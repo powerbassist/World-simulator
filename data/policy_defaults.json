@@ -1,0 +1,20 @@
+{
+  "_source": "authored",
+  "_note": "Starting fiscal policy, applied to every nation at new-game. Shared rather than per-nation because only the player's nation has a budget at MVP. See docs/economy-model.md. Never touched by tools/import_data.py.",
+
+  "tax_rates_pct": {
+    "income": 20.0,
+    "corporate": 25.0,
+    "vat": 20.0
+  },
+
+  "spending_pct_gdp": {
+    "health": 11.0,
+    "education": 5.5,
+    "defence": 2.0,
+    "pensions": 14.5,
+    "infrastructure": 3.5
+  },
+
+  "other_spending_pct_gdp": 12.0
+}

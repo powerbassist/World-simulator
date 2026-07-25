@@ -81,6 +81,24 @@ The obvious objection is performance. GDScript is meaningfully slower than C# �
 > annotation; for *cross-file* references, `const Foo = preload("res://path/foo.gd")`
 > sidesteps the same cache dependency entirely and is the safer default throughout.
 
+> [!warning] Gotcha — a `Control` outside the scene tree is half-dead
+> In a `godot --headless --script` run there is no scene loaded, so a node you
+> build and `add_child()` to `root` during `_init()` is **not yet inside the
+> tree**. Two consequences, both silent:
+>
+> - `_ready()` has not run, so anything it builds is `null`.
+> - `Range.value_changed` does **not** emit. Setting `slider.value = 28.0`
+>   updates the number and fires nothing.
+>
+> The second is the dangerous one: a UI test that sets slider values outside the
+> tree passes against a panel whose signals were never connected. Confirmed in
+> S4 on 4.7.1.
+>
+> The fix is to drive the test a frame at a time. `extends SceneTree` can
+> override MainLoop's `func _process(delta: float) -> bool` — do the setup on
+> frame 1, act on frame 2, assert on frame 3. `tests/test_budget_panel.gd` and
+> `tests/test_game_loop.gd` both use this shape.
+
 ## Maintainability and scalability
 
 The stated risk is real: a project that accretes economy, diplomacy, AI nations, and events over years turns into spaghetti unless the structure resists it. Three rules do most of the work.

@@ -35,8 +35,11 @@ data/
 ├── laws/              law templates, grouped by theme
 ├── political-systems/ institutional templates (V1)
 ├── companies/         fictional firms (V1)
-└── geo/               europe.geojson — borders from Natural Earth
+├── geo/               europe.geojson — borders from Natural Earth
+└── policy_defaults.json   starting tax rates and spending split
 ```
+
+`policy_defaults.json` is shared by every nation rather than split per file, because only the player's nation has a budget at MVP — see [[economy-model]]. Like every other file here it is read once at startup, validated, and never mutated; `tools/import_data.py` neither reads nor writes it.
 
 One file per entity, named by ISO 3166-1 alpha-3 where a nation is involved. Small files mean readable git diffs and no merge conflicts between unrelated content edits.
 
@@ -149,21 +152,31 @@ It runs unconditionally at startup and fails loudly with the offending file and 
 
 ### Shape
 
-A single `GameState` object holding plain data, built at new-game time by copying starting values out of the static data.
+A single `GameState` object holding plain data, built at new-game time by copying starting values out of the static data. Built in [[ROADMAP|S4]], the first session that had anything to mutate.
 
 ```
-GameState
-├── date, speed, paused
+GameState                        src/core/game_state.gd
 ├── save_version
+├── year, month                  mirrored from the Clock each monthly tick
 ├── player_nation_id
-├── nations[]            live per-nation values — economy, budget, opinion
-├── assembly             current seat distribution
-├── passed_laws[]
-├── election             term start, term length, next election date
-└── history[]            monthly snapshots of key figures, for charts
+├── nations{}                    String id -> NationState
+├── history[]                    dated monthly snapshots, for charts
+└── errors[]                     problems found while building the state
+
+NationState                      src/core/nation_state.gd
+├── economy    sector_output{}, gdp, potential_gdp, trend, growth,
+│              unemployment, structural_unemployment, population
+├── policy     has_budget, tax_rates_pct{}, spending_pct_gdp{}, the starting
+│              values of both, other_spending_pct_gdp, other_revenue_pct_gdp
+├── fiscal     revenue_pct_gdp{}, totals, debt_service, deficit, debt_eur_bn
+└── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
 ```
 
-Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI reads it and never writes it — player intent goes back as explicit commands. This is the one-way dependency rule from [[engine-decision]].
+Later sessions add their own fields the same way the nation schema is grown — S5 opinion, S6 election state. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
+
+`NationState.duplicate_state()` and `GameState.duplicate_state()` deep-copy the whole thing. That is not a convenience: the budget projection runs the real simulation forward on a copy, which is what makes the projected path identical to what subsequently happens rather than merely close. Every Dictionary field must be duplicated, not shared.
+
+Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI reads it and never writes it — player intent goes back as explicit commands, of which `Budget.commit()` is the first. This is the one-way dependency rule from [[engine-decision]].
 
 ### Persistence
 

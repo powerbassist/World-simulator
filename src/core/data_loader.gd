@@ -6,18 +6,24 @@ extends RefCounted
 
 const Nation = preload("res://src/core/nation.gd")
 const Party = preload("res://src/core/party.gd")
+const C = preload("res://src/sim/economy_constants.gd")
 
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
 
+const MAX_TAX_RATE_PCT := 100.0
+const MAX_SPENDING_PCT_GDP := 100.0
+
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
+var policy_defaults: Dictionary = {}
 var errors: Array[String] = []
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json") -> void:
 	nations.clear()
 	parties.clear()
+	policy_defaults.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -56,7 +62,52 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	for id in nations.keys():
 		_load_parties(id, parties_dir)
 
+	_load_policy_defaults(policy_path)
 	_validate_cross_file(geo_path)
+
+
+## Starting tax rates and spending split, shared by every nation. Static content
+## like the nation files, so it gets the same treatment: parsed once at startup,
+## validated loudly, never mutated. See docs/economy-model.md.
+func _load_policy_defaults(policy_path: String) -> void:
+	var text := FileAccess.get_file_as_string(policy_path)
+	if text.is_empty():
+		errors.append("%s: could not read file" % policy_path)
+		return
+
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		errors.append("%s: invalid JSON" % policy_path)
+		return
+
+	var fname := policy_path.get_file()
+	policy_defaults = parsed
+
+	var rates := _extract_dict(parsed, "tax_rates_pct", fname)
+	for key in C.TAX_KEYS:
+		_check_number(rates, key, "tax_rates_pct.%s" % key, 0.0, MAX_TAX_RATE_PCT, fname)
+
+	var spending := _extract_dict(parsed, "spending_pct_gdp", fname)
+	for key in C.SPENDING_KEYS:
+		_check_number(spending, key, "spending_pct_gdp.%s" % key, 0.0, MAX_SPENDING_PCT_GDP, fname)
+
+	_check_number(parsed, "other_spending_pct_gdp", "other_spending_pct_gdp", 0.0, MAX_SPENDING_PCT_GDP, fname)
+
+
+func _extract_dict(d: Dictionary, key: String, filename: String) -> Dictionary:
+	if not d.has(key) or typeof(d[key]) != TYPE_DICTIONARY:
+		errors.append("%s: missing or invalid object field '%s'" % [filename, key])
+		return {}
+	return d[key]
+
+
+func _check_number(d: Dictionary, key: String, path: String, min_v: float, max_v: float, filename: String) -> void:
+	if not d.has(key) or not (typeof(d[key]) == TYPE_INT or typeof(d[key]) == TYPE_FLOAT):
+		errors.append("%s: missing or invalid numeric field '%s'" % [filename, path])
+		return
+	var value := float(d[key])
+	if value < min_v or value > max_v:
+		errors.append("%s: %s = %s out of range [%s, %s]" % [filename, path, str(value), str(min_v), str(max_v)])
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:

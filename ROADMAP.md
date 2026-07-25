@@ -121,7 +121,14 @@ Nations: France, Germany, Italy, Spain, Belgium, Netherlands, Luxembourg, Switze
 
 **Goal:** Money comes in, money goes out, and the numbers move month to month.
 
-**Scope:** `src/sim/economy.gd` — four aggregate sectors, GDP, growth, unemployment, updated monthly. `src/sim/budget.gd` — three tax levers, six spending lines, deficit, accumulated debt, debt service. Budget screen in `src/ui/` showing current allocations, projected effect of a change before committing, and the resulting balance.
+**Scope:** `src/sim/economy.gd` — three aggregate sectors, GDP, growth, unemployment, updated monthly. `src/sim/budget.gd` — three tax levers, six spending lines, deficit, accumulated debt, debt service. Budget screen in `src/ui/` showing current allocations, projected effect of a change before committing, and the resulting balance.
+
+> [!note] Three sectors, not the four this line originally said
+> The fourth was energy, split out of industry. That was written before
+> [docs/data-sources.md](docs/data-sources.md) established no open dataset
+> provides the split, and no MVP mechanic distinguishes energy from industry —
+> energy mix is [someday](docs/tiers/someday.md) tier. Corrected in S4 rather
+> than honoured; the model is [docs/economy-model.md](docs/economy-model.md).
 
 **Done when:**
 - Raising income tax increases revenue and reduces growth over the following months.

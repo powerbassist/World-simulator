@@ -1,0 +1,123 @@
+extends RefCounted
+
+## Live per-nation simulation state. Plain data — no engine dependency, no node
+## references, no signals. Built at new-game by copying starting values out of a
+## Nation (static data), then mutated every simulated month by src/sim/.
+##
+## The static Nation object still says what unemployment was at game start; this
+## says what it is now. See docs/data-architecture.md.
+##
+## Later sessions add their own fields here — S5 opinion, S6 election state —
+## the same way the nation schema is grown.
+
+const C = preload("res://src/sim/economy_constants.gd")
+
+var id: String = ""
+
+# --- Economy -----------------------------------------------------------------
+
+var sector_output := {}  # String -> float, EUR bn. Sums to gdp_eur_bn exactly.
+var gdp_eur_bn: float = 0.0
+var potential_gdp_eur_bn: float = 0.0
+
+var trend_annual_pct: float = 0.0
+var growth_annual_pct: float = 0.0
+
+var unemployment_pct: float = 0.0
+var structural_unemployment_pct: float = 0.0
+var start_unemployment_pct: float = 0.0
+
+var population: float = 0.0
+
+# --- Policy ------------------------------------------------------------------
+
+## Only the player's nation has a budget. The other nine carry these fields
+## unchanged from their starting values so one code path serves both.
+var has_budget: bool = false
+
+var tax_rates_pct := {}          # income, corporate, vat
+var spending_pct_gdp := {}       # health, education, defence, pensions, infrastructure
+var start_tax_rates_pct := {}
+var start_spending_pct_gdp := {}
+var other_spending_pct_gdp: float = 0.0
+
+## Calibration residual, fixed at new-game so starting revenue equals the
+## nation's authored fiscal.tax_revenue_pct_gdp. Social contributions, local
+## taxes, everything the player has no slider for.
+var other_revenue_pct_gdp: float = 0.0
+
+# --- Fiscal results, recomputed every month ----------------------------------
+
+var revenue_pct_gdp := {}        # income, corporate, vat, other
+var total_revenue_pct_gdp: float = 0.0
+var total_spending_pct_gdp: float = 0.0
+var debt_service_pct_gdp: float = 0.0
+var deficit_pct_gdp: float = 0.0
+var debt_eur_bn: float = 0.0
+
+# --- Impulses ----------------------------------------------------------------
+
+## Short-run demand shock from a committed budget change. Decays geometrically.
+var demand_impulse_pct: float = 0.0
+
+## Long-run shift to trend growth from infrastructure, education and corporate
+## tax. Hard-clamped; this is the only feedback into trend.
+var potential_shift_pct: float = 0.0
+
+## External demand from neighbours, recomputed each month.
+var external_impulse_pct: float = 0.0
+
+## GDP-weighted neighbour growth at new-game, the zero point for the term above.
+var trade_baseline_pct: float = 0.0
+
+
+## Deep copy. The budget projection runs the real simulation forward on a copy,
+## so every mutable field — every Dictionary — must be duplicated, not shared.
+func duplicate_state():
+	var s = new()
+	s.id = id
+
+	s.sector_output = sector_output.duplicate(true)
+	s.gdp_eur_bn = gdp_eur_bn
+	s.potential_gdp_eur_bn = potential_gdp_eur_bn
+	s.trend_annual_pct = trend_annual_pct
+	s.growth_annual_pct = growth_annual_pct
+	s.unemployment_pct = unemployment_pct
+	s.structural_unemployment_pct = structural_unemployment_pct
+	s.start_unemployment_pct = start_unemployment_pct
+	s.population = population
+
+	s.has_budget = has_budget
+	s.tax_rates_pct = tax_rates_pct.duplicate(true)
+	s.spending_pct_gdp = spending_pct_gdp.duplicate(true)
+	s.start_tax_rates_pct = start_tax_rates_pct.duplicate(true)
+	s.start_spending_pct_gdp = start_spending_pct_gdp.duplicate(true)
+	s.other_spending_pct_gdp = other_spending_pct_gdp
+	s.other_revenue_pct_gdp = other_revenue_pct_gdp
+
+	s.revenue_pct_gdp = revenue_pct_gdp.duplicate(true)
+	s.total_revenue_pct_gdp = total_revenue_pct_gdp
+	s.total_spending_pct_gdp = total_spending_pct_gdp
+	s.debt_service_pct_gdp = debt_service_pct_gdp
+	s.deficit_pct_gdp = deficit_pct_gdp
+	s.debt_eur_bn = debt_eur_bn
+
+	s.demand_impulse_pct = demand_impulse_pct
+	s.potential_shift_pct = potential_shift_pct
+	s.external_impulse_pct = external_impulse_pct
+	s.trade_baseline_pct = trade_baseline_pct
+
+	return s
+
+
+func debt_to_gdp_pct() -> float:
+	if gdp_eur_bn <= 0.0:
+		return 0.0
+	return debt_eur_bn / gdp_eur_bn * 100.0
+
+
+func player_spending_pct_gdp() -> float:
+	var total := 0.0
+	for key in C.SPENDING_KEYS:
+		total += float(spending_pct_gdp.get(key, 0.0))
+	return total

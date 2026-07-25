@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Runs every headless test. Non-zero exit if any of them fails.
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+tests=(
+  tests/test_data.gd
+  tests/test_clock.gd
+  tests/test_economy.gd
+  tests/test_budget.gd
+  tests/test_budget_panel.gd
+  tests/test_game_loop.gd
+)
+
+failed=0
+for t in "${tests[@]}"; do
+  if ! godot --headless --script "res://$t"; then
+    echo "FAIL $t" >&2
+    failed=1
+  fi
+done
+
+if [ "$failed" -ne 0 ]; then
+  echo "test suite failed" >&2
+  exit 1
+fi
+echo "test suite passed"

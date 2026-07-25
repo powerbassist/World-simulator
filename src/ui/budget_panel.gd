@@ -1,0 +1,280 @@
+extends PanelContainer
+
+## The budget screen. Eight levers, the books as they stand, the books as
+## proposed, and a two-year projection of both.
+##
+## Reads simulation state and never writes it. The single exception is the
+## Commit button, which sends player intent back as one explicit command —
+## Budget.commit(). Pending slider positions live here, not in the simulation.
+## See engine-decision.md Rule 2.
+##
+## The control tree is built in code rather than authored as a .tscn: it is a
+## generated grid of eight identical rows, which a scene file would describe
+## worse and more verbosely than the loop below.
+
+const Budget = preload("res://src/sim/budget.gd")
+const C = preload("res://src/sim/economy_constants.gd")
+
+const PROJECTION_MONTHS := 24
+
+const LEVER_LABELS := {
+	"income": "Income tax",
+	"corporate": "Corporate tax",
+	"vat": "VAT",
+	"health": "Health",
+	"education": "Education",
+	"defence": "Defence",
+	"pensions": "Pensions",
+	"infrastructure": "Infrastructure",
+}
+const LEVER_MAX := {
+	"income": 70.0,
+	"corporate": 70.0,
+	"vat": 40.0,
+	"health": 30.0,
+	"education": 30.0,
+	"defence": 30.0,
+	"pensions": 30.0,
+	"infrastructure": 30.0,
+}
+
+const FIGURE_ROWS := [
+	["revenue", "Revenue"],
+	["spending", "Spending"],
+	["debt_service", "  of which debt service"],
+	["deficit", "Deficit"],
+	["debt", "Debt"],
+	["", ""],
+	["proj_growth", "GDP growth, in 24 months"],
+	["proj_unemployment", "Unemployment, in 24 months"],
+	["proj_debt", "Debt ratio, in 24 months"],
+]
+
+signal committed
+
+var _state
+var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
+var _sliders := {}
+var _lever_values := {}
+var _figures := {}
+var _title: Label
+var _dirty := true
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_CENTER)
+	custom_minimum_size = Vector2(820, 520)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_%s" % side, 16)
+	add_child(margin)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	margin.add_child(root)
+
+	_title = Label.new()
+	root.add_child(_title)
+
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 24)
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(columns)
+
+	columns.add_child(_build_levers())
+	columns.add_child(_build_figures())
+
+	root.add_child(_build_buttons())
+
+
+func _build_levers() -> Control:
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var heading := Label.new()
+	heading.text = "Levers (tax rates %, spending % of GDP)"
+	box.add_child(heading)
+
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 12)
+	box.add_child(grid)
+
+	for key in _lever_keys():
+		var name_label := Label.new()
+		name_label.text = LEVER_LABELS[key]
+		name_label.custom_minimum_size.x = 130
+		grid.add_child(name_label)
+
+		var slider := HSlider.new()
+		slider.min_value = 0.0
+		slider.max_value = float(LEVER_MAX[key])
+		slider.step = 0.1
+		slider.custom_minimum_size.x = 220
+		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		slider.value_changed.connect(_on_lever_changed.bind(key))
+		grid.add_child(slider)
+		_sliders[key] = slider
+
+		var value_label := Label.new()
+		value_label.custom_minimum_size.x = 60
+		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(value_label)
+		_lever_values[key] = value_label
+
+	return box
+
+
+func _build_figures() -> Control:
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 16)
+	box.add_child(grid)
+
+	for header in ["", "now", "proposed"]:
+		var label := Label.new()
+		label.text = header
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if header != "" else HORIZONTAL_ALIGNMENT_LEFT
+		label.custom_minimum_size.x = 200 if header == "" else 110
+		grid.add_child(label)
+
+	for row in FIGURE_ROWS:
+		var name_label := Label.new()
+		name_label.text = row[1]
+		grid.add_child(name_label)
+
+		var now_label := Label.new()
+		now_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(now_label)
+
+		var pending_label := Label.new()
+		pending_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(pending_label)
+
+		if row[0] != "":
+			_figures[row[0]] = [now_label, pending_label]
+
+	return box
+
+
+func _build_buttons() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+
+	var commit := Button.new()
+	commit.text = "Commit"
+	commit.pressed.connect(_on_commit)
+	row.add_child(commit)
+
+	var revert := Button.new()
+	revert.text = "Revert"
+	revert.pressed.connect(_on_revert)
+	row.add_child(revert)
+
+	var close := Button.new()
+	close.text = "Close (B)"
+	close.pressed.connect(func(): hide())
+	row.add_child(close)
+
+	return row
+
+
+func _lever_keys() -> Array:
+	var keys: Array = []
+	keys.append_array(C.TAX_KEYS)
+	keys.append_array(C.SPENDING_KEYS)
+	return keys
+
+
+func setup(state) -> void:
+	_state = state
+	var ns = _state.player()
+	_title.text = "BUDGET — %s" % ns.id
+	_on_revert()
+
+
+func _on_revert() -> void:
+	var ns = _state.player()
+	_pending = {
+		"tax_rates_pct": ns.tax_rates_pct.duplicate(true),
+		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
+	}
+	for key in _lever_keys():
+		var slider: HSlider = _sliders[key]
+		slider.set_block_signals(true)
+		slider.value = _pending_value(key)
+		slider.set_block_signals(false)
+	_dirty = true
+
+
+func _on_commit() -> void:
+	Budget.commit(_state, _pending)
+	_on_revert()
+	committed.emit()
+
+
+func _on_lever_changed(value: float, key: String) -> void:
+	if C.TAX_KEYS.has(key):
+		_pending["tax_rates_pct"][key] = value
+	else:
+		_pending["spending_pct_gdp"][key] = value
+	_dirty = true
+
+
+func _pending_value(key: String) -> float:
+	if C.TAX_KEYS.has(key):
+		return float(_pending["tax_rates_pct"].get(key, 0.0))
+	return float(_pending["spending_pct_gdp"].get(key, 0.0))
+
+
+## Sliders fire many times during a drag, and every refresh runs two 24-month
+## projections. Coalesce to at most one refresh per frame.
+func _process(_delta: float) -> void:
+	if not _dirty or not visible or _state == null:
+		return
+	_dirty = false
+	_refresh()
+
+
+## Called by the owner after each simulated month, so an open panel does not show
+## last month's figures.
+func mark_dirty() -> void:
+	_dirty = true
+
+
+func _refresh() -> void:
+	for key in _lever_keys():
+		_lever_values[key].text = "%.1f%%" % _pending_value(key)
+
+	var now := Budget.snapshot(_state)
+	var proposed := Budget.preview(_state, _pending)
+	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS)
+	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS)
+
+	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
+	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
+	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
+	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
+	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
+
+	var last_now: Dictionary = now_path[-1]
+	var last_proposed: Dictionary = proposed_path[-1]
+	_set_figure("proj_growth", "%.2f%%" % last_now["growth_annual_pct"], "%.2f%%" % last_proposed["growth_annual_pct"])
+	_set_figure("proj_unemployment", "%.2f%%" % last_now["unemployment_pct"], "%.2f%%" % last_proposed["unemployment_pct"])
+	_set_figure("proj_debt", "%.1f%%" % last_now["debt_to_gdp_pct"], "%.1f%%" % last_proposed["debt_to_gdp_pct"])
+
+
+func _pct_and_eur(snap: Dictionary, key: String) -> String:
+	var pct: float = snap[key]
+	return "%.2f%%  (%.0f bn)" % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
+
+
+func _set_figure(key: String, now_text: String, pending_text: String) -> void:
+	if not _figures.has(key):
+		return
+	_figures[key][0].text = now_text
+	_figures[key][1].text = pending_text
