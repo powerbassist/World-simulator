@@ -106,7 +106,7 @@ and budget already maintain.
 | `defence` | " | " |
 | `pensions` | " | " |
 | `infrastructure` | " | " |
-| `public_finances` | `−Δdeficit / DEFICIT_SCALE` | 3.0 pp of GDP |
+| `public_finances` | `−Δdeficit / DEFICIT_SCALE` | 6.0 pp of GDP |
 
 All clamped to [−1, +1] after scaling.
 
@@ -134,22 +134,28 @@ nobody cares about buys nothing" true rather than decorative.
 
 | Bloc | Base weights |
 |---|---|
-| workers | jobs 0.40 · tax_income 0.19 · health 0.11 · tax_vat 0.09 · pensions 0.07 · growth 0.07 · public_finances 0.07 |
-| pensioners | pensions 0.44 · health 0.26 · public_finances 0.13 · tax_vat 0.09 · jobs 0.08 |
-| urban | health 0.22 · jobs 0.21 · education 0.17 · infrastructure 0.13 · tax_income 0.11 · growth 0.09 · public_finances 0.07 |
-| rural | infrastructure 0.24 · jobs 0.19 · health 0.15 · tax_vat 0.13 · pensions 0.11 · defence 0.11 · public_finances 0.07 |
-| business | tax_corporate 0.30 · public_finances 0.24 · growth 0.22 · infrastructure 0.11 · jobs 0.07 · education 0.06 |
-| students | education 0.44 · jobs 0.25 · tax_vat 0.11 · growth 0.07 · health 0.07 · public_finances 0.06 |
+| workers | jobs 0.34 · public_finances 0.18 · tax_income 0.15 · health 0.10 · tax_vat 0.08 · growth 0.08 · pensions 0.07 |
+| pensioners | pensions 0.38 · health 0.21 · public_finances 0.20 · jobs 0.13 · tax_vat 0.08 |
+| urban | health 0.19 · jobs 0.18 · public_finances 0.17 · education 0.14 · infrastructure 0.11 · tax_income 0.11 · growth 0.10 |
+| rural | infrastructure 0.20 · public_finances 0.18 · jobs 0.16 · health 0.13 · defence 0.12 · tax_vat 0.11 · pensions 0.10 |
+| business | public_finances 0.34 · tax_corporate 0.25 · growth 0.19 · infrastructure 0.09 · jobs 0.07 · education 0.06 |
+| students | education 0.38 · jobs 0.22 · public_finances 0.14 · tax_vat 0.10 · growth 0.08 · health 0.08 |
 
-Two properties are load-bearing rather than incidental:
+Three properties are load-bearing rather than incidental:
 
-- **Pensioners weight pensions at 0.44 and students at nothing.** The S5
-  done-when condition about a pension cut is therefore a property of this table,
-  not of code.
+- **Pensioners weight pensions far above anything else and students at nothing.**
+  The S5 done-when condition about a pension cut is therefore a property of this
+  table, not of code.
 - **`jobs` is the most-weighted issue overall.** [[economy-model]] gives
   unemployment the honest textbook treatment — Okun plus reversion to a structural
   rate — specifically so that bloc reactions to it feel earned. Leaning on it
   hardest is the payoff.
+- **`public_finances` is second, at about 0.20 of the national agenda.** The
+  [[ROADMAP|S10]] pass roughly doubled this row from its S5 weights; the argument
+  is in the callout below. It is worth noting how *surgical* that change is: a
+  player who never touches the budget sits at a `public_finances` satisfaction of
+  about zero and is untouched by it. The row bites only once the player moves the
+  deficit, in whichever direction — which is exactly when it should.
 
 ### Salience moves with the news
 
@@ -162,12 +168,45 @@ w_b[i]     = base_b[i] × (1 + SALIENCE_GAIN × severity_i)
 w_b        = w_b / Σ w_b
 ```
 
-`SALIENCE_GAIN = 1.0` — a fully bad issue counts double before renormalisation.
+`SALIENCE_GAIN = 5.0` — a fully bad issue counts six times before
+renormalisation.
 
 The renormalisation is the entire stability argument: the result is a point on
 the simplex, so no amount of bad news can make the weights grow. It also means
 salience is genuinely zero-sum, which is the behaviour worth having — a crisis in
 one place crowds attention out of another.
+
+> [!important] The gain was 1.0 until S10, and that made the game unloseable
+> This constant does far more work than its S5 description suggested, and the
+> [[ROADMAP|S10]] balance pass found it doing none of it. Three separate
+> failures traced back here and to the `public_finances` weights beside it:
+>
+> **Fiscal discipline was strictly dominated.** `public_finances` carried about
+> 0.10 of the national agenda against roughly 0.50 for the five spending lines.
+> A budget with every line maxed and every tax at zero ran a deficit of 112 % of
+> GDP, walked debt to 1346 % of GDP, and still held approval at 57 and won three
+> consecutive elections — while an austerity budget running a surplus lost. There
+> was no reason to ever open the budget screen except to spend more.
+>
+> **Saturation made the model non-monotone.** Satisfaction is clamped to
+> [−1, +1], so once a deficit has pinned `public_finances` at −1 it cannot get
+> worse, and every further giveaway is free upside. Maxing spending *and* zeroing
+> taxes was more popular than either half alone: the second half added three
+> saturated positives against a negative already on the floor. Widening
+> `DEFICIT_SCALE` cannot fix this — no scale distinguishes −18 pp from −85 pp
+> once both clamp — but the gain can, because it multiplies weight by severity
+> rather than adding to score. The flip point for that budget sits between 4.0
+> and 4.5.
+>
+> **Losing was unattributable.** The result screen names the most-salient issues
+> at the moment of the vote. At a low gain it named whatever the base table said,
+> regardless of what the player had actually broken, so every defeat read the
+> same. At 5.0 each failure mode is blamed on the number that caused it:
+> profligacy on `public_finances`, austerity on `health` and `pensions`, a tax
+> squeeze on `jobs` and the tax lines.
+>
+> `tools/balance_probe.gd` is the harness that found all three;
+> `tests/test_balance.gd` is the subset that now fails if they come back.
 
 The size-weighted average of the per-bloc weights is stored as
 `issue_salience` and is what the polling panel's "what the country is thinking

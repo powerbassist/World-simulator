@@ -293,13 +293,27 @@ and each month `demand_impulse *= IMPULSE_DECAY`.
 | `MULT_TAX.income` | 0.60 | Households save part of a tax change, so the multiplier is below the spending one. |
 | `MULT_TAX.corporate` | 0.40 | Weakest demand channel; corporate tax does most of its work on potential, below. |
 | `MULT_TAX.vat` | 0.70 | Falls on consumption directly. |
-| `IMPULSE_MAX` | ±50 %/yr | Guard rail against absurd inputs, not a modelling claim. |
+| `IMPULSE_MAX` | ±6 %/yr | Must sit *inside* `GROWTH_MAX`, not outside it. See below. |
 
 `LEVEL_FACTOR` converts "the GDP level effect I want" into "the annualised
 impulse that produces it once decayed to nothing" — the geometric sum
 `Σ impulse₀ × decay^n / 12`. Stating the multipliers as multipliers keeps
 [[ROADMAP|S10]]'s balance pass legible; without it, the tunables would be
 opaque products.
+
+> [!note] `IMPULSE_MAX` was ±50 %/yr until S10
+> Two guard rails bound growth — this one and `GROWTH_MAX` at ±12 %/yr — and at
+> ±50 the wrong one was binding. A large budget commit produced an impulse of
+> 20–90 %/yr, growth pinned against ±12, and it *stayed* pinned for a year or
+> more while the impulse decayed underneath it. For that whole period the clamp,
+> not the model, was setting the growth rate: two different budgets one of which
+> was three times as expansionary as the other produced the same +12 %.
+>
+> A guard rail is meant to be unreachable under any input the player can express.
+> At ±6 the largest committable budget produces a boom of about +6 %/yr fading
+> over two years, `GROWTH_MAX` goes back to being unreachable, and the two rails
+> stop competing. `tests/test_balance.gd` asserts the growth clamp is never
+> touched across a fourteen-year run.
 
 `Δrevenue` is computed by running the revenue function at the old and new rates
 on the current GDP, rather than by a separate approximation. Same function both

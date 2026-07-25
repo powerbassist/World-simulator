@@ -105,7 +105,15 @@ const DEBT_REAL_RATE_PCT := 2.0
 # --- Demand impulse (short run) ----------------------------------------------
 
 const IMPULSE_DECAY := 0.90
-const IMPULSE_MAX_PCT := 50.0
+
+## Cap on the demand impulse, %/yr. Must stay *inside* GROWTH_MAX_PCT, not
+## outside it. At the S4 value of 50 it sat four times above the growth clamp, so
+## any large budget commit drove growth onto ±12 and held it there for a year
+## while the impulse decayed — the clamp, not the model, was setting the growth
+## rate. At 6 the largest budget a player can commit produces a boom of about
+## +6%/yr fading over two years, and the growth clamp goes back to being the
+## unreachable guard rail it was meant to be. Found by tools/balance_probe.gd.
+const IMPULSE_MAX_PCT := 6.0
 
 ## Fiscal multipliers, applied to the change in each line as a % of GDP.
 const MULT_SPENDING := 0.90

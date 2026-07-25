@@ -76,15 +76,52 @@ Steps 1–5 repeat continuously. Step 6 is the wall the whole game is aimed at.
 
 ## Done-when
 
-The MVP is finished when all of the following are true:
+The MVP is finished when all of the following are true. Evidence was gathered in
+the [[ROADMAP|S10]] balance pass; every claim below is a check that runs in
+`./tools/run_tests.sh`, not a playtest impression. The trajectories the tuning
+was done against come from `tools/balance_probe.gd`, which plays fourteen
+simulated years — the inherited term plus two full ones — under ten fixed budget
+regimes.
 
-- [ ] A full five-year term is playable start to finish without a crash or a softlock.
-- [ ] The player can lose, and losing is attributable to their decisions rather than to noise.
-- [ ] Passing a law visibly changes at least one economic and one opinion number over the following months.
-- [ ] Ignoring the budget for a full term produces a visibly worse outcome than managing it.
-- [ ] A save reloaded mid-term produces identical state.
-- [ ] A ten-year playthrough (two terms) runs with no value diverging to infinity or pinning at zero.
-- [ ] The banned-names grep from [[fictionalization]] returns nothing.
+- [x] **A full five-year term is playable start to finish without a crash or a softlock.**
+  `tests/test_game_loop.gd` drives the real clock through the real main scene.
+  `tests/test_balance.gd` plays 168 months and resolves three national elections
+  (June 2029, 2034, 2039), asserting `terms_served ≥ 3` at the end.
+- [x] **The player can lose, and losing is attributable to their decisions rather than to noise.**
+  Seven of the ten probe regimes lose their first election; the two viable ones
+  and one mediocre one hold. There is no randomness anywhere in the sim — polling
+  noise is display-only — so a result is reproducible from state, which
+  `tests/test_elections.gd` asserts. Attribution names a *different* number per
+  failure: profligacy on `public_finances` (salience 0.57, satisfaction −1.00),
+  austerity on `health` and `pensions`, a tax squeeze on `jobs` and the tax lines,
+  abolishing spending on `health`, `pensions` and `education`.
+  `tests/test_balance.gd` asserts two different bad budgets are blamed on two
+  different issues, and that each is named because its satisfaction is negative.
+- [x] **Passing a law visibly changes at least one economic and one opinion number over the following months.**
+  `tests/test_legislature.gd::_check_passed_law_moves_economy_and_opinion` passes
+  `carbon_levy` against a do-nothing control and requires both the deficit and
+  rural approval to diverge from it.
+- [x] **Ignoring the budget for a full term produces a visibly worse outcome than managing it.**
+  Over 168 months, never touching the budget ends at debt 163.1 % of GDP,
+  approval 48.2, 203/577 seats, on a monotonically decaying approval curve. The
+  managed budget — cut defence, fund it with VAT, leave health, education and
+  pensions alone — ends at debt 121.3 %, approval 49.7, 212 seats, with the debt
+  ratio *stable* rather than climbing. `tests/test_balance.gd` asserts managed
+  beats ignored on all three.
+- [x] **A save reloaded mid-term produces identical state.**
+  `tests/test_save_load.gd`.
+- [x] **A ten-year playthrough (two terms) runs with no value diverging to infinity or pinning at zero.**
+  `tests/test_balance.gd` checks every headline scalar, every sector and every
+  bloc approval *each month* for non-finite values, non-positive GDP and
+  population, and — stricter than the checklist asks — for any value resting on
+  one of the model's guard clamps. All ten probe regimes report clean.
+- [ ] **The banned-names grep from [[fictionalization]] returns nothing.**
+  Still failing, on two S2 substring false positives: `BEL.json`'s invented
+  "Sociale Vooruitgang" matches the banned "Vooruit", and `GBR.json`'s invented
+  "Ecology Alliance" matches "Ecolo". Both authored names are fictional; the
+  check's matcher is not word-boundary aware. Pre-existing debt, queued
+  separately, deliberately **not** fixed inside S10 — the fix belongs in
+  `tools/check_names.sh`, not in the balance constants.
 
 ## Deliberately absent
 

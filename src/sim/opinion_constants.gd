@@ -74,7 +74,13 @@ const JOBS_SCALE_PP := 3.0        # points of unemployment
 const GROWTH_SCALE_PP := 4.0      # points of growth away from trend
 const TAX_SCALE_PP := 8.0         # points of a tax rate
 const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
-const DEFICIT_SCALE_PP := 3.0     # points of GDP of deficit
+
+## Points of GDP of deficit. Widened from S5's 3.0 during the S10 balance pass:
+## at 3.0 the issue saturated at ±1 on a three-point move, so a deficit two
+## points over the starting one and a deficit twenty points over it read exactly
+## the same to a voter. Six points spans a genuine consolidation or a genuine
+## blowout, which is the range the player actually moves this number over.
+const DEFICIT_SCALE_PP := 6.0
 
 # --- Salience ----------------------------------------------------------------
 
@@ -83,65 +89,98 @@ const DEFICIT_SCALE_PP := 3.0     # points of GDP of deficit
 ## "fixing something nobody cares about buys nothing" true. Each row sums to 1.0;
 ## the code normalises anyway, so a tuning pass need not keep it that way.
 ##
-## Note pensioners weight pensions at 0.45 and students at nothing. That pair is
-## the S5 done-when condition, and it is a property of this table, not of code.
+## Note pensioners weight pensions far above anything else and students at
+## nothing. That pair is the S5 done-when condition, and it is a property of this
+## table, not of code.
+##
+## The public_finances row was raised across every bloc during the S10 balance
+## pass. At the S5 weights it carried about 0.10 of the national agenda against
+## roughly 0.50 for the five spending lines, which made fiscal discipline a
+## strictly dominated strategy: a budget with every spending line maxed and every
+## tax at zero ran a deficit of 112% of GDP, walked debt to 1346% of GDP, and
+## still held approval at 57 and won three consecutive elections, while an
+## austerity budget that ran a surplus lost. Roughly doubling this one row is the
+## whole fix — and it is surgical, because a player who never touches the budget
+## sits at a public_finances satisfaction of about zero and is untouched by the
+## change. It bites only once the player moves the deficit, in whichever
+## direction. Found by tools/balance_probe.gd.
 const BLOC_SALIENCE_BASE := {
 	"workers": {
-		"jobs": 0.40,
-		"tax_income": 0.19,
-		"health": 0.11,
-		"tax_vat": 0.09,
+		"jobs": 0.34,
+		"public_finances": 0.18,
+		"tax_income": 0.15,
+		"health": 0.10,
+		"tax_vat": 0.08,
+		"growth": 0.08,
 		"pensions": 0.07,
-		"growth": 0.07,
-		"public_finances": 0.07,
 	},
 	"pensioners": {
-		"pensions": 0.44,
-		"health": 0.26,
-		"public_finances": 0.13,
-		"tax_vat": 0.09,
-		"jobs": 0.08,
+		"pensions": 0.38,
+		"health": 0.21,
+		"public_finances": 0.20,
+		"jobs": 0.13,
+		"tax_vat": 0.08,
 	},
 	"urban": {
-		"health": 0.22,
-		"jobs": 0.21,
-		"education": 0.17,
-		"infrastructure": 0.13,
+		"health": 0.19,
+		"jobs": 0.18,
+		"public_finances": 0.17,
+		"education": 0.14,
+		"infrastructure": 0.11,
 		"tax_income": 0.11,
-		"growth": 0.09,
-		"public_finances": 0.07,
+		"growth": 0.10,
 	},
 	"rural": {
-		"infrastructure": 0.24,
-		"jobs": 0.19,
-		"health": 0.15,
-		"tax_vat": 0.13,
-		"pensions": 0.11,
-		"defence": 0.11,
-		"public_finances": 0.07,
+		"infrastructure": 0.20,
+		"public_finances": 0.18,
+		"jobs": 0.16,
+		"health": 0.13,
+		"defence": 0.12,
+		"tax_vat": 0.11,
+		"pensions": 0.10,
 	},
 	"business": {
-		"tax_corporate": 0.30,
-		"public_finances": 0.24,
-		"growth": 0.22,
-		"infrastructure": 0.11,
+		"public_finances": 0.34,
+		"tax_corporate": 0.25,
+		"growth": 0.19,
+		"infrastructure": 0.09,
 		"jobs": 0.07,
 		"education": 0.06,
 	},
 	"students": {
-		"education": 0.44,
-		"jobs": 0.25,
-		"tax_vat": 0.11,
-		"growth": 0.07,
-		"health": 0.07,
-		"public_finances": 0.06,
+		"education": 0.38,
+		"jobs": 0.22,
+		"public_finances": 0.14,
+		"tax_vat": 0.10,
+		"growth": 0.08,
+		"health": 0.08,
 	},
 }
 
 ## How much bad news raises an issue's weight. Applied as
 ## `base * (1 + GAIN * severity)` and then renormalised, so weights stay on the
 ## simplex and no amount of bad news can make them compound.
-const SALIENCE_GAIN := 1.0
+##
+## Raised from S5's 1.0 in the S10 balance pass. This is the constant that makes
+## losing *attributable*: the election result screen names the most-salient
+## issues at the moment of the vote, so at a low gain it names whatever the base
+## table says regardless of what actually went wrong in the run. At 5.0 the issue
+## the player is failing on climbs to the top of the agenda and the result screen
+## names it. The renormalisation argument above is what keeps this safe to raise.
+##
+## It is also the constant that repairs the model's one non-monotone corner.
+## Satisfaction is clamped to [-1, +1], so once a deficit has saturated
+## public_finances at -1 it cannot get any worse — and every further giveaway is
+## then free upside. A budget with every spending line maxed *and* every tax at
+## zero used to be more popular than either half on its own, because the second
+## half added three saturated positives against a negative already at the floor.
+## The gain is the only term that can outweigh that: it multiplies the weight by
+## (1 + GAIN * severity), so an issue in crisis (severity 1.0) grows six times
+## while one that is merely uncomfortable (severity 0.3) grows 2.5 times. The
+## flip point for that combined-giveaway budget sits between 4.0 and 4.5; 5.0 is
+## chosen for headroom past it, and costs a managed budget nothing measurable
+## against a do-nothing one. Found by tools/balance_probe.gd.
+const SALIENCE_GAIN := 5.0
 
 # --- Approval ----------------------------------------------------------------
 
