@@ -7,6 +7,26 @@ Sessions are ordered so the **MVP loop closes at S6**, roughly halfway through t
 Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
+## Plan first?
+
+Whether a session should be designed in plan mode before any code is written. The test is not size — it is **how expensive the decision is to reverse**. A schema or a simulation model that turns out wrong is rewritten along with everything that reads it. A map renderer that turns out wrong is rewritten alone.
+
+| Session | Plan first | Why |
+|---|---|---|
+| S0 Skeleton | **No** | Mechanical. Folder layout is already specified in [docs/engine-decision.md](docs/engine-decision.md). |
+| S1 Nation data | **Yes** | Schema design. Every later system reads it, so a bad shape is expensive in proportion to how much has been built on top. |
+| S2 Fictional content | **No** | Authoring against rules already written in [docs/fictionalization.md](docs/fictionalization.md). |
+| S3 Time | **No** | Small and fully specified. Tick, pause, three speeds, one signal. |
+| S4 Economy + budget | **Yes** | The highest-risk design in the MVP. Formulas, feedback loops, and time constants determine whether the game is interesting. Decide them deliberately, not while typing. |
+| S5 Public opinion | **Yes** | Same class as S4, and coupled to it. How blocs weight issues and how inertia works are model decisions. |
+| S6 Elections | **Light** | Vote-share formula is a real design choice; the rest is bookkeeping. A short plan for the formula is enough. |
+| S7 Laws | **Yes** | Law template schema is data-schema design, same class as S1, and it needs to accommodate V1 laws that do not exist yet without being over-general today. |
+| S8 Map | **No** | Render GeoJSON, colour, hover, click. Mechanical and self-contained. |
+| S9 Save/load | **No** | Already specified in [docs/data-architecture.md](docs/data-architecture.md). |
+| S10 Balance | **No** | Iterative tuning against the [docs/tiers/mvp.md](docs/tiers/mvp.md) checklist. Planning constants in advance is guessing. |
+
+Every V1 block gets a plan. By then there is enough built that changes ripple.
+
 ---
 
 ## MVP
