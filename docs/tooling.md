@@ -68,13 +68,45 @@ Runtime tools — `get_game_scene_tree`, `click_button_by_text`, `capture_frames
 
 `npm audit` reports 2 moderate advisories, both in the MCP SDK's HTTP transport dependency chain (`hono`). This server runs over **stdio**, so that code path is not reachable. Non-blocking; re-check after an SDK bump.
 
+## Godot docs MCP
+
+[Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.
+
+Chosen because it does not overlap the editor bridge at all. One drives the editor, the other answers "how does `Control` anchoring actually work" without a web round-trip or a guess from stale model memory.
+
+### Install
+
+Runs in Docker, registered at user scope:
+
+```bash
+git clone --depth 1 https://github.com/Nihilantropy/godot-mcp-docs.git ~/.mcp/godot-mcp-docs
+cd ~/.mcp/godot-mcp-docs
+docker build -f deploy/Dockerfile -t godot-mcp-docs:local .
+claude mcp add --scope user godot-docs -- docker run --rm -i godot-mcp-docs:local
+```
+
+The build downloads `godot-docs` **master** and converts it with pandoc — 1604 markdown files baked into the image. Docs are therefore current as of the build date, not as of the repo's last commit.
+
+Refresh when the engine moves:
+
+```bash
+docker build -f deploy/Dockerfile -t godot-mcp-docs:local ~/.mcp/godot-mcp-docs --no-cache
+```
+
+> [!warning] `get_documentation_file` returns whole files, with no search and no pagination
+> The big class references are enormous — `classes/class_control.md` alone is **232 KB**, roughly 60k tokens in a single tool call. Fetching two or three of those will fill a context window on its own.
+>
+> Use `get_documentation_tree` to find the narrowest file that answers the question, and prefer the focused tutorial pages (`tutorials/ui/…`) over the class reference when either would do. For a single property or method, plain model knowledge or a targeted web search is usually the cheaper tool.
+
+Pandoc conversion leaves RST artefacts in the output — `{.interpreted-text role="ref"}` around cross-references. Noisy, still readable.
+
 ## Deliberately not installed
 
-Ten-plus other Godot MCP servers exist. Only one is installed, on purpose.
+Ten-plus other Godot MCP servers exist. Two are installed, and they were chosen to **not** overlap: one drives the editor, one serves docs.
 
-They overlap almost entirely — the same editor APIs wrapped in different tool names — and every installed server's tool schemas compete for the same context budget. A second Godot MCP would add hundreds of near-duplicate tools, make tool selection ambiguous, and buy close to nothing. 173 tools is already a large surface.
+The rest are near-duplicates of the editor bridge — the same APIs wrapped in different tool names. Every installed server's tool schemas compete for the same context budget, so a second editor bridge would add hundreds of ambiguous near-duplicate tools and buy nothing. 173 tools is already a large surface.
 
-If godot-mcp turns out to be missing something specific, the move is to replace it with the server that has that capability, not to run both.
+The rule: if a server is missing something, **replace** it with the one that has that capability. Do not stack servers that do the same job.
 
 ---
 
