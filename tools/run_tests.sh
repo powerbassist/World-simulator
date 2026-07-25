@@ -19,6 +19,7 @@ tests=(
   tests/test_law_panel.gd
   tests/test_game_loop.gd
   tests/test_map_view.gd
+  tests/test_save_load.gd
 )
 
 failed=0

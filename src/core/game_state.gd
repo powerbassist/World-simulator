@@ -138,3 +138,46 @@ func append_history(snapshot: Dictionary) -> void:
 	entry["year"] = year
 	entry["month"] = month
 	history.append(entry)
+
+
+## Serialise the whole live state to a plain, JSON-safe Dictionary. Same field
+## set as duplicate_state(), walked the same way, plus history — a save is not
+## a projection, so unlike duplicate_state() the chart data comes along. errors
+## does not: it is new-game diagnostics, meaningless once a game has been
+## played and saved. See docs/data-architecture.md Persistence.
+func to_dict() -> Dictionary:
+	var nations_dict := {}
+	for id in nations.keys():
+		nations_dict[id] = nations[id].to_dict()
+
+	return {
+		"save_version": save_version,
+		"player_nation_id": player_nation_id,
+		"year": year,
+		"month": month,
+		"nations": nations_dict,
+		"history": history,
+	}
+
+
+## Inverse of to_dict(). Does not check save_version — the caller (SaveManager)
+## checks it before this is ever called, since a mismatch must fail loudly
+## rather than build a half-understood state.
+static func from_dict(d: Dictionary):
+	var gs = new()
+	gs.save_version = int(d.get("save_version", SAVE_VERSION))
+	gs.player_nation_id = d.get("player_nation_id", "")
+	gs.year = int(d.get("year", 0))
+	gs.month = int(d.get("month", 0))
+
+	var nations_dict: Dictionary = d.get("nations", {})
+	for id in nations_dict.keys():
+		gs.nations[id] = NationState.from_dict(nations_dict[id])
+
+	var hist: Array = d.get("history", [])
+	var typed_hist: Array[Dictionary] = []
+	for entry in hist:
+		typed_hist.append(entry as Dictionary)
+	gs.history = typed_hist
+
+	return gs

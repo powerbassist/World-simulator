@@ -222,6 +222,142 @@ func duplicate_state():
 	return s
 
 
+## Serialise to a plain Dictionary (JSON-safe: String/float/int/bool/Array/
+## Dictionary only). Same field set as duplicate_state(), in the same order,
+## so the two stay easy to compare when a field is added. See
+## docs/data-architecture.md Persistence.
+func to_dict() -> Dictionary:
+	return {
+		"id": id,
+
+		"sector_output": sector_output,
+		"gdp_eur_bn": gdp_eur_bn,
+		"potential_gdp_eur_bn": potential_gdp_eur_bn,
+		"trend_annual_pct": trend_annual_pct,
+		"growth_annual_pct": growth_annual_pct,
+		"unemployment_pct": unemployment_pct,
+		"structural_unemployment_pct": structural_unemployment_pct,
+		"start_unemployment_pct": start_unemployment_pct,
+		"population": population,
+
+		"has_budget": has_budget,
+		"tax_rates_pct": tax_rates_pct,
+		"spending_pct_gdp": spending_pct_gdp,
+		"start_tax_rates_pct": start_tax_rates_pct,
+		"start_spending_pct_gdp": start_spending_pct_gdp,
+		"other_spending_pct_gdp": other_spending_pct_gdp,
+		"other_revenue_pct_gdp": other_revenue_pct_gdp,
+
+		"revenue_pct_gdp": revenue_pct_gdp,
+		"total_revenue_pct_gdp": total_revenue_pct_gdp,
+		"total_spending_pct_gdp": total_spending_pct_gdp,
+		"debt_service_pct_gdp": debt_service_pct_gdp,
+		"deficit_pct_gdp": deficit_pct_gdp,
+		"debt_eur_bn": debt_eur_bn,
+		"start_deficit_pct_gdp": start_deficit_pct_gdp,
+
+		"bloc_approval": bloc_approval,
+		"overall_approval_pct": overall_approval_pct,
+		"issue_salience": issue_salience,
+
+		"demand_impulse_pct": demand_impulse_pct,
+		"potential_shift_pct": potential_shift_pct,
+		"external_impulse_pct": external_impulse_pct,
+		"trade_baseline_pct": trade_baseline_pct,
+
+		"assembly_seats": assembly_seats,
+		"term_months": term_months,
+		"months_in_term": months_in_term,
+		"next_election_year": next_election_year,
+		"next_election_month": next_election_month,
+		"next_ep_election_year": next_ep_election_year,
+		"next_ep_election_month": next_ep_election_month,
+		"terms_served": terms_served,
+		"incumbent_party_id": incumbent_party_id,
+		"seats_by_party": seats_by_party,
+		"last_election": last_election,
+		"last_ep_election": last_ep_election,
+		"in_government": in_government,
+
+		"law_structural_offset_pct": law_structural_offset_pct,
+		"law_potential_target_pct": law_potential_target_pct,
+		"law_other_revenue_pct_gdp": law_other_revenue_pct_gdp,
+		"law_bloc_offset": law_bloc_offset,
+		"passed_law_ids": passed_law_ids,
+		"law_cooldown_months": law_cooldown_months,
+		"last_law_result": last_law_result,
+	}
+
+
+## Inverse of to_dict(). Every Dictionary/Array comes from JSON.parse_string(),
+## already fresh and unshared, so no .duplicate() is needed here the way
+## duplicate_state() needs one.
+static func from_dict(d: Dictionary):
+	var s = new()
+	s.id = d.get("id", "")
+
+	s.sector_output = d.get("sector_output", {})
+	s.gdp_eur_bn = d.get("gdp_eur_bn", 0.0)
+	s.potential_gdp_eur_bn = d.get("potential_gdp_eur_bn", 0.0)
+	s.trend_annual_pct = d.get("trend_annual_pct", 0.0)
+	s.growth_annual_pct = d.get("growth_annual_pct", 0.0)
+	s.unemployment_pct = d.get("unemployment_pct", 0.0)
+	s.structural_unemployment_pct = d.get("structural_unemployment_pct", 0.0)
+	s.start_unemployment_pct = d.get("start_unemployment_pct", 0.0)
+	s.population = d.get("population", 0.0)
+
+	s.has_budget = d.get("has_budget", false)
+	s.tax_rates_pct = d.get("tax_rates_pct", {})
+	s.spending_pct_gdp = d.get("spending_pct_gdp", {})
+	s.start_tax_rates_pct = d.get("start_tax_rates_pct", {})
+	s.start_spending_pct_gdp = d.get("start_spending_pct_gdp", {})
+	s.other_spending_pct_gdp = d.get("other_spending_pct_gdp", 0.0)
+	s.other_revenue_pct_gdp = d.get("other_revenue_pct_gdp", 0.0)
+
+	s.revenue_pct_gdp = d.get("revenue_pct_gdp", {})
+	s.total_revenue_pct_gdp = d.get("total_revenue_pct_gdp", 0.0)
+	s.total_spending_pct_gdp = d.get("total_spending_pct_gdp", 0.0)
+	s.debt_service_pct_gdp = d.get("debt_service_pct_gdp", 0.0)
+	s.deficit_pct_gdp = d.get("deficit_pct_gdp", 0.0)
+	s.debt_eur_bn = d.get("debt_eur_bn", 0.0)
+	s.start_deficit_pct_gdp = d.get("start_deficit_pct_gdp", 0.0)
+
+	s.bloc_approval = d.get("bloc_approval", {})
+	s.overall_approval_pct = d.get("overall_approval_pct", 0.0)
+	s.issue_salience = d.get("issue_salience", {})
+
+	s.demand_impulse_pct = d.get("demand_impulse_pct", 0.0)
+	s.potential_shift_pct = d.get("potential_shift_pct", 0.0)
+	s.external_impulse_pct = d.get("external_impulse_pct", 0.0)
+	s.trade_baseline_pct = d.get("trade_baseline_pct", 0.0)
+
+	# JSON has one numeric type; Godot's parser hands every number back as a
+	# float. Cast the int-typed fields back explicitly.
+	s.assembly_seats = int(d.get("assembly_seats", 0))
+	s.term_months = int(d.get("term_months", 0))
+	s.months_in_term = int(d.get("months_in_term", 0))
+	s.next_election_year = int(d.get("next_election_year", 0))
+	s.next_election_month = int(d.get("next_election_month", 0))
+	s.next_ep_election_year = int(d.get("next_ep_election_year", 0))
+	s.next_ep_election_month = int(d.get("next_ep_election_month", 0))
+	s.terms_served = int(d.get("terms_served", 0))
+	s.incumbent_party_id = d.get("incumbent_party_id", "")
+	s.seats_by_party = d.get("seats_by_party", {})
+	s.last_election = d.get("last_election", {})
+	s.last_ep_election = d.get("last_ep_election", {})
+	s.in_government = d.get("in_government", true)
+
+	s.law_structural_offset_pct = d.get("law_structural_offset_pct", 0.0)
+	s.law_potential_target_pct = d.get("law_potential_target_pct", 0.0)
+	s.law_other_revenue_pct_gdp = d.get("law_other_revenue_pct_gdp", 0.0)
+	s.law_bloc_offset = d.get("law_bloc_offset", {})
+	s.passed_law_ids = d.get("passed_law_ids", {})
+	s.law_cooldown_months = d.get("law_cooldown_months", {})
+	s.last_law_result = d.get("last_law_result", {})
+
+	return s
+
+
 func debt_to_gdp_pct() -> float:
 	if gdp_eur_bn <= 0.0:
 		return 0.0

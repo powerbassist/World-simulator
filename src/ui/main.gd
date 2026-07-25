@@ -15,6 +15,8 @@ const LawPanel = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
+const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
 
 const PLAYER_NATION_ID := "FRA"
 
@@ -34,6 +36,7 @@ var _election_panel
 var _law_panel
 var _map_view
 var _nation_panel
+var _save_load_panel
 
 
 func _ready() -> void:
@@ -101,6 +104,12 @@ func _ready() -> void:
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide()
 
+	_save_load_panel = SaveLoadPanel.new()
+	_add_centered(_save_load_panel)
+	_save_load_panel.hide()
+	_save_load_panel.save_requested.connect(_on_save_requested)
+	_save_load_panel.load_requested.connect(_on_load_requested)
+
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
 	_update_hud()
@@ -156,6 +165,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_law_panel.visible = not _law_panel.visible
 				if _law_panel.visible:
 					_law_panel.mark_dirty()
+		KEY_S:
+			if _save_load_panel != null:
+				_save_load_panel.visible = not _save_load_panel.visible
+				if _save_load_panel.visible:
+					_save_load_panel.mark_dirty()
 
 
 func _on_nation_clicked(nation_id: String) -> void:
@@ -212,6 +226,48 @@ func _on_month_elapsed(year: int, month: int) -> void:
 
 
 func _on_day_advanced(_year: int, _month: int, _day: int) -> void:
+	_update_hud()
+
+
+func _on_save_requested(slot: String) -> void:
+	var error := SaveManager.save_game(_state, _clock, slot)
+	if error.is_empty():
+		_save_load_panel.report("Saved '%s'." % slot)
+	else:
+		_save_load_panel.report("Save failed: %s" % error)
+	_save_load_panel.mark_dirty()
+
+
+## Loading replaces the live GameState wholesale, so every panel holding a
+## reference to the old one has to be pointed at the new one -- the same
+## setup() calls _ready() made the first time, not a special load path.
+func _on_load_requested(slot: String) -> void:
+	var result := SaveManager.load_game(slot)
+	if not result["ok"]:
+		_save_load_panel.report("Load failed: %s" % result["error"])
+		_save_load_panel.mark_dirty()
+		return
+
+	_state = result["state"]
+	_clock.year = _state.year
+	_clock.month = _state.month
+	_clock.day = int(result["day"])
+	_clock.paused = true
+
+	_map_view.setup(_loader, _state)
+	_budget_panel.setup(_state)
+	_polling_panel.setup(_state)
+	_election_panel.setup(_state, _loader)
+	_law_panel.setup(_state, _loader)
+	_nation_panel.setup(_state, _loader)
+
+	_budget_panel.mark_dirty()
+	_polling_panel.mark_dirty()
+	_law_panel.mark_dirty()
+	_nation_panel.mark_dirty()
+
+	_save_load_panel.report("Loaded '%s'." % slot)
+	_save_load_panel.mark_dirty()
 	_update_hud()
 
 
