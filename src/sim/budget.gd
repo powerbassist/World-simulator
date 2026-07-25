@@ -26,7 +26,7 @@ static func tick_month(state) -> void:
 ## allocations, debt and GDP. Pure bookkeeping — no state advances here.
 static func recompute(ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct)
-	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp
+	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 
 	var revenue := 0.0
 	for v in ns.revenue_pct_gdp.values():

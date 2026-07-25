@@ -1,0 +1,67 @@
+{
+  "laws": [
+    {
+      "id": "minimum_wage_rise",
+      "name": "Minimum Wage Uplift",
+      "theme": "labour",
+      "summary": "Raise the statutory minimum wage.",
+      "position": { "economic": -0.6, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": 0.1,
+        "bloc_offset": { "workers": 0.2, "business": -0.15 }
+      }
+    },
+    {
+      "id": "retirement_age_reform",
+      "name": "Retirement Age Reform",
+      "theme": "labour",
+      "summary": "Raise the statutory retirement age by two years.",
+      "position": { "economic": 0.45, "social": 0.25 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [
+        { "field": "debt_to_gdp_pct", "op": ">=", "value": 100.0 }
+      ],
+      "effects": {
+        "spending_pct_gdp": { "pensions": -1.2 },
+        "structural_unemployment_pct": -0.2,
+        "bloc_offset": { "pensioners": -0.35, "business": 0.15 }
+      }
+    },
+    {
+      "id": "working_time_reduction",
+      "name": "Working Time Reduction Act",
+      "theme": "labour",
+      "summary": "Cut the statutory working week.",
+      "position": { "economic": -0.7, "social": -0.2 },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": 0.3,
+        "bloc_offset": { "workers": 0.25, "business": -0.2 }
+      }
+    },
+    {
+      "id": "labour_market_flexibilisation",
+      "name": "Labour Market Flexibilisation Act",
+      "theme": "labour",
+      "summary": "Loosen hiring and firing rules for private employers.",
+      "position": { "economic": 0.6, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": -0.3,
+        "bloc_offset": { "business": 0.2, "workers": -0.2 }
+      }
+    }
+  ]
+}

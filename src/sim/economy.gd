@@ -109,7 +109,8 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 			+ C.STRUCT_INCOME_BETA * (
 				float(ns.tax_rates_pct.get("income", 0.0))
 				- float(ns.start_tax_rates_pct.get("income", 0.0))
-			),
+			)
+			+ ns.law_structural_offset_pct,
 		C.STRUCT_MIN_PCT,
 		C.STRUCT_MAX_PCT
 	)
@@ -139,7 +140,7 @@ static func _update_potential_shift(ns) -> void:
 		- float(ns.start_tax_rates_pct.get("corporate", 0.0))
 	)
 
-	var target: float = C.INFRA_BETA * d_infra + C.EDU_BETA * d_edu - C.CORP_TAX_BETA * d_corp
+	var target: float = C.INFRA_BETA * d_infra + C.EDU_BETA * d_edu - C.CORP_TAX_BETA * d_corp + ns.law_potential_target_pct
 
 	ns.potential_shift_pct += (target - ns.potential_shift_pct) * C.SHIFT_ADJUST / 12.0
 	ns.potential_shift_pct = clampf(ns.potential_shift_pct, -C.SHIFT_MAX_PCT, C.SHIFT_MAX_PCT)

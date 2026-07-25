@@ -7,9 +7,11 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
+const LawPanel = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 const PLAYER_NATION_ID := "FRA"
@@ -27,6 +29,7 @@ var _loader: DataLoader
 var _budget_panel
 var _polling_panel
 var _election_panel
+var _law_panel
 
 
 func _ready() -> void:
@@ -71,6 +74,12 @@ func _ready() -> void:
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	_election_panel.dismissed.connect(func(): _clock.paused = false)
+
+	_law_panel = LawPanel.new()
+	_add_centered(_law_panel)
+	_law_panel.setup(_state, _loader)
+	_law_panel.hide()
+	_law_panel.proposed.connect(_update_hud)
 
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
@@ -122,6 +131,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_polling_panel.visible = not _polling_panel.visible
 				if _polling_panel.visible:
 					_polling_panel.mark_dirty()
+		KEY_L:
+			if _law_panel != null:
+				_law_panel.visible = not _law_panel.visible
+				if _law_panel.visible:
+					_law_panel.mark_dirty()
 
 
 ## The simulation's whole entry point. Economy first so budget percentages apply
@@ -149,6 +163,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_budget_panel.mark_dirty()
 	if _polling_panel != null:
 		_polling_panel.mark_dirty()
+	if _law_panel != null:
+		_law_panel.mark_dirty()
+
+	# Cooldowns count down before the election check, same ordering reasoning as
+	# everything else in this handler: state settles top to bottom, elections
+	# read it last.
+	Legislature.tick_month(_state)
 
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June
@@ -185,6 +206,6 @@ func _update_hud() -> void:
 			PollingPanel.HEADLINE_KEY,
 			ns.overall_approval_pct
 		)
-		line += "\napproval %.0f%% (poll)   [B] budget   [P] polling" % poll
+		line += "\napproval %.0f%% (poll)   [B] budget   [P] polling   [L] legislature" % poll
 
 	_hud.text = line

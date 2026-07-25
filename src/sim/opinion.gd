@@ -60,7 +60,12 @@ static func _tick_nation(ns) -> void:
 		for issue in weights:
 			score += float(weights[issue]) * float(sat.get(issue, 0.0))
 
-		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * score
+		# law_offset is a law's direct opinion effect -- for laws with no budget
+		# footprint and so no issue to be salient about. Combined with `score`
+		# and clamped before scaling, so the target stays inside the same
+		# [10, 90] bound a pure satisfaction score would produce on its own.
+		var law_offset: float = float(ns.law_bloc_offset.get(bloc, 0.0))
+		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(score + law_offset, -1.0, 1.0)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE
 		ns.bloc_approval[bloc] = clampf(approval, K.APPROVAL_MIN, K.APPROVAL_MAX)

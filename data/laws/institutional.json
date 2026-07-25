@@ -1,0 +1,63 @@
+{
+  "laws": [
+    {
+      "id": "anti_corruption_agency",
+      "name": "Anti-Corruption Agency Act",
+      "theme": "institutional",
+      "summary": "Establish an independent agency to investigate public corruption.",
+      "position": { "economic": 0.0, "social": -0.3 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.1,
+        "bloc_offset": { "urban": 0.15, "business": -0.05 }
+      }
+    },
+    {
+      "id": "regional_devolution",
+      "name": "Regional Devolution Act",
+      "theme": "institutional",
+      "summary": "Devolve spending powers over infrastructure to regional government.",
+      "position": { "economic": -0.1, "social": 0.2 },
+      "majority": "two_thirds",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.2 },
+        "bloc_offset": { "rural": 0.2, "urban": -0.05 }
+      }
+    },
+    {
+      "id": "public_broadcasting_reform",
+      "name": "Public Broadcasting Reform Act",
+      "theme": "institutional",
+      "summary": "Restructure the public broadcaster's funding and mandate.",
+      "position": { "economic": -0.1, "social": -0.3 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": -0.05,
+        "bloc_offset": { "urban": 0.1, "rural": -0.05 }
+      }
+    },
+    {
+      "id": "lobbying_transparency_act",
+      "name": "Lobbying Transparency Act",
+      "theme": "institutional",
+      "summary": "Require public disclosure of lobbying contacts with ministers.",
+      "position": { "economic": -0.1, "social": -0.4 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "bloc_offset": { "business": -0.2, "urban": 0.15, "students": 0.1 }
+      }
+    }
+  ]
+}

@@ -127,6 +127,34 @@ var last_ep_election := {}
 ## has a meaningful reading — see has_budget below.
 var in_government: bool = true
 
+# --- Legislature ---------------------------------------------------------------
+
+## Accumulated across every passed law, each clamped in legislature_constants.gd.
+## Read once each tick by economy.gd/budget.gd/opinion.gd, alongside the terms
+## those formulas already compute -- one added term each, no new equation. See
+## docs/legislature-model.md.
+var law_structural_offset_pct: float = 0.0
+var law_potential_target_pct: float = 0.0
+var law_other_revenue_pct_gdp: float = 0.0
+
+## String bloc id -> accumulated offset, summed into that bloc's approval
+## *target* in opinion.gd, not into approval directly -- inertia and every bound
+## still apply. For laws with no budget footprint and so no matching issue.
+var law_bloc_offset := {}
+
+## String law id -> true. A law with `once = true` that has passed can never be
+## proposed again; a law that failed and has `cooldown_months > 0` goes in
+## law_cooldown_months instead, not here.
+var passed_law_ids := {}
+
+## String law id -> months remaining before it can be proposed again, counting
+## down every tick. Set on a failed vote; absent once it reaches zero.
+var law_cooldown_months := {}
+
+## The most recent law vote, for the law screen to read after proposing. Empty
+## until the first one resolves. Same shape as Elections.resolve()'s result.
+var last_law_result := {}
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -182,6 +210,14 @@ func duplicate_state():
 	s.last_election = last_election.duplicate(true)
 	s.last_ep_election = last_ep_election.duplicate(true)
 	s.in_government = in_government
+
+	s.law_structural_offset_pct = law_structural_offset_pct
+	s.law_potential_target_pct = law_potential_target_pct
+	s.law_other_revenue_pct_gdp = law_other_revenue_pct_gdp
+	s.law_bloc_offset = law_bloc_offset.duplicate(true)
+	s.passed_law_ids = passed_law_ids.duplicate(true)
+	s.law_cooldown_months = law_cooldown_months.duplicate(true)
+	s.last_law_result = last_law_result.duplicate(true)
 
 	return s
 

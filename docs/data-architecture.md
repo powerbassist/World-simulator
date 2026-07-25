@@ -32,7 +32,7 @@ Static data is **read once at startup and never mutated**. When the simulation r
 data/
 ├── nations/           one file per nation — FRA.json, DEU.json, …
 ├── parties/           one file per nation's party system
-├── laws/              law templates, grouped by theme
+├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
 ├── political-systems/ institutional templates (V1)
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth

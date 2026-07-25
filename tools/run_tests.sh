@@ -15,6 +15,8 @@ tests=(
   tests/test_electoral_systems.gd
   tests/test_elections.gd
   tests/test_election_panel.gd
+  tests/test_legislature.gd
+  tests/test_law_panel.gd
   tests/test_game_loop.gd
 )
 

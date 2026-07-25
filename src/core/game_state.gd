@@ -15,6 +15,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 const SAVE_VERSION := 1
@@ -102,6 +103,7 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 	Opinion.init_nation(ns)
 
 	Elections.init_nation(ns, n, party_list, eu)
+	Legislature.init_nation(ns)
 
 	return ns
 

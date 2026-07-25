@@ -1,0 +1,65 @@
+{
+  "laws": [
+    {
+      "id": "childcare_expansion",
+      "name": "Childcare Expansion Act",
+      "theme": "social",
+      "summary": "Expand publicly funded childcare places.",
+      "position": { "economic": -0.3, "social": -0.4 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "health": 0.3 },
+        "bloc_offset": { "urban": 0.2, "workers": 0.1 }
+      }
+    },
+    {
+      "id": "housing_programme",
+      "name": "National Housing Programme",
+      "theme": "social",
+      "summary": "A public building programme aimed at housing costs in the largest cities.",
+      "position": { "economic": -0.4, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.6 },
+        "bloc_offset": { "urban": 0.2, "rural": 0.05 }
+      }
+    },
+    {
+      "id": "health_service_reform",
+      "name": "Health Service Reform Act",
+      "theme": "social",
+      "summary": "Expand health spending, funded by a small rise in income tax.",
+      "position": { "economic": -0.3, "social": -0.1 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "health": 1.0 },
+        "tax_rates_pct": { "income": 1.0 },
+        "bloc_offset": { "pensioners": 0.15, "urban": 0.1 }
+      }
+    },
+    {
+      "id": "immigration_tightening",
+      "name": "Immigration Tightening Act",
+      "theme": "social",
+      "summary": "Tighten immigration rules for new labour-market entrants.",
+      "position": { "economic": 0.2, "social": 0.7 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": -0.05,
+        "bloc_offset": { "rural": 0.25, "urban": -0.15, "business": 0.05 }
+      }
+    }
+  ]
+}

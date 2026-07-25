@@ -1,0 +1,64 @@
+{
+  "laws": [
+    {
+      "id": "high_earner_surtax",
+      "name": "High-Earner Surtax",
+      "theme": "tax",
+      "summary": "Raise the top rate of income tax by five points.",
+      "position": { "economic": -0.6, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "tax_rates_pct": { "income": 5.0 },
+        "bloc_offset": { "business": -0.15, "workers": 0.05 }
+      }
+    },
+    {
+      "id": "corporate_tax_cut",
+      "name": "Corporate Tax Relief Act",
+      "theme": "tax",
+      "summary": "Cut the corporate tax rate by five points to attract investment.",
+      "position": { "economic": 0.6, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "tax_rates_pct": { "corporate": -5.0 },
+        "bloc_offset": { "business": 0.2 }
+      }
+    },
+    {
+      "id": "vat_consolidation",
+      "name": "VAT Consolidation Act",
+      "theme": "tax",
+      "summary": "Raise the standard VAT rate by two points to shore up revenue.",
+      "position": { "economic": 0.3, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "tax_rates_pct": { "vat": 2.0 },
+        "bloc_offset": { "workers": -0.1, "students": -0.05 }
+      }
+    },
+    {
+      "id": "carbon_levy",
+      "name": "Carbon Levy Act",
+      "theme": "tax",
+      "summary": "A new levy on carbon-intensive industry, collected outside the existing tax code.",
+      "position": { "economic": -0.2, "social": -0.4 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.5,
+        "bloc_offset": { "business": -0.1, "urban": 0.1, "rural": -0.15 }
+      }
+    }
+  ]
+}

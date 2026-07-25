@@ -22,7 +22,7 @@ Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/dat
 | S4 Economy + budget | **Yes** | Opus 5 | High | The highest-risk design in the MVP. Formulas, feedback loops and time constants decide whether the game is interesting. Worth the strongest model on both the plan and the build. |
 | S5 Public opinion | **Yes** | Opus 5 | High | Same class as S4 and coupled to it. Bloc weighting and inertia are model decisions with no obviously right answer. |
 | S6 Elections | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | Vote-share formula is a genuine design choice; seat allocation and the result screen are bookkeeping. |
-| S7 Laws | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Low | Law template schema is the same class as S1, and must accommodate V1 laws that do not exist yet without being over-general today. Writing the fifteen templates afterwards is data entry. |
+| S7 Laws | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Law template schema is the same class as S1, and must accommodate V1 laws that do not exist yet without being over-general today. The fifteen templates are data entry, but the build also wires vote resolution and four effect channels into three existing tick formulas plus a third UI surface — corrected from High → Low during this session's plan; see the note below. |
 | S8 Map | **No** | Sonnet 5 | Medium | Render GeoJSON, colour, hover, click. Mechanical, though projection and polygon winding have fiddly edges. |
 | S9 Save/load | **No** | Sonnet 5 | Low | Already specified in [docs/data-architecture.md](docs/data-architecture.md). |
 | S10 Balance | **No** | Opus 5 | Medium | No design decisions left, but diagnosing a runaway feedback loop is exactly the kind of reasoning worth the stronger model. |
@@ -191,6 +191,20 @@ Nations: France, Germany, Italy, Spain, Belgium, Netherlands, Luxembourg, Switze
 **Goal:** The assembly is an obstacle, not a rubber stamp.
 
 **Scope:** `data/laws/*.json` — law templates with preconditions, effects, and per-ideology-slot support. `src/sim/legislature.gd` — proposal, vote resolution by party seat share and ideology alignment, effect application on passage. Law screen listing available laws, their projected effects, and a vote forecast.
+
+> [!note] Two corrections made during this session's plan
+> The effort row below originally read High → Low. Planning at High held; the
+> build was corrected to **Medium** — it is not only the fifteen templates, it
+> is vote resolution, four effect channels wired into three existing tick
+> formulas, a third UI surface, and two new headless tests, the same class of
+> work [[ROADMAP|S6]] got Medium for. Per-ideology-slot law support reads the
+> same two-axis space [[election-model]] already put every party on, rather
+> than inventing a second vocabulary — see [[legislature-model]]. And the vote
+> forecast is deliberately **blurred**, not exact: a party inside a band wider
+> than the real vote's own threshold shows as Undecided, a display-layer trick
+> with no sim-side randomness, the same shape [[opinion-model|polling noise]]
+> and [[election-model|no election-day noise]] both already argue for their
+> own cases. Full argument in [[legislature-model]].
 
 **Done when:**
 - At least fifteen law templates exist as data, spanning tax, labour, social and institutional themes.

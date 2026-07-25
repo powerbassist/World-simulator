@@ -6,8 +6,10 @@ extends RefCounted
 
 const Nation = preload("res://src/core/nation.gd")
 const Party = preload("res://src/core/party.gd")
+const Law = preload("res://src/core/law.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
@@ -19,14 +21,16 @@ const EU = preload("res://src/core/eu.gd")
 
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
+var laws: Array[Law] = []
 var policy_defaults: Dictionary = {}
 var eu: EU = null
 var errors: Array[String] = []
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json", eu_path := "res://data/eu_parliament.json") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws") -> void:
 	nations.clear()
 	parties.clear()
+	laws.clear()
 	policy_defaults.clear()
 	errors = []
 
@@ -67,6 +71,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		_load_parties(id, parties_dir)
 
 	_load_policy_defaults(policy_path)
+	_load_laws(laws_dir)
 
 	eu = EU.new()
 	eu.load(eu_path)
@@ -163,6 +168,51 @@ func _load_parties(nation_id: String, parties_dir: String) -> void:
 
 	errors.append_array(per_file_errors)
 	parties[nation_id] = parsed_parties
+
+
+## Reads every data/laws/*.json file -- each {"laws": [...]}, grouped by theme,
+## same shape as data/parties/*.json. See docs/legislature-model.md.
+func _load_laws(laws_dir: String) -> void:
+	var da := DirAccess.open(laws_dir)
+	if da == null:
+		errors.append("%s: directory not found" % laws_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := laws_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("laws")) != TYPE_ARRAY:
+			errors.append("%s: invalid law file, expected {\"laws\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["laws"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: laws[%d] is not an object" % [fname, i])
+				continue
+			var law = Law.from_dict(entry, fname, errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS)
+			if law.id != "":
+				if seen_ids.has(law.id):
+					errors.append("%s: duplicate law id '%s'" % [fname, law.id])
+				seen_ids[law.id] = true
+			laws.append(law)
 
 
 func _validate_cross_file(geo_path: String) -> void:
