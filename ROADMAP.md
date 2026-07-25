@@ -7,25 +7,30 @@ Sessions are ordered so the **MVP loop closes at S6**, roughly halfway through t
 Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
-## Plan first?
+## Per-session: plan, model, effort
 
-Whether a session should be designed in plan mode before any code is written. The test is not size — it is **how expensive the decision is to reverse**. A schema or a simulation model that turns out wrong is rewritten along with everything that reads it. A map renderer that turns out wrong is rewritten alone.
+**Plan first** asks whether the session should be designed in plan mode before any code is written. The test is not size — it is **how expensive the decision is to reverse**. A schema or a simulation model that turns out wrong is rewritten along with everything that reads it. A map renderer that turns out wrong is rewritten alone.
 
-| Session | Plan first | Why |
-|---|---|---|
-| S0 Skeleton | **No** | Mechanical. Folder layout is already specified in [docs/engine-decision.md](docs/engine-decision.md). |
-| S1 Nation data | **Yes** | Schema design. Every later system reads it, so a bad shape is expensive in proportion to how much has been built on top. |
-| S2 Fictional content | **No** | Authoring against rules already written in [docs/fictionalization.md](docs/fictionalization.md). |
-| S3 Time | **No** | Small and fully specified. Tick, pause, three speeds, one signal. |
-| S4 Economy + budget | **Yes** | The highest-risk design in the MVP. Formulas, feedback loops, and time constants determine whether the game is interesting. Decide them deliberately, not while typing. |
-| S5 Public opinion | **Yes** | Same class as S4, and coupled to it. How blocs weight issues and how inertia works are model decisions. |
-| S6 Elections | **Light** | Vote-share formula is a real design choice; the rest is bookkeeping. A short plan for the formula is enough. |
-| S7 Laws | **Yes** | Law template schema is data-schema design, same class as S1, and it needs to accommodate V1 laws that do not exist yet without being over-general today. |
-| S8 Map | **No** | Render GeoJSON, colour, hover, click. Mechanical and self-contained. |
-| S9 Save/load | **No** | Already specified in [docs/data-architecture.md](docs/data-architecture.md). |
-| S10 Balance | **No** | Iterative tuning against the [docs/tiers/mvp.md](docs/tiers/mvp.md) checklist. Planning constants in advance is guessing. |
+**Model and effort** follow the same logic. Opus 5 at high effort is for open design judgement — deciding what the model *should be* when several plausible answers exist. Sonnet 5 at low or medium effort is for executing a decision that is already made, which is most sessions once the docs are written.
 
-Every V1 block gets a plan. By then there is enough built that changes ripple.
+| Session | Plan first | Model | Effort | Why |
+|---|---|---|---|---|
+| S0 Skeleton | **No** | Sonnet 5 | Low | Mechanical. Folder layout already specified in [docs/engine-decision.md](docs/engine-decision.md). |
+| S1 Nation data | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Schema design. Every later system reads it, so a bad shape costs in proportion to what has been built on top. The import script itself is routine. |
+| S2 Fictional content | **No** | Sonnet 5 | Medium | Bulk authoring against rules already written in [docs/fictionalization.md](docs/fictionalization.md). Medium rather than low only because the banned-names constraint needs attention. |
+| S3 Time | **No** | Sonnet 5 | Low | Small and fully specified. Tick, pause, three speeds, one signal. |
+| S4 Economy + budget | **Yes** | Opus 5 | High | The highest-risk design in the MVP. Formulas, feedback loops and time constants decide whether the game is interesting. Worth the strongest model on both the plan and the build. |
+| S5 Public opinion | **Yes** | Opus 5 | High | Same class as S4 and coupled to it. Bloc weighting and inertia are model decisions with no obviously right answer. |
+| S6 Elections | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | Vote-share formula is a genuine design choice; seat allocation and the result screen are bookkeeping. |
+| S7 Laws | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Low | Law template schema is the same class as S1, and must accommodate V1 laws that do not exist yet without being over-general today. Writing the fifteen templates afterwards is data entry. |
+| S8 Map | **No** | Sonnet 5 | Medium | Render GeoJSON, colour, hover, click. Mechanical, though projection and polygon winding have fiddly edges. |
+| S9 Save/load | **No** | Sonnet 5 | Low | Already specified in [docs/data-architecture.md](docs/data-architecture.md). |
+| S10 Balance | **No** | Opus 5 | Medium | No design decisions left, but diagnosing a runaway feedback loop is exactly the kind of reasoning worth the stronger model. |
+
+Every V1 block gets a plan, on Opus 5. By then there is enough built that changes ripple.
+
+> [!tip] These are starting points
+> If a session marked Sonnet stalls — repeated failed attempts, a bug that will not localise — escalate to Opus rather than grinding. The cost of one wrong model choice is minutes; the cost of grinding is a session.
 
 ---
 
