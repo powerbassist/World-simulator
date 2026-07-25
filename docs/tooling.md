@@ -96,6 +96,32 @@ claude mcp add --scope user godot-mcp --env GODOT_MCP_PORT=6505 \
 
 Same effect as calling `godot-mcp`'s tools directly — `invoke_tool` forwards to the real tool name and arguments — just discovered in two steps instead of one.
 
+> [!warning] Consequence — tool names are no longer searchable
+> Since the compressor collapses 173 tools to `get_tool_schema` / `invoke_tool`, a
+> session (or a subagent) that does `ToolSearch("add_node")` finds nothing. Call
+> `get_tool_schema` first to see what exists, then `invoke_tool` by name. This is
+> permanent behaviour, not a bug — flagged here because it looks exactly like the
+> server being unavailable.
+
+> [!warning] Gotcha — one session at a time, and the compressor turns a partial
+> failure into total silence
+> The Node.js server behind the plugin binds a **fixed port (6505)**. Only one
+> instance can hold it. Two Claude Code windows both connecting to `godot-mcp`
+> race for it; the loser's backend dies on `EADDRINUSE`.
+>
+> Without the compressor that would surface as individual tool calls failing.
+> **With it, the compressor's own `initialize` depends on that backend coming up
+> first** — so on collision the whole server, not just a tool call, fails to
+> appear. From inside the session it looks exactly like godot-mcp was never
+> registered, which is the confusing part.
+>
+> Practical rule: **one window using `godot-mcp` at a time.** Between roadmap
+> sessions, `/clear` inside the same window rather than opening a new one — it
+> resets context without dropping the MCP connection or re-fighting for the port.
+> If a connection does go stale, `tasklist | grep node` / `grep mcp-compressor`
+> and kill orphans, then `netstat -ano | grep 6505` to confirm the port is free
+> before reconnecting.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.
