@@ -23,6 +23,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[data-architecture]] — static content vs live state, and why there is no database
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
+- [[tooling]] — Godot version, MCP setup, machine prerequisites
 
 ## Scope tiers
 

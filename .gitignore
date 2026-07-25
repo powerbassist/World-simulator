@@ -1,6 +1,12 @@
 # Godot
 .godot/
 .import/
+
+# Third-party editor tooling, not game code. See docs/tooling.md to reinstall.
+# project.godot keeps the [editor_plugins] enable line — Godot warns and skips
+# if the addon is absent, which is non-fatal.
+addons/
+
 export.cfg
 export_presets.cfg
 *.translation
