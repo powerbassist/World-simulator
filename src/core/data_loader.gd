@@ -42,7 +42,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 			continue
 
 		var per_file_errors: Array[String] = []
-		var nation := Nation.from_dict(parsed, fname, per_file_errors)
+		var nation = Nation.from_dict(parsed, fname, per_file_errors)
 		errors.append_array(per_file_errors)
 		if nation.id != "":
 			nations[nation.id] = nation

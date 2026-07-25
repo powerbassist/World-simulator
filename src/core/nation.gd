@@ -31,8 +31,8 @@ var unemployment_pct: float = 0.0
 var sectors: Dictionary = {}
 
 
-static func from_dict(d: Dictionary, filename: String, errors: Array[String]) -> Nation:
-	var n := Nation.new()
+static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
+	var n := new()
 
 	n.id = _extract_string(d, "id", filename, errors)
 	if n.id != "" and not _id_regex.search(n.id):
