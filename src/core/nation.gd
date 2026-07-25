@@ -19,6 +19,9 @@ var geo_id: String = ""
 var capital: String = ""
 var playable: bool = false
 
+var leader_name: String = ""
+var leader_title: String = ""
+
 var term_years: int = 0
 var assembly_seats: int = 0
 
@@ -45,6 +48,10 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.geo_id = _extract_string(d, "geo_id", filename, errors)
 	n.capital = _extract_string(d, "capital", filename, errors)
 	n.playable = _extract_bool(d, "playable", filename, errors)
+
+	var leader: Dictionary = _extract_dict(d, "leader", filename, errors)
+	n.leader_name = _extract_string(leader, "name", filename, errors)
+	n.leader_title = _extract_string(leader, "title", filename, errors)
 
 	var government: Dictionary = _extract_dict(d, "government", filename, errors)
 	n.term_years = _extract_int(government, "term_years", "government.term_years", filename, errors)

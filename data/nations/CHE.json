@@ -4,6 +4,10 @@
   "geo_id": "CHE",
   "capital": "Bern",
   "playable": false,
+  "leader": {
+    "name": "Reto Baumgartner",
+    "title": "President of the Confederation"
+  },
   "government": {
     "term_years": 4,
     "assembly_seats": 200

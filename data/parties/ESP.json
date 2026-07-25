@@ -1,0 +1,9 @@
+{
+  "parties": [
+    { "id": "union_popular", "name": "Unión Popular", "ideology_slot": "centre_right", "seat_share": 0.28 },
+    { "id": "frente_progresista", "name": "Frente Progresista", "ideology_slot": "social_democratic", "seat_share": 0.30 },
+    { "id": "voz_nacional", "name": "Voz Nacional", "ideology_slot": "nationalist_right", "seat_share": 0.14 },
+    { "id": "convergencia_ciudadana", "name": "Convergencia Ciudadana", "ideology_slot": "left_populist", "seat_share": 0.16 },
+    { "id": "verdes_iberia", "name": "Verdes Iberia", "ideology_slot": "green", "seat_share": 0.12 }
+  ]
+}

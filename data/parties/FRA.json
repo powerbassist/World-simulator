@@ -1,0 +1,10 @@
+{
+  "parties": [
+    { "id": "renouveau_civique", "name": "Renouveau Civique", "ideology_slot": "centrist_liberal", "seat_share": 0.28 },
+    { "id": "union_conservatrice", "name": "Union Conservatrice", "ideology_slot": "centre_right", "seat_share": 0.20 },
+    { "id": "parti_social_uni", "name": "Parti Social Uni", "ideology_slot": "social_democratic", "seat_share": 0.18 },
+    { "id": "alliance_verte", "name": "Alliance Verte", "ideology_slot": "green", "seat_share": 0.09 },
+    { "id": "front_souverainiste", "name": "Front Souverainiste", "ideology_slot": "nationalist_right", "seat_share": 0.16 },
+    { "id": "gauche_populaire", "name": "Gauche Populaire", "ideology_slot": "left_populist", "seat_share": 0.09 }
+  ]
+}

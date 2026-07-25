@@ -4,6 +4,10 @@
   "geo_id": "AUT",
   "capital": "Vienna",
   "playable": false,
+  "leader": {
+    "name": "Bernhard Kettler",
+    "title": "Federal Chancellor"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 183

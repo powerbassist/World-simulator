@@ -4,6 +4,10 @@
   "geo_id": "GBR",
   "capital": "London",
   "playable": false,
+  "leader": {
+    "name": "Edward Marchbanks",
+    "title": "Prime Minister"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 650

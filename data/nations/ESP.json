@@ -4,6 +4,10 @@
   "geo_id": "ESP",
   "capital": "Madrid",
   "playable": false,
+  "leader": {
+    "name": "Mateo Larrañaga",
+    "title": "President of the Government"
+  },
   "government": {
     "term_years": 4,
     "assembly_seats": 350

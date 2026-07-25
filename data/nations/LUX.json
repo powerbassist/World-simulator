@@ -4,6 +4,10 @@
   "geo_id": "LUX",
   "capital": "Luxembourg City",
   "playable": false,
+  "leader": {
+    "name": "Marc Everling",
+    "title": "Prime Minister"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 60

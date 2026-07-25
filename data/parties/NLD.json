@@ -1,0 +1,10 @@
+{
+  "parties": [
+    { "id": "nationale_vrijheid", "name": "Nationale Vrijheid", "ideology_slot": "nationalist_right", "seat_share": 0.19 },
+    { "id": "liberaal_verbond", "name": "Liberaal Verbond", "ideology_slot": "liberal", "seat_share": 0.21 },
+    { "id": "sociale_unie", "name": "Sociale Unie", "ideology_slot": "social_democratic", "seat_share": 0.18 },
+    { "id": "democraten_nu", "name": "Democraten Nu", "ideology_slot": "progressive_liberal", "seat_share": 0.14 },
+    { "id": "christelijk_midden", "name": "Christelijk Midden", "ideology_slot": "christian_democrat", "seat_share": 0.13 },
+    { "id": "groen_polder", "name": "Groen Polder", "ideology_slot": "green", "seat_share": 0.15 }
+  ]
+}

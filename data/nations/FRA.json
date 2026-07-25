@@ -4,6 +4,10 @@
   "geo_id": "FRA",
   "capital": "Paris",
   "playable": true,
+  "leader": {
+    "name": "Daniel Moucron",
+    "title": "President of the Republic"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 577

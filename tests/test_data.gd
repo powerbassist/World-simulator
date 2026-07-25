@@ -22,6 +22,21 @@ func _init() -> void:
 		if absf(total - 1.0) > 0.001:
 			failures.append("%s: sectors sum to %s, expected 1.0" % [id, total])
 
+		if n.leader_name == "":
+			failures.append("%s: no leader name" % id)
+
+		if not loader.parties.has(id):
+			failures.append("%s: no parties loaded" % id)
+			continue
+		var party_list: Array = loader.parties[id]
+		if party_list.size() < 4:
+			failures.append("%s: fewer than 4 parties (%d)" % [id, party_list.size()])
+		var seat_total := 0.0
+		for party in party_list:
+			seat_total += party.seat_share
+		if absf(seat_total - 1.0) > 0.001:
+			failures.append("%s: party seat_share sums to %s, expected 1.0" % [id, seat_total])
+
 	var fixture_text := FileAccess.get_file_as_string("res://tests/fixtures/nation_bad_unemployment.json")
 	var fixture_dict = JSON.parse_string(fixture_text)
 	var fixture_errors: Array[String] = []

@@ -1,0 +1,9 @@
+{
+  "parties": [
+    { "id": "union_chretienne", "name": "Union Chrétienne", "ideology_slot": "christian_democrat", "seat_share": 0.27 },
+    { "id": "alliance_liberale", "name": "Alliance Libérale", "ideology_slot": "liberal", "seat_share": 0.20 },
+    { "id": "parti_ouvrier_uni", "name": "Parti Ouvrier Uni", "ideology_slot": "social_democratic", "seat_share": 0.24 },
+    { "id": "verts_nationaux", "name": "Verts Nationaux", "ideology_slot": "green", "seat_share": 0.16 },
+    { "id": "renouveau_populaire", "name": "Renouveau Populaire", "ideology_slot": "nationalist_right", "seat_share": 0.13 }
+  ]
+}

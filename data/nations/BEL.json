@@ -4,6 +4,10 @@
   "geo_id": "BEL",
   "capital": "Brussels",
   "playable": false,
+  "leader": {
+    "name": "Bram Vandekerckhove",
+    "title": "Prime Minister"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 150

@@ -4,6 +4,10 @@
   "geo_id": "ITA",
   "capital": "Rome",
   "playable": false,
+  "leader": {
+    "name": "Lorenzo Bagnasco",
+    "title": "President of the Council of Ministers"
+  },
   "government": {
     "term_years": 5,
     "assembly_seats": 400

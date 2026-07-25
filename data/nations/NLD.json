@@ -4,6 +4,10 @@
   "geo_id": "NLD",
   "capital": "Amsterdam",
   "playable": false,
+  "leader": {
+    "name": "Willem Terborg",
+    "title": "Prime Minister"
+  },
   "government": {
     "term_years": 4,
     "assembly_seats": 150

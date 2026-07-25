@@ -1,0 +1,165 @@
+# Banned real-world names: heads of state/government (current + recent),
+# real political party names/abbreviations, real major companies — for every
+# nation in scope (S1). Grepped by check_names.sh. See docs/fictionalization.md.
+# One entry per line. Lines starting with # are comments.
+
+# --- France ---
+Emmanuel Macron
+Gabriel Attal
+Michel Barnier
+François Bayrou
+Élisabeth Borne
+Jean Castex
+Édouard Philippe
+Renaissance
+La République En Marche
+LREM
+Les Républicains
+Rassemblement National
+Parti Socialiste
+La France Insoumise
+LFI
+Europe Écologie Les Verts
+EELV
+Nouveau Front Populaire
+TotalEnergies
+Airbus
+Orange
+BNP Paribas
+
+# --- Germany ---
+Olaf Scholz
+Friedrich Merz
+Angela Merkel
+Frank-Walter Steinmeier
+Christlich Demokratische Union
+CDU
+CSU
+SPD
+FDP
+Bündnis 90/Die Grünen
+AfD
+Die Linke
+BASF
+Siemens
+Deutsche Telekom
+Deutsche Bank
+
+# --- Italy ---
+Giorgia Meloni
+Sergio Mattarella
+Mario Draghi
+Fratelli d'Italia
+Lega Nord
+Forza Italia
+Partito Democratico
+Movimento 5 Stelle
+M5S
+Eni
+Enel
+Fiat
+Stellantis
+UniCredit
+
+# --- Spain ---
+Pedro Sánchez
+Felipe VI
+Alberto Núñez Feijóo
+PSOE
+Partido Popular
+Vox
+Sumar
+Podemos
+Repsol
+Telefónica
+Iberdrola
+Santander
+
+# --- Belgium ---
+Bart De Wever
+Alexander De Croo
+Philippe De Backer
+N-VA
+Vooruit
+Vlaams Belang
+CD&V
+Ecolo
+Anheuser-Busch InBev
+Solvay
+KBC
+
+# --- Netherlands ---
+Dick Schoof
+Mark Rutte
+Geert Wilders
+Willem-Alexander
+VVD
+PVV
+D66
+CDA
+GroenLinks-PvdA
+NSC
+BBB
+Royal Dutch Shell
+ASML
+ING Group
+Heineken
+
+# --- Luxembourg ---
+Luc Frieden
+Xavier Bettel
+Chrëschtlech Sozial Vollekspartei
+Democratic Party
+LSAP
+déi Gréng
+ArcelorMittal
+RTL Group
+SES
+
+# --- Switzerland ---
+Karin Keller-Sutter
+Viola Amherd
+Ignazio Cassis
+Guy Parmelin
+Schweizerische Volkspartei
+UDC
+Die Mitte
+Nestlé
+Novartis
+Roche
+UBS
+Glencore
+
+# --- United Kingdom ---
+Keir Starmer
+Rishi Sunak
+Boris Johnson
+Liz Truss
+Charles III
+Labour Party
+Conservative Party
+Liberal Democrats
+Reform UK
+Scottish National Party
+Green Party
+BP plc
+HSBC
+Unilever
+GlaxoSmithKline
+AstraZeneca
+
+# --- Austria ---
+Christian Stocker
+Karl Nehammer
+Alexander Van der Bellen
+Österreichische Volkspartei
+ÖVP
+Sozialdemokratische Partei Österreichs
+SPÖ
+Freiheitliche Partei Österreichs
+FPÖ
+NEOS
+OMV
+Erste Group
+Raiffeisen
+voestalpine
