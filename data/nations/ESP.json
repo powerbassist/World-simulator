@@ -1,0 +1,30 @@
+{
+  "id": "ESP",
+  "name": "Spain",
+  "geo_id": "ESP",
+  "capital": "Madrid",
+  "playable": false,
+  "government": {
+    "term_years": 4,
+    "assembly_seats": 350
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 100.4,
+    "tax_revenue_pct_gdp": 37.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 48800000,
+    "gdp_eur_bn": 1590.0,
+    "unemployment_pct": 11.4,
+    "sectors": {
+      "agriculture": 0.03,
+      "industry": 0.214,
+      "services": 0.756
+    }
+  }
+}

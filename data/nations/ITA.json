@@ -1,0 +1,30 @@
+{
+  "id": "ITA",
+  "name": "Italy",
+  "geo_id": "ITA",
+  "capital": "Rome",
+  "playable": false,
+  "government": {
+    "term_years": 5,
+    "assembly_seats": 400
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 137.1,
+    "tax_revenue_pct_gdp": 42.9
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 59000000,
+    "gdp_eur_bn": 2190.0,
+    "unemployment_pct": 6.5,
+    "sectors": {
+      "agriculture": 0.022,
+      "industry": 0.254,
+      "services": 0.724
+    }
+  }
+}

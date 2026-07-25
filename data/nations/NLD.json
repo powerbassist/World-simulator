@@ -1,0 +1,30 @@
+{
+  "id": "NLD",
+  "name": "Netherlands",
+  "geo_id": "NLD",
+  "capital": "Amsterdam",
+  "playable": false,
+  "government": {
+    "term_years": 4,
+    "assembly_seats": 150
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 43.3,
+    "tax_revenue_pct_gdp": 38.8
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 18000000,
+    "gdp_eur_bn": 1120.0,
+    "unemployment_pct": 3.7,
+    "sectors": {
+      "agriculture": 0.019,
+      "industry": 0.195,
+      "services": 0.786
+    }
+  }
+}

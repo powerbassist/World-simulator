@@ -24,8 +24,18 @@ Which open datasets seed the game's content, what each one is licensed under, an
 ### World Bank Open Data — economic seed values
 
 - **License:** CC BY 4.0. Attribution required.
-- **Provides:** GDP, GDP per capita, population, unemployment rate, general government debt as % of GDP, tax revenue as % of GDP, trade balance, inflation.
-- **Used for:** Starting statistics for every nation in scope, **rounded**. France starts at roughly €2.9T GDP and roughly 110% debt-to-GDP, not at four decimal places. The simulation cannot justify precision the model doesn't have, and round numbers are far easier to reason about when balancing.
+- **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`).
+- **Used for:** Starting statistics for every nation in scope, **rounded**. GDP converted USD → EUR at a fixed rate pinned in the import script (see below), so re-running the import doesn't drift on exchange-rate noise. Sector shares are normalised to sum to 1.0 — the three World Bank value-added indicators sum to roughly 89–95% of GDP on their own (the residual is taxes less subsidies on products), so dividing by their sum is required, not optional polish.
+- **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
+
+### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
+
+- **`ISO_A3` is `-99` for France.** The import script matches on **`ADM0_A3`** instead, which is populated correctly for all ten nations in scope.
+- **France's feature has 10 polygon rings; 7 are overseas** — Mayotte, Réunion, Martinique, Guadeloupe (×3), French Guiana. Left in, they blow out the map's camera bounds at S8. The import script drops any ring whose bounding box falls entirely outside lon [−11, 32], lat [34, 72], which keeps mainland France, Corsica and Île de Ré and drops the rest. The same filter also drops the Canary Islands from Spain and the Caribbean municipalities from the Netherlands.
+
+### Fixed conversion rate
+
+`USD_TO_EUR = 0.92` is a module constant in `tools/import_data.py`, echoed into each nation file as `imported._usd_eur` so the provenance of every GDP figure is visible in the data itself. Pinning it rather than fetching a live rate is what makes re-imports reproducible.
 
 ### GeoNames — cities
 
@@ -64,6 +74,28 @@ World Bank and GeoNames both require credit. The credit line goes in `ATTRIBUTIO
 Draft line:
 
 > Economic data derived from World Bank Open Data (CC BY 4.0). Geographic data from Natural Earth (public domain).
+
+## How to fetch the raw datasets
+
+`sources/` is gitignored, so nobody can commit a `sources/README.md` there — these
+instructions are that file's replacement. Run once, or whenever the seed data needs
+a refresh.
+
+```bash
+mkdir -p sources/wb
+
+curl -L -o "sources/ne_50m_admin_0_countries.geojson" \
+  "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson"
+
+for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS; do
+  curl -L -o "sources/wb/$I.json" \
+    "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+done
+```
+
+The Natural Earth URL is pinned to tag `v5.1.2` rather than `master`, so the file
+doesn't silently change under a future re-download. Then run
+`python tools/import_data.py`.
 
 ## Re-import safety
 

@@ -1,0 +1,30 @@
+{
+  "id": "AUT",
+  "name": "Austria",
+  "geo_id": "AUT",
+  "capital": "Vienna",
+  "playable": false,
+  "government": {
+    "term_years": 5,
+    "assembly_seats": 183
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 80.5,
+    "tax_revenue_pct_gdp": 43.1
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 9200000,
+    "gdp_eur_bn": 492.0,
+    "unemployment_pct": 5.2,
+    "sectors": {
+      "agriculture": 0.014,
+      "industry": 0.274,
+      "services": 0.712
+    }
+  }
+}

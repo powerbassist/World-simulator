@@ -36,7 +36,10 @@ Steps 1–5 repeat continuously. Step 6 is the wall the whole game is aimed at.
 - Daily tick for the clock, **monthly resolution** for economic and opinion updates. Anything faster is churn the model cannot justify.
 
 ### Economy
-- Aggregate sectors: agriculture, industry, services, energy.
+- Aggregate sectors: agriculture, industry, services. No open dataset splits energy
+  out of industry (see [[data-sources]]) — if S4's model wants an energy lever, it
+  splits industry as a hand-tuned constant against a concrete model, not a guess made
+  before the model exists.
 - GDP, growth, unemployment.
 - Passive trade with neighbours as a growth input.
 

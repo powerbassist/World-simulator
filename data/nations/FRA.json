@@ -1,0 +1,30 @@
+{
+  "id": "FRA",
+  "name": "France",
+  "geo_id": "FRA",
+  "capital": "Paris",
+  "playable": true,
+  "government": {
+    "term_years": 5,
+    "assembly_seats": 577
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 116.0,
+    "tax_revenue_pct_gdp": 46.1
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 68600000,
+    "gdp_eur_bn": 2910.0,
+    "unemployment_pct": 7.4,
+    "sectors": {
+      "agriculture": 0.015,
+      "industry": 0.192,
+      "services": 0.793
+    }
+  }
+}

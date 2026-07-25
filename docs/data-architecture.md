@@ -52,64 +52,98 @@ The cost is losing the inspector's type checking. That is bought back by the val
 
 ### Nation schema
 
+As implemented at [[ROADMAP|S1]]. Fields owned by later sessions — leader (S2),
+`voter_blocs` (S5), `system` (V1) — are added by the session whose model reads them,
+not stubbed in ahead of time.
+
 ```json
 {
   "id": "FRA",
   "name": "France",
   "geo_id": "FRA",
-  "playable": true,
   "capital": "Paris",
-  "stats": {
-    "_source": "worldbank",
-    "population": 68000000,
-    "gdp_eur": 2900000000000,
-    "gdp_per_capita_eur": 42600,
-    "unemployment_pct": 7.5,
-    "debt_to_gdp_pct": 110,
-    "tax_revenue_pct_gdp": 46,
-    "inflation_pct": 2.1
-  },
-  "sectors": {
-    "agriculture": 0.02,
-    "industry": 0.17,
-    "services": 0.71,
-    "energy": 0.10
-  },
+  "playable": true,
+
   "government": {
-    "system": "presidential-republic",
-    "leader": "Daniel Moucron",
     "term_years": 5,
     "assembly_seats": 577
   },
-  "voter_blocs": [
-    { "id": "workers",    "share": 0.30, "priorities": ["unemployment", "wages"] },
-    { "id": "business",   "share": 0.10, "priorities": ["corporate_tax", "growth"] },
-    { "id": "pensioners", "share": 0.22, "priorities": ["pensions", "health"] }
-  ]
+
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates, rounded",
+    "debt_to_gdp_pct": 116.0,
+    "tax_revenue_pct_gdp": 46.1
+  },
+
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 68600000,
+    "gdp_eur_bn": 2910.0,
+    "unemployment_pct": 7.4,
+    "sectors": {
+      "agriculture": 0.015,
+      "industry": 0.192,
+      "services": 0.793
+    }
+  }
 }
 ```
+
+Three sectors, not four — no open dataset splits energy out of industry. If S4's
+economy model wants an energy lever, it splits industry as a hand-tuned constant at
+that point, against a concrete model rather than a placeholder.
+
+`debt_to_gdp_pct` and `tax_revenue_pct_gdp` sit in their own `fiscal` object because
+they are **authored, but real** — same class as `assembly_seats`, not the same class
+as a party name. World Bank's central-government indicators are null or wrong-scope
+for this purpose; see [[data-sources]] for the specifics. They do not refresh on
+re-import.
+
+### Unit conventions
+
+| Kind | Convention | Example |
+|---|---|---|
+| Money | suffix `_eur_bn`, float, EUR billions | `gdp_eur_bn: 2910.0` |
+| Population | bare integer, persons | `population: 68600000` |
+| Rate | suffix `_pct`, range 0–100 | `unemployment_pct: 7.4` |
+| Share | no suffix, range 0–1, group sums to 1.0 | `services: 0.793` |
+
+Everything is EUR, including nations that don't use it. The MVP has one playable
+nation and one budget; a `currency` field has no reader until V1.3 trade, if ever.
 
 ### The re-import safety rule
 
 > [!important] The import script writes exactly one thing
-> `tools/import_data.py` may write the `stats` object and nothing else. Every other field is hand-authored and the script never touches it.
+> `tools/import_data.py` replaces the top-level `imported` object wholesale on every
+> run. Every other key in the file — including `fiscal`, which is also real-world
+> data — is hand-authored and the script never reads or writes it. It also never
+> creates a nation file: if `data/nations/<ID>.json` doesn't exist, the script errors
+> rather than inventing one.
 
-The `"_source"` marker inside `stats` makes the boundary explicit and greppable. A re-import a year from now, to refresh economic figures, updates the numbers and leaves every invented name, party, and tuning value intact.
+A dedicated top-level key the script owns entirely is a structural boundary, not just
+a marker to grep for. The validator enforces the other direction — no key inside
+`imported` outside the known list — so an authored value can't drift into the block
+that gets overwritten.
 
-Raw datasets live in `sources/`, which is **gitignored**. A `sources/README.md` records where each file came from and how to re-download it. Shapefiles and multi-megabyte CSVs never enter the repository and never ship.
+Raw datasets live in `sources/`, which is **gitignored** — so a `sources/README.md` could never be committed there. Download instructions live in [[data-sources]] instead. Shapefiles and multi-megabyte CSVs never enter the repository and never ship.
 
 Full source and licence detail: [[data-sources]].
 
 ### Validation
 
-`tools/validate_data.gd` runs over `data/` and checks:
+Validation lives in `src/core/` (`nation.gd`, `data_loader.gd`), not in `tools/` —
+`tools/` is not shipped, and validation must run every time the game starts, not just
+at import time. It checks:
 
 - Required fields present, correct type.
 - Numeric fields within sane ranges — no negative populations, no debt ratios of 40,000.
-- Referential integrity — every `system` names a real political system template, every party's nation exists.
+- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists (V1: every `system` names a real political system template).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
 
-It runs at startup in debug builds and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
+It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
 
 ## Live state
 

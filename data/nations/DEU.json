@@ -1,0 +1,30 @@
+{
+  "id": "DEU",
+  "name": "Germany",
+  "geo_id": "DEU",
+  "capital": "Berlin",
+  "playable": false,
+  "government": {
+    "term_years": 4,
+    "assembly_seats": 630
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 62.9,
+    "tax_revenue_pct_gdp": 39.3
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 83500000,
+    "gdp_eur_bn": 4310.0,
+    "unemployment_pct": 3.4,
+    "sectors": {
+      "agriculture": 0.01,
+      "industry": 0.283,
+      "services": 0.707
+    }
+  }
+}

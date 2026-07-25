@@ -1,0 +1,30 @@
+{
+  "id": "GBR",
+  "name": "United Kingdom",
+  "geo_id": "GBR",
+  "capital": "London",
+  "playable": false,
+  "government": {
+    "term_years": 5,
+    "assembly_seats": 650
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "debt_to_gdp_pct": 102.3,
+    "tax_revenue_pct_gdp": 35.3
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_usd_eur": 0.92,
+    "population": 69300000,
+    "gdp_eur_bn": 3400.0,
+    "unemployment_pct": 4.4,
+    "sectors": {
+      "agriculture": 0.007,
+      "industry": 0.189,
+      "services": 0.804
+    }
+  }
+}
