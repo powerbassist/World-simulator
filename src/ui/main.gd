@@ -13,6 +13,8 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
+const MapView = preload("res://src/ui/map_view.gd")
+const NationPanel = preload("res://src/ui/nation_panel.gd")
 
 const PLAYER_NATION_ID := "FRA"
 
@@ -30,6 +32,8 @@ var _budget_panel
 var _polling_panel
 var _election_panel
 var _law_panel
+var _map_view
+var _nation_panel
 
 
 func _ready() -> void:
@@ -58,6 +62,17 @@ func _ready() -> void:
 	_state.year = _clock.year
 	_state.month = _clock.month
 
+	# The map is a full-screen background layer, not a modal panel like the
+	# other three -- added first, then moved to sibling index 0 so the HUD
+	# (already in the scene from main.tscn) and every panel below draw on
+	# top of it rather than the map drawing over everything else.
+	_map_view = MapView.new()
+	add_child(_map_view)
+	move_child(_map_view, 0)
+	_map_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_view.setup(_loader, _state)
+	_map_view.nation_clicked.connect(_on_nation_clicked)
+
 	_budget_panel = BudgetPanel.new()
 	_add_centered(_budget_panel)
 	_budget_panel.setup(_state)
@@ -80,6 +95,11 @@ func _ready() -> void:
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide()
 	_law_panel.proposed.connect(_update_hud)
+
+	_nation_panel = NationPanel.new()
+	_add_centered(_nation_panel)
+	_nation_panel.setup(_state, _loader)
+	_nation_panel.hide()
 
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
@@ -138,6 +158,13 @@ func _unhandled_input(event: InputEvent) -> void:
 					_law_panel.mark_dirty()
 
 
+func _on_nation_clicked(nation_id: String) -> void:
+	if _nation_panel == null:
+		return
+	_nation_panel.show_nation(nation_id)
+	_nation_panel.show()
+
+
 ## The simulation's whole entry point. Economy first so budget percentages apply
 ## to this month's GDP; opinion last, so it reacts to figures that have already
 ## settled rather than to last month's. See docs/economy-model.md.
@@ -165,6 +192,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_polling_panel.mark_dirty()
 	if _law_panel != null:
 		_law_panel.mark_dirty()
+	if _nation_panel != null:
+		_nation_panel.mark_dirty()
 
 	# Cooldowns count down before the election check, same ordering reasoning as
 	# everything else in this handler: state settles top to bottom, elections

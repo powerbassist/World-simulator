@@ -26,6 +26,14 @@ var policy_defaults: Dictionary = {}
 var eu: EU = null
 var errors: Array[String] = []
 
+## geo feature id -> Array[PackedVector2Array]. One entry per polygon in the
+## feature's MultiPolygon; each PackedVector2Array is that polygon's outer ring
+## only, raw (lon, lat) degrees -- holes are not kept, S8's map only needs
+## recognisable borders and a click hit-test, not exact enclaves. Read once at
+## startup by _load_geo(), same as the id list _validate_cross_file already
+## cross-checks.
+var geo_features: Dictionary = {}
+
 
 func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws") -> void:
 	nations.clear()
@@ -226,7 +234,7 @@ func _validate_cross_file(geo_path: String) -> void:
 	if playable_count != 1:
 		errors.append("expected exactly 1 playable nation, found %d" % playable_count)
 
-	var geo_ids := _load_geo_ids(geo_path)
+	var geo_ids := _load_geo(geo_path)
 	for n in nations.values():
 		if not geo_ids.has(n.geo_id):
 			errors.append("%s.json: geo_id '%s' has no matching feature in %s" % [n.id, n.geo_id, geo_path])
@@ -252,8 +260,9 @@ func _validate_cross_file(geo_path: String) -> void:
 			])
 
 
-func _load_geo_ids(geo_path: String) -> Array:
+func _load_geo(geo_path: String) -> Array:
 	var ids: Array = []
+	geo_features.clear()
 	var text := FileAccess.get_file_as_string(geo_path)
 	if text.is_empty():
 		errors.append("%s: could not read file" % geo_path)
@@ -265,5 +274,29 @@ func _load_geo_ids(geo_path: String) -> Array:
 		return ids
 
 	for feature in parsed["features"]:
-		ids.append(feature["properties"]["id"])
+		var id: String = feature["properties"]["id"]
+		ids.append(id)
+
+		var geometry: Dictionary = feature.get("geometry", {})
+		var polygons: Array = []
+		match geometry.get("type", ""):
+			"MultiPolygon":
+				for polygon_coords in geometry.get("coordinates", []):
+					polygons.append(_outer_ring(polygon_coords))
+			"Polygon":
+				polygons.append(_outer_ring(geometry.get("coordinates", [])))
+			_:
+				errors.append("%s: feature '%s' has unsupported geometry type '%s'" % [geo_path, id, geometry.get("type", "")])
+		geo_features[id] = polygons
 	return ids
+
+
+## The first ring of a Polygon's coordinate array is the outer boundary; any
+## further rings are holes, which S8's renderer and hit-test both ignore.
+func _outer_ring(polygon_coords: Array) -> PackedVector2Array:
+	var ring := PackedVector2Array()
+	if polygon_coords.is_empty():
+		return ring
+	for point in polygon_coords[0]:
+		ring.append(Vector2(point[0], point[1]))
+	return ring

@@ -18,6 +18,7 @@ tests=(
   tests/test_legislature.gd
   tests/test_law_panel.gd
   tests/test_game_loop.gd
+  tests/test_map_view.gd
 )
 
 failed=0
