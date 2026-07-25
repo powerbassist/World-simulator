@@ -71,6 +71,16 @@ The obvious objection is performance. GDScript is meaningfully slower than C# �
 > [!note] Reversibility
 > This is not a locked door. The simulation layer is designed to be plain data and plain functions with no engine dependency, so porting it is a rewrite of one layer rather than of the game. That property is worth more than getting the language choice perfectly right.
 
+> [!warning] Gotcha — a class can't reference its own `class_name` on first run
+> A script that uses its own `class_name` inside its own body — `Foo.new()` or a
+> `-> Foo` return type inside a method of `class_name Foo` — fails with
+> `Identifier not found` the first time the project loads, before
+> `.godot/global_script_class_cache.cfg` exists (fresh checkout, CI, a bare
+> `godot --headless --script` run with no prior editor session). Confirmed in S1.
+> Use bare `new()` for self-instantiation and skip the self-referencing return-type
+> annotation; for *cross-file* references, `const Foo = preload("res://path/foo.gd")`
+> sidesteps the same cache dependency entirely and is the safer default throughout.
+
 ## Maintainability and scalability
 
 The stated risk is real: a project that accretes economy, diplomacy, AI nations, and events over years turns into spaghetti unless the structure resists it. Three rules do most of the work.
