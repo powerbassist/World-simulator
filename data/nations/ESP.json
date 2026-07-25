@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Mateo Larrañaga",
-    "title": "President of the Government"
+    "title": "President of the Government",
+    "party": "frente_progresista"
   },
   "government": {
     "term_years": 4,
-    "assembly_seats": 350
+    "assembly_seats": 350,
+    "chamber": "Congreso de los Diputados",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than 22 August 2027 (current term runs to 23 July 2027); Wikipedia 'Next Spanish general election'. Per-constituency 3% threshold approximated as national — see docs/electoral-systems.md.",
+      "system": "pr_dhondt",
+      "next": { "year": 2027, "month": 7 },
+      "threshold_pct": 3.0
+    },
+    "eu": { "member": true, "ep_seats": 61 }
   },
   "fiscal": {
     "_source": "authored",

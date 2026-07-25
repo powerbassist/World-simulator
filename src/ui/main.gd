@@ -6,8 +6,10 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Elections = preload("res://src/sim/elections.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 const PLAYER_NATION_ID := "FRA"
@@ -21,29 +23,31 @@ const MONTH_NAMES: Array[String] = [
 ]
 
 var _state
+var _loader: DataLoader
 var _budget_panel
 var _polling_panel
+var _election_panel
 
 
 func _ready() -> void:
-	var loader := DataLoader.new()
-	loader.load_all()
+	_loader = DataLoader.new()
+	_loader.load_all()
 
-	if not loader.errors.is_empty():
-		for e in loader.errors:
+	if not _loader.errors.is_empty():
+		for e in _loader.errors:
 			push_error(e)
 		return
 
-	var ids := loader.nations.keys()
+	var ids := _loader.nations.keys()
 	ids.sort()
 	for id in ids:
-		var n: Nation = loader.nations[id]
+		var n: Nation = _loader.nations[id]
 		var pop_m := n.population / 1_000_000.0
 		print("%s %-15s pop %5.1fM   GDP EUR %5.0fbn   debt %5.1f%%" % [
 			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
 		])
 
-	_state = GameState.new_game(loader, PLAYER_NATION_ID)
+	_state = GameState.new_game(_loader, PLAYER_NATION_ID)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)
@@ -61,6 +65,12 @@ func _ready() -> void:
 	_add_centered(_polling_panel)
 	_polling_panel.setup(_state)
 	_polling_panel.hide()
+
+	_election_panel = ElectionPanel.new()
+	_add_centered(_election_panel)
+	_election_panel.setup(_state, _loader)
+	_election_panel.hide()
+	_election_panel.dismissed.connect(func(): _clock.paused = false)
 
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
@@ -139,6 +149,16 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_budget_panel.mark_dirty()
 	if _polling_panel != null:
 		_polling_panel.mark_dirty()
+
+	# Elections run last, on the already-settled history entry, and can fire a
+	# national and an EP result in the same month (France and Belgium, June
+	# 2029). Any result pauses the clock — the player reads it before time moves
+	# again, whether that reading ends in Continue or in defeat.
+	var results := Elections.tick_month(_state, _loader)
+	if not results.is_empty() and _election_panel != null:
+		_clock.paused = true
+		_election_panel.show_results(results)
+		_election_panel.show()
 
 
 func _on_day_advanced(_year: int, _month: int, _day: int) -> void:

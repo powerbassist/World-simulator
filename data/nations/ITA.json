@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Lorenzo Bagnasco",
-    "title": "President of the Council of Ministers"
+    "title": "President of the Council of Ministers",
+    "party": "fratelli_della_nazione"
   },
   "government": {
     "term_years": 5,
-    "assembly_seats": 400
+    "assembly_seats": 400,
+    "chamber": "Camera dei Deputati",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than 22 December 2027; Wikipedia 'Next Italian general election'. Rosatellum's ~61% PR / ~37% single-member split reduced to 'parallel' — see docs/electoral-systems.md.",
+      "system": "parallel",
+      "next": { "year": 2027, "month": 12 },
+      "threshold_pct": 3.0
+    },
+    "eu": { "member": true, "ep_seats": 76 }
   },
   "fiscal": {
     "_source": "authored",

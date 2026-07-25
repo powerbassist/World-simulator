@@ -86,6 +86,47 @@ var external_impulse_pct: float = 0.0
 ## GDP-weighted neighbour growth at new-game, the zero point for the term above.
 var trade_baseline_pct: float = 0.0
 
+# --- Elections -----------------------------------------------------------------
+
+## Copied from Nation at new-game; the assembly's size never changes mid-game.
+var assembly_seats: int = 0
+
+## term_years * 12, from Nation.government.term_years. months_in_term counts up
+## from the term the player inherits at new-game — see docs/election-model.md on
+## why that term is usually shorter than a full one.
+var term_months: int = 0
+var months_in_term: int = 0
+
+## The nation's real, authored election date until the first one fires; reset to
+## exactly term_months later after every national election. See
+## docs/electoral-systems.md for where these numbers come from.
+var next_election_year: int = 0
+var next_election_month: int = 0
+
+## Mirrors data/eu_parliament.json's schedule until the first EP election fires,
+## then advances five years. Zero for a non-member — same "field exists, tick
+## does nothing" shape has_budget uses elsewhere.
+var next_ep_election_year: int = 0
+var next_ep_election_month: int = 0
+
+var terms_served: int = 0
+
+## String party id -> seats, from the most recent national election. Empty
+## until the first one resolves.
+var incumbent_party_id: String = ""
+var seats_by_party := {}
+
+## The full result of the most recent national and EP elections — vote share,
+## seats, turnout and attribution, everything the result screen reads. See
+## src/sim/elections.gd. Empty {} until the first one of each kind fires.
+var last_election := {}
+var last_ep_election := {}
+
+## False the moment the incumbent loses a national election. Gates the clock:
+## main.gd stops advancing time once this is false. Only the player's nation
+## has a meaningful reading — see has_budget below.
+var in_government: bool = true
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -127,6 +168,20 @@ func duplicate_state():
 	s.potential_shift_pct = potential_shift_pct
 	s.external_impulse_pct = external_impulse_pct
 	s.trade_baseline_pct = trade_baseline_pct
+
+	s.assembly_seats = assembly_seats
+	s.term_months = term_months
+	s.months_in_term = months_in_term
+	s.next_election_year = next_election_year
+	s.next_election_month = next_election_month
+	s.next_ep_election_year = next_ep_election_year
+	s.next_ep_election_month = next_ep_election_month
+	s.terms_served = terms_served
+	s.incumbent_party_id = incumbent_party_id
+	s.seats_by_party = seats_by_party.duplicate(true)
+	s.last_election = last_election.duplicate(true)
+	s.last_ep_election = last_ep_election.duplicate(true)
+	s.in_government = in_government
 
 	return s
 

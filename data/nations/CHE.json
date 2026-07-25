@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Reto Baumgartner",
-    "title": "President of the Confederation"
+    "title": "President of the Confederation",
+    "party": "alliance_nationale_suisse"
   },
   "government": {
     "term_years": 4,
-    "assembly_seats": 200
+    "assembly_seats": 200,
+    "chamber": "Nationalrat",
+    "election": {
+      "_source": "authored",
+      "_note": "Scheduled for 24 October 2027; Wikipedia '2027 Swiss federal election'. No national threshold.",
+      "system": "pr_national",
+      "next": { "year": 2027, "month": 10 },
+      "threshold_pct": 0.0
+    },
+    "eu": { "member": false }
   },
   "fiscal": {
     "_source": "authored",

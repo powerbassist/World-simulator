@@ -14,6 +14,7 @@ const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Elections = preload("res://src/sim/elections.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 const SAVE_VERSION := 1
@@ -43,7 +44,8 @@ static func new_game(loader, player_id: String):
 	var ids: Array = loader.nations.keys()
 	ids.sort()
 	for id in ids:
-		gs.nations[id] = _build_nation(loader.nations[id], loader.policy_defaults, id == player_id, gs.errors)
+		var party_list: Array = loader.parties.get(id, [])
+		gs.nations[id] = _build_nation(loader.nations[id], loader.policy_defaults, id == player_id, party_list, loader.eu, gs.errors)
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -56,7 +58,7 @@ static func new_game(loader, player_id: String):
 	return gs
 
 
-static func _build_nation(n, defaults: Dictionary, is_player: bool, errors: Array[String]):
+static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: Array, eu, errors: Array[String]):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -98,6 +100,8 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, errors: Arra
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns)
+
+	Elections.init_nation(ns, n, party_list, eu)
 
 	return ns
 

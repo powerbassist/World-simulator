@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Matthias Vogler",
-    "title": "Federal Chancellor"
+    "title": "Federal Chancellor",
+    "party": "buergerunion"
   },
   "government": {
     "term_years": 4,
-    "assembly_seats": 630
+    "assembly_seats": 630,
+    "chamber": "Bundestag",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than 25 March 2029; Wikipedia 'Next German federal election'. MMP reduced to national PR — see docs/electoral-systems.md.",
+      "system": "pr_national",
+      "next": { "year": 2029, "month": 2 },
+      "threshold_pct": 5.0
+    },
+    "eu": { "member": true, "ep_seats": 96 }
   },
   "fiscal": {
     "_source": "authored",

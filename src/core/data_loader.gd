@@ -7,6 +7,7 @@ extends RefCounted
 const Nation = preload("res://src/core/nation.gd")
 const Party = preload("res://src/core/party.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const K = preload("res://src/sim/election_constants.gd")
 
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
@@ -14,13 +15,16 @@ const MAX_PARTIES := 6
 const MAX_TAX_RATE_PCT := 100.0
 const MAX_SPENDING_PCT_GDP := 100.0
 
+const EU = preload("res://src/core/eu.gd")
+
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
 var policy_defaults: Dictionary = {}
+var eu: EU = null
 var errors: Array[String] = []
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json", eu_path := "res://data/eu_parliament.json") -> void:
 	nations.clear()
 	parties.clear()
 	policy_defaults.clear()
@@ -63,6 +67,11 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		_load_parties(id, parties_dir)
 
 	_load_policy_defaults(policy_path)
+
+	eu = EU.new()
+	eu.load(eu_path)
+	errors.append_array(eu.errors)
+
 	_validate_cross_file(geo_path)
 
 
@@ -148,6 +157,10 @@ func _load_parties(nation_id: String, parties_dir: String) -> void:
 	if absf(total - 1.0) > 0.001:
 		per_file_errors.append("%s: seat_share sums to %s, expected 1.0" % [fname, str(total)])
 
+	for party in parsed_parties:
+		if party.ideology_slot != "" and not K.SLOT_KEYS.has(party.ideology_slot):
+			per_file_errors.append("%s: ideology_slot '%s' has no position in election_constants.SLOT_POSITION" % [fname, party.ideology_slot])
+
 	errors.append_array(per_file_errors)
 	parties[nation_id] = parsed_parties
 
@@ -167,6 +180,26 @@ func _validate_cross_file(geo_path: String) -> void:
 	for n in nations.values():
 		if not geo_ids.has(n.geo_id):
 			errors.append("%s.json: geo_id '%s' has no matching feature in %s" % [n.id, n.geo_id, geo_path])
+
+	for id in nations.keys():
+		var n = nations[id]
+		var roster: Array = parties.get(id, [])
+		var found := false
+		for party in roster:
+			if party.id == n.leader_party_id:
+				found = true
+				break
+		if not found:
+			errors.append("%s.json: leader.party '%s' does not match any party in data/parties/%s.json" % [id, n.leader_party_id, id])
+
+		if n.eu_member != eu.is_member(id):
+			errors.append("%s.json: government.eu.member=%s but data/eu_parliament.json members %s '%s'" % [
+				id, n.eu_member, "has" if eu.is_member(id) else "lacks", id
+			])
+		elif n.eu_member and n.eu_ep_seats != eu.ep_seats(id):
+			errors.append("%s.json: government.eu.ep_seats %d does not match data/eu_parliament.json's %d for '%s'" % [
+				id, n.eu_ep_seats, eu.ep_seats(id), id
+			])
 
 
 func _load_geo_ids(geo_path: String) -> Array:

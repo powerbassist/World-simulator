@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Marc Everling",
-    "title": "Prime Minister"
+    "title": "Prime Minister",
+    "party": "union_chretienne"
   },
   "government": {
     "term_years": 5,
-    "assembly_seats": 60
+    "assembly_seats": 60,
+    "chamber": "Chambre des Députés",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than 8 October 2028; Wikipedia 'Next Luxembourg general election'. Hagenbach-Bischoff reduced to largest-remainder PR — see docs/electoral-systems.md.",
+      "system": "pr_national",
+      "next": { "year": 2028, "month": 10 },
+      "threshold_pct": 0.0
+    },
+    "eu": { "member": true, "ep_seats": 6 }
   },
   "fiscal": {
     "_source": "authored",

@@ -27,6 +27,7 @@ signal closed
 var _state
 var _title: Label
 var _headline: Label
+var _election_countdown: Label
 var _bloc_rows := {}          # bloc id -> [approval Label, change Label]
 var _issue_rows: Array = []   # [name Label, share Label]
 var _dirty := true
@@ -56,6 +57,9 @@ func _ready() -> void:
 
 	_headline = Label.new()
 	root.add_child(_headline)
+
+	_election_countdown = Label.new()
+	root.add_child(_election_countdown)
 
 	root.add_child(_build_blocs())
 	root.add_child(_build_issues())
@@ -191,6 +195,7 @@ func _refresh() -> void:
 		_shown_poll_id = id
 
 	_headline.text = "Approval  %.0f%%" % current[HEADLINE_KEY]
+	_election_countdown.text = "Next election: %s" % _months_until_text(ns)
 
 	for bloc in K.BLOC_KEYS:
 		var row: Array = _bloc_rows[bloc]
@@ -213,3 +218,12 @@ func _change_text(key: String, value: float) -> String:
 	if not _previous.has(key):
 		return "—"
 	return "%+.0f" % (value - float(_previous[key]))
+
+
+func _months_until_text(ns) -> String:
+	var months: int = (int(ns.next_election_year) - _state.year) * 12 + (int(ns.next_election_month) - _state.month)
+	if months <= 0:
+		return "this month"
+	if months == 1:
+		return "1 month"
+	return "%d months" % months

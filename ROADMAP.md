@@ -162,6 +162,17 @@ Nations: France, Germany, Italy, Spain, Belgium, Netherlands, Luxembourg, Switze
 
 **Scope:** `src/sim/elections.gd` — five-year term timer, vote share computed from bloc approval, bloc size, turnout weighting and party ideology positions. Seat allocation to the assembly. Win/lose resolution and an end-of-term summary screen showing what happened to the key numbers over the term.
 
+> [!note] Real, per-nation election timing and systems, not a five-year timer
+> Added on instruction partway through S6's plan: each nation's term length,
+> election date and electoral system are real and authored, not a single
+> five-year timer, and European Parliament elections exist alongside national
+> ones. This changed the row below — "light plan... seat allocation... is
+> bookkeeping" assumed one term length and one allocation rule. Ten real
+> systems plus the EP made the schedule-and-system shape an [[data-architecture|S1]]-class
+> schema decision instead, since S7 laws, [[v1|V1.1]] coalitions and
+> [[v1|V1.2]] political systems all read it. Full argument in
+> [[electoral-systems]]; the vote-share model itself is [[election-model]].
+
 **Done when:**
 - A full five-year term is playable from start to result without a crash.
 - Governing badly — ignoring the budget, letting unemployment rise — loses the election.

@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Bernhard Kettler",
-    "title": "Federal Chancellor"
+    "title": "Federal Chancellor",
+    "party": "buergerliche_mitte"
   },
   "government": {
     "term_years": 5,
-    "assembly_seats": 183
+    "assembly_seats": 183,
+    "chamber": "Nationalrat",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than September 2029, no fixed date announced; Wikipedia 'Next Austrian legislative election'",
+      "system": "pr_national",
+      "next": { "year": 2029, "month": 9 },
+      "threshold_pct": 4.0
+    },
+    "eu": { "member": true, "ep_seats": 20 }
   },
   "fiscal": {
     "_source": "authored",

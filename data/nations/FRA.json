@@ -6,11 +6,21 @@
   "playable": true,
   "leader": {
     "name": "Daniel Moucron",
-    "title": "President of the Republic"
+    "title": "President of the Republic",
+    "party": "renouveau_civique"
   },
   "government": {
     "term_years": 5,
-    "assembly_seats": 577
+    "assembly_seats": 577,
+    "chamber": "Assemblée nationale",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than June 2029 (2024 Assembly's 5-year term); Wikipedia 'Next French legislative election'",
+      "system": "two_round",
+      "next": { "year": 2029, "month": 6 },
+      "threshold_pct": 0.0
+    },
+    "eu": { "member": true, "ep_seats": 81 }
   },
   "fiscal": {
     "_source": "authored",

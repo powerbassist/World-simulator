@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Willem Terborg",
-    "title": "Prime Minister"
+    "title": "Prime Minister",
+    "party": "liberaal_verbond"
   },
   "government": {
     "term_years": 4,
-    "assembly_seats": 150
+    "assembly_seats": 150,
+    "chamber": "Tweede Kamer",
+    "election": {
+      "_source": "authored",
+      "_note": "The 29 October 2025 election is already in the past at game start (Jan 2026); next scheduled for May 2030 (moved off the usual 4-year mark to avoid clashing with March 2030 municipal elections) — Wikipedia 'Next Dutch general election'",
+      "system": "pr_national",
+      "next": { "year": 2030, "month": 5 },
+      "threshold_pct": 0.67
+    },
+    "eu": { "member": true, "ep_seats": 31 }
   },
   "fiscal": {
     "_source": "authored",

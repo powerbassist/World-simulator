@@ -36,7 +36,8 @@ data/
 ├── political-systems/ institutional templates (V1)
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth
-└── policy_defaults.json   starting tax rates and spending split
+├── policy_defaults.json   starting tax rates and spending split
+└── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
 ```
 
 `policy_defaults.json` is shared by every nation rather than split per file, because only the player's nation has a budget at MVP — see [[economy-model]]. Like every other file here it is read once at startup, validated, and never mutated; `tools/import_data.py` neither reads nor writes it.
@@ -77,9 +78,23 @@ of time.
   "capital": "Paris",
   "playable": true,
 
+  "leader": {
+    "name": "Daniel Moucron",
+    "title": "President of the Republic",
+    "party": "renouveau_civique"
+  },
+
   "government": {
     "term_years": 5,
-    "assembly_seats": 577
+    "assembly_seats": 577,
+    "chamber": "Assemblée nationale",
+    "election": {
+      "_source": "authored",
+      "system": "two_round",
+      "next": { "year": 2029, "month": 6 },
+      "threshold_pct": 0.0
+    },
+    "eu": { "member": true, "ep_seats": 81 }
   },
 
   "fiscal": {
@@ -114,6 +129,14 @@ they are **authored, but real** — same class as `assembly_seats`, not the same
 as a party name. World Bank's central-government indicators are null or wrong-scope
 for this purpose; see [[data-sources]] for the specifics. They do not refresh on
 re-import.
+
+> [!note] `leader.party`, `government.election` and `government.eu`, added at [[ROADMAP|S6]]
+> `leader.party` resolves to a party id in that nation's own `data/parties/*.json`
+> — validated cross-file, the same way `geo_id` is checked against the map.
+> `government.election` and `government.eu` are the same class as `fiscal`:
+> **authored, but real**, checked against a source at the session that added
+> them and never touched by `tools/import_data.py`. Full argument, every date's
+> source, and what each real electoral system reduces to is [[electoral-systems]].
 
 ### Unit conventions
 
@@ -181,7 +204,11 @@ NationState                      src/core/nation_state.gd
 ├── fiscal     revenue_pct_gdp{}, totals, debt_service, deficit, debt_eur_bn,
 │              the starting deficit the opinion model measures against
 ├── opinion    bloc_approval{}, overall_approval_pct, issue_salience{}
-└── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
+├── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
+└── elections  assembly_seats, term_months, months_in_term, next_election_year/
+               _month, next_ep_election_year/_month, terms_served,
+               incumbent_party_id, seats_by_party{}, last_election{},
+               last_ep_election{}, in_government   ([[ROADMAP|S6]])
 ```
 
 Later sessions add their own fields the same way the nation schema is grown — S6 election state. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.

@@ -6,11 +6,21 @@
   "playable": false,
   "leader": {
     "name": "Edward Marchbanks",
-    "title": "Prime Minister"
+    "title": "Prime Minister",
+    "party": "progress_alliance"
   },
   "government": {
     "term_years": 5,
-    "assembly_seats": 650
+    "assembly_seats": 650,
+    "chamber": "House of Commons",
+    "election": {
+      "_source": "authored",
+      "_note": "By law no later than 15 August 2029 (Dissolution and Calling of Parliament Act 2022); expected polling day 1 May 2029 — Wikipedia 'Next United Kingdom general election'",
+      "system": "fptp",
+      "next": { "year": 2029, "month": 5 },
+      "threshold_pct": 0.0
+    },
+    "eu": { "member": false }
   },
   "fiscal": {
     "_source": "authored",

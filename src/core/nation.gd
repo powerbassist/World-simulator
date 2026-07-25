@@ -10,6 +10,7 @@ const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"unemployment_pct", "sectors",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
+const KNOWN_ELECTION_SYSTEMS: Array[String] = ["pr_dhondt", "pr_national", "fptp", "two_round", "parallel"]
 
 static var _id_regex := RegEx.create_from_string("^[A-Z]{3}$")
 
@@ -21,9 +22,25 @@ var playable: bool = false
 
 var leader_name: String = ""
 var leader_title: String = ""
+var leader_party_id: String = ""
 
 var term_years: int = 0
 var assembly_seats: int = 0
+var chamber_name: String = ""
+
+## The nation's own next scheduled election, real and sourced — see
+## docs/electoral-systems.md. Authored, not imported: tools/import_data.py never
+## reads or writes it, same class as fiscal below.
+var election_system: String = ""
+var election_next_year: int = 0
+var election_next_month: int = 0
+var election_threshold_pct: float = 0.0
+
+## EU membership and European Parliament seat count. Empty/zero for a
+## non-member — GBR and CHE simply have no reader for these, see
+## docs/electoral-systems.md.
+var eu_member: bool = false
+var eu_ep_seats: int = 0
 
 var debt_to_gdp_pct: float = 0.0
 var tax_revenue_pct_gdp: float = 0.0
@@ -52,12 +69,32 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var leader: Dictionary = _extract_dict(d, "leader", filename, errors)
 	n.leader_name = _extract_string(leader, "name", filename, errors)
 	n.leader_title = _extract_string(leader, "title", filename, errors)
+	n.leader_party_id = _extract_string(leader, "party", filename, errors)
 
 	var government: Dictionary = _extract_dict(d, "government", filename, errors)
 	n.term_years = _extract_int(government, "term_years", "government.term_years", filename, errors)
 	_check_range_int(n.term_years, 1, 10, "government.term_years", filename, errors)
 	n.assembly_seats = _extract_int(government, "assembly_seats", "government.assembly_seats", filename, errors)
 	_check_range_int(n.assembly_seats, 1, 2000, "government.assembly_seats", filename, errors)
+	n.chamber_name = _extract_string(government, "chamber", filename, errors)
+
+	var election: Dictionary = _extract_dict(government, "election", filename, errors)
+	n.election_system = _extract_string(election, "system", filename, errors)
+	if n.election_system != "" and not KNOWN_ELECTION_SYSTEMS.has(n.election_system):
+		errors.append("%s: government.election.system '%s' is not a recognised method" % [filename, n.election_system])
+	var next: Dictionary = _extract_dict(election, "next", filename, errors)
+	n.election_next_year = _extract_int(next, "year", "government.election.next.year", filename, errors)
+	_check_range_int(n.election_next_year, 2026, 2100, "government.election.next.year", filename, errors)
+	n.election_next_month = _extract_int(next, "month", "government.election.next.month", filename, errors)
+	_check_range_int(n.election_next_month, 1, 12, "government.election.next.month", filename, errors)
+	n.election_threshold_pct = _extract_float(election, "threshold_pct", "government.election.threshold_pct", filename, errors)
+	_check_range_float(n.election_threshold_pct, 0.0, 20.0, "government.election.threshold_pct", filename, errors)
+
+	var eu: Dictionary = _extract_dict(government, "eu", filename, errors)
+	n.eu_member = _extract_bool(eu, "member", filename, errors)
+	if n.eu_member:
+		n.eu_ep_seats = _extract_int(eu, "ep_seats", "government.eu.ep_seats", filename, errors)
+		_check_range_int(n.eu_ep_seats, 1, 200, "government.eu.ep_seats", filename, errors)
 
 	var fiscal: Dictionary = _extract_dict(d, "fiscal", filename, errors)
 	n.debt_to_gdp_pct = _extract_float(fiscal, "debt_to_gdp_pct", "fiscal.debt_to_gdp_pct", filename, errors)
