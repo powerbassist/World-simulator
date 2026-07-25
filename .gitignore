@@ -1,0 +1,20 @@
+# Godot
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
+
+# Raw datasets — re-downloadable, never committed. See docs/data-sources.md
+sources/
+
+# Builds
+build/
+dist/
+*.exe
+*.pck
+*.zip
+
+# OS
+Thumbs.db
+.DS_Store
