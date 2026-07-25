@@ -13,6 +13,7 @@ extends RefCounted
 const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 const SAVE_VERSION := 1
@@ -94,6 +95,9 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, errors: Arra
 	ns.trend_annual_pct = Economy.trend_pct(ns)
 	ns.growth_annual_pct = ns.trend_annual_pct
 	Budget.recompute(ns)
+
+	# After recompute, so the starting deficit opinion measures against is real.
+	Opinion.init_nation(ns)
 
 	return ns
 

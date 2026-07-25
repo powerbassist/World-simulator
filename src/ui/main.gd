@@ -5,7 +5,10 @@ const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
+const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 const PLAYER_NATION_ID := "FRA"
 
@@ -19,6 +22,7 @@ const MONTH_NAMES: Array[String] = [
 
 var _state
 var _budget_panel
+var _polling_panel
 
 
 func _ready() -> void:
@@ -48,14 +52,38 @@ func _ready() -> void:
 	_state.month = _clock.month
 
 	_budget_panel = BudgetPanel.new()
-	add_child(_budget_panel)
+	_add_centered(_budget_panel)
 	_budget_panel.setup(_state)
 	_budget_panel.hide()
 	_budget_panel.committed.connect(_update_hud)
 
+	_polling_panel = PollingPanel.new()
+	_add_centered(_polling_panel)
+	_polling_panel.setup(_state)
+	_polling_panel.hide()
+
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
 	_update_hud()
+
+
+## Screen-filling CenterContainer per panel, which is the one placement mechanism
+## that works before a panel's children exist — an anchor preset computed in
+## _ready() reads a minimum size of zero and lands in the corner. One container
+## each, so hiding one panel does not move the other.
+func _add_centered(panel: Control) -> void:
+	var holder := CenterContainer.new()
+	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(panel)
+	add_child(holder)
+
+	# The default panel style is translucent, so the HUD reads through a screen
+	# full of figures. Opaque until S10 gives the game an actual theme.
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.11, 0.12, 0.13)
+	style.set_corner_radius_all(4)
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -79,10 +107,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				_budget_panel.visible = not _budget_panel.visible
 				if _budget_panel.visible:
 					_budget_panel.mark_dirty()
+		KEY_P:
+			if _polling_panel != null:
+				_polling_panel.visible = not _polling_panel.visible
+				if _polling_panel.visible:
+					_polling_panel.mark_dirty()
 
 
 ## The simulation's whole entry point. Economy first so budget percentages apply
-## to this month's GDP; S5 opinion hooks in after both. See docs/economy-model.md.
+## to this month's GDP; opinion last, so it reacts to figures that have already
+## settled rather than to last month's. See docs/economy-model.md.
+##
+## The history entry is the two snapshots merged. Opinion is deliberately not
+## folded into Budget.snapshot(): Budget.project() runs only the economy and
+## budget ticks on its copy, so a snapshot carrying approval would make the
+## projection-equals-reality test compare a real month against a stale one.
 func _on_month_elapsed(year: int, month: int) -> void:
 	if _state == null:
 		return
@@ -90,9 +129,16 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	_state.month = month
 	Economy.tick_month(_state)
 	Budget.tick_month(_state)
-	_state.append_history(Budget.snapshot(_state))
+	Opinion.tick_month(_state)
+
+	var entry := Budget.snapshot(_state)
+	entry.merge(Opinion.snapshot(_state))
+	_state.append_history(entry)
+
 	if _budget_panel != null:
 		_budget_panel.mark_dirty()
+	if _polling_panel != null:
+		_polling_panel.mark_dirty()
 
 
 func _on_day_advanced(_year: int, _month: int, _day: int) -> void:
@@ -109,8 +155,16 @@ func _update_hud() -> void:
 		line += "\nGDP EUR %.0fbn   growth %+.2f%%   unemployment %.1f%%" % [
 			ns.gdp_eur_bn, ns.growth_annual_pct, ns.unemployment_pct
 		]
-		line += "\ndebt %.1f%% of GDP   deficit %+.2f%% of GDP   [B] budget" % [
+		line += "\ndebt %.1f%% of GDP   deficit %+.2f%% of GDP" % [
 			ns.debt_to_gdp_pct(), -ns.deficit_pct_gdp
 		]
+		# The polled figure, not the true one — the HUD must not leak what the
+		# polling panel is deliberately blurring.
+		var poll := PollNoise.displayed(
+			PollNoise.poll_id(_state.year, _state.month),
+			PollingPanel.HEADLINE_KEY,
+			ns.overall_approval_pct
+		)
+		line += "\napproval %.0f%% (poll)   [B] budget   [P] polling" % poll
 
 	_hud.text = line

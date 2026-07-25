@@ -1,0 +1,318 @@
+---
+title: Opinion Model
+tags:
+  - decision
+  - opinion
+  - simulation
+---
+
+# Opinion Model
+
+The MVP public-opinion model, as built in [[ROADMAP|S5]]. Every formula, every
+constant, and the argument for why approval moves fast enough to be worth
+watching and slowly enough to be worth planning around.
+
+Same standard as [[economy-model]]: this is a **game model**, judged on whether
+the player's decisions produce legible, delayed, reversible political
+consequences — not on whether it would survive a political scientist. Where
+realism and legibility conflict, legibility wins, and the trade is noted.
+
+## Where it sits
+
+```
+clock.month_elapsed
+  → Economy.tick_month(state)      GDP, sectors, unemployment, population
+  → Budget.tick_month(state)       revenue, spending, deficit, debt
+  → Opinion.tick_month(state)      satisfaction, salience, approval
+  → state.append_history()
+```
+
+Opinion runs **last**, on purpose. It reads figures that have already settled
+this month; wired anywhere earlier, approval would react to last month's economy
+and every response would carry a spurious extra month of lag.
+
+Like `Budget.tick_month`, it is gated on `has_budget` rather than on the player
+id — the nine AI nations have no reader for approval at MVP. Initialisation runs
+for all ten so the state shape stays uniform.
+
+> [!important] No randomness here either
+> [[economy-model]]'s determinism rule extends to this file. `Opinion` never
+> calls an RNG, and the model never stores a noisy number. Polling noise is
+> applied at the moment a figure is rendered — see [Polling noise](#polling-noise)
+> below. `tests/test_budget.gd` asserts the budget projection equals what
+> subsequently happens to 1e-9, and a single `randf()` in a tick would break it.
+
+## Where the blocs live
+
+`src/sim/opinion_constants.gd`, as typed GDScript `const`s. **Not** in `data/`,
+and this is a deliberate departure from the `voter_blocs` nation-schema field
+[[data-architecture]] originally pencilled in for this session.
+
+The argument is `policy_defaults.json`'s, one step further. Only France is
+playable, so nine authored bloc sets would have no reader. And unlike starting
+tax rates, blocs are not content a designer adds more of: regional and
+generational breakdown is [[someday]] tier, so six blocs is one fixed set,
+forever — [[economy-model|the same definition]] used to keep the economy's
+constants out of `data/`.
+
+**What reverses this:** a second playable nation ([[v1|V1.2]]), or per-nation
+bloc sizes acquiring a real reader. At that point blocs become content, move to
+`data/`, and get a loader and a validator.
+
+Two rules make that move cheap, and both are just [[engine-decision|Rule 1]]
+applied:
+
+1. **Bloc names appear in `opinion_constants.gd` and nowhere else.** `opinion.gd`,
+   the polling panel and every test iterate `BLOC_KEYS`.
+2. **`ns.has_budget` gates the tick, never `id == player_nation_id`.**
+
+So the expensive version of this decision — an "exactly six blocs, named these"
+assumption smeared across S6 vote share, S7 law effects, S9 saves and the UI —
+never gets made. The cheap version, a table moving file, stays cheap.
+
+## Blocs
+
+A partition of the electorate by dominant identity. Sizes sum to 1.0, which is
+what makes the headline an average rather than an arbitrary index.
+
+| Bloc | Size |
+|---|---|
+| workers | 0.30 |
+| pensioners | 0.24 |
+| urban | 0.15 |
+| rural | 0.13 |
+| business | 0.10 |
+| students | 0.08 |
+
+The overlap is acknowledged rather than modelled: a worker also lives in a city.
+Six mutually exclusive segments, each keyed on the identity that dominates how
+that person votes, is the legible choice, and it is what makes the roll-up
+honest. Cross-cutting membership is [[someday]] tier along with regional opinion.
+
+## Issues
+
+Eleven, each a satisfaction `s ∈ [−1, +1]`, each computed from state the economy
+and budget already maintain.
+
+| Issue | Formula | Scale |
+|---|---|---|
+| `jobs` | `(start_u − u) / JOBS_SCALE` | 3.0 pp of unemployment |
+| `growth` | `(growth − trend) / GROWTH_SCALE` | 4.0 pp of growth |
+| `tax_income` | `−Δrate / TAX_SCALE` | 8.0 pp of the rate |
+| `tax_corporate` | " | " |
+| `tax_vat` | " | " |
+| `health` | `Δspend / SPEND_SCALE` | 3.0 pp of GDP |
+| `education` | " | " |
+| `defence` | " | " |
+| `pensions` | " | " |
+| `infrastructure` | " | " |
+| `public_finances` | `−Δdeficit / DEFICIT_SCALE` | 3.0 pp of GDP |
+
+All clamped to [−1, +1] after scaling.
+
+**Every delta is against the nation's own starting value** — `start_unemployment_pct`,
+`start_tax_rates_pct`, `start_spending_pct_gdp`, `start_deficit_pct_gdp`. So at
+new-game every satisfaction is exactly zero, every bloc sits at neutral, and the
+model needs no calibration constant. That is the same trick the economy's
+`potential_shift` uses, and it means France's real 4.7 %-of-GDP starting deficit
+is politically free until the player moves it — which is right. Voters price
+changes, not levels.
+
+`public_finances` is measured on the **deficit**, not on the debt ratio. Debt
+walks upward every month by construction — [[economy-model|r exceeds g]] — so a
+debt-level term would make every bloc slowly unhappy no matter what the player
+did, which is a drift, not a mechanic.
+
+`growth` uses growth *relative to trend* rather than absolute growth, so a nation
+with a structurally low trend is not permanently unpopular for it.
+
+## Salience
+
+Each bloc has a sparse base weight vector. An issue a bloc has no entry for
+carries no weight for that bloc, which is precisely what makes "fixing something
+nobody cares about buys nothing" true rather than decorative.
+
+| Bloc | Base weights |
+|---|---|
+| workers | jobs 0.40 · tax_income 0.19 · health 0.11 · tax_vat 0.09 · pensions 0.07 · growth 0.07 · public_finances 0.07 |
+| pensioners | pensions 0.44 · health 0.26 · public_finances 0.13 · tax_vat 0.09 · jobs 0.08 |
+| urban | health 0.22 · jobs 0.21 · education 0.17 · infrastructure 0.13 · tax_income 0.11 · growth 0.09 · public_finances 0.07 |
+| rural | infrastructure 0.24 · jobs 0.19 · health 0.15 · tax_vat 0.13 · pensions 0.11 · defence 0.11 · public_finances 0.07 |
+| business | tax_corporate 0.30 · public_finances 0.24 · growth 0.22 · infrastructure 0.11 · jobs 0.07 · education 0.06 |
+| students | education 0.44 · jobs 0.25 · tax_vat 0.11 · growth 0.07 · health 0.07 · public_finances 0.06 |
+
+Two properties are load-bearing rather than incidental:
+
+- **Pensioners weight pensions at 0.44 and students at nothing.** The S5
+  done-when condition about a pension cut is therefore a property of this table,
+  not of code.
+- **`jobs` is the most-weighted issue overall.** [[economy-model]] gives
+  unemployment the honest textbook treatment — Okun plus reversion to a structural
+  rate — specifically so that bloc reactions to it feel earned. Leaning on it
+  hardest is the payoff.
+
+### Salience moves with the news
+
+Static weights would make "issue salience" a synonym for "weight". Bad news
+raises how much an issue is worth arguing about:
+
+```
+severity_i = clampf(−s_i, 0.0, 1.0)                 # only bad news counts
+w_b[i]     = base_b[i] × (1 + SALIENCE_GAIN × severity_i)
+w_b        = w_b / Σ w_b
+```
+
+`SALIENCE_GAIN = 1.0` — a fully bad issue counts double before renormalisation.
+
+The renormalisation is the entire stability argument: the result is a point on
+the simplex, so no amount of bad news can make the weights grow. It also means
+salience is genuinely zero-sum, which is the behaviour worth having — a crisis in
+one place crowds attention out of another.
+
+The size-weighted average of the per-bloc weights is stored as
+`issue_salience` and is what the polling panel's "what the country is thinking
+about" list reads. It sums to 1.0 by construction, which
+`tests/test_opinion.gd` asserts every month for ten years.
+
+## Approval
+
+```
+target_b    = NEUTRAL + SPAN × Σ_i w_b[i] × s_i
+approval_b += (target_b − approval_b) × INERTIA_RATE
+approval_b  = clampf(approval_b, 0, 100)
+overall     = Σ_b size_b × approval_b
+```
+
+| Constant | Value | Why |
+|---|---|---|
+| `APPROVAL_NEUTRAL` | 50.0 | Where everyone starts and where a bloc with nothing to complain about sits. No honeymoon bonus — time in office as its own drag is [[v1]]. |
+| `APPROVAL_SPAN` | 40.0 | Satisfaction is bounded to [−1, +1], so target approval lives in [10, 90]. The hard 0–100 clamp is a guard rail that never binds under sane play. |
+| `INERTIA_RATE` | 0.25 /month | Half-life ≈ 2.4 months. |
+
+### On inertia, and why it is fast
+
+The obvious reading of "opinion inertia so nothing swings on a single month" is
+*make it slow*. That is the trap, and it is worth stating why.
+
+Opinion sits downstream of an economy that already lags. Unemployment responds to
+growth through Okun at 1/12 per month and reverts to structural over roughly three
+years. Put a slow inertia term on top and there are **two lags in series on the
+game's most important channel** — the player changes the budget, waits a year for
+unemployment to move, then waits again for anyone to notice. The game stops
+answering, and no amount of feedback in the UI fixes a model that is not
+responding.
+
+So 0.25 is chosen so that opinion is deliberately *not* the bottleneck:
+
+- On a **spending change**, the issue moves instantly — it is a delta against a
+  starting value, with no economy in between — so inertia is the only lag, and
+  roughly 58 % of the response lands within three months.
+- On **unemployment**, the economy's lag dominates and inertia adds almost
+  nothing on top of it.
+
+Which is the right split: the player feels a pension cut quickly, because
+pensioners feel it quickly, and feels a jobs crisis on the economy's schedule,
+because that is how long a jobs crisis takes.
+
+`tests/test_opinion.gd` checks the combined response rather than the model's own
+half-life, which is the only number that matters.
+
+## What it does
+
+Selected paths, from the model as committed. France, default budget, starting
+approval 50 everywhere.
+
+| Scenario | What happens |
+|---|---|
+| **Do nothing** | Everyone holds near 50 for a decade; business drifts to 49 as debt service widens the deficit. A do-nothing game is not punished, and is not rewarded either. |
+| **Pensions 14.5 → 11.5 % of GDP** | Pensioners 50 → 37.9 within three months, settling near 29. Students move 0.9 points. Business *gains*, to 60 — the deficit halved. |
+| **Defence and infrastructure cut by 5 pp** | Unemployment 7.4 → 8.3 %. Rural collapses to 33 (infrastructure is their top issue), workers trough at 46 with no policy aimed at them at all, pensioners rise to 54 on the improved deficit. |
+| **Income tax 20 → 30 %** | Workers 50 → 37, business to 57. The cleanest left-right split the model produces. |
+| **Every spending line +3 pp** | Overall approval peaks at 66 after a year, then decays to 57 by year five as the boom unwinds and business falls to 38. |
+
+The pattern worth noticing is that **no scenario moves every bloc the same way**.
+That is the model earning its keep: there is no lever that is simply good, so
+S6's election is a question of which coalition you built rather than how high you
+pushed one number.
+
+> [!note] A known soft spot, for [[ROADMAP|S10]]
+> The last row is still a real approval win for a budget that takes debt from
+> 116 % to roughly 215 % of GDP over five years. Every bloc now weights
+> `public_finances` — that change alone took the peak from 73 down to 66 — but a
+> blowout remains popular inside a single term, and the punishment arrives
+> through debt service crowding out spending over the following one. Whether that
+> is a flaw or the correct politics of deficit spending is a balance question,
+> and it needs the S6 checkpoint playtest to answer rather than another
+> pre-emptive constant.
+
+## Polling noise
+
+Approval is not published. The player sees a poll.
+
+`src/ui/poll_noise.gd`, in `src/ui/` because it is a presentation concern and
+nothing in `src/sim/` references it.
+
+```
+poll_id = year × 12 + month
+shown   = clampf(true_value + (u(poll_id, key) × 2 − 1) × NOISE_MAX_PCT, 0, 100)
+```
+
+`NOISE_MAX_PCT = 3.0`, uniform, therefore unbiased over many polls.
+
+The interesting constraint is that this cannot be `randf()`. The simulation
+contains no randomness at all, so the noise is a **pure function of the poll and
+what is being asked about**. Three things follow, all of them wanted:
+
+- The panel shows the same figures on every repaint within a month. A poll is a
+  published figure, not a fresh sample every frame — and the numbers do not
+  flicker while a slider is being dragged.
+- The figures survive a save and reload, because there is no RNG state to
+  serialise. [[ROADMAP|S9]] gets this for free.
+- `tests/test_budget.gd`'s projection-equals-reality guarantee is untouched.
+
+`u()` is FNV-1a over the key mixed through splitmix32's finaliser, written out
+rather than delegated to Godot's `hash()`, so the published figures do not depend
+on an engine-internal detail that a save file would then be pinned to.
+
+`tests/test_polling_panel.gd` checks the four properties that matter over 120
+polls: bounded, varies between polls, deterministic on repeat calls, and centred
+on zero.
+
+## Why nothing diverges
+
+Shorter than [[economy-model]]'s equivalent section, because there is less to
+argue about.
+
+| Quantity | Bound |
+|---|---|
+| Issue satisfaction | Clamped to [−1, +1] by construction. |
+| Salience weights | Renormalised to sum to 1.0 every month. A simplex cannot grow. |
+| Target approval | `NEUTRAL ± SPAN × 1` — [10, 90], since the weighted satisfaction is a convex combination of terms in [−1, +1]. |
+| Bloc approval | First-order lag toward a bounded target, plus a hard [0, 100] clamp that never binds. |
+| Overall approval | A convex combination of bounded values. |
+
+There is **no term where approval feeds back into itself or into the economy**.
+Opinion is a pure read of the simulation this month; it never writes to the
+economy or the budget. That is what keeps the stability argument this short, and
+it is a property worth defending — [[ROADMAP|S6]] elections consume approval, and
+[[ROADMAP|S7]] laws will write to the economy, but neither should let approval
+drive an economic variable directly.
+
+The argument is not the evidence. `tests/test_opinion.gd` runs 120 months under
+five budgets including the absurd ones and asserts finiteness, bounds and the
+salience invariant on every bloc every month. **That** is the evidence.
+
+## Where the constants live
+
+`src/sim/opinion_constants.gd`, all of them, next to
+`src/sim/economy_constants.gd` and for the same reason: [[ROADMAP|S10]]'s balance
+pass gets one file per model, and `opinion.gd` and the polling panel cannot drift
+apart.
+
+The one number that is *not* there is `NOISE_MAX_PCT`, which lives with the noise
+function in `src/ui/poll_noise.gd`. It is not a model parameter — the model does
+not know polls exist.
+
+---
+
+Related: [[index]] · [[economy-model]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[ROADMAP]] · [[mechanics-society]]

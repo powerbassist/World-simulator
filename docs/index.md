@@ -22,6 +22,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[engine-decision]] — Godot 4 + GDScript, and why not Unity or Unreal
 - [[data-architecture]] — static content vs live state, and why there is no database
 - [[economy-model]] — the economy and budget formulas, and why nothing diverges
+- [[opinion-model]] — voter blocs, salience, approval inertia, and polling noise
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

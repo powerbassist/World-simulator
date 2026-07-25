@@ -62,7 +62,11 @@ var _dirty := true
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_CENTER)
+	# Placement is the owner's job — main.gd drops this into a CenterContainer.
+	# S4 called set_anchors_preset(PRESET_CENTER) here, which moves the anchors and
+	# leaves the offsets at zero, so the panel actually sat in the top-left corner
+	# on top of the HUD. Never noticed, because it had only ever been tested
+	# headlessly.
 	custom_minimum_size = Vector2(820, 520)
 
 	var margin := MarginContainer.new()

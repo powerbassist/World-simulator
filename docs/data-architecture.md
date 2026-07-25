@@ -56,8 +56,18 @@ The cost is losing the inspector's type checking. That is bought back by the val
 ### Nation schema
 
 As implemented at [[ROADMAP|S1]]. Fields owned by later sessions — leader (S2),
-`voter_blocs` (S5), `system` (V1) — are added by the session whose model reads them,
-not stubbed in ahead of time.
+`system` (V1) — are added by the session whose model reads them, not stubbed in ahead
+of time.
+
+> [!note] `voter_blocs` was pencilled in here for S5 and did not happen
+> S5 read the field and decided it was not content. Only France is playable, so nine
+> authored bloc sets would have no reader, and unlike starting tax rates, blocs are
+> not something a designer adds more of — regional and generational breakdown is
+> [[someday]] tier, so six blocs is one fixed set forever. They live in
+> `src/sim/opinion_constants.gd` with the rest of the opinion model. The full
+> argument, and the trigger that reverses it — a second playable nation — is in
+> [[opinion-model]]. This is the rule working as intended: the session whose model
+> reads a field decides where it lives.
 
 ```json
 {
@@ -168,13 +178,17 @@ NationState                      src/core/nation_state.gd
 │              unemployment, structural_unemployment, population
 ├── policy     has_budget, tax_rates_pct{}, spending_pct_gdp{}, the starting
 │              values of both, other_spending_pct_gdp, other_revenue_pct_gdp
-├── fiscal     revenue_pct_gdp{}, totals, debt_service, deficit, debt_eur_bn
+├── fiscal     revenue_pct_gdp{}, totals, debt_service, deficit, debt_eur_bn,
+│              the starting deficit the opinion model measures against
+├── opinion    bloc_approval{}, overall_approval_pct, issue_salience{}
 └── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
 ```
 
-Later sessions add their own fields the same way the nation schema is grown — S5 opinion, S6 election state. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
+Later sessions add their own fields the same way the nation schema is grown — S6 election state. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
 
 `NationState.duplicate_state()` and `GameState.duplicate_state()` deep-copy the whole thing. That is not a convenience: the budget projection runs the real simulation forward on a copy, which is what makes the projected path identical to what subsequently happens rather than merely close. Every Dictionary field must be duplicated, not shared.
+
+Both are hand-written field lists, so a field added to the class and forgotten in the copy fails silently and nastily — the projection ends up sharing a Dictionary with the live game. `tests/test_state_copy.gd` (S5) enumerates the fields off the object rather than listing them, and checks both failure modes: not copied at all, and copied by reference. It needs no edit when a session adds a field, which is the point.
 
 Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI reads it and never writes it — player intent goes back as explicit commands, of which `Budget.commit()` is the first. This is the one-way dependency rule from [[engine-decision]].
 

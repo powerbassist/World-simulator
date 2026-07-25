@@ -50,16 +50,19 @@ ROADMAP rather than honoured.
 clock.month_elapsed
   → Economy.tick_month(state)      GDP, sectors, unemployment, population
   → Budget.tick_month(state)       revenue, spending, deficit, debt
+  → Opinion.tick_month(state)      satisfaction, salience, approval   (S5)
   → state.append_history()
 ```
 
 Economy first, so budget percentages apply to the GDP the player will actually
-see this month. S5 opinion hooks in **after** both — it reacts to figures that
-are already settled.
+see this month. Opinion **after** both — it reacts to figures that are already
+settled. See [[opinion-model]].
 
 **No randomness anywhere in this model.** Determinism is what makes the budget
 projection exactly equal to what subsequently happens, which is a done-when
-condition. Polling noise arrives in S5 and belongs to the display layer.
+condition. That rule extends to [[opinion-model|opinion]]: polling noise is
+applied when a figure is rendered, never stored, and is a pure function of the
+poll rather than a live `randf()`.
 
 ## Economy
 

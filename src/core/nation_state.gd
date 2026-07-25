@@ -55,6 +55,22 @@ var debt_service_pct_gdp: float = 0.0
 var deficit_pct_gdp: float = 0.0
 var debt_eur_bn: float = 0.0
 
+## The deficit at new-game. The opinion model's public_finances issue is measured
+## against this, so a fresh game starts on exactly neutral.
+var start_deficit_pct_gdp: float = 0.0
+
+# --- Opinion -----------------------------------------------------------------
+
+## String bloc id -> approval, 0-100. Keys come from opinion_constants.BLOC_KEYS
+## and appear nowhere else, so the set of blocs is one table's business.
+var bloc_approval := {}
+
+## Bloc approval weighted by bloc size. The headline number.
+var overall_approval_pct: float = 0.0
+
+## String issue id -> how much the electorate currently cares, summing to 1.0.
+var issue_salience := {}
+
 # --- Impulses ----------------------------------------------------------------
 
 ## Short-run demand shock from a committed budget change. Decays geometrically.
@@ -101,6 +117,11 @@ func duplicate_state():
 	s.debt_service_pct_gdp = debt_service_pct_gdp
 	s.deficit_pct_gdp = deficit_pct_gdp
 	s.debt_eur_bn = debt_eur_bn
+	s.start_deficit_pct_gdp = start_deficit_pct_gdp
+
+	s.bloc_approval = bloc_approval.duplicate(true)
+	s.overall_approval_pct = overall_approval_pct
+	s.issue_salience = issue_salience.duplicate(true)
 
 	s.demand_impulse_pct = demand_impulse_pct
 	s.potential_shift_pct = potential_shift_pct
