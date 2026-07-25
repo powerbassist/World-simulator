@@ -32,6 +32,22 @@ Every V1 block gets a plan, on Opus 5. By then there is enough built that change
 > [!tip] These are starting points
 > If a session marked Sonnet stalls — repeated failed attempts, a bug that will not localise — escalate to Opus rather than grinding. The cost of one wrong model choice is minutes; the cost of grinding is a session.
 
+## Session handoff
+
+Every session runs in a **fresh chat**. Context from building S3 is dead weight when starting S4, and a long session degrades before it ends.
+
+That only works if the handoff is written down, so **the last thing every session does, after the commit, is output a copy-ready prompt for the next one.** Not a summary — a prompt, in a code block, ready to paste into a new chat with nothing to edit.
+
+It must contain:
+
+- Which session, and the instruction to do that one only.
+- Which docs to read first.
+- The plan / model / effort row from the table above, and the instruction to challenge it if it looks wrong.
+- Anything the previous session learned that is **not** written in a doc or a commit — a gotcha, a rejected approach, a version pin. If it turns out to be load-bearing, it belongs in a doc instead, so write it there and link it.
+- The instruction to verify against that session's done-when list before claiming done.
+
+If the handoff prompt is hard to write because the session ended in a messy state, that is the signal — finish or revert the mess before writing it, not after.
+
 ---
 
 ## MVP
