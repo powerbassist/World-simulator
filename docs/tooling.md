@@ -68,6 +68,34 @@ Runtime tools — `get_game_scene_tree`, `click_button_by_text`, `capture_frames
 
 `npm audit` reports 2 moderate advisories, both in the MCP SDK's HTTP transport dependency chain (`hono`). This server runs over **stdio**, so that code path is not reachable. Non-blocking; re-check after an SDK bump.
 
+## mcp-compressor
+
+[atlassian-labs/mcp-compressor](https://github.com/atlassian-labs/mcp-compressor) — a stdio proxy that sits in front of an MCP server and collapses its tool list into two: `get_tool_schema` and `invoke_tool`. The client sees a small surface up front and fetches a tool's full schema only when it is about to call it.
+
+Installed once, applied to **godot-mcp only**:
+
+```bash
+pip install mcp-compressor
+```
+
+The wheel installs to `%APPDATA%\Python\Python313\Scripts\`, off `PATH`. Referenced by full path in the MCP registration below rather than adding it to `PATH` — one fewer thing to keep track of on a machine with several Python install locations.
+
+### Why godot-mcp and not godot-docs
+
+godot-mcp lists **173 tools**; its `tools/list` payload measured **52,634 bytes** raw versus **14,267 bytes** through the compressor at `medium` — and more importantly, 173 individually-declared tool schemas collapse to 2. That is the actual cost this tool removes: a client loads every connected server's full tool list up front, and 173 schemas is real weight before a single tool has been called.
+
+godot-docs already exposes 2 tools. Wrapping it saves nothing on the list, and its real cost — `get_documentation_file` returning uncompressed files past 200 KB — is a per-call payload problem the compressor's tool-list collapsing does not touch. Left direct.
+
+### Registration
+
+```bash
+claude mcp add --scope user godot-mcp --env GODOT_MCP_PORT=6505 \
+  -- "C:/Users/<you>/AppData/Roaming/Python/Python313/Scripts/mcp-compressor.exe" \
+  -c medium -- node "C:/Users/<you>/.mcp/godot-mcp/server/build/index.js"
+```
+
+Same effect as calling `godot-mcp`'s tools directly — `invoke_tool` forwards to the real tool name and arguments — just discovered in two steps instead of one.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.
