@@ -41,6 +41,9 @@ func _run() -> void:
 	var loader = _main._loader
 	var ns = _main._state.player()
 
+	# On the pristine assembly, before the mangling below destroys it.
+	_check_rebellion_is_forecast_and_named(loader, ns)
+
 	# Force a hostile assembly so the proposed law fails and names its
 	# opponents -- the exact scenario the roadmap's done-when condition names.
 	var law = _find_law(loader, "working_time_reduction")
@@ -88,6 +91,49 @@ func _run() -> void:
 		_fail("ns.last_law_result was not populated after proposing through the panel")
 	elif ns.last_law_result["passed"]:
 		_fail("expected the hostile assembly to reject the law, but ns.last_law_result says it passed")
+
+
+## V1.1b. With the coalition's discipline eroded, the panel must warn that seats
+## will break ranks *before* the vote and name who did afterwards. Silent
+## rebellion is the failure mode: the player would see a bill they were told
+## would pass fail for no visible reason.
+##
+## Discipline is written by hand; whether a played regime reaches it is
+## tools/balance_probe.gd's question and is recorded in docs/discipline-model.md.
+func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
+	var law = _find_law(loader, "housing_programme")
+	if law == null:
+		_fail("law template 'housing_programme' not found")
+		return
+
+	for pid in ns.coalition_party_ids:
+		ns.party_discipline[pid] = 0.2
+
+	_main._law_panel.show()
+	_main._law_panel.setup(_main._state, loader)
+	_main._law_panel.mark_dirty()
+	_main._law_panel._process(0.0)
+
+	var forecast := _collect_text(_main._law_panel)
+	if not forecast.contains("expected to break ranks"):
+		_fail("the forecast does not warn that seats will break ranks: %s" % forecast)
+
+	_main._law_panel._on_propose(law)
+	_main._law_panel._process(0.0)
+
+	var after := _collect_text(_main._law_panel)
+	if not after.contains("seats broke ranks"):
+		_fail("the result does not report a rebellion: %s" % after)
+
+	var rebels: Dictionary = ns.last_law_result.get("party_rebels", {})
+	if rebels.is_empty():
+		_fail("no party rebelled at 0.2 discipline, so the panel had nothing to name")
+		return
+	for party in loader.parties.get(ns.id, []):
+		if int(rebels.get(party.id, 0)) > 0 and not after.contains(party.party_name):
+			_fail("'%s' lost %d seats to a rebellion and is not named: %s" % [
+				party.party_name, int(rebels[party.id]), after
+			])
 
 
 func _find_law(loader, law_id: String):

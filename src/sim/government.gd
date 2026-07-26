@@ -22,6 +22,8 @@ const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
+const DK = preload("res://src/sim/discipline_constants.gd")
 
 const NEUTRAL_POSITION := {"economic": 0.0, "social": 0.0}
 
@@ -346,13 +348,17 @@ static func _form_directorial(ns, party_list: Array) -> Dictionary:
 ##
 ## Zero for any party outside the coalition -- opposition gets no bonus, exactly
 ## as before.
+##
+## Since V1.1b the discipline factor is the LIVE one, not the authored one: a
+## coalition whose members have stopped listening to their whips delivers less on
+## the government's own bills. See docs/discipline-model.md.
 static func coalition_bonus(ns, party) -> float:
 	if not ns.coalition_party_ids.has(party.id):
 		return 0.0
 	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
 	var dist := _distance(ns.coalition_position, pos)
 	var cohesion: float = exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
-	return GK.COALITION_BONUS_MAX * cohesion * party.discipline
+	return GK.COALITION_BONUS_MAX * cohesion * Discipline.of(ns, party)
 
 
 ## How much a party wants this government gone, in [-1, +1]. The same Gaussian
@@ -360,24 +366,55 @@ static func coalition_bonus(ns, party) -> float:
 ## a party sitting on the line scores -1 and a party far from it scores +1. No
 ## new equation and no new constant.
 ##
-## A party inside the government subtracts its own `discipline`, so a
+## A party inside the government subtracts its live `discipline`, so a
 ## disciplined partner does not vote down the government it signed up to and an
 ## ill-disciplined one that has drifted might. `forced` adds
 ## FORCE_HOSTILITY_BONUS -- that term is the entire risk in Article 49.3.
-static func hostility(ns, party, forced := false) -> float:
+##
+## V1.1b adds the DISAFFECTION term, and it is the only term here that can turn a
+## partner *against* a government it agrees with: distance asks whether a party
+## likes the policy, disaffection asks whether its members want to be standing
+## next to this government at the next election. It is gated on (1 - discipline),
+## so it is discipline erosion -- not unpopularity on its own -- that costs the
+## player their coalition. Exactly zero for a government at or above neutral
+## approval, which is why nothing in the V1.1a balance moves. See
+## docs/discipline-model.md for why the model could not reach censure without it.
+##
+## `whipped = false` reads the same party with no leadership on its shoulder:
+## the discipline subtraction goes, and disaffection runs at full strength
+## instead of being damped by discipline. The gap between the two readings is
+## exactly the strain the rebellion split measures.
+static func hostility(ns, party, forced := false, whipped := true) -> float:
 	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
 	var dist := _distance(ns.coalition_position, pos)
 	var h: float = 1.0 - 2.0 * exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
 	if ns.coalition_party_ids.has(party.id):
-		h -= party.discipline
+		var d: float = Discipline.of(ns, party) if whipped else 0.0
+		h -= d
+		h += DK.DISAFFECTION * Discipline.unpopularity(ns) * (1.0 - d)
 	if forced:
 		h += GK.FORCE_HOSTILITY_BONUS
 	return clampf(h, -1.0, 1.0)
 
 
-## Resolve a censure motion against the sitting government. Whole-party bloc
-## voting and the same ABSTAIN_BAND legislature.gd uses for bills, so a party
-## near indifferent neither saves the government nor sinks it.
+## How a hostility score reads as a vote, against the same ABSTAIN_BAND
+## legislature.gd uses for bills -- a party near indifferent neither saves the
+## government nor sinks it.
+static func censure_vote(h: float) -> String:
+	if h > LK.ABSTAIN_BAND:
+		return "for"
+	if h < -LK.ABSTAIN_BAND:
+		return "against"
+	return "abstain"
+
+
+## Resolve a censure motion against the sitting government.
+##
+## Since V1.1b a party is not one bloc. Its line is `hostility()` and its members
+## unwhipped are `hostility(whipped = false)`; where those disagree, a share of
+## the party's seats set by discipline.gd votes the second reading. `party_votes`
+## still names the party's line -- the tallies are what actually went through the
+## division lobbies.
 ##
 ## Does not mutate state; fall() below does that after reading the result. No
 ## rand() anywhere, the same discipline as every other module in src/sim/.
@@ -386,26 +423,41 @@ static func resolve_censure(ns, party_list: Array, forced := false) -> Dictionar
 	var against_seats := 0
 	var abstain_seats := 0
 	var votes := {}
+	var rebels_by_party := {}
 	var defectors: Array = []
 
 	for party in party_list:
 		var seats := _seats(ns, party.id)
 		if seats <= 0:
 			continue
+
 		var h := hostility(ns, party, forced)
-		if h > LK.ABSTAIN_BAND:
-			for_seats += seats
-			votes[party.id] = "for"
-			# A partner that votes to bring the government down is no longer in
-			# it. This is the mechanical cost of a censure the player survives.
-			if ns.coalition_party_ids.has(party.id):
-				defectors.append(party.id)
-		elif h < -LK.ABSTAIN_BAND:
-			against_seats += seats
-			votes[party.id] = "against"
-		else:
-			abstain_seats += seats
-			votes[party.id] = "abstain"
+		var h_own := hostility(ns, party, forced, false)
+		var line := censure_vote(h)
+		var own := censure_vote(h_own)
+
+		var rebels := 0
+		if own != line:
+			rebels = Discipline.rebel_seats(ns, party, h, h_own)
+		if rebels > 0:
+			rebels_by_party[party.id] = rebels
+
+		match line:
+			"for": for_seats += seats - rebels
+			"against": against_seats += seats - rebels
+			_: abstain_seats += seats - rebels
+		match own:
+			"for": for_seats += rebels
+			"against": against_seats += rebels
+			_: abstain_seats += rebels
+
+		votes[party.id] = line
+		# A partner whose LINE is to bring the government down is no longer in
+		# it. This is the mechanical cost of a censure the player survives.
+		# Rebels inside a partner whose line held are not a defection: the party
+		# did not break the agreement, some of its members did.
+		if line == "for" and ns.coalition_party_ids.has(party.id):
+			defectors.append(party.id)
 
 	var threshold := censure_seats(ns)
 	var carried: bool
@@ -431,6 +483,7 @@ static func resolve_censure(ns, party_list: Array, forced := false) -> Dictionar
 		"threshold": threshold,
 		"seats_total": ns.assembly_seats,
 		"party_votes": votes,
+		"party_rebels": rebels_by_party,
 		"defectors": defectors,
 		"pm_name": ns.pm_name,
 		"pm_party_id": ns.pm_party_id,

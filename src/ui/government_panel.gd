@@ -13,9 +13,11 @@ extends PanelContainer
 signal closed
 
 const Government = preload("res://src/sim/government.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -120,6 +122,14 @@ func _refresh() -> void:
 		ns.coalition_seats, ns.assembly_seats, majority
 	])
 
+	# The V1.1b reading, and the one that makes the line above less comforting
+	# than it looks: seats a party holds are not seats it necessarily delivers.
+	var breakable := _worst_case_rebels(ns)
+	if breakable > 0:
+		_add_line("Up to %d of those break ranks on a bill their own party dislikes, leaving %d." % [
+			breakable, ns.coalition_seats - breakable
+		])
+
 	if ns.censure_rule == "none":
 		_add_line("Censure: %s." % CENSURE_LABEL[ns.censure_rule])
 	else:
@@ -130,23 +140,34 @@ func _refresh() -> void:
 		])
 		# The honest reading of a French minority government: the opposition can
 		# only ever remove you if it votes together, which is why so few do.
+		#
+		# Both phrasings say "on its own" since V1.1b, because coalition seats
+		# move too now -- without that, this line and the 49.3 tally below read
+		# as a flat contradiction whenever discipline has eroded.
 		if against >= needed:
-			_add_line("A united opposition could bring this government down.")
+			_add_line("The opposition could bring this government down on its own.")
 		else:
-			_add_line("The opposition cannot reach that threshold even united.")
+			_add_line("The opposition cannot reach that threshold on its own, even united.")
 
 		# What a censure motion would actually do right now, at the hostility a
 		# forced bill would provoke. This is the number Article 49.3 gambles on,
 		# so it is shown before the player gambles rather than after.
-		var forced_for := 0
-		for party in _loader.parties.get(ns.id, []):
-			if Government.hostility(ns, party, true) > LK.ABSTAIN_BAND:
-				forced_for += int(ns.seats_by_party.get(party.id, 0))
-		_add_line("Under Article 49.3 today: %d seats would move to censure." % forced_for)
+		#
+		# Resolved through the real resolver rather than counted party by party:
+		# since V1.1b a motion collects seats from parties whose line is against
+		# it, and a tally that missed those would read safer than the vote is.
+		var forced := Government.resolve_censure(ns, _loader.parties.get(ns.id, []), true)
+		var rebels := 0
+		for pid in forced["party_rebels"]:
+			rebels += int(forced["party_rebels"][pid])
+		_add_line("Under Article 49.3 today: %d seats would move to censure%s." % [
+			forced["for_seats"],
+			", %d of them against their own party's line" % rebels if rebels > 0 else "",
+		])
 		if ns.formation_method == "presidential_appointment":
 			if ns.force_cooldown_months > 0:
 				_add_line("Article 49.3 unavailable for %d months." % ns.force_cooldown_months)
-			elif forced_for >= needed:
+			elif forced["carried"]:
 				_add_line("Forcing a bill now would bring the government down.")
 			else:
 				_add_line("A forced bill would survive censure.")
@@ -173,21 +194,25 @@ func _refresh() -> void:
 		_add_line("In opposition: %s" % ", ".join(outside))
 
 
-## One row per coalition partner: seats, distance from the agreed position, and
-## the bonus that distance and its discipline actually buy on a government bill.
-## The bonus column is the number legislature.gd reads, shown rather than
-## described, so a partner drifting away from the line is visible before it
-## costs a vote.
+## One row per coalition partner: seats, distance from the agreed position, the
+## bonus that distance and its discipline actually buy on a government bill, the
+## live discipline behind that bonus, and how many of the party's seats would
+## break ranks on a bill it dislikes.
+##
+## The reliability column is the number legislature.gd reads and the discipline
+## column is the number that moves; showing both is what makes a partner drifting
+## away from the line visible before it costs a vote rather than after.
 func _build_partner_table(ns) -> Control:
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = 6
 	grid.add_theme_constant_override("h_separation", 16)
 
-	for header in ["party", "seats", "distance", "reliability"]:
+	for header in ["party", "seats", "distance", "reliability", "discipline", "rebels"]:
 		var label := Label.new()
 		label.text = header
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if header == "party" else HORIZONTAL_ALIGNMENT_RIGHT
-		label.custom_minimum_size.x = 220 if header == "party" else 90
+		label.custom_minimum_size.x = 200 if header == "party" else 84
+		label.theme_type_variation = UiTheme.CAPTION
 		grid.add_child(label)
 
 	var by_id := {}
@@ -220,7 +245,34 @@ func _build_partner_table(ns) -> Control:
 		var bonus := Government.coalition_bonus(ns, party)
 		grid.add_child(_right("%.0f%%" % (bonus / GK.COALITION_BONUS_MAX * 100.0)))
 
+		# Live against authored, because the drift is the story. A party sitting
+		# at its own ceiling prints one number; one that has slipped prints both.
+		var live := Discipline.of(ns, party)
+		var base := Discipline.base_of(party)
+		var discipline_cell := _right("%.2f" % live)
+		if live < base - 0.005:
+			discipline_cell.text = "%.2f of %.2f" % [live, base]
+			discipline_cell.theme_type_variation = UiTheme.BAD_TEXT
+		grid.add_child(discipline_cell)
+
+		# The worst a bill can cost this party: the whip's full pull IS the
+		# coalition bonus, so that bonus is the strain, measured against members
+		# who would otherwise vote the other way.
+		grid.add_child(_right(str(Discipline.rebel_seats(ns, party, bonus, 0.0))))
+
 	return grid
+
+
+## Seats the coalition would lose on the worst bill for it -- one its partners
+## are whipped hardest to support and like least. The whip's full pull is the
+## coalition bonus, so that bonus is the strain; see docs/discipline-model.md.
+func _worst_case_rebels(ns) -> int:
+	var total := 0
+	for party in _loader.parties.get(ns.id, []):
+		if not ns.coalition_party_ids.has(party.id):
+			continue
+		total += Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
+	return total
 
 
 func _right(text: String) -> Label:

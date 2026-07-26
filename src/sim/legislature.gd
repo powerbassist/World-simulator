@@ -17,6 +17,8 @@ const K = preload("res://src/sim/election_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
+const DK = preload("res://src/sim/discipline_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -111,37 +113,77 @@ static func _read_field(ns, field: String) -> float:
 ## dependable vote than the one that wrote the bill. Opposition still gets
 ## nothing. See docs/government-model.md.
 static func support(ns, party, law) -> float:
+	return clampf(spatial_support(ns, party, law) + Government.coalition_bonus(ns, party), -1.0, 1.0)
+
+
+## The same party's view of the same bill with no government whip on it -- the
+## purely spatial term, before coalition_bonus(). Split out of support() at V1.1b
+## because the gap between the two IS the strain the rebellion split measures,
+## and computing it twice in two files would let them drift.
+##
+## Identical for an opposition party, whose bonus is zero by construction. That
+## is why opposition parties never rebel: nothing is pulling their members away
+## from where they already stand.
+static func spatial_support(ns, party, law) -> float:
 	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, {"economic": 0.0, "social": 0.0})
 	var d_econ: float = float(pos["economic"]) - float(law.position["economic"])
 	var d_social: float = float(pos["social"]) - float(law.position["social"])
 	var dist: float = sqrt(d_econ * d_econ + d_social * d_social)
 
-	var spatial: float = 2.0 * exp(-pow(dist / LK.LAW_SIGMA, 2.0)) - 1.0
-	return clampf(spatial + Government.coalition_bonus(ns, party), -1.0, 1.0)
+	return clampf(2.0 * exp(-pow(dist / LK.LAW_SIGMA, 2.0)) - 1.0, -1.0, 1.0)
+
+
+## How a support score reads as a vote. Named so the forecast in law_panel.gd and
+## the real division cannot disagree about where the band sits.
+static func vote_of(s: float) -> String:
+	if s > LK.ABSTAIN_BAND:
+		return "yes"
+	if s < -LK.ABSTAIN_BAND:
+		return "no"
+	return "abstain"
 
 
 ## Vote share -> seats, resolved once against ns.seats_by_party. Does not
 ## mutate state; propose() below does that after reading the result.
+##
+## Since V1.1b a party is not one bloc. Its line is support(); its members with
+## no whip on them are spatial_support(); where those two read as different votes,
+## the share of seats discipline.gd computes goes with the second. `party_votes`
+## still names the party's line, and `party_rebels` says how many of its seats
+## did not follow it.
 static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 	var yes_seats := 0
 	var no_seats := 0
 	var abstain_seats := 0
 	var party_votes := {}
 	var party_support := {}
+	var party_rebels := {}
 
 	for party in party_list:
 		var s: float = support(ns, party, law)
+		var own: float = spatial_support(ns, party, law)
 		party_support[party.id] = s
+
 		var seats: int = int(ns.seats_by_party.get(party.id, 0))
-		if s > LK.ABSTAIN_BAND:
-			yes_seats += seats
-			party_votes[party.id] = "yes"
-		elif s < -LK.ABSTAIN_BAND:
-			no_seats += seats
-			party_votes[party.id] = "no"
-		else:
-			abstain_seats += seats
-			party_votes[party.id] = "abstain"
+		var line := vote_of(s)
+		var rebel_line := vote_of(own)
+
+		var rebels := 0
+		if rebel_line != line:
+			rebels = Discipline.rebel_seats(ns, party, s, own)
+		if rebels > 0:
+			party_rebels[party.id] = rebels
+
+		match line:
+			"yes": yes_seats += seats - rebels
+			"no": no_seats += seats - rebels
+			_: abstain_seats += seats - rebels
+		match rebel_line:
+			"yes": yes_seats += rebels
+			"no": no_seats += rebels
+			_: abstain_seats += rebels
+
+		party_votes[party.id] = line
 
 	var seats_total: int = ns.assembly_seats
 	var passed: bool
@@ -166,6 +208,7 @@ static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 		"seats_total": seats_total,
 		"party_votes": party_votes,
 		"party_support": party_support,
+		"party_rebels": party_rebels,
 	}
 
 
@@ -241,8 +284,20 @@ static func propose(state, loader, law, force := false) -> Dictionary:
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 
+	# A whip that failed fails more easily next time, whichever way the bill went.
+	# Applied here rather than in resolve_vote(), which stays a pure function of
+	# state so the forecast can call it as often as it likes.
+	Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
+
 	ns.last_law_result = result
 	return result
+
+
+static func _by_id(party_list: Array) -> Dictionary:
+	var by_id := {}
+	for party in party_list:
+		by_id[party.id] = party
+	return by_id
 
 
 ## Article 49.3. The bill is adopted with no vote taken, which is why every seat
@@ -261,6 +316,7 @@ static func _force(state, ns, party_list: Array, law) -> Dictionary:
 		"seats_total": ns.assembly_seats,
 		"party_votes": {},
 		"party_support": {},
+		"party_rebels": {},
 	}
 
 	if not Government.can_force(ns):
@@ -272,15 +328,24 @@ static func _force(state, ns, party_list: Array, law) -> Dictionary:
 	apply(state, ns, law)
 	ns.force_cooldown_months = GK.FORCE_COOLDOWN_MONTHS
 
+	var by_id := _by_id(party_list)
+
 	# Bypassing the assembly costs something whether or not the censure motion
 	# carries. Without this, a government that can cover the threshold would
 	# force every bill it could not win, for free.
 	Government.penalise_blocs(ns, GK.FORCE_BLOC_PENALTY)
 
+	# The second price of the article, and the one paid in the chamber rather
+	# than in the polls: a government that goes over its own majority's head
+	# finds that majority less willing the next time it asks. Applied before the
+	# censure motion resolves, because the insult is the reason for the motion.
+	Discipline.penalise(ns, ns.coalition_party_ids, DK.FORCE_DISCIPLINE_PENALTY, by_id)
+
 	# Resolved against the government the bill was forced through for, and
 	# before any collapse re-forms it, so the vote reads the coalition that
 	# actually did the forcing.
 	var censure := Government.resolve_censure(ns, party_list, true)
+	Discipline.penalise_rebellions(ns, censure["party_rebels"], by_id)
 	if censure["carried"]:
 		Government.fall(ns, party_list, censure)
 

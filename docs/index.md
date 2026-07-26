@@ -27,6 +27,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[electoral-systems]] — the ten real electoral systems, every date's source, and what each reduction throws away
 - [[legislature-model]] — law templates, ideology-space vote resolution, and effect channels
 - [[government-model]] — government formation per nation, coalitions as a point in ideology space, and the censure arithmetic
+- [[discipline-model]] — party discipline as live state, what erodes it, and seat-level rebellions
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

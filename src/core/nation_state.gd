@@ -190,6 +190,17 @@ var governments_fallen: int = 0
 ## Empty until one is moved. Same shape government.gd:resolve_censure() returns.
 var last_censure := {}
 
+# --- Discipline ------------------------------------------------------------------
+
+## String party id -> how reliably that party currently delivers its seats, in
+## [DISCIPLINE_MIN, the party's authored figure]. Seeded from data/parties/*.json
+## and moved every month by src/sim/discipline.gd; the authored number is what
+## the party manages at its best, this is what it manages now.
+##
+## Read by government.gd's coalition_bonus() and hostility(), and by the
+## rebellion split in both vote resolvers. See docs/discipline-model.md.
+var party_discipline := {}
+
 # --- Legislature ---------------------------------------------------------------
 
 ## Accumulated across every passed law, each clamped in legislature_constants.gd.
@@ -294,6 +305,8 @@ func duplicate_state():
 	s.governments_fallen = governments_fallen
 	s.last_censure = last_censure.duplicate(true)
 
+	s.party_discipline = party_discipline.duplicate(true)
+
 	s.law_structural_offset_pct = law_structural_offset_pct
 	s.law_potential_target_pct = law_potential_target_pct
 	s.law_other_revenue_pct_gdp = law_other_revenue_pct_gdp
@@ -382,6 +395,8 @@ func to_dict() -> Dictionary:
 		"governments_fallen": governments_fallen,
 		"last_censure": last_censure,
 
+		"party_discipline": party_discipline,
+
 		"law_structural_offset_pct": law_structural_offset_pct,
 		"law_potential_target_pct": law_potential_target_pct,
 		"law_other_revenue_pct_gdp": law_other_revenue_pct_gdp,
@@ -469,6 +484,8 @@ static func from_dict(d: Dictionary):
 	s.censure_barred_party_ids = d.get("censure_barred_party_ids", [])
 	s.governments_fallen = int(d.get("governments_fallen", 0))
 	s.last_censure = d.get("last_censure", {})
+
+	s.party_discipline = d.get("party_discipline", {})
 
 	s.law_structural_offset_pct = d.get("law_structural_offset_pct", 0.0)
 	s.law_potential_target_pct = d.get("law_potential_target_pct", 0.0)

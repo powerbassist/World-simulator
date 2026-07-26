@@ -17,6 +17,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Government = preload("res://src/sim/government.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 
 const ALL_IDS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
@@ -494,6 +495,7 @@ func _tick(state) -> Array:
 	Economy.tick_month(state)
 	Budget.tick_month(state)
 	Opinion.tick_month(state)
+	Discipline.tick_month(state, _loader)
 	Legislature.tick_month(state)
 	return Elections.tick_month(state, _loader)
 

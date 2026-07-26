@@ -116,9 +116,13 @@ Because the position lives in that space, the flat `GOVERNMENT_BONUS` becomes an
 
 ```
 cohesion(p) = exp(−(|SLOT_POSITION[p] − position(C)| / COALITION_SIGMA)²)
-bonus(p)    = COALITION_BONUS_MAX · cohesion(p) · p.discipline     for p ∈ C
+bonus(p)    = COALITION_BONUS_MAX · cohesion(p) · discipline(p)    for p ∈ C
             = 0                                                   otherwise
 ```
+
+Since [[v1|V1.1b]] that discipline factor is the **live** one, not the authored
+one — a coalition whose members have stopped listening to their whips delivers
+less on the government's own bills. See [[discipline-model]].
 
 A partner dragged a long way from its own ideology to join is a less dependable
 vote on the government's bills than the party that wrote them. Opposition still
@@ -189,20 +193,32 @@ the same Gaussian on distance from the agreed position that
 
 ```
 hostility(p) = 1 − 2 · exp(−(|SLOT_POSITION[p] − position(C)| / COALITION_SIGMA)²)
-             − p.discipline           if p ∈ C
+             − discipline(p)                            if p ∈ C
+             + DISAFFECTION · unpopularity · (1 − d)    if p ∈ C
              + FORCE_HOSTILITY_BONUS  if the motion follows a forced bill
              → clamped to [−1, +1]
 ```
 
-Whole-party bloc voting against the same `ABSTAIN_BAND` bills use, so a party
-near indifferent neither saves the government nor sinks it.
+Subtracting `discipline` means a disciplined partner does not vote down the
+government it signed up to, while an ill-disciplined one that has **drifted** far
+from the line might — and a partner that votes for censure is **expelled**,
+barred from the replacement until the next legislative election clears the slate.
+That is the mechanical cost of a censure the player survives.
 
-Two terms carry the model. Subtracting `discipline` means a disciplined partner
-does not vote down the government it signed up to, while an ill-disciplined one
-that has **drifted** far from the line might — and a partner that votes for
-censure is **expelled**, barred from the replacement until the next legislative
-election clears the slate. That is the mechanical cost of a censure the player
-survives.
+The `DISAFFECTION` term is [[discipline-model|V1.1b's]], and it is the only term
+here that can turn a partner against a government it agrees with. Cohesion asks
+whether a party likes the policy; disaffection asks whether its members want to
+be standing next to this government at the next election. It is exactly zero at
+or above neutral approval, so nothing in the V1.1a balance below moves. That note
+records the measurement which forced it: the formation search builds coalitions
+out of parties *close* to the line, so without a term like this one, eroding
+discipline could never move the censure tally by a single seat.
+
+Since V1.1b a party is no longer one bloc either. Its line is `hostility()` and
+its members unwhipped are `hostility(whipped = false)`; where those read as
+different votes, a share of the party's seats set by [[discipline-model]] votes
+the second. `party_votes` still names the party's line, and only that line
+expels a partner — backbenchers who walk are not a defection.
 
 `FORCE_HOSTILITY_BONUS` is the entire risk in Article 49.3. Without it, forcing
 would be free: the seats that would censure a government are the seats that
@@ -242,10 +258,11 @@ nation a budget and an opinion model.
 
 **Opposition-initiated censure.** A motion is only ever triggered by the player
 forcing a bill. Tabling one on the assembly's own initiative needs party AI with
-its own agenda, which is [[v1|V1.1b]] and V1.1c territory. In practice this is
-close to the real distribution anyway: French censure motions are tabled often
-and almost never carry, and the one that carried in December 2024 followed a
-49.3.
+its own agenda, which [[v1|V1.1b]] did not build either — it made discipline live
+and divisions seat-level, not the assembly self-directing — so this is V1.1c
+territory. In practice it is close to the real distribution anyway: French
+censure motions are tabled often and almost never carry, and the one that carried
+in December 2024 followed a 49.3.
 
 | Constant | Value | Why |
 |---|---|---|
@@ -256,23 +273,27 @@ and almost never carry, and the one that carried in December 2024 followed a
 
 ## What the balance currently does with all this
 
-> [!warning] Censure works, and no played game reaches it
-> France's starting government holds **318 of 577** against a threshold of
-> **289**. The opposition musters **259** even provoked by a 49.3, so it cannot
-> censure the government — correctly, and that is precisely why a strong
-> government can use the article at all.
+> [!tip] Censure fires now — V1.1b, through the model rather than a retune
+> This box used to read "censure works, and no played game reaches it". France's
+> starting government holds **318 of 577** against a threshold of **289**, the
+> opposition musters only **259** even provoked by a 49.3, and every legislative
+> election in `tools/balance_probe.gd`'s fourteen-year run returned a
+> presidential majority of 368–385. Nothing could close that gap.
 >
-> But across `tools/balance_probe.gd`'s fourteen-year run, **every legislative
-> election under every surviving regime returns a presidential majority of
-> 368–385 of 577.** So in play today, 49.3 is a once-a-year lever that passes a
-> rejected bill for a fixed approval cost, and the censure branch never fires.
+> [[discipline-model|Party discipline]] closed it. A government's nominal seats
+> are no longer the seats it delivers: discipline erodes with unpopularity and
+> with an approaching legislative election, members break ranks on a division,
+> and an eroded partner becomes willing to bring the government down. The probe's
+> full table is in that note. In short: the three competent regimes hold at zero
+> rebels across all fourteen years, the two tax extremes sit seven seats from the
+> line, and `austerity` collects **343 of 289** within a year — a forced bill
+> under it brings the government down.
 >
-> `tests/test_censure.gd` covers the carrying case against a hand-written
-> assembly, so the rule is verified rather than assumed. Making it *live* is the
-> same balance question cohabitation raises above, with the same two levers —
-> `INCUMBENT_SWING` and the President's party's `seat_share`. Recorded here
-> rather than quietly retuned, because how fragmented the Assembly should be is a
-> design decision, not a defect.
+> One caveat survives, and it is not this model's. No regime that *wins* its
+> presidential election ever becomes unpopular enough to reach those states, so
+> the censure branch is live in the sixteen months before May 2027 and not after
+> it. That is the same `INCUMBENT_SWING` question cohabitation raises above, and
+> it is still left as found.
 
 ## Cohabitation, and what the balance currently does with it
 
@@ -319,19 +340,20 @@ France 1986, 1993 and 1997 were opposition majorities, not power-sharing deals.
 
 `discipline` and `excluded_partners` are **content**, in `data/parties/*.json`,
 because they describe particular invented parties rather than the model. Party
-discipline as a *mechanism* — rebellions, whipping, defection on individual
-votes — is [[v1|V1.1b]]; `discipline` here is only a scalar on the coalition
-bonus.
+discipline as a *mechanism* — erosion, rebellions, defection on individual votes
+— shipped in [[v1|V1.1b]] and is [[discipline-model]]; the authored figure is now
+the **ceiling** on a live quantity rather than the quantity itself.
 
 ## Why nothing diverges
 
 | Quantity | Bound |
 |---|---|
 | `position(C)` | A seat-weighted mean of points inside the [−1, +1] square, so inside it by construction. Asserted every month of a 168-month run. |
-| `coalition_bonus(p)` | `[0, COALITION_BONUS_MAX]`: a product of a Gaussian in `(0, 1]`, a discipline in `[0, 1]`, and the ceiling. |
+| `coalition_bonus(p)` | `[0, COALITION_BONUS_MAX]`: a product of a Gaussian in `(0, 1]`, a discipline in `[0, 1]`, and the ceiling. Live discipline is a subset of that interval, so V1.1b does not widen it. |
 | `support(p, law)` | Still clamped to `[−1, +1]`, unchanged from [[legislature-model]]. |
 | `coalition_seats` | A sum of seat counts drawn from `seats_by_party`, so bounded by `assembly_seats`. |
-| `hostility(p)` | Clamped to `[−1, +1]` by construction. |
+| `hostility(p)` | Clamped to `[−1, +1]` by construction; the disaffection term is bounded by `DISAFFECTION · 1 · 1`. |
+| A censure tally | The three columns sum to `assembly_seats` exactly: a rebellion moves seats between them and never creates one — see [[discipline-model]]. |
 | `law_bloc_offset[bloc]` | The censure and 49.3 penalties are clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, and clamped again with the satisfaction score before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Repeated forcing cannot walk approval down without bound. |
 | `censure_barred_party_ids` | Grows to at most the roster size, and is emptied at every legislative election. |
 | Formation itself | Terminates: each round adds one party from a finite roster and never removes one. |
@@ -363,6 +385,7 @@ clock.month_elapsed
   → Budget.tick_month(state)
   → Opinion.tick_month(state)
   → state.append_history()
+  → Discipline.tick_month(state, loader) erodes/recovers; reads approval
   → Legislature.tick_month(state)        cooldowns; reads coalition_position
   → Elections.tick_month(state, loader)  legislative → Government.form()
                                          executive   → win/lose, then form()
@@ -381,5 +404,5 @@ already there rather than in a tick of its own.
 ---
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
-[[legislature-model]] · [[opinion-model]] · [[data-architecture]] · [[v1]] ·
-[[ROADMAP]]
+[[legislature-model]] · [[discipline-model]] · [[opinion-model]] ·
+[[data-architecture]] · [[v1]] · [[ROADMAP]]

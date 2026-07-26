@@ -13,6 +13,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 
 const GAME_START_YEAR := 2026
 const GAME_START_MONTH := 1
@@ -259,6 +260,7 @@ func _check_finite_over_ten_years_with_every_law_applied() -> void:
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Opinion.tick_month(state)
+		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state)
 
 		var ns = state.player()

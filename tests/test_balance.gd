@@ -29,6 +29,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
+const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 
@@ -240,6 +242,7 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
+		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —

@@ -18,6 +18,7 @@ extends PanelContainer
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const Law = preload("res://src/core/law.gd")
 const Trends = preload("res://src/ui/trends.gd")
 
@@ -160,6 +161,13 @@ func _build_result_summary(result: Dictionary) -> Control:
 	]
 	box.add_child(tally)
 
+	var rebellion := _rebellion_text(result.get("party_rebels", {}))
+	if rebellion != "":
+		var broke := Label.new()
+		broke.text = rebellion
+		broke.autowrap_mode = TextServer.AUTOWRAP_WORD
+		box.add_child(broke)
+
 	if not result["passed"]:
 		var opposed := PackedStringArray()
 		for party in _loader.parties.get(_state.player().id, []):
@@ -214,13 +222,41 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 		who.autowrap_mode = TextServer.AUTOWRAP_WORD
 		box.add_child(who)
 
+	var rebellion := _rebellion_text(censure.get("party_rebels", {}))
+	if rebellion != "":
+		var broke := Label.new()
+		broke.text = rebellion
+		broke.autowrap_mode = TextServer.AUTOWRAP_WORD
+		box.add_child(broke)
+
+	# Distinct from the line above on purpose: that one is members who ignored
+	# their party, this one is parties that walked. Only the second is expelled.
 	var defectors: Array = censure["defectors"]
 	if not defectors.is_empty():
 		var lost := Label.new()
-		lost.text = "%d coalition partner(s) broke ranks and are out of government." % defectors.size()
+		lost.text = "%d coalition party(s) voted to censure and are out of government." % defectors.size()
 		box.add_child(lost)
 
 	return box
+
+
+## Who ignored their own party's line, and by how much. The payoff line of the
+## whole discipline model -- the player is told which benches they have lost, by
+## name, at the moment it costs them a vote.
+func _rebellion_text(party_rebels: Dictionary) -> String:
+	if party_rebels.is_empty():
+		return ""
+	var parts := PackedStringArray()
+	var total := 0
+	for party in _loader.parties.get(_state.player().id, []):
+		var rebels: int = int(party_rebels.get(party.id, 0))
+		if rebels <= 0:
+			continue
+		total += rebels
+		parts.append("%d %s" % [rebels, party.party_name])
+	if parts.is_empty():
+		return ""
+	return "%d seats broke ranks: %s." % [total, ", ".join(parts)]
 
 
 func _build_law_row(ns, party_list: Array, law) -> Control:
@@ -266,20 +302,47 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	return box
 
 
+## The blur is unchanged: a party whose |support| falls inside
+## FORECAST_UNCERTAIN_BAND lands in "undecided" rather than a firm column.
+##
+## Rebel seats are counted into the column they will actually vote in, not left
+## inside their party's block. They are not a second kind of uncertainty -- the
+## split is deterministic and the government panel already publishes it per
+## party, so hiding it here would make the forecast lie in one direction only.
 func _forecast_text(ns, party_list: Array, law) -> String:
 	var yes := 0
 	var no := 0
 	var undecided := 0
+	var rebels := 0
+
 	for party in party_list:
 		var s: float = Legislature.support(ns, party, law)
+		var own: float = Legislature.spatial_support(ns, party, law)
 		var seats: int = int(ns.seats_by_party.get(party.id, 0))
+
+		var broke := 0
+		if Legislature.vote_of(own) != Legislature.vote_of(s):
+			broke = Discipline.rebel_seats(ns, party, s, own)
+		rebels += broke
+
 		if s > FORECAST_UNCERTAIN_BAND:
-			yes += seats
+			yes += seats - broke
 		elif s < -FORECAST_UNCERTAIN_BAND:
-			no += seats
+			no += seats - broke
 		else:
-			undecided += seats
-	return "%d for · %d against · %d undecided" % [yes, no, undecided]
+			undecided += seats - broke
+
+		if own > FORECAST_UNCERTAIN_BAND:
+			yes += broke
+		elif own < -FORECAST_UNCERTAIN_BAND:
+			no += broke
+		else:
+			undecided += broke
+
+	var text := "%d for · %d against · %d undecided" % [yes, no, undecided]
+	if rebels > 0:
+		text += "  (%d expected to break ranks)" % rebels
+	return text
 
 
 func _on_propose(law) -> void:

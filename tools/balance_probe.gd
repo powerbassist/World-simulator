@@ -20,6 +20,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
+const Government = preload("res://src/sim/government.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 
 const MONTHS := 168  # fourteen years: covers the inherited term plus two full ones
@@ -151,6 +153,7 @@ func _run(regime_name: String, pending: Dictionary) -> void:
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
+		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state)
 
 		var results := Elections.tick_month(state, loader)
@@ -194,6 +197,7 @@ func _run(regime_name: String, pending: Dictionary) -> void:
 		problems.append_array(_check(ns, year, month))
 		if (i + 1) % 12 == 0:
 			_print_row(ns, year)
+			_print_discipline_row(ns, loader.parties.get(ns.id, []))
 
 		if not ns.in_government:
 			print("  (out of government from %d-%02d; simulation stops)" % [year, month])
@@ -212,6 +216,34 @@ func _run(regime_name: String, pending: Dictionary) -> void:
 
 func _print_header() -> void:
 	print("  year   GDP      grow  trend  unemp  debt%%   defc%%  appr   worst bloc     spread")
+
+
+## V1.1b's evidence line. A nominal majority is no longer the number that
+## matters: what matters is how many seats a censure motion would actually
+## collect once discipline has eroded and members have broken ranks, against the
+## threshold the constitution sets.
+##
+## resolve_censure() is pure, so calling it here to look does not disturb the run
+## -- the same property the law screen's forecast relies on.
+func _print_discipline_row(ns, party_list: Array) -> void:
+	var seats := 0
+	var weighted := 0.0
+	for pid in ns.coalition_party_ids:
+		var s := int(ns.seats_by_party.get(pid, 0))
+		seats += s
+		weighted += float(s) * float(ns.party_discipline.get(pid, 0.0))
+	var mean_discipline: float = weighted / float(seats) if seats > 0 else 0.0
+
+	var forced := Government.resolve_censure(ns, party_list, true)
+	var rebels := 0
+	for pid in forced["party_rebels"]:
+		rebels += int(forced["party_rebels"][pid])
+
+	print("         discipline %.2f  coalition %3d/%d  49.3 censure %3d/%d %-6s  rebels %d" % [
+		mean_discipline, ns.coalition_seats, ns.assembly_seats,
+		forced["for_seats"], forced["threshold"],
+		"CARRIES" if forced["carried"] else "holds", rebels,
+	])
 
 
 func _print_row(ns, year: int) -> void:

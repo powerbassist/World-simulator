@@ -8,6 +8,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -387,6 +388,10 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_nation_panel.mark_dirty()
 	if _government_panel != null:
 		_government_panel.mark_dirty()
+
+	# Discipline reads the approval Opinion has just settled, so it goes after
+	# that and before anything that reads a coalition bonus or a censure vote.
+	Discipline.tick_month(_state, _loader)
 
 	# Cooldowns count down before the election check, same ordering reasoning as
 	# everything else in this handler: state settles top to bottom, elections

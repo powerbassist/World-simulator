@@ -26,6 +26,7 @@ clock.month_elapsed
   → Budget.tick_month(state)       revenue, spending, deficit, debt
   → Opinion.tick_month(state)      satisfaction, salience, approval
   → state.append_history()
+  → Discipline.tick_month(state, loader)  party discipline erodes or recovers
   → Legislature.tick_month(state)  cooldowns count down
   → Elections.tick_month(state, loader)   schedule check, vote share, seats
 ```
@@ -85,21 +86,27 @@ always gets *some* electoral coalition; a law vote does not work that way.
 
 ## Vote resolution
 
-Whole-party bloc voting: every seat a party holds votes the same way. Party
-discipline as a *mechanism* — rebellions, whipping, individual defection — is
-still [[v1|V1.1b]]'s job. [[v1|V1.1a]] added a `discipline` scalar per party,
-but it only scales the coalition bonus above; it does not yet split a party's
-seats across a vote.
+A party's **line** is `support(p, law)` read against `ABSTAIN_BAND`. Until
+[[v1|V1.1b]] every seat the party held went with that line; since V1.1b a share
+of them set by [[discipline-model]] goes with `spatial(p, law)` instead — what
+the same members would vote with no whip on them. `party_votes` in the result
+still names the line, and `party_rebels` says how many seats did not follow it.
 
 ```
-yes    = Σ seats_by_party[p]  where support(p, law) >  ABSTAIN_BAND
-no     = Σ seats_by_party[p]  where support(p, law) < −ABSTAIN_BAND
-abstain = the rest
+line(p)     = support(p, law)         >  ABSTAIN_BAND → yes,  < −ABSTAIN_BAND → no,  else abstain
+unwhipped(p) = spatial(p, law)        bucketed the same way
+rebels(p)   = Discipline.rebel_seats(...)   0 unless the two buckets differ
+
+yes / no / abstain = Σ (seats_by_party[p] − rebels(p)) into line(p)'s column
+                   + Σ rebels(p)              into unwhipped(p)'s column
 
 passed = yes  >  no                                   if majority == "simple"
        = yes  >  0.5 × seats_total                     if majority == "absolute"
        = yes  >= (2/3) × seats_total                   if majority == "two_thirds"
 ```
+
+The three columns still sum to `seats_total` exactly: a rebellion moves seats
+between them and never creates one.
 
 | Constant | Value | Why |
 |---|---|---|
@@ -118,10 +125,15 @@ starting composition and is never mutated after new-game — see
 [[data-architecture]]. A law proposed after the assembly has turned over votes
 against the assembly the player actually has.
 
-**No `rand()` anywhere.** A vote is exactly reproducible from state — the same
-discipline `economy.gd`, `budget.gd`, `opinion.gd` and `elections.gd` all keep,
-and for the same reason: `tests/test_budget.gd`'s projection-equals-reality
-guarantee would break if any tick called an RNG.
+**No `rand()` anywhere**, rebellions included. A vote is exactly reproducible
+from state — the same discipline `economy.gd`, `budget.gd`, `opinion.gd` and
+`elections.gd` all keep, and for the same reason: `tests/test_budget.gd`'s
+projection-equals-reality guarantee would break if any tick called an RNG.
+
+**`resolve_vote()` does not mutate.** The rebellion a division provokes costs the
+party discipline, but that step is applied by `propose()` from the result, so the
+resolver stays a pure function of state and the law screen's forecast can call it
+as often as it likes.
 
 ## Suspense is a display-layer trick
 
@@ -134,7 +146,14 @@ gamble) but wrong for a vote, which the roadmap wants to feel like an obstacle.
 `FORECAST_UNCERTAIN_BAND` (0.15 — wider than `ABSTAIN_BAND`'s 0.05) shows as
 **Undecided** in the forecast, its seats pooled separately from the yes and no
 tallies. The real vote still resolves off the exact same `support()` value at
-the tighter `ABSTAIN_BAND` the moment the player actually proposes. This needs
+the tighter `ABSTAIN_BAND` the moment the player actually proposes.
+
+Rebel seats are **not** blurred. They are counted into the column they will
+actually vote in, with the total called out beside the tally, because the
+government screen already publishes the per-party figure and hiding it here would
+make the forecast optimistic in one direction only. The uncertainty a forecast is
+allowed to manufacture is about where a party stands, not about arithmetic the
+player can already read on another tab. This needs
 no hash-based noise function the way [[opinion-model|polling]] and
 [[election-model|no election-day noise]] both discuss and reject for their own
 cases — the two bands are both plain functions of state, so the blur is
@@ -206,6 +225,7 @@ know a forecast exists.
 |---|---|
 | `support(p, law)` | Clamped to `[−1, +1]` by construction. |
 | Vote outcome | A deterministic comparison of two seat counts against `seats_total`; both are bounded by the assembly size. |
+| The three columns | Sum to `seats_total` exactly, at any discipline and on any law — a rebellion moves seats between them and never creates one. Asserted in `tests/test_discipline.gd`. |
 | `law_structural_offset_pct` | Hard-clamped, `[−5, +5]` points. |
 | `law_potential_target_pct` | Hard-clamped to the same `±1.0 %/yr` [[economy-model|`potential_shift`]] already enforces — this cannot let a law compound trend growth beyond what the economy model already guards against. |
 | `law_other_revenue_pct_gdp` | Hard-clamped, `[−10, +10]` points of GDP. |
@@ -220,4 +240,5 @@ runs 120 months, asserting every field stays finite and unemployment stays in
 ---
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
-[[opinion-model]] · [[economy-model]] · [[data-architecture]] · [[ROADMAP]]
+[[government-model]] · [[discipline-model]] · [[opinion-model]] ·
+[[economy-model]] · [[data-architecture]] · [[ROADMAP]]

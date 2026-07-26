@@ -167,6 +167,20 @@ func _run_unknown_version() -> void:
 	elif old["error"].is_empty():
 		_fail("load_game rejected a version-1 save but gave no error message")
 
+	# Version 2 for the same reason one version on: V1.1b made party discipline
+	# live state, so a version-2 save carries no party_discipline table and every
+	# coalition bonus and censure vote read out of it would be scored against the
+	# authored figure rather than the eroded one.
+	var v2 := FileAccess.open(path, FileAccess.WRITE)
+	v2.store_string(JSON.stringify({"save_version": 2, "day": 1, "game_state": {}}))
+	v2.close()
+
+	var pre_discipline := SaveManager.load_game(BOGUS_SLOT)
+	if pre_discipline["ok"]:
+		_fail("load_game accepted a version-2 save; the discipline table would be missing")
+	elif pre_discipline["error"].is_empty():
+		_fail("load_game rejected a version-2 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

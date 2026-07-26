@@ -25,7 +25,9 @@ presentation had been assumed to fall out of each feature session, and by V1.1a
 that had produced a game with no menu, no pause, and seven overlays bound to
 seven keypresses. See [[decision-log]].
 
-One track at a time per session. Interleaved, not parallel.
+One track at a time per session. Interleaved, not parallel. U1–U4 are done, so
+the queue below is S-track until a system session ends by needing a surface the
+shell does not have.
 
 ---
 
@@ -49,6 +51,8 @@ One track at a time per session. Interleaved, not parallel.
 | X1 | Fixes | Atomic save writes; banned-names check green, closing the last MVP box |
 | U2 | Shell | Dashboard: persistent top bar, left tab rail, seven panels docked, map as a tab |
 | U3 | UI | Overview and Economy rebuilt as hierarchies, one code-built theme, `Trends` over `history` |
+| U4 | UI | Decision deltas: `recent_effects`, a baseline captured at commit, measured against the next history entry |
+| V1.1b | Sim | Party discipline as live state, seat-level rebellions, disaffection — the censure branch fires |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -58,38 +62,30 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **U4** | UI | Decision deltas | U2, U3 |
-| **V1.1b** | Sim | Party discipline and rebellions | V1.1a |
 | **V1.1c** | Sim | Dissolution and snap elections | V1.1a, V1.1b |
 | **V1.1d** | Sim | Cabinet and ministers | V1.1a |
 | **V1.1e** | Sim | Upper house and judiciary | — |
 
 V1.1f referendums is deferred toward V1.7, which brings campaigns.
 
-The U-track goes first because every system session currently ends by bolting one
-more overlay and one more keybind onto a scheme that is already at its limit.
-Doing the shell now makes V1.1b–e cheaper, not more expensive.
+### V1.1c–e
 
-### U4 — Decision deltas
+Not broken into scope and done-when lists until the block before each is done,
+because the shape of each depends on what the previous one turns out to need.
+Content is in [docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
+[[government-model]] and [[discipline-model]].
 
-**Goal:** you can tell what your last decision actually did.
+Two things V1.1b left on the table, both recorded rather than quietly carried:
 
-**Scope:** committing a budget change or passing a law surfaces its effect
-immediately — `approval −3%, deficit +€2B` — and appends to a recent-effects list
-on Overview. Cheap, because `Budget.project()` and `GameState.history[]` already
-compute both sides of the comparison, and U3's `src/ui/trends.gd` already reads
-the second of those.
-
-**Done when:**
-- Every player command produces a visible delta within one tick of committing it.
-- The delta matches what the history entries show a month later.
-
-### V1.1b–e
-
-Not broken into scope and done-when lists until U2–U4 are done, because the shape
-of each depends on the frame they will be displayed in. Content is in
-[docs/tiers/v1.md](docs/tiers/v1.md); the model built so far is
-[[government-model]].
+- **`INCUMBENT_SWING`.** Discipline erosion made the censure branch fire, but no
+  regime that *wins* its presidential election ever gets unpopular enough to
+  reach it — so censure is live for the sixteen months before May 2027 and not
+  after. Sustained low-approval survival is an [[election-model]] question, and
+  it is the same lever cohabitation has been waiting on since V1.1a.
+- **`ns.term_months` says 60 while the first election is 41 months out**, found in
+  the U3 audit and still unfixed. Whichever figure is wrong, it belongs to a
+  V1.1 session; V1.1b did not need it, because discipline's election-proximity
+  term reads `next_election_year/month` directly.
 
 ---
 
@@ -108,8 +104,6 @@ is already made, which is most sessions once the docs are written.
 
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
-| U4 Decision deltas | **No** | Sonnet 5 | Low | Small and fully specified. The numbers already exist on both sides. |
-| V1.1b Party discipline | **Yes** | Opus 5 | High | A model decision coupled to the existing coalition arithmetic, with no obviously right answer — the S5 class. |
 | V1.1c Dissolution | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | Reads the schedule schema [[electoral-systems]] already settled; the gamble's payoff curve is the real decision. |
 | V1.1d Cabinet | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Ministers are a schema that departments, opinion and events all read — S1 class. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |

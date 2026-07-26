@@ -146,6 +146,51 @@ changed no simulation: on a fresh French game `ns.term_months` says 60 while
 60" next to "41 months until the vote". The term-progress line was dropped rather
 than shown. Whichever of the two figures is wrong belongs to a V1.1 session.
 
+## V1.1b — the effort column held, and a term the plan did not contain
+
+The roadmap wrote V1.1b as Plan / Opus / High. Counted at plan time as U2's entry
+says to: two new `src/sim/` files, one `NationState` field across three
+serialisation sites, a `SAVE_VERSION` bump, two readers plus a censure split in
+`government.gd`, a support extraction plus a vote split plus two erosion sites in
+`legislature.gd`, three readings in `law_panel.gd`, a column and two lines in
+`government_panel.gd`, effective-majority reporting in the balance probe, one new
+test and five updated, one new doc and six updated. Eleven surfaces. **High was
+right** — the second plan-first session running where the estimate survived the
+count, which is worth recording as much as the misses were.
+
+The change of mind was inside the model, not the estimate.
+
+**`hostility()` needed a term nobody had noticed was missing.** The session was
+scoped to make discipline live and divisions seat-level, and the balance goal
+agreed at plan time was to make the censure branch [[government-model]] records
+as unreachable actually fire. Building it revealed that it could not: measured on
+the authored French roster, the three governing parties sit 0.26, 0.32 and 0.36
+from the coalition's agreed position, so their raw hostility is near −0.8 apiece,
+and subtracting discipline only pushes it further down. **Eroding discipline from
+0.85 to the floor moved the censure tally by zero seats** — 259 of 289 at every
+value. The formation search builds coalitions out of parties that agree with the
+government, so distance can never turn one against it.
+
+Discipline had no route into the censure arithmetic at all. The fix is
+`DISAFFECTION`: cohesion asks whether a party likes the *policy*, disaffection
+asks whether its members want to be standing next to this government at the next
+election, and only the second explains why coalitions collapse under unpopular
+leaders. Gated on `(1 − discipline)` so it stays a discipline term rather than a
+second parallel channel, and zero at or above neutral approval so the V1.1a
+balance is untouched. Full argument, and the probe table it was tuned against,
+in [[discipline-model]].
+
+Worth generalising: **the tell was that a number refused to move, and the probe
+was the thing that said so.** The plan's balance goal was written from a reading
+of the model rather than from a measurement of it, and the reading was wrong. A
+balance goal in a future plan should name the measurement that would confirm it.
+
+One scope call taken with it: **no whip or concession command.** Rebellion's
+counterplay is the lever set that already exists — which bills you propose, who
+is in the coalition, and whether you force. Adding a costed command to suppress a
+rebellion in the same session that invented rebellion would have been tuning two
+things against each other with neither yet measured.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

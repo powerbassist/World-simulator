@@ -51,6 +51,8 @@ func _process(_delta: float) -> bool:
 			_check_minority()
 		3:
 			_check_cohabitation()
+		4:
+			_check_eroded_discipline_is_visible()
 			_finish()
 	return false
 
@@ -103,7 +105,7 @@ func _check_minority() -> void:
 		])
 	# 577 - 162 = 415 opposition seats against a 289 threshold, so the panel must
 	# say a united opposition could remove this government.
-	if not text.contains("could bring this government down"):
+	if not text.contains("bring this government down on its own"):
 		_fail("a minority facing 415 opposition seats is not warned about censure: %s" % text)
 
 
@@ -125,6 +127,57 @@ func _check_cohabitation() -> void:
 		_fail("a government excluding the President's party is not flagged as cohabitation: %s" % text)
 	if not text.contains("Hélène Vasseur"):
 		_fail("cohabitation panel does not name the imposed head of government: %s" % text)
+
+
+## V1.1b: a partner that has slipped below its authored discipline must say so on
+## the panel, and the seats it would lose on a bill must be shown before the
+## player proposes one rather than after the vote. A silent erosion is a
+## mechanic the player cannot play around.
+func _check_eroded_discipline_is_visible() -> void:
+	var ns = _state.player()
+	# Back to the starting government, then eroded by hand -- whether a played
+	# regime reaches this discipline is tools/balance_probe.gd's question.
+	ns.coalition_party_ids = ["renouveau_civique", "alliance_verte", "parti_social_uni"]
+	ns.coalition_seats = 0
+	for pid in ns.coalition_party_ids:
+		ns.coalition_seats += int(ns.seats_by_party.get(pid, 0))
+	ns.is_minority = false
+	ns.is_cohabitation = false
+
+	var at_ceiling := _breakable_seats(_refresh_text())
+	if at_ceiling < 0:
+		_fail("panel does not warn how many coalition seats would break ranks")
+		return
+	if _refresh_text().contains(" of 0.85"):
+		_fail("a coalition sitting at its authored figure prints a drift it does not have")
+
+	for pid in ns.coalition_party_ids:
+		ns.party_discipline[pid] = 0.45
+
+	var text := _refresh_text()
+	if not text.contains("discipline"):
+		_fail("panel has no discipline column: %s" % text)
+	if not text.contains("0.45 of 0.85"):
+		_fail("panel does not show live discipline against the authored figure: %s" % text)
+
+	var eroded := _breakable_seats(text)
+	if eroded <= at_ceiling:
+		_fail("eroding the coalition to 0.45 did not raise the seats at risk: %d against %d" % [
+			eroded, at_ceiling
+		])
+
+
+## The number out of "Up to N of those break ranks", or -1 if the line is absent.
+##
+## The LAST such line, not the first: _refresh() frees the old labels with
+## queue_free(), which does not take effect until the end of the frame, so within
+## one frame the collected text still carries every earlier refresh's output.
+func _breakable_seats(text: String) -> int:
+	var found := -1
+	for line in text.split("\n"):
+		if line.begins_with("Up to "):
+			found = int(line.trim_prefix("Up to ").split(" ")[0])
+	return found
 
 
 func _collect_text(node) -> String:

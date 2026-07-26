@@ -223,6 +223,7 @@ GameState                        src/core/game_state.gd
 ├── player_nation_id
 ├── nations{}                    String id -> NationState
 ├── history[]                    dated monthly snapshots, for charts
+├── recent_effects[]             what the last few commands moved ([[ROADMAP|U4]])
 └── errors[]                     problems found while building the state
 
 NationState                      src/core/nation_state.gd
@@ -234,13 +235,21 @@ NationState                      src/core/nation_state.gd
 │              the starting deficit the opinion model measures against
 ├── opinion    bloc_approval{}, overall_approval_pct, issue_salience{}
 ├── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
-└── elections  assembly_seats, term_months, months_in_term, next_election_year/
-               _month, next_ep_election_year/_month, terms_served,
-               incumbent_party_id, seats_by_party{}, last_election{},
-               last_ep_election{}, in_government   ([[ROADMAP|S6]])
+├── elections  assembly_seats, term_months, months_in_term, next_election_year/
+│              _month, next_ep_election_year/_month, terms_served,
+│              incumbent_party_id, seats_by_party{}, last_election{},
+│              last_ep_election{}, in_government   ([[ROADMAP|S6]])
+├── government formation_method, censure_rule, coalition_party_ids[],
+│              coalition_seats, coalition_position{}, pm_party_id/_name,
+│              is_cohabitation, is_minority, force_cooldown_months,
+│              censure_barred_party_ids[], governments_fallen ([[ROADMAP|V1.1a]])
+├── discipline party_discipline{}  String party id -> live discipline
+│                                  ([[ROADMAP|V1.1b]], [[discipline-model]])
+└── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
+               last_law_result{}   ([[ROADMAP|S7]])
 ```
 
-Later sessions add their own fields the same way the nation schema is grown — S6 election state. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
+Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
 
 `NationState.duplicate_state()` and `GameState.duplicate_state()` deep-copy the whole thing. That is not a convenience: the budget projection runs the real simulation forward on a copy, which is what makes the projected path identical to what subsequently happens rather than merely close. Every Dictionary field must be duplicated, not shared.
 
@@ -253,6 +262,8 @@ Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI read
 Live state is serialised to a JSON save file. The whole `GameState` object, written in one go, read in one go.
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
+
+**It is at 3, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Both are refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 

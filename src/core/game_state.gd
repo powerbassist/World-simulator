@@ -17,13 +17,15 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Government = preload("res://src/sim/government.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-## 2 as of V1.1a: government formation split the executive's term from the
-## assembly's and added the coalition fields, so a version-1 save has no
-## coherent reading. SaveManager rejects an unknown version outright rather than
-## building a half-understood state — see docs/data-architecture.md.
-const SAVE_VERSION := 2
+## 3 as of V1.1b: party discipline became live state, so a version-2 save carries
+## no party_discipline and every coalition bonus and censure vote read out of it
+## would be computed against the authored figure rather than the eroded one — the
+## same half-understood state a version-1 save would give V1.1a. SaveManager
+## rejects an unknown version outright — see docs/data-architecture.md.
+const SAVE_VERSION := 3
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -114,6 +116,10 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 	Opinion.init_nation(ns)
 
 	Elections.init_nation(ns, n, party_list, eu)
+	# Before Government, which reads discipline the moment it computes the first
+	# coalition bonus — seeding after formation would score that one government
+	# against an empty table.
+	Discipline.init_nation(ns, party_list)
 	# After Elections, which seeds seats_by_party and incumbent_party_id — the
 	# two things a formation search reads.
 	Government.init_nation(ns, n, party_list)

@@ -82,15 +82,19 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**U3 shipped** — Overview and Economy rebuilt as hierarchies (a lead sentence
-over labelled columns, not a field dump), `src/ui/trends.gd` turning
-`GameState.history` into six-month deltas, and one code-built theme in
-`src/ui/ui_theme.gd` assigned to each scene root, replacing the three hand-built
-`StyleBoxFlat` sites. MVP, V1.1a and U1–U3 are done.
+**V1.1b shipped** — party discipline is live state in `ns.party_discipline`,
+eroded by unpopularity and by an approaching legislative election and pulled back
+by inertia; both vote resolvers split a party's seats when its line and its
+members disagree; and a `DISAFFECTION` term in `Government.hostility()` lets an
+eroded coalition bring its own government down, which is what finally makes the
+censure branch fire in a played game. Model: [docs/discipline-model.md](docs/discipline-model.md).
+MVP, V1.1a–b and U1–U4 are done.
 
-**Next: U4** — decision deltas. Committing a budget change or passing a law
-surfaces its effect immediately and appends to a recent-effects list on Overview.
-See [ROADMAP.md](ROADMAP.md).
+**Next: V1.1c** — dissolution and snap elections. See [ROADMAP.md](ROADMAP.md).
+
+Save format is at **version 3**. There has never been a migration: a superseded
+save is refused outright, because a half-understood political state is worse than
+a clear refusal.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or
