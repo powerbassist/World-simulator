@@ -13,6 +13,8 @@ extends RefCounted
 
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
 
 ## The comparison window. Six months is long enough that one noisy month does not
 ## dominate and short enough to still be about the player's current term.
@@ -112,13 +114,59 @@ static func movements(state, months := TREND_MONTHS) -> Array[Dictionary]:
 ## The figure moving worst, or {} when nothing has moved enough to be worth
 ## saying. Same row shape movements() returns.
 static func worst(state, months := TREND_MONTHS) -> Dictionary:
+	return worst_of(movements(state, months))
+
+
+## Same selection worst() makes, factored out so a caller holding an already
+## -built movements() array (decision effects, U4) does not recompute it.
+static func worst_of(rows: Array[Dictionary]) -> Dictionary:
 	var found := {}
-	for row in movements(state, months):
+	for row in rows:
 		if is_nan(row["severity"]) or float(row["severity"]) < NOTABLE_SEVERITY:
 			continue
 		if found.is_empty() or float(row["severity"]) > float(found["severity"]):
 			found = row
 	return found
+
+
+## The same merged shape main.gd's _on_month_elapsed() stamps into history --
+## Budget.snapshot() plus Opinion.snapshot(), dated now -- but callable mid-month
+## without ticking anything. U4's decision-effects baseline: captured the instant
+## a command is committed, so comparing it against next month's real history
+## entry measures everything that command changed, both the instant part
+## (Budget.commit()'s revenue/spending arithmetic) and the part that only
+## resolves on the next tick (Opinion's inertia).
+static func snapshot_now(state) -> Dictionary:
+	var entry := Budget.snapshot(state)
+	entry.merge(Opinion.snapshot(state))
+	entry["year"] = state.year
+	entry["month"] = state.month
+	return entry
+
+
+## movements(), but between two explicit entries (snapshot_now() at commit time
+## and a later history entry) rather than history-indexed by months-ago. Same
+## row shape, same WATCHED table, so worst_of() and change_text() both work on
+## either caller's output unmodified.
+static func movements_between(before: Dictionary, after: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for watch in WATCHED:
+		var key: String = watch["key"]
+		var change := NAN
+		if before.has(key) and after.has(key):
+			change = _polled(after) - _polled(before) if key == APPROVAL_KEY else float(after[key]) - float(before[key])
+		var severity := NAN
+		if not is_nan(change):
+			var worse: float = change if watch["worse_when_rising"] else -change
+			severity = worse / float(watch["scale"])
+		out.append({
+			"key": key,
+			"label": watch["label"],
+			"unit": watch["unit"],
+			"change": change,
+			"severity": severity,
+		})
+	return out
 
 
 ## Months from the current game date to the given one. Negative or zero means it

@@ -39,6 +39,17 @@ const TOP_ISSUE_COUNT := 2
 ## no scale for.
 const SATISFACTION_BAND := 0.15
 
+## How many past decisions the recent-effects region shows -- U4. A fifth
+## region under the four-column row, not a fifth column: the row is already at
+## four across 1130px, and a decision log reads better as full-width lines than
+## squeezed into the same column width as GOVERNMENT or NEXT ELECTION.
+const RECENT_EFFECTS_SHOWN := 5
+
+## Per decision, how many of its moved figures get a line -- the worst-movers,
+## not every WATCHED figure, the same "lead with what matters" reasoning as the
+## rest of this tab.
+const EFFECT_FIGURES_SHOWN := 2
+
 ## Which watched figure the electorate would blame on which issue, used only to
 ## decide whether the lead sentence can name an issue alongside the movement.
 ## Approval is deliberately absent: falling approval IS the electorate, so
@@ -55,6 +66,7 @@ var _loader
 var _title: Label
 var _lead: Label
 var _columns := {}   # id -> VBoxContainer holding that column's rebuilt body
+var _effects_box: VBoxContainer
 var _dirty := true
 
 
@@ -92,6 +104,17 @@ func _ready() -> void:
 		["moving", "MOVING, LAST %d MONTHS" % Trends.TREND_MONTHS],
 	]:
 		row.add_child(_build_column(spec[0], spec[1]))
+
+	root.add_child(HSeparator.new())
+
+	var effects_heading := Label.new()
+	effects_heading.text = "RECENT DECISIONS"
+	effects_heading.theme_type_variation = UiTheme.HEADING
+	root.add_child(effects_heading)
+
+	_effects_box = VBoxContainer.new()
+	_effects_box.add_theme_constant_override("separation", 4)
+	root.add_child(_effects_box)
 
 
 func _build_column(id: String, heading: String) -> Control:
@@ -144,6 +167,8 @@ func _refresh() -> void:
 	for body in _columns.values():
 		for child in body.get_children():
 			child.queue_free()
+	for child in _effects_box.get_children():
+		child.queue_free()
 
 	var censure := _censure_probe(ns)
 	var months_to_election := Trends.months_until(_state, int(ns.next_election_year), int(ns.next_election_month))
@@ -158,6 +183,7 @@ func _refresh() -> void:
 	_fill_election(ns, months_to_election)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
+	_fill_recent_effects()
 
 
 ## What a censure motion would do today, at ordinary hostility rather than the
@@ -288,6 +314,52 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 		_caption("moving", "Nothing has moved much.")
 	else:
 		_caption("moving", "%s is the one to watch." % String(worst["label"]))
+
+
+## U4: the last few committed decisions, each with the figures it moved most --
+## not every WATCHED figure, which would make a law with one small tax nudge
+## read as long as one that reshaped the whole budget.
+func _fill_recent_effects() -> void:
+	var entries: Array = _state.recent_effects
+	if entries.is_empty():
+		var none := Label.new()
+		none.text = "Nothing committed yet this game."
+		none.theme_type_variation = UiTheme.CAPTION
+		_effects_box.add_child(none)
+		return
+
+	for i in mini(RECENT_EFFECTS_SHOWN, entries.size()):
+		_effects_box.add_child(_build_effect_row(entries[i]))
+
+
+func _build_effect_row(effect: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var label := Label.new()
+	label.text = "%s — %s %d:" % [String(effect["label"]), MONTH_NAMES[int(effect["month"]) - 1], int(effect["year"])]
+	label.theme_type_variation = UiTheme.CAPTION
+	row.add_child(label)
+
+	var ranked: Array = (effect["movements"] as Array).duplicate()
+	ranked = ranked.filter(func(m): return not is_nan(m["severity"]))
+	ranked.sort_custom(func(a, b): return float(a["severity"]) > float(b["severity"]))
+
+	if ranked.is_empty():
+		var flat := Label.new()
+		flat.text = "nothing moved"
+		flat.theme_type_variation = UiTheme.CAPTION
+		row.add_child(flat)
+		return row
+
+	for i in mini(EFFECT_FIGURES_SHOWN, ranked.size()):
+		var m: Dictionary = ranked[i]
+		var figure := Label.new()
+		figure.text = "%s %s" % [String(m["label"]), Trends.change_text(float(m["change"]), String(m["unit"]))]
+		figure.theme_type_variation = UiTheme.BAD_TEXT if float(m["severity"]) > 0.0 else UiTheme.GOOD_TEXT
+		row.add_child(figure)
+
+	return row
 
 
 # --- small builders ---------------------------------------------------------

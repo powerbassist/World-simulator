@@ -19,13 +19,19 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Law = preload("res://src/core/law.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
 ## a wider band around zero so a close vote is not readable in advance.
 const FORECAST_UNCERTAIN_BAND := 0.15
 
-signal proposed
+## Carries the pre-vote baseline (Trends.snapshot_now()) and the law's name --
+## same reasoning as budget_panel.gd's committed signal. Emitted whether the
+## bill passed or not; main.gd only queues an effect worth measuring once a
+## month has actually elapsed against it, which a failed vote changes nothing
+## to distinguish -- an entry that shows "nothing moved" is still correct.
+signal proposed(before: Dictionary, law_name: String)
 
 var _state
 var _loader
@@ -277,14 +283,16 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 
 
 func _on_propose(law) -> void:
+	var before := Trends.snapshot_now(_state)
 	Legislature.propose(_state, _loader, law)
-	proposed.emit()
+	proposed.emit(before, law.law_name)
 	_dirty = true
 
 
 func _on_force(law) -> void:
+	var before := Trends.snapshot_now(_state)
 	Legislature.propose(_state, _loader, law, true)
-	proposed.emit()
+	proposed.emit(before, law.law_name)
 	_dirty = true
 
 

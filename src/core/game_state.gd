@@ -36,6 +36,12 @@ var month: int = 0
 var nations := {}  # String id -> NationState
 var history: Array[Dictionary] = []
 
+## What the player's last few commands actually did -- U4. Newest first, each
+## {label, year, month, movements}, movements in Trends.movements_between()
+## shape. Appended by main.gd's _on_month_elapsed(), the one place a committed
+## decision's baseline meets the history entry it is measured against.
+var recent_effects: Array[Dictionary] = []
+
 ## Problems found while building the state. Surfaced the same way the loader's
 ## are — loudly, naming the nation and the field.
 var errors: Array[String] = []
@@ -165,6 +171,7 @@ func to_dict() -> Dictionary:
 		"month": month,
 		"nations": nations_dict,
 		"history": history,
+		"recent_effects": recent_effects,
 	}
 
 
@@ -187,5 +194,11 @@ static func from_dict(d: Dictionary):
 	for entry in hist:
 		typed_hist.append(entry as Dictionary)
 	gs.history = typed_hist
+
+	var effects: Array = d.get("recent_effects", [])
+	var typed_effects: Array[Dictionary] = []
+	for entry in effects:
+		typed_effects.append(entry as Dictionary)
+	gs.recent_effects = typed_effects
 
 	return gs

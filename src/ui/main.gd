@@ -24,10 +24,17 @@ const Dashboard = preload("res://src/ui/dashboard.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
 
 const PLAYER_NATION_ID := "FRA"
+
+## How many decisions Overview's recent-effects list keeps -- U4. Not
+## GameState.recent_effects.size(), which is unbounded in the array itself;
+## trimmed here so a long session's save file does not grow one entry per
+## commit forever.
+const RECENT_EFFECTS_KEPT := 5
 
 ## Set by menu.gd before this scene enters the tree. Empty means a new game;
 ## a slot name means load that save once the new game has been built and every
@@ -57,6 +64,13 @@ var _settings_panel
 ## it rather than unpausing unconditionally, so pausing to save does not also
 ## start the clock on a player who had deliberately stopped it.
 var _paused_before_menu := false
+
+## Decisions committed since the last month elapsed, waiting to be measured
+## against the history entry the next tick produces -- U4. Not persisted:
+## a save taken between committing and the next monthly tick loses the
+## in-flight baseline, the same way it would lose an un-elapsed day on the
+## clock. {label, before} per entry, in commit order.
+var _pending_effects: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -124,7 +138,10 @@ func _ready() -> void:
 	_dashboard.add_tab("budget", "Budget", _budget_panel)
 	_budget_panel.setup(_state)
 	_budget_panel.hide_close_button()
-	_budget_panel.committed.connect(_update_top_bar)
+	_budget_panel.committed.connect(func(before):
+		_queue_effect("Budget change", before)
+		_update_top_bar()
+	)
 
 	_government_panel = GovernmentPanel.new()
 	_dashboard.add_tab("politics", "Politics", _government_panel)
@@ -140,7 +157,10 @@ func _ready() -> void:
 	_dashboard.add_tab("legislature", "Legislature", _law_panel)
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
-	_law_panel.proposed.connect(_update_top_bar)
+	_law_panel.proposed.connect(func(before, law_name):
+		_queue_effect(law_name, before)
+		_update_top_bar()
+	)
 
 	# Europe: the map plus a detail pane, side by side, replacing the map's old
 	# life as a full-screen layer behind everything else.
@@ -302,6 +322,13 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_load_panel.mark_dirty()
 
 
+## Records a command's pre-commit baseline, to be measured once the month it
+## was committed in actually elapses -- see _pending_effects and
+## _on_month_elapsed()'s resolution loop.
+func _queue_effect(label: String, before: Dictionary) -> void:
+	_pending_effects.append({"label": label, "before": before})
+
+
 func _on_nation_clicked(nation_id: String) -> void:
 	if _nation_panel == null:
 		return
@@ -329,6 +356,22 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	var entry := Budget.snapshot(_state)
 	entry.merge(Opinion.snapshot(_state))
 	_state.append_history(entry)
+
+	# The stamped entry (year/month added), so movements_between() reads the
+	# same "now" for approval's poll-noise lookup that the rest of the UI does.
+	var dated_entry := entry.duplicate(true)
+	dated_entry["year"] = year
+	dated_entry["month"] = month
+	for pending in _pending_effects:
+		_state.recent_effects.push_front({
+			"label": pending["label"],
+			"year": year,
+			"month": month,
+			"movements": Trends.movements_between(pending["before"], dated_entry),
+		})
+	_pending_effects.clear()
+	while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
+		_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
 
 	if _overview_panel != null:
 		_overview_panel.mark_dirty()

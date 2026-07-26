@@ -14,6 +14,7 @@ extends PanelContainer
 
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -50,7 +51,10 @@ const FIGURE_ROWS := [
 	["proj_debt", "Debt ratio, in 24 months"],
 ]
 
-signal committed
+## Carries the state Trends.snapshot_now() took the instant before Budget.commit()
+## ran -- U4's decision-effects baseline. Taken here, not in main.gd, because by
+## the time main.gd hears this signal the commit has already happened.
+signal committed(before: Dictionary)
 
 var _state
 var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
@@ -224,9 +228,10 @@ func _on_revert() -> void:
 
 
 func _on_commit() -> void:
+	var before := Trends.snapshot_now(_state)
 	Budget.commit(_state, _pending)
 	_on_revert()
-	committed.emit()
+	committed.emit(before)
 
 
 func _on_lever_changed(value: float, key: String) -> void:

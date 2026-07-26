@@ -31,6 +31,7 @@ const SENTINEL_NUMBER := -987654.321
 const NOT_COPIED := {
 	"history": "a projection has no past",
 	"errors": "new-game diagnostics, meaningless on a copy",
+	"recent_effects": "a projection has no past, same reasoning as history",
 }
 
 var _failures: Array[String] = []
