@@ -48,6 +48,7 @@ One track at a time per session. Interleaved, not parallel.
 | U1 | Shell | Main menu, settings, credits, pause menu, keyboard navigation |
 | X1 | Fixes | Atomic save writes; banned-names check green, closing the last MVP box |
 | U2 | Shell | Dashboard: persistent top bar, left tab rail, seven panels docked, map as a tab |
+| U3 | UI | Overview and Economy rebuilt as hierarchies, one code-built theme, `Trends` over `history` |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -57,8 +58,7 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **U3** | UI | Tab content and hierarchy | U2 |
-| **U4** | UI | Decision deltas | U2 |
+| **U4** | UI | Decision deltas | U2, U3 |
 | **V1.1b** | Sim | Party discipline and rebellions | V1.1a |
 | **V1.1c** | Sim | Dissolution and snap elections | V1.1a, V1.1b |
 | **V1.1d** | Sim | Cabinet and ministers | V1.1a |
@@ -70,22 +70,6 @@ The U-track goes first because every system session currently ends by bolting on
 more overlay and one more keybind onto a scheme that is already at its limit.
 Doing the shell now makes V1.1b–e cheaper, not more expensive.
 
-### U3 — Tab content and hierarchy
-
-**Goal:** density with hierarchy, not a wall of numbers.
-
-**Scope:** per-tab content pass. The Overview tab is the hierarchy answer: not
-every figure, but government standing, months to the next election, the two
-highest-salience issues with their satisfaction, the worst-trending figure, and
-recent deltas. A theme resource, so panel styling stops being a `StyleBoxFlat`
-built by hand in two places.
-
-**Done when:**
-- Overview answers "what matters most right now" without the player opening
-  another tab.
-- No tab is a flat list of every field its system owns.
-- Panel styling comes from one theme, not from per-panel overrides.
-
 ### U4 — Decision deltas
 
 **Goal:** you can tell what your last decision actually did.
@@ -93,7 +77,8 @@ built by hand in two places.
 **Scope:** committing a budget change or passing a law surfaces its effect
 immediately — `approval −3%, deficit +€2B` — and appends to a recent-effects list
 on Overview. Cheap, because `Budget.project()` and `GameState.history[]` already
-compute both sides of the comparison.
+compute both sides of the comparison, and U3's `src/ui/trends.gd` already reads
+the second of those.
 
 **Done when:**
 - Every player command produces a visible delta within one tick of committing it.
@@ -123,7 +108,6 @@ is already made, which is most sessions once the docs are written.
 
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
-| U3 Tab content | **Light** | Opus 5 | Medium | "What matters most right now" is a design judgement with no obviously right answer; the rest is layout. |
 | U4 Decision deltas | **No** | Sonnet 5 | Low | Small and fully specified. The numbers already exist on both sides. |
 | V1.1b Party discipline | **Yes** | Opus 5 | High | A model decision coupled to the existing coalition arithmetic, with no obviously right answer — the S5 class. |
 | V1.1c Dissolution | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | Reads the schedule schema [[electoral-systems]] already settled; the gamble's payoff curve is the real decision. |
@@ -139,7 +123,9 @@ changes ripple.
 > model choice is minutes; the cost of grinding is a session.
 
 > [!note] The effort column has been wrong before, in one direction
-> S7 was written High → Low and built at Medium. The tell each time is the same:
+> U3 is the counterexample: counted at plan time, Medium held. The count is the
+> discipline, not the correction. S7 was written High → Low and built at Medium.
+> The tell each time is the same:
 > the estimate counted the headline artefact (fifteen law templates) and not the
 > wiring around it (vote resolution, four effect channels, a third UI surface,
 > two tests). When in doubt, count the surfaces the session has to touch, not the

@@ -1,16 +1,60 @@
 extends PanelContainer
 
+## The Overview tab -- U3. Rewritten from the U2 placeholder, which was six
+## unranked lines re-hosted from the old HUD.
+##
+## This tab answers one question -- "what matters most right now" -- and it is
+## the default tab, so it is the first thing a player reads. That makes ranking
+## the whole design: one lead sentence saying the single most pressing thing,
+## then four columns each answering a different question, and deliberately no
+## GDP, population, sector output or debt level. Those are one click away on
+## Economy and none of them is something the player acts on this month.
+##
+## Reads state and never writes it (engine-decision.md Rule 2). Government's
+## censure resolution is called as a probe: resolve_censure() is pure, and
+## government_panel.gd already reads it the same way.
+
+const Government = preload("res://src/sim/government.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
+const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
-## Overview tab -- U2. A thin re-host of the old HUD's date/government/election
-## lines, not new design; U3 owns the "what matters most" answer (ROADMAP.md).
-## Same shape as nation_panel.gd: setup(), mark_dirty(), a _process guard, and
-## _add_line() into a VBoxContainer rebuilt each refresh.
+const MONTH_NAMES: Array[String] = [
+	"January", "February", "March", "April", "May", "June",
+	"July", "August", "September", "October", "November", "December",
+]
+
+## An election closer than this is the story, whatever else is happening.
+const ELECTION_URGENT_MONTHS := 6
+
+## Two issues, not four. Society shows the full ranking; the point here is that
+## the player leaves with the two they could not afford to have missed.
+const TOP_ISSUE_COUNT := 2
+
+## Satisfaction is a [-1, +1] score. Anything inside this band reads as neither
+## pleased nor angry, and is shown as such rather than as a number the player has
+## no scale for.
+const SATISFACTION_BAND := 0.15
+
+## Which watched figure the electorate would blame on which issue, used only to
+## decide whether the lead sentence can name an issue alongside the movement.
+## Approval is deliberately absent: falling approval IS the electorate, so
+## "approval is down and approval is what people care about" says nothing.
+const ISSUE_FOR_FIGURE := {
+	"unemployment_pct": "jobs",
+	"growth_annual_pct": "growth",
+	"deficit_pct_gdp": "public_finances",
+	"debt_to_gdp_pct": "public_finances",
+}
 
 var _state
+var _loader
 var _title: Label
-var _body: VBoxContainer
+var _lead: Label
+var _columns := {}   # id -> VBoxContainer holding that column's rebuilt body
 var _dirty := true
 
 
@@ -21,20 +65,60 @@ func _ready() -> void:
 	add_child(margin)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
+	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
 	_title = Label.new()
 	_title.text = "OVERVIEW"
+	_title.theme_type_variation = UiTheme.HEADING
 	root.add_child(_title)
 
-	_body = VBoxContainer.new()
-	_body.add_theme_constant_override("separation", 4)
-	root.add_child(_body)
+	_lead = Label.new()
+	_lead.theme_type_variation = UiTheme.LEAD
+	_lead.autowrap_mode = TextServer.AUTOWRAP_WORD
+	root.add_child(_lead)
+
+	root.add_child(HSeparator.new())
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 28)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(row)
+
+	for spec in [
+		["government", "GOVERNMENT"],
+		["election", "NEXT ELECTION"],
+		["issues", "WHAT THE COUNTRY WANTS"],
+		["moving", "MOVING, LAST %d MONTHS" % Trends.TREND_MONTHS],
+	]:
+		row.add_child(_build_column(spec[0], spec[1]))
 
 
-func setup(state) -> void:
+func _build_column(id: String, heading: String) -> Control:
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.size_flags_vertical = Control.SIZE_FILL
+	col.add_theme_constant_override("separation", 6)
+
+	var label := Label.new()
+	label.text = heading
+	label.theme_type_variation = UiTheme.HEADING
+	col.add_child(label)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 3)
+	col.add_child(body)
+	_columns[id] = body
+
+	return col
+
+
+## Takes the loader as well as the state, the same shape government_panel.gd
+## uses: the censure probe needs the nation's party list, which lives in data
+## rather than on the nation state.
+func setup(state, loader) -> void:
 	_state = state
+	_loader = loader
 	_dirty = true
 
 
@@ -51,31 +135,260 @@ func _process(_delta: float) -> void:
 
 func _refresh() -> void:
 	var ns = _state.player()
+	if ns == null:
+		return
 
-	_title.text = "OVERVIEW — %s" % ns.id
+	var nation = _loader.nations.get(ns.id) if _loader != null else null
+	_title.text = "OVERVIEW — %s" % (nation.nation_name if nation != null else ns.id)
 
-	for child in _body.get_children():
-		child.queue_free()
+	for body in _columns.values():
+		for child in body.get_children():
+			child.queue_free()
 
-	var standing := "cohabitation" if ns.is_cohabitation else ("minority" if ns.is_minority else "majority")
-	_add_line("Government: %d/%d seats (%s)" % [ns.coalition_seats, ns.assembly_seats, standing])
-	_add_line("Term %d of %d months, next election %d/%d" % [
-		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
+	var censure := _censure_probe(ns)
+	var months_to_election := Trends.months_until(_state, int(ns.next_election_year), int(ns.next_election_month))
+	var satisfaction := Opinion.issue_satisfaction(ns)
+	var top := Opinion.top_issues(ns, TOP_ISSUE_COUNT)
+	var movements := Trends.movements(_state)
+	var worst := Trends.worst(_state)
+
+	_lead.text = _lead_text(ns, censure, months_to_election, top, worst)
+
+	_fill_government(ns, censure)
+	_fill_election(ns, months_to_election)
+	_fill_issues(top, satisfaction)
+	_fill_moving(movements, worst)
+
+
+## What a censure motion would do today, at ordinary hostility rather than the
+## hostility a forced bill provokes -- the Article 49.3 gamble is the Politics
+## tab's subject, and this line is about whether the government is standing.
+## {} where the nation has no censure procedure at all.
+func _censure_probe(ns) -> Dictionary:
+	if ns.censure_rule == "none" or _loader == null:
+		return {}
+	return Government.resolve_censure(ns, _loader.parties.get(ns.id, []), false)
+
+
+# --- the lead sentence ------------------------------------------------------
+
+## A deterministic ladder, ordered by how irreversible the thing is: losing the
+## government, then losing the election, then losing ground. Deterministic
+## because a lead line that changed for reasons the player cannot reconstruct is
+## worse than no lead line.
+func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Dictionary) -> String:
+	if not censure.is_empty() and bool(censure["carried"]):
+		return "The assembly would bring this government down today — %d of the %d seats a censure motion needs." % [
+			int(censure["for_seats"]), int(censure["threshold"])
+		]
+
+	if months <= ELECTION_URGENT_MONTHS:
+		var approval := _polled_approval(ns)
+		var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
+		if is_nan(change):
+			return "Election %s. You are polling %.0f%%." % [_when(months), approval]
+		return "Election %s. You are polling %.0f%%, %s since %s." % [
+			_when(months), approval, _moved(change), _month_name_ago(Trends.TREND_MONTHS)
+		]
+
+	if not worst.is_empty():
+		var sentence := "%s is %s since %s." % [
+			String(worst["label"]), _moved(float(worst["change"])), _month_name_ago(Trends.TREND_MONTHS)
+		]
+		var issue: String = ISSUE_FOR_FIGURE.get(worst["key"], "")
+		if issue != "" and not top.is_empty() and top[0][0] == issue:
+			sentence += " It is also what the country cares about most."
+		return sentence
+
+	if _state.history.is_empty():
+		return "%s, %d months into a %d-month term. Nothing to compare against yet." % [
+			_standing_sentence(ns), int(ns.months_in_term), int(ns.term_months)
+		]
+	return "%s, and nothing is moving sharply. Election %s." % [
+		_standing_sentence(ns), _when(months)
+	]
+
+
+# --- the four columns -------------------------------------------------------
+
+func _fill_government(ns, censure: Dictionary) -> void:
+	_figure("government", "%d / %d" % [int(ns.coalition_seats), int(ns.assembly_seats)], "seats held")
+	_caption("government", "%s — a majority needs more than %d." % [
+		_standing_sentence(ns), Government.majority_seats(ns)
 	])
-	_add_line("")
-	# The polled figure, not the true one -- matches top_bar.gd and the HUD it
-	# replaces; this tab must not leak what the polling panel is deliberately
-	# blurring.
-	var poll := PollNoise.displayed(
-		PollNoise.poll_id(_state.year, _state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct
-	)
-	_add_line("Approval: %.0f%% (poll)" % poll)
-	_add_line("Deficit: %+.1f%% of GDP" % -ns.deficit_pct_gdp)
-	_add_line("Unemployment: %.1f%%" % ns.unemployment_pct)
+
+	if censure.is_empty():
+		_caption("government", "No censure procedure.")
+	elif bool(censure["carried"]):
+		_note("government", "A censure motion would carry: %d of %d." % [
+			int(censure["for_seats"]), int(censure["threshold"])
+		], UiTheme.BAD_TEXT)
+	else:
+		_note("government", "A censure motion would fail: %d of %d." % [
+			int(censure["for_seats"]), int(censure["threshold"])
+		], UiTheme.GOOD_TEXT)
+
+	# Only meaningful where the constitution has it at all, so nations without
+	# presidential appointment say nothing rather than saying "unavailable".
+	if ns.formation_method == "presidential_appointment":
+		if Government.can_force(ns):
+			_caption("government", "Article 49.3 available.")
+		else:
+			_caption("government", "Article 49.3 in %s." % Trends.months_text(int(ns.force_cooldown_months)))
 
 
-func _add_line(text: String) -> void:
+func _fill_election(ns, months: int) -> void:
+	_figure("election", Trends.months_text(months), "until the vote")
+	_caption("election", "%s %d." % [
+		MONTH_NAMES[int(ns.next_election_month) - 1], int(ns.next_election_year)
+	])
+	# No "month N of M in this term" line. ns.term_months is the nation's nominal
+	# term, while next_election_* comes from the real electoral calendar, and on a
+	# fresh French game those read "month 0 of 60" beside "41 months until the
+	# vote" -- two true figures that look like a contradiction on the one tab
+	# whose job is to be unambiguous. Which of the two is wrong is a simulation
+	# question; see docs/decision-log.md's U3 entry.
+	var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
+	_caption("election", "Polling %.0f%% (%s)." % [_polled_approval(ns), Trends.change_text(change)])
+
+
+func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
+	if top.is_empty():
+		_caption("issues", "—")
+		return
+	for entry in top:
+		var issue: String = entry[0]
+		var sat: float = float(satisfaction.get(issue, 0.0))
+		_figure("issues", K.ISSUE_LABEL.get(issue, issue), "%.0f%% of what people weigh" % (float(entry[1]) * 100.0))
+		_note("issues", _satisfaction_word(sat), _satisfaction_tone(sat))
+
+
+func _fill_moving(movements: Array, worst: Dictionary) -> void:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	_columns["moving"].add_child(grid)
+
+	for row in movements:
+		var name_label := Label.new()
+		name_label.text = String(row["label"])
+		name_label.theme_type_variation = UiTheme.CAPTION
+		grid.add_child(name_label)
+
+		var change: float = float(row["change"])
+		var value := Label.new()
+		value.text = Trends.change_text(change)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not is_nan(row["severity"]):
+			value.theme_type_variation = UiTheme.BAD_TEXT if float(row["severity"]) > 0.0 else UiTheme.GOOD_TEXT
+		grid.add_child(value)
+
+	if worst.is_empty():
+		_caption("moving", "Nothing has moved much.")
+	else:
+		_caption("moving", "%s is the one to watch." % String(worst["label"]))
+
+
+# --- small builders ---------------------------------------------------------
+
+## A column's one big number, with its caption underneath rather than above:
+## the eye lands on the figure first and then finds out what it is, which is the
+## order that makes a column scannable.
+func _figure(column: String, value: String, caption: String) -> void:
+	var label := Label.new()
+	label.text = value
+	label.theme_type_variation = UiTheme.FIGURE
+	_columns[column].add_child(label)
+
+	var sub := Label.new()
+	sub.text = caption
+	sub.theme_type_variation = UiTheme.FIGURE_LABEL
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_columns[column].add_child(sub)
+
+
+func _caption(column: String, text: String) -> void:
 	var label := Label.new()
 	label.text = text
+	label.theme_type_variation = UiTheme.CAPTION
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_body.add_child(label)
+	_columns[column].add_child(label)
+
+
+## Three tones, not two. An electorate that is neither pleased nor angry is not
+## bad news, and colouring it as if it were makes the tab read as a wall of
+## alarm on a turn where nothing is wrong.
+func _note(column: String, text: String, variation: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.theme_type_variation = variation
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_columns[column].add_child(label)
+
+
+# --- wording ----------------------------------------------------------------
+
+func _standing_word(ns) -> String:
+	if ns.is_cohabitation:
+		return "cohabitation"
+	if ns.is_minority:
+		return "minority government"
+	return "majority government"
+
+
+## Not String.capitalize(), which title-cases every word and would render
+## "minority government" as "Minority Government".
+func _standing_sentence(ns) -> String:
+	var word := _standing_word(ns)
+	return word.substr(0, 1).to_upper() + word.substr(1)
+
+
+func _satisfaction_word(sat: float) -> String:
+	if sat > SATISFACTION_BAND:
+		return "satisfied"
+	if sat < -SATISFACTION_BAND:
+		return "dissatisfied"
+	return "neither pleased nor angry"
+
+
+func _satisfaction_tone(sat: float) -> String:
+	if sat > SATISFACTION_BAND:
+		return UiTheme.GOOD_TEXT
+	if sat < -SATISFACTION_BAND:
+		return UiTheme.BAD_TEXT
+	return UiTheme.CAPTION
+
+
+func _when(months: int) -> String:
+	if months <= 0:
+		return "this month"
+	return "in %s" % Trends.months_text(months)
+
+
+## Approval is always the polled figure, never ns.overall_approval_pct. The true
+## number exists in state and the player is never shown it -- top_bar.gd and
+## polling_panel.gd hold the same line, and nation_panel.gd is the deliberate
+## exception because it covers rival nations rather than the player.
+func _polled_approval(ns) -> float:
+	return PollNoise.displayed(
+		PollNoise.poll_id(_state.year, _state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct
+	)
+
+
+func _moved(change: float) -> String:
+	if absf(change) < 0.05:
+		return "flat"
+	var direction := "up" if change > 0.0 else "down"
+	return "%s %.1f points" % [direction, absf(change)]
+
+
+func _month_name_ago(months: int) -> String:
+	var index: int = int(_state.month) - 1 - months
+	var year: int = int(_state.year)
+	while index < 0:
+		index += 12
+		year -= 1
+	if year == int(_state.year):
+		return MONTH_NAMES[index]
+	return "%s %d" % [MONTH_NAMES[index], year]

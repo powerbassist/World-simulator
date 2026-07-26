@@ -106,6 +106,46 @@ it. This is the second time the same pattern has produced a wrong effort call �
 worth watching for at every future plan-first session, not just re-deriving from
 scratch each time.
 
+## U3 — the surface count that held, and three calls it forced
+
+The roadmap wrote U3 as Light / Opus / Medium. Counted at plan time, as U2's
+entry says to: two panel rewrites, one theme at two scene roots plus a top-bar
+variation and a rail-button variation, four modals losing their hand-built
+`StyleBoxFlat`, a new trend helper reading `history`, and three test files.
+Roughly nine surfaces — the first plan-first session in three where the roadmap's
+own estimate survived the count. **Medium was right.** The counting is still
+worth doing; what it caught this time is that the estimate was fine.
+
+It only held because of a scope call taken with it. The done-when line reads "no
+tab is a flat list of every field its system owns", which literally means seven
+tabs. Politics, Society, Legislature and Budget already group their content under
+headings and grids — they are dense, not flat — so U3 rewrote **Overview and
+Economy only**. Reading the line as "all seven" would have tripled the surfaces
+and reproduced the S7 and U2 mistake from the opposite direction: not
+underestimating the wiring, but inflating the scope to match a sentence.
+
+Two smaller calls:
+
+- **The theme is `src/ui/ui_theme.gd`, not a `.tres`.** A Theme resource is the
+  engine-idiomatic answer and was rejected: it diffs badly, can only really be
+  edited through the editor, and the repo has no other `.tres`. Built in code it
+  matches the rule that panels are built in code, and a palette change is a
+  one-line diff. What actually mattered was not the format but that a `Theme`
+  assigned to a Control propagates to every descendant — that propagation is why
+  one assignment per scene root replaces three hand-built styles.
+- **Approval deltas are poll-against-poll.** `history` stores the true
+  `overall_approval_pct`, so the obvious six-month delta would have quietly
+  contradicted the polled figure printed beside it and leaked the real number's
+  movement. `Trends.approval_delta()` runs both ends through `PollNoise`, and
+  `tests/test_overview_panel.gd` advances months until the two round differently
+  before asserting, so the check cannot pass by coincidence.
+
+One thing found and **not** fixed, because it is a simulation question and U3
+changed no simulation: on a fresh French game `ns.term_months` says 60 while
+`next_election_*` is 41 months out, so an honest Overview would print "month 0 of
+60" next to "41 months until the vote". The term-progress line was dropped rather
+than shown. Whichever of the two figures is wrong belongs to a V1.1 session.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

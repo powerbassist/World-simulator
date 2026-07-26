@@ -23,6 +23,7 @@ const TopBar = preload("res://src/ui/top_bar.gd")
 const Dashboard = preload("res://src/ui/dashboard.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
 
@@ -59,6 +60,11 @@ var _paused_before_menu := false
 
 
 func _ready() -> void:
+	# Before anything is built. A Theme on this Control propagates to every
+	# descendant, which is what lets the docked tabs, the top bar and the four
+	# modal panels share one set of styles instead of three hand-built ones.
+	UiTheme.apply(self)
+
 	_loader = DataLoader.new()
 	_loader.load_all()
 
@@ -108,11 +114,11 @@ func _ready() -> void:
 
 	_overview_panel = OverviewPanel.new()
 	_dashboard.add_tab("overview", "Overview", _overview_panel)
-	_overview_panel.setup(_state)
+	_overview_panel.setup(_state, _loader)
 
 	_economy_panel = EconomyPanel.new()
 	_dashboard.add_tab("economy", "Economy", _economy_panel)
-	_economy_panel.setup(_state)
+	_economy_panel.setup(_state, _loader)
 
 	_budget_panel = BudgetPanel.new()
 	_dashboard.add_tab("budget", "Budget", _budget_panel)
@@ -211,6 +217,9 @@ func _ready() -> void:
 ## _ready() reads a minimum size of zero and lands in the corner. One container
 ## each, so hiding one panel does not move the other. Only the four modal
 ## panels use this now; the rest are docked by dashboard.gd.
+##
+## Placement only, since U3: the opaque background these panels need is the
+## theme's PanelContainer style, inherited from this scene's root.
 func _add_centered(panel: Control, blocking := false) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -218,13 +227,6 @@ func _add_centered(panel: Control, blocking := false) -> void:
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(panel)
 	add_child(holder)
-
-	# The default panel style is translucent, so the dashboard reads through a
-	# screen full of figures. Opaque until U3 gives the game an actual theme.
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.12, 0.13)
-	style.set_corner_radius_all(4)
-	panel.add_theme_stylebox_override("panel", style)
 
 
 ## The pause menu's *holder* is what is shown and hidden, not the panel. It is
@@ -389,8 +391,8 @@ func _on_load_requested(slot: String) -> void:
 	_clock.paused = true
 
 	_map_view.setup(_loader, _state)
-	_overview_panel.setup(_state)
-	_economy_panel.setup(_state)
+	_overview_panel.setup(_state, _loader)
+	_economy_panel.setup(_state, _loader)
 	_budget_panel.setup(_state)
 	_polling_panel.setup(_state)
 	_election_panel.setup(_state, _loader)

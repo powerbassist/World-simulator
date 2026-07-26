@@ -6,6 +6,8 @@ extends HBoxContainer
 ## file). The dock holds every tab's root control as a child and shows exactly
 ## one at a time; main.gd owns what each tab actually contains.
 
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
 signal tab_selected(id: String)
 
 const RAIL_WIDTH := 150
@@ -40,6 +42,9 @@ func add_tab(id: String, title: String, panel: Control) -> void:
 	button.toggle_mode = true
 	button.focus_mode = Control.FOCUS_ALL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	# Flat until selected, where an accent bar marks the open tab -- a rail of
+	# seven raised buttons reads as seven widgets rather than as one list.
+	button.theme_type_variation = UiTheme.RAIL_BUTTON
 	button.pressed.connect(func(): select_tab(id))
 	_rail.add_child(button)
 	_buttons[id] = button

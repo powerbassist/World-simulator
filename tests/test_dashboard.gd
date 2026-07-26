@@ -89,17 +89,22 @@ func _check_tab_content() -> void:
 	var dash = _main._dashboard
 	var ns = _main._state.player()
 
+	# Section headings rather than a single figure, since U3: what these two tabs
+	# have to keep is the hierarchy, and a regression to a flat list of every
+	# field would still contain any one figure the check named.
 	dash.select_tab("overview")
 	dash._panels["overview"]._process(0.0)
 	var overview_text := _collect_text(dash._panels["overview"])
-	if not overview_text.contains("OVERVIEW"):
-		_fail("overview tab does not render its heading: %s" % overview_text)
+	for heading in ["OVERVIEW", "GOVERNMENT", "NEXT ELECTION", "WHAT THE COUNTRY WANTS", "MOVING"]:
+		if not overview_text.contains(heading):
+			_fail("overview tab has no '%s' section: %s" % [heading, overview_text])
 
 	dash.select_tab("economy")
 	dash._panels["economy"]._process(0.0)
 	var economy_text := _collect_text(dash._panels["economy"])
-	if not economy_text.contains("GDP"):
-		_fail("economy tab does not render GDP: %s" % economy_text)
+	for heading in ["ECONOMY", "LABOUR", "PUBLIC FINANCES", "OUTPUT BY SECTOR"]:
+		if not economy_text.contains(heading):
+			_fail("economy tab has no '%s' section: %s" % [heading, economy_text])
 
 	dash.select_tab("budget")
 	dash._panels["budget"]._process(0.0)

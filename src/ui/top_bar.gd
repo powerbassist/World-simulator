@@ -2,6 +2,7 @@ extends PanelContainer
 
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Persistent top bar, replacing main.tscn's five-line HUD Label -- U2. Date and
 ## pause/speed on the left, the four headline figures the player is actually
@@ -30,15 +31,9 @@ var _figure_values := {}
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, 64)
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.12, 0.13)
-	style.set_corner_radius_all(0)
-	style.content_margin_left = 16
-	style.content_margin_right = 16
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
-	add_theme_stylebox_override("panel", style)
+	# Square corners and its own padding, because this one sits flush against the
+	# window edge; every other PanelContainer takes the theme's default.
+	theme_type_variation = UiTheme.TOP_BAR_PANEL
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
@@ -88,12 +83,12 @@ func _build_figure(key: String, title: String) -> Control:
 
 	var label := Label.new()
 	label.text = title
-	label.add_theme_font_size_override("font_size", 12)
+	label.theme_type_variation = UiTheme.FIGURE_LABEL
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	col.add_child(label)
 
 	var value := Label.new()
-	value.add_theme_font_size_override("font_size", 20)
+	value.theme_type_variation = UiTheme.FIGURE
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	col.add_child(value)
 	_figure_values[key] = value

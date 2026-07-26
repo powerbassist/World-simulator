@@ -24,6 +24,8 @@ tests=(
   tests/test_menu.gd
   tests/test_map_view.gd
   tests/test_dashboard.gd
+  tests/test_ui_theme.gd
+  tests/test_overview_panel.gd
   tests/test_save_load.gd
   tests/test_balance.gd
 )

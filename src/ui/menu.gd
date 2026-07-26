@@ -15,6 +15,7 @@ const SaveManager = preload("res://src/core/save_manager.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const CreditsPanel = preload("res://src/ui/credits_panel.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const GAME_SCENE := "res://src/ui/main.tscn"
 
@@ -31,6 +32,9 @@ var _focus_return: Control
 func _ready() -> void:
 	# First scene up, so this is where the saved display settings land.
 	SettingsPanel.apply_saved(get_window())
+	# Each scene root carries its own copy -- a Theme propagates down the tree,
+	# not across a change_scene_to_file().
+	UiTheme.apply(self)
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_build_background())
@@ -124,11 +128,6 @@ func _add_overlay(panel: Control) -> void:
 	holder.add_child(panel)
 	holder.hide()
 	add_child(holder)
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.12, 0.13)
-	style.set_corner_radius_all(4)
-	panel.add_theme_stylebox_override("panel", style)
 
 	panel.closed.connect(func(): _close(panel))
 

@@ -82,14 +82,20 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**U2 shipped** — persistent top bar and left tab rail; five of the old overlay
-panels are now docked tabs, plus two new thin ones (Overview, Economy), and the
-map is the Europe tab instead of a full-screen background. MVP and V1.1a
-(government formation, coalitions, censure, Article 49.3) are done.
+**U3 shipped** — Overview and Economy rebuilt as hierarchies (a lead sentence
+over labelled columns, not a field dump), `src/ui/trends.gd` turning
+`GameState.history` into six-month deltas, and one code-built theme in
+`src/ui/ui_theme.gd` assigned to each scene root, replacing the three hand-built
+`StyleBoxFlat` sites. MVP, V1.1a and U1–U3 are done.
 
-**Next: U3** — tab content and hierarchy. Overview answers "what matters most
-right now" instead of listing every figure; a theme resource replaces the
-per-panel `StyleBoxFlat` overrides. See [ROADMAP.md](ROADMAP.md).
+**Next: U4** — decision deltas. Committing a budget change or passing a law
+surfaces its effect immediately and appends to a recent-effects list on Overview.
+See [ROADMAP.md](ROADMAP.md).
+
+Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
+per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or
+`add_theme_font_size_override()` in a panel — `tests/test_ui_theme.gd` fails on
+it. Separation and margin constants stay at their call sites; they are layout.
 
 ## Workflow
 
