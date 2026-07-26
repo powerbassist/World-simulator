@@ -10,17 +10,43 @@
     "party": "renouveau_civique"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 577,
-    "chamber": "Assemblée nationale",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than June 2029 (2024 Assembly's 5-year term); Wikipedia 'Next French legislative election'",
-      "system": "two_round",
-      "next": { "year": 2029, "month": 6 },
-      "threshold_pct": 0.0
+    "legislative": {
+      "chamber": "Assemblée nationale",
+      "assembly_seats": 577,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than June 2029 (2024 Assembly's 5-year term); Wikipedia 'Next French legislative election'",
+        "system": "two_round",
+        "next": {
+          "year": 2029,
+          "month": 6
+        },
+        "threshold_pct": 0.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 81 }
+    "executive": {
+      "_source": "authored",
+      "_note": "First round 18 April 2027, run-off 2 May 2027; five-year term. This is the PLAYER's term and it is a different clock from the Assembly's -- france24.com 'France sets presidential election date', Wikipedia '2027 French presidential election'.",
+      "title": "President of the Republic",
+      "term_years": 5,
+      "next": {
+        "year": 2027,
+        "month": 5
+      }
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "President appoints the Prime Minister; there is no investiture vote. A motion de censure carries only with an absolute majority of the members (289 of 577) -- abstentions and absences count as against. Art. 49 of the 1958 Constitution; connexionfrance.com 'What is a motion de censure'.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Cécile Aumont"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 81
+    }
   },
   "fiscal": {
     "_source": "authored",

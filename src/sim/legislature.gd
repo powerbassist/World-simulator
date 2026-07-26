@@ -15,6 +15,7 @@ extends RefCounted
 const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Government = preload("res://src/sim/government.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -97,8 +98,15 @@ static func _read_field(ns, field: String) -> float:
 ## A single party's support for a law, in [-1, +1]. Gaussian falloff on
 ## ideological distance, same functional form elections.gd:vote_share() uses
 ## against SLOT_POSITION, with its own (tighter) sigma -- parties are
-## disciplined voting blocs, not fuzzy electorates. Plus a flat bonus for the
-## governing party voting for its own government's bill.
+## disciplined voting blocs, not fuzzy electorates. Plus a bonus for sitting in
+## the government whose bill this is.
+##
+## That bonus used to be a flat GOVERNMENT_BONUS for the single incumbent party.
+## It is now earned: government.gd scales it by the party's distance from the
+## coalition's agreed position and by how reliably that party delivers its
+## seats, so a partner dragged a long way from its own ideology is a less
+## dependable vote than the one that wrote the bill. Opposition still gets
+## nothing. See docs/government-model.md.
 static func support(ns, party, law) -> float:
 	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, {"economic": 0.0, "social": 0.0})
 	var d_econ: float = float(pos["economic"]) - float(law.position["economic"])
@@ -106,8 +114,7 @@ static func support(ns, party, law) -> float:
 	var dist: float = sqrt(d_econ * d_econ + d_social * d_social)
 
 	var spatial: float = 2.0 * exp(-pow(dist / LK.LAW_SIGMA, 2.0)) - 1.0
-	var bonus: float = LK.GOVERNMENT_BONUS if party.id == ns.incumbent_party_id else 0.0
-	return clampf(spatial + bonus, -1.0, 1.0)
+	return clampf(spatial + Government.coalition_bonus(ns, party), -1.0, 1.0)
 
 
 ## Vote share -> seats, resolved once against ns.seats_by_party. Does not

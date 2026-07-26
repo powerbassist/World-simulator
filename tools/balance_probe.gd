@@ -155,13 +155,35 @@ func _run(regime_name: String, pending: Dictionary) -> void:
 
 		var results := Elections.tick_month(state, loader)
 		for r in results:
-			if r["kind"] != "national":
+			# The verdict on the player is the EXECUTIVE election where one
+			# exists — France's presidency, May 2027 and every five years after.
+			# A legislative election reshapes the assembly and re-forms the
+			# government but cannot remove the player, so it is reported
+			# separately rather than scored as a win or a loss.
+			if r["kind"] == "national" and ns.has_executive:
+				elections.append("%d-%02d %s: legislative — incumbent %d/%d seats, government %d/%d %s" % [
+					r["year"], r["month"], regime_name,
+					r["incumbent_seats"], r["seats_total"],
+					ns.coalition_seats, ns.assembly_seats,
+					"COHABITATION" if ns.is_cohabitation else ("MINORITY" if ns.is_minority else "majority"),
+				])
 				continue
-			elections.append("%d-%02d %s: incumbent %.1f%% vote, %d/%d seats — %s" % [
-				r["year"], r["month"], regime_name,
-				r["incumbent_vote_share"] * 100.0, r["incumbent_seats"],
-				r["seats_total"], "HELD" if r["incumbent_largest"] else "LOST",
-			])
+			var verdict_kind := "executive" if ns.has_executive else "national"
+			if r["kind"] != verdict_kind:
+				continue
+			if r["kind"] == "executive":
+				# One office, no seats to report.
+				elections.append("%d-%02d %s: presidential — incumbent %.1f%% vote — %s" % [
+					r["year"], r["month"], regime_name,
+					r["incumbent_vote_share"] * 100.0,
+					"HELD" if r["incumbent_largest"] else "LOST",
+				])
+			else:
+				elections.append("%d-%02d %s: incumbent %.1f%% vote, %d/%d seats — %s" % [
+					r["year"], r["month"], regime_name,
+					r["incumbent_vote_share"] * 100.0, r["incumbent_seats"],
+					r["seats_total"], "HELD" if r["incumbent_largest"] else "LOST",
+				])
 			# What the result screen tells the player. The point of printing it
 			# here is that it must name the number the player actually moved.
 			for a in r["attribution"]:

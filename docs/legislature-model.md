@@ -59,13 +59,22 @@ argable against its name.
 ```
 dist(p, law)    = |SLOT_POSITION[p.ideology_slot] − law.position|      (2-D euclidean)
 spatial(p, law) = 2 · exp(−(dist / LAW_SIGMA)²) − 1                    → [−1, +1]
-support(p, law) = clampf(spatial + GOVERNMENT_BONUS · [p is incumbent], −1, +1)
+support(p, law) = clampf(spatial + coalition_bonus(p), −1, +1)
 ```
 
 | Constant | Value | Why |
 |---|---|---|
 | `LAW_SIGMA` | 0.6 | Tighter than [[election-model]]'s `AFFINITY_SIGMA` (0.8) — parties are disciplined voting blocs deciding on a specific bill, not a fuzzy electorate; a party a full axis-width from a law is close to indifferent rather than merely lukewarm. |
-| `GOVERNMENT_BONUS` | 0.35 | Added to a governing party's support for its own government's bill — party discipline, not ideology. The one non-spatial term in the model, a single constant rather than a table. |
+
+> [!note] Corrected in V1.1a: the government term used to be a flat constant
+> This read `+ GOVERNMENT_BONUS · [p is incumbent]`, a flat 0.35 for whichever
+> single party held `ns.incumbent_party_id`. A government is now a **coalition**,
+> so the bonus is earned rather than given: `government.gd:coalition_bonus()`
+> scales `COALITION_BONUS_MAX` by the party's distance from the coalition's
+> agreed position and by its authored `discipline`. Opposition still scores zero,
+> exactly as before. `GOVERNMENT_BONUS` is gone from
+> `legislature_constants.gd`; the argument for what replaced it is
+> [[government-model]].
 
 `spatial` is rescaled to `[−1, +1]` rather than `[0, 1]` the way
 [[election-model|vote-share affinity]] is, because a law has opponents, not
@@ -77,7 +86,10 @@ always gets *some* electoral coalition; a law vote does not work that way.
 ## Vote resolution
 
 Whole-party bloc voting: every seat a party holds votes the same way. Party
-discipline and rebellions are explicitly [[v1|V1.1]]'s job.
+discipline as a *mechanism* — rebellions, whipping, individual defection — is
+still [[v1|V1.1b]]'s job. [[v1|V1.1a]] added a `discipline` scalar per party,
+but it only scales the coalition bonus above; it does not yet split a party's
+seats across a vote.
 
 ```
 yes    = Σ seats_by_party[p]  where support(p, law) >  ABSTAIN_BAND
@@ -178,9 +190,9 @@ unpositioned `ideology_slot`.
 ## Constants vs content
 
 `src/sim/legislature_constants.gd` holds every tunable — `LAW_SIGMA`,
-`GOVERNMENT_BONUS`, `ABSTAIN_BAND`, the majority-threshold fractions, and every
-effect channel's clamp. Model parameters, one set forever, next to
-`economy_constants.gd`, `opinion_constants.gd` and `election_constants.gd` —
+`ABSTAIN_BAND`, the majority-threshold fractions, and every effect channel's
+clamp. Model parameters, one set forever, next to `economy_constants.gd`,
+`opinion_constants.gd`, `election_constants.gd` and `government_constants.gd` —
 not in `data/`, per [[engine-decision|Rule 1]].
 
 `FORECAST_UNCERTAIN_BAND` lives in `src/ui/law_panel.gd`, not here, for the

@@ -10,17 +10,32 @@
     "party": "alliance_nationale_suisse"
   },
   "government": {
-    "term_years": 4,
-    "assembly_seats": 200,
-    "chamber": "Nationalrat",
-    "election": {
-      "_source": "authored",
-      "_note": "Scheduled for 24 October 2027; Wikipedia '2027 Swiss federal election'. No national threshold.",
-      "system": "pr_national",
-      "next": { "year": 2027, "month": 10 },
-      "threshold_pct": 0.0
+    "legislative": {
+      "chamber": "Nationalrat",
+      "assembly_seats": 200,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Scheduled for 24 October 2027; Wikipedia '2027 Swiss federal election'. No national threshold.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 10
+        },
+        "threshold_pct": 0.0
+      }
     },
-    "eu": { "member": false }
+    "formation": {
+      "_source": "authored",
+      "_note": "The Federal Council is elected by the United Federal Assembly for a fixed four-year term under the power-sharing 'magic formula'. It does not depend on parliamentary confidence and cannot be removed by a no-confidence vote. swissinfo.ch 'The not so magical formula'.",
+      "method": "directorial",
+      "censure": "none",
+      "head_of_government_title": "President of the Confederation",
+      "head_of_government_name": "Reto Baumgartner"
+    },
+    "eu": {
+      "member": false
+    }
   },
   "fiscal": {
     "_source": "authored",

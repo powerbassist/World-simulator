@@ -1,10 +1,58 @@
 {
   "parties": [
-    { "id": "alliance_nationale_suisse", "name": "Alliance Nationale Suisse", "ideology_slot": "nationalist_right", "seat_share": 0.25 },
-    { "id": "parti_radical_liberal", "name": "Parti Radical Libéral", "ideology_slot": "liberal", "seat_share": 0.18 },
-    { "id": "union_ouvriere_helvetique", "name": "Union Ouvrière Helvétique", "ideology_slot": "social_democratic", "seat_share": 0.17 },
-    { "id": "centre_federal", "name": "Centre Fédéral", "ideology_slot": "centrist", "seat_share": 0.15 },
-    { "id": "verts_helvetiques", "name": "Verts Helvétiques", "ideology_slot": "green", "seat_share": 0.13 },
-    { "id": "ligue_populaire", "name": "Ligue Populaire", "ideology_slot": "left_populist", "seat_share": 0.12 }
+    {
+      "id": "alliance_nationale_suisse",
+      "name": "Alliance Nationale Suisse",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.25,
+      "leader_name": "Reto Baumgartner",
+      "discipline": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "parti_radical_liberal",
+      "name": "Parti Radical Libéral",
+      "ideology_slot": "liberal",
+      "seat_share": 0.18,
+      "leader_name": "Céline Perrenoud",
+      "discipline": 0.85,
+      "excluded_partners": []
+    },
+    {
+      "id": "union_ouvriere_helvetique",
+      "name": "Union Ouvrière Helvétique",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.17,
+      "leader_name": "Markus Zbinden",
+      "discipline": 0.85,
+      "excluded_partners": []
+    },
+    {
+      "id": "centre_federal",
+      "name": "Centre Fédéral",
+      "ideology_slot": "centrist",
+      "seat_share": 0.15,
+      "leader_name": "Andrea Bissig",
+      "discipline": 0.85,
+      "excluded_partners": []
+    },
+    {
+      "id": "verts_helvetiques",
+      "name": "Verts Helvétiques",
+      "ideology_slot": "green",
+      "seat_share": 0.13,
+      "leader_name": "Livia Frei",
+      "discipline": 0.8,
+      "excluded_partners": []
+    },
+    {
+      "id": "ligue_populaire",
+      "name": "Ligue Populaire",
+      "ideology_slot": "left_populist",
+      "seat_share": 0.12,
+      "leader_name": "Fabio Bernasconi",
+      "discipline": 0.65,
+      "excluded_partners": []
+    }
   ]
 }

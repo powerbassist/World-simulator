@@ -10,17 +10,33 @@
     "party": "fratelli_della_nazione"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 400,
-    "chamber": "Camera dei Deputati",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than 22 December 2027; Wikipedia 'Next Italian general election'. Rosatellum's ~61% PR / ~37% single-member split reduced to 'parallel' — see docs/electoral-systems.md.",
-      "system": "parallel",
-      "next": { "year": 2027, "month": 12 },
-      "threshold_pct": 3.0
+    "legislative": {
+      "chamber": "Camera dei Deputati",
+      "assembly_seats": 400,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than 22 December 2027; Wikipedia 'Next Italian general election'. Rosatellum's ~61% PR / ~37% single-member split reduced to 'parallel' — see docs/electoral-systems.md.",
+        "system": "parallel",
+        "next": {
+          "year": 2027,
+          "month": 12
+        },
+        "threshold_pct": 3.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 76 }
+    "formation": {
+      "_source": "authored",
+      "_note": "PM appointed by the President of the Republic, then must win a confidence vote in both chambers. No confidence is simple -- no successor required. Art. 94 of the Constitution.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "President of the Council of Ministers",
+      "head_of_government_name": "Lorenzo Bagnasco"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 76
+    }
   },
   "fiscal": {
     "_source": "authored",

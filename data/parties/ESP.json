@@ -1,9 +1,53 @@
 {
   "parties": [
-    { "id": "union_popular", "name": "Unión Popular", "ideology_slot": "centre_right", "seat_share": 0.28 },
-    { "id": "frente_progresista", "name": "Frente Progresista", "ideology_slot": "social_democratic", "seat_share": 0.30 },
-    { "id": "voz_nacional", "name": "Voz Nacional", "ideology_slot": "nationalist_right", "seat_share": 0.14 },
-    { "id": "convergencia_ciudadana", "name": "Convergencia Ciudadana", "ideology_slot": "left_populist", "seat_share": 0.16 },
-    { "id": "verdes_iberia", "name": "Verdes Iberia", "ideology_slot": "green", "seat_share": 0.12 }
+    {
+      "id": "union_popular",
+      "name": "Unión Popular",
+      "ideology_slot": "centre_right",
+      "seat_share": 0.28,
+      "leader_name": "Álvaro Bustamante",
+      "discipline": 0.85,
+      "excluded_partners": []
+    },
+    {
+      "id": "frente_progresista",
+      "name": "Frente Progresista",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.3,
+      "leader_name": "Mateo Larrañaga",
+      "discipline": 0.85,
+      "excluded_partners": [
+        "voz_nacional"
+      ]
+    },
+    {
+      "id": "voz_nacional",
+      "name": "Voz Nacional",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.14,
+      "leader_name": "Rocío Sanchís",
+      "discipline": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "convergencia_ciudadana",
+      "name": "Convergencia Ciudadana",
+      "ideology_slot": "left_populist",
+      "seat_share": 0.16,
+      "leader_name": "Iker Mendiola",
+      "discipline": 0.65,
+      "excluded_partners": []
+    },
+    {
+      "id": "verdes_iberia",
+      "name": "Verdes Iberia",
+      "ideology_slot": "green",
+      "seat_share": 0.12,
+      "leader_name": "Nuria Palomares",
+      "discipline": 0.8,
+      "excluded_partners": [
+        "voz_nacional"
+      ]
+    }
   ]
 }

@@ -10,17 +10,33 @@
     "party": "liberaal_verbond"
   },
   "government": {
-    "term_years": 4,
-    "assembly_seats": 150,
-    "chamber": "Tweede Kamer",
-    "election": {
-      "_source": "authored",
-      "_note": "The 29 October 2025 election is already in the past at game start (Jan 2026); next scheduled for May 2030 (moved off the usual 4-year mark to avoid clashing with March 2030 municipal elections) — Wikipedia 'Next Dutch general election'",
-      "system": "pr_national",
-      "next": { "year": 2030, "month": 5 },
-      "threshold_pct": 0.67
+    "legislative": {
+      "chamber": "Tweede Kamer",
+      "assembly_seats": 150,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "The 29 October 2025 election is already in the past at game start (Jan 2026); next scheduled for May 2030 (moved off the usual 4-year mark to avoid clashing with March 2030 municipal elections) — Wikipedia 'Next Dutch general election'",
+        "system": "pr_national",
+        "next": {
+          "year": 2030,
+          "month": 5
+        },
+        "threshold_pct": 0.67
+      }
     },
-    "eu": { "member": true, "ep_seats": 31 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Formation runs through an informateur and formateur; there is no codified investiture vote. The confidence rule (vertrouwensregel) is constitutional convention, not statute, and a motion carries on a simple majority.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Willem Terborg"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 31
+    }
   },
   "fiscal": {
     "_source": "authored",

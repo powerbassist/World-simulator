@@ -15,6 +15,7 @@ const LawPanel = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
+const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 
@@ -36,6 +37,7 @@ var _election_panel
 var _law_panel
 var _map_view
 var _nation_panel
+var _government_panel
 var _save_load_panel
 
 
@@ -104,6 +106,11 @@ func _ready() -> void:
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide()
 
+	_government_panel = GovernmentPanel.new()
+	_add_centered(_government_panel)
+	_government_panel.setup(_state, _loader)
+	_government_panel.hide()
+
 	_save_load_panel = SaveLoadPanel.new()
 	_add_centered(_save_load_panel)
 	_save_load_panel.hide()
@@ -165,6 +172,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_law_panel.visible = not _law_panel.visible
 				if _law_panel.visible:
 					_law_panel.mark_dirty()
+		KEY_G:
+			if _government_panel != null:
+				_government_panel.visible = not _government_panel.visible
+				if _government_panel.visible:
+					_government_panel.mark_dirty()
 		KEY_S:
 			if _save_load_panel != null:
 				_save_load_panel.visible = not _save_load_panel.visible
@@ -208,6 +220,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_law_panel.mark_dirty()
 	if _nation_panel != null:
 		_nation_panel.mark_dirty()
+	if _government_panel != null:
+		_government_panel.mark_dirty()
 
 	# Cooldowns count down before the election check, same ordering reasoning as
 	# everything else in this handler: state settles top to bottom, elections
@@ -260,11 +274,13 @@ func _on_load_requested(slot: String) -> void:
 	_election_panel.setup(_state, _loader)
 	_law_panel.setup(_state, _loader)
 	_nation_panel.setup(_state, _loader)
+	_government_panel.setup(_state, _loader)
 
 	_budget_panel.mark_dirty()
 	_polling_panel.mark_dirty()
 	_law_panel.mark_dirty()
 	_nation_panel.mark_dirty()
+	_government_panel.mark_dirty()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
@@ -291,6 +307,12 @@ func _update_hud() -> void:
 			PollingPanel.HEADLINE_KEY,
 			ns.overall_approval_pct
 		)
-		line += "\napproval %.0f%% (poll)   [B] budget   [P] polling   [L] legislature" % poll
+		line += "\napproval %.0f%% (poll)" % poll
+
+		# The seat count is now the other number the player is playing against:
+		# a government below the majority line governs on sufferance.
+		var standing := "cohabitation" if ns.is_cohabitation else ("minority" if ns.is_minority else "majority")
+		line += "   government %d/%d (%s)" % [ns.coalition_seats, ns.assembly_seats, standing]
+		line += "\n[B] budget   [P] polling   [L] legislature   [G] government"
 
 	_hud.text = line

@@ -269,6 +269,30 @@ Deliberately coarse. These are not broken into sessions until the MVP is done, b
 | Block | Rough content |
 |---|---|
 | **V1.1 Political depth** | Coalitions, party discipline, confidence votes, dissolution, cabinet, upper house, judiciary, referendums |
+
+> [!note] V1.1 decomposed into six sub-projects during its plan
+> The eight bullets above are not one session and not independent. Dependency
+> order, which is **not** the order [[v1]] lists them in:
+>
+> | # | Sub-project | Depends on | State |
+> |---|---|---|---|
+> | **a** | Government formation, coalitions, censure, 49.3 | — | Session 1 **done**; session 2 (censure, 49.3) next |
+> | **b** | Party discipline and rebellions | a | |
+> | **c** | Dissolution and snap elections | a, b | |
+> | **d** | Cabinet and ministers | a | |
+> | **e** | Upper house and judiciary | — | Independent of a–d |
+> | **f** | Referendums | — | Deferred toward V1.7, which brings campaigns |
+>
+> (a) went first because it is the schema decision — government representation
+> and party data are read by b, c and d, and by the save format — the same
+> argument S1, S6 and S7 got. Full model in [[government-model]].
+>
+> Two findings from planning (a) that are now written down rather than
+> rediscovered: **the player's term was modelled as the Assembly's**, which made
+> the first playable term 41 months instead of 16 and is corrected in
+> [[electoral-systems]]; and **a France-honest formation model necessarily
+> contains the motion de censure**, because there is no investiture vote in
+> France, so (a) and half of (c) could not be separated.
 | **V1.2 Political systems** | System templates as data, constitutional amendment, monarchy ↔ republic transitions, additional playable nations |
 | **V1.3 Diplomacy and trade** | Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy |
 | **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets |

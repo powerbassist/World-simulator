@@ -10,17 +10,33 @@
     "party": "union_chretienne"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 60,
-    "chamber": "Chambre des Députés",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than 8 October 2028; Wikipedia 'Next Luxembourg general election'. Hagenbach-Bischoff reduced to largest-remainder PR — see docs/electoral-systems.md.",
-      "system": "pr_national",
-      "next": { "year": 2028, "month": 10 },
-      "threshold_pct": 0.0
+    "legislative": {
+      "chamber": "Chambre des Députés",
+      "assembly_seats": 60,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than 8 October 2028; Wikipedia 'Next Luxembourg general election'. Hagenbach-Bischoff reduced to largest-remainder PR — see docs/electoral-systems.md.",
+        "system": "pr_national",
+        "next": {
+          "year": 2028,
+          "month": 10
+        },
+        "threshold_pct": 0.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 6 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Coalition government appointed by the Grand Duke; requires the confidence of the Chambre des Deputes on a simple majority.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Marc Everling"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 6
+    }
   },
   "fiscal": {
     "_source": "authored",

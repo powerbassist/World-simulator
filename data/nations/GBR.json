@@ -10,17 +10,32 @@
     "party": "progress_alliance"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 650,
-    "chamber": "House of Commons",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than 15 August 2029 (Dissolution and Calling of Parliament Act 2022); expected polling day 1 May 2029 — Wikipedia 'Next United Kingdom general election'",
-      "system": "fptp",
-      "next": { "year": 2029, "month": 5 },
-      "threshold_pct": 0.0
+    "legislative": {
+      "chamber": "House of Commons",
+      "assembly_seats": 650,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than 15 August 2029 (Dissolution and Calling of Parliament Act 2022); expected polling day 1 May 2029 — Wikipedia 'Next United Kingdom general election'",
+        "system": "fptp",
+        "next": {
+          "year": 2029,
+          "month": 5
+        },
+        "threshold_pct": 0.0
+      }
     },
-    "eu": { "member": false }
+    "formation": {
+      "_source": "authored",
+      "_note": "The largest party forms a government; there is no investiture vote. A no confidence motion carries on a simple majority of members present and voting.",
+      "method": "largest_party",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Edward Marchbanks"
+    },
+    "eu": {
+      "member": false
+    }
   },
   "fiscal": {
     "_source": "authored",

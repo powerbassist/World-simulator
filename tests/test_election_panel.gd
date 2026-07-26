@@ -9,13 +9,16 @@ extends SceneTree
 ## frame at a time because a Control outside the scene tree has not run
 ## _ready() — see docs/engine-decision.md.
 ##
-## Runs to June 2029, France's first scheduled election (and, the same month,
-## the European Parliament's) — the double-election case is the one most likely
-## to break a panel written for a single result.
+## France runs two clocks, so this drives past two panels. First the
+## presidential election of May 2027, which is the one that can end the game.
+## Then June 2029, when the legislative and European Parliament elections land
+## in the same month — the double-election case is the one most likely to break
+## a panel written for a single result.
 
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
-const TARGET_MONTHS := 41  # January 2026 to June 2029, FRA's authored schedule.
+const EXEC_MONTHS := 16       # January 2026 to May 2027, FRA's presidential term.
+const TARGET_MONTHS := 41     # January 2026 to June 2029, the Assembly's term.
 
 var _failures: Array[String] = []
 var _main
@@ -43,15 +46,30 @@ func _run() -> void:
 		return
 
 	var clock: Node = _main.get_node("Clock")
-	for _month in range(TARGET_MONTHS):
-		for _d in range(31):
-			clock.advance_one_day()
-			if clock.paused:
-				break
-
 	var ns = _main._state.player()
+
+	_advance(clock, EXEC_MONTHS)
+
+	# The presidential election must have paused the clock and opened the panel.
+	if not clock.paused:
+		_fail("the clock did not pause for the presidential election (clock at %d-%d)" % [clock.year, clock.month])
+		return
+	var exec_text := _collect_text(_main._election_panel)
+	if not exec_text.contains("Presidential election"):
+		_fail("the May 2027 panel is not labelled a presidential election: %s" % exec_text)
+	if not ns.in_government:
+		_fail("the incumbent lost the 2027 presidential election, so the rest of this test cannot run")
+		return
+	if not exec_text.contains("RE-ELECTED"):
+		_fail("won the presidency but the panel does not say so: %s" % exec_text)
+
+	# Dismiss it the way the Continue button does, and run on to June 2029.
+	_main._election_panel.hide()
+	clock.paused = false
+	_advance(clock, TARGET_MONTHS - EXEC_MONTHS)
+
 	if ns.last_election.is_empty():
-		_fail("no national election had resolved by month %d (clock at %d-%d)" % [TARGET_MONTHS, clock.year, clock.month])
+		_fail("no legislative election had resolved by month %d (clock at %d-%d)" % [TARGET_MONTHS, clock.year, clock.month])
 		return
 	if ns.last_ep_election.is_empty():
 		_fail("no EP election had resolved alongside the national one (clock at %d-%d)" % [clock.year, clock.month])
@@ -59,7 +77,7 @@ func _run() -> void:
 	if not clock.paused:
 		_fail("the clock did not pause when the election panel opened")
 	if _main._election_panel == null or not _main._election_panel.visible:
-		_fail("the election panel is not visible after a national election")
+		_fail("the election panel is not visible after a legislative election")
 		return
 
 	var text := _collect_text(_main._election_panel)
@@ -82,7 +100,11 @@ func _run() -> void:
 		if not text.contains(issue_label):
 			_fail("panel text does not name the top issue '%s': %s" % [issue_label, text])
 
-	# Continue only makes sense on a win; a defeat must not offer it.
+	# A legislative election cannot end a presidency, so this panel must name the
+	# government that came out of it and must always offer Continue.
+	if not text.contains(ns.pm_name):
+		_fail("panel text does not name the head of government ('%s'): %s" % [ns.pm_name, text])
+
 	var has_continue := false
 	for child in _main._election_panel._footer.get_children():
 		if child is Button and child.text == "Continue":
@@ -91,6 +113,15 @@ func _run() -> void:
 		_fail("won the election but the panel offers no Continue button")
 	if not ns.in_government and has_continue:
 		_fail("lost the election but the panel still offers Continue")
+
+
+## Advance whole months, stopping early if an election pauses the clock.
+func _advance(clock: Node, months: int) -> void:
+	for _month in range(months):
+		for _d in range(31):
+			clock.advance_one_day()
+			if clock.paused:
+				return
 
 
 func _collect_text(node) -> String:

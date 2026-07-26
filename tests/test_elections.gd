@@ -18,6 +18,11 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const GAME_START_YEAR := 2026
 const GAME_START_MONTH := 1
 
+## The two French clocks, in months from game start. The presidency is the
+## player's term and the shorter one — see docs/government-model.md.
+const EXEC_TARGET_MONTHS := (2027 - GAME_START_YEAR) * 12 + (5 - GAME_START_MONTH)
+const LEGISLATIVE_TARGET_MONTHS := (2029 - GAME_START_YEAR) * 12 + (6 - GAME_START_MONTH)
+
 var _failures: Array[String] = []
 var _loader: DataLoader
 
@@ -99,39 +104,65 @@ func _check_monotone_in_approval() -> void:
 		previous = share
 
 
-## The national election fires in the exact month the data names (FRA: June
-## 2029) and no other, and after a win the next date is exactly term_years
-## later.
+## France runs two clocks. The presidential election fires in May 2027 and
+## nothing fires before it; the legislative election fires in June 2029, inside
+## the presidency it does not end. Both dates come from the data, and after each
+## the matching next-date advances by that body's own term.
 func _check_schedule_fires_only_on_date_and_advances() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	var target_months := (2029 - GAME_START_YEAR) * 12 + (6 - GAME_START_MONTH)
 
-	for i in range(target_months - 1):
+	for i in range(EXEC_TARGET_MONTHS - 1):
 		var results := _tick(state)
 		if not results.is_empty():
 			_fail("election fired early, at month %d (year %d month %d): %s" % [i + 1, state.year, state.month, results])
 			return
 
-	var final_results := _tick(state)
-	if final_results.is_empty():
-		_fail("no election fired at the scheduled month (year %d month %d)" % [state.year, state.month])
+	var exec_results := _tick(state)
+	var executive = null
+	for r in exec_results:
+		if r["kind"] == "executive":
+			executive = r
+	if executive == null:
+		_fail("no executive election fired in May 2027 (clock at %d-%d): %s" % [state.year, state.month, exec_results])
+		return
+	if executive["seats_total"] != 0:
+		_fail("an executive election allocated %d seats; it is one office, not a chamber" % executive["seats_total"])
+
+	if not executive["incumbent_largest"]:
+		if ns.in_government:
+			_fail("the incumbent lost the presidency but in_government is still true")
 		return
 
+	if ns.next_executive_year != 2032 or ns.next_executive_month != 5:
+		_fail("after a presidential win, next executive election is %d-%d, expected 2032-5" % [
+			ns.next_executive_year, ns.next_executive_month
+		])
+	if ns.next_election_year != 2029 or ns.next_election_month != 6:
+		_fail("the presidential election moved the legislative date to %d-%d, expected 2029-6" % [
+			ns.next_election_year, ns.next_election_month
+		])
+
+	# On to the legislative election, which must NOT end the term.
+	for _i in range(LEGISLATIVE_TARGET_MONTHS - EXEC_TARGET_MONTHS - 1):
+		_tick(state)
+	var leg_results := _tick(state)
+
 	var national = null
-	for r in final_results:
+	for r in leg_results:
 		if r["kind"] == "national":
 			national = r
 	if national == null:
-		_fail("national election did not fire alongside the EP election in June 2029")
+		_fail("no legislative election fired in June 2029 (clock at %d-%d)" % [state.year, state.month])
 		return
-
-	if national["incumbent_largest"]:
-		if ns.next_election_year != 2034 or ns.next_election_month != 6:
-			_fail("after a win, next election is %d-%d, expected 2034-6" % [ns.next_election_year, ns.next_election_month])
-	else:
-		if ns.in_government:
-			_fail("incumbent was not the largest party but in_government is still true")
+	if not national.has("formation"):
+		_fail("a legislative election did not re-form the government")
+	if not ns.in_government:
+		_fail("a legislative election ended the presidency; only an executive election can")
+	if ns.next_election_year != 2034 or ns.next_election_month != 6:
+		_fail("after a legislative election, next is %d-%d, expected 2034-6" % [
+			ns.next_election_year, ns.next_election_month
+		])
 
 
 ## An EU member (FRA) resolves an EP election in June 2029 alongside its
@@ -162,25 +193,24 @@ func _check_governing_badly_loses() -> void:
 		"spending_pct_gdp": {"health": 4.0, "education": 1.5, "defence": 0.0, "pensions": 5.0, "infrastructure": 0.0},
 	})
 
-	var target_months := (2029 - GAME_START_YEAR) * 12 + (6 - GAME_START_MONTH)
 	var results := []
-	for _i in range(target_months):
+	for _i in range(EXEC_TARGET_MONTHS):
 		results = _tick(state)
 
 	var ns = state.player()
 	if ns.in_government:
-		_fail("a brutal budget still won re-election (approval %.1f)" % ns.overall_approval_pct)
+		_fail("a brutal budget still won the presidency (approval %.1f)" % ns.overall_approval_pct)
 		return
 
-	var national = null
+	var executive = null
 	for r in results:
-		if r["kind"] == "national":
-			national = r
-	if national == null:
-		_fail("no national result recorded for the losing term")
+		if r["kind"] == "executive":
+			executive = r
+	if executive == null:
+		_fail("no executive result recorded for the losing term")
 		return
-	if national["incumbent_largest"]:
-		_fail("in_government is false but the result still names the incumbent as largest")
+	if executive["incumbent_largest"]:
+		_fail("in_government is false but the result still names the incumbent as the winner")
 
 
 ## A modest, sustainable budget should win re-election, and the game continues
@@ -191,19 +221,20 @@ func _check_governing_well_wins_and_second_term_starts() -> void:
 		"spending_pct_gdp": {"health": 11.5, "education": 6.0, "defence": 2.0, "pensions": 14.5, "infrastructure": 4.0},
 	})
 
-	var target_months := (2029 - GAME_START_YEAR) * 12 + (6 - GAME_START_MONTH)
-	for _i in range(target_months):
+	for _i in range(EXEC_TARGET_MONTHS):
 		_tick(state)
 
 	var ns = state.player()
 	if not ns.in_government:
-		_fail("a modest, sustainable budget lost re-election (approval %.1f)" % ns.overall_approval_pct)
+		_fail("a modest, sustainable budget lost the presidency (approval %.1f)" % ns.overall_approval_pct)
 		return
 	if ns.terms_served != 1:
-		_fail("terms_served is %d after one election, expected 1" % ns.terms_served)
+		_fail("terms_served is %d after one presidential election, expected 1" % ns.terms_served)
 	if ns.months_in_term != 0:
-		_fail("months_in_term is %d right after an election, expected 0" % ns.months_in_term)
+		_fail("months_in_term is %d right after a presidential election, expected 0" % ns.months_in_term)
 
+	# Twelve quiet months. The next legislative election is June 2029 and the
+	# next presidential one May 2032, so nothing may fire in between.
 	for _i in range(12):
 		var results := _tick(state)
 		if not results.is_empty():

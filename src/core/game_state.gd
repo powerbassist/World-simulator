@@ -16,9 +16,14 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Government = preload("res://src/sim/government.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-const SAVE_VERSION := 1
+## 2 as of V1.1a: government formation split the executive's term from the
+## assembly's and added the coalition fields, so a version-1 save has no
+## coherent reading. SaveManager rejects an unknown version outright rather than
+## building a half-understood state — see docs/data-architecture.md.
+const SAVE_VERSION := 2
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -103,6 +108,9 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 	Opinion.init_nation(ns)
 
 	Elections.init_nation(ns, n, party_list, eu)
+	# After Elections, which seeds seats_by_party and incumbent_party_id — the
+	# two things a formation search reads.
+	Government.init_nation(ns, n, party_list)
 	Legislature.init_nation(ns)
 
 	return ns

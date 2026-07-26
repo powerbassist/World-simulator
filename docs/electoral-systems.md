@@ -34,10 +34,18 @@ is asking.
 
 ## The schedule
 
-`government.election` in each `data/nations/*.json`, alongside the existing
-`term_years` and `assembly_seats`. Same class as `fiscal` — **authored, but
-real** — so `tools/import_data.py` never reads or writes it, and it does not
-refresh on re-import.
+`government.legislative.election` in each `data/nations/*.json`, alongside that
+block's `term_years`, `assembly_seats` and `chamber`. Same class as `fiscal` —
+**authored, but real** — so `tools/import_data.py` never reads or writes it, and
+it does not refresh on re-import.
+
+> [!warning] This table is the **legislative** schedule only
+> V1.1a split `government.election` into `government.legislative.election` and
+> an optional `government.executive`, because France runs two clocks and this
+> table was being read as though it ran one. Every date below is the date that
+> chamber is next elected. **France's presidential election — the player's own
+> term — is 18 April / 2 May 2027 and is not in this table**; it lives in
+> `government.executive`, and the argument is [[government-model]].
 
 | Nation | Chamber | Seats | Term | System | Next election | Source |
 |---|---|---|---|---|---|---|
@@ -58,12 +66,19 @@ knowledge cutoff, and a snap election moves a date without warning. If a real
 election is called early after this session lands, the fix is a one-line data
 edit to the affected nation's `government.election.next`, not a code change.
 
-**The player inherits a term already in progress.** Game start is January 2026;
-France's next ordinary election is June 2029, so the first playable term is 41
-months, not a full 60. That is realistic — the player did not just win an
-election, they took over an existing government — and it is also what gets the
-[[ROADMAP|S6]] checkpoint playtest to a result screen in under four minutes of
-wall clock at speed 3, rather than five simulated years.
+**The player inherits a term already in progress.** Game start is January 2026.
+France's next **presidential** election — the one that decides whether the
+player keeps their office — is May 2027, so the first playable term is **16
+months**, not a full 60. That is realistic; the player did not just win an
+election, they took over an existing presidency partway through. It also gets
+the [[ROADMAP|S6]] checkpoint playtest to a result screen in about a minute and
+a half of wall clock at speed 3.
+
+> [!note] Corrected in V1.1a: this said 41 months
+> That figure came from reading France's **June 2029 legislative** election as
+> the end of the player's term. It is not: the player is the President, whose
+> term ends in May 2027. The 2029 election reshapes the Assembly and forces a
+> new government, and cannot remove the player. See [[government-model]].
 
 **A double election happens on schedule, not by design.** France and Belgium
 both have national elections in June 2029, the same month as the next European

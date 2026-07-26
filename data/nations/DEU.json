@@ -10,17 +10,33 @@
     "party": "buergerunion"
   },
   "government": {
-    "term_years": 4,
-    "assembly_seats": 630,
-    "chamber": "Bundestag",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than 25 March 2029; Wikipedia 'Next German federal election'. MMP reduced to national PR — see docs/electoral-systems.md.",
-      "system": "pr_national",
-      "next": { "year": 2029, "month": 2 },
-      "threshold_pct": 5.0
+    "legislative": {
+      "chamber": "Bundestag",
+      "assembly_seats": 630,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than 25 March 2029; Wikipedia 'Next German federal election'. MMP reduced to national PR — see docs/electoral-systems.md.",
+        "system": "pr_national",
+        "next": {
+          "year": 2029,
+          "month": 2
+        },
+        "threshold_pct": 5.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 96 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Chancellor elected by the Bundestag with an absolute majority of the statutory membership (Kanzlermehrheit); removable only by a constructive vote of no confidence that simultaneously elects a successor. Art. 63 and 67 GG; bundestag.de 'Election of the Federal Chancellor'.",
+      "method": "chancellor_election",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "Federal Chancellor",
+      "head_of_government_name": "Matthias Vogler"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 96
+    }
   },
   "fiscal": {
     "_source": "authored",

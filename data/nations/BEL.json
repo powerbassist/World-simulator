@@ -10,17 +10,33 @@
     "party": "burgerforum"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 150,
-    "chamber": "Chamber of Representatives",
-    "election": {
-      "_source": "authored",
-      "_note": "Federal, regional and EP elections are held together every 5 years in June (2024 was 9 June, alongside the EP vote); Wikipedia '2024 Belgian federal election'",
-      "system": "pr_dhondt",
-      "next": { "year": 2029, "month": 6 },
-      "threshold_pct": 5.0
+    "legislative": {
+      "chamber": "Chamber of Representatives",
+      "assembly_seats": 150,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "Federal, regional and EP elections are held together every 5 years in June (2024 was 9 June, alongside the EP vote); Wikipedia '2024 Belgian federal election'",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2029,
+          "month": 6
+        },
+        "threshold_pct": 5.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 22 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Government formed by coalition negotiation and appointed by the King; requires the confidence of the Chamber, carried on a simple majority of those voting.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Bram Vandekerckhove"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 22
+    }
   },
   "fiscal": {
     "_source": "authored",

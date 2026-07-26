@@ -10,17 +10,33 @@
     "party": "buergerliche_mitte"
   },
   "government": {
-    "term_years": 5,
-    "assembly_seats": 183,
-    "chamber": "Nationalrat",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than September 2029, no fixed date announced; Wikipedia 'Next Austrian legislative election'",
-      "system": "pr_national",
-      "next": { "year": 2029, "month": 9 },
-      "threshold_pct": 4.0
+    "legislative": {
+      "chamber": "Nationalrat",
+      "assembly_seats": 183,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than September 2029, no fixed date announced; Wikipedia 'Next Austrian legislative election'",
+        "system": "pr_national",
+        "next": {
+          "year": 2029,
+          "month": 9
+        },
+        "threshold_pct": 4.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 20 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Chancellor appointed by the Federal President. A majority of the Nationalrat can topple the Federal Government at any time; a minority government survives only while tolerated. parlament.gv.at 'Vote of no confidence'.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Federal Chancellor",
+      "head_of_government_name": "Bernhard Kettler"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 20
+    }
   },
   "fiscal": {
     "_source": "authored",

@@ -122,10 +122,56 @@ var seats_by_party := {}
 var last_election := {}
 var last_ep_election := {}
 
-## False the moment the incumbent loses a national election. Gates the clock:
-## main.gd stops advancing time once this is false. Only the player's nation
-## has a meaningful reading — see has_budget below.
+## False the moment the incumbent loses an EXECUTIVE election. Gates the clock:
+## main.gd stops advancing time once this is false. A legislative election can
+## take the player's majority away but never their office — see
+## docs/government-model.md. Only the player's nation has a meaningful reading.
 var in_government: bool = true
+
+## The executive's own schedule, present only where the head of government is
+## elected separately from the assembly — of the ten, only France. When absent
+## the executive term IS the legislative term and these mirror it, so the tick
+## has one code path rather than two.
+var has_executive: bool = false
+var next_executive_year: int = 0
+var next_executive_month: int = 0
+
+# --- Government ------------------------------------------------------------------
+
+## Copied from Nation at new-game; how this nation assembles a government and
+## what it takes to bring one down. Dispatched on in src/sim/government.gd,
+## never branched on the nation id.
+var formation_method: String = ""
+var censure_rule: String = ""
+var head_of_government_title: String = ""
+
+## The head of government holding office at game start. Reused whenever the
+## premiership returns to the executive's own party, because in a
+## semi-presidential system that party's authored leader is the President, not
+## the Prime Minister.
+var start_head_of_government_name: String = ""
+
+## The live government: which parties are in it, how many seats they carry
+## between them, and the seat-weighted mean of their ideology positions. That
+## position is the government's agreed line, and legislature.gd reads it.
+var coalition_party_ids: Array = []
+var coalition_seats: int = 0
+var coalition_position := {"economic": 0.0, "social": 0.0}
+
+var pm_party_id: String = ""
+var pm_name: String = ""
+
+## True when the assembly majority is a bloc that excludes the executive's own
+## party — the player keeps the office and loses the legislature.
+var is_cohabitation: bool = false
+
+## True when the government holds at most half the chamber. A legal outcome,
+## not a failure: it governs until it is censured.
+var is_minority: bool = false
+
+## The full description of the most recent formation, for the government screen
+## to read. Same shape src/sim/government.gd:form() returns.
+var last_formation := {}
 
 # --- Legislature ---------------------------------------------------------------
 
@@ -210,6 +256,22 @@ func duplicate_state():
 	s.last_election = last_election.duplicate(true)
 	s.last_ep_election = last_ep_election.duplicate(true)
 	s.in_government = in_government
+	s.has_executive = has_executive
+	s.next_executive_year = next_executive_year
+	s.next_executive_month = next_executive_month
+
+	s.formation_method = formation_method
+	s.censure_rule = censure_rule
+	s.head_of_government_title = head_of_government_title
+	s.start_head_of_government_name = start_head_of_government_name
+	s.coalition_party_ids = coalition_party_ids.duplicate(true)
+	s.coalition_seats = coalition_seats
+	s.coalition_position = coalition_position.duplicate(true)
+	s.pm_party_id = pm_party_id
+	s.pm_name = pm_name
+	s.is_cohabitation = is_cohabitation
+	s.is_minority = is_minority
+	s.last_formation = last_formation.duplicate(true)
 
 	s.law_structural_offset_pct = law_structural_offset_pct
 	s.law_potential_target_pct = law_potential_target_pct
@@ -278,6 +340,22 @@ func to_dict() -> Dictionary:
 		"last_election": last_election,
 		"last_ep_election": last_ep_election,
 		"in_government": in_government,
+		"has_executive": has_executive,
+		"next_executive_year": next_executive_year,
+		"next_executive_month": next_executive_month,
+
+		"formation_method": formation_method,
+		"censure_rule": censure_rule,
+		"head_of_government_title": head_of_government_title,
+		"start_head_of_government_name": start_head_of_government_name,
+		"coalition_party_ids": coalition_party_ids,
+		"coalition_seats": coalition_seats,
+		"coalition_position": coalition_position,
+		"pm_party_id": pm_party_id,
+		"pm_name": pm_name,
+		"is_cohabitation": is_cohabitation,
+		"is_minority": is_minority,
+		"last_formation": last_formation,
 
 		"law_structural_offset_pct": law_structural_offset_pct,
 		"law_potential_target_pct": law_potential_target_pct,
@@ -346,6 +424,22 @@ static func from_dict(d: Dictionary):
 	s.last_election = d.get("last_election", {})
 	s.last_ep_election = d.get("last_ep_election", {})
 	s.in_government = d.get("in_government", true)
+	s.has_executive = d.get("has_executive", false)
+	s.next_executive_year = int(d.get("next_executive_year", 0))
+	s.next_executive_month = int(d.get("next_executive_month", 0))
+
+	s.formation_method = d.get("formation_method", "")
+	s.censure_rule = d.get("censure_rule", "")
+	s.head_of_government_title = d.get("head_of_government_title", "")
+	s.start_head_of_government_name = d.get("start_head_of_government_name", "")
+	s.coalition_party_ids = d.get("coalition_party_ids", [])
+	s.coalition_seats = int(d.get("coalition_seats", 0))
+	s.coalition_position = d.get("coalition_position", {"economic": 0.0, "social": 0.0})
+	s.pm_party_id = d.get("pm_party_id", "")
+	s.pm_name = d.get("pm_name", "")
+	s.is_cohabitation = d.get("is_cohabitation", false)
+	s.is_minority = d.get("is_minority", false)
+	s.last_formation = d.get("last_formation", {})
 
 	s.law_structural_offset_pct = d.get("law_structural_offset_pct", 0.0)
 	s.law_potential_target_pct = d.get("law_potential_target_pct", 0.0)

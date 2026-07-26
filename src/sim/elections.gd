@@ -16,6 +16,7 @@ const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
+const Government = preload("res://src/sim/government.gd")
 
 const TOP_ISSUE_COUNT := 3
 
@@ -28,11 +29,25 @@ const TOP_ISSUE_COUNT := 3
 ## nation's Array[Party] from DataLoader.parties. `eu` is the loader's EU object.
 static func init_nation(ns, nation, party_list: Array, eu) -> void:
 	ns.assembly_seats = nation.assembly_seats
-	ns.term_months = nation.term_years * 12
 	ns.months_in_term = 0
 
 	ns.next_election_year = nation.election_next_year
 	ns.next_election_month = nation.election_next_month
+
+	# Two clocks, not one. Where the executive is elected separately — of the
+	# ten, only France — term_months is the EXECUTIVE's term, because that is
+	# the player's. Where it is not, the executive comes out of the chamber and
+	# the two schedules are the same schedule, so the tick below needs no
+	# special case. See docs/government-model.md.
+	ns.has_executive = nation.has_executive
+	if nation.has_executive:
+		ns.term_months = nation.executive_term_years * 12
+		ns.next_executive_year = nation.executive_next_year
+		ns.next_executive_month = nation.executive_next_month
+	else:
+		ns.term_months = nation.term_years * 12
+		ns.next_executive_year = nation.election_next_year
+		ns.next_executive_month = nation.election_next_month
 
 	if nation.eu_member:
 		ns.next_ep_election_year = eu.next_election_year
@@ -81,17 +96,41 @@ static func _tick_nation(state, ns, loader) -> Array:
 	var nation = loader.nations.get(ns.id)
 	var party_list: Array = loader.parties.get(ns.id, [])
 
+	# A legislative election rewrites the assembly and forces a new government.
+	# It does NOT decide whether the player keeps their office — under a
+	# separately elected executive it cannot, and the government that comes out
+	# of it may exclude the player's own party entirely. That is cohabitation,
+	# not defeat.
 	if state.year == ns.next_election_year and state.month == ns.next_election_month:
 		var result := resolve(ns, party_list, nation.election_system, nation.election_threshold_pct, "national", state.year, state.month)
 		ns.seats_by_party = result["seats"]
 		ns.last_election = result
-		ns.in_government = result["incumbent_largest"]
+		ns.next_election_year = state.year + nation.term_years
+		ns.next_election_month = state.month
+		result["formation"] = Government.form(ns, party_list)
+		results.append(result)
+
+	# The executive verdict. Where the executive is drawn from the chamber this
+	# fires in the same month as the legislative election above and reads its
+	# result rather than resolving a second vote — one office, one verdict.
+	if state.year == ns.next_executive_year and state.month == ns.next_executive_month:
+		var exec_result: Dictionary
+		if ns.has_executive:
+			exec_result = resolve_executive(ns, party_list, state.year, state.month)
+			results.append(exec_result)
+		else:
+			exec_result = ns.last_election
+
+		ns.in_government = bool(exec_result.get("incumbent_largest", false))
 		if ns.in_government:
 			ns.terms_served += 1
 			ns.months_in_term = 0
-			ns.next_election_year = state.year + int(ns.term_months / 12)
-			ns.next_election_month = state.month
-		results.append(result)
+			ns.next_executive_year = state.year + int(ns.term_months / 12)
+			ns.next_executive_month = state.month
+			# A re-elected president appoints a government afresh against the
+			# assembly they actually have.
+			if ns.has_executive:
+				Government.form(ns, party_list)
 
 	if ns.in_government and nation.eu_member:
 		if state.year == ns.next_ep_election_year and state.month == ns.next_ep_election_month:
@@ -179,6 +218,44 @@ static func resolve(ns, party_list: Array, system: String, threshold_pct: float,
 		"incumbent_vote_share": float(shares.get(ns.incumbent_party_id, 0.0)),
 		"largest_party_id": largest_party,
 		"incumbent_largest": largest_party == ns.incumbent_party_id,
+		"attribution": attribution(ns),
+	}
+
+
+## A directly elected executive is not a seat allocation — one office, won on
+## the highest vote share. Reuses vote_share() and attribution() unchanged, so
+## the presidential verdict is computed from exactly the same opinion state the
+## legislative one reads, and returns the same key set so the result screen
+## needs no special case beyond its label.
+##
+## The two-round runoff is not simulated: with no second-preference data there
+## is nothing to transfer, and docs/electoral-systems.md already reduces
+## France's legislative two-round system to a national-level approximation for
+## the same reason. Highest first-round share wins. Ties break by party id, so
+## the outcome never depends on roster order.
+static func resolve_executive(ns, party_list: Array, year: int, month: int) -> Dictionary:
+	var shares := vote_share(ns, party_list, ns.incumbent_party_id)
+
+	var winner := ""
+	var best := -1.0
+	for party_id in shares:
+		var s: float = float(shares[party_id])
+		if s > best or (is_equal_approx(s, best) and party_id < winner):
+			best = s
+			winner = party_id
+
+	return {
+		"kind": "executive",
+		"year": year,
+		"month": month,
+		"vote_share": shares,
+		"seats": {},
+		"seats_total": 0,
+		"incumbent_party_id": ns.incumbent_party_id,
+		"incumbent_seats": 0,
+		"incumbent_vote_share": float(shares.get(ns.incumbent_party_id, 0.0)),
+		"largest_party_id": winner,
+		"incumbent_largest": winner == ns.incumbent_party_id,
 		"attribution": attribution(ns),
 	}
 

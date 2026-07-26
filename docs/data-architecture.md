@@ -85,14 +85,29 @@ of time.
   },
 
   "government": {
-    "term_years": 5,
-    "assembly_seats": 577,
-    "chamber": "Assemblée nationale",
-    "election": {
+    "legislative": {
+      "chamber": "Assemblée nationale",
+      "assembly_seats": 577,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "system": "two_round",
+        "next": { "year": 2029, "month": 6 },
+        "threshold_pct": 0.0
+      }
+    },
+    "executive": {
       "_source": "authored",
-      "system": "two_round",
-      "next": { "year": 2029, "month": 6 },
-      "threshold_pct": 0.0
+      "title": "President of the Republic",
+      "term_years": 5,
+      "next": { "year": 2027, "month": 5 }
+    },
+    "formation": {
+      "_source": "authored",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Cécile Aumont"
     },
     "eu": { "member": true, "ep_seats": 81 }
   },
@@ -130,13 +145,27 @@ as a party name. World Bank's central-government indicators are null or wrong-sc
 for this purpose; see [[data-sources]] for the specifics. They do not refresh on
 re-import.
 
-> [!note] `leader.party`, `government.election` and `government.eu`, added at [[ROADMAP|S6]]
+> [!note] `leader.party` and the `government` sub-blocks
 > `leader.party` resolves to a party id in that nation's own `data/parties/*.json`
 > — validated cross-file, the same way `geo_id` is checked against the map.
-> `government.election` and `government.eu` are the same class as `fiscal`:
-> **authored, but real**, checked against a source at the session that added
-> them and never touched by `tools/import_data.py`. Full argument, every date's
-> source, and what each real electoral system reduces to is [[electoral-systems]].
+> Everything under `government` is the same class as `fiscal`: **authored, but
+> real**, checked against a source at the session that added it and never
+> touched by `tools/import_data.py`. Full argument, every date's source, and
+> what each real electoral system reduces to is [[electoral-systems]].
+>
+> `legislative` and `eu` arrived at [[ROADMAP|S6]]; `formation` and `executive`
+> at [[v1|V1.1a]], which also split the old flat `government.election` into
+> `government.legislative.election`. **`executive` is optional and present only
+> where the head of government is elected separately from the assembly** — of
+> the ten, only France. Absent means the executive comes out of the chamber and
+> its term is the legislative term. The argument for that shape, and for
+> `formation.method` being dispatched rather than branched on, is
+> [[government-model]].
+>
+> `data/parties/*.json` gained `leader_name`, `discipline` and
+> `excluded_partners` in the same block. `excluded_partners` is validated
+> against that nation's own roster, so a cordon naming a party that does not
+> exist is a startup error rather than a silently empty exclusion.
 
 ### Unit conventions
 

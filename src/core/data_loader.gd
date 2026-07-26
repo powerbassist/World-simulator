@@ -174,6 +174,15 @@ func _load_parties(nation_id: String, parties_dir: String) -> void:
 		if party.ideology_slot != "" and not K.SLOT_KEYS.has(party.ideology_slot):
 			per_file_errors.append("%s: ideology_slot '%s' has no position in election_constants.SLOT_POSITION" % [fname, party.ideology_slot])
 
+		# A cordon naming a party that does not exist would silently exclude
+		# nothing, which is the same class of quiet failure the slot check above
+		# exists to catch.
+		for other in party.excluded_partners:
+			if not seen_ids.has(other):
+				per_file_errors.append("%s: party '%s' excludes '%s', which is not a party in this nation" % [fname, party.id, other])
+			elif other == party.id:
+				per_file_errors.append("%s: party '%s' excludes itself" % [fname, party.id])
+
 	errors.append_array(per_file_errors)
 	parties[nation_id] = parsed_parties
 

@@ -242,8 +242,14 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 		state.append_history(entry)
 		Legislature.tick_month(state)
 
+		# The verdict on the player is the EXECUTIVE election where one exists —
+		# France's presidency — and the legislative one where the head of
+		# government comes out of the chamber. A legislative election under a
+		# separately elected executive changes the assembly, not the office, so
+		# collecting it here would score the player on a vote they cannot lose.
+		var verdict_kind := "executive" if ns.has_executive else "national"
 		for r in Elections.tick_month(state, _loader):
-			if r["kind"] == "national":
+			if r["kind"] == verdict_kind:
 				elections.append(r)
 
 		played += 1

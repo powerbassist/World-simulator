@@ -143,9 +143,21 @@ and attributes an outcome exactly like a national election, but
 result exists at all and what it deliberately does not model.
 
 Win → `Elections.tick_month()` increments `terms_served`, resets
-`months_in_term` to zero, and sets `next_election_year/_month` to exactly
-`term_months` later — the nation's own `term_years`, not a hardcoded five,
-because [[electoral-systems|the ten nations do not all serve the same term]].
+`months_in_term` to zero, and sets `next_executive_year/_month` to exactly
+`term_months` later — the nation's own term, not a hardcoded five, because
+[[electoral-systems|the ten nations do not all serve the same term]].
+
+> [!important] Which election is the win/lose condition changed in V1.1a
+> This model was written when a nation had one election, so the national
+> legislative vote decided both the assembly *and* whether the player kept
+> office. Where the executive is elected separately — of the ten, only France —
+> that is now false. **Only an executive election sets `ns.in_government`.** A
+> legislative election rewrites `seats_by_party` and forces a new government to
+> form, and cannot remove the player; the result may be cohabitation, which is
+> neither a win nor a loss. Everything below about vote share, turnout weighting,
+> attribution and the absence of election-day noise is unchanged and applies to
+> both votes — `Elections.resolve_executive()` calls the same `vote_share()` and
+> the same `attribution()`. Full argument in [[government-model]].
 
 ## Attribution
 
@@ -181,7 +193,8 @@ not retrofitted into this one.
 | Vote share | Convex combination of per-bloc weights that are renormalised onto the simplex every time; sums to 1.0 by construction. |
 | Seat counts | Every allocation method in [[electoral-systems]] sums to the assembly size by construction — checked directly in `tests/test_electoral_systems.gd`, not argued. |
 | `incumbent_seats`, `terms_served` | Bounded by the assembly size and by how many terms the game has actually run. |
-| `next_election_year/_month` | Advances by exactly `term_months` per win; a loss stops advancing it at all, because the game is over. |
+| `next_election_year/_month` | Advances by exactly the chamber's `term_years` at every legislative election, won or lost, because the assembly is re-elected either way. |
+| `next_executive_year/_month` | Advances by exactly `term_months` per win; a loss stops advancing it at all, because the game is over. |
 
 Elections read state and write a small, bounded set of fields once per term.
 Nothing here feeds back into the economy, the budget, or opinion — the same

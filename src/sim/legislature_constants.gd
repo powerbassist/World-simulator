@@ -14,10 +14,11 @@ extends RefCounted
 ## indifferent to it rather than merely lukewarm.
 const LAW_SIGMA := 0.6
 
-## Added to a governing party's support for its own government's bill — party
-## discipline, not ideology. A single constant, not a table: this is the one
-## non-spatial term in the model.
-const GOVERNMENT_BONUS := 0.35
+## GOVERNMENT_BONUS (a flat 0.35 for the single incumbent party) lived here
+## until V1.1a. A government is now a coalition, so the bonus is earned rather
+## than given: government_constants.gd's COALITION_BONUS_MAX, scaled by the
+## party's distance from the agreed position and by its discipline. See
+## docs/government-model.md.
 
 ## |support| below this counts as an abstention rather than a yes or a no.
 const ABSTAIN_BAND := 0.05

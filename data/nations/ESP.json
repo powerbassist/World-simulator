@@ -10,17 +10,33 @@
     "party": "frente_progresista"
   },
   "government": {
-    "term_years": 4,
-    "assembly_seats": 350,
-    "chamber": "Congreso de los Diputados",
-    "election": {
-      "_source": "authored",
-      "_note": "By law no later than 22 August 2027 (current term runs to 23 July 2027); Wikipedia 'Next Spanish general election'. Per-constituency 3% threshold approximated as national — see docs/electoral-systems.md.",
-      "system": "pr_dhondt",
-      "next": { "year": 2027, "month": 7 },
-      "threshold_pct": 3.0
+    "legislative": {
+      "chamber": "Congreso de los Diputados",
+      "assembly_seats": 350,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "By law no later than 22 August 2027 (current term runs to 23 July 2027); Wikipedia 'Next Spanish general election'. Per-constituency 3% threshold approximated as national — see docs/electoral-systems.md.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 7
+        },
+        "threshold_pct": 3.0
+      }
     },
-    "eu": { "member": true, "ep_seats": 61 }
+    "formation": {
+      "_source": "authored",
+      "_note": "Investiture requires an absolute majority in the first round, a simple majority 48 hours later. No confidence is constructive and requires an absolute majority. Arts. 99 and 113 of the 1978 Constitution.",
+      "method": "investiture",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "President of the Government",
+      "head_of_government_name": "Mateo Larrañaga"
+    },
+    "eu": {
+      "member": true,
+      "ep_seats": 61
+    }
   },
   "fiscal": {
     "_source": "authored",

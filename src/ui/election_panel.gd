@@ -70,26 +70,59 @@ func show_results(results: Array) -> void:
 	var ns = _state.player()
 	var national = null
 	var eu_result = null
+	var executive = null
 	for r in results:
 		if r["kind"] == "national":
 			national = r
 		elif r["kind"] == "eu_parliament":
 			eu_result = r
+		elif r["kind"] == "executive":
+			executive = r
 
-	var defeated: bool = national != null and not national["incumbent_largest"]
+	# Only an executive election can end the player's term. Where the executive
+	# is drawn from the chamber there is no separate executive result and the
+	# national one carries the verdict, exactly as before V1.1a.
+	var verdict_result = executive if executive != null else national
+	var defeated: bool = verdict_result != null and not verdict_result["incumbent_largest"] and not ns.in_government
 
-	if national != null:
+	if executive != null:
 		_title.text = "DEFEATED" if defeated else "RE-ELECTED"
-		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name))
+	elif national != null:
+		# A legislative election under a separately elected executive does not
+		# end the term. It decides whether the player still commands a majority.
+		if ns.has_executive:
+			_title.text = "COHABITATION" if ns.is_cohabitation else "NEW ASSEMBLY"
+		else:
+			_title.text = "DEFEATED" if defeated else "RE-ELECTED"
 	else:
 		_title.text = "EUROPEAN PARLIAMENT ELECTION"
 
+	if executive != null:
+		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title))
+	if national != null:
+		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name))
 	if eu_result != null:
 		_sections.add_child(_build_section(eu_result, ""))
 
+	if national != null and ns.has_executive and not defeated:
+		var gov := Label.new()
+		if ns.is_cohabitation:
+			gov.text = "The new Assembly is against you. %s %s leads a government you did not choose." % [
+				ns.head_of_government_title, ns.pm_name
+			]
+		elif ns.is_minority:
+			gov.text = "%s %s heads a minority government: %d of %d seats." % [
+				ns.head_of_government_title, ns.pm_name, ns.coalition_seats, ns.assembly_seats
+			]
+		else:
+			gov.text = "%s %s forms a government with %d of %d seats." % [
+				ns.head_of_government_title, ns.pm_name, ns.coalition_seats, ns.assembly_seats
+			]
+		_sections.add_child(gov)
+
 	if defeated:
 		var over := Label.new()
-		over.text = "Your government has lost its majority. This term is over."
+		over.text = "You have lost your office. This term is over."
 		_footer.add_child(over)
 	else:
 		var cont := Button.new()
@@ -103,9 +136,26 @@ func _build_section(result: Dictionary, chamber_label: String) -> Control:
 	box.add_theme_constant_override("separation", 8)
 
 	var heading := Label.new()
-	var kind_label := "National election" if result["kind"] == "national" else "European Parliament election"
+	var kind_label := "European Parliament election"
+	if result["kind"] == "national":
+		kind_label = "Legislative election"
+	elif result["kind"] == "executive":
+		kind_label = "Presidential election"
 	heading.text = "%s — %s" % [kind_label, chamber_label] if chamber_label != "" else kind_label
 	box.add_child(heading)
+
+	if result["kind"] == "executive":
+		var won := Label.new()
+		var winner_name := _party_name(result["largest_party_id"])
+		if result["incumbent_largest"]:
+			won.text = "%s holds the office on %.1f%% of the vote." % [
+				winner_name, float(result["incumbent_vote_share"]) * 100.0
+			]
+		else:
+			won.text = "%s takes the office; you polled %.1f%%." % [
+				winner_name, float(result["incumbent_vote_share"]) * 100.0
+			]
+		box.add_child(won)
 
 	if result["kind"] == "national":
 		var verdict := Label.new()
@@ -139,8 +189,16 @@ func _build_party_table(result: Dictionary) -> Control:
 
 	var seats: Dictionary = result["seats"]
 	var shares: Dictionary = result["vote_share"]
-	var ordered: Array = seats.keys()
-	ordered.sort_custom(func(a, b): return int(seats[a]) > int(seats[b]))
+
+	# An executive election allocates no seats — one office, not a chamber — so
+	# the table falls back to ranking by vote share.
+	var ordered: Array
+	if seats.is_empty():
+		ordered = shares.keys()
+		ordered.sort_custom(func(a, b): return float(shares[a]) > float(shares[b]))
+	else:
+		ordered = seats.keys()
+		ordered.sort_custom(func(a, b): return int(seats[a]) > int(seats[b]))
 
 	for party_id in ordered:
 		var name_label := Label.new()
@@ -155,7 +213,7 @@ func _build_party_table(result: Dictionary) -> Control:
 		grid.add_child(share_label)
 
 		var seat_label := Label.new()
-		seat_label.text = str(seats[party_id])
+		seat_label.text = str(seats[party_id]) if seats.has(party_id) else "—"
 		seat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		grid.add_child(seat_label)
 

@@ -118,6 +118,22 @@ func _run_unknown_version() -> void:
 	elif result["error"].is_empty():
 		_fail("load_game rejected an unknown save_version but gave no error message")
 
+	# Version 1 specifically. V1.1a split the executive's term from the
+	# assembly's and added the coalition fields, so a version-1 save has no
+	# coherent reading — it must be refused outright rather than restored with
+	# the government silently empty. Named as a case of its own because a
+	# superseded version is the one an actual player will have on disk, unlike
+	# 999 above.
+	var v1 := FileAccess.open(path, FileAccess.WRITE)
+	v1.store_string(JSON.stringify({"save_version": 1, "day": 1, "game_state": {}}))
+	v1.close()
+
+	var old := SaveManager.load_game(BOGUS_SLOT)
+	if old["ok"]:
+		_fail("load_game accepted a version-1 save; the government fields would be missing")
+	elif old["error"].is_empty():
+		_fail("load_game rejected a version-1 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

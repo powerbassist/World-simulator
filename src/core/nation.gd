@@ -12,6 +12,17 @@ const KNOWN_IMPORTED_KEYS: Array[String] = [
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 const KNOWN_ELECTION_SYSTEMS: Array[String] = ["pr_dhondt", "pr_national", "fptp", "two_round", "parallel"]
 
+## How a government is assembled, and what it takes to bring one down. Both are
+## dispatched on the string in src/sim/government.gd, never on the nation id —
+## see docs/government-model.md and docs/engine-decision.md Rule 1.
+const KNOWN_FORMATION_METHODS: Array[String] = [
+	"presidential_appointment", "chancellor_election", "investiture",
+	"coalition_negotiation", "largest_party", "directorial",
+]
+const KNOWN_CENSURE_RULES: Array[String] = [
+	"absolute_members", "constructive_absolute", "simple_present", "none",
+]
+
 static var _id_regex := RegEx.create_from_string("^[A-Z]{3}$")
 
 var id: String = ""
@@ -24,9 +35,35 @@ var leader_name: String = ""
 var leader_title: String = ""
 var leader_party_id: String = ""
 
+## The assembly's own term and size, from government.legislative. Distinct from
+## the executive's term below: in France those are two different clocks, and
+## conflating them is what made the player's term read as the Assembly's.
 var term_years: int = 0
 var assembly_seats: int = 0
 var chamber_name: String = ""
+
+## Present only where the head of government is elected separately from the
+## assembly — of the ten, only France. Absent means the executive is drawn from
+## the chamber and its term IS the legislative term, the same "field exists,
+## reader does nothing" shape EU membership already uses. See
+## docs/government-model.md.
+var has_executive: bool = false
+var executive_title: String = ""
+var executive_term_years: int = 0
+var executive_next_year: int = 0
+var executive_next_month: int = 0
+
+## How a government forms and how it can be brought down. Required for all ten,
+## resolved only for the player's nation — the same authored-but-not-resolved
+## split docs/electoral-systems.md makes for the election schedule.
+var formation_method: String = ""
+var censure_rule: String = ""
+var head_of_government_title: String = ""
+
+## Who holds the head-of-government office at game start. Equal to the national
+## leader for nine of the ten; France is the exception, where the leader is the
+## President and the Prime Minister is a separate person.
+var head_of_government_name: String = ""
 
 ## The nation's own next scheduled election, real and sourced — see
 ## docs/electoral-systems.md. Authored, not imported: tools/import_data.py never
@@ -72,23 +109,50 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.leader_party_id = _extract_string(leader, "party", filename, errors)
 
 	var government: Dictionary = _extract_dict(d, "government", filename, errors)
-	n.term_years = _extract_int(government, "term_years", "government.term_years", filename, errors)
-	_check_range_int(n.term_years, 1, 10, "government.term_years", filename, errors)
-	n.assembly_seats = _extract_int(government, "assembly_seats", "government.assembly_seats", filename, errors)
-	_check_range_int(n.assembly_seats, 1, 2000, "government.assembly_seats", filename, errors)
-	n.chamber_name = _extract_string(government, "chamber", filename, errors)
 
-	var election: Dictionary = _extract_dict(government, "election", filename, errors)
+	var legislative: Dictionary = _extract_dict(government, "legislative", filename, errors)
+	n.term_years = _extract_int(legislative, "term_years", "government.legislative.term_years", filename, errors)
+	_check_range_int(n.term_years, 1, 10, "government.legislative.term_years", filename, errors)
+	n.assembly_seats = _extract_int(legislative, "assembly_seats", "government.legislative.assembly_seats", filename, errors)
+	_check_range_int(n.assembly_seats, 1, 2000, "government.legislative.assembly_seats", filename, errors)
+	n.chamber_name = _extract_string(legislative, "chamber", filename, errors)
+
+	var election: Dictionary = _extract_dict(legislative, "election", filename, errors)
 	n.election_system = _extract_string(election, "system", filename, errors)
 	if n.election_system != "" and not KNOWN_ELECTION_SYSTEMS.has(n.election_system):
-		errors.append("%s: government.election.system '%s' is not a recognised method" % [filename, n.election_system])
+		errors.append("%s: government.legislative.election.system '%s' is not a recognised method" % [filename, n.election_system])
 	var next: Dictionary = _extract_dict(election, "next", filename, errors)
-	n.election_next_year = _extract_int(next, "year", "government.election.next.year", filename, errors)
-	_check_range_int(n.election_next_year, 2026, 2100, "government.election.next.year", filename, errors)
-	n.election_next_month = _extract_int(next, "month", "government.election.next.month", filename, errors)
-	_check_range_int(n.election_next_month, 1, 12, "government.election.next.month", filename, errors)
-	n.election_threshold_pct = _extract_float(election, "threshold_pct", "government.election.threshold_pct", filename, errors)
-	_check_range_float(n.election_threshold_pct, 0.0, 20.0, "government.election.threshold_pct", filename, errors)
+	n.election_next_year = _extract_int(next, "year", "government.legislative.election.next.year", filename, errors)
+	_check_range_int(n.election_next_year, 2026, 2100, "government.legislative.election.next.year", filename, errors)
+	n.election_next_month = _extract_int(next, "month", "government.legislative.election.next.month", filename, errors)
+	_check_range_int(n.election_next_month, 1, 12, "government.legislative.election.next.month", filename, errors)
+	n.election_threshold_pct = _extract_float(election, "threshold_pct", "government.legislative.election.threshold_pct", filename, errors)
+	_check_range_float(n.election_threshold_pct, 0.0, 20.0, "government.legislative.election.threshold_pct", filename, errors)
+
+	# Optional by design: absent means the executive comes out of the chamber.
+	# Present, it must be complete — a half-authored executive block is the
+	# silent-wrong-term bug this validation exists to prevent.
+	n.has_executive = government.has("executive")
+	if n.has_executive:
+		var executive: Dictionary = _extract_dict(government, "executive", filename, errors)
+		n.executive_title = _extract_string(executive, "title", filename, errors)
+		n.executive_term_years = _extract_int(executive, "term_years", "government.executive.term_years", filename, errors)
+		_check_range_int(n.executive_term_years, 1, 10, "government.executive.term_years", filename, errors)
+		var exec_next: Dictionary = _extract_dict(executive, "next", filename, errors)
+		n.executive_next_year = _extract_int(exec_next, "year", "government.executive.next.year", filename, errors)
+		_check_range_int(n.executive_next_year, 2026, 2100, "government.executive.next.year", filename, errors)
+		n.executive_next_month = _extract_int(exec_next, "month", "government.executive.next.month", filename, errors)
+		_check_range_int(n.executive_next_month, 1, 12, "government.executive.next.month", filename, errors)
+
+	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)
+	n.formation_method = _extract_string(formation, "method", filename, errors)
+	if n.formation_method != "" and not KNOWN_FORMATION_METHODS.has(n.formation_method):
+		errors.append("%s: government.formation.method '%s' is not a recognised method" % [filename, n.formation_method])
+	n.censure_rule = _extract_string(formation, "censure", filename, errors)
+	if n.censure_rule != "" and not KNOWN_CENSURE_RULES.has(n.censure_rule):
+		errors.append("%s: government.formation.censure '%s' is not a recognised rule" % [filename, n.censure_rule])
+	n.head_of_government_title = _extract_string(formation, "head_of_government_title", filename, errors)
+	n.head_of_government_name = _extract_string(formation, "head_of_government_name", filename, errors)
 
 	var eu: Dictionary = _extract_dict(government, "eu", filename, errors)
 	n.eu_member = _extract_bool(eu, "member", filename, errors)
