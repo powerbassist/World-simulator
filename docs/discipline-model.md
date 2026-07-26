@@ -123,6 +123,31 @@ at zero discipline has no line to rebel *against* — its stated position alread
 is its members'. The interesting behaviour is in the middle, which is where a
 governing party under strain actually sits.
 
+**It follows that whether a censure motion carries is not monotone in
+discipline**, and that is worth writing down rather than rediscovering. Measured
+on the authored French roster, the starting assembly, a motion following a 49.3,
+against a threshold of 289 of 577:
+
+| approval | d 0.85 | 0.70 | 0.60 | 0.50 | 0.40 | 0.30 | 0.20 | 0.10 |
+|---|---|---|---|---|---|---|---|---|
+| 32 | 272 | 284 | 287 | 288 | 287 | 284 | 278 | 270 |
+| 30 | 280 | **297** | **303** | **304** | **303** | **297** | 288 | 275 |
+| 28 | 300 | 338 | 351 | **355** | 351 | 339 | 320 | 294 |
+
+Bold carries. A clean inverted parabola peaking at `d = 0.50`, so in a narrow
+band around 29–31% approval a coalition at 0.20 discipline **survives** while the
+same coalition at 0.50 **falls**. Outside that band the ordering never bites:
+above roughly 33% nothing carries and below roughly 28% everything does.
+
+This is the shape argued for above, not a defect — a party whose whips have lost
+the room entirely has already priced that into its line, so there is nobody left
+to rebel. It is recorded here because the surviving/falling *outcome* being
+non-monotone is surprising in a way the rebel *fraction* being non-monotone is
+not, and a future session measuring censure should not "fix" a model the project
+chose deliberately. Reproduce with a throwaway probe in `tools/` sweeping
+approval against discipline: `Government.resolve_censure()` is pure, so calling
+it to look does not disturb anything.
+
 ## Disaffection, and the measurement that forced it
 
 `hostility()` gains one term at V1.1b, and it is the only term in that function
