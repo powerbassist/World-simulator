@@ -20,6 +20,8 @@ extends RefCounted
 
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 const NEUTRAL_POSITION := {"economic": 0.0, "social": 0.0}
 
@@ -41,6 +43,11 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.is_cohabitation = false
 	ns.is_minority = false
 	ns.last_formation = {}
+
+	ns.force_cooldown_months = 0
+	ns.censure_barred_party_ids = []
+	ns.governments_fallen = 0
+	ns.last_censure = {}
 
 	form(ns, party_list)
 
@@ -270,7 +277,7 @@ static func _largest_party_id(ns, party_list: Array, exclude: String = "") -> St
 ## does, which is cohabitation; or nobody does, which is a minority government
 ## under the President's own party.
 static func _form_presidential(ns, party_list: Array, by_id: Dictionary) -> Dictionary:
-	var own := _grow(ns, ns.incumbent_party_id, party_list, by_id)
+	var own := _grow(ns, ns.incumbent_party_id, party_list, by_id, ns.censure_barred_party_ids)
 	var own_seats := 0
 	for pid in own:
 		own_seats += _seats(ns, pid)
@@ -286,7 +293,9 @@ static func _form_presidential(ns, party_list: Array, by_id: Dictionary) -> Dict
 	# were opposition majorities, not power-sharing deals.
 	var rival_anchor := _largest_party_id(ns, party_list, ns.incumbent_party_id)
 	if rival_anchor != "":
-		var rival := _grow(ns, rival_anchor, party_list, by_id, [ns.incumbent_party_id])
+		var rival_barred: Array = [ns.incumbent_party_id]
+		rival_barred.append_array(ns.censure_barred_party_ids)
+		var rival := _grow(ns, rival_anchor, party_list, by_id, rival_barred)
 		var rival_seats := 0
 		for pid in rival:
 			rival_seats += _seats(ns, pid)
@@ -304,7 +313,7 @@ static func _form_from_largest(ns, party_list: Array, by_id: Dictionary) -> Dict
 	var anchor := _largest_party_id(ns, party_list)
 	if anchor == "":
 		return _empty_result()
-	var chosen := _grow(ns, anchor, party_list, by_id)
+	var chosen := _grow(ns, anchor, party_list, by_id, ns.censure_barred_party_ids)
 	return _describe(ns, chosen, by_id, anchor, false)
 
 
@@ -344,3 +353,129 @@ static func coalition_bonus(ns, party) -> float:
 	var dist := _distance(ns.coalition_position, pos)
 	var cohesion: float = exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
 	return GK.COALITION_BONUS_MAX * cohesion * party.discipline
+
+
+## How much a party wants this government gone, in [-1, +1]. The same Gaussian
+## on distance from the agreed position that coalition_bonus() uses, inverted:
+## a party sitting on the line scores -1 and a party far from it scores +1. No
+## new equation and no new constant.
+##
+## A party inside the government subtracts its own `discipline`, so a
+## disciplined partner does not vote down the government it signed up to and an
+## ill-disciplined one that has drifted might. `forced` adds
+## FORCE_HOSTILITY_BONUS -- that term is the entire risk in Article 49.3.
+static func hostility(ns, party, forced := false) -> float:
+	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
+	var dist := _distance(ns.coalition_position, pos)
+	var h: float = 1.0 - 2.0 * exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
+	if ns.coalition_party_ids.has(party.id):
+		h -= party.discipline
+	if forced:
+		h += GK.FORCE_HOSTILITY_BONUS
+	return clampf(h, -1.0, 1.0)
+
+
+## Resolve a censure motion against the sitting government. Whole-party bloc
+## voting and the same ABSTAIN_BAND legislature.gd uses for bills, so a party
+## near indifferent neither saves the government nor sinks it.
+##
+## Does not mutate state; fall() below does that after reading the result. No
+## rand() anywhere, the same discipline as every other module in src/sim/.
+static func resolve_censure(ns, party_list: Array, forced := false) -> Dictionary:
+	var for_seats := 0
+	var against_seats := 0
+	var abstain_seats := 0
+	var votes := {}
+	var defectors: Array = []
+
+	for party in party_list:
+		var seats := _seats(ns, party.id)
+		if seats <= 0:
+			continue
+		var h := hostility(ns, party, forced)
+		if h > LK.ABSTAIN_BAND:
+			for_seats += seats
+			votes[party.id] = "for"
+			# A partner that votes to bring the government down is no longer in
+			# it. This is the mechanical cost of a censure the player survives.
+			if ns.coalition_party_ids.has(party.id):
+				defectors.append(party.id)
+		elif h < -LK.ABSTAIN_BAND:
+			against_seats += seats
+			votes[party.id] = "against"
+		else:
+			abstain_seats += seats
+			votes[party.id] = "abstain"
+
+	var threshold := censure_seats(ns)
+	var carried: bool
+	match ns.censure_rule:
+		"none":
+			carried = false
+		"simple_present":
+			# A simple majority of those actually voting; abstentions do not count.
+			carried = for_seats > against_seats
+		_:
+			# absolute_members and constructive_absolute both measure against the
+			# chamber's whole membership, so abstentions and absences count as
+			# against. France's 289 of 577 is exactly this.
+			carried = for_seats >= threshold
+
+	return {
+		"carried": carried,
+		"forced": forced,
+		"rule": ns.censure_rule,
+		"for_seats": for_seats,
+		"against_seats": against_seats,
+		"abstain_seats": abstain_seats,
+		"threshold": threshold,
+		"seats_total": ns.assembly_seats,
+		"party_votes": votes,
+		"defectors": defectors,
+		"pm_name": ns.pm_name,
+		"pm_party_id": ns.pm_party_id,
+	}
+
+
+## Bring the government down. Parties that voted for censure are barred from the
+## replacement -- they have just demonstrated they will not support it -- and the
+## bar lasts until the next legislative election, which is a new assembly and a
+## clean slate.
+##
+## The player keeps their office where the executive is elected separately: a
+## censured French government costs the President their Prime Minister, not the
+## presidency. Where the head of government IS the player, a carried censure ends
+## the run.
+static func fall(ns, party_list: Array, result: Dictionary) -> void:
+	ns.governments_fallen += 1
+
+	for pid in result["defectors"]:
+		if not ns.censure_barred_party_ids.has(pid):
+			ns.censure_barred_party_ids.append(pid)
+
+	penalise_blocs(ns, GK.FALLEN_BLOC_PENALTY)
+
+	if ns.has_executive:
+		form(ns, party_list)
+	else:
+		ns.in_government = false
+
+
+## Shift every bloc's approval target by `amount`, through the law_bloc_offset
+## accumulator opinion.gd already reads. Added to the *target*, not to approval
+## directly, so INERTIA_RATE and every bound in docs/opinion-model.md still
+## apply -- a political event cannot make approval jump in one month any more
+## than a law can.
+static func penalise_blocs(ns, amount: float) -> void:
+	for bloc in OpinionK.BLOC_KEYS:
+		ns.law_bloc_offset[bloc] = clampf(
+			float(ns.law_bloc_offset.get(bloc, 0.0)) + amount,
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
+		)
+
+
+## True when the government may force a bill through without a vote. Article 49.3
+## belongs to the French constitution, so it is gated on the formation method
+## rather than on the nation id -- docs/engine-decision.md Rule 1.
+static func can_force(ns) -> bool:
+	return ns.formation_method == "presidential_appointment" and ns.force_cooldown_months <= 0

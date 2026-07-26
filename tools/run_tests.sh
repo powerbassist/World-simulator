@@ -16,6 +16,7 @@ tests=(
   tests/test_elections.gd
   tests/test_government.gd
   tests/test_government_panel.gd
+  tests/test_censure.gd
   tests/test_election_panel.gd
   tests/test_legislature.gd
   tests/test_law_panel.gd

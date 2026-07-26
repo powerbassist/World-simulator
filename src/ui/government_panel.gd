@@ -15,6 +15,7 @@ signal closed
 const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -127,6 +128,25 @@ func _refresh() -> void:
 			_add_line("A united opposition could bring this government down.")
 		else:
 			_add_line("The opposition cannot reach that threshold even united.")
+
+		# What a censure motion would actually do right now, at the hostility a
+		# forced bill would provoke. This is the number Article 49.3 gambles on,
+		# so it is shown before the player gambles rather than after.
+		var forced_for := 0
+		for party in _loader.parties.get(ns.id, []):
+			if Government.hostility(ns, party, true) > LK.ABSTAIN_BAND:
+				forced_for += int(ns.seats_by_party.get(party.id, 0))
+		_add_line("Under Article 49.3 today: %d seats would move to censure." % forced_for)
+		if ns.formation_method == "presidential_appointment":
+			if ns.force_cooldown_months > 0:
+				_add_line("Article 49.3 unavailable for %d months." % ns.force_cooldown_months)
+			elif forced_for >= needed:
+				_add_line("Forcing a bill now would bring the government down.")
+			else:
+				_add_line("A forced bill would survive censure.")
+
+	if ns.governments_fallen > 0:
+		_add_line("Governments censured out of office this run: %d." % ns.governments_fallen)
 
 	_add_line("")
 	_add_line("Formation: %s." % METHOD_LABEL.get(ns.formation_method, ns.formation_method))

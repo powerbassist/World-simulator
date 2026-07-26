@@ -16,6 +16,7 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
+const GK = preload("res://src/sim/government_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -38,6 +39,8 @@ static func tick_month(state) -> void:
 	for ns in state.nations.values():
 		if not ns.has_budget:
 			continue
+		if ns.force_cooldown_months > 0:
+			ns.force_cooldown_months -= 1
 		var expired: Array = []
 		for law_id in ns.law_cooldown_months:
 			var remaining: int = int(ns.law_cooldown_months[law_id]) - 1
@@ -222,9 +225,15 @@ static func apply(state, ns, law) -> void:
 ## cooldown on failure, and record the result for the law screen to read.
 ## `loader` is the same DataLoader main.gd already threads through to
 ## Elections.tick_month() -- parties live in loader.parties, keyed by nation id.
-static func propose(state, loader, law) -> Dictionary:
+##
+## `force` is Article 49.3: the bill is adopted without a vote, and the assembly
+## may then censure the government instead. See docs/government-model.md.
+static func propose(state, loader, law, force := false) -> Dictionary:
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
+
+	if force:
+		return _force(state, ns, party_list, law)
 
 	var result := resolve_vote(ns, party_list, law)
 	if result["passed"]:
@@ -232,5 +241,50 @@ static func propose(state, loader, law) -> Dictionary:
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 
+	ns.last_law_result = result
+	return result
+
+
+## Article 49.3. The bill is adopted with no vote taken, which is why every seat
+## tally below is zero -- there was no division. What the government pays for it
+## is a censure motion resolved at FORCE_HOSTILITY_BONUS, and the risk is real
+## only for a government that cannot cover the censure threshold.
+static func _force(state, ns, party_list: Array, law) -> Dictionary:
+	var result := {
+		"law_id": law.id,
+		"passed": true,
+		"forced": true,
+		"majority": law.majority,
+		"yes_seats": 0,
+		"no_seats": 0,
+		"abstain_seats": 0,
+		"seats_total": ns.assembly_seats,
+		"party_votes": {},
+		"party_support": {},
+	}
+
+	if not Government.can_force(ns):
+		result["passed"] = false
+		result["refused"] = true
+		ns.last_law_result = result
+		return result
+
+	apply(state, ns, law)
+	ns.force_cooldown_months = GK.FORCE_COOLDOWN_MONTHS
+
+	# Bypassing the assembly costs something whether or not the censure motion
+	# carries. Without this, a government that can cover the threshold would
+	# force every bill it could not win, for free.
+	Government.penalise_blocs(ns, GK.FORCE_BLOC_PENALTY)
+
+	# Resolved against the government the bill was forced through for, and
+	# before any collapse re-forms it, so the vote reads the coalition that
+	# actually did the forcing.
+	var censure := Government.resolve_censure(ns, party_list, true)
+	if censure["carried"]:
+		Government.fall(ns, party_list, censure)
+
+	ns.last_censure = censure
+	result["censure"] = censure
 	ns.last_law_result = result
 	return result

@@ -17,6 +17,7 @@ extends PanelContainer
 
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const Government = preload("res://src/sim/government.gd")
 const Law = preload("res://src/core/law.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
@@ -130,6 +131,17 @@ func _build_result_summary(result: Dictionary) -> Control:
 	heading.text = "%s — %s" % [law_label, "PASSED" if result["passed"] else "FAILED"]
 	box.add_child(heading)
 
+	# A forced bill had no division, so the seat tally would read all zeroes.
+	# What happened instead is the censure motion.
+	if result.get("forced", false):
+		if result.get("refused", false):
+			var refused := Label.new()
+			refused.text = "Article 49.3 is not available."
+			box.add_child(refused)
+			return box
+		box.add_child(_build_censure_summary(result.get("censure", {})))
+		return box
+
 	var tally := Label.new()
 	tally.text = "Yes %d · No %d · Abstain %d, of %d seats" % [
 		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]
@@ -145,6 +157,56 @@ func _build_result_summary(result: Dictionary) -> Control:
 			var against := Label.new()
 			against.text = "Voted against: %s" % ", ".join(opposed)
 			box.add_child(against)
+
+	return box
+
+
+## What the assembly did about being bypassed. Names the parties that moved to
+## censure, so a survived 49.3 still tells the player who came after them.
+func _build_censure_summary(censure: Dictionary) -> Control:
+	var box := VBoxContainer.new()
+	if censure.is_empty():
+		return box
+
+	var ns = _state.player()
+
+	var forced := Label.new()
+	forced.text = "Adopted without a vote under Article 49.3."
+	box.add_child(forced)
+
+	var tally := Label.new()
+	tally.text = "Censure motion: %d for · %d against · %d abstained, of %d seats (needs %d)" % [
+		censure["for_seats"], censure["against_seats"], censure["abstain_seats"],
+		censure["seats_total"], censure["threshold"],
+	]
+	box.add_child(tally)
+
+	var verdict := Label.new()
+	if censure["carried"]:
+		verdict.text = "CENSURED. %s falls; %s %s now heads the government." % [
+			censure["pm_name"], ns.head_of_government_title, ns.pm_name
+		]
+	else:
+		verdict.text = "The motion failed. %s %s survives and the law stands." % [
+			ns.head_of_government_title, ns.pm_name
+		]
+	box.add_child(verdict)
+
+	var movers := PackedStringArray()
+	for party in _loader.parties.get(ns.id, []):
+		if censure["party_votes"].get(party.id, "") == "for":
+			movers.append(party.party_name)
+	if not movers.is_empty():
+		var who := Label.new()
+		who.text = "Moved to censure: %s" % ", ".join(movers)
+		who.autowrap_mode = TextServer.AUTOWRAP_WORD
+		box.add_child(who)
+
+	var defectors: Array = censure["defectors"]
+	if not defectors.is_empty():
+		var lost := Label.new()
+		lost.text = "%d coalition partner(s) broke ranks and are out of government." % defectors.size()
+		box.add_child(lost)
 
 	return box
 
@@ -175,6 +237,19 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	propose_btn.pressed.connect(_on_propose.bind(law))
 	row.add_child(propose_btn)
 
+	# Article 49.3 exists only under a constitution that has it, so the button is
+	# absent rather than disabled for every other formation method.
+	if ns.formation_method == "presidential_appointment":
+		var force_btn := Button.new()
+		force_btn.text = "Force (49.3)"
+		force_btn.disabled = not Government.can_force(ns)
+		if force_btn.disabled:
+			force_btn.tooltip_text = "Available again in %d months." % ns.force_cooldown_months
+		else:
+			force_btn.tooltip_text = "Adopt without a vote. The assembly may censure the government instead."
+		force_btn.pressed.connect(_on_force.bind(law))
+		row.add_child(force_btn)
+
 	box.add_child(row)
 	return box
 
@@ -197,6 +272,12 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 
 func _on_propose(law) -> void:
 	Legislature.propose(_state, _loader, law)
+	proposed.emit()
+	_dirty = true
+
+
+func _on_force(law) -> void:
+	Legislature.propose(_state, _loader, law, true)
 	proposed.emit()
 	_dirty = true
 

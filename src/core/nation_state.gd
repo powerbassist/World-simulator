@@ -173,6 +173,23 @@ var is_minority: bool = false
 ## to read. Same shape src/sim/government.gd:form() returns.
 var last_formation := {}
 
+## Months before the government may force another bill through under Article
+## 49.3. Counted down by legislature.gd alongside the per-law cooldowns.
+var force_cooldown_months: int = 0
+
+## Parties that voted for a censure motion that carried. Barred from joining the
+## replacement government -- they have just shown they will not support one --
+## until the next legislative election clears the slate.
+var censure_barred_party_ids: Array = []
+
+## How many governments have been censured out of office this run. Never reset;
+## a president who has burned through three prime ministers should read as one.
+var governments_fallen: int = 0
+
+## The most recent censure motion, for the law and government screens to read.
+## Empty until one is moved. Same shape government.gd:resolve_censure() returns.
+var last_censure := {}
+
 # --- Legislature ---------------------------------------------------------------
 
 ## Accumulated across every passed law, each clamped in legislature_constants.gd.
@@ -272,6 +289,10 @@ func duplicate_state():
 	s.is_cohabitation = is_cohabitation
 	s.is_minority = is_minority
 	s.last_formation = last_formation.duplicate(true)
+	s.force_cooldown_months = force_cooldown_months
+	s.censure_barred_party_ids = censure_barred_party_ids.duplicate(true)
+	s.governments_fallen = governments_fallen
+	s.last_censure = last_censure.duplicate(true)
 
 	s.law_structural_offset_pct = law_structural_offset_pct
 	s.law_potential_target_pct = law_potential_target_pct
@@ -356,6 +377,10 @@ func to_dict() -> Dictionary:
 		"is_cohabitation": is_cohabitation,
 		"is_minority": is_minority,
 		"last_formation": last_formation,
+		"force_cooldown_months": force_cooldown_months,
+		"censure_barred_party_ids": censure_barred_party_ids,
+		"governments_fallen": governments_fallen,
+		"last_censure": last_censure,
 
 		"law_structural_offset_pct": law_structural_offset_pct,
 		"law_potential_target_pct": law_potential_target_pct,
@@ -440,6 +465,10 @@ static func from_dict(d: Dictionary):
 	s.is_cohabitation = d.get("is_cohabitation", false)
 	s.is_minority = d.get("is_minority", false)
 	s.last_formation = d.get("last_formation", {})
+	s.force_cooldown_months = int(d.get("force_cooldown_months", 0))
+	s.censure_barred_party_ids = d.get("censure_barred_party_ids", [])
+	s.governments_fallen = int(d.get("governments_fallen", 0))
+	s.last_censure = d.get("last_censure", {})
 
 	s.law_structural_offset_pct = d.get("law_structural_offset_pct", 0.0)
 	s.law_potential_target_pct = d.get("law_potential_target_pct", 0.0)

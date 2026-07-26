@@ -276,7 +276,7 @@ Deliberately coarse. These are not broken into sessions until the MVP is done, b
 >
 > | # | Sub-project | Depends on | State |
 > |---|---|---|---|
-> | **a** | Government formation, coalitions, censure, 49.3 | — | Session 1 **done**; session 2 (censure, 49.3) next |
+> | **a** | Government formation, coalitions, censure, 49.3 | — | **Done**, both sessions |
 > | **b** | Party discipline and rebellions | a | |
 > | **c** | Dissolution and snap elections | a, b | |
 > | **d** | Cabinet and ministers | a | |

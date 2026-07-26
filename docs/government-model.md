@@ -181,9 +181,98 @@ together. That is the real French dynamic, and it emerges from data authored in
 `tests/test_government.gd` asserts the no-two-party property directly, so a
 future roster edit cannot quietly remove it.
 
-**Resolving a censure motion, Article 49.3, and government collapse are the next
-session's work.** This block builds formation, the agreed position, the earned
-bonus, and the threshold arithmetic the screen reads.
+### How a party votes on a censure motion
+
+**Hostility is the inverse of cohesion.** No new equation and no new constant —
+the same Gaussian on distance from the agreed position that
+`coalition_bonus()` uses, flipped:
+
+```
+hostility(p) = 1 − 2 · exp(−(|SLOT_POSITION[p] − position(C)| / COALITION_SIGMA)²)
+             − p.discipline           if p ∈ C
+             + FORCE_HOSTILITY_BONUS  if the motion follows a forced bill
+             → clamped to [−1, +1]
+```
+
+Whole-party bloc voting against the same `ABSTAIN_BAND` bills use, so a party
+near indifferent neither saves the government nor sinks it.
+
+Two terms carry the model. Subtracting `discipline` means a disciplined partner
+does not vote down the government it signed up to, while an ill-disciplined one
+that has **drifted** far from the line might — and a partner that votes for
+censure is **expelled**, barred from the replacement until the next legislative
+election clears the slate. That is the mechanical cost of a censure the player
+survives.
+
+`FORCE_HOSTILITY_BONUS` is the entire risk in Article 49.3. Without it, forcing
+would be free: the seats that would censure a government are the seats that
+would already have voted the bill down, so the motion could never reach a
+threshold the bill itself did not.
+
+### Article 49.3
+
+`Legislature.propose(state, loader, law, force := true)`. The bill is **adopted
+with no vote taken** — every seat tally in the result is zero because there was
+no division — and the assembly may censure the government instead. If the motion
+fails, the law stands and the government survives.
+
+Gated on `formation_method == "presidential_appointment"`, not on the nation id:
+49.3 belongs to one constitution. Every other method refuses the command
+outright rather than silently adopting a bill without a vote.
+
+**Forcing costs approval whether or not the motion carries.** This is the one
+place the model asserts something the constitution does not. Without a cost on
+use, 49.3 is **strictly dominant** — any government that covers the censure
+threshold would force every bill it could not win, for nothing. That is the same
+defect class [[opinion-model|`SALIENCE_GAIN`]] documents from the S10 balance
+pass: a free action with an unbounded upside. The 2023 pension reform survived
+censure by nine votes and cost the government heavily in the polls; surviving is
+not getting away with it. Routed through the existing `law_bloc_offset`
+accumulator, so inertia and every bound in [[opinion-model]] still apply.
+
+### What is deliberately not built
+
+**`constructive_absolute`'s successor requirement.** Germany and Spain can only
+remove a head of government by simultaneously electing a replacement. The
+threshold is authored and resolved correctly; the successor half is not
+modelled, because **only the player's nation resolves a censure motion** and the
+player is France, which uses `absolute_members`. Building it now would be code
+with no caller. It lands with [[v1|V1.2]], the same session that gives a second
+nation a budget and an opinion model.
+
+**Opposition-initiated censure.** A motion is only ever triggered by the player
+forcing a bill. Tabling one on the assembly's own initiative needs party AI with
+its own agenda, which is [[v1|V1.1b]] and V1.1c territory. In practice this is
+close to the real distribution anyway: French censure motions are tabled often
+and almost never carry, and the one that carried in December 2024 followed a
+49.3.
+
+| Constant | Value | Why |
+|---|---|---|
+| `FORCE_COOLDOWN_MONTHS` | 12 | Real 49.3 allows one non-budget bill per parliamentary session. A twelve-month lockout is the same shape without modelling sessions. |
+| `FORCE_HOSTILITY_BONUS` | 0.35 | Turns an abstainer into a censure vote. Without it, forcing is risk-free. |
+| `FORCE_BLOC_PENALTY` | −0.08 | The cost of bypassing the assembly, paid on every use. Prevents 49.3 being strictly dominant. |
+| `FALLEN_BLOC_PENALTY` | −0.12 | Paid when a government actually falls, on top of the forcing cost. Larger, because a collapse is the more visible failure. |
+
+## What the balance currently does with all this
+
+> [!warning] Censure works, and no played game reaches it
+> France's starting government holds **318 of 577** against a threshold of
+> **289**. The opposition musters **259** even provoked by a 49.3, so it cannot
+> censure the government — correctly, and that is precisely why a strong
+> government can use the article at all.
+>
+> But across `tools/balance_probe.gd`'s fourteen-year run, **every legislative
+> election under every surviving regime returns a presidential majority of
+> 368–385 of 577.** So in play today, 49.3 is a once-a-year lever that passes a
+> rejected bill for a fixed approval cost, and the censure branch never fires.
+>
+> `tests/test_censure.gd` covers the carrying case against a hand-written
+> assembly, so the rule is verified rather than assumed. Making it *live* is the
+> same balance question cohabitation raises above, with the same two levers —
+> `INCUMBENT_SWING` and the President's party's `seat_share`. Recorded here
+> rather than quietly retuned, because how fragmented the Assembly should be is a
+> design decision, not a defect.
 
 ## Cohabitation, and what the balance currently does with it
 
@@ -242,6 +331,9 @@ bonus.
 | `coalition_bonus(p)` | `[0, COALITION_BONUS_MAX]`: a product of a Gaussian in `(0, 1]`, a discipline in `[0, 1]`, and the ceiling. |
 | `support(p, law)` | Still clamped to `[−1, +1]`, unchanged from [[legislature-model]]. |
 | `coalition_seats` | A sum of seat counts drawn from `seats_by_party`, so bounded by `assembly_seats`. |
+| `hostility(p)` | Clamped to `[−1, +1]` by construction. |
+| `law_bloc_offset[bloc]` | The censure and 49.3 penalties are clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, and clamped again with the satisfaction score before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Repeated forcing cannot walk approval down without bound. |
+| `censure_barred_party_ids` | Grows to at most the roster size, and is emptied at every legislative election. |
 | Formation itself | Terminates: each round adds one party from a finite roster and never removes one. |
 
 No quantity here accumulates. A formation is computed fresh from
@@ -255,7 +347,13 @@ past the distance cap, asserts the censure threshold matches each authored rule,
 and runs 168 months through three presidential and three legislative elections
 checking every month that the government is non-empty, headed, and inside its
 bounds. `tests/test_government_panel.gd` covers the majority, minority and
-cohabitation readings of the screen.
+cohabitation readings of the screen. `tests/test_censure.gd` covers hostility's
+bounds and sign, a strong government surviving 49.3, the approval cost of
+forcing measured against winning the same vote outright, the cooldown blocking
+and then expiring, every non-French method refusing the article, a weak
+government being censured and replaced, defectors being barred, the bar clearing
+at a legislative election, Switzerland never falling, and a parliamentary head of
+government losing the run to a carried motion.
 
 ## Where it sits
 
@@ -272,9 +370,13 @@ clock.month_elapsed
 
 `Government` has no tick of its own. Forming a government is not a monthly
 event — it happens when the assembly changes, which is at a legislative
-election, or when a re-elected executive appoints afresh. That is the same shape
-`Budget.commit()` and `Legislature.propose()` already have: a command at a
-boundary, not a per-month update.
+election, when a re-elected executive appoints afresh, or when a censure motion
+carries. That is the same shape `Budget.commit()` and `Legislature.propose()`
+already have: a command at a boundary, not a per-month update.
+
+The one per-month thing this model owns is the Article 49.3 cooldown, counted
+down inside `Legislature.tick_month()` alongside the per-law cooldowns that were
+already there rather than in a tick of its own.
 
 ---
 

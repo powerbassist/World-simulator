@@ -107,6 +107,9 @@ static func _tick_nation(state, ns, loader) -> Array:
 		ns.last_election = result
 		ns.next_election_year = state.year + nation.term_years
 		ns.next_election_month = state.month
+		# A new assembly is a clean slate: parties barred for censuring the last
+		# government are eligible again, because the voters have since spoken.
+		ns.censure_barred_party_ids = []
 		result["formation"] = Government.form(ns, party_list)
 		results.append(result)
 

@@ -63,3 +63,31 @@ const CENSURE_ABSOLUTE_FRACTION := 0.5
 ## Censure rules that measure against total membership rather than against the
 ## parties actually voting.
 const ABSOLUTE_CENSURE_RULES: Array[String] = ["absolute_members", "constructive_absolute"]
+
+# --- Article 49.3 ----------------------------------------------------------------
+
+## Months before the government may force another bill through without a vote.
+## Real 49.3 is limited to one non-budget bill per parliamentary session; a
+## twelve-month lockout is the same shape without modelling sessions.
+const FORCE_COOLDOWN_MONTHS := 12
+
+## Added to every party's hostility when a censure motion follows a forced bill.
+## Forcing is what turns an abstainer into a censure vote -- without this term
+## 49.3 would be a free pass on any bill, since the numbers that would censure a
+## government are the numbers that would already have voted the bill down.
+const FORCE_HOSTILITY_BONUS := 0.35
+
+## Applied to every bloc when a bill is forced through, whether or not the
+## censure motion that follows carries. Without a cost on use, Article 49.3 is
+## strictly dominant: a government that can cover the censure threshold would
+## force every bill the assembly would otherwise reject, for nothing. Surviving
+## a censure motion is not the same as getting away with it -- the 2023 pension
+## reform survived by nine votes and cost the government heavily in the polls.
+const FORCE_BLOC_PENALTY := -0.08
+
+## Applied to every bloc's approval target when a government falls, through the
+## law_bloc_offset accumulator opinion.gd already reads. A collapse is a visible
+## political failure and the opinion model has no other channel for one; routing
+## it through the existing accumulator means inertia and every bound in
+## docs/opinion-model.md still apply, exactly as they do for a law.
+const FALLEN_BLOC_PENALTY := -0.12
