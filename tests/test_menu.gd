@@ -1,0 +1,240 @@
+extends SceneTree
+
+## Headless test: godot --headless --script res://tests/test_menu.gd
+## Non-zero exit on any failure.
+##
+## The other wiring test. tests/test_game_loop.gd proves the clock reaches the
+## simulation once a game is running; this one proves you can get a game
+## running at all -- the menu builds, its overlays start hidden, and its two
+## ways into the game (New Game, and Continue/Load with a slot) both land on a
+## Main with a live GameState.
+##
+## Driven a frame at a time, per the Control-outside-the-tree gotcha in
+## docs/engine-decision.md: a node only gets its _ready() when it is actually
+## in the tree, so nothing here can be asserted during _init().
+
+const DataLoader = preload("res://src/core/data_loader.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const Clock = preload("res://src/core/clock.gd")
+
+const SLOT := "__test_menu_continue__"
+const SAVED_YEAR := 2031
+const SAVED_MONTH := 7
+const SAVED_DAY := 23
+
+var _failures: Array[String] = []
+var _menu
+var _frame := 0
+
+
+func _init() -> void:
+	_menu = load("res://src/ui/menu.tscn").instantiate()
+	root.add_child(_menu)
+
+
+func _process(_delta: float) -> bool:
+	_frame += 1
+	match _frame:
+		1:
+			return false  # let the menu's _ready() run
+		2:
+			_check_structure()
+			_check_settings()
+			_write_save()
+			_menu._start_game(SLOT)
+			return false
+		_:
+			_check_loaded_game()
+			_cleanup()
+			_finish()
+			return false
+
+
+func _check_structure() -> void:
+	if _menu._continue_button == null:
+		_fail("menu did not build its Continue button")
+		return
+
+	# Not a tautology against list_slots(): it catches the condition being
+	# inverted, which is the way this particular line goes wrong.
+	var expected := SaveManager.list_slots().is_empty()
+	if _menu._continue_button.disabled != expected:
+		_fail("Continue disabled=%s with %d save(s) on disk" % [
+			_menu._continue_button.disabled, SaveManager.list_slots().size()
+		])
+
+	# Every overlay's holder starts hidden. A visible full-rect holder swallows
+	# the clicks meant for the menu buttons under it, which looks like the menu
+	# being dead rather than like a layering bug.
+	for named in [["load", _menu._load_panel], ["settings", _menu._settings_panel], ["credits", _menu._credits_panel]]:
+		var panel = named[1]
+		if panel == null:
+			_fail("menu did not build its %s panel" % named[0])
+			continue
+		if panel.get_parent().visible:
+			_fail("%s panel's holder is visible before anything opened it" % named[0])
+
+	_menu._show(_menu._load_panel)
+	if not _menu._load_panel.get_parent().visible:
+		_fail("opening the load panel did not show its holder")
+	_menu._load_panel.get_parent().hide()
+
+	# The menu has no game to save, so the save row must be gone rather than
+	# present and inert. Checked because the first attempt at this called
+	# hide_save_row() before the panel was in the tree, where it did nothing
+	# and said nothing.
+	if _menu._load_panel._save_row.visible:
+		_fail("the menu's load panel still shows its save row")
+
+
+## Settings are only settings if they survive a relaunch, so what is checked
+## here is the round trip: change the controls, and a freshly built panel comes
+## back showing the same thing, with the interface scale actually applied to the
+## window rather than merely recorded.
+##
+## The real user://settings.cfg is backed up and put back afterwards -- a test
+## that silently resets the player's display settings is worse than no test.
+func _check_settings() -> void:
+	var panel = _menu._settings_panel
+	if panel == null:
+		_fail("menu did not build its settings panel")
+		return
+
+	var backup := ""
+	var had_config := FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if had_config:
+		backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
+
+	const SCALE_INDEX := 3
+	const RESOLUTION_INDEX := 2
+	panel._fullscreen_button.select(0)
+	panel._resolution_button.select(RESOLUTION_INDEX)
+	panel._scale_button.select(SCALE_INDEX)
+	panel._save_and_apply()
+
+	var expected: float = SettingsPanel.UI_SCALES[SCALE_INDEX]
+	if not is_equal_approx(root.content_scale_factor, expected):
+		_fail("interface scale saved but not applied: window is at %s, expected %s" % [
+			root.content_scale_factor, expected
+		])
+
+	# A second panel reads the file, not the first panel's memory -- which is
+	# what the next launch will do.
+	var reloaded = SettingsPanel.new()
+	root.add_child(reloaded)
+	if reloaded._scale_button.selected != SCALE_INDEX or reloaded._resolution_button.selected != RESOLUTION_INDEX:
+		_fail("settings did not survive a reload: scale %d, resolution %d" % [
+			reloaded._scale_button.selected, reloaded._resolution_button.selected
+		])
+	reloaded.queue_free()
+
+	if had_config:
+		var restore := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		restore.store_string(backup)
+		restore.close()
+		SettingsPanel.apply_saved(root)
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
+		root.content_scale_factor = 1.0
+
+
+## A save the menu can be asked to continue from. Written straight through
+## SaveManager rather than by playing a game, because what is under test here
+## is the menu -> Main handoff, not the simulation.
+func _write_save() -> void:
+	var loader := DataLoader.new()
+	loader.load_all()
+	if not loader.errors.is_empty():
+		_fail("data did not load cleanly: %s" % [loader.errors])
+		return
+
+	var state = GameState.new_game(loader, "FRA")
+	state.year = SAVED_YEAR
+	state.month = SAVED_MONTH
+
+	var clock := Clock.new()
+	clock.day = SAVED_DAY
+	var error := SaveManager.save_game(state, clock, SLOT)
+	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
+	if not error.is_empty():
+		_fail("could not write the test save: %s" % error)
+
+
+func _check_loaded_game() -> void:
+	var game = current_scene
+	if game == null:
+		_fail("_start_game() did not set the game as the current scene")
+		return
+	if game._state == null:
+		_fail("the game scene the menu started has no GameState")
+		return
+
+	# pending_load_slot has to reach main.gd's existing load path, not merely be
+	# stored on it -- the date is the cheapest proof the save actually replaced
+	# the new game that _ready() builds first.
+	if game._state.year != SAVED_YEAR or game._state.month != SAVED_MONTH:
+		_fail("continued into %d-%d, expected the saved %d-%d" % [
+			game._state.year, game._state.month, SAVED_YEAR, SAVED_MONTH
+		])
+
+	var clock: Node = game.get_node("Clock")
+	if clock.year != SAVED_YEAR or clock.month != SAVED_MONTH or clock.day != SAVED_DAY:
+		_fail("clock resumed at %d-%d-%d, expected %d-%d-%d" % [
+			clock.year, clock.month, clock.day, SAVED_YEAR, SAVED_MONTH, SAVED_DAY
+		])
+
+	_check_pause_menu(game, clock)
+
+
+## Two properties, both of which fail silently rather than loudly:
+##   1. Opening pauses and closing restores the state from *before*, so pausing
+##      to save does not start the clock on a player who had stopped it.
+##   2. The blocking holder is hidden when the menu is closed. A visible
+##      full-rect blocking CenterContainer eats every map click for the rest of
+##      the session and looks like the map having died.
+func _check_pause_menu(game, clock) -> void:
+	if game._pause_menu == null:
+		_fail("the game scene has no pause menu")
+		return
+	var holder: Control = game._pause_menu.get_parent()
+
+	for was_paused in [true, false]:
+		clock.paused = was_paused
+		game._open_pause_menu()
+		if not holder.visible:
+			_fail("opening the pause menu did not show its holder")
+		if not clock.paused:
+			_fail("the pause menu opened without stopping the clock")
+
+		game._close_pause_menu()
+		if holder.visible:
+			_fail("the closed pause menu's blocking holder is still visible")
+		if clock.paused != was_paused:
+			_fail("closing the pause menu left paused=%s, expected the prior %s" % [
+				clock.paused, was_paused
+			])
+
+
+func _cleanup() -> void:
+	var dir := DirAccess.open(SaveManager.SAVE_DIR)
+	if dir == null:
+		return
+	for p in [SaveManager._path_for(SLOT), SaveManager._path_for(SLOT) + SaveManager.TEMP_SUFFIX]:
+		if FileAccess.file_exists(p):
+			dir.remove(p)
+
+
+func _fail(message: String) -> void:
+	_failures.append(message)
+
+
+func _finish() -> void:
+	if _failures.is_empty():
+		print("test_menu: all checks passed")
+		quit(0)
+	else:
+		for f in _failures:
+			printerr(f)
+		quit(1)

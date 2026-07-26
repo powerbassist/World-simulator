@@ -18,8 +18,18 @@ const NationPanel = preload("res://src/ui/nation_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const PauseMenu = preload("res://src/ui/pause_menu.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+
+const MENU_SCENE := "res://src/ui/menu.tscn"
 
 const PLAYER_NATION_ID := "FRA"
+
+## Set by menu.gd before this scene enters the tree. Empty means a new game;
+## a slot name means load that save once the new game has been built and every
+## panel is wired, which is what _on_load_requested() below already expects.
+## A property rather than an autoload -- see menu.gd's note.
+var pending_load_slot := ""
 
 @onready var _clock: Node = $Clock
 @onready var _hud: Label = $HUD
@@ -39,6 +49,12 @@ var _map_view
 var _nation_panel
 var _government_panel
 var _save_load_panel
+var _pause_menu
+var _settings_panel
+## The clock's pause state from before the pause menu opened. Resume restores
+## it rather than unpausing unconditionally, so pausing to save does not also
+## start the clock on a player who had deliberately stopped it.
+var _paused_before_menu := false
 
 
 func _ready() -> void:
@@ -117,8 +133,39 @@ func _ready() -> void:
 	_save_load_panel.save_requested.connect(_on_save_requested)
 	_save_load_panel.load_requested.connect(_on_load_requested)
 
+	_settings_panel = SettingsPanel.new()
+	_add_centered(_settings_panel)
+	_settings_panel.hide()
+	_settings_panel.closed.connect(func(): _set_pause_menu_visible(true))
+
+	# Blocking, unlike every other panel: a pause menu you can click past into
+	# the map underneath is not paused in any sense the player recognises.
+	_pause_menu = PauseMenu.new()
+	_add_centered(_pause_menu, true)
+	_set_pause_menu_visible(false)
+	_pause_menu.resumed.connect(_close_pause_menu)
+	_pause_menu.save_load_requested.connect(func():
+		_set_pause_menu_visible(false)
+		_save_load_panel.show()
+		_save_load_panel.mark_dirty()
+	)
+	_pause_menu.settings_requested.connect(func():
+		_set_pause_menu_visible(false)
+		_settings_panel.show()
+	)
+	_pause_menu.main_menu_requested.connect(func():
+		get_tree().change_scene_to_file(MENU_SCENE)
+	)
+
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
+
+	# Loading reuses the whole existing load path rather than a separate
+	# start-from-save branch: a new game is built first, then replaced. That
+	# costs one throwaway GameState and buys one code path to keep correct.
+	if not pending_load_slot.is_empty():
+		_on_load_requested(pending_load_slot)
+
 	_update_hud()
 
 
@@ -126,10 +173,11 @@ func _ready() -> void:
 ## that works before a panel's children exist — an anchor preset computed in
 ## _ready() reads a minimum size of zero and lands in the corner. One container
 ## each, so hiding one panel does not move the other.
-func _add_centered(panel: Control) -> void:
+func _add_centered(panel: Control, blocking := false) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not blocking:
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(panel)
 	add_child(holder)
 
@@ -141,10 +189,39 @@ func _add_centered(panel: Control) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 
 
+## The pause menu's *holder* is what is shown and hidden, not the panel. It is
+## the one holder built blocking, and a full-rect blocking CenterContainer goes
+## on swallowing map clicks while the panel inside it is invisible.
+func _set_pause_menu_visible(shown: bool) -> void:
+	_pause_menu.get_parent().visible = shown
+	_pause_menu.visible = shown
+
+
+func _open_pause_menu() -> void:
+	_paused_before_menu = _clock.paused
+	_clock.paused = true
+	_set_pause_menu_visible(true)
+	_update_hud()
+
+
+func _close_pause_menu() -> void:
+	_set_pause_menu_visible(false)
+	_settings_panel.hide()
+	_clock.paused = _paused_before_menu
+	_update_hud()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed:
 		return
 	match event.keycode:
+		KEY_ESCAPE:
+			if _pause_menu == null:
+				return
+			if _pause_menu.get_parent().visible:
+				_close_pause_menu()
+			else:
+				_open_pause_menu()
 		KEY_SPACE:
 			_clock.toggle_pause()
 			_update_hud()
@@ -313,6 +390,6 @@ func _update_hud() -> void:
 		# a government below the majority line governs on sufferance.
 		var standing := "cohabitation" if ns.is_cohabitation else ("minority" if ns.is_minority else "majority")
 		line += "   government %d/%d (%s)" % [ns.coalition_seats, ns.assembly_seats, standing]
-		line += "\n[B] budget   [P] polling   [L] legislature   [G] government"
+		line += "\n[B] budget   [P] polling   [L] legislature   [G] government   [S] save/load   [Esc] menu"
 
 	_hud.text = line

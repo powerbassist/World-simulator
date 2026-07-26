@@ -14,12 +14,17 @@ extends PanelContainer
 
 signal save_requested(slot: String)
 signal load_requested(slot: String)
+## Emitted alongside hide(), the same shape nation_panel.gd and
+## government_panel.gd already use. The main menu hosts this panel in a
+## full-rect holder it has to hide too, and cannot see a plain hide().
+signal closed
 
 const SaveManager = preload("res://src/core/save_manager.gd")
 
 var _name_field: LineEdit
 var _status: Label
 var _slot_list: VBoxContainer
+var _save_row: HBoxContainer
 var _dirty := true
 
 
@@ -39,20 +44,20 @@ func _ready() -> void:
 	title.text = "SAVE / LOAD"
 	root.add_child(title)
 
-	var save_row := HBoxContainer.new()
-	save_row.add_theme_constant_override("separation", 8)
-	root.add_child(save_row)
+	_save_row = HBoxContainer.new()
+	_save_row.add_theme_constant_override("separation", 8)
+	root.add_child(_save_row)
 
 	_name_field = LineEdit.new()
 	_name_field.placeholder_text = "save name"
 	_name_field.text = "quicksave"
 	_name_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	save_row.add_child(_name_field)
+	_save_row.add_child(_name_field)
 
 	var save_btn := Button.new()
 	save_btn.text = "Save"
 	save_btn.pressed.connect(_on_save_pressed)
-	save_row.add_child(save_btn)
+	_save_row.add_child(save_btn)
 
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -79,11 +84,21 @@ func _build_footer() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	var close := Button.new()
-	close.text = "Close (S)"
-	close.pressed.connect(func(): hide())
+	close.text = "Close"
+	close.pressed.connect(func():
+		hide()
+		closed.emit()
+	)
 	row.add_child(close)
 
 	return row
+
+
+## Load-only mode, for the main menu: there is no game in progress to save, so
+## the save row would be a control that cannot work rather than one that is
+## merely disabled.
+func hide_save_row() -> void:
+	_save_row.hide()
 
 
 func _process(_delta: float) -> void:
