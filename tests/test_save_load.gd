@@ -70,6 +70,7 @@ func _init() -> void:
 	clock.day = 17
 
 	_run_roundtrip(state, clock)
+	_run_atomic_write(state, clock)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -103,6 +104,38 @@ func _run_roundtrip(state, clock) -> void:
 
 	if loaded.history.size() != state.history.size():
 		_fail("history: original has %d entries, loaded has %d" % [state.history.size(), loaded.history.size()])
+
+
+## The save is written to a sibling .tmp and renamed into place, so that an
+## interrupted write loses the new save rather than the old one. Two observable
+## consequences, both checked here, because the failure this guards against —
+## a truncated save where a working game used to be — cannot be provoked
+## directly without killing the process mid-write.
+func _run_atomic_write(state, clock) -> void:
+	var temp_path: String = SaveManager._path_for(ROUNDTRIP_SLOT) + SaveManager.TEMP_SUFFIX
+
+	# 1. A completed save leaves no temp behind.
+	if FileAccess.file_exists(temp_path):
+		_fail("save_game left '%s' behind after a successful write" % temp_path)
+
+	# 2. A temp stranded by an interrupted save is invisible to the slot list and
+	#    harmless to the good save sitting next to it -- the point of putting the
+	#    suffix after ".json" rather than before it.
+	var stranded := FileAccess.open(temp_path, FileAccess.WRITE)
+	stranded.store_string("{ truncated")
+	stranded.close()
+
+	if SaveManager.list_slots().has(ROUNDTRIP_SLOT + ".json" + SaveManager.TEMP_SUFFIX):
+		_fail("list_slots() offered a stranded temp file as a loadable slot")
+	if not SaveManager.load_game(ROUNDTRIP_SLOT)["ok"]:
+		_fail("a stranded temp file broke loading the good save beside it")
+
+	# 3. Saving again over the stranded temp succeeds rather than failing on it.
+	var save_error := SaveManager.save_game(state, clock, ROUNDTRIP_SLOT)
+	if not save_error.is_empty():
+		_fail("save_game failed when a stranded temp file was present: %s" % save_error)
+	if FileAccess.file_exists(temp_path):
+		_fail("save_game left '%s' behind on the retry" % temp_path)
 
 
 func _run_unknown_version() -> void:
@@ -140,9 +173,9 @@ func _cleanup() -> void:
 	if dir == null:
 		return
 	for slot in [ROUNDTRIP_SLOT, BOGUS_SLOT]:
-		var p := SaveManager._path_for(slot)
-		if FileAccess.file_exists(p):
-			dir.remove(p)
+		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
+			if FileAccess.file_exists(p):
+				dir.remove(p)
 
 
 ## Same reflective, enumerate-off-the-object approach as test_state_copy.gd --

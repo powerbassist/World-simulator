@@ -115,13 +115,13 @@ regimes.
   bloc approval *each month* for non-finite values, non-positive GDP and
   population, and — stricter than the checklist asks — for any value resting on
   one of the model's guard clamps. All ten probe regimes report clean.
-- [ ] **The banned-names grep from [[fictionalization]] returns nothing.**
-  Still failing, on two S2 substring false positives: `BEL.json`'s invented
-  "Sociale Vooruitgang" matches the banned "Vooruit", and `GBR.json`'s invented
-  "Ecology Alliance" matches "Ecolo". Both authored names are fictional; the
-  check's matcher is not word-boundary aware. Pre-existing debt, queued
-  separately, deliberately **not** fixed inside S10 — the fix belongs in
-  `tools/check_names.sh`, not in the balance constants.
+- [x] **The banned-names grep from [[fictionalization]] returns nothing.**
+  `tools/check_names.sh` reports zero hits. It failed through S10 on two S2
+  substring false positives — one invented Dutch party name and one invented
+  British one, each of which happens to *contain* a shorter real party name
+  from the banned list. Both authored names are fictional; the matcher was the
+  bug, not the content. Fixed at U1 by adding `-w` to the grep, which is what
+  the list always meant: a banned name is a name, not a letter sequence.
 
 ## Deliberately absent
 

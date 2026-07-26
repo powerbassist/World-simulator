@@ -13,7 +13,11 @@ while IFS= read -r f; do
   case "$f" in
     tools/banned_names.txt|tools/check_names.sh) continue ;;
   esac
-  if grep -InF -f "$pattern_file" -- "$f" 2>/dev/null; then
+  # -w, because the banned list holds short real party names that are honest
+  # substrings of longer invented ones -- one Dutch and one British case in
+  # data/parties/. Without word boundaries the check rejects content it should
+  # pass, and an always-red check is one nobody reads.
+  if grep -InFw -f "$pattern_file" -- "$f" 2>/dev/null; then
     hits=1
   fi
 done < <(git ls-files)

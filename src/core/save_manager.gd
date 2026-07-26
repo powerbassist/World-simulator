@@ -16,6 +16,9 @@ extends RefCounted
 ## rather than resetting to day 1 (a two-day-late tick, not a wrong number).
 
 const SAVE_DIR := "user://saves/"
+## Appended after ".json", not before it, so list_slots()'s ".json" suffix test
+## skips a stranded temp file rather than offering it as a loadable slot.
+const TEMP_SUFFIX := ".tmp"
 const GameState = preload("res://src/core/game_state.gd")
 
 
@@ -29,6 +32,14 @@ static func _path_for(slot: String) -> String:
 
 ## Writes `slot`.json under user://saves/. Returns "" on success, an error
 ## message otherwise.
+##
+## Written to a sibling .tmp first and renamed into place, so a crash or a full
+## disk mid-write loses the new save rather than the old one. Writing straight
+## to the destination truncates it on open -- an interrupted save would leave a
+## half-written file where a working game used to be, which is the one failure
+## this project is least willing to ship. The rename is atomic on POSIX; on
+## Windows it is replace-then-rename, so the guarantee there is "the live file
+## is never the one being written to", not true atomicity.
 static func save_game(state, clock, slot: String) -> String:
 	if slot.is_empty():
 		return "save slot name cannot be empty"
@@ -40,12 +51,23 @@ static func save_game(state, clock, slot: String) -> String:
 		"game_state": state.to_dict(),
 	}
 
-	var file := FileAccess.open(_path_for(slot), FileAccess.WRITE)
+	var temp_path := _path_for(slot) + TEMP_SUFFIX
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
-		return "could not open '%s' for writing (%s)" % [_path_for(slot), error_string(FileAccess.get_open_error())]
+		return "could not open '%s' for writing (%s)" % [temp_path, error_string(FileAccess.get_open_error())]
 
 	file.store_string(JSON.stringify(payload, "\t"))
 	file.close()
+
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		DirAccess.remove_absolute(temp_path)
+		return "could not open '%s' (%s)" % [SAVE_DIR, error_string(DirAccess.get_open_error())]
+
+	var err := dir.rename(slot + ".json" + TEMP_SUFFIX, slot + ".json")
+	if err != OK:
+		DirAccess.remove_absolute(temp_path)
+		return "could not replace '%s' (%s)" % [_path_for(slot), error_string(err)]
 	return ""
 
 
