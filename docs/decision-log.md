@@ -91,6 +91,21 @@ and neither was noticed: `SaveManager.save_game()` wrote straight to the live sa
 file, and the banned-names check had been failing since S2 on two substring false
 positives caused by a missing `-w`. An always-red check is one nobody reads.
 
+## U2 — effort corrected High → High at plan time, not mid-session
+
+The roadmap wrote U2 as High → Medium. Corrected before any code was written,
+by counting surfaces instead of the headline artefact: top bar, rail, dock host,
+seven tab hosts, two new panels (Overview, Economy), a map re-host, a nation-panel
+re-host, a modal layer that stays for four panels, seven keybinds retargeted plus
+three added, focus order, and a new shell test. Eleven surfaces behind one line
+in the roadmap table.
+
+Same tell [[ROADMAP|the roadmap's own effort note]] already names for S7: the
+estimate counted the thing the session is named after and not the wiring around
+it. This is the second time the same pattern has produced a wrong effort call —
+worth watching for at every future plan-first session, not just re-deriving from
+scratch each time.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

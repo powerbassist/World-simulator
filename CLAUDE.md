@@ -82,11 +82,14 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**U1 shipped** — main menu, settings, credits, pause menu, atomic saves. MVP and
-V1.1a (government formation, coalitions, censure, Article 49.3) are done.
+**U2 shipped** — persistent top bar and left tab rail; five of the old overlay
+panels are now docked tabs, plus two new thin ones (Overview, Economy), and the
+map is the Europe tab instead of a full-screen background. MVP and V1.1a
+(government formation, coalitions, censure, Article 49.3) are done.
 
-**Next: U2** — dashboard shell. Persistent top bar and left tab rail; the seven
-keybind-toggled overlays become docked tabs. See [ROADMAP.md](ROADMAP.md).
+**Next: U3** — tab content and hierarchy. Overview answers "what matters most
+right now" instead of listing every figure; a theme resource replaces the
+per-panel `StyleBoxFlat` overrides. See [ROADMAP.md](ROADMAP.md).
 
 ## Workflow
 

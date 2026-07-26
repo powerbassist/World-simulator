@@ -47,6 +47,7 @@ One track at a time per session. Interleaved, not parallel.
 | V1.1a | Government | Formation per nation's real rules, coalitions, cohabitation, minority, censure, Article 49.3 |
 | U1 | Shell | Main menu, settings, credits, pause menu, keyboard navigation |
 | X1 | Fixes | Atomic save writes; banned-names check green, closing the last MVP box |
+| U2 | Shell | Dashboard: persistent top bar, left tab rail, seven panels docked, map as a tab |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -56,7 +57,6 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **U2** | UI | Dashboard shell | U1 |
 | **U3** | UI | Tab content and hierarchy | U2 |
 | **U4** | UI | Decision deltas | U2 |
 | **V1.1b** | Sim | Party discipline and rebellions | V1.1a |
@@ -69,33 +69,6 @@ V1.1f referendums is deferred toward V1.7, which brings campaigns.
 The U-track goes first because every system session currently ends by bolting one
 more overlay and one more keybind onto a scheme that is already at its limit.
 Doing the shell now makes V1.1b–e cheaper, not more expensive.
-
-### U2 — Dashboard shell
-
-**Goal:** the game has a frame, and panels live inside it instead of floating
-over it.
-
-**Scope:** a persistent **top bar** — date, pause and speed control, and the four
-headline figures — replacing the five-line HUD `Label`. A persistent **left tab
-rail**: Overview · Economy · Budget · Politics · Society · Legislature · Europe.
-The seven existing panels are re-hosted as docked tabs with their **content
-unchanged**; the map becomes the Europe tab instead of a full-screen background.
-Existing keybinds survive as shortcuts. Modals are kept for things that are
-genuinely modal — election results, censure motions, confirmations.
-
-**Done when:**
-- Every panel that opened with a keypress before opens as a tab, showing the same
-  figures, refreshing on the same monthly tick.
-- No panel floats over the map any more, and no full-rect holder blocks input.
-- The top bar's figures update every tick without opening anything.
-- The existing panel tests still pass, unmodified where possible.
-
-`feat: dashboard shell with top bar and tab rail`
-
-> [!note] Install `frontend-design` before this one
-> `npx skills add anthropics/skills@frontend-design -g -y`. It is web-oriented,
-> so its hierarchy, density and spacing principles transfer to Godot `Control`
-> and its concrete output does not.
 
 ### U3 — Tab content and hierarchy
 
@@ -150,7 +123,6 @@ is already made, which is most sessions once the docs are written.
 
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
-| U2 Dashboard shell | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | The frame every later UI session builds inside, and the last cheap moment to get the navigation model right. The re-hosting itself is mechanical. |
 | U3 Tab content | **Light** | Opus 5 | Medium | "What matters most right now" is a design judgement with no obviously right answer; the rest is layout. |
 | U4 Decision deltas | **No** | Sonnet 5 | Low | Small and fully specified. The numbers already exist on both sides. |
 | V1.1b Party discipline | **Yes** | Opus 5 | High | A model decision coupled to the existing coalition arithmetic, with no obviously right answer — the S5 class. |

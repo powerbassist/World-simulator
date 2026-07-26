@@ -33,6 +33,7 @@ var _title: Label
 var _list: VBoxContainer
 var _result_box: VBoxContainer
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -69,12 +70,17 @@ func _build_footer() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
 
-	var close := Button.new()
-	close.text = "Close (L)"
-	close.pressed.connect(func(): hide())
-	row.add_child(close)
+	_close_button = Button.new()
+	_close_button.text = "Close (L)"
+	_close_button.pressed.connect(func(): hide())
+	row.add_child(_close_button)
 
 	return row
+
+
+## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func setup(state, loader) -> void:

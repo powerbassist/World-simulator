@@ -12,7 +12,6 @@ const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
-const PollNoise = preload("res://src/ui/poll_noise.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
@@ -20,6 +19,10 @@ const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
+const Dashboard = preload("res://src/ui/dashboard.gd")
+const OverviewPanel = preload("res://src/ui/overview_panel.gd")
+const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
 
@@ -32,15 +35,13 @@ const PLAYER_NATION_ID := "FRA"
 var pending_load_slot := ""
 
 @onready var _clock: Node = $Clock
-@onready var _hud: Label = $HUD
-
-const MONTH_NAMES: Array[String] = [
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-]
 
 var _state
 var _loader: DataLoader
+var _top_bar
+var _dashboard
+var _overview_panel
+var _economy_panel
 var _budget_panel
 var _polling_panel
 var _election_panel
@@ -83,49 +84,85 @@ func _ready() -> void:
 	_state.year = _clock.year
 	_state.month = _clock.month
 
-	# The map is a full-screen background layer, not a modal panel like the
-	# other three -- added first, then moved to sibling index 0 so the HUD
-	# (already in the scene from main.tscn) and every panel below draw on
-	# top of it rather than the map drawing over everything else.
+	# The frame: top bar over rail+dock, stacked in a VBox so the dock gets
+	# whatever height the bar doesn't use. Not a stored reference -- nothing
+	# outside this block needs it.
+	var shell := VBoxContainer.new()
+	shell.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(shell)
+
+	_top_bar = TopBar.new()
+	shell.add_child(_top_bar)
+	_top_bar.pause_toggled.connect(func():
+		_clock.toggle_pause()
+		_update_top_bar()
+	)
+	_top_bar.speed_selected.connect(func(s: int):
+		_clock.set_speed(s)
+		_update_top_bar()
+	)
+
+	_dashboard = Dashboard.new()
+	_dashboard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	shell.add_child(_dashboard)
+
+	_overview_panel = OverviewPanel.new()
+	_dashboard.add_tab("overview", "Overview", _overview_panel)
+	_overview_panel.setup(_state)
+
+	_economy_panel = EconomyPanel.new()
+	_dashboard.add_tab("economy", "Economy", _economy_panel)
+	_economy_panel.setup(_state)
+
+	_budget_panel = BudgetPanel.new()
+	_dashboard.add_tab("budget", "Budget", _budget_panel)
+	_budget_panel.setup(_state)
+	_budget_panel.hide_close_button()
+	_budget_panel.committed.connect(_update_top_bar)
+
+	_government_panel = GovernmentPanel.new()
+	_dashboard.add_tab("politics", "Politics", _government_panel)
+	_government_panel.setup(_state, _loader)
+	_government_panel.hide_close_button()
+
+	_polling_panel = PollingPanel.new()
+	_dashboard.add_tab("society", "Society", _polling_panel)
+	_polling_panel.setup(_state)
+	_polling_panel.hide_close_button()
+
+	_law_panel = LawPanel.new()
+	_dashboard.add_tab("legislature", "Legislature", _law_panel)
+	_law_panel.setup(_state, _loader)
+	_law_panel.hide_close_button()
+	_law_panel.proposed.connect(_update_top_bar)
+
+	# Europe: the map plus a detail pane, side by side, replacing the map's old
+	# life as a full-screen layer behind everything else.
+	var europe := HBoxContainer.new()
+	europe.add_theme_constant_override("separation", 12)
+
 	_map_view = MapView.new()
-	add_child(_map_view)
-	move_child(_map_view, 0)
-	_map_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	europe.add_child(_map_view)
 	_map_view.setup(_loader, _state)
 	_map_view.nation_clicked.connect(_on_nation_clicked)
 
-	_budget_panel = BudgetPanel.new()
-	_add_centered(_budget_panel)
-	_budget_panel.setup(_state)
-	_budget_panel.hide()
-	_budget_panel.committed.connect(_update_hud)
+	_nation_panel = NationPanel.new()
+	europe.add_child(_nation_panel)
+	_nation_panel.setup(_state, _loader)
+	_nation_panel.hide()
 
-	_polling_panel = PollingPanel.new()
-	_add_centered(_polling_panel)
-	_polling_panel.setup(_state)
-	_polling_panel.hide()
+	_dashboard.add_tab("europe", "Europe", europe)
 
+	# Four panels stay modal, not docked: election results and censure land on
+	# the player regardless of which tab is open, and settings/save-load are
+	# reached through the pause menu rather than the rail.
 	_election_panel = ElectionPanel.new()
 	_add_centered(_election_panel)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	_election_panel.dismissed.connect(func(): _clock.paused = false)
-
-	_law_panel = LawPanel.new()
-	_add_centered(_law_panel)
-	_law_panel.setup(_state, _loader)
-	_law_panel.hide()
-	_law_panel.proposed.connect(_update_hud)
-
-	_nation_panel = NationPanel.new()
-	_add_centered(_nation_panel)
-	_nation_panel.setup(_state, _loader)
-	_nation_panel.hide()
-
-	_government_panel = GovernmentPanel.new()
-	_add_centered(_government_panel)
-	_government_panel.setup(_state, _loader)
-	_government_panel.hide()
 
 	_save_load_panel = SaveLoadPanel.new()
 	_add_centered(_save_load_panel)
@@ -166,13 +203,14 @@ func _ready() -> void:
 	if not pending_load_slot.is_empty():
 		_on_load_requested(pending_load_slot)
 
-	_update_hud()
+	_update_top_bar()
 
 
 ## Screen-filling CenterContainer per panel, which is the one placement mechanism
 ## that works before a panel's children exist — an anchor preset computed in
 ## _ready() reads a minimum size of zero and lands in the corner. One container
-## each, so hiding one panel does not move the other.
+## each, so hiding one panel does not move the other. Only the four modal
+## panels use this now; the rest are docked by dashboard.gd.
 func _add_centered(panel: Control, blocking := false) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -181,8 +219,8 @@ func _add_centered(panel: Control, blocking := false) -> void:
 	holder.add_child(panel)
 	add_child(holder)
 
-	# The default panel style is translucent, so the HUD reads through a screen
-	# full of figures. Opaque until S10 gives the game an actual theme.
+	# The default panel style is translucent, so the dashboard reads through a
+	# screen full of figures. Opaque until U3 gives the game an actual theme.
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.11, 0.12, 0.13)
 	style.set_corner_radius_all(4)
@@ -201,14 +239,14 @@ func _open_pause_menu() -> void:
 	_paused_before_menu = _clock.paused
 	_clock.paused = true
 	_set_pause_menu_visible(true)
-	_update_hud()
+	_update_top_bar()
 
 
 func _close_pause_menu() -> void:
 	_set_pause_menu_visible(false)
 	_settings_panel.hide()
 	_clock.paused = _paused_before_menu
-	_update_hud()
+	_update_top_bar()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -224,36 +262,37 @@ func _unhandled_input(event: InputEvent) -> void:
 				_open_pause_menu()
 		KEY_SPACE:
 			_clock.toggle_pause()
-			_update_hud()
+			_update_top_bar()
 		KEY_1:
 			_clock.set_speed(1)
-			_update_hud()
+			_update_top_bar()
 		KEY_2:
 			_clock.set_speed(2)
-			_update_hud()
+			_update_top_bar()
 		KEY_3:
 			_clock.set_speed(3)
-			_update_hud()
+			_update_top_bar()
+		KEY_O:
+			if _dashboard != null:
+				_dashboard.select_tab("overview")
+		KEY_E:
+			if _dashboard != null:
+				_dashboard.select_tab("economy")
 		KEY_B:
-			if _budget_panel != null:
-				_budget_panel.visible = not _budget_panel.visible
-				if _budget_panel.visible:
-					_budget_panel.mark_dirty()
-		KEY_P:
-			if _polling_panel != null:
-				_polling_panel.visible = not _polling_panel.visible
-				if _polling_panel.visible:
-					_polling_panel.mark_dirty()
-		KEY_L:
-			if _law_panel != null:
-				_law_panel.visible = not _law_panel.visible
-				if _law_panel.visible:
-					_law_panel.mark_dirty()
+			if _dashboard != null:
+				_dashboard.select_tab("budget")
 		KEY_G:
-			if _government_panel != null:
-				_government_panel.visible = not _government_panel.visible
-				if _government_panel.visible:
-					_government_panel.mark_dirty()
+			if _dashboard != null:
+				_dashboard.select_tab("politics")
+		KEY_P:
+			if _dashboard != null:
+				_dashboard.select_tab("society")
+		KEY_L:
+			if _dashboard != null:
+				_dashboard.select_tab("legislature")
+		KEY_M:
+			if _dashboard != null:
+				_dashboard.select_tab("europe")
 		KEY_S:
 			if _save_load_panel != null:
 				_save_load_panel.visible = not _save_load_panel.visible
@@ -289,6 +328,10 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	entry.merge(Opinion.snapshot(_state))
 	_state.append_history(entry)
 
+	if _overview_panel != null:
+		_overview_panel.mark_dirty()
+	if _economy_panel != null:
+		_economy_panel.mark_dirty()
 	if _budget_panel != null:
 		_budget_panel.mark_dirty()
 	if _polling_panel != null:
@@ -317,7 +360,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 
 
 func _on_day_advanced(_year: int, _month: int, _day: int) -> void:
-	_update_hud()
+	_update_top_bar()
 
 
 func _on_save_requested(slot: String) -> void:
@@ -346,6 +389,8 @@ func _on_load_requested(slot: String) -> void:
 	_clock.paused = true
 
 	_map_view.setup(_loader, _state)
+	_overview_panel.setup(_state)
+	_economy_panel.setup(_state)
 	_budget_panel.setup(_state)
 	_polling_panel.setup(_state)
 	_election_panel.setup(_state, _loader)
@@ -353,6 +398,8 @@ func _on_load_requested(slot: String) -> void:
 	_nation_panel.setup(_state, _loader)
 	_government_panel.setup(_state, _loader)
 
+	_overview_panel.mark_dirty()
+	_economy_panel.mark_dirty()
 	_budget_panel.mark_dirty()
 	_polling_panel.mark_dirty()
 	_law_panel.mark_dirty()
@@ -361,35 +408,9 @@ func _on_load_requested(slot: String) -> void:
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
-	_update_hud()
+	_update_top_bar()
 
 
-func _update_hud() -> void:
-	var month_name: String = MONTH_NAMES[_clock.month - 1]
-	var state_text := "paused" if _clock.paused else "speed %d" % _clock.speed
-	var line := "%s %d, %d — %s" % [month_name, _clock.day, _clock.year, state_text]
-
-	if _state != null:
-		var ns = _state.player()
-		line += "\nGDP EUR %.0fbn   growth %+.2f%%   unemployment %.1f%%" % [
-			ns.gdp_eur_bn, ns.growth_annual_pct, ns.unemployment_pct
-		]
-		line += "\ndebt %.1f%% of GDP   deficit %+.2f%% of GDP" % [
-			ns.debt_to_gdp_pct(), -ns.deficit_pct_gdp
-		]
-		# The polled figure, not the true one — the HUD must not leak what the
-		# polling panel is deliberately blurring.
-		var poll := PollNoise.displayed(
-			PollNoise.poll_id(_state.year, _state.month),
-			PollingPanel.HEADLINE_KEY,
-			ns.overall_approval_pct
-		)
-		line += "\napproval %.0f%% (poll)" % poll
-
-		# The seat count is now the other number the player is playing against:
-		# a government below the majority line governs on sufferance.
-		var standing := "cohabitation" if ns.is_cohabitation else ("minority" if ns.is_minority else "majority")
-		line += "   government %d/%d (%s)" % [ns.coalition_seats, ns.assembly_seats, standing]
-		line += "\n[B] budget   [P] polling   [L] legislature   [G] government   [S] save/load   [Esc] menu"
-
-	_hud.text = line
+func _update_top_bar() -> void:
+	if _top_bar != null:
+		_top_bar.refresh(_state, _clock)

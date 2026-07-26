@@ -14,10 +14,3 @@ grow_vertical = 2
 
 [node name="Clock" type="Node" parent="."]
 script = ExtResource("2")
-
-[node name="HUD" type="Label" parent="."]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 660.0
-offset_bottom = 132.0

@@ -113,10 +113,11 @@ func _add_entry(column: VBoxContainer, text: String, action: Callable) -> Button
 ## clicks meant for the menu buttons underneath it.
 ##
 ## main.gd's _add_centered() does nearly the same thing and is deliberately not
-## shared: U2 replaces main.gd's centred overlays with docked tabs, at which
-## point that copy disappears. Extracting ten lines of node plumbing into a
-## module one of its two callers is about to stop using is a worse trade than
-## the duplication.
+## shared. U2 docked five of main.gd's nine overlays as dashboard tabs, but the
+## other four -- election results, pause, settings, save/load -- are genuinely
+## modal and still use _add_centered(), so both this copy and that one keep a
+## caller. Extracting ten lines of node plumbing into a module shared by two
+## call sites is not worth the indirection.
 func _add_overlay(panel: Control) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

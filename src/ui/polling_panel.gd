@@ -31,6 +31,7 @@ var _election_countdown: Label
 var _bloc_rows := {}          # bloc id -> [approval Label, change Label]
 var _issue_rows: Array = []   # [name Label, share Label]
 var _dirty := true
+var _close_button: Button
 
 ## What the previous poll said, so the change column compares like with like:
 ## two noised figures, not a noised one against a true one.
@@ -152,8 +153,14 @@ func _build_footer() -> Control:
 	close.text = "Close (P)"
 	close.pressed.connect(func(): hide(); closed.emit())
 	row.add_child(close)
+	_close_button = close
 
 	return row
+
+
+## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func setup(state) -> void:

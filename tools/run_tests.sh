@@ -23,6 +23,7 @@ tests=(
   tests/test_game_loop.gd
   tests/test_menu.gd
   tests/test_map_view.gd
+  tests/test_dashboard.gd
   tests/test_save_load.gd
   tests/test_balance.gd
 )

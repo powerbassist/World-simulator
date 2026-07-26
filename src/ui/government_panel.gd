@@ -42,6 +42,7 @@ var _loader
 var _title: Label
 var _body: VBoxContainer
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -63,19 +64,24 @@ func _ready() -> void:
 	_body.add_theme_constant_override("separation", 4)
 	root.add_child(_body)
 
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(func():
+	_close_button = Button.new()
+	_close_button.text = "Close"
+	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
 	)
-	root.add_child(close)
+	root.add_child(_close_button)
 
 
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+
+
+## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func _process(_delta: float) -> void:

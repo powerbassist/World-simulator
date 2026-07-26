@@ -59,6 +59,7 @@ var _lever_values := {}
 var _figures := {}
 var _title: Label
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -179,12 +180,19 @@ func _build_buttons() -> Control:
 	revert.pressed.connect(_on_revert)
 	row.add_child(revert)
 
-	var close := Button.new()
-	close.text = "Close (B)"
-	close.pressed.connect(func(): hide())
-	row.add_child(close)
+	_close_button = Button.new()
+	_close_button.text = "Close (B)"
+	_close_button.pressed.connect(func(): hide())
+	row.add_child(_close_button)
 
 	return row
+
+
+## Docked-tab mode, for the dashboard: the rail already selects a different tab
+## to leave this one, so a "Close" button that just hides the panel inside its
+## own tab would show a blank tab. Same idiom as save_load_panel.hide_save_row().
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func _lever_keys() -> Array:
