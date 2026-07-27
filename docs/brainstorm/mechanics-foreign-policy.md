@@ -50,9 +50,9 @@ Unfiltered candidate list. The tier column is a first-pass read; [[mvp]], [[v1]]
 | Mechanic | Sketch | Tier |
 |---|---|---|
 | Sanctions | Economic pressure, imposed and received, with domestic blowback. | V1 |
-| Military strength | An abstract capability score rather than units on a map. | Someday |
+| Military strength | An abstract capability score rather than units on a map. Derived from sustained defence spending, not authored. | V1 |
 | War declaration and resolution | Resolved at the strategic level — costs, casualties, outcomes — not tactically. | Someday |
-| Military deployment abroad | Peacekeeping and intervention, with a domestic approval bill. | Someday |
+| Military deployment abroad | Peacekeeping and intervention, with a domestic approval bill. The bill *is* the mechanic. | V1 |
 | Arms sales | Revenue, influence, and later regret. | Someday |
 | Espionage | Intelligence gathering, sabotage, covert influence on other nations' politics. | Someday |
 | Counter-intelligence | Catching theirs. | Someday |

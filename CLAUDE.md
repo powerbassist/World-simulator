@@ -98,11 +98,15 @@ well-governed regime and five under a failing one in `tools/balance_probe.gd`.
 cycle. Model: [docs/cabinet-model.md](docs/cabinet-model.md). MVP, V1.1a–d
 and U1–U4 are done.
 
-**Next: V1.1e** — upper house and judiciary, per [ROADMAP.md](ROADMAP.md) —
-but the user has asked not to keep deepening the French assembly session
-after session; check with them before defaulting into it rather than
-widening scope instead (another playable nation, V1.2 political system
-templates, or a different track). See ROADMAP's own note on this.
+**Next: V1.2a** — a second playable nation, decided by a scope-alignment pass
+that also settled where military lands (thin, inside V1.3, as domestic
+politics rather than warfare), that three sectors and five taxes are the
+economy's final granularity, that Events stays last, and what happens to
+tourism, leader personal wealth and difficulty settings. V1.1e is re-parked,
+not cancelled. Arguments in [ROADMAP.md](ROADMAP.md),
+[docs/tiers/v1.md](docs/tiers/v1.md), the new
+[docs/tiers/declined.md](docs/tiers/declined.md), and
+[docs/decision-log.md](docs/decision-log.md).
 
 Save format is at **version 5**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than

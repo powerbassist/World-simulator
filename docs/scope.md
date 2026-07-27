@@ -62,6 +62,7 @@ The candidate mechanic space, deliberately unfiltered. These lists are long on p
 - **[[out-of-scope-mvp]]** — the explicit exclusion list, with the reason for each cut written down.
 - **[[v1]]** — what gets built once the MVP loop works, in the order it gets built.
 - **[[someday]]** — the parking lot. Explicitly not part of near-term planning.
+- **[[declined]]** — considered and decided against, with the reason and the condition that would reopen each. Stronger than the parking lot.
 
 ## The MVP in one sentence
 

@@ -40,6 +40,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[mvp]] — France, one term, one way to lose
 - [[v1]] — what gets built once the MVP works
 - [[someday]] — the parking lot, not scheduled
+- [[declined]] — considered and decided against, with what would reopen each
 - [[out-of-scope-mvp]] — the explicit exclusion list, with reasons
 
 ## Brainstorm

@@ -302,6 +302,101 @@ Full model, both measurements, and the balance-probe regimes that confirmed
 section 1(b) under the real full pipeline rather than the probe's isolated
 formula: [[cabinet-model]].
 
+## Scope alignment — four gaps found by a competitor comparison, and what each got
+
+The first entry here that came from **no build session at all**. A comparison of
+the planning docs against Geopolitical Simulator's 2025/2026 store-page feature
+list found four things absent from every doc in the repo: military, tourism, the
+leader's personal wealth, and difficulty settings. A fifth question came with
+them — whether three economic sectors is enough — and a sixth was already open in
+[[ROADMAP]]: what follows V1.1d.
+
+The premise the pass worked from, and did not treat the store page as
+overriding: **this project's differentiator is not feature parity.** It is fewer
+systems that work reliably, against a competitor with a documented reliability
+problem. Copying the surface area copies the failure mode. So the output is
+decisions with reasons — two scheduled thin, two declined, one folded into an
+existing line — rather than a longer backlog.
+
+**Military is scheduled, thin, inside V1.3, and is not warfare.** The genre
+argument for scheduling it is real: a geopolitics game with defence as a
+non-pillar is arguably out of genre. The argument against building the
+competitor's version is equally real: units, theatres and war resolution are a
+second game, and the lose condition here is an election. The split that resolves
+both is that the player's actual interaction with defence in a
+nation-management game is **budgetary and political** — what it costs, who it
+upsets, what an alliance obliges you to — and all three run on machinery that
+already exists: the `defence` spending line, its opinion issue with per-bloc
+weights, the Defence portfolio in [[cabinet-model]], and
+[[legislature-model|the law effect channels]]. Capability is *derived* from
+sustained spending rather than authored, the same treatment competence gets, so
+it costs no new per-nation data. It cannot land before V1.3, because a
+deployment with no counterparty and no relations score is a spending line with a
+different label.
+
+One premise in the framing was checked and **found wrong**: EU defence
+integration does not land on existing structure. `src/core/eu.gd` is a
+membership table, an EP seat count and an election date — there is no bloc
+policy and no bloc-level voting to attach anything to. Those are themselves V1.3
+scope, which is a second, independent reason the defence layer belongs there.
+
+**Three sectors is the answer, permanently; five taxes is V1.6's target.** The
+asymmetry that decides it had never been written down: **sector count scales
+with the nation roster, tax count scales with nothing.** Sector shares are
+per-nation content seeded from World Bank value-added indicators, [[data-sources]]
+establishes there is no fourth series, and [[scope]] commits to every nation
+eventually being playable — so a fourth sector is a hand-authored guess
+multiplied by the whole roster, forever. Tax parameters live in
+`economy_constants.gd`, are authored once, and are not per-nation at all. This
+generalises S4's energy rejection from one decision into a rule, which is why
+tourism could be declined by the same argument without a fresh investigation.
+Spending lines stay at five plus `other` because [[cabinet-model|the cabinet]] is
+keyed 1:1 to them and a sixth line is a sixth minister. V1.6's "sectoral
+investment" is resolved as a lever pointed at a sector, not more sectors.
+
+**Events stays last, for a better reason than the one written.** The original
+reason — events paper over a loop that is not working — is right but does not
+answer the strongest objection, which is that a consequences layer is the direct
+vehicle for the visible-cause-and-effect goal. It does not answer it because
+**that goal already shipped its vehicle, and it was not events**: U4's decision
+deltas capture a baseline at commit and measure it against the next history
+entry. Events add *authored* consequences on top of systemic ones, and authored
+consequences are only legible if the systemic ones already are. Second reason,
+purely practical: the event schema's shape is the union of the effect channels
+V1.3–V1.7 create, so writing it early means writing it twice. A falsifier was
+attached, in the discipline V1.1b arrived at for balance goals — if playtesting
+finds the loop legible but **inert**, that is the signal to move it, and nothing
+weaker is.
+
+**The three silent omissions, one line each.** Tourism → [[declined]]: a services
+sub-sector with no dataset split and no mechanic that would read it (no visa
+policy, no exchange rate). Leader personal wealth → [[someday]], folded into the
+existing personal-corruption line rather than added beside it, because a
+personal-money pool that is not corrupt is a second currency with no lose
+condition attached. Difficulty → [[declined]] **as a global multiplier**,
+accepted as **start scenarios** under V1.2: every balance number in this project
+is measured, so a slider scaling tuned constants invalidates every measurement
+and multiplies every future probe run by the number of settings, while varying
+the *starting* state changes data and no constant.
+
+**A fourth tier doc exists now: [[declined]].** [[someday]] says "not
+scheduled", which is a weaker claim than "decided against", and
+[[out-of-scope-mvp]] is phase-specific with its own deadline long past. Each
+entry names what would reopen it, because a decision with no route back is a
+prohibition.
+
+**Next block: V1.2a, a second playable nation** — the breadth move, confirmed
+with the user, replacing the open question this document's own [[ROADMAP]] entry
+had parked. What made it the cheapest option is that the content already exists
+for ten nations and `GameState.new_game()` is already parameterised on
+`player_id`; the only hardcoded player nation under `src/` is one const in
+`main.gd`. The real cost is the two **shared** things a second player nation
+makes wrong — `policy_defaults.json` is one file for every nation, by an explicit
+MVP-era note that is now due, and `opinion_constants.gd`'s bloc weights are one
+global table, so every electorate in Europe currently has identical priorities.
+Which of those two moves into data is the call that decides the block's size, and
+it belongs to that block's plan step.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

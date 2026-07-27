@@ -10,6 +10,10 @@ tags:
 > [!warning] Not part of near-term planning
 > Nothing on this page is scheduled, estimated, or committed to. It exists so good ideas have somewhere to live that is not the [[ROADMAP]]. Treat it as a parking lot, not a backlog.
 
+> [!note] Parked is not the same as declined
+> Everything here is *unscheduled*. Things that were considered and **decided
+> against**, with a reason and a route back, are in [[declined]] instead.
+
 ## Governance
 
 - Gerrymandering and boundary review
@@ -60,9 +64,7 @@ tags:
 - Bloc accession and withdrawal as multi-year domestic fights
 - UN-shaped international organisations, vetoes, resolutions
 - Treaty ratification fights in your own assembly
-- Military strength as an abstract capability score
-- War declaration and strategic-level resolution
-- Overseas military deployment and peacekeeping
+- War declaration and strategic-level resolution — units, theatres, casualties. The domestic-politics half of defence (capability, deployments, alliance obligations) moved to [[v1|V1.3]]; this half stays here, because it is a second game
 - Arms sales
 - Espionage, counter-intelligence, cyber operations
 - Border disputes
@@ -80,7 +82,7 @@ tags:
 - Disinformation, foreign and domestic
 - Riots, police response choices, general strikes
 - Revolution as an unrest terminal state and lose condition
-- Personal corruption and exposure risk
+- Personal corruption and exposure risk, including **the leader's personal wealth** as a tracked resource. Deliberately one line rather than two: a personal-money pool that is not corrupt is a second currency with no lose condition attached, and the version worth building is enrichment-with-exposure-risk, which needs the media and scandal layer of [[v1|V1.5]] to have any teeth
 - Patronage appointments
 - Separatist movements
 - Ethnic and linguistic minority rights
@@ -99,4 +101,4 @@ tags:
 
 ---
 
-Related: [[scope]] · [[mvp]] · [[v1]] · [[out-of-scope-mvp]]
+Related: [[scope]] · [[mvp]] · [[v1]] · [[declined]] · [[out-of-scope-mvp]]

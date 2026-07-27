@@ -7,7 +7,7 @@ This document is **forward-looking**. What shipped is one line each in the table
 below; the corrections made along the way are in [[decision-log]]; the models are
 in the model notes.
 
-Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md)
+Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
 ## Two tracks
@@ -62,31 +62,55 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-> [!warning] Not V1.1e next, unless the receiving session checks first
-> After V1.1d shipped, the user asked explicitly not to keep deepening the
-> French assembly for another session — four sessions running (V1.1a–d) each
-> added another layer of institutional detail to the one nation, and it reads
-> as narrowing rather than broadening. V1.1e (upper house and judiciary) is
-> exactly that pattern again. This is a stated preference, not a dependency
-> finding — V1.1e is still buildable, still in order — so the next session
-> should confirm with the user before defaulting into it, and should weigh a
-> breadth move instead: another playable nation, or V1.2 political system
-> templates, or a different track entirely (diplomacy, companies, society).
-
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **V1.1e** | Sim | Upper house and judiciary | — |
+| **V1.2a** | Sim | A second playable nation | — |
 
-V1.1f referendums is deferred toward V1.7, which brings campaigns.
+### V1.2a — a second playable nation
 
-### V1.1e
+**V1.1e is not next.** After V1.1d shipped, the user asked not to spend another
+session deepening the French assembly: four sessions running (V1.1a–d) each added
+another layer of institutional detail to one nation, which reads as narrowing.
+The scope-alignment pass took that as settled and picked the breadth move
+instead. V1.1e is still buildable and still in order — it is re-parked below, not
+cancelled.
 
-Not broken into a scope and done-when list until the block before it is done,
-because its shape depends on what V1.1d turned out to need. Writing V1.1e's
-scope and done-when list is part of its own plan step. Content is in
-[docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
+Why this one rather than diplomacy or the political-system templates: it is the
+cheapest breadth per unit of work, because **the content already exists for ten
+nations**. All ten have authored `data/nations/*.json` and `data/parties/*.json`,
+a real electoral system, a real formation and censure rule (`DEU.json` carries
+`"censure": "constructive_absolute"`), and V1.1c's dissolution rule as ten-nation
+data. `GameState.new_game(loader, player_id)` is already parameterised; the only
+hardcoded player nation under `src/` is `PLAYER_NATION_ID` in `src/ui/main.gd`.
+[docs/scope.md](docs/scope.md) already calls France-only "debt with a known due
+date", and every further block adds more of it.
+
+The cost is not code. It is the two **shared** things a second player nation
+makes wrong:
+
+- **`data/policy_defaults.json` is one file for every nation.** Its own `_note`
+  says "Shared rather than per-nation because only the player's nation has a
+  budget at MVP". That note is now due.
+- **`opinion_constants.gd`'s bloc weights are one global table**, so every
+  nation's electorate has identical priorities. Whether that is accepted as an
+  honest simplification or moved into data is a call for this block's plan step,
+  and it is the call that decides the block's real size.
+
+The nation-select screen is one list on the existing main menu, so it rides with
+this block rather than triggering a U block. **U5 stays reserved** for the
+dashboard tab V1.1d deferred.
+
+Scope and done-when list are written in its own plan step, as always. Content is
+in [docs/tiers/v1.md](docs/tiers/v1.md) §2; the models built so far are
 [[government-model]], [[discipline-model]], [[dissolution-model]] and
 [[cabinet-model]].
+
+### Re-parked, still in order
+
+| Block | Where it sits now |
+|---|---|
+| **V1.1e** Upper house and judiciary | Unchanged and unblocked. Deferred on a stated preference, not a dependency — pick it up when another France-institutions session is wanted. |
+| **V1.1f** Referendums | Deferred toward V1.7, which brings campaigns. |
 
 **`ns.term_months` says 60 while the first election is 41 months out** was found
 in the U3 audit and fixed in V1.1c: `nation_state.gd`'s comment tying `term_months`
@@ -126,6 +150,7 @@ is already made, which is most sessions once the docs are written.
 | V1.1c Dissolution | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Originally logged **Light / Medium**, flagged in advance as known wrong — "reads the schedule schema [[electoral-systems]] already settled" assumed the dissolution rule was already in that schema; it was not, and adding it was S1 class. The cold count at plan time found thirteen surfaces: a ten-nation schema addition, six state fields plus a save-version bump, a new sim module, a tick change, two panels, five test files, two probe regimes, eight docs. Third correction on this table's own record; see [[decision-log]]. |
 | V1.1d Cabinet | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on "ministers are a schema that departments, opinion and events all read — S1 class." The cold count at plan time found ~fourteen surfaces against that reading — V1.1c's own thirteen, plus a new content class (named individuals) and a dashboard tab. **Corrected by cutting scope, not raising effort** — the first correction on this table's record to resolve that way rather than by moving to a higher tier: portfolio → party (not named individuals), loyalty → resignation only (not a second hostility() term), UI → the existing Government panel (not a new tab). Cut to eleven surfaces, Medium held. Fourth correction on this table's own record; see [[decision-log]]. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
+| V1.2a Second nation | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Counted at scope-alignment time, not from the block's name: `PLAYER_NATION_ID` plus a nation-select on the existing menu, per-nation policy defaults across ten data files plus loader and validator, a probable `SAVE_VERSION` bump, the `FRA`-hardcoded probes and tests parameterised, a balance run for a second nation, and docs. Roughly ten surfaces. The count is a starting point and was made by the *handing-off* session, which the record below says is the worse vantage point — count it cold and challenge it. The specific thing to challenge: whether the bloc-weight table moves into data, which is the difference between ten surfaces and an S1-class schema session. |
 
 Every V1.2+ block gets a plan, on Opus 5. By then there is enough built that
 changes ripple.
@@ -208,13 +233,20 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 
 | Block | Rough content |
 |---|---|
-| **V1.2 Political systems** | System templates as data, constitutional amendment, monarchy ↔ republic transitions, additional playable nations |
-| **V1.3 Diplomacy and trade** | Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy |
+| **V1.2 Political systems** | Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios |
+| **V1.3 Diplomacy and trade** | Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics** |
 | **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |
-| **V1.6 Economic depth** | Inflation, business cycle, tax brackets, sectoral investment, infrastructure |
+| **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
-| **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose |
+| **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
+
+Three of those cells changed in the scope-alignment pass rather than in a build
+session. The arguments are in [docs/tiers/v1.md](docs/tiers/v1.md) and
+[[decision-log]]; the short version is that defence is scheduled thin and only
+where it has a counterparty, the economy's granularity numbers are now decided
+rather than open, and Events stays last for a better reason than the one
+originally written — with a named condition that would move it.
 
 ### Two dashboard tabs waiting on a model
 
@@ -223,7 +255,9 @@ here so the omission is a decision rather than an oversight.
 
 | Tab | Blocked on | Today |
 |---|---|---|
-| **Military** | No military model of any kind exists | One `defence` spending line, under Budget |
+| **Military** | V1.3's defence layer — capability, deployments, alliance obligations. No longer an open-ended "no model exists": the model is scheduled, thin, and named | One `defence` spending line under Budget, its opinion issue, and a Defence portfolio |
 | **Demographics** | V1.5 — ageing, migration, inequality | One field, `population`, under Economy |
 
-Beyond V1: [docs/tiers/someday.md](docs/tiers/someday.md). Not scheduled.
+Beyond V1: [docs/tiers/someday.md](docs/tiers/someday.md), not scheduled, and
+[docs/tiers/declined.md](docs/tiers/declined.md), decided against with a route
+back.

@@ -32,7 +32,8 @@ Unfiltered candidate list. The tier column is a first-pass read; [[mvp]], [[v1]]
 
 | Mechanic | Sketch | Tier |
 |---|---|---|
-| Aggregate sectors | Agriculture, industry, services, energy — each with output, employment share, and health. | MVP |
+| Aggregate sectors | Agriculture, industry, services — each with output, employment share, and health. Built as three; energy was cut at S4 and the count is now settled permanently, see [[declined]]. | MVP |
+| Tourism as its own sector | Inbound spending as a line the player can affect. | Declined |
 | GDP and growth | Derived from sector health, investment, and shocks. | MVP |
 | Unemployment | The number that drives public mood harder than any other. | MVP |
 | Inflation | Prices as a separate pressure from growth. | V1 |

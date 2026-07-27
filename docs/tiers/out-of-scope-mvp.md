@@ -25,7 +25,7 @@ Each entry says *why*, because "not yet" without a reason erodes the moment some
 | **Referendums** | Needs campaign mechanics and question authoring to be interesting. [[v1]]. |
 | **Cabinet and ministers** | Adds a management layer on top of a loop that does not yet exist. [[v1]]. |
 | **Central bank and monetary policy** | France is in the eurozone. It does not set its own interest rate, so the realistic version of this mechanic is *not having it*. Genuinely out until non-euro playable nations exist. [[someday]]. |
-| **War and military** | Enormous scope, and orthogonal to "survive re-election". [[someday]]. |
+| **War and military** | Enormous scope, and orthogonal to "survive re-election". Split since: the *domestic politics* of defence — capability, deployments, alliance obligations billed at home — is scheduled thin in [[v1|V1.3]], where relations exist to point it at. Warfighting itself stays [[someday]]. |
 | **Espionage** | Same. [[someday]]. |
 | **Media outlets and press freedom** | Opinion at MVP moves from material conditions directly. A media layer that mediates that is a refinement of a system that must work first. [[v1]]. |
 | **Corruption** | Same reasoning — a modifier on systems that do not exist yet. [[v1]]. |
@@ -47,4 +47,4 @@ The MVP loop closes at **session S6** of the [[ROADMAP]]. Nothing on this page g
 
 ---
 
-Related: [[scope]] · [[mvp]] · [[v1]] · [[someday]]
+Related: [[scope]] · [[mvp]] · [[v1]] · [[someday]] · [[declined]]
