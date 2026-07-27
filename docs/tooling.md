@@ -154,6 +154,52 @@ docker build -f deploy/Dockerfile -t godot-mcp-docs:local ~/.mcp/godot-mcp-docs 
 
 Pandoc conversion leaves RST artefacts in the output — `{.interpreted-text role="ref"}` around cross-references. Noisy, still readable.
 
+## Editor addons
+
+`addons/` is gitignored, so this is the only record of what is installed. All of these came from the Godot Asset Library and are reinstalled per machine.
+
+Only `godot_mcp` is **enabled** — `project.godot`'s `[editor_plugins]` lists it alone. The rest are installed and dormant, which costs nothing until one is switched on.
+
+| Addon | What it is | Where it could land |
+|---|---|---|
+| `at-icons` | Icon pack, MIT, icons by Voxy | **Now.** The tab rail is text-only. See below for the committing rule |
+| `dialogue_manager` | Branching dialogue trees with choices | Plausibly [[v1\|V1.8]] Events. Nothing before it has dialogue |
+| `limboai` | Behaviour trees and hierarchical state machines | Would be V1.3 nation AI — but see the collision below |
+| `materialLayers` | Layered PBR material authoring, 3D | Nowhere, unless [[scope]]'s "no 3D" constraint changes |
+| `road-generator` | Procedural 3D road meshes along curves | Same |
+| `godot_mcp`, `godot_mcp_toolkit` | The editor bridge above | In use |
+
+### The committing rule, and why `at-icons` is special
+
+`addons/` is ignored, but an **asset a scene preloads is not tooling**. A missing plugin is a warning Godot skips; a missing icon a panel preloads is a hard load failure on a fresh clone, and `tools/run_tests.sh` runs headless straight from the repo.
+
+So `.gitignore` carves out `at-icons`, and each icon `src/` actually references is committed at its `res://` path:
+
+```bash
+git add -f addons/at-icons/control/<icon>.svg
+```
+
+Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothing under `src/` may reference an addon file that is not committed** — that is the whole rule, and it replaced a vaguer "no plugins in the game code" line in [CLAUDE.md](../CLAUDE.md).
+
+> [!warning] LimboAI cannot hold the nation AI, and the reason is structural
+> Behaviour trees are the obvious tool for [[v1|V1.3]]'s AI foreign policy, which
+> that block itself calls "the actual hard part". LimboAI is the wrong vehicle
+> here anyway: `BTTask` and `BTPlayer` are `Node`-derived and run inside the
+> scene tree, and nation AI lives in `src/sim/`, which
+> [[engine-decision|Rule 2]] tests by requiring **a full ten-year run headless
+> with no scene tree**. `tools/run_tests.sh` runs `--headless --script`.
+>
+> Using it would mean either moving simulation logic into the scene tree — the
+> one thing the architecture is tested against — or running two AI systems. It
+> also ships as a GDExtension in most builds, which pins to the engine version
+> and fights the deliberate `4.7.1` pin.
+>
+> Written down here so a V1.3 session does not rediscover it after wiring half a
+> tree. If behaviour trees are wanted, the plain-GDScript version is a few
+> hundred lines of `RefCounted` and stays headless.
+
+`materialLayers` and `road-generator` both assume 3D. [[scope]] fixes "2D map plus dense UI panels, no 3D" as a constraint everything else is designed around, so neither has a use path without changing that — noted rather than judged; they cost nothing sitting there.
+
 ## Deliberately not installed
 
 Ten-plus other Godot MCP servers exist. Two are installed, and they were chosen to **not** overlap: one drives the editor, one serves docs.
