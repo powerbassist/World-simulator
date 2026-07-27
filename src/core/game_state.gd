@@ -19,14 +19,14 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-## 4 as of V1.1c: dissolution added six fields to NationState, none of which a
-## version-3 save carries — a loaded game would read an empty dissolution rule
-## and never be able to dissolve at all, the same half-understood state every
-## prior version bump refused rather than shipped. SaveManager rejects an
-## unknown version outright — see docs/data-architecture.md.
-const SAVE_VERSION := 4
+## 5 as of V1.1d: cabinet added six fields to NationState, none of which a
+## version-4 save carries — a loaded game would read an empty cabinet and never
+## be able to seat one. SaveManager rejects an unknown version outright — see
+## docs/data-architecture.md.
+const SAVE_VERSION := 5
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -124,6 +124,12 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 	# After Elections, which seeds seats_by_party and incumbent_party_id — the
 	# two things a formation search reads.
 	Government.init_nation(ns, n, party_list)
+	# After Government, which forms the starting coalition Cabinet.seat() reads.
+	# Called here rather than from inside government.gd -- Cabinet depends on
+	# Government, so the reverse would be a preload() cycle. See
+	# docs/cabinet-model.md.
+	Cabinet.init_nation(ns)
+	Cabinet.seat(ns, party_list)
 	Legislature.init_nation(ns)
 	Dissolution.init_nation(ns, n)
 

@@ -7,6 +7,7 @@
       "seat_share": 0.28,
       "leader_name": "Álvaro Bustamante",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -16,6 +17,7 @@
       "seat_share": 0.3,
       "leader_name": "Mateo Larrañaga",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "voz_nacional"
       ]
@@ -27,6 +29,7 @@
       "seat_share": 0.14,
       "leader_name": "Rocío Sanchís",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -36,6 +39,7 @@
       "seat_share": 0.16,
       "leader_name": "Iker Mendiola",
       "discipline": 0.65,
+      "competence": 0.5,
       "excluded_partners": []
     },
     {
@@ -45,6 +49,7 @@
       "seat_share": 0.12,
       "leader_name": "Nuria Palomares",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "voz_nacional"
       ]

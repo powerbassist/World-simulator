@@ -23,6 +23,8 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
+const CK = preload("res://src/sim/cabinet_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 
 const MONTHS := 168  # fourteen years: covers the inherited term plus two full ones
@@ -109,6 +111,17 @@ const DISSOLUTION_REGIMES := {
 	"austerity_dissolves_late": {"budget": REGIMES["austerity"], "dissolve_month": 10},
 }
 
+## V1.1d: does a deliberately bad cabinet assignment survive contact with a
+## full governed run, not just cabinet_probe.gd's isolated effectiveness sweep?
+## Each regime strips the largest coalition partner's biggest portfolio and
+## hands it to a weaker-fit partner at `shortfall_month` -- shorting the
+## stripped party below its d'Hondt entitlement, the condition
+## docs/cabinet-model.md ties to a reachable resignation.
+const CABINET_REGIMES := {
+	"managed_cabinet_shorted": {"budget": REGIMES["managed"], "shortfall_month": 6},
+	"austerity_cabinet_shorted": {"budget": REGIMES["austerity"], "shortfall_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -130,11 +143,14 @@ func _init() -> void:
 		for name in DISSOLUTION_REGIMES.keys():
 			var regime: Dictionary = DISSOLUTION_REGIMES[name]
 			_run(name, regime["budget"], int(regime["dissolve_month"]))
+		for name in CABINET_REGIMES.keys():
+			var regime: Dictionary = CABINET_REGIMES[name]
+			_run(name, regime["budget"], -1, int(regime["shortfall_month"]))
 
 	quit(0)
 
 
-func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) -> void:
+func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -150,6 +166,7 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) ->
 	_print_header()
 
 	var ns = state.player()
+	var party_list: Array = loader.parties.get("FRA", [])
 	if not pending.is_empty():
 		Budget.commit(state, pending)
 
@@ -175,6 +192,7 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) ->
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state)
 		Dissolution.tick_month(state)
+		Cabinet.tick_month(state, loader)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -187,6 +205,9 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) ->
 				print("  %d-%02d %s: dissolution REFUSED — %s" % [
 					year, month, regime_name, Dissolution.refusal_reason(state, ns),
 				])
+
+		if i + 1 == cabinet_shortfall_month:
+			_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
 
 		var results := Elections.tick_month(state, loader)
 		for r in results:
@@ -241,6 +262,8 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) ->
 
 	for line in elections:
 		print("  " + line)
+	if cabinet_shortfall_month > 0:
+		print("  resignations over the run: %d (last: %s)" % [ns.resignations_count, ns.last_resignation])
 	if problems.is_empty():
 		print("  invariants: OK over %d months" % MONTHS)
 	else:
@@ -248,6 +271,53 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) ->
 			print("  PROBLEM " + p)
 		if problems.size() > 8:
 			print("  ... and %d more" % (problems.size() - 8))
+
+
+## V1.1d: strips the largest coalition partner's biggest-affinity portfolio
+## and hands it to the weakest-fit OTHER coalition partner -- the worst legal
+## reassignment available, and the one most likely to short the stripped
+## party below its d'Hondt entitlement. Prints what it did so the trajectory
+## printed afterward is traceable to a concrete decision.
+func _short_the_largest_partner(state, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
+	var by_id := {}
+	for p in party_list:
+		by_id[p.id] = p
+
+	var largest := ""
+	var largest_seats := -1
+	for pid in ns.coalition_party_ids:
+		var seats := int(ns.seats_by_party.get(pid, 0))
+		if seats > largest_seats:
+			largest_seats = seats
+			largest = pid
+	if largest == "" or not by_id.has(largest):
+		return
+
+	var target_portfolio := ""
+	for f in ns.cabinet:
+		if String(ns.cabinet[f]) == largest:
+			target_portfolio = f
+			break
+	if target_portfolio == "":
+		return
+
+	var weakest_fit := ""
+	var weakest_affinity := 2.0
+	for pid in ns.coalition_party_ids:
+		if pid == largest or not by_id.has(pid):
+			continue
+		var a := Cabinet.affinity(by_id[pid], target_portfolio)
+		if a < weakest_affinity:
+			weakest_affinity = a
+			weakest_fit = pid
+	if weakest_fit == "":
+		return
+
+	Cabinet.assign(state, target_portfolio, weakest_fit, party_list)
+	print("  %d-%02d %s: reassigned %s from %s to %s (shortfall %.2f)" % [
+		year, month, regime_name, target_portfolio, largest, weakest_fit,
+		Cabinet.shortfall(ns, largest),
+	])
 
 
 func _print_header() -> void:

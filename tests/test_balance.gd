@@ -31,6 +31,8 @@ const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
+const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -275,6 +277,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1) -> Dic
 		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state)
 		Dissolution.tick_month(state)
+		Cabinet.tick_month(state, _loader)
 
 		if i + 1 == dissolve_at_month:
 			Dissolution.dissolve(state, ns)
@@ -338,6 +341,22 @@ func _problems(ns, year: int, month: int) -> Array[String]:
 		out.append("%s approval on its clamp at %.2f" % [at, ns.overall_approval_pct])
 	if absf(ns.growth_annual_pct) >= C.GROWTH_MAX_PCT - 0.01:
 		out.append("%s growth on its clamp at %.2f" % [at, ns.growth_annual_pct])
+
+	# Cabinet: no portfolio held outside the coalition, and every cached
+	# effectiveness figure inside the range the formula can actually produce --
+	# see docs/cabinet-model.md.
+	var max_effectiveness: float = 1.0 + CK.COMPETENCE_SPAN * (1.0 - CK.COMPETENCE_NEUTRAL)
+	for f in CK.PORTFOLIO_KEYS:
+		var holder: String = String(ns.cabinet.get(f, ""))
+		if holder != "" and not ns.coalition_party_ids.has(holder):
+			out.append("%s portfolio %s held by %s, outside the coalition" % [at, f, holder])
+		var eff: float = float(ns.cabinet_effectiveness.get(f, CK.VACANT_EFFECTIVENESS))
+		if is_nan(eff) or is_inf(eff):
+			out.append("%s cabinet effectiveness for %s is %s" % [at, f, eff])
+		elif eff < CK.VACANT_EFFECTIVENESS - 0.001 or eff > max_effectiveness + 0.001:
+			out.append("%s cabinet effectiveness for %s is %.3f, outside [%.3f, %.3f]" % [
+				at, f, eff, CK.VACANT_EFFECTIVENESS, max_effectiveness
+			])
 
 	return out
 

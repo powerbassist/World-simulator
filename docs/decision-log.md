@@ -244,6 +244,64 @@ first place. Recorded because the branch not firing is itself a finding: the
 model was closer to a resolving gamble than the "free +65 seats" structural
 finding above made it look.
 
+## V1.1d — corrected by cutting scope, not raising effort, for the first time
+
+ROADMAP wrote V1.1d's row as **Plan first Yes / Opus to plan, Sonnet to build
+/ High → Medium**, on "ministers are a schema that departments, opinion and
+events all read — S1 class." Counted cold at plan time against the roadmap's
+own one-line description, three forks each carried real surface cost:
+named individuals instead of a party field (a whole content roster, exposed
+to `check_names.sh`), loyalty as a second `hostility()` term instead of
+resignation, and a new dashboard tab instead of a Government panel section.
+Taken together, roughly fourteen surfaces — V1.1c's own thirteen plus two
+V1.1c did not have.
+
+**Every prior correction on this table moved a session to a higher plan/model
+tier. This one moved the other way: three decisions taken with the user
+before planning cut the scope back to eleven surfaces, and Sonnet 5 / Medium
+held at that scope.** Portfolio → party rather than named individuals;
+resignation rather than a second hostility equation; the existing Government
+panel rather than a new tab (deferred to **U5**, the roadmap's own trigger
+for it — "until a system session ends by needing a surface the shell does
+not have"). None of the three closed off future depth: named ministers and a
+dedicated tab are both recorded as deliberately-not-built rather than
+foreclosed. Full argument: [[cabinet-model]].
+
+**Section 1's own test needed correcting before it could answer the
+question it was built to ask.** The pre-committed probe budget was
+`balance_probe.gd`'s `managed` regime — S10-tuned to be near-frictionless
+governance, so it moves only `defence` away from
+`policy_defaults.json` and leaves the other four spending lines exactly at
+their starting values. Effectiveness multiplies a line's *delta from start*,
+so the first run multiplied zero on four of five lines and the measured
+spread came back **negative** — a more competent cabinet reading as worse,
+because the one line that did move was a cut and a bigger multiplier on a
+cut is a bigger cut. Corrected to a representative governing budget with
+deltas on all five lines; the channel then measured a genuine 2.21-point
+spread at `COMPETENCE_SPAN = 0.75` (0.6 fell short at 1.77). The lesson
+generalises past this session: a pre-committed measurement is only as sound
+as the scenario it runs against, and a scenario chosen for a different
+reason (S10 tuned `managed` to be *low-friction*, not *representative*) can
+silently defeat the question a later session asks of it.
+
+**A plan-time architectural assumption did not survive contact with the
+file it named.** The design called for `Government.form()` to call
+`Cabinet.seat()` directly. Writing `cabinet.gd` surfaced that `Cabinet`
+needs `Government.cohesion()` and `Government.penalise_blocs()` — so the
+planned direction would have made a `preload()` cycle out of two files each
+depending on the other, which GDScript does not support. Fixed by moving
+`seat()` to the orchestrator (`game_state.gd`, `elections.gd`,
+`legislature.gd` — every external call site of `Government.form()`/`fall()`)
+rather than calling it from inside `government.gd`. Cabinet depends on
+Government; Government never depends on Cabinet. Caught during
+implementation, not planning — worth naming because it is the kind of
+one-directional-dependency check a plan can assert in prose without the
+author actually tracing which file would need to `preload()` which.
+
+Full model, both measurements, and the balance-probe regimes that confirmed
+section 1(b) under the real full pipeline rather than the probe's isolated
+formula: [[cabinet-model]].
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

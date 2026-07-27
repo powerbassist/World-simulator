@@ -7,6 +7,7 @@
       "seat_share": 0.26,
       "leader_name": "Bernhard Kettler",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -16,6 +17,7 @@
       "seat_share": 0.21,
       "leader_name": "Ingrid Haslinger",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "nationale_sammlung"
       ]
@@ -27,6 +29,7 @@
       "seat_share": 0.19,
       "leader_name": "Wolfgang Prantl",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -36,6 +39,7 @@
       "seat_share": 0.15,
       "leader_name": "Theresa Aichinger",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "nationale_sammlung"
       ]
@@ -47,6 +51,7 @@
       "seat_share": 0.19,
       "leader_name": "Lukas Steinhauser",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     }
   ]

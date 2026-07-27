@@ -17,6 +17,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Government = preload("res://src/sim/government.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 
 const TOP_ISSUE_COUNT := 3
 
@@ -120,6 +121,10 @@ static func _tick_nation(state, ns, loader) -> Array:
 			ns.dissolution_lockout_remaining = ns.dissolution_lockout_months
 
 		result["formation"] = Government.form(ns, party_list)
+		# See docs/cabinet-model.md: called here, not from inside government.gd,
+		# to avoid a preload() cycle -- Cabinet depends on Government, so
+		# Government must never depend on Cabinet.
+		Cabinet.seat(ns, party_list)
 		results.append(result)
 
 	# The executive verdict. Where the executive is drawn from the chamber this
@@ -143,6 +148,7 @@ static func _tick_nation(state, ns, loader) -> Array:
 			# assembly they actually have.
 			if ns.has_executive:
 				Government.form(ns, party_list)
+				Cabinet.seat(ns, party_list)
 
 	if ns.in_government and nation.eu_member:
 		if state.year == ns.next_ep_election_year and state.month == ns.next_ep_election_month:

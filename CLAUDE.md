@@ -82,19 +82,29 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.1c shipped** — dissolution and snap elections. `government.legislative.dissolution`
-in `data/nations/*.json` names who may end the current assembly early and what
-it costs, dispatched in `src/sim/dissolution.gd`; calling one moves only the
-legislative clock, not the executive's, and the resulting election resolves
-through the ordinary legislative path with a `snap` flag on its result. Measured
-before it was built: a 57-seat spread in what a snap returns across the approval
-range a player can hold while still in office, wide enough that `INCUMBENT_SWING`
-did not need to change. Model: [docs/dissolution-model.md](docs/dissolution-model.md).
-MVP, V1.1a–c and U1–U4 are done.
+**V1.1d shipped** — cabinet and ministers. Five portfolios keyed to the
+spending lines, held by coalition parties; `src/sim/cabinet.gd` computes a
+portfolio's ideology-space position from tables `opinion_constants.gd` and
+`election_constants.gd` already had (no authored coordinates), and a party's
+authored `competence` scales by ideological affinity into an effectiveness
+that multiplies a spending line's delta in `opinion.gd`. A party held below
+its d'Hondt entitlement (`Cabinet.shortfall()`) can lose a minister to
+resignation, but only in combination with an unpopular government — measured,
+not assumed: an identical shortfall produced zero resignations under a
+well-governed regime and five under a failing one in `tools/balance_probe.gd`.
+`Cabinet.seat()` is called by the orchestrator (`game_state.gd`,
+`elections.gd`, `legislature.gd`) right after every `Government.form()`/
+`fall()`, never from inside `government.gd` itself, to avoid a `preload()`
+cycle. Model: [docs/cabinet-model.md](docs/cabinet-model.md). MVP, V1.1a–d
+and U1–U4 are done.
 
-**Next: V1.1d** — cabinet and ministers. See [ROADMAP.md](ROADMAP.md).
+**Next: V1.1e** — upper house and judiciary, per [ROADMAP.md](ROADMAP.md) —
+but the user has asked not to keep deepening the French assembly session
+after session; check with them before defaulting into it rather than
+widening scope instead (another playable nation, V1.2 political system
+templates, or a different track). See ROADMAP's own note on this.
 
-Save format is at **version 4**. There has never been a migration: a superseded
+Save format is at **version 5**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal.
 

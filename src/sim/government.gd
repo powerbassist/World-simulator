@@ -340,6 +340,19 @@ static func _form_directorial(ns, party_list: Array) -> Dictionary:
 	return _describe(ns, chosen, by_id, pm, false)
 
 
+## How closely a party's own position sits to the government's agreed one, in
+## (0, 1] -- a Gaussian on distance, the same falloff shape
+## election_constants.AFFINITY_SIGMA gives bloc-to-slot affinity. Meaningful
+## for any party, not only a coalition member: src/sim/cabinet.gd reads this
+## for exactly the parties coalition_bonus() would score, but asks a different
+## question of the same number -- how loyal a portfolio-holder is, rather than
+## how much its vote is worth.
+static func cohesion(ns, party) -> float:
+	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
+	var dist := _distance(ns.coalition_position, pos)
+	return exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
+
+
 ## How much a party's membership of the government adds to its support for a
 ## government bill, in [0, COALITION_BONUS_MAX]. Replaces the flat
 ## GOVERNMENT_BONUS legislature.gd gave the single incumbent party: the bonus is
@@ -355,10 +368,7 @@ static func _form_directorial(ns, party_list: Array) -> Dictionary:
 static func coalition_bonus(ns, party) -> float:
 	if not ns.coalition_party_ids.has(party.id):
 		return 0.0
-	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
-	var dist := _distance(ns.coalition_position, pos)
-	var cohesion: float = exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
-	return GK.COALITION_BONUS_MAX * cohesion * Discipline.of(ns, party)
+	return GK.COALITION_BONUS_MAX * cohesion(ns, party) * Discipline.of(ns, party)
 
 
 ## How much a party wants this government gone, in [-1, +1]. The same Gaussian
@@ -385,9 +395,7 @@ static func coalition_bonus(ns, party) -> float:
 ## instead of being damped by discipline. The gap between the two readings is
 ## exactly the strain the rebellion split measures.
 static func hostility(ns, party, forced := false, whipped := true) -> float:
-	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
-	var dist := _distance(ns.coalition_position, pos)
-	var h: float = 1.0 - 2.0 * exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
+	var h: float = 1.0 - 2.0 * cohesion(ns, party)
 	if ns.coalition_party_ids.has(party.id):
 		var d: float = Discipline.of(ns, party) if whipped else 0.0
 		h -= d

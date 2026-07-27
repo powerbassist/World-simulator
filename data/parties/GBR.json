@@ -7,6 +7,7 @@
       "seat_share": 0.3,
       "leader_name": "Caroline Wexford",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "patriot_front"
       ]
@@ -18,6 +19,7 @@
       "seat_share": 0.32,
       "leader_name": "Edward Marchbanks",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "patriot_front"
       ]
@@ -29,6 +31,7 @@
       "seat_share": 0.12,
       "leader_name": "Adrian Pell",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -38,6 +41,7 @@
       "seat_share": 0.14,
       "leader_name": "Duncan Harlow",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -47,6 +51,7 @@
       "seat_share": 0.06,
       "leader_name": "Miriam Cobbett",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": []
     },
     {
@@ -56,6 +61,7 @@
       "seat_share": 0.06,
       "leader_name": "Rhona Kilbride",
       "discipline": 0.75,
+      "competence": 0.55,
       "excluded_partners": []
     }
   ]

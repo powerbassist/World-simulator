@@ -276,6 +276,20 @@ the existing election model, so **`INCUMBENT_SWING` was left exactly as this
 document describes it**; the cohabitation and censure balance notes below are
 unchanged by V1.1c.
 
+### Cabinet
+
+[[v1|V1.1d]] adds a decision inside the government itself, rather than only
+levers against or around it: coalition parties hold portfolios, and how well
+each governs its department depends on the same coalition position and
+discipline this file already computes. `src/sim/cabinet.gd`,
+[[cabinet-model]]. `Government.cohesion()` — the Gaussian on distance from
+the agreed position `coalition_bonus()` and `hostility()` both already used
+inline — is extracted as a public function there for `Cabinet.loyalty()` to
+reuse; nothing about coalition formation, cohesion or hostility changes.
+Cabinet depends on Government one-way, never the reverse, so `Cabinet.seat()`
+is called by the orchestrator immediately after every `form()`/`fall()` call
+site rather than from inside this file.
+
 | Constant | Value | Why |
 |---|---|---|
 | `FORCE_COOLDOWN_MONTHS` | 12 | Real 49.3 allows one non-budget bill per parliamentary session. A twelve-month lockout is the same shape without modelling sessions. |
@@ -416,5 +430,6 @@ already there rather than in a tick of its own.
 ---
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
-[[legislature-model]] · [[discipline-model]] · [[opinion-model]] ·
-[[data-architecture]] · [[v1]] · [[ROADMAP]]
+[[legislature-model]] · [[discipline-model]] · [[dissolution-model]] ·
+[[cabinet-model]] · [[opinion-model]] · [[data-architecture]] · [[v1]] ·
+[[ROADMAP]]

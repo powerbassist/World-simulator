@@ -17,14 +17,28 @@ signal closed
 ## treats a dissolution the same way it treats any other player command.
 signal dissolved(before: Dictionary)
 
+## Carries the pre-command baseline for a cabinet reassignment -- the same
+## shape `dissolved` above uses, so main.gd's effect-queueing treats a
+## reshuffle the same way it treats any other player command.
+signal reassigned(before: Dictionary)
+
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
+const CK = preload("res://src/sim/cabinet_constants.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
+
+## Longest human label for a portfolio -- the panel names the spending line the
+## player already knows from the Budget tab, not the internal key.
+const PORTFOLIO_LABEL := {
+	"health": "Health", "education": "Education", "defence": "Defence",
+	"pensions": "Pensions", "infrastructure": "Infrastructure",
+}
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -61,6 +75,11 @@ var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
 var _dissolve_button: Button
+var _portfolio_option: OptionButton
+var _party_option: OptionButton
+var _reassign_button: Button
+var _reassign_status: Label
+var _party_option_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -86,6 +105,27 @@ func _ready() -> void:
 	_dissolve_button.text = "Dissolve"
 	_dissolve_button.pressed.connect(_on_dissolve)
 	root.add_child(_dissolve_button)
+
+	var reassign_row := HBoxContainer.new()
+	reassign_row.add_theme_constant_override("separation", 8)
+	root.add_child(reassign_row)
+
+	_portfolio_option = OptionButton.new()
+	for f in CK.PORTFOLIO_KEYS:
+		_portfolio_option.add_item(PORTFOLIO_LABEL.get(f, f))
+	reassign_row.add_child(_portfolio_option)
+
+	_party_option = OptionButton.new()
+	reassign_row.add_child(_party_option)
+
+	_reassign_button = Button.new()
+	_reassign_button.text = "Reassign"
+	_reassign_button.pressed.connect(_on_reassign)
+	reassign_row.add_child(_reassign_button)
+
+	_reassign_status = Label.new()
+	_reassign_status.theme_type_variation = UiTheme.CAPTION
+	root.add_child(_reassign_status)
 
 	_close_button = Button.new()
 	_close_button.text = "Close"
@@ -221,6 +261,21 @@ func _refresh() -> void:
 	_add_line("In government")
 	_body.add_child(_build_partner_table(ns))
 
+	_add_line("")
+	_add_line("Cabinet")
+	_body.add_child(_build_cabinet_table(ns))
+	if ns.resignations_count > 0:
+		var last: Dictionary = ns.last_resignation
+		var last_party := ""
+		if _loader != null:
+			for party in _loader.parties.get(ns.id, []):
+				if party.id == String(last.get("party_id", "")):
+					last_party = party.party_name
+		_add_line("Ministers resigned this run: %d (last: %s over %s)" % [
+			ns.resignations_count, last_party, PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", ""))
+		])
+	_refresh_party_option(ns)
+
 	var outside: Array[String] = []
 	for party in _loader.parties.get(ns.id, []):
 		if not ns.coalition_party_ids.has(party.id) and int(ns.seats_by_party.get(party.id, 0)) > 0:
@@ -297,6 +352,110 @@ func _build_partner_table(ns) -> Control:
 		grid.add_child(_right(str(Discipline.rebel_seats(ns, party, bonus, 0.0))))
 
 	return grid
+
+
+## One row per portfolio: holder, effectiveness against the neutral 100% a
+## party of average skill and perfect affinity would deliver, and whether the
+## holder is short of its d'Hondt entitlement -- the condition that makes a
+## resignation reachable. See docs/cabinet-model.md.
+func _build_cabinet_table(ns) -> Control:
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 16)
+
+	for header in ["portfolio", "holder", "effectiveness", "entitlement"]:
+		var label := Label.new()
+		label.text = header
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if header in ["portfolio", "holder"] else HORIZONTAL_ALIGNMENT_RIGHT
+		label.custom_minimum_size.x = 140 if header in ["portfolio", "holder"] else 100
+		label.theme_type_variation = UiTheme.CAPTION
+		grid.add_child(label)
+
+	var by_id := {}
+	for party in _loader.parties.get(ns.id, []):
+		by_id[party.id] = party
+
+	var held := {}
+	for f in ns.cabinet:
+		var pid: String = String(ns.cabinet[f])
+		if pid != "":
+			held[pid] = int(held.get(pid, 0)) + 1
+
+	for f in CK.PORTFOLIO_KEYS:
+		var portfolio_label := Label.new()
+		portfolio_label.text = PORTFOLIO_LABEL.get(f, f)
+		grid.add_child(portfolio_label)
+
+		var pid: String = String(ns.cabinet.get(f, ""))
+		var holder_label := Label.new()
+		if pid == "" or not by_id.has(pid):
+			holder_label.text = "VACANT"
+			holder_label.theme_type_variation = UiTheme.BAD_TEXT
+		else:
+			holder_label.text = by_id[pid].party_name
+		grid.add_child(holder_label)
+
+		var eff := Cabinet.effectiveness(ns, f)
+		var eff_cell := _right("%.0f%%" % (eff * 100.0))
+		if eff > 1.0:
+			eff_cell.theme_type_variation = UiTheme.GOOD_TEXT
+		elif eff < 1.0:
+			eff_cell.theme_type_variation = UiTheme.BAD_TEXT
+		grid.add_child(eff_cell)
+
+		var entitlement_cell := _right("")
+		if pid != "" and by_id.has(pid):
+			var ent := int(ns.cabinet_entitlement.get(pid, 0))
+			var h := int(held.get(pid, 0))
+			if h < ent:
+				entitlement_cell.text = "%d of %d" % [h, ent]
+				entitlement_cell.theme_type_variation = UiTheme.BAD_TEXT
+		grid.add_child(entitlement_cell)
+
+	return grid
+
+
+## Coalition parties only -- can_assign() refuses everything else. Rebuilt on
+## every refresh because the coalition itself can change under the panel
+## between one election and the next.
+func _refresh_party_option(ns) -> void:
+	_party_option.clear()
+	_party_option_ids.clear()
+	var by_id := {}
+	for party in _loader.parties.get(ns.id, []):
+		by_id[party.id] = party
+	var ordered: Array = ns.coalition_party_ids.duplicate()
+	ordered.sort_custom(func(a, b): return int(ns.seats_by_party.get(a, 0)) > int(ns.seats_by_party.get(b, 0)))
+	for pid in ordered:
+		if not by_id.has(pid):
+			continue
+		_party_option.add_item(by_id[pid].party_name)
+		_party_option_ids.append(pid)
+
+
+func _on_reassign() -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var idx := _portfolio_option.selected
+	if idx < 0 or idx >= CK.PORTFOLIO_KEYS.size():
+		return
+	var party_idx := _party_option.selected
+	if party_idx < 0 or party_idx >= _party_option_ids.size():
+		return
+
+	var portfolio: String = CK.PORTFOLIO_KEYS[idx]
+	var party_id: String = _party_option_ids[party_idx]
+	if not Cabinet.can_assign(ns, portfolio, party_id):
+		_reassign_status.text = Cabinet.refusal_reason(ns, portfolio, party_id)
+		_reassign_status.theme_type_variation = UiTheme.BAD_TEXT
+		return
+
+	var before := Trends.snapshot_now(_state)
+	Cabinet.assign(_state, portfolio, party_id, _loader.parties.get(ns.id, []))
+	_reassign_status.text = ""
+	reassigned.emit(before)
+	_dirty = true
 
 
 ## Seats the coalition would lose on the worst bill for it -- one its partners

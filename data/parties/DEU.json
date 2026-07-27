@@ -7,6 +7,7 @@
       "seat_share": 0.28,
       "leader_name": "Matthias Vogler",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "nationale_erneuerung",
         "linke_allianz"
@@ -19,6 +20,7 @@
       "seat_share": 0.24,
       "leader_name": "Katrin Bohlen",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "nationale_erneuerung"
       ]
@@ -30,6 +32,7 @@
       "seat_share": 0.1,
       "leader_name": "Jens Ruppert",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "nationale_erneuerung"
       ]
@@ -41,6 +44,7 @@
       "seat_share": 0.13,
       "leader_name": "Annika Seibold",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "nationale_erneuerung"
       ]
@@ -52,6 +56,7 @@
       "seat_share": 0.16,
       "leader_name": "Dietrich Falk",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -61,6 +66,7 @@
       "seat_share": 0.09,
       "leader_name": "Marlene Grotholt",
       "discipline": 0.65,
+      "competence": 0.5,
       "excluded_partners": []
     }
   ]

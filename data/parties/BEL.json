@@ -7,6 +7,7 @@
       "seat_share": 0.17,
       "leader_name": "Joris Van Craen",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -16,6 +17,7 @@
       "seat_share": 0.2,
       "leader_name": "Bram Vandekerckhove",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "vlaamse_toekomst"
       ]
@@ -27,6 +29,7 @@
       "seat_share": 0.19,
       "leader_name": "Naima Dewilde",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "vlaamse_toekomst"
       ]
@@ -38,6 +41,7 @@
       "seat_share": 0.16,
       "leader_name": "Pieter Coussement",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "vlaamse_toekomst"
       ]
@@ -49,6 +53,7 @@
       "seat_share": 0.13,
       "leader_name": "Lore Vanhamme",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "vlaamse_toekomst"
       ]
@@ -60,6 +65,7 @@
       "seat_share": 0.15,
       "leader_name": "Tom Segers",
       "discipline": 0.65,
+      "competence": 0.5,
       "excluded_partners": [
         "vlaamse_toekomst"
       ]

@@ -10,6 +10,7 @@ const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -151,7 +152,9 @@ func _ready() -> void:
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
 		_queue_effect("Dissolution called", before)
-		_update_top_bar()
+	)
+	_government_panel.reassigned.connect(func(before):
+		_queue_effect("Cabinet reassigned", before)
 	)
 
 	_polling_panel = PollingPanel.new()
@@ -403,6 +406,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# read it last.
 	Legislature.tick_month(_state)
 	Dissolution.tick_month(_state)
+
+	# Reads unpopularity Opinion already settled and discipline Discipline
+	# already ticked -- a resignation this month is judged against this
+	# month's numbers, not last month's.
+	Cabinet.tick_month(_state, _loader)
 
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June

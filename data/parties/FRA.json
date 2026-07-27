@@ -7,6 +7,7 @@
       "seat_share": 0.28,
       "leader_name": "Daniel Moucron",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "front_souverainiste"
       ]
@@ -18,6 +19,7 @@
       "seat_share": 0.2,
       "leader_name": "Hélène Vasseur",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "front_souverainiste",
         "gauche_populaire"
@@ -30,6 +32,7 @@
       "seat_share": 0.18,
       "leader_name": "Bruno Lachapelle",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "front_souverainiste"
       ]
@@ -41,6 +44,7 @@
       "seat_share": 0.09,
       "leader_name": "Camille Ferrand",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "front_souverainiste"
       ]
@@ -52,6 +56,7 @@
       "seat_share": 0.16,
       "leader_name": "Gilles Aubertin",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -61,6 +66,7 @@
       "seat_share": 0.09,
       "leader_name": "Nadia Perrault",
       "discipline": 0.65,
+      "competence": 0.5,
       "excluded_partners": []
     }
   ]

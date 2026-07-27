@@ -218,6 +218,35 @@ var governments_fallen: int = 0
 ## Empty until one is moved. Same shape government.gd:resolve_censure() returns.
 var last_censure := {}
 
+# --- Cabinet -----------------------------------------------------------------
+
+## Copied from cabinet_constants.PORTFOLIO_KEYS at every seating -- portfolio
+## string -> holding party id, "" is vacant. Dispatched on in src/sim/cabinet.gd.
+## See docs/cabinet-model.md.
+var cabinet := {}
+
+## Cached at every seat()/assign()/resignation, the same way coalition_position
+## is cached by government.gd rather than recomputed by every reader --
+## opinion.gd reads this directly and has no reason to know a Party object
+## exists. portfolio string -> effectiveness float.
+var cabinet_effectiveness := {}
+
+## How many of the five portfolios each coalition party is entitled to by
+## d'Hondt over coalition seats, cached at the same time as cabinet itself.
+## party id -> int, summing to PORTFOLIO_KEYS.size().
+var cabinet_entitlement := {}
+
+## How many times the player has reshuffled the cabinet this run. Never reset --
+## the same shape dissolutions_called and governments_fallen already use.
+var reshuffles_called: int = 0
+
+## How many ministers have resigned this run. Never reset.
+var resignations_count: int = 0
+
+## The most recent resignation, for the government screen to read. Empty until
+## the first one.
+var last_resignation := {}
+
 # --- Discipline ------------------------------------------------------------------
 
 ## String party id -> how reliably that party currently delivers its seats, in
@@ -341,6 +370,13 @@ func duplicate_state():
 	s.governments_fallen = governments_fallen
 	s.last_censure = last_censure.duplicate(true)
 
+	s.cabinet = cabinet.duplicate(true)
+	s.cabinet_effectiveness = cabinet_effectiveness.duplicate(true)
+	s.cabinet_entitlement = cabinet_entitlement.duplicate(true)
+	s.reshuffles_called = reshuffles_called
+	s.resignations_count = resignations_count
+	s.last_resignation = last_resignation.duplicate(true)
+
 	s.party_discipline = party_discipline.duplicate(true)
 
 	s.law_structural_offset_pct = law_structural_offset_pct
@@ -439,6 +475,13 @@ func to_dict() -> Dictionary:
 		"governments_fallen": governments_fallen,
 		"last_censure": last_censure,
 
+		"cabinet": cabinet,
+		"cabinet_effectiveness": cabinet_effectiveness,
+		"cabinet_entitlement": cabinet_entitlement,
+		"reshuffles_called": reshuffles_called,
+		"resignations_count": resignations_count,
+		"last_resignation": last_resignation,
+
 		"party_discipline": party_discipline,
 
 		"law_structural_offset_pct": law_structural_offset_pct,
@@ -536,6 +579,13 @@ static func from_dict(d: Dictionary):
 	s.censure_barred_party_ids = d.get("censure_barred_party_ids", [])
 	s.governments_fallen = int(d.get("governments_fallen", 0))
 	s.last_censure = d.get("last_censure", {})
+
+	s.cabinet = d.get("cabinet", {})
+	s.cabinet_effectiveness = d.get("cabinet_effectiveness", {})
+	s.cabinet_entitlement = d.get("cabinet_entitlement", {})
+	s.reshuffles_called = int(d.get("reshuffles_called", 0))
+	s.resignations_count = int(d.get("resignations_count", 0))
+	s.last_resignation = d.get("last_resignation", {})
 
 	s.party_discipline = d.get("party_discipline", {})
 

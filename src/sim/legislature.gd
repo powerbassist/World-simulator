@@ -19,6 +19,7 @@ const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -348,6 +349,10 @@ static func _force(state, ns, party_list: Array, law) -> Dictionary:
 	Discipline.penalise_rebellions(ns, censure["party_rebels"], by_id)
 	if censure["carried"]:
 		Government.fall(ns, party_list, censure)
+		# Cabinet.seat() is called here rather than from inside government.gd
+		# itself -- Cabinet depends on Government (cohesion(), penalise_blocs()),
+		# so the reverse would be a preload() cycle. See docs/cabinet-model.md.
+		Cabinet.seat(ns, party_list)
 
 	ns.last_censure = censure
 	result["censure"] = censure

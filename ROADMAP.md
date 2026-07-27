@@ -54,6 +54,7 @@ shell does not have.
 | U4 | UI | Decision deltas: `recent_effects`, a baseline captured at commit, measured against the next history entry |
 | V1.1b | Sim | Party discipline as live state, seat-level rebellions, disaffection — the censure branch fires |
 | V1.1c | Sim | Dissolution and snap elections — the rule as ten-nation data, measured before it was built, no election-model change needed |
+| V1.1d | Sim | Cabinet and ministers — five portfolios keyed to spending lines, competence and portfolio position both derived rather than authored, shortfall-driven resignation measured before it was built |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -61,20 +62,31 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
+> [!warning] Not V1.1e next, unless the receiving session checks first
+> After V1.1d shipped, the user asked explicitly not to keep deepening the
+> French assembly for another session — four sessions running (V1.1a–d) each
+> added another layer of institutional detail to the one nation, and it reads
+> as narrowing rather than broadening. V1.1e (upper house and judiciary) is
+> exactly that pattern again. This is a stated preference, not a dependency
+> finding — V1.1e is still buildable, still in order — so the next session
+> should confirm with the user before defaulting into it, and should weigh a
+> breadth move instead: another playable nation, or V1.2 political system
+> templates, or a different track entirely (diplomacy, companies, society).
+
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **V1.1d** | Sim | Cabinet and ministers | V1.1a |
 | **V1.1e** | Sim | Upper house and judiciary | — |
 
 V1.1f referendums is deferred toward V1.7, which brings campaigns.
 
-### V1.1d–e
+### V1.1e
 
-Not broken into scope and done-when lists until the block before each is done,
-because the shape of each depends on what the previous one turns out to need.
-Writing V1.1d's scope and done-when list is part of its own plan step. Content is
-in [docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
-[[government-model]], [[discipline-model]] and [[dissolution-model]].
+Not broken into a scope and done-when list until the block before it is done,
+because its shape depends on what V1.1d turned out to need. Writing V1.1e's
+scope and done-when list is part of its own plan step. Content is in
+[docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
+[[government-model]], [[discipline-model]], [[dissolution-model]] and
+[[cabinet-model]].
 
 **`ns.term_months` says 60 while the first election is 41 months out** was found
 in the U3 audit and fixed in V1.1c: `nation_state.gd`'s comment tying `term_months`
@@ -112,7 +124,7 @@ is already made, which is most sessions once the docs are written.
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
 | V1.1c Dissolution | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Originally logged **Light / Medium**, flagged in advance as known wrong — "reads the schedule schema [[electoral-systems]] already settled" assumed the dissolution rule was already in that schema; it was not, and adding it was S1 class. The cold count at plan time found thirteen surfaces: a ten-nation schema addition, six state fields plus a save-version bump, a new sim module, a tick change, two panels, five test files, two probe regimes, eight docs. Third correction on this table's own record; see [[decision-log]]. |
-| V1.1d Cabinet | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Ministers are a schema that departments, opinion and events all read — S1 class. |
+| V1.1d Cabinet | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on "ministers are a schema that departments, opinion and events all read — S1 class." The cold count at plan time found ~fourteen surfaces against that reading — V1.1c's own thirteen, plus a new content class (named individuals) and a dashboard tab. **Corrected by cutting scope, not raising effort** — the first correction on this table's record to resolve that way rather than by moving to a higher tier: portfolio → party (not named individuals), loyalty → resignation only (not a second hostility() term), UI → the existing Government panel (not a new tab). Cut to eleven surfaces, Medium held. Fourth correction on this table's own record; see [[decision-log]]. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 
 Every V1.2+ block gets a plan, on Opus 5. By then there is enough built that

@@ -194,6 +194,19 @@ func _run_unknown_version() -> void:
 	elif pre_dissolution["error"].is_empty():
 		_fail("load_game rejected a version-3 save but gave no error message")
 
+	# Version 4 for the same reason one version further on: V1.1d added
+	# cabinet's six fields, so a version-4 save carries no cabinet table and
+	# every portfolio would read vacant, silently, after a load.
+	var v4 := FileAccess.open(path, FileAccess.WRITE)
+	v4.store_string(JSON.stringify({"save_version": 4, "day": 1, "game_state": {}}))
+	v4.close()
+
+	var pre_cabinet := SaveManager.load_game(BOGUS_SLOT)
+	if pre_cabinet["ok"]:
+		_fail("load_game accepted a version-4 save; the cabinet fields would be missing")
+	elif pre_cabinet["error"].is_empty():
+		_fail("load_game rejected a version-4 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

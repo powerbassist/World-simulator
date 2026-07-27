@@ -7,6 +7,7 @@
       "seat_share": 0.19,
       "leader_name": "Sander Kuiperink",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -16,6 +17,7 @@
       "seat_share": 0.21,
       "leader_name": "Willem Terborg",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -25,6 +27,7 @@
       "seat_share": 0.18,
       "leader_name": "Ellen Bosveld",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "nationale_vrijheid"
       ]
@@ -36,6 +39,7 @@
       "seat_share": 0.14,
       "leader_name": "Ruben Aalders",
       "discipline": 0.8,
+      "competence": 0.65,
       "excluded_partners": []
     },
     {
@@ -45,6 +49,7 @@
       "seat_share": 0.13,
       "leader_name": "Marijke Stoffels",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -54,6 +59,7 @@
       "seat_share": 0.15,
       "leader_name": "Fenna Wielinga",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "nationale_vrijheid"
       ]

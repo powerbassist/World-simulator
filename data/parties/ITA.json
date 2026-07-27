@@ -7,6 +7,7 @@
       "seat_share": 0.27,
       "leader_name": "Lorenzo Bagnasco",
       "discipline": 0.7,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -16,6 +17,7 @@
       "seat_share": 0.11,
       "leader_name": "Piergiorgio Ronchi",
       "discipline": 0.75,
+      "competence": 0.55,
       "excluded_partners": []
     },
     {
@@ -25,6 +27,7 @@
       "seat_share": 0.1,
       "leader_name": "Vittorio Lambertini",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": []
     },
     {
@@ -34,6 +37,7 @@
       "seat_share": 0.22,
       "leader_name": "Chiara Fossati",
       "discipline": 0.85,
+      "competence": 0.75,
       "excluded_partners": [
         "fratelli_della_nazione"
       ]
@@ -45,6 +49,7 @@
       "seat_share": 0.23,
       "leader_name": "Enzo Trevisan",
       "discipline": 0.65,
+      "competence": 0.5,
       "excluded_partners": []
     },
     {
@@ -54,6 +59,7 @@
       "seat_share": 0.07,
       "leader_name": "Serena Caputo",
       "discipline": 0.8,
+      "competence": 0.6,
       "excluded_partners": [
         "fratelli_della_nazione"
       ]

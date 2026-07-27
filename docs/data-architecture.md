@@ -245,11 +245,17 @@ NationState                      src/core/nation_state.gd
 │              censure_barred_party_ids[], governments_fallen ([[ROADMAP|V1.1a]])
 ├── discipline party_discipline{}  String party id -> live discipline
 │                                  ([[ROADMAP|V1.1b]], [[discipline-model]])
+├── dissolution dissolution_rule, _lockout_months, _notice_months,
+│               _lockout_remaining, dissolution_pending, dissolutions_called,
+│               last_dissolution{}   ([[ROADMAP|V1.1c]], [[dissolution-model]])
+├── cabinet    cabinet{}, cabinet_effectiveness{}, cabinet_entitlement{},
+│              reshuffles_called, resignations_count, last_resignation{}
+│                                  ([[ROADMAP|V1.1d]], [[cabinet-model]])
 └── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
                last_law_result{}   ([[ROADMAP|S7]])
 ```
 
-Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
+Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline, V1.1c's dissolution, V1.1d's cabinet. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
 
 `NationState.duplicate_state()` and `GameState.duplicate_state()` deep-copy the whole thing. That is not a convenience: the budget projection runs the real simulation forward on a copy, which is what makes the projected path identical to what subsequently happens rather than merely close. Every Dictionary field must be duplicated, not shared.
 
@@ -263,7 +269,7 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
-**It is at 3, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Both are refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
+**It is at 5, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 

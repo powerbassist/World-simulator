@@ -17,6 +17,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 
 
 ## Set every bloc to the neutral baseline and record the starting deficit that
@@ -99,7 +100,11 @@ static func issue_satisfaction(ns) -> Dictionary:
 			float(ns.spending_pct_gdp.get(key, 0.0))
 			- float(ns.start_spending_pct_gdp.get(key, 0.0))
 		)
-		sat[key] = _scaled(d_spend, K.SPEND_SCALE_PP)
+		# Effectiveness multiplies the DELTA, not the level -- see
+		# docs/cabinet-model.md. A player who never touches this spending line
+		# is untouched by the whole cabinet system, the same surgical property
+		# the public_finances retune above argues for.
+		sat[key] = _scaled(d_spend * Cabinet.effectiveness(ns, key), K.SPEND_SCALE_PP)
 
 	# Measured on the deficit, not the debt ratio. Debt walks upward every month
 	# by construction (r > g), so a debt-level term would make every bloc slowly
