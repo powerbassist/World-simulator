@@ -42,10 +42,19 @@ static func _months_to_election(state, ns) -> int:
 	return (ns.next_election_year - int(state.year)) * 12 + (ns.next_election_month - int(state.month))
 
 
+## Months from the current date to the head of state's own scheduled election --
+## Italy's clock, present only where head_of_state_kind is elected_president.
+## Same negative-once-overdue shape as _months_to_election() above.
+static func _months_to_head_of_state_election(state, ns) -> int:
+	return (ns.head_of_state_next_year - int(state.year)) * 12 + (ns.head_of_state_next_month - int(state.month))
+
+
 ## True when the rule permits the player to call a dissolution right now --
 ## the rule allows an executive command, no dissolution is already pending, the
-## lockout has expired, and the scheduled election is not close enough that
-## dissolving early would just be a free reroll of a vote already coming.
+## lockout has expired, the scheduled election is not close enough that
+## dissolving early would just be a free reroll of a vote already coming, and
+## -- for head_of_state_limited -- the head of state's own term is not in its
+## last six months, the semestre bianco. See docs/dissolution-model.md.
 static func can_dissolve(state, ns) -> bool:
 	if not EXECUTIVE_RULES.has(ns.dissolution_rule):
 		return false
@@ -56,6 +65,10 @@ static func can_dissolve(state, ns) -> bool:
 	var months := _months_to_election(state, ns)
 	if months >= 0 and months < DK.DISSOLUTION_BLACKOUT_MONTHS:
 		return false
+	if ns.dissolution_rule == "head_of_state_limited":
+		var hos_months := _months_to_head_of_state_election(state, ns)
+		if hos_months >= 0 and hos_months < DK.SEMESTRE_BIANCO_MONTHS:
+			return false
 	return true
 
 
@@ -76,6 +89,10 @@ static func refusal_reason(state, ns) -> String:
 	var months := _months_to_election(state, ns)
 	if months >= 0 and months < DK.DISSOLUTION_BLACKOUT_MONTHS:
 		return "Too close to the scheduled election to be worth calling."
+	if ns.dissolution_rule == "head_of_state_limited":
+		var hos_months := _months_to_head_of_state_election(state, ns)
+		if hos_months >= 0 and hos_months < DK.SEMESTRE_BIANCO_MONTHS:
+			return "Too close to the head of state's own term to be worth calling."
 	return ""
 
 

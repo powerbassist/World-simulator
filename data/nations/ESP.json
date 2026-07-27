@@ -32,6 +32,13 @@
         "notice_months": 2
       }
     },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "name": "Alfonso VII"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Investiture requires an absolute majority in the first round, a simple majority 48 hours later. No confidence is constructive and requires an absolute majority. Arts. 99 and 113 of the 1978 Constitution.",

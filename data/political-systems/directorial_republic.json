@@ -1,0 +1,9 @@
+{
+  "id": "directorial_republic",
+  "name": "Directorial republic",
+  "lose_condition": "never",
+  "allowed_formation_methods": ["directorial"],
+  "allowed_censure_rules": ["none"],
+  "allowed_dissolution_rules": ["none"],
+  "permits_term_limit": false
+}

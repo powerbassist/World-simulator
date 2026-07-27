@@ -56,6 +56,7 @@ shell does not have.
 | V1.1c | Sim | Dissolution and snap elections — the rule as ten-nation data, measured before it was built, no election-model change needed |
 | V1.1d | Sim | Cabinet and ministers — five portfolios keyed to spending lines, competence and portfolio position both derived rather than authored, shortfall-driven resignation measured before it was built |
 | V1.2a | Sim | A second playable nation — Germany, per-nation starting fiscal policy (`policy_defaults.json` retired), bloc weights confirmed global by measurement rather than assumption |
+| V1.2b | Sim | Political system templates as a constraint not a defaults table, the head of state (five constitutional monarchies now say so), a named lose condition replacing a structural-flag dispatch, term limits enforced (France's two-term limit termed-out on the merits), Italy's *semestre bianco* dissolution blackout |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -63,11 +64,48 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's political
-system templates are next in the written order, now that a second nation has
-proven the institutional layer generalises — but per this document's own
-handoff convention below, the plan/model/effort call belongs to the session
-that picks it up, read cold, not to this one.
+Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's
+remaining items — constitutional amendment, system transition, start
+scenarios — are next in the written order, now that V1.2b built the templates
+those first two need to point at. Per this document's own handoff convention
+below, the plan/model/effort call belongs to the session that picks it up,
+read cold, not to this one.
+
+### V1.2b — political system templates, head of state, term limits (shipped)
+
+[docs/tiers/v1.md](docs/tiers/v1.md) §2's headline feature, built once there
+was a working institutional layer to generalise. Most of what a template would
+declare, nations already declared flat — `formation.method`, `censure`,
+`dissolution.rule`, `election.system` — so the template earns its keep only on
+what nations could not express before: the **head of state** (five
+constitutional monarchies now say so, where nothing did before), a **named
+lose condition** (`elections.gd`'s run-ending branch was dispatched on the
+structural flag `has_executive`; now on `lose_condition`), and an **enforced
+term limit** (France's two-term rule; `terms_served` had been tracked and read
+by nothing).
+
+The template is a **constraint, not a defaults table** — no inheritance, no
+override resolution, so there is nowhere for a half-understood institutional
+state to come from. `data_loader.gd` fails at startup if a nation's flat
+formation/censure/dissolution value falls outside its declared template's
+allowed set, which is what makes the template load-bearing rather than
+decorative. Four templates, matching the roster
+(`semi_presidential_republic` FRA, `parliamentary_republic` DEU/ITA/AUT,
+`constitutional_monarchy` GBR/ESP/BEL/NLD/LUX, `directorial_republic` CHE) —
+§2's other two named templates, absolute monarchy and one-party state, have no
+nation in a ten-nation Western European roster to attach to, and are deferred
+with a named trigger rather than authored unattached.
+
+Enforcing France's term limit found a real collision with the balance
+harness's long-horizon check, and a real (not a bug) divergence along the way:
+moving that check to Germany, as planned, found that a do-nothing German
+budget does not survive three elections either — the chancellor's party
+erodes under 50% and loses "largest party" status by the second one, a
+previously-measured France/Germany divergence surfacing again in a new place.
+Full account: [[political-systems]].
+
+Content is [docs/tiers/v1.md](docs/tiers/v1.md) §2; the model is
+[[political-systems]].
 
 ### V1.2a — a second playable nation (shipped)
 
@@ -158,6 +196,16 @@ is already made, which is most sessions once the docs are written.
 | V1.1d Cabinet | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on "ministers are a schema that departments, opinion and events all read — S1 class." The cold count at plan time found ~fourteen surfaces against that reading — V1.1c's own thirteen, plus a new content class (named individuals) and a dashboard tab. **Corrected by cutting scope, not raising effort** — the first correction on this table's record to resolve that way rather than by moving to a higher tier: portfolio → party (not named individuals), loyalty → resignation only (not a second hostility() term), UI → the existing Government panel (not a new tab). Cut to eleven surfaces, Medium held. Fourth correction on this table's own record; see [[decision-log]]. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
+| V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
+
+> [!note] V1.2b's plan got a real collision wrong, and the build found it
+> The plan assumed enforcing France's term limit could move the balance
+> harness's long-horizon three-election survival check to Germany "unchanged
+> from V1.2a's numbers." Running it found Germany's own do-nothing budget does
+> not survive three elections either — a real, previously-measured divergence,
+> not a bug. The build session caught this by running the harness rather than
+> reasoning from the plan's own text, and rewrote the check to assert what its
+> name actually promises. See [[political-systems]] and [[decision-log]].
 
 Every V1.2+ block gets a plan, on Opus 5. By then there is enough built that
 changes ripple.

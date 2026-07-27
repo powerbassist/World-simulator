@@ -33,7 +33,7 @@ data/
 ├── nations/           one file per nation — FRA.json, DEU.json, …
 ├── parties/           one file per nation's party system
 ├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
-├── political-systems/ institutional templates (V1)
+├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
@@ -103,6 +103,13 @@ of time.
         "threshold_pct": 0.0
       }
     },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "kind": "executive_president",
+      "title": "President of the Republic",
+      "name": "Daniel Moucron"
+    },
+    "term_limit": 2,
     "executive": {
       "_source": "authored",
       "title": "President of the Republic",
@@ -190,6 +197,15 @@ begins exactly on its own erosion reference.
 > `formation.method` being dispatched rather than branched on, is
 > [[government-model]].
 >
+> `system`, `head_of_state` and `term_limit` arrived at [[ROADMAP|V1.2b]].
+> `system` names a `data/political-systems/*.json` file, which constrains —
+> not defaults — `formation.method`/`formation.censure`/
+> `legislative.dissolution.rule` to the set that template allows.
+> `head_of_state` is required for all ten; only `elected_president` carries its
+> own `term_years`/`next`, the same optional-but-complete shape `executive`
+> already uses. `term_limit` is `0` unless the nation's template permits one —
+> only France's does. Full argument: [[political-systems]].
+>
 > `data/parties/*.json` gained `leader_name`, `discipline` and
 > `excluded_partners` in the same block. `excluded_partners` is validated
 > against that nation's own roster, so a cordon naming a party that does not
@@ -233,7 +249,7 @@ at import time. It checks:
 
 - Required fields present, correct type.
 - Numeric fields within sane ranges — no negative populations, no debt ratios of 40,000.
-- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists (V1: every `system` names a real political system template).
+- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
 
 It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.

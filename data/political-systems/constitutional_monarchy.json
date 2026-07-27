@@ -1,0 +1,9 @@
+{
+  "id": "constitutional_monarchy",
+  "name": "Constitutional monarchy",
+  "lose_condition": "party_not_largest",
+  "allowed_formation_methods": ["coalition_negotiation", "investiture", "largest_party"],
+  "allowed_censure_rules": ["simple_present", "constructive_absolute"],
+  "allowed_dissolution_rules": ["confidence_failure", "executive_discretion"],
+  "permits_term_limit": false
+}

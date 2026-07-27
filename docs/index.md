@@ -30,6 +30,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[discipline-model]] — party discipline as live state, what erodes it, and seat-level rebellions
 - [[dissolution-model]] — dissolution and snap elections, the rule as data, and what the gamble costs
 - [[cabinet-model]] — cabinet portfolios, competence as derived effectiveness, and shortfall-driven resignation
+- [[political-systems]] — political system templates as a constraint not a defaults table, the head of state, and enforced term limits
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

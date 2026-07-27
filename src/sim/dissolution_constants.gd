@@ -27,3 +27,8 @@ const DISSOLUTION_BLOC_PENALTY := -0.08
 ## election. Without it, dissolving one month early is a free reroll of a vote
 ## that was coming anyway, paying the bloc penalty for no gamble at all.
 const DISSOLUTION_BLACKOUT_MONTHS := 6
+
+## Italy's semestre bianco: no dissolution in the last six months of the head
+## of state's own term. Only `head_of_state_limited` reads this -- see
+## docs/dissolution-model.md and docs/political-systems.md.
+const SEMESTRE_BIANCO_MONTHS := 6

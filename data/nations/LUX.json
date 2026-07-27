@@ -32,6 +32,13 @@
         "notice_months": 3
       }
     },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "Grand Duke",
+      "name": "Adolphe III"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Coalition government appointed by the Grand Duke; requires the confidence of the Chambre des Deputes on a simple majority.",

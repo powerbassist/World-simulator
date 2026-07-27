@@ -32,6 +32,20 @@
         "notice_months": 2
       }
     },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The Bundespräsident, elected by the Federal Convention for a five-year term; last elected February 2022, so the next is due February 2027. Ceremonial -- no reader beyond the government panel. Wikipedia, 'President of Germany'.",
+      "kind": "elected_president",
+      "title": "Federal President",
+      "name": "Wolfgang Emmerich",
+      "term_years": 5,
+      "next": {
+        "year": 2027,
+        "month": 2
+      }
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Chancellor elected by the Bundestag with an absolute majority of the statutory membership (Kanzlermehrheit); removable only by a constructive vote of no confidence that simultaneously elects a successor. Art. 63 and 67 GG; bundestag.de 'Election of the Federal Chancellor'.",

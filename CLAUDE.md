@@ -84,38 +84,36 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.2a shipped** — a second playable nation. Germany is playable alongside
-France, chosen for maximum institutional contrast (`chancellor_election` vs
-`presidential_appointment`, `constructive_absolute` vs `absolute_members`
-censure, no separate executive clock, `pr_national` with a 5% threshold vs
-`two_round`'s 0%, dissolution the player can never call). `data/nations/*.json`
-now carries each nation's own starting fiscal policy in its `fiscal` block —
-`tax_rates_pct`, `spending_pct_gdp`, `other_spending_pct_gdp` — replacing the
-one shared `data/policy_defaults.json`; France's own numbers are the unchanged
-anchor, the other nine are sourced (VAT direct, income/corporate scaled from
-France's by OECD Revenue Statistics tax-to-GDP shares, spending scaled by
-general government expenditure). `Budget._erosion()`'s reference rate is now
-`ns.start_tax_rates_pct`, not a shared constant, so every nation starts exactly
-on its own erosion curve. `opinion_constants.gd`'s bloc weights stayed one
-global table — a measured decision: `tools/balance_probe.gd`, parameterised by
-nation, found France and Germany already diverge sharply under an identical
-relative budget, from institutions and party rosters alone. New Game opens a
-nation-select panel (`src/ui/nation_select_panel.gd`) built from whichever
-nations `data/nations/*.json` marks `playable`; a third nation onward is a
-one-flag data edit. Models: [docs/cabinet-model.md](docs/cabinet-model.md),
-[docs/economy-model.md](docs/economy-model.md). MVP, V1.1a–d, V1.2a, and
-U1–U4 are done.
+**V1.2b shipped** — political system templates, the head of state, and
+enforced term limits. `data/political-systems/*.json` is a **constraint on
+what nations already declare flat**, not a defaults table: no inheritance, no
+override resolution, and `data_loader.gd` fails at startup if a nation's own
+`formation.method`/`censure`/`dissolution.rule` falls outside its declared
+template's allowed set. Four templates match the roster —
+`semi_presidential_republic` (FRA), `parliamentary_republic` (DEU, ITA, AUT),
+`constitutional_monarchy` (GBR, ESP, BEL, NLD, LUX), `directorial_republic`
+(CHE) — §2's other two named templates, absolute monarchy and one-party
+state, have no nation to attach to and are deferred with a named trigger.
+Every nation now carries `government.head_of_state` (kind, title, name; an
+`elected_president`'s own term clock for DEU/ITA/AUT) and
+`government.term_limit` (0 unless the template permits one — only France's
+does, at 2). `elections.gd`'s run-ending branch is dispatched on a named
+`ns.lose_condition` rather than the structural flag `has_executive`; Italy's
+`head_of_state_limited` dissolution rule now reads the head of state's own
+clock for the *semestre bianco* blackout, no longer identical to
+`executive_discretion`. Model: [docs/political-systems.md](docs/political-systems.md).
+MVP, V1.1a–d, V1.2a, V1.2b, and U1–U4 are done.
 
-**Next: not yet scoped.** [docs/tiers/v1.md](docs/tiers/v1.md) §2's political
-system templates are next in the written order, now that a second nation has
-proven the institutional layer generalises, but the plan/model/effort call
-belongs to the session that picks it up — see
-[ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e (upper house and
-judiciary) is re-parked, not cancelled. Arguments in
+**Next: not yet scoped.** [docs/tiers/v1.md](docs/tiers/v1.md) §2's remaining
+items — constitutional amendment, system transition, start scenarios — are
+next in the written order, now that the templates exist for amendment and
+transition to point at. The plan/model/effort call belongs to the session
+that picks it up — see [ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e
+(upper house and judiciary) is re-parked, not cancelled. Arguments in
 [docs/tiers/v1.md](docs/tiers/v1.md), [docs/tiers/declined.md](docs/tiers/declined.md),
 and [docs/decision-log.md](docs/decision-log.md).
 
-Save format is at **version 5**. There has never been a migration: a superseded
+Save format is at **version 6**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal.
 

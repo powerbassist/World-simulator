@@ -32,6 +32,20 @@
         "notice_months": 2
       }
     },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The Bundespräsident, popularly elected for a six-year term; last elected October 2022, so the next is due October 2028. Ceremonial -- no reader beyond the government panel. Wikipedia, 'President of Austria'.",
+      "kind": "elected_president",
+      "title": "Federal President",
+      "name": "Elisabeth Kranzler",
+      "term_years": 6,
+      "next": {
+        "year": 2028,
+        "month": 10
+      }
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Chancellor appointed by the Federal President. A majority of the Nationalrat can topple the Federal Government at any time; a minority government survives only while tolerated. parlament.gv.at 'Vote of no confidence'.",

@@ -158,6 +158,10 @@ Win → `Elections.tick_month()` increments `terms_served`, resets
 > attribution and the absence of election-day noise is unchanged and applies to
 > both votes — `Elections.resolve_executive()` calls the same `vote_share()` and
 > the same `attribution()`. Full argument in [[government-model]].
+>
+> **Since [[ROADMAP|V1.2b]]**, the verdict itself is dispatched on
+> `ns.lose_condition`, not on `has_executive` — the same code path, named
+> rather than inferred. See [[political-systems]].
 
 ## Attribution
 

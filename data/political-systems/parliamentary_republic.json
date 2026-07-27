@@ -1,0 +1,9 @@
+{
+  "id": "parliamentary_republic",
+  "name": "Parliamentary republic",
+  "lose_condition": "party_not_largest",
+  "allowed_formation_methods": ["coalition_negotiation", "chancellor_election", "investiture"],
+  "allowed_censure_rules": ["simple_present", "constructive_absolute"],
+  "allowed_dissolution_rules": ["self_dissolution", "confidence_failure", "head_of_state_limited"],
+  "permits_term_limit": false
+}

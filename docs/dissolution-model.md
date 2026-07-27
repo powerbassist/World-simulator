@@ -244,16 +244,18 @@ half-implements — the same call [[government-model]] makes for
 than an honest refusal, and it is Germany's and Belgium's actual mechanism, not
 a placeholder for one this session ran out of time to build.
 
-**Italy's *semestre bianco* blackout.** The real rule bars dissolution during
-the last six months of the **head of state's own** seven-year term. No nation
-but France tracks a separate executive term in this schema (`has_executive`),
-so there is no clock to measure Italy's head of state against without
-inventing one for a nation whose own executive is never resolved. Modelling it
-would be new state for a caveat only ITA's authored roster could ever exercise
-— the same "code with no caller" reasoning as the confidence-vote gap.
-`head_of_state_limited` is present in the schema and dispatched identically to
-`executive_discretion` today; the blackout itself is recorded here as future
-work rather than silently dropped.
+**Italy's *semestre bianco* blackout — built at [[ROADMAP|V1.2b]].** The real
+rule bars dissolution during the last six months of the **head of state's own**
+seven-year term. V1.1c recorded this as future work because no nation but
+France tracked a separate executive clock in this schema, and inventing one for
+a caveat only Italy's roster could exercise was new state with no other reader.
+[[political-systems|V1.2b's]] `head_of_state` block is that clock for every
+elected head of state, not invented for this alone — Italy's President is
+`elected_president`, term seven years, and `can_dissolve()` now reads
+`_months_to_head_of_state_election()` against it the same way it already reads
+`_months_to_election()` against the assembly's own schedule.
+`DK.SEMESTRE_BIANCO_MONTHS` (6) is the constant; `head_of_state_limited` no
+longer dispatches identically to `executive_discretion`.
 
 **Dissolution for the nine non-resolving nations.** Only the player's
 dissolution is ever called — the same split [[electoral-systems]] makes for

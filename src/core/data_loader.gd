@@ -7,6 +7,7 @@ extends RefCounted
 const Nation = preload("res://src/core/nation.gd")
 const Party = preload("res://src/core/party.gd")
 const Law = preload("res://src/core/law.gd")
+const PoliticalSystem = preload("res://src/core/political_system.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -19,6 +20,7 @@ const EU = preload("res://src/core/eu.gd")
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
 var laws: Array[Law] = []
+var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var eu: EU = null
 var errors: Array[String] = []
 
@@ -31,10 +33,11 @@ var errors: Array[String] = []
 var geo_features: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
+	political_systems.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -74,6 +77,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		_load_parties(id, parties_dir)
 
 	_load_laws(laws_dir)
+	_load_political_systems(political_systems_dir)
 
 	eu = EU.new()
 	eu.load(eu_path)
@@ -182,6 +186,45 @@ func _load_laws(laws_dir: String) -> void:
 			laws.append(law)
 
 
+## Reads every data/political-systems/*.json file. See docs/political-systems.md
+## and political_system.gd's own header for why a template is a constraint, not
+## a defaults table -- the constraint itself is enforced below, in
+## _validate_cross_file(), against every nation that names one.
+func _load_political_systems(political_systems_dir: String) -> void:
+	var da := DirAccess.open(political_systems_dir)
+	if da == null:
+		errors.append("%s: directory not found" % political_systems_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	for fname in filenames:
+		var path := political_systems_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY:
+			errors.append("%s: invalid JSON" % fname)
+			continue
+
+		var per_file_errors: Array[String] = []
+		var system = PoliticalSystem.from_dict(parsed, fname, per_file_errors)
+		errors.append_array(per_file_errors)
+		if system.id != "":
+			political_systems[system.id] = system
+
+
 func _validate_cross_file(geo_path: String) -> void:
 	if nations.size() != 10:
 		errors.append("expected 10 nations, loaded %d" % nations.size())
@@ -219,6 +262,29 @@ func _validate_cross_file(geo_path: String) -> void:
 			errors.append("%s.json: government.eu.ep_seats %d does not match data/eu_parliament.json's %d for '%s'" % [
 				id, n.eu_ep_seats, eu.ep_seats(id), id
 			])
+
+		_validate_political_system(n)
+
+
+## The template is a constraint, not a defaults table -- see political_system.gd.
+## A nation's formation/censure/dissolution rule must fall inside the set its
+## own template declares, and a term limit may only be authored where the
+## template permits one. Failing loudly here is what makes the template
+## load-bearing rather than decorative.
+func _validate_political_system(n) -> void:
+	if not political_systems.has(n.system_id):
+		errors.append("%s.json: government.system '%s' names no file in data/political-systems/" % [n.id, n.system_id])
+		return
+
+	var system: PoliticalSystem = political_systems[n.system_id]
+	if not system.allowed_formation_methods.has(n.formation_method):
+		errors.append("%s.json: government.formation.method '%s' is not permitted by system '%s'" % [n.id, n.formation_method, n.system_id])
+	if not system.allowed_censure_rules.has(n.censure_rule):
+		errors.append("%s.json: government.formation.censure '%s' is not permitted by system '%s'" % [n.id, n.censure_rule, n.system_id])
+	if not system.allowed_dissolution_rules.has(n.dissolution_rule):
+		errors.append("%s.json: government.legislative.dissolution.rule '%s' is not permitted by system '%s'" % [n.id, n.dissolution_rule, n.system_id])
+	if n.term_limit > 0 and not system.permits_term_limit:
+		errors.append("%s.json: government.term_limit %d is set but system '%s' does not permit a term limit" % [n.id, n.term_limit, n.system_id])
 
 
 func _load_geo(geo_path: String) -> Array:

@@ -1,0 +1,9 @@
+{
+  "id": "semi_presidential_republic",
+  "name": "Semi-presidential republic",
+  "lose_condition": "executive_election_defeat",
+  "allowed_formation_methods": ["presidential_appointment"],
+  "allowed_censure_rules": ["absolute_members"],
+  "allowed_dissolution_rules": ["executive_discretion"],
+  "permits_term_limit": true
+}

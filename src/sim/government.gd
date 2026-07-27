@@ -37,6 +37,14 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.head_of_government_title = nation.head_of_government_title
 	ns.start_head_of_government_name = nation.head_of_government_name
 
+	ns.system_id = nation.system_id
+	ns.head_of_state_kind = nation.head_of_state_kind
+	ns.head_of_state_title = nation.head_of_state_title
+	ns.head_of_state_name = nation.head_of_state_name
+	ns.head_of_state_next_year = nation.head_of_state_next_year
+	ns.head_of_state_next_month = nation.head_of_state_next_month
+	ns.term_limit = nation.term_limit
+
 	ns.coalition_party_ids = []
 	ns.coalition_seats = 0
 	ns.coalition_position = NEUTRAL_POSITION.duplicate()

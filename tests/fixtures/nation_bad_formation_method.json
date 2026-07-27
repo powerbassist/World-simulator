@@ -1,0 +1,61 @@
+{
+  "id": "FRA",
+  "name": "France",
+  "geo_id": "FRA",
+  "capital": "Paris",
+  "playable": true,
+  "leader": {
+    "name": "Daniel Moucron",
+    "title": "President of the Republic",
+    "party": "renouveau_civique"
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Assemblée nationale",
+      "assembly_seats": 577,
+      "term_years": 5,
+      "election": {
+        "system": "two_round",
+        "next": { "year": 2029, "month": 6 },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "rule": "executive_discretion",
+        "lockout_months": 12,
+        "notice_months": 1
+      }
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "kind": "executive_president",
+      "title": "President of the Republic",
+      "name": "Daniel Moucron"
+    },
+    "term_limit": 2,
+    "executive": {
+      "title": "President of the Republic",
+      "term_years": 5,
+      "next": { "year": 2027, "month": 5 }
+    },
+    "formation": {
+      "method": "coalition_negotiation",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_name": "Cécile Aumont"
+    },
+    "eu": { "member": true, "ep_seats": 81 }
+  },
+  "fiscal": {
+    "debt_to_gdp_pct": 116.0,
+    "tax_revenue_pct_gdp": 46.1,
+    "tax_rates_pct": { "income": 20.0, "corporate": 25.0, "vat": 20.0 },
+    "spending_pct_gdp": { "health": 11.0, "education": 5.5, "defence": 2.0, "pensions": 14.5, "infrastructure": 3.5 },
+    "other_spending_pct_gdp": 12.0
+  },
+  "imported": {
+    "population": 68600000,
+    "gdp_eur_bn": 2910.0,
+    "unemployment_pct": 7.4,
+    "sectors": { "agriculture": 0.015, "industry": 0.192, "services": 0.793 }
+  }
+}

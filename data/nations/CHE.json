@@ -32,6 +32,14 @@
         "notice_months": 1
       }
     },
+    "system": "directorial_republic",
+    "head_of_state": {
+      "_note": "The presidency of the Confederation is a one-year rotation among the seven Federal Councillors, held this year by the same Councillor already authored as leader -- one office, one name, no separate clock.",
+      "kind": "collegial",
+      "title": "President of the Confederation",
+      "name": "Reto Baumgartner"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "The Federal Council is elected by the United Federal Assembly for a fixed four-year term under the power-sharing 'magic formula'. It does not depend on parliamentary confidence and cannot be removed by a no-confidence vote. swissinfo.ch 'The not so magical formula'.",

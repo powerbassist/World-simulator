@@ -66,6 +66,14 @@ all now refer to the **player's** term: the executive's where one exists, the
 legislature's otherwise. Only an **executive** election can set
 `in_government` false.
 
+**Since [[ROADMAP|V1.2b]]**, *why* it goes false is named rather than inferred
+from `has_executive`: `ns.lose_condition` (`executive_election_defeat` for
+France, `party_not_largest` for the other nine, `never` for CHE's collegial
+executive) and a separate `ns.term_limit` check, which ends the run without
+resolving a vote at all for an incumbent who is not on the ballot. Both are
+copied onto `NationState` from the nation's declared political-system
+template. Full argument: [[political-systems]].
+
 ## Formation as a method, not a branch
 
 [[engine-decision|Rule 1]] still applies: no `if nation_id == "FRA"` anywhere.

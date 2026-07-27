@@ -32,6 +32,13 @@
         "notice_months": 2
       }
     },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "name": "Baudouin III"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Government formed by coalition negotiation and appointed by the King; requires the confidence of the Chamber, carried on a simple majority of those voting.",

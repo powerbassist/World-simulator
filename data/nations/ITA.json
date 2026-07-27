@@ -32,6 +32,20 @@
         "notice_months": 2
       }
     },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President of the Republic, elected by Parliament for a seven-year term; last elected January 2022, so the next is due January 2029. Whose own clock the head_of_state_limited semestre bianco is measured against -- see docs/dissolution-model.md. Wikipedia, 'President of Italy'.",
+      "kind": "elected_president",
+      "title": "President of the Republic",
+      "name": "Umberto Salvagno",
+      "term_years": 7,
+      "next": {
+        "year": 2029,
+        "month": 1
+      }
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "PM appointed by the President of the Republic, then must win a confidence vote in both chambers. No confidence is simple -- no successor required. Art. 94 of the Constitution.",

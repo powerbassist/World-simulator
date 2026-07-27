@@ -22,11 +22,12 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-## 5 as of V1.1d: cabinet added six fields to NationState, none of which a
-## version-4 save carries — a loaded game would read an empty cabinet and never
-## be able to seat one. SaveManager rejects an unknown version outright — see
+## 6 as of V1.2b: political-system fields (system_id, head-of-state,
+## lose_condition, term_limit) added to NationState, none of which a version-5
+## save carries — a loaded game would read an empty lose_condition and never be
+## able to end a run. SaveManager rejects an unknown version outright — see
 ## docs/data-architecture.md.
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -60,7 +61,7 @@ static func new_game(loader, player_id: String):
 	ids.sort()
 	for id in ids:
 		var party_list: Array = loader.parties.get(id, [])
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, gs.errors)
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, loader.political_systems, gs.errors)
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -73,7 +74,7 @@ static func new_game(loader, player_id: String):
 	return gs
 
 
-static func _build_nation(n, is_player: bool, party_list: Array, eu, errors: Array[String]):
+static func _build_nation(n, is_player: bool, party_list: Array, eu, political_systems: Dictionary, errors: Array[String]):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -124,6 +125,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, errors: Arr
 	# After Elections, which seeds seats_by_party and incumbent_party_id — the
 	# two things a formation search reads.
 	Government.init_nation(ns, n, party_list)
+
+	# The template is a constraint the loader already enforced against this
+	# nation's own flat fields (data_loader.gd's _validate_political_system) --
+	# lose_condition is the one field only the template carries, so it is read
+	# here rather than copied from Nation like formation_method/censure_rule
+	# above. See docs/political-systems.md.
+	var system = political_systems.get(n.system_id)
+	ns.lose_condition = system.lose_condition if system != null else ""
 	# After Government, which forms the starting coalition Cabinet.seat() reads.
 	# Called here rather than from inside government.gd -- Cabinet depends on
 	# Government, so the reverse would be a preload() cycle. See

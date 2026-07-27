@@ -32,6 +32,13 @@
         "notice_months": 1
       }
     },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "name": "Robert III"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "The largest party forms a government; there is no investiture vote. A no confidence motion carries on a simple majority of members present and voting.",

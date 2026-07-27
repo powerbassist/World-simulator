@@ -81,6 +81,7 @@ func _init() -> void:
 
 	_check_ten_years_stay_off_every_clamp()
 	_check_two_full_terms_without_softlock()
+	_check_france_terms_out_at_the_limit()
 	_check_managing_beats_ignoring()
 	_check_a_ruinous_budget_loses()
 	_check_losing_names_the_number_the_player_moved()
@@ -105,22 +106,49 @@ func _check_ten_years_stay_off_every_clamp() -> void:
 
 
 ## Done-when: "A full five-year term is playable start to finish without a crash
-## or a softlock", and S10's "two consecutive full terms play without a
-## softlock". Three national elections resolve in 168 months; a player who never
-## opens the budget screen should survive all three.
+## or a softlock".
+##
+## Run on Germany, not France, since V1.2b: France's two-term limit caps a
+## do-nothing run at two elections regardless of outcome (see
+## _check_france_terms_out_at_the_limit() below), so it cannot exercise a third.
+## Germany has no such limit -- but a do-nothing German budget does not keep
+## winning either. tools/balance_probe.gd's own hands_off/DEU trajectory shows
+## the chancellor's party sliding under 50% and losing "largest party" at the
+## second legislative election, 2033-02 — a real, previously-measured
+## divergence from France (see docs/data-architecture.md's bloc-weight note),
+## not a softlock. So this checks what the done-when actually asks for: however
+## many elections a 168-month run resolves, none of them produces a crash, a
+## non-finite value, or a value stuck on a guard clamp.
 func _check_two_full_terms_without_softlock() -> void:
+	var run := _play(IGNORED, MONTHS, -1, "DEU")
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("Germany do-nothing run: %s" % p)
+	if run["elections"].is_empty():
+		_fail("Germany's do-nothing run resolved no legislative elections in %d months" % run["months"])
+
+
+## V1.2b: France's own two-term limit ends what would otherwise be an
+## indefinitely-survivable do-nothing run -- the President is termed out at the
+## third executive election (2037-05) rather than losing a vote. Distinct from
+## every other check here: in_government going false is the CORRECT outcome,
+## and the failure modes are firing early, firing late, or being
+## indistinguishable from an actual election defeat.
+func _check_france_terms_out_at_the_limit() -> void:
 	var run := _play(IGNORED, MONTHS)
 	var ns = run["state"].player()
 
-	if run["months"] < MONTHS:
-		_fail("ignoring the budget lost government after %d months; a do-nothing run should survive two full terms" % run["months"])
+	if ns.in_government:
+		_fail("a do-nothing French run still holds office after %d months; the two-term limit should have ended it" % run["months"])
 		return
-	if run["elections"].size() < 3:
-		_fail("expected three national elections in %d months, saw %d" % [MONTHS, run["elections"].size()])
-	if ns.terms_served < 3:
-		_fail("terms_served is %d after three held elections" % ns.terms_served)
-	if not ns.in_government:
-		_fail("in_government is false after a run in which every election was held")
+	if run["elections"].size() != 2:
+		_fail("expected exactly 2 executive elections before the term limit barred a third, saw %d" % run["elections"].size())
+	if ns.terms_served != 2:
+		_fail("terms_served is %d when termed out; France's term_limit is 2" % ns.terms_served)
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("termed-out run: %s" % p)
 
 
 ## Done-when: "Ignoring the budget for a full term produces a visibly worse
@@ -132,8 +160,12 @@ func _check_managing_beats_ignoring() -> void:
 	var ignored := _play(IGNORED, MONTHS)
 	var managed := _play(MANAGED, MONTHS)
 
-	if managed["months"] < MONTHS:
-		_fail("the managed budget lost government after %d months" % managed["months"])
+	# Both regimes win every election here, so both are termed out by France's
+	# two-term limit at the same real-calendar month regardless of budget --
+	# see _check_france_terms_out_at_the_limit(). A managed run stopping short
+	# of THAT month is the regression this guards; stopping at it is expected.
+	if managed["months"] < ignored["months"]:
+		_fail("the managed budget lost government at month %d, before the do-nothing run's month %d" % [managed["months"], ignored["months"]])
 		return
 
 	var i = ignored["state"].player()
@@ -241,8 +273,8 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1) -> Dictionary:
-	var state = GameState.new_game(_loader, "FRA")
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA") -> Dictionary:
+	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
 	state.year = START_YEAR

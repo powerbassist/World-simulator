@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 
 tests=(
   tests/test_data.gd
+  tests/test_political_systems.gd
   tests/test_clock.gd
   tests/test_economy.gd
   tests/test_budget.gd

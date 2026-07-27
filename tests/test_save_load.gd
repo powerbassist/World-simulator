@@ -262,6 +262,20 @@ func _run_unknown_version() -> void:
 	elif pre_cabinet["error"].is_empty():
 		_fail("load_game rejected a version-4 save but gave no error message")
 
+	# Version 5 for the same reason one version further on: V1.2b added
+	# political-system fields (system_id, head-of-state, lose_condition,
+	# term_limit), so a version-5 save carries no lose_condition and the run
+	# could never end.
+	var v5 := FileAccess.open(path, FileAccess.WRITE)
+	v5.store_string(JSON.stringify({"save_version": 5, "day": 1, "game_state": {}}))
+	v5.close()
+
+	var pre_political_systems := SaveManager.load_game(BOGUS_SLOT)
+	if pre_political_systems["ok"]:
+		_fail("load_game accepted a version-5 save; the political-system fields would be missing")
+	elif pre_political_systems["error"].is_empty():
+		_fail("load_game rejected a version-5 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

@@ -39,6 +39,17 @@ const KNOWN_DISSOLUTION_RULES: Array[String] = [
 	"self_dissolution", "none",
 ]
 
+## Who the head of state is, and how they got there. Dispatched nowhere in
+## sim code except the elected_president clock dissolution.gd reads for
+## head_of_state_limited -- otherwise decorative, read only by the government
+## panel. See docs/political-systems.md.
+const KNOWN_HEAD_OF_STATE_KINDS: Array[String] = [
+	"executive_president", "elected_president", "hereditary_monarch", "collegial",
+]
+
+const MIN_TERM_LIMIT := 0
+const MAX_TERM_LIMIT := 10
+
 static var _id_regex := RegEx.create_from_string("^[A-Z]{3}$")
 
 var id: String = ""
@@ -94,6 +105,28 @@ var election_threshold_pct: float = 0.0
 var dissolution_rule: String = ""
 var dissolution_lockout_months: int = 0
 var dissolution_notice_months: int = 0
+
+## Which template this nation's institutions are declared as, validated by
+## data_loader.gd against data/political-systems/*.json -- every flat field
+## above must fall inside that template's allowed set. See
+## docs/political-systems.md.
+var system_id: String = ""
+
+## The head of state -- absent from the game entirely before V1.2b. Required
+## for all ten; only elected_president carries its own term/election clock,
+## the same "present only where needed, and complete if present" shape
+## has_executive already uses below.
+var head_of_state_kind: String = ""
+var head_of_state_title: String = ""
+var head_of_state_name: String = ""
+var head_of_state_term_years: int = 0
+var head_of_state_next_year: int = 0
+var head_of_state_next_month: int = 0
+
+## How many terms the player's own office permits before the run ends
+## termed-out, 0 meaning no limit. Only France's template permits a nonzero
+## value -- see docs/political-systems.md.
+var term_limit: int = 0
 
 ## EU membership and European Parliament seat count. Empty/zero for a
 ## non-member — GBR and CHE simply have no reader for these, see
@@ -182,6 +215,33 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 		_check_range_int(n.executive_next_year, 2026, 2100, "government.executive.next.year", filename, errors)
 		n.executive_next_month = _extract_int(exec_next, "month", "government.executive.next.month", filename, errors)
 		_check_range_int(n.executive_next_month, 1, 12, "government.executive.next.month", filename, errors)
+
+	n.system_id = _extract_string(government, "system", filename, errors)
+
+	var head_of_state: Dictionary = _extract_dict(government, "head_of_state", filename, errors)
+	n.head_of_state_kind = _extract_string(head_of_state, "kind", filename, errors)
+	if n.head_of_state_kind != "" and not KNOWN_HEAD_OF_STATE_KINDS.has(n.head_of_state_kind):
+		errors.append("%s: government.head_of_state.kind '%s' is not a recognised kind" % [filename, n.head_of_state_kind])
+	n.head_of_state_title = _extract_string(head_of_state, "title", filename, errors)
+	n.head_of_state_name = _extract_string(head_of_state, "name", filename, errors)
+	# Only an elected head of state has a clock of its own -- a monarch, a
+	# collegial presidency, or a president who IS the executive (France) does
+	# not. Present-only-if-required, complete-if-present -- the same rule
+	# `executive` below already enforces, for the same reason: a half-authored
+	# clock is the silent-wrong-term bug the validation exists to prevent.
+	if n.head_of_state_kind == "elected_president":
+		n.head_of_state_term_years = _extract_int(head_of_state, "term_years", "government.head_of_state.term_years", filename, errors)
+		_check_range_int(n.head_of_state_term_years, 1, 10, "government.head_of_state.term_years", filename, errors)
+		var hos_next: Dictionary = _extract_dict(head_of_state, "next", filename, errors)
+		n.head_of_state_next_year = _extract_int(hos_next, "year", "government.head_of_state.next.year", filename, errors)
+		_check_range_int(n.head_of_state_next_year, 2026, 2100, "government.head_of_state.next.year", filename, errors)
+		n.head_of_state_next_month = _extract_int(hos_next, "month", "government.head_of_state.next.month", filename, errors)
+		_check_range_int(n.head_of_state_next_month, 1, 12, "government.head_of_state.next.month", filename, errors)
+	elif head_of_state.has("term_years") or head_of_state.has("next"):
+		errors.append("%s: government.head_of_state.kind '%s' must not carry term_years/next" % [filename, n.head_of_state_kind])
+
+	n.term_limit = _extract_int(government, "term_limit", "government.term_limit", filename, errors)
+	_check_range_int(n.term_limit, MIN_TERM_LIMIT, MAX_TERM_LIMIT, "government.term_limit", filename, errors)
 
 	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)
 	n.formation_method = _extract_string(formation, "method", filename, errors)

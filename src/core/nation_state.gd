@@ -125,9 +125,11 @@ var seats_by_party := {}
 var last_election := {}
 var last_ep_election := {}
 
-## False the moment the incumbent loses an EXECUTIVE election. Gates the clock:
-## main.gd stops advancing time once this is false. A legislative election can
-## take the player's majority away but never their office — see
+## False the moment the incumbent's office is lost — an executive election
+## defeat, a legislative election that leaves their party no longer largest,
+## or a term limit reached. Gates the clock: main.gd stops advancing time once
+## this is false. A legislative election can take the player's majority away
+## but never their office where the two are separate — see
 ## docs/government-model.md. Only the player's nation has a meaningful reading.
 var in_government: bool = true
 
@@ -138,6 +140,28 @@ var in_government: bool = true
 var has_executive: bool = false
 var next_executive_year: int = 0
 var next_executive_month: int = 0
+
+# --- Political system --------------------------------------------------------
+
+## Copied from Nation at new-game; which template this nation's institutions
+## are declared as. See docs/political-systems.md.
+var system_id: String = ""
+
+## The head of state -- decorative except for elected_president's clock, which
+## dissolution.gd reads for head_of_state_limited. See political_system.gd.
+var head_of_state_kind: String = ""
+var head_of_state_title: String = ""
+var head_of_state_name: String = ""
+var head_of_state_next_year: int = 0
+var head_of_state_next_month: int = 0
+
+## What ends the player's run, dispatched in src/sim/elections.gd -- named
+## rather than inferred from has_executive, see docs/political-systems.md.
+var lose_condition: String = ""
+
+## How many terms the player's own office permits, 0 meaning no limit. Checked
+## alongside lose_condition at the executive verdict.
+var term_limit: int = 0
 
 # --- Dissolution ---------------------------------------------------------------
 
@@ -345,6 +369,15 @@ func duplicate_state():
 	s.next_executive_year = next_executive_year
 	s.next_executive_month = next_executive_month
 
+	s.system_id = system_id
+	s.head_of_state_kind = head_of_state_kind
+	s.head_of_state_title = head_of_state_title
+	s.head_of_state_name = head_of_state_name
+	s.head_of_state_next_year = head_of_state_next_year
+	s.head_of_state_next_month = head_of_state_next_month
+	s.lose_condition = lose_condition
+	s.term_limit = term_limit
+
 	s.dissolution_rule = dissolution_rule
 	s.dissolution_lockout_months = dissolution_lockout_months
 	s.dissolution_notice_months = dissolution_notice_months
@@ -450,6 +483,15 @@ func to_dict() -> Dictionary:
 		"next_executive_year": next_executive_year,
 		"next_executive_month": next_executive_month,
 
+		"system_id": system_id,
+		"head_of_state_kind": head_of_state_kind,
+		"head_of_state_title": head_of_state_title,
+		"head_of_state_name": head_of_state_name,
+		"head_of_state_next_year": head_of_state_next_year,
+		"head_of_state_next_month": head_of_state_next_month,
+		"lose_condition": lose_condition,
+		"term_limit": term_limit,
+
 		"dissolution_rule": dissolution_rule,
 		"dissolution_lockout_months": dissolution_lockout_months,
 		"dissolution_notice_months": dissolution_notice_months,
@@ -554,6 +596,15 @@ static func from_dict(d: Dictionary):
 	s.has_executive = d.get("has_executive", false)
 	s.next_executive_year = int(d.get("next_executive_year", 0))
 	s.next_executive_month = int(d.get("next_executive_month", 0))
+
+	s.system_id = d.get("system_id", "")
+	s.head_of_state_kind = d.get("head_of_state_kind", "")
+	s.head_of_state_title = d.get("head_of_state_title", "")
+	s.head_of_state_name = d.get("head_of_state_name", "")
+	s.head_of_state_next_year = int(d.get("head_of_state_next_year", 0))
+	s.head_of_state_next_month = int(d.get("head_of_state_next_month", 0))
+	s.lose_condition = d.get("lose_condition", "")
+	s.term_limit = int(d.get("term_limit", 0))
 
 	s.dissolution_rule = d.get("dissolution_rule", "")
 	s.dissolution_lockout_months = int(d.get("dissolution_lockout_months", 0))

@@ -171,6 +171,13 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
+	var system = _loader.political_systems.get(ns.system_id)
+	_add_line("%s." % (system.display_name if system != null else ns.system_id))
+	if ns.head_of_state_kind != "executive_president":
+		_add_line("Head of state: %s %s." % [ns.head_of_state_title, ns.head_of_state_name])
+	if ns.term_limit > 0:
+		_add_line("Term limit: %d of %d served." % [ns.terms_served, ns.term_limit])
+
 	var standing := "Majority government"
 	if ns.is_cohabitation:
 		standing = "COHABITATION — the assembly majority is against you"

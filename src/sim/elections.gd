@@ -131,24 +131,34 @@ static func _tick_nation(state, ns, loader) -> Array:
 	# fires in the same month as the legislative election above and reads its
 	# result rather than resolving a second vote — one office, one verdict.
 	if state.year == ns.next_executive_year and state.month == ns.next_executive_month:
-		var exec_result: Dictionary
-		if ns.has_executive:
-			exec_result = resolve_executive(ns, party_list, state.year, state.month)
-			results.append(exec_result)
+		# A termed-out incumbent does not stand, so no vote is resolved on
+		# their behalf -- the run ends here, the same as any other lost
+		# office. See docs/political-systems.md.
+		if ns.term_limit > 0 and ns.terms_served >= ns.term_limit:
+			ns.in_government = false
 		else:
-			exec_result = ns.last_election
-
-		ns.in_government = bool(exec_result.get("incumbent_largest", false))
-		if ns.in_government:
-			ns.terms_served += 1
-			ns.months_in_term = 0
-			ns.next_executive_year = state.year + int(ns.term_months / 12)
-			ns.next_executive_month = state.month
-			# A re-elected president appoints a government afresh against the
-			# assembly they actually have.
+			var exec_result: Dictionary
 			if ns.has_executive:
-				Government.form(ns, party_list)
-				Cabinet.seat(ns, party_list)
+				exec_result = resolve_executive(ns, party_list, state.year, state.month)
+				results.append(exec_result)
+			else:
+				exec_result = ns.last_election
+
+			# Dispatched on the declared lose_condition, not on has_executive --
+			# "never" (a collegial executive) can only be won, and every other
+			# nation's office is lost or kept on the same vote has_executive
+			# already selected above. See docs/political-systems.md.
+			ns.in_government = ns.lose_condition == "never" or bool(exec_result.get("incumbent_largest", false))
+			if ns.in_government:
+				ns.terms_served += 1
+				ns.months_in_term = 0
+				ns.next_executive_year = state.year + int(ns.term_months / 12)
+				ns.next_executive_month = state.month
+				# A re-elected president appoints a government afresh against the
+				# assembly they actually have.
+				if ns.has_executive:
+					Government.form(ns, party_list)
+					Cabinet.seat(ns, party_list)
 
 	if ns.in_government and nation.eu_member:
 		if state.year == ns.next_ep_election_year and state.month == ns.next_ep_election_month:

@@ -32,6 +32,13 @@
         "notice_months": 3
       }
     },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "name": "Maurits III"
+    },
+    "term_limit": 0,
     "formation": {
       "_source": "authored",
       "_note": "Formation runs through an informateur and formateur; there is no codified investiture vote. The confidence rule (vertrouwensregel) is constitutional convention, not statute, and a motion carries on a simple majority.",

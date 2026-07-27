@@ -32,6 +32,13 @@
         "notice_months": 1
       }
     },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "kind": "executive_president",
+      "title": "President of the Republic",
+      "name": "Daniel Moucron"
+    },
+    "term_limit": 2,
     "executive": {
       "_source": "authored",
       "_note": "First round 18 April 2027, run-off 2 May 2027; five-year term. This is the PLAYER's term and it is a different clock from the Assembly's -- france24.com 'France sets presidential election date', Wikipedia '2027 French presidential election'.",

@@ -443,6 +443,59 @@ already used (e.g. `spend_max`'s defence delta is `+18.0`, landing at
 France's old 20.0), re-verified against France's pre-change trajectory
 before moving on.
 
+## V1.2b shipped: political system templates, head of state, term limits
+
+**The plan-step calls, both settled before the build began.** Whether the
+template should be a defaults table nations could override, or a constraint
+on fields they already carry flat — settled as a **constraint**: no
+inheritance, no override-resolution order, so there is nowhere for a
+half-understood institutional state to come from, the same standard a version
+mismatch or a dangling exclusion already gets refused rather than patched
+around. And how many templates to author against §2's five named ones —
+settled as **four**, matching the roster (`semi_presidential_republic` corrects
+§2's "presidential republic": France is semi-presidential): absolute monarchy
+and one-party state have no nation in a ten-nation Western European roster to
+attach to, deferred with a named trigger — the first start scenario or system
+transition that produces one — rather than authored as content with no reader.
+
+**A collision the plan named in advance, and caught nothing wrong.** The plan
+flagged the lose-condition rename (`elections.gd`'s run-ending branch,
+dispatched on `has_executive` before this block, on `ns.lose_condition` after)
+as the one place a mechanical refactor could turn out to be a behaviour
+change, and named escalation to Opus as the response if a balance number
+moved. None did — `test_elections.gd` and `test_censure.gd`'s existing
+assertions on `in_government` passed unmodified, and France's and Germany's
+existing `tools/balance_probe.gd` regimes are unchanged.
+
+**A different collision the plan got wrong, caught by running it rather than
+reading it.** The plan assumed enforcing France's two-term limit could simply
+move `tests/test_balance.gd`'s long-horizon three-election survival check to
+Germany, "unchanged from V1.2a's numbers," since Germany has no chancellor
+term limit. Running the moved check found a do-nothing German budget does not
+survive three elections either: `tools/balance_probe.gd -- hands_off DEU`
+shows the chancellor's party sliding under 50% approval and losing "largest
+party" status at the second legislative election, 2033-02 — the same
+France/Germany divergence [[declined|V1.2a's bloc-weight measurement]] already
+found, surfacing again in a horizon nobody had run an automated check against
+before. Not a bug in this block's refactor: `_validate_political_system()`
+made no change to how Germany's elections resolve. The check was rewritten to
+assert what its own name promises — no softlock, no non-finite value, across
+however many elections a 168-month run actually resolves — rather than a win
+streak Germany's own measured behaviour does not support. France's own
+three-election check became `_check_france_terms_out_at_the_limit()`,
+asserting the term limit fires on schedule rather than early, late, or
+indistinguishably from an actual defeat; `_check_managing_beats_ignoring`
+needed a matching adjustment since both its regimes now hit the same
+term-limit stop for the same non-political reason. Full account:
+[[political-systems]].
+
+**The seventeen-surface count held Medium.** No new tuned constant, no new
+model needing a number decided — only a fifth instance of the
+dispatch-on-a-data-string pattern electoral system, formation, censure and
+dissolution had already established. The two collisions above were both
+caught and resolved inside the build session rather than requiring escalation
+or a second planning pass.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]
