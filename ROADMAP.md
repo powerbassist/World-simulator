@@ -72,8 +72,24 @@ V1.1f referendums is deferred toward V1.7, which brings campaigns.
 
 Not broken into scope and done-when lists until the block before each is done,
 because the shape of each depends on what the previous one turns out to need.
-Content is in [docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
+Writing V1.1c's scope and done-when list is part of its own plan step. Content is
+in [docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
 [[government-model]] and [[discipline-model]].
+
+**The dissolution rule is not in the schema.** `government.legislative.election`
+in `data/nations/*.json` carries `system`, `next` and `threshold_pct` and nothing
+about who may dissolve, how long a lockout runs, or whether it is possible at all
+— Switzerland cannot, Germany only through a failed confidence vote, France has a
+one-year lockout after use. Adding it is a ten-nation schema decision that
+[[v1|V1.2]] political systems will also read, which is S1 class and not the
+bookkeeping the effort row below assumed. Count before accepting that row.
+
+**The gamble needs a real downside.** [[out-of-scope-mvp]] cut dissolution partly
+because "an escape hatch from the fixed-term clock undermines the one pressure the
+MVP has". What that escape costs is the session's actual design decision, not the
+snap-election plumbing. If the plan sets a balance goal, name the measurement that
+would confirm it — V1.1b's goal was written from a reading of the model instead of
+a measurement of it, and the reading was wrong.
 
 Two things V1.1b left on the table, both recorded rather than quietly carried:
 
@@ -81,11 +97,21 @@ Two things V1.1b left on the table, both recorded rather than quietly carried:
   regime that *wins* its presidential election ever gets unpopular enough to
   reach it — so censure is live for the sixteen months before May 2027 and not
   after. Sustained low-approval survival is an [[election-model]] question, and
-  it is the same lever cohabitation has been waiting on since V1.1a.
+  it is the same lever cohabitation has been waiting on since V1.1a. V1.1c may
+  not be able to defer it again: what a dissolution is worth depends on how vote
+  share responds to an unpopular incumbent.
 - **`ns.term_months` says 60 while the first election is 41 months out**, found in
-  the U3 audit and still unfixed. Whichever figure is wrong, it belongs to a
-  V1.1 session; V1.1b did not need it, because discipline's election-proximity
-  term reads `next_election_year/month` directly.
+  the U3 audit and still unfixed. Located since: `elections.gd:44` sets it from
+  the **executive's** term while `next_election_*` is the **legislative** date.
+  Both are right for their own clock; what is wrong is `nation_state.gd:101`'s
+  comment tying them together, which is why U3 dropped the term-progress line
+  rather than print a contradiction. It belongs to a V1.1 session. V1.1b did not
+  need it, because discipline's election-proximity term reads
+  `next_election_year/month` directly.
+
+One consequence worth knowing before planning: a snap election moves
+`next_election_*`, and `discipline.gd:88` reads that date to compute
+election proximity. Moving the date moves discipline.
 
 ---
 
@@ -104,7 +130,7 @@ is already made, which is most sessions once the docs are written.
 
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
-| V1.1c Dissolution | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | Reads the schedule schema [[electoral-systems]] already settled; the gamble's payoff curve is the real decision. |
+| V1.1c Dissolution | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | ⚠ This row's reasoning is known wrong. It read "reads the schedule schema [[electoral-systems]] already settled" — but the dissolution rule is not in that schema and adding it is S1 class. Left standing rather than silently raised, because the count is the receiving session's to do. See V1.1c–e above. |
 | V1.1d Cabinet | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Ministers are a schema that departments, opinion and events all read — S1 class. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 
@@ -131,21 +157,49 @@ Every session runs in a **fresh chat**. Context from building S3 is dead weight
 when starting S4, and a long session degrades before it ends.
 
 That only works if the handoff is written down, so **the last thing every session
-does, after the commit, is output a copy-ready prompt for the next one.** Not a
-summary — a prompt, in a code block, ready to paste into a new chat with nothing
-to edit.
+does, after the commit, is output a copy-ready prompt for the next one** — a
+prompt, in a code block, ready to paste with nothing to edit.
 
-It must contain:
+### Keep it short, and put nothing in it that a doc already says
+
+A handoff carries **only what is written nowhere else**: a gotcha, a rejected
+approach, a version pin, a thing that surprised the session. If a line of it
+restates [CLAUDE.md](CLAUDE.md) or this file, delete the line — a prompt that
+duplicates a document is a second copy that drifts, and the copy is the one that
+will be believed.
+
+Anything load-bearing enough to want in the prompt belongs in a doc **instead**.
+Write it there, and let the prompt say which doc to read.
+
+Past **fifteen lines**, the surplus is duplication. Treat the length as the test.
+
+The prompt contains:
 
 - Which session, and the instruction to do that one only.
 - Which docs to read first.
-- The plan / model / effort row from the table above, and the instruction to
-  challenge it if it looks wrong.
-- Anything the previous session learned that is **not** written in a doc or a
-  commit — a gotcha, a rejected approach, a version pin. If it turns out to be
-  load-bearing, it belongs in a doc instead, so write it there and link it.
+- What is written nowhere else, if anything. Often nothing.
 - The instruction to verify against that session's done-when list before claiming
-  done.
+  done, and to write the next handoff after the commit.
+
+### The effort call belongs to the receiving session, not the handing-off one
+
+The prompt does **not** argue the plan / model / effort row. It says: *read the
+row, count the surfaces yourself, challenge it before accepting it.*
+
+This is not a preference, it is what the record shows. The effort column has been
+corrected twice, and **both corrections came from the session about to do the
+work, reading the row cold at plan time** — U2's, and V1.1c's. Neither came from
+the handoff that preceded it, and the preceding session shipped both times
+without noticing. A session writing its own successor's estimate is doing it at
+the point of worst context degradation, on the subject it is least able to be
+objective about.
+
+> [!tip] A cold read is worth buying before a plan-first session
+> Both catches above came from a fresh chat that had built nothing and read the
+> repo from scratch. Before a session marked **Plan first: Yes**, a short
+> throwaway chat that reads only the roadmap and the code and reports what the
+> row misses costs little and has a hit rate of two for two. Not worth it
+> routinely.
 
 If the handoff prompt is hard to write because the session ended in a messy
 state, that is the signal — finish or revert the mess before writing it, not
