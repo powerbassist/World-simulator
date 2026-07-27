@@ -13,7 +13,9 @@ Design vault is `docs/` — open **the project root** as the Obsidian vault, not
   Bump deliberately and re-run the tests before committing the bump.
 - **GDScript with static typing** (`var gdp: float`). C# stays available as an
   escape hatch for a hot loop a profiler actually found — not preemptively.
-- No database, no autoloads, no plugins in the game code. JSON content, JSON saves.
+- No database and no autoloads in the game code. Third-party addons are
+  editor-side and gitignored by default; `src/` may reference an addon file
+  **only if that file is committed** — see `.gitignore`. JSON content, JSON saves.
 
 ## Commands
 

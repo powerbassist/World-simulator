@@ -14,6 +14,12 @@ config/name="Nation Simulator"
 run/main_scene="res://src/ui/menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+MCPRuntimeBridge="*res://addons/godot_mcp/services/mcp_runtime_bridge.gd"
+MCPInputBridge="*res://addons/godot_mcp/services/mcp_input_bridge.gd"
+MCPScreenshotBridge="*res://addons/godot_mcp/services/mcp_screenshot_bridge.gd"
+
 [display]
 
 ; Godot's own engine default is 1152x648 -- narrower than the smallest
@@ -22,6 +28,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 ; runs. U2's dashboard adds a 150px rail; matching the smallest supported
 ; resolution here is what makes dense panels like Budget fit on that first
 ; frame instead of only after the player opens Settings once.
+; Opening the Godot editor strips these comments -- restore them if it does.
 window/size/viewport_width=1280
 window/size/viewport_height=720
 

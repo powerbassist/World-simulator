@@ -2,10 +2,21 @@
 .godot/
 .import/
 
-# Third-party editor tooling, not game code. See docs/tooling.md to reinstall.
+# Third-party addons, reinstalled per machine — see docs/tooling.md. Ignored by
+# default because they are large (at-icons alone is 21 MB) and re-downloadable.
 # project.godot keeps the [editor_plugins] enable line — Godot warns and skips
 # if the addon is absent, which is non-fatal.
-addons/
+addons/*
+
+# The exception, and why it has to exist: an *asset* a scene preloads is not
+# tooling. A missing addon plugin is a warning; a missing icon a panel preloads
+# is a hard load failure on a fresh clone, and tools/run_tests.sh runs headless
+# straight from the repo. So every at-icons file src/ actually references is
+# committed at its res:// path with `git add -f`, and the licence travels with
+# it. Nothing under src/ may reference an addon file that is not committed.
+!addons/at-icons/
+addons/at-icons/*
+!addons/at-icons/LICENSE.txt
 
 export.cfg
 export_presets.cfg
