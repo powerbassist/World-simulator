@@ -61,8 +61,30 @@ The MCP server only does anything while **the Godot editor is open on this proje
 
 Runtime tools — `get_game_scene_tree`, `click_button_by_text`, `capture_frames` — additionally need the scene to be playing, and depend on three autoloads the plugin injects on enable.
 
+The three autoloads are **transient**, and that is the whole mechanism worth understanding. `addons/godot_mcp/plugin.gd` injects them in `_enter_tree()` and removes them in `_exit_tree()`, so they exist for exactly as long as an editor session does:
+
+```gdscript
+const AUTOLOADS: Array[Array] = [
+	["autoload/MCPRuntimeBridge", "res://addons/godot_mcp/services/mcp_runtime_bridge.gd"],
+	...
+]
+```
+
 > [!warning] Gotcha — `--headless --editor --quit` strips the autoloads
 > Running the editor headless to force a reimport enables the plugin, then immediately stops it, and the cleanup removes the injected autoloads from `project.godot`. Harmless for import and test runs, but do not expect runtime MCP tools to work in that state. A normal editor session restores them.
+
+> [!warning] Gotcha, the inverse — a killed editor leaves them behind, and they must not be committed
+> `_exit_tree()` only runs on a **clean** close. Kill the editor, or let a
+> background launch die, and the `[autoload]` block stays in `project.godot`.
+> Committing it is the thing to avoid: those paths point into gitignored
+> `addons/`, so a fresh clone gets three autoloads whose scripts do not exist —
+> which is exactly the failure mode the `[editor_plugins]` line above is
+> deliberately kept *instead of*.
+>
+> There is nothing to preserve, since the plugin re-injects on the next open. If
+> the block is in a diff, either close the editor cleanly and let the plugin
+> remove it, or delete it by hand while the editor is shut. Check
+> `git diff project.godot` after any editor session.
 
 ### Known state
 
