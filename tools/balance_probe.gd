@@ -22,6 +22,7 @@ const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Government = preload("res://src/sim/government.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 
 const MONTHS := 168  # fourteen years: covers the inherited term plus two full ones
@@ -96,6 +97,18 @@ const REGIMES := {
 	},
 }
 
+## V1.1c: does calling a dissolution actually gamble on how the player has
+## governed? Two regimes, same budgets as above, each dissolving once well
+## clear of DISSOLUTION_BLACKOUT_MONTHS and of the scheduled 2029-06 vote —
+## `dissolve_month` is the simulated month count (1-indexed) at which
+## Dissolution.dissolve() fires. `managed` should return a bigger coalition
+## than the assembly it replaced; `austerity`, already discipline-eroded by the
+## time it could plausibly call one, is the harder case.
+const DISSOLUTION_REGIMES := {
+	"managed_dissolves_early": {"budget": REGIMES["managed"], "dissolve_month": 8},
+	"austerity_dissolves_late": {"budget": REGIMES["austerity"], "dissolve_month": 10},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -112,10 +125,16 @@ func _init() -> void:
 
 	for name in names:
 		_run(name, REGIMES[name])
+
+	if only == "":
+		for name in DISSOLUTION_REGIMES.keys():
+			var regime: Dictionary = DISSOLUTION_REGIMES[name]
+			_run(name, regime["budget"], int(regime["dissolve_month"]))
+
 	quit(0)
 
 
-func _run(regime_name: String, pending: Dictionary) -> void:
+func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -155,9 +174,26 @@ func _run(regime_name: String, pending: Dictionary) -> void:
 		state.append_history(entry)
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state)
+		Dissolution.tick_month(state)
+
+		if i + 1 == dissolve_month:
+			var before_seats: int = ns.coalition_seats
+			Dissolution.dissolve(state, ns)
+			if ns.dissolution_pending:
+				print("  %d-%02d %s: DISSOLVED — coalition %d/%d before the call" % [
+					year, month, regime_name, before_seats, ns.assembly_seats,
+				])
+			else:
+				print("  %d-%02d %s: dissolution REFUSED — %s" % [
+					year, month, regime_name, Dissolution.refusal_reason(state, ns),
+				])
 
 		var results := Elections.tick_month(state, loader)
 		for r in results:
+			if r["kind"] == "national" and bool(r.get("snap", false)):
+				print("  %d-%02d %s: SNAP resolved — coalition now %d/%d" % [
+					r["year"], r["month"], regime_name, ns.coalition_seats, ns.assembly_seats,
+				])
 			# The verdict on the player is the EXECUTIVE election where one
 			# exists — France's presidency, May 2027 and every five years after.
 			# A legislative election reshapes the assembly and re-forms the

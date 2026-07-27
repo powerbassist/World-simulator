@@ -23,6 +23,13 @@
           "month": 12
         },
         "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 88: the President may dissolve either chamber (typically on the PM's advice after a lost confidence vote or a collapsed coalition), except during the semestre bianco -- the last six months of the President's own seven-year term, when dissolution is barred outright. Elections follow within 70 days. Wikipedia, 'Semestre bianco'.",
+        "rule": "head_of_state_limited",
+        "lockout_months": 0,
+        "notice_months": 2
       }
     },
     "formation": {

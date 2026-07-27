@@ -301,6 +301,17 @@ before anything that reads a coalition bonus or resolves a division. Gated on
 nine nations have no approval figure for the target to read, and
 `Discipline.of()` falls back to the authored number for them.
 
+## A moved election date, since V1.1c
+
+`months_to_legislative()` reads `ns.next_election_year/month` directly, and
+[[dissolution-model|dissolution]] moves that date. Calling one therefore ramps
+the election-proximity term toward full the moment it is called, not on the
+date the snap eventually lands. Measured rather than assumed: at France's
+`notice_months = 1`, this is worth roughly 0.016 of discipline in the
+announcement month — real, and too small on its own to flip a division. Not a
+designed consequence of V1.1c; it is what this formula already did when handed
+a date that moved, recorded here so it is not mistaken for a bug later.
+
 ## What is deliberately not built
 
 **No whip or concession command.** Rebellion's counterplay is the lever set that

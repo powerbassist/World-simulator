@@ -23,6 +23,13 @@
           "month": 5
         },
         "threshold_pct": 0.67
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The cabinet requests a dissolution decree from the King, most often after a coalition partner walks; no codified lockout. Recent practice runs long -- the June 2025 collapse did not reach the polls until 29 October, about four months later, once the Electoral Act's deadlines and the summer recess were accounted for. universiteitleiden.nl, 'Why will elections for Dutch Parliament not be held until November?'.",
+        "rule": "executive_discretion",
+        "lockout_months": 0,
+        "notice_months": 3
       }
     },
     "formation": {

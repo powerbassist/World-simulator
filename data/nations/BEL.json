@@ -23,6 +23,13 @@
           "month": 6
         },
         "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The King may dissolve the Chamber only when the federal Government resigns with the consent of an absolute majority of the Chamber, or when the Chamber rejects a confidence motion or carries a no-confidence motion without proposing a successor PM within three days. No confidence-vote command exists at V1.1c, so this refuses the player's command outright. senate.be, 'Introduction in Belgian Parliamentary History'; archive.ipu.org, 'Motion of censure and votes of no confidence'.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
       }
     },
     "formation": {

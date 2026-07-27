@@ -23,6 +23,13 @@
           "month": 2
         },
         "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 68 GG: the Bundestag can be dissolved only after the Chancellor calls a confidence vote and loses it, and only within 21 days of that loss. No confidence-vote command exists at V1.1c, so this refuses the player's command outright rather than half-model it. Elections must follow within 60 days (Art. 39). bundeswahlleiterin.de, 'Early elections'; ukconstitutionallaw.org, 'An Aversion to Weimar'.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
       }
     },
     "formation": {

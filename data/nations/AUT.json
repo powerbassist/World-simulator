@@ -23,6 +23,13 @@
           "month": 9
         },
         "threshold_pct": 4.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Nationalrat dissolves itself by simple law before its term expires -- the mechanism actually used. The Federal President can also dissolve it on the government's proposal, but only once for the same reason, and has done so only once in the Republic's history (1930); constitutional convention treats that power as effectively dead. Neither is an executive command the player can issue, so this refuses. parlament.gv.at, 'The Federal President'; Wikipedia, 'Self-elimination of the Austrian Parliament'.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
       }
     },
     "formation": {

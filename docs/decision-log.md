@@ -191,6 +191,59 @@ is in the coalition, and whether you force. Adding a costed command to suppress 
 rebellion in the same session that invented rebellion would have been tuning two
 things against each other with neither yet measured.
 
+## V1.1c — the effort row was flagged wrong in advance, and it was
+
+ROADMAP wrote V1.1c's row as **Light / Sonnet 5 / Medium**, and flagged that
+reasoning as known wrong before the session started: it read "reads the
+schedule schema [[electoral-systems]] already settled", but the dissolution
+rule was not in that schema. Counted cold at plan time: a ten-nation schema
+addition plus `nation.gd` validation, six `NationState` fields across three
+serialisation sites plus a `SAVE_VERSION` bump, a new `src/sim/` module and its
+constants file, a change to `elections.gd`'s tick, two panels, tick wiring in
+two files, one new test file plus four edited, two new balance-probe regimes,
+and eight documentation edits. **Corrected to Plan first Yes, High → Medium** —
+the third correction on this roadmap's own accounting, and the second one
+caught by the receiving session reading the row cold rather than the one that
+wrote it, which is the pattern [[ROADMAP|the roadmap's own handoff section]]
+now names directly.
+
+**The structural finding: a scheduled election is worth roughly +65 seats no
+regime earns.** `tools/balance_probe.gd`, unchanged, shows every legislative
+election that survives to fire returning the government 368–385 of 577,
+against a starting 318 — at every approval a surviving regime reaches (44–50).
+Traced to `Elections.init_nation()` allocating the authored `seat_share`
+roster with `pr_national` while every election after it runs the same shares
+through `two_round`'s squaring: five points of approval move the result by
+eleven seats, the allocation step alone moves it by sixty-five. A dissolution
+called in month two of a fresh game would have been worth that whole step for
+free, regardless of governance — the same "free action, unbounded upside"
+defect class [[government-model|Article 49.3]] already had to be given a cost
+against.
+
+**The fix the finding suggests is rejected, and the rejection is on record so
+it is not tried again.** Re-seeding the starting assembly through each
+nation's own electoral system — one line in `Elections.init_nation()` — was
+checked and found to break something else: under `two_round`, the authored
+French roster gives the top two parties roughly 355 seats between them,
+destroying [[government-model|the no-two-parties-reach-289 property]] that
+makes every French majority government a three-party coalition and that
+`tests/test_government.gd` asserts directly. The roster would need
+re-authoring to fix this without breaking that, which is [[ROADMAP|S2]]
+content work, not a V1.1 session's.
+
+**The gamble was measured before it was built, and it did not need
+`INCUMBENT_SWING` touched.** The session's plan pre-committed a branch: sweep
+a snap election's result across the approval range a player can hold while
+still in office (27–50), and if the spread came in under 40 seats, extend the
+incumbent's electoral swing to the whole governing coalition and re-measure
+every balance table that depends on it. It measured at 57. `INCUMBENT_SWING`
+was left exactly as [[government-model]] and [[discipline-model]] already
+describe it — the two-round system's own amplification does the work, the
+same mechanism that produces the authored 318-seat starting majority in the
+first place. Recorded because the branch not firing is itself a finding: the
+model was closer to a resolving gamble than the "free +65 seats" structural
+finding above made it look.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

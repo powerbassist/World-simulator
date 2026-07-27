@@ -110,6 +110,15 @@ static func _tick_nation(state, ns, loader) -> Array:
 		# A new assembly is a clean slate: parties barred for censuring the last
 		# government are eligible again, because the voters have since spoken.
 		ns.censure_barred_party_ids = []
+
+		# The player called this one -- see src/sim/dissolution.gd. The lockout is
+		# set HERE, at the resulting election, not at the command: France's rule
+		# is one year from the new Assembly, not from the decree.
+		result["snap"] = ns.dissolution_pending
+		if ns.dissolution_pending:
+			ns.dissolution_pending = false
+			ns.dissolution_lockout_remaining = ns.dissolution_lockout_months
+
 		result["formation"] = Government.form(ns, party_list)
 		results.append(result)
 

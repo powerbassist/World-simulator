@@ -47,24 +47,33 @@ it does not refresh on re-import.
 > term — is 18 April / 2 May 2027 and is not in this table**; it lives in
 > `government.executive`, and the argument is [[government-model]].
 
-| Nation | Chamber | Seats | Term | System | Next election | Source |
-|---|---|---|---|---|---|---|
-| FRA | Assemblée nationale | 577 | 5 | two-round | 2029-06 | By law no later than June 2029 ([Wikipedia, Next French legislative election](https://en.wikipedia.org/wiki/Next_French_legislative_election)) |
-| DEU | Bundestag | 630 | 4 | pr_national (MMP reduced) | 2029-02 | By law no later than 25 March 2029; likeliest window late Jan–Mar ([Wikipedia, Next German federal election](https://en.wikipedia.org/wiki/Next_German_federal_election)) |
-| ITA | Camera dei Deputati | 400 | 5 | parallel | 2027-12 | By law no later than 22 December 2027 ([Wikipedia, Next Italian general election](https://en.wikipedia.org/wiki/Next_Italian_general_election)) |
-| ESP | Congreso de los Diputados | 350 | 4 | pr_dhondt | 2027-07 | Term runs to 23 July 2027; latest possible vote 22 August 2027 ([Wikipedia/healthplanspain.com, Next Spanish general election](https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_Spanish_general_election)) |
-| BEL | Chamber of Representatives | 150 | 5 | pr_dhondt | 2029-06 | Federal, regional and EP elections are held together every 5 years in June — 2024's were 9 June, alongside the EP vote ([Wikipedia, 2024 Belgian federal election](https://en.wikipedia.org/wiki/2024_Belgian_federal_election)) |
-| NLD | Tweede Kamer | 150 | 4 | pr_national | 2030-05 | The 29 October 2025 election is already in the past at game start (January 2026); next moved to May 2030 to avoid clashing with March 2030 municipal elections ([Wikipedia, Next Dutch general election](https://en.wikipedia.org/wiki/Next_Dutch_general_election)) |
-| LUX | Chambre des Députés | 60 | 5 | pr_national (Hagenbach-Bischoff reduced) | 2028-10 | By law no later than 8 October 2028 ([Wikipedia, Next Luxembourg general election](https://en.wikipedia.org/wiki/Next_Luxembourg_general_election)) |
-| CHE | Nationalrat | 200 | 4 | pr_national | 2027-10 | Scheduled for 24 October 2027 ([Wikipedia, 2027 Swiss federal election](https://en.wikipedia.org/wiki/2027_Swiss_federal_election)) |
-| GBR | House of Commons | 650 | 5 | fptp | 2029-05 | By law no later than 15 August 2029; expected polling day 1 May 2029 ([Wikipedia, Next United Kingdom general election](https://en.wikipedia.org/wiki/Next_United_Kingdom_general_election)) |
-| AUT | Nationalrat | 183 | 5 | pr_national | 2029-09 | By law no later than September 2029, no fixed date announced ([Wikipedia, Next Austrian legislative election](https://en.wikipedia.org/wiki/Next_Austrian_legislative_election)) |
+| Nation | Chamber | Seats | Term | System | Next election | Dissolution | Source |
+|---|---|---|---|---|---|---|---|
+| FRA | Assemblée nationale | 577 | 5 | two-round | 2029-06 | executive_discretion, 12mo lockout | By law no later than June 2029 ([Wikipedia, Next French legislative election](https://en.wikipedia.org/wiki/Next_French_legislative_election)) |
+| DEU | Bundestag | 630 | 4 | pr_national (MMP reduced) | 2029-02 | confidence_failure | By law no later than 25 March 2029; likeliest window late Jan–Mar ([Wikipedia, Next German federal election](https://en.wikipedia.org/wiki/Next_German_federal_election)) |
+| ITA | Camera dei Deputati | 400 | 5 | parallel | 2027-12 | head_of_state_limited | By law no later than 22 December 2027 ([Wikipedia, Next Italian general election](https://en.wikipedia.org/wiki/Next_Italian_general_election)) |
+| ESP | Congreso de los Diputados | 350 | 4 | pr_dhondt | 2027-07 | executive_discretion, 12mo lockout | Term runs to 23 July 2027; latest possible vote 22 August 2027 ([Wikipedia/healthplanspain.com, Next Spanish general election](https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_Spanish_general_election)) |
+| BEL | Chamber of Representatives | 150 | 5 | pr_dhondt | 2029-06 | confidence_failure | Federal, regional and EP elections are held together every 5 years in June — 2024's were 9 June, alongside the EP vote ([Wikipedia, 2024 Belgian federal election](https://en.wikipedia.org/wiki/2024_Belgian_federal_election)) |
+| NLD | Tweede Kamer | 150 | 4 | pr_national | 2030-05 | executive_discretion | The 29 October 2025 election is already in the past at game start (January 2026); next moved to May 2030 to avoid clashing with March 2030 municipal elections ([Wikipedia, Next Dutch general election](https://en.wikipedia.org/wiki/Next_Dutch_general_election)) |
+| LUX | Chambre des Députés | 60 | 5 | pr_national (Hagenbach-Bischoff reduced) | 2028-10 | executive_discretion | By law no later than 8 October 2028 ([Wikipedia, Next Luxembourg general election](https://en.wikipedia.org/wiki/Next_Luxembourg_general_election)) |
+| CHE | Nationalrat | 200 | 4 | pr_national | 2027-10 | none | Scheduled for 24 October 2027 ([Wikipedia, 2027 Swiss federal election](https://en.wikipedia.org/wiki/2027_Swiss_federal_election)) |
+| GBR | House of Commons | 650 | 5 | fptp | 2029-05 | executive_discretion | By law no later than 15 August 2029; expected polling day 1 May 2029 ([Wikipedia, Next United Kingdom general election](https://en.wikipedia.org/wiki/Next_United_Kingdom_general_election)) |
+| AUT | Nationalrat | 183 | 5 | pr_national | 2029-09 | self_dissolution | By law no later than September 2029, no fixed date announced ([Wikipedia, Next Austrian legislative election](https://en.wikipedia.org/wiki/Next_Austrian_legislative_election)) |
+
+Dissolution rules, lockouts and sources are [[dissolution-model]]'s table, not
+repeated here in full — this column is a pointer, not the authority.
 
 Every date was checked against a source at build time, not carried over from
 training data — several of these turn on an election held close to the
 knowledge cutoff, and a snap election moves a date without warning. If a real
 election is called early after this session lands, the fix is a one-line data
 edit to the affected nation's `government.election.next`, not a code change.
+
+> [!note] Since V1.1c, one of these dates can move mid-game
+> `government.legislative.dissolution`, alongside `election` in the same
+> block, names who may end this schedule early and what it costs — see
+> [[dissolution-model]]. Only the player's nation ever calls one; the other
+> nine nations' dates in the table above are as fixed as they always were.
 
 **The player inherits a term already in progress.** Game start is January 2026.
 France's next **presidential** election — the one that decides whether the

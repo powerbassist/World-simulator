@@ -82,17 +82,19 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.1b shipped** — party discipline is live state in `ns.party_discipline`,
-eroded by unpopularity and by an approaching legislative election and pulled back
-by inertia; both vote resolvers split a party's seats when its line and its
-members disagree; and a `DISAFFECTION` term in `Government.hostility()` lets an
-eroded coalition bring its own government down, which is what finally makes the
-censure branch fire in a played game. Model: [docs/discipline-model.md](docs/discipline-model.md).
-MVP, V1.1a–b and U1–U4 are done.
+**V1.1c shipped** — dissolution and snap elections. `government.legislative.dissolution`
+in `data/nations/*.json` names who may end the current assembly early and what
+it costs, dispatched in `src/sim/dissolution.gd`; calling one moves only the
+legislative clock, not the executive's, and the resulting election resolves
+through the ordinary legislative path with a `snap` flag on its result. Measured
+before it was built: a 57-seat spread in what a snap returns across the approval
+range a player can hold while still in office, wide enough that `INCUMBENT_SWING`
+did not need to change. Model: [docs/dissolution-model.md](docs/dissolution-model.md).
+MVP, V1.1a–c and U1–U4 are done.
 
-**Next: V1.1c** — dissolution and snap elections. See [ROADMAP.md](ROADMAP.md).
+**Next: V1.1d** — cabinet and ministers. See [ROADMAP.md](ROADMAP.md).
 
-Save format is at **version 3**. There has never been a migration: a superseded
+Save format is at **version 4**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal.
 

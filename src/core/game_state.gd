@@ -18,14 +18,15 @@ const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-## 3 as of V1.1b: party discipline became live state, so a version-2 save carries
-## no party_discipline and every coalition bonus and censure vote read out of it
-## would be computed against the authored figure rather than the eroded one — the
-## same half-understood state a version-1 save would give V1.1a. SaveManager
-## rejects an unknown version outright — see docs/data-architecture.md.
-const SAVE_VERSION := 3
+## 4 as of V1.1c: dissolution added six fields to NationState, none of which a
+## version-3 save carries — a loaded game would read an empty dissolution rule
+## and never be able to dissolve at all, the same half-understood state every
+## prior version bump refused rather than shipped. SaveManager rejects an
+## unknown version outright — see docs/data-architecture.md.
+const SAVE_VERSION := 4
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -124,6 +125,7 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 	# two things a formation search reads.
 	Government.init_nation(ns, n, party_list)
 	Legislature.init_nation(ns)
+	Dissolution.init_nation(ns, n)
 
 	return ns
 

@@ -23,6 +23,13 @@
           "month": 6
         },
         "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 12: the President may dissolve the Assembly after consulting the PM and the presidents of both chambers, no approval required. Elections must be held 20-40 days later. No second dissolution within a year of the previous one. Lexology, 'The French President announces the dissolution of the National Assembly'; france24.com, 'France's dissolution of parliament, snap elections'.",
+        "rule": "executive_discretion",
+        "lockout_months": 12,
+        "notice_months": 1
       }
     },
     "executive": {

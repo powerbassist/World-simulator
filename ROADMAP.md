@@ -53,6 +53,7 @@ shell does not have.
 | U3 | UI | Overview and Economy rebuilt as hierarchies, one code-built theme, `Trends` over `history` |
 | U4 | UI | Decision deltas: `recent_effects`, a baseline captured at commit, measured against the next history entry |
 | V1.1b | Sim | Party discipline as live state, seat-level rebellions, disaffection — the censure branch fires |
+| V1.1c | Sim | Dissolution and snap elections — the rule as ten-nation data, measured before it was built, no election-model change needed |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -62,56 +63,36 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 | # | Track | Block | Depends on |
 |---|---|---|---|
-| **V1.1c** | Sim | Dissolution and snap elections | V1.1a, V1.1b |
 | **V1.1d** | Sim | Cabinet and ministers | V1.1a |
 | **V1.1e** | Sim | Upper house and judiciary | — |
 
 V1.1f referendums is deferred toward V1.7, which brings campaigns.
 
-### V1.1c–e
+### V1.1d–e
 
 Not broken into scope and done-when lists until the block before each is done,
 because the shape of each depends on what the previous one turns out to need.
-Writing V1.1c's scope and done-when list is part of its own plan step. Content is
+Writing V1.1d's scope and done-when list is part of its own plan step. Content is
 in [docs/tiers/v1.md](docs/tiers/v1.md); the models built so far are
-[[government-model]] and [[discipline-model]].
+[[government-model]], [[discipline-model]] and [[dissolution-model]].
 
-**The dissolution rule is not in the schema.** `government.legislative.election`
-in `data/nations/*.json` carries `system`, `next` and `threshold_pct` and nothing
-about who may dissolve, how long a lockout runs, or whether it is possible at all
-— Switzerland cannot, Germany only through a failed confidence vote, France has a
-one-year lockout after use. Adding it is a ten-nation schema decision that
-[[v1|V1.2]] political systems will also read, which is S1 class and not the
-bookkeeping the effort row below assumed. Count before accepting that row.
+**`ns.term_months` says 60 while the first election is 41 months out** was found
+in the U3 audit and fixed in V1.1c: `nation_state.gd`'s comment tying `term_months`
+to the legislative block was the bug, not either clock — both numbers were always
+right for their own schedule. See [[government-model|the two clocks]].
 
-**The gamble needs a real downside.** [[out-of-scope-mvp]] cut dissolution partly
-because "an escape hatch from the fixed-term clock undermines the one pressure the
-MVP has". What that escape costs is the session's actual design decision, not the
-snap-election plumbing. If the plan sets a balance goal, name the measurement that
-would confirm it — V1.1b's goal was written from a reading of the model instead of
-a measurement of it, and the reading was wrong.
-
-Two things V1.1b left on the table, both recorded rather than quietly carried:
+V1.1c left one thing on the table, recorded rather than quietly carried:
 
 - **`INCUMBENT_SWING`.** Discipline erosion made the censure branch fire, but no
   regime that *wins* its presidential election ever gets unpopular enough to
   reach it — so censure is live for the sixteen months before May 2027 and not
-  after. Sustained low-approval survival is an [[election-model]] question, and
-  it is the same lever cohabitation has been waiting on since V1.1a. V1.1c may
-  not be able to defer it again: what a dissolution is worth depends on how vote
-  share responds to an unpopular incumbent.
-- **`ns.term_months` says 60 while the first election is 41 months out**, found in
-  the U3 audit and still unfixed. Located since: `elections.gd:44` sets it from
-  the **executive's** term while `next_election_*` is the **legislative** date.
-  Both are right for their own clock; what is wrong is `nation_state.gd:101`'s
-  comment tying them together, which is why U3 dropped the term-progress line
-  rather than print a contradiction. It belongs to a V1.1 session. V1.1b did not
-  need it, because discipline's election-proximity term reads
-  `next_election_year/month` directly.
-
-One consequence worth knowing before planning: a snap election moves
-`next_election_*`, and `discipline.gd:88` reads that date to compute
-election proximity. Moving the date moves discipline.
+  after. V1.1c's own measurement (a 57-seat spread in what a snap election
+  returns, swept across the approval range a player can hold while still in
+  office) found dissolution did not need this term touched, but that measured
+  something different from sustained low-approval *survival*, which is still an
+  [[election-model]] question and still the same lever cohabitation has been
+  waiting on since V1.1a. Left as found; not this block's or the next one's
+  problem unless one of them needs it.
 
 ---
 
@@ -130,7 +111,7 @@ is already made, which is most sessions once the docs are written.
 
 | Session | Plan first | Model | Effort | Why |
 |---|---|---|---|---|
-| V1.1c Dissolution | **Light** | Opus 5 to plan, Sonnet 5 to build | Medium | ⚠ This row's reasoning is known wrong. It read "reads the schedule schema [[electoral-systems]] already settled" — but the dissolution rule is not in that schema and adding it is S1 class. Left standing rather than silently raised, because the count is the receiving session's to do. See V1.1c–e above. |
+| V1.1c Dissolution | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Originally logged **Light / Medium**, flagged in advance as known wrong — "reads the schedule schema [[electoral-systems]] already settled" assumed the dissolution rule was already in that schema; it was not, and adding it was S1 class. The cold count at plan time found thirteen surfaces: a ten-nation schema addition, six state fields plus a save-version bump, a new sim module, a tick change, two panels, five test files, two probe regimes, eight docs. Third correction on this table's own record; see [[decision-log]]. |
 | V1.1d Cabinet | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Ministers are a schema that departments, opinion and events all read — S1 class. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 

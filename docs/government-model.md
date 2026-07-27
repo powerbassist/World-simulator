@@ -259,10 +259,22 @@ nation a budget and an opinion model.
 **Opposition-initiated censure.** A motion is only ever triggered by the player
 forcing a bill. Tabling one on the assembly's own initiative needs party AI with
 its own agenda, which [[v1|V1.1b]] did not build either — it made discipline live
-and divisions seat-level, not the assembly self-directing — so this is V1.1c
-territory. In practice it is close to the real distribution anyway: French
-censure motions are tabled often and almost never carry, and the one that carried
-in December 2024 followed a 49.3.
+and divisions seat-level, not the assembly self-directing — so this remains
+future work; [[v1|V1.1c]] built dissolution instead. In practice it is close to
+the real distribution anyway: French censure motions are tabled often and almost
+never carry, and the one that carried in December 2024 followed a 49.3.
+
+### Dissolution
+
+[[v1|V1.1c]] adds the player's other lever against a hostile chamber: rather
+than surviving a censure motion, the President can end the current assembly
+early and gamble on a better one. `src/sim/dissolution.gd`,
+[[dissolution-model]]. Section 1 of that session's plan measured the gamble
+before building it — a 57-seat spread between the worst and best approval a
+player can hold while still in office — and found it already resolves through
+the existing election model, so **`INCUMBENT_SWING` was left exactly as this
+document describes it**; the cohabitation and censure balance notes below are
+unchanged by V1.1c.
 
 | Constant | Value | Why |
 |---|---|---|

@@ -91,9 +91,12 @@ var trade_baseline_pct: float = 0.0
 ## Copied from Nation at new-game; the assembly's size never changes mid-game.
 var assembly_seats: int = 0
 
-## term_years * 12, from Nation.government.term_years. months_in_term counts up
-## from the term the player inherits at new-game — see docs/election-model.md on
-## why that term is usually shorter than a full one.
+## The PLAYER's term in months: the executive's where one exists (France), the
+## legislature's otherwise -- see docs/government-model.md's two clocks. Not
+## simply term_years * 12 from the legislative block; Elections.init_nation()
+## reads whichever schedule is the player's. months_in_term counts up from the
+## term the player inherits at new-game, which is usually shorter than a full
+## one — see docs/electoral-systems.md.
 var term_months: int = 0
 var months_in_term: int = 0
 
@@ -135,6 +138,31 @@ var in_government: bool = true
 var has_executive: bool = false
 var next_executive_year: int = 0
 var next_executive_month: int = 0
+
+# --- Dissolution ---------------------------------------------------------------
+
+## Copied from Nation at new-game; who may end the current assembly early and
+## what it costs to. Dispatched in src/sim/dissolution.gd, never on the nation
+## id. See docs/dissolution-model.md.
+var dissolution_rule: String = ""
+var dissolution_lockout_months: int = 0
+var dissolution_notice_months: int = 0
+
+## Months remaining before the player may dissolve again, counted down by
+## src/sim/dissolution.gd. Set at the RESULTING election, not at the command --
+## France's lockout is one year from the new Assembly, not from the decree.
+var dissolution_lockout_remaining: int = 0
+
+## True from the command until the snap election it scheduled actually fires.
+## Read once by Elections._tick_nation() and cleared there.
+var dissolution_pending: bool = false
+
+## How many times the player has dissolved this run. Never reset.
+var dissolutions_called: int = 0
+
+## {year, month} of the most recently called dissolution, for the government
+## screen to read. Empty until the first one.
+var last_dissolution := {}
 
 # --- Government ------------------------------------------------------------------
 
@@ -288,6 +316,14 @@ func duplicate_state():
 	s.next_executive_year = next_executive_year
 	s.next_executive_month = next_executive_month
 
+	s.dissolution_rule = dissolution_rule
+	s.dissolution_lockout_months = dissolution_lockout_months
+	s.dissolution_notice_months = dissolution_notice_months
+	s.dissolution_lockout_remaining = dissolution_lockout_remaining
+	s.dissolution_pending = dissolution_pending
+	s.dissolutions_called = dissolutions_called
+	s.last_dissolution = last_dissolution.duplicate(true)
+
 	s.formation_method = formation_method
 	s.censure_rule = censure_rule
 	s.head_of_government_title = head_of_government_title
@@ -378,6 +414,14 @@ func to_dict() -> Dictionary:
 		"next_executive_year": next_executive_year,
 		"next_executive_month": next_executive_month,
 
+		"dissolution_rule": dissolution_rule,
+		"dissolution_lockout_months": dissolution_lockout_months,
+		"dissolution_notice_months": dissolution_notice_months,
+		"dissolution_lockout_remaining": dissolution_lockout_remaining,
+		"dissolution_pending": dissolution_pending,
+		"dissolutions_called": dissolutions_called,
+		"last_dissolution": last_dissolution,
+
 		"formation_method": formation_method,
 		"censure_rule": censure_rule,
 		"head_of_government_title": head_of_government_title,
@@ -467,6 +511,14 @@ static func from_dict(d: Dictionary):
 	s.has_executive = d.get("has_executive", false)
 	s.next_executive_year = int(d.get("next_executive_year", 0))
 	s.next_executive_month = int(d.get("next_executive_month", 0))
+
+	s.dissolution_rule = d.get("dissolution_rule", "")
+	s.dissolution_lockout_months = int(d.get("dissolution_lockout_months", 0))
+	s.dissolution_notice_months = int(d.get("dissolution_notice_months", 0))
+	s.dissolution_lockout_remaining = int(d.get("dissolution_lockout_remaining", 0))
+	s.dissolution_pending = d.get("dissolution_pending", false)
+	s.dissolutions_called = int(d.get("dissolutions_called", 0))
+	s.last_dissolution = d.get("last_dissolution", {})
 
 	s.formation_method = d.get("formation_method", "")
 	s.censure_rule = d.get("censure_rule", "")

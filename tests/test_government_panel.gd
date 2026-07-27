@@ -16,6 +16,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Government = preload("res://src/sim/government.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 
 var _failures: Array[String] = []
 var _loader: DataLoader
@@ -37,6 +38,8 @@ func _init() -> void:
 		_failures.append("new_game reported %s" % [_state.errors])
 		_finish()
 		return
+	_state.year = 2026
+	_state.month = 1
 
 	_panel = GovernmentPanel.new()
 	root.add_child(_panel)
@@ -53,6 +56,8 @@ func _process(_delta: float) -> bool:
 			_check_cohabitation()
 		4:
 			_check_eroded_discipline_is_visible()
+		5:
+			_check_dissolve_button()
 			_finish()
 	return false
 
@@ -165,6 +170,45 @@ func _check_eroded_discipline_is_visible() -> void:
 		_fail("eroding the coalition to 0.45 did not raise the seats at risk: %d against %d" % [
 			eroded, at_ceiling
 		])
+
+
+## V1.1c: the dissolve button reads three ways, the same precedent Article
+## 49.3's Force button set at law_panel.gd -- absent where the rule forbids it
+## outright, disabled with a stated reason where it does not apply right now,
+## and enabled otherwise.
+func _check_dissolve_button() -> void:
+	# France, month 1 of a fresh game: executive_discretion, no lockout, and the
+	# next scheduled election (June 2029) is nowhere near the blackout window.
+	_refresh_text()
+	if not _panel._dissolve_button.visible:
+		_fail("dissolve button is hidden for FRA, which can dissolve at will")
+	if _panel._dissolve_button.disabled:
+		_fail("dissolve button is disabled for FRA with no lockout and no blackout: %s" % _panel._dissolve_button.tooltip_text)
+
+	var ns = _state.player()
+	ns.dissolution_lockout_remaining = 6
+	_refresh_text()
+	if not _panel._dissolve_button.disabled:
+		_fail("dissolve button is enabled during an active lockout")
+	if not _panel._dissolve_button.tooltip_text.contains("6"):
+		_fail("disabled dissolve button does not name the months remaining: %s" % _panel._dissolve_button.tooltip_text)
+	ns.dissolution_lockout_remaining = 0
+
+	# A nation whose rule refuses the command outright gets no button at all --
+	# Germany, confidence_failure, no confidence-vote mechanic exists yet.
+	var deu_state = GameState.new_game(_loader, "DEU")
+	if not deu_state.errors.is_empty():
+		_fail("new_game(DEU) reported %s" % [deu_state.errors])
+		return
+	deu_state.year = 2026
+	deu_state.month = 1
+	_panel.setup(deu_state, _loader)
+	_panel.mark_dirty()
+	_panel._refresh()
+	if _panel._dissolve_button.visible:
+		_fail("dissolve button is shown for DEU, whose rule is confidence_failure")
+
+	_panel.setup(_state, _loader)
 
 
 ## The number out of "Up to N of those break ranks", or -1 if the line is absent.

@@ -9,6 +9,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -148,6 +149,10 @@ func _ready() -> void:
 	_dashboard.add_tab("politics", "Politics", _government_panel)
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
+	_government_panel.dissolved.connect(func(before):
+		_queue_effect("Dissolution called", before)
+		_update_top_bar()
+	)
 
 	_polling_panel = PollingPanel.new()
 	_dashboard.add_tab("society", "Society", _polling_panel)
@@ -397,6 +402,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# everything else in this handler: state settles top to bottom, elections
 	# read it last.
 	Legislature.tick_month(_state)
+	Dissolution.tick_month(_state)
 
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June

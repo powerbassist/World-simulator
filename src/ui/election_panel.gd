@@ -85,13 +85,20 @@ func show_results(results: Array) -> void:
 	var verdict_result = executive if executive != null else national
 	var defeated: bool = verdict_result != null and not verdict_result["incumbent_largest"] and not ns.in_government
 
+	var snap: bool = national != null and bool(national.get("snap", false))
+
 	if executive != null:
 		_title.text = "DEFEATED" if defeated else "RE-ELECTED"
 	elif national != null:
 		# A legislative election under a separately elected executive does not
 		# end the term. It decides whether the player still commands a majority.
 		if ns.has_executive:
-			_title.text = "COHABITATION" if ns.is_cohabitation else "NEW ASSEMBLY"
+			if ns.is_cohabitation:
+				_title.text = "COHABITATION"
+			elif snap:
+				_title.text = "SNAP ELECTION"
+			else:
+				_title.text = "NEW ASSEMBLY"
 		else:
 			_title.text = "DEFEATED" if defeated else "RE-ELECTED"
 	else:
@@ -138,7 +145,7 @@ func _build_section(result: Dictionary, chamber_label: String) -> Control:
 	var heading := Label.new()
 	var kind_label := "European Parliament election"
 	if result["kind"] == "national":
-		kind_label = "Legislative election"
+		kind_label = "Snap legislative election" if bool(result.get("snap", false)) else "Legislative election"
 	elif result["kind"] == "executive":
 		kind_label = "Presidential election"
 	heading.text = "%s — %s" % [kind_label, chamber_label] if chamber_label != "" else kind_label

@@ -23,6 +23,13 @@
           "month": 10
         },
         "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Federal Council has no power to dissolve the Nationalrat, and there is no provision for early elections at all -- the same fixed, unremovable shape as formation.censure. data.ipu.org, Switzerland National Council oversight page.",
+        "rule": "none",
+        "lockout_months": 0,
+        "notice_months": 1
       }
     },
     "formation": {

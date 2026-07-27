@@ -23,6 +23,13 @@
           "month": 10
         },
         "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Grand Duke may dissolve the Chamber on the government's advice; no codified lockout. New elections must be held within three months. constituteproject.org, Luxembourg 1868 (rev. 2009) Constitution.",
+        "rule": "executive_discretion",
+        "lockout_months": 0,
+        "notice_months": 3
       }
     },
     "formation": {

@@ -23,6 +23,14 @@ const KNOWN_CENSURE_RULES: Array[String] = [
 	"absolute_members", "constructive_absolute", "simple_present", "none",
 ]
 
+## Who may dissolve the assembly early, dispatched in src/sim/dissolution.gd,
+## never on the nation id -- docs/dissolution-model.md and
+## docs/engine-decision.md Rule 1.
+const KNOWN_DISSOLUTION_RULES: Array[String] = [
+	"executive_discretion", "confidence_failure", "head_of_state_limited",
+	"self_dissolution", "none",
+]
+
 static var _id_regex := RegEx.create_from_string("^[A-Z]{3}$")
 
 var id: String = ""
@@ -72,6 +80,12 @@ var election_system: String = ""
 var election_next_year: int = 0
 var election_next_month: int = 0
 var election_threshold_pct: float = 0.0
+
+## Who may end the current assembly early, and what it costs to. Required for
+## all ten, resolved only for the player's nation -- see docs/dissolution-model.md.
+var dissolution_rule: String = ""
+var dissolution_lockout_months: int = 0
+var dissolution_notice_months: int = 0
 
 ## EU membership and European Parliament seat count. Empty/zero for a
 ## non-member — GBR and CHE simply have no reader for these, see
@@ -128,6 +142,15 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	_check_range_int(n.election_next_month, 1, 12, "government.legislative.election.next.month", filename, errors)
 	n.election_threshold_pct = _extract_float(election, "threshold_pct", "government.legislative.election.threshold_pct", filename, errors)
 	_check_range_float(n.election_threshold_pct, 0.0, 20.0, "government.legislative.election.threshold_pct", filename, errors)
+
+	var dissolution: Dictionary = _extract_dict(legislative, "dissolution", filename, errors)
+	n.dissolution_rule = _extract_string(dissolution, "rule", filename, errors)
+	if n.dissolution_rule != "" and not KNOWN_DISSOLUTION_RULES.has(n.dissolution_rule):
+		errors.append("%s: government.legislative.dissolution.rule '%s' is not a recognised rule" % [filename, n.dissolution_rule])
+	n.dissolution_lockout_months = _extract_int(dissolution, "lockout_months", "government.legislative.dissolution.lockout_months", filename, errors)
+	_check_range_int(n.dissolution_lockout_months, 0, 60, "government.legislative.dissolution.lockout_months", filename, errors)
+	n.dissolution_notice_months = _extract_int(dissolution, "notice_months", "government.legislative.dissolution.notice_months", filename, errors)
+	_check_range_int(n.dissolution_notice_months, 1, 6, "government.legislative.dissolution.notice_months", filename, errors)
 
 	# Optional by design: absent means the executive comes out of the chamber.
 	# Present, it must be complete — a half-authored executive block is the

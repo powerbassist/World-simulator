@@ -25,6 +25,9 @@ func _init() -> void:
 		if n.leader_name == "":
 			failures.append("%s: no leader name" % id)
 
+		if n.dissolution_rule == "" or not Nation.KNOWN_DISSOLUTION_RULES.has(n.dissolution_rule):
+			failures.append("%s: dissolution_rule '%s' is missing or unrecognised" % [id, n.dissolution_rule])
+
 		if not loader.parties.has(id):
 			failures.append("%s: no parties loaded" % id)
 			continue

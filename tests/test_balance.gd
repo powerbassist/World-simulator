@@ -30,6 +30,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -81,6 +82,7 @@ func _init() -> void:
 	_check_managing_beats_ignoring()
 	_check_a_ruinous_budget_loses()
 	_check_losing_names_the_number_the_player_moved()
+	_check_a_dissolution_stays_off_every_clamp()
 	_finish()
 
 
@@ -206,11 +208,38 @@ func _expect_blamed_on(pending: Dictionary, issue: String, description: String) 
 			])
 
 
+## V1.1c: a managed budget that also dissolves early stays inside every
+## invariant this file checks, and the snap election it calls actually resolves
+## and reads as one. `dissolve_at_month` is well clear of
+## DISSOLUTION_BLACKOUT_MONTHS (2029-06 is 40 months out at month 3), so this
+## exercises the ordinary case rather than a refusal.
+func _check_a_dissolution_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, 3)
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("dissolution run: %s" % p)
+
+	var snapped := false
+	for r in run["all_results"]:
+		if r["kind"] == "national" and bool(r.get("snap", false)):
+			snapped = true
+	if not snapped:
+		_fail("a dissolution called at month 3 never produced a snap-flagged legislative result")
+
+	var ns = run["state"].player()
+	if ns.dissolutions_called != 1:
+		_fail("dissolutions_called is %d after calling exactly one" % ns.dissolutions_called)
+
+
 ## One playthrough. `pending` is committed once, in the first month, and then
 ## left alone — the crudest possible player, which is the point: a constant
 ## policy that breaks the model means a real one certainly will. Stops early if
 ## the incumbent is voted out, the same way main.gd's clock does.
-func _play(pending: Dictionary, months: int) -> Dictionary:
+## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
+## Dissolution.dissolve() once that month is reached, in the same tick position
+## main.gd and balance_probe.gd use: after Legislature, before Elections.
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1) -> Dictionary:
 	var state = GameState.new_game(_loader, "FRA")
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -223,12 +252,13 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 	var ns = state.player()
 	var problems: Array[String] = []
 	var elections: Array = []
+	var all_results: Array = []
 
 	var year := START_YEAR
 	var month := 1
 	var played := 0
 
-	for _i in range(months):
+	for i in range(months):
 		month += 1
 		if month > 12:
 			month = 1
@@ -244,6 +274,10 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 		state.append_history(entry)
 		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state)
+		Dissolution.tick_month(state)
+
+		if i + 1 == dissolve_at_month:
+			Dissolution.dissolve(state, ns)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -252,6 +286,7 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 		# collecting it here would score the player on a vote they cannot lose.
 		var verdict_kind := "executive" if ns.has_executive else "national"
 		for r in Elections.tick_month(state, _loader):
+			all_results.append(r)
 			if r["kind"] == verdict_kind:
 				elections.append(r)
 
@@ -260,7 +295,7 @@ func _play(pending: Dictionary, months: int) -> Dictionary:
 		if not ns.in_government:
 			break
 
-	return {"state": state, "months": played, "problems": problems, "elections": elections}
+	return {"state": state, "months": played, "problems": problems, "elections": elections, "all_results": all_results}
 
 
 ## Non-finite, non-positive, or resting on a guard clamp. The clamps are

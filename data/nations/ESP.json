@@ -23,6 +23,13 @@
           "month": 7
         },
         "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 115: the PM may propose dissolution to the King on the Council of Ministers' exclusive responsibility. Barred while a censure motion is pending, and no second dissolution within a year of the previous one (Art. 115.3). ICL/servat.unibe.ch, Spanish Constitution text.",
+        "rule": "executive_discretion",
+        "lockout_months": 12,
+        "notice_months": 2
       }
     },
     "formation": {

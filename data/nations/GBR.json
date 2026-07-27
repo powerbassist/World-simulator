@@ -23,6 +23,13 @@
           "month": 5
         },
         "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Dissolution and Calling of Parliament Act 2022 repealed the Fixed-term Parliaments Act 2011 and restored the pre-2011 prerogative: the PM may request dissolution from the Sovereign at a time of their choosing, no lockout. Polling day follows roughly 25 working days later. Wikipedia, 'Dissolution and Calling of Parliament Act 2022'; commonslibrary.parliament.uk.",
+        "rule": "executive_discretion",
+        "lockout_months": 0,
+        "notice_months": 1
       }
     },
     "formation": {

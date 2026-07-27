@@ -181,6 +181,19 @@ func _run_unknown_version() -> void:
 	elif pre_discipline["error"].is_empty():
 		_fail("load_game rejected a version-2 save but gave no error message")
 
+	# Version 3 for the same reason one version further on: V1.1c added
+	# dissolution's six fields, so a version-3 save carries no dissolution_rule
+	# and the player could never dissolve, or read a stale lockout, after a load.
+	var v3 := FileAccess.open(path, FileAccess.WRITE)
+	v3.store_string(JSON.stringify({"save_version": 3, "day": 1, "game_state": {}}))
+	v3.close()
+
+	var pre_dissolution := SaveManager.load_game(BOGUS_SLOT)
+	if pre_dissolution["ok"]:
+		_fail("load_game accepted a version-3 save; the dissolution fields would be missing")
+	elif pre_dissolution["error"].is_empty():
+		_fail("load_game rejected a version-3 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

@@ -12,12 +12,19 @@ extends PanelContainer
 
 signal closed
 
+## Carries the pre-command baseline, the same shape budget_panel.gd's
+## `committed` and law_panel.gd's `proposed` use, so main.gd's effect-queueing
+## treats a dissolution the same way it treats any other player command.
+signal dissolved(before: Dictionary)
+
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Dissolution = preload("res://src/sim/dissolution.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -39,12 +46,21 @@ const CENSURE_LABEL := {
 	"none": "no censure motion exists",
 }
 
+const DISSOLUTION_LABEL := {
+	"executive_discretion": "may be dissolved at will",
+	"head_of_state_limited": "may be dissolved, except near the head of state's own term limit",
+	"confidence_failure": "may be dissolved only after a lost confidence vote",
+	"self_dissolution": "may only dissolve itself, by simple law",
+	"none": "cannot be dissolved",
+}
+
 var _state
 var _loader
 var _title: Label
 var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
+var _dissolve_button: Button
 
 
 func _ready() -> void:
@@ -65,6 +81,11 @@ func _ready() -> void:
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 4)
 	root.add_child(_body)
+
+	_dissolve_button = Button.new()
+	_dissolve_button.text = "Dissolve"
+	_dissolve_button.pressed.connect(_on_dissolve)
+	root.add_child(_dissolve_button)
 
 	_close_button = Button.new()
 	_close_button.text = "Close"
@@ -176,6 +197,21 @@ func _refresh() -> void:
 		_add_line("Governments censured out of office this run: %d." % ns.governments_fallen)
 
 	_add_line("")
+	_add_line("%s %s." % [n.chamber_name, DISSOLUTION_LABEL.get(ns.dissolution_rule, ns.dissolution_rule)])
+	if ns.dissolution_rule == "executive_discretion" or ns.dissolution_rule == "head_of_state_limited":
+		_add_line("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated." % ns.dissolution_lockout_months)
+	if ns.dissolutions_called > 0:
+		_add_line("Dissolutions called this run: %d." % ns.dissolutions_called)
+
+	var can_dissolve := Dissolution.can_dissolve(_state, ns)
+	_dissolve_button.visible = ns.dissolution_rule != "none" and ns.dissolution_rule != "confidence_failure" and ns.dissolution_rule != "self_dissolution"
+	_dissolve_button.disabled = not can_dissolve
+	if not can_dissolve:
+		_dissolve_button.tooltip_text = Dissolution.refusal_reason(_state, ns)
+	else:
+		_dissolve_button.tooltip_text = "Call a snap election. No seat forecast -- read the polls, not a projection."
+
+	_add_line("")
 	_add_line("Formation: %s." % METHOD_LABEL.get(ns.formation_method, ns.formation_method))
 	_add_line("Agreed position: economic %+.2f, social %+.2f." % [
 		ns.coalition_position["economic"], ns.coalition_position["social"]
@@ -273,6 +309,16 @@ func _worst_case_rebels(ns) -> int:
 			continue
 		total += Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
 	return total
+
+
+func _on_dissolve() -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var before := Trends.snapshot_now(_state)
+	Dissolution.dissolve(_state, ns)
+	dissolved.emit(before)
+	_dirty = true
 
 
 func _right(text: String) -> Label:
