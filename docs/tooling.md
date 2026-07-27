@@ -169,6 +169,16 @@ Only `godot_mcp` is **enabled** — `project.godot`'s `[editor_plugins]` lists i
 | `road-generator` | Procedural 3D road meshes along curves | Same |
 | `godot_mcp`, `godot_mcp_toolkit` | The editor bridge above | In use |
 
+One more is **not** in `addons/` at all, because it is not an addon: `MapCamera2D` is a single 255-line `Camera2D` subclass adding zoom, pan and drag. No `plugin.cfg`, no autoload, no GDExtension, and the UI layer is allowed to be scene-tree bound — so it is vendored and committed at `src/ui/vendor/MapCamera2D.gd` rather than ignored, with its MIT licence beside it.
+
+> [!warning] It unpacked a bare `LICENSE` into the project root
+> Asset Library downloads do not all land under `addons/`. This one dropped
+> `MapCamera2D.gd` and a root `LICENSE` reading "Copyright (c) 2024 Julian Vos".
+> A root `LICENSE` states the licence of **this** project, so it was renamed to
+> `MapCamera2D.LICENSE.txt` and moved next to the file it covers. Worth checking
+> the repo root after any Asset Library install — `road_demos/`, `demo/` and the
+> `@icons` picker page all landed there too, and are gitignored.
+
 ### The committing rule, and why `at-icons` is special
 
 `addons/` is ignored, but an **asset a scene preloads is not tooling**. A missing plugin is a warning Godot skips; a missing icon a panel preloads is a hard load failure on a fresh clone, and `tools/run_tests.sh` runs headless straight from the repo.

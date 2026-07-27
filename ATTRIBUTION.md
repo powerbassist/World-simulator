@@ -13,3 +13,9 @@ Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), 
 Interface icons from the @icons addon — icons by Voxy (Valentin Fossati), in-editor picker by SuperDuperSword and Voxy. MIT License; the full text is committed at `addons/at-icons/LICENSE.txt`.
 
 Only the icon files the game actually references are committed, so this credit covers a subset of the pack rather than all of it. Listed here from the moment the first one ships, not at ship time — an attribution obligation you remember late is one you have already breached, the same rule [docs/data-sources.md](docs/data-sources.md) states for the datasets.
+
+## MapCamera2D
+
+Map camera panning, zooming and dragging from MapCamera2D by Julian Vos, MIT License. Vendored as a single file at `src/ui/vendor/MapCamera2D.gd`; the licence text is beside it.
+
+It arrived from the Asset Library as a loose `MapCamera2D.gd` plus a bare `LICENSE` in the project root. The licence was renamed and moved with the file it covers, because a root `LICENSE` file states the licence of *this* project — which is not MIT and is not Julian Vos's.
