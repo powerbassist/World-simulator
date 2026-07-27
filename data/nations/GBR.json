@@ -46,9 +46,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 20% is the UK's own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024' -- the UK is included for comparison though outside the EU regime). Income and corporate are France's 20/25 scaled by the UK's OECD Revenue Statistics personal/corporate tax-to-GDP share against France's, landing close to France's own. Spending is France's split scaled by general government expenditure of 44.0% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 102.3,
-    "tax_revenue_pct_gdp": 35.3
+    "tax_revenue_pct_gdp": 35.3,
+    "tax_rates_pct": {
+      "income": 20.0,
+      "corporate": 25.0,
+      "vat": 20.0
+    },
+    "spending_pct_gdp": {
+      "health": 8.4,
+      "education": 4.2,
+      "defence": 1.5,
+      "pensions": 11.1,
+      "infrastructure": 2.7
+    },
+    "other_spending_pct_gdp": 9.2
   },
   "imported": {
     "_source": "worldbank",

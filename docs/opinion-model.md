@@ -48,16 +48,36 @@ for all ten so the state shape stays uniform.
 and this is a deliberate departure from the `voter_blocs` nation-schema field
 [[data-architecture]] originally pencilled in for this session.
 
-The argument is `policy_defaults.json`'s, one step further. Only France is
-playable, so nine authored bloc sets would have no reader. And unlike starting
-tax rates, blocs are not content a designer adds more of: regional and
-generational breakdown is [[someday]] tier, so six blocs is one fixed set,
-forever — [[economy-model|the same definition]] used to keep the economy's
-constants out of `data/`.
+The argument used to be `policy_defaults.json`'s, one step further: only France
+was playable, so nine authored bloc sets would have had no reader. Unlike
+starting tax rates, blocs are still not content a designer adds more of:
+regional and generational breakdown is [[someday]] tier, so six blocs is one
+fixed set, forever — [[economy-model|the same definition]] used to keep the
+economy's constants out of `data/`.
 
-**What reverses this:** a second playable nation ([[v1|V1.2]]), or per-nation
-bloc sizes acquiring a real reader. At that point blocs become content, move to
-`data/`, and get a loader and a validator.
+> [!note] The trigger fired at V1.2a, and the call was re-examined, not skipped
+> "A second playable nation" was the named trigger. [[ROADMAP|V1.2a]] made
+> Germany playable and the plan step re-opened this exact question, with a
+> measurement instead of a restated assumption: `tools/balance_probe.gd`,
+> parameterised by nation, ran the same relative "managed" budget against
+> France and Germany. Germany's government lost its majority at its February
+> 2029 legislative election; France held one through every election of the
+> full fourteen-year run. Institutions
+> (`chancellor_election`/`constructive_absolute` vs
+> `presidential_appointment`/`absolute_members`, a 5% `pr_national` threshold
+> vs `two_round`'s 0%) and party rosters alone already produce that divergence,
+> with the bloc table completely untouched. Per-nation salience is still
+> unsourced — roughly 660 numbers with nothing to author them from — and every
+> tuned constant in this file (`SALIENCE_GAIN`, `DEFICIT_SCALE_PP`, the whole
+> `public_finances` row) was measured against this one shared table; per-nation
+> tables would mean ten measurements or nine assertions. Bloc weights stayed
+> global. Recorded, with the measurement, in [[declined]].
+
+**What would reopen this again:** per-nation bloc *size* (`BLOC_SIZE`)
+acquiring a real source — World Bank/Eurostat splits for urban share, 65+
+share, tertiary enrolment exist and could source that one table without
+inventing salience. Full salience staying global is a standing decision, not a
+parked one; see [[declined]] for what evidence would move it.
 
 Two rules make that move cheap, and both are just [[engine-decision|Rule 1]]
 applied:

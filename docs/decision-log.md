@@ -397,6 +397,52 @@ global table, so every electorate in Europe currently has identical priorities.
 Which of those two moves into data is the call that decides the block's size, and
 it belongs to that block's plan step.
 
+## V1.2a shipped: Germany playable, per-nation starting fiscal policy, bloc weights stay global
+
+**The plan-step call:** `opinion_constants.gd`'s bloc weights stay one shared
+table. `policy_defaults.json` — the other shared thing this document's own
+V1.2a entry flagged — did move into data: each nation's `fiscal` block now
+carries `tax_rates_pct`, `spending_pct_gdp` and `other_spending_pct_gdp`,
+sourced per nation (VAT directly, income and corporate scaled from France's by
+OECD Revenue Statistics tax-to-GDP shares, spending scaled by general
+government expenditure), with France as the unchanged anchor. Full sourcing
+in each nation's `fiscal._note`; the model argument in [[economy-model]].
+
+The bloc-weight call replaced an assumption with a measurement.
+`tools/balance_probe.gd`, parameterised by nation, ran the identical relative
+`managed` budget against France and Germany: Germany's government lost its
+majority at its February 2029 legislative election, France held one through
+the whole fourteen-year run — from institutions and party rosters alone, bloc
+table untouched. Recorded with the full argument in [[declined]].
+
+**The roadmap row was challenged, not accepted.** It read "roughly ten
+surfaces". A cold count at plan time found sixteen, but two of the row's own
+assumed surfaces turned out not to apply — no `SAVE_VERSION` bump (no
+`NationState` field moved), and most `"FRA"` literals in `tests/` turned out
+to be intentional assertions about France's own authored numbers, not things
+that needed parameterising. `High → Medium` held.
+
+**One exception to "no nation id under `src/`" survives, by design, not
+oversight.** `main.gd` still carries a single default player id, read only
+when a scene is built directly rather than through the menu — the shape
+`tests/test_game_loop.gd` and every `tools/*.gd` probe already depend on.
+That is a default value for an entry point, not the `if nation_id == "FRA"`
+branch [[engine-decision|Rule 1]] forbids; the two are different enough that
+the distinction is worth stating rather than assumed.
+
+**One correction found mid-build, not mid-plan.** `balance_probe.gd`'s
+extreme regimes (`tax_max`, `tax_zero`, `spend_max`, `spend_zero`, `ruinous`)
+were first rewritten as ±100pp deltas on the reasoning that clamping to the
+schema's 0/100 range would reproduce the old absolute figures. It did not —
+the old absolute figures (30/20/20/30/20 for `spend_max`, for instance) were
+nowhere near that ceiling, so every nation was pinned to the identical
+extreme regardless of its own starting point, and Germany's `spend_max`
+tripped a debt-ratio-runaway invariant France's identical-looking run did
+not. Corrected to the same France-relative deltas the moderate regimes
+already used (e.g. `spend_max`'s defence delta is `+18.0`, landing at
+France's old 20.0), re-verified against France's pre-change trajectory
+before moving on.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

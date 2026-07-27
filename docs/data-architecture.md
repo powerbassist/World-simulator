@@ -36,11 +36,16 @@ data/
 ├── political-systems/ institutional templates (V1)
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth
-├── policy_defaults.json   starting tax rates and spending split
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
 ```
 
-`policy_defaults.json` is shared by every nation rather than split per file, because only the player's nation has a budget at MVP — see [[economy-model]]. Like every other file here it is read once at startup, validated, and never mutated; `tools/import_data.py` neither reads nor writes it.
+> [!note] `policy_defaults.json` existed from S4 to V1.1d and is gone
+> Starting tax rates and spending split were one file shared by every nation,
+> because only the player's nation had a budget at MVP. Its own `_note` said
+> that was temporary; [[ROADMAP|V1.2a]], the session that made a second nation
+> playable, was where it came due. Each nation's `fiscal` block now carries its
+> own `tax_rates_pct`, `spending_pct_gdp` and `other_spending_pct_gdp` — see the
+> schema below. See [[economy-model]] for the sourcing.
 
 One file per entity, named by ISO 3166-1 alpha-3 where a nation is involved. Small files mean readable git diffs and no merge conflicts between unrelated content edits.
 
@@ -60,15 +65,17 @@ As implemented at [[ROADMAP|S1]]. Fields owned by later sessions — leader (S2)
 `system` (V1) — are added by the session whose model reads them, not stubbed in ahead
 of time.
 
-> [!note] `voter_blocs` was pencilled in here for S5 and did not happen
-> S5 read the field and decided it was not content. Only France is playable, so nine
-> authored bloc sets would have no reader, and unlike starting tax rates, blocs are
-> not something a designer adds more of — regional and generational breakdown is
-> [[someday]] tier, so six blocs is one fixed set forever. They live in
-> `src/sim/opinion_constants.gd` with the rest of the opinion model. The full
-> argument, and the trigger that reverses it — a second playable nation — is in
-> [[opinion-model]]. This is the rule working as intended: the session whose model
-> reads a field decides where it lives.
+> [!note] `voter_blocs` was pencilled in here for S5 and still has not happened
+> S5 read the field and decided it was not content. The trigger written down at
+> the time was "a second playable nation" — that trigger fired at [[ROADMAP|V1.2a]],
+> and the call was re-examined, not skipped: bloc weights stayed in
+> `src/sim/opinion_constants.gd` as one global table. There is still no source
+> for per-nation salience, and a `tools/balance_probe.gd` run comparing France
+> and Germany under an identical relative budget found the two already diverge
+> sharply — Germany's government lost its majority by month 38 where France's
+> held one for the whole fourteen-year run — on institutions and party rosters
+> alone, with the bloc table untouched. Full argument and the new trigger:
+> [[opinion-model]] and [[declined]].
 
 ```json
 {
@@ -114,9 +121,15 @@ of time.
 
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates, rounded",
+    "_note": "General government, IMF/OECD estimates, rounded. France is the V1.2a starting-policy anchor -- see FRA.json's own note.",
     "debt_to_gdp_pct": 116.0,
-    "tax_revenue_pct_gdp": 46.1
+    "tax_revenue_pct_gdp": 46.1,
+    "tax_rates_pct": { "income": 20.0, "corporate": 25.0, "vat": 20.0 },
+    "spending_pct_gdp": {
+      "health": 11.0, "education": 5.5, "defence": 2.0,
+      "pensions": 14.5, "infrastructure": 3.5
+    },
+    "other_spending_pct_gdp": 12.0
   },
 
   "imported": {
@@ -144,6 +157,21 @@ they are **authored, but real** — same class as `assembly_seats`, not the same
 as a party name. World Bank's central-government indicators are null or wrong-scope
 for this purpose; see [[data-sources]] for the specifics. They do not refresh on
 re-import.
+
+`tax_rates_pct`, `spending_pct_gdp` and `other_spending_pct_gdp` joined the same
+object at [[ROADMAP|V1.2a]], replacing the one shared `policy_defaults.json`
+above. Same class again: France's own numbers are the unchanged anchor, VAT on
+the other nine is each one's own sourced statutory rate, income and corporate
+are France's scaled by OECD Revenue Statistics tax-to-GDP shares (headline
+combined rates directly for Switzerland and Luxembourg, where scaling by
+revenue share would have amplified their profit-shifting-inflated corporate
+base into an implausible number), and the five spending lines plus
+`other_spending_pct_gdp` are France's split scaled by general government
+expenditure. Every nation's `_note` says which. `GameState._build_nation()`
+reads these instead of a loader-wide defaults argument, and
+`Budget._erosion()`'s reference rate is `ns.start_tax_rates_pct` — the nation's
+own starting rates, not a shared constant — so every nation, not only France,
+begins exactly on its own erosion reference.
 
 > [!note] `leader.party` and the `government` sub-blocks
 > `leader.party` resolves to a party id in that nation's own `data/parties/*.json`

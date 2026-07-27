@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 21% is Belgium's own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'). Income is France's 20 scaled by Belgium's OECD Revenue Statistics personal-tax-to-GDP share against France's -- Belgium carries one of the OECD's heaviest personal income tax loads, hence 24; corporate stays close to France's own at 25. Spending is France's split scaled by general government expenditure of 54.1% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 106.3,
-    "tax_revenue_pct_gdp": 42.3
+    "tax_revenue_pct_gdp": 42.3,
+    "tax_rates_pct": {
+      "income": 24.0,
+      "corporate": 25.0,
+      "vat": 21.0
+    },
+    "spending_pct_gdp": {
+      "health": 10.4,
+      "education": 5.2,
+      "defence": 1.9,
+      "pensions": 13.7,
+      "infrastructure": 3.3
+    },
+    "other_spending_pct_gdp": 11.3
   },
   "imported": {
     "_source": "worldbank",

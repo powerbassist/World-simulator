@@ -5,12 +5,20 @@ extends RefCounted
 ## Built and range-checked by from_dict(); see docs/data-architecture.md for
 ## the schema and the import script's ownership boundary on `imported`.
 
+const C = preload("res://src/sim/economy_constants.gd")
+
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 const KNOWN_ELECTION_SYSTEMS: Array[String] = ["pr_dhondt", "pr_national", "fptp", "two_round", "parallel"]
+
+## Moved from data_loader.gd's now-deleted _load_policy_defaults() at V1.2a,
+## when starting fiscal policy moved from the one shared policy_defaults.json
+## into each nation's own fiscal block.
+const MAX_TAX_RATE_PCT := 100.0
+const MAX_SPENDING_PCT_GDP := 100.0
 
 ## How a government is assembled, and what it takes to bring one down. Both are
 ## dispatched on the string in src/sim/government.gd, never on the nation id —
@@ -95,6 +103,14 @@ var eu_ep_seats: int = 0
 
 var debt_to_gdp_pct: float = 0.0
 var tax_revenue_pct_gdp: float = 0.0
+
+## Starting fiscal policy -- per nation since V1.2a. Previously one shared
+## data/policy_defaults.json; see the _note on FRA.json's fiscal block for the
+## sourcing and derivation of the other nine. GameState._build_nation() reads
+## these instead of a loader-wide defaults argument.
+var tax_rates_pct: Dictionary = {}          # income, corporate, vat
+var spending_pct_gdp: Dictionary = {}       # health, education, defence, pensions, infrastructure
+var other_spending_pct_gdp: float = 0.0
 
 var population: int = 0
 var gdp_eur_bn: float = 0.0
@@ -188,6 +204,21 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	_check_range_float(n.debt_to_gdp_pct, 0.0, 400.0, "fiscal.debt_to_gdp_pct", filename, errors)
 	n.tax_revenue_pct_gdp = _extract_float(fiscal, "tax_revenue_pct_gdp", "fiscal.tax_revenue_pct_gdp", filename, errors)
 	_check_range_float(n.tax_revenue_pct_gdp, 0.0, 100.0, "fiscal.tax_revenue_pct_gdp", filename, errors)
+
+	var rates: Dictionary = _extract_dict(fiscal, "tax_rates_pct", filename, errors)
+	for key in C.TAX_KEYS:
+		var rate := _extract_float(rates, key, "fiscal.tax_rates_pct.%s" % key, filename, errors)
+		_check_range_float(rate, 0.0, MAX_TAX_RATE_PCT, "fiscal.tax_rates_pct.%s" % key, filename, errors)
+		n.tax_rates_pct[key] = rate
+
+	var spending: Dictionary = _extract_dict(fiscal, "spending_pct_gdp", filename, errors)
+	for key in C.SPENDING_KEYS:
+		var amount := _extract_float(spending, key, "fiscal.spending_pct_gdp.%s" % key, filename, errors)
+		_check_range_float(amount, 0.0, MAX_SPENDING_PCT_GDP, "fiscal.spending_pct_gdp.%s" % key, filename, errors)
+		n.spending_pct_gdp[key] = amount
+
+	n.other_spending_pct_gdp = _extract_float(fiscal, "other_spending_pct_gdp", "fiscal.other_spending_pct_gdp", filename, errors)
+	_check_range_float(n.other_spending_pct_gdp, 0.0, MAX_SPENDING_PCT_GDP, "fiscal.other_spending_pct_gdp", filename, errors)
 
 	var imported: Dictionary = _extract_dict(d, "imported", filename, errors)
 	for key in imported.keys():

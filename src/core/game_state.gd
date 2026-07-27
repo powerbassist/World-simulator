@@ -60,7 +60,7 @@ static func new_game(loader, player_id: String):
 	ids.sort()
 	for id in ids:
 		var party_list: Array = loader.parties.get(id, [])
-		gs.nations[id] = _build_nation(loader.nations[id], loader.policy_defaults, id == player_id, party_list, loader.eu, gs.errors)
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, gs.errors)
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -73,7 +73,7 @@ static func new_game(loader, player_id: String):
 	return gs
 
 
-static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: Array, eu, errors: Array[String]):
+static func _build_nation(n, is_player: bool, party_list: Array, eu, errors: Array[String]):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -93,14 +93,14 @@ static func _build_nation(n, defaults: Dictionary, is_player: bool, party_list: 
 
 	ns.debt_eur_bn = n.debt_to_gdp_pct / 100.0 * ns.gdp_eur_bn
 
-	ns.tax_rates_pct = (defaults.get("tax_rates_pct", {}) as Dictionary).duplicate(true)
+	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
-	ns.spending_pct_gdp = (defaults.get("spending_pct_gdp", {}) as Dictionary).duplicate(true)
+	ns.spending_pct_gdp = n.spending_pct_gdp.duplicate(true)
 	ns.start_spending_pct_gdp = ns.spending_pct_gdp.duplicate(true)
-	ns.other_spending_pct_gdp = float(defaults.get("other_spending_pct_gdp", 0.0))
+	ns.other_spending_pct_gdp = n.other_spending_pct_gdp
 
 	# Calibrate the residual so starting revenue equals the authored real figure.
-	var modelled := Budget.modelled_revenue_total(ns.tax_rates_pct)
+	var modelled := Budget.modelled_revenue_total(ns.tax_rates_pct, ns.start_tax_rates_pct)
 	ns.other_revenue_pct_gdp = n.tax_revenue_pct_gdp - modelled
 	if ns.other_revenue_pct_gdp < 0.0:
 		errors.append(

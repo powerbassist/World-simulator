@@ -44,8 +44,8 @@ const START_YEAR := 2026
 ## -- tools/ files are independent probes, each disposable on its own, and
 ## balance_probe.gd's REGIMES dict is not part of any module's public surface.
 ##
-## Found running section (a): MANAGED moves only `defence` away from
-## policy_defaults.json (health, education, pensions and infrastructure sit
+## Found running section (a): MANAGED moves only `defence` away from France's
+## own starting values (health, education, pensions and infrastructure sit
 ## EXACTLY at their starting values). Effectiveness multiplies a spending
 ## line's delta from start -- so on four of five lines it multiplies zero.
 ## MANAGED was S10-tuned to be near-frictionless governance, which makes it
@@ -62,7 +62,7 @@ const MANAGED := {
 ## A representative governing budget: moderate deltas on all five lines, none
 ## of them at a balance-probe extreme. This is what section (a) actually
 ## exercises, because "does competence matter" is a question about a player
-## who touches spending, not one who leaves it at policy_defaults.json.
+## who touches spending, not one who leaves it at its starting values.
 const GOVERNING := {
 	"spending_pct_gdp": {
 		"health": 12.5, "education": 6.5, "defence": 1.0,

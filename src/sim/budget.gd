@@ -25,7 +25,7 @@ static func tick_month(state) -> void:
 ## Revenue, spending, debt service and deficit from the nation's current rates,
 ## allocations, debt and GDP. Pure bookkeeping — no state advances here.
 static func recompute(ns) -> void:
-	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct)
+	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 
 	var revenue := 0.0
@@ -45,17 +45,24 @@ static func recompute(ns) -> void:
 
 ## Yield of each modelled tax as a percent of GDP. With the rate in percent and
 ## the base as a share of GDP, the product is already a percent of GDP.
-static func revenue_lines(rates: Dictionary) -> Dictionary:
+##
+## `ref_rates` is the reference the erosion curve centres on -- always the
+## nation's own starting rates, `ns.start_tax_rates_pct`, the same "delta
+## against the nation's own start" shape every other satisfaction term in this
+## model already uses. Passed explicitly rather than read off a shared
+## constant since V1.2a made starting rates per-nation: a table shared by all
+## ten would put every nation but one off its own reference.
+static func revenue_lines(rates: Dictionary, ref_rates: Dictionary) -> Dictionary:
 	var out := {}
 	for key in C.TAX_KEYS:
 		var rate := float(rates.get(key, 0.0))
-		out[key] = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate)
+		out[key] = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
 	return out
 
 
-static func modelled_revenue_total(rates: Dictionary) -> float:
+static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> float:
 	var total := 0.0
-	for v in revenue_lines(rates).values():
+	for v in revenue_lines(rates, ref_rates).values():
 		total += float(v)
 	return total
 
@@ -63,8 +70,8 @@ static func modelled_revenue_total(rates: Dictionary) -> float:
 ## Diminishing returns. Steeper where the base is more mobile — corporate profits
 ## move, consumption does not. Clamped so a rate of zero or of 100 still produces
 ## a finite, correctly signed number.
-static func _erosion(key: String, rate_pct: float) -> float:
-	var ref := float(C.TAX_REF_RATE_PCT[key])
+static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary) -> float:
+	var ref := float(ref_rates.get(key, 0.0))
 	if ref <= 0.0:
 		return 1.0
 	var raw: float = 1.0 - float(C.TAX_EROSION[key]) * (rate_pct - ref) / ref
@@ -95,8 +102,8 @@ static func commit(state, pending: Dictionary) -> void:
 			if pending["spending_pct_gdp"].has(key):
 				new_spending[key] = float(pending["spending_pct_gdp"][key])
 
-	var old_revenue := revenue_lines(ns.tax_rates_pct)
-	var new_revenue := revenue_lines(new_rates)
+	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
+	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct)
 
 	var old_spend: float = ns.player_spending_pct_gdp()
 	var new_spend := 0.0

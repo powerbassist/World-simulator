@@ -3,7 +3,7 @@
   "name": "Germany",
   "geo_id": "DEU",
   "capital": "Berlin",
-  "playable": false,
+  "playable": true,
   "leader": {
     "name": "Matthias Vogler",
     "title": "Federal Chancellor",
@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 19% is Germany's own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'). Income and corporate are France's 20/25 scaled by Germany's OECD Revenue Statistics personal/corporate tax-to-GDP share against France's -- income tax leans similar, corporate revenue (Gewerbesteuer included) runs higher, hence 21/29.9. Spending is France's split scaled by general government expenditure of 49.4% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 62.9,
-    "tax_revenue_pct_gdp": 39.3
+    "tax_revenue_pct_gdp": 39.3,
+    "tax_rates_pct": {
+      "income": 21.0,
+      "corporate": 29.9,
+      "vat": 19.0
+    },
+    "spending_pct_gdp": {
+      "health": 9.5,
+      "education": 4.7,
+      "defence": 1.7,
+      "pensions": 12.5,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 10.3
   },
   "imported": {
     "_source": "worldbank",

@@ -261,8 +261,9 @@ decorative and the model changes before code is written.
 
 **First run failed, and taught something the plan had not anticipated.** The
 pre-committed test budget was `balance_probe.gd`'s `managed` regime — and
-`managed` moves only `defence` away from `policy_defaults.json`; health,
-education, pensions and infrastructure sit exactly at their starting values.
+`managed` moves only `defence` away from the nation's own starting values;
+health, education, pensions and infrastructure sit exactly at their starting
+values.
 Effectiveness multiplies a spending line's *delta from start*, so on four of
 five lines it was multiplying zero. `managed` is S10-tuned to be
 near-frictionless governance, which makes it exactly the wrong budget to

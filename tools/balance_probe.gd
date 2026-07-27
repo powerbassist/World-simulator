@@ -34,54 +34,64 @@ const START_YEAR := 2026
 ## Each regime is a budget committed once, in month 1, and then left alone —
 ## the crudest possible player, which is the point: if a constant policy blows
 ## the model up, a real player certainly will.
+##
+## Expressed as DELTAS in percentage points from the nation's own starting
+## rates/spending, not absolute figures -- V1.2a made starting fiscal policy
+## per-nation, so an absolute "vat: 23.0" regime meant something different (or
+## nothing) for a nation that starts somewhere other than France's 20.0. A
+## delta is nation-relative by construction: "managed" always means "cut
+## defence by 1.4 points of GDP and raise VAT by 3", whichever nation is under
+## test. _resolve_pending() turns a delta back into the absolute values
+## Budget.commit() expects, clamped to the loader's valid ranges.
 const REGIMES := {
 	"hands_off": {},
 	"spendthrift": {
 		"spending_pct_gdp": {
-			"health": 14.0, "education": 8.0, "defence": 3.5,
-			"pensions": 18.0, "infrastructure": 6.0,
+			"health": 3.0, "education": 2.5, "defence": 1.5,
+			"pensions": 3.5, "infrastructure": 2.5,
 		},
-		"tax_rates_pct": {"income": 14.0, "corporate": 18.0, "vat": 16.0},
+		"tax_rates_pct": {"income": -6.0, "corporate": -7.0, "vat": -4.0},
 	},
 	"austerity": {
 		"spending_pct_gdp": {
-			"health": 8.5, "education": 3.5, "defence": 1.0,
-			"pensions": 11.0, "infrastructure": 1.5,
+			"health": -2.5, "education": -2.0, "defence": -1.0,
+			"pensions": -3.5, "infrastructure": -2.0,
 		},
-		"tax_rates_pct": {"income": 26.0, "corporate": 30.0, "vat": 24.0},
+		"tax_rates_pct": {"income": 6.0, "corporate": 5.0, "vat": 4.0},
 	},
 	# The budget a player who reads the polling panel should converge on: cut the
 	# line only one bloc weights (defence), fund it with the tax that carries no
 	# labour-market cost (VAT), leave the three lines every bloc weights alone,
 	# and take the deficit down to where the debt ratio stops climbing.
 	"managed": {
-		"spending_pct_gdp": {
-			"health": 11.0, "education": 5.5, "defence": 0.6,
-			"pensions": 14.5, "infrastructure": 3.5,
-		},
-		"tax_rates_pct": {"income": 21.0, "corporate": 25.0, "vat": 23.0},
+		"spending_pct_gdp": {"defence": -1.4},
+		"tax_rates_pct": {"vat": 3.0},
 	},
 	# The same player getting it wrong: churn every line, upset the blocs that
 	# weight them, and end up with a *worse* deficit than doing nothing.
 	"tinkering": {
 		"spending_pct_gdp": {
-			"health": 11.0, "education": 6.5, "defence": 2.0,
-			"pensions": 13.5, "infrastructure": 5.0,
+			"education": 1.0, "pensions": -1.0, "infrastructure": 1.5,
 		},
-		"tax_rates_pct": {"income": 21.0, "corporate": 24.0, "vat": 21.0},
+		"tax_rates_pct": {"income": 1.0, "corporate": -1.0, "vat": 1.0},
 	},
-	"tax_max": {"tax_rates_pct": {"income": 60.0, "corporate": 50.0, "vat": 35.0}},
-	"tax_zero": {"tax_rates_pct": {"income": 0.0, "corporate": 0.0, "vat": 0.0}},
+	"tax_max": {"tax_rates_pct": {"income": 40.0, "corporate": 25.0, "vat": 15.0}},
+	# Deltas that land exactly on France's own zero -- not the clamp floor,
+	# which would pin every nation's rate at 0 regardless of where it started
+	# and turn a "give away every tax" regime into "every nation converges on
+	# the identical absolute number", the opposite of what a nation-relative
+	# regime is for.
+	"tax_zero": {"tax_rates_pct": {"income": -20.0, "corporate": -25.0, "vat": -20.0}},
 	"spend_max": {
 		"spending_pct_gdp": {
-			"health": 30.0, "education": 20.0, "defence": 20.0,
-			"pensions": 30.0, "infrastructure": 20.0,
+			"health": 19.0, "education": 14.5, "defence": 18.0,
+			"pensions": 15.5, "infrastructure": 16.5,
 		},
 	},
 	"spend_zero": {
 		"spending_pct_gdp": {
-			"health": 0.0, "education": 0.0, "defence": 0.0,
-			"pensions": 0.0, "infrastructure": 0.0,
+			"health": -11.0, "education": -5.5, "defence": -2.0,
+			"pensions": -14.5, "infrastructure": -3.5,
 		},
 	},
 	# Both giveaways at once. The hardest case in the set, and not because it is
@@ -92,10 +102,10 @@ const REGIMES := {
 	# more popular.
 	"ruinous": {
 		"spending_pct_gdp": {
-			"health": 30.0, "education": 20.0, "defence": 20.0,
-			"pensions": 30.0, "infrastructure": 20.0,
+			"health": 19.0, "education": 14.5, "defence": 18.0,
+			"pensions": 15.5, "infrastructure": 16.5,
 		},
-		"tax_rates_pct": {"income": 0.0, "corporate": 0.0, "vat": 0.0},
+		"tax_rates_pct": {"income": -20.0, "corporate": -25.0, "vat": -20.0},
 	},
 }
 
@@ -125,8 +135,15 @@ const CABINET_REGIMES := {
 
 func _init() -> void:
 	var only := ""
+	var nation_id := "FRA"
+	# Either bare token may be the regime name or the nation id -- a nation id
+	# is always three uppercase letters, which no regime name is, so order
+	# doesn't matter: `-- managed DEU` and `-- DEU managed` both work.
 	for arg in OS.get_cmdline_user_args():
-		only = arg
+		if arg.length() == 3 and arg == arg.to_upper():
+			nation_id = arg
+		else:
+			only = arg
 
 	var names: Array = REGIMES.keys()
 	if only != "":
@@ -137,20 +154,40 @@ func _init() -> void:
 		names = [only]
 
 	for name in names:
-		_run(name, REGIMES[name])
+		_run(nation_id, name, REGIMES[name])
 
 	if only == "":
 		for name in DISSOLUTION_REGIMES.keys():
 			var regime: Dictionary = DISSOLUTION_REGIMES[name]
-			_run(name, regime["budget"], int(regime["dissolve_month"]))
+			_run(nation_id, name, regime["budget"], int(regime["dissolve_month"]))
 		for name in CABINET_REGIMES.keys():
 			var regime: Dictionary = CABINET_REGIMES[name]
-			_run(name, regime["budget"], -1, int(regime["shortfall_month"]))
+			_run(nation_id, name, regime["budget"], -1, int(regime["shortfall_month"]))
 
 	quit(0)
 
 
-func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1) -> void:
+## `delta` is a REGIMES-shaped entry: tax_rates_pct / spending_pct_gdp deltas in
+## percentage points, relative to `ns`'s own starting rates -- see REGIMES'
+## header comment. Absent keys are left at the nation's start.
+func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
+	var pending := {}
+	if delta.has("tax_rates_pct"):
+		var rates := {}
+		for key in delta["tax_rates_pct"]:
+			var start: float = float(ns.start_tax_rates_pct.get(key, 0.0))
+			rates[key] = clampf(start + float(delta["tax_rates_pct"][key]), 0.0, 100.0)
+		pending["tax_rates_pct"] = rates
+	if delta.has("spending_pct_gdp"):
+		var spending := {}
+		for key in delta["spending_pct_gdp"]:
+			var start: float = float(ns.start_spending_pct_gdp.get(key, 0.0))
+			spending[key] = clampf(start + float(delta["spending_pct_gdp"][key]), 0.0, 100.0)
+		pending["spending_pct_gdp"] = spending
+	return pending
+
+
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -158,15 +195,16 @@ func _run(regime_name: String, pending: Dictionary, dissolve_month: int = -1, ca
 		quit(1)
 		return
 
-	var state = GameState.new_game(loader, "FRA")
+	var state = GameState.new_game(loader, nation_id)
 	state.year = START_YEAR
 	state.month = 1
 
-	print("\n=== %s ===" % regime_name)
+	print("\n=== %s (%s) ===" % [regime_name, nation_id])
 	_print_header()
 
 	var ns = state.player()
-	var party_list: Array = loader.parties.get("FRA", [])
+	var party_list: Array = loader.parties.get(nation_id, [])
+	var pending := _resolve_pending(ns, delta)
 	if not pending.is_empty():
 		Budget.commit(state, pending)
 

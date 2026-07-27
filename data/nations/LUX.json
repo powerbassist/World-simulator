@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 17% is Luxembourg's own statutory standard rate, the lowest in the EU (Tax Foundation, 'VAT Rates in Europe 2024'). Corporate 24.9% is the commonly cited combined rate (17% corporate income tax plus municipal business tax plus solidarity surtax) -- used directly rather than revenue-share-scaled from France, for the same reason as Switzerland's: Luxembourg's corporate tax revenue is inflated by holding-company profit booking relative to what a modest headline rate would suggest. Income is France's 20 scaled by Luxembourg's OECD Revenue Statistics personal-tax-to-GDP share against France's, hence 17. Spending is France's split scaled by general government expenditure of 46.8% of GDP against France's 57.3% (tradingeconomics.com / Wikipedia 'Economy of Luxembourg').",
     "debt_to_gdp_pct": 27.0,
-    "tax_revenue_pct_gdp": 38.4
+    "tax_revenue_pct_gdp": 38.4,
+    "tax_rates_pct": {
+      "income": 17.0,
+      "corporate": 24.9,
+      "vat": 17.0
+    },
+    "spending_pct_gdp": {
+      "health": 9.0,
+      "education": 4.5,
+      "defence": 1.6,
+      "pensions": 11.8,
+      "infrastructure": 2.9
+    },
+    "other_spending_pct_gdp": 9.8
   },
   "imported": {
     "_source": "worldbank",

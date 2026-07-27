@@ -14,15 +14,11 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
 
-const MAX_TAX_RATE_PCT := 100.0
-const MAX_SPENDING_PCT_GDP := 100.0
-
 const EU = preload("res://src/core/eu.gd")
 
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
 var laws: Array[Law] = []
-var policy_defaults: Dictionary = {}
 var eu: EU = null
 var errors: Array[String] = []
 
@@ -35,11 +31,10 @@ var errors: Array[String] = []
 var geo_features: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", policy_path := "res://data/policy_defaults.json", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
-	policy_defaults.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -78,7 +73,6 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	for id in nations.keys():
 		_load_parties(id, parties_dir)
 
-	_load_policy_defaults(policy_path)
 	_load_laws(laws_dir)
 
 	eu = EU.new()
@@ -86,50 +80,6 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	errors.append_array(eu.errors)
 
 	_validate_cross_file(geo_path)
-
-
-## Starting tax rates and spending split, shared by every nation. Static content
-## like the nation files, so it gets the same treatment: parsed once at startup,
-## validated loudly, never mutated. See docs/economy-model.md.
-func _load_policy_defaults(policy_path: String) -> void:
-	var text := FileAccess.get_file_as_string(policy_path)
-	if text.is_empty():
-		errors.append("%s: could not read file" % policy_path)
-		return
-
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		errors.append("%s: invalid JSON" % policy_path)
-		return
-
-	var fname := policy_path.get_file()
-	policy_defaults = parsed
-
-	var rates := _extract_dict(parsed, "tax_rates_pct", fname)
-	for key in C.TAX_KEYS:
-		_check_number(rates, key, "tax_rates_pct.%s" % key, 0.0, MAX_TAX_RATE_PCT, fname)
-
-	var spending := _extract_dict(parsed, "spending_pct_gdp", fname)
-	for key in C.SPENDING_KEYS:
-		_check_number(spending, key, "spending_pct_gdp.%s" % key, 0.0, MAX_SPENDING_PCT_GDP, fname)
-
-	_check_number(parsed, "other_spending_pct_gdp", "other_spending_pct_gdp", 0.0, MAX_SPENDING_PCT_GDP, fname)
-
-
-func _extract_dict(d: Dictionary, key: String, filename: String) -> Dictionary:
-	if not d.has(key) or typeof(d[key]) != TYPE_DICTIONARY:
-		errors.append("%s: missing or invalid object field '%s'" % [filename, key])
-		return {}
-	return d[key]
-
-
-func _check_number(d: Dictionary, key: String, path: String, min_v: float, max_v: float, filename: String) -> void:
-	if not d.has(key) or not (typeof(d[key]) == TYPE_INT or typeof(d[key]) == TYPE_FLOAT):
-		errors.append("%s: missing or invalid numeric field '%s'" % [filename, path])
-		return
-	var value := float(d[key])
-	if value < min_v or value > max_v:
-		errors.append("%s: %s = %s out of range [%s, %s]" % [filename, path, str(value), str(min_v), str(max_v)])
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:
@@ -236,12 +186,14 @@ func _validate_cross_file(geo_path: String) -> void:
 	if nations.size() != 10:
 		errors.append("expected 10 nations, loaded %d" % nations.size())
 
+	# At least one, not exactly one -- V1.2a made a second nation playable, and
+	# a third later is a one-flag data edit, not a code change. See ROADMAP.md.
 	var playable_count := 0
 	for n in nations.values():
 		if n.playable:
 			playable_count += 1
-	if playable_count != 1:
-		errors.append("expected exactly 1 playable nation, found %d" % playable_count)
+	if playable_count < 1:
+		errors.append("expected at least 1 playable nation, found %d" % playable_count)
 
 	var geo_ids := _load_geo(geo_path)
 	for n in nations.values():

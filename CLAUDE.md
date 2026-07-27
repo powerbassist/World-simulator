@@ -84,31 +84,36 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.1d shipped** — cabinet and ministers. Five portfolios keyed to the
-spending lines, held by coalition parties; `src/sim/cabinet.gd` computes a
-portfolio's ideology-space position from tables `opinion_constants.gd` and
-`election_constants.gd` already had (no authored coordinates), and a party's
-authored `competence` scales by ideological affinity into an effectiveness
-that multiplies a spending line's delta in `opinion.gd`. A party held below
-its d'Hondt entitlement (`Cabinet.shortfall()`) can lose a minister to
-resignation, but only in combination with an unpopular government — measured,
-not assumed: an identical shortfall produced zero resignations under a
-well-governed regime and five under a failing one in `tools/balance_probe.gd`.
-`Cabinet.seat()` is called by the orchestrator (`game_state.gd`,
-`elections.gd`, `legislature.gd`) right after every `Government.form()`/
-`fall()`, never from inside `government.gd` itself, to avoid a `preload()`
-cycle. Model: [docs/cabinet-model.md](docs/cabinet-model.md). MVP, V1.1a–d
-and U1–U4 are done.
+**V1.2a shipped** — a second playable nation. Germany is playable alongside
+France, chosen for maximum institutional contrast (`chancellor_election` vs
+`presidential_appointment`, `constructive_absolute` vs `absolute_members`
+censure, no separate executive clock, `pr_national` with a 5% threshold vs
+`two_round`'s 0%, dissolution the player can never call). `data/nations/*.json`
+now carries each nation's own starting fiscal policy in its `fiscal` block —
+`tax_rates_pct`, `spending_pct_gdp`, `other_spending_pct_gdp` — replacing the
+one shared `data/policy_defaults.json`; France's own numbers are the unchanged
+anchor, the other nine are sourced (VAT direct, income/corporate scaled from
+France's by OECD Revenue Statistics tax-to-GDP shares, spending scaled by
+general government expenditure). `Budget._erosion()`'s reference rate is now
+`ns.start_tax_rates_pct`, not a shared constant, so every nation starts exactly
+on its own erosion curve. `opinion_constants.gd`'s bloc weights stayed one
+global table — a measured decision: `tools/balance_probe.gd`, parameterised by
+nation, found France and Germany already diverge sharply under an identical
+relative budget, from institutions and party rosters alone. New Game opens a
+nation-select panel (`src/ui/nation_select_panel.gd`) built from whichever
+nations `data/nations/*.json` marks `playable`; a third nation onward is a
+one-flag data edit. Models: [docs/cabinet-model.md](docs/cabinet-model.md),
+[docs/economy-model.md](docs/economy-model.md). MVP, V1.1a–d, V1.2a, and
+U1–U4 are done.
 
-**Next: V1.2a** — a second playable nation, decided by a scope-alignment pass
-that also settled where military lands (thin, inside V1.3, as domestic
-politics rather than warfare), that three sectors and five taxes are the
-economy's final granularity, that Events stays last, and what happens to
-tourism, leader personal wealth and difficulty settings. V1.1e is re-parked,
-not cancelled. Arguments in [ROADMAP.md](ROADMAP.md),
-[docs/tiers/v1.md](docs/tiers/v1.md), the new
-[docs/tiers/declined.md](docs/tiers/declined.md), and
-[docs/decision-log.md](docs/decision-log.md).
+**Next: not yet scoped.** [docs/tiers/v1.md](docs/tiers/v1.md) §2's political
+system templates are next in the written order, now that a second nation has
+proven the institutional layer generalises, but the plan/model/effort call
+belongs to the session that picks it up — see
+[ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e (upper house and
+judiciary) is re-parked, not cancelled. Arguments in
+[docs/tiers/v1.md](docs/tiers/v1.md), [docs/tiers/declined.md](docs/tiers/declined.md),
+and [docs/decision-log.md](docs/decision-log.md).
 
 Save format is at **version 5**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than

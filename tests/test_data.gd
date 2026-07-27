@@ -5,6 +5,8 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const C = preload("res://src/sim/economy_constants.gd")
 
 func _init() -> void:
 	var failures: Array[String] = []
@@ -14,6 +16,7 @@ func _init() -> void:
 	if not loader.errors.is_empty():
 		failures.append("expected zero errors loading real data, got: %s" % [loader.errors])
 
+	var playable_count := 0
 	for id in loader.nations.keys():
 		var n: Nation = loader.nations[id]
 		var total := 0.0
@@ -27,6 +30,18 @@ func _init() -> void:
 
 		if n.dissolution_rule == "" or not Nation.KNOWN_DISSOLUTION_RULES.has(n.dissolution_rule):
 			failures.append("%s: dissolution_rule '%s' is missing or unrecognised" % [id, n.dissolution_rule])
+
+		if n.playable:
+			playable_count += 1
+
+		# V1.2a: starting fiscal policy is per-nation, not read from a single
+		# shared policy_defaults.json -- every nation must carry its own.
+		for key in C.TAX_KEYS:
+			if not n.tax_rates_pct.has(key):
+				failures.append("%s: fiscal.tax_rates_pct missing '%s'" % [id, key])
+		for key in C.SPENDING_KEYS:
+			if not n.spending_pct_gdp.has(key):
+				failures.append("%s: fiscal.spending_pct_gdp missing '%s'" % [id, key])
 
 		if not loader.parties.has(id):
 			failures.append("%s: no parties loaded" % id)
@@ -61,6 +76,19 @@ func _init() -> void:
 			failures.append("FRA debt_to_gdp_pct %s not within 5%% of %s" % [fra.debt_to_gdp_pct, expected_debt])
 	else:
 		failures.append("FRA not loaded")
+
+	if playable_count < 2:
+		failures.append("expected at least 2 playable nations (V1.2a), found %d" % playable_count)
+
+	# No nation's per-nation starting policy is calibrated below what its
+	# modelled taxes yield -- the negative-residual guard game_state.gd's
+	# _build_nation() reports as an error, checked here across every nation
+	# rather than only the one actually played in a given game.
+	for id in loader.nations.keys():
+		var state = GameState.new_game(loader, id)
+		for e in state.errors:
+			if e.find("revenue residual would be negative") != -1:
+				failures.append("%s: %s" % [id, e])
 
 	if failures.is_empty():
 		print("test_data: all checks passed")

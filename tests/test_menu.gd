@@ -27,6 +27,12 @@ const SAVED_DAY := 23
 var _failures: Array[String] = []
 var _menu
 var _frame := 0
+## The two Main instances _start_game() creates this run -- one from the
+## Continue/Load path (SLOT), one from New Game's nation select (DEU). Neither
+## is read off current_scene, since the second _start_game() call overwrites
+## it: each is captured as the child root.add_child() just appended.
+var _continued_game
+var _new_game_deu
 
 
 func _init() -> void:
@@ -44,9 +50,16 @@ func _process(_delta: float) -> bool:
 			_check_settings()
 			_write_save()
 			_menu._start_game(SLOT)
+			_continued_game = root.get_child(root.get_child_count() - 1)
+			# _start_game() queue_free()s the menu it was called on -- deferred,
+			# so _menu is still a valid Control for the rest of this frame, and a
+			# second call on it (New Game's path this time) is safe.
+			_menu._start_game("", "DEU")
+			_new_game_deu = root.get_child(root.get_child_count() - 1)
 			return false
 		_:
 			_check_loaded_game()
+			_check_new_game_nation_select()
 			_cleanup()
 			_finish()
 			return false
@@ -68,7 +81,7 @@ func _check_structure() -> void:
 	# Every overlay's holder starts hidden. A visible full-rect holder swallows
 	# the clicks meant for the menu buttons under it, which looks like the menu
 	# being dead rather than like a layering bug.
-	for named in [["load", _menu._load_panel], ["settings", _menu._settings_panel], ["credits", _menu._credits_panel]]:
+	for named in [["load", _menu._load_panel], ["settings", _menu._settings_panel], ["credits", _menu._credits_panel], ["nation select", _menu._nation_select_panel]]:
 		var panel = named[1]
 		if panel == null:
 			_fail("menu did not build its %s panel" % named[0])
@@ -80,6 +93,17 @@ func _check_structure() -> void:
 	if not _menu._load_panel.get_parent().visible:
 		_fail("opening the load panel did not show its holder")
 	_menu._load_panel.get_parent().hide()
+
+	# V1.2a: New Game opens a nation choice rather than starting France
+	# outright, and every nation the real data marks playable is offered --
+	# at minimum France and Germany.
+	var ids := []
+	for n in _menu._playable_nations():
+		ids.append(n.id)
+	if not ids.has("FRA") or not ids.has("DEU"):
+		_fail("nation select does not offer both FRA and DEU: %s" % [ids])
+	if _menu._new_game_button.disabled:
+		_fail("New Game is disabled even though playable nations exist")
 
 	# The menu has no game to save, so the save row must be gone rather than
 	# present and inert. Checked because the first attempt at this called
@@ -163,9 +187,9 @@ func _write_save() -> void:
 
 
 func _check_loaded_game() -> void:
-	var game = current_scene
+	var game = _continued_game
 	if game == null:
-		_fail("_start_game() did not set the game as the current scene")
+		_fail("_start_game() did not produce a Main instance for the Continue/Load path")
 		return
 	if game._state == null:
 		_fail("the game scene the menu started has no GameState")
@@ -186,6 +210,28 @@ func _check_loaded_game() -> void:
 		])
 
 	_check_pause_menu(game, clock)
+
+
+## V1.2a: choosing Germany from the nation select panel has to reach main.gd's
+## pending_player_id, not merely be stored on the menu -- the same "reached the
+## existing load path" property _check_loaded_game() proves for Continue.
+func _check_new_game_nation_select() -> void:
+	var game = _new_game_deu
+	if game == null:
+		_fail("_start_game(\"\", \"DEU\") did not produce a Main instance")
+		return
+	if game._state == null:
+		_fail("the New-Game-as-DEU scene has no GameState")
+		return
+	if game._state.player_nation_id != "DEU":
+		_fail("New Game with nation_id 'DEU' started as '%s'" % game._state.player_nation_id)
+		return
+
+	var deu = game._state.player()
+	if deu.has_executive:
+		_fail("DEU's player nation carries an executive clock; Germany has none")
+	if deu.dissolution_rule != "confidence_failure":
+		_fail("DEU's dissolution_rule is '%s', expected confidence_failure" % deu.dissolution_rule)
 
 
 ## Two properties, both of which fail silently rather than loudly:

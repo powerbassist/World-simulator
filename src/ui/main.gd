@@ -31,7 +31,15 @@ const Trends = preload("res://src/ui/trends.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
 
-const PLAYER_NATION_ID := "FRA"
+## Set by menu.gd before this scene enters the tree, the same way
+## pending_load_slot is -- see its note. Empty means "load path", where the
+## value is irrelevant because load replaces the whole GameState wholesale.
+##
+## Defaults to France rather than staying empty so a direct scene load still
+## works: tests/test_game_loop.gd and tools/*.gd load main.tscn/build a
+## GameState without going through menu.gd's nation-select panel at all.
+const DEFAULT_PLAYER_NATION_ID := "FRA"
+var pending_player_id := DEFAULT_PLAYER_NATION_ID
 
 ## How many decisions Overview's recent-effects list keeps -- U4. Not
 ## GameState.recent_effects.size(), which is unbounded in the array itself;
@@ -99,7 +107,7 @@ func _ready() -> void:
 			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
 		])
 
-	_state = GameState.new_game(_loader, PLAYER_NATION_ID)
+	_state = GameState.new_game(_loader, pending_player_id)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)

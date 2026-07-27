@@ -28,6 +28,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
+const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -71,10 +72,64 @@ func _init() -> void:
 
 	_run_roundtrip(state, clock)
 	_run_atomic_write(state, clock)
+	_run_second_nation_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
 	_finish()
+
+
+## V1.2a: SAVE_VERSION did not move (see the plan step's own cold count), but
+## a save still has to round-trip for whichever nation is playing -- checked
+## against Germany specifically, since a v4-era save format built against one
+## nation could still quietly assume something about it that a second nation
+## breaks. Lighter than _run_roundtrip(): the reflective field check is the
+## point, not another pass over atomic writes or version rejection.
+func _run_second_nation_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "DEU")
+	if not state.errors.is_empty():
+		_fail("new_game(DEU) reported %s" % [state.errors])
+		return
+
+	for _i in range(3):
+		state.month += 1
+		if state.month > 12:
+			state.month = 1
+			state.year += 1
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Opinion.tick_month(state)
+		var entry := Budget.snapshot(state)
+		entry.merge(Opinion.snapshot(state))
+		state.append_history(entry)
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 9
+
+	var save_error := SaveManager.save_game(state, clock, SECOND_NATION_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game(DEU) failed: %s" % save_error)
+		return
+
+	var result := SaveManager.load_game(SECOND_NATION_SLOT)
+	if not result["ok"]:
+		_fail("load_game(DEU) failed on a save this test just wrote: %s" % result["error"])
+		return
+
+	var loaded = result["state"]
+	if loaded.save_version != GameState.SAVE_VERSION:
+		_fail("DEU save round-tripped at save_version %d, expected %d" % [loaded.save_version, GameState.SAVE_VERSION])
+	if loaded.player_nation_id != "DEU":
+		_fail("loaded DEU save has player_nation_id '%s'" % loaded.player_nation_id)
+	_check_pair("GameState[DEU]", state, loaded)
+	for id in state.nations.keys():
+		if not loaded.nations.has(id):
+			_fail("DEU save dropped nation %s" % id)
+			continue
+		_check_pair("NationState[DEU][%s]" % id, state.nations[id], loaded.nations[id])
 
 
 func _run_roundtrip(state, clock) -> void:
@@ -212,7 +267,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

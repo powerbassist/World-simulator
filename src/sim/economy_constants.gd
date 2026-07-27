@@ -73,14 +73,6 @@ const TAX_BASE_SHARE := {
 	"vat": 0.53,
 }
 
-## Reference rate the erosion curve is centred on, %. Matches the starting rates
-## in data/policy_defaults.json, so a fresh game sits exactly on the reference.
-const TAX_REF_RATE_PCT := {
-	"income": 20.0,
-	"corporate": 25.0,
-	"vat": 20.0,
-}
-
 ## Base erosion per unit of relative rate increase. Higher where the base is more
 ## mobile — corporate profits move, consumption does not.
 const TAX_EROSION := {

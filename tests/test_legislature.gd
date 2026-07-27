@@ -70,8 +70,7 @@ func _check_extra_law_is_data_only_edit() -> void:
 	var extra := DataLoader.new()
 	extra.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/policy_defaults.json", "res://data/eu_parliament.json",
-		"res://tests/fixtures/laws_extra"
+		"res://data/eu_parliament.json", "res://tests/fixtures/laws_extra"
 	)
 	if not extra.errors.is_empty():
 		_fail("extra laws directory did not load cleanly: %s" % [extra.errors])

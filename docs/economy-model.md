@@ -195,27 +195,42 @@ revenue_pct_gdp_s  = BASE_SHARE[s] × rate_s × erosion(rate_s, REF_RATE[s], ERO
 With `rate` in percent and `BASE_SHARE` a share of GDP, the product is already a
 percent of GDP — no scaling factor to get wrong.
 
-| Lever | `BASE_SHARE` | `REF_RATE` | `EROSION` | Yield at ref | Laffer peak |
-|---|---|---|---|---|---|
-| Income tax | 0.50 | 20 % | 0.35 | 10.0 % of GDP | 38.6 % |
-| Corporate tax | 0.18 | 25 % | 0.55 | 4.5 % of GDP | 35.2 % |
-| VAT | 0.53 | 20 % | 0.25 | 10.6 % of GDP | 50.0 % |
+| Lever | `BASE_SHARE` | `EROSION` |
+|---|---|---|
+| Income tax | 0.50 | 0.35 |
+| Corporate tax | 0.18 | 0.55 |
+| VAT | 0.53 | 0.25 |
 
 `BASE_SHARE` is the share of GDP the tax nominally falls on — labour and
 household income, corporate profits, consumption. Erosion rises with mobility of
 the base, which is why corporate is nearly double income and VAT is lowest.
-The peak is `ref × (1 + k) / 2k`; all three sit above any rate a player would
-plausibly want, so the curve reads as diminishing returns rather than as a trap.
+
+> [!note] `REF_RATE` was a shared constant until V1.2a; it is now `ns.start_tax_rates_pct`
+> `Budget._erosion()`'s reference used to be `economy_constants.TAX_REF_RATE_PCT`,
+> one table for all ten nations, matched to `data/policy_defaults.json`'s
+> 20/25/20 — the same file starting rates lived in before V1.2a made them
+> per-nation. Once they were, a shared reference put every nation but France
+> off its own erosion curve at new-game. `revenue_lines()`,
+> `modelled_revenue_total()` and `_erosion()` now all take the reference as an
+> explicit argument, and every call site passes `ns.start_tax_rates_pct` — the
+> same "delta against the nation's own start" shape `start_spending_pct_gdp`,
+> `start_deficit_pct_gdp` and `start_unemployment_pct` already used. Erosion is
+> then exactly 1.0 for every nation at new-game, France included, with numbers
+> unchanged: `TAX_BASE_SHARE × rate` at the nation's own starting rate.
 
 `EROSION_MIN` / `EROSION_MAX` = 0.35 / 1.25 clamp the multiplier, so a rate of
-zero or of 100 % still produces a finite, signed number.
+zero or of 100 % still produces a finite, signed number, at whatever reference
+the nation's own start set.
 
 ### The revenue residual
 
-The three modelled taxes yield **25.1 % of GDP** at reference rates. France
-actually collects 46.1 % (`fiscal.tax_revenue_pct_gdp`). The difference is
-social contributions, local taxes, and everything else the player does not have a
-slider for.
+At reference rates the three modelled taxes yield `BASE_SHARE × rate` summed —
+**25.1 % of GDP** for France's 20/25/20. France actually collects 46.1 %
+(`fiscal.tax_revenue_pct_gdp`). The difference is social contributions, local
+taxes, and everything else the player does not have a slider for. Every nation
+calibrates its own residual the same way, against its own rates and its own
+authored `tax_revenue_pct_gdp` — the United Kingdom's modelled 25.1 % against
+its authored 35.3 % is the tightest margin of the ten as of V1.2a.
 
 ```
 other_revenue_pct_gdp = nation.tax_revenue_pct_gdp − Σ revenue_pct_gdp_s(starting rates)
@@ -415,11 +430,12 @@ They are deliberately **not** in `data/`. [[engine-decision|Rule 1]] puts
 These are model parameters: there is exactly one set, forever, and moving them to
 JSON would buy a loader and a validator in exchange for nothing.
 
-The one thing that *is* content is `data/policy_defaults.json` — the starting tax
-rates and spending split. It is a single shared file rather than a `policy` block
-in ten nation files, because only France has a budget at MVP and authoring nine
-plausible spending splits nothing reads is busywork. A per-nation override block
-is a small addition if V1 ever needs it.
+The one thing that *is* content is starting tax rates and spending split, and it
+lives in `data/nations/*.json`'s `fiscal` block, per nation, since [[ROADMAP|V1.2a]].
+It was a single shared `policy_defaults.json` from S4 through V1.1d, on the
+stated grounds that only France had a budget at MVP; V1.2a made a second nation
+playable and that grounds ran out. See [[data-architecture]] for the schema and
+the sourcing behind the other nine nations' numbers.
 
 ---
 

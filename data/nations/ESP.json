@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 21% is Spain's own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'). Income and corporate are France's 20/25 scaled by Spain's OECD Revenue Statistics personal/corporate tax-to-GDP share against France's -- Spain leans noticeably less on personal income tax, hence 15/25. Spending is France's split scaled by general government expenditure of 45.5% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 100.4,
-    "tax_revenue_pct_gdp": 37.5
+    "tax_revenue_pct_gdp": 37.5,
+    "tax_rates_pct": {
+      "income": 15.0,
+      "corporate": 25.0,
+      "vat": 21.0
+    },
+    "spending_pct_gdp": {
+      "health": 8.7,
+      "education": 4.4,
+      "defence": 1.6,
+      "pensions": 11.5,
+      "infrastructure": 2.8
+    },
+    "other_spending_pct_gdp": 9.5
   },
   "imported": {
     "_source": "worldbank",

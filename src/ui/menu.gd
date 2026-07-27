@@ -12,9 +12,11 @@ extends Control
 ## read. One scene, one job -- docs/engine-decision.md Rule 3.
 
 const SaveManager = preload("res://src/core/save_manager.gd")
+const DataLoader = preload("res://src/core/data_loader.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const CreditsPanel = preload("res://src/ui/credits_panel.gd")
+const NationSelectPanel = preload("res://src/ui/nation_select_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const GAME_SCENE := "res://src/ui/main.tscn"
@@ -24,6 +26,8 @@ var _new_game_button: Button
 var _load_panel
 var _settings_panel
 var _credits_panel
+var _nation_select_panel
+var _loader: DataLoader
 ## The menu entry that opened the current overlay, so closing it puts keyboard
 ## focus back where the player left it rather than nowhere.
 var _focus_return: Control
@@ -35,6 +39,16 @@ func _ready() -> void:
 	# Each scene root carries its own copy -- a Theme propagates down the tree,
 	# not across a change_scene_to_file().
 	UiTheme.apply(self)
+
+	# New Game needs to know which nations are playable before it can offer a
+	# choice -- the same data main.gd loads to build the actual game, read here
+	# a second time rather than threaded through the scene change, which cannot
+	# pass an argument (see _start_game()'s note).
+	_loader = DataLoader.new()
+	_loader.load_all()
+	if not _loader.errors.is_empty():
+		for e in _loader.errors:
+			push_error(e)
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_build_background())
@@ -54,12 +68,30 @@ func _ready() -> void:
 	_credits_panel = CreditsPanel.new()
 	_add_overlay(_credits_panel)
 
+	_nation_select_panel = NationSelectPanel.new()
+	_nation_select_panel.nation_selected.connect(func(id): _start_game("", id))
+	_add_overlay(_nation_select_panel)
+	_nation_select_panel.set_nations(_playable_nations())
+
 	# Godot focuses nothing by default, and a menu with no focused control
 	# cannot be driven from the keyboard at all -- arrow keys and Enter go
 	# nowhere until something has focus. grab_focus() only works in the tree,
 	# so it happens here rather than in _build_menu().
 	var first: Button = _new_game_button if _continue_button.disabled else _continue_button
 	first.grab_focus()
+
+
+## Every nation the loaded data marks playable, sorted by id so the list order
+## is stable and matches every other place this project iterates nations.gd.
+func _playable_nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	var out: Array = []
+	for id in ids:
+		var n = _loader.nations[id]
+		if n.playable:
+			out.append(n)
+	return out
 
 
 func _build_background() -> Control:
@@ -94,7 +126,8 @@ func _build_menu() -> Control:
 	_continue_button = _add_entry(column, "Continue", func(): _start_game(slots[0]))
 	_continue_button.disabled = slots.is_empty()
 
-	_new_game_button = _add_entry(column, "New Game", func(): _start_game(""))
+	_new_game_button = _add_entry(column, "New Game", func(): _show(_nation_select_panel))
+	_new_game_button.disabled = _playable_nations().is_empty()
 	_add_entry(column, "Load Game", func(): _show(_load_panel))
 	_add_entry(column, "Settings", func(): _show(_settings_panel))
 	_add_entry(column, "Credits", func(): _show(_credits_panel))
@@ -152,7 +185,7 @@ func _close(panel: Control) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.keycode != KEY_ESCAPE:
 		return
-	for panel in [_load_panel, _settings_panel, _credits_panel]:
+	for panel in [_load_panel, _settings_panel, _credits_panel, _nation_select_panel]:
 		if panel.get_parent().visible:
 			_close(panel)
 			return
@@ -164,13 +197,18 @@ func _unhandled_input(event: InputEvent) -> void:
 ## editor run strips autoloads out of project.godot -- a global that vanishes
 ## under a tool the project uses is not the cheap option it looks like.
 ##
-## An empty slot means a new game.
-func _start_game(load_slot: String) -> void:
+## An empty slot means a new game, in which case `nation_id` is the player's
+## choice from the nation select panel. `nation_id` is ignored when loading --
+## a save carries its own player_nation_id, and main.gd's load path replaces
+## the whole GameState wholesale after building a throwaway one.
+func _start_game(load_slot: String, nation_id: String = "") -> void:
 	# Untyped, like main.gd's panel references: pending_load_slot is a script
 	# property, and a Node-typed variable cannot see it without a cast that buys
 	# nothing here.
 	var game = load(GAME_SCENE).instantiate()
 	game.pending_load_slot = load_slot
+	if not nation_id.is_empty():
+		game.pending_player_id = nation_id
 	get_tree().root.add_child(game)
 	get_tree().current_scene = game
 	queue_free()

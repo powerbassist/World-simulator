@@ -90,6 +90,45 @@ scenarios can reach is too narrow — that a scenario cannot be authored hard
 enough or gentle enough. That is an empirical finding, not a preference, and
 nothing weaker counts.
 
+## Per-nation voter-bloc weights
+
+**Declined at V1.2a**, when the named trigger — a second playable nation —
+actually fired. Re-examined rather than restated: `opinion_constants.gd`'s
+`BLOC_SIZE`, `BLOC_SALIENCE_BASE` and, by the same argument,
+`election_constants.gd`'s `BLOC_TURNOUT` and `BLOC_IDEAL`, stay one global
+table rather than becoming per-nation `data/` content.
+
+Three reasons:
+
+- **No source.** Per-nation salience is roughly 660 hand-invented numbers, with
+  nothing in [[data-sources]] to author them from. Sourced-but-wrong is worse
+  than honestly a model parameter — it reads as authority the numbers don't
+  have.
+- **Every tuned constant in [[opinion-model]] was measured against this one
+  shared table.** `SALIENCE_GAIN = 5.0`, `DEFICIT_SCALE_PP = 6.0`, the whole
+  `public_finances` row — `tools/balance_probe.gd` found each of these against
+  a single bloc table. Ten tables means ten measurements, or nine tuned
+  constants asserted rather than found.
+- **A measurement, not an assumption, says the shared table isn't hiding the
+  problem it looks like it might.** `balance_probe.gd`, parameterised by
+  nation at V1.2a, ran the identical relative `managed` budget — cut defence,
+  raise VAT, by the same percentage-point deltas from each nation's own start
+  — against France and Germany. Germany's government lost its majority at its
+  February 2029 legislative election; France held one through every election
+  of the same fourteen-year run. That divergence comes entirely from
+  authored, already-per-nation content: `chancellor_election` /
+  `constructive_absolute` censure against `presidential_appointment` /
+  `absolute_members`, a 5% `pr_national` threshold against `two_round`'s 0%,
+  and two different party rosters — with the bloc table completely untouched.
+  Two nations already play differently without it.
+
+**What would reopen it:** a real source for per-nation bloc *size* specifically
+— World Bank/Eurostat urban-share, 65+-share and tertiary-enrolment series
+exist and could source `BLOC_SIZE` without inventing salience alongside it —
+or a playtesting finding that two nations under the same relative policy feel
+interchangeable, which the measurement above argues against but a third and
+fourth playable nation could still show.
+
 ---
 
 Related: [[scope]] · [[mvp]] · [[v1]] · [[someday]] · [[out-of-scope-mvp]]

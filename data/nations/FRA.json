@@ -57,9 +57,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. Starting policy is the V1.2a anchor -- every other nation's tax_rates_pct/spending_pct_gdp/other_spending_pct_gdp is France's, scaled: VAT is each nation's own sourced statutory rate, income and corporate are France's scaled by that nation's OECD Revenue Statistics personal/corporate tax-to-GDP share, and the five spending lines plus other_spending_pct_gdp are France's split scaled by general-government-expenditure-to-GDP. France's own numbers are therefore unchanged from V1.1 and are not derived from anything below.",
     "debt_to_gdp_pct": 116.0,
-    "tax_revenue_pct_gdp": 46.1
+    "tax_revenue_pct_gdp": 46.1,
+    "tax_rates_pct": {
+      "income": 20.0,
+      "corporate": 25.0,
+      "vat": 20.0
+    },
+    "spending_pct_gdp": {
+      "health": 11.0,
+      "education": 5.5,
+      "defence": 2.0,
+      "pensions": 14.5,
+      "infrastructure": 3.5
+    },
+    "other_spending_pct_gdp": 12.0
   },
   "imported": {
     "_source": "worldbank",

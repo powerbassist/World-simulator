@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 20% is Austria's own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'). Corporate 23% is Austria's own statutory rate, reduced from 25% in 2024 (BMF). Income is France's 20 scaled by Austria's OECD Revenue Statistics personal-tax-to-GDP share against France's, landing close to France's own at 19. Spending is France's split scaled by general government expenditure of 55.2% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 80.5,
-    "tax_revenue_pct_gdp": 43.1
+    "tax_revenue_pct_gdp": 43.1,
+    "tax_rates_pct": {
+      "income": 19.0,
+      "corporate": 23.0,
+      "vat": 20.0
+    },
+    "spending_pct_gdp": {
+      "health": 10.6,
+      "education": 5.3,
+      "defence": 1.9,
+      "pensions": 14.0,
+      "infrastructure": 3.4
+    },
+    "other_spending_pct_gdp": 11.6
   },
   "imported": {
     "_source": "worldbank",

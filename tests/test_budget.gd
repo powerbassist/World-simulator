@@ -26,6 +26,8 @@ func _init() -> void:
 		return
 
 	_check_calibration()
+	_check_france_unchanged_by_v1_2a()
+	_check_second_nation_calibrates()
 	_check_income_tax_rise()
 	_check_debt_accumulates()
 	_check_projection_matches()
@@ -52,11 +54,58 @@ func _check_calibration() -> void:
 	if fra.debt_service_pct_gdp <= 0.0:
 		_fail("FRA starts with no debt service, expected roughly 2.3%% of GDP")
 
-	# Every nation must calibrate, not just the playable one — Switzerland's
-	# 27.8% total is the binding case.
+	# Every nation must calibrate, not just the playable ones — the United
+	# Kingdom's 35.3% total against its modelled 25.1% is the tightest margin
+	# of the ten once starting policy went per-nation at V1.2a.
 	for ns in state.nations.values():
 		if ns.other_revenue_pct_gdp < 0.0:
 			_fail("%s: revenue residual is negative (%.2f)" % [ns.id, ns.other_revenue_pct_gdp])
+
+
+## V1.2a moved starting fiscal policy from one shared data/policy_defaults.json
+## into each nation's own fiscal block, and threaded the tax-erosion reference
+## through as an explicit per-nation argument instead of a shared constant
+## (economy_constants.TAX_REF_RATE_PCT, deleted). France was the anchor both
+## changes were built around and its own numbers were never meant to move --
+## this is that promise, checked to float precision rather than eyeballed.
+func _check_france_unchanged_by_v1_2a() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var fra = state.player()
+
+	if absf(fra.tax_rates_pct["income"] - 20.0) > 1e-9 or \
+		absf(fra.tax_rates_pct["corporate"] - 25.0) > 1e-9 or \
+		absf(fra.tax_rates_pct["vat"] - 20.0) > 1e-9:
+		_fail("FRA's starting tax rates moved: %s" % [fra.tax_rates_pct])
+
+	# Erosion is centred on the nation's own start, so at new-game it must be
+	# exactly 1.0 -- the modelled revenue line is then TAX_BASE_SHARE * rate,
+	# nothing else, checked to float precision.
+	for key in C.TAX_KEYS:
+		var expected: float = float(C.TAX_BASE_SHARE[key]) * float(fra.tax_rates_pct[key])
+		var actual: float = float(fra.revenue_pct_gdp[key])
+		if absf(actual - expected) > 1e-9:
+			_fail("FRA's %s revenue line is %.9f, expected erosion-free %.9f at new-game" % [key, actual, expected])
+
+
+## The second half of the V1.2a promise: a nation whose starting policy is
+## genuinely different from France's still calibrates cleanly, and its
+## starting deficit is not France's by coincidence.
+func _check_second_nation_calibrates() -> void:
+	var state = GameState.new_game(_loader, "DEU")
+	if not state.errors.is_empty():
+		_fail("new_game(DEU) reported errors: %s" % [state.errors])
+		return
+
+	var deu = state.player()
+	var authored: float = _loader.nations["DEU"].tax_revenue_pct_gdp
+	if absf(deu.total_revenue_pct_gdp - authored) > 0.01:
+		_fail("DEU starting revenue is %.2f%% of GDP, expected the authored %.2f%%" % [deu.total_revenue_pct_gdp, authored])
+
+	var fra = GameState.new_game(_loader, "FRA").player()
+	if is_equal_approx(deu.deficit_pct_gdp, fra.deficit_pct_gdp):
+		_fail("DEU's starting deficit (%.2f) exactly matches FRA's (%.2f) -- per-nation policy did not take" % [
+			deu.deficit_pct_gdp, fra.deficit_pct_gdp
+		])
 
 
 ## Done-when: raising income tax increases revenue and reduces growth over the

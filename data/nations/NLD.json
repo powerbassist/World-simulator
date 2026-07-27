@@ -47,9 +47,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 21% is the Netherlands' own statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'). Income and corporate are France's 20/25 scaled by the Netherlands' OECD Revenue Statistics personal/corporate tax-to-GDP share against France's -- the Netherlands leans more on payroll/social contributions than personal income tax and carries a comparatively high corporate-tax base, hence 19/25.8. Spending is France's split scaled by general government expenditure of 44.4% of GDP against France's 57.3% (TheGlobalEconomy.com / OECD Government at a Glance 2025).",
     "debt_to_gdp_pct": 43.3,
-    "tax_revenue_pct_gdp": 38.8
+    "tax_revenue_pct_gdp": 38.8,
+    "tax_rates_pct": {
+      "income": 19.0,
+      "corporate": 25.8,
+      "vat": 21.0
+    },
+    "spending_pct_gdp": {
+      "health": 8.5,
+      "education": 4.3,
+      "defence": 1.5,
+      "pensions": 11.2,
+      "infrastructure": 2.7
+    },
+    "other_spending_pct_gdp": 9.3
   },
   "imported": {
     "_source": "worldbank",

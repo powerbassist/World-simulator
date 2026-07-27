@@ -46,9 +46,22 @@
   },
   "fiscal": {
     "_source": "authored",
-    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded",
+    "_note": "General government, IMF/OECD estimates ~2023-2024, rounded. V1.2a starting policy, derived from France's anchor (see FRA.json): VAT 8.1% is Switzerland's own statutory standard rate, the lowest in Europe (Tax Foundation, 'VAT Rates in Europe 2024'). Corporate 19.7% is the commonly cited federal-plus-cantonal average combined rate -- used directly rather than revenue-share-scaled from France, because Switzerland's corporate tax revenue is inflated by multinational profit booking relative to its low headline rate, and scaling by revenue share would have overstated it. Income is France's 20 scaled by Switzerland's OECD Revenue Statistics personal-tax-to-GDP share against France's, hence 17. Spending is France's split scaled by general government expenditure of 31.3% of GDP against France's 57.3% -- the lowest of the ten (countryeconomy.com / Swiss Federal Finance Administration).",
     "debt_to_gdp_pct": 39.4,
-    "tax_revenue_pct_gdp": 27.8
+    "tax_revenue_pct_gdp": 27.8,
+    "tax_rates_pct": {
+      "income": 17.0,
+      "corporate": 19.7,
+      "vat": 8.1
+    },
+    "spending_pct_gdp": {
+      "health": 6.0,
+      "education": 3.0,
+      "defence": 1.1,
+      "pensions": 7.9,
+      "infrastructure": 1.9
+    },
+    "other_spending_pct_gdp": 6.6
   },
   "imported": {
     "_source": "worldbank",

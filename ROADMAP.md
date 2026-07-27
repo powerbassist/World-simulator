@@ -55,6 +55,7 @@ shell does not have.
 | V1.1b | Sim | Party discipline as live state, seat-level rebellions, disaffection — the censure branch fires |
 | V1.1c | Sim | Dissolution and snap elections — the rule as ten-nation data, measured before it was built, no election-model change needed |
 | V1.1d | Sim | Cabinet and ministers — five portfolios keyed to spending lines, competence and portfolio position both derived rather than authored, shortfall-driven resignation measured before it was built |
+| V1.2a | Sim | A second playable nation — Germany, per-nation starting fiscal policy (`policy_defaults.json` retired), bloc weights confirmed global by measurement rather than assumption |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -62,11 +63,13 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-| # | Track | Block | Depends on |
-|---|---|---|---|
-| **V1.2a** | Sim | A second playable nation | — |
+Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's political
+system templates are next in the written order, now that a second nation has
+proven the institutional layer generalises — but per this document's own
+handoff convention below, the plan/model/effort call belongs to the session
+that picks it up, read cold, not to this one.
 
-### V1.2a — a second playable nation
+### V1.2a — a second playable nation (shipped)
 
 **V1.1e is not next.** After V1.1d shipped, the user asked not to spend another
 session deepening the French assembly: four sessions running (V1.1a–d) each added
@@ -75,34 +78,38 @@ The scope-alignment pass took that as settled and picked the breadth move
 instead. V1.1e is still buildable and still in order — it is re-parked below, not
 cancelled.
 
-Why this one rather than diplomacy or the political-system templates: it is the
-cheapest breadth per unit of work, because **the content already exists for ten
-nations**. All ten have authored `data/nations/*.json` and `data/parties/*.json`,
+Why this one rather than diplomacy or the political-system templates: it was the
+cheapest breadth per unit of work, because **the content already existed for ten
+nations**. All ten had authored `data/nations/*.json` and `data/parties/*.json`,
 a real electoral system, a real formation and censure rule (`DEU.json` carries
 `"censure": "constructive_absolute"`), and V1.1c's dissolution rule as ten-nation
-data. `GameState.new_game(loader, player_id)` is already parameterised; the only
-hardcoded player nation under `src/` is `PLAYER_NATION_ID` in `src/ui/main.gd`.
+data. `GameState.new_game(loader, player_id)` was already parameterised; the only
+hardcoded player nation under `src/` was `PLAYER_NATION_ID` in `src/ui/main.gd`
+(now `main.gd`'s `pending_player_id`, set by the menu's nation-select panel,
+defaulting to France only for a scene built directly rather than through it —
+see [docs/decision-log.md](docs/decision-log.md)).
 [docs/scope.md](docs/scope.md) already calls France-only "debt with a known due
 date", and every further block adds more of it.
 
-The cost is not code. It is the two **shared** things a second player nation
-makes wrong:
+**Shipped.** Germany is playable, chosen for maximum institutional contrast with
+France. The two shared things a second player nation made wrong:
 
-- **`data/policy_defaults.json` is one file for every nation.** Its own `_note`
-  says "Shared rather than per-nation because only the player's nation has a
-  budget at MVP". That note is now due.
-- **`opinion_constants.gd`'s bloc weights are one global table**, so every
-  nation's electorate has identical priorities. Whether that is accepted as an
-  honest simplification or moved into data is a call for this block's plan step,
-  and it is the call that decides the block's real size.
+- **`data/policy_defaults.json` was one file for every nation.** Retired —
+  every nation's `fiscal` block now carries its own `tax_rates_pct`,
+  `spending_pct_gdp` and `other_spending_pct_gdp`, sourced per nation with
+  France as the anchor. See [docs/data-architecture.md](docs/data-architecture.md).
+- **`opinion_constants.gd`'s bloc weights are one global table.** Stayed that
+  way — a measured decision, not a restated assumption. See
+  [docs/tiers/declined.md](docs/tiers/declined.md).
 
-The nation-select screen is one list on the existing main menu, so it rides with
+The nation-select screen is one list on the existing main menu, so it rode with
 this block rather than triggering a U block. **U5 stays reserved** for the
 dashboard tab V1.1d deferred.
 
-Scope and done-when list are written in its own plan step, as always. Content is
-in [docs/tiers/v1.md](docs/tiers/v1.md) §2; the models built so far are
-[[government-model]], [[discipline-model]], [[dissolution-model]] and
+Full account, including the roadmap-row correction and the mid-build fix to the
+balance probe's extreme regimes: [docs/decision-log.md](docs/decision-log.md).
+Content is in [docs/tiers/v1.md](docs/tiers/v1.md) §2; the models built so far
+are [[government-model]], [[discipline-model]], [[dissolution-model]] and
 [[cabinet-model]].
 
 ### Re-parked, still in order
@@ -150,7 +157,7 @@ is already made, which is most sessions once the docs are written.
 | V1.1c Dissolution | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Originally logged **Light / Medium**, flagged in advance as known wrong — "reads the schedule schema [[electoral-systems]] already settled" assumed the dissolution rule was already in that schema; it was not, and adding it was S1 class. The cold count at plan time found thirteen surfaces: a ten-nation schema addition, six state fields plus a save-version bump, a new sim module, a tick change, two panels, five test files, two probe regimes, eight docs. Third correction on this table's own record; see [[decision-log]]. |
 | V1.1d Cabinet | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on "ministers are a schema that departments, opinion and events all read — S1 class." The cold count at plan time found ~fourteen surfaces against that reading — V1.1c's own thirteen, plus a new content class (named individuals) and a dashboard tab. **Corrected by cutting scope, not raising effort** — the first correction on this table's record to resolve that way rather than by moving to a higher tier: portfolio → party (not named individuals), loyalty → resignation only (not a second hostility() term), UI → the existing Government panel (not a new tab). Cut to eleven surfaces, Medium held. Fourth correction on this table's own record; see [[decision-log]]. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
-| V1.2a Second nation | **Yes** | Opus 5 to plan, Sonnet 5 to build | High → Medium | Counted at scope-alignment time, not from the block's name: `PLAYER_NATION_ID` plus a nation-select on the existing menu, per-nation policy defaults across ten data files plus loader and validator, a probable `SAVE_VERSION` bump, the `FRA`-hardcoded probes and tests parameterised, a balance run for a second nation, and docs. Roughly ten surfaces. The count is a starting point and was made by the *handing-off* session, which the record below says is the worse vantage point — count it cold and challenge it. The specific thing to challenge: whether the bloc-weight table moves into data, which is the difference between ten surfaces and an S1-class schema session. |
+| V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 
 Every V1.2+ block gets a plan, on Opus 5. By then there is enough built that
 changes ripple.
