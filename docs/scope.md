@@ -26,9 +26,26 @@ These are settled and everything else is designed around them.
 | Time model | Real-time with pause and speed control. |
 | Presentation | 2D map plus dense UI panels. No 3D. |
 | First playable nation | France. |
+| Playable nations, eventually | **All of them.** France-only is an alpha cut, not the design target. |
 | World at MVP | France plus nine European AI neighbours. |
 | Engine | Godot 4.x, GDScript — see [[engine-decision]]. |
 | Content rule | Real nations, invented people, companies, and parties — see [[fictionalization]]. |
+
+> [!important] France-only is temporary, and that changes what is acceptable now
+> Every nation in the game is meant to become playable. [[v1|V1.2]] adds the
+> first few; the end state is all of them, at whatever roster the game ships
+> with.
+>
+> This is a constraint on **today's** code, not a note about the future. A
+> shortcut that works because there is exactly one player nation is debt with a
+> known due date, and the cheap version is worth taking only after checking that
+> it generalises. It is the same rule [[engine-decision]] already states as
+> "there is never an `if nation_id == "FRA"` anywhere" — which nation the player
+> holds is data, read through `GameState.player()`, never a constant or a branch.
+>
+> The ten authored electoral systems, formation methods and censure rules already
+> exist partly for this reason: they were built per-nation when a France-only
+> game would not have needed them.
 
 ## Step 1 — Brainstorm
 
