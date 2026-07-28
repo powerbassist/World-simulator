@@ -39,6 +39,11 @@
       "name": "Baudouin III"
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "A revision requires declaring the relevant article open to revision, dissolving Parliament, and re-electing it before the new Chambers can amend it by a 2/3 majority with a 2/3 quorum present. The dissolution-and-re-election step is not modelled; the entrenching number, 2/3, is what this rule carries. senate.be, 'Revision of the Constitution'.",
+      "rule": "two_thirds"
+    },
     "formation": {
       "_source": "authored",
       "_note": "Government formed by coalition negotiation and appointed by the King; requires the confidence of the Chamber, carried on a simple majority of those voting.",

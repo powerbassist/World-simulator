@@ -132,6 +132,16 @@ const CABINET_REGIMES := {
 	"austerity_cabinet_shorted": {"budget": REGIMES["austerity"], "shortfall_month": 6},
 }
 
+## V1.2c: does a constitutional amendment actually pass, and does the run stay
+## sane once it has rewritten one of its own institutional fields mid-play?
+## FRA's real three_fifths is the only playable nation measured reachable --
+## docs/amendment-model.md's reachability sweep found Germany's real
+## two_thirds unreachable even at full term-start cohesion, so no regime
+## targets DEU here.
+const AMENDMENT_REGIMES := {
+	"managed_amends_term_limit": {"budget": REGIMES["managed"], "amend_month": 12, "amendment_id": "abolish_term_limits"},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -163,6 +173,9 @@ func _init() -> void:
 		for name in CABINET_REGIMES.keys():
 			var regime: Dictionary = CABINET_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, int(regime["shortfall_month"]))
+		for name in AMENDMENT_REGIMES.keys():
+			var regime: Dictionary = AMENDMENT_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
 
 	quit(0)
 
@@ -187,7 +200,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "") -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -246,6 +259,18 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == cabinet_shortfall_month:
 			_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
+
+		if i + 1 == amend_month and amendment_id != "":
+			var law = _find_law(loader, amendment_id)
+			if law == null:
+				printerr("  amendment '%s' not found in data/laws" % amendment_id)
+			else:
+				var result := Legislature.propose(state, loader, law)
+				print("  %d-%02d %s: amendment '%s' — %s (%d/%d, needed %s)" % [
+					year, month, regime_name, amendment_id,
+					"PASSED" if result["passed"] else "failed",
+					result["yes_seats"], result["seats_total"], ns.amendment_rule,
+				])
 
 		var results := Elections.tick_month(state, loader)
 		for r in results:
@@ -356,6 +381,13 @@ func _short_the_largest_partner(state, ns, party_list: Array, regime_name: Strin
 		year, month, regime_name, target_portfolio, largest, weakest_fit,
 		Cabinet.shortfall(ns, largest),
 	])
+
+
+func _find_law(loader, law_id: String):
+	for law in loader.laws:
+		if law.id == law_id:
+			return law
+	return null
 
 
 func _print_header() -> void:

@@ -259,12 +259,28 @@ func _rebellion_text(party_rebels: Dictionary) -> String:
 	return "%d seats broke ranks: %s." % [total, ", ".join(parts)]
 
 
+## A constitutional amendment reads its OWN nation's real threshold rather
+## than the literal string "amendment" -- law.majority only tells
+## resolve_vote() to look at ns.amendment_rule, and this is where the display
+## does the same lookup. See docs/amendment-model.md.
+func _majority_phrase(ns, law) -> String:
+	if not law.constitutional:
+		return "%s majority" % law.majority
+	match ns.amendment_rule:
+		"ordinary_law": return "ordinary majority"
+		"three_fifths": return "3/5 majority"
+		"two_thirds": return "2/3 majority"
+		"three_quarters": return "3/4 majority"
+		"referendum_required": return "referendum required"
+		_: return ns.amendment_rule
+
+
 func _build_law_row(ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
 	var heading := Label.new()
-	heading.text = "%s  (%s, %s majority)" % [law.law_name, law.theme, law.majority]
+	heading.text = "%s  (%s, %s)" % [law.law_name, law.theme, _majority_phrase(ns, law)]
 	box.add_child(heading)
 
 	var summary := Label.new()
@@ -285,9 +301,10 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	propose_btn.pressed.connect(_on_propose.bind(law))
 	row.add_child(propose_btn)
 
-	# Article 49.3 exists only under a constitution that has it, so the button is
-	# absent rather than disabled for every other formation method.
-	if ns.formation_method == "presidential_appointment":
+	# Article 49.3 exists only under a constitution that has it, and cannot force
+	# a constitutional amendment through -- Art. 89's revision procedure has no
+	# executive bypass. See docs/amendment-model.md.
+	if ns.formation_method == "presidential_appointment" and not law.constitutional:
 		var force_btn := Button.new()
 		force_btn.text = "Force (49.3)"
 		force_btn.disabled = not Government.can_force(ns)

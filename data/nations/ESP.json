@@ -39,6 +39,11 @@
       "name": "Alfonso VII"
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 167: an ordinary amendment needs a 3/5 majority in both the Congress and the Senate (or 2/3 of Congress plus 3/5 of Senate via a joint committee if they first disagree). Only Art. 168's rare total-revision path -- affecting the fundamental-rights title, requiring 2/3, a dissolution, and a referendum -- needs a stricter bar, and no amendment content in this game invokes it. ICL/servat.unibe.ch, Spanish Constitution text.",
+      "rule": "three_fifths"
+    },
     "formation": {
       "_source": "authored",
       "_note": "Investiture requires an absolute majority in the first round, a simple majority 48 hours later. No confidence is constructive and requires an absolute majority. Arts. 99 and 113 of the 1978 Constitution.",

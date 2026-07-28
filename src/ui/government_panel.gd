@@ -68,6 +68,14 @@ const DISSOLUTION_LABEL := {
 	"none": "cannot be dissolved",
 }
 
+const AMENDMENT_LABEL := {
+	"ordinary_law": "an ordinary majority, like any other law",
+	"three_fifths": "3/5 of the assembly",
+	"two_thirds": "2/3 of the assembly",
+	"three_quarters": "3/4 of the assembly",
+	"referendum_required": "a mandatory referendum; not proposable in this game",
+}
+
 var _state
 var _loader
 var _title: Label
@@ -263,6 +271,7 @@ func _refresh() -> void:
 	_add_line("Agreed position: economic %+.2f, social %+.2f." % [
 		ns.coalition_position["economic"], ns.coalition_position["social"]
 	])
+	_add_line("A constitutional amendment needs %s." % AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule))
 
 	_add_line("")
 	_add_line("In government")

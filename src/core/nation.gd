@@ -39,6 +39,22 @@ const KNOWN_DISSOLUTION_RULES: Array[String] = [
 	"self_dissolution", "none",
 ]
 
+## What it takes to pass a constitutional amendment, dispatched in
+## src/sim/legislature.gd's amendment vote path, never on the nation id --
+## docs/amendment-model.md and docs/engine-decision.md Rule 1.
+##
+## referendum_required is declared, unresolved -- the same shape
+## PoliticalSystem.KNOWN_LOSE_CONDITIONS' "never" uses for Switzerland: no
+## referendum mechanic exists yet (V1.1f/V1.7), so no amendment is proposable
+## for a nation carrying this rule. two_thirds is genuinely, measurably
+## unreachable for Germany's six-party roster even at full term-start
+## cohesion -- see docs/amendment-model.md's reachability sweep -- so Germany
+## carries the real rule with no amendment content authored against it,
+## rather than a detuned number invented to make the mechanic playable.
+const KNOWN_AMENDMENT_RULES: Array[String] = [
+	"ordinary_law", "three_fifths", "two_thirds", "three_quarters", "referendum_required",
+]
+
 ## Who the head of state is, and how they got there. Dispatched nowhere in
 ## sim code except the elected_president clock dissolution.gd reads for
 ## head_of_state_limited -- otherwise decorative, read only by the government
@@ -127,6 +143,11 @@ var head_of_state_next_month: int = 0
 ## termed-out, 0 meaning no limit. Only France's template permits a nonzero
 ## value -- see docs/political-systems.md.
 var term_limit: int = 0
+
+## What a constitutional amendment must clear to pass, dispatched by
+## src/sim/legislature.gd's resolve_vote() amendment arm -- see
+## docs/amendment-model.md.
+var amendment_rule: String = ""
 
 ## EU membership and European Parliament seat count. Empty/zero for a
 ## non-member — GBR and CHE simply have no reader for these, see
@@ -242,6 +263,11 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 
 	n.term_limit = _extract_int(government, "term_limit", "government.term_limit", filename, errors)
 	_check_range_int(n.term_limit, MIN_TERM_LIMIT, MAX_TERM_LIMIT, "government.term_limit", filename, errors)
+
+	var amendment: Dictionary = _extract_dict(government, "amendment", filename, errors)
+	n.amendment_rule = _extract_string(amendment, "rule", filename, errors)
+	if n.amendment_rule != "" and not KNOWN_AMENDMENT_RULES.has(n.amendment_rule):
+		errors.append("%s: government.amendment.rule '%s' is not a recognised rule" % [filename, n.amendment_rule])
 
 	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)
 	n.formation_method = _extract_string(formation, "method", filename, errors)

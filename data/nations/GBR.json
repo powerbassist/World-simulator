@@ -39,6 +39,11 @@
       "name": "Robert III"
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "The UK has no codified, entrenched constitution: Parliament alters constitutional arrangements (the electoral system, the devolution settlements, the Union itself) by ordinary Act, under parliamentary sovereignty. No special majority or second vote is required. UK Parliament, 'Parliamentary sovereignty'.",
+      "rule": "ordinary_law"
+    },
     "formation": {
       "_source": "authored",
       "_note": "The largest party forms a government; there is no investiture vote. A no confidence motion carries on a simple majority of members present and voting.",

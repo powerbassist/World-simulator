@@ -61,9 +61,15 @@ func _new_state(player_id := "FRA"):
 	return state
 
 
+## The first ORDINARY law -- every check in this file forces a bill and reads
+## an ordinary majority/censure outcome, which a constitutional amendment
+## does not have (Article 49.3 refuses one outright, see
+## docs/amendment-model.md). Skipping law.constitutional keeps that true
+## regardless of where data/laws/amendments.json happens to sort
+## alphabetically among the law directories.
 func _first_law():
 	for law in _loader.laws:
-		if law.id != "":
+		if law.id != "" and not law.constitutional:
 			return law
 	return null
 
@@ -174,9 +180,15 @@ func _check_forcing_costs_approval_even_when_it_survives() -> void:
 func _check_cooldown_blocks_a_second_force_and_expires() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	var laws: Array = Legislature.available(ns, _loader.laws)
+	# Ordinary laws only -- Article 49.3 refuses a constitutional amendment
+	# outright, so one in this list would make "forcing failed" and "the
+	# cooldown never engaged" indistinguishable. See docs/amendment-model.md.
+	var laws: Array = []
+	for law in Legislature.available(ns, _loader.laws):
+		if not law.constitutional:
+			laws.append(law)
 	if laws.size() < 2:
-		_fail("fewer than two proposable laws; cannot test the cooldown")
+		_fail("fewer than two proposable ordinary laws; cannot test the cooldown")
 		return
 
 	Legislature.propose(state, _loader, laws[0], true)

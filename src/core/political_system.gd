@@ -31,6 +31,10 @@ var allowed_formation_methods: Array[String] = []
 var allowed_censure_rules: Array[String] = []
 var allowed_dissolution_rules: Array[String] = []
 
+## Every government.amendment.rule a nation using this template may declare.
+## See docs/amendment-model.md.
+var allowed_amendment_rules: Array[String] = []
+
 ## Whether a nation using this template may declare a term limit on the office
 ## the player holds. Nations without one still carry government.term_limit = 0,
 ## the same "field exists, zero means absent" shape EU membership uses.
@@ -54,6 +58,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	s.allowed_formation_methods = _extract_string_array(d, "allowed_formation_methods", filename, errors)
 	s.allowed_censure_rules = _extract_string_array(d, "allowed_censure_rules", filename, errors)
 	s.allowed_dissolution_rules = _extract_string_array(d, "allowed_dissolution_rules", filename, errors)
+	s.allowed_amendment_rules = _extract_string_array(d, "allowed_amendment_rules", filename, errors)
 
 	s.permits_term_limit = _extract_bool(d, "permits_term_limit", filename, errors)
 

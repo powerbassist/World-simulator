@@ -57,6 +57,7 @@ shell does not have.
 | V1.1d | Sim | Cabinet and ministers — five portfolios keyed to spending lines, competence and portfolio position both derived rather than authored, shortfall-driven resignation measured before it was built |
 | V1.2a | Sim | A second playable nation — Germany, per-nation starting fiscal policy (`policy_defaults.json` retired), bloc weights confirmed global by measurement rather than assumption |
 | V1.2b | Sim | Political system templates as a constraint not a defaults table, the head of state (five constitutional monarchies now say so), a named lose condition replacing a structural-flag dispatch, term limits enforced (France's two-term limit termed-out on the merits), Italy's *semestre bianco* dissolution blackout |
+| V1.2c | Sim | Constitutional amendment — a sixth per-nation dispatch field (`amendment_rule`) at real constitutional fractions, a seventh law effect channel that sets rather than nudges an institution, the load-bearing cross-check extended to amendments; measured, not assumed, that Germany's real two-thirds is unreachable, and left unauthored-against rather than detuned |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -65,11 +66,56 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 ## Next
 
 Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's
-remaining items — constitutional amendment, system transition, start
-scenarios — are next in the written order, now that V1.2b built the templates
-those first two need to point at. Per this document's own handoff convention
-below, the plan/model/effort call belongs to the session that picks it up,
-read cold, not to this one.
+remaining items — system transition, start scenarios — are next in the
+written order, now that V1.2c built the amendment mechanism transition points
+at. Per this document's own handoff convention below, the plan/model/effort
+call belongs to the session that picks it up, read cold, not to this one.
+
+### V1.2c — constitutional amendment (shipped)
+
+[docs/tiers/v1.md](docs/tiers/v1.md) §2's next item after V1.2b built the
+templates it constrains. An amendment is [[legislature-model|the existing law
+pipeline]] plus three additions — `constitutional: true`, a `systems` filter,
+and a new `effects.institutional` channel that **sets** an institution rather
+than nudging it, the only channel in the model that does. Everything else
+(preconditions, cooldowns, seat-level vote resolution, the rebellion split,
+the forecast) is reused unchanged.
+
+The threshold is a **sixth** per-nation dispatch-on-a-data-string field,
+`government.amendment.rule`, constrained by the template's own
+`allowed_amendment_rules` — real constitutional fractions researched per
+nation (3/5 for France's Art. 89 Congress vote *and*, corrected from a
+plan-time table error, Spain's Art. 167 ordinary revision path; 2/3 for
+Germany, Italy, Austria, Belgium, Netherlands; **3/4** for Luxembourg's real
+referendum-waiving bar, added as a fifth rule rather than rounded down to an
+existing tier; an ordinary majority for the UK's uncodified constitution; a
+declared-unresolved mandatory referendum for Switzerland, the same shape
+`lose_condition: "never"` already gives it).
+
+**The plan named a measurement to run before any content was authored, and it
+changed the plan.** A live sweep of `spatial_support()`/`coalition_bonus()`
+against each nation's real starting seats, cohesion and discipline found
+France's real `three_fifths` clears with room to spare (0.660 achievable
+against 0.600 needed) but Germany's real `two_thirds` is **unreachable even
+at the best possible moment in a term** (0.519 achievable against 0.667
+needed) — the unmodelled Bundesrat co-requirement stacked on six-party
+fragmentation. The response, decided rather than tuned around: Germany keeps
+its real threshold, and no amendment content this session names
+`parliamentary_republic` in its `systems` list. A named trigger — an
+upper-house model or a grand-coalition start scenario — could raise the
+ceiling later; until then the mechanic is honestly unshipped there rather
+than shipped against a nation that can never pass it.
+
+Also new: the load-bearing template cross-check V1.2b built for a nation's
+*flat* fields now runs for every value a constitutional amendment could ever
+*write* — a violating amendment fails to load, the same discipline a bad
+nation file already gets. Article 49.3 cannot force a constitutional
+amendment through, matching the real Article 89 procedure's lack of an
+executive bypass. `SAVE_VERSION` 6 → 7 for `amendment_rule`, which — unlike
+every other V1.2b institutional field — is itself mutable at runtime.
+
+Full account: [[amendment-model]]. Content is
+[docs/tiers/v1.md](docs/tiers/v1.md) §2.
 
 ### V1.2b — political system templates, head of state, term limits (shipped)
 
@@ -197,6 +243,7 @@ is already made, which is most sessions once the docs are written.
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 | V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
+| V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
 > The plan assumed enforcing France's term limit could move the balance

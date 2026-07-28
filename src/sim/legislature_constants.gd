@@ -28,10 +28,27 @@ const ABSTAIN_BAND := 0.05
 ## "simple" = yes > no among votes cast (abstentions don't count either way).
 ## "absolute" = yes > half of the whole assembly, abstentions count against it.
 ## "two_thirds" = yes >= two thirds of the whole assembly. Institutional laws
-## use the stricter forms.
-const MAJORITY_KEYS := ["simple", "absolute", "two_thirds"]
+## use the stricter forms. "amendment" (V1.2c) reads the proposing nation's
+## OWN threshold off ns.amendment_rule via AMENDMENT_RULE_FRACTIONS below,
+## rather than a fixed fraction here -- see docs/amendment-model.md.
+const MAJORITY_KEYS := ["simple", "absolute", "two_thirds", "amendment"]
 const ABSOLUTE_MAJORITY_FRACTION := 0.5
 const TWO_THIRDS_MAJORITY_FRACTION := 2.0 / 3.0
+
+## Real constitutional amendment thresholds, per docs/political-systems.md's
+## amendment_rule. Fraction of the WHOLE assembly, same basis as
+## ABSOLUTE_MAJORITY_FRACTION and TWO_THIRDS_MAJORITY_FRACTION above --
+## abstentions count against passage. referendum_required has no seat
+## fraction: no amendment names it in `systems` (Switzerland is not
+## playable), so resolve_vote() never looks it up -- see
+## docs/amendment-model.md's reachability sweep for why Germany's real
+## two_thirds is measured, not detuned, even though it is unreachable.
+const AMENDMENT_RULE_FRACTIONS := {
+	"ordinary_law": ABSOLUTE_MAJORITY_FRACTION,
+	"three_fifths": 0.6,
+	"two_thirds": TWO_THIRDS_MAJORITY_FRACTION,
+	"three_quarters": 0.75,
+}
 
 # --- Effect channel clamps -------------------------------------------------------
 

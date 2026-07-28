@@ -496,6 +496,60 @@ dissolution had already established. The two collisions above were both
 caught and resolved inside the build session rather than requiring escalation
 or a second planning pass.
 
+## V1.2c — Spain's real amendment threshold, and Germany's measured to be unreachable
+
+Two corrections, both caught before any content was authored against the
+wrong number, not after.
+
+**Spain's plan-time table entry was wrong.** The plan grouped Spain with
+Germany/Italy/Austria at `two_thirds`. Writing the real citation rather than
+copying a rough cohort found Spain's Constitution Art. 167 sets the
+*ordinary* amendment procedure at 3/5 of each chamber — only Art. 168's rare
+total-revision path is 2/3, and no amendment content in this game invokes it.
+Corrected to `three_fifths` at data-authoring time, before Spain's
+`data/nations/ESP.json` entry was written.
+
+**Luxembourg's real bypass bar (3/4) was nearly rounded down to an existing
+tier (2/3) rather than added as its own rule.** Caught mid-authoring: this
+project's own standard is that amendment thresholds are real constitutional
+numbers, not detuned to fit a convenient existing tier — the same standard
+that kept France's term limit at the literal figure through V1.2b. A fifth
+`AMENDMENT_RULE_FRACTIONS` entry, `three_quarters` at 0.75, was added instead
+of rounding.
+
+**The plan's own named measurement fired, and sharpened rather than merely
+confirmed the rough estimate.** The plan-time sweep (authored `seat_share`
+only, full-strength coalition bonus) found France marginal under `two_thirds`
+and Germany "probably unreachable... once discipline erodes." The build
+session's live-state re-measurement — real starting `seats_by_party`, real
+cohesion, real discipline — found Germany's ceiling **already below 2/3 at
+term start**, before any erosion: the unmodelled Bundesrat co-requirement
+stacked on six-party fragmentation, not a discipline-erosion story at all.
+The response, matching what the plan named in advance rather than requiring
+an escalation: Germany keeps its real `two_thirds`, and no amendment content
+this session names `parliamentary_republic` in its `systems` list — the same
+honesty `referendum_required` already gives Switzerland, rather than a
+detuned number invented to make the mechanic playable everywhere. Full
+account: [[amendment-model]].
+
+**docs/political-systems.md's own named trigger for the deferred absolute-
+monarchy/one-party-state templates was dead as written**, caught while
+writing this block's own plan rather than left for a later session to trip
+over: "the first start scenario or system transition that produces one"
+cannot fire, because a transition inside the ten-nation Western European
+roster never produces either, and a start scenario per [docs/tiers/v1.md](tiers/v1.md)
+§2 varies starting state, never the institutional system. Corrected to name
+the honest trigger — a roster addition outside Western Europe, or an
+explicitly counterfactual scenario.
+
+**The ~eighteen-surface count held Medium.** No new tuned constant (the
+fractions are real, not model parameters), no new model, only a sixth
+instance of the dispatch-on-a-data-string pattern. The one condition that
+could have forced an escalation to Opus — the reachability measurement coming
+back bad — did come back bad, but the response it required (leave the real
+number, don't author against it) was already the plan's own stated response,
+not a design decision made fresh mid-build.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

@@ -23,6 +23,7 @@ const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 const MONTHS := 168
 
@@ -65,9 +66,13 @@ func _new_state(player_id := "FRA"):
 	return state
 
 
+## The first ORDINARY law -- both call sites force a bill via Article 49.3,
+## which refuses a constitutional amendment outright (see
+## docs/amendment-model.md), regardless of where data/laws/amendments.json
+## happens to sort alphabetically among the law directories.
 func _first_law():
 	for law in _loader.laws:
-		if law.id != "":
+		if law.id != "" and not law.constitutional:
 			return law
 	return null
 
@@ -345,6 +350,7 @@ func _passes_on_party_lines(ns, result: Dictionary, law) -> bool:
 	match law.majority:
 		"simple": return yes > no
 		"absolute": return float(yes) > 0.5 * float(ns.assembly_seats)
+		"amendment": return float(yes) >= LK.AMENDMENT_RULE_FRACTIONS.get(ns.amendment_rule, 2.0 / 3.0) * float(ns.assembly_seats)
 		_: return float(yes) >= (2.0 / 3.0) * float(ns.assembly_seats)
 
 

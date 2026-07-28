@@ -34,6 +34,7 @@ const NEUTRAL_POSITION := {"economic": 0.0, "social": 0.0}
 static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.formation_method = nation.formation_method
 	ns.censure_rule = nation.censure_rule
+	ns.amendment_rule = nation.amendment_rule
 	ns.head_of_government_title = nation.head_of_government_title
 	ns.start_head_of_government_name = nation.head_of_government_name
 

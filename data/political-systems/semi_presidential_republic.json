@@ -5,5 +5,6 @@
   "allowed_formation_methods": ["presidential_appointment"],
   "allowed_censure_rules": ["absolute_members"],
   "allowed_dissolution_rules": ["executive_discretion"],
+  "allowed_amendment_rules": ["three_fifths"],
   "permits_term_limit": true
 }

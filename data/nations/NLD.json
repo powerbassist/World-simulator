@@ -39,6 +39,11 @@
       "name": "Maurits III"
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "A revision passes the Tweede Kamer by simple majority in a first reading, then Parliament dissolves for an election, and only the newly elected Tweede Kamer can adopt it, in a second reading, by a 2/3 majority. The intervening dissolution and election are not modelled; the entrenching number, 2/3, is what this rule carries -- already flagged in docs/political-systems.md as not fully modelled. rijksoverheid.nl, 'Herziening van de Grondwet'.",
+      "rule": "two_thirds"
+    },
     "formation": {
       "_source": "authored",
       "_note": "Formation runs through an informateur and formateur; there is no codified investiture vote. The confidence rule (vertrouwensregel) is constitutional convention, not statute, and a motion carries on a simple majority.",

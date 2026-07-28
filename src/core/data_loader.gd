@@ -84,6 +84,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	errors.append_array(eu.errors)
 
 	_validate_cross_file(geo_path)
+	_validate_amendments()
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:
@@ -283,8 +284,40 @@ func _validate_political_system(n) -> void:
 		errors.append("%s.json: government.formation.censure '%s' is not permitted by system '%s'" % [n.id, n.censure_rule, n.system_id])
 	if not system.allowed_dissolution_rules.has(n.dissolution_rule):
 		errors.append("%s.json: government.legislative.dissolution.rule '%s' is not permitted by system '%s'" % [n.id, n.dissolution_rule, n.system_id])
+	if not system.allowed_amendment_rules.has(n.amendment_rule):
+		errors.append("%s.json: government.amendment.rule '%s' is not permitted by system '%s'" % [n.id, n.amendment_rule, n.system_id])
 	if n.term_limit > 0 and not system.permits_term_limit:
 		errors.append("%s.json: government.term_limit %d is set but system '%s' does not permit a term limit" % [n.id, n.term_limit, n.system_id])
+
+
+## A constitutional amendment can write an institutional field at RUNTIME, long
+## past this startup check -- so the check that makes V1.2b's template
+## load-bearing (a nation's flat field must fall inside its template's allowed
+## set) has to hold for every value an amendment could ever WRITE, not just the
+## value a nation starts with. Checked once here, against every system named in
+## the amendment's own `systems` list, so a violating amendment cannot load --
+## the runtime state it would produce is refused the same way a bad nation file
+## already is. See docs/amendment-model.md.
+func _validate_amendments() -> void:
+	for law in laws:
+		if not law.constitutional:
+			continue
+		var inst: Dictionary = law.effects.get("institutional", {})
+		for system_id in law.systems:
+			if not political_systems.has(system_id):
+				errors.append("laws: %s names system '%s', which has no file in data/political-systems/" % [law.id, system_id])
+				continue
+			var system: PoliticalSystem = political_systems[system_id]
+			if inst.has("censure_rule") and not system.allowed_censure_rules.has(inst["censure_rule"]):
+				errors.append("laws: %s effects.institutional.censure_rule '%s' is not permitted by system '%s'" % [law.id, inst["censure_rule"], system_id])
+			if inst.has("dissolution_rule") and not system.allowed_dissolution_rules.has(inst["dissolution_rule"]):
+				errors.append("laws: %s effects.institutional.dissolution_rule '%s' is not permitted by system '%s'" % [law.id, inst["dissolution_rule"], system_id])
+			if inst.has("formation_method") and not system.allowed_formation_methods.has(inst["formation_method"]):
+				errors.append("laws: %s effects.institutional.formation_method '%s' is not permitted by system '%s'" % [law.id, inst["formation_method"], system_id])
+			if inst.has("amendment_rule") and not system.allowed_amendment_rules.has(inst["amendment_rule"]):
+				errors.append("laws: %s effects.institutional.amendment_rule '%s' is not permitted by system '%s'" % [law.id, inst["amendment_rule"], system_id])
+			if inst.has("term_limit") and int(inst["term_limit"]) > 0 and not system.permits_term_limit:
+				errors.append("laws: %s effects.institutional.term_limit %d is set but system '%s' does not permit a term limit" % [law.id, int(inst["term_limit"]), system_id])
 
 
 func _load_geo(geo_path: String) -> Array:

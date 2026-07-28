@@ -276,6 +276,20 @@ func _run_unknown_version() -> void:
 	elif pre_political_systems["error"].is_empty():
 		_fail("load_game rejected a version-5 save but gave no error message")
 
+	# Version 6 for the same reason one version further on: V1.2c added
+	# amendment_rule, mutable at runtime (an amendment may entrench its own
+	# threshold), so a version-6 save carries no amendment_rule and no
+	# amendment would ever be proposable after a load.
+	var v6 := FileAccess.open(path, FileAccess.WRITE)
+	v6.store_string(JSON.stringify({"save_version": 6, "day": 1, "game_state": {}}))
+	v6.close()
+
+	var pre_amendment := SaveManager.load_game(BOGUS_SLOT)
+	if pre_amendment["ok"]:
+		_fail("load_game accepted a version-6 save; amendment_rule would be missing")
+	elif pre_amendment["error"].is_empty():
+		_fail("load_game rejected a version-6 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)

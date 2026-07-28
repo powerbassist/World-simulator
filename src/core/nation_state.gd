@@ -163,6 +163,12 @@ var lose_condition: String = ""
 ## alongside lose_condition at the executive verdict.
 var term_limit: int = 0
 
+## What a constitutional amendment must clear to pass. Mutable at runtime, in
+## contrast to every other field on this page -- amendment_rule itself is a
+## valid amendment target (entrenchment), which is why it lives here rather
+## than being read straight off Nation. See docs/amendment-model.md.
+var amendment_rule: String = ""
+
 # --- Dissolution ---------------------------------------------------------------
 
 ## Copied from Nation at new-game; who may end the current assembly early and
@@ -377,6 +383,7 @@ func duplicate_state():
 	s.head_of_state_next_month = head_of_state_next_month
 	s.lose_condition = lose_condition
 	s.term_limit = term_limit
+	s.amendment_rule = amendment_rule
 
 	s.dissolution_rule = dissolution_rule
 	s.dissolution_lockout_months = dissolution_lockout_months
@@ -491,6 +498,7 @@ func to_dict() -> Dictionary:
 		"head_of_state_next_month": head_of_state_next_month,
 		"lose_condition": lose_condition,
 		"term_limit": term_limit,
+		"amendment_rule": amendment_rule,
 
 		"dissolution_rule": dissolution_rule,
 		"dissolution_lockout_months": dissolution_lockout_months,
@@ -605,6 +613,7 @@ static func from_dict(d: Dictionary):
 	s.head_of_state_next_month = int(d.get("head_of_state_next_month", 0))
 	s.lose_condition = d.get("lose_condition", "")
 	s.term_limit = int(d.get("term_limit", 0))
+	s.amendment_rule = d.get("amendment_rule", "")
 
 	s.dissolution_rule = d.get("dissolution_rule", "")
 	s.dissolution_lockout_months = int(d.get("dissolution_lockout_months", 0))

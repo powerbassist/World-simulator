@@ -40,6 +40,11 @@
       "name": "Reto Baumgartner"
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Every constitutional amendment requires a mandatory popular referendum with a double majority of the people and the cantons -- there is no seats-only path at all, so no seat fraction applies. Declared, unresolved: no referendum mechanic exists yet (V1.1f/V1.7), so no amendment names this system in its own `systems` list, the same shape lose_condition: 'never' already uses for Switzerland. Art. 195, Federal Constitution of the Swiss Confederation.",
+      "rule": "referendum_required"
+    },
     "formation": {
       "_source": "authored",
       "_note": "The Federal Council is elected by the United Federal Assembly for a fixed four-year term under the power-sharing 'magic formula'. It does not depend on parliamentary confidence and cannot be removed by a no-confidence vote. swissinfo.ch 'The not so magical formula'.",

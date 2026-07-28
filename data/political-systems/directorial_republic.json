@@ -5,5 +5,6 @@
   "allowed_formation_methods": ["directorial"],
   "allowed_censure_rules": ["none"],
   "allowed_dissolution_rules": ["none"],
+  "allowed_amendment_rules": ["referendum_required"],
   "permits_term_limit": false
 }

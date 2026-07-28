@@ -39,6 +39,11 @@
       "name": "Daniel Moucron"
     },
     "term_limit": 2,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 89: a revision bill must pass both chambers in identical terms, then either a popular referendum or -- the President's choice, and the only path this game models -- a joint session of both chambers (Congress) at Versailles requiring a 3/5 majority of votes cast. Legifrance, Constitution of 4 October 1958, Title XVI.",
+      "rule": "three_fifths"
+    },
     "executive": {
       "_source": "authored",
       "_note": "First round 18 April 2027, run-off 2 May 2027; five-year term. This is the PLAYER's term and it is a different clock from the Assembly's -- france24.com 'France sets presidential election date', Wikipedia '2027 French presidential election'.",

@@ -25,9 +25,12 @@ const C = preload("res://src/sim/economy_constants.gd")
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
 ## lose_condition, term_limit) added to NationState, none of which a version-5
 ## save carries — a loaded game would read an empty lose_condition and never be
-## able to end a run. SaveManager rejects an unknown version outright — see
-## docs/data-architecture.md.
-const SAVE_VERSION := 6
+## able to end a run. 7 as of V1.2c: amendment_rule, mutable at runtime (an
+## amendment may entrench its own threshold), so a version-6 save's absent
+## value would silently read as "" -- no rule ever passes, an amendment law is
+## proposable to no one, and the failure is silent rather than loud. SaveManager
+## rejects an unknown version outright — see docs/data-architecture.md.
+const SAVE_VERSION := 7
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

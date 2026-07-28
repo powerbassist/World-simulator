@@ -40,6 +40,17 @@ const EXPECTED_LOSE_CONDITION := {
 	"CHE": "never",
 }
 
+## V1.2c: each nation's real amendment threshold -- see docs/amendment-model.md.
+## ESP is three_fifths, not two_thirds: Art. 167's ordinary revision path is
+## 3/5 of each chamber; only Art. 168's rare total-revision path is 2/3.
+const EXPECTED_AMENDMENT_RULE := {
+	"FRA": "three_fifths",
+	"DEU": "two_thirds", "ITA": "two_thirds", "AUT": "two_thirds",
+	"GBR": "ordinary_law", "ESP": "three_fifths", "BEL": "two_thirds",
+	"NLD": "two_thirds", "LUX": "three_quarters",
+	"CHE": "referendum_required",
+}
+
 
 func _init() -> void:
 	var failures: Array[String] = []
@@ -62,6 +73,8 @@ func _init() -> void:
 			failures.append("%s: system_id is '%s', expected '%s'" % [id, n.system_id, EXPECTED_SYSTEM[id]])
 		if n.head_of_state_kind != EXPECTED_HEAD_OF_STATE_KIND[id]:
 			failures.append("%s: head_of_state_kind is '%s', expected '%s'" % [id, n.head_of_state_kind, EXPECTED_HEAD_OF_STATE_KIND[id]])
+		if n.amendment_rule != EXPECTED_AMENDMENT_RULE[id]:
+			failures.append("%s: amendment_rule is '%s', expected '%s'" % [id, n.amendment_rule, EXPECTED_AMENDMENT_RULE[id]])
 		if n.head_of_state_name == "":
 			failures.append("%s: head_of_state has no name" % id)
 

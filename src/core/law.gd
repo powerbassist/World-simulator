@@ -9,6 +9,7 @@ extends RefCounted
 ## at load time, validated loudly, never mutated afterward.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+const Nation = preload("res://src/core/nation.gd")
 
 const THEME_KEYS := ["tax", "labour", "social", "institutional"]
 
@@ -17,6 +18,25 @@ const THEME_KEYS := ["tax", "labour", "social", "institutional"]
 const SCALAR_EFFECT_KEYS := [
 	"structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp",
 ]
+
+## effects.institutional keys a constitutional amendment may set, each an
+## ABSOLUTE value written straight onto NationState -- an institution is set,
+## not nudged, unlike every other effect channel above. Whether a given VALUE
+## is allowed for a given nation is a template question, checked once at
+## load by DataLoader against every system named in this law's own `systems`
+## list -- see docs/amendment-model.md. This dict only checks that the value
+## is a recognised member of the right enum at all.
+const INSTITUTIONAL_EFFECT_KEYS := {
+	"censure_rule": Nation.KNOWN_CENSURE_RULES,
+	"dissolution_rule": Nation.KNOWN_DISSOLUTION_RULES,
+	"formation_method": Nation.KNOWN_FORMATION_METHODS,
+	"amendment_rule": Nation.KNOWN_AMENDMENT_RULES,
+}
+## Integer institutional effect keys, checked by range rather than by enum.
+const INSTITUTIONAL_INT_KEYS := {
+	"term_limit": [Nation.MIN_TERM_LIMIT, Nation.MAX_TERM_LIMIT],
+	"term_months": [12, 120],
+}
 
 var id: String = ""
 var law_name: String = ""
@@ -41,8 +61,19 @@ var preconditions: Array = []
 
 ## {"tax_rates_pct": {...}, "spending_pct_gdp": {...},
 ##  "structural_unemployment_pct": float, "potential_growth_pct": float,
-##  "other_revenue_pct_gdp": float, "bloc_offset": {...}} -- any subset.
+##  "other_revenue_pct_gdp": float, "bloc_offset": {...},
+##  "institutional": {...}} -- any subset.
 var effects: Dictionary = {}
+
+## A constitutional amendment: resolve_vote() reads the proposing nation's own
+## ns.amendment_rule instead of `majority` above. See docs/amendment-model.md.
+var constitutional: bool = false
+
+## Which political-system templates this law may be proposed under -- filters
+## Legislature.available(). Required and non-empty when constitutional is
+## true; ignored (and must be absent) otherwise, the same
+## present-only-if-needed shape Nation's executive block uses.
+var systems: Array[String] = []
 
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array):
@@ -81,10 +112,37 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 	law.once = bool(d.get("once", false))
 
+	law.constitutional = bool(d.get("constitutional", false))
+	if law.constitutional and law.majority != "amendment":
+		errors.append("%s: %s constitutional laws must set majority: 'amendment'" % [filename, law.id])
+	if not law.constitutional and law.majority == "amendment":
+		errors.append("%s: %s majority 'amendment' requires constitutional: true" % [filename, law.id])
+
+	if law.constitutional:
+		law.systems = _extract_string_array(d, "systems", law.id, filename, errors)
+		if law.systems.is_empty():
+			errors.append("%s: %s constitutional laws must name at least one system in 'systems'" % [filename, law.id])
+	elif d.has("systems"):
+		errors.append("%s: %s 'systems' is only valid on a constitutional law" % [filename, law.id])
+
 	law.preconditions = _extract_preconditions(d, law.id, filename, errors)
-	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys)
+	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, law.constitutional)
 
 	return law
+
+
+static func _extract_string_array(d: Dictionary, key: String, law_id: String, filename: String, errors: Array[String]) -> Array[String]:
+	var out: Array[String] = []
+	var raw = d.get(key, [])
+	if typeof(raw) != TYPE_ARRAY:
+		errors.append("%s: %s %s must be an array" % [filename, law_id, key])
+		return out
+	for entry in raw:
+		if typeof(entry) != TYPE_STRING:
+			errors.append("%s: %s %s contains a non-string entry" % [filename, law_id, key])
+			continue
+		out.append(entry)
+	return out
 
 
 static func _extract_position(d: Dictionary, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
@@ -134,7 +192,7 @@ static func _extract_preconditions(d: Dictionary, law_id: String, filename: Stri
 	return out
 
 
-static func _extract_effects(d: Dictionary, law_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array) -> Dictionary:
+static func _extract_effects(d: Dictionary, law_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, allow_institutional: bool) -> Dictionary:
 	var raw: Dictionary = d.get("effects", {})
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects must be an object" % [filename, law_id])
@@ -158,10 +216,50 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("bloc_offset"):
 		out["bloc_offset"] = _extract_keyed_deltas(raw["bloc_offset"], bloc_keys, "effects.bloc_offset", law_id, filename, errors)
 
+	if raw.has("institutional"):
+		if not allow_institutional:
+			errors.append("%s: %s effects.institutional is only valid on a constitutional law" % [filename, law_id])
+		else:
+			out["institutional"] = _extract_institutional(raw["institutional"], law_id, filename, errors)
+
 	for key in raw.keys():
-		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and not SCALAR_EFFECT_KEYS.has(key):
+		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and not SCALAR_EFFECT_KEYS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
 
+	return out
+
+
+## Absolute values written straight onto NationState -- see
+## INSTITUTIONAL_EFFECT_KEYS' header comment. Only checks that the value is a
+## recognised member of the right enum at all; whether it is the RIGHT value
+## for a given nation's declared system is DataLoader's cross-check against
+## this law's own `systems` list.
+static func _extract_institutional(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.institutional must be an object" % [filename, law_id])
+		return {}
+	if raw.is_empty():
+		errors.append("%s: %s effects.institutional must not be empty" % [filename, law_id])
+
+	var out := {}
+	for key in raw.keys():
+		if INSTITUTIONAL_EFFECT_KEYS.has(key):
+			var allowed: Array = INSTITUTIONAL_EFFECT_KEYS[key]
+			if typeof(raw[key]) != TYPE_STRING or not allowed.has(raw[key]):
+				errors.append("%s: %s effects.institutional.%s must be one of %s" % [filename, law_id, key, allowed])
+			else:
+				out[key] = raw[key]
+		elif INSTITUTIONAL_INT_KEYS.has(key):
+			var range: Array = INSTITUTIONAL_INT_KEYS[key]
+			if not (typeof(raw[key]) == TYPE_INT or typeof(raw[key]) == TYPE_FLOAT):
+				errors.append("%s: %s effects.institutional.%s must be numeric" % [filename, law_id, key])
+			else:
+				var value := int(raw[key])
+				if value < int(range[0]) or value > int(range[1]):
+					errors.append("%s: %s effects.institutional.%s = %d out of range [%d, %d]" % [filename, law_id, key, value, range[0], range[1]])
+				out[key] = value
+		else:
+			errors.append("%s: %s effects.institutional.%s is not a recognised institutional field" % [filename, law_id, key])
 	return out
 
 

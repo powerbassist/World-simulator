@@ -46,6 +46,11 @@
       }
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 138: an amendment needs an absolute majority in each chamber in a first vote, then in a second vote three months later either a 2/3 majority in each chamber (final, no referendum) or an absolute majority (open to a referendum petition). This game models only the higher, referendum-proof bar, and only a single vote rather than two readings. senato.it, 'The revision of the Constitution'.",
+      "rule": "two_thirds"
+    },
     "formation": {
       "_source": "authored",
       "_note": "PM appointed by the President of the Republic, then must win a confidence vote in both chambers. No confidence is simple -- no successor required. Art. 94 of the Constitution.",

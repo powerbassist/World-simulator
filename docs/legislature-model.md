@@ -103,7 +103,15 @@ yes / no / abstain = Σ (seats_by_party[p] − rebels(p)) into line(p)'s column
 passed = yes  >  no                                   if majority == "simple"
        = yes  >  0.5 × seats_total                     if majority == "absolute"
        = yes  >= (2/3) × seats_total                   if majority == "two_thirds"
+       = yes  >= FRACTION[ns.amendment_rule] × seats_total   if majority == "amendment"
 ```
+
+`"amendment"` (V1.2c) reads the *proposing nation's own* threshold off
+`ns.amendment_rule` rather than a fixed fraction — the whole point of a
+constitutional amendment being gated by real, per-nation data instead of one
+global constant. Full argument, including the measurement that found
+Germany's real `two_thirds` unreachable even at full term-start cohesion:
+[[amendment-model]].
 
 The three columns still sum to `seats_total` exactly: a rebellion moves seats
 between them and never creates one.
@@ -112,11 +120,13 @@ between them and never creates one.
 |---|---|---|
 | `ABSTAIN_BAND` | 0.05 | Support within this band of zero counts as an abstention, not a firm yes or no — the same idea [[election-model]]'s incumbent-swing clamp uses: a small guard rail, not a modelling claim. |
 
-Three majority types, matching how the sixteen authored templates actually
-split: ordinary policy laws use `simple`; laws with a long-run structural
-effect (retirement age, health funding) use `absolute`, since durable change
-should cost more than a plurality; constitutional-adjacent laws (devolution)
-use `two_thirds`.
+Three majority types for ordinary laws, matching how the sixteen
+tax/labour/social/institutional templates actually split: ordinary policy
+laws use `simple`; laws with a long-run structural effect (retirement age,
+health funding) use `absolute`, since durable change should cost more than a
+plurality; institutional laws that fall short of a full constitutional
+amendment (devolution) use `two_thirds`. A fourth, `"amendment"`, is
+V1.2c's own — see above.
 
 **Reads `ns.seats_by_party`, never `party.seat_share`.** `seats_by_party` is
 live state, seeded by `Elections.init_nation()` from the authored starting
@@ -174,6 +184,7 @@ into a formula that already exists — nothing here is a new equation.
 | Long-run growth | `law_potential_target_pct` | `economy.gd:_update_potential_shift()`, added into `target` before the lag | Inherits the five-year time constant and the ±1.0 %/yr hard clamp that is [[economy-model|the model's whole stability argument]] — this is the only term that feeds back into trend, so a law cannot bypass the one guard rail that matters. |
 | Off-budget revenue | `law_other_revenue_pct_gdp` | `budget.gd:recompute()`, added to `other_revenue_pct_gdp` | For levies with no slider — a carbon levy, a lobbying-registration fee — the same "authored residual" slot `other_revenue_pct_gdp` already fills for social contributions and local taxes. |
 | Direct opinion | `law_bloc_offset{}` | `opinion.gd:_tick_nation()`, added to a bloc's approval **target**, clamped together with the satisfaction score before scaling | For laws with no budget footprint and so no matching issue — immigration rules, an anti-corruption agency. Added to the *target*, not to approval directly, so `INERTIA_RATE` and every bound in [[opinion-model|opinion's own stability argument]] still apply; a law cannot make approval jump in one month any more than a policy change can. |
+| Institutional | `censure_rule`, `dissolution_rule`, `formation_method`, `amendment_rule`, `term_limit`, `term_months` on `NationState` | Whichever system already reads that field — `government.gd`, `dissolution.gd`, `elections.gd` | The only channel that sets an **absolute value** rather than accumulating a delta — an institution is changed, not nudged. Constitutional-amendment-only (`law.constitutional == true`); see [[amendment-model]] for the load-bearing check that stops an amendment writing a value its own declared system doesn't permit. |
 
 **The rule that prevents double-counting:** a law with a genuine budget effect
 expresses it as a lever, through `tax_rates_pct` or `spending_pct_gdp`. The
@@ -212,7 +223,12 @@ unpositioned `ideology_slot`.
 `ABSTAIN_BAND`, the majority-threshold fractions, and every effect channel's
 clamp. Model parameters, one set forever, next to `economy_constants.gd`,
 `opinion_constants.gd`, `election_constants.gd` and `government_constants.gd` —
-not in `data/`, per [[engine-decision|Rule 1]].
+not in `data/`, per [[engine-decision|Rule 1]]. `AMENDMENT_RULE_FRACTIONS` is
+the one exception to "one set forever" in spirit but not in mechanism: the
+*fractions* are model constants same as the other three, but *which fraction
+applies* is read off `ns.amendment_rule` — per-nation data, constrained by the
+political-system template — not a single value this file picks for everyone.
+See [[amendment-model]].
 
 `FORECAST_UNCERTAIN_BAND` lives in `src/ui/law_panel.gd`, not here, for the
 same reason `poll_noise.gd`'s `NOISE_MAX_PCT` lives in `src/ui/` and not in
@@ -241,4 +257,4 @@ runs 120 months, asserting every field stays finite and unemployment stays in
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
 [[government-model]] · [[discipline-model]] · [[opinion-model]] ·
-[[economy-model]] · [[data-architecture]] · [[ROADMAP]]
+[[economy-model]] · [[amendment-model]] · [[data-architecture]] · [[ROADMAP]]

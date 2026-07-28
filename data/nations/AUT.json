@@ -46,6 +46,11 @@
       }
     },
     "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 44: an ordinary constitutional amendment needs a 2/3 majority of the Nationalrat with at least half its members present. A total revision additionally requires a referendum -- not modelled, since no amendment content in this game rewrites the whole constitution. parlament.gv.at, 'Legislative process'.",
+      "rule": "two_thirds"
+    },
     "formation": {
       "_source": "authored",
       "_note": "Chancellor appointed by the Federal President. A majority of the Nationalrat can topple the Federal Government at any time; a minority government survives only while tolerated. parlament.gv.at 'Vote of no confidence'.",

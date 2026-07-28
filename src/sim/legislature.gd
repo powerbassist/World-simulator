@@ -56,7 +56,8 @@ static func tick_month(state) -> void:
 
 
 ## Every law from `all_laws` currently proposable against `ns`: preconditions
-## met, not already passed as a once-only law, and not on cooldown.
+## met, not already passed as a once-only law, not on cooldown, and -- for a
+## constitutional amendment -- proposable under the nation's own system.
 static func available(ns, all_laws: Array) -> Array:
 	var out: Array = []
 	for law in all_laws:
@@ -65,6 +66,8 @@ static func available(ns, all_laws: Array) -> Array:
 		if law.once and ns.passed_law_ids.has(law.id):
 			continue
 		if ns.law_cooldown_months.has(law.id):
+			continue
+		if law.constitutional and not law.systems.has(ns.system_id):
 			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
@@ -195,6 +198,17 @@ static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 			passed = float(yes_seats) > LK.ABSOLUTE_MAJORITY_FRACTION * float(seats_total)
 		"two_thirds":
 			passed = float(yes_seats) >= LK.TWO_THIRDS_MAJORITY_FRACTION * float(seats_total)
+		"amendment":
+			# Reads the PROPOSING nation's own threshold, not a fixed fraction --
+			# the whole point of amendment_rule being per-nation data. A rule with
+			# no fraction (referendum_required) means no amendment names it in
+			# `systems`, so reaching this branch with one is a content bug, not a
+			# runtime state a played game can produce.
+			if not LK.AMENDMENT_RULE_FRACTIONS.has(ns.amendment_rule):
+				push_error("legislature: amendment_rule '%s' has no seat fraction" % ns.amendment_rule)
+				passed = false
+			else:
+				passed = float(yes_seats) >= LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] * float(seats_total)
 		_:
 			push_error("legislature: unknown majority type '%s'" % law.majority)
 			passed = false
@@ -261,6 +275,27 @@ static func apply(state, ns, law) -> void:
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
 
+	# An institution is SET, not nudged -- every key here is an absolute value
+	# written straight onto NationState, unlike every channel above. Whether
+	# the value is legal for this nation's system was already checked at load
+	# by DataLoader against this law's own `systems` list, so writing it here
+	# cannot produce the half-understood state V1.2b's cross-check refuses --
+	# see docs/amendment-model.md.
+	if effects.has("institutional"):
+		var inst: Dictionary = effects["institutional"]
+		if inst.has("censure_rule"):
+			ns.censure_rule = inst["censure_rule"]
+		if inst.has("dissolution_rule"):
+			ns.dissolution_rule = inst["dissolution_rule"]
+		if inst.has("formation_method"):
+			ns.formation_method = inst["formation_method"]
+		if inst.has("amendment_rule"):
+			ns.amendment_rule = inst["amendment_rule"]
+		if inst.has("term_limit"):
+			ns.term_limit = int(inst["term_limit"])
+		if inst.has("term_months"):
+			ns.term_months = int(inst["term_months"])
+
 	if law.once:
 		ns.passed_law_ids[law.id] = true
 
@@ -272,9 +307,23 @@ static func apply(state, ns, law) -> void:
 ##
 ## `force` is Article 49.3: the bill is adopted without a vote, and the assembly
 ## may then censure the government instead. See docs/government-model.md.
+##
+## Article 49.3 cannot force a constitutional amendment through -- the real
+## Article 89 revision procedure is a separate track with no executive
+## bypass, and this game invents no such bypass for any nation's amendment
+## rule either. See docs/amendment-model.md.
 static func propose(state, loader, law, force := false) -> Dictionary:
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
+
+	if force and law.constitutional:
+		var refused := {
+			"law_id": law.id, "passed": false, "forced": true, "refused": true,
+			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
+			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
+		}
+		ns.last_law_result = refused
+		return refused
 
 	if force:
 		return _force(state, ns, party_list, law)

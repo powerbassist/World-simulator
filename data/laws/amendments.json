@@ -1,0 +1,72 @@
+{
+  "laws": [
+    {
+      "id": "abolish_term_limits",
+      "name": "Term Limits Abolition Amendment",
+      "theme": "institutional",
+      "summary": "Repeal the constitutional limit on how many terms the head of state may serve.",
+      "constitutional": true,
+      "systems": ["semi_presidential_republic"],
+      "position": { "economic": 0.1, "social": 0.3 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "term_limit": 0 },
+        "bloc_offset": { "business": 0.1, "students": -0.15 }
+      }
+    },
+    {
+      "id": "constructive_confidence_reform",
+      "name": "Constructive Confidence Reform",
+      "theme": "institutional",
+      "summary": "Require a no-confidence motion to name a successor before it can remove the government, so a government cannot fall with no majority ready to replace it.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": -0.1, "social": -0.1 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "censure_rule": "constructive_absolute" },
+        "bloc_offset": { "business": 0.1, "workers": 0.05 }
+      }
+    },
+    {
+      "id": "executive_dissolution_reform",
+      "name": "Executive Dissolution Reform",
+      "theme": "institutional",
+      "summary": "Give the head of government discretion to dissolve the assembly, rather than requiring it to first lose a confidence vote.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": 0.1, "social": 0.1 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "dissolution_rule": "executive_discretion" },
+        "bloc_offset": { "urban": -0.1, "rural": 0.05 }
+      }
+    },
+    {
+      "id": "streamline_amendment_procedure",
+      "name": "Amendment Procedure Streamlining Act",
+      "theme": "institutional",
+      "summary": "Remove the special supermajority for future constitutional amendments, so they pass like ordinary legislation.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": 0.0, "social": -0.4 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "amendment_rule": "ordinary_law" },
+        "bloc_offset": { "urban": 0.1, "rural": -0.1 }
+      }
+    }
+  ]
+}

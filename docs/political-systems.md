@@ -90,10 +90,16 @@ what §2 called "presidential republic." Building unattached templates now
 would be code for content that does not exist, the same measured-before-built
 discipline [[dissolution-model]] and [[cabinet-model]] both used.
 
-> [!note] Named trigger for the deferral
-> The first start scenario or system transition that produces an absolute
-> monarchy or a one-party state authors its template then, against a real
-> instance rather than a guess at what one would need.
+> [!note] Named trigger for the deferral, corrected at V1.2c
+> Originally: "the first start scenario or system transition that produces
+> one." Neither can, on inspection: a system transition inside a ten-nation
+> Western European roster produces `constitutional_monarchy` ↔
+> `parliamentary_republic` and never an absolute monarchy, and
+> [docs/tiers/v1.md](tiers/v1.md) §2's start scenarios vary *starting state*
+> (debt, seats, approval, coalition), never the institutional system itself.
+> The honest trigger is a **roster addition outside Western Europe**, or an
+> explicitly counterfactual authored scenario — either authors the template
+> against a real instance rather than a guess at what one would need.
 
 `parliamentary_republic` and `constitutional_monarchy` share most of their
 allowed formation/censure/dissolution sets — `coalition_negotiation` forms a
@@ -148,6 +154,15 @@ The head of state has exactly two readers:
 Names are invented per [[fictionalization]], structural titles ("King",
 "Federal President") are real. `tools/check_names.sh` covers the ten new names
 the same as every other invented name in the project.
+
+## Amendment, added at V1.2c
+
+Every field this page describes as fixed for the whole run — `formation_method`,
+`censure_rule`, `dissolution_rule`, `term_limit` — can now be rewritten by a
+constitutional amendment, itself gated by a fifth per-nation field this
+template constrains: `allowed_amendment_rules`. Full argument, including the
+measured finding that Germany's real `two_thirds` is unreachable and is left
+unauthored-against rather than detuned: [[amendment-model]].
 
 ## Term limits, enforced
 
@@ -249,4 +264,5 @@ above for the one place that was not simply "unchanged."
   cross-check
 
 Related: [[government-model]] · [[dissolution-model]] · [[cabinet-model]] ·
-[[data-architecture]] · [[fictionalization]] · [docs/tiers/v1.md](tiers/v1.md)
+[[amendment-model]] · [[data-architecture]] · [[fictionalization]] ·
+[docs/tiers/v1.md](tiers/v1.md)

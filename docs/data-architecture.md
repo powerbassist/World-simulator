@@ -206,6 +206,15 @@ begins exactly on its own erosion reference.
 > already uses. `term_limit` is `0` unless the nation's template permits one —
 > only France's does. Full argument: [[political-systems]].
 >
+> `government.amendment.rule` arrived at [[ROADMAP|V1.2c]], constrained the
+> same way by the template's own `allowed_amendment_rules` — a sixth
+> dispatch-on-a-data-string field, not a new pattern. Unlike every field
+> above, it is not fixed for the run: a constitutional amendment can rewrite
+> it (entrenchment or loosening), which is why it lives on `NationState`,
+> copied at new-game, rather than being read straight off `Nation` on demand.
+> Full argument, including the measured finding that Germany's real
+> `two_thirds` is unreachable: [[amendment-model]].
+>
 > `data/parties/*.json` gained `leader_name`, `discipline` and
 > `excluded_partners` in the same block. `excluded_partners` is validated
 > against that nation's own roster, so a cordon naming a party that does not
@@ -249,7 +258,7 @@ at import time. It checks:
 
 - Required fields present, correct type.
 - Numeric fields within sane ranges — no negative populations, no debt ratios of 40,000.
-- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]).
+- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]), and every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list ([[ROADMAP|V1.2c]], [[amendment-model]]).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
 
 It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
@@ -295,8 +304,12 @@ NationState                      src/core/nation_state.gd
 ├── cabinet    cabinet{}, cabinet_effectiveness{}, cabinet_entitlement{},
 │              reshuffles_called, resignations_count, last_resignation{}
 │                                  ([[ROADMAP|V1.1d]], [[cabinet-model]])
-└── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
-               last_law_result{}   ([[ROADMAP|S7]])
+├── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
+│              last_law_result{}   ([[ROADMAP|S7]])
+├── political system_id, head_of_state_*, lose_condition, term_limit
+│              ([[ROADMAP|V1.2b]], [[political-systems]])
+└── amendment  amendment_rule -- mutable at runtime, unlike its V1.2b
+               siblings above   ([[ROADMAP|V1.2c]], [[amendment-model]])
 ```
 
 Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline, V1.1c's dissolution, V1.1d's cabinet. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
@@ -313,7 +326,7 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
-**It is at 5, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
+**It is at 7, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 
@@ -343,4 +356,4 @@ Stated in advance, so the decision can be revisited on evidence rather than on f
 
 ---
 
-Related: [[index]] · [[engine-decision]] · [[data-sources]] · [[fictionalization]] · [[scope]]
+Related: [[index]] · [[engine-decision]] · [[data-sources]] · [[fictionalization]] · [[scope]] · [[political-systems]] · [[amendment-model]]
