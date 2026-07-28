@@ -86,6 +86,40 @@ const AUTOLOADS: Array[Array] = [
 > remove it, or delete it by hand while the editor is shut. Check
 > `git diff project.godot` after any editor session.
 
+> [!warning] Gotcha — `simulate_key` and friends are broken, and fail *silently*
+> Every input tool (`simulate_key`, `simulate_mouse_click`, `simulate_action`,
+> `simulate_sequence`) is a no-op against the running game, and each returns
+> `{"queued": true}` regardless. The chain, in the addon:
+>
+> ```
+> input_commands.gd:_simulate_key    -> returns _ok({"queued": true}) unconditionally
+> base_commands.gd:_queue_input      -> `if bridge:` ... silently no-ops when null
+> base_commands.gd:_get_input_bridge -> get_node_or_null("/root/MCPInputBridge")
+> ```
+>
+> That lookup runs in the **editor** process, and `mcp_input_bridge.gd` carries
+> no `@tool` annotation — so the autoload's script never runs there and the node
+> is never available. The guard is therefore always false.
+>
+> Screenshots and `get_scene_tree` work because they do **not** go through that
+> node lookup: `_request_screenshot` and `_send_runtime_request` write a request
+> *file* and let the game-side autoload pick it up. Input is the one path that
+> reaches for a node instead of a file. That asymmetry is the whole diagnosis —
+> "screenshots work, so the bridge is up" is the wrong inference.
+>
+> **Use `tools/send_input.py` instead**, which writes the queue file directly:
+>
+> ```bash
+> python tools/send_input.py key ENTER
+> ```
+>
+> It lives in `tools/` rather than as a patch to `addons/godot_mcp/` because
+> `addons/*` is gitignored and reinstalled per machine — a patch there is lost
+> on the next reinstall and invisible to the repo. Prefer `key` over `click`:
+> the bridge's "mouse_click" branch reuses one event object for press and
+> release, so a click lands as hover without activating. Full argument in the
+> script's own docstring.
+
 ### Known state
 
 `npm audit` reports 2 moderate advisories, both in the MCP SDK's HTTP transport dependency chain (`hono`). This server runs over **stdio**, so that code path is not reachable. Non-blocking; re-check after an SDK bump.
