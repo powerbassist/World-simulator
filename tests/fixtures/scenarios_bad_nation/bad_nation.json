@@ -1,0 +1,10 @@
+{
+  "id": "bad_nation",
+  "nation": "ITA",
+  "name": "Unreachable",
+  "description": "Authored against a nation the nation-select surface never lists.",
+  "_note": "Fixture for tests/test_scenario.gd. Italy is loaded but not playable, so this scenario can never be selected -- the loader must say so rather than accept content nothing can reach.",
+  "overrides": {
+    "debt_to_gdp_pct": 150.0
+  }
+}

@@ -90,6 +90,23 @@ scenarios can reach is too narrow — that a scenario cannot be authored hard
 enough or gentle enough. That is an empirical finding, not a preference, and
 nothing weaker counts.
 
+> [!note] Measured at [[ROADMAP|V1.2e]], and it did not fire
+> The falsifier above was run rather than left standing, by
+> `tools/scenario_probe.gd`, before any scenario content was finalised. Across
+> the three playable nations the authorable envelope spans a **~40-point
+> approval range** (50 → 10 by month 60, and two nations lose an election they
+> otherwise hold), a **~120pp debt range**, and an amendment ceiling that moves
+> by ±0.06 — enough to **flip reachability in both directions** (France loses a
+> reachable amendment, Britain gains one). Not a narrow band.
+>
+> One axis nearly did fire, at design time rather than in play: an authored
+> approval written only to `bloc_approval` decays back to neutral on a
+> ~2.4-month half-life and is gone inside a game year, because every
+> satisfaction term is a delta against the nation's own start. It is held at
+> its target through the existing `law_bloc_offset` channel instead. Had that
+> gone unnoticed, a third of this feature would have been decorative. See
+> [[scenario-model]].
+
 ## Per-nation voter-bloc weights
 
 **Declined at V1.2a**, when the named trigger — a second playable nation —

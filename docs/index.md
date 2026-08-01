@@ -31,6 +31,9 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[dissolution-model]] — dissolution and snap elections, the rule as data, and what the gamble costs
 - [[cabinet-model]] — cabinet portfolios, competence as derived effectiveness, and shortfall-driven resignation
 - [[political-systems]] — political system templates as a constraint not a defaults table, the head of state, and enforced term limits
+- [[amendment-model]] — constitutional amendment as a law with a per-nation threshold, and the channel that sets rather than nudges an institution
+- [[transition-model]] — monarchy ↔ republic as the amendment mechanism pointed at `system_id`, checked against the target
+- [[scenario-model]] — start scenarios as the answer to difficulty, the three authored axes, and the measured envelope
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

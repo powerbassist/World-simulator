@@ -1,0 +1,22 @@
+{
+  "id": "gbr_hung_parliament",
+  "nation": "GBR",
+  "name": "Hung Parliament",
+  "description": "The largest party by four seats and nowhere near a majority. Every vote is a negotiation, and the opposition only needs one bad week.",
+  "_source": "authored",
+  "_note": "The seat axis, pointed at what the United Kingdom's own institutions make dangerous rather than at a coalition. GBR forms a government by largest_party and censures on simple_present, so a plurality this thin is a standing minority government that a single bad month can end -- which is the scenario docs/scenario-model.md argues is GBR's equivalent of the coalition axis the other two nations have and GBR structurally does not. progress_alliance keeps its plurality (0.29 against 0.27) so the formation rule still returns the authored leader's party. WHERE the freed seats go is the whole scenario, and the first draft got it backwards: spread onto liberal_union it built a centrist bloc some law could always rally, and the probe found it made amendments EASIER than the standard start (0.505 against 0.497), the opposite of what this file claims to be. Rewritten to spread onto patriot_front, which both large parties list in excluded_partners -- seats that are dead weight for assembling anything. Measured, not assumed: see docs/scenario-model.md.",
+  "overrides": {
+    "seat_share": {
+      "progress_alliance": 0.29,
+      "national_unity_party": 0.27,
+      "liberal_union": 0.1,
+      "patriot_front": 0.22,
+      "ecology_alliance": 0.06,
+      "home_nations_bloc": 0.06
+    },
+    "bloc_approval": {
+      "urban": 46.0,
+      "rural": 46.0
+    }
+  }
+}

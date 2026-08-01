@@ -1,0 +1,12 @@
+{
+  "id": "bad_party",
+  "nation": "FRA",
+  "name": "Phantom Bench",
+  "description": "Hands seats to a party that does not sit in this assembly.",
+  "_note": "Fixture for tests/test_scenario.gd. 'parti_imaginaire' is not in data/parties/FRA.json, so this override would silently move no seats at all -- the same class of quiet failure the excluded_partners check in _load_parties() exists to catch.",
+  "overrides": {
+    "seat_share": {
+      "parti_imaginaire": 0.4
+    }
+  }
+}

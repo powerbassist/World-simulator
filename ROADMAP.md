@@ -59,6 +59,7 @@ shell does not have.
 | V1.2b | Sim | Political system templates as a constraint not a defaults table, the head of state (five constitutional monarchies now say so), a named lose condition replacing a structural-flag dispatch, term limits enforced (France's two-term limit termed-out on the merits), Italy's *semestre bianco* dissolution blackout |
 | V1.2c | Sim | Constitutional amendment — a sixth per-nation dispatch field (`amendment_rule`) at real constitutional fractions, a seventh law effect channel that sets rather than nudges an institution, the load-bearing cross-check extended to amendments; measured, not assumed, that Germany's real two-thirds is unreachable, and left unauthored-against rather than detuned |
 | V1.2d | Sim | System transition — the amendment mechanism pointed at `system_id`, a completeness rule on the institutional bundle, the cross-check inverted to validate against the amendment's target rather than the systems it is proposed under, a seventh per-nation dispatch field (`permits_system_change`); the United Kingdom made the third playable nation, added to the scope at plan time once the original scope was found to ship to zero playable nations |
+| V1.2e | Sim | Start scenarios — an authored starting state as the project's answer to difficulty, three axes not §2's four (the coalition stays derived), a new directory-scanned content type with its validation split per-file/cross-file; the declined difficulty slider's own falsifier measured and not fired, an approval axis caught decorative at design time and fixed through the existing offset channel, and two of the three shipped scenarios corrected by the measurement before release — **V1.2 closed** |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -66,12 +67,73 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's last
-remaining item is **start scenarios** — a nation plus an authored starting
-state (debt level, seat composition, approval, coalition). With V1.2d,
-everything else in §2 is built. Per this document's own handoff convention
-below, the plan/model/effort call belongs to the session that picks it up,
-read cold, not to this one.
+**V1.2 is closed.** [docs/tiers/v1.md](docs/tiers/v1.md) §2 is fully built as of
+V1.2e. The next block is **V1.3, diplomacy and trade** — and it is one coarse
+row in the V1.2-onward table below, not a session: relations, diplomatic
+actions, trade agreements, tariffs, sanctions, an EU-shaped bloc, nation AI
+foreign policy, and defence as domestic politics. That is six-plus sessions,
+so the first thing V1.3 needs is a **decomposition into V1.3a–f**, argued and
+written down, not a build.
+
+Two things this document already commits to that the decomposition inherits:
+AI foreign policy is named as "the actual hard part of this block", and defence
+is scheduled thin, here and nowhere earlier, because a deployment with no
+counterparty is a spending line with a different label. V1.3 is also what
+unblocks the Military dashboard tab parked below.
+
+One piece of V1.2 work is deferred rather than done, with somewhere to point
+now: **V1.2c authored no amendment content naming `parliamentary_republic`**,
+because Germany's real two-thirds bar was measured unreachable. V1.2e's
+`deu_grand_coalition` start makes it reachable (0.727 against 0.667). The
+content itself was left to the session that picks it up — see
+[[scenario-model]].
+
+Per this document's own handoff convention below, the plan/model/effort call
+belongs to the session that picks it up, read cold, not to this one.
+
+### V1.2e — start scenarios (shipped)
+
+[docs/tiers/v1.md](docs/tiers/v1.md) §2's last item, and the one that closes
+V1.2. A scenario is an authored starting state for one nation, applied once at
+`GameState.new_game()` and never again — the project's answer to difficulty, and
+the reason [docs/tiers/declined.md](docs/tiers/declined.md) declined a slider:
+every balance number here is measured, so a multiplier over tuned constants
+invalidates each measurement, while varying the starting state changes data and
+no constant.
+
+**Three axes, not §2's four.** Debt, seat composition and starting approval are
+authored; **the coalition stays derived** by `Government.form()` from the seats
+a scenario already authors. Authoring both would author a contradiction the
+formation rule exists to resolve, and under GBR's `largest_party` the axis is
+degenerate — the government is single-party by construction, so it is a field
+one playable nation in three cannot use.
+
+**The plan's named measurement ran, changed the content twice, and its first
+result was an artefact.** `tools/scenario_probe.gd` initially reported the seats
+axis as changing *nothing* — identical approval, deficit, debt and election
+timing at every extreme. That was the regime, not the finding: `hands_off`
+proposes no law, and the legislature is the only channel seats have. Split into
+a legislative table and an economic one, the axis moves the amendment ceiling by
+±0.06 — enough to flip reachability in **both** directions. Both seat scenarios
+were then found wrong and corrected before release: `deu_grand_coalition`
+cleared two-thirds by *exactly nothing* (0.667 against 0.667, on a rounding
+boundary) and was widened; `gbr_hung_parliament` made amendments **easier** than
+the standard start, the opposite of what it claims to be, and had its freed
+seats moved onto the party both large parties exclude.
+
+**A third of the feature was decorative and nearly shipped that way.** Every
+satisfaction term is a delta against the nation's own start, so a fresh game's
+approval target is exactly neutral — an authored approval written only to
+`bloc_approval` decays back to 50 on a ~2.4-month half-life and is gone inside a
+game year, while debt and seats persist. Caught at design time and held at its
+target through `law_bloc_offset`, the channel `Government.penalise_blocs()`
+already uses for a fallen government. [docs/tiers/declined.md](docs/tiers/declined.md)'s
+own falsifier was otherwise measured and did **not** fire.
+
+`SAVE_VERSION` stays at 8 — the one runtime-readable addition since V1.2b that
+does not earn a bump, because a version-8 save's absent `scenario_id` reads as
+"" and that is *correct* rather than silently wrong. Full account:
+[[scenario-model]].
 
 ### V1.2d — system transition, and a third playable nation (shipped)
 
@@ -280,6 +342,7 @@ is already made, which is most sessions once the docs are written.
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 | V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
+| V1.2e Start scenarios | **Yes** *(held)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time cold count of ~20 surfaces — between V1.2c's ~18 and V1.2d's ~21 — on the reasoning that a scenario adds one new value type, one new validator in a pattern built four times, and two optional sim arguments, with no new tuned constant and no new model. Held. Two things the count got right in advance: `new_game()`'s ~50 call sites made a defaulted third parameter mandatory rather than optional, and the coalition axis was cut at plan time rather than discovered mid-build. One thing it did not: the plan treated an authored `bloc_approval` as a single write, and it needed a second (`law_bloc_offset`) or the axis would have decayed to nothing inside a game year — found at design time from `INERTIA_RATE`, before content existed, which is the earliest any correction on this table has been caught. The plan's own named escalation trigger (the reachability sweep coming back too narrow) did **not** fire; a different measurement problem did, and the response the plan named for it — split the report rather than trust the first number — resolved it without escalating. Ninth correction on this table's own record, and the fifth that held its tier once corrected. |
 | V1.2d System transition | **Yes** *(corrected)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time count of ~21 surfaces — three above V1.2c's ~eighteen, for the seventh dispatch-on-a-data-string field, the inverted target-side cross-check, and a new template field. **Corrected at plan time, not at build time**: a cold read of the scope found it would ship to zero playable nations, and the session's scope grew to include a third playable nation before any code was written — the eighth correction on this table's own record, and the first caught before the plan was even finalised rather than during or after the build. The plan's own named escalation trigger (a reachability sweep coming back unreachable) fired once, for restoration, and resolved by widening the sweep rather than escalating — the response the plan itself named in advance. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
@@ -372,7 +435,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 
 | Block | Rough content |
 |---|---|
-| **V1.2 Political systems** | Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions — all shipped; **start scenarios** left |
+| **V1.2 Political systems** | ~~Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios~~ — **all shipped, block closed at V1.2e** |
 | **V1.3 Diplomacy and trade** | Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics** |
 | **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |

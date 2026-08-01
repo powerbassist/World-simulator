@@ -18,6 +18,9 @@ extends RefCounted
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes law_bloc_offset for a
+## start scenario, and must respect the same bounds a law is held to.
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 
 ## Set every bloc to the neutral baseline and record the starting deficit that
@@ -25,16 +28,49 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 ##
 ## Runs for all ten nations even though only the player's ticks, so the state
 ## shape is uniform and duplicate_state() has nothing conditional to copy.
-static func init_nation(ns) -> void:
+##
+## `bloc_approval_override` is a start scenario's authored starting approval,
+## {bloc key -> approval}, applied over the neutral baseline below. Partial: a
+## bloc the scenario does not name stays neutral. Empty for a standard start.
+## See docs/scenario-model.md.
+static func init_nation(ns, bloc_approval_override: Dictionary = {}) -> void:
 	ns.start_deficit_pct_gdp = ns.deficit_pct_gdp
 
 	ns.bloc_approval = {}
 	for bloc in K.BLOC_KEYS:
 		ns.bloc_approval[bloc] = K.APPROVAL_NEUTRAL
+
+	for bloc in bloc_approval_override.keys():
+		var authored: float = float(bloc_approval_override[bloc])
+		ns.bloc_approval[bloc] = authored
+
+		# The authored figure has to set the EQUILIBRIUM as well as the starting
+		# position, or it is not a difficulty lever at all. Every satisfaction
+		# term is a delta against the nation's own starting figure, so a fresh
+		# game's target is exactly APPROVAL_NEUTRAL -- an authored 38 with an
+		# unshifted target would decay back to 50 on INERTIA_RATE's ~2.4-month
+		# half-life and be gone inside a game year, while debt and seats persist.
+		# Measured before it was built: see docs/scenario-model.md.
+		#
+		# Routed through law_bloc_offset because that IS the model's channel for
+		# an opinion effect with no budget line behind it -- Government.
+		# penalise_blocs() already uses it for a fallen government, which is no
+		# more a law than a scenario is. Inverting _tick_nation()'s own target
+		# formula gives the offset that makes `authored` the resting point; the
+		# clamp is what bounds the sustainable band to [10, 90], the same band
+		# APPROVAL_SPAN gives a pure satisfaction score.
+		ns.law_bloc_offset[bloc] = clampf(
+			(authored - K.APPROVAL_NEUTRAL) / K.APPROVAL_SPAN,
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
+		)
+
 	ns.overall_approval_pct = K.APPROVAL_NEUTRAL
 
 	# Every satisfaction is zero at new-game, so this leaves approval exactly at
-	# neutral and exists only to populate issue_salience.
+	# neutral and exists only to populate issue_salience -- except under a
+	# scenario, where the offset above holds the target at the authored figure
+	# and this rolls the blocs up into overall_approval_pct, which is why the
+	# roll-up is not authored directly.
 	_tick_nation(ns)
 
 

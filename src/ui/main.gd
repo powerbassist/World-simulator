@@ -41,6 +41,11 @@ const MENU_SCENE := "res://src/ui/menu.tscn"
 const DEFAULT_PLAYER_NATION_ID := "FRA"
 var pending_player_id := DEFAULT_PLAYER_NATION_ID
 
+## Which start scenario to begin under -- V1.2e. Set by menu.gd alongside
+## pending_player_id. Empty is the standard start, which is what a direct scene
+## load (tests, tools) gets and what every save written before V1.2e reads as.
+var pending_scenario_id := ""
+
 ## How many decisions Overview's recent-effects list keeps -- U4. Not
 ## GameState.recent_effects.size(), which is unbounded in the array itself;
 ## trimmed here so a long session's save file does not grow one entry per
@@ -107,7 +112,7 @@ func _ready() -> void:
 			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
 		])
 
-	_state = GameState.new_game(_loader, pending_player_id)
+	_state = GameState.new_game(_loader, pending_player_id, pending_scenario_id)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)

@@ -8,6 +8,7 @@ const Nation = preload("res://src/core/nation.gd")
 const Party = preload("res://src/core/party.gd")
 const Law = preload("res://src/core/law.gd")
 const PoliticalSystem = preload("res://src/core/political_system.gd")
+const Scenario = preload("res://src/core/scenario.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -21,6 +22,7 @@ var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
+var scenarios: Dictionary = {}  # String id -> Scenario
 var eu: EU = null
 var errors: Array[String] = []
 
@@ -33,11 +35,12 @@ var errors: Array[String] = []
 var geo_features: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
 	political_systems.clear()
+	scenarios.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -78,6 +81,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
+	_load_scenarios(scenarios_dir)
 
 	eu = EU.new()
 	eu.load(eu_path)
@@ -85,6 +89,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 
 	_validate_cross_file(geo_path)
 	_validate_amendments()
+	_validate_scenarios()
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:
@@ -226,6 +231,48 @@ func _load_political_systems(political_systems_dir: String) -> void:
 			political_systems[system.id] = system
 
 
+## Reads every data/scenarios/*.json file -- one authored starting state each.
+## Same directory-scan shape as laws and political systems: no manifest, so
+## adding a scenario is a file, not a file plus an index entry. The cross-file
+## half of the validation (which nation, which parties, which blocs) is
+## _validate_scenarios() below. See docs/scenario-model.md.
+func _load_scenarios(scenarios_dir: String) -> void:
+	var da := DirAccess.open(scenarios_dir)
+	if da == null:
+		errors.append("%s: directory not found" % scenarios_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	for fname in filenames:
+		var path := scenarios_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY:
+			errors.append("%s: invalid JSON" % fname)
+			continue
+
+		var per_file_errors: Array[String] = []
+		var scenario = Scenario.from_dict(parsed, fname, per_file_errors)
+		errors.append_array(per_file_errors)
+		if scenario.id != "":
+			if scenarios.has(scenario.id):
+				errors.append("%s: duplicate scenario id '%s'" % [fname, scenario.id])
+			scenarios[scenario.id] = scenario
+
+
 func _validate_cross_file(geo_path: String) -> void:
 	if nations.size() != 10:
 		errors.append("expected 10 nations, loaded %d" % nations.size())
@@ -343,6 +390,52 @@ func _validate_institutional_against_system(law, inst: Dictionary, system_id: St
 		var hos: Dictionary = inst["head_of_state"]
 		if hos.has("kind") and not system.allowed_head_of_state_kinds.has(hos["kind"]):
 			errors.append("laws: %s effects.institutional.head_of_state.kind '%s' is not permitted by system '%s'" % [law.id, hos["kind"], system_id])
+
+
+## The cross-file half of a scenario's validation -- everything that needs the
+## nation's own roster rather than just the scenario file. Fails loudly at
+## startup for the same reason a bad nation file does: a scenario is authored
+## content, and a scenario naming a party that does not exist would silently
+## override nothing. See docs/scenario-model.md.
+func _validate_scenarios() -> void:
+	for id in scenarios.keys():
+		var s: Scenario = scenarios[id]
+
+		if not nations.has(s.nation_id):
+			errors.append("%s.json: nation '%s' is not a loaded nation" % [id, s.nation_id])
+			continue
+
+		# Playable, not merely loaded. A scenario is offered from the nation-select
+		# surface, which lists playable nations only -- one authored against an
+		# unplayable nation is content nothing can ever reach.
+		var n = nations[s.nation_id]
+		if not n.playable:
+			errors.append("%s.json: nation '%s' is not playable, so this scenario can never be selected" % [id, s.nation_id])
+
+		var roster: Array = parties.get(s.nation_id, [])
+		if not s.seat_share.is_empty():
+			# Merged over the nation's authored shares, then summed -- the same
+			# invariant _load_parties() holds the party file to, checked against
+			# what the scenario ACTUALLY produces rather than against the override
+			# fragment, which is not required to sum to anything on its own.
+			var merged := {}
+			for party in roster:
+				merged[party.id] = party.seat_share
+			for party_id in s.seat_share.keys():
+				if not merged.has(party_id):
+					errors.append("%s.json: overrides.seat_share names '%s', which is not a party in data/parties/%s.json" % [id, party_id, s.nation_id])
+					continue
+				merged[party_id] = s.seat_share[party_id]
+
+			var total := 0.0
+			for share in merged.values():
+				total += float(share)
+			if absf(total - 1.0) > 0.001:
+				errors.append("%s.json: overrides.seat_share leaves the roster summing to %s, expected 1.0" % [id, str(total)])
+
+		for bloc in s.bloc_approval.keys():
+			if not OpinionK.BLOC_KEYS.has(bloc):
+				errors.append("%s.json: overrides.bloc_approval names '%s', which is not a voter bloc" % [id, bloc])
 
 
 func _load_geo(geo_path: String) -> Array:

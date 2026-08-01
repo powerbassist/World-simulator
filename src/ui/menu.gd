@@ -69,9 +69,9 @@ func _ready() -> void:
 	_add_overlay(_credits_panel)
 
 	_nation_select_panel = NationSelectPanel.new()
-	_nation_select_panel.nation_selected.connect(func(id): _start_game("", id))
+	_nation_select_panel.nation_selected.connect(func(id, scenario_id): _start_game("", id, scenario_id))
 	_add_overlay(_nation_select_panel)
-	_nation_select_panel.set_nations(_playable_nations())
+	_nation_select_panel.set_nations(_playable_nations(), _loader.scenarios)
 
 	# Godot focuses nothing by default, and a menu with no focused control
 	# cannot be driven from the keyboard at all -- arrow keys and Enter go
@@ -171,6 +171,11 @@ func _show(panel: Control) -> void:
 	panel.show()
 	if panel.has_method("mark_dirty"):
 		panel.mark_dirty()
+	# Same reason _ready() focuses the first menu entry: a panel with no focused
+	# control cannot be driven from the keyboard at all. The nation select panel
+	# never had this and so was mouse-only from V1.2a until V1.2e noticed.
+	if panel.has_method("focus_first"):
+		panel.focus_first()
 
 
 func _close(panel: Control) -> void:
@@ -198,10 +203,11 @@ func _unhandled_input(event: InputEvent) -> void:
 ## under a tool the project uses is not the cheap option it looks like.
 ##
 ## An empty slot means a new game, in which case `nation_id` is the player's
-## choice from the nation select panel. `nation_id` is ignored when loading --
-## a save carries its own player_nation_id, and main.gd's load path replaces
+## choice from the nation select panel and `scenario_id` their choice of start
+## ("" for the standard one). Both are ignored when loading -- a save carries
+## its own player_nation_id and scenario_id, and main.gd's load path replaces
 ## the whole GameState wholesale after building a throwaway one.
-func _start_game(load_slot: String, nation_id: String = "") -> void:
+func _start_game(load_slot: String, nation_id: String = "", scenario_id: String = "") -> void:
 	# Untyped, like main.gd's panel references: pending_load_slot is a script
 	# property, and a Node-typed variable cannot see it without a cast that buys
 	# nothing here.
@@ -209,6 +215,7 @@ func _start_game(load_slot: String, nation_id: String = "") -> void:
 	game.pending_load_slot = load_slot
 	if not nation_id.is_empty():
 		game.pending_player_id = nation_id
+	game.pending_scenario_id = scenario_id
 	get_tree().root.add_child(game)
 	get_tree().current_scene = game
 	queue_free()

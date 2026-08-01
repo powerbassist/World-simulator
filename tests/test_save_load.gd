@@ -31,6 +31,7 @@ const Clock = preload("res://src/core/clock.gd")
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
 const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
 const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
+const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -76,6 +77,7 @@ func _init() -> void:
 	_run_atomic_write(state, clock)
 	_run_second_nation_roundtrip(loader)
 	_run_transition_roundtrip(loader)
+	_run_scenario_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -133,6 +135,66 @@ func _run_second_nation_roundtrip(loader) -> void:
 			_fail("DEU save dropped nation %s" % id)
 			continue
 		_check_pair("NationState[DEU][%s]" % id, state.nations[id], loaded.nations[id])
+
+
+## V1.2e: a game begun under a start scenario, through the real SaveManager
+## rather than to_dict()/from_dict() alone -- tests/test_scenario.gd covers the
+## dictionary pair, this covers the disk path SAVE_VERSION guards. Deliberately
+## the case the no-bump argument rests on: the scenario's EFFECTS have to ride
+## in the ordinary fields, so that a save carries them whether or not anything
+## ever reads scenario_id back.
+func _run_scenario_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "DEU", "deu_grand_coalition")
+	if not state.errors.is_empty():
+		_fail("new_game(DEU, deu_grand_coalition) reported %s" % [state.errors])
+		return
+
+	for _i in range(3):
+		state.month += 1
+		if state.month > 12:
+			state.month = 1
+			state.year += 1
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Opinion.tick_month(state)
+		var entry := Budget.snapshot(state)
+		entry.merge(Opinion.snapshot(state))
+		state.append_history(entry)
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 9
+
+	var save_error := SaveManager.save_game(state, clock, SCENARIO_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game(DEU scenario) failed: %s" % save_error)
+		return
+
+	var result := SaveManager.load_game(SCENARIO_SLOT)
+	if not result["ok"]:
+		_fail("load_game(DEU scenario) failed on a save this test just wrote: %s" % result["error"])
+		return
+
+	var loaded = result["state"]
+	_check_pair("GameState[DEU scenario]", state, loaded)
+	_check_pair("NationState[DEU scenario]", state.player(), loaded.player())
+
+	if loaded.scenario_id != "deu_grand_coalition":
+		_fail("a scenario save reloaded as scenario_id '%s'" % loaded.scenario_id)
+
+	# Compared per key rather than as whole Dictionaries: JSON has no integer
+	# type, so every seat count comes back as a float and the key order is not
+	# preserved. True of every Dictionary in a save since S9, not something a
+	# scenario introduced -- but a `!=` here would report it as one.
+	var before: Dictionary = state.player().seats_by_party
+	var after: Dictionary = loaded.player().seats_by_party
+	for party_id in before.keys():
+		if int(after.get(party_id, -1)) != int(before[party_id]):
+			_fail("a scenario's authored assembly did not survive the disk round trip: '%s' %s -> %s" % [
+				party_id, before[party_id], after.get(party_id, "absent"),
+			])
 
 
 ## V1.2d: system_id, lose_condition and the head-of-state fields become
@@ -360,7 +422,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

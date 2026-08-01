@@ -40,6 +40,18 @@ const SAVE_VERSION := 8
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
 
+## Which data/scenarios/*.json start this game was begun under; "" is the
+## standard start. Read-only after new_game() -- a scenario is an authored
+## STARTING state, applied once, so nothing mutates this and no system reads it
+## except the UI, which shows the player which start they are in.
+##
+## No SAVE_VERSION bump for it: a scenario's effects live in the ordinary
+## fields a save already carries, and a version-8 save with no scenario_id
+## reads as "" -- which is correct for every save that exists, not silently
+## wrong. That is the condition this file's SAVE_VERSION comment gives for a
+## bump, and it does not hold here. See docs/scenario-model.md.
+var scenario_id: String = ""
+
 ## Mirrored from the Clock on each monthly tick, so history entries are stamped.
 ## The Clock stays authoritative for the date; folding it in here is S9's call.
 var year: int = 0
@@ -61,15 +73,34 @@ var errors: Array[String] = []
 
 ## Build live state by copying starting values out of loaded static data.
 ## `loader` is a DataLoader that has already run load_all() without errors.
-static func new_game(loader, player_id: String):
+##
+## `scenario_id` names a data/scenarios/*.json start; "" is the standard start,
+## which is what every existing caller wants and so what the default gives. A
+## scenario applies to the PLAYER's nation only, once, here -- see
+## docs/scenario-model.md.
+static func new_game(loader, player_id: String, scenario_id: String = ""):
 	var gs = new()
 	gs.player_nation_id = player_id
+	gs.scenario_id = scenario_id
+
+	var scenario = null
+	if scenario_id != "":
+		scenario = loader.scenarios.get(scenario_id)
+		if scenario == null:
+			gs.errors.append("scenario '%s' was not loaded" % scenario_id)
+		elif scenario.nation_id != player_id:
+			# Refused, not silently ignored: a scenario authored for another
+			# nation would otherwise produce a game that says it is running one
+			# start and is running a different one.
+			gs.errors.append("scenario '%s' is authored for nation '%s', not the player's '%s'" % [scenario_id, scenario.nation_id, player_id])
+			scenario = null
 
 	var ids: Array = loader.nations.keys()
 	ids.sort()
 	for id in ids:
 		var party_list: Array = loader.parties.get(id, [])
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, loader.political_systems, gs.errors)
+		var applied = scenario if id == player_id else null
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, loader.political_systems, gs.errors, applied)
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -82,7 +113,13 @@ static func new_game(loader, player_id: String):
 	return gs
 
 
-static func _build_nation(n, is_player: bool, party_list: Array, eu, political_systems: Dictionary, errors: Array[String]):
+## `scenario` is a Scenario for the player's nation, or null for a standard
+## start and for every non-player nation. It overrides exactly three things --
+## debt, seat composition, starting approval -- each at the one point below
+## where that value first enters live state. Everything downstream (discipline,
+## the coalition, the cabinet, dissolution) then reads the overridden figures
+## and needs no scenario awareness of its own. See docs/scenario-model.md.
+static func _build_nation(n, is_player: bool, party_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -100,7 +137,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	ns.start_unemployment_pct = n.unemployment_pct
 	ns.structural_unemployment_pct = n.unemployment_pct
 
-	ns.debt_eur_bn = n.debt_to_gdp_pct / 100.0 * ns.gdp_eur_bn
+	# Before Budget.recompute() below, so the debt service a scenario's debt
+	# implies is in the starting deficit that Opinion then measures against --
+	# an inherited debt is a permanent drag on the budget, which is the whole
+	# point of the axis, rather than a number on a panel.
+	var debt_to_gdp_pct: float = n.debt_to_gdp_pct
+	if scenario != null and scenario.has_debt_to_gdp_pct:
+		debt_to_gdp_pct = scenario.debt_to_gdp_pct
+	ns.debt_eur_bn = debt_to_gdp_pct / 100.0 * ns.gdp_eur_bn
 
 	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
@@ -122,10 +166,18 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	ns.growth_annual_pct = ns.trend_annual_pct
 	Budget.recompute(ns)
 
-	# After recompute, so the starting deficit opinion measures against is real.
-	Opinion.init_nation(ns)
+	# Before Opinion, which is the one init that now WRITES law_bloc_offset --
+	# a scenario's authored approval is held at its target through that
+	# accumulator, and Legislature.init_nation() zeroes it. Moved ahead of
+	# Opinion rather than teaching Legislature to spare one key: it zeroes law
+	# state and reads nothing, so it is order-independent against everything
+	# here. See docs/scenario-model.md.
+	Legislature.init_nation(ns)
 
-	Elections.init_nation(ns, n, party_list, eu)
+	# After recompute, so the starting deficit opinion measures against is real.
+	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
+
+	Elections.init_nation(ns, n, party_list, eu, scenario.seat_share if scenario != null else {})
 	# Before Government, which reads discipline the moment it computes the first
 	# coalition bonus — seeding after formation would score that one government
 	# against an empty table.
@@ -147,7 +199,6 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	# docs/cabinet-model.md.
 	Cabinet.init_nation(ns)
 	Cabinet.seat(ns, party_list)
-	Legislature.init_nation(ns)
 	Dissolution.init_nation(ns, n)
 
 	return ns
@@ -170,6 +221,7 @@ func duplicate_state():
 	var gs = new()
 	gs.save_version = save_version
 	gs.player_nation_id = player_nation_id
+	gs.scenario_id = scenario_id
 	gs.year = year
 	gs.month = month
 	for id in nations.keys():
@@ -198,6 +250,7 @@ func to_dict() -> Dictionary:
 	return {
 		"save_version": save_version,
 		"player_nation_id": player_nation_id,
+		"scenario_id": scenario_id,
 		"year": year,
 		"month": month,
 		"nations": nations_dict,
@@ -213,6 +266,10 @@ static func from_dict(d: Dictionary):
 	var gs = new()
 	gs.save_version = int(d.get("save_version", SAVE_VERSION))
 	gs.player_nation_id = d.get("player_nation_id", "")
+	# Absent in a version-8 save, and "" is exactly right for one: those games
+	# were all standard starts. See the field's own declaration for why this is
+	# the one runtime-readable addition that does not earn a version bump.
+	gs.scenario_id = d.get("scenario_id", "")
 	gs.year = int(d.get("year", 0))
 	gs.month = int(d.get("month", 0))
 

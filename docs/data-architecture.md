@@ -34,6 +34,7 @@ data/
 ├── parties/           one file per nation's party system
 ├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
 ├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
+├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
@@ -258,7 +259,8 @@ at import time. It checks:
 
 - Required fields present, correct type.
 - Numeric fields within sane ranges — no negative populations, no debt ratios of 40,000.
-- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]), and every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list ([[ROADMAP|V1.2c]], [[amendment-model]]).
+- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]), every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list ([[ROADMAP|V1.2c]], [[amendment-model]]), and every scenario names a *playable* nation, real parties, and real voter blocs ([[ROADMAP|V1.2e]], [[scenario-model]]).
+- **What a scenario produces, not what it declares.** A scenario's `seat_share` is a partial override merged over the party file's own shares, so the fragment is not required to sum to anything — the check is that the *merged roster* still sums to 1.0, the same invariant `data/parties/*.json` is held to. It is the one check in the loader that passes every per-file test and fails only cross-file, which is why scenario validation is split between `scenario.gd` (range and shape) and `data_loader.gd` (everything needing the nation's roster).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
 
 It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
@@ -332,6 +334,15 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **It is at 8, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
+> [!note] [[ROADMAP|V1.2e]] added a runtime-readable field and did **not** bump
+> `GameState.scenario_id` is the first addition since V1.2b to stop at 8. The
+> rule this list follows is not "a new field bumps" but "a missing field would
+> be read as something *wrong*" — and a version-8 save has no `scenario_id`
+> because it was a standard start, which is exactly what `""` means. The
+> scenario's effects ride in the ordinary fields either way, since a scenario
+> applies once at new-game and mutates nothing after. Same call [[ROADMAP|V1.2a]]
+> made and held. See [[scenario-model]].
+
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 
 ## Why there is no database
@@ -360,4 +371,4 @@ Stated in advance, so the decision can be revisited on evidence rather than on f
 
 ---
 
-Related: [[index]] · [[engine-decision]] · [[data-sources]] · [[fictionalization]] · [[scope]] · [[political-systems]] · [[amendment-model]]
+Related: [[index]] · [[engine-decision]] · [[data-sources]] · [[fictionalization]] · [[scope]] · [[political-systems]] · [[amendment-model]] · [[scenario-model]]

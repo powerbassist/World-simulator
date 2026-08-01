@@ -53,6 +53,7 @@ implementation, plugin architecture.
 
 ```
 data/     static content, read once at startup, never mutated
+          (nations, parties, laws, political-systems, scenarios, geo)
 src/core/ game state, clock, save/load, data loader, value types
 src/sim/  one file per system, no UI knowledge
 src/ui/   scenes and panels, read-only over sim state
@@ -84,38 +85,45 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.2b shipped** — political system templates, the head of state, and
-enforced term limits. `data/political-systems/*.json` is a **constraint on
-what nations already declare flat**, not a defaults table: no inheritance, no
-override resolution, and `data_loader.gd` fails at startup if a nation's own
-`formation.method`/`censure`/`dissolution.rule` falls outside its declared
-template's allowed set. Four templates match the roster —
-`semi_presidential_republic` (FRA), `parliamentary_republic` (DEU, ITA, AUT),
-`constitutional_monarchy` (GBR, ESP, BEL, NLD, LUX), `directorial_republic`
-(CHE) — §2's other two named templates, absolute monarchy and one-party
-state, have no nation to attach to and are deferred with a named trigger.
-Every nation now carries `government.head_of_state` (kind, title, name; an
-`elected_president`'s own term clock for DEU/ITA/AUT) and
-`government.term_limit` (0 unless the template permits one — only France's
-does, at 2). `elections.gd`'s run-ending branch is dispatched on a named
-`ns.lose_condition` rather than the structural flag `has_executive`; Italy's
-`head_of_state_limited` dissolution rule now reads the head of state's own
-clock for the *semestre bianco* blackout, no longer identical to
-`executive_discretion`. Model: [docs/political-systems.md](docs/political-systems.md).
-MVP, V1.1a–d, V1.2a, V1.2b, and U1–U4 are done.
+**V1.2e shipped, and V1.2 is closed** — start scenarios, the last item in
+[docs/tiers/v1.md](docs/tiers/v1.md) §2. A scenario is an authored starting
+state for one nation, in `data/scenarios/*.json`, applied once at
+`GameState.new_game()` and never again — the project's answer to difficulty,
+and why there is no slider ([docs/tiers/declined.md](docs/tiers/declined.md)).
+**Three axes, not §2's four**: debt, seat composition and starting approval are
+authored; the coalition stays *derived* by `Government.form()` from the seats a
+scenario already authors. `scenario_id == ""` is the standard start and has no
+file. Every override is optional and partial. Model:
+[docs/scenario-model.md](docs/scenario-model.md).
 
-**Next: not yet scoped.** [docs/tiers/v1.md](docs/tiers/v1.md) §2's remaining
-items — constitutional amendment, system transition, start scenarios — are
-next in the written order, now that the templates exist for amendment and
-transition to point at. The plan/model/effort call belongs to the session
-that picks it up — see [ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e
-(upper house and judiciary) is re-parked, not cancelled. Arguments in
-[docs/tiers/v1.md](docs/tiers/v1.md), [docs/tiers/declined.md](docs/tiers/declined.md),
-and [docs/decision-log.md](docs/decision-log.md).
+Two things worth knowing before touching it. **An authored `bloc_approval`
+writes `law_bloc_offset` as well** — every satisfaction term is a delta against
+the nation's own start, so an approval written only to `bloc_approval` decays
+back to neutral inside a game year and the axis is decorative. **The seats axis
+is invisible on economic/opinion figures**: the legislature is its only channel,
+so it is measured at month 0 through `resolve_vote()`, not by running a
+do-nothing regime. Both are recorded in
+[docs/decision-log.md](docs/decision-log.md).
 
-Save format is at **version 6**. There has never been a migration: a superseded
+MVP, V1.1a–d, V1.2a–e, and U1–U4 are done.
+
+**Next: V1.3, diplomacy and trade — and it needs decomposing before it needs
+building.** It is one coarse row in [ROADMAP.md](ROADMAP.md)'s V1.2-onward
+table (relations, diplomatic actions, trade agreements, tariffs, sanctions, an
+EU-shaped bloc, nation AI foreign policy, defence as domestic politics), which
+is six-plus sessions. The plan/model/effort call belongs to the session that
+picks it up — see [ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e (upper
+house and judiciary) is re-parked, not cancelled. One piece of V1.2 work is
+deferred with somewhere to point now: V1.2c authored no amendment content for
+`parliamentary_republic` because Germany's two-thirds bar was unreachable, and
+V1.2e's `deu_grand_coalition` start makes it reachable.
+
+Save format is at **version 8**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
-a clear refusal.
+a clear refusal. V1.2e added `GameState.scenario_id` **without** a bump — the
+rule is not "a new field bumps" but "a missing field would read as something
+wrong", and a version-8 save's absent `scenario_id` reads as `""`, which is
+correct for every save that exists.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

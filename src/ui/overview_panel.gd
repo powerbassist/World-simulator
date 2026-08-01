@@ -162,7 +162,9 @@ func _refresh() -> void:
 		return
 
 	var nation = _loader.nations.get(ns.id) if _loader != null else null
-	_title.text = "OVERVIEW — %s" % (nation.nation_name if nation != null else ns.id)
+	_title.text = "OVERVIEW — %s%s" % [
+		nation.nation_name if nation != null else ns.id, _start_suffix(),
+	]
 
 	for body in _columns.values():
 		for child in body.get_children():
@@ -184,6 +186,19 @@ func _refresh() -> void:
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
 	_fill_recent_effects()
+
+
+## Which start this game was begun under, appended to the panel title -- V1.2e.
+## Empty for the standard start rather than the word "Standard": a label that is
+## always there says nothing, and the whole point is to mark the games that
+## differ from the baseline every figure in docs/ was measured against.
+func _start_suffix() -> String:
+	if _state.scenario_id == "" or _loader == null:
+		return ""
+	var scenario = _loader.scenarios.get(_state.scenario_id)
+	if scenario == null:
+		return ""
+	return " · %s" % scenario.display_name
 
 
 ## What a censure motion would do today, at ordinary hostility rather than the

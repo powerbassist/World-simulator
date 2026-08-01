@@ -28,7 +28,12 @@ const TOP_ISSUE_COUNT := 3
 ##
 ## `nation` is the Nation this NationState was built from; `party_list` is that
 ## nation's Array[Party] from DataLoader.parties. `eu` is the loader's EU object.
-static func init_nation(ns, nation, party_list: Array, eu) -> void:
+##
+## `seat_share_override` is a start scenario's authored assembly, {party id ->
+## share}, merged over the party file's own shares below. Empty for a standard
+## start, which is every call but the player's under a scenario. See
+## docs/scenario-model.md.
+static func init_nation(ns, nation, party_list: Array, eu, seat_share_override: Dictionary = {}) -> void:
 	ns.assembly_seats = nation.assembly_seats
 	ns.months_in_term = 0
 
@@ -61,9 +66,17 @@ static func init_nation(ns, nation, party_list: Array, eu) -> void:
 	# initial seats_by_party is that composition allocated onto assembly_seats —
 	# reusing the same largest-remainder step pr_national uses on any other
 	# vote-share Dictionary, rather than a separate rounding routine.
+	#
+	# A scenario overrides that composition and nothing else about it: the
+	# allocation below is pr_national regardless of the nation's own election
+	# system, so an authored assembly needs no per-system branch — GBR's fptp
+	# seats itself here exactly as France's two_round does. The loader has
+	# already checked the merged shares still sum to 1.0.
 	var starting_share := {}
 	for party in party_list:
 		starting_share[party.id] = party.seat_share
+	for party_id in seat_share_override.keys():
+		starting_share[party_id] = seat_share_override[party_id]
 	ns.seats_by_party = ElectoralSystems.pr_national(starting_share, ns.assembly_seats, 0.0)
 
 	ns.last_election = {}

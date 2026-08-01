@@ -1,0 +1,12 @@
+{
+  "id": "bad_bloc",
+  "nation": "FRA",
+  "name": "Phantom Electorate",
+  "description": "Sets the starting mood of a voter bloc that does not exist.",
+  "_note": "Fixture for tests/test_scenario.gd. 'landowners' is not in opinion_constants.BLOC_KEYS, so this would author an approval figure nothing ever reads -- and, worse, would seed a law_bloc_offset key no bloc loop iterates.",
+  "overrides": {
+    "bloc_approval": {
+      "landowners": 30.0
+    }
+  }
+}

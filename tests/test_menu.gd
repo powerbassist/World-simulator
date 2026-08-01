@@ -33,6 +33,11 @@ var _frame := 0
 ## it: each is captured as the child root.add_child() just appended.
 var _continued_game
 var _new_game_deu
+## The Main that the nation-select panel's own buttons produced, driven end to
+## end -- V1.2e. The other two are started by calling _start_game() directly,
+## which is exactly the path that would keep passing if the panel stopped
+## emitting a scenario at all.
+var _new_game_fra_scenario
 
 
 func _init() -> void:
@@ -48,6 +53,7 @@ func _process(_delta: float) -> bool:
 		2:
 			_check_structure()
 			_check_settings()
+			_check_scenario_select()
 			_write_save()
 			_menu._start_game(SLOT)
 			_continued_game = root.get_child(root.get_child_count() - 1)
@@ -60,6 +66,7 @@ func _process(_delta: float) -> bool:
 		_:
 			_check_loaded_game()
 			_check_new_game_nation_select()
+			_check_new_game_scenario()
 			_cleanup()
 			_finish()
 			return false
@@ -210,6 +217,109 @@ func _check_loaded_game() -> void:
 		])
 
 	_check_pause_menu(game, clock)
+
+
+## The Play button on a row, wherever the row puts it -- a nation row is
+## [Label, Button] and a start row is [VBox, Button], and a test that indexed
+## either would break on the other.
+func _play_button(row: Control) -> Button:
+	for child in row.get_children():
+		if child is Button:
+			return child
+	return null
+
+
+## V1.2e: the two-step flow, driven through the panel's own buttons rather than
+## by calling _start_game(). Both halves fail silently otherwise -- a panel that
+## stopped offering starts would still start games, and a signal that dropped
+## its second argument would still start the right nation.
+func _check_scenario_select() -> void:
+	var panel = _menu._nation_select_panel
+
+	# France has an authored start, so its Play opens the start list rather than
+	# starting the game. Germany would do the same; a nation with no scenario
+	# must NOT, and that asymmetry is the thing worth asserting.
+	var fra_row: Control = null
+	for row in panel._list.get_children():
+		for child in row.get_children():
+			if child is Label and child.text.begins_with("France"):
+				fra_row = row
+	if fra_row == null:
+		_fail("nation select has no France row")
+		return
+
+	# Keyboard-drivable, which this panel was not from V1.2a until V1.2e: nothing
+	# ever called grab_focus() on it, so Tab landed nowhere and the whole New
+	# Game flow was mouse-only. Silent by construction -- every automated check
+	# emitted `pressed` directly and never asked what had focus.
+	# Focus must land INSIDE the panel, not merely be non-null: the main menu's
+	# own New Game button keeps focus otherwise, which is what made the first
+	# version of this assertion pass with the fix disabled.
+	_menu._show(panel)
+	var opened: Control = root.gui_get_focus_owner()
+	if opened == null or not panel.is_ancestor_of(opened):
+		_fail("opening nation select left focus outside it, so it cannot be driven from the keyboard")
+
+	var before: int = root.get_child_count()
+	_play_button(fra_row).pressed.emit()
+	if root.get_child_count() != before:
+		_fail("choosing a nation with authored starts began a game instead of offering them")
+		return
+	if not panel._title.text.begins_with("CHOOSE A START"):
+		_fail("choosing France did not open the start list: title is '%s'" % panel._title.text)
+		return
+
+	# Standard first, then the authored ones -- the baseline must not be buried
+	# under the variants, since it is the game every measured figure describes.
+	var rows: Array = panel._list.get_children()
+	if rows.size() < 2:
+		_fail("France's start list offers %d row(s), expected Standard plus at least one authored start" % rows.size())
+		return
+
+	# Focus has to survive the list swap too -- the control that had it was just
+	# queue_free()d, and a panel focused on a dead node is as keyboard-dead as
+	# one focused on nothing.
+	var focused: Control = root.gui_get_focus_owner()
+	if focused == null or not is_instance_valid(focused) or not panel.is_ancestor_of(focused):
+		_fail("swapping to the start list left focus on nothing, on a freed control, or outside the panel")
+
+	var found_inheritance := -1
+	for i in rows.size():
+		for child in rows[i].get_children():
+			if child is VBoxContainer and child.get_child(0).text == "Inheritance":
+				found_inheritance = i
+	if found_inheritance <= 0:
+		_fail("Inheritance is not offered after Standard in France's start list (index %d)" % found_inheritance)
+		return
+
+	_play_button(rows[found_inheritance]).pressed.emit()
+	_new_game_fra_scenario = root.get_child(root.get_child_count() - 1)
+
+
+## The chosen start has to reach main.gd's pending_scenario_id and then the
+## GameState, not merely be emitted -- the same property _check_loaded_game()
+## proves for Continue and _check_new_game_nation_select() for the nation.
+func _check_new_game_scenario() -> void:
+	var game = _new_game_fra_scenario
+	if game == null:
+		_fail("pressing Play on a start did not produce a Main instance")
+		return
+	if game._state == null:
+		_fail("the New-Game-with-scenario scene has no GameState")
+		return
+	if game._state.scenario_id != "fra_inheritance":
+		_fail("started under scenario '%s', expected fra_inheritance" % game._state.scenario_id)
+		return
+	if game._state.player_nation_id != "FRA":
+		_fail("the scenario start began as '%s', expected FRA" % game._state.player_nation_id)
+
+	# The scenario's own effect, not just its id: a scenario_id that arrived
+	# without its overrides being applied is the failure this catches.
+	var loader = game._loader
+	var expected: float = loader.scenarios["fra_inheritance"].debt_to_gdp_pct
+	var got: float = game._state.player().debt_eur_bn / game._state.player().gdp_eur_bn * 100.0
+	if absf(got - expected) > 0.1:
+		_fail("scenario start's debt is %.1f%% of GDP, expected the authored %.1f%%" % [got, expected])
 
 
 ## V1.2a: choosing Germany from the nation select panel has to reach main.gd's

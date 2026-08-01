@@ -1,0 +1,18 @@
+{
+  "id": "deu_grand_coalition",
+  "nation": "DEU",
+  "name": "Grand Coalition",
+  "description": "The two largest parties hold two thirds of the Bundestag between them. Everything is possible, and nothing is comfortable.",
+  "_source": "authored",
+  "_note": "The seat axis, and the one scenario with a named prior claim to test. docs/amendment-model.md records that Germany's real two-thirds amendment bar is unreachable at the standard start -- 0.503 achievable against 0.667 needed by tools/scenario_probe.gd's own measure -- and names a grand-coalition-shaped start scenario as one of two things that could raise the ceiling. Authored at 0.69 combined first, which the probe found cleared the bar by EXACTLY nothing (0.667 against 0.667, passing on a rounding boundary); widened to 0.75 for real margin rather than shipped on the knife edge, the same call docs/transition-model.md's restoration sweep made. Measured, not assumed: see docs/scenario-model.md. The other four parties keep their relative order, squeezed proportionally.",
+  "overrides": {
+    "seat_share": {
+      "buergerunion": 0.42,
+      "sozialer_fortschritt": 0.33,
+      "freiheitliche_mitte": 0.06,
+      "gruene_zukunft": 0.07,
+      "nationale_erneuerung": 0.08,
+      "linke_allianz": 0.04
+    }
+  }
+}

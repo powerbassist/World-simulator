@@ -1,0 +1,16 @@
+{
+  "id": "fra_inheritance",
+  "nation": "FRA",
+  "name": "Inheritance",
+  "description": "A decade of deferred decisions, handed over intact. The assembly is the one France actually elected; the books are not.",
+  "_source": "authored",
+  "_note": "The debt axis, alone. 155.0 against the standard start's 116.0 -- a third again, not the doubling the envelope sweep probes, because content should be hard and reachable rather than sit at the edge the sweep measures. The approval depression is deliberately mild and concentrated on the blocs the public_finances issue weighs heaviest: this is a fiscal inheritance, not an unpopular government, and the two should not be authored as the same thing. Seats are untouched -- France's scenario is about the budget constraint, and docs/scenario-model.md argues each start should lean on one axis.",
+  "overrides": {
+    "debt_to_gdp_pct": 155.0,
+    "bloc_approval": {
+      "workers": 45.0,
+      "pensioners": 44.0,
+      "business": 43.0
+    }
+  }
+}

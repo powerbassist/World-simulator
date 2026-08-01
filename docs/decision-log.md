@@ -588,6 +588,56 @@ than the systems a law is proposed under — is a real, different
 justification, corrected in [[transition-model]] rather than left standing
 on the roadmap's original framing.
 
+## V1.2e — an axis measured decorative before it shipped, and a probe that lied once
+
+Three corrections, and the interesting one is the earliest any correction on
+this record has been caught.
+
+**The coalition axis was cut at plan time.** [docs/tiers/v1.md](tiers/v1.md) §2
+names four things a start scenario varies — debt, seats, approval, coalition —
+and the plan shipped three. Seats plus `excluded_partners` already determine the
+coalition through `Government.form()`, so authoring both authors a contradiction
+that rule exists to resolve; and under GBR's `largest_party` the axis is
+degenerate, the government being single-party by construction. Cutting scope at
+plan time rather than discovering the collision mid-build is V1.1d's pattern,
+not a new one.
+
+**A third of the feature was decorative, and the constant said so before any
+content existed.** The plan treated an authored `bloc_approval` as a single
+write. It cannot be: every satisfaction term in [[opinion-model]] is a delta
+against the nation's *own* starting figure, so a fresh game's approval target is
+exactly `APPROVAL_NEUTRAL`, and `INERTIA_RATE = 0.25` pulls an authored 38 back
+to 50 on a ~2.4-month half-life — gone inside a game year, while debt and seats
+persist indefinitely. That is [[declined]]'s own falsifier firing on one axis.
+Caught by reading the constant at implementation time rather than by running the
+sweep afterwards, and fixed by holding the target through `law_bloc_offset`, the
+channel `Government.penalise_blocs()` already uses for a fallen government. The
+pattern worth keeping: **an axis can be measured dead from a tuning constant
+alone, before there is any content to measure.**
+
+**The probe's first answer was an artefact, and the fix was to split the
+report.** `tools/scenario_probe.gd` initially showed the seats axis changing
+*nothing* — identical approval, deficit, debt and election timing at every
+extreme, for all three nations. The tempting read was "seats are not a
+difficulty lever". The real cause was the regime: `hands_off` proposes no law,
+and the legislature is the only channel seats have. Split into a legislative
+table (month 0, through the real `resolve_vote()`) and an economic one, the axis
+moves the amendment ceiling by ±0.06 and flips reachability in **both**
+directions. Same lesson as V1.2c's Germany sweep and V1.2d's restoration sweep,
+arrived at from the opposite side: those two needed *widening* to find a ceiling
+that existed, this one needed *narrowing* to find an effect the aggregate hid.
+
+The measurement then paid for itself twice on content that was already written:
+`deu_grand_coalition` cleared two-thirds by exactly nothing (0.667 against
+0.667, passing on a rounding boundary) and was widened; `gbr_hung_parliament`
+made amendments *easier* than the standard start, the opposite of what the file
+claims to be, and had its freed seats moved off the centre and onto the party
+both large parties exclude. Neither would have been visible without running it.
+
+`SAVE_VERSION` stayed at 8 — the first runtime-readable field since V1.2b not to
+earn a bump, because a version-8 save's absent `scenario_id` reads as `""` and
+that is *correct*, not silently wrong. Full account: [[scenario-model]].
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

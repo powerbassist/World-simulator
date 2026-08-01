@@ -1,0 +1,12 @@
+{
+  "id": "bad_sum",
+  "nation": "FRA",
+  "name": "Extra Benches",
+  "description": "A partial override that leaves the assembly summing past one.",
+  "_note": "Fixture for tests/test_scenario.gd. Every named party is real and every share is inside [0, 1], so the per-file checks in scenario.gd all pass -- this fails only against the nation's own roster, which is the whole reason _validate_scenarios() is a cross-file check. renouveau_civique 0.28 -> 0.60 leaves the merged roster at 1.32.",
+  "overrides": {
+    "seat_share": {
+      "renouveau_civique": 0.6
+    }
+  }
+}
