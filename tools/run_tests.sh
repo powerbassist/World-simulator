@@ -23,6 +23,7 @@ tests=(
   tests/test_election_panel.gd
   tests/test_legislature.gd
   tests/test_amendment.gd
+  tests/test_transition.gd
   tests/test_law_panel.gd
   tests/test_game_loop.gd
   tests/test_menu.gd

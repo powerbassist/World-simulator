@@ -42,7 +42,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "A revision passes the Tweede Kamer by simple majority in a first reading, then Parliament dissolves for an election, and only the newly elected Tweede Kamer can adopt it, in a second reading, by a 2/3 majority. The intervening dissolution and election are not modelled; the entrenching number, 2/3, is what this rule carries -- already flagged in docs/political-systems.md as not fully modelled. rijksoverheid.nl, 'Herziening van de Grondwet'.",
-      "rule": "two_thirds"
+      "rule": "two_thirds",
+      "permits_system_change": true,
+      "_permits_system_change_note": "The monarchy is a title in the Grondwet, revisable by the same 2/3 procedure as any other article -- no eternity clause excludes it."
     },
     "formation": {
       "_source": "authored",

@@ -6,5 +6,6 @@
   "allowed_censure_rules": ["none"],
   "allowed_dissolution_rules": ["none"],
   "allowed_amendment_rules": ["referendum_required"],
+  "allowed_head_of_state_kinds": ["collegial"],
   "permits_term_limit": false
 }

@@ -146,7 +146,7 @@ func _check_forcing_costs_approval_even_when_it_survives() -> void:
 		return
 
 	var won_state = _new_state()
-	Legislature.apply(won_state, won_state.player(), law)
+	Legislature.apply(won_state, won_state.player(), law, _loader)
 	var w = won_state.player()
 
 	for bloc in OpinionK.BLOC_KEYS:

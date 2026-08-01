@@ -3,7 +3,7 @@
   "name": "United Kingdom",
   "geo_id": "GBR",
   "capital": "London",
-  "playable": false,
+  "playable": true,
   "leader": {
     "name": "Edward Marchbanks",
     "title": "Prime Minister",
@@ -42,7 +42,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "The UK has no codified, entrenched constitution: Parliament alters constitutional arrangements (the electoral system, the devolution settlements, the Union itself) by ordinary Act, under parliamentary sovereignty. No special majority or second vote is required. UK Parliament, 'Parliamentary sovereignty'.",
-      "rule": "ordinary_law"
+      "rule": "ordinary_law",
+      "permits_system_change": true,
+      "_permits_system_change_note": "The same parliamentary sovereignty that sets the amendment bar at an ordinary Act extends to the form of the state itself -- nothing in the UK's uncodified constitution entrenches the monarchy against Parliament."
     },
     "formation": {
       "_source": "authored",

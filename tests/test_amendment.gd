@@ -140,7 +140,7 @@ func _check_amendment_writes_institutional_field() -> void:
 	var law = _find_law("abolish_term_limits")
 	if law == null:
 		return
-	Legislature.apply(state, ns, law)
+	Legislature.apply(state, ns, law, _loader)
 
 	if ns.term_limit != 0:
 		_fail("apply(abolish_term_limits) left term_limit at %d, expected 0" % ns.term_limit)
@@ -162,7 +162,7 @@ func _check_writing_amendment_rule_changes_a_later_vote() -> void:
 	var law = _find_law("abolish_term_limits")
 	if law == null:
 		return
-	Legislature.apply(state, ns, law)
+	Legislature.apply(state, ns, law, _loader)
 
 	Elections.tick_month(state, _loader)
 	if not ns.in_government:

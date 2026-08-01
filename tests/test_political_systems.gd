@@ -51,6 +51,17 @@ const EXPECTED_AMENDMENT_RULE := {
 	"CHE": "referendum_required",
 }
 
+## V1.2d: whether each nation's own constitution permits changing its
+## political system at all -- see docs/transition-model.md. France, Germany
+## and Italy each entrench the republican form; Austria's rests on the
+## Habsburg Law rather than a clean eternity clause. Switzerland is moot (no
+## transition content names directorial_republic).
+const EXPECTED_PERMITS_SYSTEM_CHANGE := {
+	"FRA": false, "DEU": false, "ITA": false, "AUT": false,
+	"GBR": true, "ESP": true, "BEL": true, "NLD": true, "LUX": true,
+	"CHE": false,
+}
+
 
 func _init() -> void:
 	var failures: Array[String] = []
@@ -81,6 +92,10 @@ func _init() -> void:
 		var system: PoliticalSystem = loader.political_systems.get(n.system_id)
 		if system != null and system.lose_condition != EXPECTED_LOSE_CONDITION[id]:
 			failures.append("%s: system '%s' lose_condition is '%s', expected '%s'" % [id, n.system_id, system.lose_condition, EXPECTED_LOSE_CONDITION[id]])
+		if system != null and not system.allowed_head_of_state_kinds.has(n.head_of_state_kind):
+			failures.append("%s: head_of_state_kind '%s' is not in system '%s''s allowed_head_of_state_kinds %s" % [id, n.head_of_state_kind, n.system_id, system.allowed_head_of_state_kinds])
+		if n.permits_system_change != EXPECTED_PERMITS_SYSTEM_CHANGE[id]:
+			failures.append("%s: permits_system_change is %s, expected %s" % [id, n.permits_system_change, EXPECTED_PERMITS_SYSTEM_CHANGE[id]])
 
 		# elected_president is the only kind with a clock of its own; every
 		# other kind must not carry one -- present-only-if-required, the same

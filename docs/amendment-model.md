@@ -11,9 +11,9 @@ tags:
 Built at [[ROADMAP|V1.2c]]. [docs/tiers/v1.md](tiers/v1.md) §2's next item after
 [[political-systems]]: constitutional amendment, the mechanism for changing the
 institutions a template constrains. System transition (monarchy ↔ republic) is
-scheduled next, at V1.2d, as the same mechanism pointed at `system_id` itself —
-kept separate because a transition changes `lose_condition` and the head of
-state at the same time, not one field.
+built at [[ROADMAP|V1.2d]], as the same mechanism pointed at `system_id`
+itself — see [[transition-model]] for why it earned a separate session (not,
+in the end, the `lose_condition` reason first assumed).
 
 ## What changed, and why it had to
 
@@ -242,5 +242,6 @@ Refused outright, as always; no migration.
 - `tests/test_amendment.gd` — new; `tests/test_political_systems.gd`, `test_save_load.gd` — edits
 - `tests/fixtures/laws_bad_amendment/` — the load-bearing cross-check fixture
 
-Related: [[political-systems]] · [[government-model]] · [[legislature-model]] ·
-[[data-architecture]] · [docs/tiers/v1.md](tiers/v1.md) · [[declined]]
+Related: [[political-systems]] · [[transition-model]] · [[government-model]] ·
+[[legislature-model]] · [[data-architecture]] · [docs/tiers/v1.md](tiers/v1.md) ·
+[[declined]]

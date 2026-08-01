@@ -164,6 +164,17 @@ template constrains: `allowed_amendment_rules`. Full argument, including the
 measured finding that Germany's real `two_thirds` is unreachable and is left
 unauthored-against rather than detuned: [[amendment-model]].
 
+## System transition, and `allowed_head_of_state_kinds`, added at V1.2d
+
+Even `system_id` itself is now rewritable, by the same amendment mechanism
+pointed at a target template rather than a single field — [[transition-model]].
+That is also what the head of state needed a template-side constraint for the
+first time: `allowed_head_of_state_kinds`, one value per template today
+(1:1 with the roster), which makes a transition's head-of-state write
+checkable against the target rather than trusted, and makes every nation's
+own starting kind checked against its declared system for the first time —
+nothing checked this before V1.2d.
+
 ## Term limits, enforced
 
 `government.term_limit`, an int, `0` meaning no limit — the same
@@ -264,5 +275,5 @@ above for the one place that was not simply "unchanged."
   cross-check
 
 Related: [[government-model]] · [[dissolution-model]] · [[cabinet-model]] ·
-[[amendment-model]] · [[data-architecture]] · [[fictionalization]] ·
+[[amendment-model]] · [[transition-model]] · [[data-architecture]] · [[fictionalization]] ·
 [docs/tiers/v1.md](tiers/v1.md)

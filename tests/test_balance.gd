@@ -80,6 +80,7 @@ func _init() -> void:
 		return
 
 	_check_ten_years_stay_off_every_clamp()
+	_check_gbr_ten_years_stay_off_every_clamp()
 	_check_two_full_terms_without_softlock()
 	_check_france_terms_out_at_the_limit()
 	_check_managing_beats_ignoring()
@@ -103,6 +104,24 @@ func _check_ten_years_stay_off_every_clamp() -> void:
 		_fail("ten-year run ended with GDP %.3f" % ns.gdp_eur_bn)
 	if run["months"] < TEN_YEARS:
 		_fail("ten-year run stopped after %d months" % run["months"])
+
+
+## V1.2d: GBR is the third playable nation. Same shape as the FRA check above
+## -- a do-nothing budget over two terms stays off every clamp -- proving
+## nothing in the model quietly assumed France or Germany's institutions
+## (largest_party formation, ordinary_law amendment threshold, FPTP with no
+## threshold), the same test V1.2a's Germany addition ran.
+func _check_gbr_ten_years_stay_off_every_clamp() -> void:
+	var run := _play(IGNORED, TEN_YEARS, -1, "GBR")
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("GBR ten-year run: %s" % p)
+	if ns.gdp_eur_bn <= 0.0:
+		_fail("GBR ten-year run ended with GDP %.3f" % ns.gdp_eur_bn)
+	if run["months"] < TEN_YEARS:
+		_fail("GBR ten-year run stopped after %d months" % run["months"])
 
 
 ## Done-when: "A full five-year term is playable start to finish without a crash

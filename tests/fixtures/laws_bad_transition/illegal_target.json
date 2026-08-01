@@ -1,0 +1,28 @@
+{
+  "laws": [
+    {
+      "id": "test_fixture_illegal_target_transition",
+      "name": "Test Fixture Illegal Target Transition",
+      "theme": "institutional",
+      "summary": "A complete bundle, but formation_method 'largest_party' is not legal under the TARGET system parliamentary_republic -- must fail to load, the target-side cross-check.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": 0.0, "social": 0.0 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "system_id": "parliamentary_republic",
+          "formation_method": "largest_party",
+          "censure_rule": "simple_present",
+          "dissolution_rule": "confidence_failure",
+          "amendment_rule": "two_thirds",
+          "term_limit": 0,
+          "head_of_state": { "kind": "elected_president", "title": "President", "term_years": 5 }
+        }
+      }
+    }
+  ]
+}

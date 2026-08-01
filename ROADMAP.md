@@ -58,6 +58,7 @@ shell does not have.
 | V1.2a | Sim | A second playable nation — Germany, per-nation starting fiscal policy (`policy_defaults.json` retired), bloc weights confirmed global by measurement rather than assumption |
 | V1.2b | Sim | Political system templates as a constraint not a defaults table, the head of state (five constitutional monarchies now say so), a named lose condition replacing a structural-flag dispatch, term limits enforced (France's two-term limit termed-out on the merits), Italy's *semestre bianco* dissolution blackout |
 | V1.2c | Sim | Constitutional amendment — a sixth per-nation dispatch field (`amendment_rule`) at real constitutional fractions, a seventh law effect channel that sets rather than nudges an institution, the load-bearing cross-check extended to amendments; measured, not assumed, that Germany's real two-thirds is unreachable, and left unauthored-against rather than detuned |
+| V1.2d | Sim | System transition — the amendment mechanism pointed at `system_id`, a completeness rule on the institutional bundle, the cross-check inverted to validate against the amendment's target rather than the systems it is proposed under, a seventh per-nation dispatch field (`permits_system_change`); the United Kingdom made the third playable nation, added to the scope at plan time once the original scope was found to ship to zero playable nations |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -65,11 +66,46 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's
-remaining items — system transition, start scenarios — are next in the
-written order, now that V1.2c built the amendment mechanism transition points
-at. Per this document's own handoff convention below, the plan/model/effort
-call belongs to the session that picks it up, read cold, not to this one.
+Not yet scoped into a session. [docs/tiers/v1.md](docs/tiers/v1.md) §2's last
+remaining item is **start scenarios** — a nation plus an authored starting
+state (debt level, seat composition, approval, coalition). With V1.2d,
+everything else in §2 is built. Per this document's own handoff convention
+below, the plan/model/effort call belongs to the session that picks it up,
+read cold, not to this one.
+
+### V1.2d — system transition, and a third playable nation (shipped)
+
+[docs/tiers/v1.md](docs/tiers/v1.md) §2's last mechanism item, built after
+[[amendment-model|V1.2c]] gave it the amendment machinery to point at
+`system_id` itself. **The plan's own cold read found the block as scoped
+would ship to zero playable nations** — FRA and DEU both prohibit a change to
+the form of the state outright (Art. 89 §5, Art. 79(3)), and every nation the
+mechanic is actually about (GBR, ESP, BEL, NLD, LUX) was `playable: false`.
+Corrected before any code was written: the session became transition **and**
+a third playable nation, the United Kingdom, chosen because its `ordinary_law`
+amendment bar settles reachability by construction rather than needing a
+sweep that could come back unshippable the way Germany's did.
+
+A transition writes a **complete** institutional bundle — `system_id` plus
+`formation_method`/`censure_rule`/`dissolution_rule`/`amendment_rule`/
+`term_limit`/`head_of_state`, all at once — checked against the **target**
+system rather than the systems the amendment is proposed under, the cross-
+check `_validate_amendments()` had to invert. A new template field,
+`allowed_head_of_state_kinds`, makes the head-of-state write checkable the
+same way. A seventh per-nation dispatch field,
+`government.amendment.permits_system_change`, gates the whole mechanic —
+France, Germany, Italy and Austria each entrench their form of state and
+carry `false`.
+
+**The restoration-direction reachability sweep needed widening mid-plan, the
+same way V1.2c's Germany sweep needed sharpening.** Measured against only
+GBR's actually-formed government, the ceiling was exactly that coalition's
+own seat share (0.560) — below `parliamentary_republic`'s real `two_thirds`
+(0.667). Widened to every 1–3-party coalition, matching the Germany sweep's
+own method, the true ceiling is 0.680 — reachable, with a 1.3pp margin.
+`restore_the_monarchy` shipped on the strength of the wider sweep. Full
+account, including why the block earned its own session for a different
+reason than the roadmap originally gave: [[transition-model]].
 
 ### V1.2c — constitutional amendment (shipped)
 
@@ -244,6 +280,7 @@ is already made, which is most sessions once the docs are written.
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 | V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
+| V1.2d System transition | **Yes** *(corrected)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time count of ~21 surfaces — three above V1.2c's ~eighteen, for the seventh dispatch-on-a-data-string field, the inverted target-side cross-check, and a new template field. **Corrected at plan time, not at build time**: a cold read of the scope found it would ship to zero playable nations, and the session's scope grew to include a third playable nation before any code was written — the eighth correction on this table's own record, and the first caught before the plan was even finalised rather than during or after the build. The plan's own named escalation trigger (a reachability sweep coming back unreachable) fired once, for restoration, and resolved by widening the sweep rather than escalating — the response the plan itself named in advance. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
 > The plan assumed enforcing France's term limit could move the balance
@@ -335,7 +372,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 
 | Block | Rough content |
 |---|---|
-| **V1.2 Political systems** | Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios |
+| **V1.2 Political systems** | Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions — all shipped; **start scenarios** left |
 | **V1.3 Diplomacy and trade** | Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics** |
 | **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |

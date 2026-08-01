@@ -283,6 +283,18 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	heading.text = "%s  (%s, %s)" % [law.law_name, law.theme, _majority_phrase(ns, law)]
 	box.add_child(heading)
 
+	# A system transition rewrites the whole constitution, not one field --
+	# named here structurally, off the loaded template's own display_name,
+	# rather than left to the law's own summary prose to stay accurate. See
+	# docs/transition-model.md.
+	if law.changes_system:
+		var target_system_id: String = law.effects.get("institutional", {}).get("system_id", "")
+		var target = _loader.political_systems.get(target_system_id)
+		var target_label: String = target.display_name if target != null else target_system_id
+		var target_line := Label.new()
+		target_line.text = "Rewrites the constitution to a %s." % target_label
+		box.add_child(target_line)
+
 	var summary := Label.new()
 	summary.text = law.summary
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD

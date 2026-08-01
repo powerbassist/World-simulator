@@ -25,10 +25,12 @@ const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
 const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
+const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -73,6 +75,7 @@ func _init() -> void:
 	_run_roundtrip(state, clock)
 	_run_atomic_write(state, clock)
 	_run_second_nation_roundtrip(loader)
+	_run_transition_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -130,6 +133,53 @@ func _run_second_nation_roundtrip(loader) -> void:
 			_fail("DEU save dropped nation %s" % id)
 			continue
 		_check_pair("NationState[DEU][%s]" % id, state.nations[id], loaded.nations[id])
+
+
+## V1.2d: system_id, lose_condition and the head-of-state fields become
+## MUTABLE at runtime for the first time -- a version-7 save format never had
+## to round-trip a value written after new-game for any of them. Pass a
+## transition through Legislature.apply() first, then round-trip, so this
+## catches a serializer that only ever saw the new-game value.
+func _run_transition_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "GBR")
+	if not state.errors.is_empty():
+		_fail("new_game(GBR) reported %s" % [state.errors])
+		return
+
+	var law = null
+	for l in loader.laws:
+		if l.id == "abolish_the_monarchy":
+			law = l
+	if law == null:
+		_fail("abolish_the_monarchy not found in data/laws/amendments.json")
+		return
+
+	Legislature.apply(state, state.player(), law, loader)
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 3
+
+	var save_error := SaveManager.save_game(state, clock, TRANSITION_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game(GBR post-transition) failed: %s" % save_error)
+		return
+
+	var result := SaveManager.load_game(TRANSITION_SLOT)
+	if not result["ok"]:
+		_fail("load_game(GBR post-transition) failed on a save this test just wrote: %s" % result["error"])
+		return
+
+	var loaded = result["state"]
+	_check_pair("GameState[GBR post-transition]", state, loaded)
+	_check_pair("NationState[GBR post-transition]", state.player(), loaded.player())
+
+	if loaded.player().system_id != "parliamentary_republic":
+		_fail("post-transition save round-tripped system_id as '%s', expected parliamentary_republic" % loaded.player().system_id)
+	if loaded.player().head_of_state_kind != "elected_president":
+		_fail("post-transition save round-tripped head_of_state_kind as '%s', expected elected_president" % loaded.player().head_of_state_kind)
 
 
 func _run_roundtrip(state, clock) -> void:
@@ -290,12 +340,27 @@ func _run_unknown_version() -> void:
 	elif pre_amendment["error"].is_empty():
 		_fail("load_game rejected a version-6 save but gave no error message")
 
+	# Version 7 for the same reason one version further on: V1.2d added
+	# permits_system_change, and made system_id/lose_condition/head-of-state
+	# mutable at runtime for the first time -- a version-7 save carries no
+	# permits_system_change and would silently refuse every transition the
+	# nation's own data permits.
+	var v7 := FileAccess.open(path, FileAccess.WRITE)
+	v7.store_string(JSON.stringify({"save_version": 7, "day": 1, "game_state": {}}))
+	v7.close()
+
+	var pre_transition := SaveManager.load_game(BOGUS_SLOT)
+	if pre_transition["ok"]:
+		_fail("load_game accepted a version-7 save; permits_system_change would be missing")
+	elif pre_transition["error"].is_empty():
+		_fail("load_game rejected a version-7 save but gave no error message")
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

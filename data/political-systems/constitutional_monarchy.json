@@ -6,5 +6,6 @@
   "allowed_censure_rules": ["simple_present", "constructive_absolute"],
   "allowed_dissolution_rules": ["confidence_failure", "executive_discretion"],
   "allowed_amendment_rules": ["ordinary_law", "three_fifths", "two_thirds", "three_quarters"],
+  "allowed_head_of_state_kinds": ["hereditary_monarch"],
   "permits_term_limit": false
 }

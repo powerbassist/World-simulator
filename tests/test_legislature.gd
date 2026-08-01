@@ -253,7 +253,7 @@ func _check_finite_over_ten_years_with_every_law_applied() -> void:
 	for law in _loader.laws:
 		# Ignore preconditions here on purpose -- the point is to stress-test
 		# the accumulators, not to reproduce a plausible playthrough.
-		Legislature.apply(state, state.player(), law)
+		Legislature.apply(state, state.player(), law, _loader)
 
 	for month in range(120):
 		Economy.tick_month(state)

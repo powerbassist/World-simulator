@@ -149,6 +149,16 @@ var term_limit: int = 0
 ## docs/amendment-model.md.
 var amendment_rule: String = ""
 
+## Whether this nation's own constitution permits changing its political
+## system at all -- distinct from amendment_rule, which is the bar an
+## amendment must clear IF proposable. Per-nation, not per-template: DEU,
+## ITA and AUT share parliamentary_republic with a transitioned GBR, and the
+## prohibition on changing the form of state belongs to each nation's own
+## constitution, not to the template's shape. Immutable at runtime -- no
+## amendment in this game can un-entrench itself. See
+## docs/transition-model.md.
+var permits_system_change: bool = false
+
 ## EU membership and European Parliament seat count. Empty/zero for a
 ## non-member — GBR and CHE simply have no reader for these, see
 ## docs/electoral-systems.md.
@@ -268,6 +278,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.amendment_rule = _extract_string(amendment, "rule", filename, errors)
 	if n.amendment_rule != "" and not KNOWN_AMENDMENT_RULES.has(n.amendment_rule):
 		errors.append("%s: government.amendment.rule '%s' is not a recognised rule" % [filename, n.amendment_rule])
+	n.permits_system_change = _extract_bool(amendment, "permits_system_change", filename, errors)
 
 	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)
 	n.formation_method = _extract_string(formation, "method", filename, errors)

@@ -550,6 +550,44 @@ back bad — did come back bad, but the response it required (leave the real
 number, don't author against it) was already the plan's own stated response,
 not a design decision made fresh mid-build.
 
+## V1.2d — a third playable nation added to the scope, at plan time
+
+[docs/tiers/v1.md](tiers/v1.md) §2 scoped system transition as a mechanism
+only. Cold-reading the plan found it would have shipped to **zero** playable
+nations: FRA and DEU both prohibit a change to the form of the state
+outright (Art. 89 §5, Art. 79(3)), and every nation a monarchy↔republic
+transition is actually about — GBR, ESP, BEL, NLD, LUX — was `playable:
+false`. Corrected before any code was written, not discovered mid-build: the
+session became transition **and** a third playable nation, GBR, picked
+because its `ordinary_law` amendment bar settles reachability by
+construction rather than requiring a sweep that could come back
+"unshippable" the way Germany's did at V1.2c.
+
+**The restoration-direction reachability sweep needed widening mid-measurement,
+the same way V1.2c's own sweep needed sharpening.** The plan's Step 0 swept
+only GBR's *actually formed* government against a hypothetical bill position,
+and found a ceiling of exactly that coalition's own seat share (0.560) —
+below `parliamentary_republic`'s real `two_thirds` (0.667). Re-run against
+every 1–3-party coalition combination, matching
+[[amendment-model|the Germany sweep's own method]] rather than a narrower
+reading of it, the true ceiling is 0.680 — reachable, with a 1.3pp margin.
+`restore_the_monarchy` shipped on the strength of the wider sweep;
+authoring it against the narrower one would have wrongly left restoration
+unshipped. Full account: [[transition-model]].
+
+**`ROADMAP.md`'s own stated reason for keeping transition a separate session
+from amendment didn't hold for the content actually authored.** The roadmap
+said a transition "changes `lose_condition` and the head of state at the
+same time, not one field" — true in principle, but
+`constitutional_monarchy` and `parliamentary_republic` both declare
+`lose_condition: "party_not_largest"`, so for the one transition pair this
+block ships, `lose_condition` never changes. The real reason transition
+earned its own session — a completeness rule on the institutional bundle,
+and a cross-check that has to validate against the *target* system rather
+than the systems a law is proposed under — is a real, different
+justification, corrected in [[transition-model]] rather than left standing
+on the roadmap's original framing.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

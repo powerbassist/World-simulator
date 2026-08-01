@@ -307,9 +307,13 @@ NationState                      src/core/nation_state.gd
 ├── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
 │              last_law_result{}   ([[ROADMAP|S7]])
 ├── political system_id, head_of_state_*, lose_condition, term_limit
-│              ([[ROADMAP|V1.2b]], [[political-systems]])
-└── amendment  amendment_rule -- mutable at runtime, unlike its V1.2b
-               siblings above   ([[ROADMAP|V1.2c]], [[amendment-model]])
+│              ([[ROADMAP|V1.2b]], [[political-systems]]) -- system_id,
+│              lose_condition and head_of_state_* become mutable at runtime
+│              from [[ROADMAP|V1.2d]] on, a system transition being the first
+│              thing that writes them ([[transition-model]])
+├── amendment  amendment_rule -- mutable at runtime, unlike its V1.2b
+│              siblings above   ([[ROADMAP|V1.2c]], [[amendment-model]])
+└── transition permits_system_change   ([[ROADMAP|V1.2d]], [[transition-model]])
 ```
 
 Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline, V1.1c's dissolution, V1.1d's cabinet. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
@@ -326,7 +330,7 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
-**It is at 7, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
+**It is at 8, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 

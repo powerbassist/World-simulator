@@ -28,9 +28,14 @@ const C = preload("res://src/sim/economy_constants.gd")
 ## able to end a run. 7 as of V1.2c: amendment_rule, mutable at runtime (an
 ## amendment may entrench its own threshold), so a version-6 save's absent
 ## value would silently read as "" -- no rule ever passes, an amendment law is
-## proposable to no one, and the failure is silent rather than loud. SaveManager
-## rejects an unknown version outright — see docs/data-architecture.md.
-const SAVE_VERSION := 7
+## proposable to no one, and the failure is silent rather than loud. 8 as of
+## V1.2d: permits_system_change, and system_id/lose_condition/head-of-state
+## become mutable at runtime for the first time (a system transition writes
+## all of them) -- a version-7 save's absent permits_system_change would
+## silently read as false, refusing a transition the nation's own data
+## permits. SaveManager rejects an unknown version outright — see
+## docs/data-architecture.md.
+const SAVE_VERSION := 8
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

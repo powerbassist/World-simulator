@@ -1,0 +1,20 @@
+{
+  "laws": [
+    {
+      "id": "test_fixture_incomplete_transition",
+      "name": "Test Fixture Incomplete Transition",
+      "theme": "institutional",
+      "summary": "Writes system_id but not the rest of the required bundle -- must fail to load.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": 0.0, "social": 0.0 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "system_id": "parliamentary_republic" }
+      }
+    }
+  ]
+}

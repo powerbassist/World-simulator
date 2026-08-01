@@ -169,6 +169,12 @@ var term_limit: int = 0
 ## than being read straight off Nation. See docs/amendment-model.md.
 var amendment_rule: String = ""
 
+## Whether this nation's own constitution permits changing its political
+## system at all. Copied from Nation at new-game and never written again --
+## unlike amendment_rule above, no amendment in this game can un-entrench
+## itself. See docs/transition-model.md.
+var permits_system_change: bool = false
+
 # --- Dissolution ---------------------------------------------------------------
 
 ## Copied from Nation at new-game; who may end the current assembly early and
@@ -384,6 +390,7 @@ func duplicate_state():
 	s.lose_condition = lose_condition
 	s.term_limit = term_limit
 	s.amendment_rule = amendment_rule
+	s.permits_system_change = permits_system_change
 
 	s.dissolution_rule = dissolution_rule
 	s.dissolution_lockout_months = dissolution_lockout_months
@@ -499,6 +506,7 @@ func to_dict() -> Dictionary:
 		"lose_condition": lose_condition,
 		"term_limit": term_limit,
 		"amendment_rule": amendment_rule,
+		"permits_system_change": permits_system_change,
 
 		"dissolution_rule": dissolution_rule,
 		"dissolution_lockout_months": dissolution_lockout_months,
@@ -614,6 +622,7 @@ static func from_dict(d: Dictionary):
 	s.lose_condition = d.get("lose_condition", "")
 	s.term_limit = int(d.get("term_limit", 0))
 	s.amendment_rule = d.get("amendment_rule", "")
+	s.permits_system_change = d.get("permits_system_change", false)
 
 	s.dissolution_rule = d.get("dissolution_rule", "")
 	s.dissolution_lockout_months = int(d.get("dissolution_lockout_months", 0))

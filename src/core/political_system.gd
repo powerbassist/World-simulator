@@ -35,6 +35,14 @@ var allowed_dissolution_rules: Array[String] = []
 ## See docs/amendment-model.md.
 var allowed_amendment_rules: Array[String] = []
 
+## Every government.head_of_state.kind a nation using this template may
+## declare. Added at V1.2d alongside system transition -- a transition writes
+## a new head-of-state kind onto the target system, and this is what makes
+## that write checkable target-side rather than trusted. Not needed before
+## V1.2d because no nation's head-of-state kind ever changed. See
+## docs/transition-model.md.
+var allowed_head_of_state_kinds: Array[String] = []
+
 ## Whether a nation using this template may declare a term limit on the office
 ## the player holds. Nations without one still carry government.term_limit = 0,
 ## the same "field exists, zero means absent" shape EU membership uses.
@@ -59,6 +67,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	s.allowed_censure_rules = _extract_string_array(d, "allowed_censure_rules", filename, errors)
 	s.allowed_dissolution_rules = _extract_string_array(d, "allowed_dissolution_rules", filename, errors)
 	s.allowed_amendment_rules = _extract_string_array(d, "allowed_amendment_rules", filename, errors)
+	s.allowed_head_of_state_kinds = _extract_string_array(d, "allowed_head_of_state_kinds", filename, errors)
 
 	s.permits_term_limit = _extract_bool(d, "permits_term_limit", filename, errors)
 

@@ -42,7 +42,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "Art. 167: an ordinary amendment needs a 3/5 majority in both the Congress and the Senate (or 2/3 of Congress plus 3/5 of Senate via a joint committee if they first disagree). Only Art. 168's rare total-revision path -- affecting the fundamental-rights title, requiring 2/3, a dissolution, and a referendum -- needs a stricter bar, and no amendment content in this game invokes it. ICL/servat.unibe.ch, Spanish Constitution text.",
-      "rule": "three_fifths"
+      "rule": "three_fifths",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No amendment content in this game targets Spain's form of state, but nothing in Title X excludes it from Art. 167's ordinary path either -- unlike Art. 168's stricter total-revision path, not modelled here. See docs/transition-model.md's named deferral."
     },
     "formation": {
       "_source": "authored",

@@ -77,8 +77,8 @@ func _init() -> void:
 	else:
 		failures.append("FRA not loaded")
 
-	if playable_count < 2:
-		failures.append("expected at least 2 playable nations (V1.2a), found %d" % playable_count)
+	if playable_count < 3:
+		failures.append("expected at least 3 playable nations (V1.2d), found %d" % playable_count)
 
 	# No nation's per-nation starting policy is calibrated below what its
 	# modelled taxes yield -- the negative-residual guard game_state.gd's

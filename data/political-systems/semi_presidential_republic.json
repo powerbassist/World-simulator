@@ -6,5 +6,6 @@
   "allowed_censure_rules": ["absolute_members"],
   "allowed_dissolution_rules": ["executive_discretion"],
   "allowed_amendment_rules": ["three_fifths"],
+  "allowed_head_of_state_kinds": ["executive_president"],
   "permits_term_limit": true
 }

@@ -38,6 +38,16 @@ const INSTITUTIONAL_INT_KEYS := {
 	"term_months": [12, 120],
 }
 
+## Keys a system-transition amendment must ALSO write if it writes
+## effects.institutional.system_id -- a bare system_id write would leave every
+## OTHER field at its pre-transition value, which is exactly the
+## half-understood institutional state docs/political-systems.md refuses.
+## head_of_state is a nested object, checked separately by
+## _extract_head_of_state(). See docs/transition-model.md.
+const SYSTEM_CHANGE_REQUIRED_KEYS := [
+	"formation_method", "censure_rule", "dissolution_rule", "amendment_rule", "term_limit",
+]
+
 var id: String = ""
 var law_name: String = ""
 var theme: String = ""
@@ -74,6 +84,13 @@ var constitutional: bool = false
 ## true; ignored (and must be absent) otherwise, the same
 ## present-only-if-needed shape Nation's executive block uses.
 var systems: Array[String] = []
+
+## True when effects.institutional writes system_id -- a system transition,
+## not an ordinary amendment. Derived once at load, the same precedent
+## `constitutional` sets, so Legislature.available() does not dig into a
+## nested dict every call. Gated separately from `constitutional` by
+## ns.permits_system_change -- see docs/transition-model.md.
+var changes_system: bool = false
 
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array):
@@ -127,6 +144,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 	law.preconditions = _extract_preconditions(d, law.id, filename, errors)
 	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, law.constitutional)
+	law.changes_system = law.effects.get("institutional", {}).has("system_id")
 
 	return law
 
@@ -243,7 +261,18 @@ static func _extract_institutional(raw, law_id: String, filename: String, errors
 
 	var out := {}
 	for key in raw.keys():
-		if INSTITUTIONAL_EFFECT_KEYS.has(key):
+		if key == "system_id":
+			# A system-transition target. Whether it names a real template, and
+			# whether the rest of `out` is legal under that template, is
+			# DataLoader's target-side cross-check -- this only checks the
+			# value is a non-empty string. See docs/transition-model.md.
+			if typeof(raw[key]) != TYPE_STRING or raw[key] == "":
+				errors.append("%s: %s effects.institutional.system_id must be a non-empty string" % [filename, law_id])
+			else:
+				out[key] = raw[key]
+		elif key == "head_of_state":
+			out[key] = _extract_head_of_state(raw[key], law_id, filename, errors)
+		elif INSTITUTIONAL_EFFECT_KEYS.has(key):
 			var allowed: Array = INSTITUTIONAL_EFFECT_KEYS[key]
 			if typeof(raw[key]) != TYPE_STRING or not allowed.has(raw[key]):
 				errors.append("%s: %s effects.institutional.%s must be one of %s" % [filename, law_id, key, allowed])
@@ -260,6 +289,67 @@ static func _extract_institutional(raw, law_id: String, filename: String, errors
 				out[key] = value
 		else:
 			errors.append("%s: %s effects.institutional.%s is not a recognised institutional field" % [filename, law_id, key])
+
+	# Completeness: a system_id write with nothing else is the exact
+	# half-understood state the template's own cross-check refuses for a
+	# nation file -- see SYSTEM_CHANGE_REQUIRED_KEYS' header comment.
+	if out.has("system_id"):
+		for key in SYSTEM_CHANGE_REQUIRED_KEYS:
+			if not out.has(key):
+				errors.append("%s: %s writes system_id but is missing effects.institutional.%s, required for every system transition" % [filename, law_id, key])
+		if not out.has("head_of_state"):
+			errors.append("%s: %s writes system_id but is missing effects.institutional.head_of_state, required for every system transition" % [filename, law_id])
+	elif out.has("head_of_state"):
+		errors.append("%s: %s effects.institutional.head_of_state is only valid alongside system_id" % [filename, law_id])
+
+	return out
+
+
+## The office an amendment installs, not the person -- see
+## docs/transition-model.md. `elected_president` derives its holder from the
+## largest party's own leader at apply() time, so `name` is forbidden there,
+## the mirror of Nation.gd's own head-of-state parsing (which always requires
+## a name, because a nation's starting head of state is always authored, never
+## derived). `term_years` is required only for `elected_president`, the same
+## present-only-if-needed shape Nation.gd's own clock uses.
+static func _extract_head_of_state(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.institutional.head_of_state must be an object" % [filename, law_id])
+		return {}
+
+	var out := {}
+
+	var kind = raw.get("kind", "")
+	if typeof(kind) != TYPE_STRING or not Nation.KNOWN_HEAD_OF_STATE_KINDS.has(kind):
+		errors.append("%s: %s effects.institutional.head_of_state.kind '%s' is not a recognised kind" % [filename, law_id, str(kind)])
+		return {}
+	out["kind"] = kind
+
+	var title = raw.get("title", "")
+	if typeof(title) != TYPE_STRING or title == "":
+		errors.append("%s: %s effects.institutional.head_of_state.title is missing or invalid" % [filename, law_id])
+	else:
+		out["title"] = title
+
+	if kind == "elected_president":
+		if raw.has("name"):
+			errors.append("%s: %s effects.institutional.head_of_state.name must not be set for kind 'elected_president' -- the holder is derived from the largest party's leader at apply() time" % [filename, law_id])
+		if not raw.has("term_years") or not (typeof(raw["term_years"]) == TYPE_INT or typeof(raw["term_years"]) == TYPE_FLOAT):
+			errors.append("%s: %s effects.institutional.head_of_state.term_years is missing or not numeric, required for kind 'elected_president'" % [filename, law_id])
+		else:
+			var term_years := int(raw["term_years"])
+			if term_years < 1 or term_years > 10:
+				errors.append("%s: %s effects.institutional.head_of_state.term_years = %d out of range [1, 10]" % [filename, law_id, term_years])
+			out["term_years"] = term_years
+	else:
+		if raw.has("term_years"):
+			errors.append("%s: %s effects.institutional.head_of_state.term_years must not be set for kind '%s'" % [filename, law_id, kind])
+		var name = raw.get("name", "")
+		if typeof(name) != TYPE_STRING or name == "":
+			errors.append("%s: %s effects.institutional.head_of_state.name is missing or invalid, required for kind '%s'" % [filename, law_id, kind])
+		else:
+			out["name"] = name
+
 	return out
 
 

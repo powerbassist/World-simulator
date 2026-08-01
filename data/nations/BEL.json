@@ -42,7 +42,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "A revision requires declaring the relevant article open to revision, dissolving Parliament, and re-electing it before the new Chambers can amend it by a 2/3 majority with a 2/3 quorum present. The dissolution-and-re-election step is not modelled; the entrenching number, 2/3, is what this rule carries. senate.be, 'Revision of the Constitution'.",
-      "rule": "two_thirds"
+      "rule": "two_thirds",
+      "permits_system_change": true,
+      "_permits_system_change_note": "Nothing in the Belgian constitution excludes the monarchy from ordinary revision -- the crown itself is a revisable title, not an entrenched one."
     },
     "formation": {
       "_source": "authored",

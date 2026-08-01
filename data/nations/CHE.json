@@ -43,7 +43,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "Every constitutional amendment requires a mandatory popular referendum with a double majority of the people and the cantons -- there is no seats-only path at all, so no seat fraction applies. Declared, unresolved: no referendum mechanic exists yet (V1.1f/V1.7), so no amendment names this system in its own `systems` list, the same shape lose_condition: 'never' already uses for Switzerland. Art. 195, Federal Constitution of the Swiss Confederation.",
-      "rule": "referendum_required"
+      "rule": "referendum_required",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Moot, the same way amendment_rule itself is moot: no transition content names directorial_republic in its `systems`, so this is never looked up. Set false rather than true because nothing in this game's model resolves what a Swiss system change would even mean without the referendum mechanic V1.1f/V1.7 defers."
     },
     "formation": {
       "_source": "authored",

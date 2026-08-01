@@ -49,7 +49,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "Art. 44: an ordinary constitutional amendment needs a 2/3 majority of the Nationalrat with at least half its members present. A total revision additionally requires a referendum -- not modelled, since no amendment content in this game rewrites the whole constitution. parlament.gv.at, 'Legislative process'.",
-      "rule": "two_thirds"
+      "rule": "two_thirds",
+      "permits_system_change": false,
+      "_permits_system_change_note": "The 1919 Habsburg Law and the republic's own constitutional practice treat the republican form as excluded from ordinary revision -- a thinner citation than France's Art. 89 §5 or Germany's Art. 79(3) eternity clause, flagged as such rather than asserted with equal confidence."
     },
     "formation": {
       "_source": "authored",

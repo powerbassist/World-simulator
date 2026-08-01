@@ -288,6 +288,8 @@ func _validate_political_system(n) -> void:
 		errors.append("%s.json: government.amendment.rule '%s' is not permitted by system '%s'" % [n.id, n.amendment_rule, n.system_id])
 	if n.term_limit > 0 and not system.permits_term_limit:
 		errors.append("%s.json: government.term_limit %d is set but system '%s' does not permit a term limit" % [n.id, n.term_limit, n.system_id])
+	if not system.allowed_head_of_state_kinds.has(n.head_of_state_kind):
+		errors.append("%s.json: government.head_of_state.kind '%s' is not permitted by system '%s'" % [n.id, n.head_of_state_kind, n.system_id])
 
 
 ## A constitutional amendment can write an institutional field at RUNTIME, long
@@ -303,21 +305,44 @@ func _validate_amendments() -> void:
 		if not law.constitutional:
 			continue
 		var inst: Dictionary = law.effects.get("institutional", {})
+
+		if law.changes_system:
+			# A system transition writes every institutional field against a
+			# TARGET system, not the systems it's proposed under -- `systems`
+			# still gates proposability, but the written state must be legal
+			# under where it lands, not where it started. See
+			# docs/transition-model.md.
+			_validate_institutional_against_system(law, inst, String(inst["system_id"]))
+			continue
+
 		for system_id in law.systems:
-			if not political_systems.has(system_id):
-				errors.append("laws: %s names system '%s', which has no file in data/political-systems/" % [law.id, system_id])
-				continue
-			var system: PoliticalSystem = political_systems[system_id]
-			if inst.has("censure_rule") and not system.allowed_censure_rules.has(inst["censure_rule"]):
-				errors.append("laws: %s effects.institutional.censure_rule '%s' is not permitted by system '%s'" % [law.id, inst["censure_rule"], system_id])
-			if inst.has("dissolution_rule") and not system.allowed_dissolution_rules.has(inst["dissolution_rule"]):
-				errors.append("laws: %s effects.institutional.dissolution_rule '%s' is not permitted by system '%s'" % [law.id, inst["dissolution_rule"], system_id])
-			if inst.has("formation_method") and not system.allowed_formation_methods.has(inst["formation_method"]):
-				errors.append("laws: %s effects.institutional.formation_method '%s' is not permitted by system '%s'" % [law.id, inst["formation_method"], system_id])
-			if inst.has("amendment_rule") and not system.allowed_amendment_rules.has(inst["amendment_rule"]):
-				errors.append("laws: %s effects.institutional.amendment_rule '%s' is not permitted by system '%s'" % [law.id, inst["amendment_rule"], system_id])
-			if inst.has("term_limit") and int(inst["term_limit"]) > 0 and not system.permits_term_limit:
-				errors.append("laws: %s effects.institutional.term_limit %d is set but system '%s' does not permit a term limit" % [law.id, int(inst["term_limit"]), system_id])
+			_validate_institutional_against_system(law, inst, system_id)
+
+
+## Checks `inst` -- one law's effects.institutional -- against one named
+## system, appending an error for every field that system does not permit.
+## Shared by an ordinary amendment (checked against every system it's
+## proposed UNDER) and a system transition (checked against the single system
+## it TARGETS) -- see _validate_amendments() above.
+func _validate_institutional_against_system(law, inst: Dictionary, system_id: String) -> void:
+	if not political_systems.has(system_id):
+		errors.append("laws: %s names system '%s', which has no file in data/political-systems/" % [law.id, system_id])
+		return
+	var system: PoliticalSystem = political_systems[system_id]
+	if inst.has("censure_rule") and not system.allowed_censure_rules.has(inst["censure_rule"]):
+		errors.append("laws: %s effects.institutional.censure_rule '%s' is not permitted by system '%s'" % [law.id, inst["censure_rule"], system_id])
+	if inst.has("dissolution_rule") and not system.allowed_dissolution_rules.has(inst["dissolution_rule"]):
+		errors.append("laws: %s effects.institutional.dissolution_rule '%s' is not permitted by system '%s'" % [law.id, inst["dissolution_rule"], system_id])
+	if inst.has("formation_method") and not system.allowed_formation_methods.has(inst["formation_method"]):
+		errors.append("laws: %s effects.institutional.formation_method '%s' is not permitted by system '%s'" % [law.id, inst["formation_method"], system_id])
+	if inst.has("amendment_rule") and not system.allowed_amendment_rules.has(inst["amendment_rule"]):
+		errors.append("laws: %s effects.institutional.amendment_rule '%s' is not permitted by system '%s'" % [law.id, inst["amendment_rule"], system_id])
+	if inst.has("term_limit") and int(inst["term_limit"]) > 0 and not system.permits_term_limit:
+		errors.append("laws: %s effects.institutional.term_limit %d is set but system '%s' does not permit a term limit" % [law.id, int(inst["term_limit"]), system_id])
+	if inst.has("head_of_state"):
+		var hos: Dictionary = inst["head_of_state"]
+		if hos.has("kind") and not system.allowed_head_of_state_kinds.has(hos["kind"]):
+			errors.append("laws: %s effects.institutional.head_of_state.kind '%s' is not permitted by system '%s'" % [law.id, hos["kind"], system_id])
 
 
 func _load_geo(geo_path: String) -> Array:

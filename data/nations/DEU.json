@@ -49,7 +49,9 @@
     "amendment": {
       "_source": "authored",
       "_note": "Art. 79(2) GG: a Basic Law amendment requires a 2/3 majority of BOTH the Bundestag's statutory membership and the Bundesrat's votes. Only the Bundestag half is modelled -- there is no Bundesrat in this game -- so this is the harder of the two real hurdles, not the easier. See docs/amendment-model.md's reachability sweep: measurably unreachable for Germany's authored six-party roster even at full term-start cohesion, and left at the real figure rather than detuned. Bundestag.de, 'Amending the Basic Law'.",
-      "rule": "two_thirds"
+      "rule": "two_thirds",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 79(3) GG, the eternity clause: no amendment may touch the federal structure or the Art. 1/20 principles it entrenches, which as a practical matter puts the form of state beyond amendment at all."
     },
     "formation": {
       "_source": "authored",

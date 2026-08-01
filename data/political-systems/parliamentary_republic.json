@@ -6,5 +6,6 @@
   "allowed_censure_rules": ["simple_present", "constructive_absolute"],
   "allowed_dissolution_rules": ["self_dissolution", "confidence_failure", "head_of_state_limited"],
   "allowed_amendment_rules": ["two_thirds"],
+  "allowed_head_of_state_kinds": ["elected_president"],
   "permits_term_limit": false
 }

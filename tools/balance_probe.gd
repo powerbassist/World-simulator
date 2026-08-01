@@ -142,6 +142,15 @@ const AMENDMENT_REGIMES := {
 	"managed_amends_term_limit": {"budget": REGIMES["managed"], "amend_month": 12, "amendment_id": "abolish_term_limits"},
 }
 
+## V1.2d: does a system transition actually pass, and does the run stay sane
+## once it has rewritten system_id, formation_method, censure_rule,
+## dissolution_rule, amendment_rule, term_limit and the head of state all at
+## once? Pinned to GBR regardless of the CLI's own nation_id -- GBR is the
+## only playable nation this mechanic targets, docs/transition-model.md.
+const TRANSITION_REGIMES := {
+	"managed_abolishes_the_monarchy": {"budget": REGIMES["managed"], "amend_month": 12, "amendment_id": "abolish_the_monarchy", "nation_id": "GBR"},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -176,6 +185,9 @@ func _init() -> void:
 		for name in AMENDMENT_REGIMES.keys():
 			var regime: Dictionary = AMENDMENT_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
+		for name in TRANSITION_REGIMES.keys():
+			var regime: Dictionary = TRANSITION_REGIMES[name]
+			_run(String(regime["nation_id"]), name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
 
 	quit(0)
 

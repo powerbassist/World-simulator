@@ -67,6 +67,56 @@
         "institutional": { "amendment_rule": "ordinary_law" },
         "bloc_offset": { "urban": 0.1, "rural": -0.1 }
       }
+    },
+    {
+      "id": "abolish_the_monarchy",
+      "name": "Republic Act",
+      "theme": "institutional",
+      "summary": "Abolish the monarchy and establish a parliamentary republic, with a President elected by the assembly as head of state.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy"],
+      "position": { "economic": 0.0, "social": -0.6 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "system_id": "parliamentary_republic",
+          "formation_method": "investiture",
+          "censure_rule": "simple_present",
+          "dissolution_rule": "confidence_failure",
+          "amendment_rule": "two_thirds",
+          "term_limit": 0,
+          "head_of_state": { "kind": "elected_president", "title": "President", "term_years": 5 }
+        },
+        "bloc_offset": { "students": 0.15, "urban": 0.05, "pensioners": -0.15 }
+      }
+    },
+    {
+      "id": "restore_the_monarchy",
+      "name": "Restoration Act",
+      "theme": "institutional",
+      "summary": "Restore the monarchy and its constitutional powers, ending the republic.",
+      "constitutional": true,
+      "systems": ["parliamentary_republic"],
+      "position": { "economic": 0.0, "social": 0.6 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "system_id": "constitutional_monarchy",
+          "formation_method": "largest_party",
+          "censure_rule": "simple_present",
+          "dissolution_rule": "executive_discretion",
+          "amendment_rule": "ordinary_law",
+          "term_limit": 0,
+          "head_of_state": { "kind": "hereditary_monarch", "title": "King", "name": "Alexander IV" }
+        },
+        "bloc_offset": { "pensioners": 0.15, "rural": 0.05, "students": -0.15 }
+      }
     }
   ]
 }

@@ -69,6 +69,8 @@ static func available(ns, all_laws: Array) -> Array:
 			continue
 		if law.constitutional and not law.systems.has(ns.system_id):
 			continue
+		if law.changes_system and not ns.permits_system_change:
+			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
 	return out
@@ -232,7 +234,13 @@ static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 ## issue all fire exactly as they would for a player-driven budget change --
 ## the same mechanism, so double-counting is structurally impossible. Every
 ## other channel is one clamped accumulator, read by an existing formula.
-static func apply(state, ns, law) -> void:
+##
+## `loader` is required, not defaulted -- a system transition needs
+## loader.political_systems (to re-read lose_condition off the new template)
+## and loader.parties (to derive an elected head of state's holder). A
+## defaulted param would let a transition silently half-apply, the failure
+## mode this project refuses throughout. See docs/transition-model.md.
+static func apply(state, ns, law, loader) -> void:
 	var effects: Dictionary = law.effects
 
 	var pending := {}
@@ -283,6 +291,12 @@ static func apply(state, ns, law) -> void:
 	# see docs/amendment-model.md.
 	if effects.has("institutional"):
 		var inst: Dictionary = effects["institutional"]
+		# system_id first -- everything below it in this block, and
+		# lose_condition just after, is read as "the new system's own rule",
+		# so the nation has to already be pointed at the target before any of
+		# them are written. See docs/transition-model.md.
+		if inst.has("system_id"):
+			ns.system_id = inst["system_id"]
 		if inst.has("censure_rule"):
 			ns.censure_rule = inst["censure_rule"]
 		if inst.has("dissolution_rule"):
@@ -295,9 +309,44 @@ static func apply(state, ns, law) -> void:
 			ns.term_limit = int(inst["term_limit"])
 		if inst.has("term_months"):
 			ns.term_months = int(inst["term_months"])
+		if inst.has("system_id"):
+			# lose_condition lives on the template, not the nation -- see
+			# docs/political-systems.md -- so a transition has to re-read it
+			# off the TARGET template, the same way game_state.gd's
+			# _build_nation() reads it at new-game.
+			var system = loader.political_systems.get(inst["system_id"])
+			ns.lose_condition = system.lose_condition if system != null else ns.lose_condition
+		if inst.has("head_of_state"):
+			_apply_head_of_state(state, ns, loader, inst["head_of_state"])
 
 	if law.once:
 		ns.passed_law_ids[law.id] = true
+
+
+## Writes a system transition's new head of state. `hos` is law.gd's already-
+## validated {kind, title, name?, term_years?} -- for `elected_president` the
+## holder is DERIVED from the largest party's own leader_name rather than
+## authored, because an elected president is someone already on the board,
+## unlike a restored monarch, who is not. See docs/transition-model.md.
+static func _apply_head_of_state(state, ns, loader, hos: Dictionary) -> void:
+	ns.head_of_state_kind = hos["kind"]
+	ns.head_of_state_title = hos["title"]
+	if hos["kind"] == "elected_president":
+		var party_list: Array = loader.parties.get(ns.id, [])
+		var largest_id := Government.largest_party_id(ns, party_list)
+		var holder_name := ""
+		for party in party_list:
+			if party.id == largest_id:
+				holder_name = party.leader_name
+				break
+		ns.head_of_state_name = holder_name
+		var term_years := int(hos["term_years"])
+		ns.head_of_state_next_year = int(state.year) + term_years
+		ns.head_of_state_next_month = int(state.month)
+	else:
+		ns.head_of_state_name = hos["name"]
+		ns.head_of_state_next_year = 0
+		ns.head_of_state_next_month = 0
 
 
 ## The player command: resolve the vote, apply effects on passage, set a
@@ -326,11 +375,11 @@ static func propose(state, loader, law, force := false) -> Dictionary:
 		return refused
 
 	if force:
-		return _force(state, ns, party_list, law)
+		return _force(state, ns, party_list, law, loader)
 
 	var result := resolve_vote(ns, party_list, law)
 	if result["passed"]:
-		apply(state, ns, law)
+		apply(state, ns, law, loader)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 
@@ -354,7 +403,7 @@ static func _by_id(party_list: Array) -> Dictionary:
 ## tally below is zero -- there was no division. What the government pays for it
 ## is a censure motion resolved at FORCE_HOSTILITY_BONUS, and the risk is real
 ## only for a government that cannot cover the censure threshold.
-static func _force(state, ns, party_list: Array, law) -> Dictionary:
+static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 	var result := {
 		"law_id": law.id,
 		"passed": true,
@@ -375,7 +424,7 @@ static func _force(state, ns, party_list: Array, law) -> Dictionary:
 		ns.last_law_result = result
 		return result
 
-	apply(state, ns, law)
+	apply(state, ns, law, loader)
 	ns.force_cooldown_months = GK.FORCE_COOLDOWN_MONTHS
 
 	var by_id := _by_id(party_list)
