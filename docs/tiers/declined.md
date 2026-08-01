@@ -146,6 +146,43 @@ or a playtesting finding that two nations under the same relative policy feel
 interchangeable, which the measurement above argues against but a third and
 fourth playable nation could still show.
 
+## LimboAI for nation AI foreign policy
+
+**Declined at the [[ROADMAP|V1.3 decomposition]]**, when the plugin was
+installed and evaluated for [[v1|V1.3e]] rather than dismissed unexamined.
+LimboAI is behavior trees and hierarchical state machines for Godot 4, and it
+is on disk at `addons/limboai/` (v1.8.0).
+
+Four reasons, and the last two are the load-bearing ones:
+
+- **Wrong problem shape.** Its own README describes the target as agents
+  "characters, enemies" — per-frame reactive behaviour. V1.3e's problem is nine
+  nations scoring an action list *once a month* from a numeric interest
+  function. That is the same shape as `government.gd`'s coalition search and
+  `legislature.gd`'s vote resolution, both of which are already plain scored
+  search in `src/sim/` with no framework under them.
+- **Engine version.** v1.8.0 states support for Godot **4.6**; this project
+  pins **4.7.1**. A C++ GDExtension against a newer engine is a
+  binary-compatibility bet, and the plugin is not currently enabled in
+  `project.godot`.
+- **It breaks [[engine-decision|Rule 2]].** Its runtime is Node/Resource-based
+  and expects a Node agent. `src/sim/` is `RefCounted` with no scene tree *by
+  rule*, and the test of that rule is a full ten-year run headless — which is
+  also how `tools/run_tests.sh` runs.
+- **It breaks the `.gitignore` contract.** `addons/*` is ignored with one
+  documented exception, and `src/` may reference an addon file **only if that
+  file is committed**. Using LimboAI from the simulation means committing
+  per-platform native binaries for every export target — precisely the cost the
+  exception's comment exists to refuse.
+
+**What would reopen it:** V1.3e turning out to need *interruptible multi-month
+plans* per nation — a negotiation a nation enters, suspends, abandons and
+resumes across many ticks, where the resumption point is real state — **and** a
+hand-rolled state machine in `src/sim/` crossing the few-hundred-line tripwire
+[[engine-decision|Rule 3]] uses to say a file is doing two jobs. A monthly
+re-score from current state needs neither, and that is the design V1.3e starts
+from.
+
 ---
 
 Related: [[scope]] · [[mvp]] · [[v1]] · [[someday]] · [[out-of-scope-mvp]]

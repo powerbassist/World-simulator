@@ -85,38 +85,28 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.2e shipped, and V1.2 is closed** — start scenarios, the last item in
-[docs/tiers/v1.md](docs/tiers/v1.md) §2. A scenario is an authored starting
-state for one nation, in `data/scenarios/*.json`, applied once at
-`GameState.new_game()` and never again — the project's answer to difficulty,
-and why there is no slider ([docs/tiers/declined.md](docs/tiers/declined.md)).
-**Three axes, not §2's four**: debt, seat composition and starting approval are
-authored; the coalition stays *derived* by `Government.form()` from the seats a
-scenario already authors. `scenario_id == ""` is the standard start and has no
-file. Every override is optional and partial. Model:
-[docs/scenario-model.md](docs/scenario-model.md).
+**V1.3 is decomposed into six sessions, V1.3a–f, and none of them are built.**
+The argument, the four calls it made, and the per-session table are in
+[ROADMAP.md](ROADMAP.md); [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
+bullet with the session that builds it. Order: (a) relations and diplomatic
+actions, (b) trade intensity and agreements, (c) tariffs and sanctions, (d) the
+bloc, (e) AI foreign policy, (f) defence.
 
-Two things worth knowing before touching it. **An authored `bloc_approval`
-writes `law_bloc_offset` as well** — every satisfaction term is a delta against
-the nation's own start, so an approval written only to `bloc_approval` decays
-back to neutral inside a game year and the axis is decorative. **The seats axis
-is invisible on economic/opinion figures**: the legislature is its only channel,
-so it is measured at month 0 through `resolve_vote()`, not by running a
-do-nothing regime. Both are recorded in
-[docs/decision-log.md](docs/decision-log.md).
+**Next: V1.3a.** It is the schema session — relations are the first live state
+in this project that is neither per-nation nor global, and everything b–f reads
+whatever shape it picks. Three things it inherits, all argued in the roadmap
+rather than restated here: relations ship *with* a player verb, not as a state
+layer nothing reads; the counterparty response is a **declared stopgap** V1.3e
+replaces, not a quiet approximation; and no new `ISSUE_KEYS` entry, because a
+new issue re-opens the whole `BLOC_SALIENCE_BASE` measurement and that call
+belongs to V1.3d. **LimboAI was evaluated for V1.3e and declined** —
+[docs/tiers/declined.md](docs/tiers/declined.md).
 
-MVP, V1.1a–d, V1.2a–e, and U1–U4 are done.
-
-**Next: V1.3, diplomacy and trade — and it needs decomposing before it needs
-building.** It is one coarse row in [ROADMAP.md](ROADMAP.md)'s V1.2-onward
-table (relations, diplomatic actions, trade agreements, tariffs, sanctions, an
-EU-shaped bloc, nation AI foreign policy, defence as domestic politics), which
-is six-plus sessions. The plan/model/effort call belongs to the session that
-picks it up — see [ROADMAP.md](ROADMAP.md)'s handoff convention. V1.1e (upper
-house and judiciary) is re-parked, not cancelled. One piece of V1.2 work is
-deferred with somewhere to point now: V1.2c authored no amendment content for
-`parliamentary_republic` because Germany's two-thirds bar was unreachable, and
-V1.2e's `deu_grand_coalition` start makes it reachable.
+MVP, V1.1a–d, V1.2a–e, and U1–U4 are done. V1.1e (upper house and judiciary) is
+re-parked, not cancelled. One piece of V1.2 work is deferred with somewhere to
+point now: V1.2c authored no amendment content for `parliamentary_republic`
+because Germany's two-thirds bar was unreachable, and V1.2e's
+`deu_grand_coalition` start makes it reachable.
 
 Save format is at **version 8**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than

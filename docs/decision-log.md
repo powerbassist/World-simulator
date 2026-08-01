@@ -638,6 +638,54 @@ both large parties exclude. Neither would have been visible without running it.
 earn a bump, because a version-8 save's absent `scenario_id` reads as `""` and
 that is *correct*, not silently wrong. Full account: [[scenario-model]].
 
+## V1.3 — decomposed before any code, and four calls made while decomposing
+
+Not a build session and not a correction to one: [[ROADMAP]] carried V1.3 as a
+single table row — relations, diplomatic actions, trade agreements, tariffs,
+sanctions, an EU-shaped bloc, nation AI foreign policy, defence — and a row is
+not a session. Logged here for the same reason the **Scope alignment** entry
+above is: a decision that changed the roadmap without shipping code is exactly
+the kind that otherwise leaves no trace.
+
+**The block's real schema decision is not any of its named features.**
+Everything in this project's live state today hangs off a `NationState` or off
+`GameState` itself. A relations score belongs to a *pair*, which nothing in the
+codebase has a home for. That, not the verb count, is why V1.3a is the schema
+session and why its tier is **High** while V1.2c–e each held Medium: those
+three each held on "no new model, no new tuned constant, an nth instance of a
+pattern built n−1 times", and all three are false here.
+
+**Four calls made at decomposition time, each of which could have gone the
+other way:**
+
+- **Relations ship with a verb.** The obvious split — state layer first, actions
+  second — reproduces exactly what [[scenario-model|V1.2e]] caught at design
+  time: an axis with no persistent reader decays to neutral inside a game year
+  and is decorative. So V1.3a is relations *and* a small set of player actions,
+  and the elastic surface if it overruns is the action **content count**, never
+  the schema.
+- **AI is fifth, with named stopgaps rather than accidental ones.** The docs
+  already commit to AI foreign policy being "the actual hard part". Building it
+  early means building an agenda with no action space to score, then rescoring
+  it at every later session. So V1.3b–d each ship a deterministic counterparty
+  rule *declared* as a stopgap V1.3e replaces — the same declared-unresolved
+  shape `lose_condition: "never"` and `referendum_required` already use — and
+  V1.3e opens with the checklist rather than discovering the debt.
+- **The foreign-policy opinion issue belongs to V1.3d.** Adding an `ISSUE_KEYS`
+  entry means six new `BLOC_SALIENCE_BASE` rows, and [[declined]] records that
+  every tuned opinion constant was measured against that one table. Assigning
+  it to one named session keeps three sessions from each paying a share of a
+  re-measurement; a–c use `law_bloc_offset` instead, the channel V1.2e already
+  proved persistent.
+- **LimboAI declined for V1.3e.** Installed, evaluated, and refused on four
+  grounds — wrong problem shape, an engine-version bet, Nodes in `src/sim/`
+  against Rule 2, and committed platform binaries against the `.gitignore`
+  contract. It has a reopening condition, in [[declined]].
+
+One thing the cold read changed on the spot: the roadmap's Military-tab row said
+"blocked on V1.3's defence layer", a whole block away. It is now blocked on
+**V1.3f** specifically, which is one named session with a dependency list.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]
