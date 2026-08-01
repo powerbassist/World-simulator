@@ -1,0 +1,53 @@
+{
+  "_note": "Every magnitude here was set by tools/diplomacy_probe.gd BEFORE this file existed, not tuned after. The two numbers that decided them: an offset of 0.075 moves a bloc's approval target exactly 3.0 points, which is poll_noise.gd's NOISE_MAX_PCT; and an offset applied to fewer than six blocs never moves overall_approval_pct past that noise floor, so a split price is legible on the polling panel's per-bloc rows and nowhere else. See docs/diplomacy-model.md.",
+  "actions": [
+    {
+      "id": "state_visit",
+      "name": "State Visit",
+      "summary": "A formal visit, photographed and reciprocated. Costs nothing at home and buys a little goodwill abroad.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": 5.0
+      }
+    },
+    {
+      "id": "bilateral_treaty",
+      "name": "Bilateral Treaty",
+      "summary": "A standing agreement, only negotiable with a partner already well disposed. Business welcomes it; organised labour reads it as an opening to competition.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "relations",
+          "op": ">=",
+          "value": 70.0
+        }
+      ],
+      "effects": {
+        "relations": 8.0,
+        "bloc_offset": {
+          "business": 0.1,
+          "workers": -0.1
+        }
+      }
+    },
+    {
+      "id": "settle_dispute",
+      "name": "Settle the Dispute",
+      "summary": "Concede the long-running bilateral quarrel outright. The relationship transforms; at home every bloc reads it as a climbdown.",
+      "cooldown_months": 24,
+      "preconditions": [],
+      "effects": {
+        "relations": 10.0,
+        "bloc_offset": {
+          "workers": -0.09,
+          "pensioners": -0.09,
+          "urban": -0.09,
+          "rural": -0.09,
+          "business": -0.09,
+          "students": -0.09
+        }
+      }
+    }
+  ]
+}

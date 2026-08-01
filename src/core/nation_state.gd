@@ -306,8 +306,16 @@ var law_other_revenue_pct_gdp: float = 0.0
 
 ## String bloc id -> accumulated offset, summed into that bloc's approval
 ## *target* in opinion.gd, not into approval directly -- inertia and every bound
-## still apply. For laws with no budget footprint and so no matching issue.
-var law_bloc_offset := {}
+## still apply. For decisions with no budget footprint and so no matching issue.
+##
+## Named `law_bloc_offset` until V1.3a, when the prefix stopped being true for
+## the fifth time: a law writes it, but so do Government.penalise_blocs() after
+## a censure or an Article 49.3, a cabinet resignation, a reshuffle, a
+## dissolution, a scenario's authored starting approval, and now a diplomatic
+## action. It is the model's ONE persistent per-bloc approval channel, and the
+## save version was already bumping for `relations`, which is the only window
+## in which renaming a serialised field is free. See docs/diplomacy-model.md.
+var bloc_offset := {}
 
 ## String law id -> true. A law with `once = true` that has passed can never be
 ## proposed again; a law that failed and has `cooldown_months > 0` goes in
@@ -321,6 +329,22 @@ var law_cooldown_months := {}
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
+
+
+# --- Diplomacy (V1.3a) ---------------------------------------------------------
+
+## "action_id|TARGET" -> months remaining before that action can be used against
+## THAT nation again, counting down every tick. Keyed on the pair rather than on
+## the action alone because condemning Germany is not a reason to be unable to
+## condemn Italy -- the verb is on cooldown against one counterparty, not
+## globally. The relations SCORE lives on GameState, not here; this is the
+## acting nation's own record of what it has recently done, which genuinely is
+## per-nation. See docs/diplomacy-model.md.
+var diplo_cooldown_months := {}
+
+## The most recent diplomatic action, for the nation panel to read after acting.
+## Empty until the first one resolves.
+var last_diplomatic_result := {}
 
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
@@ -429,10 +453,13 @@ func duplicate_state():
 	s.law_structural_offset_pct = law_structural_offset_pct
 	s.law_potential_target_pct = law_potential_target_pct
 	s.law_other_revenue_pct_gdp = law_other_revenue_pct_gdp
-	s.law_bloc_offset = law_bloc_offset.duplicate(true)
+	s.bloc_offset = bloc_offset.duplicate(true)
 	s.passed_law_ids = passed_law_ids.duplicate(true)
 	s.law_cooldown_months = law_cooldown_months.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
+
+	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
+	s.last_diplomatic_result = last_diplomatic_result.duplicate(true)
 
 	return s
 
@@ -545,10 +572,13 @@ func to_dict() -> Dictionary:
 		"law_structural_offset_pct": law_structural_offset_pct,
 		"law_potential_target_pct": law_potential_target_pct,
 		"law_other_revenue_pct_gdp": law_other_revenue_pct_gdp,
-		"law_bloc_offset": law_bloc_offset,
+		"bloc_offset": bloc_offset,
 		"passed_law_ids": passed_law_ids,
 		"law_cooldown_months": law_cooldown_months,
 		"last_law_result": last_law_result,
+
+		"diplo_cooldown_months": diplo_cooldown_months,
+		"last_diplomatic_result": last_diplomatic_result,
 	}
 
 
@@ -661,7 +691,9 @@ static func from_dict(d: Dictionary):
 	s.law_structural_offset_pct = d.get("law_structural_offset_pct", 0.0)
 	s.law_potential_target_pct = d.get("law_potential_target_pct", 0.0)
 	s.law_other_revenue_pct_gdp = d.get("law_other_revenue_pct_gdp", 0.0)
-	s.law_bloc_offset = d.get("law_bloc_offset", {})
+	s.bloc_offset = d.get("bloc_offset", {})
+	s.diplo_cooldown_months = d.get("diplo_cooldown_months", {})
+	s.last_diplomatic_result = d.get("last_diplomatic_result", {})
 	s.passed_law_ids = d.get("passed_law_ids", {})
 	s.law_cooldown_months = d.get("law_cooldown_months", {})
 	s.last_law_result = d.get("last_law_result", {})

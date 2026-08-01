@@ -85,35 +85,41 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.3 is decomposed into six sessions, V1.3a–f, and none of them are built.**
+**V1.3 is decomposed into six sessions, V1.3a–f. V1.3a is built.**
 The argument, the four calls it made, and the per-session table are in
 [ROADMAP.md](ROADMAP.md); [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
 bullet with the session that builds it. Order: (a) relations and diplomatic
 actions, (b) trade intensity and agreements, (c) tariffs and sanctions, (d) the
 bloc, (e) AI foreign policy, (f) defence.
 
-**Next: V1.3a.** It is the schema session — relations are the first live state
-in this project that is neither per-nation nor global, and everything b–f reads
-whatever shape it picks. Three things it inherits, all argued in the roadmap
-rather than restated here: relations ship *with* a player verb, not as a state
-layer nothing reads; the counterparty response is a **declared stopgap** V1.3e
-replaces, not a quiet approximation; and no new `ISSUE_KEYS` entry, because a
-new issue re-opens the whole `BLOC_SALIENCE_BASE` measurement and that call
-belongs to V1.3d. **LimboAI was evaluated for V1.3e and declined** —
-[docs/tiers/declined.md](docs/tiers/declined.md).
+**V1.3a shipped the schema everything b–f reads.** Relations are pair state on
+`GameState.relations`, **symmetric**, keyed `"DEU|FRA"` by `src/core/relations.gd`
+— the only thing allowed to build a key — and derived at start from EU
+co-membership and `government.neighbours`. The counterparty response is a
+**declared stopgap** V1.3e replaces, asserted as such in `tests/test_diplomacy.gd`.
+The model, every constant, and the measured tables are
+[docs/diplomacy-model.md](docs/diplomacy-model.md).
 
-MVP, V1.1a–d, V1.2a–e, and U1–U4 are done. V1.1e (upper house and judiciary) is
-re-parked, not cancelled. One piece of V1.2 work is deferred with somewhere to
-point now: V1.2c authored no amendment content for `parliamentary_republic`
-because Germany's two-thirds bar was unreachable, and V1.2e's
-`deu_grand_coalition` start makes it reachable.
+**Next: V1.3b, trade.** It owns `external_impulse_pct`, wired since S4 and
+deliberately quiet, so it is the session that re-runs the balance harness — and
+it inherits the size-asymmetry input V1.3a dropped. Still true for the whole
+block: no new `ISSUE_KEYS` entry before V1.3d, because a new issue re-opens the
+whole `BLOC_SALIENCE_BASE` measurement. **LimboAI was evaluated for V1.3e and
+declined** — [docs/tiers/declined.md](docs/tiers/declined.md).
 
-Save format is at **version 8**. There has never been a migration: a superseded
+MVP, V1.1a–d, V1.2a–e, V1.3a and U1–U4 are done. V1.1e (upper house and
+judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
+somewhere to point now: V1.2c authored no amendment content for
+`parliamentary_republic` because Germany's two-thirds bar was unreachable, and
+V1.2e's `deu_grand_coalition` start makes it reachable.
+
+Save format is at **version 9**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
-a clear refusal. V1.2e added `GameState.scenario_id` **without** a bump — the
-rule is not "a new field bumps" but "a missing field would read as something
-wrong", and a version-8 save's absent `scenario_id` reads as `""`, which is
-correct for every save that exists.
+a clear refusal. The rule is not "a new field bumps" but "a missing field would
+read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
+because an absent one reads as `""`, which is correct; V1.3a bumped because an
+absent `relations` reads every pair as 0.0, which is the *worst possible*
+relations rather than a neutral default.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

@@ -9,6 +9,7 @@ const Party = preload("res://src/core/party.gd")
 const Law = preload("res://src/core/law.gd")
 const PoliticalSystem = preload("res://src/core/political_system.gd")
 const Scenario = preload("res://src/core/scenario.gd")
+const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -23,6 +24,11 @@ var parties: Dictionary = {}  # String id -> Array[Party]
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
+
+## Ordered, not keyed by id, the same way `laws` is: the nation panel offers
+## them as a list in authored order and nothing looks one up by id at runtime.
+var diplomatic_actions: Array[DiplomaticAction] = []
+
 var eu: EU = null
 var errors: Array[String] = []
 
@@ -35,12 +41,13 @@ var errors: Array[String] = []
 var geo_features: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
+	diplomatic_actions.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -82,6 +89,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
+	_load_diplomatic_actions(diplomatic_actions_dir)
 
 	eu = EU.new()
 	eu.load(eu_path)
@@ -90,6 +98,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_cross_file(geo_path)
 	_validate_amendments()
 	_validate_scenarios()
+	_validate_neighbours()
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:
@@ -271,6 +280,78 @@ func _load_scenarios(scenarios_dir: String) -> void:
 			if scenarios.has(scenario.id):
 				errors.append("%s: duplicate scenario id '%s'" % [fname, scenario.id])
 			scenarios[scenario.id] = scenario
+
+
+## Directory-scanned, exactly like _load_laws() and _load_scenarios() -- adding
+## an action is a file, not a file plus an index entry. Every file holds
+## {"actions": [...]}, matching a law file's {"laws": [...]}, so several actions
+## can share a themed file. There is no cross-file half: an action names no
+## nation, no party and no bloc roster beyond the global BLOC_KEYS its own
+## from_dict already checks. See docs/diplomacy-model.md.
+func _load_diplomatic_actions(actions_dir: String) -> void:
+	var da := DirAccess.open(actions_dir)
+	if da == null:
+		errors.append("%s: directory not found" % actions_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := actions_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("actions")) != TYPE_ARRAY:
+			errors.append("%s: invalid diplomatic-action file, expected {\"actions\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["actions"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: actions[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = DiplomaticAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate diplomatic action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+			diplomatic_actions.append(action)
+
+
+## A land border is mutual or it is not a land border. Nation.gd already checked
+## each list's shape against its own file; only here is the whole roster in
+## scope, so only here can "FRA lists DEU but DEU does not list FRA" be caught.
+##
+## This is what lets src/sim/diplomacy.gd derive one resting value per unordered
+## pair without asking which nation's file it should believe -- the symmetric
+## pair key of src/core/relations.gd would otherwise be resting on an asymmetric
+## input. See docs/diplomacy-model.md.
+func _validate_neighbours() -> void:
+	for id in nations.keys():
+		var n = nations[id]
+		for other_id in n.neighbours:
+			if not nations.has(other_id):
+				errors.append("%s.json: government.neighbours names '%s', which is not a loaded nation" % [id, other_id])
+				continue
+			if not nations[other_id].neighbours.has(id):
+				errors.append("%s.json: government.neighbours lists '%s', but %s.json does not list '%s' back" % [
+					id, other_id, other_id, id
+				])
 
 
 func _validate_cross_file(geo_path: String) -> void:

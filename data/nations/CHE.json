@@ -57,7 +57,8 @@
     },
     "eu": {
       "member": false
-    }
+    },
+    "neighbours": ["AUT", "DEU", "FRA", "ITA"]
   },
   "fiscal": {
     "_source": "authored",

@@ -20,6 +20,7 @@ const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -34,8 +35,17 @@ const C = preload("res://src/sim/economy_constants.gd")
 ## all of them) -- a version-7 save's absent permits_system_change would
 ## silently read as false, refusing a transition the nation's own data
 ## permits. SaveManager rejects an unknown version outright — see
-## docs/data-architecture.md.
-const SAVE_VERSION := 8
+## docs/data-architecture.md. 9 as of V1.3a: `relations` below, plus the
+## `bloc_offset` -> `bloc_offset` rename on NationState. Relations earn the
+## bump under this comment's own rule and `scenario_id`'s absence of one -- the
+## test is not "a new field" but "would a missing field read as something
+## wrong?". An absent relations dictionary reads as {}, every pair then resolves
+## to 0.0, and 0.0 is the WORST possible relations rather than a neutral
+## default: a version-8 save would load as ten nations who all hate each other.
+## The rename is the same class of loud-vs-silent failure -- a version-8 save's
+## `bloc_offset` key would be dropped on load, quietly discarding every
+## accumulated approval offset a played game has earned.
+const SAVE_VERSION := 9
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -58,6 +68,20 @@ var year: int = 0
 var month: int = 0
 
 var nations := {}  # String id -> NationState
+
+## Pair-keyed diplomatic relations, 0-100, one entry per unordered pair of the
+## ten -- 45 in all. The FIRST live state in this project that is neither
+## per-nation nor global, which is why it sits here rather than on NationState:
+## a relations score belongs to a pair, and mirroring it onto both nations would
+## double the write path and reintroduce a divergence the symmetric key makes
+## impossible.
+##
+## Keys are built ONLY by src/core/relations.gd's key(), never by string
+## concatenation at a call site. Seeded once by Diplomacy.seed_relations() from
+## values derived at load, then owned by Diplomacy.tick_month() and by the
+## player's own diplomatic actions. See docs/diplomacy-model.md.
+var relations := {}  # sorted pair key, e.g. "DEU|FRA" -> float in [0, 100]
+
 var history: Array[Dictionary] = []
 
 ## What the player's last few commands actually did -- U4. Newest first, each
@@ -109,6 +133,13 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	var baseline := Economy.neighbour_weighted_growth(gs)
 	for ns in gs.nations.values():
 		ns.trade_baseline_pct = baseline
+
+	# After every nation exists, because a pair needs both halves, and outside
+	# _build_nation() because relations are the one piece of starting state that
+	# is not a nation's own. Reads the loader's Nation objects (eu_member,
+	# neighbours) rather than NationState -- neither input is live state and
+	# neither ever changes. See docs/diplomacy-model.md.
+	Diplomacy.seed_relations(gs, loader)
 
 	return gs
 
@@ -166,13 +197,18 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	ns.growth_annual_pct = ns.trend_annual_pct
 	Budget.recompute(ns)
 
-	# Before Opinion, which is the one init that now WRITES law_bloc_offset --
+	# Before Opinion, which is the one init that now WRITES bloc_offset --
 	# a scenario's authored approval is held at its target through that
 	# accumulator, and Legislature.init_nation() zeroes it. Moved ahead of
 	# Opinion rather than teaching Legislature to spare one key: it zeroes law
 	# state and reads nothing, so it is order-independent against everything
 	# here. See docs/scenario-model.md.
 	Legislature.init_nation(ns)
+	# Order-independent against everything here for the same reason Legislature
+	# is: it zeroes this nation's own diplomacy record and reads nothing. The
+	# relations themselves are pair state, seeded in new_game() once every
+	# nation exists.
+	Diplomacy.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
@@ -224,6 +260,7 @@ func duplicate_state():
 	gs.scenario_id = scenario_id
 	gs.year = year
 	gs.month = month
+	gs.relations = relations.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -254,6 +291,7 @@ func to_dict() -> Dictionary:
 		"year": year,
 		"month": month,
 		"nations": nations_dict,
+		"relations": relations,
 		"history": history,
 		"recent_effects": recent_effects,
 	}
@@ -276,6 +314,14 @@ static func from_dict(d: Dictionary):
 	var nations_dict: Dictionary = d.get("nations", {})
 	for id in nations_dict.keys():
 		gs.nations[id] = NationState.from_dict(nations_dict[id])
+
+	# Re-floated key by key rather than taken wholesale: JSON round-trips a
+	# whole-number score as an int, and a relations dictionary holding a mix of
+	# ints and floats would make the drift arithmetic depend on how a value
+	# happened to be saved.
+	var rel: Dictionary = d.get("relations", {})
+	for pair_key in rel.keys():
+		gs.relations[pair_key] = float(rel[pair_key])
 
 	var hist: Array = d.get("history", [])
 	var typed_hist: Array[Dictionary] = []

@@ -251,7 +251,7 @@ threshold would force every bill it could not win, for nothing. That is the same
 defect class [[opinion-model|`SALIENCE_GAIN`]] documents from the S10 balance
 pass: a free action with an unbounded upside. The 2023 pension reform survived
 censure by nine votes and cost the government heavily in the polls; surviving is
-not getting away with it. Routed through the existing `law_bloc_offset`
+not getting away with it. Routed through the existing `bloc_offset`
 accumulator, so inertia and every bound in [[opinion-model]] still apply.
 
 ### What is deliberately not built
@@ -388,7 +388,7 @@ the **ceiling** on a live quantity rather than the quantity itself.
 | `coalition_seats` | A sum of seat counts drawn from `seats_by_party`, so bounded by `assembly_seats`. |
 | `hostility(p)` | Clamped to `[−1, +1]` by construction; the disaffection term is bounded by `DISAFFECTION · 1 · 1`. |
 | A censure tally | The three columns sum to `assembly_seats` exactly: a rebellion moves seats between them and never creates one — see [[discipline-model]]. |
-| `law_bloc_offset[bloc]` | The censure and 49.3 penalties are clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, and clamped again with the satisfaction score before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Repeated forcing cannot walk approval down without bound. |
+| `bloc_offset[bloc]` | The censure and 49.3 penalties are clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, and clamped again with the satisfaction score before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Repeated forcing cannot walk approval down without bound. |
 | `censure_barred_party_ids` | Grows to at most the roster size, and is emptied at every legislative election. |
 | Formation itself | Terminates: each round adds one party from a finite roster and never removes one. |
 

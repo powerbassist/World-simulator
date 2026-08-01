@@ -26,12 +26,15 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Relations = preload("res://src/core/relations.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
 const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
 const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
 const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
+const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -78,6 +81,7 @@ func _init() -> void:
 	_run_second_nation_roundtrip(loader)
 	_run_transition_roundtrip(loader)
 	_run_scenario_roundtrip(loader)
+	_run_diplomacy_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -242,6 +246,78 @@ func _run_transition_roundtrip(loader) -> void:
 		_fail("post-transition save round-tripped system_id as '%s', expected parliamentary_republic" % loaded.player().system_id)
 	if loaded.player().head_of_state_kind != "elected_president":
 		_fail("post-transition save round-tripped head_of_state_kind as '%s', expected elected_president" % loaded.player().head_of_state_kind)
+
+
+## V1.3a. The reflective check above already walks `relations` and
+## `diplo_cooldown_months`, but only proves anything if they are OFF their
+## defaults -- an empty cooldown map round-trips as an empty cooldown map
+## whether or not it is saved at all. So: act first, then save.
+##
+## Also checks the claim SAVE_VERSION 9 rests on, directly rather than by
+## argument: a save with no `relations` key reads every pair as 0.0, which is
+## the WORST relations rather than a neutral default. That is the "would a
+## missing field read as something wrong" test game_state.gd's own comment sets,
+## and it is why this bump exists where `scenario_id`'s did not.
+func _run_diplomacy_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported %s" % [state.errors])
+		return
+
+	var action = null
+	for candidate in loader.diplomatic_actions:
+		if candidate.cooldown_months > 0 and candidate.preconditions.is_empty():
+			action = candidate
+			break
+	if action == null:
+		_fail("no unconditional diplomatic action with a cooldown to act with")
+		return
+
+	var result := Diplomacy.execute(state, loader.diplomatic_actions, action, "FRA", "DEU")
+	if not result["applied"]:
+		_fail("could not take a diplomatic action to save: %s" % [result])
+		return
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 3
+
+	var save_error := SaveManager.save_game(state, clock, DIPLOMACY_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game failed on a state with diplomacy: %s" % save_error)
+		return
+
+	var loaded_result := SaveManager.load_game(DIPLOMACY_SLOT)
+	if not loaded_result["ok"]:
+		_fail("load_game failed on a save with diplomacy: %s" % loaded_result["error"])
+		return
+
+	var loaded = loaded_result["state"]
+	_check_pair("GameState[diplomacy]", state, loaded)
+	_check_pair("NationState[FRA diplomacy]", state.player(), loaded.player())
+
+	var key := Relations.key("FRA", "DEU")
+	if not loaded.relations.has(key):
+		_fail("a save round trip dropped the %s pair entirely" % key)
+	elif not _deep_equal(loaded.relations[key], state.relations[key]):
+		_fail("%s round-tripped as %s, expected %s" % [key, loaded.relations[key], state.relations[key]])
+	if loaded.relations.size() != 45:
+		_fail("a save round trip left %d pairs, expected 45" % loaded.relations.size())
+
+	var cooldown := Diplomacy.cooldown_key(action.id, "DEU")
+	if not loaded.player().diplo_cooldown_months.has(cooldown):
+		_fail("a save round trip dropped the '%s' cooldown" % cooldown)
+
+	# The bump's own justification, checked rather than asserted in a comment.
+	var older: Dictionary = state.to_dict()
+	older.erase("relations")
+	var revived = GameState.from_dict(older)
+	if not revived.relations.is_empty():
+		_fail("a save with no relations key invented some")
+	if not is_zero_approx(Relations.score(revived, "FRA", "DEU")):
+		_fail("a save with no relations key did not read as 0.0 -- the bump's premise is wrong")
 
 
 func _run_roundtrip(state, clock) -> void:
@@ -422,7 +498,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

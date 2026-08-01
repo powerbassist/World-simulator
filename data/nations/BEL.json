@@ -57,7 +57,8 @@
     "eu": {
       "member": true,
       "ep_seats": 22
-    }
+    },
+    "neighbours": ["DEU", "FRA", "LUX", "NLD"]
   },
   "fiscal": {
     "_source": "authored",

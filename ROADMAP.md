@@ -60,6 +60,7 @@ shell does not have.
 | V1.2c | Sim | Constitutional amendment — a sixth per-nation dispatch field (`amendment_rule`) at real constitutional fractions, a seventh law effect channel that sets rather than nudges an institution, the load-bearing cross-check extended to amendments; measured, not assumed, that Germany's real two-thirds is unreachable, and left unauthored-against rather than detuned |
 | V1.2d | Sim | System transition — the amendment mechanism pointed at `system_id`, a completeness rule on the institutional bundle, the cross-check inverted to validate against the amendment's target rather than the systems it is proposed under, a seventh per-nation dispatch field (`permits_system_change`); the United Kingdom made the third playable nation, added to the scope at plan time once the original scope was found to ship to zero playable nations |
 | V1.2e | Sim | Start scenarios — an authored starting state as the project's answer to difficulty, three axes not §2's four (the coalition stays derived), a new directory-scanned content type with its validation split per-file/cross-file; the declined difficulty slider's own falsifier measured and not fired, an approval axis caught decorative at design time and fixed through the existing offset channel, and two of the three shipped scenarios corrected by the measurement before release — **V1.2 closed** |
+| V1.3a | Sim | Relations and diplomatic actions — the block's schema session: **pair-keyed relations**, the first live state that is neither per-nation nor global, symmetric by construction and derived from the only two inputs the data can supply (EU co-membership, and a shared border added as fact); a new content type on the law template's preconditions/cooldown/effects shape but explicitly *not* its vote; four player verbs on the Europe tab's existing nation panel; `law_bloc_offset` → `bloc_offset` at the fifth writer that is not a law; `SAVE_VERSION` 8 → 9. The named escalation trigger did not fire, and the measurement set every content number — including one it made a table redo, and one exploit it caught before the content shipped |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
@@ -68,64 +69,27 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 ## Next
 
 **V1.3 is decomposed into six sessions** — the argument, and the four calls it
-made, are under *V1.3 — the decomposition* below. The next session is **V1.3a,
-relations and diplomatic actions**.
+made, are under *V1.3 — the decomposition* below. V1.3a is shipped. The next
+session is **V1.3b, trade: per-partner intensity and agreements**.
 
-### V1.3a — relations and diplomatic actions (next)
+### V1.3b — trade: per-partner intensity and agreements (next)
 
-The block's schema session. Relations are the **first state in this project that
-is neither per-nation nor global** — every field today lives on a `NationState`
-or on `GameState`, and a relations score belongs to a *pair*. Everything b–f
-reads off whatever shape this session picks, which is what makes it plan-first
-and what sets its tier.
+The session that **unquiets `external_impulse_pct`**. That channel has been
+wired since S4 and deliberately silent — `economy_constants.gd`'s `TRADE_BETA`
+comment says so in as many words — and every tuned economy constant was
+measured through it. So this is the session where the balance harness gets
+re-run, which is its defining cost and is not a cost V1.3a had.
 
-**In scope.** Pair-keyed relations as live state with a monthly drift toward a
-resting value; a new directory-scanned content type
-`data/diplomatic-actions/*.json` on [[legislature-model|the law template's]]
-shape (preconditions, cooldown, effects); the player's verbs surfaced on the
-Europe tab's existing nation panel — you act *on* the nation you have clicked,
-so no new tab; a domestic price paid through the `law_bloc_offset` channel;
-`SAVE_VERSION` 8 → 9.
+**In scope.** `external_impulse_pct` made per-partner rather than one
+GDP-weighted aggregate; bilateral trade agreements with sector winners and
+losers at home. It reads V1.3a's relations, and it is the session that
+**inherits V1.3a's dropped third input**: size asymmetry was cut from the
+relations derivation because a symmetric pair key has nowhere honest to put it,
+and per-partner trade weight is where it belongs — see [[diplomacy-model]].
 
-**Out of scope, and why.** No trade coupling — V1.3b owns
-`external_impulse_pct` and the re-measurement that unquieting it forces. No
-counterparty *reasoning*: the actions here are the player's, and any neighbour
-reaction is the declared stopgap rule V1.3e replaces. No new `ISSUE_KEYS`
-entry — that call belongs to V1.3d, for the reason given below. No new
-dashboard tab.
-
-**Four design questions the plan must settle**, listed rather than pre-decided:
-
-1. **Symmetric or asymmetric.** One number per unordered pair, or two.
-   Symmetric halves the content; asymmetric is truer and costs 45 more numbers
-   with no source. Widening later is a *schema* change, not a data change,
-   which is what makes this the expensive one.
-2. **Authored or derived starting values.** 45 hand-authored numbers with
-   nothing in [docs/data-sources.md](docs/data-sources.md) to author them from,
-   against deriving from data that exists (EU co-membership, an adjacency
-   table, size asymmetry). The precedent — [[cabinet-model|competence]], and
-   military capability already scheduled as derived at V1.3f — leans derived.
-3. **Where live relations sit.** A `GameState.relations` dictionary keyed by a
-   sorted pair string is the obvious answer and the one that survives
-   `duplicate_state()`, `to_dict()` and the budget projection; mirroring onto
-   each `NationState` is the alternative and doubles the write path.
-4. **Whether `law_bloc_offset` is renamed.** The save version bumps anyway, so
-   generalising the name is nearly free here and never cheaper later — against
-   a rename touching `Legislature`, `Government.penalise_blocs()`, `Opinion`,
-   `Scenario` and their tests for no behaviour change.
-
-**The named measurement, run before any action content is finalised.** Sweep
-the *reachable* relations range under the drift constant, and check an action's
-domestic cost against `src/ui/poll_noise.gd` — an action whose bloc effect is
-invisible against display noise is a decorative verb, and finding that after
-the content is authored is finding it too late. `tools/diplomacy_probe.gd`, on
-`scenario_probe.gd`'s pattern.
-
-**Named cut if it overruns:** three diplomatic actions, not eight. Content
-count is the elastic surface; the schema is not. **Named escalation trigger:**
-if the reachable relations range is too narrow for any action's precondition to
-bite, that is a model decision — the drift constant, or relations as a rate
-rather than a level — not a tuning call.
+**Out of scope.** Tariffs and sanctions are V1.3c. Counterparty reasoning is
+still V1.3e, and whatever deterministic rule this session ships for a trade
+partner's response is **declared a stopgap** the same way V1.3a's was.
 
 One piece of V1.2 work is still deferred rather than done, with somewhere to
 point now: **V1.2c authored no amendment content naming `parliamentary_republic`**,
@@ -134,10 +98,65 @@ because Germany's real two-thirds bar was measured unreachable. V1.2e's
 content itself was left to the session that picks it up — see
 [[scenario-model]].
 
-Per this document's own handoff convention below, the plan/model/effort call
-belongs to the session that picks it up, read cold. The V1.3a row on that table
-was counted by the decomposition session and is there to be challenged, not
-accepted.
+### V1.3a — relations and diplomatic actions (shipped)
+
+The block's schema session, and the first live state in this project that is
+neither per-nation nor global. The full account — all four design questions,
+every constant's rationale, and the measured tables — is [[diplomacy-model]].
+What belongs here is what the session's own record adds to this document's
+arguments.
+
+**All four design questions went the cheap way, and one of them cost a third
+input.** Relations are **symmetric** — one number per unordered pair, 45 in all,
+keyed `"DEU|FRA"` by the one helper permitted to build a key, so
+`rel(A,B) == rel(B,A)` is structurally true rather than maintained. Starting
+values are **derived**, not authored, from EU co-membership (which every nation
+file already carried) and a shared land border (added as a *fact*, the same
+class as `assembly_seats`, cross-checked at load for mutuality). Size
+asymmetry — the third input the roadmap expected to use — was **dropped as a
+direct consequence of the symmetry call**: under a symmetric key a size
+disparity cannot be expressed, because the pair's single number has no side to
+attach it to. Handed to V1.3b's read-time trade weighting rather than quietly
+omitted. `bloc_offset` was renamed, at the fifth writer that is not a law.
+
+**The named escalation trigger did not fire, but the measurement rewrote
+itself once.** The reachable range is ample — even the mildest authorable
+content moves a pair further than the 8-point gap between two resting tiers,
+so no precondition is unreachable. But the probe's first table asked *how long
+a pair takes to return within one point of resting after sustained use*, which
+from a twenty-point displacement is four-plus half-lives **by construction** —
+so nearly every row read "> 120 months" and the table looked like it was
+reporting that the drift does nothing. A second table was added rather than the
+first one reinterpreted, and it is the one that justifies the constant: a
+**single** action has a 35-month half-life, 78% present after a year and 30%
+after a term.
+
+**The measurement's real finding was in the other table, and it was not the one
+the plan named.** The plan expected to check whether an action's bloc effect
+clears poll noise. It does, at 0.08 and above — but only when the effect hits
+**all six** blocs. An offset applied to fewer never clears the floor in
+`overall_approval_pct`, not even at the content ceiling, because the roll-up is
+weighted. A split price is legible on the polling panel's per-bloc rows and
+nowhere else. Not a bug — a policy that divides the country should not move the
+average — but an action whose only price was a two-bloc offset would have
+shipped looking like a decision with no visible consequence.
+
+**And it caught an exploit before the content shipped.** The obvious content
+for the visible-cost slot was a six-bloc *gain*, since condemning foreigners is
+domestically popular. The cooldown is per (action, target), so nothing would
+have stopped the player applying it against all nine neighbours in one month —
++0.72 accumulated into a channel clamped at +1.0, saturating approval outright.
+The visible six-bloc action shipped as a pure **cost** instead, and the popular
+verb ships **split**, so mass use moves blocs in opposite directions and is
+self-limiting. This is the first correction on this document's record to come
+from a measurement finding an *exploit* rather than an unreachable number.
+
+**The counterparty response is a declared stopgap, and the test asserts it.**
+An action's own `relations` delta is the entire reaction; no reasoning, no
+retaliation, no third pair moves. `tests/test_diplomacy.gd` asserts that acting
+on Germany leaves `DEU|ITA` exactly at its resting value, so V1.3e replacing
+the stopgap is a visible test change rather than a silent one.
+
 
 ### V1.3 — the decomposition, and why these six
 
@@ -457,7 +476,7 @@ is already made, which is most sessions once the docs are written.
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
 | V1.2e Start scenarios | **Yes** *(held)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time cold count of ~20 surfaces — between V1.2c's ~18 and V1.2d's ~21 — on the reasoning that a scenario adds one new value type, one new validator in a pattern built four times, and two optional sim arguments, with no new tuned constant and no new model. Held. Two things the count got right in advance: `new_game()`'s ~50 call sites made a defaulted third parameter mandatory rather than optional, and the coalition axis was cut at plan time rather than discovered mid-build. One thing it did not: the plan treated an authored `bloc_approval` as a single write, and it needed a second (`law_bloc_offset`) or the axis would have decayed to nothing inside a game year — found at design time from `INERTIA_RATE`, before content existed, which is the earliest any correction on this table has been caught. The plan's own named escalation trigger (the reachability sweep coming back too narrow) did **not** fire; a different measurement problem did, and the response the plan named for it — split the report rather than trust the first number — resolved it without escalating. Ninth correction on this table's own record, and the fifth that held its tier once corrected. |
 | V1.2d System transition | **Yes** *(corrected)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time count of ~21 surfaces — three above V1.2c's ~eighteen, for the seventh dispatch-on-a-data-string field, the inverted target-side cross-check, and a new template field. **Corrected at plan time, not at build time**: a cold read of the scope found it would ship to zero playable nations, and the session's scope grew to include a third playable nation before any code was written — the eighth correction on this table's own record, and the first caught before the plan was even finalised rather than during or after the build. The plan's own named escalation trigger (a reachability sweep coming back unreachable) fired once, for restoration, and resolved by widening the sweep rather than escalating — the response the plan itself named in advance. |
-| V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. |
+| V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
 > The plan assumed enforcing France's term limit could move the balance

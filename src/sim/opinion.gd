@@ -18,7 +18,7 @@ extends RefCounted
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
-## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes law_bloc_offset for a
+## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes bloc_offset for a
 ## start scenario, and must respect the same bounds a law is held to.
 const LK = preload("res://src/sim/legislature_constants.gd")
 
@@ -52,14 +52,14 @@ static func init_nation(ns, bloc_approval_override: Dictionary = {}) -> void:
 		# half-life and be gone inside a game year, while debt and seats persist.
 		# Measured before it was built: see docs/scenario-model.md.
 		#
-		# Routed through law_bloc_offset because that IS the model's channel for
+		# Routed through bloc_offset because that IS the model's channel for
 		# an opinion effect with no budget line behind it -- Government.
 		# penalise_blocs() already uses it for a fallen government, which is no
 		# more a law than a scenario is. Inverting _tick_nation()'s own target
 		# formula gives the offset that makes `authored` the resting point; the
 		# clamp is what bounds the sustainable band to [10, 90], the same band
 		# APPROVAL_SPAN gives a pure satisfaction score.
-		ns.law_bloc_offset[bloc] = clampf(
+		ns.bloc_offset[bloc] = clampf(
 			(authored - K.APPROVAL_NEUTRAL) / K.APPROVAL_SPAN,
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
@@ -101,7 +101,7 @@ static func _tick_nation(ns) -> void:
 		# footprint and so no issue to be salient about. Combined with `score`
 		# and clamped before scaling, so the target stays inside the same
 		# [10, 90] bound a pure satisfaction score would produce on its own.
-		var law_offset: float = float(ns.law_bloc_offset.get(bloc, 0.0))
+		var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
 		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(score + law_offset, -1.0, 1.0)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE

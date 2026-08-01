@@ -86,7 +86,7 @@ const FORCE_HOSTILITY_BONUS := 0.35
 const FORCE_BLOC_PENALTY := -0.08
 
 ## Applied to every bloc's approval target when a government falls, through the
-## law_bloc_offset accumulator opinion.gd already reads. A collapse is a visible
+## bloc_offset accumulator opinion.gd already reads. A collapse is a visible
 ## political failure and the opinion model has no other channel for one; routing
 ## it through the existing accumulator means inertia and every bound in
 ## docs/opinion-model.md still apply, exactly as they do for a law.

@@ -1,0 +1,17 @@
+{
+  "_note": "Fixture for tests/test_diplomacy.gd. An action with a domestic effect and no relations effect is a domestic gesture wearing a diplomacy label -- the same class of quiet lie src/core/scenario.gd refuses for an overrides block that overrides nothing. diplomatic_action.gd requires effects.relations and requires it non-zero.",
+  "actions": [
+    {
+      "id": "no_relations",
+      "name": "Fixture: Moves No Pair",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "bloc_offset": {
+          "business": 0.05
+        }
+      }
+    }
+  ]
+}

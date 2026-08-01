@@ -44,7 +44,8 @@
       "head_of_government_title": "Prime Minister",
       "head_of_government_name": "Cécile Aumont"
     },
-    "eu": { "member": true, "ep_seats": 81 }
+    "eu": { "member": true, "ep_seats": 81 },
+    "neighbours": ["BEL", "CHE", "DEU", "ESP", "ITA", "LUX"]
   },
   "fiscal": {
     "debt_to_gdp_pct": 116.0,

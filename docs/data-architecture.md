@@ -35,6 +35,7 @@ data/
 ├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
 ├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
 ├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])
+├── diplomatic-actions/ the player's foreign-policy verbs ([[ROADMAP|V1.3a]])
 ├── companies/         fictional firms (V1)
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
@@ -124,7 +125,8 @@ of time.
       "head_of_government_title": "Prime Minister",
       "head_of_government_name": "Cécile Aumont"
     },
-    "eu": { "member": true, "ep_seats": 81 }
+    "eu": { "member": true, "ep_seats": 81 },
+    "neighbours": ["BEL", "CHE", "DEU", "ESP", "ITA", "LUX"]
   },
 
   "fiscal": {
@@ -159,6 +161,15 @@ of time.
 Three sectors, not four — no open dataset splits energy out of industry. If S4's
 economy model wants an energy lever, it splits industry as a hand-tuned constant at
 that point, against a concrete model rather than a placeholder.
+
+`neighbours` joined at [[ROADMAP|V1.3a]] and is in that same authored-but-real
+class: which nations share a land border is a fact, not a tuning number, and it
+is one of only two inputs the relations derivation has. Required and possibly
+empty — GBR's list is empty and that is correct, so an absent key would be
+indistinguishable from a nation that borders nobody. Only roster members are
+listed; `data_loader.gd` fails at startup if a border is not mutual, because the
+symmetric pair key would otherwise rest on an asymmetric input. See
+[[diplomacy-model]].
 
 `debt_to_gdp_pct` and `tax_revenue_pct_gdp` sit in their own `fiscal` object because
 they are **authored, but real** — same class as `assembly_seats`, not the same class
@@ -277,6 +288,7 @@ GameState                        src/core/game_state.gd
 ├── year, month                  mirrored from the Clock each monthly tick
 ├── player_nation_id
 ├── nations{}                    String id -> NationState
+├── relations{}                  sorted pair key -> float in 0-100 ([[ROADMAP|V1.3a]])
 ├── history[]                    dated monthly snapshots, for charts
 ├── recent_effects[]             what the last few commands moved ([[ROADMAP|U4]])
 └── errors[]                     problems found while building the state
@@ -332,7 +344,7 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
-**It is at 8, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
+**It is at 9, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
 > [!note] [[ROADMAP|V1.2e]] added a runtime-readable field and did **not** bump
 > `GameState.scenario_id` is the first addition since V1.2b to stop at 8. The
@@ -342,6 +354,18 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 > scenario's effects ride in the ordinary fields either way, since a scenario
 > applies once at new-game and mutates nothing after. Same call [[ROADMAP|V1.2a]]
 > made and held. See [[scenario-model]].
+
+Version 8 → 9 at [[ROADMAP|V1.3a]], and it is the clearest illustration of that
+same rule cutting the other way. `GameState.relations` is the first live state
+that is neither per-nation nor global; a version-8 save carries no `relations`
+key, every pair then resolves to `0.0`, and `0.0` is the **worst possible**
+relations rather than a neutral default — a loaded save would be ten nations who
+all hate each other. `NationState.law_bloc_offset` was renamed to `bloc_offset`
+in the same bump, which is the only window in which renaming a serialised field
+is free: an unrenamed key would be dropped on load, quietly discarding every
+accumulated approval offset a played game had earned. `tests/test_save_load.gd`
+checks the premise directly rather than asserting it in prose. See
+[[diplomacy-model]].
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 

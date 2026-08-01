@@ -540,15 +540,15 @@ static func fall(ns, party_list: Array, result: Dictionary) -> void:
 		ns.in_government = false
 
 
-## Shift every bloc's approval target by `amount`, through the law_bloc_offset
+## Shift every bloc's approval target by `amount`, through the bloc_offset
 ## accumulator opinion.gd already reads. Added to the *target*, not to approval
 ## directly, so INERTIA_RATE and every bound in docs/opinion-model.md still
 ## apply -- a political event cannot make approval jump in one month any more
 ## than a law can.
 static func penalise_blocs(ns, amount: float) -> void:
 	for bloc in OpinionK.BLOC_KEYS:
-		ns.law_bloc_offset[bloc] = clampf(
-			float(ns.law_bloc_offset.get(bloc, 0.0)) + amount,
+		ns.bloc_offset[bloc] = clampf(
+			float(ns.bloc_offset.get(bloc, 0.0)) + amount,
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 

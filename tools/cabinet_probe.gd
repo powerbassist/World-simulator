@@ -194,7 +194,7 @@ func _opinion_tick_with_effectiveness(ns, effectiveness: float) -> void:
 		for issue in weights:
 			score += float(weights[issue]) * float(sat.get(issue, 0.0))
 
-		var law_offset: float = float(ns.law_bloc_offset.get(bloc, 0.0))
+		var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
 		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(score + law_offset, -1.0, 1.0)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE

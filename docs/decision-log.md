@@ -610,7 +610,7 @@ exactly `APPROVAL_NEUTRAL`, and `INERTIA_RATE = 0.25` pulls an authored 38 back
 to 50 on a ~2.4-month half-life — gone inside a game year, while debt and seats
 persist indefinitely. That is [[declined]]'s own falsifier firing on one axis.
 Caught by reading the constant at implementation time rather than by running the
-sweep afterwards, and fixed by holding the target through `law_bloc_offset`, the
+sweep afterwards, and fixed by holding the target through `bloc_offset`, the
 channel `Government.penalise_blocs()` already uses for a fallen government. The
 pattern worth keeping: **an axis can be measured dead from a tuning constant
 alone, before there is any content to measure.**
@@ -675,7 +675,7 @@ other way:**
   entry means six new `BLOC_SALIENCE_BASE` rows, and [[declined]] records that
   every tuned opinion constant was measured against that one table. Assigning
   it to one named session keeps three sessions from each paying a share of a
-  re-measurement; a–c use `law_bloc_offset` instead, the channel V1.2e already
+  re-measurement; a–c use `bloc_offset` instead, the channel V1.2e already
   proved persistent.
 - **LimboAI declined for V1.3e.** Installed, evaluated, and refused on four
   grounds — wrong problem shape, an engine-version bet, Nodes in `src/sim/`
@@ -685,6 +685,52 @@ other way:**
 One thing the cold read changed on the spot: the roadmap's Military-tab row said
 "blocked on V1.3's defence layer", a whole block away. It is now blocked on
 **V1.3f** specifically, which is one named session with a dependency list.
+
+## V1.3a — the symmetry call cost a third input, and the measurement caught an exploit
+
+The plan/model/effort row was counted by the decomposition session, which by that
+table's own record is the estimate most likely to be wrong. Counted cold at plan
+time it came in at **~25 surfaces against the logged ~22**, and High held — on the
+reversibility test the table's own preamble names, not on the count. Two logged
+surfaces were wrong in opposite directions: `data/relations.json` does not exist,
+because starting values are derived, and the `bloc_offset` rename logged as
+"nearly free" was ~30 edit sites across five code files, four test files and eight
+docs.
+
+Three things the session found that the plan did not contain.
+
+**The symmetry call took a third input with it.** The plan expected to derive a
+pair's resting value from EU co-membership, a shared border, and size asymmetry.
+Choosing one symmetric number per unordered pair made the third unusable *as a
+matter of arithmetic* — the pair's single number has no side to attach "the
+smaller partner has less leverage" to. Dropped and handed to V1.3b's read-time
+trade weighting rather than quietly omitted, which is the same treatment
+[[scenario-model|V1.2e]] gave the coalition axis it could not author without
+authoring a contradiction.
+
+**The probe's first table measured the wrong thing and looked like a finding.**
+It swept sustained use and asked how many months a pair took to return within one
+point of resting. From a twenty-point displacement that is four-plus half-lives
+**by construction**, so nearly every row read "> 120 months" and the table appeared
+to report that the drift does nothing. A second table was added rather than the
+first reinterpreted — one action, then nothing — and it is the one that justifies
+the constant: a 35-month half-life, 78% present after a year, 30% after a term.
+Second time a probe on this project has produced an artefact rather than a result;
+[[scenario-model|V1.2e's]] seats axis was the first, and the response both times
+was to split the report rather than trust the first number.
+
+**And the measurement caught an *exploit*, which is new on this record.** Every
+correction here so far has come from a number that turned out unreachable. This
+one came from a number that turned out too reachable. The plan's visible-cost slot
+was going to be a six-bloc approval *gain* — condemning foreigners is popular, and
+the probe had just shown that only a six-bloc effect clears poll noise in the
+headline figure. But the cooldown is per (action, target), so nothing stopped the
+player applying it against all nine neighbours in one month: +0.72 into a channel
+clamped at +1.0, saturating approval outright. Shipped as a pure **cost** instead,
+with the popular verb **split** across blocs so mass use is self-limiting. Found
+before the content existed, which is the whole reason the measurement runs first.
+
+Full account: [[diplomacy-model]].
 
 ---
 

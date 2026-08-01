@@ -56,7 +56,8 @@
     },
     "eu": {
       "member": false
-    }
+    },
+    "neighbours": []
   },
   "fiscal": {
     "_source": "authored",

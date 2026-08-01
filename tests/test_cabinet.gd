@@ -242,7 +242,7 @@ func _check_assign_succeeds_and_charges_the_reshuffle_penalty() -> void:
 		_fail("reshuffles_called did not increment: %d -> %d" % [before_reshuffles, ns.reshuffles_called])
 
 
-## The cost of a reshuffle lands through law_bloc_offset -- the accumulator
+## The cost of a reshuffle lands through bloc_offset -- the accumulator
 ## Article 49.3, a fallen government and a dissolution already move -- so
 ## opinion_constants.INERTIA_RATE and every bound in docs/opinion-model.md
 ## still apply. It must not touch overall_approval_pct directly in the commit

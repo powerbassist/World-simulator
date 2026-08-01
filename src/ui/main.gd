@@ -11,6 +11,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -200,6 +201,13 @@ func _ready() -> void:
 	europe.add_child(_nation_panel)
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide()
+	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
+	# player command with a domestic price, so it earns a U4 decision delta on
+	# exactly the same terms a law does.
+	_nation_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
 
 	_dashboard.add_tab("europe", "Europe", europe)
 
@@ -419,6 +427,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# read it last.
 	Legislature.tick_month(_state)
 	Dissolution.tick_month(_state)
+
+	# Relations drift and diplomatic cooldowns, alongside the other cooldown
+	# ticks. After Opinion, which has already read the bloc offsets an action
+	# wrote last month, and before Elections, which runs last on settled state.
+	Diplomacy.tick_month(_state, _loader)
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this

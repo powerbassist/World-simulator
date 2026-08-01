@@ -103,7 +103,7 @@ nothing weaker counts.
 > approval written only to `bloc_approval` decays back to neutral on a
 > ~2.4-month half-life and is gone inside a game year, because every
 > satisfaction term is a delta against the nation's own start. It is held at
-> its target through the existing `law_bloc_offset` channel instead. Had that
+> its target through the existing `bloc_offset` channel instead. Had that
 > gone unnoticed, a third of this feature would have been decorative. See
 > [[scenario-model]].
 

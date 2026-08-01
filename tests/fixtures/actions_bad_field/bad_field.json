@@ -1,0 +1,21 @@
+{
+  "_note": "Fixture for tests/test_diplomacy.gd. 'coalition_seats' is not in diplomacy_constants.PRECONDITION_FIELDS, so this precondition could never be evaluated. An unknown field is a startup error, not a silently-false predicate -- the same discipline legislature_constants.PRECONDITION_FIELDS already gets.",
+  "actions": [
+    {
+      "id": "bad_field",
+      "name": "Fixture: Unknown Precondition Field",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [
+        {
+          "field": "coalition_seats",
+          "op": ">=",
+          "value": 100.0
+        }
+      ],
+      "effects": {
+        "relations": 5.0
+      }
+    }
+  ]
+}

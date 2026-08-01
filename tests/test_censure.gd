@@ -133,7 +133,7 @@ func _check_forcing_costs_approval_even_when_it_survives() -> void:
 	var law = _first_law()
 
 	# The same law, landing on the same state two ways. A law's own effects write
-	# to law_bloc_offset as well, so comparing against a do-nothing run would
+	# to bloc_offset as well, so comparing against a do-nothing run would
 	# measure the law rather than the forcing. Applying it directly is exactly
 	# what a won vote does, so the difference between these two is the cost of
 	# bypassing the assembly and nothing else.
@@ -150,8 +150,8 @@ func _check_forcing_costs_approval_even_when_it_survives() -> void:
 	var w = won_state.player()
 
 	for bloc in OpinionK.BLOC_KEYS:
-		var forced_offset := float(f.law_bloc_offset.get(bloc, 0.0))
-		var won_offset := float(w.law_bloc_offset.get(bloc, 0.0))
+		var forced_offset := float(f.bloc_offset.get(bloc, 0.0))
+		var won_offset := float(w.bloc_offset.get(bloc, 0.0))
 		if forced_offset >= won_offset:
 			_fail("bloc '%s': forcing left offset %+.3f, winning the vote %+.3f — forcing must cost more" % [
 				bloc, forced_offset, won_offset
@@ -256,7 +256,7 @@ func _check_a_weak_government_is_censured_and_falls() -> void:
 		_fail("the censured head of government is still in office")
 	if ns.coalition_party_ids.is_empty():
 		_fail("no replacement government formed after the censure")
-	if float(ns.law_bloc_offset.get(OpinionK.BLOC_KEYS[0], 0.0)) >= 0.0:
+	if float(ns.bloc_offset.get(OpinionK.BLOC_KEYS[0], 0.0)) >= 0.0:
 		_fail("a government fell without any opinion cost")
 
 

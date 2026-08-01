@@ -195,7 +195,7 @@ one.
 | `dissolution_lockout_remaining` | Set once, from `dissolution_lockout_months`, at the resulting election; counted down to zero and never below by `tick_month()`'s own guard. |
 | `dissolutions_called` | Monotonically increasing, never reset — the same shape `governments_fallen` already uses. |
 | Coalition seats after a snap | Bounded by `assembly_seats`, through the same `ElectoralSystems.allocate()` and `Government.form()` every scheduled election already uses. Nothing here computes a seat count of its own. |
-| `overall_approval_pct` | Untouched directly by `dissolve()` — the bloc penalty moves the *target* opinion.gd ticks toward, through `law_bloc_offset`, so [[opinion-model|`INERTIA_RATE`]] and every existing bound still apply. `tests/test_dissolution.gd` asserts this directly: approval does not move in the commit month. |
+| `overall_approval_pct` | Untouched directly by `dissolve()` — the bloc penalty moves the *target* opinion.gd ticks toward, through `bloc_offset`, so [[opinion-model|`INERTIA_RATE`]] and every existing bound still apply. `tests/test_dissolution.gd` asserts this directly: approval does not move in the commit month. |
 
 The one stored quantity with a nontrivial lifecycle is
 `dissolution_lockout_remaining`, and it moves only by `tick_month()`'s

@@ -152,7 +152,7 @@ func _check_approval_override_reaches_state() -> void:
 		_fail("fra_inheritance did not roll its blocs up into overall_approval_pct: %.3f" % ns.overall_approval_pct)
 
 
-## The reason the override writes law_bloc_offset as well as bloc_approval.
+## The reason the override writes bloc_offset as well as bloc_approval.
 ## Every satisfaction term is a delta against the nation's own start, so a fresh
 ## game's approval target is exactly APPROVAL_NEUTRAL -- an authored figure with
 ## no target shift decays back to 50 on INERTIA_RATE's ~2.4-month half-life and

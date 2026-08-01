@@ -165,6 +165,17 @@ var permits_system_change: bool = false
 var eu_member: bool = false
 var eu_ep_seats: int = 0
 
+## Which nations in the roster this one shares a land border with. A FACT, not
+## a tuned number -- the same class as assembly_seats -- and the reason V1.3a
+## derives relations rather than authoring 45 of them: it is one of only two
+## inputs docs/data-sources.md can actually supply. Empty is legitimate: GBR's
+## only land border is with a nation outside the ten.
+##
+## Borders outside the roster (Portugal, Slovenia, Denmark...) are deliberately
+## absent. Nothing reads them, and listing an id no nation file defines would
+## fail data_loader.gd's own cross-file check. See docs/diplomacy-model.md.
+var neighbours: Array[String] = []
+
 var debt_to_gdp_pct: float = 0.0
 var tax_revenue_pct_gdp: float = 0.0
 
@@ -296,6 +307,13 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 		n.eu_ep_seats = _extract_int(eu, "ep_seats", "government.eu.ep_seats", filename, errors)
 		_check_range_int(n.eu_ep_seats, 1, 200, "government.eu.ep_seats", filename, errors)
 
+	# Required and possibly empty, rather than optional: an absent key would be
+	# indistinguishable from "this nation borders nobody", and one of the ten
+	# genuinely borders nobody. Whether each id names a nation that LOADED, and
+	# whether the relation is mutual, are cross-file questions --
+	# data_loader.gd's _validate_neighbours().
+	n.neighbours = _extract_neighbours(government, n.id, filename, errors)
+
 	var fiscal: Dictionary = _extract_dict(d, "fiscal", filename, errors)
 	n.debt_to_gdp_pct = _extract_float(fiscal, "debt_to_gdp_pct", "fiscal.debt_to_gdp_pct", filename, errors)
 	_check_range_float(n.debt_to_gdp_pct, 0.0, 400.0, "fiscal.debt_to_gdp_pct", filename, errors)
@@ -335,6 +353,31 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	_validate_sectors(n.sectors, filename, errors)
 
 	return n
+
+
+## Shape and self-consistency only: three uppercase letters, no self-reference,
+## no duplicates. Sorted on the way out so the derived resting value cannot
+## depend on authoring order.
+static func _extract_neighbours(government: Dictionary, nation_id: String, filename: String, errors: Array[String]) -> Array[String]:
+	var out: Array[String] = []
+	if not government.has("neighbours") or typeof(government["neighbours"]) != TYPE_ARRAY:
+		errors.append("%s: missing or invalid array field 'government.neighbours'" % filename)
+		return out
+
+	for entry in government["neighbours"]:
+		if typeof(entry) != TYPE_STRING or not _id_regex.search(entry):
+			errors.append("%s: government.neighbours entry '%s' must be three uppercase letters" % [filename, str(entry)])
+			continue
+		if entry == nation_id:
+			errors.append("%s: government.neighbours lists the nation itself" % filename)
+			continue
+		if out.has(entry):
+			errors.append("%s: government.neighbours lists '%s' twice" % [filename, entry])
+			continue
+		out.append(entry)
+
+	out.sort()
+	return out
 
 
 static func _validate_sectors(sectors: Dictionary, filename: String, errors: Array[String]) -> void:

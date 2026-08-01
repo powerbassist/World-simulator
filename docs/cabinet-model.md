@@ -138,7 +138,7 @@ sat[key] = _scaled(d_spend * Cabinet.effectiveness(ns, key), K.SPEND_SCALE_PP)
 ```
 
 One multiplied term on an existing expression, the same "one added term, no
-new equation" shape `law_bloc_offset` and `potential_shift_pct` already have.
+new equation" shape `bloc_offset` and `potential_shift_pct` already have.
 Multiplying the **delta** rather than the level is deliberate: a player who
 never touches a spending line is untouched by the whole cabinet system, the
 same surgical property `opinion-model.md` argues for its own
@@ -203,7 +203,7 @@ so a resignation earlier in `PORTFOLIO_KEYS` order cannot change another
 portfolio's shortfall reading within the same month — the same determinism
 guarantee every `tick_month()` in `src/sim/` keeps.
 
-The penalty routes through `law_bloc_offset`, the accumulator Article 49.3, a
+The penalty routes through `bloc_offset`, the accumulator Article 49.3, a
 fallen government, and a dissolution already move, so `INERTIA_RATE` and
 every bound in [[opinion-model]] still apply. Smaller than
 `government_constants.FALLEN_BLOC_PENALTY`: a resigned minister is a
@@ -352,7 +352,7 @@ files and not in `data/`, per [[engine-decision|Rule 1]].
 | `cabinet_entitlement` | Sums to exactly `PORTFOLIO_KEYS.size()` — `ElectoralSystems.pr_dhondt()` already guarantees its output sums to the seat count requested. |
 | A held portfolio | Always a coalition party or `""` — `seat()` only ever assigns from `ns.coalition_party_ids`, and `assign()` refuses anything else through `can_assign()`. Asserted every month of a 168-month run. |
 | `resignations_count`, `reshuffles_called` | Monotonically increasing, never reset — the same shape `dissolutions_called` and `governments_fallen` already use. |
-| A resignation's cost | Routed through `law_bloc_offset`, clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Cannot walk approval down without bound. |
+| A resignation's cost | Routed through `bloc_offset`, clamped by the same `BLOC_OFFSET_MIN/MAX` a law's own offset is, before reaching `APPROVAL_SPAN` — see [[legislature-model]]. Cannot walk approval down without bound. |
 
 No quantity here accumulates outside those bounds. A cabinet is computed
 fresh from `ns.coalition_party_ids` whenever the coalition changes, so there

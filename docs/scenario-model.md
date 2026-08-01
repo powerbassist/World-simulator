@@ -61,7 +61,7 @@ Everything downstream — `Discipline`, `Cabinet`, `Legislature`, `Dissolution` 
 reads the overridden figures and needs no scenario awareness at all.
 
 > [!note] `Legislature.init_nation()` moved ahead of `Opinion.init_nation()`
-> It zeroes `law_bloc_offset`, which `Opinion.init_nation()` now writes. It
+> It zeroes `bloc_offset`, which `Opinion.init_nation()` now writes. It
 > zeroes law state and reads nothing, so it is order-independent against
 > everything else in `_build_nation()`; moving it was cheaper and more honest
 > than teaching it to spare one key.
@@ -78,7 +78,7 @@ and that is [[declined]]'s own falsifier firing on one third of this feature.
 
 Caught at design time, before content was authored. The fix reuses the channel
 the model already has for an opinion effect with no budget line behind it:
-`law_bloc_offset`, summed into the approval *target* rather than into approval
+`bloc_offset`, summed into the approval *target* rather than into approval
 directly. `Government.penalise_blocs()` already writes it for a fallen
 government, which is no more a law than a scenario is — the field is misnamed,
 not misused.
@@ -87,7 +87,7 @@ The authored figure sets both, and the second is **derived, not authored twice**
 — inverting `_tick_nation()`'s own target formula:
 
 ```
-law_bloc_offset[bloc] = (authored - APPROVAL_NEUTRAL) / APPROVAL_SPAN
+bloc_offset[bloc] = (authored - APPROVAL_NEUTRAL) / APPROVAL_SPAN
 ```
 
 Clamped to `[BLOC_OFFSET_MIN, BLOC_OFFSET_MAX]`, which bounds the *sustainable*

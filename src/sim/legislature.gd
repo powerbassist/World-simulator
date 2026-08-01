@@ -29,7 +29,7 @@ static func init_nation(ns) -> void:
 	ns.law_structural_offset_pct = 0.0
 	ns.law_potential_target_pct = 0.0
 	ns.law_other_revenue_pct_gdp = 0.0
-	ns.law_bloc_offset = {}
+	ns.bloc_offset = {}
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
 	ns.last_law_result = {}
@@ -277,8 +277,8 @@ static func apply(state, ns, law, loader) -> void:
 
 	if effects.has("bloc_offset"):
 		for bloc in effects["bloc_offset"]:
-			var current: float = float(ns.law_bloc_offset.get(bloc, 0.0))
-			ns.law_bloc_offset[bloc] = clampf(
+			var current: float = float(ns.bloc_offset.get(bloc, 0.0))
+			ns.bloc_offset[bloc] = clampf(
 				current + float(effects["bloc_offset"][bloc]),
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
