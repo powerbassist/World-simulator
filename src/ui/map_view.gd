@@ -13,11 +13,18 @@ extends Control
 ## _screen_to_lonlat()/_lonlat_to_screen() for the one transform drawing,
 ## hit-testing and the minimap all share.
 ##
-## Four layers, back to front: the satellite raster, the outlines of every country
-## the game does not simulate, the ten it does, and their labels. The middle layer
-## is drawn from `_world_polygons` and hit-tested by nothing -- `_nation_at_lonlat`
-## iterates `_polygons` alone, so "you cannot click Poland" is structural rather
-## than a filter somewhere that could be forgotten.
+## Four DRAW layers, back to front: the satellite raster, the outlines of every
+## country the game does not simulate, the ten it does, and their labels. The
+## middle one is drawn from `_world_polygons` and hit-tested by nothing --
+## `_nation_at_lonlat` iterates `_polygons` alone, so "you cannot click Poland" is
+## structural rather than a filter somewhere that could be forgotten.
+##
+## U5c added a second, unrelated sense of the word: a MAP layer is what the ten
+## are *coloured by* -- political, relations, trade. Those live entirely in
+## map_layers.gd and change only what `_draw_roster()` fills with. The two never
+## interact: no map layer adds, removes or reorders a draw layer, and the ~160
+## non-simulated countries are coloured by none of them, having neither a pair
+## nor a trade weight to show.
 ##
 ## Hit-testing, pan/zoom and framing are exposed as plain methods
 ## (nation_at_screen_point, pan_by, zoom_by, center_on_lonlat,
@@ -27,8 +34,14 @@ extends Control
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
+const MapLayers = preload("res://src/ui/map_layers.gd")
 
 signal nation_clicked(nation_id: String)
+
+## The nation under the cursor, "" when there is none. U5c: the legend's readout
+## needs to name the value the player is looking at, and a colour ramp the player
+## can only read to the nearest legend stop is a ramp they cannot read.
+signal nation_hovered(nation_id: String)
 
 const BASE_SCALE := 12.0  # screen pixels per degree, before zoom
 
@@ -76,29 +89,15 @@ var _last_mouse_pos := Vector2.ZERO
 var _span_deg := Vector2.ZERO
 var _has_fitted := false
 
-## Ten land tones, cycled by hash so neighbours rarely collide. Desaturated and
-## pulled toward the theme's navy at U5a: U2 chose these to be distinguishable
-## inside a tab, which is a different problem from sitting under a whole
-## interface all game. Saturated pink and olive against a brass-on-navy HUD read
-## as two designs on one screen.
+## Which layer is up. The fill is map_layers.gd's business as of U5c -- there is
+## no colour table and no alpha constant in this file any more, and no mode flag
+## threaded through _draw() either: _draw_roster() asks the registry for a Colour
+## per id, and a new layer is an entry there that this file never learns about.
 ##
-## Drawn at LAND_ALPHA over the satellite raster since U5b, not as opaque fills.
-## Opaque would hide the photograph the session exists to add; bare would lose the
-## one thing the tint is for, which is that these ten and only these ten answer a
-## click. Colouring these by relations and trade is U5c's.
-const PALETTE: Array[Color] = [
-	Color(0.28, 0.34, 0.40), Color(0.24, 0.32, 0.42), Color(0.31, 0.36, 0.36),
-	Color(0.26, 0.30, 0.38), Color(0.33, 0.35, 0.41), Color(0.22, 0.30, 0.36),
-	Color(0.30, 0.33, 0.44), Color(0.35, 0.38, 0.39), Color(0.25, 0.34, 0.38),
-	Color(0.32, 0.31, 0.37),
-]
-
-## Low, and lowered from 0.42 after looking at a frame rather than reasoning about
-## one. The palette is desaturated navy, so at 0.42 it behaved as a grey wash and
-## the ten playable nations came out the flattest things on screen while Poland
-## and Ireland kept the satellite's colour -- the exact inverse of what the tint
-## is for. What separates the roster now is its *outline*, not its fill.
-const LAND_ALPHA := 0.20
+## Political by default. It is the layer that needs no simulation state to be
+## legible, so it is what the map should open on and what an unknown id falls
+## back to -- see MapLayers.layer().
+var _layer := MapLayers.POLITICAL
 
 ## The sea, now only a fallback. Kept rather than deleted with the raster's
 ## arrival because MapRaster.texture() returning null is a declared outcome, not
@@ -114,6 +113,20 @@ const SEA := Color(0.043, 0.075, 0.129)
 const COAST := Color(0.95, 0.96, 0.99, 0.88)
 const WORLD_BORDER := Color(0.71, 0.78, 0.86, 0.22)
 const WORLD_BORDER_WIDTH := 1.0
+
+## Hover and the viewer's own nation both move the *stroke* rather than the fill,
+## and on a data layer that is not a style choice. U5b's hover lifted the fill
+## toward the accent by 0.35, which on the political layer says "this one is under
+## the cursor" and on a relations layer says a pair is warmer than it is -- the
+## one place in the interface where pointing at a number would change it. The
+## outline is already what separates the roster (see COAST), so it is the honest
+## carrier for both marks.
+## Hover is width alone, not brightness: COAST is already near-white, so a
+## brighter white adds nothing and brass is spoken for by the home mark. 3.0 was
+## legible in a frame only just, hence 4.0.
+const COAST_WIDTH := 1.5
+const HOVER_WIDTH := 4.0
+const HOME_WIDTH := 2.5
 
 ## Below this zoom a label is dropped. At the world view ten labels across Europe
 ## are ten labels on top of each other; the threshold is set just under the
@@ -312,6 +325,33 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 	return _nation_at_lonlat(_screen_to_lonlat(screen_pos))
 
 
+## Whose seat the data layers are read from. The player's, always -- U5c's first
+## call, argued in ROADMAP's U5c row. It is a method rather than an inlined
+## `_state.player_nation_id` at four call sites so that a selected-nation viewer,
+## if a later session wants one, is a change here and nowhere else.
+func viewer_id() -> String:
+	if _state == null:
+		return ""
+	return _state.player_nation_id
+
+
+## Public rather than only reachable from the legend's toggle, the same rule the
+## camera methods state: a headless test drives this directly.
+func set_layer(layer_id: String) -> void:
+	# Normalised through the registry, so an unknown id is stored as the fallback
+	# rather than kept and resolved on every draw -- layer() must report what is
+	# actually being drawn.
+	var resolved := String(MapLayers.layer(layer_id)["id"])
+	if resolved == _layer:
+		return
+	_layer = resolved
+	queue_redraw()
+
+
+func layer() -> String:
+	return _layer
+
+
 func pan_by(delta: Vector2) -> void:
 	_pan_offset += delta
 	_clamp_pan()
@@ -357,6 +397,7 @@ func _gui_input(event: InputEvent) -> void:
 			var id := nation_at_screen_point(event.position)
 			if id != _hovered_id:
 				_hovered_id = id
+				nation_hovered.emit(id)
 				queue_redraw()
 
 
@@ -392,14 +433,23 @@ func _draw_world_borders() -> void:
 
 
 func _draw_roster() -> void:
+	var viewer := viewer_id()
 	for id in _polygons.keys():
-		var color: Color = PALETTE[hash(id) % PALETTE.size()]
-		# Hover lifts toward the accent rather than toward white, so the one
-		# country under the cursor is picked out in the same brass everything
-		# else selectable uses.
+		var color := MapLayers.color_for(_layer, _state, viewer, id)
+
+		# Brass for the nation the player governs, thicker white under the cursor,
+		# the plain coastline otherwise. The home mark wins a collision: hovering
+		# your own country should not stop it being yours, and it carries no value
+		# on either data layer for the readout to disagree with.
+		var stroke := COAST
+		var width := COAST_WIDTH
 		if id == _hovered_id:
-			color = color.lerp(UiTheme.ACCENT, 0.35)
-		color.a = LAND_ALPHA
+			stroke = Color(1.0, 1.0, 1.0, 1.0)
+			width = HOVER_WIDTH
+		if MapLayers.is_viewer(viewer, id):
+			stroke = UiTheme.ACCENT
+			width = HOME_WIDTH
+
 		for ring: PackedVector2Array in _polygons[id]:
 			if ring.size() < 3:
 				continue
@@ -409,7 +459,7 @@ func _draw_roster() -> void:
 			draw_colored_polygon(screen_points, color)
 			var closed := screen_points.duplicate()
 			closed.append(screen_points[0])
-			draw_polyline(closed, COAST, 1.5)
+			draw_polyline(closed, stroke, width)
 
 
 ## The roster only. Naming the ~160 countries the player cannot click would say

@@ -85,9 +85,10 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**U5a shipped the ruler's shell and U5b the world map, interrupting the S-track
-queue on request.** The map is the background, not a tab; `dashboard.gd` and its
-rail are deleted; the panels are pinnable floating windows.
+**U5a shipped the ruler's shell, U5b the world map and U5c its layers,
+interrupting the S-track queue on request.** The map is the background, not a
+tab; `dashboard.gd` and its rail are deleted; the panels are pinnable floating
+windows.
 
 **U5b made the map a map of the world.** Four layers back to front: the NASA Blue
 Marble raster, the outlines of ~160 countries the game does not simulate, the ten
@@ -102,11 +103,25 @@ there to leave. The minimap fills the slot `clock_cluster.gd` reserved a session
 early, and `tests/test_minimap.gd` asserts the cluster did **not** grow — that,
 not the minimap's presence, is what the reservation was for.
 
-Two named successors are scheduled and argued in [ROADMAP.md](ROADMAP.md):
-**U5c** (map layers — relations and trade colouring, switcher, legend, cut out of
-U5b at plan time and deliberately parked behind V1.3c so it can colour tariffs
-too) and **U6** (the calendar, as a scheduling skin over existing verbs, plus the
-named-individual roster V1.1d deferred). Neither blocks V1.3c.
+**U5c made the ten coloured by what the player has with them.**
+`src/ui/map_layers.gd` is the only place a roster fill is chosen, and it is a
+**registry, not a mode flag** — three layers today (political, relations, trade)
+and a fourth is one `LAYERS` entry plus one branch in `_value()`/`ramp()`, which
+is what let U5c run *before* V1.3c rather than after it as planned. Three calls:
+the **viewer is always the player**, because the symmetric-vs-directed asymmetry
+is about what a readout may claim (`FRA–DEU 68` names the pair; a trade share
+never claims the partner's side) rather than about whose seat you sit in;
+**alpha is per-layer** and `LAND_ALPHA`'s 0.20 is *not* inherited, since U5b's
+0.42-goes-grey finding is about a ramp with no hue variation; and **both ramps
+are anchored on measured values** — relations on
+[docs/diplomacy-model.md](docs/diplomacy-model.md)'s resting tiers over a 40–72
+domain, not the nominal 0–100, and trade mid-anchored on an even ninth. Hover
+moved from the fill to the stroke: lifting a fill toward the accent is the one
+place in this interface where pointing at a number would change it.
+
+**U6** is the one named successor left (the calendar, as a scheduling skin over
+existing verbs, plus the named-individual roster V1.1d deferred). It does not
+block V1.3c.
 
 `assets/map/blue_marble_5400x2700.jpg` is the repo's first large binary, 2.5 MB,
 public domain, provenance in [docs/data-sources.md](docs/data-sources.md). It is
@@ -120,8 +135,10 @@ nothing is drawn twice.
 
 **`tools/screenshot.gd` exists now, and a UI session that does not run it is not
 finished.** `--headless` draws nothing, so a green suite says nothing about
-layout; U5a shipped two bugs invisible to one. It saves a PNG of the running
-game — run it windowed, not headless.
+layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
+warm end until a frame was looked at. It saves a PNG of the running game — run it
+windowed, not headless — and takes `--layer` and `--hover` so every map layer can
+be captured, not only whichever one the game opens on.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in

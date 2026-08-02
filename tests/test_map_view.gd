@@ -8,6 +8,9 @@ extends SceneTree
 ## outside the scene tree has not run _ready() and signals don't emit -- see
 ## docs/engine-decision.md.
 
+const MapLayers = preload("res://src/ui/map_layers.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -48,6 +51,7 @@ func _run() -> void:
 	_check_projection_and_hit_test(map)
 	_check_pan_zoom(map)
 	_check_camera(map)
+	_check_layer_state(map)
 	_check_click_opens_panel_with_live_values(map)
 
 
@@ -207,6 +211,46 @@ func _check_camera(map) -> void:
 
 	map._pan_offset = pan_before
 	map._zoom = zoom_before
+
+
+## U5c's half of the map's own contract. The ramps themselves are
+## tests/test_map_layers.gd's; what belongs here is that this control asks the
+## registry rather than colouring anything itself, and that **hover does not
+## touch the fill on a data layer** -- U5b's hover lifted it toward the accent,
+## which on the political layer picks a country out and on a relations layer
+## would say a pair is warmer than it is.
+func _check_layer_state(map) -> void:
+	if map.layer() != MapLayers.POLITICAL:
+		_fail("the map did not open on the political layer, but on '%s'" % map.layer())
+
+	var viewer: String = map.viewer_id()
+	if viewer != _main._state.player_nation_id:
+		_fail("map viewer is '%s', not the player nation" % viewer)
+
+	map.set_layer(MapLayers.RELATIONS)
+	if map.layer() != MapLayers.RELATIONS:
+		_fail("set_layer did not take")
+
+	var hovered_before: String = map._hovered_id
+	var target := "DEU" if viewer != "DEU" else "FRA"
+
+	var plain: Color = MapLayers.color_for(map.layer(), _main._state, viewer, target)
+	map._hovered_id = target
+	var hovered: Color = MapLayers.color_for(map.layer(), _main._state, viewer, target)
+	if not plain.is_equal_approx(hovered):
+		_fail("hovering %s changed its fill on a data layer: %s -> %s" % [target, plain, hovered])
+
+	# And the fill is the ramp at that pair's live score, not a table in this
+	# control -- the end-to-end version of "one place picks a fill colour".
+	var expected := MapLayers.ramp(
+		MapLayers.RELATIONS, Diplomacy.score(_main._state, viewer, target)
+	)
+	expected.a = MapLayers.alpha(MapLayers.RELATIONS)
+	if not plain.is_equal_approx(expected):
+		_fail("%s's fill is %s, the ramp at its live score is %s" % [target, plain, expected])
+
+	map._hovered_id = hovered_before
+	map.set_layer(MapLayers.POLITICAL)
 
 
 func _check_click_opens_panel_with_live_values(map) -> void:

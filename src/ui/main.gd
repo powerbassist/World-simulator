@@ -215,6 +215,10 @@ func _ready() -> void:
 	_nation_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
+		# A diplomatic action moves relations, and on the relations layer that is a
+		# colour change the player should see the moment they act rather than at
+		# the next month's tick.
+		_map_view.queue_redraw()
 	)
 
 	_build_action_bar()
@@ -321,6 +325,17 @@ func _wire_hud() -> void:
 	)
 	_hud.top_bar.settings_requested.connect(_open_pause_menu)
 	_hud.portrait_card.setup(_state, _loader)
+
+	# U5c. The legend proposes a layer, the map view holds it, and the legend is
+	# then told what it now shows -- one direction, so the two cannot disagree
+	# about which layer is up.
+	_hud.map_legend.layer_selected.connect(func(id: String):
+		_map_view.set_layer(id)
+		_hud.map_legend.show_layer(_map_view.layer())
+	)
+	_map_view.nation_hovered.connect(func(id: String):
+		_hud.map_legend.show_hover(id, _state, _map_view.viewer_id())
+	)
 
 
 func _add_centered(panel: Control, blocking := false) -> void:
@@ -480,6 +495,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_nation_panel.mark_dirty()
 	if _government_panel != null:
 		_government_panel.mark_dirty()
+
+	# U5c. The map draws only on hover, pan, zoom and resize, which was complete
+	# while its colours came from a hash of the nation id and is not now: relations
+	# drift every month and a trade weight moves with every partner's GDP. Without
+	# this the data layers show the colours of whenever the mouse last moved.
+	if _map_view != null:
+		_map_view.queue_redraw()
 
 	# Discipline reads the approval Opinion has just settled, so it goes after
 	# that and before anything that reads a coalition bonus or a censure vote.

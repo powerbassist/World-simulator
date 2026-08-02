@@ -1,7 +1,7 @@
 extends Control
 
 ## The instrument furniture laid over the map -- U5a's arrangement, and nothing
-## else. Builds the five pieces, places them, and hands them to main.gd to wire.
+## else. Builds the six pieces, places them, and hands them to main.gd to wire.
 ##
 ## It owns no game state and no behaviour: every signal these pieces emit is
 ## connected by main.gd, which is the node holding the Clock and the GameState.
@@ -20,14 +20,21 @@ const PortraitCard = preload("res://src/ui/portrait_card.gd")
 const ActionBar = preload("res://src/ui/action_bar.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
+const MapLegend = preload("res://src/ui/map_legend.gd")
 
 const EDGE_MARGIN := 14
+
+## Between the legend and the portrait card under it. Wider than a container
+## separation so the two read as two plates stacked, not as one plate with a
+## seam -- the same distinction the action bar's sub-row makes.
+const LEFT_STACK_GAP := 8
 
 var top_bar
 var portrait_card
 var action_bar
 var clock_cluster
 var message_stack
+var map_legend
 
 
 func _ready() -> void:
@@ -68,9 +75,22 @@ func _ready() -> void:
 	lower.size_flags_vertical = Control.SIZE_SHRINK_END
 	rows.add_child(lower)
 
+	# The left stack: U5c's map legend above U5a's portrait card. Both are about
+	# the map rather than about a panel -- who you are, and what the colours under
+	# you mean -- so they share a corner. Shrink-end so the pair grows upward into
+	# the map and the portrait's baseline never moves.
+	var left := _ignore(VBoxContainer.new())
+	left.size_flags_vertical = Control.SIZE_SHRINK_END
+	left.alignment = BoxContainer.ALIGNMENT_END
+	left.add_theme_constant_override("separation", LEFT_STACK_GAP)
+	lower.add_child(left)
+
+	map_legend = MapLegend.new()
+	map_legend.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	left.add_child(map_legend)
+
 	portrait_card = PortraitCard.new()
-	portrait_card.size_flags_vertical = Control.SIZE_SHRINK_END
-	lower.add_child(portrait_card)
+	left.add_child(portrait_card)
 
 	lower.add_child(_spacer())
 
@@ -90,7 +110,7 @@ func _ready() -> void:
 ## HUD rect, so without this a drag started on the portrait card would pan
 ## Europe.
 func is_over_furniture(point: Vector2) -> bool:
-	for plate in [top_bar, portrait_card, action_bar, clock_cluster, message_stack]:
+	for plate in [top_bar, portrait_card, action_bar, clock_cluster, message_stack, map_legend]:
 		if plate == null or not plate.visible:
 			continue
 		if Rect2(plate.global_position, plate.size).has_point(point):

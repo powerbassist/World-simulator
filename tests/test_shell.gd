@@ -110,6 +110,16 @@ func _check_hud_lets_the_map_through() -> void:
 	if hud.is_over_furniture(hud.size / 2.0):
 		_fail("is_over_furniture() reports the middle of the map as furniture")
 
+	# U5c's plate, sitting directly above the portrait card. A new piece of
+	# furniture that nobody adds to is_over_furniture()'s list is a drag on the
+	# legend that pans the map underneath it -- the failure this whole check
+	# exists for, one plate later.
+	var legend = hud.map_legend
+	if legend == null:
+		_fail("the HUD did not build the map legend")
+	elif not hud.is_over_furniture(legend.global_position + legend.size / 2.0):
+		_fail("is_over_furniture() does not report the centre of the map legend")
+
 
 ## Every Container under the HUD is layout, and layout must never be solid. The
 ## leaves -- the plates -- are PanelContainers, which is how they are told apart.
