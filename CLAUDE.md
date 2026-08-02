@@ -82,6 +82,12 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   everything it builds is `null`, and `Range.value_changed` does not emit.
   Configure a panel *after* `add_child()`, and drive UI tests a frame at a time
   with `extends SceneTree` + `func _process(delta) -> bool`.
+- **A new `.gd` gets no `.uid` until something imports it.** `--headless
+  --script` runs the file without generating one, so a session that only runs
+  the tests commits scripts whose siblings all have a `.uid` and whose own is
+  missing — U5b did, and paid for it with a follow-up commit. Run `godot --path
+  "<repo>" --headless --import` once before `git add`, and check that every new
+  script has its pair.
 
 ## Current focus
 
