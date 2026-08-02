@@ -1,0 +1,24 @@
+{
+  "_note": "Fixture for tests/test_trade.gd. The three sector shifts sum to +0.30 rather than zero. This must fail to load: Economy._apply_growth_to_sectors() reconciles sectors against the month's GDP target by redistributing the residual by SECTOR_CYCLE_BETA (0.4 / 1.8 / 0.8), so the surplus would come back weighted toward industry and the composition change the player sees would not be the one written here. The author has no way to notice, which is what makes it a load error rather than a rounding tolerance.",
+  "actions": [
+    {
+      "id": "bad_sector_sum",
+      "name": "Fixture: Sector Shift Does Not Balance",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": 5.0,
+        "agreement": {
+          "op": "enter",
+          "weight_multiplier": 1.2,
+          "sector_shift": {
+            "agriculture": -0.1,
+            "industry": 0.5,
+            "services": -0.1
+          }
+        }
+      }
+    }
+  ]
+}

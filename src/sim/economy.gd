@@ -10,21 +10,47 @@ extends RefCounted
 ## The model, and the justification for every constant, is docs/economy-model.md.
 
 const C = preload("res://src/sim/economy_constants.gd")
+const Trade = preload("res://src/sim/trade.gd")
+const TradeK = preload("res://src/sim/trade_constants.gd")
 
 
 static func tick_month(state) -> void:
-	# Computed once, from last month's figures, so the result does not depend on
-	# the order nations are ticked in.
-	var neighbour_growth := neighbour_weighted_growth(state)
+	# Snapshotted once, from last month's figures, so the result does not depend on
+	# the order nations are ticked in. Same reason the single GDP-weighted
+	# aggregate this replaced was computed once, and more load-bearing now: the
+	# table is ninety directed entries reading every nation's GDP.
+	var table := Trade.weight_table(state)
+
+	# The impulse is resolved for every nation BEFORE any nation ticks, not inside
+	# the loop below. Snapshotting the weight table alone is not enough: the
+	# impulse also reads each partner's growth_annual_pct, and _tick_nation()
+	# overwrites that. Computed in the loop, the player would read this month's
+	# growth for every partner sorted before it and last month's for every partner
+	# after -- for France, five of nine one way and four the other.
+	#
+	# Invisible today, because every partner sits at its own baseline forever and
+	# both answers are zero. It would have surfaced at V1.3c, as a mystery, in the
+	# session that first perturbs a partner. tools/trade_probe.gd's synthetic
+	# recession is what caught it.
+	var impulses := {}
+	for ns in state.nations.values():
+		# Player-only, unchanged from S4. Not a stability concern -- the coupled
+		# ten-nation system's common mode is provably stable, and the eigenvalues
+		# are in docs/trade-model.md so V1.3c can lift this knowingly. It is that
+		# turning it on replaces the 28-month output-gap half-life the whole
+		# game's pacing is argued from, which is a model rewrite rather than a
+		# wiring change.
+		if ns.has_budget:
+			impulses[ns.id] = Trade.external_impulse(state, ns, table.get(ns.id, {}))
 
 	for ns in state.nations.values():
-		if ns.has_budget:
-			ns.external_impulse_pct = C.TRADE_BETA * (neighbour_growth - ns.trade_baseline_pct)
-		_tick_nation(ns)
+		if impulses.has(ns.id):
+			ns.external_impulse_pct = float(impulses[ns.id])
+		_tick_nation(state, ns)
 
 
-static func _tick_nation(ns) -> void:
-	_update_potential_shift(ns)
+static func _tick_nation(state, ns) -> void:
+	_update_potential_shift(state, ns)
 
 	var trend := trend_pct(ns)
 	ns.trend_annual_pct = trend
@@ -39,7 +65,7 @@ static func _tick_nation(ns) -> void:
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth
 
-	_apply_growth_to_sectors(ns, growth)
+	_apply_growth_to_sectors(state, ns, growth)
 	_update_unemployment(ns, trend, growth)
 
 	ns.population *= C.monthly_factor(C.POP_GROWTH_PCT)
@@ -65,14 +91,24 @@ static func trend_pct(ns) -> float:
 ## in one step with beta alone would push industry's share *up* over a decade,
 ## the opposite of the secular trend. The cyclical part is a residual against the
 ## GDP target, so sector output sums to GDP exactly with no reconciliation.
-static func _apply_growth_to_sectors(ns, growth: float) -> void:
+static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 	var target_gdp: float = ns.gdp_eur_bn * C.monthly_factor(growth)
+
+	# An agreement's winners and losers, in points of trend per sector. The three
+	# shifts sum to zero — checked at load — so this moves the SPLIT between
+	# sectors and never the nation's own trend. Inside this loop rather than as a
+	# pass after it: the cyclical residual below reconciles sectors to the GDP
+	# target exactly, and a shift applied outside would break that identity.
+	var trade_shift := Trade.sector_shift(state, ns.id)
 
 	# Trend part: each sector at its own rate, plus the uniform potential shift.
 	# Summed, this is exactly the nation's trend, so the two paths agree.
 	var after_trend := 0.0
 	for key in C.SECTOR_TREND.keys():
-		var rate: float = float(C.SECTOR_TREND[key]) + ns.potential_shift_pct
+		var rate: float = (
+			float(C.SECTOR_TREND[key]) + ns.potential_shift_pct
+			+ float(trade_shift.get(key, 0.0))
+		)
 		ns.sector_output[key] = float(ns.sector_output[key]) * C.monthly_factor(rate)
 		after_trend += float(ns.sector_output[key])
 	if after_trend <= 0.0:
@@ -126,7 +162,7 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 ## First-order lag toward the shift implied by current infrastructure, education
 ## and corporate tax. Clamped hard: this is the only term that feeds back into
 ## trend growth, so it is the only one that could compound.
-static func _update_potential_shift(ns) -> void:
+static func _update_potential_shift(state, ns) -> void:
 	var d_infra: float = (
 		float(ns.spending_pct_gdp.get("infrastructure", 0.0))
 		- float(ns.start_spending_pct_gdp.get("infrastructure", 0.0))
@@ -140,26 +176,31 @@ static func _update_potential_shift(ns) -> void:
 		- float(ns.start_tax_rates_pct.get("corporate", 0.0))
 	)
 
-	var target: float = C.INFRA_BETA * d_infra + C.EDU_BETA * d_edu - C.CORP_TAX_BETA * d_corp + ns.law_potential_target_pct
+	# The fourth writer, added at V1.3b. Trade openness is a trend effect, not a
+	# demand one, so this is the right channel — and sharing SHIFT_MAX_PCT with
+	# infrastructure is the point rather than a compromise: openness and public
+	# investment compete for the same ±1.0 budget. The index is exactly 1.0 with no
+	# agreement signed, so this term is exactly zero for every regime in the balance
+	# harness, and it is bounded by MAX_AGREEMENT_WEIGHT_MULTIPLIER at load, before
+	# the clamp below ever sees it. See docs/trade-model.md.
+	var d_open: float = Trade.openness_index(state, ns.id) - 1.0
+
+	var target: float = (
+		C.INFRA_BETA * d_infra + C.EDU_BETA * d_edu - C.CORP_TAX_BETA * d_corp
+		+ TradeK.TRADE_OPENNESS_BETA * d_open
+		+ ns.law_potential_target_pct
+	)
 
 	ns.potential_shift_pct += (target - ns.potential_shift_pct) * C.SHIFT_ADJUST / 12.0
 	ns.potential_shift_pct = clampf(ns.potential_shift_pct, -C.SHIFT_MAX_PCT, C.SHIFT_MAX_PCT)
 
 
-## GDP-weighted growth of every nation the player does not govern. Real and
-## computed — their trends differ because their sector mixes differ — but quiet,
-## because nothing in the MVP perturbs a neighbour. See docs/economy-model.md.
-static func neighbour_weighted_growth(state) -> float:
-	var weighted := 0.0
-	var total_gdp := 0.0
-	for ns in state.nations.values():
-		if ns.id == state.player_nation_id:
-			continue
-		weighted += ns.growth_annual_pct * ns.gdp_eur_bn
-		total_gdp += ns.gdp_eur_bn
-	if total_gdp <= 0.0:
-		return 0.0
-	return weighted / total_gdp
+## `neighbour_weighted_growth()` lived here from S4 to V1.3a: one GDP-weighted
+## average of the nine nations the player does not govern, the same number for
+## every viewer. V1.3b replaced it with src/sim/trade.gd's directed weight table,
+## which is per-viewer and reads relations and agreements as well as size. Retired
+## rather than kept alongside — two answers to "how much does B matter to A" is the
+## divergence the pair key was made symmetric to avoid.
 
 
 static func output_gap_pct(ns) -> float:

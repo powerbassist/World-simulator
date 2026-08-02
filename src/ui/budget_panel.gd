@@ -57,6 +57,7 @@ const FIGURE_ROWS := [
 signal committed(before: Dictionary)
 
 var _state
+var _loader
 var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
 var _sliders := {}
 var _lever_values := {}
@@ -206,8 +207,11 @@ func _lever_keys() -> Array:
 	return keys
 
 
-func setup(state) -> void:
+## `loader` since V1.3b: Budget.project() needs it to drift relations the way the
+## real game does, or the projected path and the played one disagree.
+func setup(state, loader) -> void:
 	_state = state
+	_loader = loader
 	var ns = _state.player()
 	_title.text = "BUDGET — %s" % ns.id
 	_on_revert()
@@ -269,8 +273,8 @@ func _refresh() -> void:
 
 	var now := Budget.snapshot(_state)
 	var proposed := Budget.preview(_state, _pending)
-	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS)
-	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS)
+	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS, _loader)
+	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS, _loader)
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))

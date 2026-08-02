@@ -14,6 +14,14 @@ const C = preload("res://src/sim/economy_constants.gd")
 
 var id: String = ""
 
+## Copied from Nation at new-game and never mutated, the same class of field as
+## assembly_seats. Both are static facts, and both are read by the trade weight
+## in src/sim/trade.gd -- which is why they live here rather than being looked up
+## through the loader: Economy.tick_month() has no loader argument and has
+## twenty-eight call sites that would all have to grow one.
+var eu_member: bool = false
+var neighbours: Array = []
+
 # --- Economy -----------------------------------------------------------------
 
 var sector_output := {}  # String -> float, EUR bn. Sums to gdp_eur_bn exactly.
@@ -80,11 +88,21 @@ var demand_impulse_pct: float = 0.0
 ## tax. Hard-clamped; this is the only feedback into trend.
 var potential_shift_pct: float = 0.0
 
-## External demand from neighbours, recomputed each month.
+## External demand from trade partners, recomputed each month. Per-partner since
+## V1.3b: a trade-weighted sum over the other nine rather than one GDP-weighted
+## aggregate. See docs/trade-model.md.
 var external_impulse_pct: float = 0.0
 
-## GDP-weighted neighbour growth at new-game, the zero point for the term above.
-var trade_baseline_pct: float = 0.0
+## Each partner's own growth at new-game, keyed by nation id -- the zero point for
+## the term above, one per partner rather than one for the lot.
+##
+## Load-bearing, not bookkeeping. Under the single scalar this replaced,
+## RE-WEIGHTING ALONE produced an impulse: shifting weight toward whichever partner
+## happened to have the highest trend was a free growth boost with nothing having
+## changed abroad. Per partner, the sum is identically zero whenever every partner
+## sits at its own baseline, whatever the weights say. tests/test_trade.gd pins
+## exactly that, and it is the field that earned SAVE_VERSION 9 -> 10.
+var trade_baseline_by_partner := {}
 
 # --- Elections -----------------------------------------------------------------
 
@@ -352,6 +370,8 @@ var last_diplomatic_result := {}
 func duplicate_state():
 	var s = new()
 	s.id = id
+	s.eu_member = eu_member
+	s.neighbours = neighbours.duplicate()
 
 	s.sector_output = sector_output.duplicate(true)
 	s.gdp_eur_bn = gdp_eur_bn
@@ -386,7 +406,7 @@ func duplicate_state():
 	s.demand_impulse_pct = demand_impulse_pct
 	s.potential_shift_pct = potential_shift_pct
 	s.external_impulse_pct = external_impulse_pct
-	s.trade_baseline_pct = trade_baseline_pct
+	s.trade_baseline_by_partner = trade_baseline_by_partner.duplicate(true)
 
 	s.assembly_seats = assembly_seats
 	s.term_months = term_months
@@ -471,6 +491,8 @@ func duplicate_state():
 func to_dict() -> Dictionary:
 	return {
 		"id": id,
+		"eu_member": eu_member,
+		"neighbours": neighbours,
 
 		"sector_output": sector_output,
 		"gdp_eur_bn": gdp_eur_bn,
@@ -505,7 +527,7 @@ func to_dict() -> Dictionary:
 		"demand_impulse_pct": demand_impulse_pct,
 		"potential_shift_pct": potential_shift_pct,
 		"external_impulse_pct": external_impulse_pct,
-		"trade_baseline_pct": trade_baseline_pct,
+		"trade_baseline_by_partner": trade_baseline_by_partner,
 
 		"assembly_seats": assembly_seats,
 		"term_months": term_months,
@@ -588,6 +610,8 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var s = new()
 	s.id = d.get("id", "")
+	s.eu_member = bool(d.get("eu_member", false))
+	s.neighbours = d.get("neighbours", [])
 
 	s.sector_output = d.get("sector_output", {})
 	s.gdp_eur_bn = d.get("gdp_eur_bn", 0.0)
@@ -622,7 +646,13 @@ static func from_dict(d: Dictionary):
 	s.demand_impulse_pct = d.get("demand_impulse_pct", 0.0)
 	s.potential_shift_pct = d.get("potential_shift_pct", 0.0)
 	s.external_impulse_pct = d.get("external_impulse_pct", 0.0)
-	s.trade_baseline_pct = d.get("trade_baseline_pct", 0.0)
+	# Re-floated key by key rather than taken wholesale, the same reason
+	# GameState.from_dict() re-floats relations: JSON round-trips a whole-number
+	# growth as an int, and a baseline dictionary holding a mix of ints and floats
+	# would make the impulse arithmetic depend on how a value happened to be saved.
+	var baselines: Dictionary = d.get("trade_baseline_by_partner", {})
+	for partner_id in baselines.keys():
+		s.trade_baseline_by_partner[partner_id] = float(baselines[partner_id])
 
 	# JSON has one numeric type; Godot's parser hands every number back as a
 	# float. Cast the int-typed fields back explicitly.

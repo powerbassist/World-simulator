@@ -17,6 +17,7 @@ extends SceneTree
 
 const Relations = preload("res://src/core/relations.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Trade = preload("res://src/sim/trade.gd")
 
 const TARGET := "DEU"
 
@@ -53,8 +54,17 @@ func _run() -> void:
 
 	_check_own_nation_offers_nothing(panel, state)
 	_check_other_nation_offers_verbs(panel, state)
+	# Split around the two that press buttons, and deliberately so. Those press
+	# whichever verb is enabled first, which since V1.3b is the agreement one, so
+	# the "nothing signed yet" half has to run before them. The "now something is"
+	# half has to run after, because _refresh() clears its rows with queue_free(),
+	# which is DEFERRED -- inside one frame the panel's children are the old labels
+	# and the new ones both, so only a presence assertion means anything here and
+	# an absence assertion would read the stale row and fail for nothing.
+	_check_trade_rows_before_signing(panel, state)
 	_check_pressing_act_moves_relations(panel, state)
 	_check_acted_signal_carries_a_baseline(panel, state)
+	_check_trade_rows_after_signing(panel, state)
 
 
 ## The player's own nation is not a pair, so there is nothing to score and
@@ -96,6 +106,63 @@ func _check_pressing_act_moves_relations(panel, state) -> void:
 		_fail("pressing a diplomatic button did not move the %s pair" % key)
 	if state.player().last_diplomatic_result.is_empty():
 		_fail("pressing a diplomatic button recorded no result for the panel to read")
+
+
+## V1.3b. The two rows the trade model added, checked by MUTATION rather than by
+## looking for a label: a "the panel contains a Trade: line" assertion passes
+## against a row that prints 0% forever, and a weight that never changes is the
+## silent-UI failure class CLAUDE.md asks for a test on.
+##
+## Both rows are read off the PLAYER's side of the pair. That matters enough to
+## assert: the weight is directed, so showing the partner's share instead would be
+## a different — and wrong — number that still looks plausible.
+func _check_trade_rows_before_signing(panel, state) -> void:
+	_show(panel, TARGET)
+	var text := _panel_text(panel)
+
+	# The PLAYER's side of the pair. The weight is directed, so the partner's own
+	# share of this pair is a different number that would look just as plausible on
+	# screen -- which is why the expected figure is computed rather than eyeballed.
+	var mine := "%.0f%%" % (100.0 * float(Trade.weights(state, state.player_nation_id).get(TARGET, 0.0)))
+	var theirs := "%.0f%%" % (100.0 * float(Trade.weights(state, TARGET).get(state.player_nation_id, 0.0)))
+	if not text.contains(mine):
+		_fail("the panel does not show the player's own trade weight on %s (expected %s)" % [TARGET, mine])
+	if mine != theirs and text.contains(theirs):
+		_fail("the panel shows %s's weight on the player (%s) rather than the player's on %s" % [
+			TARGET, theirs, TARGET,
+		])
+	if not text.contains("Agreement: none"):
+		_fail("the panel does not report that no agreement is in force at game start")
+
+
+## Signed behind the panel's back, so what is measured is the panel reading the
+## register rather than the panel remembering its own button press.
+func _check_trade_rows_after_signing(panel, state) -> void:
+	var enter = null
+	for action in _main._loader.diplomatic_actions:
+		if String(action.effects.get("agreement", {}).get("op", "")) == "enter":
+			enter = action
+	if enter == null:
+		_fail("no 'enter' agreement action is authored")
+		return
+
+	# The checks above pressed whatever was enabled, which may have been this verb
+	# or may have left it on cooldown. Clear both so this measures the panel and
+	# not the order of the checks before it.
+	state.player().diplo_cooldown_months.clear()
+	state.agreements.erase(Relations.key(state.player_nation_id, TARGET))
+
+	var before_weight: float = float(Trade.weights(state, state.player_nation_id).get(TARGET, 0.0))
+	if not Diplomacy.execute(state, _main._loader.diplomatic_actions, enter, state.player_nation_id, TARGET)["applied"]:
+		_fail("could not sign an agreement with %s to show" % TARGET)
+		return
+
+	if is_equal_approx(float(Trade.weights(state, state.player_nation_id).get(TARGET, 0.0)), before_weight):
+		_fail("signing did not move the trade weight the panel reports")
+
+	_show(panel, TARGET)
+	if not _panel_text(panel).contains(enter.action_name):
+		_fail("the panel does not name the agreement in force")
 
 
 ## U4's decision-delta plumbing reads `before` as a Trends snapshot. A signal

@@ -34,6 +34,8 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[amendment-model]] — constitutional amendment as a law with a per-nation threshold, and the channel that sets rather than nudges an institution
 - [[transition-model]] — monarchy ↔ republic as the amendment mechanism pointed at `system_id`, checked against the target
 - [[scenario-model]] — start scenarios as the answer to difficulty, the three authored axes, and the measured envelope
+- [[diplomacy-model]] — pair-keyed relations, symmetric and derived, their drift, and the player's diplomatic verbs
+- [[trade-model]] — the directed trade weight, per-partner external demand, bilateral agreements, and why relations move the mix and never the level
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

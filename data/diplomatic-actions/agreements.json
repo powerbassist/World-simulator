@@ -1,0 +1,58 @@
+{
+  "_note": "V1.3b's content, and the only two verbs that write GameState.agreements. The economic terms ride the action rather than living in a content type of their own -- an agreement is a signed contract, so its terms are copied into the register at signing and read from there afterwards. See docs/trade-model.md. Three numbers here were set by tools/trade_probe.gd rather than chosen: the weight multiplier and the two halves of the sector shift, measured against the floor that an agreement's payoff must be readable at sixty months and its composition move must clear the economy panel's own rounding. The relations gate is NOT here -- it is diplomacy_constants.AGREEMENT_ACCEPT_MIN, because it is the counterparty's decision rather than the action's precondition, and it is a declared stopgap V1.3e replaces.",
+  "_sector_shift_note": "The three shifts sum to exactly zero, and src/core/diplomatic_action.gd refuses the file if they do not. A non-zero sum is not ignored: Economy._apply_growth_to_sectors() reconciles sectors against the month's GDP target by redistributing the residual by SECTOR_CYCLE_BETA, so the surplus would come back weighted 0.4/1.8/0.8 and the composition change the player sees would not be the one written here.",
+  "actions": [
+    {
+      "id": "industrial_compact",
+      "name": "Industrial Compact",
+      "summary": "Open the border to industrial goods on agreed terms. Trade with this partner deepens and manufacturing gains at agriculture's and services' expense. Business has wanted it for years; organised labour reads it as an invitation to be undercut.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "agreement_active",
+          "op": "==",
+          "value": 0
+        }
+      ],
+      "effects": {
+        "relations": 6.0,
+        "bloc_offset": {
+          "business": 0.1,
+          "workers": -0.1
+        },
+        "agreement": {
+          "op": "enter",
+          "weight_multiplier": 1.35,
+          "sector_shift": {
+            "agriculture": -0.15,
+            "industry": 0.45,
+            "services": -0.3
+          }
+        }
+      }
+    },
+    {
+      "id": "withdraw_from_compact",
+      "name": "Withdraw from the Compact",
+      "summary": "Tear up the industrial agreement. The trade goes with it, the sectors drift back, and the partner does not forget being walked out on.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "agreement_active",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": -6.0,
+        "bloc_offset": {
+          "business": -0.1,
+          "workers": 0.1
+        },
+        "agreement": {
+          "op": "exit"
+        }
+      }
+    }
+  ]
+}

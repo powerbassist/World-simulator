@@ -12,6 +12,7 @@ extends RefCounted
 
 const C = preload("res://src/sim/economy_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 
 
 static func tick_month(state) -> void:
@@ -136,7 +137,20 @@ static func preview(state, pending: Dictionary) -> Dictionary:
 ## Run `months` of the real simulation on a copy, with `pending` applied first.
 ## Returns one snapshot per month. Pass an empty Dictionary to project the
 ## current budget unchanged, which is what the UI compares against.
-static func project(state, pending: Dictionary, months: int) -> Array[Dictionary]:
+##
+## `loader` is required rather than defaulted, and V1.3b is why. Until then this
+## ran Economy + Budget and nothing else, because nothing else could reach a figure
+## the projection reports. Relations now do: they set the trade weight, the trade
+## weight sets the external impulse, and Diplomacy.tick_month() is what drifts them
+## back toward resting. Without this call the projection holds relations frozen
+## while the real game drifts them, and the two disagree -- measured at about 2e-9
+## relative from a displaced state, small but real, and this panel is the one
+## surface in the game that promises "this is what will happen".
+##
+## A defaulted null would have made that divergence opt-in and silent at every call
+## site that forgot. tests/test_budget.gd runs the check from a diplomatically
+## displaced state precisely because the undisplaced one cannot see it.
+static func project(state, pending: Dictionary, months: int, loader) -> Array[Dictionary]:
 	var sim = state.duplicate_state()
 	commit(sim, pending)
 
@@ -144,6 +158,7 @@ static func project(state, pending: Dictionary, months: int) -> Array[Dictionary
 	for _i in range(months):
 		Economy.tick_month(sim)
 		tick_month(sim)
+		Diplomacy.tick_month(sim, loader)
 		out.append(snapshot(sim))
 	return out
 

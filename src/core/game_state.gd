@@ -45,7 +45,27 @@ const C = preload("res://src/sim/economy_constants.gd")
 ## The rename is the same class of loud-vs-silent failure -- a version-8 save's
 ## `bloc_offset` key would be dropped on load, quietly discarding every
 ## accumulated approval offset a played game has earned.
-const SAVE_VERSION := 9
+##
+## 10 as of V1.3b, and the fields that earn it are NationState.eu_member and
+## .neighbours -- NOT `agreements` below, and not the trade baselines either.
+## Both of those were candidates and both were checked rather than assumed, in
+## tests/test_save_load.gd's _run_trade_roundtrip():
+##
+##   - An absent `agreements` register reads as {}, which is exactly right for
+##     every version-9 save: those games could not sign one. `scenario_id`'s case
+##     again, and it would not have earned a bump on its own.
+##   - An absent `trade_baseline_by_partner` fails SOFT, not loud: the fallback in
+##     Trade.external_impulse() re-bases a missing partner to its current growth,
+##     so the channel silently re-zeroes at the moment of loading and an in-flight
+##     external shock is erased. Real, and worth saving for, but recoverable.
+##   - An absent eu_member/neighbours is the loud one. Every nation loads
+##     landlocked and outside the EU, both gravity bonuses vanish from
+##     src/sim/trade.gd's weight, and the whole trade model silently collapses
+##     back to the GDP-only vector V1.3b replaced. A reloaded game would run a
+##     DIFFERENT MODEL from the one that saved it, with nothing anywhere to say
+##     so. That is the "would a missing field read as something wrong" test this
+##     comment sets, in its strongest form yet.
+const SAVE_VERSION := 10
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -81,6 +101,21 @@ var nations := {}  # String id -> NationState
 ## values derived at load, then owned by Diplomacy.tick_month() and by the
 ## player's own diplomatic actions. See docs/diplomacy-model.md.
 var relations := {}  # sorted pair key, e.g. "DEU|FRA" -> float in [0, 100]
+
+## Trade agreements in force, on the same pair key relations use, at most one per
+## pair. The second piece of pair state, added at V1.3b, and it sits beside
+## relations for the same reason relations sit here rather than on NationState.
+##
+## Each entry carries the TERMS, not the id of the action that wrote them:
+## {action_id, action_name, since_year, since_month, weight_multiplier,
+## sector_shift}. An agreement is a signed contract, and its terms are what was
+## agreed at signing rather than what the content file says later -- and storing
+## them is what lets src/sim/trade.gd take no loader, which in turn is what keeps
+## Economy.tick_month()'s signature unchanged across its twenty-eight call sites.
+##
+## Written ONLY by Diplomacy.execute(); src/sim/trade.gd reads it and never writes.
+## See docs/trade-model.md.
+var agreements := {}  # sorted pair key -> Dictionary of agreed terms
 
 var history: Array[Dictionary] = []
 
@@ -130,9 +165,14 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
 		return gs
 
-	var baseline := Economy.neighbour_weighted_growth(gs)
+	# One baseline per partner rather than one aggregate, so the external impulse
+	# is zero at new-game under ANY weighting -- including a weighting the player
+	# later changes by improving relations. See
+	# NationState.trade_baseline_by_partner for why that property is load-bearing.
 	for ns in gs.nations.values():
-		ns.trade_baseline_pct = baseline
+		for partner_id in gs.nations.keys():
+			if partner_id != ns.id:
+				ns.trade_baseline_by_partner[partner_id] = gs.nations[partner_id].growth_annual_pct
 
 	# After every nation exists, because a pair needs both halves, and outside
 	# _build_nation() because relations are the one piece of starting state that
@@ -155,6 +195,17 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	ns.id = n.id
 	ns.has_budget = is_player
 	ns.population = float(n.population)
+
+	# Static facts, copied once and never mutated, so the trade weight can read
+	# them without a loader. See NationState's own declaration for why that matters.
+	ns.eu_member = n.eu_member
+	# assign() rather than duplicate(): Nation.neighbours is an Array[String], and
+	# duplicate() preserves the element type. NationState's copy is declared plain
+	# Array and has to stay one -- test_state_copy.gd walks every field generically
+	# and probes an Array by appending a numeric sentinel, which a typed array
+	# refuses, and the refusal reads as "not duplicated" rather than as a type error.
+	ns.neighbours = []
+	ns.neighbours.assign(n.neighbours)
 
 	# Sector shares sum to 1.0 only within the validator's tolerance, so GDP is
 	# defined as the sum of sector output rather than the other way round. That
@@ -261,6 +312,7 @@ func duplicate_state():
 	gs.year = year
 	gs.month = month
 	gs.relations = relations.duplicate(true)
+	gs.agreements = agreements.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -292,6 +344,7 @@ func to_dict() -> Dictionary:
 		"month": month,
 		"nations": nations_dict,
 		"relations": relations,
+		"agreements": agreements,
 		"history": history,
 		"recent_effects": recent_effects,
 	}
@@ -322,6 +375,25 @@ static func from_dict(d: Dictionary):
 	var rel: Dictionary = d.get("relations", {})
 	for pair_key in rel.keys():
 		gs.relations[pair_key] = float(rel[pair_key])
+
+	# Re-floated the same way and for the same reason, one level deeper: the
+	# multiplier and the three sector shifts are all read as floats by the trade
+	# model, and JSON round-trips a whole-number multiplier as an int.
+	var agr: Dictionary = d.get("agreements", {})
+	for pair_key in agr.keys():
+		var entry: Dictionary = agr[pair_key]
+		var shifts := {}
+		var raw_shifts: Dictionary = entry.get("sector_shift", {})
+		for sector in raw_shifts.keys():
+			shifts[sector] = float(raw_shifts[sector])
+		gs.agreements[pair_key] = {
+			"action_id": entry.get("action_id", ""),
+			"action_name": entry.get("action_name", ""),
+			"since_year": int(entry.get("since_year", 0)),
+			"since_month": int(entry.get("since_month", 0)),
+			"weight_multiplier": float(entry.get("weight_multiplier", 1.0)),
+			"sector_shift": shifts,
+		}
 
 	var hist: Array = d.get("history", [])
 	var typed_hist: Array[Dictionary] = []

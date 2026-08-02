@@ -153,7 +153,7 @@ func _ready() -> void:
 
 	_budget_panel = BudgetPanel.new()
 	_dashboard.add_tab("budget", "Budget", _budget_panel)
-	_budget_panel.setup(_state)
+	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before):
 		_queue_effect("Budget change", before)
@@ -481,7 +481,7 @@ func _on_load_requested(slot: String) -> void:
 	_map_view.setup(_loader, _state)
 	_overview_panel.setup(_state, _loader)
 	_economy_panel.setup(_state, _loader)
-	_budget_panel.setup(_state)
+	_budget_panel.setup(_state, _loader)
 	_polling_panel.setup(_state)
 	_election_panel.setup(_state, _loader)
 	_law_panel.setup(_state, _loader)

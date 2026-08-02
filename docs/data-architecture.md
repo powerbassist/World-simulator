@@ -168,8 +168,11 @@ is one of only two inputs the relations derivation has. Required and possibly
 empty — GBR's list is empty and that is correct, so an absent key would be
 indistinguishable from a nation that borders nobody. Only roster members are
 listed; `data_loader.gd` fails at startup if a border is not mutual, because the
-symmetric pair key would otherwise rest on an asymmetric input. See
-[[diplomacy-model]].
+symmetric pair key would otherwise rest on an asymmetric input. It gained a
+second reader at [[ROADMAP|V1.3b]] -- the trade weight's border bonus -- which is
+also why it is copied onto `NationState` rather than looked up through the loader:
+`Economy.tick_month()` has no loader argument and twenty-eight call sites that
+would all have had to grow one. See [[diplomacy-model]] and [[trade-model]].
 
 `debt_to_gdp_pct` and `tax_revenue_pct_gdp` sit in their own `fiscal` object because
 they are **authored, but real** — same class as `assembly_seats`, not the same class
@@ -289,6 +292,7 @@ GameState                        src/core/game_state.gd
 ├── player_nation_id
 ├── nations{}                    String id -> NationState
 ├── relations{}                  sorted pair key -> float in 0-100 ([[ROADMAP|V1.3a]])
+├── agreements{}                 sorted pair key -> the agreed terms ([[ROADMAP|V1.3b]])
 ├── history[]                    dated monthly snapshots, for charts
 ├── recent_effects[]             what the last few commands moved ([[ROADMAP|U4]])
 └── errors[]                     problems found while building the state
@@ -301,7 +305,10 @@ NationState                      src/core/nation_state.gd
 ├── fiscal     revenue_pct_gdp{}, totals, debt_service, deficit, debt_eur_bn,
 │              the starting deficit the opinion model measures against
 ├── opinion    bloc_approval{}, overall_approval_pct, issue_salience{}
-├── impulses   demand_impulse, potential_shift, external_impulse, trade_baseline
+├── identity   eu_member, neighbours[] -- static facts copied from Nation, read
+│              by the trade weight ([[ROADMAP|V1.3b]])
+├── impulses   demand_impulse, potential_shift, external_impulse,
+│              trade_baseline_by_partner{} ([[ROADMAP|V1.3b]], replacing a scalar)
 ├── elections  assembly_seats, term_months, months_in_term, next_election_year/
 │              _month, next_ep_election_year/_month, terms_served,
 │              incumbent_party_id, seats_by_party{}, last_election{},
@@ -366,6 +373,19 @@ is free: an unrenamed key would be dropped on load, quietly discarding every
 accumulated approval offset a played game had earned. `tests/test_save_load.gd`
 checks the premise directly rather than asserting it in prose. See
 [[diplomacy-model]].
+
+**9 -> 10 at [[ROADMAP|V1.3b]]**, and the interesting part is which of three
+candidate fields earned it -- all three were checked in `tests/test_save_load.gd`
+rather than argued. `agreements` did **not**: an absent register reads as `{}`,
+which is exactly right for a version-9 save, and that is `scenario_id`'s case
+again. `trade_baseline_by_partner` did not either, quite: it fails *soft*, because
+`Trade.external_impulse()` re-bases a missing partner to its current growth, so an
+absent dictionary silently re-zeroes the channel at the moment of loading rather
+than producing nonsense. What earned it is `NationState.eu_member` and
+`.neighbours` -- absent, every nation loads landlocked and outside the EU, both
+gravity bonuses vanish, and the trade weight silently collapses back to the
+GDP-only vector V1.3b replaced. A reloaded game would run a **different model**
+from the one that saved it. See [[trade-model]].
 
 Saves are JSON rather than binary, deliberately. A save you can open in a text editor is a save you can debug, and during development that is worth far more than file size or load speed. The switch to a binary format is a two-line change if a save ever gets large or slow enough to matter — measured, not assumed.
 

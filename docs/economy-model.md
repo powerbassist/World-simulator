@@ -347,11 +347,24 @@ not just opinion levers.
 ```
 target = INFRA_BETA × Δinfrastructure + EDU_BETA × Δeducation
          − CORP_TAX_BETA × Δcorporate_rate
+         + TRADE_OPENNESS_BETA × (openness_index − 1)
 potential_shift += (target − potential_shift) × SHIFT_ADJUST / 12
 potential_shift  = clampf(potential_shift, −SHIFT_MAX, SHIFT_MAX)
 ```
 
 All deltas are against the nation's starting values.
+
+> [!note] The fourth writer, added at V1.3b
+> `openness_index` is a **ratio** — the nation's raw trade mass against what that
+> mass would be with no agreement in force — so it is exactly 1.0 for a nation
+> that has signed nothing, and this whole term is exactly zero for every regime in
+> the balance harness. That is what let V1.3b's re-run assert *bit-identical*
+> rather than *close enough*. Trade openness is a trend effect rather than a
+> demand one, so this is the right channel, and sharing `SHIFT_MAX` with
+> infrastructure is the point rather than a compromise: a treaty and a public
+> investment programme compete for the same ±1.0. The argument for the ratio form,
+> including the three defects of the obvious trade-to-GDP alternative, is
+> [[trade-model]].
 
 | Constant | Value | Why |
 |---|---|---|
@@ -373,24 +386,48 @@ plausible mechanism the player can feel beats three the player cannot separate.
 
 ## Neighbours and trade
 
-The nine AI nations run the economy above with no budget and no impulses. Their
-trends differ because their sector mixes differ, and their shares drift, so
-`neighbour_weighted_growth` — GDP-weighted, recomputed monthly — is a real
-computed figure rather than a constant.
+The nine AI nations run the economy above with no budget and no demand impulse.
+Their trends differ because their sector mixes differ, and their shares drift.
+
+**This section described a single GDP-weighted aggregate from S4 to V1.3a. It is
+now a model of its own** — [[trade-model]] — and the summary here is deliberately
+short, because that document is where the argument lives.
 
 ```
-external_impulse = TRADE_BETA × (neighbour_weighted_growth − trade_baseline)
+external_impulse = TRADE_BETA × Σ_B w(A,B) × (growth_B − baseline_B)
 ```
 
-`TRADE_BETA = 0.25`. `trade_baseline` is captured at new-game.
+`w(A,B)` is a **directed** trade weight from `src/sim/trade.gd`: partner GDP under
+an exponent, times bonuses for EU co-membership and a shared border, times a term
+in the pair's relations, normalised over the other nine. Ninety entries,
+snapshotted once per tick before any nation ticks. `Economy.neighbour_weighted_growth()`
+is retired — two answers to "how much does B matter to A" is the divergence
+[[diplomacy-model|the symmetric pair key]] exists to make impossible.
 
-> [!note] Honest about what this does today
-> At new-game the term is exactly zero, and over ten years it moves by
-> hundredths of a point as neighbour sector shares drift. It is a **wired but
-> quiet** channel. It is built now because [[mvp]] lists passive trade as an
-> economy input and no other session owns it, and because the thing that makes
-> it move — tariffs, trade agreements, a neighbour in recession — is
-> [[v1|V1.3]]. It is not pretending to be a trade model.
+`baseline_B` is **per partner**, captured at new-game, and that is what makes the
+sum exactly zero whenever every partner sits at its own baseline *whatever the
+weights say*. Under the single scalar it replaced, re-weighting alone produced an
+impulse — a free growth boost bought by improving relations with whichever nation
+happened to have the highest trend.
+
+`TRADE_BETA = 0.25`, unchanged, and it now lives in `src/sim/trade_constants.gd`
+with the rest of the trade tunables.
+
+> [!note] Still quiet, and now honestly so
+> The term is exactly zero at new-game and stays near zero while nothing perturbs
+> a partner — the nine AI nations have no budget and take no shocks, so the
+> quiet-state residual is about **0.008**, from partners drifting off their own
+> baselines as sector shares move. Two things now move it for real: a signed trade
+> agreement, which is bilateral and so raises the partner's trend as well as the
+> player's; and, from [[v1|V1.3c]], tariffs and sanctions. Under a synthetic
+> partner recession the term reaches 6 % of `IMPULSE_MAX` — measured, in
+> [[trade-model]], so the headroom is known rather than assumed.
+
+The other nine still get no external impulse of their own. Not a stability
+concern: the coupled ten-nation system's common mode is provably stable, and the
+eigenvalues are recorded in [[trade-model]] so V1.3c can lift the restriction
+knowingly. The reason to defer it is that turning it on **replaces the 28-month
+gap half-life** this document argues the game's pacing from.
 
 ## Why nothing diverges
 
@@ -403,6 +440,7 @@ Every dynamic quantity in the model is exactly one of:
 | Hard-clamped level shift | potential shift, structural unemployment | Cannot exceed ±1.0 %/yr and [2, 25] %. |
 | Clamped outright | growth, unemployment, erosion multiplier | Bounded by construction. |
 | Bounded by its inputs | sector output, GDP, potential, population | Grow at a clamped rate. |
+| **Bounded by content, at load** | **trade openness index, external impulse** | **`MAX_AGREEMENT_WEIGHT_MULTIPLIER` bounds the openness index before `SHIFT_MAX` ever sees it; the trade weight is normalised so it sums to 1 by construction.** |
 
 The only unbounded quantity is **debt**, and at a flat 2 %/yr it grows at most
 close to linearly. The default budget takes France from 116 % to roughly 148 %
@@ -414,6 +452,16 @@ Note what is *not* in the model: no term where a variable feeds its own growth
 rate without a clamp in between. `potential_shift` is the only feedback into
 trend, and it is clamped at ±1.0 before it is ever read. That is the whole
 stability argument, and it is short on purpose.
+
+**V1.3b left that argument intact deliberately, and it was the harder of its two
+options.** The obvious openness figure — raw trade mass over own GDP — does not
+break the sentence above, but it makes the clamp *bind under ordinary play*:
+partner GDP grows at trend forever, so the index ratchets up about 20 % over the
+harness's fourteen years from time passing alone, and the clamp rather than the
+model ends up setting trend growth. That is the `IMPULSE_MAX = ±50` failure this
+document already writes up, one section down, committed a second time. The ratio
+form has no time trend at all, and the table above gains one row that is bounded
+by a load-time content check rather than by a runtime clamp. See [[trade-model]].
 
 The argument is not the evidence. `tests/test_economy.gd` runs 120 months under
 five budgets, including the absurd ones, and asserts finiteness and sanity on

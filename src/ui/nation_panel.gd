@@ -18,6 +18,9 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Trade = preload("res://src/sim/trade.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 signal closed
 
@@ -141,6 +144,28 @@ func _refresh_actions() -> void:
 	score_line.text = "%s–%s: %.0f / 100" % [player_id, _nation_id, score]
 	_actions.add_child(score_line)
 
+	# The player's side of the trade weight, not the partner's. The two differ --
+	# that asymmetry is the whole point of the directed weight — and showing the
+	# viewer's own share is what makes "who matters to me" readable.
+	var weight_line := Label.new()
+	weight_line.text = "Trade: %.0f%% of %s's external demand" % [
+		100.0 * float(Trade.weights(_state, player_id).get(_nation_id, 0.0)), player_id,
+	]
+	weight_line.theme_type_variation = UiTheme.CAPTION
+	_actions.add_child(weight_line)
+
+	var agreement_line := Label.new()
+	if _state.agreements.has(Relations.key(player_id, _nation_id)):
+		var entry: Dictionary = _state.agreements[Relations.key(player_id, _nation_id)]
+		agreement_line.text = "Agreement: %s, since %d/%d" % [
+			entry.get("action_name", entry.get("action_id", "")),
+			int(entry.get("since_month", 0)), int(entry.get("since_year", 0)),
+		]
+	else:
+		agreement_line.text = "Agreement: none"
+		agreement_line.theme_type_variation = UiTheme.CAPTION
+	_actions.add_child(agreement_line)
+
 	var available: Array = Diplomacy.available(
 		_state, _loader.diplomatic_actions, player_id, _nation_id
 	)
@@ -188,6 +213,13 @@ func _unavailable_reason(action, player_id: String) -> String:
 	var key := Diplomacy.cooldown_key(action.id, _nation_id)
 	if ns.diplo_cooldown_months.has(key):
 		return "Available again in %d months." % int(ns.diplo_cooldown_months[key])
+	# Named ahead of the generic reason: "they will not sign" is a different
+	# problem from "you cannot propose", and it is the one the player can fix.
+	if String(action.effects.get("agreement", {}).get("op", "")) == "enter":
+		if not Diplomacy.would_accept_agreement(_state, player_id, _nation_id):
+			return "%s will not sign below %.0f relations." % [
+				_nation_id, DK.AGREEMENT_ACCEPT_MIN,
+			]
 	return "Conditions for this action are not met."
 
 

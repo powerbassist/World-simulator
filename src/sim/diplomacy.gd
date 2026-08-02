@@ -166,6 +166,10 @@ static func _preconditions_met(state, ns, action, target_id: String) -> bool:
 static func _read_field(state, ns, field: String, target_id: String) -> float:
 	match field:
 		"relations": return score(state, ns.id, target_id)
+		# The second pair-state field, and the one that makes propose and withdraw
+		# gate themselves with no trade knowledge in this module at all: an enter
+		# verb asks for 0, an exit verb asks for 1.
+		"agreement_active": return 1.0 if state.agreements.has(RK.key(ns.id, target_id)) else 0.0
 		"overall_approval_pct": return ns.overall_approval_pct
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -188,12 +192,24 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	if ns == null:
 		return {"action_id": action.id, "target_id": target_id, "applied": false, "refused": true}
 
-	if not available(state, all_actions, actor_id, target_id).has(action):
+	# The counterparty gate is folded into the same refusal as an unmet
+	# precondition, deliberately. A verdict applied AFTER the effects would be a
+	# third outcome -- available, executed, partner said no -- and would leave the
+	# player +6 relations for a treaty that was refused. As a gate there is no
+	# third outcome, no new result field, and no UI branch.
+	var terms: Dictionary = action.effects.get("agreement", {})
+	var blocked_by_partner: bool = (
+		String(terms.get("op", "")) == "enter"
+		and not would_accept_agreement(state, actor_id, target_id)
+	)
+
+	if blocked_by_partner or not available(state, all_actions, actor_id, target_id).has(action):
 		var refused := {
 			"action_id": action.id,
 			"target_id": target_id,
 			"applied": false,
 			"refused": true,
+			"refused_by_partner": blocked_by_partner,
 			"relations_before": score(state, actor_id, target_id),
 			"relations_after": score(state, actor_id, target_id),
 		}
@@ -217,6 +233,24 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 
+	# The third effect channel, added at V1.3b. Diplomacy owns this register
+	# because it is pair state written by a player command, exactly like relations;
+	# src/sim/trade.gd reads it and never writes it, so the two modules talk
+	# through GameState and never preload each other.
+	var pair_key := RK.key(actor_id, target_id)
+	match String(terms.get("op", "")):
+		"enter":
+			state.agreements[pair_key] = {
+				"action_id": action.id,
+				"action_name": action.action_name,
+				"since_year": state.year,
+				"since_month": state.month,
+				"weight_multiplier": float(terms.get("weight_multiplier", 1.0)),
+				"sector_shift": (terms.get("sector_shift", {}) as Dictionary).duplicate(true),
+			}
+		"exit":
+			state.agreements.erase(pair_key)
+
 	if action.cooldown_months > 0:
 		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
 
@@ -226,9 +260,28 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		"target_id": target_id,
 		"applied": true,
 		"refused": false,
+		"refused_by_partner": false,
 		"relations_before": before,
 		"relations_after": after,
 		"bloc_offset": offsets.duplicate(true),
+		"agreement_op": terms.get("op", ""),
 	}
 	ns.last_diplomatic_result = result
 	return result
+
+
+## Whether `target_id` would sign a trade agreement proposed by `actor_id`.
+##
+## > [!warning] THE ENTIRE COUNTERPARTY MODEL, and a DECLARED STOPGAP.
+## > A pair score against one threshold. The target does not weigh its own
+## > economy, does not compare this partner against its alternatives, never
+## > proposes an agreement of its own, and never withdraws from one. Nothing about
+## > the target's GDP, sectors, unemployment, growth, government or existing
+## > agreements is consulted -- tests/test_trade.gd asserts exactly that, by
+## > mutating every one of them and checking the verdict does not move.
+## >
+## > Named rather than approximated, the same shape V1.3a's own stopgap uses, so
+## > V1.3e replacing it is a visible test change rather than a silent one. V1.3e
+## > opens with the checklist of these. See ROADMAP.md and docs/trade-model.md.
+static func would_accept_agreement(state, actor_id: String, target_id: String) -> bool:
+	return score(state, actor_id, target_id) >= DK.AGREEMENT_ACCEPT_MIN

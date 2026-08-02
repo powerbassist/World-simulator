@@ -1,0 +1,19 @@
+{
+  "_note": "Fixture for tests/test_trade.gd. An 'exit' that carries economic terms. An exit clears the pair and reads nothing, so terms on one are an author believing they wrote something that no code path reads -- the same class of quiet lie a zero effects.relations is already refused for.",
+  "actions": [
+    {
+      "id": "exit_with_terms",
+      "name": "Fixture: Exit Carrying Terms",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": -5.0,
+        "agreement": {
+          "op": "exit",
+          "weight_multiplier": 1.5
+        }
+      }
+    }
+  ]
+}

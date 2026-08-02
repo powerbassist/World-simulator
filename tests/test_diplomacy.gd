@@ -332,6 +332,12 @@ func _expect_fixture_error(actions_dir: String, needle: String, message: String)
 
 ## Clears whatever is currently blocking `action` against every target, so a
 ## test of one gate is not silently passing because a different gate closed.
+## Make `action` available against every target, whatever it asks for. Both
+## pair-state precondition fields are handled here rather than only `relations`:
+## V1.3b's agreement verbs gate on `agreement_active`, and a helper that silently
+## ignored half the fields would leave a caller thinking it had forced something
+## it had not. That is how this first failed -- _action_with_cooldown() picks the
+## alphabetically first action with a cooldown, which became industrial_compact.
 func _force_available(state, action) -> void:
 	var ns = state.player()
 	ns.diplo_cooldown_months.clear()
@@ -341,6 +347,15 @@ func _force_available(state, action) -> void:
 				if id == PLAYER:
 					continue
 				state.relations[Relations.key(PLAYER, id)] = cond["value"] + 5.0
+		elif cond["field"] == "agreement_active":
+			for id in state.nations.keys():
+				if id == PLAYER:
+					continue
+				var pair_key := Relations.key(PLAYER, id)
+				if is_zero_approx(float(cond["value"])):
+					state.agreements.erase(pair_key)
+				else:
+					state.agreements[pair_key] = {"action_id": "test_fixture", "sector_shift": {}}
 
 
 func _action_with_relations_precondition():

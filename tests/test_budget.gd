@@ -11,6 +11,8 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 var _failures: Array[String] = []
@@ -31,6 +33,7 @@ func _init() -> void:
 	_check_income_tax_rise()
 	_check_debt_accumulates()
 	_check_projection_matches()
+	_check_projection_matches_after_diplomacy()
 
 	_finish()
 
@@ -177,7 +180,7 @@ func _check_projection_matches() -> void:
 	}
 
 	var state = GameState.new_game(_loader, "FRA")
-	var projected := Budget.project(state, pending, 24)
+	var projected := Budget.project(state, pending, 24, _loader)
 
 	# The projection must not have touched the live state.
 	if state.player().tax_rates_pct["income"] != 20.0:
@@ -196,6 +199,59 @@ func _check_projection_matches() -> void:
 					_close("month %d sectors.%s" % [i + 1, sector], projected[i][key][sector], actual[i][key][sector])
 			else:
 				_close("month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
+
+
+## V1.3b. The same check, from a state the player has already acted diplomatically
+## from -- which is where the projection could newly diverge and where the check
+## above cannot see it.
+##
+## Budget.project() runs Economy + Budget on a copy and does NOT tick Diplomacy;
+## it has no loader to do it with, while main.gd does. So relations are frozen in
+## the projection and drifting in the real game, and since V1.3b relations feed
+## the trade weight, the two could disagree. They do not, and the reason is
+## structural rather than lucky: relations move the normalised MIX, the mix only
+## reaches the impulse through partners' deviations from their own baselines, and
+## those are ~0. The gap is bounded by drift over the projection horizon rather
+## than by anything the player can do.
+##
+## Pinned here so that if a later session gives relations a level effect, this
+## fails rather than the budget panel quietly starting to lie. The panel is the
+## one surface in the game that promises "this is what will happen".
+func _check_projection_matches_after_diplomacy() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+
+	# Displaced hard and unevenly, so a projection that ignores relations drift has
+	# the largest possible disagreement with one that does not.
+	for id in state.nations.keys():
+		if id == "FRA":
+			continue
+		state.relations[Relations.key("FRA", id)] = 95.0 if id < "G" else 5.0
+
+	var pending := {"tax_rates_pct": {"vat": 23.0}}
+	var projected := Budget.project(state, pending, 24, _loader)
+	var actual := _run_with_diplomacy(state, pending, 24)
+
+	if projected.size() != actual.size():
+		_fail("displaced projection has %d months, actual has %d" % [projected.size(), actual.size()])
+		return
+	for i in range(projected.size()):
+		for key in projected[i].keys():
+			if key == "sectors":
+				continue
+			_close("displaced month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
+
+
+## main.gd's chain, not project()'s -- that difference is the whole point.
+func _run_with_diplomacy(state, pending: Dictionary, months: int) -> Array[Dictionary]:
+	if not pending.is_empty():
+		Budget.commit(state, pending)
+	var out: Array[Dictionary] = []
+	for _i in range(months):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Diplomacy.tick_month(state, _loader)
+		out.append(Budget.snapshot(state))
+	return out
 
 
 func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:

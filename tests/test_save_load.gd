@@ -28,6 +28,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Trade = preload("res://src/sim/trade.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -35,6 +36,7 @@ const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
 const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
 const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
 const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
+const TRADE_SLOT := "__test_save_load_roundtrip_trade__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -82,6 +84,7 @@ func _init() -> void:
 	_run_transition_roundtrip(loader)
 	_run_scenario_roundtrip(loader)
 	_run_diplomacy_roundtrip(loader)
+	_run_trade_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -320,6 +323,120 @@ func _run_diplomacy_roundtrip(loader) -> void:
 		_fail("a save with no relations key did not read as 0.0 -- the bump's premise is wrong")
 
 
+## V1.3b. The agreement register and the per-partner trade baselines, and the two
+## halves of SAVE_VERSION 10's own argument -- which are NOT the same field.
+##
+## An absent `agreements` reads as {} and that is CORRECT for every version-9
+## save, so it would not have earned a bump on its own; that is `scenario_id`'s
+## case exactly. An absent `trade_baseline_by_partner` is the opposite: every
+## partner's baseline resolves to 0.0, so the impulse reads each partner's whole
+## growth rather than its deviation and roughly a third of a point per year
+## appears from nowhere. Both are asserted here, because the DIFFERENCE between
+## them is the rule game_state.gd's comment states.
+func _run_trade_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported %s" % [state.errors])
+		return
+
+	var action = null
+	for candidate in loader.diplomatic_actions:
+		if String(candidate.effects.get("agreement", {}).get("op", "")) == "enter":
+			action = candidate
+			break
+	if action == null:
+		_fail("no 'enter' agreement action to act with")
+		return
+
+	if not Diplomacy.execute(state, loader.diplomatic_actions, action, "FRA", "DEU")["applied"]:
+		_fail("could not sign an agreement to save")
+		return
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 4
+	var save_error := SaveManager.save_game(state, clock, TRADE_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game failed on a state with an agreement: %s" % save_error)
+		return
+
+	var loaded_result := SaveManager.load_game(TRADE_SLOT)
+	if not loaded_result["ok"]:
+		_fail("load_game failed on a save with an agreement: %s" % loaded_result["error"])
+		return
+
+	var loaded = loaded_result["state"]
+	var key := Relations.key("FRA", "DEU")
+	if not loaded.agreements.has(key):
+		_fail("a save round trip dropped the %s agreement" % key)
+		return
+
+	# The terms are the contract, so they have to survive intact -- an agreement
+	# whose multiplier round-trips as 1.0 is an agreement that does nothing.
+	var before: Dictionary = state.agreements[key]
+	var after: Dictionary = loaded.agreements[key]
+	if not is_equal_approx(float(after["weight_multiplier"]), float(before["weight_multiplier"])):
+		_fail("weight_multiplier round-tripped as %s, expected %s" % [
+			after["weight_multiplier"], before["weight_multiplier"],
+		])
+	for sector in (before["sector_shift"] as Dictionary).keys():
+		if not is_equal_approx(float(after["sector_shift"][sector]), float(before["sector_shift"][sector])):
+			_fail("sector_shift.%s round-tripped as %s, expected %s" % [
+				sector, after["sector_shift"][sector], before["sector_shift"][sector],
+			])
+	if not is_equal_approx(Trade.openness_index(loaded, "FRA"), Trade.openness_index(state, "FRA")):
+		_fail("the openness index does not survive a save round trip")
+
+	# Half one of the bump's argument: agreements alone would NOT have earned it.
+	var no_agreements: Dictionary = state.to_dict()
+	no_agreements.erase("agreements")
+	var without = GameState.from_dict(no_agreements)
+	if not without.agreements.is_empty():
+		_fail("a save with no agreements key invented some")
+	if not is_equal_approx(Trade.openness_index(without, "FRA"), 1.0):
+		_fail("a save with no agreements key did not read as 'nothing signed' -- that half of the bump's argument is wrong")
+
+	# Half two, which is the half that DID earn it: the static nation facts the
+	# trade weight reads. Absent, every nation loads landlocked and outside the EU,
+	# both gravity bonuses vanish, and the weight silently collapses back to the
+	# GDP-only vector V1.3b replaced -- a reloaded game running a DIFFERENT trade
+	# model from the one that saved it, with nothing to say so.
+	var no_facts: Dictionary = state.to_dict()
+	for id in (no_facts["nations"] as Dictionary).keys():
+		(no_facts["nations"][id] as Dictionary).erase("neighbours")
+		(no_facts["nations"][id] as Dictionary).erase("eu_member")
+	var stripped = GameState.from_dict(no_facts)
+	var before_weights := Trade.weights(state, "FRA")
+	var after_weights := Trade.weights(stripped, "FRA")
+	var moved := false
+	for id in before_weights.keys():
+		if not is_equal_approx(float(before_weights[id]), float(after_weights.get(id, 0.0))):
+			moved = true
+	if not moved:
+		_fail("a save with no neighbours/eu_member produced the same trade weights -- the bump's premise is wrong")
+
+	# And the baselines, whose failure is quieter but still real: the fallback in
+	# Trade.external_impulse() re-bases a missing partner to its CURRENT growth, so
+	# an absent dictionary does not explode -- it silently erases an in-flight
+	# external shock, re-zeroing the channel at the moment of loading.
+	var shocked = GameState.new_game(loader, "FRA")
+	Economy.tick_month(shocked)
+	shocked.nations["DEU"].growth_annual_pct -= 4.0
+	Economy.tick_month(shocked)
+	if is_zero_approx(shocked.player().external_impulse_pct):
+		_fail("could not set up an in-flight external impulse to save")
+		return
+	var no_baselines: Dictionary = shocked.to_dict()
+	for id in (no_baselines["nations"] as Dictionary).keys():
+		(no_baselines["nations"][id] as Dictionary).erase("trade_baseline_by_partner")
+	var rebased = GameState.from_dict(no_baselines)
+	Economy.tick_month(rebased)
+	if not is_zero_approx(rebased.player().external_impulse_pct):
+		_fail("a save with no trade_baseline_by_partner did not re-zero the impulse -- the field's own justification is wrong")
+
+
 func _run_roundtrip(state, clock) -> void:
 	var save_error := SaveManager.save_game(state, clock, ROUNDTRIP_SLOT)
 	if not save_error.is_empty():
@@ -498,7 +615,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, TRADE_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

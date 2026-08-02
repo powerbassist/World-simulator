@@ -26,6 +26,7 @@ tests=(
   tests/test_transition.gd
   tests/test_scenario.gd
   tests/test_diplomacy.gd
+  tests/test_trade.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_game_loop.gd

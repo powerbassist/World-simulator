@@ -18,6 +18,8 @@ extends RefCounted
 ## "once, ever, against anybody" is not a shape any action in this block wants.
 
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const TK = preload("res://src/sim/trade_constants.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
 
 
 var id: String = ""
@@ -130,9 +132,99 @@ static func _extract_effects(d: Dictionary, action_id: String, filename: String,
 	if raw.has("bloc_offset"):
 		out["bloc_offset"] = _extract_bloc_offset(raw["bloc_offset"], action_id, filename, errors, bloc_keys)
 
+	if raw.has("agreement"):
+		out["agreement"] = _extract_agreement(raw["agreement"], action_id, filename, errors)
+
 	for key in raw.keys():
-		if key != "relations" and key != "bloc_offset":
+		if key != "relations" and key != "bloc_offset" and key != "agreement":
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, action_id, key])
+
+	return out
+
+
+## The third effect channel, added at V1.3b: an action that enters or leaves a
+## bilateral trade agreement. The terms live here rather than in a content type of
+## their own -- see docs/trade-model.md for why V1.3b ships no data/trade-agreements/.
+##
+## An `exit` carries no terms. It names nothing and sets nothing; it clears the
+## pair. Terms on an exit would be an author believing they had written something
+## that is read by nobody, so they are a load error rather than ignored.
+static func _extract_agreement(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.agreement must be an object" % [filename, action_id])
+		return {}
+
+	var op = raw.get("op", "")
+	if typeof(op) != TYPE_STRING or not (op == "enter" or op == "exit"):
+		errors.append("%s: %s effects.agreement.op '%s' must be \"enter\" or \"exit\"" % [
+			filename, action_id, str(op)
+		])
+		return {}
+
+	var out := {"op": op}
+
+	if op == "exit":
+		for key in raw.keys():
+			if key != "op":
+				errors.append("%s: %s effects.agreement.%s is set on an \"exit\" -- an exit clears the pair and reads no terms" % [
+					filename, action_id, key
+				])
+		return out
+
+	var multiplier := float(raw.get("weight_multiplier", 1.0))
+	if multiplier <= 0.0:
+		errors.append("%s: %s effects.agreement.weight_multiplier must be > 0" % [filename, action_id])
+	elif multiplier > TK.MAX_AGREEMENT_WEIGHT_MULTIPLIER:
+		errors.append("%s: %s effects.agreement.weight_multiplier = %s exceeds MAX_AGREEMENT_WEIGHT_MULTIPLIER (%s)" % [
+			filename, action_id, str(multiplier), str(TK.MAX_AGREEMENT_WEIGHT_MULTIPLIER)
+		])
+	out["weight_multiplier"] = multiplier
+
+	out["sector_shift"] = _extract_sector_shift(raw.get("sector_shift", {}), action_id, filename, errors)
+	return out
+
+
+## The agreement's winners and losers at home, in points of trend per sector.
+##
+## THE THREE MUST SUM TO ZERO. Not because a surplus would be ignored -- because
+## it would be silently converted into a DIFFERENT composition change than the one
+## the author wrote. Economy._apply_growth_to_sectors() reconciles sectors against
+## the month's GDP target by redistributing the residual by
+## SECTOR_CYCLE_BETA (0.4 / 1.8 / 0.8), so a shift summing to +0.3 is clawed back
+## disproportionately from industry, and nothing tells the author. The same class
+## of quiet lie a zero effects.relations is refused for above.
+static func _extract_sector_shift(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.agreement.sector_shift must be an object" % [filename, action_id])
+		return {}
+	if raw.is_empty():
+		return {}
+
+	var out := {}
+	var total := 0.0
+	for key in raw.keys():
+		if not EK.SECTOR_TREND.has(key):
+			errors.append("%s: %s effects.agreement.sector_shift.%s is not a recognised sector" % [
+				filename, action_id, key
+			])
+			continue
+		if not (typeof(raw[key]) == TYPE_INT or typeof(raw[key]) == TYPE_FLOAT):
+			errors.append("%s: %s effects.agreement.sector_shift.%s must be numeric" % [
+				filename, action_id, key
+			])
+			continue
+		var value := float(raw[key])
+		if absf(value) > TK.MAX_AGREEMENT_SECTOR_SHIFT:
+			errors.append("%s: %s effects.agreement.sector_shift.%s = %s exceeds MAX_AGREEMENT_SECTOR_SHIFT (%s)" % [
+				filename, action_id, key, str(value), str(TK.MAX_AGREEMENT_SECTOR_SHIFT)
+			])
+		out[key] = value
+		total += value
+
+	if not is_zero_approx(total):
+		errors.append("%s: %s effects.agreement.sector_shift sums to %s, not zero -- the cyclical residual would redistribute the difference by SECTOR_CYCLE_BETA and produce a different composition change than the one authored" % [
+			filename, action_id, str(total)
+		])
 
 	return out
 

@@ -25,7 +25,18 @@ const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
+const TK = preload("res://src/sim/trade_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
+const C = preload("res://src/sim/economy_constants.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Trade = preload("res://src/sim/trade.gd")
+
+## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
+## openness may claim on its own. Half: openness shares that budget with
+## infrastructure, education and corporate tax, and a trade term that could take
+## most of it would make a treaty out-earn every fiscal lever in the game.
+const TRADE_SHIFT_BUDGET := 0.5
 
 const MONTHS := 168  # fourteen years: covers the inherited term plus two full ones
 const START_YEAR := 2026
@@ -151,6 +162,20 @@ const TRANSITION_REGIMES := {
 	"managed_abolishes_the_monarchy": {"budget": REGIMES["managed"], "amend_month": 12, "amendment_id": "abolish_the_monarchy", "nation_id": "GBR"},
 }
 
+## V1.3b: the only regime in this file that signs a trade agreement, and therefore
+## the only one where the openness index is not exactly 1.0 and
+## potential_shift_pct has a fourth writer contributing anything.
+##
+## That is the point of keeping it separate rather than folding trade into the ten
+## budget regimes. Openness is a ratio against a no-agreement counterfactual, so
+## every regime above is provably unchanged from V1.3a -- which turns the balance
+## re-run from "has anything moved materially?" into "has anything moved at all?",
+## and the answer has to be no. This regime is where the trade channel gets its
+## fourteen years of sanity checking.
+const TRADE_REGIMES := {
+	"managed_signs_agreement": {"budget": REGIMES["managed"], "agreement_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -188,6 +213,9 @@ func _init() -> void:
 		for name in TRANSITION_REGIMES.keys():
 			var regime: Dictionary = TRANSITION_REGIMES[name]
 			_run(String(regime["nation_id"]), name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
+		for name in TRADE_REGIMES.keys():
+			var regime: Dictionary = TRADE_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", int(regime["agreement_month"]))
 
 	quit(0)
 
@@ -212,7 +240,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "") -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -255,7 +283,17 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state)
 		Dissolution.tick_month(state)
+		# Added at V1.3b, and inert for every regime that does not sign anything:
+		# relations start at their resting value and this drifts them toward it, so
+		# with no diplomatic act the step is exactly zero. It matters only once a
+		# regime moves a pair, and leaving it out would have let the trade weight
+		# read a relations score that never decays -- a different simulation from
+		# the one main.gd runs.
+		Diplomacy.tick_month(state, loader)
 		Cabinet.tick_month(state, loader)
+
+		if i + 1 == agreement_month:
+			_sign_agreement(state, loader, ns, regime_name, year, month)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -326,7 +364,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					a["issue"], a["salience"], a["satisfaction"],
 				])
 
-		problems.append_array(_check(ns, year, month))
+		problems.append_array(_check(state, ns, year, month))
 		if (i + 1) % 12 == 0:
 			_print_row(ns, year)
 			_print_discipline_row(ns, loader.parties.get(ns.id, []))
@@ -451,9 +489,78 @@ func _print_row(ns, year: int) -> void:
 	])
 
 
+## Sign the first authored "enter" agreement against whichever partner this nation
+## already has the best relations with. Deliberately not a fixed target: the point
+## is to exercise the trade channel for whichever nation the CLI was given, and
+## GBR's best partner rests at 45 where France's rests at 68.
+func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for candidate in loader.diplomatic_actions:
+		if String(candidate.effects.get("agreement", {}).get("op", "")) == "enter":
+			action = candidate
+			break
+	if action == null:
+		printerr("  no 'enter' agreement action is authored")
+		return
+
+	var best := ""
+	var best_score := -1.0
+	for id in state.nations.keys():
+		if id == ns.id:
+			continue
+		var value := Diplomacy.score(state, ns.id, id)
+		if value > best_score:
+			best_score = value
+			best = id
+
+	# Earn the counterparty gate first if the pair is under it. Every GBR pair rests
+	# at 45 against an AGREEMENT_ACCEPT_MIN of 52, so without this the regime is a
+	# refusal for one playable nation in three and the trade channel gets no
+	# fourteen-year run there at all. This is what a GBR player would have to do,
+	# and doing it here is the difference between testing the gate and testing the
+	# model behind it.
+	while Diplomacy.score(state, ns.id, best) < DK.AGREEMENT_ACCEPT_MIN:
+		var lift = _strongest_positive(loader)
+		if lift == null:
+			break
+		var lifted := Diplomacy.execute(state, loader.diplomatic_actions, lift, ns.id, best)
+		if not lifted["applied"]:
+			break
+		print("  %d-%02d %s: '%s' with %s to reach the gate — relations now %.1f" % [
+			year, month, regime_name, lift.id, best, Diplomacy.score(state, ns.id, best),
+		])
+		ns.diplo_cooldown_months.erase(Diplomacy.cooldown_key(lift.id, best))
+
+	var result := Diplomacy.execute(state, loader.diplomatic_actions, action, ns.id, best)
+	if result["applied"]:
+		# Re-read rather than reusing best_score: the loop above may have lifted it.
+		print("  %d-%02d %s: signed '%s' with %s at relations %.1f — openness now %.4f" % [
+			year, month, regime_name, action.id, best,
+			float(result["relations_before"]), Trade.openness_index(state, ns.id),
+		])
+	else:
+		print("  %d-%02d %s: '%s' with %s REFUSED at relations %.1f — %s" % [
+			year, month, regime_name, action.id, best, best_score,
+			"partner declined" if result.get("refused_by_partner", false) else "precondition or cooldown",
+		])
+
+
+func _strongest_positive(loader):
+	var best = null
+	var best_delta := 0.0
+	for action in loader.diplomatic_actions:
+		if not action.effects.get("agreement", {}).is_empty():
+			continue
+		var delta := float(action.effects.get("relations", 0.0))
+		if delta > best_delta:
+			best_delta = delta
+			best = action
+	return best
+
+
 ## The three failure modes S10 is looking for: not-a-number, a value running
 ## away, and a value pinned against a clamp.
-func _check(ns, year: int, month: int) -> Array[String]:
+func _check(state, ns, year: int, month: int) -> Array[String]:
 	var out: Array[String] = []
 	var at := "%d-%02d" % [year, month]
 
@@ -465,6 +572,7 @@ func _check(ns, year: int, month: int) -> Array[String]:
 		"deficit": ns.deficit_pct_gdp, "revenue": ns.total_revenue_pct_gdp,
 		"spending": ns.total_spending_pct_gdp, "impulse": ns.demand_impulse_pct,
 		"shift": ns.potential_shift_pct, "approval": ns.overall_approval_pct,
+		"external": ns.external_impulse_pct,
 	}
 	for key in scalars:
 		var v: float = float(scalars[key])
@@ -487,6 +595,21 @@ func _check(ns, year: int, month: int) -> Array[String]:
 		out.append("%s approval on its clamp at %.2f" % [at, ns.overall_approval_pct])
 	if absf(ns.growth_annual_pct) >= 11.99:
 		out.append("%s growth on its clamp at %.2f" % [at, ns.growth_annual_pct])
+	# V1.3b. potential_shift_pct gained a fourth writer, trade openness, and its
+	# clamp is the single most important guard in the model -- docs/economy-model.md
+	# says so in as many words, because it is the only term feeding back into trend.
+	#
+	# Checks the TRADE CONTRIBUTION rather than the total, deliberately. The total
+	# already sits on the clamp under `ruinous` and `spend_max`, through the
+	# infrastructure writer and since S10 -- that is the guard rail doing its job on
+	# a budget no sane player commits, and it is not this session's to relabel as a
+	# failure. What V1.3b has to answer for is its own term, which must stay a small
+	# part of the same budget rather than crowding the other three out.
+	var trade_share: float = absf(TK.TRADE_OPENNESS_BETA * (Trade.openness_index(state, ns.id) - 1.0))
+	if trade_share >= C.SHIFT_MAX_PCT * TRADE_SHIFT_BUDGET:
+		out.append("%s trade openness claims %.3f of the +-%.1f potential-shift budget" % [
+			at, trade_share, C.SHIFT_MAX_PCT,
+		])
 	if ns.debt_to_gdp_pct() > 1000.0:
 		out.append("%s debt ratio running away at %.0f%%" % [at, ns.debt_to_gdp_pct()])
 

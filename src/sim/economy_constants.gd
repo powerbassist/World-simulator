@@ -133,11 +133,12 @@ const SHIFT_ADJUST := 0.20
 const SHIFT_MAX_PCT := 1.0
 
 # --- Trade -------------------------------------------------------------------
-
-## Sensitivity of the player's growth to neighbours' GDP-weighted growth
-## deviating from its new-game baseline. Wired but quiet until V1.3 gives
-## neighbours something to react to.
-const TRADE_BETA := 0.25
+#
+# TRADE_BETA lived here from S4 to V1.3a and moved to src/sim/trade_constants.gd
+# at V1.3b, unchanged in value, along with every other trade tunable. One system,
+# one module: leaving it behind would have split the trade parameters across two
+# files, and the trade model is now a module of its own rather than four lines at
+# the top of Economy.tick_month().
 
 
 ## Level effect on GDP of an annualised impulse of 1.0 that then decays to

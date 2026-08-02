@@ -42,6 +42,9 @@ resting(A, B) = REST_BASE + EU_CO_MEMBER_BONUS + SHARED_BORDER_BONUS
 - **A shared land border** did not, and is added as `government.neighbours` on each nation file. This is a **fact**, the same class as `assembly_seats`, not a tuning number. Borders outside the roster (Portugal, Slovenia, Denmark) are deliberately absent — nothing reads them. GBR's list is empty, which is correct and is why the field is required-and-possibly-empty rather than optional.
 - **Size asymmetry was dropped**, and it falls straight out of question 1: under a symmetric key a size disparity has nowhere honest to go, because the pair's single number cannot express "the smaller partner has less leverage". It belongs to V1.3b's read-time trade weighting. Recorded here rather than silently omitted.
 
+> [!success] Landed at V1.3b, and the escape hatch was not needed
+> [[trade-model|The directed trade weight]] is normalised per viewer, so it has two sides where the pair key has one, and the disparity is simply the ratio between them: `w(LUX→DEU)` is **13.1×** `w(DEU→LUX)`, while `w(FRA→DEU)` and `w(DEU→FRA)` differ by 1.1×. Luxembourg's trade is mostly with Germany and Germany's is barely with Luxembourg; France and Germany matter to each other about equally. Neither statement is expressible here, both fall out there for free, and **nothing in this file changed to allow it** — which is what the note below predicted.
+
 `data_loader.gd`'s `_validate_neighbours()` fails at startup if a border is not mutual. Without it the symmetric key would be resting on an asymmetric input, and the derivation would depend on which file it happened to read first.
 
 The four tiers this produces, and the pairs at each:
@@ -81,9 +84,11 @@ Borrowed from [[legislature-model|the law template]]: **preconditions, cooldown,
 | `majority` | Same. A diplomatic action is an executive act. |
 | `once` | The cooldown is per (action, target). A state visit to Germany and one to Italy are separate uses of the same verb; "once, ever, against anybody" is a shape no action wants. |
 
-Two effect channels only. `relations` is **required and non-zero** — an action that moves no pair is a domestic gesture wearing a diplomacy label, the same class of quiet lie `scenario.gd` refuses for an overrides block that overrides nothing. `bloc_offset` is optional.
+Two effect channels at V1.3a, three since. `relations` is **required and non-zero** — an action that moves no pair is a domestic gesture wearing a diplomacy label, the same class of quiet lie `scenario.gd` refuses for an overrides block that overrides nothing. `bloc_offset` is optional.
 
-Preconditions may test `relations` (against the action's own target) or five of the acting nation's own fields. An unrecognised field is a startup error, not a silently-false predicate.
+**`effects.agreement` is V1.3b's, and it is why that session shipped no content type of its own.** An `enter` carries the economic terms of a bilateral trade agreement — a weight multiplier and a per-sector shift — and an `exit` carries none and clears the pair. The register is `GameState.agreements`, on this file's own key. Full argument: [[trade-model]].
+
+Preconditions may test `relations` (against the action's own target) or the acting nation's own fields. A **second pair-state field**, `agreement_active`, joined them at V1.3b, and it is what lets propose and withdraw gate themselves generically: an enter verb asks for 0, an exit verb asks for 1, and `Diplomacy.available()` needs no trade knowledge at all. An unrecognised field is a startup error, not a silently-false predicate.
 
 ## The measurement, run before the content existed
 
@@ -157,6 +162,11 @@ V1.3e replaces it, and [[ROADMAP]] has it opening with a checklist of these rath
 
 Third-pair effects need an alliance model, which is V1.3f's, not this session's.
 
+**V1.3b added the second entry to that checklist**, in the same shape and with the same kind of test: `Diplomacy.would_accept_agreement()` is a pair score against one threshold, the target's own economy is never consulted, and `tests/test_trade.gd` asserts it by mutating that economy to extremes and checking the verdict does not move. The two stopgaps compose rather than conflict — this one says the target does not *react*, that one says it does not *decide*.
+
+> [!note] One thing V1.3b's version does that this one does not
+> The agreement gate is a **gate**, evaluated before the effects, not a verdict applied after them. `execute()` has two outcomes and a post-hoc counterparty answer would have been a third — leaving the player +6 relations for a treaty that was refused. The existing `refused: true` shape carries it instead.
+
 ## Bounds
 
 | Quantity | Bound |
@@ -171,8 +181,8 @@ Third-pair effects need an alliance model, which is V1.3f's, not this session's.
 - **No new `ISSUE_KEYS` entry.** Everything here pays through `bloc_offset`. Whether foreign policy earns an issue of its own is V1.3d's call, where the domestic politics of Europe is the mechanic rather than a side effect — and the cost is named in advance: six new `BLOC_SALIENCE_BASE` rows, against which [[declined|every tuned opinion constant was measured]].
 - **No new dashboard tab.** You act *on* the nation you clicked, so the verbs live on the Europe tab's existing nation panel. A separate tab would need its own nation picker, duplicating the map.
 - **No relations colouring on the map.** Named the cut candidate at plan time and cut, once the cold surface count came in above the roadmap's estimate.
-- **No trade coupling.** `external_impulse_pct` is V1.3b's, and unquieting it re-runs the balance harness.
+- ~~**No trade coupling.** `external_impulse_pct` is V1.3b's, and unquieting it re-runs the balance harness.~~ Built at V1.3b — [[trade-model]]. Relations reach the economy through exactly one channel, the **mix** of the directed trade weight, and deliberately never through its level: an openness level that responded to relations would have made `state_visit` — free, unpriced, per-target cooldown — worth about two permanent points of GDP on infrastructure for nine clicks a year. The same exploit shape this file records the V1.3a probe catching, found the same way and before the content shipped.
 
 ---
 
-Related: [[ROADMAP]] · [[legislature-model]] · [[opinion-model]] · [[scenario-model]] · [[data-architecture]] · [[data-sources]]
+Related: [[ROADMAP]] · [[trade-model]] · [[legislature-model]] · [[opinion-model]] · [[scenario-model]] · [[data-architecture]] · [[data-sources]]

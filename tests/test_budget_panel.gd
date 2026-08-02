@@ -20,20 +20,21 @@ const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 
 var _failures: Array[String] = []
 var _state
+var _loader
 var _panel
 var _frame := 0
 var _revenue_before := ""
 
 
 func _init() -> void:
-	var loader := DataLoader.new()
-	loader.load_all()
-	if not loader.errors.is_empty():
-		_failures.append("data did not load cleanly: %s" % [loader.errors])
+	_loader = DataLoader.new()
+	_loader.load_all()
+	if not _loader.errors.is_empty():
+		_failures.append("data did not load cleanly: %s" % [_loader.errors])
 		_finish()
 		return
 
-	_state = GameState.new_game(loader, "FRA")
+	_state = GameState.new_game(_loader, "FRA")
 	if not _state.errors.is_empty():
 		_failures.append("new_game reported %s" % [_state.errors])
 		_finish()
@@ -57,7 +58,7 @@ func _process(_delta: float) -> bool:
 
 
 func _setup() -> void:
-	_panel.setup(_state)
+	_panel.setup(_state, _loader)
 	_panel.show()
 	_panel._refresh()
 

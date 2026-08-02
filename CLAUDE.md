@@ -85,7 +85,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V1.3 is decomposed into six sessions, V1.3a–f. V1.3a is built.**
+**V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in
 [ROADMAP.md](ROADMAP.md); [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
 bullet with the session that builds it. Order: (a) relations and diplomatic
@@ -100,12 +100,30 @@ co-membership and `government.neighbours`. The counterparty response is a
 The model, every constant, and the measured tables are
 [docs/diplomacy-model.md](docs/diplomacy-model.md).
 
-**Next: V1.3b, trade.** It owns `external_impulse_pct`, wired since S4 and
-deliberately quiet, so it is the session that re-runs the balance harness — and
-it inherits the size-asymmetry input V1.3a dropped. Still true for the whole
-block: no new `ISSUE_KEYS` entry before V1.3d, because a new issue re-opens the
-whole `BLOC_SALIENCE_BASE` measurement. **LimboAI was evaluated for V1.3e and
-declined** — [docs/tiers/declined.md](docs/tiers/declined.md).
+**V1.3b made external demand directed.** `src/sim/trade.gd` derives a per-viewer
+weight over the other nine from partner size, EU co-membership, a shared border
+and the pair's relations; `Economy.neighbour_weighted_growth()` is retired.
+`GameState.agreements` is the second piece of pair state, on the same key, written
+only by `Diplomacy.execute()` through a third effect channel on the existing
+diplomatic action — there is no `data/trade-agreements/`. **Relations move the
+mix, only an agreement moves the level**, and that is a load-bearing call rather
+than a detail: an openness *level* that responded to relations makes the free,
+unpriced `state_visit` worth two permanent points of GDP. The model, both
+escalation triggers, and the measured tables are
+[docs/trade-model.md](docs/trade-model.md).
+
+**Next: V1.3c, tariffs and sanctions.** It is the first session that perturbs a
+partner on purpose, which is what makes V1.3b's transmission channel loud rather
+than merely correct — `tools/trade_probe.gd` already measures the headroom under a
+synthetic recession. Still true for the whole block: no new `ISSUE_KEYS` entry
+before V1.3d, because a new issue re-opens the whole `BLOC_SALIENCE_BASE`
+measurement. **LimboAI was evaluated for V1.3e and declined** —
+[docs/tiers/declined.md](docs/tiers/declined.md).
+
+Two declared stopgaps are now on V1.3e's opening checklist, each asserted by a
+test that must fail when it is replaced: the counterparty *reaction*
+(`tests/test_diplomacy.gd`) and the counterparty *decision*
+(`tests/test_trade.gd`).
 
 MVP, V1.1a–d, V1.2a–e, V1.3a and U1–U4 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
@@ -113,13 +131,18 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 9**. There has never been a migration: a superseded
+Save format is at **version 10**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
 because an absent one reads as `""`, which is correct; V1.3a bumped because an
 absent `relations` reads every pair as 0.0, which is the *worst possible*
-relations rather than a neutral default.
+relations rather than a neutral default. V1.3b is the sharpest case yet: neither
+`agreements` nor the trade baselines earned it (one reads correctly as "nothing
+signed", the other fails soft), and what did is `NationState.eu_member` and
+`.neighbours` — absent, the trade weight silently collapses back to the aggregate
+V1.3b replaced, so a reloaded game runs a *different model* from the one that
+saved it. All three are checked in `tests/test_save_load.gd`, not argued in prose.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

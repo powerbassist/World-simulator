@@ -60,6 +60,7 @@ shell does not have.
 | V1.2c | Sim | Constitutional amendment — a sixth per-nation dispatch field (`amendment_rule`) at real constitutional fractions, a seventh law effect channel that sets rather than nudges an institution, the load-bearing cross-check extended to amendments; measured, not assumed, that Germany's real two-thirds is unreachable, and left unauthored-against rather than detuned |
 | V1.2d | Sim | System transition — the amendment mechanism pointed at `system_id`, a completeness rule on the institutional bundle, the cross-check inverted to validate against the amendment's target rather than the systems it is proposed under, a seventh per-nation dispatch field (`permits_system_change`); the United Kingdom made the third playable nation, added to the scope at plan time once the original scope was found to ship to zero playable nations |
 | V1.2e | Sim | Start scenarios — an authored starting state as the project's answer to difficulty, three axes not §2's four (the coalition stays derived), a new directory-scanned content type with its validation split per-file/cross-file; the declined difficulty slider's own falsifier measured and not fired, an approval axis caught decorative at design time and fixed through the existing offset channel, and two of the three shipped scenarios corrected by the measurement before release — **V1.2 closed** |
+| V1.3b | Sim | Trade: per-partner intensity and agreements — `external_impulse_pct` made **directed**, ninety entries from partner size, EU co-membership, a shared border and the pair's relations, retiring the one GDP-weighted aggregate that was the same number for every viewer; **V1.3a's dropped size asymmetry landed here**, because a normalised directed weight has two sides where a symmetric pair key has one (LUX→DEU is 13.1× DEU→LUX); bilateral agreements as a **third effect channel on the existing diplomatic action** rather than a content type of their own, with sector winners and losers that must sum to zero at load; a second declared stopgap; `SAVE_VERSION` 9 → 10. Both named escalation triggers were GBR-shaped and the first **fired** — at the obvious exponent the whole feature is arithmetically a no-op for one playable nation in three. The balance harness came back **bit-identical across thirty fourteen-year runs**, and the model was shaped to make that provable rather than likely |
 | V1.3a | Sim | Relations and diplomatic actions — the block's schema session: **pair-keyed relations**, the first live state that is neither per-nation nor global, symmetric by construction and derived from the only two inputs the data can supply (EU co-membership, and a shared border added as fact); a new content type on the law template's preconditions/cooldown/effects shape but explicitly *not* its vote; four player verbs on the Europe tab's existing nation panel; `law_bloc_offset` → `bloc_offset` at the fifth writer that is not a law; `SAVE_VERSION` 8 → 9. The named escalation trigger did not fire, and the measurement set every content number — including one it made a table redo, and one exploit it caught before the content shipped |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
@@ -69,27 +70,102 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 ## Next
 
 **V1.3 is decomposed into six sessions** — the argument, and the four calls it
-made, are under *V1.3 — the decomposition* below. V1.3a is shipped. The next
-session is **V1.3b, trade: per-partner intensity and agreements**.
+made, are under *V1.3 — the decomposition* below. V1.3a and V1.3b are shipped.
+The next session is **V1.3c, tariffs and sanctions**.
 
-### V1.3b — trade: per-partner intensity and agreements (next)
+### V1.3c — tariffs and sanctions (next)
 
-The session that **unquiets `external_impulse_pct`**. That channel has been
-wired since S4 and deliberately silent — `economy_constants.gd`'s `TRADE_BETA`
-comment says so in as many words — and every tuned economy constant was
-measured through it. So this is the session where the balance harness gets
-re-run, which is its defining cost and is not a cost V1.3a had.
+Coercion in both directions: tariff revenue, sanctions imposed and received,
+domestic blowback, retaliation. Reads a and b.
 
-**In scope.** `external_impulse_pct` made per-partner rather than one
-GDP-weighted aggregate; bilateral trade agreements with sector winners and
-losers at home. It reads V1.3a's relations, and it is the session that
-**inherits V1.3a's dropped third input**: size asymmetry was cut from the
-relations derivation because a symmetric pair key has nowhere honest to put it,
-and per-partner trade weight is where it belongs — see [[diplomacy-model]].
+**It inherits a channel that is built, measured and waiting.** V1.3b made
+`external_impulse_pct` per-partner and directed, and left it structurally
+correct but numerically small — the nine AI nations have no budget and take no
+shocks, so nothing perturbs a partner except a bilateral agreement. **V1.3c is
+the first session that perturbs one on purpose**, and `tools/trade_probe.gd`
+already measures what the channel does under a synthetic partner recession: at
+France's weight on Germany the peak impulse is 6% of `IMPULSE_MAX`, so the
+headroom is known rather than assumed. [[trade-model]] also records the coupled
+ten-nation system's eigenvalues, so the decision to give the other nine an
+external impulse of their own can be taken knowingly rather than re-derived.
 
-**Out of scope.** Tariffs and sanctions are V1.3c. Counterparty reasoning is
-still V1.3e, and whatever deterministic rule this session ships for a trade
-partner's response is **declared a stopgap** the same way V1.3a's was.
+**Two stopgaps are on the checklist now, not one.** V1.3c adds a third and
+declares it the same way — see the decomposition's call 2 below.
+
+### V1.3b — trade: per-partner intensity and agreements (shipped)
+
+The session that made `external_impulse_pct` **per-partner**, and the one that
+owed the balance harness a re-run. Full account: [[trade-model]]. What belongs
+here is what the session's own record adds.
+
+**"Unquiets `external_impulse_pct`" was an overclaim, and it is corrected above
+and in [[v1]] rather than quietly delivered.** The decomposition table's own
+wording — *made per-partner rather than one GDP-weighted aggregate* — shipped
+literally and fully. The prose promised more. The channel is now structurally
+correct and still numerically small, because nothing in the shipped game
+perturbs a partner except an agreement, which is bilateral and so does move the
+partner's trend. That makes the channel live rather than dormant, but it does
+not make it loud, and saying so is cheaper than discovering it at V1.3c.
+
+**The first named escalation trigger fired, and it was structural rather than a
+tuning miss.** At the obvious gravity exponent of 1.0 the derived weight vector
+is GDP-proportional — and GBR, which is in no EU pair and whose `neighbours`
+list is empty, has both tie bonuses constant across all nine partners, so both
+**cancel under normalisation**. Its vector is then *identically* the aggregate
+the session replaced: L1 distance 0.000, measured. One playable nation in three
+would have received a per-partner model that was arithmetically the thing it
+replaced. The exponent is the only lever that moves GBR at all, and it shipped
+at 0.70. This is the same class of cold read [[transition-model|V1.2d]] made
+when it found its own scope shipping to zero playable nations — caught by the
+plan's own named measurement, before any of the model was built.
+
+**The second trigger did not fire, but it constrained a constant from above and
+that consequence is recorded rather than left to be found.** Every GBR pair
+rests at 45.0 and the strongest positive verb reaches 60.7, so any
+relations-based gate must sit under 60.7 or the feature is closed to Britain
+entirely — [[amendment-model|Germany's two-thirds]] repeated. It shipped at 52.
+The consequence: for France and Germany the gate is non-binding against almost
+every partner, so an agreement's difficulty there is carried by its **domestic
+price** rather than by the gate. For GBR the gate *is* the difficulty. That
+asymmetry is forced, not chosen, and it is thematically right.
+
+**A second exploit was caught the way V1.3a's was, and it decided the model's
+central call.** The obvious openness figure — trade mass over own GDP — would
+have let relations move the trend *level*. `state_visit` is +5 relations, per
+target, with no preconditions and **no domestic price at all**; nine clicks a
+year would have bought about two permanent points of GDP on infrastructure for
+free. Openness shipped as a ratio against a no-agreement counterfactual instead,
+so relations move the **mix** and only an agreement moves the level. That choice
+also killed a monotonic ratchet — partner GDP growing at trend forever would
+have walked the index up ~20% over the harness's fourteen years from time
+passing alone, putting the clamp rather than the model in charge of trend
+growth, which is the `IMPULSE_MAX = ±50` failure [[economy-model]] already
+records, committed a second time.
+
+**And it made the harness re-run cheap by making it exact.** Because the
+openness index is exactly 1.0 with nothing signed and the impulse is exactly
+zero while partners sit at their own baselines — both by construction — the
+re-run's question sharpened from *has anything moved materially?* to *has
+anything moved at all?* Thirty fourteen-year runs, captured from the V1.3a tree
+and diffed: **bit-identical**. Every economy constant measured through this
+channel is still valid, unchanged and unargued.
+
+**The synthetic probe found a real ordering bug that was invisible and would
+have surfaced a session later.** The weight table is snapshotted before the tick
+loop, but the impulse also reads each partner's `growth_annual_pct`, which
+`_tick_nation()` overwrites — so resolved inside the loop, France read *this*
+month's growth for the five partners sorted before it and *last* month's for the
+four after. Both answers are zero while nothing is perturbed, so no test could
+have seen it; it would have surfaced at V1.3c as a mystery. Found only because
+the probe injected a partner recession the shipped game cannot produce.
+
+**One repair the plan predicted and one it did not.** `Budget.project()` never
+ticked `Diplomacy`, which was harmless until relations reached the economy;
+measured at 2e-9 relative from a displaced state, small and still a broken
+done-when condition, so `project()` now takes a loader. The one the plan did not
+predict: storing an agreement's **terms** rather than its id in the register let
+`src/sim/trade.gd` take no loader at all, which is what kept
+`Economy.tick_month()`'s signature unchanged across **twenty-eight call sites**.
 
 One piece of V1.2 work is still deferred rather than done, with somewhere to
 point now: **V1.2c authored no amendment content naming `parliamentary_republic`**,
@@ -168,7 +244,7 @@ one line is not a session.
 | | Session | Content | Reads |
 |---|---|---|---|
 | **V1.3a** | Relations and diplomatic actions | Pair-keyed relations as live state, monthly drift, a small set of player verbs with a domestic price | — |
-| **V1.3b** | Trade: per-partner intensity and agreements | `external_impulse_pct` made per-partner rather than one GDP-weighted aggregate; bilateral agreements with sector winners and losers at home | a |
+| **V1.3b** | ~~Trade: per-partner intensity and agreements~~ **shipped** | `external_impulse_pct` made per-partner rather than one GDP-weighted aggregate; bilateral agreements with sector winners and losers at home | a |
 | **V1.3c** | Tariffs and sanctions | Coercion in both directions: tariff revenue, sanctions imposed and received, domestic blowback, retaliation | a, b |
 | **V1.3d** | The bloc | EU-shaped membership as a real constraint on domestic policy, transfers, bloc-level voting where the player is one member among many | a, (b) |
 | **V1.3e** | AI foreign policy | Nine nations pursuing their own interests. Replaces every stopgap rule b–d shipped | a–d |
@@ -211,7 +287,10 @@ Three things the cold read found that the decomposition rests on:
   `economy_constants.gd`'s `TRADE_BETA` comment says so in as many words. V1.3b
   is the session that unquiets it — and every tuned economy constant was
   measured through that channel, so b is where the balance harness gets re-run,
-  not a.
+  not a. **Half right, and the wrong half was the word "unquiets"**: b made the
+  channel per-partner and directed as promised, and did re-run the harness, but
+  the term stays numerically small until something perturbs a partner. See
+  V1.3b's row above.
 - **All ten nations already have a formed government.**
   `GameState._build_nation()` runs `Government.form()` for every nation, so each
   carries a `coalition_position` on the same two-axis space laws are scored
@@ -476,6 +555,7 @@ is already made, which is most sessions once the docs are written.
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
 | V1.2e Start scenarios | **Yes** *(held)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time cold count of ~20 surfaces — between V1.2c's ~18 and V1.2d's ~21 — on the reasoning that a scenario adds one new value type, one new validator in a pattern built four times, and two optional sim arguments, with no new tuned constant and no new model. Held. Two things the count got right in advance: `new_game()`'s ~50 call sites made a defaulted third parameter mandatory rather than optional, and the coalition axis was cut at plan time rather than discovered mid-build. One thing it did not: the plan treated an authored `bloc_approval` as a single write, and it needed a second (`law_bloc_offset`) or the axis would have decayed to nothing inside a game year — found at design time from `INERTIA_RATE`, before content existed, which is the earliest any correction on this table has been caught. The plan's own named escalation trigger (the reachability sweep coming back too narrow) did **not** fire; a different measurement problem did, and the response the plan named for it — split the report rather than trust the first number — resolved it without escalating. Ninth correction on this table's own record, and the fifth that held its tier once corrected. |
 | V1.2d System transition | **Yes** *(corrected)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time count of ~21 surfaces — three above V1.2c's ~eighteen, for the seventh dispatch-on-a-data-string field, the inverted target-side cross-check, and a new template field. **Corrected at plan time, not at build time**: a cold read of the scope found it would ship to zero playable nations, and the session's scope grew to include a third playable nation before any code was written — the eighth correction on this table's own record, and the first caught before the plan was even finalised rather than during or after the build. The plan's own named escalation trigger (a reachability sweep coming back unreachable) fired once, for restoration, and resolved by widening the sweep rather than escalating — the response the plan itself named in advance. |
+| V1.3b Trade: per-partner intensity and agreements | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3b row.** It stopped at V1.3a, so unlike every correction above this one is not a challenge to a logged estimate — it is an estimate authored at plan time with nothing to challenge, and the handoff convention's *read the row, count the surfaces yourself* had no row to read. Recorded because a missing row is a different failure from a wrong one, and the decomposition wrote per-session content and dependencies for all six without writing their tiers. The cold count came in at **~33 surfaces** — the largest on this table, eight above V1.3a's ~25, against V1.2d's ~21 and V1.2e's ~20. As with V1.3a the count is not what set the tier; the preamble's test is reversibility, and **both halves fire, the second for the first time in this block**: `w(A,B)` is schema-shaped with three downstream readers (c scales it, d reads it, e's interest function reads it), so a wrong weight function is rewritten with three sessions; and this is the first session to put **already-measured constants at risk** rather than add new ones, since every economy constant was tuned with this channel at zero and [[economy-model]]'s divergence argument had to be left standing. Held. Four cuts were declared in advance and the first was taken before any code: the separate `data/trade-agreements/` content type (terms ride the diplomatic action), then `economy_panel.gd`, a `Trade.tick_month()`, and a second agreement instance — the last three were not needed. Both named escalation triggers were GBR-shaped and stated before the model was built; **the first fired** and was resolved by the measurement it named rather than by escalating. Eleventh correction on this table's own record, and the first to be an *addition* to it. |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it

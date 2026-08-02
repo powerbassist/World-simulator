@@ -70,7 +70,7 @@ const RESTING_EPSILON := 1.0
 ## PRECONDITION_FIELDS are. An unknown field is a startup error, not a silently
 ## false predicate.
 const PRECONDITION_FIELDS := [
-	"relations", "overall_approval_pct", "debt_to_gdp_pct",
+	"relations", "agreement_active", "overall_approval_pct", "debt_to_gdp_pct",
 	"unemployment_pct", "deficit_pct_gdp", "growth_annual_pct",
 ]
 
@@ -88,3 +88,30 @@ const MAX_ACTION_RELATIONS_DELTA := 25.0
 ## diplomatic act should be able to cost about what a collapsed government
 ## costs, and no more.
 const MAX_ACTION_BLOC_OFFSET := 0.15
+
+# --- The counterparty rule, and its ceiling ----------------------------------------
+
+## The relations a target must already be at before it will sign a trade
+## agreement. THE WHOLE COUNTERPARTY MODEL, and a declared stopgap V1.3e replaces
+## -- see Diplomacy.would_accept_agreement().
+##
+## Measured by tools/trade_probe.gd before any agreement content was authored, and
+## the measurement constrained it from above rather than the content doing so.
+## Every GBR pair rests at exactly 45.0, the floor of docs/diplomacy-model.md's
+## four-tier table, and the strongest positive verb shipped reaches only 60.7 from
+## there under sixty months of spam. So this number has to sit under 60.7 or the
+## whole feature is closed to one playable nation in three -- the failure
+## docs/amendment-model.md records for Germany's two-thirds bar.
+##
+## 52 rather than 55: one settle_dispute takes a resting-45 pair to exactly 55,
+## and clearing a bar by exactly nothing is the mistake docs/scenario-model.md
+## records deu_grand_coalition making at 0.667 against 0.667. 52 leaves 3 points.
+##
+## The consequence, recorded rather than discovered later: at 52 the gate is
+## non-binding for 8 of France's 9 partners and for all of Germany's EU ones,
+## because their resting tiers are already 60 or 68. That is forced -- GBR's 60.7
+## ceiling caps ANY relations-based bar -- and it means the DIFFICULTY of an
+## agreement for an EU nation is carried by the action's domestic price, not by
+## this gate. For GBR the gate is the difficulty, which is thematically right for
+## a nation outside the bloc and is where the asymmetry belongs.
+const AGREEMENT_ACCEPT_MIN := 52.0
