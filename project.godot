@@ -22,13 +22,6 @@ MCPScreenshotBridge="*res://addons/godot_mcp/services/mcp_screenshot_bridge.gd"
 
 [display]
 
-; Godot's own engine default is 1152x648 -- narrower than the smallest
-; resolution settings_panel.gd offers (1280x720, RESOLUTIONS[0]), and the size
-; a first launch or a headless run gets before SettingsPanel.apply_saved() ever
-; runs. U2's dashboard adds a 150px rail; matching the smallest supported
-; resolution here is what makes dense panels like Budget fit on that first
-; frame instead of only after the player opens Settings once.
-; Opening the Godot editor strips these comments -- restore them if it does.
 window/size/viewport_width=1280
 window/size/viewport_height=720
 
