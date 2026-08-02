@@ -226,6 +226,15 @@ The second named escalation trigger. Every GBR pair rests at exactly **45.0**, t
 
 The session's defining cost, and the reason V1.3b was marked plan-first. Ten regimes × three playable nations = **thirty fourteen-year runs**, captured from the V1.3a tree and diffed against the rebuilt one.
 
+> [!tip] How to repeat it, for the next session that owes one
+> `git stash push -u`, then for each nation × regime run
+> `godot --headless --script res://tools/balance_probe.gd -- <REGIME> <NATION>`
+> into a file per run, dropping the engine banner line. `git stash pop`, run the
+> same set into a second directory, `diff -rq`. Takes a few minutes and turns a
+> paragraph of reasoning about whether a constant still holds into a yes or no.
+> V1.3c owns a re-run too — tariffs move revenue and sanctions move a partner's
+> growth, and both reach figures every economy constant was measured against.
+
 **All thirty are bit-identical.** Not "within tolerance" — byte-for-byte the same output. That is the invariant the model was shaped to make provable: the openness index is exactly 1.0 with nothing signed, and the impulse is exactly zero while partners sit at their baselines, both by construction rather than by tuning. Every economy constant measured through this channel before V1.3b is therefore still valid, unchanged and unargued.
 
 An eleventh regime, `managed_signs_agreement`, is where the trade channel gets its own fourteen years. It runs clean for all three nations, with no clamp reached. GBR's run is the one worth reading: it is **refused at 45.0**, lifts the pair with one `settle_dispute` to 55, and then signs — the gate and the model behind it both exercised in the same run.
