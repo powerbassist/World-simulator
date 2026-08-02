@@ -85,12 +85,43 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**U5a shipped the ruler's shell, interrupting the S-track queue on request.**
-The map is the background, not a tab; `dashboard.gd` and its rail are deleted;
-the panels are pinnable floating windows. Two named successors are scheduled and
-argued in [ROADMAP.md](ROADMAP.md): **U5b** (world satellite map, layers,
-minimap) and **U6** (the calendar, as a scheduling skin over existing verbs,
-plus the named-individual roster V1.1d deferred). Neither blocks V1.3c.
+**U5a shipped the ruler's shell and U5b the world map, interrupting the S-track
+queue on request.** The map is the background, not a tab; `dashboard.gd` and its
+rail are deleted; the panels are pinnable floating windows.
+
+**U5b made the map a map of the world.** Four layers back to front: the NASA Blue
+Marble raster, the outlines of ~160 countries the game does not simulate, the ten
+it does at `LAND_ALPHA` over the photograph, and labels for those ten only. A
+non-simulated country is unclickable **structurally** — `_nation_at_lonlat()`
+iterates `_polygons` and world geometry lives in a separate `_world_polygons`, so
+there is no filter anywhere that could be forgotten. `MIN_ZOOM` stopped being a
+constant and became `min_zoom()`, the cover fit, so the furthest zoom out is
+exactly the whole planet on any window size; `_clamp_pan()` is new and keeps the
+world under the viewport, which nothing needed before there was anything out
+there to leave. The minimap fills the slot `clock_cluster.gd` reserved a session
+early, and `tests/test_minimap.gd` asserts the cluster did **not** grow — that,
+not the minimap's presence, is what the reservation was for.
+
+Two named successors are scheduled and argued in [ROADMAP.md](ROADMAP.md):
+**U5c** (map layers — relations and trade colouring, switcher, legend, cut out of
+U5b at plan time and deliberately parked behind V1.3c so it can colour tariffs
+too) and **U6** (the calendar, as a scheduling skin over existing verbs, plus the
+named-individual roster V1.1d deferred). Neither blocks V1.3c.
+
+`assets/map/blue_marble_5400x2700.jpg` is the repo's first large binary, 2.5 MB,
+public domain, provenance in [docs/data-sources.md](docs/data-sources.md). It is
+read as **bytes** and decoded in memory — never `load()` — for the same
+fresh-clone reason as the fonts and icons, and it carries a committed
+`.jpg.import` with `importer="keep"`, without which Godot spends ten minutes
+VRAM-compressing 14.6 megapixels nothing reads on every run with no `.godot/`.
+World borders are Natural Earth **1:110m** in `data/geo/world.geojson`; the
+roster stays 1:50m in `europe.geojson`, and `build_world()` excludes the ten so
+nothing is drawn twice.
+
+**`tools/screenshot.gd` exists now, and a UI session that does not run it is not
+finished.** `--headless` draws nothing, so a green suite says nothing about
+layout; U5a shipped two bugs invisible to one. It saves a PNG of the running
+game — run it windowed, not headless.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in

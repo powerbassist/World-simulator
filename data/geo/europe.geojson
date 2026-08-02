@@ -4,7 +4,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "AUT"
+        "id": "AUT",
+        "label_lon": 14.1305,
+        "label_lat": 47.5189
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1107,7 +1109,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "BEL"
+        "id": "BEL",
+        "label_lon": 4.8004,
+        "label_lat": 50.7854
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1778,7 +1782,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "CHE"
+        "id": "CHE",
+        "label_lon": 7.464,
+        "label_lat": 46.7191
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2541,7 +2547,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "DEU"
+        "id": "DEU",
+        "label_lon": 9.6783,
+        "label_lat": 50.9617
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4824,7 +4832,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "ESP"
+        "id": "ESP",
+        "label_lon": -3.4647,
+        "label_lat": 40.091
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6631,7 +6641,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "FRA"
+        "id": "FRA",
+        "label_lon": 2.5523,
+        "label_lat": 46.6961
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9066,7 +9078,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "GBR"
+        "id": "GBR",
+        "label_lon": -2.1163,
+        "label_lat": 54.4027
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13113,7 +13127,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "ITA"
+        "id": "ITA",
+        "label_lon": 11.0769,
+        "label_lat": 44.7325
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15616,7 +15632,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "LUX"
+        "id": "LUX",
+        "label_lon": 6.0776,
+        "label_lat": 49.7337
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15815,7 +15833,9 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "NLD"
+        "id": "NLD",
+        "label_lon": 5.6114,
+        "label_lat": 52.4222
       },
       "geometry": {
         "type": "MultiPolygon",

@@ -18,8 +18,22 @@ Which open datasets seed the game's content, what each one is licensed under, an
 
 - **License:** Public domain. No attribution required, no conditions.
 - **Provides:** Country borders (`admin_0_countries`), sub-national regions (`admin_1_states_provinces`), populated places. Available at 1:10m, 1:50m, and 1:110m detail.
-- **Used for:** The 2D Europe map. We take 1:50m — enough detail that Belgium and Luxembourg read correctly, small enough that the whole of Europe is a manageable GeoJSON.
+- **Used for:** The 2D map, at **two detail levels for two jobs**. The ten simulated nations come from 1:50m — enough detail that Belgium and Luxembourg read correctly, small enough that the whole of Europe is a manageable GeoJSON — into `data/geo/europe.geojson`. Every other country comes from **1:110m** into `data/geo/world.geojson`, added at U5b as the backdrop beyond the roster.
+- **Why 1:110m for the world:** 242 countries at 1:50m is several megabytes of JSON parsed at every launch, larger than the satellite raster it is drawn over, to gain detail on borders nothing in the game can click. World coordinates are rounded to **2 decimals** (~1 km, below one screen pixel at every zoom the map offers) rather than the roster's 4, and rings whose bounding box is under 1 deg² are dropped — at the furthest zoom out such an island is about 2.5 px across, and the raster underneath still shows it.
+- **The two files never overlap.** `build_world()` excludes the ten in `NATIONS`. Drawn from both, they would be outlined twice and tinted over their own coastline.
+- **Label anchors:** Natural Earth's own `LABEL_X` / `LABEL_Y` are carried into both files as `label_lon` / `label_lat`. They are hand-placed and better than a polygon centroid — Norway's centroid is in Sweden.
 - **Note:** Sub-national regions are imported now but decorative at MVP. They exist so regional autonomy in [[v1]] doesn't require a second import pass.
+
+### NASA Blue Marble — the map raster
+
+- **License:** Public domain (NASA Earth Observatory imagery policy). No attribution required; credited anyway, because an unattributed asset is one nobody can re-source.
+- **Provides:** `world.topo.bathy.200412.3x5400x2700.jpg` — next-generation Blue Marble, topography and bathymetry, December 2004. 5400×2700, 2.5 MB.
+- **Used for:** The satellite backdrop the whole map is drawn over, from U5b.
+- **Why it needs no reprojection:** the image is plate carrée, which is already `map_view.gd`'s projection. Longitude maps linearly to x and latitude linearly to y across the whole image, so its rect in map space is derived from four constants in `src/ui/map_raster.gd` rather than fitted by eye.
+- **The one rule about loading it:** never `load()`. That path returns the editor's imported texture out of `.godot/`, which is gitignored and absent on a fresh clone, while `tools/run_tests.sh` runs headless straight from the repo. The bytes are read and decoded in memory — the same escape `icon.gd` uses for SVG and `ui_theme.gd` for fonts, and `tests/test_map_view.gd` asserts the texture is non-null so a regression to `load()` fails the suite rather than only the clone.
+
+> [!note] This is committed, not downloaded at build time
+> `sources/` is gitignored and holds datasets a script reads once. The raster is not one of those: it is an *asset the running game draws*, so it lives in `assets/map/` and is committed, under the same reasoning the `.gitignore`'s at-icons exception already states. At 2.5 MB it is a tenth of the at-icons set that exception was written for.
 
 ### World Bank Open Data — economic seed values
 
@@ -87,15 +101,27 @@ mkdir -p sources/wb
 curl -L -o "sources/ne_50m_admin_0_countries.geojson" \
   "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson"
 
+curl -L -o "sources/ne_110m_admin_0_countries.geojson" \
+  "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_admin_0_countries.geojson"
+
 for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS; do
   curl -L -o "sources/wb/$I.json" \
     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
 ```
 
-The Natural Earth URL is pinned to tag `v5.1.2` rather than `master`, so the file
-doesn't silently change under a future re-download. Then run
+The Natural Earth URLs are pinned to tag `v5.1.2` rather than `master`, so the
+files don't silently change under a future re-download. Then run
 `python tools/import_data.py`.
+
+The map raster is **not** fetched here, because it is not a dataset — it is a
+committed asset and is already in the repo at
+`assets/map/blue_marble_5400x2700.jpg`. Only if it needs replacing:
+
+```bash
+curl -L --create-dirs -o "assets/map/blue_marble_5400x2700.jpg" \
+  "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg"
+```
 
 ## Re-import safety
 

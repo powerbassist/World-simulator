@@ -40,8 +40,19 @@ var errors: Array[String] = []
 ## cross-checks.
 var geo_features: Dictionary = {}
 
+## The same shape as geo_features, for the ~160 countries the game does not
+## simulate -- U5b's backdrop. Kept in a separate dictionary rather than merged,
+## because the separation is what makes a non-simulated country structurally
+## unclickable: map_view.gd hit-tests geo_features and only geo_features, so
+## there is no filter anywhere that could be forgotten.
+var world_features: Dictionary = {}
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions") -> void:
+## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
+## Both files contribute; map_view.gd draws labels for the roster only.
+var label_points: Dictionary = {}
+
+
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
@@ -95,7 +106,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	eu.load(eu_path)
 	errors.append_array(eu.errors)
 
-	_validate_cross_file(geo_path)
+	_validate_cross_file(geo_path, world_path)
 	_validate_amendments()
 	_validate_scenarios()
 	_validate_neighbours()
@@ -354,7 +365,7 @@ func _validate_neighbours() -> void:
 				])
 
 
-func _validate_cross_file(geo_path: String) -> void:
+func _validate_cross_file(geo_path: String, world_path: String) -> void:
 	if nations.size() != 10:
 		errors.append("expected 10 nations, loaded %d" % nations.size())
 
@@ -367,10 +378,13 @@ func _validate_cross_file(geo_path: String) -> void:
 	if playable_count < 1:
 		errors.append("expected at least 1 playable nation, found %d" % playable_count)
 
-	var geo_ids := _load_geo(geo_path)
+	label_points.clear()
+	var geo_ids := _load_geo(geo_path, geo_features)
 	for n in nations.values():
 		if not geo_ids.has(n.geo_id):
 			errors.append("%s.json: geo_id '%s' has no matching feature in %s" % [n.id, n.geo_id, geo_path])
+
+	_load_geo(world_path, world_features)
 
 	for id in nations.keys():
 		var n = nations[id]
@@ -519,9 +533,14 @@ func _validate_scenarios() -> void:
 				errors.append("%s.json: overrides.bloc_approval names '%s', which is not a voter bloc" % [id, bloc])
 
 
-func _load_geo(geo_path: String) -> Array:
+## Reads one GeoJSON FeatureCollection into `into`, and every feature's label
+## anchor into the shared label_points. Parameterised at U5b so europe.geojson
+## and world.geojson go through exactly the same parser and the same error
+## handling -- a malformed world file is an errors.append(), not a crash, the
+## same as a malformed roster file has always been.
+func _load_geo(geo_path: String, into: Dictionary) -> Array:
 	var ids: Array = []
-	geo_features.clear()
+	into.clear()
 	var text := FileAccess.get_file_as_string(geo_path)
 	if text.is_empty():
 		errors.append("%s: could not read file" % geo_path)
@@ -533,8 +552,12 @@ func _load_geo(geo_path: String) -> Array:
 		return ids
 
 	for feature in parsed["features"]:
-		var id: String = feature["properties"]["id"]
+		var props: Dictionary = feature.get("properties", {})
+		var id: String = props["id"]
 		ids.append(id)
+
+		if props.has("label_lon") and props.has("label_lat"):
+			label_points[id] = Vector2(float(props["label_lon"]), float(props["label_lat"]))
 
 		var geometry: Dictionary = feature.get("geometry", {})
 		var polygons: Array = []
@@ -546,7 +569,7 @@ func _load_geo(geo_path: String) -> Array:
 				polygons.append(_outer_ring(geometry.get("coordinates", [])))
 			_:
 				errors.append("%s: feature '%s' has unsupported geometry type '%s'" % [geo_path, id, geometry.get("type", "")])
-		geo_features[id] = polygons
+		into[id] = polygons
 	return ids
 
 

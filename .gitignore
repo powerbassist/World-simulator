@@ -33,6 +33,9 @@ export_presets.cfg
 # Raw datasets — re-downloadable, never committed. See docs/data-sources.md
 sources/
 
+# Python bytecode from tools/import_data.py
+__pycache__/
+
 # Builds
 build/
 dist/

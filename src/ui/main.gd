@@ -17,6 +17,7 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
+const Minimap = preload("res://src/ui/minimap.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
@@ -73,6 +74,7 @@ var _polling_panel
 var _election_panel
 var _law_panel
 var _map_view
+var _minimap
 var _nation_panel
 var _government_panel
 var _save_load_panel
@@ -142,6 +144,13 @@ func _ready() -> void:
 	_hud = Hud.new()
 	add_child(_hud)
 	_top_bar = _hud.top_bar
+
+	# set_minimap() puts it in the tree, so setup() comes after -- the same
+	# register()-before-setup() ordering every window below follows, and for the
+	# same reason: a Control outside the tree has not run _ready().
+	_minimap = Minimap.new()
+	_hud.clock_cluster.set_minimap(_minimap)
+	_minimap.setup(_map_view, _loader, _state)
 
 	# register() before setup(), every time. register() is what puts the panel in
 	# the tree, and a Control outside the tree has not run _ready(), so every
@@ -533,6 +542,7 @@ func _on_load_requested(slot: String) -> void:
 	_clock.paused = true
 
 	_map_view.setup(_loader, _state)
+	_minimap.setup(_map_view, _loader, _state)
 	_overview_panel.setup(_state, _loader)
 	_economy_panel.setup(_state, _loader)
 	_budget_panel.setup(_state, _loader)

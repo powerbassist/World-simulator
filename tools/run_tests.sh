@@ -32,6 +32,7 @@ tests=(
   tests/test_game_loop.gd
   tests/test_menu.gd
   tests/test_map_view.gd
+  tests/test_minimap.gd
   tests/test_shell.gd
   tests/test_window_frame.gd
   tests/test_hud.gd

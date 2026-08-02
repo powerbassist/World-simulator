@@ -8,6 +8,12 @@ Nation economic statistics sourced from the World Bank Open Data catalog (https:
 
 Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain.
 
+## NASA Blue Marble
+
+Satellite map imagery from NASA's Earth Observatory — Blue Marble: Next Generation, topography and bathymetry, December 2004 (https://visibleearth.nasa.gov/collection/1484/blue-marble). Public domain.
+
+Committed at `assets/map/blue_marble_5400x2700.jpg`. NASA imagery requires no attribution; credited anyway, so the source of the one large binary in the repo is recoverable without archaeology.
+
 ## @icons
 
 Interface icons from the @icons addon — icons by Voxy (Valentin Fossati), in-editor picker by SuperDuperSword and Voxy. MIT License; the full text is committed at `addons/at-icons/LICENSE.txt`.

@@ -43,8 +43,11 @@ func _run() -> void:
 	var map = _main._map_view
 
 	_check_geometry(loader)
+	_check_world_geometry(loader, map)
+	_check_raster(map)
 	_check_projection_and_hit_test(map)
 	_check_pan_zoom(map)
+	_check_camera(map)
 	_check_click_opens_panel_with_live_values(map)
 
 
@@ -60,6 +63,46 @@ func _check_geometry(loader) -> void:
 		for ring in polys:
 			if ring.size() < 3:
 				_fail("%s: an outer ring has fewer than 3 points" % id)
+
+
+## U5b's backdrop. The assertion that matters is the *negative* one: a country the
+## game does not simulate must hit-test to nothing, which is what makes "the edge
+## of the game is visible without a click that leads nowhere" true rather than
+## aspirational.
+func _check_world_geometry(loader, map) -> void:
+	if loader.world_features.is_empty():
+		_fail("no world features loaded -- data/geo/world.geojson missing or unparsed")
+		return
+	if loader.world_features.size() < 100:
+		_fail("only %d world features loaded, expected well over 100" % loader.world_features.size())
+
+	for id in loader.nations.keys():
+		var geo_id: String = loader.nations[id].geo_id
+		if loader.world_features.has(geo_id):
+			_fail("%s is in both europe.geojson and world.geojson; it would be drawn twice" % geo_id)
+
+	# Warsaw. Inside Poland, which the game renders and does not simulate.
+	var warsaw: Vector2 = map._lonlat_to_screen(21.0, 52.2)
+	var hit: String = map.nation_at_screen_point(warsaw)
+	if hit != "":
+		_fail("a point inside a non-simulated country hit-tested as '%s'" % hit)
+
+	# Every nation the labels name must be one of the ten.
+	for id in map._labels.keys():
+		if not loader.nations.has(id):
+			_fail("map labels a nation that is not in the roster: '%s'" % id)
+	if map._labels.size() != loader.nations.size():
+		_fail("expected a label point for all %d nations, got %d" % [loader.nations.size(), map._labels.size()])
+
+
+## The fresh-clone check, and the reason map_raster.gd decodes bytes rather than
+## calling load(). A load()-based raster passes in the editor and fails here.
+func _check_raster(map) -> void:
+	if map._texture == null:
+		_fail("map raster did not load -- assets/map/ missing, or loaded via load() instead of from bytes")
+		return
+	if map._texture.get_width() < 1000:
+		_fail("map raster is %d px wide, far below the shipped asset" % map._texture.get_width())
 
 
 func _check_projection_and_hit_test(map) -> void:
@@ -92,6 +135,8 @@ func _check_pan_zoom(map) -> void:
 	var zoom_before: float = map._zoom
 	var pan_before: Vector2 = map._pan_offset
 
+	# A small pan, well inside the world, so the clamp has nothing to do and the
+	# delta arrives intact. A pan large enough to hit the clamp is checked below.
 	map.pan_by(Vector2(37, -19))
 	if not (map._pan_offset - (pan_before + Vector2(37, -19))).is_zero_approx():
 		_fail("pan_by did not move _pan_offset by the given delta")
@@ -99,7 +144,7 @@ func _check_pan_zoom(map) -> void:
 	map.zoom_by(1.5, map._control_center())
 	if is_equal_approx(map._zoom, zoom_before):
 		_fail("zoom_by did not change _zoom")
-	if map._zoom > map.MAX_ZOOM or map._zoom < map.MIN_ZOOM:
+	if map._zoom > map.MAX_ZOOM or map._zoom < map.min_zoom():
 		_fail("zoom_by produced an out-of-range zoom: %s" % map._zoom)
 
 	# Clamp holds even for an extreme factor.
@@ -107,7 +152,59 @@ func _check_pan_zoom(map) -> void:
 	if map._zoom > map.MAX_ZOOM:
 		_fail("zoom_by did not clamp to MAX_ZOOM")
 
+	map.zoom_by(0.00001, map._control_center())
+	if map._zoom < map.min_zoom() - 0.0001:
+		_fail("zoom_by went below the cover fit: %s < %s" % [map._zoom, map.min_zoom()])
+
 	# Reset so the click test below hit-tests against the original projection.
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
+
+
+## The camera surface U5b added, and the one it changed. min_zoom() is derived
+## from the control's size rather than being a constant, so the furthest zoom out
+## is exactly the whole world -- assert that, not a number.
+func _check_camera(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+
+	if map.size.x <= 0.0 or map.size.y <= 0.0:
+		_fail("map view has no size; the camera checks below would be meaningless")
+		return
+
+	# At exactly min_zoom the world covers the control on both axes, with no
+	# margin to spare on the tighter one.
+	map._zoom = map.min_zoom()
+	map._clamp_pan()
+	var visible: Rect2 = map.visible_lonlat_rect()
+	if visible.size.x > 360.5 and visible.size.y > 180.5:
+		_fail("at min_zoom the view is larger than the world on both axes: %s" % visible.size)
+	if visible.size.x < 359.5 and visible.size.y < 179.5:
+		_fail("at min_zoom the world does not cover the control on either axis: %s" % visible.size)
+
+	# Panning far past the edge cannot leave the world behind.
+	map.pan_by(Vector2(100000, 100000))
+	var clamped: Rect2 = map.visible_lonlat_rect()
+	if clamped.position.x < -181.0 or clamped.position.x + clamped.size.x > 181.0:
+		_fail("pan escaped the world in longitude: %s" % clamped)
+	if clamped.position.y < -91.0 or clamped.position.y + clamped.size.y > 91.0:
+		_fail("pan escaped the world in latitude: %s" % clamped)
+
+	# center_on_lonlat puts the point under the control centre. Zoomed in, so the
+	# clamp is not what decides where the view ends up.
+	map._zoom = 4.0
+	map.center_on_lonlat(2.35, 48.86)  # Paris
+	var back: Vector2 = map._screen_to_lonlat(map._control_center())
+	if absf(back.x - 2.35) > 0.01 or absf(back.y - 48.86) > 0.01:
+		_fail("center_on_lonlat(2.35, 48.86) left %s under the control centre" % back)
+
+	# Zooming in shrinks the window, which is what the minimap's rectangle reads.
+	var wide: Rect2 = map.visible_lonlat_rect()
+	map.zoom_by(2.0, map._control_center())
+	var close: Rect2 = map.visible_lonlat_rect()
+	if close.size.x >= wide.size.x or close.size.y >= wide.size.y:
+		_fail("zooming in did not shrink visible_lonlat_rect: %s -> %s" % [wide.size, close.size])
+
 	map._pan_offset = pan_before
 	map._zoom = zoom_before
 
