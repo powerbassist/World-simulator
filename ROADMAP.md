@@ -25,9 +25,18 @@ presentation had been assumed to fall out of each feature session, and by V1.1a
 that had produced a game with no menu, no pause, and seven overlays bound to
 seven keypresses. See [[decision-log]].
 
-One track at a time per session. Interleaved, not parallel. U1–U4 are done, so
-the queue below is S-track until a system session ends by needing a surface the
-shell does not have.
+One track at a time per session. Interleaved, not parallel.
+
+**U5a interrupted the S-track queue, and it was asked for rather than
+scheduled.** The queue below was V1.3c when the user asked for the shell to
+become a geopolitical simulator's rather than a dashboard's — the player
+incarnating a ruler, not administering a country. That is a legitimate reason to
+interleave and exactly what the two-track split exists to allow, but it is worth
+recording that the U-track's *own* backlog did not surface it: U5 had been
+reserved since V1.1d for a Military tab, and that reservation is now spent
+differently. Nothing in U1–U4's own record predicted a whole-shell relayout,
+because each of those sessions improved the dashboard rather than asking whether
+a dashboard was the right object.
 
 ---
 
@@ -61,6 +70,7 @@ shell does not have.
 | V1.2d | Sim | System transition — the amendment mechanism pointed at `system_id`, a completeness rule on the institutional bundle, the cross-check inverted to validate against the amendment's target rather than the systems it is proposed under, a seventh per-nation dispatch field (`permits_system_change`); the United Kingdom made the third playable nation, added to the scope at plan time once the original scope was found to ship to zero playable nations |
 | V1.2e | Sim | Start scenarios — an authored starting state as the project's answer to difficulty, three axes not §2's four (the coalition stays derived), a new directory-scanned content type with its validation split per-file/cross-file; the declined difficulty slider's own falsifier measured and not fired, an approval axis caught decorative at design time and fixed through the existing offset channel, and two of the three shipped scenarios corrected by the measurement before release — **V1.2 closed** |
 | V1.3b | Sim | Trade: per-partner intensity and agreements — `external_impulse_pct` made **directed**, ninety entries from partner size, EU co-membership, a shared border and the pair's relations, retiring the one GDP-weighted aggregate that was the same number for every viewer; **V1.3a's dropped size asymmetry landed here**, because a normalised directed weight has two sides where a symmetric pair key has one (LUX→DEU is 13.1× DEU→LUX); bilateral agreements as a **third effect channel on the existing diplomatic action** rather than a content type of their own, with sector winners and losers that must sum to zero at load; a second declared stopgap; `SAVE_VERSION` 9 → 10. Both named escalation triggers were GBR-shaped and the first **fired** — at the obvious exponent the whole feature is arithmetically a no-op for one playable nation in three. The balance harness came back **bit-identical across thirty fourteen-year runs**, and the model was shaped to make that provable rather than likely |
+| U5a | UI | The ruler's shell — the map stops being a tab and becomes the background the game is played on; the 150px tab rail is deleted and `dashboard.gd` with it; the seven docked pages become **floating windows that pin**, so reading the budget while proposing the law that changes it is possible for the first time. Bottom-left portrait card with the player's own approval, four themed clusters with a sub-row along the bottom, date and speed in the bottom-right corner, a message column stubbed for V1.8. One theme retuned from flat grey to deep navy with a **brass** accent, the repo's first committed fonts and its first four committed icons, and a 1920×1080 base that opens fullscreen. `flag` added to all ten nation files as data with a layout string, because a colour table in the UI is Rule 1's `if nation_id == "FRA"` wearing a hat |
 | V1.3a | Sim | Relations and diplomatic actions — the block's schema session: **pair-keyed relations**, the first live state that is neither per-nation nor global, symmetric by construction and derived from the only two inputs the data can supply (EU co-membership, and a shared border added as fact); a new content type on the law template's preconditions/cooldown/effects shape but explicitly *not* its vote; four player verbs on the Europe tab's existing nation panel; `law_bloc_offset` → `bloc_offset` at the fifth writer that is not a law; `SAVE_VERSION` 8 → 9. The named escalation trigger did not fire, and the measurement set every content number — including one it made a table redo, and one exploit it caught before the content shipped |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
@@ -72,6 +82,71 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 **V1.3 is decomposed into six sessions** — the argument, and the four calls it
 made, are under *V1.3 — the decomposition* below. V1.3a and V1.3b are shipped.
 The next session is **V1.3c, tariffs and sanctions**.
+
+### U5a — the ruler's shell (shipped)
+
+The session that changed what the game *is a picture of*. U2 built a dashboard,
+U3 and U4 made it a good one, and none of the three asked whether a dashboard
+was the right object — the player was administering France through a set of
+tabs. U5a makes the map the background, the interface instrument furniture laid
+over it, and the player's own face a permanent fixture in the corner.
+
+**The ask was three things and shipped as one, decomposed before any code.** The
+request was the shell, a world satellite map, and a calendar of appointments
+with named people. The calendar is a simulation feature wearing a UI costume —
+it needs person entities that do not exist, which is the thing [[cabinet-model|V1.1d]]
+explicitly deferred — and the map half is independent of the HUD half. Split
+into U5a (this), **U5b** (the map) and **U6** (the calendar and the roster), each
+with its own plan. The count for U5a alone came to ~28 surfaces, between V1.2d's
+~21 and V1.3b's ~33.
+
+**Four calls, recorded because each could have gone the other way:**
+
+1. **Windows pin, and that is why the rail could die.** A tab rail guarantees
+   one thing a set of floating windows does not: the player never has to tidy
+   up. `window_manager.gd` keeps that guarantee as its single rule — *opening a
+   panel closes the open unpinned one, and leaves every pinned one alone* — so
+   the default behaves exactly like tabs and the pin buys the case tabs could
+   never serve. Without the pin this would have been a reskin.
+2. **Brass, not cyan.** The reference and every game HUD reach for a cool glow.
+   Brass is the state's own material — seal, instrument bezel — and it is the
+   one bold move in a palette that is otherwise disciplined navy. The signature
+   is one rule applied everywhere: a 1px brass hairline on a plate's **top edge
+   only**, light falling on glass laid over a map table. `tests/test_ui_theme.gd`
+   asserts the other three edges stay bare, because that is precisely the kind
+   of thing a later session tidies into `set_border_width_all()` without
+   noticing the interface stopped having a point of view.
+3. **The message column ships as furniture with nothing behind it.** Events are
+   V1.8 and [docs/tiers/v1.md](docs/tiers/v1.md) argues at length that they stay
+   last. Building the column now costs a file; wiring it to invented content now
+   would cost the argument. The API is real and tested so V1.8 adds calls rather
+   than a layout.
+4. **The flag became data, not a table in the UI.** Ten `flag` blocks with a
+   `layout` string `src/ui/flag.gd` dispatches on — the same
+   dispatch-on-a-data-string shape as `formation_method` and the six fields
+   after it. A colour table keyed by nation id inside a panel is
+   `if nation_id == "FRA"` with extra steps, which
+   [docs/engine-decision.md](docs/engine-decision.md) Rule 1 forbids outright.
+   This is the one place the session touched `data/`, and it earns **no**
+   `SAVE_VERSION` bump: a flag is static content read at startup and never
+   written to a save.
+
+**Two things the plan got wrong, both found by looking at the running game
+rather than by reasoning.** The first: with the map promoted to background, its
+opening zoom of 1.0 — fine inside a tab — left Europe as a 480×420 object
+floating in the middle of 1920×1080, and every test passed while it did, because
+no test asks what fraction of the screen the map fills. The second: the panels
+report combined minimum heights up to 974px against a usable band of 886, so a
+window sized to its content grew straight through the bottom furniture and the
+player could not reach its last row. Both are the class of bug the U-track
+exists for and neither is visible headless; `tools/shot.gd` (throwaway, not
+committed) rendered the scene to a PNG because `--headless` draws nothing.
+
+**One deviation from the plan, stated rather than absorbed.** The plan said the
+session touched no `data/` and no `src/core/`. The flag did both — ten JSON
+files, `Nation.from_dict()` and a validator. It is presentation content, it
+fails at load like every other bad field, and it was the only way to draw a flag
+without breaking Rule 1; but the plan's claim was wrong and the row says so.
 
 ### V1.3c — tariffs and sanctions (next)
 
@@ -555,6 +630,7 @@ is already made, which is most sessions once the docs are written.
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |
 | V1.2e Start scenarios | **Yes** *(held)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time cold count of ~20 surfaces — between V1.2c's ~18 and V1.2d's ~21 — on the reasoning that a scenario adds one new value type, one new validator in a pattern built four times, and two optional sim arguments, with no new tuned constant and no new model. Held. Two things the count got right in advance: `new_game()`'s ~50 call sites made a defaulted third parameter mandatory rather than optional, and the coalition axis was cut at plan time rather than discovered mid-build. One thing it did not: the plan treated an authored `bloc_approval` as a single write, and it needed a second (`law_bloc_offset`) or the axis would have decayed to nothing inside a game year — found at design time from `INERTIA_RATE`, before content existed, which is the earliest any correction on this table has been caught. The plan's own named escalation trigger (the reachability sweep coming back too narrow) did **not** fire; a different measurement problem did, and the response the plan named for it — split the report rather than trust the first number — resolved it without escalating. Ninth correction on this table's own record, and the fifth that held its tier once corrected. |
 | V1.2d System transition | **Yes** *(corrected)* | Opus 5, plan and build in one session | Medium | Logged **Medium** on a plan-time count of ~21 surfaces — three above V1.2c's ~eighteen, for the seventh dispatch-on-a-data-string field, the inverted target-side cross-check, and a new template field. **Corrected at plan time, not at build time**: a cold read of the scope found it would ship to zero playable nations, and the session's scope grew to include a third playable nation before any code was written — the eighth correction on this table's own record, and the first caught before the plan was even finalised rather than during or after the build. The plan's own named escalation trigger (a reachability sweep coming back unreachable) fired once, for restoration, and resolved by widening the sweep rather than escalating — the response the plan itself named in advance. |
+| U5a The ruler's shell | **Yes** *(authored)* | Opus 5, plan and build in one session | Medium | **This table had no U-track row at all** — every entry on it is S-track, and U1–U4 shipped without one. Recorded because that is a different gap from the missing V1.3b row: V1.3b was a session the decomposition forgot to tier, whereas the U-track was never on this table in the first place, which quietly encoded that UI work does not need the discipline. It does: U2's and V1.1c's corrections are the two the preamble names, and U2 is a U block. The count came in at **~28** surfaces, above V1.2d's ~21 and below V1.3b's ~33. Medium rather than High on the reversibility test the preamble actually names — a layout that turns out wrong is rewritten alone, and no simulation model, tuned constant or save field is at risk. Held, with one flag stated in advance: the pinnable window manager is new machinery rather than a rearrangement and was the one place the estimate could break. It did not, because `window_frame.gd` was given no knowledge of any panel and the panels were not edited — every `setup()` and every signal connection survived the move from dock to window untouched. Two cuts were declared and both taken: the map's real treatment and the minimap went to U5b, the calendar and its roster to U6. What the count missed was smaller than any correction on this table and was caught by looking rather than reasoning: the map's opening zoom and the windows' maximum height were both wrong on a 1080p screen and both invisible to a headless suite. Twelfth correction on this table's own record, and the second (after V1.3b) to be an *addition* to it |
 | V1.3b Trade: per-partner intensity and agreements | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3b row.** It stopped at V1.3a, so unlike every correction above this one is not a challenge to a logged estimate — it is an estimate authored at plan time with nothing to challenge, and the handoff convention's *read the row, count the surfaces yourself* had no row to read. Recorded because a missing row is a different failure from a wrong one, and the decomposition wrote per-session content and dependencies for all six without writing their tiers. The cold count came in at **~33 surfaces** — the largest on this table, eight above V1.3a's ~25, against V1.2d's ~21 and V1.2e's ~20. As with V1.3a the count is not what set the tier; the preamble's test is reversibility, and **both halves fire, the second for the first time in this block**: `w(A,B)` is schema-shaped with three downstream readers (c scales it, d reads it, e's interest function reads it), so a wrong weight function is rewritten with three sessions; and this is the first session to put **already-measured constants at risk** rather than add new ones, since every economy constant was tuned with this channel at zero and [[economy-model]]'s divergence argument had to be left standing. Held. Four cuts were declared in advance and the first was taken before any code: the separate `data/trade-agreements/` content type (terms ride the diplomatic action), then `economy_panel.gd`, a `Trade.tick_month()`, and a second agreement instance — the last three were not needed. Both named escalation triggers were GBR-shaped and stated before the model was built; **the first fired** and was resolved by the measurement it named rather than by escalating. Eleventh correction on this table's own record, and the first to be an *addition* to it. |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
@@ -672,6 +748,19 @@ here so the omission is a decision rather than an oversight.
 |---|---|---|
 | **Military** | **V1.3f** specifically, now that V1.3 is decomposed — capability, deployments, alliance obligations. No longer an open-ended "no model exists", and no longer a whole block away: it is one named session, and the tab is that session's own UI call | One `defence` spending line under Budget, its opinion issue, and a Defence portfolio |
 | **Demographics** | V1.5 — ageing, migration, inequality | One field, `population`, under Economy |
+
+Both are cheaper than they were: U5a replaced the tab rail with four themed
+clusters and a sub-row, so neither needs a bar redesign. A new surface is one
+`register()` in `main.gd` and one line in `_build_action_bar()`'s list.
+
+### U5b and U6 — the two sessions U5a split off
+
+Both were part of the same request and are scheduled rather than parked.
+
+| Session | Content |
+|---|---|
+| **U5b** The map | A world satellite raster (NASA Blue Marble is public domain and equirectangular, which is already `map_view.gd`'s projection, so it drops onto the existing transform), Natural Earth world borders, map layer colouring by relations and trade weight, the minimap in the slot `clock_cluster.gd` already reserves at its final size, nation labels. Non-simulated countries render from the texture and are **not clickable** — no hover, no cursor change, so the edge of the game is visible without a click that leads nowhere. This is the repo's first large binary asset and needs a provenance line in [[data-sources]] under the same rule the at-icons exception already states |
+| **U6** The calendar and the people | An appointment is a **scheduling skin over the verbs that already exist** — a meeting *is* a diplomatic action or a law proposal, booked to a date and costing days of the player's time. No new effect channel. What it does need is the roster: politicians, celebrities, journalists, business, foreign leaders, which means **named individuals**, the thing [[cabinet-model|V1.1d]] deferred on purpose, plus the banned-names check and a `SAVE_VERSION` bump. S-track, not U — the surface is the easy half |
 
 Beyond V1: [docs/tiers/someday.md](docs/tiers/someday.md), not scheduled, and
 [docs/tiers/declined.md](docs/tiers/declined.md), decided against with a route

@@ -732,6 +732,62 @@ before the content existed, which is the whole reason the measurement runs first
 
 Full account: [[diplomacy-model]].
 
+## U5a — a request that was three sessions, and an accent chosen against the obvious one
+
+The first U-track entry in this log, and the first session on the record whose
+scope came from the user asking for something rather than from the roadmap's own
+queue. Worth writing down for three reasons.
+
+**The request decomposed into three before any code, and the split was not
+arbitrary.** The ask was: reshape the shell to a geopolitical simulator's, put a
+satellite map of the whole world behind it, and add a calendar of appointments
+with leaders, politicians and celebrities. Two of those three are independent of
+the shell, and one of them is not a UI feature at all — an appointment needs
+*people*, and the game knows names but has no person entities, which is exactly
+what [[cabinet-model|V1.1d]] deferred when it made a portfolio point at a party
+rather than at a minister. Shipping the calendar as part of a layout session
+would have smuggled an S-track schema in under a U-track heading. Split into U5a
+(the shell), U5b (the map) and U6 (the calendar and the roster).
+
+**The pin is what made deleting the tab rail defensible.** A rail guarantees the
+player never has to tidy up: one thing is open, selecting another closes it.
+Floating windows lose that guarantee by default, and a shell that makes the
+player manage windows is worse than the tabs it replaced. `window_manager.gd`
+keeps the guarantee as its one rule — opening a panel closes the open *unpinned*
+one — so the default is exactly tab behaviour, and the pin buys the single case
+tabs could never serve: reading the budget while proposing the law that changes
+it. Without it this session would have been a reskin with a regression in it.
+
+**Brass over cyan, and the reason is a rule about where the boldness goes.**
+Every game HUD reaches for a cool accent on dark, and the reference the user
+brought is no exception. Brass is the state's own material — seal, instrument
+bezel, ministerial fitting — and picking it is the one deliberately bold move in
+a palette that is otherwise disciplined navy. The corollary matters more than
+the colour: the signature is *one rule applied everywhere* (a 1px brass hairline
+along a plate's top edge and nowhere else, light falling on glass over a map
+table), and nothing else in the interface gets a glow, a gradient or a shadow.
+`tests/test_ui_theme.gd` asserts the other three edges stay bare, because a
+later session tidying that into `set_border_width_all()` would cost the
+interface its point of view without failing anything.
+
+**Two bugs found by looking, which no test could have caught.** With the map
+promoted from a tab to the background, its opening zoom of 1.0 left Europe as a
+480×420 object in the middle of 1920×1080 — every test passed, because no test
+asks what fraction of the screen the map fills. And the panels report combined
+minimum heights up to 974px against a usable band of 886, so a window sized to
+its content grew straight through the bottom furniture and its last row became
+unreachable. Both needed a rendered frame: `--headless` draws nothing, so a
+throwaway `tools/shot.gd` wrote the scene to a PNG. This is the third time on
+this log's record that the U-track's characteristic failure is *silent* — the
+thing renders, nothing errors, and it is simply wrong to look at.
+
+**One plan claim that was wrong, corrected in the row rather than absorbed.**
+The plan said U5a touched no `data/` and no `src/core/`. Drawing a flag without
+a colour table keyed by nation id — [[engine-decision]] Rule 1 — meant a `flag`
+block in all ten nation files, a field on `Nation`, and a validator. It earns no
+`SAVE_VERSION` bump, since a flag is static content read at startup and never
+written to a save.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

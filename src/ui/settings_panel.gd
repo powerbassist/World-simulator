@@ -18,12 +18,28 @@ signal closed
 const CONFIG_PATH := "user://settings.cfg"
 
 ## Windowed sizes offered. Fullscreen ignores these; the size is the display's.
+##
+## These are window sizes, not layout sizes. Since U5a the project stretches
+## `canvas_items` from a 1920x1080 base, so every entry here renders the same
+## 1080p HUD scaled to fit -- 1280x720 is the 1080p layout at 0.667, not a
+## narrower one. That is the whole reason the small sizes can stay on the list
+## now that the interface is designed against a fixed base.
 const RESOLUTIONS: Array[Vector2i] = [
 	Vector2i(1280, 720),
 	Vector2i(1600, 900),
 	Vector2i(1920, 1080),
 	Vector2i(2560, 1440),
 ]
+
+## 1920x1080, matching the project's base viewport. A first launch that has never
+## opened the settings screen should be looking at the size the HUD was drawn
+## for, not at the smallest one on the list.
+const DEFAULT_RESOLUTION_INDEX := 2
+
+## Fullscreen on a first launch. This is a map that fills the screen with the
+## interface laid over it; in a 1280x720 window that reads as a screenshot of a
+## game rather than as the game.
+const DEFAULT_FULLSCREEN := true
 
 ## Interface scale. This game is a wall of small numbers in dense tables, so
 ## the readability knob is worth having before any other polish.
@@ -45,8 +61,8 @@ static func apply_saved(window: Window) -> void:
 	cfg.load(CONFIG_PATH)  # absent file leaves it empty, which is the default set
 	_apply(
 		window,
-		bool(cfg.get_value("display", "fullscreen", false)),
-		int(cfg.get_value("display", "resolution_index", 0)),
+		bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)),
+		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)),
 		int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX))
 	)
 
@@ -164,8 +180,8 @@ func _scale_labels() -> Array:
 func _load_into_controls() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
-	var fullscreen := bool(cfg.get_value("display", "fullscreen", false))
+	var fullscreen := bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN))
 	_fullscreen_button.select(1 if fullscreen else 0)
-	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", 0)), 0, RESOLUTIONS.size() - 1))
+	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
 	_resolution_button.disabled = fullscreen

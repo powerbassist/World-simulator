@@ -9,6 +9,10 @@
     "title": "Federal Chancellor",
     "party": "buergerliche_mitte"
   },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#ED2939", "#FFFFFF", "#ED2939"]
+  },
   "government": {
     "legislative": {
       "chamber": "Nationalrat",

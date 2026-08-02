@@ -78,6 +78,24 @@ var leader_name: String = ""
 var leader_title: String = ""
 var leader_party_id: String = ""
 
+## The flag, as bands of colour plus a layout string src/ui/flag.gd dispatches
+## on -- the same dispatch-on-a-data-string shape as formation_method and the
+## six fields below it, and here for the same reason: a colour table keyed by
+## nation id in the UI would be `if nation_id == "FRA"` wearing a hat, which
+## docs/engine-decision.md Rule 1 forbids outright.
+##
+## Two nations are not bands and say so rather than being special-cased at the
+## call site: GBR is `union` and CHE is `cross`. Both are drawn from the same
+## `flag_bands` list, read in a layout-specific order -- see flag.gd.
+##
+## The bands are ordered hoist-first (left to right, or top to bottom). Charges
+## are not modelled: Spain's arms and Luxembourg's proportions are not what a
+## 24-pixel flag on a portrait card conveys.
+const KNOWN_FLAG_LAYOUTS: Array[String] = ["vertical", "horizontal", "union", "cross"]
+
+var flag_bands: Array[Color] = []
+var flag_layout: String = ""
+
 ## The assembly's own term and size, from government.legislative. Distinct from
 ## the executive's term below: in France those are two different clocks, and
 ## conflating them is what made the player's term read as the Assembly's.
@@ -212,6 +230,12 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.leader_name = _extract_string(leader, "name", filename, errors)
 	n.leader_title = _extract_string(leader, "title", filename, errors)
 	n.leader_party_id = _extract_string(leader, "party", filename, errors)
+
+	var flag: Dictionary = _extract_dict(d, "flag", filename, errors)
+	n.flag_layout = _extract_string(flag, "layout", filename, errors)
+	if n.flag_layout != "" and not KNOWN_FLAG_LAYOUTS.has(n.flag_layout):
+		errors.append("%s: flag.layout '%s' is not one of %s" % [filename, n.flag_layout, str(KNOWN_FLAG_LAYOUTS)])
+	n.flag_bands = _extract_colours(flag, "bands", filename, errors)
 
 	var government: Dictionary = _extract_dict(d, "government", filename, errors)
 
@@ -402,6 +426,26 @@ static func _validate_sectors(sectors: Dictionary, filename: String, errors: Arr
 
 	if absf(total - 1.0) > 0.001:
 		errors.append("%s: imported.sectors sums to %s, expected 1.0" % [filename, str(total)])
+
+
+## Hex strings in, Colors out, validated here rather than at the draw call --
+## a malformed colour should fail the load like every other bad field, not
+## render as transparent black on the portrait card and be blamed on the theme.
+static func _extract_colours(d: Dictionary, key: String, filename: String, errors: Array[String]) -> Array[Color]:
+	var out: Array[Color] = []
+	if not d.has(key) or typeof(d[key]) != TYPE_ARRAY:
+		errors.append("%s: missing or invalid array field 'flag.%s'" % [filename, key])
+		return out
+
+	for entry in d[key]:
+		if typeof(entry) != TYPE_STRING or not Color.html_is_valid(entry):
+			errors.append("%s: flag.%s entry '%s' is not a valid hex colour" % [filename, key, str(entry)])
+			continue
+		out.append(Color.html(entry))
+
+	if out.size() < 2:
+		errors.append("%s: flag.%s needs at least two colours, found %d" % [filename, key, out.size()])
+	return out
 
 
 static func _extract_string(d: Dictionary, key: String, filename: String, errors: Array[String]) -> String:

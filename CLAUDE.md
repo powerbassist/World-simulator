@@ -85,6 +85,13 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**U5a shipped the ruler's shell, interrupting the S-track queue on request.**
+The map is the background, not a tab; `dashboard.gd` and its rail are deleted;
+the panels are pinnable floating windows. Two named successors are scheduled and
+argued in [ROADMAP.md](ROADMAP.md): **U5b** (world satellite map, layers,
+minimap) and **U6** (the calendar, as a scheduling skin over existing verbs,
+plus the named-individual roster V1.1d deferred). Neither blocks V1.3c.
+
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in
 [ROADMAP.md](ROADMAP.md); [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
@@ -148,6 +155,23 @@ Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or
 `add_theme_font_size_override()` in a panel — `tests/test_ui_theme.gd` fails on
 it. Separation and margin constants stay at their call sites; they are layout.
+
+**U5a retuned that theme and moved the shell around it.** The palette is deep
+navy with a single **brass** accent, and the visual signature is one rule: a HUD
+plate carries a 1px brass hairline on its **top edge only**. `test_ui_theme.gd`
+asserts the other three edges stay bare — do not "tidy" it into
+`set_border_width_all()`. `assets/fonts/` holds the repo's first committed
+binaries (Barlow Condensed for chrome, IBM Plex Mono for figures, both SIL OFL);
+they are loaded by a path that works before the editor has imported anything,
+because `tools/run_tests.sh` runs headless from a fresh clone. Icons are read
+and rasterised from `.svg` text for the same reason — never `load()` an at-icons
+path.
+
+The shell is: `map_view` full-rect at the back, `window_manager` over it, `hud`
+on top. There is no tab rail. A panel is registered with
+`_windows.register(id, title, panel)` **before** its `setup()` is called, because
+`register()` is what puts it in the tree. Adding a surface is that one call plus
+one line in `main.gd`'s `_build_action_bar()`.
 
 ## Workflow
 

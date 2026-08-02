@@ -9,6 +9,10 @@
     "title": "President of the Republic",
     "party": "renouveau_civique"
   },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#0055A4", "#FFFFFF", "#EF4135"]
+  },
   "government": {
     "legislative": {
       "chamber": "Assemblée nationale",

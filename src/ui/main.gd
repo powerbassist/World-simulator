@@ -23,8 +23,8 @@ const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
-const TopBar = preload("res://src/ui/top_bar.gd")
-const Dashboard = preload("res://src/ui/dashboard.gd")
+const Hud = preload("res://src/ui/hud.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -63,8 +63,9 @@ var pending_load_slot := ""
 
 var _state
 var _loader: DataLoader
+var _hud
+var _windows
 var _top_bar
-var _dashboard
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -121,38 +122,45 @@ func _ready() -> void:
 	_state.year = _clock.year
 	_state.month = _clock.month
 
-	# The frame: top bar over rail+dock, stacked in a VBox so the dock gets
-	# whatever height the bar doesn't use. Not a stored reference -- nothing
-	# outside this block needs it.
-	var shell := VBoxContainer.new()
-	shell.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(shell)
+	# Three layers, back to front -- U5a's whole structural change. U2 made the
+	# map one tab among seven; here it is the background the game is played on,
+	# so it is added first, full-rect, and everything else draws over it.
+	#
+	# Windows sit *under* the HUD on purpose. A panel the player has dragged to
+	# the bottom of the screen must not cover the clock or the portrait: the
+	# furniture is how the game is read at a glance, and a window is something
+	# they opened and can close.
+	_map_view = MapView.new()
+	_map_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_map_view)
+	_map_view.setup(_loader, _state)
+	_map_view.nation_clicked.connect(_on_nation_clicked)
 
-	_top_bar = TopBar.new()
-	shell.add_child(_top_bar)
-	_top_bar.pause_toggled.connect(func():
-		_clock.toggle_pause()
-		_update_top_bar()
-	)
-	_top_bar.speed_selected.connect(func(s: int):
-		_clock.set_speed(s)
-		_update_top_bar()
-	)
+	_windows = WindowManager.new()
+	add_child(_windows)
 
-	_dashboard = Dashboard.new()
-	_dashboard.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	shell.add_child(_dashboard)
+	_hud = Hud.new()
+	add_child(_hud)
+	_top_bar = _hud.top_bar
 
+	# register() before setup(), every time. register() is what puts the panel in
+	# the tree, and a Control outside the tree has not run _ready(), so every
+	# label setup() writes to is still null -- CLAUDE.md's gotcha, and the same
+	# order dashboard.gd's add_tab() enforced by doing both itself.
 	_overview_panel = OverviewPanel.new()
-	_dashboard.add_tab("overview", "Overview", _overview_panel)
+	_windows.register("overview", "Overview", _overview_panel)
 	_overview_panel.setup(_state, _loader)
 
 	_economy_panel = EconomyPanel.new()
-	_dashboard.add_tab("economy", "Economy", _economy_panel)
+	_windows.register("economy", "Economy", _economy_panel)
 	_economy_panel.setup(_state, _loader)
 
+	# hide_close_button() still applies: these panels each build their own Close
+	# button for the life they had before U2 docked them, and the window frame
+	# now provides the real one. Two close buttons on one panel is worse than
+	# either.
 	_budget_panel = BudgetPanel.new()
-	_dashboard.add_tab("budget", "Budget", _budget_panel)
+	_windows.register("budget", "Budget", _budget_panel)
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before):
@@ -161,7 +169,7 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_dashboard.add_tab("politics", "Politics", _government_panel)
+	_windows.register("politics", "Politics", _government_panel)
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
@@ -172,12 +180,12 @@ func _ready() -> void:
 	)
 
 	_polling_panel = PollingPanel.new()
-	_dashboard.add_tab("society", "Society", _polling_panel)
+	_windows.register("society", "Society", _polling_panel)
 	_polling_panel.setup(_state)
 	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
-	_dashboard.add_tab("legislature", "Legislature", _law_panel)
+	_windows.register("legislature", "Legislature", _law_panel)
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
 	_law_panel.proposed.connect(func(before, law_name):
@@ -185,22 +193,13 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
-	# Europe: the map plus a detail pane, side by side, replacing the map's old
-	# life as a full-screen layer behind everything else.
-	var europe := HBoxContainer.new()
-	europe.add_theme_constant_override("separation", 12)
-
-	_map_view = MapView.new()
-	_map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	europe.add_child(_map_view)
-	_map_view.setup(_loader, _state)
-	_map_view.nation_clicked.connect(_on_nation_clicked)
-
+	# The nation panel loses its side-by-side pane and becomes what it always
+	# behaved like: a card about whichever country was clicked. Opened by
+	# _on_nation_clicked(), and reachable from the World cluster as well so the
+	# diplomatic verbs are not hidden behind knowing to click the map.
 	_nation_panel = NationPanel.new()
-	europe.add_child(_nation_panel)
+	_windows.register("diplomacy", "Diplomacy", _nation_panel)
 	_nation_panel.setup(_state, _loader)
-	_nation_panel.hide()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
@@ -209,7 +208,8 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
-	_dashboard.add_tab("europe", "Europe", europe)
+	_build_action_bar()
+	_wire_hud()
 
 	# Four panels stay modal, not docked: election results and censure land on
 	# the player regardless of which tab is open, and settings/save-load are
@@ -270,6 +270,50 @@ func _ready() -> void:
 ##
 ## Placement only, since U3: the opaque background these panels need is the
 ## theme's PanelContainer style, inherited from this scene's root.
+## The four clusters, in the order a president spends a day in rather than
+## alphabetically. Every entry names a panel already registered above; the bar
+## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
+## register() and one line in this list.
+func _build_action_bar() -> void:
+	const ICONS := "res://addons/at-icons/control/"
+	_hud.action_bar.add_cluster("state", "State", ICONS + "institutional_building.svg", [
+		{"id": "overview", "label": "Overview"},
+		{"id": "politics", "label": "Politics"},
+		{"id": "legislature", "label": "Legislature"},
+	])
+	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
+		{"id": "economy", "label": "Economy"},
+		{"id": "budget", "label": "Budget"},
+	])
+	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
+		{"id": "society", "label": "Polling"},
+	])
+	_hud.action_bar.add_cluster("world", "World", ICONS + "globe.svg", [
+		{"id": "diplomacy", "label": "Diplomacy"},
+	])
+	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
+
+
+## Every signal the furniture emits, connected in one place. hud.gd builds and
+## places the pieces and deliberately wires none of them -- it has no clock and
+## no GameState, and giving it either would put game control in a layout file.
+func _wire_hud() -> void:
+	_hud.clock_cluster.pause_toggled.connect(func():
+		_clock.toggle_pause()
+		_update_top_bar()
+	)
+	_hud.clock_cluster.speed_selected.connect(func(s: int):
+		_clock.set_speed(s)
+		_update_top_bar()
+	)
+	_hud.top_bar.save_load_requested.connect(func():
+		_save_load_panel.show()
+		_save_load_panel.mark_dirty()
+	)
+	_hud.top_bar.settings_requested.connect(_open_pause_menu)
+	_hud.portrait_card.setup(_state, _loader)
+
+
 func _add_centered(panel: Control, blocking := false) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -324,27 +368,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_3:
 			_clock.set_speed(3)
 			_update_top_bar()
+		# The same letters U2 bound to tabs, now opening windows. A key that
+		# toggles rather than selects, because with no rail there is no longer
+		# anything showing which panel is "current" -- pressing B twice should
+		# put the player back on the map.
 		KEY_O:
-			if _dashboard != null:
-				_dashboard.select_tab("overview")
+			_toggle_window("overview")
 		KEY_E:
-			if _dashboard != null:
-				_dashboard.select_tab("economy")
+			_toggle_window("economy")
 		KEY_B:
-			if _dashboard != null:
-				_dashboard.select_tab("budget")
+			_toggle_window("budget")
 		KEY_G:
-			if _dashboard != null:
-				_dashboard.select_tab("politics")
+			_toggle_window("politics")
 		KEY_P:
-			if _dashboard != null:
-				_dashboard.select_tab("society")
+			_toggle_window("society")
 		KEY_L:
-			if _dashboard != null:
-				_dashboard.select_tab("legislature")
+			_toggle_window("legislature")
 		KEY_M:
-			if _dashboard != null:
-				_dashboard.select_tab("europe")
+			# M was the Europe tab. The map is now always underneath, so the
+			# useful thing that key can do is clear everything off it.
+			if _windows != null:
+				_windows.close_all()
+			if _hud != null:
+				_hud.action_bar.close_subrow()
 		KEY_S:
 			if _save_load_panel != null:
 				_save_load_panel.visible = not _save_load_panel.visible
@@ -359,11 +405,19 @@ func _queue_effect(label: String, before: Dictionary) -> void:
 	_pending_effects.append({"label": label, "before": before})
 
 
+func _toggle_window(id: String) -> void:
+	if _windows != null:
+		_windows.toggle(id)
+
+
 func _on_nation_clicked(nation_id: String) -> void:
-	if _nation_panel == null:
+	if _nation_panel == null or _windows == null:
 		return
+	# Content before the window opens: open() places the frame by centring its
+	# size, and a nation panel that has not been told which nation it is showing
+	# reports the size of an empty one.
 	_nation_panel.show_nation(nation_id)
-	_nation_panel.show()
+	_windows.open("diplomacy")
 
 
 ## The simulation's whole entry point. Economy first so budget percentages apply
@@ -501,6 +555,12 @@ func _on_load_requested(slot: String) -> void:
 	_update_top_bar()
 
 
+## Everything on screen that is not inside a window. Kept under U2's name
+## because ~15 call sites already say it and the job is unchanged -- the strip
+## simply is not the only always-visible surface any more.
 func _update_top_bar() -> void:
 	if _top_bar != null:
 		_top_bar.refresh(_state, _clock)
+	if _hud != null:
+		_hud.clock_cluster.refresh(_clock)
+		_hud.portrait_card.refresh()

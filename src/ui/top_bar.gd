@@ -1,123 +1,109 @@
 extends PanelContainer
 
-const PollNoise = preload("res://src/ui/poll_noise.gd")
-const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
-## Persistent top bar, replacing main.tscn's five-line HUD Label -- U2. Date and
-## pause/speed on the left, the four headline figures the player is actually
-## playing against on the right: approval (the election), government standing
-## (censure), deficit (fiscal room), unemployment (the blame the public feels).
-## GDP, growth and debt still exist but move to the Economy tab -- see
-## ROADMAP.md U2.
+## The thin strip along the top edge -- U2, rebuilt at U5a.
 ##
-## Reads state and clock, never writes them. Pause and speed changes go back to
-## main.gd as signals, same shape as Budget.commit() -- the panel proposes,
-## main.gd is the one holding _clock.
+## U2 put six things here because there was nowhere else to put them: the date,
+## pause, three speeds and four figures. U5a gives the clock its own corner
+## cluster and gives approval to the portrait card, which leaves this doing the
+## one job a permanent top strip is good at -- the two or three numbers that are
+## true about the country regardless of what the player is looking at.
+##
+## Deficit, GDP and unemployment, in that order, matching the reference. Not
+## approval (the portrait carries it, and a president reads their own standing
+## off their own face) and not government standing, which is a Politics-panel
+## question the player checks rather than monitors.
+##
+## Reads state, never writes it. The gear and save buttons emit; main.gd decides
+## what they open, the same shape as every other panel here.
 
-signal pause_toggled
-signal speed_selected(speed: int)
+signal settings_requested
+signal save_load_requested
 
-const MONTH_NAMES: Array[String] = [
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-]
+const BAR_HEIGHT := 40
 
-var _date_label: Label
-var _pause_button: Button
-var _speed_buttons := {}
 var _figure_values := {}
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(0, 64)
-	# Square corners and its own padding, because this one sits flush against the
-	# window edge; every other PanelContainer takes the theme's default.
+	custom_minimum_size = Vector2(0, BAR_HEIGHT)
+	# Square corners and its own padding, because this one sits flush against
+	# the window edge; every other panel takes the theme's default.
 	theme_type_variation = UiTheme.TOP_BAR_PANEL
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 20)
+	row.add_theme_constant_override("separation", 0)
 	add_child(row)
 
-	row.add_child(_build_clock_group())
+	row.add_child(_spacer())
 
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
+	var figures := HBoxContainer.new()
+	figures.add_theme_constant_override("separation", 34)
+	row.add_child(figures)
 
-	row.add_child(_build_figure("approval", "Approval"))
-	row.add_child(_build_figure("government", "Government"))
-	row.add_child(_build_figure("deficit", "Deficit"))
-	row.add_child(_build_figure("unemployment", "Unemployment"))
+	figures.add_child(_build_figure("deficit", "Budget deficit"))
+	figures.add_child(_build_figure("gdp", "GDP"))
+	figures.add_child(_build_figure("unemployment", "Unemployment"))
+
+	row.add_child(_spacer())
+
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 4)
+	row.add_child(tools)
+
+	var save := Button.new()
+	save.text = "SAVE"
+	save.theme_type_variation = UiTheme.SUBROW_BUTTON
+	save.tooltip_text = "Save and load (S)"
+	save.pressed.connect(func(): save_load_requested.emit())
+	tools.add_child(save)
+
+	var settings := Button.new()
+	settings.text = "MENU"
+	settings.theme_type_variation = UiTheme.SUBROW_BUTTON
+	settings.tooltip_text = "Pause menu (Esc)"
+	settings.pressed.connect(func(): settings_requested.emit())
+	tools.add_child(settings)
 
 
-func _build_clock_group() -> Control:
+## Label and value on one line rather than stacked, which is what lets the strip
+## be 40px instead of U2's 64 and still read at a glance.
+func _build_figure(key: String, title: String) -> Control:
 	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
+	box.add_theme_constant_override("separation", 7)
 
-	_date_label = Label.new()
-	_date_label.custom_minimum_size.x = 160
-	_date_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	box.add_child(_date_label)
+	var label := Label.new()
+	label.text = title.to_upper()
+	label.theme_type_variation = UiTheme.MICRO
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	box.add_child(label)
 
-	_pause_button = Button.new()
-	_pause_button.text = "Pause (Space)"
-	_pause_button.pressed.connect(func(): pause_toggled.emit())
-	box.add_child(_pause_button)
-
-	for s in [1, 2, 3]:
-		var b := Button.new()
-		b.text = "%dx" % s
-		b.toggle_mode = true
-		b.pressed.connect(func(): speed_selected.emit(s))
-		box.add_child(b)
-		_speed_buttons[s] = b
+	var value := Label.new()
+	value.theme_type_variation = UiTheme.FIGURE
+	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	box.add_child(value)
+	_figure_values[key] = value
 
 	return box
 
 
-func _build_figure(key: String, title: String) -> Control:
-	var col := VBoxContainer.new()
-	col.custom_minimum_size.x = 110
-	col.add_theme_constant_override("separation", 2)
-
-	var label := Label.new()
-	label.text = title
-	label.theme_type_variation = UiTheme.FIGURE_LABEL
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	col.add_child(label)
-
-	var value := Label.new()
-	value.theme_type_variation = UiTheme.FIGURE
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	col.add_child(value)
-	_figure_values[key] = value
-
-	return col
+func _spacer() -> Control:
+	var spacer := Control.new()
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return spacer
 
 
-## Called every day (was _update_hud()'s job) -- cheap enough that main.gd calls
-## it unconditionally rather than gating it behind a dirty flag like the docked
-## panels, matching the HUD it replaces.
-func refresh(state, clock: Node) -> void:
-	var month_name: String = MONTH_NAMES[clock.month - 1]
-	_date_label.text = "%s %d, %d" % [month_name, clock.day, clock.year]
-
-	_pause_button.text = "Resume (Space)" if clock.paused else "Pause (Space)"
-	for s in _speed_buttons.keys():
-		_speed_buttons[s].button_pressed = (not clock.paused) and clock.speed == s
-
+## Called every day -- cheap enough that main.gd calls it unconditionally rather
+## than gating it behind a dirty flag like the floating panels, matching the HUD
+## it replaces.
+func refresh(state, _clock: Node) -> void:
 	if state == null:
 		return
 	var ns = state.player()
 
-	_figure_values["approval"].text = "%.0f%%" % PollNoise.displayed(
-		PollNoise.poll_id(state.year, state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct
-	)
-
-	var standing := "cohabitation" if ns.is_cohabitation else ("minority" if ns.is_minority else "majority")
-	_figure_values["government"].text = "%d/%d" % [ns.coalition_seats, ns.assembly_seats]
-	_figure_values["government"].tooltip_text = standing.capitalize()
-
-	_figure_values["deficit"].text = "%+.1f%%" % -ns.deficit_pct_gdp
-	_figure_values["unemployment"].text = "%.1f%%" % ns.unemployment_pct
+	# Signed the way a player reads it: a deficit is a negative number.
+	_figure_values["deficit"].text = "%+.2f%%" % -ns.deficit_pct_gdp
+	_figure_values["gdp"].text = "%.0f Bn" % ns.gdp_eur_bn
+	_figure_values["unemployment"].text = "%.2f%%" % ns.unemployment_pct

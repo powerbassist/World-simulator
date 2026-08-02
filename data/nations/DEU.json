@@ -9,6 +9,10 @@
     "title": "Federal Chancellor",
     "party": "buergerunion"
   },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#000000", "#DD0000", "#FFCE00"]
+  },
   "government": {
     "legislative": {
       "chamber": "Bundestag",

@@ -9,6 +9,10 @@
     "title": "Prime Minister",
     "party": "liberaal_verbond"
   },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#AE1C28", "#FFFFFF", "#21468B"]
+  },
   "government": {
     "legislative": {
       "chamber": "Tweede Kamer",

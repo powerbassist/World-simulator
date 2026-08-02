@@ -1,0 +1,162 @@
+extends PanelContainer
+
+## The chrome around a floating panel -- U5a. A title, a pin, a close button and
+## a grab handle, wrapped around a panel that knows nothing about any of it.
+##
+## This is deliberately dumb. It holds no game state, never reads GameState, and
+## its content is whatever Control it was handed. That is what let U2's seven
+## docked panels move into floating windows without one of them being edited:
+## budget_panel.gd still builds the same tree it built when it was a tab.
+##
+## Positioning is manual, so this must be added to a plain Control -- a container
+## parent would lay it out and the drag would fight the layout every frame. See
+## window_manager.gd, which is that parent.
+
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
+signal close_requested
+signal pin_toggled(pinned: bool)
+signal grabbed
+
+## Kept clear of the top strip and of the bottom furniture, so a window can
+## never be dragged under the clock or the portrait card and stranded there --
+## the title bar is the only thing that drags it back.
+const TOP_MARGIN := 44.0
+const BOTTOM_MARGIN := 150.0
+
+var pinned := false
+
+var _title_label: Label
+var _pin_button: Button
+var _close_button: Button
+var _scroll: ScrollContainer
+var _content: Control
+var _dragging := false
+
+
+func setup(title: String, content: Control) -> void:
+	theme_type_variation = UiTheme.PLATE
+	# The window sizes to its content, not to the screen: a panel that was 820
+	# wide as a tab should not become 1900 wide as a window.
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	add_child(column)
+
+	column.add_child(_build_title_bar(title))
+
+	# Scrolled rather than sized to the panel. These panels were laid out for a
+	# 1280x720 dock and several report a combined minimum size taller than the
+	# band a window is allowed to occupy -- overview asks for most of 1080 on
+	# its own. Without this the window grows past the bottom furniture and the
+	# player cannot reach its last row at all.
+	_content = content
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.follow_focus = true
+	column.add_child(_scroll)
+
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(content)
+
+	# Any click anywhere on the window raises it, not only one on the title bar.
+	gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed:
+			grabbed.emit()
+	)
+
+
+func _build_title_bar(title: String) -> Control:
+	var bar := PanelContainer.new()
+	bar.theme_type_variation = UiTheme.TITLE_BAR
+	bar.mouse_filter = Control.MOUSE_FILTER_STOP
+	bar.gui_input.connect(_on_title_input)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	bar.add_child(row)
+
+	_title_label = Label.new()
+	_title_label.text = title.to_upper()
+	_title_label.theme_type_variation = UiTheme.HEADING
+	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_title_label)
+
+	# Text glyphs rather than icons: these two are the only controls in the game
+	# that appear on every panel, and a wrong icon here is wrong twenty times.
+	_pin_button = Button.new()
+	_pin_button.text = "PIN"
+	_pin_button.toggle_mode = true
+	_pin_button.tooltip_text = "Keep this panel open when another is opened"
+	_pin_button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	_pin_button.pressed.connect(func(): set_pinned(_pin_button.button_pressed))
+	row.add_child(_pin_button)
+
+	_close_button = Button.new()
+	_close_button.text = "X"
+	_close_button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	_close_button.pressed.connect(func(): close_requested.emit())
+	row.add_child(_close_button)
+
+	return bar
+
+
+func set_pinned(value: bool) -> void:
+	pinned = value
+	if _pin_button != null:
+		_pin_button.button_pressed = value
+	pin_toggled.emit(value)
+
+
+func _on_title_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_dragging = true
+			grabbed.emit()
+		else:
+			_dragging = false
+	elif event is InputEventMouseMotion and _dragging:
+		drag_by(event.relative)
+
+
+## Sizes the window to its content, up to `available`, and scrolls beyond that.
+## Called by the manager on the way in rather than at setup(), because at setup()
+## the panel is an empty shell -- main.gd's own setup(state, loader) is what
+## fills it, and it runs afterwards by necessity (a Control outside the tree has
+## not run _ready()).
+func fit_within(available: Vector2) -> void:
+	if _scroll == null or _content == null:
+		return
+	# Cleared first: a stale minimum from the last fit would be included in the
+	# combined size and the window would ratchet wider every time it opened.
+	_scroll.custom_minimum_size = Vector2.ZERO
+	var wanted := _content.get_combined_minimum_size()
+	_scroll.custom_minimum_size = Vector2(
+		minf(wanted.x, maxf(240.0, available.x)),
+		minf(wanted.y, maxf(200.0, available.y))
+	)
+	reset_size()
+
+
+## Public so a headless test can drive it without synthesising mouse motion --
+## the same reason map_view.gd exposes pan_by() and zoom_by().
+func drag_by(delta: Vector2) -> void:
+	position += delta
+	clamp_into_parent()
+
+
+## Called after a drag and after the manager places the window. A window whose
+## title bar is off screen cannot be dragged back, because the title bar is the
+## only thing that drags it.
+func clamp_into_parent() -> void:
+	var parent := get_parent_control()
+	if parent == null:
+		return
+	var limit := parent.size - size
+	position.x = clampf(position.x, 0.0, maxf(0.0, limit.x))
+	position.y = clampf(position.y, TOP_MARGIN, maxf(TOP_MARGIN, limit.y - BOTTOM_MARGIN))

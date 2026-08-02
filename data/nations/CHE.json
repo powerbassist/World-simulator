@@ -9,6 +9,10 @@
     "title": "President of the Confederation",
     "party": "alliance_nationale_suisse"
   },
+  "flag": {
+    "layout": "cross",
+    "bands": ["#FF0000", "#FFFFFF"]
+  },
   "government": {
     "legislative": {
       "chamber": "Nationalrat",

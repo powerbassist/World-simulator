@@ -44,7 +44,7 @@ func _process(_delta: float) -> bool:
 		_finish()
 		return false
 
-	_main._dashboard.select_tab("overview")
+	_main._windows.open("overview")
 
 	_check_fresh_game_has_no_trends()
 	_check_trends_appear_after_a_run()

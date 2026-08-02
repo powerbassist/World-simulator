@@ -9,6 +9,10 @@
     "title": "President of the Council of Ministers",
     "party": "fratelli_della_nazione"
   },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#008C45", "#F4F5F0", "#CD212A"]
+  },
   "government": {
     "legislative": {
       "chamber": "Camera dei Deputati",

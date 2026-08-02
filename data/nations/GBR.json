@@ -9,6 +9,10 @@
     "title": "Prime Minister",
     "party": "progress_alliance"
   },
+  "flag": {
+    "layout": "union",
+    "bands": ["#012169", "#FFFFFF", "#C8102E"]
+  },
   "government": {
     "legislative": {
       "chamber": "House of Commons",

@@ -9,6 +9,10 @@
     "title": "President of the Government",
     "party": "frente_progresista"
   },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#AA151B", "#F1BF00", "#AA151B"]
+  },
   "government": {
     "legislative": {
       "chamber": "Congreso de los Diputados",

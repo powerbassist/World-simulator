@@ -9,6 +9,10 @@
     "title": "Prime Minister",
     "party": "burgerforum"
   },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#000000", "#FAE042", "#ED2939"]
+  },
   "government": {
     "legislative": {
       "chamber": "Chamber of Representatives",

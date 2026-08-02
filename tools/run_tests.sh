@@ -32,7 +32,9 @@ tests=(
   tests/test_game_loop.gd
   tests/test_menu.gd
   tests/test_map_view.gd
-  tests/test_dashboard.gd
+  tests/test_shell.gd
+  tests/test_window_frame.gd
+  tests/test_hud.gd
   tests/test_ui_theme.gd
   tests/test_overview_panel.gd
   tests/test_save_load.gd

@@ -9,6 +9,10 @@
     "title": "Prime Minister",
     "party": "union_chretienne"
   },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#ED2939", "#FFFFFF", "#00A1DE"]
+  },
   "government": {
     "legislative": {
       "chamber": "Chambre des Députés",
