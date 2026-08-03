@@ -227,15 +227,29 @@ The second named escalation trigger. Every GBR pair rests at exactly **45.0**, t
 The session's defining cost, and the reason V1.3b was marked plan-first. Ten regimes × three playable nations = **thirty fourteen-year runs**, captured from the V1.3a tree and diffed against the rebuilt one.
 
 > [!tip] How to repeat it, for the next session that owes one
-> `git stash push -u`, then for each nation × regime run
-> `godot --headless --script res://tools/balance_probe.gd -- <REGIME> <NATION>`
-> into a file per run, dropping the engine banner line. `git stash pop`, run the
-> same set into a second directory, `diff -rq`. Takes a few minutes and turns a
-> paragraph of reasoning about whether a constant still holds into a yes or no.
-> V1.3c owned a re-run too, and it came back **bit-identical across the same
-> thirty runs** — see [[coercion-model]]. The invariant held for the same reason
-> it did here: no regime imposes a measure, so the trade multiplier is exactly
-> 1.0 and the coercion impulse exactly 0.0, both by construction.
+> **Use a worktree, not a stash.** V1.3b's original recipe was `git stash push -u`
+> and `git stash pop` around the two runs; V1.3c used
+> `git worktree add <tmp> HEAD` instead and it is strictly better — the session's
+> own work is never unstaged at any point, so an interrupted run cannot lose it,
+> and both trees exist at once so the two sets can be produced without an
+> ordering constraint. `git worktree remove <tmp> --force` afterwards.
+>
+> For each nation × regime, run
+> `godot --path <tree> --headless --script res://tools/balance_probe.gd -- <REGIME> <NATION>`
+> into a file per run, then `diff -rq` the two directories.
+>
+> **Filter the engine's own noise before you diff, or all thirty files differ and
+> the result looks like a model change.** `addons/godot_mcp` is gitignored and its
+> autoloads are declared in `project.godot`, so a fresh worktree cannot load them
+> and prints six `ERROR:`/`   at:` pairs per run that the working tree does not.
+> Strip `^ERROR:` and `^   at: ` from both sides. V1.3c lost a few minutes to
+> exactly this before looking at what actually differed.
+>
+> Turns a paragraph of reasoning about whether a constant still holds into a yes
+> or no. V1.3c owned a re-run too, and it came back **bit-identical across the
+> same thirty runs** — see [[coercion-model]]. The invariant held for the same
+> reason it did here: no regime imposes a measure, so the trade multiplier is
+> exactly 1.0 and the coercion impulse exactly 0.0, both by construction.
 
 **All thirty are bit-identical.** Not "within tolerance" — byte-for-byte the same output. That is the invariant the model was shaped to make provable: the openness index is exactly 1.0 with nothing signed, and the impulse is exactly zero while partners sit at their baselines, both by construction rather than by tuning. Every economy constant measured through this channel before V1.3b is therefore still valid, unchanged and unargued.
 
