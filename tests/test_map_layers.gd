@@ -13,6 +13,7 @@ extends SceneTree
 ## colour is viewer-relative rather than a property of the nation.
 
 const MapLayers = preload("res://src/ui/map_layers.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -49,6 +50,7 @@ func _run() -> void:
 	_check_unknown_layer_falls_back()
 	_check_legend_swatches_match_the_map()
 	_check_readout_says_what_each_layer_may_claim()
+	_check_coercion_is_summed_not_netted()
 
 
 ## The contract that let U5c run before V1.3c: adding a layer is one entry in
@@ -74,6 +76,7 @@ func _check_registry_drives_the_switcher() -> void:
 func _check_ramps_are_monotone() -> void:
 	_check_ramp_spread(MapLayers.RELATIONS, MapLayers.RELATIONS_MIN_SHOWN, MapLayers.RELATIONS_MAX_SHOWN)
 	_check_ramp_spread(MapLayers.TRADE, 0.0, MapLayers.TRADE_MAX_SHOWN)
+	_check_ramp_spread(MapLayers.COERCION, 0.0, MapLayers.COERCION_MAX_SHOWN)
 
 	# Clamped, not extrapolated: relations above 76 and a trade share above a
 	# third are both reachable in a played game and must saturate at the end of
@@ -106,6 +109,47 @@ func _check_ramp_spread(layer_id: String, low: float, high: float) -> void:
 	var spread := Vector3(first.r - previous.r, first.g - previous.g, first.b - previous.b).length()
 	if spread < 0.5:
 		_fail("%s ramp's endpoints are only %.2f apart in RGB" % [layer_id, spread])
+
+
+## V1.3c's one real design call, and the one a later session is most likely to
+## "tidy" into a signed net. The colour is TOTAL severity on the pair, both
+## directions summed -- so a mutual embargo reads as the most coerced pair on the
+## map. Netted, it would read as clean, which is the single worst thing this map
+## could say.
+func _check_coercion_is_summed_not_netted() -> void:
+	var state = _main._state
+
+	var clean := MapLayers.value(MapLayers.COERCION, state, "FRA", "DEU")
+	if not is_zero_approx(clean):
+		_fail("a clean pair does not read 0.0 on the coercion layer: %s" % clean)
+
+	state.measures[Relations.directed_key("FRA", "DEU")] = _terms("tariff", 0.625)
+	var one_way := MapLayers.value(MapLayers.COERCION, state, "FRA", "DEU")
+
+	state.measures[Relations.directed_key("DEU", "FRA")] = _terms("tariff", 0.625)
+	var both_ways := MapLayers.value(MapLayers.COERCION, state, "FRA", "DEU")
+
+	if both_ways <= one_way:
+		_fail("a mutual measure (%.3f) does not read above a one-way one (%.3f) -- the layer is netting rather than summing" % [both_ways, one_way])
+
+	# And the readout must recover the direction the colour summed away, naming
+	# both sides -- the one place on this map a readout claims both, and it may,
+	# because the player is party to both.
+	var text := MapLayers.value_text(MapLayers.COERCION, state, "FRA", "DEU")
+	if text.find("you") == -1 or text.find("them") == -1:
+		_fail("the coercion readout does not name both directions: '%s'" % text)
+
+	state.measures.clear()
+	if not is_zero_approx(MapLayers.value(MapLayers.COERCION, state, "FRA", "DEU")):
+		_fail("clearing the register did not return the layer to 0.0")
+
+
+func _terms(kind: String, severity: float) -> Dictionary:
+	return {
+		"action_id": "test", "action_name": "Test", "kind": kind,
+		"severity": severity, "since_year": 2026, "since_month": 1,
+		"retaliated": true,
+	}
 
 
 ## A trade weight is one row of ninety. The same nation must not come back the

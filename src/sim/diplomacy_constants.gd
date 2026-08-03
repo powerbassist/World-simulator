@@ -69,9 +69,23 @@ const RESTING_EPSILON := 1.0
 ## nation's own state, read the same way legislature_constants.gd's
 ## PRECONDITION_FIELDS are. An unknown field is a startup error, not a silently
 ## false predicate.
+## The three measure fields are V1.3c's, the third piece of pair state and the
+## first DIRECTED one: they read the acting nation's own measure against this
+## target, not the target's against them. That is what lets impose and lift gate
+## themselves generically, the way agreement_active does for enter and exit, with
+## no coercion knowledge in src/sim/diplomacy.gd at all.
+##
+## THREE rather than one, and the content is what forced it. With only
+## "measure_active", every lift verb is available against any measure -- so
+## lift_sanctions would clear a tariff, because the register knows the pair is
+## coerced and the precondition could not ask HOW. One measure per directed pair
+## makes "is anything in force" the right gate for imposing and the wrong one for
+## lifting.
 const PRECONDITION_FIELDS := [
-	"relations", "agreement_active", "overall_approval_pct", "debt_to_gdp_pct",
-	"unemployment_pct", "deficit_pct_gdp", "growth_annual_pct",
+	"relations", "agreement_active",
+	"measure_active", "tariff_active", "sanction_active",
+	"overall_approval_pct", "debt_to_gdp_pct", "unemployment_pct",
+	"deficit_pct_gdp", "growth_annual_pct",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

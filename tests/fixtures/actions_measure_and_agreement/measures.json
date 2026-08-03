@@ -1,0 +1,29 @@
+{
+  "_note": "Fixture for tests/test_coercion.gd. One action carrying BOTH effects.agreement and effects.measure. Imposing a measure erases the agreement on the same pair, so an action doing both describes an outcome that depends on the order Diplomacy.execute() applies its channels in. Refused at load rather than resolved by a rule nobody would remember.",
+  "actions": [
+    {
+      "id": "measure_and_agreement",
+      "name": "Fixture: Both Channels At Once",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": -5.0,
+        "agreement": {
+          "op": "enter",
+          "weight_multiplier": 1.2,
+          "sector_shift": {
+            "agriculture": -0.1,
+            "industry": 0.2,
+            "services": -0.1
+          }
+        },
+        "measure": {
+          "op": "impose",
+          "kind": "tariff",
+          "severity": 0.5
+        }
+      }
+    }
+  ]
+}

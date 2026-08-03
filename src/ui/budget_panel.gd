@@ -41,6 +41,13 @@ const LEVER_MAX := {
 
 const FIGURE_ROWS := [
 	["revenue", "Revenue"],
+	# Indented under Revenue the way debt service is under Spending, because it is
+	# a component and not a fourth headline. A line of its own rather than folded
+	# into `other`: V1.3c's tariffs are a revenue source the player CHOSE, and one
+	# they cannot see on the panel is the decorative-axis failure
+	# docs/scenario-model.md records, with a different label. Reads "—" while
+	# nothing is imposed, which is every game that has not used the verb.
+	["tariffs", "  of which tariffs"],
 	["spending", "Spending"],
 	["debt_service", "  of which debt service"],
 	["deficit", "Deficit"],
@@ -271,12 +278,20 @@ func _refresh() -> void:
 	for key in _lever_keys():
 		_lever_values[key].text = "%.1f%%" % _pending_value(key)
 
-	var now := Budget.snapshot(_state)
+	# preview() with nothing pending rather than snapshot(), and V1.3c is why.
+	# snapshot() reads ns.revenue_pct_gdp as Budget.tick_month() last left it, so a
+	# tariff imposed THIS month showed an em dash under Revenue until the clock
+	# moved -- the panel telling the player their new revenue source collects
+	# nothing. preview() recomputes the books on a deep copy, so the "now" column is
+	# the live position without this panel writing a byte of sim state, which rule 2
+	# forbids. Found by tests/test_budget_panel.gd, not by looking.
+	var now := Budget.preview(_state, {})
 	var proposed := Budget.preview(_state, _pending)
 	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS, _loader)
 	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS, _loader)
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
+	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
@@ -287,6 +302,17 @@ func _refresh() -> void:
 	_set_figure("proj_growth", "%.2f%%" % last_now["growth_annual_pct"], "%.2f%%" % last_proposed["growth_annual_pct"])
 	_set_figure("proj_unemployment", "%.2f%%" % last_now["unemployment_pct"], "%.2f%%" % last_proposed["unemployment_pct"])
 	_set_figure("proj_debt", "%.1f%%" % last_now["debt_to_gdp_pct"], "%.1f%%" % last_proposed["debt_to_gdp_pct"])
+
+
+## An em dash rather than "0.00%" while nothing is imposed. The two say different
+## things: a zero invites the player to wonder what they did wrong, where a dash
+## says the line is not in play. Every game that has never used the verb reads the
+## dash, which is most of them.
+func _tariff_text(snap: Dictionary) -> String:
+	var pct: float = float(snap.get("tariff_revenue_pct_gdp", 0.0))
+	if is_zero_approx(pct):
+		return "—"
+	return _pct_and_eur(snap, "tariff_revenue_pct_gdp")
 
 
 func _pct_and_eur(snap: Dictionary, key: String) -> String:

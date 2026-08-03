@@ -166,6 +166,12 @@ func _refresh_actions() -> void:
 		agreement_line.theme_type_variation = UiTheme.CAPTION
 	_actions.add_child(agreement_line)
 
+	# BOTH directions, on two lines. The register is directed and a retaliation is
+	# the second entry, so a single "coerced" line would hide the half the player
+	# did not choose -- which is the half costing them growth.
+	_actions.add_child(_measure_line("Measures imposed", player_id, _nation_id))
+	_actions.add_child(_measure_line("Measures received", _nation_id, player_id))
+
 	var available: Array = Diplomacy.available(
 		_state, _loader.diplomatic_actions, player_id, _nation_id
 	)
@@ -176,6 +182,25 @@ func _refresh_actions() -> void:
 	# same way law_panel.gd disables a 49.3 button on cooldown.
 	for action in _loader.diplomatic_actions:
 		_actions.add_child(_action_row(action, available.has(action), player_id))
+
+
+## One direction of the coercion register, named. Reads "none" as a caption while
+## nothing is in force, the same shape the agreement line above uses, so a quiet
+## pair does not shout two extra rows at the player.
+func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
+	var line := Label.new()
+	var terms = _state.measures.get(Relations.directed_key(from_id, to_id))
+	if terms == null:
+		line.text = "%s: none" % prefix
+		line.theme_type_variation = UiTheme.CAPTION
+		return line
+	line.text = "%s: %s, severity %.2f, since %d/%d" % [
+		prefix,
+		terms.get("action_name", terms.get("action_id", "")),
+		float(terms.get("severity", 0.0)),
+		int(terms.get("since_month", 0)), int(terms.get("since_year", 0)),
+	]
+	return line
 
 
 func _action_row(action, is_available: bool, player_id: String) -> Control:

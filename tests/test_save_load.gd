@@ -29,6 +29,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Trade = preload("res://src/sim/trade.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -37,6 +38,7 @@ const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
 const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
 const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
 const TRADE_SLOT := "__test_save_load_roundtrip_trade__"
+const COERCION_SLOT := "__test_save_load_roundtrip_coercion__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -85,6 +87,7 @@ func _init() -> void:
 	_run_scenario_roundtrip(loader)
 	_run_diplomacy_roundtrip(loader)
 	_run_trade_roundtrip(loader)
+	_run_coercion_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -435,6 +438,101 @@ func _run_trade_roundtrip(loader) -> void:
 	Economy.tick_month(rebased)
 	if not is_zero_approx(rebased.player().external_impulse_pct):
 		_fail("a save with no trade_baseline_by_partner did not re-zero the impulse -- the field's own justification is wrong")
+
+
+## V1.3c. The directed measure register, and the argument for why this session
+## earns NO SAVE_VERSION bump -- asserted rather than claimed in a comment.
+##
+## Every field V1.3c adds passes the rule game_state.gd states: an absent one reads
+## as something CORRECT, not as something silently wrong. `measures` reads as {},
+## which is right for every version-10 save because those games could not impose
+## one -- `agreements`' case exactly. `coercion_impulse_pct` reads as 0.0, which is
+## right because nothing was in force. Contrast the two fields that DID earn 9->10
+## above, both of which read as an actively wrong model.
+func _run_coercion_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported %s" % [state.errors])
+		return
+
+	var action = null
+	for candidate in loader.diplomatic_actions:
+		if String(candidate.effects.get("measure", {}).get("op", "")) == "impose":
+			action = candidate
+			break
+	if action == null:
+		_fail("no 'impose' measure action to act with")
+		return
+
+	if not Diplomacy.execute(state, loader.diplomatic_actions, action, "FRA", "DEU")["applied"]:
+		_fail("could not impose a measure to save")
+		return
+	Economy.tick_month(state)
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 9
+	var save_error := SaveManager.save_game(state, clock, COERCION_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game failed on a state with a measure: %s" % save_error)
+		return
+
+	var loaded_result := SaveManager.load_game(COERCION_SLOT)
+	if not loaded_result["ok"]:
+		_fail("load_game failed on a save with a measure: %s" % loaded_result["error"])
+		return
+
+	var loaded = loaded_result["state"]
+	var directed := Relations.directed_key("FRA", "DEU")
+	if not loaded.measures.has(directed):
+		_fail("a save round trip dropped the %s measure" % directed)
+		return
+
+	# The terms are what was imposed, so they have to survive intact -- a severity
+	# that round-trips as 0.0 is a measure that does nothing.
+	var before: Dictionary = state.measures[directed]
+	var after: Dictionary = loaded.measures[directed]
+	for field in ["kind", "severity", "retaliated"]:
+		if str(after[field]) != str(before[field]):
+			_fail("measure.%s round-tripped as %s, expected %s" % [field, after[field], before[field]])
+
+	# The directed key must survive as a DIRECTED key. JSON keys are strings, so a
+	# separator collision would show up here as a measure readable from both sides.
+	if loaded.measures.has(Relations.directed_key("DEU", "FRA")):
+		_fail("a round trip made the measure readable in both directions")
+
+	# And the effects have to survive with it, or a reloaded game is running a
+	# different model from the one that saved it.
+	if not is_equal_approx(
+		Coercion.trade_multiplier(loaded, "FRA", "DEU"),
+		Coercion.trade_multiplier(state, "FRA", "DEU")
+	):
+		_fail("the coercion trade multiplier does not survive a save round trip")
+	if not is_equal_approx(Trade.openness_index(loaded, "FRA"), Trade.openness_index(state, "FRA")):
+		_fail("the openness index does not survive a save round trip with a measure")
+
+	# The no-bump argument, both halves, checked the way the bump's own halves are.
+	var no_measures: Dictionary = state.to_dict()
+	no_measures.erase("measures")
+	var without = GameState.from_dict(no_measures)
+	if not without.measures.is_empty():
+		_fail("a save with no measures key invented some")
+	if not is_equal_approx(Trade.openness_index(without, "FRA"), 1.0):
+		_fail("a save with no measures key did not read as 'nothing imposed' -- the no-bump argument is wrong")
+
+	var no_impulse: Dictionary = state.to_dict()
+	for id in (no_impulse["nations"] as Dictionary).keys():
+		(no_impulse["nations"][id] as Dictionary).erase("coercion_impulse_pct")
+	var zeroed = GameState.from_dict(no_impulse)
+	if zeroed.nations["DEU"].coercion_impulse_pct != 0.0:
+		_fail("an absent coercion_impulse_pct did not read as exactly 0.0")
+
+	# The version this session did NOT bump. Stated as an assertion so that a
+	# later session raising SAVE_VERSION has to come here and say why.
+	if GameState.SAVE_VERSION != 10:
+		_fail("SAVE_VERSION is %d -- V1.3c argued for staying at 10, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 func _run_roundtrip(state, clock) -> void:

@@ -20,6 +20,7 @@ extends RefCounted
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const TK = preload("res://src/sim/trade_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
+const CK = preload("res://src/sim/coercion_constants.gd")
 
 
 var id: String = ""
@@ -36,8 +37,10 @@ var cooldown_months: int = 0
 ## acting nation's own state.
 var preconditions: Array = []
 
-## {"relations": float, "bloc_offset": {...}} -- `relations` is required and
-## non-zero, `bloc_offset` optional.
+## Four channels: `relations` (required and non-zero), `bloc_offset` (optional),
+## `agreement` (V1.3b, optional) and `measure` (V1.3c, optional). The last two are
+## mutually exclusive -- a measure breaks an agreement on the same pair, so an
+## action carrying both would describe an order-dependent outcome.
 var effects: Dictionary = {}
 
 
@@ -135,9 +138,90 @@ static func _extract_effects(d: Dictionary, action_id: String, filename: String,
 	if raw.has("agreement"):
 		out["agreement"] = _extract_agreement(raw["agreement"], action_id, filename, errors)
 
+	if raw.has("measure"):
+		out["measure"] = _extract_measure(raw["measure"], action_id, filename, errors)
+
+	# An action cannot both sign a treaty and impose a tariff on the same pair: the
+	# first writes the agreement register and the second erases it, so the file
+	# would describe an outcome that depends on the order Diplomacy.execute()
+	# happens to apply its channels in. Refused at load rather than resolved by a
+	# rule nobody would remember.
+	if raw.has("agreement") and raw.has("measure"):
+		errors.append("%s: %s carries both effects.agreement and effects.measure -- a measure breaks an agreement on the same pair, so one action cannot do both" % [
+			filename, action_id
+		])
+
 	for key in raw.keys():
-		if key != "relations" and key != "bloc_offset" and key != "agreement":
+		if key != "relations" and key != "bloc_offset" and key != "agreement" and key != "measure":
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, action_id, key])
+
+	return out
+
+
+## The fourth effect channel, added at V1.3c: an action that imposes or lifts a
+## coercive measure. Same shape as effects.agreement above and for the same reason
+## -- docs/trade-model.md's argument against a content type of its own applies
+## unchanged, and V1.3c ships no data/measures/ either.
+##
+## The two kinds are one verb with a different price, which is what
+## docs/tiers/v1.md section 3 committed to. A "tariff" collects revenue and bites
+## moderately; a "sanction" collects nothing and bites hard.
+##
+## A "lift" carries no terms. It names nothing and sets nothing; it clears the
+## directed entry. Terms on a lift would be an author believing they had written
+## something read by nobody, so they are a load error rather than ignored -- the
+## same rule an agreement "exit" gets.
+static func _extract_measure(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.measure must be an object" % [filename, action_id])
+		return {}
+
+	var op = raw.get("op", "")
+	if typeof(op) != TYPE_STRING or not (op == "impose" or op == "lift"):
+		errors.append("%s: %s effects.measure.op '%s' must be \"impose\" or \"lift\"" % [
+			filename, action_id, str(op)
+		])
+		return {}
+
+	var out := {"op": op}
+
+	if op == "lift":
+		for key in raw.keys():
+			if key != "op":
+				errors.append("%s: %s effects.measure.%s is set on a \"lift\" -- a lift clears the pair and reads no terms" % [
+					filename, action_id, key
+				])
+		return out
+
+	var kind = raw.get("kind", "")
+	if typeof(kind) != TYPE_STRING or not CK.MEASURE_KINDS.has(kind):
+		errors.append("%s: %s effects.measure.kind '%s' is not a recognised kind (%s)" % [
+			filename, action_id, str(kind), str(CK.MEASURE_KINDS)
+		])
+		return out
+	out["kind"] = kind
+
+	var severity := float(raw.get("severity", 0.0))
+	if severity <= 0.0:
+		errors.append("%s: %s effects.measure.severity must be > 0 -- a measure that bites nothing is not a measure" % [
+			filename, action_id
+		])
+	elif severity > CK.MAX_MEASURE_SEVERITY:
+		errors.append("%s: %s effects.measure.severity = %s exceeds MAX_MEASURE_SEVERITY (%s)" % [
+			filename, action_id, str(severity), str(CK.MAX_MEASURE_SEVERITY)
+		])
+	out["severity"] = severity
+
+	# Severity is the ONLY intensity dial. An authored tariff rate was cut at
+	# measurement time -- tools/coercion_probe.gd's first revenue table showed yield
+	# exactly linear in it, because the trade bite read severity and the rate merely
+	# scaled the answer, so the two were one intensity written twice. Named here
+	# because an author reaching for a rate should find out why there isn't one.
+	for key in raw.keys():
+		if key != "op" and key != "kind" and key != "severity":
+			errors.append("%s: %s effects.measure.%s is not a recognised term -- severity is the only intensity, and a tariff rate is the same number written twice" % [
+				filename, action_id, key
+			])
 
 	return out
 

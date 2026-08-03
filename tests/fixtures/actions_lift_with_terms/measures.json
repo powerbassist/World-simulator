@@ -1,0 +1,20 @@
+{
+  "_note": "Fixture for tests/test_coercion.gd. A 'lift' that carries terms. A lift clears the directed entry and reads nothing, so terms on one are an author believing they wrote something no code path reads -- the same class of quiet lie an agreement 'exit' carrying terms is already refused for.",
+  "actions": [
+    {
+      "id": "lift_with_terms",
+      "name": "Fixture: Lift Carrying Terms",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": 5.0,
+        "measure": {
+          "op": "lift",
+          "kind": "tariff",
+          "severity": 0.5
+        }
+      }
+    }
+  ]
+}

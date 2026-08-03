@@ -17,6 +17,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 var _failures: Array[String] = []
 var _state
@@ -69,6 +70,25 @@ func _setup() -> void:
 		_fail("with nothing pending, the now and proposed columns should agree")
 	if _panel._figures["proj_debt"][0].text.is_empty():
 		_fail("the 24-month projection did not populate")
+
+	# V1.3c. The tariff line reads an em dash rather than "0.00%" while nothing is
+	# imposed, which is every game that has never used the verb. A zero invites the
+	# player to wonder what they did wrong; a dash says the line is not in play.
+	if _panel._figures["tariffs"][0].text != "—":
+		_fail("the tariff line reads '%s' with nothing imposed, expected an em dash" % _panel._figures["tariffs"][0].text)
+
+	# And it must appear the moment a measure exists -- a revenue source the player
+	# chose and cannot see on the panel is a decorative one.
+	_state.measures[Relations.directed_key(_state.player_nation_id, "DEU")] = {
+		"action_id": "test", "action_name": "Test", "kind": "tariff",
+		"severity": 0.625, "since_year": _state.year, "since_month": _state.month,
+		"retaliated": true,
+	}
+	_panel._refresh()
+	if _panel._figures["tariffs"][0].text == "—":
+		_fail("the tariff line still reads an em dash with a tariff in force")
+	_state.measures.clear()
+	_panel._refresh()
 
 
 func _move_a_lever() -> void:

@@ -26,6 +26,17 @@ extends RefCounted
 ## make the key ambiguous.
 const SEPARATOR := "|"
 
+## V1.3c's directed key, for the register a tariff or a sanction lives on.
+## Deliberately a DIFFERENT character from SEPARATOR: the two kinds of key are
+## not interchangeable, and a directed key passed to key() or to other() would
+## sort or split silently rather than fail. With distinct separators, other()
+## returns "" for a directed key and every mix-up is visible.
+##
+## docs/diplomacy-model.md named this in advance as the additive escape hatch --
+## a directed layer OVER the symmetric level, with the pair key unchanged and
+## nothing already reading `relations` rewritten.
+const DIRECTED_SEPARATOR := ">"
+
 
 ## The canonical key for an unordered pair. Sorted, so the caller's argument
 ## order cannot matter.
@@ -33,6 +44,24 @@ static func key(a: String, b: String) -> String:
 	if a <= b:
 		return a + SEPARATOR + b
 	return b + SEPARATOR + a
+
+
+## The key for one nation acting on another. NOT sorted, and that is the whole
+## point: FRA>DEU and DEU>FRA are two separate entries, because a tariff and the
+## retaliation against it are two acts and not one contract. An agreement stays
+## on key() above, where both sides genuinely read the same terms.
+static func directed_key(from: String, to: String) -> String:
+	return from + DIRECTED_SEPARATOR + to
+
+
+## The two sides of a directed key, as [from, to], or an empty array if the
+## string is not one. Mirrors other()'s job for the symmetric key: nothing
+## outside this file should be splitting a key by hand.
+static func directed_parts(directed: String) -> Array:
+	var parts := directed.split(DIRECTED_SEPARATOR)
+	if parts.size() != 2:
+		return []
+	return [parts[0], parts[1]]
 
 
 ## The pair's current score, or `fallback` if the pair has none. A missing pair

@@ -6,6 +6,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --frames 40
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer relations
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer trade --hover DEU
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -15,6 +16,8 @@ extends SceneTree
 ##
 ## Runs windowed, not headless, on purpose: root.get_texture() is the window's own
 ## framebuffer, and with no rendering device there is nothing in it.
+
+const Relations = preload("res://src/core/relations.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -33,6 +36,13 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+
+## V1.3c. Impose a spread of measures before capturing, because a new game has
+## none and a frame of an all-zero layer proves nothing about its ramp -- which is
+## the one claim a screenshot exists to check. U5c's own falsifier was whether a
+## saturated ramp survives being drawn over a satellite photograph; that question
+## cannot be asked of a layer where every nation sits at the same end.
+var _coerce := false
 var _main
 
 
@@ -47,6 +57,8 @@ func _init() -> void:
 			_layer = args[i + 1]
 		elif args[i] == "--hover" and i + 1 < args.size():
 			_hover = args[i + 1].to_upper()
+		elif args[i] == "--coerce":
+			_coerce = true
 
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
@@ -85,6 +97,8 @@ func _process(_delta: float) -> bool:
 func _apply_view() -> void:
 	if _main == null or _main._map_view == null:
 		return
+	if _coerce:
+		_impose_a_spread()
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		_main._hud.map_legend.show_layer(_main._map_view.layer())
@@ -94,3 +108,40 @@ func _apply_view() -> void:
 		_main._hud.map_legend.show_hover(
 			_hover, _main._state, _main._map_view.viewer_id()
 		)
+
+
+## One measure at each legend stop, so the captured frame shows the whole ramp
+## rather than one point on it. Written straight into the register, the way
+## tools/coercion_probe.gd does -- this is a dev tool looking at pixels, not a
+## test of the command path, and going through Diplomacy.execute() would tie the
+## severities to whatever the shipped verbs happen to use.
+func _impose_a_spread() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var viewer: String = _main._map_view.viewer_id()
+
+	# Deliberately spread across the domain AND across the two directions, so the
+	# frame answers both questions at once: does the ramp separate, and does a
+	# measure aimed AT the player read the same as one the player aimed.
+	var spread := {"DEU": 0.625, "ITA": 1.0, "ESP": 0.3}
+	for target in spread.keys():
+		if not state.nations.has(target):
+			continue
+		state.measures[Relations.directed_key(viewer, target)] = _terms(
+			state, "tariff", float(spread[target])
+		)
+	# Mutual: the pair that must read at the top of the ramp rather than as clean,
+	# which is the netting bug this layer's design note warns a later session about.
+	if state.nations.has("ITA"):
+		state.measures[Relations.directed_key("ITA", viewer)] = _terms(state, "tariff", 1.0)
+
+	_main._map_view.queue_redraw()
+
+
+func _terms(state, kind: String, severity: float) -> Dictionary:
+	return {
+		"action_id": "screenshot", "action_name": "Screenshot",
+		"kind": kind, "severity": severity,
+		"since_year": state.year, "since_month": state.month, "retaliated": true,
+	}

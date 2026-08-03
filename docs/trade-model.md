@@ -232,8 +232,10 @@ The session's defining cost, and the reason V1.3b was marked plan-first. Ten reg
 > into a file per run, dropping the engine banner line. `git stash pop`, run the
 > same set into a second directory, `diff -rq`. Takes a few minutes and turns a
 > paragraph of reasoning about whether a constant still holds into a yes or no.
-> V1.3c owns a re-run too — tariffs move revenue and sanctions move a partner's
-> growth, and both reach figures every economy constant was measured against.
+> V1.3c owned a re-run too, and it came back **bit-identical across the same
+> thirty runs** — see [[coercion-model]]. The invariant held for the same reason
+> it did here: no regime imposes a measure, so the trade multiplier is exactly
+> 1.0 and the coercion impulse exactly 0.0, both by construction.
 
 **All thirty are bit-identical.** Not "within tolerance" — byte-for-byte the same output. That is the invariant the model was shaped to make provable: the openness index is exactly 1.0 with nothing signed, and the impulse is exactly zero while partners sit at their baselines, both by construction rather than by tuning. Every economy constant measured through this channel before V1.3b is therefore still valid, unchanged and unargued.
 
@@ -257,6 +259,14 @@ Two candidates were checked rather than assumed, and **neither was the one that 
 
 All three are asserted directly in `tests/test_save_load.gd` rather than argued in a comment.
 
+## What V1.3c did to this model
+
+Three changes, none of which rewrote anything here.
+
+- **`_raw()` took a second flag.** `with_agreements` became `with_agreements` **and** `with_measures`, so `openness_index()`'s counterfactual is now *"no agreements and no measures"*. That is what makes a tariff cost trend growth, and it reuses this session's channel rather than adding one.
+- **A second weight vector exists.** `weights_before_measures()` — agreements in force, measures removed. Revenue is collected on the trade that still crosses the border, damage is done by the trade destroyed, and reading both off the same vector put a trap in the content. See [[coercion-model]].
+- **The directed table earned its keep a second time.** Coercion damage scales with `w(target → imposer)`, so `w(LUX→FRA)` being 12.2× `w(FRA→LUX)` makes France sanctioning Luxembourg 12.1× the act Luxembourg sanctioning France is. The size asymmetry V1.3a dropped and this session caught now does work in two places.
+
 ## Bounds
 
 | Quantity | Bound |
@@ -270,7 +280,7 @@ All three are asserted directly in `tests/test_save_load.gd` rather than argued 
 ## Deliberately absent
 
 - **No `Trade.tick_month()`.** The module is stateless — a weight recomputed from live GDP, live relations and the register has nothing to store — so there is no line in `main.gd`'s chain and no ordering question beyond the snapshot.
-- **No agreement duration or expiry.** V1.3c owns it, via a sanction breaking one.
+- ~~**No agreement duration or expiry.** V1.3c owns it, via a sanction breaking one.~~ Built at V1.3c: `Diplomacy.execute()` erases the pair's agreement when an impose lands on it. One line, no duration model. See [[coercion-model]].
 - **No effect on the partner beyond the contract itself.** The partner's economy opens because it is party to the agreement; nothing else about it is modelled, and it never acts.
 - **A scenario cannot author a starting agreement.** [[scenario-model|The three axes]] are unchanged. Stated so it is a decision rather than an assumption.
 - **No new `ISSUE_KEYS` entry**, and no trade colouring on the map. Both are still V1.3d's and both would reopen measurements this session did not touch.

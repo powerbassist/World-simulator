@@ -17,10 +17,13 @@ extends RefCounted
 
 const Trade = preload("res://src/sim/trade.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 const POLITICAL := "political"
 const RELATIONS := "relations"
 const TRADE := "trade"
+const COERCION := "coercion"
 
 ## The relations ramp's domain, and why it is not 0-100.
 ##
@@ -49,6 +52,22 @@ const RELATIONS_MAX_SHOWN := 72.0
 ## docs/trade-model.md: FRA->DEU 0.329, FRA->LUX 0.021.
 const EVEN_SHARE := 1.0 / 9.0
 const TRADE_MAX_SHOWN := 0.33
+
+## The coercion ramp's domain: total severity on the pair, both directions summed.
+##
+## SUMMED RATHER THAN NETTED, and that is this layer's one real call. A signed
+## net -- what you impose minus what is imposed on you -- reads a mutual embargo
+## as zero, which is the single worst thing this map could say. Summing is also
+## what makes the colour the quantity the MODEL actually uses:
+## Coercion.severity_on_pair() is what cuts the trade weight, and the map draws it
+## rather than a second number of the UI's own. Direction is not lost, it moves to
+## the hover readout, where it can be stated exactly instead of encoded in a hue.
+##
+## The stops are the shipped content read back: one tariff is 0.625, its
+## retaliation 0.375, so a tariff answered is 1.0 -- the value a player in an
+## ordinary trade fight will actually see. 2.0 is both sides at full embargo and
+## is the ceiling, since one measure per directed pair is the register's rule.
+const COERCION_MAX_SHOWN := 2.0
 
 ## The layers, in switcher order.
 ##
@@ -100,6 +119,18 @@ const LAYERS: Array[Dictionary] = [
 		],
 		"caption": "Share of your external demand.",
 	},
+	{
+		"id": COERCION,
+		"label": "Coercion",
+		"alpha": 0.50,
+		"stops": [
+			{"at": 0.0, "text": "—  nothing in force"},
+			{"at": 0.625, "text": "0.6  tariffs one way"},
+			{"at": 1.0, "text": "1.0  tariffs answered"},
+			{"at": 2.0, "text": "2.0  mutual embargo"},
+		],
+		"caption": "Tariffs and sanctions on the pair, both ways.",
+	},
 ]
 
 # -- Ramps ----------------------------------------------------------------------
@@ -119,6 +150,20 @@ const REL_WARM := Color(0.196, 0.722, 0.678)
 const TRADE_LOW := Color(0.180, 0.196, 0.310)
 const TRADE_MID := Color(0.788, 0.635, 0.153)
 const TRADE_HIGH := Color(0.976, 0.898, 0.639)
+
+## Coercion: sequential, from the map's own navy up through ember to a hot red.
+## Sequential rather than diverging because the datum is a magnitude with no
+## natural middle -- zero is not a neutral between two opposites, it is simply
+## nothing in force, and the low end is pulled toward NO_VALUE so a quiet Europe
+## reads as quiet rather than as a colour choice.
+##
+## Red, and deliberately the only place on this map that uses it as a LEVEL. The
+## relations ramp's cold end is also red, but the two layers are never up at once
+## and a player looking at a red continent should be in no doubt something is
+## wrong -- which on this layer is exactly what the colour means.
+const COERCE_NONE := Color(0.129, 0.196, 0.310)
+const COERCE_MID := Color(0.706, 0.325, 0.180)
+const COERCE_HIGH := Color(0.918, 0.243, 0.208)
 
 ## Ten land tones for the political layer, cycled by hash so neighbours rarely
 ## collide. Moved here from map_view.gd at U5c with its argument intact.
@@ -221,6 +266,13 @@ static func ramp(layer_id: String, v: float) -> Color:
 			if v <= EVEN_SHARE:
 				return TRADE_LOW.lerp(TRADE_MID, _fraction(v, 0.0, EVEN_SHARE))
 			return TRADE_MID.lerp(TRADE_HIGH, _fraction(v, EVEN_SHARE, TRADE_MAX_SHOWN))
+		COERCION:
+			# Broken at 1.0 -- a tariff answered -- rather than at the domain's
+			# midpoint, so the ordinary trade fight sits at the top of the first
+			# half and the whole second half is reserved for escalation past it.
+			if v <= 1.0:
+				return COERCE_NONE.lerp(COERCE_MID, _fraction(v, 0.0, 1.0))
+			return COERCE_MID.lerp(COERCE_HIGH, _fraction(v, 1.0, COERCION_MAX_SHOWN))
 	return NO_VALUE
 
 
@@ -235,6 +287,11 @@ static func value(layer_id: String, state, viewer_id: String, nation_id: String)
 			return Diplomacy.score(state, viewer_id, nation_id)
 		TRADE:
 			return float(Trade.weights(state, viewer_id).get(nation_id, 0.0))
+		COERCION:
+			# 0.0 rather than NAN for a clean pair: "nothing in force" is a real
+			# reading and belongs on the ramp, unlike the viewer's own nation, which
+			# has no pair with itself and is caught above.
+			return Coercion.severity_on_pair(state, viewer_id, nation_id)
 	return NAN
 
 
@@ -256,7 +313,31 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 			return "%s–%s  %.0f / 100" % [viewer_id, nation_id, v]
 		TRADE:
 			return "%s  %.1f%% of %s's demand" % [nation_id, 100.0 * v, viewer_id]
+		COERCION:
+			# The one readout on this map that names BOTH sides of a pair, and it
+			# may: the colour is a sum, so direction has to be recoverable
+			# somewhere, and unlike a trade share both halves are the viewer's own
+			# business -- one is what they did, the other is what was done to them.
+			# U5c's rule is about what a readout may CLAIM, and it claims nothing
+			# here that the player is not party to.
+			if is_zero_approx(v):
+				return "%s  nothing in force" % nation_id
+			return "%s  you %s, them %s" % [
+				nation_id,
+				_measure_text(state, viewer_id, nation_id),
+				_measure_text(state, nation_id, viewer_id),
+			]
 	return nation_id
+
+
+## One side of a coercion pair, in words. "—" where that side has imposed nothing,
+## so the readout says which of the two directions is live rather than printing a
+## zero the player has to interpret.
+static func _measure_text(state, from_id: String, to_id: String) -> String:
+	var terms = state.measures.get(Relations.directed_key(from_id, to_id))
+	if terms == null:
+		return "—"
+	return "%s %.2f" % [String(terms.get("kind", "")), float(terms.get("severity", 0.0))]
 
 
 ## Clamped, so a value outside the shown domain saturates at the end of the ramp

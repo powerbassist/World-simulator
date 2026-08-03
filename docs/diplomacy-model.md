@@ -29,6 +29,9 @@ The rejected alternative was two directed numbers. It is truer in the abstract: 
 > [!note] The escape hatch is named, so widening stays additive
 > If V1.3c needs "A resents B more than B resents A", it adds a **directed grievance layer over** the symmetric level. The pair key does not change, and nothing already reading `relations` is rewritten.
 
+> [!success] Taken at V1.3c, exactly as written
+> `GameState.measures` is keyed `"FRA>DEU"` by a second builder in the same file, on a **different separator**, so `other()` refuses a directed key and `directed_parts()` refuses a symmetric one. Relations and agreements were not touched. A tariff and its retaliation are two entries because they are two acts — which is the thing a symmetric key could never say. See [[coercion-model]].
+
 ### 2. Derived starting values — from two inputs, not three
 
 [[data-sources]] has nothing to author 45 numbers from; its own *what datasets cannot provide* list is explicit. The precedent leans derived anyway — [[cabinet-model|competence]] is derived, and military capability is already scheduled derived at V1.3f.
@@ -147,6 +150,8 @@ That is not fatal, and it is not a bug: a policy that divides the country genuin
 | `bilateral_treaty` | +8 | 24 | business +0.10, workers −0.10 | The relations **gate** — `relations >= 70` — plus a split price. |
 | `settle_dispute` | +10 | 24 | all six at −0.09 | The one whose cost the player reads in the **headline** figure (≈ −3.5 points at twelve months). |
 
+V1.3c added four more on the same shape — `impose_tariffs`, `lift_tariffs`, `impose_sanctions`, `lift_sanctions` — with a fourth effect channel, `effects.measure`, and three new precondition fields. Their magnitudes were set by their own measurement; see [[coercion-model]].
+
 Three consequences of the measurement, none of which were in the plan:
 
 - **Every split price is authored at 0.08–0.12, near the `MAX_ACTION_BLOC_OFFSET` ceiling of 0.15**, because anything smaller does not clear ±3 even on its own bloc row.
@@ -161,6 +166,8 @@ Three consequences of the measurement, none of which were in the plan:
 V1.3e replaces it, and [[ROADMAP]] has it opening with a checklist of these rather than discovering them. `tests/test_diplomacy.gd` asserts the current behaviour directly — acting on Germany leaves `DEU|ITA` exactly at its resting value — so replacing the stopgap is a visible test change rather than a silent one.
 
 Third-pair effects need an alliance model, which is V1.3f's, not this session's.
+
+**V1.3c added the third**, in the same shape again: `Coercion.retaliation_terms()` mirrors a measure back once at a fixed fraction after a fixed delay, weighs nothing, and never acts first. `tests/test_coercion.gd` asserts it by mutation. The three compose — V1.3a's says the target does not *react*, V1.3b's says it does not *decide*, V1.3c's says it reacts by a fixed rule and decides nothing. See [[coercion-model]].
 
 **V1.3b added the second entry to that checklist**, in the same shape and with the same kind of test: `Diplomacy.would_accept_agreement()` is a pair score against one threshold, the target's own economy is never consulted, and `tests/test_trade.gd` asserts it by mutating that economy to extremes and checking the verdict does not move. The two stopgaps compose rather than conflict — this one says the target does not *react*, that one says it does not *decide*.
 

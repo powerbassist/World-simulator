@@ -117,6 +117,30 @@ var relations := {}  # sorted pair key, e.g. "DEU|FRA" -> float in [0, 100]
 ## See docs/trade-model.md.
 var agreements := {}  # sorted pair key -> Dictionary of agreed terms
 
+## Coercive measures in force -- tariffs and sanctions, V1.3c. The third piece of
+## pair state, and the FIRST that is DIRECTED: keyed "FRA>DEU" by
+## src/core/relations.gd's directed_key(), never by the sorted key() the other two
+## use.
+##
+## That is the additive escape hatch docs/diplomacy-model.md named in advance: a
+## directed layer OVER the symmetric level, with the pair key unchanged and nothing
+## already reading `relations` rewritten. It is directed because a measure is not a
+## contract -- FRA>DEU and DEU>FRA are two separate acts, and a retaliation is
+## precisely the second one. An agreement stays symmetric, where both sides really
+## do read the same terms.
+##
+## Each entry carries the TERMS the way an agreement does, and for the same two
+## reasons: a measure is imposed at a moment and its severity is what was imposed,
+## and storing the terms is what lets src/sim/coercion.gd take no loader.
+## {action_id, action_name, kind, severity, since_year, since_month, retaliated}.
+## Severity is the model's only intensity dial -- an authored tariff rate was cut
+## at measurement time as the same number written twice.
+##
+## Written ONLY by Diplomacy (execute() for the player, tick_month() for the
+## declared-stopgap retaliation); src/sim/coercion.gd and src/sim/trade.gd read it
+## and never write. See docs/coercion-model.md.
+var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure terms
+
 var history: Array[Dictionary] = []
 
 ## What the player's last few commands actually did -- U4. Newest first, each
@@ -246,7 +270,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 
 	ns.trend_annual_pct = Economy.trend_pct(ns)
 	ns.growth_annual_pct = ns.trend_annual_pct
-	Budget.recompute(ns)
+	# `null` state, said out loud at the one call site where it is provably right
+	# rather than defaulted in the signature -- V1.3b's argument against a
+	# defaulted loader on project() applies to a defaulted state here too. A
+	# new-game nation has no measures against anyone: the register starts empty and
+	# a scenario cannot author one, the same way it cannot author an agreement. And
+	# `gs` is only half-populated at this point in the loop, so threading it
+	# through would hand Trade.weights() a partial roster.
+	Budget.recompute(null, ns)
 
 	# Before Opinion, which is the one init that now WRITES bloc_offset --
 	# a scenario's authored approval is held at its target through that
@@ -313,6 +344,10 @@ func duplicate_state():
 	gs.month = month
 	gs.relations = relations.duplicate(true)
 	gs.agreements = agreements.duplicate(true)
+	# Copied for the same reason agreements are: Budget.project() runs the real
+	# model forward on this copy, and a projection that dropped the measures in
+	# force would report a tariff's revenue as never having existed.
+	gs.measures = measures.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -345,6 +380,7 @@ func to_dict() -> Dictionary:
 		"nations": nations_dict,
 		"relations": relations,
 		"agreements": agreements,
+		"measures": measures,
 		"history": history,
 		"recent_effects": recent_effects,
 	}
@@ -393,6 +429,24 @@ static func from_dict(d: Dictionary):
 			"since_month": int(entry.get("since_month", 0)),
 			"weight_multiplier": float(entry.get("weight_multiplier", 1.0)),
 			"sector_shift": shifts,
+		}
+
+	# Re-floated the same way again. An absent `measures` reads as {} and that is
+	# CORRECT rather than silently wrong for every version-10 save -- those games
+	# could not impose a measure -- which is why V1.3c earns no SAVE_VERSION bump.
+	# The same test scenario_id passed and eu_member/neighbours failed. See the
+	# SAVE_VERSION comment at the top of this file and docs/coercion-model.md.
+	var meas: Dictionary = d.get("measures", {})
+	for directed_key in meas.keys():
+		var entry: Dictionary = meas[directed_key]
+		gs.measures[directed_key] = {
+			"action_id": entry.get("action_id", ""),
+			"action_name": entry.get("action_name", ""),
+			"kind": entry.get("kind", ""),
+			"severity": float(entry.get("severity", 0.0)),
+			"since_year": int(entry.get("since_year", 0)),
+			"since_month": int(entry.get("since_month", 0)),
+			"retaliated": bool(entry.get("retaliated", false)),
 		}
 
 	var hist: Array = d.get("history", [])

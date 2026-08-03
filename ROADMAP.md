@@ -73,6 +73,8 @@ a dashboard was the right object.
 | U5a | UI | The ruler's shell — the map stops being a tab and becomes the background the game is played on; the 150px tab rail is deleted and `dashboard.gd` with it; the seven docked pages become **floating windows that pin**, so reading the budget while proposing the law that changes it is possible for the first time. Bottom-left portrait card with the player's own approval, four themed clusters with a sub-row along the bottom, date and speed in the bottom-right corner, a message column stubbed for V1.8. One theme retuned from flat grey to deep navy with a **brass** accent, the repo's first committed fonts and its first four committed icons, and a 1920×1080 base that opens fullscreen. `flag` added to all ten nation files as data with a layout string, because a colour table in the UI is Rule 1's `if nation_id == "FRA"` wearing a hat |
 | V1.3a | Sim | Relations and diplomatic actions — the block's schema session: **pair-keyed relations**, the first live state that is neither per-nation nor global, symmetric by construction and derived from the only two inputs the data can supply (EU co-membership, and a shared border added as fact); a new content type on the law template's preconditions/cooldown/effects shape but explicitly *not* its vote; four player verbs on the Europe tab's existing nation panel; `law_bloc_offset` → `bloc_offset` at the fifth writer that is not a law; `SAVE_VERSION` 8 → 9. The named escalation trigger did not fire, and the measurement set every content number — including one it made a table redo, and one exploit it caught before the content shipped |
 
+| V1.3c | Sim | Tariffs and sanctions — coercion in both directions, on the project's **first directed state**: `GameState.measures` keyed `"FRA>DEU"`, which is the additive escape hatch [[diplomacy-model|V1.3a]] named in advance and took without touching a line of relations or agreements, because a tariff and its retaliation are two acts where a relationship and a contract are one. One verb with two prices — a tariff collects and bites moderately, a sanction collects nothing and bites hard — and they are **the same mechanism read at two points on one curve**. A fourth effect channel on the existing diplomatic action; no new content type again. Three things fall out of two constants rather than being authored: a **real Laffer curve** with an interior maximum at 0.625 severity, the protectionist trade-off (revenue now, trend later, through V1.3b's openness channel unchanged), and the fact that **who you can hurt is a different question from who matters to you** — damage scales with `w(target → imposer)`, so FRA→LUX is 12.1× LUX→FRA. **The probe corrected the model twice before any content existed**: an authored tariff rate was cut as the same intensity written twice, and damage read off the post-measure weight made every severity above the revenue peak *strictly dominated*. The named escalation trigger — that being sanctioned is below the readable floor — **fired on the first sweep and was resolved by the second correction rather than by tuning**; `COERCION_IMPULSE_MAX` was then found binding in reachable play and raised. Third declared stopgap (retaliation), agreement expiry discharged in one line, `SAVE_VERSION` **stays at 10** and the test says why. Thirty fourteen-year runs **bit-identical** again |
+
 | U5c | UI | The map layers — the ten stop being coloured by a hash of their id and start being coloured by what the player has with them. `src/ui/map_layers.gd` is the **only** place a roster fill is chosen and is a **registry rather than a mode flag**: three layers today (political, relations, trade), and a fourth is one entry plus one branch, which is what let this run before V1.3c instead of after it. Three calls, each of which could have gone the other way. **The viewer is always the player** — the symmetric/directed asymmetry is not about whose seat you look from but about what the readout may *claim*, so `FRA–DEU 68` names the pair and a trade share never claims the partner's side. **Alpha is per-layer and `LAND_ALPHA` is not inherited** — U5b's 0.42-goes-grey finding is about a ramp with no hue variation and does not transfer, so the data layers carry 0.50. **Both ramps are anchored on measured values** — relations on `docs/diplomacy-model.md`'s four resting tiers rather than the nominal 0–100, trade mid-anchored on an even ninth so the map reads *above or below its fair share*. Hover moved off the fill and onto the stroke, because lifting a fill toward the accent is the one place in this interface where pointing at a number would change it; the player's own nation takes a brass outline and `NO_VALUE`, having no pair with itself and no self-weight. The staleness the row never mentioned is fixed: the map drew only on hover, pan, zoom and resize, which was complete while a colour came from `hash(id)` and is not once relations drift monthly |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
@@ -82,8 +84,8 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 ## Next
 
 **V1.3 is decomposed into six sessions** — the argument, and the four calls it
-made, are under *V1.3 — the decomposition* below. V1.3a and V1.3b are shipped.
-The next session is **V1.3c, tariffs and sanctions**.
+made, are under *V1.3 — the decomposition* below. V1.3a, V1.3b and V1.3c are
+shipped. The next session is **V1.3d, the bloc**.
 
 ### U5a — the ruler's shell (shipped)
 
@@ -150,24 +152,80 @@ files, `Nation.from_dict()` and a validator. It is presentation content, it
 fails at load like every other bad field, and it was the only way to draw a flag
 without breaking Rule 1; but the plan's claim was wrong and the row says so.
 
-### V1.3c — tariffs and sanctions (next)
+### V1.3c — tariffs and sanctions (shipped)
 
-Coercion in both directions: tariff revenue, sanctions imposed and received,
-domestic blowback, retaliation. Reads a and b.
+The first session that perturbs a partner on purpose, and the one that took the
+directed-state escape hatch V1.3a named. Full account: [[coercion-model]]. What
+belongs here is what the session's own record adds.
 
-**It inherits a channel that is built, measured and waiting.** V1.3b made
-`external_impulse_pct` per-partner and directed, and left it structurally
-correct but numerically small — the nine AI nations have no budget and take no
-shocks, so nothing perturbs a partner except a bilateral agreement. **V1.3c is
-the first session that perturbs one on purpose**, and `tools/trade_probe.gd`
-already measures what the channel does under a synthetic partner recession: at
-France's weight on Germany the peak impulse is 6% of `IMPULSE_MAX`, so the
-headroom is known rather than assumed. [[trade-model]] also records the coupled
-ten-nation system's eigenvalues, so the decision to give the other nine an
-external impulse of their own can be taken knowingly rather than re-derived.
+**The measurement corrected the model twice, both times before any content
+existed, and that is the whole case for the probe-first discipline.** The first:
+`effects.measure` carried both a `severity` and a `tariff_rate_pct`, and revenue
+came back *exactly* linear in the rate — 0.0005 per point, every rate, every
+nation — because the trade bite read severity and the rate only scaled the
+answer. Two numbers for one intensity, the same redundancy V1.3b's own probe
+caught between the gravity tie bonuses and the relations term. The rate was cut,
+and cutting it is what turned an **asserted** Laffer curve into a real one: with
+severity the only dial, revenue has an interior maximum at exactly
+`1/(2 × MEASURE_TRADE_BITE)`, and nothing authors that number.
 
-**Two stopgaps are on the checklist now, not one.** V1.3c adds a third and
-declares it the same way — see the decomposition's call 2 below.
+The second correction was larger. Damage was read off the **post-measure** trade
+weight, which is intuitive and wrong: a full embargo has destroyed the trade it
+would damage through, so damage saturated while cost kept rising and **every
+severity above the revenue peak was strictly dominated** — less money *and* less
+harm for more trend loss. A trap in the content, caught with no content in the
+repo. The fix is that the two effects read different weights because they are
+different quantities: you damage in proportion to the trade you *destroy*, you
+collect in proportion to what still *crosses*.
+
+**The named escalation trigger fired, and then unfired — which is the outcome
+the trigger existed to produce.** The prior was poor: [[trade-model]] had
+measured the transmission channel at 6% of `IMPULSE_MAX` under a synthetic
+recession larger than any sanction should manage. The first sweep confirmed it —
+−1.41 approval against a ±3.0 noise floor, not legible for any playable nation,
+which the plan had named in advance as a **model** decision rather than a tuning
+one. The second correction moved it to −4.9/−6.7/−7.4 without touching
+`TRADE_BETA` or any economy constant. Had it not, the plan's stated fallback was
+to ship coercion as a lever the player *wields* and barely *feels*, declared
+rather than tuned until the panel twitched.
+
+**A clamp was found binding in reachable play, which is the failure this project
+keeps rediscovering.** `COERCION_IMPULSE_MAX` was set provisionally at 4.0 on the
+reasoning that it should sit "comfortably inside" `IMPULSE_MAX_PCT`. A player who
+tariffs three partners collects three retaliations, damage sums over imposers,
+and at 4.0 the clamp rather than the model was setting the growth rate — the
+`IMPULSE_MAX = ±50` failure [[economy-model]] records, a third time. It ships at
+6.0, *equal* to `IMPULSE_MAX_PCT`, which is a principled anchor where "somewhat
+less" was a feeling: a coercion shock may be as large as the largest budget shock
+and no larger.
+
+**GBR surfaced a third time, and the gate direction inverted.** V1.3b's trigger
+was that a relations-based bar closes a feature to Britain. Here there is no bar
+— a hostile verb needs no relations floor, and copying `AGREEMENT_ACCEPT_MIN`'s
+shape would have closed the feature to whoever is *friendliest*. What Britain's
+isolation costs it is leverage: revenue is open to it (0.120 against 0.179 and
+0.161, within 1.5×) because tariffing collects on your own external demand, but
+its best possible *hit* is a quarter of the other two's, because damage needs
+someone who depends on you. Forced by the trade vector, thematically right, and
+recorded rather than tuned away. **The probe's first version of that table
+measured the wrong thing** — it picked each nation's largest trade partner when
+damage scales the other way — and reported GBR at a quarter of the others' reach
+for a reason that was an artefact before it was a finding.
+
+**One repair the plan did not predict, found by a test rather than by looking.**
+The budget panel built its "now" column from `Budget.snapshot()`, which reads the
+revenue dictionary as the last monthly tick left it — so a tariff imposed *this*
+month showed an em dash under Revenue until the clock moved, the panel telling
+the player their new revenue source collects nothing. It now builds that column
+from `preview()` with nothing pending, which recomputes on a deep copy and writes
+no sim state.
+
+**`SAVE_VERSION` stays at 10, and the test says so.** Every field V1.3c adds
+passes the stated rule: an absent `measures` reads as `{}`, which is correct for
+every version-10 save because those games could not impose one. That is
+`scenario_id`'s case and `agreements`' case, against `eu_member`/`neighbours`,
+which read as an actively wrong model. `tests/test_save_load.gd` asserts the
+version is still 10, so a later session raising it has to come and say why.
 
 ### V1.3b — trade: per-partner intensity and agreements (shipped)
 
@@ -322,7 +380,7 @@ one line is not a session.
 |---|---|---|---|
 | **V1.3a** | Relations and diplomatic actions | Pair-keyed relations as live state, monthly drift, a small set of player verbs with a domestic price | — |
 | **V1.3b** | ~~Trade: per-partner intensity and agreements~~ **shipped** | `external_impulse_pct` made per-partner rather than one GDP-weighted aggregate; bilateral agreements with sector winners and losers at home | a |
-| **V1.3c** | Tariffs and sanctions | Coercion in both directions: tariff revenue, sanctions imposed and received, domestic blowback, retaliation | a, b |
+| **V1.3c** | ~~Tariffs and sanctions~~ **shipped** | Coercion in both directions on the first **directed** state; one verb, two prices; a Laffer curve and a protectionist trade-off that fall out of two constants rather than being authored | a, b |
 | **V1.3d** | The bloc | EU-shaped membership as a real constraint on domestic policy, transfers, bloc-level voting where the player is one member among many | a, (b) |
 | **V1.3e** | AI foreign policy | Nine nations pursuing their own interests. Replaces every stopgap rule b–d shipped | a–d |
 | **V1.3f** | Defence as domestic politics | Capability derived from sustained spending, deployments, defensive alliances, alliance obligations that bill you at home | a, d |
@@ -636,6 +694,7 @@ is already made, which is most sessions once the docs are written.
 | U5b The world map | **Yes** *(corrected at plan time)* | Opus 5, plan and build in one session | Medium | Second U-track row, and the first to inherit a written content row rather than a tier. The *Next* table's U5b cell listed five things; counting them cold made them **four separate new machines** — a raster pipeline, a world-geometry import pass, the minimap widget, and a layer system — at ~22 surfaces weighted heavier than U5a's ~28. U5a's own count held only because its one new machine, `window_frame.gd`, was given no knowledge of any panel; nothing in this row had that property. **Corrected at plan time, not at build time**, on the same test V1.2d's correction used: the layer system was cut to **U5c** because it was the only part carrying an unmade design decision *and* the only part reading sim state, so deferring it past V1.3c buys tariffs and sanctions in the same session instead of reopening the machinery for them. Remaining count ~17, three machines, held. What the count missed was not a surface at all and was found by watching a clock rather than by reasoning: Godot VRAM-compresses the 14.6-megapixel raster on any run with no `.godot/`, which is precisely the fresh clone `tools/run_tests.sh` exists to be fast in, and the first headless test of the run sat for the best part of ten minutes building an artefact nothing reads — the bytes are decoded from the `.jpg` directly. Fixed by committing a `.jpg.import` with `importer="keep"`. Thirteenth correction on this table's own record |
 | U5c The map layers | **Yes** *(authored)* | Opus 5, plan and build in one session | Medium | **This table had no U5c row.** Third instance of the missing-row failure V1.3b recorded, and unlike U5b there was not even a content row's tier to inherit — the U5a decomposition wrote content for U5b, U5c and U6 and a tier for none of them. The cold count came in at **~13 surfaces**, the *smallest* on this table: three new files, nine edits, one conditional that turned out not to be needed (`ui_theme.gd` was not touched — the eight existing label variations carried the legend). Against U5b's ~17, V1.2e's ~20, U5a's ~28, V1.3b's ~33. **Medium rather than Low on reversibility, which is the test the preamble names and which barely fires here**: a ramp that turns out wrong is rewritten alone — no sim model, no tuned constant, no save field, and nothing downstream reads a colour. What keeps it off Low is that it is the session paying down U5b's deferred design decision, and one of its three calls was explicitly staked on a frame rather than an argument. **The count missed three surfaces and all three came from counting rather than from the row**, which lists three features and names none of them: the player's own nation has no value on either data layer, hover distorted the datum it was pointing at, and the map went stale because nothing redrew it monthly. The named escalation trigger — *a data ramp unreadable at any alpha, so terrain variance rather than alpha is what defeats it* — did **not** fire; what the screenshot pass did catch was smaller and was the same class of error as U5b's own: the relations ramp's warm end was set at 80, so the top resting tier of 68 landed only 40 % along the warm half and washed out. Domain tightened to 72, and resolution put where the game actually sits. Fourteenth correction on this table's own record, and the third to be an *addition* to it |
 | V1.3b Trade: per-partner intensity and agreements | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3b row.** It stopped at V1.3a, so unlike every correction above this one is not a challenge to a logged estimate — it is an estimate authored at plan time with nothing to challenge, and the handoff convention's *read the row, count the surfaces yourself* had no row to read. Recorded because a missing row is a different failure from a wrong one, and the decomposition wrote per-session content and dependencies for all six without writing their tiers. The cold count came in at **~33 surfaces** — the largest on this table, eight above V1.3a's ~25, against V1.2d's ~21 and V1.2e's ~20. As with V1.3a the count is not what set the tier; the preamble's test is reversibility, and **both halves fire, the second for the first time in this block**: `w(A,B)` is schema-shaped with three downstream readers (c scales it, d reads it, e's interest function reads it), so a wrong weight function is rewritten with three sessions; and this is the first session to put **already-measured constants at risk** rather than add new ones, since every economy constant was tuned with this channel at zero and [[economy-model]]'s divergence argument had to be left standing. Held. Four cuts were declared in advance and the first was taken before any code: the separate `data/trade-agreements/` content type (terms ride the diplomatic action), then `economy_panel.gd`, a `Trade.tick_month()`, and a second agreement instance — the last three were not needed. Both named escalation triggers were GBR-shaped and stated before the model was built; **the first fired** and was resolved by the measurement it named rather than by escalating. Eleventh correction on this table's own record, and the first to be an *addition* to it. |
+| V1.3c Tariffs and sanctions | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3c row either.** Fourth instance of the missing-row failure V1.3b recorded — V1.3b had none, U5b inherited a content row's tier, U5c had neither, and this had only the decomposition's content cell. The handoff convention's *read the row, count the surfaces yourself* again had no row to read, so the tier below is authored rather than challenged. The cold count came in at **~30 surfaces** — six new files, ~24 edits — against V1.3b's ~33, V1.3a's ~25, V1.2d's ~21 and U5c's ~13. As with V1.3a and V1.3b the count is not what set the tier; the preamble's test is reversibility, and **both halves fire**: the directed register is schema that V1.3d reads (a bloc setting external tariffs collectively reads exactly this), V1.3e scores as action space and V1.3f inherits the pattern for alliance obligations — so a wrong directed key is rewritten with three sessions; and it puts already-measured economy constants at risk through a new additive term in the growth equation and a new revenue line. Held. Three cuts were named in advance and **none was taken** — the map layer shipped, `sanction` shipped as a second kind, and the nation panel's readout shipped. What the count did not anticipate was that the probe would correct the *model* twice rather than merely set constants: an authored tariff rate cut as one intensity written twice, and damage read off the wrong weight making high severity strictly dominated. The named escalation trigger **fired on the first sweep and was resolved by the second of those corrections** rather than by escalating, which is the response the plan itself named. Two things the plan got wrong and the build found: `Budget.recompute()` needed a `state` parameter (three call sites, all of which had it), and the budget panel's "now" column was a month stale for the new line — caught by a test, not by looking. Fifteenth correction on this table's own record, and the third to be an *addition* to it. |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it

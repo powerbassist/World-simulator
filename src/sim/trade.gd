@@ -28,6 +28,7 @@ extends RefCounted
 const K = preload("res://src/sim/trade_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const RK = preload("res://src/core/relations.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 ## Every nation's directed weight vector, in one snapshot: {actor_id: {partner_id:
@@ -53,7 +54,21 @@ static func weight_table(state) -> Dictionary:
 ## has two, and the disparity is the ratio between them. See
 ## docs/diplomacy-model.md section 2.
 static func weights(state, actor_id: String) -> Dictionary:
-	return _normalise(_raw(state, actor_id, true))
+	return _normalise(_raw(state, actor_id, true, true))
+
+
+## The same vector as if no coercive measure existed, agreements still in force.
+##
+## V1.3c's, and it exists because the two things a measure does read DIFFERENT
+## weights. Revenue is collected on the trade that still crosses the border, which
+## is weights() above. Damage is done by the trade DESTROYED, which is this one --
+## a nation that has fully decoupled has nothing left to disrupt, so reading damage
+## off the post-measure weight made the harshest measure the least harmful and put
+## a trap in the content: severity above the revenue peak was strictly dominated,
+## collecting less AND hurting less while costing more trend. Measured, then fixed
+## here rather than tuned around.
+static func weights_before_measures(state, actor_id: String) -> Dictionary:
+	return _normalise(_raw(state, actor_id, true, false))
 
 
 ## The openness index: this nation's raw trade mass against what the same mass
@@ -78,10 +93,10 @@ static func weights(state, actor_id: String) -> Dictionary:
 ## against all nine neighbours for nothing, the same exploit shape
 ## docs/diplomacy-model.md records the V1.3a probe catching before content shipped.
 static func openness_index(state, actor_id: String) -> float:
-	var neutral := _sum(_raw(state, actor_id, false))
+	var neutral := _sum(_raw(state, actor_id, false, false))
 	if neutral <= 0.0:
 		return 1.0
-	return _sum(_raw(state, actor_id, true)) / neutral
+	return _sum(_raw(state, actor_id, true, true)) / neutral
 
 
 ## External demand, as a trade-weighted sum of partners' deviations from their own
@@ -126,10 +141,18 @@ static func has_agreement(state, a: String, b: String) -> bool:
 	return state.agreements.has(RK.key(a, b))
 
 
-## The unnormalised gravity mass toward each partner. `with_agreements` is what
-## makes openness_index() a ratio rather than a level -- the same table twice, the
-## second time with every agreement multiplier set to 1.0.
-static func _raw(state, actor_id: String, with_agreements: bool) -> Dictionary:
+## The unnormalised gravity mass toward each partner. `with_effects` is what makes
+## openness_index() a ratio rather than a level -- the same table twice, the second
+## time with every agreement multiplier AND every coercive measure removed.
+##
+## V1.3c widened this flag from agreements alone, and that widening is the
+## coercion model's central call rather than a tidy-up. Because a measure is
+## present in the with-pass and absent from the counterfactual, imposing a tariff
+## drops the openness index BELOW 1.0 and takes trend growth down through the same
+## potential_shift channel infrastructure and education write. Revenue now, trend
+## later: the protectionist trade-off, obtained from machinery already measured
+## rather than from a new channel. See docs/coercion-model.md.
+static func _raw(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
 	var a = state.nations.get(actor_id)
 	if a == null:
 		return {}
@@ -156,6 +179,18 @@ static func _raw(state, actor_id: String, with_agreements: bool) -> Dictionary:
 			var pair_key := RK.key(actor_id, partner_id)
 			if state.agreements.has(pair_key):
 				value *= float(state.agreements[pair_key].get("weight_multiplier", 1.0))
+
+		if with_measures:
+			# Measures in EITHER direction on the pair, because goods stop moving
+			# both ways whichever side imposed. The register is directed so that a
+			# tariff and its retaliation stay distinguishable; the trade effect is
+			# not, because it is not a fact about who is angry.
+			#
+			# Exactly 1.0 for a clean pair -- by construction, not by tuning --
+			# which is what keeps the balance harness bit-identical: no regime
+			# imposes a measure, so this multiplies by one everywhere and both
+			# passes stay identical.
+			value *= Coercion.trade_multiplier(state, actor_id, partner_id)
 
 		out[partner_id] = value
 	return out

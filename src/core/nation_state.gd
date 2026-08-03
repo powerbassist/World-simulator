@@ -104,6 +104,29 @@ var external_impulse_pct: float = 0.0
 ## exactly that, and it is the field that earned SAVE_VERSION 9 -> 10.
 var trade_baseline_by_partner := {}
 
+## Growth damage from coercive measures pointed at this nation, %/yr. V1.3c.
+## Recomputed from GameState.measures every month by Coercion.impulse(); exactly
+## zero whenever nothing is aimed here.
+##
+## A THIRD impulse rather than a reuse of either above, and the distinction is
+## load-bearing:
+##
+##   - Not demand_impulse_pct, because that DECAYS geometrically. A sanction in
+##     force is a standing condition, not a shock, and it must stop the moment the
+##     measure is lifted rather than fade while it is still biting.
+##   - Not external_impulse_pct, because that one is PLAYER-ONLY -- the
+##     `if ns.has_budget` guard in Economy.tick_month() -- and this term's whole
+##     job is to move a partner the player has sanctioned. docs/trade-model.md
+##     records the eigenvalues for lifting that guard; lifting it replaces the
+##     28-month output-gap half-life the game's pacing is argued from, so V1.3c
+##     deliberately does not.
+##
+## The path is one hop: the player sanctions DEU, this term moves DEU's growth,
+## and the player feels it back through their OWN external_impulse_pct at
+## w(FRA,DEU). No loop, because DEU has no external impulse to carry it onward.
+## See docs/coercion-model.md.
+var coercion_impulse_pct: float = 0.0
+
 # --- Elections -----------------------------------------------------------------
 
 ## Copied from Nation at new-game; the assembly's size never changes mid-game.
@@ -407,6 +430,7 @@ func duplicate_state():
 	s.potential_shift_pct = potential_shift_pct
 	s.external_impulse_pct = external_impulse_pct
 	s.trade_baseline_by_partner = trade_baseline_by_partner.duplicate(true)
+	s.coercion_impulse_pct = coercion_impulse_pct
 
 	s.assembly_seats = assembly_seats
 	s.term_months = term_months
@@ -528,6 +552,7 @@ func to_dict() -> Dictionary:
 		"potential_shift_pct": potential_shift_pct,
 		"external_impulse_pct": external_impulse_pct,
 		"trade_baseline_by_partner": trade_baseline_by_partner,
+		"coercion_impulse_pct": coercion_impulse_pct,
 
 		"assembly_seats": assembly_seats,
 		"term_months": term_months,
@@ -653,6 +678,10 @@ static func from_dict(d: Dictionary):
 	var baselines: Dictionary = d.get("trade_baseline_by_partner", {})
 	for partner_id in baselines.keys():
 		s.trade_baseline_by_partner[partner_id] = float(baselines[partner_id])
+	# Absent in a version-10 save, and 0.0 is exactly right for one: nothing was in
+	# force, so nothing was being damaged. Recomputed from GameState.measures on the
+	# first tick after loading in any case -- see the field's own declaration.
+	s.coercion_impulse_pct = float(d.get("coercion_impulse_pct", 0.0))
 
 	# JSON has one numeric type; Godot's parser hands every number back as a
 	# float. Cast the int-typed fields back explicitly.

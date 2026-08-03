@@ -22,6 +22,8 @@ extends RefCounted
 const RK = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
+const CK = preload("res://src/sim/coercion_constants.gd")
 
 
 ## Reset one nation's own diplomacy state. Runs for all ten, same as
@@ -99,6 +101,8 @@ static func tick_month(state, loader) -> void:
 			DK.RELATIONS_MIN, DK.RELATIONS_MAX
 		)
 
+	_tick_retaliation(state)
+
 	# Cooldowns tick for every nation, not just the player's -- V1.3e will have
 	# the other nine acting through this same path, and a counter that only
 	# counts down for one nation would be a bug that only surfaced then.
@@ -112,6 +116,79 @@ static func tick_month(state, loader) -> void:
 				ns.diplo_cooldown_months[cooldown_key] = remaining
 		for cooldown_key in expired:
 			ns.diplo_cooldown_months.erase(cooldown_key)
+
+
+## Answer every measure that has been in force long enough and has not yet been
+## answered. Runs inside tick_month(), which already runs for all ten nations and
+## whose own comment anticipated exactly this.
+##
+## > [!warning] THE THIRD DECLARED STOPGAP, and the one V1.3c adds to V1.3e's
+## > checklist. V1.3a's says the target does not REACT; V1.3b's says it does not
+## > DECIDE; this one says it reacts by a fixed rule and decides nothing. The
+## > retaliating nation does not weigh its economy, does not compare the imposer
+## > against its other partners, does not escalate past the single step, never
+## > lifts what it imposed, and never acts first. tests/test_coercion.gd asserts
+## > that by mutation, so V1.3e replacing it is a visible test change.
+##
+## Deliberately no rand(): the same discipline the rest of this file holds to, so
+## the budget projection -- which ticks Diplomacy since V1.3b -- and a reloaded
+## save agree with a played game.
+static func _tick_retaliation(state) -> void:
+	# Collected before writing, because the loop below adds entries to the very
+	# dictionary it iterates. The mirror's own `retaliated: true` would stop the
+	# recursion in any case, but mutating a Dictionary mid-iteration is undefined
+	# in Godot rather than merely subtle.
+	var answers: Array = []
+	for directed in state.measures.keys():
+		var terms: Dictionary = state.measures[directed]
+		if bool(terms.get("retaliated", false)):
+			continue
+		if Coercion.months_in_force(terms, state.year, state.month) < CK.RETALIATION_DELAY_MONTHS:
+			continue
+		var parts := RK.directed_parts(String(directed))
+		if parts.size() != 2:
+			continue
+		answers.append({"imposer": parts[0], "target": parts[1], "key": directed, "terms": terms})
+
+	for answer in answers:
+		var imposer: String = answer["imposer"]
+		var target: String = answer["target"]
+
+		# Flagged whether or not an answer lands, so a measure is considered for
+		# retaliation exactly once. Without this a target that already had a
+		# measure of its own in place would be re-examined every month forever.
+		state.measures[answer["key"]]["retaliated"] = true
+
+		# One measure per directed pair, the same rule agreements have. A nation
+		# that has already imposed something on the imposer does not stack a
+		# second entry on top; it has answered already, whatever its reason was.
+		var back := RK.directed_key(target, imposer)
+		if state.measures.has(back):
+			continue
+
+		var mirror := Coercion.retaliation_terms(
+			answer["terms"], state.year, state.month
+		)
+		if mirror.is_empty():
+			continue
+		state.measures[back] = mirror
+
+		# The second hit on a pair that has already paid for the original measure,
+		# which is why it is small next to an action's own effects.relations.
+		RK.adjust(
+			state, imposer, target, CK.RETALIATION_RELATIONS_COST,
+			DK.RELATIONS_MIN, DK.RELATIONS_MAX
+		)
+
+
+## The kind of measure `actor` has in force against `target`, or "" for none.
+## The register's own read, kept in one place so the three precondition fields
+## above cannot drift apart.
+static func _measure_kind(state, actor_id: String, target_id: String) -> String:
+	var terms = state.measures.get(RK.directed_key(actor_id, target_id))
+	if terms == null:
+		return ""
+	return String(terms.get("kind", ""))
 
 
 ## The cooldown key for one verb pointed at one counterparty. Per pair, not per
@@ -170,6 +247,14 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# gate themselves with no trade knowledge in this module at all: an enter
 		# verb asks for 0, an exit verb asks for 1.
 		"agreement_active": return 1.0 if state.agreements.has(RK.key(ns.id, target_id)) else 0.0
+		# The third piece of pair state and the first DIRECTED one: this nation's own
+		# measure against this target, not the target's against it. An impose verb
+		# asks measure_active for 0; a lift verb asks its OWN kind for 1, because
+		# one measure per pair means "something is in force" cannot tell a tariff
+		# from an embargo and a single field would let either lift clear either.
+		"measure_active": return 1.0 if _measure_kind(state, ns.id, target_id) != "" else 0.0
+		"tariff_active": return 1.0 if _measure_kind(state, ns.id, target_id) == "tariff" else 0.0
+		"sanction_active": return 1.0 if _measure_kind(state, ns.id, target_id) == "sanction" else 0.0
 		"overall_approval_pct": return ns.overall_approval_pct
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -251,6 +336,34 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		"exit":
 			state.agreements.erase(pair_key)
 
+	# The fourth effect channel, added at V1.3c, on the DIRECTED key: a measure is
+	# one nation's act against another, not a contract both sides read, so
+	# FRA>DEU and DEU>FRA are separate entries and a retaliation is simply the
+	# second one. See src/core/relations.gd's two key builders.
+	var measure: Dictionary = action.effects.get("measure", {})
+	var directed := RK.directed_key(actor_id, target_id)
+	match String(measure.get("op", "")):
+		"impose":
+			state.measures[directed] = {
+				"action_id": action.id,
+				"action_name": action.action_name,
+				"kind": measure.get("kind", "tariff"),
+				"severity": float(measure.get("severity", 0.0)),
+				"since_year": state.year,
+				"since_month": state.month,
+				"retaliated": false,
+			}
+			# A measure breaks an agreement on the same pair. This is the
+			# agreement expiry docs/trade-model.md booked to V1.3c ("no agreement
+			# duration or expiry -- V1.3c owns it, via a sanction breaking one"),
+			# discharged in one line rather than by building a duration model.
+			# Symmetric key, deliberately: the contract had two sides even though
+			# the measure has one, so imposing on a partner ends the treaty for
+			# both of you.
+			state.agreements.erase(pair_key)
+		"lift":
+			state.measures.erase(directed)
+
 	if action.cooldown_months > 0:
 		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
 
@@ -265,6 +378,8 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		"relations_after": after,
 		"bloc_offset": offsets.duplicate(true),
 		"agreement_op": terms.get("op", ""),
+		"measure_op": measure.get("op", ""),
+		"measure_kind": measure.get("kind", ""),
 	}
 	ns.last_diplomatic_result = result
 	return result

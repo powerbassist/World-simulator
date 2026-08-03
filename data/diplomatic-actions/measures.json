@@ -1,0 +1,114 @@
+{
+  "_note": "V1.3c's content, and the only four verbs that write GameState.measures. Coercion in both directions: a tariff collects revenue and bites moderately, a sanction collects nothing and bites hard. One verb pointed at one pair with two different prices, which is what docs/tiers/v1.md section 3 committed to when it put tariffs and sanctions in the same session. The economic terms ride the action rather than living in a content type of their own, exactly as an agreement's do -- see docs/coercion-model.md.",
+  "_severity_note": "SEVERITY IS THE ONLY INTENSITY DIAL. An authored tariff rate was cut at measurement time: tools/coercion_probe.gd's first revenue table showed yield exactly linear in it, because the trade bite read severity and the rate only scaled the answer. Two numbers describing one intensity is the redundancy tools/trade_probe.gd caught between the gravity tie bonuses and the relations term, resolved the same way -- carry it once.",
+  "_the_two_severities_are_the_two_ends_of_one_curve": "0.625 is the revenue-maximising severity, exactly 1/(2 * MEASURE_TRADE_BITE), and nothing authors that number -- it falls out of two constants in src/sim/coercion_constants.gd. Revenue is collected on the trade that still crosses the border, so a harsher tariff shrinks the base it is levied on and collects LESS. Damage is done by the trade destroyed, so it keeps rising. The tariff therefore sits at the top of the revenue curve and the sanction past it: one is the lucrative measure, the other the punitive one, and they are the same mechanism read at two points. Measured: at 0.625 France collects 0.246% of GDP against Germany, about half a tax point; at 1.000 it collects 0.179% and does 44% more damage.",
+  "_domestic_prices": "Every offset is authored at 0.08-0.12, near the 0.15 ceiling, because docs/diplomacy-model.md measured that anything smaller does not clear the +-3.0 poll-noise floor even on its own bloc row. The two impose verbs are SPLIT rather than paid by all six, which is deliberate and is the exploit shape that document records: a six-bloc gain applied against all nine neighbours in one month saturates the approval channel. A split price moves blocs in opposite directions and is self-limiting.",
+  "actions": [
+    {
+      "id": "impose_tariffs",
+      "name": "Impose Tariffs",
+      "summary": "Levy duties on goods from this nation. The treasury collects, and it collects most at exactly this level -- push harder and there is less trade left to tax. Producers who compete with the imports are delighted; everyone who buys them is not, and the partner will answer within the year.",
+      "cooldown_months": 12,
+      "preconditions": [
+        {
+          "field": "measure_active",
+          "op": "==",
+          "value": 0
+        }
+      ],
+      "effects": {
+        "relations": -10.0,
+        "bloc_offset": {
+          "rural": 0.12,
+          "workers": 0.09,
+          "business": -0.12,
+          "urban": -0.09
+        },
+        "measure": {
+          "op": "impose",
+          "kind": "tariff",
+          "severity": 0.625
+        }
+      }
+    },
+    {
+      "id": "lift_tariffs",
+      "name": "Lift Tariffs",
+      "summary": "Drop the duties. The revenue goes, the trade comes back, and the relationship starts to mend. The producers who were sheltered by them will remember who sheltered them and who stopped.",
+      "cooldown_months": 12,
+      "preconditions": [
+        {
+          "field": "tariff_active",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": 6.0,
+        "bloc_offset": {
+          "rural": -0.12,
+          "workers": -0.09,
+          "business": 0.12,
+          "urban": 0.09
+        },
+        "measure": {
+          "op": "lift"
+        }
+      }
+    },
+    {
+      "id": "impose_sanctions",
+      "name": "Impose Sanctions",
+      "summary": "Close the border to this nation's economy. Nothing is collected -- an embargo is a refusal to trade, not a levy on it -- and your own exporters lose the market alongside theirs. The most damage this instrument can do, at the highest price at home.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "measure_active",
+          "op": "==",
+          "value": 0
+        }
+      ],
+      "effects": {
+        "relations": -18.0,
+        "bloc_offset": {
+          "rural": 0.09,
+          "pensioners": 0.08,
+          "business": -0.12,
+          "workers": -0.1,
+          "urban": -0.09
+        },
+        "measure": {
+          "op": "impose",
+          "kind": "sanction",
+          "severity": 1.0
+        }
+      }
+    },
+    {
+      "id": "lift_sanctions",
+      "name": "Lift Sanctions",
+      "summary": "Reopen the border. Trade resumes, the damage stops compounding, and the pair begins the long walk back. Whoever argued for the embargo will call it a surrender.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "sanction_active",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": 10.0,
+        "bloc_offset": {
+          "rural": -0.09,
+          "pensioners": -0.08,
+          "business": 0.12,
+          "workers": 0.1,
+          "urban": 0.09
+        },
+        "measure": {
+          "op": "lift"
+        }
+      }
+    }
+  ]
+}

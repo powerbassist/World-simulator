@@ -12,6 +12,7 @@ extends RefCounted
 const C = preload("res://src/sim/economy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const TradeK = preload("res://src/sim/trade_constants.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 static func tick_month(state) -> void:
@@ -32,6 +33,22 @@ static func tick_month(state) -> void:
 	# both answers are zero. It would have surfaced at V1.3c, as a mystery, in the
 	# session that first perturbs a partner. tools/trade_probe.gd's synthetic
 	# recession is what caught it.
+	# Coercion damage is resolved in the same pre-pass and for the same reason: it
+	# reads the target's own weight row, which reads every nation's GDP.
+	#
+	# Unlike the trade impulse above, this one runs for ALL TEN nations -- it is a
+	# different channel, not a lifting of the has_budget guard below. That guard is
+	# about whether a nation feels its partners' business cycle; this is about
+	# whether a nation feels something done to it on purpose, and the whole point
+	# of V1.3c is that the nine can. docs/trade-model.md's deferral of the coupled
+	# common mode is untouched: the player's own trend still never feeds back to a
+	# partner, so the path stays one hop with no loop.
+	var damage := {}
+	for ns in state.nations.values():
+		# The BEFORE-measures vector, not `table`: damage is done by the trade a
+		# measure destroys, not by what survives it. See Coercion.impulse().
+		damage[ns.id] = Coercion.impulse(state, ns, Trade.weights_before_measures(state, ns.id))
+
 	var impulses := {}
 	for ns in state.nations.values():
 		# Player-only, unchanged from S4. Not a stability concern -- the coupled
@@ -46,6 +63,7 @@ static func tick_month(state) -> void:
 	for ns in state.nations.values():
 		if impulses.has(ns.id):
 			ns.external_impulse_pct = float(impulses[ns.id])
+		ns.coercion_impulse_pct = float(damage.get(ns.id, 0.0))
 		_tick_nation(state, ns)
 
 
@@ -61,7 +79,14 @@ static func _tick_nation(state, ns) -> void:
 	if ns.potential_gdp_eur_bn > 0.0:
 		gap = 100.0 * (ns.gdp_eur_bn - ns.potential_gdp_eur_bn) / ns.potential_gdp_eur_bn
 
-	var growth: float = trend + C.GAP_CLOSE * (-gap) + ns.demand_impulse_pct + ns.external_impulse_pct
+	# Four terms since V1.3c. coercion_impulse_pct is sustained rather than decayed
+	# -- a measure in force is a standing condition, not a shock -- and carries its
+	# own clamp in coercion_constants.gd, because docs/economy-model.md's
+	# divergence argument is per-quantity and a new quantity owes it a bound.
+	var growth: float = (
+		trend + C.GAP_CLOSE * (-gap)
+		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
+	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth
 

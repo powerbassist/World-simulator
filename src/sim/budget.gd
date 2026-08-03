@@ -13,21 +13,30 @@ extends RefCounted
 const C = preload("res://src/sim/economy_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Trade = preload("res://src/sim/trade.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 static func tick_month(state) -> void:
 	var ns = state.player()
 	if ns == null:
 		return
-	recompute(ns)
+	recompute(state, ns)
 	ns.debt_eur_bn += ns.deficit_pct_gdp / 100.0 * ns.gdp_eur_bn / 12.0
 
 
 ## Revenue, spending, debt service and deficit from the nation's current rates,
 ## allocations, debt and GDP. Pure bookkeeping — no state advances here.
-static func recompute(ns) -> void:
+##
+## `state` is V1.3c's, for the tariff line below, and it is passed rather than the
+## line being cached on NationState by the economy pre-pass: the budget panel is
+## the surface that promises "this is what will happen", and a tariff imposed this
+## month whose revenue only appeared next month would be a lie on exactly that
+## surface. Three call sites, all of which already had the state in hand.
+static func recompute(state, ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
+	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
 
 	var revenue := 0.0
 	for v in ns.revenue_pct_gdp.values():
@@ -59,6 +68,25 @@ static func revenue_lines(rates: Dictionary, ref_rates: Dictionary) -> Dictionar
 		var rate := float(rates.get(key, 0.0))
 		out[key] = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
 	return out
+
+
+## Tariff revenue as a percent of GDP — a revenue line of its own, not a fourth
+## entry in TAX_KEYS.
+##
+## TAX_KEYS stays at three. docs/tiers/v1.md section 6's five-tax target does not
+## include tariffs, and a tariff is not the shape the other three are: there is no
+## slider, no base share, no erosion curve, and the rate is per-partner rather than
+## national. Folding it into `other` instead was the alternative and is worse — a
+## revenue source the player cannot see on the panel is the decorative-axis failure
+## docs/scenario-model.md records, with a different label.
+##
+## Short-circuits before building a weight row when nothing is imposed, which is
+## every nation in every balance-harness regime. Exactly 0.0 then, by construction
+## rather than by rounding, which is half of what keeps the re-run bit-identical.
+static func _tariff_revenue(state, ns) -> float:
+	if state == null or Coercion.imposed_by(state, ns.id).is_empty():
+		return 0.0
+	return Coercion.tariff_revenue_pct_gdp(state, ns.id, Trade.weights(state, ns.id))
 
 
 static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> float:
@@ -123,7 +151,7 @@ static func commit(state, pending: Dictionary) -> void:
 
 	ns.tax_rates_pct = new_rates
 	ns.spending_pct_gdp = new_spending
-	recompute(ns)
+	recompute(state, ns)
 
 
 ## What the books look like the instant `pending` is committed, before any time
@@ -182,6 +210,7 @@ static func snapshot(state) -> Dictionary:
 		"debt_eur_bn": ns.debt_eur_bn,
 		"debt_to_gdp_pct": ns.debt_to_gdp_pct(),
 		"total_revenue_pct_gdp": ns.total_revenue_pct_gdp,
+		"tariff_revenue_pct_gdp": float(ns.revenue_pct_gdp.get("tariffs", 0.0)),
 		"total_spending_pct_gdp": ns.total_spending_pct_gdp,
 		"debt_service_pct_gdp": ns.debt_service_pct_gdp,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,

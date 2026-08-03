@@ -143,8 +143,10 @@ nothing is drawn twice.
 finished.** `--headless` draws nothing, so a green suite says nothing about
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
-windowed, not headless — and takes `--layer` and `--hover` so every map layer can
-be captured, not only whichever one the game opens on.
+windowed, not headless — and takes `--layer`, `--hover` and (V1.3c) `--coerce`,
+so every map layer can be captured with something actually on it. That last flag
+exists because a frame of an all-zero data layer proves nothing about its ramp,
+which is the one claim a screenshot is there to check.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in
@@ -173,18 +175,56 @@ unpriced `state_visit` worth two permanent points of GDP. The model, both
 escalation triggers, and the measured tables are
 [docs/trade-model.md](docs/trade-model.md).
 
-**Next: V1.3c, tariffs and sanctions.** It is the first session that perturbs a
-partner on purpose, which is what makes V1.3b's transmission channel loud rather
-than merely correct — `tools/trade_probe.gd` already measures the headroom under a
-synthetic recession. Still true for the whole block: no new `ISSUE_KEYS` entry
-before V1.3d, because a new issue re-opens the whole `BLOC_SALIENCE_BASE`
-measurement. **LimboAI was evaluated for V1.3e and declined** —
+**V1.3c shipped coercion, on the project's first directed state.**
+`GameState.measures` is keyed `"FRA>DEU"` by a second builder in
+`src/core/relations.gd`, on a **different separator** so `other()` refuses a
+directed key and `directed_parts()` refuses a symmetric one — the additive escape
+hatch V1.3a named in advance, taken without touching a line of relations or
+agreements, because a tariff and its retaliation are two acts where a
+relationship and a contract are one. Tariffs and sanctions are one verb with two
+prices on a fourth effect channel, `effects.measure`; there is no
+`data/measures/`, for the same reason there is no `data/trade-agreements/`.
+
+**Three things fall out of two constants rather than being authored**, and that
+is the session's shape: a **real Laffer curve** (revenue is collected on the
+trade that survives, so it peaks at severity 0.625 and falls after), the
+protectionist trade-off (**revenue now, trend later** — the openness
+counterfactual became "no agreements *and no measures*", so a tariff costs trend
+through the channel V1.3b already measured), and the fact that **who you can hurt
+is a different question from who matters to you** — damage scales with
+`w(target → imposer)`, making FRA→LUX 12.1× LUX→FRA.
+
+**The probe corrected the model twice before any content existed, which is the
+whole case for measuring first.** An authored `tariff_rate_pct` was cut once
+revenue came back exactly linear in it — one intensity written twice — and
+cutting it is what made the Laffer curve real rather than asserted. Then damage,
+read off the *post-measure* weight, made every severity above the revenue peak
+**strictly dominated**: less money and less harm for more trend loss. Damage now
+reads `Trade.weights_before_measures()`, because you damage in proportion to the
+trade you destroy and collect in proportion to what still crosses. The named
+escalation trigger — being sanctioned is below the readable floor — **fired on
+the first sweep and was resolved by that second correction** rather than by
+touching `TRADE_BETA`. `COERCION_IMPULSE_MAX` was separately found *binding in
+reachable play* at 4.0 and raised to 6.0, equal to `IMPULSE_MAX_PCT`. The model,
+every constant and the measured tables are
+[docs/coercion-model.md](docs/coercion-model.md).
+
+**Next: V1.3d, the bloc.** It extends `data/eu_parliament.json` and
+`src/core/eu.gd`, which exist and are elections-only, and it is the session that
+decides whether foreign policy earns an `ISSUE_KEYS` entry of its own — the
+constraint that has held since V1.3a is finally *its* call to make, and the cost
+is named in advance: six new `BLOC_SALIENCE_BASE` rows, against which every tuned
+opinion constant was measured. It also inherits the first reader of the directed
+register, since a bloc that sets external tariffs collectively reads exactly
+that. **LimboAI was evaluated for V1.3e and declined** —
 [docs/tiers/declined.md](docs/tiers/declined.md).
 
-Two declared stopgaps are now on V1.3e's opening checklist, each asserted by a
+Three declared stopgaps are now on V1.3e's opening checklist, each asserted by a
 test that must fail when it is replaced: the counterparty *reaction*
-(`tests/test_diplomacy.gd`) and the counterparty *decision*
-(`tests/test_trade.gd`).
+(`tests/test_diplomacy.gd`), the counterparty *decision* (`tests/test_trade.gd`),
+and the counterparty *retaliation* (`tests/test_coercion.gd`). They compose
+rather than conflict — the target does not react, does not decide, and reacts by
+a fixed rule while deciding nothing.
 
 MVP, V1.1a–d, V1.2a–e, V1.3a and U1–U4 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
@@ -203,7 +243,11 @@ relations rather than a neutral default. V1.3b is the sharpest case yet: neither
 signed", the other fails soft), and what did is `NationState.eu_member` and
 `.neighbours` — absent, the trade weight silently collapses back to the aggregate
 V1.3b replaced, so a reloaded game runs a *different model* from the one that
-saved it. All three are checked in `tests/test_save_load.gd`, not argued in prose.
+saved it. All three are checked in `tests/test_save_load.gd`, not argued in prose. **V1.3c
+earned no bump and the test says so**: an absent `measures` reads as `{}`, which
+is correct for every version-10 save because those games could not impose one, so
+`tests/test_save_load.gd` asserts the version is *still* 10 and a later session
+raising it has to come and say why.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

@@ -1,0 +1,21 @@
+{
+  "_note": "Fixture for tests/test_coercion.gd. An impose carrying a tariff_rate_pct. The field was CUT at measurement time -- tools/coercion_probe.gd showed revenue exactly linear in it, so severity and rate were one intensity written twice. An author reaching for a rate has to find out it does not exist, rather than writing a number nothing reads.",
+  "actions": [
+    {
+      "id": "measure_with_rate",
+      "name": "Fixture: Measure Carrying a Rate",
+      "summary": "Should not load.",
+      "cooldown_months": 12,
+      "preconditions": [],
+      "effects": {
+        "relations": -5.0,
+        "measure": {
+          "op": "impose",
+          "kind": "tariff",
+          "severity": 0.5,
+          "tariff_rate_pct": 15.0
+        }
+      }
+    }
+  ]
+}

@@ -31,6 +31,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
+const CoercionK = preload("res://src/sim/coercion_constants.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -176,6 +177,19 @@ const TRADE_REGIMES := {
 	"managed_signs_agreement": {"budget": REGIMES["managed"], "agreement_month": 6},
 }
 
+## V1.3c's own fourteen years, and the eleventh regime. Same argument as the tenth:
+## none of the ten budget regimes imposes a measure, so the register is empty, the
+## trade multiplier is exactly 1.0, the coercion impulse exactly 0.0 and the tariff
+## revenue line exactly 0.0 in every one of them -- which is what lets this
+## session's re-run ask "has anything moved at all?" rather than "has anything
+## moved materially?". This regime is where the coercion channel earns its keep,
+## and it runs the FULL exchange: the player tariffs their largest partner, the
+## partner retaliates three months later, and both sit in force for the rest of the
+## term while the harness watches the clamps.
+const COERCION_REGIMES := {
+	"managed_imposes_tariffs": {"budget": REGIMES["managed"], "tariff_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -216,6 +230,9 @@ func _init() -> void:
 		for name in TRADE_REGIMES.keys():
 			var regime: Dictionary = TRADE_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", int(regime["agreement_month"]))
+		for name in COERCION_REGIMES.keys():
+			var regime: Dictionary = COERCION_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, int(regime["tariff_month"]))
 
 	quit(0)
 
@@ -240,7 +257,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -294,6 +311,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == agreement_month:
 			_sign_agreement(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == tariff_month:
+			_impose_tariffs(state, loader, ns, regime_name, year, month)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -493,6 +513,39 @@ func _print_row(ns, year: int) -> void:
 ## already has the best relations with. Deliberately not a fixed target: the point
 ## is to exercise the trade channel for whichever nation the CLI was given, and
 ## GBR's best partner rests at 45 where France's rests at 68.
+## V1.3c. Tariff the largest trade partner -- the pair where the revenue is worth
+## collecting and the retaliation worth feeling. No gate to earn, unlike the
+## agreement regime above: a hostile verb has no relations floor, which is the
+## direction inverting that tools/coercion_probe.gd's table (e) records.
+func _impose_tariffs(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for candidate in loader.diplomatic_actions:
+		var m: Dictionary = candidate.effects.get("measure", {})
+		if String(m.get("op", "")) == "impose" and String(m.get("kind", "")) == "tariff":
+			action = candidate
+			break
+	if action == null:
+		printerr("  no impose/tariff action is authored")
+		return
+
+	var best := ""
+	var best_weight := -1.0
+	var weights := Trade.weights(state, ns.id)
+	for id in weights.keys():
+		if float(weights[id]) > best_weight:
+			best_weight = float(weights[id])
+			best = id
+
+	var result := Diplomacy.execute(state, loader.diplomatic_actions, action, ns.id, best)
+	if not result["applied"]:
+		printerr("  %d-%02d %s: could not impose tariffs on %s" % [year, month, regime_name, best])
+		return
+	print("  %d-%02d %s: TARIFFS on %s (w %.3f) — relations %.0f -> %.0f" % [
+		year, month, regime_name, best, best_weight,
+		result["relations_before"], result["relations_after"],
+	])
+
+
 func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var action = null
 	for candidate in loader.diplomatic_actions:
@@ -609,6 +662,16 @@ func _check(state, ns, year: int, month: int) -> Array[String]:
 	if trade_share >= C.SHIFT_MAX_PCT * TRADE_SHIFT_BUDGET:
 		out.append("%s trade openness claims %.3f of the +-%.1f potential-shift budget" % [
 			at, trade_share, C.SHIFT_MAX_PCT,
+		])
+	# V1.3c. The coercion impulse is the fifth writer into growth and the first that
+	# is something DONE TO the player rather than chosen by them. Bounded here for
+	# the same reason the trade share above is: docs/economy-model.md's divergence
+	# argument is per-quantity, so a new quantity is asserted against its own clamp
+	# rather than left for GROWTH_MIN_PCT to catch downstream. Sitting ON the clamp
+	# would mean the clamp and not the model is setting the growth rate.
+	if absf(ns.coercion_impulse_pct) >= CoercionK.COERCION_IMPULSE_MAX:
+		out.append("%s coercion impulse is ON its clamp at %.3f -- the guard rail is setting growth" % [
+			at, ns.coercion_impulse_pct,
 		])
 	if ns.debt_to_gdp_pct() > 1000.0:
 		out.append("%s debt ratio running away at %.0f%%" % [at, ns.debt_to_gdp_pct()])
