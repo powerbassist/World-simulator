@@ -77,6 +77,8 @@ a dashboard was the right object.
 
 | U5c | UI | The map layers — the ten stop being coloured by a hash of their id and start being coloured by what the player has with them. `src/ui/map_layers.gd` is the **only** place a roster fill is chosen and is a **registry rather than a mode flag**: three layers today (political, relations, trade), and a fourth is one entry plus one branch, which is what let this run before V1.3c instead of after it. Three calls, each of which could have gone the other way. **The viewer is always the player** — the symmetric/directed asymmetry is not about whose seat you look from but about what the readout may *claim*, so `FRA–DEU 68` names the pair and a trade share never claims the partner's side. **Alpha is per-layer and `LAND_ALPHA` is not inherited** — U5b's 0.42-goes-grey finding is about a ramp with no hue variation and does not transfer, so the data layers carry 0.50. **Both ramps are anchored on measured values** — relations on `docs/diplomacy-model.md`'s four resting tiers rather than the nominal 0–100, trade mid-anchored on an even ninth so the map reads *above or below its fair share*. Hover moved off the fill and onto the stroke, because lifting a fill toward the accent is the one place in this interface where pointing at a number would change it; the player's own nation takes a brass outline and `NO_VALUE`, having no pair with itself and no self-weight. The staleness the row never mentioned is fixed: the map drew only on hover, pan, zoom and resize, which was complete while a colour came from `hash(id)` and is not once relations drift monthly |
 
+| V1.3d | Sim | The bloc — EU-shaped membership as a real constraint on domestic policy, and the **fourth kind of live state**: not per-nation, not a symmetric pair, not a directed pair, but one object binding eight nations at once. A proposal reaches the council, the members divide on ideology weighted by the `ep_seats` `data/eu_parliament.json` already carried, and what carries binds the player whether or not they voted for it. Rules do **not** refuse a budget — comply and you pay in the policy you could not run, defy and you pay in a penalty on the budget line and a share of the national agenda. **The `ISSUE_KEYS` question three sessions deferred here was answered yes**, on three structural grounds rather than a thematic one: `bloc_offset` never enters `issue_salience`, so a Europe priced on it could never be named by the polling panel or the result screen; a split price never clears the ±3.0 noise floor in the headline figure; and a flat offset cannot become more *salient*, which is exactly what a rule biting hard should do. The cost was measured first and the S10 ratio moved **+0.39 %**, in the safe direction. The split then fell out of a table written at S5 for unrelated reasons — pensioners and rural weight `growth` at nothing, so 37 % of the electorate takes the sovereignty cost and none of the single market. **The probe corrected the model twice again**: authored severities summing to 1.35 against a ceiling of 1.0 made the fourth rule free to break, and the first `EUROPE_SCALE` cleared the noise floor by almost exactly nothing. A hole the tests caught before it shipped: under a whole-council denominator abstaining and opposing are the same act, so the threshold is a share of the seats **cast**. Fourth declared stopgap; `SAVE_VERSION` 10 → **11**, answering the assertion V1.3c left. The balance re-run is **not** bit-identical and said so in advance — but GDP, growth, trend and unemployment are bit-identical in all thirty runs, and exactly one run changed outcome, on a two-seat censure margin |
+
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
 ---
@@ -85,7 +87,8 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 **V1.3 is decomposed into six sessions** — the argument, and the four calls it
 made, are under *V1.3 — the decomposition* below. V1.3a, V1.3b and V1.3c are
-shipped. The next session is **V1.3d, the bloc**.
+shipped. **V1.3d, the bloc, is shipped too.** The next session is **V1.3e, AI
+foreign policy**, which opens with a checklist of four declared stopgaps.
 
 ### U5a — the ruler's shell (shipped)
 
@@ -151,6 +154,81 @@ session touched no `data/` and no `src/core/`. The flag did both — ten JSON
 files, `Nation.from_dict()` and a validator. It is presentation content, it
 fails at load like every other bad field, and it was the only way to draw a flag
 without breaking Rule 1; but the plan's claim was wrong and the row says so.
+
+### V1.3d — the bloc (shipped)
+
+The session that answers a question three earlier ones deferred to it, and the
+first to add a kind of state rather than a kind of pair. Full account:
+[[bloc-model]]. What belongs here is what the session's own record adds.
+
+**The `ISSUE_KEYS` call went the expensive way, and the reasons were structural
+rather than thematic.** V1.3a, V1.3b and V1.3c each priced their domestic cost
+through `bloc_offset` and each named this as V1.3d's decision. The argument that
+settled it is not "Europe is important enough to deserve an issue" — it is that
+`opinion.gd` builds the national agenda from the salience weights alone, so a
+Europe priced on `bloc_offset` is **structurally unnameable** by the polling
+panel's own list and by `elections.gd`'s attribution. The session's headline
+mechanic would have been invisible on the two surfaces that exist to tell the
+player why they lost. Two supporting reasons and one measured cost are in
+[[bloc-model]]; the cost is **+0.39 %** on the ratio S10's finding was about, and
+it moves in the safe direction.
+
+**The political map of Europe fell out of a table written at S5, and nothing
+authored it.** The opinion model has no signed split — every satisfaction reaches
+every bloc with the same sign, and [[opinion-model|the tax split]] is two issues
+moving opposite ways rather than one issue signing twice. So `europe` had to be
+one-signed, and the division had to come from somewhere else. It does: pensioners
+and rural carry **no `growth` entry at all**, so 37 % of the electorate receives
+the constraint and none of the single market, while business weights `growth`
+0.19 and `public_finances` 0.34 and receives both. A eurosceptic countryside and
+a pro-European boardroom, derived from weights set for unrelated reasons.
+
+**The probe corrected the model twice before any content shipped, which is now
+four sessions running.** The authored rule severities summed to 1.35 against a
+`BURDEN_MAX` of 1.0, so the clamp removed 0.35 of real burden and a player already
+defying three rules got **nothing** from breaching the fourth — the
+strictly-dominated shape [[coercion-model|V1.3c's probe caught]] for tariff
+severity, in a new place. And the first `EUROPE_SCALE` put one defied rule at
+−3.24 against a ±3.0 noise floor, which is [[scenario-model|`deu_grand_coalition`'s]]
+clearing-by-nothing mistake; swept to 0.80, where it lands on the −4.9 to −7.4
+this project already measured for a full embargo.
+
+**A hole in the vote was caught by a test rather than by looking, and it was the
+one thing that made a whole verb pointless.** With the threshold taken against the
+council's *whole* strength, abstaining and opposing leave `seats_for` identical
+and therefore always produce the same outcome — abstention was a slower way of
+voting no. Taken against the seats actually **cast**, the three choices genuinely
+differ, which is also what the real Council does.
+
+**The council was a legislature the player controlled, and the fix was content
+rather than a constant.** The first sweep had six of seven proposals decided by
+France's own vote. The probe prints the eight members' positions, and they are
+clustered — so no `SUPPORT_SIGMA` alone spreads the tallies. Moving
+`common_defence_floor` to where a defence commitment actually sits in ideology
+space is what put a proposal beyond France's reach; 0.90 is then the only swept
+value where some proposals carry without the player, some are theirs to decide,
+and some are lost whatever they do.
+
+**The re-run could not be bit-identical, and the reason is the block's cleanest
+distinction.** V1.3b's and V1.3c's both were, because an agreement and a measure
+each need a player command and no balance regime issues one. A bloc rule needs no
+command at all — the council meets whether or not the player engages. That is the
+difference between a verb and an institution, and it is also why this session
+needed **no eleventh regime** where b and c each did. What the re-run shows is
+sharp: GDP, growth, trend and unemployment are **bit-identical across all thirty
+runs**, so every economy constant measured through them is untouched; debt and
+deficit move only for members and only by the standing contribution; and exactly
+**one run of thirty changed outcome** — a GBR censure that carried by two seats
+against a 326 threshold, flipped by a tenth of an approval point. All three S10
+assertions still pass.
+
+**Two things the plan got wrong and the build found.** The plan said the
+projection would need no change; it did — `Budget.project()` had to tick `Bloc`,
+and the *test harnesses* had to as well, which `tests/test_budget.gd` caught by
+comparing a projection that advanced the council against a reality where it never
+met. And the plan claimed the dilution preserved the S10 ratio *exactly*; it does
+not, because the six candidate rows are not uniform. It preserves it to +0.39 %,
+which is the measurement rather than the claim.
 
 ### V1.3c — tariffs and sanctions (shipped)
 
@@ -381,7 +459,7 @@ one line is not a session.
 | **V1.3a** | Relations and diplomatic actions | Pair-keyed relations as live state, monthly drift, a small set of player verbs with a domestic price | — |
 | **V1.3b** | ~~Trade: per-partner intensity and agreements~~ **shipped** | `external_impulse_pct` made per-partner rather than one GDP-weighted aggregate; bilateral agreements with sector winners and losers at home | a |
 | **V1.3c** | ~~Tariffs and sanctions~~ **shipped** | Coercion in both directions on the first **directed** state; one verb, two prices; a Laffer curve and a protectionist trade-off that fall out of two constants rather than being authored | a, b |
-| **V1.3d** | The bloc | EU-shaped membership as a real constraint on domestic policy, transfers, bloc-level voting where the player is one member among many | a, (b) |
+| **V1.3d** | ~~The bloc~~ **shipped** | EU-shaped membership as a real constraint on domestic policy, transfers, bloc-level voting where the player is one member among many; and the `ISSUE_KEYS` call a–c each deferred here, answered **yes** | a, b, c |
 | **V1.3e** | AI foreign policy | Nine nations pursuing their own interests. Replaces every stopgap rule b–d shipped | a–d |
 | **V1.3f** | Defence as domestic politics | Capability derived from sustained spending, deployments, defensive alliances, alliance obligations that bill you at home | a, d |
 
@@ -400,7 +478,16 @@ Four calls, each of which could have gone the other way:
    shape `lose_condition: "never"` and `referendum_required` already use for a
    declared-unresolved rule. V1.3e opens with the checklist of them, so the
    debt is a list rather than a discovery.
-3. **The foreign-policy opinion issue is V1.3d's call, not V1.3a's.** a–c use
+3. ~~**The foreign-policy opinion issue is V1.3d's call, not V1.3a's.**~~
+   **Answered at V1.3d: yes, and `europe` is the twelfth `ISSUE_KEYS` entry.**
+   The reasons turned out to be structural rather than thematic — `bloc_offset`
+   never enters `issue_salience`, so a Europe priced on it could never be named
+   by the polling panel or the election result screen; a split price never clears
+   the noise floor in the headline figure, and Europe is a split issue by nature;
+   and a flat offset cannot become more *salient*, where a rule biting hard is
+   exactly the thing that should raise how much the country argues about Europe.
+   The cost was measured before it was taken and came in at **+0.39 %** on the
+   ratio S10's finding was about. See [[bloc-model]]. The original wording: a–c use
    `law_bloc_offset`, the persistent channel that already exists. Whether
    foreign policy earns its own `ISSUE_KEYS` entry is decided at d, where the
    domestic politics of Europe is the mechanic rather than a side effect — and
@@ -433,6 +520,8 @@ Three things the cold read found that the decomposition rests on:
   need a new per-nation content class.
 - **`data/eu_parliament.json` and `src/core/eu.gd` exist and are
   elections-only.** V1.3d extends that file rather than inventing a bloc.
+  **Held**: `ep_seats` became the council's voting weight, which is what makes
+  the file load-bearing beyond the elections it was written for.
 
 **LimboAI was evaluated for V1.3e and declined** — see [[declined]] for the four
 reasons and the condition that reopens it.
@@ -695,6 +784,7 @@ is already made, which is most sessions once the docs are written.
 | U5c The map layers | **Yes** *(authored)* | Opus 5, plan and build in one session | Medium | **This table had no U5c row.** Third instance of the missing-row failure V1.3b recorded, and unlike U5b there was not even a content row's tier to inherit — the U5a decomposition wrote content for U5b, U5c and U6 and a tier for none of them. The cold count came in at **~13 surfaces**, the *smallest* on this table: three new files, nine edits, one conditional that turned out not to be needed (`ui_theme.gd` was not touched — the eight existing label variations carried the legend). Against U5b's ~17, V1.2e's ~20, U5a's ~28, V1.3b's ~33. **Medium rather than Low on reversibility, which is the test the preamble names and which barely fires here**: a ramp that turns out wrong is rewritten alone — no sim model, no tuned constant, no save field, and nothing downstream reads a colour. What keeps it off Low is that it is the session paying down U5b's deferred design decision, and one of its three calls was explicitly staked on a frame rather than an argument. **The count missed three surfaces and all three came from counting rather than from the row**, which lists three features and names none of them: the player's own nation has no value on either data layer, hover distorted the datum it was pointing at, and the map went stale because nothing redrew it monthly. The named escalation trigger — *a data ramp unreadable at any alpha, so terrain variance rather than alpha is what defeats it* — did **not** fire; what the screenshot pass did catch was smaller and was the same class of error as U5b's own: the relations ramp's warm end was set at 80, so the top resting tier of 68 landed only 40 % along the warm half and washed out. Domain tightened to 72, and resolution put where the game actually sits. Fourteenth correction on this table's own record, and the third to be an *addition* to it |
 | V1.3b Trade: per-partner intensity and agreements | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3b row.** It stopped at V1.3a, so unlike every correction above this one is not a challenge to a logged estimate — it is an estimate authored at plan time with nothing to challenge, and the handoff convention's *read the row, count the surfaces yourself* had no row to read. Recorded because a missing row is a different failure from a wrong one, and the decomposition wrote per-session content and dependencies for all six without writing their tiers. The cold count came in at **~33 surfaces** — the largest on this table, eight above V1.3a's ~25, against V1.2d's ~21 and V1.2e's ~20. As with V1.3a the count is not what set the tier; the preamble's test is reversibility, and **both halves fire, the second for the first time in this block**: `w(A,B)` is schema-shaped with three downstream readers (c scales it, d reads it, e's interest function reads it), so a wrong weight function is rewritten with three sessions; and this is the first session to put **already-measured constants at risk** rather than add new ones, since every economy constant was tuned with this channel at zero and [[economy-model]]'s divergence argument had to be left standing. Held. Four cuts were declared in advance and the first was taken before any code: the separate `data/trade-agreements/` content type (terms ride the diplomatic action), then `economy_panel.gd`, a `Trade.tick_month()`, and a second agreement instance — the last three were not needed. Both named escalation triggers were GBR-shaped and stated before the model was built; **the first fired** and was resolved by the measurement it named rather than by escalating. Eleventh correction on this table's own record, and the first to be an *addition* to it. |
 | V1.3c Tariffs and sanctions | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **This table had no V1.3c row either.** Fourth instance of the missing-row failure V1.3b recorded — V1.3b had none, U5b inherited a content row's tier, U5c had neither, and this had only the decomposition's content cell. The handoff convention's *read the row, count the surfaces yourself* again had no row to read, so the tier below is authored rather than challenged. The cold count came in at **~30 surfaces** — six new files, ~24 edits — against V1.3b's ~33, V1.3a's ~25, V1.2d's ~21 and U5c's ~13. As with V1.3a and V1.3b the count is not what set the tier; the preamble's test is reversibility, and **both halves fire**: the directed register is schema that V1.3d reads (a bloc setting external tariffs collectively reads exactly this), V1.3e scores as action space and V1.3f inherits the pattern for alliance obligations — so a wrong directed key is rewritten with three sessions; and it puts already-measured economy constants at risk through a new additive term in the growth equation and a new revenue line. Held. Three cuts were named in advance and **none was taken** — the map layer shipped, `sanction` shipped as a second kind, and the nation panel's readout shipped. What the count did not anticipate was that the probe would correct the *model* twice rather than merely set constants: an authored tariff rate cut as one intensity written twice, and damage read off the wrong weight making high severity strictly dominated. The named escalation trigger **fired on the first sweep and was resolved by the second of those corrections** rather than by escalating, which is the response the plan itself named. Two things the plan got wrong and the build found: `Budget.recompute()` needed a `state` parameter (three call sites, all of which had it), and the budget panel's "now" column was a month stale for the new line — caught by a test, not by looking. Fifteenth correction on this table's own record, and the third to be an *addition* to it. |
+| V1.3d The bloc | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **Fifth instance of the missing-row failure V1.3b recorded**, and by now the pattern is the record rather than the exception: V1.3b had no row, U5b inherited a content row's tier, U5c had neither, V1.3c had only the decomposition's content cell, and this had the same. The tier below is authored rather than challenged. The cold count came in at **~39 surfaces** — eight new files, ~31 edits — the **largest on this table**, against V1.3b's ~33, V1.3c's ~30, V1.3a's ~25 and U5c's ~13. The count is again not what set the tier: the preamble's test is reversibility and both halves fire hard. A twelfth `ISSUE_KEYS` entry is read by S5 opinion, S6 attribution, S9 saves and three panels, and it puts the S10-measured salience table at risk — the second time in this block that already-measured constants were on the line, and the first time the *opinion* ones were. What kept ~39 surfaces inside one session is that the machine count is **three, not four**: U5b's lesson is that machines break an estimate, and proposal → vote → rule-in-force → constraint is one pipeline rather than two. Held. Three cuts were declared in advance and **all three were taken** — no bloc map layer, no separate rules content type, no accession mechanic. What the count missed was found the way U5a's was, by looking at a frame: the panel printed `deficit_pct_gdp <= 3.0` at a player, and its own budget section fell below the fold at the minimum height it shipped with. Both were one edit. The named escalation trigger — whether a bloc rule is legible at all — did **not** fire, at 2.47× the noise floor. Sixteenth correction on this table's own record, and the fourth to be an *addition* to it. |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it

@@ -37,6 +37,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[diplomacy-model]] — pair-keyed relations, symmetric and derived, their drift, and the player's diplomatic verbs
 - [[trade-model]] — the directed trade weight, per-partner external demand, bilateral agreements, and why relations move the mix and never the level
 - [[coercion-model]] — tariffs and sanctions on the first directed state: what a measure collects, what it destroys, who answers, and the Laffer curve nothing authors
+- [[bloc-model]] — the supranational bloc: proposals, the council, rules in force, transfers, and the twelfth opinion issue
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

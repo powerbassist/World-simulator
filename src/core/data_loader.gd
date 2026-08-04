@@ -10,6 +10,7 @@ const Law = preload("res://src/core/law.gd")
 const PoliticalSystem = preload("res://src/core/political_system.gd")
 const Scenario = preload("res://src/core/scenario.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
+const BlocProposal = preload("res://src/core/bloc_proposal.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -28,6 +29,12 @@ var scenarios: Dictionary = {}  # String id -> Scenario
 ## Ordered, not keyed by id, the same way `laws` is: the nation panel offers
 ## them as a list in authored order and nothing looks one up by id at runtime.
 var diplomatic_actions: Array[DiplomaticAction] = []
+
+## Ordered, not keyed by id, and the order is load-bearing here in a way it is
+## not for laws or diplomatic actions: src/sim/bloc.gd walks this list with a
+## rotating index to decide what reaches the council next, so authored order IS
+## the agenda. That is what keeps the council deterministic with no RNG.
+var bloc_proposals: Array[BlocProposal] = []
 
 var eu: EU = null
 var errors: Array[String] = []
@@ -52,13 +59,14 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals") -> void:
 	nations.clear()
 	parties.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
 	diplomatic_actions.clear()
+	bloc_proposals.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -101,6 +109,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
 	_load_diplomatic_actions(diplomatic_actions_dir)
+	_load_bloc_proposals(bloc_proposals_dir)
 
 	eu = EU.new()
 	eu.load(eu_path)
@@ -110,6 +119,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_amendments()
 	_validate_scenarios()
 	_validate_neighbours()
+	_validate_bloc_proposals()
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:
@@ -342,6 +352,83 @@ func _load_diplomatic_actions(actions_dir: String) -> void:
 					errors.append("%s: duplicate diplomatic action id '%s'" % [fname, action.id])
 				seen_ids[action.id] = true
 			diplomatic_actions.append(action)
+
+
+## Directory-scanned, exactly like _load_laws(), _load_scenarios() and
+## _load_diplomatic_actions() -- adding a proposal is a file, not a file plus an
+## index entry. Every file holds {"proposals": [...]}, matching a law file's
+## {"laws": [...]}, so several proposals can share a themed file.
+##
+## Unlike those three, the ORDER matters: src/sim/bloc.gd rotates an index over
+## this list to decide what reaches the council next, so the filename sort below
+## and the authored order inside each file together are the agenda. That is the
+## price of a scheduler with no RNG in it, and it is the right price.
+func _load_bloc_proposals(proposals_dir: String) -> void:
+	var da := DirAccess.open(proposals_dir)
+	if da == null:
+		errors.append("%s: directory not found" % proposals_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := proposals_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("proposals")) != TYPE_ARRAY:
+			errors.append("%s: invalid bloc-proposal file, expected {\"proposals\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["proposals"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: proposals[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var proposal = BlocProposal.from_dict(entry, fname, per_file_errors)
+			errors.append_array(per_file_errors)
+			if proposal.id != "":
+				if seen_ids.has(proposal.id):
+					errors.append("%s: duplicate bloc proposal id '%s'" % [fname, proposal.id])
+				seen_ids[proposal.id] = true
+			bloc_proposals.append(proposal)
+
+
+## The cross-file half: a proposal names no nation, but two of its shapes only
+## mean something against the roster it will run in.
+##
+## Runs after eu.load(), because both checks need the membership table.
+func _validate_bloc_proposals() -> void:
+	var member_count := 0
+	var outsider_count := 0
+	for id in nations.keys():
+		if eu.is_member(id):
+			member_count += 1
+		else:
+			outsider_count += 1
+
+	for p in bloc_proposals:
+		# A collective external tariff with nobody outside the bloc to levy it on
+		# is content that can never do anything -- the same class of quiet failure
+		# a scenario naming an unplayable nation is refused for.
+		if not p.external_measure.is_empty() and outsider_count == 0:
+			errors.append("bloc-proposals: %s sets an external measure, but every loaded nation is a member" % p.id)
+		if member_count == 0:
+			errors.append("bloc-proposals: %s is loaded, but no loaded nation is a bloc member" % p.id)
 
 
 ## A land border is mutual or it is not a land border. Nation.gd already checked

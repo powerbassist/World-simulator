@@ -127,6 +127,41 @@ var trade_baseline_by_partner := {}
 ## See docs/coercion-model.md.
 var coercion_impulse_pct: float = 0.0
 
+# --- The bloc ------------------------------------------------------------------
+
+## This nation's standing net contribution to the bloc, percent of its own GDP.
+## Signed: a net receiver carries a negative figure. Derived once at new-game by
+## Bloc.net_positions() from starting prosperity and never recomputed, which is
+## the same static-fact treatment eu_member and neighbours get -- and it is what
+## puts the contribution inside start_deficit_pct_gdp, where an inherited drag
+## the player did not choose belongs. Exactly 0.0 for a non-member.
+var bloc_base_transfer_pct_gdp: float = 0.0
+
+## What the bloc actually costs this month: the standing contribution above, plus
+## whatever the rules in force move it by, plus the penalties charged for defying
+## them. Written by Bloc.tick_month() and read by Budget.recompute() as a line of
+## its own -- not a sixth SPENDING_KEYS entry, because docs/tiers/v1.md section 6
+## keys spending lines 1:1 to cabinet portfolios and a sixth line would be a
+## sixth minister. Same call docs/coercion-model.md made for the tariff line.
+var bloc_transfer_pct_gdp: float = 0.0
+
+## How far outside the bloc's rules this nation is sitting, in [0, BURDEN_MAX].
+## Zero for a non-member, zero with nothing in force, and zero for a member that
+## complies -- a complying player pays in the policy they could not run, which
+## shows on the spending lines they had to cut rather than here.
+##
+## Read by opinion.gd as the `europe` issue's satisfaction, which is V1.3d's
+## answer to the ISSUE_KEYS question three sessions deferred to it. See
+## docs/bloc-model.md.
+var bloc_burden: float = 0.0
+
+## The burden at new-game, the reference the europe issue is measured against --
+## the same "delta against the nation's own start" every other satisfaction term
+## uses. France may begin in real breach of a deficit rule, and that is
+## politically free until the player makes it worse or better, exactly as its
+## real 4.7%-of-GDP starting deficit already is.
+var start_bloc_burden: float = 0.0
+
 # --- Elections -----------------------------------------------------------------
 
 ## Copied from Nation at new-game; the assembly's size never changes mid-game.
@@ -432,6 +467,11 @@ func duplicate_state():
 	s.trade_baseline_by_partner = trade_baseline_by_partner.duplicate(true)
 	s.coercion_impulse_pct = coercion_impulse_pct
 
+	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
+	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
+	s.bloc_burden = bloc_burden
+	s.start_bloc_burden = start_bloc_burden
+
 	s.assembly_seats = assembly_seats
 	s.term_months = term_months
 	s.months_in_term = months_in_term
@@ -553,6 +593,11 @@ func to_dict() -> Dictionary:
 		"external_impulse_pct": external_impulse_pct,
 		"trade_baseline_by_partner": trade_baseline_by_partner,
 		"coercion_impulse_pct": coercion_impulse_pct,
+
+		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
+		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
+		"bloc_burden": bloc_burden,
+		"start_bloc_burden": start_bloc_burden,
 
 		"assembly_seats": assembly_seats,
 		"term_months": term_months,
@@ -682,6 +727,18 @@ static func from_dict(d: Dictionary):
 	# force, so nothing was being damaged. Recomputed from GameState.measures on the
 	# first tick after loading in any case -- see the field's own declaration.
 	s.coercion_impulse_pct = float(d.get("coercion_impulse_pct", 0.0))
+
+	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
+	# the one game_state.gd's own comment states rather than a new one. An absent
+	# bloc_base_transfer_pct_gdp reads as 0.0 -- a France that pays nothing into a
+	# budget it has always paid into -- and an absent start_bloc_burden reads as
+	# 0.0 against a live burden, which permanently MIS-SIGNS the europe issue: a
+	# player who loaded a save while in breach would be scored as though the
+	# breach were new. Both are eu_member/neighbours' case, not agreements' case.
+	s.bloc_base_transfer_pct_gdp = float(d.get("bloc_base_transfer_pct_gdp", 0.0))
+	s.bloc_transfer_pct_gdp = float(d.get("bloc_transfer_pct_gdp", 0.0))
+	s.bloc_burden = float(d.get("bloc_burden", 0.0))
+	s.start_bloc_burden = float(d.get("start_bloc_burden", 0.0))
 
 	# JSON has one numeric type; Godot's parser hands every number back as a
 	# float. Cast the int-typed fields back explicitly.

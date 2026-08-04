@@ -11,6 +11,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -249,6 +250,10 @@ func _run_with_diplomacy(state, pending: Dictionary, months: int) -> Array[Dicti
 	for _i in range(months):
 		Economy.tick_month(state)
 		Budget.tick_month(state)
+		# V1.3d: Budget.project() ticks Bloc, so a runner that does not is comparing
+		# a projection that advanced the council against a reality where it never
+		# met. Caught by this file, which is what it is for.
+		Bloc.tick_month(state, _loader)
 		Diplomacy.tick_month(state, _loader)
 		out.append(Budget.snapshot(state))
 	return out
@@ -261,6 +266,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 	for _i in range(months):
 		Economy.tick_month(state)
 		Budget.tick_month(state)
+		Bloc.tick_month(state, _loader)
 		out.append(Budget.snapshot(state))
 	return out
 

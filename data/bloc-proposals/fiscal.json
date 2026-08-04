@@ -1,0 +1,45 @@
+{
+  "_source": "authored",
+  "_note": "Bloc proposals, V1.3d. Shaped after the real Stability and Growth Pact and the Excessive Deficit Procedure, but the numbers are game numbers set by tools/bloc_probe.gd and not by the Treaties -- see docs/bloc-model.md. File order is the council's agenda: src/sim/bloc.gd rotates an index over the loaded list, so a proposal added here changes what comes up and when.",
+  "proposals": [
+    {
+      "id": "stability_pact",
+      "name": "Stability and Growth Pact",
+      "summary": "Members undertake to hold the general government deficit under 3% of GDP. The Commission reports on those who do not, and the Council may levy a penalty.",
+      "position": { "economic": 0.55, "social": 0.15 },
+      "constraint": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 3.0,
+        "tolerance": 6.0,
+        "severity": 0.33
+      }
+    },
+    {
+      "id": "debt_reduction_rule",
+      "name": "Debt Reduction Rule",
+      "summary": "A member carrying debt above 90% of GDP commits to a path back below it. The path is not enforced; the reporting is.",
+      "position": { "economic": 0.65, "social": 0.20 },
+      "constraint": {
+        "field": "debt_to_gdp_pct",
+        "op": "<=",
+        "value": 90.0,
+        "tolerance": 60.0,
+        "severity": 0.26
+      }
+    },
+    {
+      "id": "minimum_corporate_rate",
+      "name": "Minimum Corporate Rate",
+      "summary": "A floor under corporation tax across the bloc, so that no member can compete for headquarters by cutting below it.",
+      "position": { "economic": -0.50, "social": -0.10 },
+      "constraint": {
+        "field": "tax_corporate",
+        "op": ">=",
+        "value": 18.0,
+        "tolerance": 8.0,
+        "severity": 0.19
+      }
+    }
+  ]
+}

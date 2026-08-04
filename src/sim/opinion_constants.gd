@@ -48,11 +48,27 @@ const BLOC_LABEL := {
 ## nation's own starting figure. At new-game every one of them is exactly zero,
 ## so the model needs no calibration constant — the same trick the economy's
 ## potential_shift uses.
+## `europe` is V1.3d's, and it is the call V1.3a, V1.3b and V1.3c each deferred
+## to it by name. Everything before it priced its domestic cost through
+## bloc_offset; the bloc could not, for three structural reasons and not a
+## thematic one. bloc_offset never enters issue_salience, so a Europe priced on
+## it could never be named by the polling panel's agenda list or by
+## elections.gd's attribution() -- the two surfaces that exist to tell the player
+## WHY. A split price never clears the poll-noise floor in the headline figure,
+## which docs/diplomacy-model.md measured, and Europe is a split issue by nature.
+## And bloc_offset is a flat additive that cannot become more SALIENT, where a
+## bloc rule biting hard is precisely the thing that should raise how much the
+## country argues about Europe.
+##
+## The cost was measured before it was taken, by tools/bloc_probe.gd: every row
+## below is scaled by 1/(1+w) once europe joins it, and S10's finding was the
+## RATIO of public_finances to the five spending lines, which moves by +0.39%.
+## See docs/bloc-model.md.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat",
 	"health", "education", "defence", "pensions", "infrastructure",
-	"public_finances",
+	"public_finances", "europe",
 ]
 
 const ISSUE_LABEL := {
@@ -67,6 +83,7 @@ const ISSUE_LABEL := {
 	"pensions": "Pensions",
 	"infrastructure": "Infrastructure",
 	"public_finances": "Public finances",
+	"europe": "Europe",
 }
 
 ## Deltas that saturate an issue's satisfaction at full strength.
@@ -81,6 +98,33 @@ const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
 ## the same to a voter. Six points spans a genuine consolidation or a genuine
 ## blowout, which is the range the player actually moves this number over.
 const DEFICIT_SCALE_PP := 6.0
+
+## Units of bloc burden. The one scale in this table that is not a quantity in
+## percentage points, because burden is already a normalised score rather than a
+## measurement.
+##
+## NOT 1.0, and the reason is DEFICIT_SCALE_PP's exactly. bloc_constants.BURDEN_MAX
+## is 1.0 and is reached only by breaching all four rules to their full tolerance
+## at once -- an extreme, not a policy. The range the player actually moves this
+## number over is roughly [0, 0.6]: one rule defied outright is 0.33, two is 0.59.
+## At a scale of 1.0 that whole band is squeezed into the middle third of the
+## issue, and tools/bloc_probe.gd measured the consequence -- one defied rule moved
+## the headline figure by 3.24 points against a 3.0 noise floor, clearing it by
+## almost exactly nothing, which is docs/scenario-model.md's `deu_grand_coalition`
+## mistake. 0.60 maps the reachable band onto the full satisfaction range.
+##
+## Deliberately not folded into BURDEN_MAX: that constant bounds the MODEL and is
+## what makes the four severities sum to exactly 1.0; this one converts a burden
+## into what a voter feels. Collapsing them would make the burden's ceiling
+## unmovable without also moving the electorate's reaction to it.
+##
+## Swept rather than reasoned to, because SALIENCE_GAIN makes the response to this
+## constant sharply non-linear -- 1.00 gives one defied rule a headline move of
+## -3.2, 0.60 gives -13.0, and the anchor that settles it is docs/coercion-model.md's
+## measured -4.9 to -7.4 for a full embargo by the largest trading partner. Defying
+## one bloc rule and being embargoed by Germany should cost about the same, and at
+## 0.80 they do.
+const EUROPE_SCALE := 0.80
 
 # --- Salience ----------------------------------------------------------------
 
@@ -104,12 +148,33 @@ const DEFICIT_SCALE_PP := 6.0
 ## sits at a public_finances satisfaction of about zero and is untouched by the
 ## change. It bites only once the player moves the deficit, in whichever
 ## direction. Found by tools/balance_probe.gd.
+## The `europe` row is V1.3d's, and it is the only issue in this table whose
+## entries are NOT the row a bloc would write for itself. Every satisfaction in
+## opinion.gd enters every bloc's score with the SAME SIGN -- blocs differ in how
+## much they weigh an issue, never in which way it moves them -- so a bloc cannot
+## be authored as pro-European through this channel. The entries below are
+## therefore "how much does being overruled from Brussels dominate this bloc's
+## agenda", one-signed, and the political SPLIT falls out of the rows that were
+## already here rather than being authored:
+##
+##   pensioners (0.24) and rural (0.13) carry NO `growth` entry at all, so 37% of
+##   the electorate receives the sovereignty cost and none of the single market's
+##   upside, while business weights growth 0.19 and public_finances 0.34 and gets
+##   both. A eurosceptic countryside and a pro-European boardroom, measured off a
+##   table written at S5 for reasons that had nothing to do with Europe.
+##
+## Rows no longer sum to 1.0 and do not need to -- salience_weights() renormalises
+## and the comment above already said a tuning pass need not keep them that way.
+## What that renormalisation costs the eleven measured issues was the session's
+## first measurement, not an afterthought: see tools/bloc_probe.gd table (a) and
+## docs/bloc-model.md.
 const BLOC_SALIENCE_BASE := {
 	"workers": {
 		"jobs": 0.34,
 		"public_finances": 0.18,
 		"tax_income": 0.15,
 		"health": 0.10,
+		"europe": 0.10,
 		"tax_vat": 0.08,
 		"growth": 0.08,
 		"pensions": 0.07,
@@ -119,6 +184,7 @@ const BLOC_SALIENCE_BASE := {
 		"health": 0.21,
 		"public_finances": 0.20,
 		"jobs": 0.13,
+		"europe": 0.10,
 		"tax_vat": 0.08,
 	},
 	"urban": {
@@ -129,11 +195,13 @@ const BLOC_SALIENCE_BASE := {
 		"infrastructure": 0.11,
 		"tax_income": 0.11,
 		"growth": 0.10,
+		"europe": 0.06,
 	},
 	"rural": {
 		"infrastructure": 0.20,
 		"public_finances": 0.18,
 		"jobs": 0.16,
+		"europe": 0.14,
 		"health": 0.13,
 		"defence": 0.12,
 		"tax_vat": 0.11,
@@ -145,6 +213,7 @@ const BLOC_SALIENCE_BASE := {
 		"growth": 0.19,
 		"infrastructure": 0.09,
 		"jobs": 0.07,
+		"europe": 0.06,
 		"education": 0.06,
 	},
 	"students": {
@@ -154,6 +223,7 @@ const BLOC_SALIENCE_BASE := {
 		"tax_vat": 0.10,
 		"growth": 0.08,
 		"health": 0.08,
+		"europe": 0.05,
 	},
 }
 

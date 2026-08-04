@@ -30,6 +30,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -39,6 +40,7 @@ const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
 const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
 const TRADE_SLOT := "__test_save_load_roundtrip_trade__"
 const COERCION_SLOT := "__test_save_load_roundtrip_coercion__"
+const BLOC_SLOT := "__test_save_load_roundtrip_bloc__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
 const FLOAT_EPS := 1e-6
 
@@ -88,6 +90,7 @@ func _init() -> void:
 	_run_diplomacy_roundtrip(loader)
 	_run_trade_roundtrip(loader)
 	_run_coercion_roundtrip(loader)
+	_run_bloc_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -529,10 +532,152 @@ func _run_coercion_roundtrip(loader) -> void:
 	if zeroed.nations["DEU"].coercion_impulse_pct != 0.0:
 		_fail("an absent coercion_impulse_pct did not read as exactly 0.0")
 
-	# The version this session did NOT bump. Stated as an assertion so that a
-	# later session raising SAVE_VERSION has to come here and say why.
-	if GameState.SAVE_VERSION != 10:
-		_fail("SAVE_VERSION is %d -- V1.3c argued for staying at 10, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	# V1.3c left an assertion here that SAVE_VERSION was STILL 10, so that a later
+	# session raising it had to come and say why. V1.3d is that session, and
+	# _run_bloc_roundtrip() below is where it says why. Nothing V1.3c added earns a
+	# bump on its own and that is still true -- the three checks above are the
+	# argument, and they are what this line has been replaced by rather than
+	# deleted. See docs/coercion-model.md and docs/bloc-model.md.
+
+
+## V1.3d, and the session that answers the assertion V1.3c left above.
+##
+## SAVE_VERSION 10 -> 11. The rule game_state.gd states is "would a missing field
+## read as something WRONG", not "is a field new" -- V1.3b's `agreements` and
+## V1.3c's `measures` both read correctly as "nothing yet" and neither earned a
+## bump. Three fields here fail that test, and the loud one is not the register:
+##
+##   - an absent `bloc_base_transfer_pct_gdp` is a France that has never paid into
+##     a budget it has always paid into, silently moving the starting deficit every
+##     economy constant is measured against;
+##   - an absent `start_bloc_burden` reads as 0.0 against a LIVE burden, so a game
+##     reloaded while in breach scores that breach as brand new and the europe
+##     issue is mis-signed for the rest of the run;
+##   - an absent `bloc` register reads as no council and no rules, which for a bloc
+##     whose premise is that its rules are always in force is wrong rather than empty.
+##
+## All three are eu_member/neighbours' case: a reloaded game running a different
+## model from the one that saved it. Asserted here rather than argued in a comment.
+func _run_bloc_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported %s" % [state.errors])
+		return
+
+	# Get something actually into the register rather than saving the empty shape:
+	# an empty rules map round-trips as an empty rules map whether or not it is
+	# saved at all, which is the trap docs/diplomacy-model.md's own round-trip
+	# check names. Adopt directly, the way the probe does -- Bloc has no public
+	# "adopt this now" and should not grow one for a test.
+	# By id, not by index: the agenda order is a filename sort and a later session
+	# adding data/bloc-proposals/aaa.json would silently move this test onto a
+	# proposal with no constraint at all, which would then assert nothing.
+	var proposal = null
+	for candidate in loader.bloc_proposals:
+		if candidate.id == "stability_pact":
+			proposal = candidate
+			break
+	if proposal == null:
+		_fail("no stability_pact proposal to adopt")
+		return
+
+	state.bloc["rules"][proposal.id] = {
+		"name": proposal.proposal_name,
+		"field": String(proposal.constraint["field"]),
+		"op": String(proposal.constraint["op"]),
+		"value": float(proposal.constraint["value"]),
+		"tolerance": float(proposal.constraint["tolerance"]),
+		"severity": float(proposal.constraint["severity"]),
+		"transfer_pct_gdp": 0.0,
+		"since_year": state.year,
+		"since_month": state.month,
+	}
+	Bloc.tick_month(state, loader)
+	Budget.tick_month(state)
+	# After the tick, which counts months_to_next down -- set before it, these
+	# would be asserting the tick's arithmetic rather than the round trip's.
+	state.bloc["next_index"] = 2
+	state.bloc["months_to_next"] = 7
+
+	if is_zero_approx(state.player().bloc_burden):
+		_fail("could not set up a live bloc burden to save -- France should be in breach of a 3%% deficit rule")
+		return
+
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 21
+	var save_error := SaveManager.save_game(state, clock, BLOC_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game failed on a state with a bloc rule: %s" % save_error)
+		return
+
+	var loaded_result := SaveManager.load_game(BLOC_SLOT)
+	if not loaded_result["ok"]:
+		_fail("load_game failed on a save with a bloc rule: %s" % loaded_result["error"])
+		return
+
+	var loaded = loaded_result["state"]
+	if not (loaded.bloc.get("rules", {}) as Dictionary).has(proposal.id):
+		_fail("a save round trip dropped the %s rule" % proposal.id)
+		return
+	# The scheduler is the half most likely to round-trip subtly wrong: JSON gives
+	# every number back as a float, and a countdown comparing a float against an int
+	# would run forever without anything looking broken.
+	if typeof(loaded.bloc["next_index"]) != TYPE_INT or int(loaded.bloc["next_index"]) != 2:
+		_fail("bloc.next_index round-tripped as %s (%d), expected the int 2" % [
+			loaded.bloc["next_index"], typeof(loaded.bloc["next_index"])
+		])
+	if typeof(loaded.bloc["months_to_next"]) != TYPE_INT or int(loaded.bloc["months_to_next"]) != 7:
+		_fail("bloc.months_to_next round-tripped as %s, expected the int 7" % [loaded.bloc["months_to_next"]])
+
+	# And the rule has to still BITE, not merely still exist.
+	if not is_equal_approx(Bloc.burden(loaded, loaded.player()), Bloc.burden(state, state.player())):
+		_fail("the bloc burden does not survive a save round trip: %.6f vs %.6f" % [
+			Bloc.burden(loaded, loaded.player()), Bloc.burden(state, state.player())
+		])
+
+	# The bump's argument, all three halves, checked the way 9 -> 10's halves are.
+	var no_bloc: Dictionary = state.to_dict()
+	no_bloc.erase("bloc")
+	var without = GameState.from_dict(no_bloc)
+	if not is_zero_approx(Bloc.burden(without, without.player())):
+		_fail("a save with no bloc key still produced a burden")
+	if is_equal_approx(Bloc.burden(without, without.player()), Bloc.burden(state, state.player())):
+		_fail("dropping the bloc register changed nothing -- that half of the bump's premise is wrong")
+
+	var no_transfer: Dictionary = state.to_dict()
+	for id in (no_transfer["nations"] as Dictionary).keys():
+		(no_transfer["nations"][id] as Dictionary).erase("bloc_base_transfer_pct_gdp")
+		(no_transfer["nations"][id] as Dictionary).erase("bloc_transfer_pct_gdp")
+	var stripped = GameState.from_dict(no_transfer)
+	Budget.recompute(stripped, stripped.player())
+	if is_equal_approx(stripped.player().deficit_pct_gdp, state.player().deficit_pct_gdp):
+		_fail("a save with no bloc transfer produced the same deficit -- the bump's premise is wrong")
+
+	var no_start: Dictionary = state.to_dict()
+	for id in (no_start["nations"] as Dictionary).keys():
+		(no_start["nations"][id] as Dictionary).erase("start_bloc_burden")
+	var mis_signed = GameState.from_dict(no_start)
+	if not is_equal_approx(mis_signed.player().start_bloc_burden, 0.0):
+		_fail("an absent start_bloc_burden did not read as 0.0")
+	# France's own start_bloc_burden is genuinely 0.0 (nothing was in force at
+	# new-game), so the mis-signing this field guards against needs a state where
+	# it is NOT -- set one, and check the issue moves when it goes missing.
+	state.player().start_bloc_burden = state.player().bloc_burden
+	var with_reference: Dictionary = state.to_dict()
+	var kept = GameState.from_dict(with_reference)
+	(with_reference["nations"]["FRA"] as Dictionary).erase("start_bloc_burden")
+	var lost = GameState.from_dict(with_reference)
+	if is_equal_approx(
+		float(Opinion.issue_satisfaction(kept.player())["europe"]),
+		float(Opinion.issue_satisfaction(lost.player())["europe"])
+	):
+		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
+
+	if GameState.SAVE_VERSION != 11:
+		_fail("SAVE_VERSION is %d -- V1.3d argued for 11, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 func _run_roundtrip(state, clock) -> void:
@@ -713,7 +858,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, TRADE_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)

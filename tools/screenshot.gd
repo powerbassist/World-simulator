@@ -7,6 +7,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer relations
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer trade --hover DEU
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -18,6 +20,7 @@ extends SceneTree
 ## framebuffer, and with no rendering device there is nothing in it.
 
 const Relations = preload("res://src/core/relations.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -43,6 +46,20 @@ var _hover := ""
 ## saturated ramp survives being drawn over a satellite photograph; that question
 ## cannot be asked of a layer where every nation sits at the same end.
 var _coerce := false
+
+## V1.3d, and the same argument --coerce makes one session later. A new game has
+## an empty council: no rule in force, nothing before the members, no penalty on
+## the budget. A frame of that panel would show three "None" captions and prove
+## nothing about the layout that matters -- which is the one claim a screenshot
+## exists to check. This puts a rule in force, a proposal on the table, and the
+## player in breach of the rule, then opens the window.
+var _bloc := false
+
+## Which registered window to open before capturing, by the id main.gd registered
+## it under. Generic rather than a flag per panel: --bloc exists because it has to
+## SET UP state the panel has nothing to show without, which is a different job
+## from simply opening a window.
+var _open := ""
 var _main
 
 
@@ -59,6 +76,10 @@ func _init() -> void:
 			_hover = args[i + 1].to_upper()
 		elif args[i] == "--coerce":
 			_coerce = true
+		elif args[i] == "--bloc":
+			_bloc = true
+		elif args[i] == "--open" and i + 1 < args.size():
+			_open = args[i + 1]
 
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
@@ -99,6 +120,10 @@ func _apply_view() -> void:
 		return
 	if _coerce:
 		_impose_a_spread()
+	if _bloc:
+		_open_the_council()
+	if _open != "":
+		_main._windows.open(_open)
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		_main._hud.map_legend.show_layer(_main._map_view.layer())
@@ -145,3 +170,49 @@ func _terms(state, kind: String, severity: float) -> Dictionary:
 		"kind": kind, "severity": severity,
 		"since_year": state.year, "since_month": state.month, "retaliated": true,
 	}
+
+
+## One rule in force, one proposal before the council, and the player in breach of
+## the rule -- so the captured frame shows every section of the panel with real
+## figures in it. Written straight into the register the way _impose_a_spread()
+## writes measures, and for the identical reason: this is a dev tool looking at
+## pixels, and going through the council's own eighteen-month schedule would mean
+## capturing frame 540.
+func _open_the_council() -> void:
+	var state = _main._state
+	if state == null or state.bloc.is_empty():
+		return
+
+	var proposal = null
+	var pending = null
+	for p in _main._loader.bloc_proposals:
+		if not p.constraint.is_empty() and proposal == null:
+			proposal = p
+		elif pending == null:
+			pending = p
+	if proposal == null:
+		return
+
+	state.bloc["rules"][proposal.id] = {
+		"name": proposal.proposal_name,
+		"field": String(proposal.constraint["field"]),
+		"op": String(proposal.constraint["op"]),
+		"value": float(proposal.constraint["value"]),
+		"tolerance": float(proposal.constraint["tolerance"]),
+		"severity": float(proposal.constraint["severity"]),
+		"transfer_pct_gdp": 0.0,
+		"since_year": state.year, "since_month": state.month,
+	}
+	if pending != null:
+		state.bloc["pending"] = {
+			"proposal_id": pending.id, "name": pending.proposal_name,
+			"summary": pending.summary, "months_left": 2,
+			"player_vote": "against",
+			"opened_year": state.year, "opened_month": state.month,
+		}
+	# So the burden, the penalty line and the breach caption are all non-zero.
+	Bloc.tick_month(state, _main._loader)
+
+	_main._windows.open("bloc")
+	if _main._bloc_panel != null:
+		_main._bloc_panel.mark_dirty()

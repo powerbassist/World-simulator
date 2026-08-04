@@ -17,6 +17,8 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
+const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -293,6 +295,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		Economy.tick_month(state)
 		Budget.tick_month(state)
+		Bloc.tick_month(state, loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
@@ -672,6 +675,24 @@ func _check(state, ns, year: int, month: int) -> Array[String]:
 	if absf(ns.coercion_impulse_pct) >= CoercionK.COERCION_IMPULSE_MAX:
 		out.append("%s coercion impulse is ON its clamp at %.3f -- the guard rail is setting growth" % [
 			at, ns.coercion_impulse_pct,
+		])
+	# V1.3d. Scoped DIFFERENTLY from the two above, and the difference is the point.
+	# BURDEN_MAX is reached exactly when every rule in force is breached to its full
+	# tolerance, because the authored severities sum to exactly it -- so touching it
+	# is the model working, not a guard rail taking over. What would be a failure is
+	# EXCEEDING it, which would mean a fifth rule had been authored without the sum
+	# being rechecked, or the per-rule term had stopped being clamped.
+	if ns.bloc_burden > BlocK.BURDEN_MAX + 1.0e-9:
+		out.append("%s bloc burden %.6f is ABOVE its ceiling of %.2f -- the severities no longer sum to it" % [
+			at, ns.bloc_burden, BlocK.BURDEN_MAX,
+		])
+	# The transfer is the fourth writer on the spending side and the first the player
+	# does not set. Bounded against the same panel every other line is read on: a
+	# contribution worth more than two tax points would out-weigh most of the budget
+	# screen without appearing on it as anything the player can move.
+	if absf(ns.bloc_transfer_pct_gdp) > 2.0 * 0.50:
+		out.append("%s the Union is charging %.3f%% of GDP, over two tax points" % [
+			at, ns.bloc_transfer_pct_gdp,
 		])
 	if ns.debt_to_gdp_pct() > 1000.0:
 		out.append("%s debt ratio running away at %.0f%%" % [at, ns.debt_to_gdp_pct()])

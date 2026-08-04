@@ -35,6 +35,11 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 ## See docs/scenario-model.md.
 static func init_nation(ns, bloc_approval_override: Dictionary = {}) -> void:
 	ns.start_deficit_pct_gdp = ns.deficit_pct_gdp
+	# The europe issue's reference, captured here beside the deficit's and for the
+	# identical reason. Zero at new-game because nothing is in force yet -- written
+	# rather than assumed, so a later session that lets a scenario author a rule
+	# already binding gets the right answer without coming back here.
+	ns.start_bloc_burden = ns.bloc_burden
 
 	ns.bloc_approval = {}
 	for bloc in K.BLOC_KEYS:
@@ -147,6 +152,26 @@ static func issue_satisfaction(ns) -> Dictionary:
 	# unhappy no matter what the player did. The deficit answers to the player.
 	sat["public_finances"] = _scaled(
 		-(ns.deficit_pct_gdp - ns.start_deficit_pct_gdp), K.DEFICIT_SCALE_PP
+	)
+
+	# V1.3d. A delta against the nation's own starting burden, exactly like every
+	# term above -- France may begin in real breach of a deficit rule and that is
+	# politically free until the player moves it, the same way its real
+	# 4.7%-of-GDP starting deficit is.
+	#
+	# ONE-SIGNED, and that is a property of the model rather than a simplification:
+	# this satisfaction reaches all six blocs with the same sign, because nothing in
+	# _tick_nation() lets a bloc weight an issue negatively. Europe divides the
+	# country anyway, through the rows that were already here -- pensioners and
+	# rural weight `growth` at nothing, so they take the sovereignty cost without
+	# the single market's upside. See opinion_constants.BLOC_SALIENCE_BASE.
+	#
+	# Zero for a non-member, zero with nothing in force, and zero for a member that
+	# COMPLIES. A complying player pays for the bloc in the policy they could not
+	# run, and that shows up on the spending lines they had to cut -- which is the
+	# same surgical property the public_finances row above is praised for.
+	sat["europe"] = _scaled(
+		-(ns.bloc_burden - ns.start_bloc_burden), K.EUROPE_SCALE
 	)
 
 	return sat

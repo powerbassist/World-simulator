@@ -12,6 +12,7 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -19,6 +20,7 @@ const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const Minimap = preload("res://src/ui/minimap.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
+const BlocPanel = preload("res://src/ui/bloc_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
@@ -76,6 +78,7 @@ var _law_panel
 var _map_view
 var _minimap
 var _nation_panel
+var _bloc_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -221,6 +224,13 @@ func _ready() -> void:
 		_map_view.queue_redraw()
 	)
 
+	# V1.3d. Beside Diplomacy in the World cluster, and its own window rather than
+	# a section of the nation panel: the council is not a nation and has no pixel
+	# on the map to click, so there is nothing to select it by.
+	_bloc_panel = BlocPanel.new()
+	_windows.register("bloc", "The Union", _bloc_panel)
+	_bloc_panel.setup(_state, _loader)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -303,6 +313,7 @@ func _build_action_bar() -> void:
 	])
 	_hud.action_bar.add_cluster("world", "World", ICONS + "globe.svg", [
 		{"id": "diplomacy", "label": "Diplomacy"},
+		{"id": "bloc", "label": "The Union"},
 	])
 	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
 
@@ -459,6 +470,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	_state.month = month
 	Economy.tick_month(_state)
 	Budget.tick_month(_state)
+	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER
+	# Budget, because the burden reads the deficit that Budget has just settled and
+	# charges its penalty into NEXT month's recompute -- which is what stops a rule
+	# on the deficit feeding a fine that widens the deficit that deepens the breach.
+	# BEFORE Opinion, because the `europe` issue reads the burden, and wired the
+	# other way round every bloc reaction would carry a spurious extra month of lag.
+	Bloc.tick_month(_state, _loader)
 	Opinion.tick_month(_state)
 
 	var entry := Budget.snapshot(_state)
@@ -495,6 +513,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_nation_panel.mark_dirty()
 	if _government_panel != null:
 		_government_panel.mark_dirty()
+	if _bloc_panel != null:
+		_bloc_panel.mark_dirty()
 
 	# U5c. The map draws only on hover, pan, zoom and resize, which was complete
 	# while its colours came from a hash of the nation id and is not now: relations
@@ -573,6 +593,7 @@ func _on_load_requested(slot: String) -> void:
 	_law_panel.setup(_state, _loader)
 	_nation_panel.setup(_state, _loader)
 	_government_panel.setup(_state, _loader)
+	_bloc_panel.setup(_state, _loader)
 
 	_overview_panel.mark_dirty()
 	_economy_panel.mark_dirty()
@@ -581,6 +602,7 @@ func _on_load_requested(slot: String) -> void:
 	_law_panel.mark_dirty()
 	_nation_panel.mark_dirty()
 	_government_panel.mark_dirty()
+	_bloc_panel.mark_dirty()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()

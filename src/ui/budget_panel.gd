@@ -50,6 +50,12 @@ const FIGURE_ROWS := [
 	["tariffs", "  of which tariffs"],
 	["spending", "Spending"],
 	["debt_service", "  of which debt service"],
+	# V1.3d, indented under Spending for the same reason tariffs are indented under
+	# Revenue, and on the same argument: a member's contribution, whatever the
+	# rules in force move it by, and the penalties for defying them are all money
+	# leaving the budget, and the player did not set any of it with a slider.
+	# Reads "—" for a non-member, which is exactly 0.0 by construction.
+	["bloc_transfer", "  of which the Union"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	["", ""],
@@ -294,6 +300,7 @@ func _refresh() -> void:
 	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
+	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 
@@ -308,6 +315,17 @@ func _refresh() -> void:
 ## things: a zero invites the player to wonder what they did wrong, where a dash
 ## says the line is not in play. Every game that has never used the verb reads the
 ## dash, which is most of them.
+## The same em dash for the same reason, with one difference the tariff line does
+## not have: this figure is SIGNED. A net receiver -- or a member drawing on a
+## programme the council adopted -- shows a negative, and "+" is forced so the
+## direction is readable without comparing it against the line above.
+func _bloc_text(snap: Dictionary) -> String:
+	var pct: float = float(snap.get("bloc_transfer_pct_gdp", 0.0))
+	if is_zero_approx(pct):
+		return "—"
+	return "%+.2f%% GDP" % pct
+
+
 func _tariff_text(snap: Dictionary) -> String:
 	var pct: float = float(snap.get("tariff_revenue_pct_gdp", 0.0))
 	if is_zero_approx(pct):

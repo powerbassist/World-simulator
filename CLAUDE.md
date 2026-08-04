@@ -146,7 +146,11 @@ warm end until a frame was looked at. It saves a PNG of the running game — run
 windowed, not headless — and takes `--layer`, `--hover` and (V1.3c) `--coerce`,
 so every map layer can be captured with something actually on it. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
-which is the one claim a screenshot is there to check.
+which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
+same argument — a new game's council is empty and a frame of three "None" captions
+proves nothing — and a generic `--open <window id>`. It earned its keep twice in
+one session: the bloc panel was printing `deficit_pct_gdp <= 3.0` at a player, and
+its own budget section fell below the fold.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in
@@ -209,22 +213,72 @@ reachable play* at 4.0 and raised to 6.0, equal to `IMPULSE_MAX_PCT`. The model,
 every constant and the measured tables are
 [docs/coercion-model.md](docs/coercion-model.md).
 
-**Next: V1.3d, the bloc.** It extends `data/eu_parliament.json` and
-`src/core/eu.gd`, which exist and are elections-only, and it is the session that
-decides whether foreign policy earns an `ISSUE_KEYS` entry of its own — the
-constraint that has held since V1.3a is finally *its* call to make, and the cost
-is named in advance: six new `BLOC_SALIENCE_BASE` rows, against which every tuned
-opinion constant was measured. It also inherits the first reader of the directed
-register, since a bloc that sets external tariffs collectively reads exactly
-that. **LimboAI was evaluated for V1.3e and declined** —
-[docs/tiers/declined.md](docs/tiers/declined.md).
+**V1.3d shipped the bloc, and the fourth kind of live state.** `GameState.bloc`
+is not per-nation, not a symmetric pair and not a directed pair — it is **one
+object binding eight nations at once**, and mirroring it onto each member would
+be the divergence the symmetric pair key exists to prevent, at a wider scale. A
+proposal reaches the council, the members divide on `coalition_position` weighted
+by the `ep_seats` `data/eu_parliament.json` already carried, and what carries
+binds the player **whether or not they voted for it**. A rule does not refuse a
+budget: comply and you pay in the policy you could not run, defy and you pay a
+penalty on the budget line and a share of the national agenda. The model, every
+constant and the measured tables are [docs/bloc-model.md](docs/bloc-model.md).
 
-Three declared stopgaps are now on V1.3e's opening checklist, each asserted by a
+**The `ISSUE_KEYS` question three sessions deferred to V1.3d was answered yes**,
+and the reasons are structural rather than thematic. `bloc_offset` never enters
+`issue_salience`, so a Europe priced on it could never be named by the polling
+panel's agenda list or by the election result screen — the two surfaces that
+exist to say *why*. A split price never clears the ±3.0 noise floor in the
+headline figure, and Europe divides by nature. And a flat offset cannot become
+more **salient**, which is exactly what a rule biting hard should do. The cost
+was measured before it was taken: every existing salience weight is scaled by
+`1/(1+w)`, and the ratio S10's finding was about moves **+0.39 %**, in the safe
+direction. `europe` takes 0.083 of the national agenda, fifth of twelve.
+
+**The political map of Europe fell out of a table written at S5 for unrelated
+reasons.** The opinion model has no signed split — every satisfaction reaches
+every bloc with the same sign — so `europe` had to be one-signed and the division
+had to come from elsewhere. Pensioners and rural weight `growth` at **nothing**,
+so 37 % of the electorate takes the sovereignty cost and none of the single
+market, while business weights `growth` 0.19 and `public_finances` 0.34 and takes
+both. Nothing authored that.
+
+**The probe corrected the model twice again, and a test caught a third.** Rule
+severities summing to 1.35 against a ceiling of 1.0 made the fourth rule free to
+break — V1.3c's strictly-dominated shape in a new place, fixed by rescaling to
+exactly 1.0. `EUROPE_SCALE` at 1.00 cleared the noise floor by almost nothing and
+was swept to 0.80, landing on the figure V1.3c measured for a full embargo. And
+under a whole-council denominator **abstaining and opposing are the same act**,
+so the threshold is a share of the seats *cast*. The council was also a
+legislature the player controlled — six of seven proposals decided by France —
+and the fix was **content, not a constant**: the members are clustered in ideology
+space, so moving `common_defence_floor` to where a defence commitment actually
+sits is what put a proposal beyond reach.
+
+`SAVE_VERSION` is **11**, answering the assertion V1.3c left. The rule is
+unchanged — *would a missing field read as something wrong?* — and three fields
+fail it, the loud ones being `bloc_base_transfer_pct_gdp` (a France that never
+paid into a budget it has always paid into) and `start_bloc_burden` (a game
+reloaded while in breach scores the breach as new).
+
+**The balance re-run is not bit-identical, and V1.3d said so in advance.** V1.3b's
+and V1.3c's were, because an agreement and a measure each need a player command
+and no regime issues one; the council meets whether or not the player engages.
+That is the difference between a verb and an institution, and it is why this
+session needed **no eleventh regime** where b and c each did. GDP, growth, trend
+and unemployment are bit-identical in all thirty runs; exactly one run changed
+outcome, on a two-seat censure margin.
+
+**Next: V1.3e, AI foreign policy** — the row the decomposition flagged as most
+likely to split.
+
+Four declared stopgaps are now on V1.3e's opening checklist, each asserted by a
 test that must fail when it is replaced: the counterparty *reaction*
 (`tests/test_diplomacy.gd`), the counterparty *decision* (`tests/test_trade.gd`),
-and the counterparty *retaliation* (`tests/test_coercion.gd`). They compose
-rather than conflict — the target does not react, does not decide, and reacts by
-a fixed rule while deciding nothing.
+the counterparty *retaliation* (`tests/test_coercion.gd`), and the council's
+*vote* (`tests/test_bloc.gd`). They compose rather than conflict — the target does
+not react, does not decide, and reacts by a fixed rule while deciding nothing;
+and the council votes its priors, reading `coalition_position` and nothing else.
 
 MVP, V1.1a–d, V1.2a–e, V1.3a and U1–U4 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
@@ -232,7 +286,7 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 10**. There has never been a migration: a superseded
+Save format is at **version 11**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -244,10 +298,14 @@ signed", the other fails soft), and what did is `NationState.eu_member` and
 `.neighbours` — absent, the trade weight silently collapses back to the aggregate
 V1.3b replaced, so a reloaded game runs a *different model* from the one that
 saved it. All three are checked in `tests/test_save_load.gd`, not argued in prose. **V1.3c
-earned no bump and the test says so**: an absent `measures` reads as `{}`, which
-is correct for every version-10 save because those games could not impose one, so
-`tests/test_save_load.gd` asserts the version is *still* 10 and a later session
-raising it has to come and say why.
+earned no bump and the test said so** — an absent `measures` reads as `{}`, which
+is correct for every version-10 save because those games could not impose one —
+and it left an assertion that the version was *still* 10 so a later session
+raising it had to come and say why. **V1.3d is that session.** Three fields fail
+the rule: an absent `bloc` register reads as a bloc with no rules, an absent
+`bloc_base_transfer_pct_gdp` as a France that never paid into a budget it has
+always paid into, and an absent `start_bloc_burden` as 0.0 against a live burden,
+which mis-signs the `europe` issue for the rest of the run.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

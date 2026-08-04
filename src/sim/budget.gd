@@ -15,6 +15,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Bloc = preload("res://src/sim/bloc.gd")
 
 
 static func tick_month(state) -> void:
@@ -47,8 +48,21 @@ static func recompute(state, ns) -> void:
 	if ns.gdp_eur_bn > 0.0:
 		ns.debt_service_pct_gdp = C.DEBT_REAL_RATE_PCT * ns.debt_eur_bn / ns.gdp_eur_bn
 
+	# V1.3d's line. SIGNED and on the spending side, not a sixth SPENDING_KEYS
+	# entry: docs/tiers/v1.md section 6 keys the five player-set spending lines 1:1
+	# to cabinet portfolios, so a sixth line would be a sixth minister -- and the
+	# player does not set this one with a slider. Same call docs/coercion-model.md
+	# made for the tariff revenue line, in the other direction.
+	#
+	# Read straight off NationState rather than recomputed here, because unlike the
+	# tariff line this one must NOT respond within the month: Bloc.tick_month() runs
+	# after this and charges next month's penalties, which is what stops a rule on
+	# the deficit from feeding a fine that widens the deficit. See src/sim/bloc.gd.
 	ns.total_spending_pct_gdp = (
-		ns.player_spending_pct_gdp() + ns.other_spending_pct_gdp + ns.debt_service_pct_gdp
+		ns.player_spending_pct_gdp()
+		+ ns.other_spending_pct_gdp
+		+ ns.debt_service_pct_gdp
+		+ ns.bloc_transfer_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -186,6 +200,12 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 	for _i in range(months):
 		Economy.tick_month(sim)
 		tick_month(sim)
+		# In the same position main.gd runs it -- after Budget, before the snapshot
+		# -- and required for exactly the reason Diplomacy is. The council advances,
+		# a defied rule keeps charging, and a projection that held the bloc frozen
+		# would under-report the deficit of a player in breach. V1.3b's repair, made
+		# once rather than rediscovered.
+		Bloc.tick_month(sim, loader)
 		Diplomacy.tick_month(sim, loader)
 		out.append(snapshot(sim))
 	return out
@@ -213,6 +233,8 @@ static func snapshot(state) -> Dictionary:
 		"tariff_revenue_pct_gdp": float(ns.revenue_pct_gdp.get("tariffs", 0.0)),
 		"total_spending_pct_gdp": ns.total_spending_pct_gdp,
 		"debt_service_pct_gdp": ns.debt_service_pct_gdp,
+		"bloc_transfer_pct_gdp": ns.bloc_transfer_pct_gdp,
+		"bloc_burden": ns.bloc_burden,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,

@@ -297,7 +297,7 @@ Three changes, none of which rewrote anything here.
 - ~~**No agreement duration or expiry.** V1.3c owns it, via a sanction breaking one.~~ Built at V1.3c: `Diplomacy.execute()` erases the pair's agreement when an impose lands on it. One line, no duration model. See [[coercion-model]].
 - **No effect on the partner beyond the contract itself.** The partner's economy opens because it is party to the agreement; nothing else about it is modelled, and it never acts.
 - **A scenario cannot author a starting agreement.** [[scenario-model|The three axes]] are unchanged. Stated so it is a decision rather than an assumption.
-- **No new `ISSUE_KEYS` entry**, and no trade colouring on the map. Both are still V1.3d's and both would reopen measurements this session did not touch.
+- ~~**No new `ISSUE_KEYS` entry**, and no trade colouring on the map. Both are still V1.3d's and both would reopen measurements this session did not touch.~~ Trade colouring shipped at U5c. The `ISSUE_KEYS` entry shipped at V1.3d as `europe`, and it did reopen a measurement — the S10 salience table — which is why V1.3d measured the cost before taking it. See [[bloc-model]].
 
 ---
 

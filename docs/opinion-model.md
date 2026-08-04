@@ -111,7 +111,7 @@ honest. Cross-cutting membership is [[someday]] tier along with regional opinion
 
 ## Issues
 
-Eleven, each a satisfaction `s ∈ [−1, +1]`, each computed from state the economy
+Twelve, each a satisfaction `s ∈ [−1, +1]`, each computed from state the economy
 and budget already maintain.
 
 | Issue | Formula | Scale |
@@ -127,6 +127,7 @@ and budget already maintain.
 | `pensions` | " | " |
 | `infrastructure` | " | " |
 | `public_finances` | `−Δdeficit / DEFICIT_SCALE` | 6.0 pp of GDP |
+| `europe` | `−Δbloc_burden / EUROPE_SCALE` | 0.80 of the burden |
 
 All clamped to [−1, +1] after scaling.
 
@@ -146,6 +147,26 @@ did, which is a drift, not a mechanic.
 `growth` uses growth *relative to trend* rather than absolute growth, so a nation
 with a structurally low trend is not permanently unpopular for it.
 
+`europe` is [[ROADMAP|V1.3d]]'s, and the only issue here whose scale is not a
+quantity in percentage points — [[bloc-model|bloc burden]] is already a
+normalised score. It is measured against `start_bloc_burden` like every other
+term is measured against a start, so France beginning in real breach of a deficit
+rule is politically free until the player moves it.
+
+> [!important] `europe` is ONE-SIGNED, and that is a property of this model
+> Nothing in `_tick_nation()` lets a bloc weight an issue negatively, so every
+> satisfaction reaches all six blocs with the same sign. Blocs differ in how much
+> they care, never in which way they move. The tax split in *What it does* below
+> is not one issue signing two ways — it is `tax_income` falling while
+> `public_finances` rises.
+>
+> That constrained V1.3d's design rather than being noticed afterwards: Europe
+> had to be a sovereignty issue everyone dislikes, and the political division had
+> to come from the table below. It does. Pensioners and rural carry **no
+> `growth` entry at all**, so they take the constraint and none of the single
+> market's upside, while business weights `growth` 0.19 and `public_finances`
+> 0.34 and takes both. See [[bloc-model]].
+
 ## Salience
 
 Each bloc has a sparse base weight vector. An issue a bloc has no entry for
@@ -160,6 +181,17 @@ nobody cares about buys nothing" true rather than decorative.
 | rural | infrastructure 0.20 · public_finances 0.18 · jobs 0.16 · health 0.13 · defence 0.12 · tax_vat 0.11 · pensions 0.10 |
 | business | public_finances 0.34 · tax_corporate 0.25 · growth 0.19 · infrastructure 0.09 · jobs 0.07 · education 0.06 |
 | students | education 0.38 · jobs 0.22 · public_finances 0.14 · tax_vat 0.10 · growth 0.08 · health 0.08 |
+
+[[ROADMAP|V1.3d]] added a `europe` entry to every row — workers 0.10, pensioners
+0.10, urban 0.06, rural 0.14, business 0.06, students 0.05 — so the rows no
+longer sum to 1.0 and `salience_weights()`'s renormalisation now does real work
+at rest. What that cost the eleven measured issues was the first thing V1.3d
+measured rather than the last: every existing weight is scaled by `1/(1+w)`, and
+the ratio S10's finding was about moves by **+0.39 %**, in the safe direction.
+`europe` takes 0.083 of the national agenda, fifth of the twelve. Six rows rather
+than the two or three that would read as natural is forced by the finding in
+[[diplomacy-model]]: a price hitting fewer than all six blocs never clears the
+poll-noise floor in `overall_approval_pct`. See [[bloc-model]].
 
 Three properties are load-bearing rather than incidental:
 
