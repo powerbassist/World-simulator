@@ -21,6 +21,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
 signal closed
 
@@ -39,7 +40,17 @@ var _dirty := true
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(420, 360)
+	# 780 rather than the 360 this shipped with, and the V1.3e screenshot pass is
+	# why: at 360 the window sized to its minimum and EVERY DIPLOMATIC ACTION
+	# BUTTON fell below the fold, so the eight verbs this panel exists for were
+	# reachable only by scrolling a panel that does not look scrollable. The panel
+	# had grown a relations score, a trade share, an agreement line and two measure
+	# lines since V1.3a set that height, and no test can see a fold.
+	#
+	# Exactly the failure docs/bloc-model.md records for the bloc panel's own
+	# budget section one session earlier. Well inside U5a's ~886px usable band,
+	# which is the ceiling a window must not grow through.
+	custom_minimum_size = Vector2(420, 780)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -180,8 +191,27 @@ func _refresh_actions() -> void:
 	# player nothing about why, and the precondition IS the interesting part.
 	# Unavailable ones are shown disabled with the reason in the tooltip, the
 	# same way law_panel.gd disables a 49.3 button on cooldown.
+	#
+	# V1.3e: an action the PARTNER would refuse counts as unavailable here, and it
+	# did not before. Diplomacy.available() never consulted the counterparty --
+	# that gate lives inside execute() -- so a treaty the partner would decline
+	# rendered as a live button, and clicking it refused silently. That is exactly
+	# the failure V1.3b's own `refused_by_partner` had (shipped, and read by
+	# nothing), reappearing INSIDE the session that fixed it, and only a frame
+	# showed it. Costs the player nothing: execute() refuses it either way, so
+	# disabling it replaces a dead click with a sentence.
 	for action in _loader.diplomatic_actions:
-		_actions.add_child(_action_row(action, available.has(action), player_id))
+		var offered: bool = available.has(action) and _partner_would_accept(action, player_id)
+		_actions.add_child(_action_row(action, offered, player_id))
+
+
+## Whether the counterparty would sign, for an action that proposes an agreement.
+## True for every action that does not, so the caller can treat it as one gate.
+func _partner_would_accept(action, player_id: String) -> bool:
+	var terms: Dictionary = action.effects.get("agreement", {})
+	if String(terms.get("op", "")) != "enter":
+		return true
+	return Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms)
 
 
 ## One direction of the coercion register, named. Reads "none" as a caption while
@@ -240,12 +270,29 @@ func _unavailable_reason(action, player_id: String) -> String:
 		return "Available again in %d months." % int(ns.diplo_cooldown_months[key])
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
-	if String(action.effects.get("agreement", {}).get("op", "")) == "enter":
-		if not Diplomacy.would_accept_agreement(_state, player_id, _nation_id):
-			return "%s will not sign below %.0f relations." % [
-				_nation_id, DK.AGREEMENT_ACCEPT_MIN,
-			]
+	var terms: Dictionary = action.effects.get("agreement", {})
+	if String(terms.get("op", "")) == "enter":
+		if not Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms):
+			return _refusal_text(Diplomacy.refusal_reason(_state, player_id, _nation_id, terms))
 	return "Conditions for this action are not met."
+
+
+## V1.3e. The model returns a KEY and this turns it into a sentence, because
+## src/sim/ does not know the UI exists and a test should not assert on wording.
+##
+## Worth its own function rather than being inlined: until this session
+## `refused_by_partner` had been on the result dictionary since V1.3b and NOTHING
+## in src/ui/ read it, so a partner declining a treaty was silent to the player.
+## Each key names the term the player can actually act on.
+func _refusal_text(key: String) -> String:
+	match key:
+		ForeignPolicy.REFUSAL_LOW_STAKE:
+			return "%s will not sign: too little of their trade runs through you." % _nation_id
+		ForeignPolicy.REFUSAL_POOR_RELATIONS:
+			return "%s will not sign: relations are not close enough." % _nation_id
+		ForeignPolicy.REFUSAL_THIN_TERMS:
+			return "%s will not sign: these terms are not worth it to them." % _nation_id
+	return "%s will not sign." % _nation_id
 
 
 func _on_act(action) -> void:

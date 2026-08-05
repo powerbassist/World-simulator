@@ -29,6 +29,7 @@ tests=(
   tests/test_trade.gd
   tests/test_coercion.gd
   tests/test_bloc.gd
+  tests/test_foreign_policy.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_game_loop.gd

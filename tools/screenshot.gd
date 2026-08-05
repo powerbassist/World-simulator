@@ -9,6 +9,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -21,6 +22,7 @@ extends SceneTree
 
 const Relations = preload("res://src/core/relations.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const BlocK = preload("res://src/sim/bloc_constants.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -60,6 +62,13 @@ var _bloc := false
 ## SET UP state the panel has nothing to show without, which is a different job
 ## from simply opening a window.
 var _open := ""
+
+## V1.3e, and --bloc's argument a third time. The nation panel's refusal line only
+## renders for a partner who actually refuses, and which partners refuse is the
+## whole thing the interest model decides -- so a frame of the panel opened on
+## nobody, or on a partner who signs, shows the absence of the line rather than the
+## line. Takes the id so the frame can be aimed at a refuser.
+var _nation := ""
 var _main
 
 
@@ -80,6 +89,8 @@ func _init() -> void:
 			_bloc = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
+		elif args[i] == "--nation" and i + 1 < args.size():
+			_nation = args[i + 1].to_upper()
 
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
@@ -122,6 +133,10 @@ func _apply_view() -> void:
 		_impose_a_spread()
 	if _bloc:
 		_open_the_council()
+	if _nation != "":
+		# Through main.gd's own click path rather than by poking the panel, so the
+		# frame captures what a click produces.
+		_main._on_nation_clicked(_nation)
 	if _open != "":
 		_main._windows.open(_open)
 	if _layer != "":
@@ -210,6 +225,70 @@ func _open_the_council() -> void:
 			"player_vote": "against",
 			"opened_year": state.year, "opened_month": state.month,
 		}
+	# V1.3e. A DIVISION THAT HAS ALREADY HAPPENED, not only one pending.
+	#
+	# The panel's new section says why each member voted as it did, and it reads
+	# `last_vote`, which a pending proposal does not populate. Without this the
+	# frame shows the section's absence rather than the section -- exactly the
+	# three-"None"-captions frame --bloc was added to stop capturing.
+	#
+	# Built through the real vote path (Bloc.support and Bloc.vote_reason) rather
+	# than by inventing a tally, because the one thing this frame has to check is
+	# that the reasons the model produces group into camps a player can read.
+	# A proposal that actually DIVIDES the council, scanned for rather than taken
+	# in agenda order. The first version took the next proposal off the list and
+	# got minimum_corporate_rate, which every member backs for the same reason --
+	# a frame showing one camp of eight, which proves nothing about a section whose
+	# whole job is to show the camps. --coerce's own argument about an all-zero
+	# layer, one session later.
+	var divided = null
+	var fallback = null
+	for p in _main._loader.bloc_proposals:
+		if p.id == proposal.id or (pending != null and p.id == pending.id):
+			continue
+		if fallback == null:
+			fallback = p
+		# Divided ON THE VOTE, not only on the reason. A proposal every member backs
+		# for the same reason is a frame of one camp; a proposal they split on shows
+		# what the section is for even when the reason is the same word.
+		var seen_for := false
+		var seen_against := false
+		for id in Bloc.members(state, _main._loader):
+			if Bloc.support(state, state.nations[id], p) >= BlocK.SUPPORT_THRESHOLD:
+				seen_for = true
+			else:
+				seen_against = true
+		if seen_for and seen_against:
+			divided = p
+			break
+	if divided == null:
+		divided = fallback
+	if divided != null:
+		var votes := {}
+		var reasons := {}
+		var seats_for := 0
+		var seats_against := 0
+		var seats_total := 0
+		for id in Bloc.members(state, _main._loader):
+			var seats: int = _main._loader.eu.ep_seats(id)
+			seats_total += seats
+			var backs: bool = Bloc.support(state, state.nations[id], divided) >= BlocK.SUPPORT_THRESHOLD
+			votes[id] = Bloc.VOTE_FOR if backs else Bloc.VOTE_AGAINST
+			reasons[id] = Bloc.vote_reason(state, state.nations[id], divided)
+			if backs:
+				seats_for += seats
+			else:
+				seats_against += seats
+		state.bloc["last_vote"] = {
+			"proposal_id": divided.id, "name": divided.proposal_name,
+			"passed": float(seats_for) >= BlocK.PASS_SEAT_FRACTION * float(seats_for + seats_against),
+			"seats_for": seats_for, "seats_against": seats_against,
+			"seats_total": seats_total,
+			"player_vote": String(votes.get(state.player_nation_id, "abstain")),
+			"votes": votes, "reasons": reasons,
+			"year": state.year, "month": state.month,
+		}
+
 	# So the burden, the penalty line and the breach caption are all non-zero.
 	Bloc.tick_month(state, _main._loader)
 

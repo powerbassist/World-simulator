@@ -175,6 +175,18 @@ const TRANSITION_REGIMES := {
 ## re-run from "has anything moved materially?" into "has anything moved at all?",
 ## and the answer has to be no. This regime is where the trade channel gets its
 ## fourteen years of sanity checking.
+## How many times the trade regime will lift a pair to reach the counterparty
+## gate before giving up.
+##
+## V1.3e. This was an unbounded `while` against AGREEMENT_ACCEPT_MIN, which was
+## safe only because that gate read relations alone and lifting relations always
+## eventually cleared it. The counterparty now weighs trade dependence and the
+## terms on the table as well, so a partner can refuse for a reason no amount of
+## relations work fixes -- and an unbounded loop would hang the probe rather than
+## report the refusal.
+const GATE_LIFT_ATTEMPTS := 12
+
+
 const TRADE_REGIMES := {
 	"managed_signs_agreement": {"budget": REGIMES["managed"], "agreement_month": 6},
 }
@@ -569,13 +581,22 @@ func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: i
 			best_score = value
 			best = id
 
-	# Earn the counterparty gate first if the pair is under it. Every GBR pair rests
-	# at 45 against an AGREEMENT_ACCEPT_MIN of 52, so without this the regime is a
-	# refusal for one playable nation in three and the trade channel gets no
-	# fourteen-year run there at all. This is what a GBR player would have to do,
-	# and doing it here is the difference between testing the gate and testing the
-	# model behind it.
-	while Diplomacy.score(state, ns.id, best) < DK.AGREEMENT_ACCEPT_MIN:
+	# Earn the counterparty gate first if the partner will not sign yet. Every GBR
+	# pair rests at the floor, so without this the regime is a refusal for one
+	# playable nation in three and the trade channel gets no fourteen-year run
+	# there at all. This is what a GBR player would have to do, and doing it here
+	# is the difference between testing the gate and testing the model behind it.
+	#
+	# V1.3e: asks the counterparty rather than comparing against a relations
+	# constant. AGREEMENT_ACCEPT_MIN was that constant and is deleted -- the target
+	# now weighs its own trade dependence and the terms on the table too, so there
+	# is no number to compare a pair score against. Bounded rather than `while`,
+	# because a partner can now refuse for a reason relations cannot fix and this
+	# loop would never have exited.
+	var agreement_terms: Dictionary = action.effects.get("agreement", {})
+	for attempt in range(GATE_LIFT_ATTEMPTS):
+		if Diplomacy.would_accept_agreement(state, ns.id, best, agreement_terms):
+			break
 		var lift = _strongest_positive(loader)
 		if lift == null:
 			break

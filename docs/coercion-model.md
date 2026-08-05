@@ -163,8 +163,12 @@ Symmetric key, deliberately: the contract had two sides even though the measure 
 
 ## 6. Retaliation is the third declared stopgap
 
-> [!warning] Named, not approximated
-> A nation under a measure mirrors it back once, at `RETALIATION_FRACTION` of the severity, after `RETALIATION_DELAY_MONTHS`. It does not weigh its economy, does not compare the imposer against its other partners, does not escalate past the single step, never lifts what it imposed, and never acts first.
+> [!success] Discharged at V1.3e
+> ~~A nation under a measure mirrors it back once, at `RETALIATION_FRACTION` of the severity, after `RETALIATION_DELAY_MONTHS`.~~ The target now decides how hard to answer -- from how much the imposer depends on it against how much it depends on the imposer -- and can decide **not to answer at all**, which a fixed mirror could not. `RETALIATION_FRACTION` survives as the ceiling.
+>
+> What falls out rather than being authored: France tariffing Luxembourg is answered at 0.058, Luxembourg tariffing France at the 0.600 ceiling. **10.4x**, against the weights' own 12.2x -- the thing the directed table made *sayable* and no session until V1.3e could act on.
+>
+> `tests/test_coercion.gd` asserted the old rule by mutation and **went red with its own message naming this session**. Still one step and still never first: escalation and acting on its own initiative are V1.3f's. See [[foreign-policy-model]].
 
 Third on V1.3e's checklist, after [[diplomacy-model|V1.3a's no-reaction]] and [[trade-model|V1.3b's accept-gate]]. The three compose rather than conflict: one says the target does not *react*, one says it does not *decide*, this one says it reacts by a fixed rule and decides nothing.
 

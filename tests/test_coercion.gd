@@ -14,6 +14,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Trade = preload("res://src/sim/trade.gd")
@@ -56,7 +57,8 @@ func _init() -> void:
 	_check_tariff_collects_and_sanction_does_not()
 	_check_revenue_peaks_below_max_severity()
 	_check_measure_breaks_an_agreement()
-	_check_retaliation_is_a_stopgap()
+	_check_retaliation_is_decided()
+	_check_retaliation_still_fires()
 	_check_retaliation_converges()
 	_check_third_parties_untouched()
 	_check_bad_fixtures_refused()
@@ -307,38 +309,52 @@ func _check_measure_breaks_an_agreement() -> void:
 		_failures.append("imposing a measure did not break the agreement on the same pair")
 
 
-# --- the stopgap -------------------------------------------------------------------------
+# --- the counterparty, no longer a stopgap -------------------------------------------------
 
-## > [!warning] THIS TEST MUST FAIL AND BE REWRITTEN AT V1.3e.
-## > The third declared stopgap, asserted the way V1.3a's third-pair assertion and
-## > V1.3b's counterparty mutation already are. The retaliating nation consults
-## > NOTHING about itself. Mutate every input a real interest function would read
-## > and the answer must not move.
-func _check_retaliation_is_a_stopgap() -> void:
-	var plain := _retaliation_severity(func(_s): pass)
+## V1.3c's DECLARED STOPGAP, DISCHARGED at V1.3e -- and this is the rewrite.
+##
+## Until V1.3e this asserted that gutting the target's economy and moving a third
+## pair left the answered severity at exactly RETALIATION_FRACTION of what was
+## imposed. It went red on the first run after the interest model landed, with its
+## own message saying so.
+##
+## Replaced by the property the decision actually has, which is stronger than
+## "something moved": THE ANSWER IS SCALED BY DEPENDENCE, BOTH WAYS ROUND. A small
+## nation that depends heavily on a large one answers barely at all, because
+## answering costs it more than it collects.
+func _check_retaliation_is_decided() -> void:
+	var state = _fresh()
 
-	var mutated := _retaliation_severity(func(s):
-		var t = s.nations[TARGET]
-		t.gdp_eur_bn /= 100.0
-		t.unemployment_pct = 39.0
-		t.growth_annual_pct = -11.0
-		t.overall_approval_pct = 3.0
-		t.debt_eur_bn *= 40.0
-		for sector in t.sector_output.keys():
-			t.sector_output[sector] /= 100.0
-		# And a third pair, which a real foreign policy would certainly weigh.
-		s.relations[Relations.key(TARGET, "ITA")] = 5.0
-	)
+	# France against Luxembourg, and Luxembourg against France. LUX sends a quarter
+	# of its trade to FRA; FRA sends a fiftieth of its trade to LUX -- the 12.1x
+	# asymmetry docs/coercion-model.md measured for damage, now reaching the answer.
+	var lux_answers := ForeignPolicy.retaliation_fraction(state, PLAYER, "LUX", CK.RETALIATION_FRACTION)
+	var fra_answers := ForeignPolicy.retaliation_fraction(state, "LUX", PLAYER, CK.RETALIATION_FRACTION)
 
-	if not is_equal_approx(plain, mutated):
+	if not (fra_answers > lux_answers):
 		_failures.append(
-			"the retaliation answer MOVED under mutation (%.4f vs %.4f). If V1.3e has "
-			% [plain, mutated]
-			+ "given the counterparty an interest function, this test is now correct to "
-			+ "fail: rewrite it. Otherwise something is reading state it should not."
+			"France answers Luxembourg at %.4f and Luxembourg answers France at %.4f -- the answer is not scaled by dependence" % [
+				fra_answers, lux_answers,
+			]
 		)
-	if is_zero_approx(plain):
-		_failures.append("no retaliation fired at all -- the stopgap is not wired")
+	if fra_answers > CK.RETALIATION_FRACTION + 1.0e-9:
+		_failures.append("an answer of %.4f exceeded the ceiling of %.2f" % [fra_answers, CK.RETALIATION_FRACTION])
+
+	# And the decision must be able to say NO, which V1.3c could not: below the
+	# floor no entry is opened, so a token measure is not recorded as a diplomatic
+	# incident that costs nobody anything.
+	var trivial := Coercion.retaliation_terms({"severity": 1.0, "kind": "tariff"}, 0.001, 2026, 1)
+	if not trivial.is_empty():
+		_failures.append("an answer below RETALIATION_MIN_SEVERITY still opened a register entry")
+
+
+## The other half of the discharge: an answer must still actually fire between
+## partners who matter to each other, or "decided" would be a way of shipping
+## nothing. Germany answers France.
+func _check_retaliation_still_fires() -> void:
+	var fired := _retaliation_severity(func(_s): pass)
+	if is_zero_approx(fired):
+		_failures.append("no retaliation fired at all between FRA and %s" % TARGET)
 
 
 ## The mirror fires ONCE per measure, flagged in the register. Convergence is

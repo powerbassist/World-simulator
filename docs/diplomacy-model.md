@@ -160,12 +160,12 @@ Three consequences of the measurement, none of which were in the plan:
 
 ## The counterparty response is a declared stopgap
 
-> [!warning] Named, not approximated
-> An action's own `effects.relations` is the **entire** reaction. The target does not reason, does not retaliate, and no third pair moves. This is the same shape `lose_condition: "never"` and `referendum_required` already use for a rule the model declares and does not yet resolve.
+> [!success] Discharged at V1.3e
+> ~~An action's own `effects.relations` is the **entire** reaction. The target does not reason, does not retaliate, and no third pair moves.~~
+>
+> `tests/test_diplomacy.gd` asserted that acting on Germany left `DEU|ITA` at exactly its resting value, and **that assertion went red** the moment [[foreign-policy-model|the interest model]] landed. It is now one signed rule: an act by A on B is an act on everyone with a stake in B, so X cools toward the actor and warms toward the target, both scaled by `stake(X -> B)`. A sanctioned nation acquires sympathisers, and U5c's relations map layer is the readout for it.
 
-V1.3e replaces it, and [[ROADMAP]] has it opening with a checklist of these rather than discovering them. `tests/test_diplomacy.gd` asserts the current behaviour directly — acting on Germany leaves `DEU|ITA` exactly at its resting value — so replacing the stopgap is a visible test change rather than a silent one.
-
-Third-pair effects need an alliance model, which is V1.3f's, not this session's.
+**The alliance argument did not survive, and it is worth saying why.** This file recorded that third-pair effects *need an alliance model, which is V1.3f's*. That was true when it was written and stopped being true at [[bloc-model|V1.3d]]: stake carries EU co-membership and the shared border, so the channel exists **without an alliance in it**. Alliances at V1.3g make it stronger, not possible.
 
 **V1.3c added the third**, in the same shape again: `Coercion.retaliation_terms()` mirrors a measure back once at a fixed fraction after a fixed delay, weighs nothing, and never acts first. `tests/test_coercion.gd` asserts it by mutation. The three compose — V1.3a's says the target does not *react*, V1.3b's says it does not *decide*, V1.3c's says it reacts by a fixed rule and decides nothing. See [[coercion-model]].
 

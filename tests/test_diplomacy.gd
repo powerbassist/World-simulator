@@ -6,6 +6,8 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const FK = preload("res://src/sim/foreign_policy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -43,6 +45,8 @@ func _init() -> void:
 	_check_preconditions_gate()
 	_check_cooldown_is_per_target()
 	_check_execute_writes_both_channels()
+	_check_third_parties_take_sides()
+	_check_third_party_pass_is_order_independent()
 	_check_execute_refuses_when_unavailable()
 	_check_neighbours_are_mutual()
 	_check_bad_fixtures_refused()
@@ -262,12 +266,87 @@ func _check_execute_writes_both_channels() -> void:
 		if not state.nations[id].bloc_offset.is_empty():
 			_failures.append("acting as %s wrote a bloc offset onto %s" % [PLAYER, id])
 
-	# The stopgap, asserted so replacing it at V1.3e is a visible change rather
-	# than a silent one: no third pair moves, and the target does not retaliate.
-	var untouched := Relations.key("DEU", "ITA")
-	var resting_untouched := Diplomacy.resting(_loader.nations["DEU"], _loader.nations["ITA"])
-	if not is_equal_approx(float(state.relations[untouched]), resting_untouched):
-		_failures.append("acting on DEU moved the unrelated pair DEU|ITA")
+	# V1.3a's DECLARED STOPGAP, DISCHARGED at V1.3e. This assertion used to read
+	# "acting on DEU moved the unrelated pair DEU|ITA" and required DEU|ITA to sit
+	# at exactly its resting value. It went red the moment the interest model
+	# landed, which is what it was written to do; the rewrite is below.
+	if result["third_party_pairs"] <= 0:
+		_failures.append("'%s' moved no third pair at all -- V1.3a's stopgap is still in place" % action.id)
+
+
+## V1.3a parked third-party effects on the grounds that they need an alliance
+## model. They do not: stake already carries EU co-membership and the border, so
+## the channel exists without an alliance in it.
+##
+## The rule is signed and has two halves, and a test that checked only "something
+## moved" would pass on a model that moved them the wrong way round.
+func _check_third_parties_take_sides() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var action = _hostile_action()
+	if action == null:
+		_failures.append("no action with a negative relations effect to test the reaction with")
+		return
+
+	_force_available(state, action)
+	# ITA is the third party: it is an EU co-member of DEU and shares a border with
+	# it, so its stake in DEU clears the floor comfortably.
+	var before_with_actor := Diplomacy.score(state, "ITA", PLAYER)
+	var before_with_target := Diplomacy.score(state, "ITA", "DEU")
+
+	var result := Diplomacy.execute(state, _loader.diplomatic_actions, action, PLAYER, "DEU")
+	if not result["applied"]:
+		_failures.append("'%s' did not apply against DEU" % action.id)
+		return
+
+	# Italy judges France for it.
+	if not (Diplomacy.score(state, "ITA", PLAYER) < before_with_actor):
+		_failures.append("a hostile act on DEU did not cool ITA toward the actor (%.3f -> %.3f)" % [
+			before_with_actor, Diplomacy.score(state, "ITA", PLAYER),
+		])
+	# ...and warms to Germany over it. A sanctioned nation acquires sympathisers.
+	if not (Diplomacy.score(state, "ITA", "DEU") > before_with_target):
+		_failures.append("a hostile act on DEU did not warm ITA toward the target (%.3f -> %.3f)" % [
+			before_with_target, Diplomacy.score(state, "ITA", "DEU"),
+		])
+
+	# A nation with no stake in the target must not be dragged in. Without the
+	# floor every act moves all eight remaining nations by some unreadable amount
+	# and forty-five pairs drift on every click.
+	var scale := ForeignPolicy.stake(state, "GBR", "DEU") / FK.EVEN_SHARE
+	if scale <= 0.0:
+		_failures.append("GBR has literally no stake in DEU, which makes the floor untestable")
+
+
+## The third-party pass must be resolved as a whole before any of it is applied.
+## Applied one at a time, each adjustment moves the relations the next stake is
+## scaled by, and the answer would depend on Dictionary iteration order -- the
+## ordering bug docs/trade-model.md records the trade probe catching in the impulse,
+## which no test could see until something finally perturbed a partner.
+func _check_third_party_pass_is_order_independent() -> void:
+	var a = GameState.new_game(_loader, PLAYER)
+	var b = GameState.new_game(_loader, PLAYER)
+	var action = _hostile_action()
+	if action == null:
+		return
+
+	_force_available(a, action)
+	_force_available(b, action)
+	Diplomacy.execute(a, _loader.diplomatic_actions, action, PLAYER, "DEU")
+	Diplomacy.execute(b, _loader.diplomatic_actions, action, PLAYER, "DEU")
+
+	for key in a.relations.keys():
+		if not is_equal_approx(float(a.relations[key]), float(b.relations[key])):
+			_failures.append("the third-party pass is not reproducible: %s came out %.9f and %.9f" % [
+				key, float(a.relations[key]), float(b.relations[key]),
+			])
+			return
+
+
+func _hostile_action():
+	for action in _loader.diplomatic_actions:
+		if float(action.effects.get("relations", 0.0)) < 0.0 and action.effects.get("measure", {}).is_empty():
+			return action
+	return null
 
 
 func _check_execute_refuses_when_unavailable() -> void:

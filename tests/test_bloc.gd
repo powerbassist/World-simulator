@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ## V1.3d. The invariants; tools/bloc_probe.gd prints the spread a human reads.
 ##
-## The load-bearing one is _check_the_council_is_a_stopgap(), which asserts the
+## The load-bearing one is _check_the_council_reads_its_own_books(), which asserts the
 ## member-vote rule by MUTATION and MUST FAIL at V1.3e. That is the point of it,
 ## and it is the fourth on this project's stopgap checklist after
 ## tests/test_diplomacy.gd's no-reaction, tests/test_trade.gd's accept-gate and
@@ -20,6 +20,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
 const PLAYER := "FRA"
 const OUTSIDER := "GBR"
@@ -45,7 +46,8 @@ func _init() -> void:
 	_check_an_abstention_is_not_a_no()
 	_check_the_external_measure_uses_the_directed_key()
 	_check_the_europe_issue_is_the_only_new_one()
-	_check_the_council_is_a_stopgap()
+	_check_the_council_reads_its_own_books()
+	_check_the_council_still_divides()
 	_finish()
 
 
@@ -261,16 +263,34 @@ func _check_an_abstention_is_not_a_no() -> void:
 	var abstain_state = _fresh()
 	var against_state = _fresh()
 
-	var carried_for := _force_vote(for_state, "stability_pact", Bloc.VOTE_FOR)
-	var carried_abstain := _force_vote(abstain_state, "stability_pact", Bloc.VOTE_ABSTAIN)
-	var carried_against := _force_vote(against_state, "stability_pact", Bloc.VOTE_AGAINST)
+	# Which proposal demonstrates this is not fixed content, and must not be. V1.3d
+	# hardcoded stability_pact here; V1.3e's appraisal changed which proposals the
+	# player is pivotal on, and a test naming one is a test about the content rather
+	# than about the mechanism. Scanned instead -- and the scan finding NOTHING is
+	# itself the finding, because a third vote option no shipped proposal can
+	# exercise is a decorative verb.
+	var subject := ""
+	for p in _loader.bloc_proposals:
+		var a = _fresh()
+		var b = _fresh()
+		if _force_vote(a, p.id, Bloc.VOTE_ABSTAIN) != _force_vote(b, p.id, Bloc.VOTE_AGAINST):
+			subject = p.id
+			break
+	if subject == "":
+		_fail("no shipped proposal has an outcome that differs between abstaining and opposing -- constructive abstention is unreachable, which is the decorative-verb failure however correct the arithmetic is")
+		return
 
-	if not carried_for:
-		_fail("stability_pact did not carry even with France voting for it")
-	if carried_against:
-		_fail("stability_pact carried against France's vote, so this triple proves nothing")
-	if carried_abstain == carried_against:
-		_fail("abstaining and opposing gave the same outcome -- abstention is not a third option, it is a no with extra steps")
+	var carried_for := _force_vote(for_state, subject, Bloc.VOTE_FOR)
+	var carried_abstain := _force_vote(abstain_state, subject, Bloc.VOTE_ABSTAIN)
+	var carried_against := _force_vote(against_state, subject, Bloc.VOTE_AGAINST)
+
+	# Abstaining removes the player from the denominator, so it can only ever make
+	# passage EASIER than opposing. Both orderings are asserted, because a model
+	# that had them the other way round would still differ.
+	if carried_against and not carried_abstain:
+		_fail("%s carried when France opposed it but not when France abstained -- the denominator is moving the wrong way" % subject)
+	if not carried_for and carried_abstain:
+		_fail("%s carried on France's abstention but not on its support" % subject)
 
 	# And the tallies say why: abstaining leaves the player out of BOTH numerators,
 	# where opposing adds their whole weight to one of them.
@@ -348,17 +368,18 @@ func _check_the_europe_issue_is_the_only_new_one() -> void:
 		])
 
 
-## > DECLARED STOPGAP, and this test MUST FAIL at V1.3e.
+## V1.3d's DECLARED STOPGAP, DISCHARGED at V1.3e -- and this is the rewrite.
 ##
-## The other eight members vote on their coalition_position and nothing else. They
-## do not weigh what a proposal would cost them, do not look at their own economy,
-## their trade weights or their relations, do not trade votes, and never propose.
+## Until V1.3e this test asserted the opposite: that gutting Germany's economy left
+## its vote at exactly the value it had before, because the council read
+## coalition_position and nothing else. That assertion went red the moment
+## src/sim/foreign_policy.gd landed, which is what it was written to do.
 ##
-## Asserted BY MUTATION, the shape tests/test_trade.gd and tests/test_coercion.gd
-## established: gut the member's economy, move a third pair, put a measure on it,
-## and the answer must not move. When V1.3e gives the council an interest
-## function, this is the test that goes red and is rewritten.
-func _check_the_council_is_a_stopgap() -> void:
+## What is asserted now is the inverse and it is stronger: a member's vote MUST
+## move when the books it is voting on move, and it must move in the right
+## DIRECTION. A test that only checked "something changed" would pass on a model
+## that read the economy and drew the wrong conclusion from it.
+func _check_the_council_reads_its_own_books() -> void:
 	var state = _fresh()
 	var proposal = null
 	for p in _loader.bloc_proposals:
@@ -366,31 +387,68 @@ func _check_the_council_is_a_stopgap() -> void:
 			proposal = p
 			break
 	if proposal == null:
-		_fail("no stability_pact to test the stopgap with")
+		_fail("no stability_pact to test the council's appraisal with")
 		return
 
-	var before := Bloc.support(state.nations["DEU"], proposal)
-
+	# stability_pact constrains deficit_pct_gdp. Put Germany comfortably inside it,
+	# then far outside it, and the vote must fall.
 	var deu = state.nations["DEU"]
-	deu.gdp_eur_bn /= 100.0
-	deu.unemployment_pct = 39.0
-	deu.growth_annual_pct = -11.0
-	deu.overall_approval_pct = 3.0
-	deu.debt_eur_bn *= 40.0
-	deu.deficit_pct_gdp = 60.0
-	for key in deu.sector_output.keys():
-		deu.sector_output[key] = 0.01
-	state.relations[Relations.key("DEU", "ITA")] = 5.0
-	state.relations[Relations.key("DEU", "FRA")] = 95.0
-	state.measures[Relations.directed_key("FRA", "DEU")] = {
-		"action_id": "probe", "action_name": "Probe", "kind": "sanction",
-		"severity": 1.0, "since_year": state.year, "since_month": state.month,
-		"retaliated": true,
-	}
+	deu.deficit_pct_gdp = 0.0
+	var compliant := Bloc.support(state, deu, proposal)
 
-	var after := Bloc.support(state.nations["DEU"], proposal)
-	if not is_equal_approx(before, after):
-		_fail("THE STOPGAP IS GONE: Germany's vote moved from %.6f to %.6f. If V1.3e has landed, rewrite this test; if not, something is reading state the declared rule says it does not." % [before, after])
+	deu.deficit_pct_gdp = 60.0
+	var in_breach := Bloc.support(state, deu, proposal)
+
+	if not (in_breach < compliant):
+		_fail("a member deep in breach of a deficit rule does not like it LESS than a member inside it (%.6f in breach vs %.6f compliant) -- the council is not reading its own books" % [in_breach, compliant])
+
+	# And the reason the panel prints has to agree with the arithmetic, or the
+	# player is told one thing while the model does another.
+	var reason := Bloc.vote_reason(state, deu, proposal)
+	if reason != ForeignPolicy.VOTE_REASON_ALREADY_IN_BREACH:
+		_fail("a member at 60%% deficit voting on a deficit rule gave reason '%s', not '%s'" % [reason, ForeignPolicy.VOTE_REASON_ALREADY_IN_BREACH])
+
+	# The other half of the stopgap: a fund a member PAYS for and one it DRAWS ON
+	# were identical under the old rule if they sat at the same point in ideology
+	# space. They must not be now.
+	var payer = null
+	var drawer = null
+	for p in _loader.bloc_proposals:
+		if p.transfer_pct_gdp > 0.0 and payer == null:
+			payer = p
+		if p.transfer_pct_gdp < 0.0 and drawer == null:
+			drawer = p
+	if payer == null or drawer == null:
+		_fail("no paying and drawing proposal pair to test the transfer sign with")
+		return
+	if not (Bloc.support(state, deu, drawer) > Bloc.support(state, deu, payer)):
+		_fail("a member likes a fund it pays into (%.3f) at least as much as one it draws on (%.3f)" % [
+			Bloc.support(state, deu, payer), Bloc.support(state, deu, drawer),
+		])
+
+
+## The council must not have become unanimous, which is the failure mode replacing
+## a priors-based vote with a books-based one invites: if every member's books
+## point the same way, a division is a formality with extra steps.
+##
+## tools/foreign_policy_probe.gd table (c) is where the balance is set; this only
+## pins that SOME proposal in the shipped content still splits the council.
+func _check_the_council_still_divides() -> void:
+	var state = _fresh()
+	var split := false
+	for p in _loader.bloc_proposals:
+		var seen_for := false
+		var seen_against := false
+		for id in Bloc.members(state, _loader):
+			if Bloc.support(state, state.nations[id], p) >= K.SUPPORT_THRESHOLD:
+				seen_for = true
+			else:
+				seen_against = true
+		if seen_for and seen_against:
+			split = true
+			break
+	if not split:
+		_fail("no proposal in the shipped content divides the council -- every member votes the same way on all of them")
 
 
 # --- helpers -------------------------------------------------------------------

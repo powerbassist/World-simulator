@@ -172,9 +172,21 @@ static func tariff_revenue_pct_gdp(state, actor_id: String, row: Dictionary) -> 
 ## Called by Diplomacy.tick_month(), which already runs for all ten nations and
 ## whose own comment anticipated exactly this ("V1.3e will have the other nine
 ## acting through this same path").
-static func retaliation_terms(terms: Dictionary, year: int, month: int) -> Dictionary:
-	var severity := float(terms.get("severity", 0.0)) * K.RETALIATION_FRACTION
-	if severity <= 0.0:
+##
+## `fraction` is DECIDED by the caller at V1.3e, where V1.3c read
+## K.RETALIATION_FRACTION here directly. This module builds the terms of a measure
+## and says what one does; it does not decide to impose one, which is
+## Diplomacy.execute()'s job for the player and _tick_retaliation()'s for the
+## nine. Keeping the decision out of here is also what keeps this file free of the
+## interest model, which cannot be preloaded from inside trade.gd's own
+## dependencies.
+static func retaliation_terms(terms: Dictionary, fraction: float, year: int, month: int) -> Dictionary:
+	var severity := float(terms.get("severity", 0.0)) * fraction
+	# Below the floor, no entry is opened at all. A register entry at severity 0.01
+	# is a diplomatic incident on the nation panel and on the map's relations layer
+	# that costs the target nothing and the player nothing; refusing to open one is
+	# what lets the model say NO rather than only HOW MUCH. V1.3c could not say no.
+	if severity < K.RETALIATION_MIN_SEVERITY:
 		return {}
 	return {
 		"action_id": "retaliation",

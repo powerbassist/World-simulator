@@ -125,15 +125,29 @@ const TARIFF_YIELD := 2.00
 ## button was pressed.
 const RETALIATION_DELAY_MONTHS := 3
 
-## Severity of the answer, as a fraction of what was imposed.
+## The HARDEST any nation may answer, as a fraction of what was imposed.
 ##
-## BELOW 1.0, and that is what makes the exchange converge rather than ratchet.
-## The mirror fires ONCE per measure (the register's `retaliated` flag), so even
-## at 1.0 there would be no infinite spiral -- but a full-strength answer plus the
-## imposer's original measure puts more coercion on the pair than the player chose,
-## and the asymmetry is the honest one: the retaliating nation is reacting, not
-## opening.
+## V1.3c's answer; V1.3e's ceiling. This was the whole retaliation model until the
+## interest model replaced it -- every target mirrored every measure back at
+## exactly 0.60, weighing nothing. It is now the clamp on
+## ForeignPolicy.retaliation_fraction(), and a target reaches it only when the
+## imposer depends on it far more than it depends on the imposer.
+##
+## BELOW 1.0, unchanged and for the unchanged reason: the mirror fires once per
+## measure (the register's `retaliated` flag), so even at 1.0 there would be no
+## infinite spiral -- but a full-strength answer plus the imposer's original
+## measure puts more coercion on the pair than the player chose, and the asymmetry
+## is the honest one. The retaliating nation is reacting, not opening.
 const RETALIATION_FRACTION := 0.60
+
+## Below this answered severity, no measure is entered at all.
+##
+## V1.3e's, and it is what lets a target say NO rather than only HOW MUCH. An
+## entry in the register at severity 0.01 is a diplomatic incident on the nation
+## panel and on the map's relations layer that costs the target nothing and the
+## player nothing -- a measure the model does not believe in. Luxembourg answering
+## France is the case this exists for.
+const RETALIATION_MIN_SEVERITY := 0.05
 
 ## Relations cost of being retaliated against, points, applied to the pair.
 ##

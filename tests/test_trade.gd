@@ -15,6 +15,8 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const FK = preload("res://src/sim/foreign_policy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -55,7 +57,7 @@ func _init() -> void:
 	_check_openness_ignores_relations()
 	_check_agreement_round_trip()
 	_check_sector_shift_preserves_gdp()
-	_check_counterparty_is_a_stopgap()
+	_check_counterparty_reads_the_partner()
 	_check_counterparty_gate_is_reachable()
 	_check_third_parties_untouched()
 	_check_bad_fixtures_refused()
@@ -321,67 +323,86 @@ func _check_sector_shift_preserves_gdp() -> void:
 		)
 
 
-# --- the declared stopgap --------------------------------------------------------
+# --- the counterparty, no longer a stopgap ----------------------------------------
 
-## > [!warning] This asserts a stopgap, so that replacing it at V1.3e is a VISIBLE
-## > test change rather than a silent one -- exactly as test_diplomacy.gd asserts
-## > V1.3a's third-pair rule.
+## V1.3b's DECLARED STOPGAP, DISCHARGED at V1.3e -- and this is the rewrite.
 ##
-## The counterparty verdict is a pair score against one threshold and nothing
-## else. Every other thing a real counterparty would weigh is mutated here to an
-## extreme, and the verdict must not move. When V1.3e gives the target an
-## interest function, THIS TEST MUST FAIL and be rewritten.
-func _check_counterparty_is_a_stopgap() -> void:
+## Until V1.3e this test asserted the opposite: that gutting Germany's economy left
+## `would_accept_agreement()` at exactly the verdict it had before, because the
+## rule was `score(a, b) >= AGREEMENT_ACCEPT_MIN` and nothing else. That constant
+## no longer exists, so the old test died at parse time rather than at assert time
+## -- which is the loudest way it could have gone.
+##
+## What is asserted now is that the target reads the two things the stopgap could
+## not: how much of its own trade runs through the proposer, and what is actually
+## on the table.
+func _check_counterparty_reads_the_partner() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
-	state.relations[Relations.key(PLAYER, "DEU")] = DK.AGREEMENT_ACCEPT_MIN + 1.0
-	var baseline := Diplomacy.would_accept_agreement(state, PLAYER, "DEU")
-	if not baseline:
-		_failures.append("would_accept_agreement() said no just above AGREEMENT_ACCEPT_MIN")
-		return
+	var thin := {"weight_multiplier": 1.05}
+	var generous := {"weight_multiplier": 2.00}
 
-	var target = state.nations["DEU"]
-	target.gdp_eur_bn *= 0.01
-	target.unemployment_pct = 39.0
-	target.growth_annual_pct = -11.0
-	target.deficit_pct_gdp = 40.0
-	target.overall_approval_pct = 1.0
-	for key in target.sector_output.keys():
-		target.sector_output[key] = float(target.sector_output[key]) * 0.01
-	state.agreements[Relations.key("DEU", "ITA")] = {"action_id": "x", "sector_shift": {}}
+	# The terms on the table must matter. Under the stopgap these were identical,
+	# because the verdict never looked at them.
+	var thin_score := ForeignPolicy.accept_score(state, PLAYER, "DEU", thin)
+	var generous_score := ForeignPolicy.accept_score(state, PLAYER, "DEU", generous)
+	if not (generous_score > thin_score):
+		_failures.append("a 2.00-multiplier deal is not more attractive than a 1.05 one (%.3f vs %.3f) -- the counterparty is not reading the terms" % [generous_score, thin_score])
 
-	if Diplomacy.would_accept_agreement(state, PLAYER, "DEU") != baseline:
-		_failures.append("the counterparty verdict moved when the target's economy did -- the stopgap is no longer a stopgap, and docs/trade-model.md must be rewritten with it")
-
-	# And the one thing it DOES read must still read.
-	state.relations[Relations.key(PLAYER, "DEU")] = DK.AGREEMENT_ACCEPT_MIN - 1.0
-	if Diplomacy.would_accept_agreement(state, PLAYER, "DEU"):
-		_failures.append("would_accept_agreement() said yes below AGREEMENT_ACCEPT_MIN")
+	# And the partner's own trade dependence must matter. LUX sends a quarter of
+	# its trade to France; France sends a fiftieth of its trade to LUX. The small
+	# partner should be the eager one, and that asymmetry is unavailable to any
+	# symmetric relations score.
+	var lux_wants_fra := ForeignPolicy.accept_score(state, PLAYER, "LUX", generous)
+	var state_lux = GameState.new_game(_loader, "LUX")
+	var fra_wants_lux := ForeignPolicy.accept_score(state_lux, "LUX", PLAYER, generous)
+	if not (lux_wants_fra > fra_wants_lux):
+		_failures.append("Luxembourg is not keener to sign with France (%.3f) than France with Luxembourg (%.3f) -- the directed weight is not reaching the verdict" % [lux_wants_fra, fra_wants_lux])
 
 
 ## docs/amendment-model.md's Germany failure, checked for rather than discovered:
 ## a gate no playable nation can reach is a feature that does not ship. GBR is the
 ## binding case -- every one of its pairs rests at the floor of the four-tier
-## table -- so it is the one asserted.
+## table -- and V1.3e's own probe found ACCEPT_MIN constrained from above by it for
+## the second time in this block.
+##
+## Both halves, exactly as V1.3b asserted them: Britain starts below the gate, and
+## relations work opens it.
 func _check_counterparty_gate_is_reachable() -> void:
 	var state = GameState.new_game(_loader, "GBR")
-	var best := 0.0
+	var terms := {"weight_multiplier": 1.35}
+
+	var signed_at_rest := 0
 	for id in state.nations.keys():
 		if id == "GBR":
 			continue
-		best = maxf(best, Diplomacy.score(state, "GBR", id))
-	if best >= DK.AGREEMENT_ACCEPT_MIN:
-		_failures.append("GBR starts above AGREEMENT_ACCEPT_MIN -- the gate is inert for the nation it is set by")
+		if ForeignPolicy.would_accept_agreement(state, "GBR", String(id), terms):
+			signed_at_rest += 1
+	if signed_at_rest > 0:
+		_failures.append("GBR can already sign %d agreements at rest -- the gate is inert for the nation that sets it" % signed_at_rest)
 
-	# One use of the strongest positive verb must clear it, or the feature is shut
-	# to GBR however long the player plays.
+	# The strongest single positive verb in the content, applied to every pair.
+	# At least one partner must then sign, or the feature is shut to one playable
+	# nation in three however long the player plays.
 	var strongest := 0.0
 	for action in _loader.diplomatic_actions:
 		if action.effects.get("agreement", {}).is_empty():
 			strongest = maxf(strongest, float(action.effects.get("relations", 0.0)))
-	if best + strongest < DK.AGREEMENT_ACCEPT_MIN:
+	for id in state.nations.keys():
+		if id == "GBR":
+			continue
+		var k := Relations.key("GBR", String(id))
+		state.relations[k] = float(state.relations[k]) + strongest
+
+	var signed_after := 0
+	for id in state.nations.keys():
+		if id == "GBR":
+			continue
+		if ForeignPolicy.would_accept_agreement(state, "GBR", String(id), terms):
+			signed_after += 1
+	if signed_after <= 0:
 		_failures.append(
-			"GBR cannot reach AGREEMENT_ACCEPT_MIN (%.1f) from %.1f with the strongest verb (+%.1f)" % [
-				DK.AGREEMENT_ACCEPT_MIN, best, strongest,
+			"GBR cannot reach ACCEPT_MIN (%.2f) against ANY partner after the strongest verb (+%.1f) -- the feature is closed to it" % [
+				FK.ACCEPT_MIN, strongest,
 			]
 		)
 

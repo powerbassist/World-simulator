@@ -40,17 +40,46 @@ const VOTE_DELAY_MONTHS := 3
 ## what makes the file load-bearing beyond the elections it was written for.
 const PASS_SEAT_FRACTION := 0.55
 
-## How far a member's coalition_position may sit from a proposal's own position
-## before it stops supporting it. Gaussian falloff, the same shape
-## election_constants.AFFINITY_SIGMA and cabinet_constants.CABINET_SIGMA use --
-## no new functional form in this project for this.
-const SUPPORT_SIGMA := 0.90
-
 ## The support level at which a member votes for rather than against. There is no
-## abstention among the nine: a declared stopgap does not get to be subtle, and a
-## third outcome would need a rule for what produces it. The PLAYER may abstain,
-## because a player choosing not to spend political capital is a real decision.
-const SUPPORT_THRESHOLD := 0.50
+## abstention among the nine: a third outcome would need a rule for what produces
+## it. The PLAYER may abstain, because a player choosing not to spend political
+## capital is a real decision.
+##
+## Re-anchored at V1.3e, and it had to be rather than merely re-swept. V1.3d's
+## support() was a Gaussian on (0, 1] and 0.50 was its midpoint; the scale
+## underneath it is now foreign_policy.gd's appraisal, which is a benefit minus
+## three costs and is signed. 0.50 against the new scale is unreachable -- the
+## ideology term alone tops out at APPRAISE_IDEOLOGY_WEIGHT -- so every member
+## would have voted against everything forever, and it would have looked like a
+## council that had simply stopped agreeing.
+##
+## Zero was the honest anchor to sweep FROM -- a member votes for what leaves it
+## better off -- and the sweep moved it. tools/foreign_policy_probe.gd table (c),
+## against TWO criteria rather than V1.3d's one:
+##
+##   threshold   carried   FRA decides   lost anyway   abstention window
+##      0.00        6           0             1                0
+##      0.05        5           1             1                1
+##      0.15        3           2             2                1     <-- shipped
+##      0.20        3           1             3                0
+##      0.25        1           2             4                2
+##      0.40        1           0             6                0
+##
+## The fourth column is new and it is the reason 0.15 rather than 0.20. V1.3d swept
+## only the first three, and its own constructive-abstention property then came out
+## of the shipped content by luck -- abstaining differs from opposing ONLY when the
+## other eight land in [172, 216) of 393 seats, a window 11 % of the range wide, and
+## nothing in the content is placed to guarantee it. At 0.20 that window is empty:
+## the council has three vote options and two outcomes, which is the decorative-verb
+## failure with correct arithmetic. tests/test_bloc.gd now SCANS for a proposal in
+## the window rather than naming one, so this cannot regress silently again.
+##
+## 0.15 also has the better first three: all non-zero and balanced. At 0.00 France
+## is pivotal on NOTHING, which is V1.3d's own failure mirrored -- that session
+## found six of seven proposals decided by France and called it a legislature the
+## player controlled, and a council the player can never move is the same fault
+## from the other side. France holds 81 of 393 member seats.
+const SUPPORT_THRESHOLD := 0.15
 
 
 # --- Rules in force --------------------------------------------------------------

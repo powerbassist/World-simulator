@@ -177,8 +177,10 @@ This is also what GBR and CHE get. They are not members, carry no burden and pay
 
 ## 6. The council is the fourth declared stopgap
 
-> [!warning] Named, not approximated
-> The other eight members vote on their `coalition_position` and **nothing else**. They do not weigh what a proposal would cost them, do not read their own economy, their trade weights or their relations, do not trade votes, and never propose. A member's answer to a fund it would pay for and a fund it would draw on is identical if the two sit at the same point in ideology space.
+> [!success] Discharged at V1.3e
+> ~~The other eight members vote on their `coalition_position` and **nothing else**.~~ They now appraise a proposal against their **own books**: what the rule would cost them given their current deficit, what the transfer would cost or pay them, what an external measure would cost their own trade, with ideology retained as one weak term among four. `cohesion_fund` is now voted down by every member and `recovery_facility` carried by every member -- the two proposals the old rule could not tell apart. They still never propose, which is V1.3f's.
+>
+> `tests/test_bloc.gd` asserted the old rule by mutation and **died at parse time**, because `support()` grew a `state` parameter. See [[foreign-policy-model]].
 
 Fourth on V1.3e's checklist, behind [[diplomacy-model|V1.3a's no-reaction]], [[trade-model|V1.3b's accept-gate]] and [[coercion-model|V1.3c's fixed retaliation]]. The four compose rather than conflict: the others say the target does not react, does not decide, and reacts by a fixed rule — this one says the council votes its priors.
 

@@ -291,9 +291,9 @@ func _transfer_table(loader) -> void:
 ## docs/scenario-model.md records, with a ballot box drawn on it.
 func _vote_table(loader) -> void:
 	print("\n\n########## (d) is the council a real division? ##########")
-	print("Members vote by ideology alone -- the session's DECLARED STOPGAP, replaced")
-	print("at V1.3e. Weighted by ep_seats, %.0f%% needed to carry." % (BK.PASS_SEAT_FRACTION * 100.0))
-	print("SUPPORT_SIGMA %.2f, threshold %.2f." % [BK.SUPPORT_SIGMA, BK.SUPPORT_THRESHOLD])
+	print("Members appraise a proposal against their own books since V1.3e -- this was")
+	print("the DECLARED STOPGAP and it is discharged. Weighted by ep_seats, %.0f%% to carry." % (BK.PASS_SEAT_FRACTION * 100.0))
+	print("Threshold %.2f. The sweep that set it is tools/foreign_policy_probe.gd (c)." % BK.SUPPORT_THRESHOLD)
 	print("")
 	print("Read from FRANCE's seat. `pivotal` is the one that matters: it is true when")
 	print("the outcome differs between the player voting for and voting against, which")
@@ -330,7 +330,7 @@ func _vote_table(loader) -> void:
 		for id in members:
 			if id == "FRA":
 				continue
-			if Bloc.support(state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
+			if Bloc.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
 				others_for += loader.eu.ep_seats(id)
 
 		# Three outcomes, because the threshold is a share of the seats CAST. Voting
@@ -347,7 +347,7 @@ func _vote_table(loader) -> void:
 			"pass" if with_for else "fail",
 			"pass" if with_against else "fail",
 			"pass" if with_abstain else "fail",
-			others_for, "%.2f" % Bloc.support(state.player(), p),
+			others_for, "%.2f" % Bloc.support(state, state.player(), p),
 			"YES" if with_for != with_against else "no",
 		])
 	print("-".repeat(80))
@@ -365,73 +365,25 @@ func _vote_table(loader) -> void:
 	print("%d of %d proposals are decided by France's own vote." % [pivotal_count, loader.bloc_proposals.size()])
 	if pivotal_count == 0:
 		print("NONE. The player's vote never changes an outcome, which makes the council a")
-		print("cutscene. SUPPORT_SIGMA or PASS_SEAT_FRACTION has to move.")
+		print("cutscene. SUPPORT_THRESHOLD or PASS_SEAT_FRACTION has to move.")
 	elif pivotal_count == loader.bloc_proposals.size():
 		print("ALL of them, which is the other failure: if the player always decides, the")
 		print("bloc is a second legislature they happen to control rather than one member")
 		print("among many.")
 
-	_sigma_sweep(loader, state, members, seats_total, needed)
 
 
-## The sweep that settles SUPPORT_SIGMA, and the one the first run of table (d)
-## made necessary: six of seven proposals were pivotal, so France decided almost
-## everything, which is the "second legislature they happen to control" failure
-## rather than "one member among many".
+## V1.3d's SIGMA SWEEP lived here and is DELETED at V1.3e.
 ##
-## What the row wants is a MIX -- some proposals carried without the player, some
-## lost even with them, some genuinely in the player's hands -- and the fix turned
-## out to be CONTENT rather than this constant. The member-position list above is
-## why: the eight are clustered, so no sigma alone spreads the tallies. Moving
-## common_defence_floor to where a defence commitment actually sits in ideology
-## space (right, traditional) is what put a proposal out of France's reach.
+## It swept bloc_constants.SUPPORT_SIGMA against the three-column test, and both
+## the constant and the Gaussian it parameterised are gone -- members now appraise
+## a proposal against their own books. The sweep carried its own inline copy of
+## that Gaussian, which is precisely the dead-model-a-later-session-reasons-from
+## hazard src/sim/diplomacy_constants.gd records for AGREEMENT_ACCEPT_MIN.
 ##
-## 0.90 is then the only value swept with all three columns non-zero. Note what
-## that buys beyond the arithmetic: a proposal France cannot pass today is not
-## dead content, because member governments change at their own elections over a
-## fourteen-year run. The council's arithmetic moves with them.
-func _sigma_sweep(loader, state, members: Array, seats_total: int, needed: int) -> void:
-	print("")
-	print("SIGMA SWEEP. `without` carries with the other eight alone; `pivotal` needs")
-	print("the player; `lost` fails even with the player voting for. A council worth")
-	print("having has all three columns non-zero -- one that is all `pivotal` is a")
-	print("legislature the player controls, and one with none is a cutscene.")
-	print("")
-	print("%8s %10s %10s %8s %14s" % ["sigma", "without", "pivotal", "lost", "median others"])
-	print("-".repeat(54))
-
-	for sigma in [0.45, 0.55, 0.65, 0.75, 0.90, 1.10]:
-		var without := 0
-		var pivotal := 0
-		var lost := 0
-		var tallies: Array = []
-		for p in loader.bloc_proposals:
-			var others_for := 0
-			for id in members:
-				if id == "FRA":
-					continue
-				var d_econ: float = float(state.nations[id].coalition_position.get("economic", 0.0)) - float(p.position.get("economic", 0.0))
-				var d_social: float = float(state.nations[id].coalition_position.get("social", 0.0)) - float(p.position.get("social", 0.0))
-				if exp(-pow(sqrt(d_econ * d_econ + d_social * d_social) / sigma, 2.0)) >= SUPPORT_THRESHOLD:
-					others_for += loader.eu.ep_seats(id)
-			tallies.append(others_for)
-			if float(others_for) >= BK.PASS_SEAT_FRACTION * float(seats_total):
-				without += 1
-			elif float(others_for + loader.eu.ep_seats("FRA")) >= BK.PASS_SEAT_FRACTION * float(seats_total):
-				pivotal += 1
-			else:
-				lost += 1
-		tallies.sort()
-		print("%8.2f %10d %10d %8d %14d" % [
-			sigma, without, pivotal, lost, int(tallies[tallies.size() / 2]),
-		])
-	print("-".repeat(54))
-	print("Member seats %d, %d needed, France holds %d." % [seats_total, needed, loader.eu.ep_seats("FRA")])
-
-
-## Read locally rather than from bloc_constants, because the sweep above varies
-## sigma and would otherwise have to vary this too to mean anything.
-const SUPPORT_THRESHOLD := 0.50
+## Its successor is tools/foreign_policy_probe.gd table (c), which sweeps
+## SUPPORT_THRESHOLD against FOUR columns rather than three -- V1.3d's own
+## constructive-abstention property turned out to be unmeasured by the three.
 
 
 ## One month of the real game, the same chain main.gd runs. Copied from

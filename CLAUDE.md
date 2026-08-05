@@ -269,18 +269,60 @@ session needed **no eleventh regime** where b and c each did. GDP, growth, trend
 and unemployment are bit-identical in all thirty runs; exactly one run changed
 outcome, on a two-seat censure margin.
 
-**Next: V1.3e, AI foreign policy** — the row the decomposition flagged as most
-likely to split.
+**V1.3e shipped the interest model, and the row split.** All four declared
+stopgaps are discharged — the counterparty *reaction*, its *decision*, its
+*retaliation* and the council's *vote* — and all four mutation tests were watched
+going red before being rewritten. The acting agent is now **V1.3f**; defence runs
+to **V1.3g**. The split was taken on **machine count**, not on the surface count
+the ROADMAP row named: that trigger (*a plan-time count above V1.3a's ~25*) had
+already fired on V1.3b, V1.3c and V1.3d without any of them splitting.
 
-Four declared stopgaps are now on V1.3e's opening checklist, each asserted by a
-test that must fail when it is replaced: the counterparty *reaction*
-(`tests/test_diplomacy.gd`), the counterparty *decision* (`tests/test_trade.gd`),
-the counterparty *retaliation* (`tests/test_coercion.gd`), and the council's
-*vote* (`tests/test_bloc.gd`). They compose rather than conflict — the target does
-not react, does not decide, and reacts by a fixed rule while deciding nothing;
-and the council votes its priors, reading `coalition_position` and nothing else.
+**Interest is material; ideology is one weak term**, and that is the session's
+central call. `tools/bloc_probe.gd` prints the eight non-player members clustered
+in ideology space — economic spanning 0.87, social 1.13 — so a function resting on
+`coalition_position` gives nine nations that behave alike, which is `trade.gd`'s
+`GRAVITY_EXPONENT = 1.0` finding in a new place. The spine is the directed trade
+weight instead. `src/sim/foreign_policy.gd` is a **pure read**: no `tick_month()`,
+nothing on `NationState`, nothing new on `GameState`, so `SAVE_VERSION` stays at
+**11** — which is what *no grievance ledger* buys, because the relations number
+**is** the memory. The model, every constant and the measured tables are
+[docs/foreign-policy-model.md](docs/foreign-policy-model.md).
 
-MVP, V1.1a–d, V1.2a–e, V1.3a and U1–U4 are done. V1.1e (upper house and
+**The probe corrected the model three times and a test caught a fourth**, which is
+five sessions running. A globally-anchored amity read Britain's structural
+detachment as hostility and closed agreements to it entirely (**0 of 9**);
+anchoring sentiment on the pair's own resting value fixed it *and* cut a
+double-count, since EU co-membership and the border were already inside the trade
+weight. An ideology term commensurate with a rule's severity had every member in
+breach of the deficit rule voting **for** it. `vote_reason()` named a cost term
+that had lost by a factor of five. And **constructive abstention has a window
+11 % of the range wide** that V1.3d never measured — it swept three columns where
+four were needed, and got its own abstention property from the content by luck.
+
+**`AGREEMENT_ACCEPT_MIN` and `SUPPORT_SIGMA` are deleted, not left unused**, along
+with `bloc_probe.gd`'s sigma sweep — a tuned constant nothing reads is a number a
+later session finds and reasons from.
+
+**The screenshot pass earned its keep twice again**: every diplomatic action
+button had fallen below the fold at a height unchanged since V1.3a, and a treaty
+the partner would refuse rendered as a **live button** that refused silently —
+V1.3b's own unread `refused_by_partner`, reappearing inside the session fixing it.
+A fold is something the headless suite structurally cannot see: two of that
+panel's labels autowrap, and with no layout pass an autowrapped label reports its
+one-word-per-line height, so the assertion reads a 500px fold that is not there.
+`tests/test_nation_panel.gd` says so rather than shipping a flaky check.
+
+**The re-run is not bit-identical and could not be.** 15 of 30 runs move; every
+large mover is GBR taking the bloc's `common_external_tariff` — a V1.3d feature
+V1.3d's own re-run never fired, because the old council never adopted it inside
+fourteen years. Exactly **one run of thirty changed outcome**, on a one-seat
+margin. The re-run also caught a break the suite could not: `balance_probe.gd`
+referenced the deleted constant and every new run failed to parse, because
+`tools/` is excluded from `run_tests.sh` by design.
+
+**Next: V1.3f, the acting agent** — the nine acting on their own initiative.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–e and U1–U5 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
@@ -305,7 +347,12 @@ raising it had to come and say why. **V1.3d is that session.** Three fields fail
 the rule: an absent `bloc` register reads as a bloc with no rules, an absent
 `bloc_base_transfer_pct_gdp` as a France that never paid into a budget it has
 always paid into, and an absent `start_bloc_burden` as 0.0 against a live burden,
-which mis-signs the `europe` issue for the rest of the run.
+which mis-signs the `europe` issue for the rest of the run. **V1.3e adds no serialised field at
+all**, and the test says why: both interest functions are pure reads over live
+state, and the two things they write — `relations` and `measures` — were
+serialised at V1.3a and V1.3c. That is a property rather than a coincidence, and
+it is what *no grievance ledger* buys: the relations number **is** the memory, so
+there is nothing for a save to carry.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

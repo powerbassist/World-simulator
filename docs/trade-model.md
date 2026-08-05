@@ -206,8 +206,12 @@ Three floors were named before the run and all three clear: the trend gain is re
 
 ## 5. The counterparty is a declared stopgap
 
-> [!warning] Named, not approximated
-> `Diplomacy.would_accept_agreement()` is a pair score against one threshold and **nothing else**. The target does not weigh its own economy, does not compare this partner against alternatives, never proposes an agreement, and never withdraws from one.
+> [!success] Discharged at V1.3e
+> ~~`Diplomacy.would_accept_agreement()` is a pair score against one threshold and **nothing else**.~~ The target now weighs how much of its own trade runs through the proposer, how far the pair sits from its resting value, and -- the part a relations threshold could never reach -- **what is actually on the table**, so a generous `weight_multiplier` is genuinely easier to sell than a thin one.
+>
+> `tests/test_trade.gd` asserted the old rule by mutating the target's whole economy, and that test **died at parse time** rather than at assert time, because `AGREEMENT_ACCEPT_MIN` no longer exists. See [[foreign-policy-model]].
+>
+> What it still does not do: the target never proposes an agreement and never withdraws from one. That is V1.3f's.
 
 Implemented as a **gate**, not a post-hoc verdict, and that choice is load-bearing. `Diplomacy.execute()` has two outcomes — refused and applied. A verdict applied *after* the effects would be a third (available, executed, partner said no), and if the relations delta still applied the player would collect +6 relations for a treaty that was refused. As a gate there is no third outcome, no new result field and no UI branch; the existing `refused: true` shape carries it, with `refused_by_partner` naming the reason for the tooltip.
 

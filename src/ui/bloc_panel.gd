@@ -20,6 +20,7 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Relations = preload("res://src/core/relations.gd")
 
 signal closed
@@ -190,7 +191,56 @@ func _refresh_vote(ns) -> void:
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), ns.id, String(last.get("player_vote", "")),
 		])
+		_refresh_why(last)
 	_line("")
+
+
+## V1.3e. WHY each member voted as it did, not only how.
+##
+## Until this session the eight voted on ideology alone and there was nothing to
+## say -- a reason would have read "because of who they are" for every member on
+## every proposal. Now they price a proposal against their own books, and the
+## division is only legible if the player can see that Luxembourg opposed a fund it
+## would pay for while Italy backed one it would draw on.
+##
+## Grouped by reason rather than listed per nation: eight rows of one nation each
+## is a table the player reads once and never again, and the interesting object is
+## the CAMP. The reasons are recorded at the moment of the division by
+## src/sim/bloc.gd, not recomputed here -- the books a member voted on were that
+## month's.
+func _refresh_why(last: Dictionary) -> void:
+	var reasons: Dictionary = last.get("reasons", {})
+	if reasons.is_empty():
+		return
+	var votes: Dictionary = last.get("votes", {})
+
+	var camps: Dictionary = {}
+	var order: Array = reasons.keys()
+	order.sort()
+	for id in order:
+		var key := String(reasons[id])
+		if not camps.has(key):
+			camps[key] = []
+		camps[key].append("%s %s" % [
+			String(id), "for" if String(votes.get(id, "")) == Bloc.VOTE_FOR else "against",
+		])
+
+	var keys: Array = camps.keys()
+	keys.sort()
+	for key in keys:
+		_caption("%s: %s" % [_vote_reason_text(String(key)), ", ".join(camps[key])])
+
+
+## The model returns a key; the wording lives here, because src/sim/ does not know
+## the UI exists and a test should not assert on prose.
+func _vote_reason_text(key: String) -> String:
+	match key:
+		ForeignPolicy.VOTE_REASON_DRAWS_ON_IT: return "stood to draw on it"
+		ForeignPolicy.VOTE_REASON_ALREADY_IN_BREACH: return "already outside the rule"
+		ForeignPolicy.VOTE_REASON_WOULD_PAY: return "would have to pay for it"
+		ForeignPolicy.VOTE_REASON_TRADES_OUTSIDE: return "trades outside the bloc"
+		ForeignPolicy.VOTE_REASON_POLITICS: return "on the politics of it"
+	return key
 
 
 ## What binds, and what each rule is costing THIS nation rather than only what it

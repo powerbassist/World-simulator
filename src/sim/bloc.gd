@@ -26,6 +26,11 @@ extends RefCounted
 
 const K = preload("res://src/sim/bloc_constants.gd")
 const RK = preload("res://src/core/relations.gd")
+
+## V1.3e. Safe to preload here and NOT safe in coercion.gd: foreign_policy.gd
+## preloads trade.gd, which preloads coercion.gd, so the cycle closes there and
+## not here. Nothing preloads bloc.gd except budget.gd.
+const FP = preload("res://src/sim/foreign_policy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 
 const VOTE_FOR := "for"
@@ -212,12 +217,19 @@ static func _resolve(state, loader) -> void:
 	var seats_against := 0
 	var seats_total := 0
 	var by_nation := {}
+	var reasons := {}
 
 	for id in _members(state, loader):
 		var seats: int = loader.eu.ep_seats(id)
 		seats_total += seats
 		var choice := _vote_of(state, id, proposal, pending)
 		by_nation[id] = choice
+		# Recorded at the moment of the division rather than recomputed by the
+		# panel, because the books a member voted on are this month's and the panel
+		# is read later. V1.3c's budget panel showed a tariff collecting nothing
+		# for exactly this class of reason.
+		if id != state.player_nation_id:
+			reasons[id] = vote_reason(state, state.nations[id], proposal)
 		if choice == VOTE_FOR:
 			seats_for += seats
 		elif choice == VOTE_AGAINST:
@@ -247,6 +259,7 @@ static func _resolve(state, loader) -> void:
 		"seats_total": seats_total,
 		"player_vote": String(pending.get("player_vote", VOTE_ABSTAIN)),
 		"votes": by_nation,
+		"reasons": reasons,
 		"year": state.year,
 		"month": state.month,
 	}
@@ -322,41 +335,48 @@ static func _apply_external_measure(state, loader, proposal) -> void:
 			state.agreements.erase(RK.key(member_id, other_id))
 
 
-## How one nation votes. The player casts; the other eight are the session's
-## declared stopgap.
+## How one nation votes. The player casts; the other eight appraise.
 static func _vote_of(state, nation_id: String, proposal, pending: Dictionary) -> String:
 	if nation_id == state.player_nation_id:
 		return String(pending.get("player_vote", VOTE_ABSTAIN))
-	return VOTE_FOR if support(state.nations[nation_id], proposal) >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
+	return VOTE_FOR if support(state, state.nations[nation_id], proposal) >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
 
 
-## How much a member's government likes a proposal, in (0, 1].
+## How much a member's government wants a proposal adopted.
 ##
-## > DECLARED STOPGAP, replaced at V1.3e.
-## >
-## > This reads the member's coalition_position and NOTHING ELSE. It does not
-## > weigh that nation's economy, does not ask what the proposal would cost it,
-## > does not look at its trade weights or its relations with the proposer, does
-## > not trade votes, and never proposes anything of its own. A member's answer to
-## > a joint fund it would pay for and a joint fund it would draw on is identical
-## > if the two sit at the same point in ideology space.
-## >
-## > Fourth on V1.3e's checklist, behind V1.3a's no-reaction, V1.3b's accept-gate
-## > and V1.3c's fixed retaliation. The four compose rather than conflict: the
-## > others say the target does not react, does not decide, and reacts by a fixed
-## > rule -- this one says the council votes its priors.
-## >
-## > tests/test_bloc.gd asserts it BY MUTATION. That test must fail and be
-## > rewritten at V1.3e.
+## > [!success] V1.3d's DECLARED STOPGAP, discharged at V1.3e.
+## > This used to read the member's coalition_position and NOTHING ELSE, so a
+## > member's answer to a joint fund it would pay for and one it would draw on was
+## > identical if the two sat at the same point in ideology space. It now appraises
+## > the proposal against the member's OWN BOOKS -- what the rule would cost it
+## > given its current deficit, what the transfer would cost or pay it, what an
+## > external measure would cost its own trade -- with ideology retained as one
+## > weak term among four. See docs/foreign-policy-model.md.
 ##
-## The Gaussian falloff is election_constants.AFFINITY_SIGMA's shape, reused
-## rather than reinvented -- cabinet_constants.CABINET_SIGMA already made the
-## same borrowing.
-static func support(ns, proposal) -> float:
-	var d_econ: float = float(ns.coalition_position.get("economic", 0.0)) - float(proposal.position.get("economic", 0.0))
-	var d_social: float = float(ns.coalition_position.get("social", 0.0)) - float(proposal.position.get("social", 0.0))
-	var dist := sqrt(d_econ * d_econ + d_social * d_social)
-	return exp(-pow(dist / K.SUPPORT_SIGMA, 2.0))
+## Takes `state` where it used to take only `ns`, which is the signature change
+## that makes the whole difference: a vote that cannot see the world cannot weigh
+## anything in it.
+##
+## The rule's cost is computed HERE and passed down rather than computed inside
+## the interest model, because foreign_policy.gd cannot preload this file -- this
+## one preloads it. Bloc keeps sole ownership of the breach arithmetic, which is
+## engine-decision.md's rule 3 with the dependency pointing the one way it can.
+static func support(state, ns, proposal) -> float:
+	return FP.appraise(state, ns, proposal, _proposed_rule_cost(ns, proposal))
+
+
+## Why a member voted as it did, as a key src/ui/bloc_panel.gd turns into words.
+static func vote_reason(state, ns, proposal) -> String:
+	return FP.vote_reason(state, ns, proposal, _proposed_rule_cost(ns, proposal))
+
+
+## What this proposal's constraint would add to this nation's burden if adopted,
+## against its books as they stand now. Zero for a proposal that binds nobody's
+## policy, and zero for a member already inside the rule.
+static func _proposed_rule_cost(ns, proposal) -> float:
+	if proposal.constraint.is_empty():
+		return 0.0
+	return float(rule_breach(ns, proposal.constraint)["contribution"])
 
 
 ## The player's command. Returns false if there is nothing to vote on, if the
@@ -386,19 +406,46 @@ static func burden(state, ns) -> float:
 	var rules: Dictionary = state.bloc.get("rules", {})
 	var total := 0.0
 	for rule in rules.values():
-		var field: String = String(rule.get("field", ""))
-		if field == "":
-			continue
-		var actual := _read_field(ns, field)
-		var target := float(rule["value"])
-		var over := 0.0
-		match String(rule["op"]):
-			"<", "<=": over = maxf(0.0, actual - target)
-			">", ">=": over = maxf(0.0, target - actual)
-		if over <= 0.0:
-			continue
-		total += float(rule["severity"]) * clampf(over / float(rule["tolerance"]), 0.0, 1.0)
+		total += float(rule_breach(ns, rule)["contribution"])
 	return clampf(total, 0.0, K.BURDEN_MAX)
+
+
+## How far one rule -- in force or merely PROPOSED -- puts this nation outside it,
+## as {breach, contribution}. `breach` is the raw overshoot in the field's own
+## units; `contribution` is what it adds to the burden, severity-weighted and
+## tolerance-scaled.
+##
+## Extracted at V1.3e, and it was already written three times before that: in
+## burden(), in rules_in_force() for the panel, and it would have been a fourth in
+## the council's own appraisal. Three copies of a formula is how the panel and the
+## model come to disagree about what a breach is.
+##
+## Takes a rule DICTIONARY rather than a proposal, so a rule in force and a
+## proposal's `constraint` block both go through it -- which is what lets a member
+## price a rule it is being asked to adopt against the same arithmetic that will
+## bind it afterwards. A member already inside a proposed rule scores exactly
+## 0.0, by construction, and that is the whole reason the council stopped voting
+## its priors.
+static func rule_breach(ns, rule: Dictionary) -> Dictionary:
+	var out := {"breach": 0.0, "contribution": 0.0}
+	if ns == null or not ns.eu_member:
+		return out
+	var field: String = String(rule.get("field", ""))
+	if field == "":
+		return out
+
+	var actual := _read_field(ns, field)
+	var target := float(rule["value"])
+	var over := 0.0
+	match String(rule["op"]):
+		"<", "<=": over = maxf(0.0, actual - target)
+		">", ">=": over = maxf(0.0, target - actual)
+	if over <= 0.0:
+		return out
+
+	out["breach"] = over
+	out["contribution"] = float(rule["severity"]) * clampf(over / float(rule["tolerance"]), 0.0, 1.0)
+	return out
 
 
 ## What the rules in force add to or take off this nation's standing transfer.
@@ -458,18 +505,9 @@ static func rules_in_force(state, ns) -> Array:
 		var rule: Dictionary = state.bloc["rules"][id]
 		var entry := rule.duplicate(true)
 		entry["id"] = id
-		entry["breach"] = 0.0
-		entry["contribution"] = 0.0
-		var field: String = String(rule.get("field", ""))
-		if field != "" and ns != null and ns.eu_member:
-			var actual := _read_field(ns, field)
-			var target := float(rule["value"])
-			var over := 0.0
-			match String(rule["op"]):
-				"<", "<=": over = maxf(0.0, actual - target)
-				">", ">=": over = maxf(0.0, target - actual)
-			entry["breach"] = over
-			entry["contribution"] = float(rule["severity"]) * clampf(over / float(rule["tolerance"]), 0.0, 1.0)
+		var scored: Dictionary = rule_breach(ns, rule)
+		entry["breach"] = scored["breach"]
+		entry["contribution"] = scored["contribution"]
 		out.append(entry)
 	return out
 

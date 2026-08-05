@@ -25,6 +25,14 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 
+## V1.3e's interest model. Preloaded here rather than in coercion.gd, which is
+## what decides where the retaliation DECISION lives: foreign_policy.gd preloads
+## trade.gd, trade.gd preloads coercion.gd, so a coercion.gd that reached back for
+## the interest model would close a cycle GDScript refuses. _tick_retaliation()
+## below already owned the loop, so the decision belongs here and Coercion keeps
+## only the terms it builds.
+const FP = preload("res://src/sim/foreign_policy.gd")
+
 
 ## Reset one nation's own diplomacy state. Runs for all ten, same as
 ## Legislature.init_nation() -- what is per-nation here is the record of what
@@ -122,13 +130,17 @@ static func tick_month(state, loader) -> void:
 ## answered. Runs inside tick_month(), which already runs for all ten nations and
 ## whose own comment anticipated exactly this.
 ##
-## > [!warning] THE THIRD DECLARED STOPGAP, and the one V1.3c adds to V1.3e's
-## > checklist. V1.3a's says the target does not REACT; V1.3b's says it does not
-## > DECIDE; this one says it reacts by a fixed rule and decides nothing. The
-## > retaliating nation does not weigh its economy, does not compare the imposer
-## > against its other partners, does not escalate past the single step, never
-## > lifts what it imposed, and never acts first. tests/test_coercion.gd asserts
-## > that by mutation, so V1.3e replacing it is a visible test change.
+## > [!success] V1.3c's DECLARED STOPGAP, discharged at V1.3e.
+## > A measure used to be mirrored back at a fixed RETALIATION_FRACTION whatever
+## > the target's position was. The target now decides how hard to answer -- from
+## > how much the imposer depends on it (how much the answer would hurt) against
+## > how much it depends on the imposer (how much the answer would cost) -- and can
+## > decide not to answer at all. RETALIATION_FRACTION survives as the ceiling.
+## > See docs/foreign-policy-model.md.
+## >
+## > Still one step and still never first: escalation past the single exchange and
+## > acting on its own initiative are V1.3f's, and the `retaliated` flag that bounds
+## > the exchange is unchanged.
 ##
 ## Deliberately no rand(): the same discipline the rest of this file holds to, so
 ## the budget projection -- which ticks Diplomacy since V1.3b -- and a reloaded
@@ -166,8 +178,15 @@ static func _tick_retaliation(state) -> void:
 		if state.measures.has(back):
 			continue
 
+		# The decision V1.3c did not make. Read here rather than inside Coercion
+		# because the interest model needs the trade weights and coercion.gd
+		# cannot reach them without closing a preload cycle -- see the FP const
+		# at the top of this file.
+		var fraction := FP.retaliation_fraction(
+			state, imposer, target, CK.RETALIATION_FRACTION
+		)
 		var mirror := Coercion.retaliation_terms(
-			answer["terms"], state.year, state.month
+			answer["terms"], fraction, state.year, state.month
 		)
 		if mirror.is_empty():
 			continue
@@ -285,7 +304,7 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	var terms: Dictionary = action.effects.get("agreement", {})
 	var blocked_by_partner: bool = (
 		String(terms.get("op", "")) == "enter"
-		and not would_accept_agreement(state, actor_id, target_id)
+		and not would_accept_agreement(state, actor_id, target_id, terms)
 	)
 
 	if blocked_by_partner or not available(state, all_actions, actor_id, target_id).has(action):
@@ -295,6 +314,10 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 			"applied": false,
 			"refused": true,
 			"refused_by_partner": blocked_by_partner,
+			# V1.3b shipped `refused_by_partner` and nothing in src/ui/ ever read
+			# it, so a partner declining a treaty was silent to the player. Now
+			# there is a reason to show, this carries it.
+			"refusal_reason": refusal_reason(state, actor_id, target_id, terms) if blocked_by_partner else "",
 			"relations_before": score(state, actor_id, target_id),
 			"relations_after": score(state, actor_id, target_id),
 		}
@@ -302,10 +325,29 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		return refused
 
 	var before := score(state, actor_id, target_id)
+	var delta: float = float(action.effects.get("relations", 0.0))
+
+	# V1.3a's stopgap was that this delta IS the entire reaction and no third pair
+	# moves. It is discharged here: every nation with a stake in the target judges
+	# the actor for it and warms to the target by the same measure.
+	#
+	# Computed BEFORE the pair itself moves, and as a whole list before any of it
+	# is applied. Both matter: applying one adjustment moves the relations the next
+	# stake is scaled by, so a resolved-as-you-go version would give an answer that
+	# depended on Dictionary iteration order -- the ordering bug docs/trade-model.md
+	# records the trade probe catching in the impulse, which was invisible until
+	# something finally perturbed a partner.
+	var third_party: Array = FP.third_party_effects(state, actor_id, target_id, delta)
+
 	var after := RK.adjust(
-		state, actor_id, target_id, float(action.effects.get("relations", 0.0)),
-		DK.RELATIONS_MIN, DK.RELATIONS_MAX
+		state, actor_id, target_id, delta, DK.RELATIONS_MIN, DK.RELATIONS_MAX
 	)
+
+	for effect in third_party:
+		RK.adjust(
+			state, String(effect["a"]), String(effect["b"]), float(effect["delta"]),
+			DK.RELATIONS_MIN, DK.RELATIONS_MAX
+		)
 
 	# Through the same clamped accumulator a law, a censure, a reshuffle and a
 	# dissolution already write. No new opinion channel and no new ISSUE_KEYS
@@ -374,8 +416,12 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		"applied": true,
 		"refused": false,
 		"refused_by_partner": false,
+		"refusal_reason": "",
 		"relations_before": before,
 		"relations_after": after,
+		# How many other pairs this act moved. The nation panel reads it so an
+		# act with consequences beyond its target does not look like one without.
+		"third_party_pairs": third_party.size(),
 		"bloc_offset": offsets.duplicate(true),
 		"agreement_op": terms.get("op", ""),
 		"measure_op": measure.get("op", ""),
@@ -385,18 +431,27 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	return result
 
 
-## Whether `target_id` would sign a trade agreement proposed by `actor_id`.
+## Whether `target_id` would sign the agreement `actor_id` is proposing.
 ##
-## > [!warning] THE ENTIRE COUNTERPARTY MODEL, and a DECLARED STOPGAP.
-## > A pair score against one threshold. The target does not weigh its own
-## > economy, does not compare this partner against its alternatives, never
-## > proposes an agreement of its own, and never withdraws from one. Nothing about
-## > the target's GDP, sectors, unemployment, growth, government or existing
-## > agreements is consulted -- tests/test_trade.gd asserts exactly that, by
-## > mutating every one of them and checking the verdict does not move.
-## >
-## > Named rather than approximated, the same shape V1.3a's own stopgap uses, so
-## > V1.3e replacing it is a visible test change rather than a silent one. V1.3e
-## > opens with the checklist of these. See ROADMAP.md and docs/trade-model.md.
-static func would_accept_agreement(state, actor_id: String, target_id: String) -> bool:
-	return score(state, actor_id, target_id) >= DK.AGREEMENT_ACCEPT_MIN
+## > [!success] V1.3b's DECLARED STOPGAP, discharged at V1.3e.
+## > This used to be `score(a, b) >= AGREEMENT_ACCEPT_MIN` and nothing else. The
+## > target now weighs how much of its own trade runs through the proposer, how
+## > warm the pair is, and -- the part a relations threshold could never reach --
+## > what is actually on the table. See docs/foreign-policy-model.md.
+##
+## Takes `terms` where it took none, which is the signature change carrying the
+## whole difference: a verdict that cannot see the deal cannot be a verdict about
+## the deal. Every caller already had them to hand.
+##
+## Still a GATE rather than a post-hoc verdict, unchanged from V1.3b and for the
+## reason docs/trade-model.md gives: execute() has two outcomes, and a counterparty
+## answer applied after the effects would be a third that left the player +6
+## relations for a treaty that was refused.
+static func would_accept_agreement(state, actor_id: String, target_id: String, terms: Dictionary) -> bool:
+	return FP.would_accept_agreement(state, actor_id, target_id, terms)
+
+
+## Which of the three terms is why they refused, as a key for the nation panel.
+## Meaningless unless would_accept_agreement() returned false.
+static func refusal_reason(state, actor_id: String, target_id: String, terms: Dictionary) -> String:
+	return FP.refusal_reason(state, actor_id, target_id, terms)

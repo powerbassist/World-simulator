@@ -54,6 +54,8 @@ func _run() -> void:
 
 	_check_own_nation_offers_nothing(panel, state)
 	_check_other_nation_offers_verbs(panel, state)
+	_check_a_refusing_partner_is_not_offered(panel, state)
+	_check_the_verbs_are_above_the_fold(panel, state)
 	# Split around the two that press buttons, and deliberately so. Those press
 	# whichever verb is enabled first, which since V1.3b is the agreement one, so
 	# the "nothing signed yet" half has to run before them. The "now something is"
@@ -190,6 +192,101 @@ func _check_acted_signal_carries_a_baseline(panel, state) -> void:
 # --- helpers -------------------------------------------------------------------
 
 ## _process() is what rebuilds the rows, and the panel skips it while hidden.
+## V1.3e. An agreement the partner would refuse must not be offered as a live
+## button.
+##
+## Diplomacy.available() does not consult the counterparty -- that gate lives
+## inside execute() -- so before this the panel rendered a refusing partner's
+## treaty as enabled and clicking it refused silently, with V1.3b's own
+## `refused_by_partner` explaining nothing to nobody. A frame caught it; this is
+## what stops it coming back.
+func _check_a_refusing_partner_is_not_offered(panel, state) -> void:
+	var refuser := ""
+	var enter = null
+	for action in _main._loader.diplomatic_actions:
+		if String(action.effects.get("agreement", {}).get("op", "")) == "enter":
+			enter = action
+			break
+	if enter == null:
+		_fail("no enter-agreement action to test the counterparty gate with")
+		return
+
+	var terms: Dictionary = enter.effects["agreement"]
+	for id in state.nations.keys():
+		if id == state.player_nation_id:
+			continue
+		if not Diplomacy.would_accept_agreement(state, state.player_nation_id, String(id), terms):
+			refuser = String(id)
+			break
+	if refuser == "":
+		_fail("every partner accepts the shipped agreement at new-game, so the gate is untestable here and probably inert")
+		return
+
+	_show(panel, refuser)
+
+	# The LAST matching row, not any matching row. _refresh_actions() clears with
+	# queue_free(), which is deferred, so within this frame the container holds the
+	# previous nation's rows AND this one's -- the trap _run() documents above. The
+	# fresh rows are appended after the stale ones, so the last match is this
+	# nation's and an any-match assertion would read DEU's.
+	var found: Button = null
+	for row in panel._actions.get_children():
+		if not (row is HBoxContainer):
+			continue
+		var label := ""
+		var button: Button = null
+		for child in row.get_children():
+			if child is Label:
+				label = child.text
+			elif child is Button:
+				button = child
+		if label == enter.action_name and button != null:
+			found = button
+	if found != null and not found.disabled:
+		_fail("'%s' is offered as a live button against %s, who would refuse it -- the click would refuse silently" % [
+			enter.action_name, refuser,
+		])
+
+
+## Every verb the panel exists for has to be reachable without scrolling.
+##
+## U5a shipped two bugs invisible to a green suite and this is one of their
+## family: at the height this panel carried from V1.3a it had since grown a
+## relations score, a trade share, an agreement line and two measure lines, and
+## ALL EIGHT action buttons had fallen below the fold. Found by looking at a
+## frame, which is not something a suite can do -- so what is asserted instead is
+## the arithmetic behind it, that the panel's own minimum height covers what it
+## builds.
+## U5a's usable band, past which a window grows through the bottom furniture and
+## its last row becomes unreachable.
+const USABLE_BAND_PX := 886.0
+
+## One half of U5a's finding, and ONLY one half. Stated as a limit rather than
+## quietly asserted as a whole, because the difference matters to the next session
+## that touches this panel.
+##
+## ASSERTED: the panel must not open TALLER than the usable band. That is a
+## comparison against a constant and it is reliable.
+##
+## NOT ASSERTED: that the panel is tall enough for its own content -- which is the
+## bug V1.3e actually found, with all eight verbs below the fold at the height
+## this panel had carried since V1.3a. It was tried and cannot be done here. Two
+## of the panel's labels autowrap, and inside a single-frame headless harness the
+## layout never runs, so an autowrapped label reports the height it would need at
+## ONE WORD PER LINE: 1312px against a true ~700, which reads as a 500px fold that
+## does not exist. Setting the panel's size first does not help, because the
+## re-sort it would trigger is deferred to a frame the harness never reaches.
+##
+## So a fold is a thing this suite structurally cannot see, which is exactly why
+## tools/screenshot.gd exists and why CLAUDE.md says a UI session that does not run
+## it is not finished. This one did, and that is what found it.
+func _check_the_verbs_are_above_the_fold(panel, state) -> void:
+	if panel.custom_minimum_size.y > USABLE_BAND_PX:
+		_fail("the panel opens at %.0fpx, past U5a's %.0fpx usable band -- its last row is unreachable" % [
+			panel.custom_minimum_size.y, USABLE_BAND_PX,
+		])
+
+
 func _show(panel, nation_id: String) -> void:
 	panel.show()
 	panel.show_nation(nation_id)
