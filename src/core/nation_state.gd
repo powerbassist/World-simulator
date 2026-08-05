@@ -422,6 +422,27 @@ var diplo_cooldown_months := {}
 ## Empty until the first one resolves.
 var last_diplomatic_result := {}
 
+## Months until this nation next considers acting on its own initiative. V1.3f.
+##
+## The only serialised field this session adds, and the one that earns
+## SAVE_VERSION 12 on its own: absent it reads as 0, which means every one of the
+## nine acts in the first month after a reload — a nine-act burst a played game
+## never produces, because the staggered counters are what spread them out.
+## GameState.foreign_acts does NOT earn the bump; absent it reads as "nothing has
+## happened yet", which is correct. tests/test_save_load.gd asserts both halves.
+##
+## Per-nation rather than one counter on GameState, unlike the council's
+## bloc.months_to_next: nine actors on one shared counter would all act in the
+## same month, and message_stack.gd holds six cards. Seeded DETERMINISTICALLY by
+## Diplomacy.init_nation() from the nation's index in a sorted id list — there is
+## no rand() anywhere in src/sim/, and the budget projection runs this forward on
+## a copy, so a projection, a reloaded save and a played game must agree.
+##
+## Zero for the player's nation and never ticked there: has_budget means a human
+## decides here, which is the one place in the project that guard is read the
+## other way round.
+var diplo_months_to_act: int = 0
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -544,6 +565,7 @@ func duplicate_state():
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
 	s.last_diplomatic_result = last_diplomatic_result.duplicate(true)
+	s.diplo_months_to_act = diplo_months_to_act
 
 	return s
 
@@ -671,6 +693,7 @@ func to_dict() -> Dictionary:
 
 		"diplo_cooldown_months": diplo_cooldown_months,
 		"last_diplomatic_result": last_diplomatic_result,
+		"diplo_months_to_act": diplo_months_to_act,
 	}
 
 
@@ -810,6 +833,7 @@ static func from_dict(d: Dictionary):
 	s.bloc_offset = d.get("bloc_offset", {})
 	s.diplo_cooldown_months = d.get("diplo_cooldown_months", {})
 	s.last_diplomatic_result = d.get("last_diplomatic_result", {})
+	s.diplo_months_to_act = int(d.get("diplo_months_to_act", 0))
 	s.passed_law_ids = d.get("passed_law_ids", {})
 	s.law_cooldown_months = d.get("law_cooldown_months", {})
 	s.last_law_result = d.get("last_law_result", {})

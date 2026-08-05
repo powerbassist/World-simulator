@@ -8,9 +8,14 @@ tags:
 
 # Foreign Policy Model
 
-Why a nation the player does not govern answers one way rather than another. Built at [[ROADMAP|V1.3e]], the fifth session of the V1.3 block.
+Why a nation the player does not govern answers one way rather than another — and, since [[ROADMAP|V1.3f]], why it acts at all. Built at [[ROADMAP|V1.3e]] and [[ROADMAP|V1.3f]], the fifth and sixth sessions of the V1.3 block.
 
-Files: `src/sim/foreign_policy.gd` (the rules) · `src/sim/foreign_policy_constants.gd` (the numbers) · `tools/foreign_policy_probe.gd` (the measurement) · `tests/test_foreign_policy.gd` (the invariants).
+Files: `src/sim/foreign_policy.gd` (the rules) · `src/sim/foreign_policy_constants.gd` (the numbers) · `tools/foreign_policy_probe.gd` (the measurement) · `tests/test_foreign_policy.gd` (the invariants) · `src/sim/diplomacy.gd`'s `_tick_agenda()` (V1.3f's scheduler).
+
+> [!info] Two sessions, one model, and the split between them is *reactive* against *acting*
+> §1–§6 are V1.3e and every one of them answers a question somebody else asked — a treaty offered, a measure imposed, a proposal tabled, an act witnessed. Nothing there starts a sentence, which is what let the whole interest model ship as a **pure read** with no serialised field.
+>
+> §7 is V1.3f: the agenda. A nation choosing a target and a verb unprompted, which needs a scheduler, and a scheduler is state. That is the entire reason `SAVE_VERSION` moves to 12.
 
 > [!important] Interest is material. Ideology is one weak term.
 > This is the session's central call and everything below follows from it. `tools/bloc_probe.gd` table (d) prints the eight non-player members' `coalition_position` and they are **clustered** — economic spans −0.54..+0.33, social −0.50..+0.63. An interest function resting on that is [[trade-model|the `GRAVITY_EXPONENT = 1.0` finding]] in a new place: nine vectors that are arithmetically one vector. So the spine of every function here is the directed trade weight, which spans 0.007 to 0.421 with 13.1× asymmetries, plus the pair's own history, plus each nation's own books.
@@ -210,6 +215,92 @@ The same proposal, priced by each member's own books:
 
 Under V1.3d's rule those two were indistinguishable if they sat at the same point in ideology space. `stability_pact` now divides the council 5–3, with the members in breach of it voting against.
 
+## 7. The agenda — acting first, rather than answering (V1.3f)
+
+```
+desire(A, act, B) = w × [ deepen + mend + punish ] − cost − risk − domestic
+
+w        = (stake(A→B)/EVEN_SHARE) ^ AGENDA_STAKE_EXPONENT
+deepen   = warmth(act)    × max(0, AGENDA_AMITY_TARGET − amity)
+mend     = warmth(act)    × max(0, −amity) × AGENDA_MEND_WEIGHT
+punish   = hostility(act) × max(0, −amity) × AGENDA_GRIEVANCE_WEIGHT
+cost     = AGENDA_COST_WEIGHT     × exposure(A→B)   × hostility(act)
+risk     = AGENDA_RISK_WEIGHT     × retaliation(B→A) × hostility(act)
+domestic = AGENDA_DOMESTIC_WEIGHT × Σ|act.bloc_offset|
+```
+
+Scored per candidate over `Diplomacy.available()`, best above `AGENDA_ACT_MIN` wins, once per nation per `AGENDA_INTERVAL_MONTHS`. `_tick_agenda()` lives in `diplomacy.gd` for the reason `_tick_retaliation()` does: `foreign_policy.gd` preloads `trade.gd` preloads `coercion.gd`, so the interest model can never see `available()` or `execute()`. It scores what it is handed.
+
+**An inert act — no relations effect, no measure — reads exactly 0.0 for all ninety ordered pairs.** `tests/test_foreign_policy.gd` asserts the exact zero, which is what makes `AGENDA_ACT_MIN` interpretable alone, the property `accept_score()` was built to have.
+
+### The probe corrected the model four times, which is six sessions running
+
+> [!warning] First: interest as an ADDEND is a goodwill ratchet
+> The first shape summed five terms, one of which was `stake/EVEN_SHARE − 1` standing alone — a partner's importance as a permanent reason to act. A friendly verb carries no hostility, therefore no cost and no risk, so **nothing anywhere in the arithmetic stopped a nation state-visiting its largest partner forever.** Measured over fourteen years: mean relations **79.6** against resting tiers spanning 45–68, and a pair pinned on the `RELATIONS_MAX` clamp — the clamp rather than the model setting the number, which is [[economy-model]]'s `IMPULSE_MAX` failure in a fourth place, and [[trade-model]]'s own `state_visit` exploit reappearing against an agent that never gets bored.
+>
+> Interest now **multiplies a bounded opportunity** instead of adding to one, and `AGENDA_AMITY_TARGET` closes `deepen` to exactly 0.0 once a pair is warm enough. The ratchet is structurally impossible rather than tuned away.
+
+> [!warning] Second: free concessions get spent freely
+> With only hostile acts priced, `settle_dispute` was **nineteen of the last twenty-four acts** of a run. It is the largest friendly verb and by far the most expensive — six blocs at −0.09, which the content's own summary calls a climbdown — and the nine paid none of it, because `Opinion.tick_month()` is `has_budget`-gated.
+>
+> The fix reads the action's **own authored** `bloc_offset` as a magnitude, exactly as `accept_score()` reads `weight_multiplier`. Not the synthetic appetite constant this session refused: the content already states how hard each act is, and the nine were the only ones not listening.
+
+> [!warning] Third: the third-party rule was unbounded, and backwards for friendly acts
+> `third_party_effects()` scaled by `care / EVEN_SHARE` **uncapped**, which reaches ~3.0 — so one act moved eight *other* pairs by up to three times the delta it moved its own. And the solidarity half ran on friendly acts, where it says France being *nice* to Germany cools everyone else toward Germany: jealousy, not solidarity, with no defensible reading.
+>
+> Both survived V1.3e because only a player ever reached that function, a handful of times a term, mostly hostilely. An agenda ran it ~120 times a run, mostly friendly. Capped at 1.0 — *nobody takes an act harder than the nation it was aimed at* — and solidarity restricted to `delta < 0`. Relations went from **5.2 … 100.0 with three pairs pinned** to **49.9 … 88.9 with none**.
+
+> [!warning] Fourth: the static sweep measured the wrong state
+> Table (d2) sweeps `AGENDA_ACT_MIN` at **new-game**, where a bar of 0.20 closes the GBR column to zero and 0.05 looks right with 2.6× margin. It is wrong: table (g2) prints the same nations at months 0, 24 and 60, and by month 24 Britain **is** everyone's top pick while the entire desire landscape has fallen under 0.05 — ITA→GBR 0.042, ESP 0.029, NLD 0.024.
+>
+> The failure was never that Britain is outranked. It is outranked for two years and then wins — but by then **the world has gone silent**, because `deepen` closes as pairs approach the target *and* Britain's own room closes from third-party spillover without anyone having acted on it.
+
+### The measured triggers
+
+Three named in advance. **Trigger 1 fired twice and was resolved by a model change both times; trigger 2 fired once; trigger 3 never fired.**
+
+**Trigger 1 — GBR, the fifth time.** Acts aimed at each playable nation over fourteen years, floor of 2:
+
+| | acts in the world | aimed at the player | of those, in the first term |
+|---|---|---|---|
+| FRA | 57 | **52** | 22 |
+| DEU | 59 | **58** | 26 |
+| GBR | 50 | **35** | 14 |
+
+The first-term column is the one that matters and it was added because fourteen years is not the horizon a player experiences: someone who sees nothing before their first election has been shipped no feature at all.
+
+At the first shape it was FRA 21, DEU 20, **GBR 0**. Britain still receives the least, which is the same structural detachment [[trade-model]], [[coercion-model]] and §2 each measured — but it receives a foreign policy rather than none.
+
+**Trigger 2 — saturation.** At year 14, against a ceiling of a third of the ninety directed pairs:
+
+| player | measures | relations range | pinned |
+|---|---|---|---|
+| FRA | 0/90 | 54.3 … 87.2 | 0 |
+| DEU | 0/90 | 52.1 … 88.9 | 0 |
+| GBR | 0/90 | 49.9 … 81.0 | 0 |
+
+**Trigger 3 — the coercion clamp in reachable play.** 0.000 against `COERCION_IMPULSE_MAX` 6.0, because an unprovoked world imposes no measures at all.
+
+### What an unplayed world does, and what a provoked one does
+
+**Every act in an unplayed run is `state_visit`, and that is the model rather than a failure.** Amity is exactly 0.0 for all forty-five pairs at new-game, so `mend` and `punish` are both shut and only `deepen` is open. A world nobody has provoked has nothing to be angry about; the player is the perturbation.
+
+Correct-by-construction is how dead code ships, so table (j) sours a pair by hand:
+
+| FRA\|DEU displaced | amity | DEU's best answer |
+|---|---|---|
+| −10 | −0.36 | `state_visit` 0.494 |
+| −25 | −1.00 | `bilateral_treaty` 1.139 |
+| −40 | −1.00 | `bilateral_treaty` 0.909 |
+
+**A soured nation reaches for repair before retaliation**, which falls out of cost and risk applying to hostile verbs and not to friendly ones. Coercion on one's own initiative needs you to both resent a partner *and* not depend on them: **6 of 90 ordered pairs** can mount one when fully soured, and none of them casually. The ordinary way a player receives coercion is still retaliation, which `_tick_retaliation()` has owned since V1.3c.
+
+### Scope, decided rather than discovered
+
+**Agreements are AI↔AI only.** `would_accept_agreement()` is the *counterparty's* decision, so an AI proposing to the player would have the interest model answer on the player's behalf. An offer the player answers needs pending state, an expiry and an accept/refuse surface — a second machine, and the split V1.3e's own machine-count test would have caught. `tests/test_diplomacy.gd` asserts no agreement verb is ever aimed at the player.
+
+**The player's own nation never acts.** Gated `if ns.has_budget: continue` — the one place in the project that flag is read the other way round, because `has_budget` means *a human decides here*.
+
 ## The readouts
 
 **`refused_by_partner` shipped at V1.3b and nothing in `src/ui/` ever read it** — so a partner declining a treaty was, until this session, completely silent to the player. The model returns a **key**, not a sentence, because `src/sim/` does not know the UI exists and a test asserting a key survives a session that rewords a tooltip.
@@ -249,7 +340,38 @@ So the movement is not the interest model leaking into the economy. It is the bl
 > [!warning] The re-run caught a break the test suite structurally could not
 > `tools/balance_probe.gd` still referenced `AGREEMENT_ACCEPT_MIN` and failed to parse — every one of the thirty new runs produced three lines of parse error instead of fourteen years. `tools/` is excluded from `run_tests.sh` by design, so a green suite said nothing about it. The unbounded `while` that constant guarded also had to become a bounded loop: it lifted relations until the pair cleared a relations bar, and a counterparty that can refuse for a reason relations do not fix would have hung the probe rather than reported it.
 
-## `SAVE_VERSION` stays at 11
+## The V1.3f re-baseline
+
+Captured from a worktree at the V1.3e commit **before** any code changed, because an agent acting from month 1 perturbs every run and there is no diff to take afterwards. Thirty runs, `^ERROR:` and `^   at: ` stripped from both sides.
+
+**The plan expected a full re-baseline. What came back is six runs of thirty, all GBR, all last-digit, and zero outcome changes.**
+
+| | |
+|---|---|
+| runs that differ | **6 of 30** — every one GBR |
+| FRA, DEU | **bit-identical, all twenty** |
+| largest change | GDP 3963 → 3964, growth −0.35 → −0.36, unemployment 4.67 → 4.66 |
+| outcome changes | **0** — one seat moved in `spend_max_GBR`, censure CARRIES and the election HELD in both trees |
+
+**That the agenda moves relations hard and the harness barely notices is a property rather than luck, and it is V1.3b's design showing up two sessions later.** Relations move the normalised trade *mix*; the mix reaches a nation's economy only through partners' deviations from their own baselines, and no balance regime perturbs a partner. So a member's economy cannot feel the agenda at all — which is exactly what twenty bit-identical FRA and DEU runs say.
+
+GBR is the exception for the reason [[bloc-model|V1.3d]] built and [[ROADMAP|V1.3e's re-run]] first fired: it is the nation the council's `common_external_tariff` is aimed at, and `appraise()`'s external term reads the trade weights the agenda now moves. A vote shifting by a month is the whole effect.
+
+`tests/test_balance.gd`'s three S10 assertions all still pass, and they are what the property rests on.
+
+> [!note] The re-run recipe, unchanged since V1.3c and used again here
+> Worktree at the previous commit rather than `git stash`, and strip `^ERROR:`/`^   at: ` from both sides — `addons/godot_mcp` is gitignored while its autoloads are declared in `project.godot`, so a fresh worktree prints six error pairs per run that the working tree does not. V1.3e also recorded that `tools/` is excluded from `run_tests.sh`, so a green suite says nothing about the probe parsing; this session ran `balance_probe.gd` before trusting the suite.
+
+## `SAVE_VERSION` 11 → 12 at V1.3f, and only one field earns it
+
+Checked against the rule `game_state.gd` states — *would a missing field read as something wrong?* — and the two additions split on it.
+
+- **`NationState.diplo_months_to_act` earns it.** Absent it reads as **0**, and 0 means *act now*: every one of the nine fires in the first month after a reload, a nine-act burst a played game cannot produce because the staggered counters are the entire mechanism that spreads them. `eu_member`/`neighbours`' case — the reloaded game behaves differently from the one that saved it, with nothing to say so.
+- **`GameState.foreign_acts` does not.** Absent it reads as `[]`, which is correct for every version-11 save because those games had no agenda to record. `measures`' case at V1.3c exactly.
+
+`tests/test_save_load.gd` asserts **both halves**, so the distinction is a test rather than this paragraph.
+
+## `SAVE_VERSION` stayed at 11 through V1.3e
 
 Checked against the rule `game_state.gd` states — *would a missing field read as something wrong?* — rather than assumed. **This session adds no serialised field at all.** Both functions are derived at read time from live state; the two things they write, `relations` and `measures`, were already serialised at V1.3a and V1.3c.
 
@@ -269,7 +391,7 @@ That is a property rather than a coincidence, and it is what **no grievance ledg
 ## Deliberately absent
 
 - **No grievance ledger.** The relations number is the memory. This is what keeps `SAVE_VERSION` at 11 and what makes the model a pure read.
-- **No agenda.** The nine still never act first, never propose an agreement, and never escalate past a single answer. **V1.3f.**
+- ~~**No agenda.**~~ **Built at V1.3f** — §7. The nine act first, choose their own targets, and propose agreements to each other. What they still do not do: propose an agreement **to the player** (there is nobody to ask — see §7's scope note), or escalate a measure past the single answer `retaliated` bounds.
 - **No lifting `Economy`'s `if ns.has_budget` guard.** Pricing every act by simulating the actor's own budget needs the nine to carry a live budget and opinion model, which is the model rewrite [[trade-model]] books separately.
 - **No new content type and no new effect channel**, for the fourth session running.
 - **`AGREEMENT_ACCEPT_MIN` and `SUPPORT_SIGMA` are deleted, not left unused.** A tuned constant nothing reads is a number a later session will find and reason from. `tools/bloc_probe.gd`'s sigma sweep went with them — it carried its own inline copy of a Gaussian the model no longer has.

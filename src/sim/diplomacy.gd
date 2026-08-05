@@ -11,13 +11,17 @@ extends RefCounted
 ## legislature.gd hold to: a relations figure is exactly reproducible from
 ## state, so the budget projection and a reloaded save agree with a played game.
 ##
-## > [!warning] The counterparty response here is a DECLARED STOPGAP.
-## > An action's own `effects.relations` IS the entire reaction: the target
-## > nation does not reason, does not retaliate, and third pairs do not move.
-## > This is deliberate and named rather than quietly approximated, the same
-## > shape `lose_condition: "never"` and `referendum_required` already use for a
-## > rule the model declares and does not yet resolve. V1.3e replaces it, and
-## > opens with a checklist of these rather than a discovery. See ROADMAP.md.
+## > [!success] V1.3a's declared stopgap is discharged, and V1.3f closes the loop.
+## > This file used to say that an action's own `effects.relations` WAS the entire
+## > reaction -- the target did not reason, did not retaliate, and third pairs did
+## > not move. V1.3e replaced all of that: execute() now resolves third-party
+## > effects, _tick_retaliation() lets a target decide how hard to answer, and a
+## > partner can refuse a treaty outright.
+## >
+## > What was still missing after V1.3e is that all of it was REACTIVE -- the nine
+## > answered and never spoke first. _tick_agenda() below is V1.3f, and it is the
+## > last piece: a nation choosing a target and a verb with nobody having acted on
+## > it. There is no declared stopgap left in this file.
 
 const RK = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -32,6 +36,7 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 ## below already owned the loop, so the decision belongs here and Coercion keeps
 ## only the terms it builds.
 const FP = preload("res://src/sim/foreign_policy.gd")
+const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 
 
 ## Reset one nation's own diplomacy state. Runs for all ten, same as
@@ -41,6 +46,7 @@ const FP = preload("res://src/sim/foreign_policy.gd")
 static func init_nation(ns) -> void:
 	ns.diplo_cooldown_months = {}
 	ns.last_diplomatic_result = {}
+	ns.diplo_months_to_act = 0
 
 
 ## Where a pair's relations settle if nobody acts. Derived from the two inputs
@@ -69,6 +75,38 @@ static func seed_relations(state, loader) -> void:
 		var a = loader.nations[pair[0]]
 		var b = loader.nations[pair[1]]
 		state.relations[RK.key(pair[0], pair[1])] = resting(a, b)
+
+
+## Stagger the nine across the agenda cycle. Called once by GameState.new_game(),
+## next to seed_relations() and for the same reason: it needs every nation to
+## exist, which init_nation() cannot promise since it runs per nation.
+##
+## DETERMINISTIC, from the nation's index in a sorted id list. There is no rand()
+## anywhere in src/sim/, and this is the field that would most obviously invite
+## one -- but Budget.project() ticks this module sixty times on a copy, so a random
+## schedule would make the budget panel's "this is what will happen" disagree with
+## what then happens, and a reloaded save disagree with the game that wrote it.
+##
+## The stagger is the whole reason the counter is per-nation rather than one
+## counter on GameState the way the council's is: nine actors sharing one would all
+## act in the same month, and src/ui/message_stack.gd holds six cards.
+##
+## The player's nation is left at 0 and never ticked -- has_budget means a human
+## decides here, which is the one place in the project that flag is read the other
+## way round.
+static func seed_agenda(state) -> void:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	var i: int = 0
+	for id in ids:
+		var ns = state.nations[id]
+		if ns.has_budget:
+			continue
+		# +1 so nobody acts in the very first month of a new game, before the
+		# player has read anything: a card in month one is noise from a world that
+		# has not started yet.
+		ns.diplo_months_to_act = 1 + (i % FPK.AGENDA_INTERVAL_MONTHS)
+		i += 1
 
 
 ## The pair's current score. Distinct from Relations.score()'s raw dictionary
@@ -124,6 +162,20 @@ static func tick_month(state, loader) -> void:
 				ns.diplo_cooldown_months[cooldown_key] = remaining
 		for cooldown_key in expired:
 			ns.diplo_cooldown_months.erase(cooldown_key)
+
+	# LAST, and both halves of that placement are load-bearing.
+	#
+	# After the retaliations, because an answer is not an initiative: a nation
+	# weighing an act should be looking at a world that already contains this
+	# month's answers rather than last month's, which is the ordering failure
+	# docs/trade-model.md records the trade probe catching in the impulse.
+	#
+	# After the cooldown countdown, because execute() sets a cooldown and running
+	# the agenda first would have this same loop decrement it immediately -- an AI
+	# verb locked for eleven months where the player's identical verb is locked for
+	# twelve. A silent one-month asymmetry between the player and the nine, in a
+	# session whose whole subject is that they use the same verbs.
+	_tick_agenda(state, loader)
 
 
 ## Answer every measure that has been in force long enough and has not yet been
@@ -198,6 +250,131 @@ static func _tick_retaliation(state) -> void:
 			state, imposer, target, CK.RETALIATION_RELATIONS_COST,
 			DK.RELATIONS_MIN, DK.RELATIONS_MAX
 		)
+
+
+## Let every nation whose counter has run out choose a target and a verb, and act.
+## V1.3f, and the last thing in the V1.3 block that made the nine passive.
+##
+## Lives here rather than in a module of its own for the reason the retaliation
+## decision does: foreign_policy.gd preloads trade.gd which preloads coercion.gd,
+## so the interest model can never reach available() or execute(). This loop
+## already exists, runs for all ten, and owns the verbs. ForeignPolicy scores what
+## it is handed; Diplomacy decides what to hand it and what to do with the answer.
+##
+## What restrains the nine is entirely inside that score, and the asymmetry is
+## declared rather than hidden: every action carries a bloc_offset domestic price
+## and for a non-player nation that price is dead state, because Opinion.tick_month()
+## is gated on has_budget. The player is checked at home; the nine are checked
+## abroad, by what an act costs them in their own trade and what the target would
+## answer with. See docs/foreign-policy-model.md.
+##
+## Sorted at both levels, so which nation acts and which target it picks are
+## reproducible rather than dependent on Dictionary ordering -- the same discipline
+## third_party_effects() and Relations.all_pairs() already hold.
+##
+## No rand(), like everything else in this file.
+static func _tick_agenda(state, loader) -> void:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+
+	for actor_id in ids:
+		var ns = state.nations[actor_id]
+
+		# The one place in the project this flag is read the other way round:
+		# has_budget means a human decides here, so the agenda skips exactly the
+		# nation the player is governing.
+		if ns.has_budget:
+			continue
+
+		ns.diplo_months_to_act -= 1
+		if ns.diplo_months_to_act > 0:
+			continue
+
+		# Reset WHETHER OR NOT it acts. A nation that declines and retried every
+		# month would make AGENDA_ACT_MIN a delay rather than a gate, and the model
+		# would lose the ability to say nothing at all -- which is the job
+		# RETALIATION_MIN_SEVERITY does for an answer.
+		ns.diplo_months_to_act = FPK.AGENDA_INTERVAL_MONTHS
+
+		var choice := _best_act(state, loader, actor_id, ids)
+		if choice.is_empty():
+			continue
+
+		var result := execute(
+			state, loader.diplomatic_actions, choice["action"], actor_id, choice["target_id"]
+		)
+		if not bool(result.get("applied", false)):
+			continue
+
+		# A DISPLAY RECORD, not a grievance ledger. Nothing in src/sim/ reads this
+		# back and tests/test_foreign_policy.gd asserts so: the relations number is
+		# the memory, which is the property that let V1.3e ship an interest model
+		# with no serialised state at all.
+		state.foreign_acts.push_front({
+			"year": state.year,
+			"month": state.month,
+			"actor_id": actor_id,
+			"target_id": choice["target_id"],
+			"action_id": choice["action"].id,
+			"action_name": choice["action"].action_name,
+			"reason": choice["reason"],
+		})
+		while state.foreign_acts.size() > FPK.AGENDA_ACTS_KEPT:
+			state.foreign_acts.remove_at(state.foreign_acts.size() - 1)
+
+
+## The best (action, target) `actor_id` could take right now, or {} if nothing
+## clears AGENDA_ACT_MIN.
+##
+## One ForeignPolicy.target_terms() per target rather than per candidate: the pair
+## terms cost a trade-weight read each and the verbs do not move them. See that
+## function for why the split is not a micro-optimisation.
+static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary:
+	var best_score: float = FPK.AGENDA_ACT_MIN
+	var best: Dictionary = {}
+
+	for target_id in ids:
+		if target_id == actor_id:
+			continue
+
+		var offers: Array = available(state, loader.diplomatic_actions, actor_id, target_id)
+		if offers.is_empty():
+			continue
+
+		var terms := FP.target_terms(state, actor_id, target_id)
+
+		for action in offers:
+			# Agreements between an AI and the PLAYER are out of scope, and the
+			# reason is that there is nobody to ask. would_accept_agreement() is the
+			# COUNTERPARTY's decision -- so an AI proposing to the player would have
+			# the interest model answer on the player's behalf, which is the one
+			# thing a single-player game must not do with the player's own foreign
+			# policy. An offer the player answers needs pending state, an expiry and
+			# an accept/refuse surface: a second machine, and the split V1.3e's own
+			# machine-count test would have caught. AI-to-AI agreements are unaffected
+			# and do run.
+			if _is_agreement_verb(action) and state.nations[target_id].has_budget:
+				continue
+
+			var score_v: float = FP.desire_from(terms, action.effects)
+			# Strictly greater, so the sorted iteration order breaks ties and the
+			# answer is reproducible.
+			if score_v > best_score:
+				best_score = score_v
+				best = {
+					"action": action,
+					"target_id": target_id,
+					"reason": FP.act_reason(terms, action.effects),
+				}
+	return best
+
+
+## Whether an action writes GameState.agreements in either direction. Read off the
+## effects rather than off a list of action ids, so a new agreement verb in
+## data/diplomatic-actions/ is covered without an edit here -- the data-not-code
+## rule docs/engine-decision.md states first.
+static func _is_agreement_verb(action) -> bool:
+	return not (action.effects.get("agreement", {}) as Dictionary).is_empty()
 
 
 ## The kind of measure `actor` has in force against `target`, or "" for none.

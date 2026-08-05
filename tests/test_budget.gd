@@ -230,7 +230,7 @@ func _check_projection_matches_after_diplomacy() -> void:
 
 	var pending := {"tax_rates_pct": {"vat": 23.0}}
 	var projected := Budget.project(state, pending, 24, _loader)
-	var actual := _run_with_diplomacy(state, pending, 24)
+	var actual := _run(state, pending, 24)
 
 	if projected.size() != actual.size():
 		_fail("displaced projection has %d months, actual has %d" % [projected.size(), actual.size()])
@@ -242,23 +242,23 @@ func _check_projection_matches_after_diplomacy() -> void:
 			_close("displaced month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
 
 
-## main.gd's chain, not project()'s -- that difference is the whole point.
-func _run_with_diplomacy(state, pending: Dictionary, months: int) -> Array[Dictionary]:
-	if not pending.is_empty():
-		Budget.commit(state, pending)
-	var out: Array[Dictionary] = []
-	for _i in range(months):
-		Economy.tick_month(state)
-		Budget.tick_month(state)
-		# V1.3d: Budget.project() ticks Bloc, so a runner that does not is comparing
-		# a projection that advanced the council against a reality where it never
-		# met. Caught by this file, which is what it is for.
-		Bloc.tick_month(state, _loader)
-		Diplomacy.tick_month(state, _loader)
-		out.append(Budget.snapshot(state))
-	return out
-
-
+## main.gd's chain, which is also project()'s. Every system project() advances on
+## its copy has to be advanced here, or the test compares a projection that ran
+## the model against a reality that did not.
+##
+## > [!note] V1.3f collapsed two runners into this one, and the reason is the
+## > point of the check rather than tidying
+## > There used to be a second runner, `_run_with_diplomacy()`, used only by the
+## > displaced check below. It existed because Diplomacy.tick_month() was a NO-OP
+## > from an undisplaced state -- drift moves nothing when every pair is already at
+## > rest -- so the plain runner agreed with the projection by accident rather than
+## > by construction, and only a displaced state could tell them apart.
+## >
+## > V1.3f ends that: the agenda acts from month one whatever the relations are, so
+## > a runner without Diplomacy in it now disagrees with the projection immediately.
+## > Adding it here is the same repair V1.3d made one session earlier for Bloc, and
+## > this file caught both. What the displaced check still buys is the MAGNITUDE --
+## > it is where a divergence would be largest.
 func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 	if not pending.is_empty():
 		Budget.commit(state, pending)
@@ -267,6 +267,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
+		Diplomacy.tick_month(state, _loader)
 		out.append(Budget.snapshot(state))
 	return out
 

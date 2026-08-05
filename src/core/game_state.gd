@@ -80,7 +80,20 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     reloaded while in breach scores the breach as NEW -- the europe issue
 ##     mis-signed for the rest of the run. All three are eu_member/neighbours'
 ##     case: a reloaded game would run a different model from the one that saved it.
-const SAVE_VERSION := 11
+##   - V1.3e earned none and added no serialised field at all: both interest
+##     functions are pure reads over live state, and the two things they write --
+##     `relations` and `measures` -- were serialised at V1.3a and V1.3c. That is
+##     what "no grievance ledger" buys; the relations number IS the memory.
+##   - V1.3f earns one, and exactly ONE of its two additions is why.
+##     NationState.diplo_months_to_act absent reads as 0, so every one of the nine
+##     acts in the first month after a reload -- a nine-act burst a played game
+##     cannot produce, because the staggered counters are the whole mechanism that
+##     spreads them. eu_member/neighbours' case again: the reloaded game behaves
+##     differently from the one that saved it, with nothing to say so.
+##     `foreign_acts` does NOT earn it -- absent it reads as "nothing has happened
+##     yet", which is correct, and that is `measures`' case at V1.3c. The test
+##     asserts both halves rather than leaving the distinction to this comment.
+const SAVE_VERSION := 12
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -185,6 +198,26 @@ var history: Array[Dictionary] = []
 ## decision's baseline meets the history entry it is measured against.
 var recent_effects: Array[Dictionary] = []
 
+## What the other nine did on their own initiative — V1.3f. Newest first, each
+## {year, month, actor_id, target_id, action_id, action_name, reason}, appended by
+## src/sim/diplomacy.gd's _tick_agenda() and capped at FOREIGN_ACTS_KEPT.
+## recent_effects' shape and bound, for the same reason: a column of cards is a
+## window on the recent past, not an archive.
+##
+## > [!important] A DISPLAY RECORD, and deliberately NOT a grievance ledger.
+## > docs/foreign-policy-model.md's central property is that the relations number
+## > IS the memory — which is what let V1.3e ship a whole interest model with no
+## > serialised field. That survives only if nothing in src/sim/ ever reads this
+## > list back: the moment a decision consults it, the model has two memories that
+## > can disagree, and the pair score stops being the one place history lives.
+## > tests/test_foreign_policy.gd asserts no reader in src/sim/ rather than
+## > trusting this comment.
+## The cap is foreign_policy_constants.AGENDA_ACTS_KEPT, held by the writer rather
+## than here -- the shape main.gd's RECENT_EFFECTS_KEPT already has for
+## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
+## preloads diplomacy.gd, so the dependency only runs one way.
+var foreign_acts: Array[Dictionary] = []
+
 ## Problems found while building the state. Surfaced the same way the loader's
 ## are — loudly, naming the nation and the field.
 var errors: Array[String] = []
@@ -247,6 +280,9 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	# neighbours) rather than NationState -- neither input is live state and
 	# neither ever changes. See docs/diplomacy-model.md.
 	Diplomacy.seed_relations(gs, loader)
+	# Next to seed_relations() and for the same reason: it needs every nation to
+	# exist, which the per-nation init_nation() cannot promise. V1.3f.
+	Diplomacy.seed_agenda(gs)
 
 	# After every nation exists, for the same reason relations are seeded here: the
 	# council is not any one nation's property. Nothing is in force at new-game, so
@@ -448,6 +484,7 @@ func to_dict() -> Dictionary:
 		"bloc": bloc,
 		"history": history,
 		"recent_effects": recent_effects,
+		"foreign_acts": foreign_acts,
 	}
 
 
@@ -557,5 +594,14 @@ static func from_dict(d: Dictionary):
 	for entry in effects:
 		typed_effects.append(entry as Dictionary)
 	gs.recent_effects = typed_effects
+
+	# Absent, this reads as an empty list, which is CORRECT rather than silently
+	# wrong -- a version-11 save's nine could not act. It is `measures`' case at
+	# V1.3c, and it is not what earned SAVE_VERSION 12; diplo_months_to_act is.
+	var acts: Array = d.get("foreign_acts", [])
+	var typed_acts: Array[Dictionary] = []
+	for entry in acts:
+		typed_acts.append(entry as Dictionary)
+	gs.foreign_acts = typed_acts
 
 	return gs

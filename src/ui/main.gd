@@ -12,6 +12,8 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
@@ -538,6 +540,10 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# wrote last month, and before Elections, which runs last on settled state.
 	Diplomacy.tick_month(_state, _loader)
 
+	# V1.3f: and now the nine act on their own initiative inside that tick, so
+	# whatever they just did is read off the record and put in front of the player.
+	_card_foreign_acts(year, month)
+
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
 	# month's numbers, not last month's.
@@ -552,6 +558,84 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_clock.paused = true
 		_election_panel.show_results(results)
 		_election_panel.show()
+
+
+## Put this month's foreign acts in the message column. V1.3f, and the first thing
+## in the game that ever calls message_stack.push().
+##
+## U5a shipped that column as furniture with a stated reason -- the thing that
+## fills it is events, which docs/tiers/v1.md schedules at V1.8, and wiring it to
+## invented content would have cost that argument. An act by a simulated nation is
+## not invented content; it is state src/sim/ just wrote. So this spends nothing:
+## V1.8 still adds calls rather than a column.
+##
+## The sim writes the record and the UI decides what is worth showing, which is the
+## data -> sim -> ui direction engine-decision.md rule 2 states. src/sim/ never
+## touches this file and GameState.foreign_acts is never read back inside src/sim/
+## -- tests/test_foreign_policy.gd asserts that, because a decision consulting it
+## would be the grievance ledger docs/foreign-policy-model.md is built without.
+##
+## Filtered, and it has to be: nine nations on a cadence produce more acts than the
+## column's six slots, and an unfiltered feed would push a sanction aimed at the
+## player off the bottom before they read it. Anything aimed AT the player always
+## cards; anything between two other nations needs the player to have a real stake
+## in the actor. The threshold reuses the model's own stake vector rather than
+## inventing a second notion of "relevant".
+func _card_foreign_acts(year: int, month: int) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+
+	var player_id: String = _state.player_nation_id
+	var floor_share: float = ForeignPolicyK.EVEN_SHARE * ForeignPolicyK.CARD_MIN_STAKE_SHARE
+
+	# Oldest first, so the newest act ends up at the top of the column: push()
+	# appends and the stack drops from the front when it overflows.
+	var fresh: Array = []
+	for act in _state.foreign_acts:
+		if int(act["year"]) != year or int(act["month"]) != month:
+			break
+		fresh.push_front(act)
+
+	for act in fresh:
+		var actor_id := String(act["actor_id"])
+		var target_id := String(act["target_id"])
+		if actor_id == player_id:
+			continue
+		if target_id != player_id and ForeignPolicy.stake(_state, player_id, actor_id) < floor_share:
+			continue
+
+		# An act aimed at the player names the player in the TITLE and not again in
+		# the body: "Austria -> you / State Visit: France" reads as though France
+		# were a third country involved somehow.
+		var aimed_here: bool = target_id == player_id
+		var title: String = (
+			"%s → you" % _nation_name(actor_id) if aimed_here else _nation_name(actor_id)
+		)
+		var body: String = (
+			"%s." % String(act["action_name"]) if aimed_here
+			else "%s: %s." % [String(act["action_name"]), _nation_name(target_id)]
+		)
+		# The model computes a reason and this is the only place it is ever read.
+		# Shipping the key unread would be V1.3b's `refused_by_partner` a third time
+		# -- a field src/sim/ fills in and no surface shows, which this block has now
+		# recorded twice and fixed once.
+		_hud.message_stack.push(title, "%s %s" % [body, _act_reason_text(String(act["reason"]))])
+
+
+## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and
+## src/ui/ owns the wording, the same split nation_panel.gd has for a refusal and
+## bloc_panel.gd for a vote.
+func _act_reason_text(key: String) -> String:
+	match key:
+		ForeignPolicy.ACT_REASON_INTEREST: return "Their interests run this way."
+		ForeignPolicy.ACT_REASON_GOODWILL: return "Mending what had soured."
+		ForeignPolicy.ACT_REASON_GRIEVANCE: return "Answering a grievance."
+	return ""
+
+
+func _nation_name(nation_id: String) -> String:
+	var n = _loader.nations.get(nation_id)
+	return String(n.nation_name) if n != null else nation_id
 
 
 func _on_day_advanced(_year: int, _month: int, _day: int) -> void:

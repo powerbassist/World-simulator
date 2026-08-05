@@ -49,6 +49,10 @@ func _init() -> void:
 	_check_third_party_effects_are_signed()
 	_check_retaliation_is_bounded()
 	_check_reason_keys_are_declared()
+	_check_desire_is_zero_at_neutral()
+	_check_warm_pairs_generate_no_further_goodwill()
+	_check_desire_prices_hostility()
+	_check_no_sim_module_reads_the_act_record()
 	_finish()
 
 
@@ -308,6 +312,121 @@ func _l1(a: Dictionary, b: Dictionary) -> float:
 	for id in a.keys():
 		total += absf(float(a[id]) - float(b.get(id, 0.0)))
 	return total
+
+
+# --- V1.3f: the agenda ---------------------------------------------------------
+
+## AGENDA_ACT_MIN is only interpretable on its own if desire reads zero at neutral,
+## which is the property accept_score() was built to have and this one inherits.
+##
+## An act with no relations effect and no measure has nothing to offer and nothing
+## to cost, so it must read EXACTLY 0.0 for every ordered pair -- not "the interest
+## term", which is what it read before the probe found interest-as-an-addend
+## driving a goodwill ratchet. That correction is what makes this assertion
+## available at all, and it is asserted at exactly zero rather than near it.
+func _check_desire_is_zero_at_neutral() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var inert := {}
+
+	for a_id in state.nations.keys():
+		for b_id in state.nations.keys():
+			if a_id == b_id:
+				continue
+			var terms := ForeignPolicy.target_terms(state, a_id, b_id)
+			var got := ForeignPolicy.desire_from(terms, inert)
+			if got != 0.0:
+				_failures.append("desire(%s -> %s) on an inert act is %.17f, not exactly 0.0" % [a_id, b_id, got])
+				return
+
+
+## The ratchet the probe caught, pinned so it cannot come back.
+##
+## A pair already at or above AGENDA_AMITY_TARGET must generate NO desire for a
+## friendly act -- exactly zero, not merely less. That is what stops a nation
+## walking an important relationship to the RELATIONS_MAX clamp by acting forever,
+## and it is a property of the shape rather than of any weight.
+func _check_warm_pairs_generate_no_further_goodwill() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var key := Relations.key("FRA", "DEU")
+	var visit := {"relations": 5.0}
+
+	# At rest the pair is worth deepening.
+	if ForeignPolicy.desire_from(ForeignPolicy.target_terms(state, "FRA", "DEU"), visit) <= 0.0:
+		_failures.append("a pair at rest generated no desire to deepen -- nothing would ever happen")
+
+	# Well past the target, it is not.
+	state.relations[key] = float(state.relations[key]) + K.AMITY_SPAN
+	var saturated := ForeignPolicy.desire_from(ForeignPolicy.target_terms(state, "FRA", "DEU"), visit)
+	if saturated != 0.0:
+		_failures.append("a pair a full AMITY_SPAN above rest still wants a state visit (%.6f) -- the ratchet is back" % saturated)
+
+
+## The two restraint terms must actually restrain: the same act, against the same
+## target, must score lower the more hostile it is once the pair is exposed. This
+## is what stands in for the domestic price the nine cannot pay, so if it does not
+## bite the model has no brake at all.
+##
+## Read against a pair with real exposure rather than an arbitrary one -- DEU is
+## the largest economy in the roster, so France's exposure to it is the clearest
+## case in the data.
+func _check_desire_prices_hostility() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var terms := ForeignPolicy.target_terms(state, "FRA", "DEU")
+
+	var rhetoric := ForeignPolicy.desire_from(terms, {"relations": -8.0})
+	var tariff := ForeignPolicy.desire_from(
+		terms, {"relations": -10.0, "measure": {"op": "impose", "kind": "tariff", "severity": 0.625}}
+	)
+	var embargo := ForeignPolicy.desire_from(
+		terms, {"relations": -18.0, "measure": {"op": "impose", "kind": "sanction", "severity": 1.0}}
+	)
+
+	if not (rhetoric > tariff and tariff > embargo):
+		_failures.append("hostility is not priced: condemnation %f, tariff %f, sanctions %f" % [rhetoric, tariff, embargo])
+
+	# And the floor under all of it: an inert act must beat every hostile one, or
+	# cost and risk are not signed the way the model claims.
+	if ForeignPolicy.desire_from(terms, {}) <= rhetoric:
+		_failures.append("an act with no hostility scored no better than a condemnation")
+
+
+## docs/foreign-policy-model.md's central property is NO GRIEVANCE LEDGER -- the
+## relations number IS the memory, which is what let V1.3e ship a whole interest
+## model with no serialised field.
+##
+## GameState.foreign_acts is the first thing that could quietly break it. It is a
+## DISPLAY record: src/ui/ reads it, src/sim/ writes it and must never read it
+## back. The moment a decision consults it the model has two memories that can
+## disagree, and the pair score stops being the one place history lives.
+##
+## Asserted by reading the source rather than argued in a comment, because this is
+## exactly the kind of invariant a later session breaks by accident.
+func _check_no_sim_module_reads_the_act_record() -> void:
+	var dir := DirAccess.open("res://src/sim")
+	if dir == null:
+		_failures.append("could not open res://src/sim to check for readers of foreign_acts")
+		return
+
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".gd"):
+			continue
+		var f := FileAccess.open("res://src/sim/" + file_name, FileAccess.READ)
+		if f == null:
+			continue
+		var text := f.get_as_text()
+		f.close()
+
+		for line in text.split("\n"):
+			var s := String(line).strip_edges()
+			if s.begins_with("#") or not s.contains("foreign_acts"):
+				continue
+			# The two writes diplomacy.gd is allowed: appending an act, and trimming
+			# the record back to its cap. Anything else is a READ, and a read is the
+			# grievance ledger arriving by the back door.
+			if s.contains("foreign_acts.push_front") or s.contains("foreign_acts.size()") or s.contains("foreign_acts.remove_at"):
+				continue
+			_failures.append("src/sim/%s reads GameState.foreign_acts ('%s') -- that is a grievance ledger" % [file_name, s])
+			return
 
 
 func _finish() -> void:

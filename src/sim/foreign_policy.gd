@@ -49,6 +49,7 @@ extends RefCounted
 const RK = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const K = preload("res://src/sim/foreign_policy_constants.gd")
+const CK = preload("res://src/sim/coercion_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 
 ## The largest distance between two points in the two-axis ideology space, used to
@@ -77,6 +78,20 @@ const VOTE_REASON_KEYS := [
 	VOTE_REASON_TRADES_OUTSIDE,
 	VOTE_REASON_POLITICS,
 ]
+
+## Why a nation acted on its own initiative. V1.3f, and the same key-not-sentence
+## contract the two sets above have.
+##
+## THREE keys against desire()'s four terms, and the missing two are deliberate.
+## Cost and risk are reasons NOT to act, and an act that happened was not stopped
+## by them -- so naming one as the reason would be the failure the balance re-run
+## caught in vote_reason(), where every member was reported voting for a proposal
+## because of the one cost term the politics had beaten by a factor of five. A
+## reason that names a term the act went against is worse than no reason.
+const ACT_REASON_INTEREST := "interest"
+const ACT_REASON_GOODWILL := "goodwill"
+const ACT_REASON_GRIEVANCE := "grievance"
+const ACT_REASON_KEYS := [ACT_REASON_INTEREST, ACT_REASON_GOODWILL, ACT_REASON_GRIEVANCE]
 
 
 # --- Stake and amity: the two quantities everything else is built from ------------------
@@ -346,16 +361,48 @@ static func third_party_effects(state, actor_id: String, target_id: String, delt
 		var care: float = stake(state, x_id, target_id)
 		if care < floor_share:
 			continue
+
+		# CAPPED AT ONE, and V1.3f's agenda is what exposed the need for it.
+		#
+		# This was `care / EVEN_SHARE` uncapped, which reaches about 3.0 for the
+		# roster's tightest pairs -- so a single act moved eight OTHER pairs by up to
+		# three times the delta it moved its own. Invisible while only the player
+		# acted a handful of times a term; with the nine acting on a cadence it
+		# became the dominant force on the whole relations table, and fourteen years
+		# put pairs on both clamps (measured 5.2 and 100.0, three pinned).
+		#
+		# The cap is the honest statement of the rule rather than a damping factor:
+		# NOBODY TAKES AN ACT HARDER THAN THE NATION IT WAS AIMED AT.
+		var reach: float = minf(1.0, care / K.EVEN_SHARE)
+
 		out.append({
 			"a": x_id,
 			"b": actor_id,
-			"delta": K.THIRD_PARTY_JUDGEMENT * delta * care / K.EVEN_SHARE,
+			"delta": K.THIRD_PARTY_JUDGEMENT * delta * reach,
 		})
-		out.append({
-			"a": x_id,
-			"b": target_id,
-			"delta": -K.THIRD_PARTY_SOLIDARITY * delta * care / K.EVEN_SHARE,
-		})
+
+		# SOLIDARITY IS FOR BEING WRONGED, so it applies to hostile acts only.
+		#
+		# The rule reads naturally in the direction it was written for -- sanctioning
+		# Germany wins Germany sympathy from everyone who trades with Germany. Run
+		# with a positive delta it says the opposite of anything intended: France
+		# being NICE to Germany cools every other nation toward Germany, which is
+		# jealousy rather than solidarity, and it has no defensible reading.
+		#
+		# It survived V1.3e because the only acts that ever reached this function
+		# came from a player, and a player's hostile verbs are the memorable ones. An
+		# agenda that mostly acts friendly ran the rule backwards a hundred times a
+		# run, and that is what drove the recipients of goodwill to the floor.
+		#
+		# The judgement half above is unaffected and still signed: a nation is
+		# credited for a friendly act and blamed for a hostile one, both by everyone
+		# with a stake in whom it acted on.
+		if delta < 0.0:
+			out.append({
+				"a": x_id,
+				"b": target_id,
+				"delta": -K.THIRD_PARTY_SOLIDARITY * delta * reach,
+			})
 	return out
 
 
@@ -466,6 +513,244 @@ static func _appraisal_terms(state, ns, proposal, rule_burden: float) -> Diction
 		"rule": -K.APPRAISE_RULE_WEIGHT * rule_burden,
 		"transfer": -K.APPRAISE_TRANSFER_WEIGHT * proposal.transfer_pct_gdp * stress,
 		"external": external,
+	}
+
+
+# --- V1.3f's agenda: acting first, rather than answering ---------------------------------
+
+## How much `actor_id` wants to take this action against `target_id`, unprompted.
+##
+## Everything above this line in this file is REACTIVE: each function answers a
+## question somebody else asked -- a treaty offered, a measure imposed, a proposal
+## tabled, an act witnessed. This is the first function that starts a sentence.
+##
+## Takes the action's `effects` DICTIONARY rather than a DiplomaticAction, and
+## that is structural rather than stylistic. diplomacy.gd preloads this file, so
+## this file cannot preload diplomacy.gd -- it can never see available(),
+## execute(), or the content class. It scores what it is handed and Diplomacy
+## decides what to hand it, which is the same split would_accept_agreement() has
+## already used for a whole session.
+##
+## Four terms, each documented at its weight in foreign_policy_constants.gd:
+##
+##   interest  is this partner worth more than a ninth of my attention
+##   warmth    does the state of this relationship point at this KIND of verb
+##   cost      what a hostile act would destroy of my OWN trade
+##   risk      what the target would answer with, from the answering model itself
+##
+## Every term reads ZERO at neutral -- stake at exactly an even ninth, a pair
+## exactly at its resting value, a purely rhetorical act -- which is what makes
+## AGENDA_ACT_MIN interpretable on its own. The property accept_score() was built
+## to have, held here for the same reason.
+##
+## The nine pay no domestic price for any of this and that asymmetry is declared
+## rather than hidden: Opinion.tick_month() is gated on has_budget, so an AI's
+## bloc_offset is written into state nothing reads. The player is checked at home,
+## the nine are checked abroad, and the two checks are the cost and risk terms.
+## See the note in foreign_policy_constants.gd's agenda section.
+##
+## The one-call form, for tests, the probe and any caller scoring a single
+## candidate. Diplomacy's own loop uses target_terms() + desire_from() instead;
+## see target_terms() for why that split is not a micro-optimisation.
+static func desire(state, actor_id: String, effects: Dictionary, target_id: String) -> float:
+	return desire_from(target_terms(state, actor_id, target_id), effects)
+
+
+## Everything about a candidate act that depends on the PAIR and not on the VERB:
+## {interest, amity, exposure, risk}. Computed once per target and reused across
+## every action scored against it.
+##
+## Split out for cost, and the cost is real rather than theoretical. Each of the
+## four reads runs Trade.weights() or weights_before_measures() over all ten
+## nations, and an acting nation scores nine targets times ten verbs. Recomputing
+## the pair terms inside that inner loop is ninety heavy reads where nine will do
+## -- and Budget.project() ticks Diplomacy sixty times on a copy every time the
+## budget panel refreshes, so this is on the path of a UI repaint, not only of a
+## monthly tick.
+##
+## The split is also where the API stops being about a verb: Diplomacy holds one
+## of these per target and asks desire_from() about each action it has.
+static func target_terms(state, actor_id: String, target_id: String) -> Dictionary:
+	return {
+		# How much this partner matters, as a MULTIPLIER on the opportunity rather
+		# than a term added to it. See _desire_parts() for why that distinction is
+		# the whole shape of the model.
+		#
+		# Softened by an exponent for the reason trade_constants.GRAVITY_EXPONENT is,
+		# and it is the same nation forcing it. Stake enters the agenda TWICE -- once
+		# choosing which target to act on, and again valuing the act -- so a linear
+		# read squares the spread, and the winner-takes-all pick then never descends
+		# past a nation's top two partners. Measured: nobody acted on a GBR player in
+		# fourteen years, at all, while it sat comfortably above AGENDA_ACT_MIN the
+		# whole time. Being outranked forever is a different failure from being
+		# unreachable, and only the second one a bar can fix.
+		"stake_factor": pow(stake(state, actor_id, target_id) / K.EVEN_SHARE, K.AGENDA_STAKE_EXPONENT),
+		"amity": amity(state, actor_id, target_id),
+		# Read BEFORE measures, for the reason docs/coercion-model.md gives at length
+		# and retaliation_fraction() already follows: what a hostile act destroys is
+		# the trade you had, not the trade that survives it. Reading the post-measure
+		# vector is what made high severity strictly dominated at V1.3c.
+		"exposure": float(
+			Trade.weights_before_measures(state, actor_id).get(target_id, 0.0)
+		) / K.EVEN_SHARE,
+		# The answering model, run from the acting side. Deliberately the real
+		# function rather than a symmetric copy: an exchange whose two halves are
+		# computed by two functions is two models that will disagree, and this one
+		# was measured.
+		#
+		# Read as DETERRENCE -- how willing and able this target is to hit back at
+		# all -- rather than as a prediction that this specific act draws a specific
+		# tariff, which is why it scales a condemnation too.
+		"risk": retaliation_fraction(state, actor_id, target_id, CK.RETALIATION_FRACTION),
+	}
+
+
+## One action scored against a target's pair terms. The cheap half of desire().
+static func desire_from(terms: Dictionary, effects: Dictionary) -> float:
+	var parts := _desire_parts(terms, effects)
+	return (
+		float(parts["deepen"])
+		+ float(parts["mend"])
+		+ float(parts["punish"])
+		+ float(parts["cost"])
+		+ float(parts["risk"])
+		+ float(parts["domestic"])
+	)
+
+
+## Which term made a nation act, as a KEY. One of ACT_REASON_KEYS.
+##
+## Picked by largest POSITIVE contribution rather than largest absolute one, which
+## is the one place this deliberately differs from vote_reason(). Cost and risk are
+## reasons not to act; an act that cleared AGENDA_ACT_MIN was not stopped by them,
+## so naming one would be a reason that refutes the act it explains -- the exact
+## failure V1.3e's balance re-run caught in vote_reason() and fixed there.
+##
+## Only meaningful for an act that was actually taken. Reading it off a candidate
+## that scored below the bar names the strongest argument for a case that lost.
+static func act_reason(terms: Dictionary, effects: Dictionary) -> String:
+	var parts := _desire_parts(terms, effects)
+
+	var best_key: String = ACT_REASON_INTEREST
+	var best: float = float(parts["deepen"])
+	if float(parts["mend"]) > best:
+		best = float(parts["mend"])
+		best_key = ACT_REASON_GOODWILL
+	if float(parts["punish"]) > best:
+		best_key = ACT_REASON_GRIEVANCE
+	return best_key
+
+
+## The contributions of a desire, signed as they enter the sum. One builder, so
+## desire_from() and act_reason() cannot drift apart -- the same reason
+## _appraisal_terms() exists, and the same failure it exists to prevent.
+##
+## > [!warning] The probe's correction: interest as an ADDEND is a goodwill ratchet
+## > The first version summed five terms, one of which was
+## > `stake/EVEN_SHARE - 1` on its own. That made a partner's importance a
+## > STANDING REASON TO ACT, and since a friendly verb has no hostility it also has
+## > no cost and no risk -- so every nation state-visited its largest partner every
+## > cycle, forever, with nothing anywhere in the arithmetic to stop it.
+## >
+## > Measured over fourteen years: mean relations **79.6** against resting tiers
+## > that span 45 to 68, and a pair pinned at the RELATIONS_MAX clamp. The clamp
+## > rather than the model setting the number, which is docs/economy-model.md's
+## > IMPULSE_MAX failure in its fourth place -- and docs/trade-model.md's own
+## > `state_visit` exploit, which V1.3b priced out of the PLAYER's economy and
+## > nobody had yet priced out of an agent that acts forever.
+## >
+## > So interest MULTIPLIES an opportunity instead of adding to one. A nation acts
+## > where its interests are, but only when there is something to be gained there,
+## > and "something to be gained" is bounded by construction rather than by a bar.
+## > An inert act now reads EXACTLY 0.0 rather than leaving the interest term
+## > dangling, which makes AGENDA_ACT_MIN cleaner than it was before the correction.
+##
+## Three opportunities, and the sign of amity decides which are open:
+##
+##   deepen   a partner that matters, up to AGENDA_AMITY_TARGET and no further --
+##            this is the term that closes as a relationship improves, and it is
+##            what makes the ratchet structurally impossible rather than tuned away
+##   mend     a soured relationship worth repairing
+##   punish   a soured relationship worth answering
+##
+## At amity 0 -- every pair at new-game, by construction -- only `deepen` is open,
+## so a fresh world opens cooperative and turns hostile only once somebody has
+## acted. Above the target, none of the three is open and the pair is left alone.
+static func _desire_parts(terms: Dictionary, effects: Dictionary) -> Dictionary:
+	var intensity := _act_intensity(effects)
+	var hostility: float = float(intensity["hostility"])
+	var warmth: float = float(intensity["warmth"])
+	var amity_v: float = float(terms["amity"])
+	var weight: float = float(terms["stake_factor"])
+
+	# Headroom, and the reason the ratchet cannot come back: once the pair is at or
+	# above the target this is exactly 0.0, whatever the partner is worth.
+	var room: float = maxf(0.0, K.AGENDA_AMITY_TARGET - amity_v)
+	var grievance: float = maxf(0.0, -amity_v)
+
+	return {
+		"deepen": weight * warmth * room,
+		"mend": weight * warmth * grievance * K.AGENDA_MEND_WEIGHT,
+		"punish": weight * hostility * grievance * K.AGENDA_GRIEVANCE_WEIGHT,
+		"cost": -K.AGENDA_COST_WEIGHT * float(terms["exposure"]) * hostility,
+		"risk": -K.AGENDA_RISK_WEIGHT * float(terms["risk"]) * hostility,
+		"domestic": -K.AGENDA_DOMESTIC_WEIGHT * _act_domestic_price(effects),
+	}
+
+
+## What an act costs its own government at home, read off the action's authored
+## bloc_offset as a magnitude.
+##
+## > [!warning] The probe's second correction: free concessions get spent freely
+## > The first version priced only HOSTILE acts, on the argument that the nine are
+## > restrained abroad rather than at home. Measured over fourteen years,
+## > `settle_dispute` was nineteen of the last twenty-four acts -- the LARGEST
+## > friendly verb in the content and by far the most expensive, six blocs at -0.09,
+## > which the content's own summary calls a climbdown every bloc reads as a
+## > surrender. The player pays 0.54 of offset for it. The nine paid nothing, so
+## > they conceded a long-running national quarrel roughly once a year each.
+## >
+## > This is NOT the synthetic appetite constant this session refused. It is the
+## > action's own authored number, read the way accept_score() already reads
+## > `weight_multiplier` -- the content states how hard an act is, and the nine were
+## > the only ones not listening. No new field, no new content, and a verb whose
+## > domestic price an author changes becomes correspondingly rarer in AI hands,
+## > which is the data-not-code rule doing exactly what it is for.
+##
+## A magnitude rather than a signed sum, and deliberately: the two impose verbs are
+## SPLIT prices that nearly cancel, so a signed read would score a tariff as almost
+## free at home. What makes an act expensive is that it moves the country at all --
+## docs/diplomacy-model.md's own finding that a split price is legible on the
+## per-bloc rows and never in the headline figure, read from the other side.
+static func _act_domestic_price(effects: Dictionary) -> float:
+	var total: float = 0.0
+	for value in (effects.get("bloc_offset", {}) as Dictionary).values():
+		total += absf(float(value))
+	return total
+
+
+## How friendly and how hostile an action is, both on roughly [0, 1+].
+##
+## Read off the content rather than authored per action, so a new verb in
+## data/diplomatic-actions/ is scored by the agenda with no change here -- the
+## data-not-code rule docs/engine-decision.md states first.
+##
+## Hostility sums the relations damage and the measure severity because they are
+## genuinely two different harms: a condemnation costs standing, a sanction costs
+## standing AND trade. Against the shipped content that orders the four hostile
+## verbs sanctions > tariffs > condemnation > withdrawal, which is the ordering a
+## player would give unprompted.
+static func _act_intensity(effects: Dictionary) -> Dictionary:
+	var delta: float = float(effects.get("relations", 0.0))
+	var hostility: float = maxf(0.0, -delta) / DK.MAX_ACTION_RELATIONS_DELTA
+
+	var measure: Dictionary = effects.get("measure", {})
+	if String(measure.get("op", "")) == "impose":
+		hostility += float(measure.get("severity", 0.0)) / CK.MAX_MEASURE_SEVERITY
+
+	return {
+		"warmth": maxf(0.0, delta) / DK.MAX_ACTION_RELATIONS_DELTA,
+		"hostility": hostility,
 	}
 
 

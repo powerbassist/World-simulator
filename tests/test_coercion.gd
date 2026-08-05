@@ -367,6 +367,13 @@ func _check_retaliation_converges() -> void:
 	state.month = 1
 	_impose(state, PLAYER, TARGET, "tariff", 0.625, false)
 
+	# V1.3f: the nine impose measures of their own now, so a register counted over
+	# thirty-six ticks would be counting the agenda's entries as well as this
+	# exchange's. Quieted past the horizon rather than stubbed -- the retaliation
+	# being measured is the real one, and that one exchange must still close at two.
+	for ns in state.nations.values():
+		ns.diplo_months_to_act = 40
+
 	for i in range(36):
 		state.month = (i + 1) % 12 + 1
 		state.year = 2026 + (i + 1) / 12

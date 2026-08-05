@@ -35,6 +35,7 @@ func _process(_delta: float) -> bool:
 	_check_mood_reads_the_polled_figure()
 	_check_action_bar_subrow()
 	_check_message_stack()
+	_check_foreign_acts_reach_the_column()
 	_check_minimap_slot_reserved()
 	_finish()
 	return false
@@ -175,6 +176,90 @@ func _check_message_stack() -> void:
 
 ## U5b puts the minimap here. The slot is held open at its final size now so
 ## that session adds a map and moves nothing else.
+## V1.3f. The nine act, and the player has to be able to SEE it.
+##
+## Exactly the silent failure this file exists for: `_card_foreign_acts()` filters
+## by the player's stake in the actor, and a filter that is one constant away from
+## rejecting everything leaves a column that is empty forever with nothing erroring
+## anywhere. The headless suite cannot see an empty column and neither can a green
+## test that only checks push() works.
+##
+## Three things, and the middle one is the whole point of the filter:
+##   - an act AIMED AT the player always cards, whatever the stake
+##   - an act between two other nations cards only if the player has a stake
+##   - the player's own acts never card, because they issued them
+func _check_foreign_acts_reach_the_column() -> void:
+	var stack = _main._hud.message_stack
+	var state = _main._state
+	if stack == null or state == null:
+		_fail("no message stack or no state to card foreign acts into")
+		return
+
+	var player_id: String = state.player_nation_id
+	var other := ""
+	var third := ""
+	for id in state.nations.keys():
+		if String(id) == player_id:
+			continue
+		if other == "":
+			other = String(id)
+		elif third == "":
+			third = String(id)
+
+	stack.clear()
+	state.foreign_acts.clear()
+	state.foreign_acts.push_front({
+		"year": state.year, "month": state.month,
+		"actor_id": other, "target_id": player_id,
+		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+	})
+	_main._card_foreign_acts(state.year, state.month)
+	if stack.card_count() != 1:
+		_fail("an act aimed at the player produced %d cards, not 1" % stack.card_count())
+		return
+
+	# And it must NAME the player as the one acted on, or the column says something
+	# happened without saying it happened to you.
+	# Case-insensitive: message_stack.push() upper-cases the title.
+	var text := _collect_text(stack).to_lower()
+	if not text.contains("you"):
+		_fail("a card for an act aimed at the player does not say so: '%s'" % text)
+
+	# The model computes a reason for every act and this card is its ONLY reader.
+	# An unread reason key is V1.3b's `refused_by_partner`, which shipped and was
+	# silent for two whole sessions before V1.3e found it.
+	if not text.contains("interests"):
+		_fail("the act's reason key never reached the card: '%s'" % text)
+
+	# The player's own act is not news to the player.
+	stack.clear()
+	state.foreign_acts.clear()
+	state.foreign_acts.push_front({
+		"year": state.year, "month": state.month,
+		"actor_id": player_id, "target_id": other,
+		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+	})
+	_main._card_foreign_acts(state.year, state.month)
+	if stack.card_count() != 0:
+		_fail("the player's own act was carded back at them (%d cards)" % stack.card_count())
+
+	# A stale act -- one from a month already gone -- must not re-card on a later
+	# tick, or every month replays the whole record.
+	stack.clear()
+	state.foreign_acts.clear()
+	state.foreign_acts.push_front({
+		"year": state.year - 1, "month": state.month,
+		"actor_id": other, "target_id": third,
+		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+	})
+	_main._card_foreign_acts(state.year, state.month)
+	if stack.card_count() != 0:
+		_fail("an act from a previous month was carded again (%d cards)" % stack.card_count())
+
+	stack.clear()
+	state.foreign_acts.clear()
+
+
 func _check_minimap_slot_reserved() -> void:
 	var cluster = _main._hud.clock_cluster
 	if cluster._minimap_slot == null:

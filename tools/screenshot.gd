@@ -57,6 +57,10 @@ var _coerce := false
 ## player in breach of the rule, then opens the window.
 var _bloc := false
 
+## V1.3f. A new game's message column is empty and a frame of nothing proves
+## nothing about it -- the same argument --coerce and --bloc were each added on.
+var _agenda := false
+
 ## Which registered window to open before capturing, by the id main.gd registered
 ## it under. Generic rather than a flag per panel: --bloc exists because it has to
 ## SET UP state the panel has nothing to show without, which is a different job
@@ -87,6 +91,8 @@ func _init() -> void:
 			_coerce = true
 		elif args[i] == "--bloc":
 			_bloc = true
+		elif args[i] == "--agenda":
+			_agenda = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -133,6 +139,8 @@ func _apply_view() -> void:
 		_impose_a_spread()
 	if _bloc:
 		_open_the_council()
+	if _agenda:
+		_run_the_agenda()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -148,6 +156,26 @@ func _apply_view() -> void:
 		_main._hud.map_legend.show_hover(
 			_hover, _main._state, _main._map_view.viewer_id()
 		)
+
+
+## Tick the world forward until the nine have acted enough to fill the message
+## column, then card what they did. V1.3f.
+##
+## Through main.gd's own monthly path rather than by pushing cards directly: the
+## thing being looked at is whether the filter in _card_foreign_acts() lets
+## anything through and whether the column overflows its slot, and a tool that
+## called push() itself would capture a frame the game cannot produce.
+##
+## Runs the clock's callback rather than the clock, because the clock advances on
+## real time and a screenshot tool has a handful of frames.
+func _run_the_agenda() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	for i in range(48):
+		var year: int = state.year + (state.month + i - 1) / 12
+		var month: int = (state.month + i - 1) % 12 + 1
+		_main._on_month_elapsed(year, month)
 
 
 ## One measure at each legend stop, so the captured frame shows the whole ramp

@@ -50,6 +50,12 @@ func _init() -> void:
 	_check_execute_refuses_when_unavailable()
 	_check_neighbours_are_mutual()
 	_check_bad_fixtures_refused()
+	_check_agenda_stagger_is_seeded()
+	_check_agenda_is_deterministic()
+	_check_agenda_never_acts_for_the_player()
+	_check_agenda_offers_the_player_no_agreement()
+	_check_agenda_acts_at_all()
+	_check_agenda_record_is_bounded()
 	_finish()
 
 
@@ -109,6 +115,12 @@ func _check_resting_reads_both_inputs() -> void:
 func _check_drift_converges_and_stops() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var resting := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"])
+
+	# V1.3f: the agenda runs inside tick_month() and moves relations on purpose, so
+	# a drift test that did not quiet it would be measuring drift plus nine nations
+	# acting. Silenced by pushing the schedule past the horizon rather than by
+	# stubbing anything -- the drift being tested is the real one.
+	_quiet_agenda(state, 300)
 
 	Relations.adjust(state, "FRA", "DEU", 20.0, DK.RELATIONS_MIN, DK.RELATIONS_MAX)
 	var displaced := Diplomacy.score(state, "FRA", "DEU")
@@ -417,6 +429,135 @@ func _expect_fixture_error(actions_dir: String, needle: String, message: String)
 ## ignored half the fields would leave a caller thinking it had forced something
 ## it had not. That is how this first failed -- _action_with_cooldown() picks the
 ## alphabetically first action with a cooldown, which became industrial_compact.
+# --- V1.3f: the agenda ---------------------------------------------------------
+
+## Every one of the nine starts on a different month of the cycle, and none starts
+## ready to fire. Without the spread they all act in the same month and
+## message_stack.gd's six slots drop most of it unread.
+func _check_agenda_stagger_is_seeded() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var seen := {}
+	for id in state.nations.keys():
+		var ns = state.nations[id]
+		if ns.has_budget:
+			if ns.diplo_months_to_act != 0:
+				_failures.append("the player's nation was given an agenda schedule (%d)" % ns.diplo_months_to_act)
+			continue
+		if ns.diplo_months_to_act < 1:
+			_failures.append("%s starts ready to act (%d) -- month one is noise" % [id, ns.diplo_months_to_act])
+		seen[ns.diplo_months_to_act] = true
+
+	# Nine nations over an interval of AGENDA_INTERVAL_MONTHS cannot all differ if
+	# the interval is under nine; what must hold is that they are SPREAD rather than
+	# identical, which is what the modulo buys.
+	if seen.size() < mini(9, FK.AGENDA_INTERVAL_MONTHS):
+		_failures.append("the nine occupy only %d distinct agenda months -- the stagger is not staggering" % seen.size())
+
+
+## No rand() in src/sim/, and this is the field that would most obviously invite
+## one. Two games from the same data must make the same picks, or the budget
+## projection -- which ticks this module sixty times on a copy -- stops agreeing
+## with the game it is projecting.
+func _check_agenda_is_deterministic() -> void:
+	var a = GameState.new_game(_loader, PLAYER)
+	var b = GameState.new_game(_loader, PLAYER)
+	for _i in range(60):
+		Diplomacy.tick_month(a, _loader)
+		Diplomacy.tick_month(b, _loader)
+
+	if a.foreign_acts.size() != b.foreign_acts.size():
+		_failures.append("two identical games produced %d and %d acts" % [a.foreign_acts.size(), b.foreign_acts.size()])
+		return
+	for i in range(a.foreign_acts.size()):
+		var x: Dictionary = a.foreign_acts[i]
+		var y: Dictionary = b.foreign_acts[i]
+		if x["actor_id"] != y["actor_id"] or x["target_id"] != y["target_id"] or x["action_id"] != y["action_id"]:
+			_failures.append("two identical games diverged at act %d: %s vs %s" % [i, x, y])
+			return
+
+
+## has_budget read the other way round: it means a human decides here, so the
+## agenda must never move for the player's own nation. A player whose foreign
+## policy ran itself would be the single worst bug this session could ship.
+func _check_agenda_never_acts_for_the_player() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	for _i in range(120):
+		Diplomacy.tick_month(state, _loader)
+
+	if state.player().diplo_months_to_act != 0:
+		_failures.append("the player's agenda counter moved to %d" % state.player().diplo_months_to_act)
+	for act in state.foreign_acts:
+		if String(act["actor_id"]) == PLAYER:
+			_failures.append("the agenda acted AS the player: %s" % act)
+			return
+
+
+## AI-to-player agreements are out of scope, and structurally so rather than by a
+## filter that could be forgotten: would_accept_agreement() is the counterparty's
+## decision, so an AI proposing to the player would have the interest model answer
+## on the player's own behalf. AI-to-AI agreements are unaffected and must still
+## happen, or the exclusion has quietly removed the verb from the game.
+func _check_agenda_offers_the_player_no_agreement() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	for _i in range(168):
+		Diplomacy.tick_month(state, _loader)
+
+	var ai_to_ai := 0
+	for act in state.foreign_acts:
+		var is_agreement: bool = String(act["action_id"]).contains("compact")
+		if not is_agreement:
+			continue
+		if String(act["target_id"]) == PLAYER:
+			_failures.append("an AI proposed an agreement to the player: %s" % act)
+			return
+		ai_to_ai += 1
+
+	# Recorded rather than asserted: whether any AI-to-AI agreement lands inside
+	# fourteen years is a CONTENT question the probe measures, and a test that
+	# demanded one would fail on a content edit rather than on a broken mechanism.
+	if ai_to_ai == 0 and state.agreements.is_empty():
+		print("  note: no AI-to-AI agreement inside 168 months -- see tools/foreign_policy_probe.gd")
+
+
+## The feature must actually do something. An agenda that never clears its own bar
+## is the state-layer-with-no-verb failure docs/diplomacy-model.md warns about, at
+## the scale of a whole session.
+func _check_agenda_acts_at_all() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	for _i in range(60):
+		Diplomacy.tick_month(state, _loader)
+
+	if state.foreign_acts.is_empty():
+		_failures.append("nobody acted in sixty months -- AGENDA_ACT_MIN is unreachable")
+		return
+
+	for act in state.foreign_acts:
+		if not ForeignPolicy.ACT_REASON_KEYS.has(String(act["reason"])):
+			_failures.append("act carried an unknown reason key '%s'" % act["reason"])
+			return
+
+
+## The record is a window on the recent past, not an archive. Unbounded, a
+## fourteen-year run accumulates hundreds of entries into every save file.
+func _check_agenda_record_is_bounded() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	for _i in range(400):
+		Diplomacy.tick_month(state, _loader)
+
+	if state.foreign_acts.size() > FK.AGENDA_ACTS_KEPT:
+		_failures.append("foreign_acts grew to %d, past AGENDA_ACTS_KEPT" % state.foreign_acts.size())
+
+
+## Push every nation's agenda counter past `months`, so tick_month() runs drift,
+## retaliation and cooldowns but nobody acts on their own initiative.
+##
+## For tests about a mechanism the agenda is not part of. A test that wants the
+## agenda drives it directly instead -- see _check_agenda_* below.
+func _quiet_agenda(state, months: int) -> void:
+	for ns in state.nations.values():
+		ns.diplo_months_to_act = months + 1
+
+
 func _force_available(state, action) -> void:
 	var ns = state.player()
 	ns.diplo_cooldown_months.clear()

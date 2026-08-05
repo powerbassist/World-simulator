@@ -291,3 +291,245 @@ const APPRAISE_EXTERNAL_WEIGHT := 0.80
 ## identical economies genuinely should be able to disagree. What it must not do
 ## is DECIDE, which at 0.35 against three material terms it cannot.
 const APPRAISE_IDEOLOGY_WEIGHT := 0.35
+
+
+# --- The agenda: acting first, rather than answering ------------------------------------
+
+## V1.3f. Everything above this line is REACTIVE -- each function answers a
+## question somebody else asked, which is why V1.3e added no serialised field and
+## left SAVE_VERSION at 11. The weights below are the first in this file that make
+## a nation choose a target and a verb unprompted.
+##
+## > [!important] The nine are restrained by consequence abroad, not by politics
+## > at home -- and that asymmetry is DECLARED, not papered over.
+## > Every diplomatic action carries a bloc_offset domestic price, and for the nine
+## > that price is dead state: Opinion.tick_month() is gated on has_budget, so a
+## > non-player nation's bloc_offset is written and never read. Giving them a
+## > synthetic "appetite" constant to stand in for it would be an authored number
+## > in place of a model, which is what AGREEMENT_ACCEPT_MIN and SUPPORT_SIGMA were
+## > deleted for. Lifting the guard is the coupled-economy rewrite
+## > docs/trade-model.md books separately.
+## >
+## > So the restraint is material and it is already measured: what a hostile act
+## > costs the actor in its own trade (COST) and what the target would do back
+## > (RISK). Both reuse the weights V1.3b measured and the answer
+## > retaliation_fraction() already computes. The player is checked at home; the
+## > nine are checked abroad.
+
+## Months between one nation's turns at the agenda.
+##
+## Staggered DETERMINISTICALLY across the ten by index in a sorted id list, not by
+## rand(): src/sim/ contains no RNG at all, and the budget projection ticks
+## Diplomacy forward on a copy -- so a projection, a reloaded save and a played
+## game must make the same picks or the panel that promises "this is what will
+## happen" is lying. The stagger is what stops nine nations acting in the same
+## month and burying src/ui/message_stack.gd's six card slots.
+##
+## Swept by tools/foreign_policy_probe.gd against how many acts reach a player in
+## fourteen years, against the year-14 saturation of the ninety directed pairs.
+const AGENDA_INTERVAL_MONTHS := 9
+
+## AGENDA_STAKE_WEIGHT and AGENDA_WARMTH_WEIGHT are DELETED, and the probe is why.
+##
+## Stake was a weight on a term ADDED to the sum: `stake/EVEN_SHARE - 1`, a
+## standing reason to act on a big partner. A friendly verb carries no hostility,
+## so it also carries no cost and no risk -- and nothing anywhere in the arithmetic
+## then stopped a nation state-visiting its largest partner every cycle forever.
+## Measured over fourteen years: mean relations 79.6 against resting tiers spanning
+## 45 to 68, and a pair pinned at the RELATIONS_MAX clamp. Stake is now a
+## MULTIPLIER on a bounded opportunity, where scaling it is exactly equivalent to
+## scaling AGENDA_ACT_MIN -- so a weight of its own is a second dial for one
+## quantity, which is the redundancy docs/coercion-model.md records the coercion
+## probe cutting between severity and an authored tariff rate.
+##
+## The warmth weight went with the shape it belonged to. A single signed term
+## `amity * (warmth - hostility)` is REINFORCING: warm pairs want more warmth. That
+## is the ratchet stated in one line, and it is replaced by three bounded
+## opportunities below rather than damped by a smaller number.
+##
+## Deleted rather than left at a value nothing reads -- AGREEMENT_ACCEPT_MIN and
+## SUPPORT_SIGMA's case, one session on.
+
+## How hard a partner's importance enters the agenda, as an exponent on its stake
+## share.
+##
+## Below 1.0 for the reason trade_constants.GRAVITY_EXPONENT is below 1.0, and it
+## is the same nation that forced both. Stake enters the agenda TWICE -- choosing
+## which target to act on, and then valuing the act against it -- so a linear read
+## squares an already 8x spread, and a winner-takes-all pick never descends past a
+## nation's top two partners.
+##
+## TAKEN FROM trade_constants.GRAVITY_EXPONENT rather than swept independently, and
+## said plainly because the distinction matters: the two constants answer the same
+## question about the same nation over the same vector, and giving this one its own
+## sweep would be two numbers describing one judgement -- the redundancy
+## docs/coercion-model.md records the coercion probe cutting. It was verified, not
+## fitted: table (g2) shows the ranking it produces, and Britain reaching the top of
+## every other nation's list by month 24.
+##
+## Not sufficient on its own, and that is recorded rather than implied. At 0.70 the
+## GBR column was still 0 acts in fourteen years; what actually fixed it was
+## AGENDA_ACT_MIN, and the diagnosis is under that constant. This narrows the gap
+## Britain has to close; the bar is what lets it close one.
+const AGENDA_STAKE_EXPONENT := 0.70
+
+## How warm a nation tries to make a relationship that matters to it, in amity
+## units, before it stops spending diplomacy on it.
+##
+## THE constant that makes the ratchet structurally impossible. Above this, the
+## `deepen` opportunity is exactly 0.0 whatever the partner is worth, so a pair
+## cannot be walked to the clamp by a nation acting forever. Below 1.0 by
+## necessity: amity saturates at +/-1, so a target of 1.0 would be unreachable and
+## the term would never close -- docs/amendment-model.md's unreachable German
+## two-thirds, in the one place here it would do real damage.
+##
+## 0.50 is half of AMITY_SPAN, which is ten points of relations above a pair's own
+## resting value -- about one settle_dispute, the strongest single positive verb in
+## the content. So a nation will spend roughly one good act on an important
+## relationship and then leave it alone.
+const AGENDA_AMITY_TARGET := 0.50
+
+## How much a soured relationship is worth REPAIRING, against deepening a healthy
+## one.
+##
+## Above 1.0 deliberately: a government with a damaged relationship it depends on
+## has a more urgent problem than one with a merely adequate relationship, and this
+## is the term that pulls relations back UP toward rest after an exchange. Without
+## it the world only ever cools, which is the ratchet's mirror image.
+const AGENDA_MEND_WEIGHT := 1.30
+
+## How much a soured relationship is worth ANSWERING, against repairing it.
+##
+## The choice between mending and punishing is NOT decided here -- it is decided by
+## the cost and risk terms below, which apply to the hostile verb and not to the
+## friendly one. This weight only sets how loud the grievance is before those two
+## price it, which is what keeps the decision material rather than authored.
+const AGENDA_GRIEVANCE_WEIGHT := 1.00
+
+## What a hostile act costs the actor in its own trade, per even share of its own
+## exposure to the target.
+##
+## Reads weights_before_measures() for the reason docs/coercion-model.md gives at
+## length: the trade you destroy is the trade you had, not the trade that survives.
+## This is one half of why a small nation does not sanction a large one, and it is
+## the mirror of retaliation_fraction()'s own FRA/LUX finding arrived at from the
+## acting side rather than the answering side.
+const AGENDA_COST_WEIGHT := 1.00
+
+## What the actor expects back, as the fraction retaliation_fraction() says the
+## target would answer with.
+##
+## The second half of the same restraint, and deliberately a separate term rather
+## than folded into COST: exposure is what an act costs me by itself, retaliation
+## is what the other side chooses to do about it, and a nation can be cheap to hit
+## while being dangerous to hit. Reusing the answering model here rather than
+## authoring a symmetric one is what keeps the two sides of an exchange consistent.
+const AGENDA_RISK_WEIGHT := 1.20
+
+## What an act costs its own government at home, per unit of the action's authored
+## bloc_offset magnitude.
+##
+## The one term that is NOT about the world, and it is here because the probe
+## found its absence unmistakable: with only hostile acts priced, `settle_dispute`
+## was nineteen of the last twenty-four acts of a fourteen-year run. It is the
+## largest friendly verb in the content and the most expensive -- six blocs at
+## -0.09, which the summary calls a climbdown -- and the nine were conceding a
+## long-running national quarrel about once a year each, for free.
+##
+## Not the synthetic appetite constant this session refused: it reads the action's
+## OWN authored price, exactly as accept_score() reads `weight_multiplier`. The
+## content already states how hard each act is and the nine were the only ones not
+## listening.
+##
+## Swept by tools/foreign_policy_probe.gd table (d3), on which verb a nation picks
+## against its most important partner:
+##
+## on which verb each of the ten picks against its own most important partner:
+##
+##   weight   picks
+##   0.00     settle_dispute x10                  <-- the concession is the norm
+##   0.25     settle_dispute x7  state_visit x3
+##   0.50     state_visit x10                     <-- flips here
+##   1.00     state_visit x10                     <-- shipped
+##   2.00     state_visit x10
+##   4.00     state_visit x10
+##
+## 1.00, which is 2x the value the choice flips at. NOT higher, and the reason is
+## an interaction the first attempt at this constant got wrong: the term applies to
+## HOSTILE verbs too, and impose_tariffs carries 0.42 of authored offset against
+## impose_sanctions' 0.48. At 2.00 the penalty is 0.84 to 0.96 and NO pair anywhere
+## in the roster can mount a hostile act -- measured at 0 of 90 ordered pairs driven
+## to full grievance, which is the coercion half of the agenda shipping as dead
+## code. At 1.00 it is 6 of 90.
+##
+## So the constant is bounded from BELOW by the concession spam and from ABOVE by
+## coercion becoming unreachable, and 1.00 is the only swept value comfortably
+## inside both. That six pairs rather than sixty can coerce is the model rather
+## than the number: acting first against a partner needs you to both resent them
+## AND not depend on them, which is docs/coercion-model.md's leverage finding
+## arriving from the acting side. The ordinary way a player receives coercion is
+## still retaliation, which _tick_retaliation() has owned since V1.3c.
+const AGENDA_DOMESTIC_WEIGHT := 1.00
+
+## The bar the four terms together must clear for a nation to act at all.
+##
+## Every term reads zero at neutral -- stake at exactly an even ninth, a pair
+## exactly at rest, a purely rhetorical act with no measure behind it -- so this
+## number is interpretable on its own, exactly as ACCEPT_MIN is.
+##
+## This lets the agenda say NOTHING, the same job RETALIATION_MIN_SEVERITY does for
+## an answer. It is NOT the main brake, and that is the model correction rather
+## than a detail: the brake is AGENDA_AMITY_TARGET closing the `deepen` opportunity
+## as a relationship improves. A bar alone cannot stop a ratchet, it can only slow
+## one.
+##
+## > [!warning] The static sweep measured the wrong state, and said 0.05
+## > tools/foreign_policy_probe.gd table (d2) sweeps this at NEW-GAME, where the
+## > best desire anyone has against Britain is 0.1309 and a bar of 0.20 closes the
+## > GBR column to zero. Read that way 0.05 looks right: 2.6x margin on the binding
+## > pair, four times under the closing value.
+## >
+## > It is wrong, because new-game is not the binding state. Table (g2) prints the
+## > same nations at months 0, 24 and 60, and by month 24 Britain IS everyone's top
+## > pick -- and the entire desire landscape has fallen under 0.05. ITA -> GBR reads
+## > 0.042, ESP 0.029, NLD 0.024. Two things pull it down together: `deepen` closes
+## > as pairs approach AGENDA_AMITY_TARGET, and Britain's own room closes from
+## > third-party judgement spillover WITHOUT ANYONE HAVING ACTED ON IT.
+## >
+## > So the measured failure was not that Britain is outranked -- it is outranked
+## > for two years and then wins -- but that the world goes SILENT after two years
+## > and Britain's turn never comes. Acts aimed at a GBR player over fourteen years:
+## > 0 at bar 0.05, 35 at bar 0.02. FRA 52, DEU 58.
+##
+## 0.02, set on the dynamic measurement rather than the static one. The static
+## column is kept in the probe because it is what makes the correction legible.
+##
+## What "100% of pairs live at new-game" does NOT mean is that everything happens:
+## a nation acts once per AGENDA_INTERVAL_MONTHS and takes only its BEST candidate,
+## so the ceiling on activity is the cadence. Fifty-odd acts across nine nations in
+## fourteen years is what it actually produces. And the thing that makes pairs go
+## quiet as a game is played is AGENDA_AMITY_TARGET, not this -- which is the whole
+## model correction this session made.
+const AGENDA_ACT_MIN := 0.02
+
+## Stake below which an act between two OTHER nations does not earn the player a
+## card, as a fraction of an even share.
+##
+## The same shape and the same units as THIRD_PARTY_MIN_STAKE_SHARE, and it exists
+## for the same reason: message_stack.gd holds six cards and drops the oldest, so
+## an unfiltered feed of nine nations acting on a cadence would push a sanction
+## aimed at the player off the column before it was read. An act aimed AT the
+## player always cards regardless of this floor -- that branch is in src/ui/, not
+## here, because what is worth showing is a UI question and what happened is not.
+const CARD_MIN_STAKE_SHARE := 0.90
+
+## How many acts GameState.foreign_acts keeps before dropping the oldest.
+##
+## Held here rather than on GameState because the writer owns the bound -- the
+## shape main.gd's RECENT_EFFECTS_KEPT already has, and forced anyway, since
+## game_state.gd preloads diplomacy.gd and the dependency runs one way.
+##
+## Above message_stack.gd's six card slots on purpose: the stack shows what is
+## worth interrupting the player for, this is what actually happened, and the
+## record has to outlive the cards drawn from it.
+const AGENDA_ACTS_KEPT := 24

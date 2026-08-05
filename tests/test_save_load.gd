@@ -91,6 +91,7 @@ func _init() -> void:
 	_run_trade_roundtrip(loader)
 	_run_coercion_roundtrip(loader)
 	_run_bloc_roundtrip(loader)
+	_run_agenda_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -676,8 +677,57 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 11:
-		_fail("SAVE_VERSION is %d -- V1.3d argued for 11, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 12:
+		_fail("SAVE_VERSION is %d -- V1.3f argued for 12, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.3f adds two things a save carries and only ONE of them earns the bump. The
+## distinction is the whole rule -- "would a missing field read as something
+## wrong?" -- so it is asserted rather than argued in a comment.
+##
+## The loud one: an absent diplo_months_to_act reads as 0, and 0 means ACT NOW.
+## Every one of the nine fires in the first month after a reload, a nine-act burst
+## a played game cannot produce because the staggered counters are the entire
+## mechanism that spreads them. eu_member/neighbours' case: the reloaded game
+## behaves differently from the one that saved it, with nothing to say so.
+##
+## The quiet one: an absent foreign_acts reads as [], which is CORRECT for every
+## version-11 save because those games had no agenda to record. `measures`' case at
+## V1.3c exactly, and it would not have earned a bump on its own.
+func _run_agenda_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+
+	# The bump's premise, stated as an inequality rather than a value: whatever the
+	# seeded stagger is, it must not be the act-now sentinel for any of the nine, or
+	# there is nothing for the missing field to read as wrong.
+	var acting_now := 0
+	for id in state.nations.keys():
+		var ns = state.nations[id]
+		if not ns.has_budget and ns.diplo_months_to_act <= 0:
+			acting_now += 1
+	if acting_now != 0:
+		_fail("%d of the nine start at diplo_months_to_act <= 0 -- the seeded stagger is not staggering" % acting_now)
+
+	var stripped_dict: Dictionary = state.to_dict()
+	for id in (stripped_dict["nations"] as Dictionary).keys():
+		(stripped_dict["nations"][id] as Dictionary).erase("diplo_months_to_act")
+	var stripped = GameState.from_dict(stripped_dict)
+
+	var burst := 0
+	for id in stripped.nations.keys():
+		var ns = stripped.nations[id]
+		if not ns.has_budget and ns.diplo_months_to_act <= 0:
+			burst += 1
+	if burst != 9:
+		_fail("a save with no diplo_months_to_act left %d of the nine ready to act, not 9 -- the bump's premise is wrong" % burst)
+
+	# And the other half: foreign_acts absent reads as empty, which is correct, so
+	# it is NOT what earned the bump.
+	var no_acts: Dictionary = state.to_dict()
+	no_acts.erase("foreign_acts")
+	var revived = GameState.from_dict(no_acts)
+	if not revived.foreign_acts.is_empty():
+		_fail("a save with no foreign_acts key invented some")
 
 
 func _run_roundtrip(state, clock) -> void:

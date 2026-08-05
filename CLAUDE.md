@@ -320,7 +320,53 @@ margin. The re-run also caught a break the suite could not: `balance_probe.gd`
 referenced the deleted constant and every new run failed to parse, because
 `tools/` is excluded from `run_tests.sh` by design.
 
-**Next: V1.3f, the acting agent** — the nine acting on their own initiative.
+**V1.3f shipped the acting agent, and the block has no stopgaps left.**
+`_tick_agenda()` lives in `diplomacy.gd` beside `_tick_retaliation()` — the
+interest model preloads `trade.gd` preloads `coercion.gd` and can never reach
+`available()` or `execute()`, so it **scores what it is handed** and Diplomacy
+decides what to hand it. No new content type, no new effect channel, no new verb:
+the agenda uses the ten actions `data/diplomatic-actions/` already ships, the
+fifth session running. `SAVE_VERSION` is **12**, earned by exactly one of two
+added fields — an absent `diplo_months_to_act` reads as 0 and 0 means *act now*,
+so a reload fires nine acts in one month; an absent `foreign_acts` reads as
+"nothing yet", which is correct. The test asserts **both** halves.
+
+**Interest MULTIPLIES a bounded opportunity; it is never an addend, and that is
+the session's central correction.** As a standing addend a partner's importance
+made friendly acts free forever — every nation state-visiting its largest partner
+on a loop, mean relations **79.6** against resting tiers of 45–68 and a pair on
+the clamp. `AGENDA_AMITY_TARGET` closes the `deepen` term to exactly 0.0 once a
+pair is warm enough, so the ratchet is structurally impossible rather than damped.
+An inert act reads **exactly 0.0** for all ninety ordered pairs.
+
+**The probe corrected the model four times and each correction is load-bearing.**
+Free concessions get spent freely, so the agenda reads the action's **own
+authored** `bloc_offset` as its domestic price — the content already said how hard
+each act was and the nine were the only ones not listening. `third_party_effects()`
+was **unbounded** (an uncapped `care/EVEN_SHARE` reaching 3.0 moved eight other
+pairs harder than the act's own) and **backwards for friendly acts** (solidarity
+said being nice to Germany cools everyone else toward Germany); both survived
+V1.3e because only a player ever reached that function. And the `AGENDA_ACT_MIN`
+sweep **measured the wrong state** — the static new-game table said 0.05, but by
+month 24 Britain is everyone's top pick and the whole landscape has fallen under
+the bar, so the world goes silent and Britain's turn never comes. GBR-aimed acts
+**0 → 35** over fourteen years. Model notes:
+[docs/foreign-policy-model.md](docs/foreign-policy-model.md) §7.
+
+**The re-run was budgeted as a re-baseline and came back quieter than planned**:
+6 of 30 runs differ, all GBR, all last-digit, **zero outcome changes**, FRA and
+DEU bit-identical across all twenty. Relations move the trade *mix*, and the mix
+reaches an economy only through partner deviations no balance regime produces.
+
+`message_stack.gd` takes its first content since U5a built it as furniture, and
+that spends nothing of V1.8's argument: an act by a simulated nation is state
+`src/sim/` just wrote, not invented content. The sim writes
+`GameState.foreign_acts`, the UI decides what earns a card, and
+`tests/test_foreign_policy.gd` asserts **nothing in `src/sim/` reads it back** —
+V1.3e's *no grievance ledger* property survives only if that stays true.
+
+**Next: V1.3g, defence as domestic politics** — the last session of the block,
+taking defensive alliances with it.
 
 MVP, V1.1a–d, V1.2a–e, V1.3a–e and U1–U5 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
@@ -328,7 +374,7 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 11**. There has never been a migration: a superseded
+Save format is at **version 12**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
