@@ -10,6 +10,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -26,6 +27,10 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -82,6 +87,14 @@ var _open := ""
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _defence := false
+
+## U6a, and --coerce's argument a sixth time. A new game's diary is EMPTY inside
+## its own horizon -- France's nearest dated event is sixteen months out and
+## cooldowns do not exist until the player has acted -- so a frame of it shows a
+## page of em dashes and a `later` footer, and proves nothing about the one thing
+## the strip exists to draw. Books three acts and acts once, so the frame carries
+## a booking, a kept appointment and a cooldown expiry the player never entered.
+var _book := false
 var _main
 
 
@@ -104,6 +117,8 @@ func _init() -> void:
 			_agenda = true
 		elif args[i] == "--defence":
 			_defence = true
+		elif args[i] == "--book":
+			_book = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -161,6 +176,8 @@ func _apply_view() -> void:
 		_run_the_agenda()
 	if _defence:
 		_stand_up_an_alliance()
+	if _book:
+		_fill_the_diary()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -258,6 +275,7 @@ func _mark_panels_dirty() -> void:
 	for name in [
 		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
+		"_calendar_panel",
 	]:
 		var panel = _main.get(name)
 		if panel != null and panel.has_method("mark_dirty"):
@@ -404,3 +422,72 @@ func _open_the_council() -> void:
 	_main._windows.open("bloc")
 	if _main._bloc_panel != null:
 		_main._bloc_panel.mark_dirty()
+
+
+## Fill the diary so a frame of it shows something. U6a.
+##
+## Three bookings and one act, because the strip draws three different things and
+## a frame that only proves one of them is the class of frame --coerce exists to
+## avoid: a booking in a future month, a KEPT appointment in the past (so the
+## resolved styling is visible), and a cooldown expiry the player never entered,
+## which is the headline -- dated state the game already carried and never showed.
+##
+## Through Calendar.book() and main.gd's own dispatch rather than by appending to
+## the register, so the frame captures what the game produces rather than what a
+## tool arranged.
+func _fill_the_diary() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var loader = _main._loader
+	var ns = state.player()
+
+	# The act. Fires now, so its own cooldown becomes a future date on the strip.
+	var partners: Array = state.nations.keys()
+	partners.sort()
+	for target_id in partners:
+		if String(target_id) == ns.id:
+			continue
+		var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+		if acts.is_empty():
+			continue
+		Diplomacy.execute(state, loader.diplomatic_actions, acts[0], ns.id, String(target_id))
+		break
+
+	# A booking two months out, and a law next month.
+	for spec in [
+		{"months": 2, "day": 12, "kind": CalendarK.KIND_DIPLOMATIC},
+		{"months": 1, "day": 19, "kind": CalendarK.KIND_LAW},
+	]:
+		var total: int = state.year * 12 + (state.month - 1) + int(spec["months"])
+		var year: int = total / 12
+		var month: int = total % 12 + 1
+		if String(spec["kind"]) == CalendarK.KIND_LAW:
+			var laws := Legislature.available(ns, loader.laws)
+			if not laws.is_empty():
+				Calendar.book(state, Calendar.make_entry(
+					CalendarK.KIND_LAW, year, month, int(spec["day"]),
+					"", "", String(laws[0].id)
+				))
+			continue
+		for target_id in partners:
+			if String(target_id) == ns.id:
+				continue
+			var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+			if acts.is_empty():
+				continue
+			Calendar.book(state, Calendar.make_entry(
+				CalendarK.KIND_DIPLOMATIC, year, month, int(spec["day"]),
+				String(acts[0].id), String(target_id)
+			))
+			break
+
+	# One already kept, dated a fortnight ago, so the resolved styling is in the
+	# frame too. Appended directly and resolved: a past date cannot be booked
+	# through book(), which is the refusal the panel test asserts.
+	var kept := Calendar.make_entry(
+		CalendarK.KIND_RESHUFFLE, state.year, state.month, maxi(int(state.day) - 14, 1),
+		"", "", "", "health", String(ns.coalition_party_ids[0]) if not ns.coalition_party_ids.is_empty() else ""
+	)
+	state.appointments.append(kept)
+	Calendar.resolve(state, Calendar.verb_key(kept), true)

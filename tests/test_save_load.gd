@@ -33,6 +33,8 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -95,6 +97,7 @@ func _init() -> void:
 	_run_bloc_roundtrip(loader)
 	_run_agenda_roundtrip(loader)
 	_run_defence_roundtrip(loader)
+	_run_diary_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -1076,3 +1079,75 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## U6a adds ONE serialised field and earns NO bump, and the interesting half is
+## what it did not add. Three claims, each asserted rather than argued:
+##
+##   1. `appointments` round-trips. A booking is a command the player issued; a
+##      save that lost it would eat that command silently.
+##   2. An ABSENT `appointments` reads as "nothing booked", which is CORRECT for
+##      every version-13 save because those games had no diary to book into.
+##      `measures`' case at V1.3c, down to being player-created state derivable
+##      from nothing -- and like `measures` it earns no bump.
+##   3. `day` is NOT in the game_state dict at all, and round-trips anyway
+##      because save_manager.gd carries clock.day at the payload's top level.
+##      This is the assertion worth having rather than the bump: it PINS the
+##      property that there is exactly one record of the date, so a later session
+##      that folds the day into GameState.to_dict() turns this red and has to
+##      come and say why it wants two records of one fact.
+##
+## The field that WOULD have earned a bump was a spent-days counter -- absent it
+## reads 0, and a player eight days into a month reloads with all of them back.
+## U6a's probe cut the currency it counted before any of it was written, so the
+## question never reached game_state.gd's list at all. docs/calendar-model.md §2.
+func _run_diary_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.day = 17
+
+	var entry := Calendar.make_entry(
+		CalendarK.KIND_DIPLOMATIC, state.year, state.month + 2, 9, "state_visit", "DEU"
+	)
+	var booked: Dictionary = Calendar.book(state, entry)
+	if not bool(booked["ok"]):
+		_fail("diary round trip could not book: %s" % String(booked["error"]))
+		return
+	# One resolved entry too, so the round trip covers a status the pruner reads
+	# rather than only the one it never touches.
+	var done := Calendar.make_entry(
+		CalendarK.KIND_LAW, state.year, state.month, 3, "", "", "high_earner_surtax"
+	)
+	state.appointments.append(done)
+	Calendar.resolve(state, Calendar.verb_key(done), true)
+
+	var dict: Dictionary = state.to_dict()
+
+	# (3) The day is deliberately absent from the state's own dictionary.
+	if dict.has("day"):
+		_fail("GameState.to_dict() carries `day` -- that is a second record of a fact save_manager.gd already saves, and the two can disagree")
+
+	var loaded = GameState.from_dict(dict)
+	if loaded.appointments.size() != 2:
+		_fail("diary round-tripped %d entries, expected 2" % loaded.appointments.size())
+		return
+
+	# (1) Both halves, by content rather than by count.
+	var still_booked := Calendar.booked(loaded)
+	if still_booked.size() != 1:
+		_fail("%d bookings survived the round trip, expected 1" % still_booked.size())
+	elif String(still_booked[0]["action_id"]) != "state_visit" or String(still_booked[0]["target_id"]) != "DEU":
+		_fail("the booking came back as %s -- a save that garbles a command is worse than one that drops it" % [still_booked[0]])
+	if String(still_booked[0].get("person_id", "MISSING")) != "":
+		_fail("the entry's unread person_id did not survive -- U6b re-keys the register if it has to add one")
+
+	# (2) Absent, and correct rather than silently wrong.
+	var without: Dictionary = state.to_dict()
+	without.erase("appointments")
+	var no_diary = GameState.from_dict(without)
+	if not no_diary.appointments.is_empty():
+		_fail("an absent appointments register did not read as an empty diary")
+	if not Calendar.due(no_diary, no_diary.year + 5, 12, 28).is_empty():
+		_fail("an absent diary produced appointments out of nothing -- 'nothing booked' is the only correct reading of a version-13 save")
+
+	if GameState.SAVE_VERSION != 13:
+		_fail("SAVE_VERSION is %d -- U6a argued for it STAYING 13, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

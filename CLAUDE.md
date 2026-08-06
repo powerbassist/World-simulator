@@ -149,7 +149,7 @@ capturing pre-mutation figures. The tool now marks panels dirty in `main.gd`'s o
 idiom, and `_apply_view()` runs four frames before the capture rather than one. `--headless` draws nothing, so a green suite says nothing about
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
-windowed, not headless — and takes `--layer`, `--hover` and (V1.3c) `--coerce`,
+windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
 so every map layer can be captured with something actually on it. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
@@ -437,10 +437,87 @@ dirty in `main.gd`'s own idiom. The nation panel's fold also reappeared one sess
 after V1.3e paid for it there, and **height alone could not fix it**: four verbs are
 ~136px against a ~886px ceiling, so it took 80px of height plus two tightenings.
 
-**Next: U6** — the calendar as a scheduling skin over existing verbs, plus the
-named-individual roster V1.1d deferred. It is the only named successor left.
+**U6 split, and U6a shipped the president's diary.** The row counted **~40
+surfaces and four machines** — the largest ever on this project — so it split on
+machine count, V1.3e's trigger, cutting the half with the unmade content
+decision exactly as U5b cut U5c. **U6b is the roster.**
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g and U1–U5 are done. V1.1e (upper house and
+**The session is judged on legibility, not on scarcity, and that is a
+measurement rather than a preference.** Every observable here is
+piecewise-constant across a month: `clock.gd` has emitted `day_advanced` since
+the MVP and nothing in `src/sim/` has ever listened, so 14 March and 22 March
+differ only in the label — which makes booking *as a replacement for acting* a
+deferral that buys nothing, V1.3c's and V1.3d's strictly-dominated shape a third
+time. So **booking is optional**, every verb keeps its act-now button, and
+`tests/test_calendar.gd` asserts a booking moves nothing at the moment it is
+made. What the diary shows instead is dated state the game has carried for
+sessions with no surface anywhere: election day, the European election, the
+presidential term, the council's next proposal and its pending vote, the
+dissolution lockout, and every diplomatic and legislative cooldown expiry.
+
+**The one tuned constant this session would have added was DELETED by its own
+probe, which is a first.** A monthly budget of the player's days was swept
+against a band fixed before the sweep ran, and the band is not mis-tuned but
+**structurally unreachable**: the median month offers 27 legal acts asking 124
+days, so every budget from 4 to 24 bound in **100 %** of months. A ceiling that
+always binds is a cap, not an allocation. Deleted rather than left unused —
+V1.3e's treatment of `AGREEMENT_ACCEPT_MIN` — so `src/sim/calendar_constants.gd`
+carries **no tuned constant at all**. The reason is carried forward because it is
+not about calendars: `available()` returns what is **legal** and nothing yet
+models what the player **wants**, so any ceiling priced against legality always
+binds. That gap is a session, not a constant.
+
+**The probe corrected itself twice and a panel test found the third, which is
+eight sessions running.** The fixed-date density table read a player who never
+acts, so cooldowns — much the densest source — reported exactly **0**; and it
+counted *after* the tick, so an election had already pushed its own date forward
+and 168 months showed **one**. Both are V1.3f's measuring-the-wrong-state error,
+in the file written to avoid it: 19.6 % → **31.0 %**. The third is sharper than
+the average: a **new game's next twelve months are completely empty**, because
+France's nearest dated event is sixteen months out and cooldowns do not exist
+until the player has acted — so the page every player sees first is the page with
+nothing on it. The pre-committed response to a thin diary was shape rather than a
+constant (widening the horizon would have been the constant, since it also bounds
+booking), so: a **twelve-month strip** rather than a month's page, a `later`
+footer, and a `Next:` line outside the scroll.
+
+**`src/sim/calendar.gd` preloads no other system, and the test reads the file to
+say so.** `due()` returns entries as **data** and `main.gd` fires the verb —
+`cabinet-model.md`'s orchestrator precedent one scale wider, and it cost **zero**
+new preloads because `main.gd` already had all three. `_queue_effect()`'s U4
+baseline moved from the button press to arrival, because a booking commits
+nothing in the month it is made. `clock.gd` emits `month_elapsed` **before**
+`day_advanced`, so a day-1 booking acts *after* that month's tick; `due()` reads
+`<=` rather than `==`, so a save reloaded past a date still fires it.
+
+**The re-run is bit-identical across all thirteen existing regimes, and a
+fourteenth was needed for a reason V1.3g's was not.** `balance_probe.gd` and
+`tests/test_balance.gd` are month loops with **no clock** — this harness has never
+called `advance_one_day()` — so a day-resolution dispatch was structurally
+invisible to all thirteen and their bit-identity would have meant nothing. The day
+loop now runs for every regime; with an empty register it is one `is_empty()`
+check.
+
+**Booking does NOT go on `nation_panel.gd`, and the plan said it would.** Every
+verb row there is an HBox holding an autowrapping summary label beside one button:
+a second button narrows the label, the wrap grows the row, and that panel is at
+860px against a ~886 ceiling having paid for that fold twice. Booking lives on the
+diary alone. The **screenshot pass earned its keep for the sixth session running**
+— `upcoming()` filtered to unfired entries, so the strip's own resolved-entry
+styling was dead code and a kept appointment vanished from the diary. And
+`tests/test_state_copy.gd` had a branch that had **never run**: its array probe
+pushes a float sentinel, every copied Array had been untyped until now, and the
+three `Array[Dictionary]` fields were all excluded for unrelated reasons — so it
+reported "shared with the copy" for a field that is duplicated correctly.
+
+**Next: U6b** — the named-individual roster, **political faces only** (foreign
+leaders, party leaders, ministers). Each is the face of a target that already
+exists, so *no new effect channel* stays literally true; a journalist has none,
+and journalists, celebrities and business therefore belong to `docs/tiers/v1.md`
+§4 and §5 with the mechanisms that give them something to do. The diary's entry
+already carries an unread `person_id`, so U6b is additive.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, U1–U5 and U6a are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
@@ -485,7 +562,16 @@ nothing, so an absent register silently withdraws the player's own forces and dr
 their bill with them. `tests/test_save_load.gd` asserts all four, and the split is
 the assertion worth having rather than the bump: it **pins** the property that
 obliged deployments are derived, so a later session making them stateful turns it
-red and has to come and say why.
+red and has to come and say why. **U6a adds one field and earns nothing, and what
+it did NOT add is the interesting half**: `appointments` absent reads as "nothing
+booked", correct for every version-13 save because those games could not book one
+— `measures`' case exactly. `GameState.day` is not serialised at all, because
+`save_manager.gd` already carries `clock.day` at the payload's top level and a
+copy in `to_dict()` would be two records of one fact; the test asserts its
+**absence**, which pins that property. And the field that *would* have earned a
+bump — a spent-days counter, which reads 0 when absent and hands a save-scumming
+player their month back — was never written, because the probe cut the currency it
+counted first.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

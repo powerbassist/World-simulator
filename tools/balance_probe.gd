@@ -35,6 +35,8 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
@@ -219,6 +221,24 @@ const DEFENCE_REGIMES := {
 	"managed_signs_pact": {"budget": REGIMES["managed"], "pact_month": 6, "deploy_month": 12},
 }
 
+## U6a's fourteen years, and the FOURTEENTH regime. Same argument as the
+## eleventh, twelfth and thirteenth: a booking is a VERB, and no budget regime
+## issues a command.
+##
+## But this one exists for a second reason the others did not have, and it is the
+## structural one. Every regime above is a MONTH LOOP WITH NO CLOCK -- this file
+## has never once called advance_one_day() -- so a diary that fires on a day is
+## invisible to all thirteen, and their coming back bit-identical would mean
+## nothing rather than something. The regime below steps days itself so that the
+## day-resolution dispatch main.gd runs is exercised at least once here.
+##
+## The other thirteen call Calendar nowhere at all, so their bit-identity is a
+## property of the code rather than a measurement: with an empty register the
+## dispatch is one is_empty() check, and no regime books.
+const CALENDAR_REGIMES := {
+	"managed_books_ahead": {"budget": REGIMES["managed"], "book_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -265,6 +285,9 @@ func _init() -> void:
 		for name in DEFENCE_REGIMES.keys():
 			var regime: Dictionary = DEFENCE_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, int(regime["pact_month"]), int(regime["deploy_month"]))
+		for name in CALENDAR_REGIMES.keys():
+			var regime: Dictionary = CALENDAR_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, int(regime["book_month"]))
 
 	quit(0)
 
@@ -289,7 +312,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -360,6 +383,21 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == deploy_month:
 			_deploy_forces(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == book_month:
+			_book_ahead(state, loader, regime_name, year, month)
+
+		# U6a. The day loop this file has never had, and it runs for EVERY regime
+		# rather than only the one that books -- a dispatch that only ever executes
+		# under the regime designed to exercise it is not a dispatch anybody has
+		# tested. With an empty register Calendar.due() is one is_empty() check, so
+		# the thirteen regimes above are provably unchanged by it.
+		state.day = 0
+		for d in range(_days_in_month(month, year)):
+			state.day = d + 1
+			for appointment in Calendar.due(state, year, month, state.day):
+				_keep_appointment(state, loader, appointment, regime_name)
+		Calendar.tick_month(state)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -827,3 +865,107 @@ func _check(state, ns, year: int, month: int) -> Array[String]:
 		out.append("%s debt ratio running away at %.0f%%" % [at, ns.debt_to_gdp_pct()])
 
 	return out
+
+
+## U6a. Books three acts three months out -- one of each bookable kind, so the
+## dispatch below runs every branch of its own match rather than only the
+## diplomatic one.
+func _book_ahead(state, loader, regime_name: String, year: int, month: int) -> void:
+	var ns = state.player()
+	var when := _months_ahead(year, month, 3)
+	var booked := 0
+
+	var partners: Array = state.nations.keys()
+	partners.sort()
+	for target_id in partners:
+		if String(target_id) == ns.id:
+			continue
+		var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+		if acts.is_empty():
+			continue
+		if bool(Calendar.book(state, Calendar.make_entry(
+			CalendarK.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 7,
+			String(acts[0].id), String(target_id)
+		))["ok"]):
+			booked += 1
+		break
+
+	var laws := Legislature.available(ns, loader.laws)
+	if not laws.is_empty():
+		if bool(Calendar.book(state, Calendar.make_entry(
+			CalendarK.KIND_LAW, int(when["year"]), int(when["month"]), 14,
+			"", "", String(laws[0].id)
+		))["ok"]):
+			booked += 1
+
+	if not ns.coalition_party_ids.is_empty():
+		var party_id := String(ns.coalition_party_ids[0])
+		for portfolio in ns.cabinet.keys():
+			if not Cabinet.can_assign(ns, String(portfolio), party_id):
+				continue
+			if bool(Calendar.book(state, Calendar.make_entry(
+				CalendarK.KIND_RESHUFFLE, int(when["year"]), int(when["month"]), 21,
+				"", "", "", String(portfolio), party_id
+			))["ok"]):
+				booked += 1
+			break
+
+	print("  %d-%02d %s: booked %d appointment(s) for %d-%02d" % [
+		year, month, regime_name, booked, int(when["year"]), int(when["month"]),
+	])
+
+
+## main.gd's _resolve_appointments() dispatch, in a probe that has no orchestrator.
+## Kept deliberately close to it: the point of the fourteenth regime is that the
+## day-resolution path the game runs is exercised here at least once, and a
+## dispatch that diverged from main.gd's would exercise something else.
+func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) -> void:
+	var ns = state.player()
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var ok := false
+	var label := ""
+
+	match String(entry.get("kind", "")):
+		CalendarK.KIND_DIPLOMATIC:
+			for action in loader.diplomatic_actions:
+				if String(action.id) != String(entry.get("action_id", "")):
+					continue
+				var result := Diplomacy.execute(
+					state, loader.diplomatic_actions, action, ns.id,
+					String(entry.get("target_id", ""))
+				)
+				ok = bool(result.get("ok", false))
+				label = String(action.action_name)
+		CalendarK.KIND_LAW:
+			var law = _find_law(loader, String(entry.get("law_id", "")))
+			if law != null:
+				var result := Legislature.propose(state, loader, law)
+				ok = bool(result.get("passed", false))
+				label = String(law.law_name)
+		CalendarK.KIND_RESHUFFLE:
+			var portfolio := String(entry.get("portfolio", ""))
+			var party_id := String(entry.get("party_id", ""))
+			if Cabinet.can_assign(ns, portfolio, party_id):
+				Cabinet.assign(state, portfolio, party_id, party_list)
+				ok = true
+			label = portfolio
+
+	Calendar.resolve(state, Calendar.verb_key(entry), ok)
+	print("  %d-%02d-%02d %s: kept '%s' — %s" % [
+		state.year, state.month, state.day, regime_name, label,
+		"carried" if ok else "did not carry",
+	])
+
+
+func _months_ahead(year: int, month: int, delta: int) -> Dictionary:
+	var total := year * 12 + (month - 1) + delta
+	return {"year": total / 12, "month": total % 12 + 1}
+
+
+## Duplicated from src/core/clock.gd rather than reached for: this file preloads
+## no Node, and a probe that instantiated a Clock to ask how long February is
+## would be carrying a scene-tree object through a headless month loop.
+func _days_in_month(m: int, y: int) -> int:
+	if m == 2 and (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)):
+		return 29
+	return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]

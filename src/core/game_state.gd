@@ -110,6 +110,20 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     their bill with them. The test asserts all four, and the split is the
 ##     assertion worth having: it PINS the property that obliged deployments are
 ##     derived, so a later session that makes them stateful turns it red.
+##
+##   - U6a adds `appointments` and does NOT bump, and the interesting half is what
+##     it did not add. An absent diary reads as "nothing booked", correct for every
+##     version-13 save because those games could not book -- `measures` at V1.3c,
+##     down to being player-created state derivable from nothing. The field that
+##     WOULD have earned a bump was a spent-days counter, which reads 0 when absent
+##     and hands a player eight days into a month all of them back on reload; the
+##     probe cut the currency it counted before any of it was written, so the
+##     question never reached this list. And `day` earns nothing because it is not
+##     serialised at all: save_manager.gd already carries clock.day at the payload's
+##     top level, so the mirror's source round-trips and a copy here would be two
+##     records of one fact. tests/test_save_load.gd asserts the version is STILL 13,
+##     so a later session raising it has to come and say why -- the shape V1.3c left
+##     and V1.3d answered.
 const SAVE_VERSION := 13
 
 var save_version: int = SAVE_VERSION
@@ -131,6 +145,19 @@ var scenario_id: String = ""
 ## The Clock stays authoritative for the date; folding it in here is S9's call.
 var year: int = 0
 var month: int = 0
+
+## Mirrored from the Clock on each DAILY tick — U6a, the first thing in this
+## project to need a resolution finer than a month. Same S9 call as year/month:
+## the Clock stays authoritative, this is a copy so src/sim/ can read a date
+## without knowing a Clock exists.
+##
+## NOT serialised, and that is a property rather than an oversight:
+## save_manager.gd already writes `clock.day` at the payload's top level and
+## restores it, so the mirror's source round-trips and main.gd re-mirrors it on
+## the first day tick after a load. A second copy in game_state's own dict would
+## be two records of one fact that can disagree — the divergence the symmetric
+## pair key exists to make impossible, in a smaller place.
+var day: int = 1
 
 var nations := {}  # String id -> NationState
 
@@ -236,6 +263,28 @@ var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 ## The one register in the project written by a module that is not answering a
 ## command, because nobody issues an obligation.
 var deployments := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of deployment terms
+
+## The president's diary — U6a. The player's own bookings, each a deferred call
+## to a command that already exists: {kind, year, month, day, action_id,
+## target_id, law_id, portfolio, party_id, person_id, status}. Ids only, never
+## object references — which is what makes it serialisable, and is the constraint
+## that kept src/sim/calendar.gd from needing to know what a Law or a
+## DiplomaticAction is.
+##
+## Global rather than per-nation, and it stays correct when a second nation
+## becomes playable: a diary belongs to whoever is holding the pen, and there is
+## exactly one player. Bounded by calendar_constants.MAX_APPOINTMENTS and pruned
+## of resolved entries by Calendar.tick_month(), so it is the one register here
+## with no accumulator behind it.
+##
+## Earns NO SAVE_VERSION bump, and the test says so rather than this comment:
+## absent, it reads as "nothing booked", which is correct for every version-13
+## save because those games could not book one. That is `measures`' case exactly
+## — likewise player-created state derivable from nothing, and likewise not a
+## bump. This is the WHOLE of what U6a serialises: the one field that would have
+## earned a bump was a spent-days counter, and U6a's probe cut the currency it
+## counted before any of it was written. See docs/calendar-model.md §2.
+var appointments: Array[Dictionary] = []
 
 var history: Array[Dictionary] = []
 
@@ -506,6 +555,11 @@ func duplicate_state():
 	# mutate the live register -- silently, sixty times per refresh.
 	gs.pacts = pacts.duplicate(true)
 	gs.deployments = deployments.duplicate(true)
+	# Nothing in Budget.project()'s pipeline ticks Calendar today, so this copy
+	# buys nothing yet -- and it is taken anyway for the reason the two lines
+	# above spell out: a shared reference is one added tick away from a budget
+	# panel repaint mutating the player's live diary, sixty times a second.
+	gs.appointments = appointments.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -542,6 +596,7 @@ func to_dict() -> Dictionary:
 		"bloc": bloc,
 		"pacts": pacts,
 		"deployments": deployments,
+		"appointments": appointments,
 		"history": history,
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
@@ -695,5 +750,17 @@ static func from_dict(d: Dictionary):
 	for entry in acts:
 		typed_acts.append(entry as Dictionary)
 	gs.foreign_acts = typed_acts
+
+	# Absent, this reads as "nothing booked" -- correct for every version-13 save,
+	# because those games had no diary to book into. `measures`' case at V1.3c,
+	# and like `measures` it earns no bump. `day` is deliberately NOT read back
+	# here: save_manager.gd carries clock.day at the payload's top level and
+	# main.gd re-mirrors it, so a second copy in this dict would be two records of
+	# one fact. tests/test_save_load.gd asserts both halves.
+	var appts: Array = d.get("appointments", [])
+	var typed_appts: Array[Dictionary] = []
+	for entry in appts:
+		typed_appts.append(entry as Dictionary)
+	gs.appointments = typed_appts
 
 	return gs
