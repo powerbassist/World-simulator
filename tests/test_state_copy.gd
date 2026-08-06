@@ -22,6 +22,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 const SENTINEL_KEY := "__test_state_copy_sentinel__"
 const SENTINEL_NUMBER := -987654.321
@@ -63,6 +64,23 @@ func _init() -> void:
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Opinion.tick_month(state)
+
+	# The pair registers, written directly. This closes a hole the reflective check
+	# below cannot see on its own: an EMPTY Dictionary field that duplicate_state()
+	# forgets entirely still passes both checks, because 0 entries equals 0 entries
+	# and a fresh {} cannot be seen as shared. `measures` sat in that hole from V1.3c
+	# until V1.3g, and `pacts`/`deployments` would have joined it.
+	state.measures[Relations.directed_key("FRA", "DEU")] = {
+		"action_id": "copy_probe", "kind": "tariff", "severity": 0.4,
+		"since_year": state.year, "since_month": state.month, "retaliated": false,
+	}
+	state.pacts[Relations.key("FRA", "ITA")] = {
+		"action_id": "copy_probe", "action_name": "Copy Probe",
+		"since_year": state.year, "since_month": state.month,
+	}
+	state.deployments[Relations.directed_key("FRA", "ITA")] = {
+		"kind": "chosen", "since_year": state.year, "since_month": state.month,
+	}
 
 	var copy = state.duplicate_state()
 

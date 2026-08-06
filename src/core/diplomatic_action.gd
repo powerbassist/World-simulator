@@ -21,6 +21,7 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const TK = preload("res://src/sim/trade_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
+const DFK = preload("res://src/sim/defence_constants.gd")
 
 
 var id: String = ""
@@ -37,11 +38,16 @@ var cooldown_months: int = 0
 ## acting nation's own state.
 var preconditions: Array = []
 
-## Four channels: `relations` (required and non-zero), `bloc_offset` (optional),
-## `agreement` (V1.3b, optional) and `measure` (V1.3c, optional). The last two are
-## mutually exclusive -- a measure breaks an agreement on the same pair, so an
-## action carrying both would describe an order-dependent outcome.
+## Five channels: `relations` (required and non-zero), `bloc_offset` (optional),
+## `agreement` (V1.3b), `measure` (V1.3c) and `pact` (V1.3g), the last three
+## optional and MUTUALLY EXCLUSIVE -- each is a separate counterparty decision, and
+## one verb has one answer.
 var effects: Dictionary = {}
+
+## The list the unknown-channel check reads, so adding a sixth channel is one entry
+## here rather than a fifth clause in a boolean nobody re-reads. V1.3g found that
+## chain at four terms and turned it into a list before adding to it.
+const EFFECT_CHANNELS := ["relations", "bloc_offset", "agreement", "measure", "pact"]
 
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String], bloc_keys: Array):
@@ -141,18 +147,36 @@ static func _extract_effects(d: Dictionary, action_id: String, filename: String,
 	if raw.has("measure"):
 		out["measure"] = _extract_measure(raw["measure"], action_id, filename, errors)
 
-	# An action cannot both sign a treaty and impose a tariff on the same pair: the
-	# first writes the agreement register and the second erases it, so the file
-	# would describe an outcome that depends on the order Diplomacy.execute()
-	# happens to apply its channels in. Refused at load rather than resolved by a
-	# rule nobody would remember.
+	if raw.has("pact"):
+		out["pact"] = _extract_pact(raw["pact"], action_id, filename, errors)
+
+	# V1.3g: at most ONE of the three counterparty channels, where V1.3c wrote a
+	# single pairwise test. Widened rather than extended, because a second pairwise
+	# test beside the first is the shape that silently misses the third pair.
+	#
+	# agreement+pact is the one combination that is technically harmless -- separate
+	# registers, no erase ordering -- and it is refused anyway: it would give one
+	# action TWO counterparty gates, and execute()'s single `blocked_by_partner`
+	# would have to become an OR that a later session has to unpick.
+	var counterparty_channels: Array = []
+	for channel in ["agreement", "measure", "pact"]:
+		if raw.has(channel):
+			counterparty_channels.append(channel)
+	if counterparty_channels.size() > 1:
+		errors.append("%s: %s carries %s -- an action may write at most one of the agreement, measure and pact registers, because each is a separate counterparty decision and one verb has one answer" % [
+			filename, action_id, str(counterparty_channels)
+		])
+
+	# V1.3c's own message, kept for the pair it was written about: a measure breaks
+	# an agreement on the same pair, so an action carrying both would describe an
+	# order-dependent outcome rather than merely an ambiguous one.
 	if raw.has("agreement") and raw.has("measure"):
 		errors.append("%s: %s carries both effects.agreement and effects.measure -- a measure breaks an agreement on the same pair, so one action cannot do both" % [
 			filename, action_id
 		])
 
 	for key in raw.keys():
-		if key != "relations" and key != "bloc_offset" and key != "agreement" and key != "measure":
+		if not EFFECT_CHANNELS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, action_id, key])
 
 	return out
@@ -224,6 +248,43 @@ static func _extract_measure(raw, action_id: String, filename: String, errors: A
 			])
 
 	return out
+
+
+## The FIFTH effect channel, added at V1.3g: an action that signs or abandons a
+## defensive pact, or opens or closes a deployment under one. Same shape as
+## effects.measure above and for the same reason -- V1.3g ships no data/pacts/
+## either, and that is the sixth session running.
+##
+## FOUR ops on one channel rather than a fifth channel for the deployment verbs. A
+## chosen deployment needs a verb, and giving it a channel of its own would be a
+## parallel vocabulary for a mechanism that already exists -- the objection
+## src/core/diplomatic_action.gd's own header raises against borrowing `position`
+## from the law template.
+##
+## No op carries terms at all, which is why this is the shortest of the three: a
+## pact has no severity and no multiplier, and a deployment's cost is DERIVED from
+## the actor's capability rather than authored. Terms here would be an author
+## believing they had written something read by nobody -- the same rule a measure's
+## "lift" and an agreement's "exit" already get, applied to every op.
+static func _extract_pact(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.pact must be an object" % [filename, action_id])
+		return {}
+
+	var op = raw.get("op", "")
+	if typeof(op) != TYPE_STRING or not DFK.PACT_OPS.has(op):
+		errors.append("%s: %s effects.pact.op '%s' is not a recognised op (%s)" % [
+			filename, action_id, str(op), str(DFK.PACT_OPS)
+		])
+		return {}
+
+	for key in raw.keys():
+		if key != "op":
+			errors.append("%s: %s effects.pact.%s is set, but no pact op reads terms -- a deployment's cost is derived from capability, not authored" % [
+				filename, action_id, key
+			])
+
+	return {"op": op}
 
 
 ## The third effect channel, added at V1.3b: an action that enters or leaves a

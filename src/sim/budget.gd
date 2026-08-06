@@ -16,6 +16,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const Defence = preload("res://src/sim/defence.gd")
 
 
 static func tick_month(state) -> void:
@@ -63,6 +64,15 @@ static func recompute(state, ns) -> void:
 		+ ns.other_spending_pct_gdp
 		+ ns.debt_service_pct_gdp
 		+ ns.bloc_transfer_pct_gdp
+		# V1.3g's line, and on the spending side for exactly the reasons above it:
+		# not a sixth SPENDING_KEYS entry, because that would key a sixth cabinet
+		# portfolio and the player sets this one with no slider at all. Read straight
+		# off NationState and NOT recomputed here, because Defence.tick_month() runs
+		# after this and an obligation that arrived this month must bill next month --
+		# the same one-month lag the bloc transfer takes, and for the same reason: a
+		# bill that widened the deficit inside the month would feed the deficit
+		# precondition that decides which verbs are available.
+		+ ns.deployment_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -207,6 +217,12 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# once rather than rediscovered.
 		Bloc.tick_month(sim, loader)
 		Diplomacy.tick_month(sim, loader)
+		# In main.gd's slot again, and required for the same reason Bloc and Diplomacy
+		# are: a projection that held defence frozen would report the bill of a player
+		# already under an alliance obligation as never having existed, and would miss
+		# an obligation arriving inside the projected window entirely. V1.3b's repair,
+		# made a third time rather than rediscovered a third time.
+		Defence.tick_month(sim)
 		out.append(snapshot(sim))
 	return out
 
@@ -235,6 +251,12 @@ static func snapshot(state) -> Dictionary:
 		"debt_service_pct_gdp": ns.debt_service_pct_gdp,
 		"bloc_transfer_pct_gdp": ns.bloc_transfer_pct_gdp,
 		"bloc_burden": ns.bloc_burden,
+		# V1.3g. On the snapshot rather than read off NationState by the panel, for
+		# the reason every other figure here is: the budget panel compares a
+		# PROJECTED month against the current one, and a projection has no
+		# NationState the panel can reach.
+		"deployment_bill_pct_gdp": ns.deployment_bill_pct_gdp,
+		"military_capability": ns.military_capability,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,

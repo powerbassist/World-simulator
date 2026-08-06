@@ -15,6 +15,8 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const DefenceK = preload("res://src/sim/defence_constants.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -540,6 +542,26 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# wrote last month, and before Elections, which runs last on settled state.
 	Diplomacy.tick_month(_state, _loader)
 
+	# V1.3g: capability converges, and alliance obligations are reconciled against
+	# the measures Diplomacy has just finished writing. AFTER Diplomacy so the
+	# obligation arrives in the month the measure did -- that is the one thing here
+	# with no lag, and it is what the whole feature is about. Both PRICES then lag by
+	# exactly one month together, because Budget has already closed this month's
+	# books: a same-month bill with a next-month opinion cost would be two lags where
+	# one will do, and they would disagree about which month the deployment started.
+	#
+	# The lag also breaks a real loop structurally rather than by iterating: bill ->
+	# deficit -> a PRECONDITION_FIELDS entry -> which verbs are available -> measures
+	# -> obligations -> bill. src/sim/bloc.gd makes the same call for the same reason.
+	# Counted either side of the tick so an obligation that opens can be carded
+	# without src/sim/ growing a record for the UI to read. Derived here rather than
+	# serialised, which is the same call V1.3f made for foreign_acts in reverse: that
+	# one is state the sim already writes, this one is a difference the UI can see
+	# for itself.
+	var obliged_before := _obliged_count()
+	Defence.tick_month(_state)
+	_card_obligations(obliged_before)
+
 	# V1.3f: and now the nine act on their own initiative inside that tick, so
 	# whatever they just did is read off the record and put in front of the player.
 	_card_foreign_acts(year, month)
@@ -558,6 +580,40 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_clock.paused = true
 		_election_panel.show_results(results)
 		_election_panel.show()
+
+
+## The player's obliged deployments, right now. Only the obliged ones: a chosen
+## deployment is a command the player just issued and does not need a card telling
+## them they issued it.
+func _obliged_count() -> int:
+	if _state == null:
+		return 0
+	var n := 0
+	for ally_id in Defence.deployments_of(_state, _state.player_nation_id).keys():
+		if Defence.deployment_kind(_state, _state.player_nation_id, String(ally_id)) == DefenceK.DEPLOYMENT_OBLIGED:
+			n += 1
+	return n
+
+
+## V1.3g. An alliance obligation opening is the one thing in this game that puts a
+## standing charge on the player's budget with no command behind it, so it is
+## exactly the thing that must not arrive silently -- the player would otherwise see
+## a deficit move for a reason nothing on screen names, which is the class of
+## failure docs/trade-model.md's unread `refused_by_partner` belongs to.
+func _card_obligations(before: int) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	var now := _obliged_count()
+	if now <= before:
+		return
+
+	var ns = _state.player()
+	_hud.message_stack.push(
+		"Alliance obligation",
+		"Forces are committed under a defensive pact. The budget carries %.2f%% of GDP for as long as it stands, and only abandoning the pact ends it." % (
+			0.0 if ns == null else ns.deployment_bill_pct_gdp
+		),
+	)
 
 
 ## Put this month's foreign acts in the message column. V1.3f, and the first thing

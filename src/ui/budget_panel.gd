@@ -56,6 +56,13 @@ const FIGURE_ROWS := [
 	# leaving the budget, and the player did not set any of it with a slider.
 	# Reads "—" for a non-member, which is exactly 0.0 by construction.
 	["bloc_transfer", "  of which the Union"],
+	# V1.3g, beside the Union line and on the same argument a third time: money
+	# leaving the budget that the player set with no slider. It differs from both
+	# lines above in the way that matters most here -- an OBLIGED deployment is
+	# spending the player did not choose AT ALL, so a panel that did not show it
+	# would leave a deficit moving for a reason nothing on screen names.
+	# Reads "—" while nothing is deployed, which is every game that has not allied.
+	["deployments", "  of which deployments"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	["", ""],
@@ -301,6 +308,7 @@ func _refresh() -> void:
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
+	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 
@@ -324,6 +332,15 @@ func _bloc_text(snap: Dictionary) -> String:
 	if is_zero_approx(pct):
 		return "—"
 	return "%+.2f%% GDP" % pct
+
+
+## The same em dash again. Unsigned, unlike the Union line: a deployment only ever
+## costs, and there is no receiving side of one.
+func _deployment_text(snap: Dictionary) -> String:
+	var pct: float = float(snap.get("deployment_bill_pct_gdp", 0.0))
+	if is_zero_approx(pct):
+		return "—"
+	return _pct_and_eur(snap, "deployment_bill_pct_gdp")
 
 
 func _tariff_text(snap: Dictionary) -> String:

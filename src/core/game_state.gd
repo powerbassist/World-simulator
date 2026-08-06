@@ -22,6 +22,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const Defence = preload("res://src/sim/defence.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -93,7 +94,23 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     `foreign_acts` does NOT earn it -- absent it reads as "nothing has happened
 ##     yet", which is correct, and that is `measures`' case at V1.3c. The test
 ##     asserts both halves rather than leaving the distinction to this comment.
-const SAVE_VERSION := 12
+##   - V1.3g earns one, and again exactly ONE of its three additions is why, but
+##     the interesting part is that the third SPLITS. NationState.military_capability
+##     absent reads as 0.0 against a France that has spent 2.0 % of GDP on defence
+##     since before the game started: the deployment cost divides by it so every
+##     commitment jumps to the clamp, and would_accept_pact() reads the whole roster
+##     as militarily worthless. eu_member/neighbours' case in its strongest form.
+##     `pacts` does NOT earn it -- absent it reads as "nothing signed", correct for
+##     every version-12 save because those games could not sign one, which is
+##     `measures`' case again. `deployments` earns it on ONE HALF ONLY: an obliged
+##     entry is re-derived on the next tick from `pacts` x `measures`, both of which
+##     the save carries, and that fails soft for a month the way
+##     trade_baseline_by_partner does -- but a CHOSEN one is derivable from nothing,
+##     so an absent register silently withdraws the player's own forces and drops
+##     their bill with them. The test asserts all four, and the split is the
+##     assertion worth having: it PINS the property that obliged deployments are
+##     derived, so a later session that makes them stateful turns it red.
+const SAVE_VERSION := 13
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -189,6 +206,36 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## state to serialise -- the same property docs/opinion-model.md's polling noise
 ## gets for free. Written ONLY by src/sim/bloc.gd. See docs/bloc-model.md.
 var bloc := {}
+
+## Defensive pacts -- V1.3g, and the fifth register rather than a fifth KIND of
+## state. Symmetric pair state on the same key builder relations and agreements
+## use, because a mutual defence commitment has one shared value the way a
+## relationship and a contract do.
+##
+## An alliance looks like a SET, and the temptation was to make it one -- a second
+## object binding N nations, the shape `bloc` above took. It is not needed: the set
+## is a derived read, Defence.allies(), and the genuinely multilateral case already
+## exists as the bloc, which already carries `common_defence_floor`. V1.3g is the
+## first session since V1.3a to add two registers and no new shape.
+##
+## {action_id, action_name, since_year, since_month}. Written by
+## Diplomacy.execute() through the fifth effect channel, and by nothing else.
+var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
+
+## Deployments -- V1.3g. DIRECTED pair state on `measures`' separator, because
+## France committing forces in support of Germany and the reverse are two acts with
+## two bills, exactly as a tariff and its retaliation are.
+##
+## {kind, since_year, since_month, and action_id/action_name when a verb opened it}.
+## `kind` is "chosen" or "obliged", and the difference is not cosmetic: a chosen one
+## was a player command and is derivable from nothing, while an obliged one is a
+## LEVEL READ over (pacts x measures) that src/sim/defence.gd re-derives every
+## month. That is what makes an obligation impossible for the player to close and
+## what keeps it bounded -- see docs/defence-model.md §3.
+##
+## The one register in the project written by a module that is not answering a
+## command, because nobody issues an obligation.
+var deployments := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of deployment terms
 
 var history: Array[Dictionary] = []
 
@@ -386,6 +433,11 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	# relations themselves are pair state, seeded in new_game() once every
 	# nation exists.
 	Diplomacy.init_nation(ns)
+	# AFTER the spending line is loaded, unlike the two above, because capability is
+	# seeded at its equilibrium rather than at zero and the equilibrium IS the
+	# defence spending line. Seeding at zero would mean every nation in the roster
+	# spends the first decade of every game acquiring an army it already had.
+	Defence.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
@@ -448,6 +500,12 @@ func duplicate_state():
 	# penalties a defied rule is charging as never having existed -- and the budget
 	# panel is the one surface that promises "this is what will happen".
 	gs.bloc = bloc.duplicate(true)
+	# duplicate(true) rather than assignment, and for a sharper reason than the
+	# three above: Defence.tick_month() WRITES `deployments` on this copy when it
+	# reconciles obligations, so a shared reference would let a budget-panel repaint
+	# mutate the live register -- silently, sixty times per refresh.
+	gs.pacts = pacts.duplicate(true)
+	gs.deployments = deployments.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -482,6 +540,8 @@ func to_dict() -> Dictionary:
 		"agreements": agreements,
 		"measures": measures,
 		"bloc": bloc,
+		"pacts": pacts,
+		"deployments": deployments,
 		"history": history,
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
@@ -550,6 +610,38 @@ static func from_dict(d: Dictionary):
 			"since_month": int(entry.get("since_month", 0)),
 			"retaliated": bool(entry.get("retaliated", false)),
 		}
+
+	# V1.3g's two registers, re-inted field by field the same way. `pacts` absent
+	# reads as {} and that is CORRECT for every version-12 save -- those games could
+	# not sign one -- which is `measures`' case exactly and why it does not earn the
+	# bump on its own. `deployments` absent is correct for the OBLIGED half only,
+	# which Defence.tick_month() re-derives from the two registers above; the chosen
+	# half is derivable from nothing and is half of what SAVE_VERSION 13 is for.
+	var pact_reg: Dictionary = d.get("pacts", {})
+	for pair_key in pact_reg.keys():
+		var entry: Dictionary = pact_reg[pair_key]
+		gs.pacts[pair_key] = {
+			"action_id": entry.get("action_id", ""),
+			"action_name": entry.get("action_name", ""),
+			"since_year": int(entry.get("since_year", 0)),
+			"since_month": int(entry.get("since_month", 0)),
+		}
+
+	var deploy_reg: Dictionary = d.get("deployments", {})
+	for directed_key in deploy_reg.keys():
+		var entry: Dictionary = deploy_reg[directed_key]
+		var rebuilt := {
+			"kind": entry.get("kind", ""),
+			"since_year": int(entry.get("since_year", 0)),
+			"since_month": int(entry.get("since_month", 0)),
+		}
+		# Only a deployment a VERB opened carries these. An obliged one has no
+		# action behind it, which is the whole point of it, and writing empty
+		# strings in would make the panel unable to tell the two apart.
+		if entry.has("action_id"):
+			rebuilt["action_id"] = entry.get("action_id", "")
+			rebuilt["action_name"] = entry.get("action_name", "")
+		gs.deployments[directed_key] = rebuilt
 
 	# Re-floated and re-inted field by field, the same way agreements and measures
 	# are and for the same reason: JSON round-trips a whole-number severity as an

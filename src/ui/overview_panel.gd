@@ -14,6 +14,7 @@ extends PanelContainer
 ## censure resolution is called as a probe: resolve_censure() is pure, and
 ## government_panel.gd already reads it the same way.
 
+const Defence = preload("res://src/sim/defence.gd")
 const Government = preload("res://src/sim/government.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -182,6 +183,7 @@ func _refresh() -> void:
 	_lead.text = _lead_text(ns, censure, months_to_election, top, worst)
 
 	_fill_government(ns, censure)
+	_fill_defence(ns)
 	_fill_election(ns, months_to_election)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
@@ -302,6 +304,33 @@ func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 		var sat: float = float(satisfaction.get(issue, 0.0))
 		_figure("issues", K.ISSUE_LABEL.get(issue, issue), "%.0f%% of what people weigh" % (float(entry[1]) * 100.0))
 		_note("issues", _satisfaction_word(sat), _satisfaction_tone(sat))
+
+
+## V1.3g. Under GOVERNMENT rather than in a column or a window of its own: the
+## whole session's claim is that defence in this game is budgetary and political,
+## and a fifth column would have said the opposite before the player read a word.
+##
+## Two lines, and the second is the one that matters. Capability alone is a number
+## with no units the player can act on; capability WITH the price it sets is the
+## loop this session is built around -- spend, and commitments get cheaper.
+func _fill_defence(ns) -> void:
+	_caption("government", "Military capability %.2f — a deployment costs %.2f%% of GDP." % [
+		ns.military_capability, Defence.deployment_cost_pct_gdp(ns),
+	])
+
+	var allies: Array = Defence.allies(_state, ns.id)
+	if allies.is_empty():
+		return
+
+	# Only when there is one. A permanent "Alliances: none" is a row that says
+	# nothing in every game that never signs a pact, which is most of them.
+	var deployed := Defence.deployment_count(_state, ns.id)
+	if deployed == 0:
+		_caption("government", "Allied with %s." % ", ".join(allies))
+	else:
+		_note("government", "Allied with %s; %d deployment%s running." % [
+			", ".join(allies), deployed, "" if deployed == 1 else "s",
+		], UiTheme.BAD_TEXT)
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:

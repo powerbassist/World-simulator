@@ -140,7 +140,13 @@ roster stays 1:50m in `europe.geojson`, and `build_world()` excludes the ten so
 nothing is drawn twice.
 
 **`tools/screenshot.gd` exists now, and a UI session that does not run it is not
-finished.** `--headless` draws nothing, so a green suite says nothing about
+finished — and V1.3g found the bug in the tool itself.** Every setup flag writes sim
+state behind panels that have already refreshed, and hiding a window frame does
+**not** clear the child panel's own `visible`, so each panel spent its one dirty
+refresh on frame 1 and never rebuilt: `--defence --open budget` printed an em dash
+against a live 0.498 bill, and every state-mutating flag since `--coerce` had been
+capturing pre-mutation figures. The tool now marks panels dirty in `main.gd`'s own
+idiom, and `_apply_view()` runs four frames before the capture rather than one. `--headless` draws nothing, so a green suite says nothing about
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
 windowed, not headless — and takes `--layer`, `--hover` and (V1.3c) `--coerce`,
@@ -365,16 +371,82 @@ that spends nothing of V1.8's argument: an act by a simulated nation is state
 `tests/test_foreign_policy.gd` asserts **nothing in `src/sim/` reads it back** —
 V1.3e's *no grievance ledger* property survives only if that stays true.
 
-**Next: V1.3g, defence as domestic politics** — the last session of the block,
-taking defensive alliances with it.
+**V1.3g shipped defence, and the V1.3 block is complete.** `GameState.pacts` is
+symmetric pair state on `relations.gd`'s existing key builder and
+`GameState.deployments` is directed pair state on the one `measures` uses — **two
+registers and no new *shape* of live state**, the first session since V1.3a to add
+two and no kind. An alliance looks like a set and does not need to be stored as
+one: `Defence.allies()` derives it, and the genuinely multilateral case already
+exists as the bloc. Capability is a stock converging on the nation's own
+`spending_pct_gdp["defence"]`, so **`has_budget` was not lifted** — all ten nations
+already author that line, the nine's never moves, and `tests/test_defence.gd`
+asserts their capability sits still for a full run rather than leaving it to a
+comment. `SAVE_VERSION` is **13**.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–e and U1–U5 are done. V1.1e (upper house and
+**The obligation opens itself, and it is a LEVEL READ rather than an edge trigger.**
+That was the design pass's correction and it is the session's sharpest call:
+nothing in this project ever lifts a retaliation, so an obligation only the player
+could close is a permanent monotone charge and `DEPLOYMENT_BILL_MAX_PCT_GDP` stops
+being a guard rail — `IMPULSE_MAX` in a fifth place, avoided rather than found. The
+player still cannot close one; only the aggressor lifting its measure, or
+abandoning the pact, can.
+
+**What the obligation fires on was authored by nobody.** The probe found the nine
+**never coerce each other** — 168 months, no player, `state.measures` stays empty
+and every recorded act is `state_visit` — so the only thing that reaches an ally
+unprompted is the council's `common_external_tariff`. An alliance obligation
+therefore fires on a pact held **outside** the bloc and never on one held inside
+it: your pact with Britain bills you when Brussels turns on Britain. That is V1.3d
+meeting V1.3g, and it is why the decomposition's "reads a, d" was right in a way it
+could not have known.
+
+**The probe corrected the model three times, seven sessions running**, and the
+second correction moved what a constant is measured *against* rather than the
+constant: `defence` is weighted **0.00 by five blocs of six**, so no value of
+`DEPLOYMENT_OPINION_CHOSEN` can move the headline past the ±3.0 noise floor, and
+raising it until one did would be tuning against an arithmetic impossibility. The
+price is read on the rural row instead — V1.3a's own finding from the other
+direction. The third correction was that the first opinion table measured **half
+the price**, having set the load and not the bill that widens the deficit every
+bloc *does* weight. `DEPLOYMENT_OBLIGED_MULT` was **decorative at 1.50** and is
+1.75, solved off a measured slope. One deployment stays below the readable floor
+and **cannot be lifted above it** — the value needed saturates two — which is a
+structural bound recorded rather than traded against. Of five named triggers one
+fired: GBR unable to ally, the sixth time in the block, fixed by a sweep that put
+`PACT_ACCEPT_MIN` **below** the trade bar. The bill clamp was measured and found
+**slack** (0.586 against 2.00), a first for this block. The model, every constant
+and the measured tables are [docs/defence-model.md](docs/defence-model.md).
+
+**The re-run is bit-identical across every shared regime**, which the plan did not
+predict, and the probe explains it: `state_visit` wins **90 pairs of 90** on being
+the only verb in `data/diplomatic-actions/` priced at exactly 0.000, so four new
+verbs changed no AI choice. That is also the session's honest limitation — **the
+four verbs are player content**; AI-to-AI pacts are reachable by the model and
+unreachable by the agenda, and the fix is a security term in `_desire_parts()`,
+which is a session rather than a constant. A **13th balance regime** was still
+needed where V1.3d and V1.3f needed none: a pact is a verb, and no budget regime
+issues a command.
+
+**The screenshot pass earned its keep for the fifth session running, and this time
+the bug was in the tool.** `--defence --open budget` showed an em dash against a
+live 0.498 bill: hiding a window frame does **not** clear the child panel's own
+`visible`, so every panel spends its one dirty refresh on frame 1 and never
+rebuilds — meaning every state-mutating flag since `--coerce` had been capturing
+pre-mutation figures and getting away with it. `screenshot.gd` now marks panels
+dirty in `main.gd`'s own idiom. The nation panel's fold also reappeared one session
+after V1.3e paid for it there, and **height alone could not fix it**: four verbs are
+~136px against a ~886px ceiling, so it took 80px of height plus two tightenings.
+
+**Next: U6** — the calendar as a scheduling skin over existing verbs, plus the
+named-individual roster V1.1d deferred. It is the only named successor left.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g and U1–U5 are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 12**. There has never been a migration: a superseded
+Save format is at **version 13**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -398,7 +470,22 @@ all**, and the test says why: both interest functions are pure reads over live
 state, and the two things they write — `relations` and `measures` — were
 serialised at V1.3a and V1.3c. That is a property rather than a coincidence, and
 it is what *no grievance ledger* buys: the relations number **is** the memory, so
-there is nothing for a save to carry.
+there is nothing for a save to carry. **V1.3g is the sharpest case on this list,
+because one of its three fields falls on BOTH sides.** `military_capability` is the
+bump: absent it reads 0.0 against a France that has spent 2 % of GDP on defence
+since before the game started, the deployment cost divides by it so every
+commitment jumps to the clamp, and `would_accept_pact()` reads the whole roster as
+militarily worthless — a reloaded game running a *different model*, which is
+`eu_member`/`neighbours` in its strongest form. `pacts` earns nothing, reading
+correctly as "nothing signed" for every version-12 save. `deployments` **splits**:
+the *obliged* half is re-derived on the next tick from `pacts` × `measures`, both
+of which the save carries, and fails soft for one month the way
+`trade_baseline_by_partner` does — while the *chosen* half is derivable from
+nothing, so an absent register silently withdraws the player's own forces and drops
+their bill with them. `tests/test_save_load.gd` asserts all four, and the split is
+the assertion worth having rather than the bump: it **pins** the property that
+obliged deployments are derived, so a later session making them stateful turns it
+red and has to come and say why.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

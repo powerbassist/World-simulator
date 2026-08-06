@@ -81,9 +81,20 @@ const RESTING_EPSILON := 1.0
 ## coerced and the precondition could not ask HOW. One measure per directed pair
 ## makes "is anything in force" the right gate for imposing and the wrong one for
 ## lifting.
+##
+## The five defence fields are V1.3g's, over its two registers. FOUR of them are
+## about the pair for the same reason the three measure fields are three: with only
+## "deployment_active" a withdraw verb would close an obligation the player is not
+## allowed to close, because the register knows a commitment exists and the
+## precondition could not ask WHOSE IDEA IT WAS. `pact_count` is the odd one and is
+## not about a pair at all -- it is the agenda's brake on signing with everybody,
+## authored in the content as `pact_count < N` rather than enforced by a constant in
+## src/sim/, which is the data-not-code rule docs/engine-decision.md states first.
 const PRECONDITION_FIELDS := [
 	"relations", "agreement_active",
 	"measure_active", "tariff_active", "sanction_active",
+	"pact_active", "pact_count",
+	"deployment_active", "deployment_chosen", "deployment_obliged",
 	"overall_approval_pct", "debt_to_gdp_pct", "unemployment_pct",
 	"deficit_pct_gdp", "growth_annual_pct",
 ]

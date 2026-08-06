@@ -64,6 +64,20 @@ static func directed_parts(directed: String) -> Array:
 	return [parts[0], parts[1]]
 
 
+## The two sides of a symmetric key, as [a, b] with a < b, or an empty array if
+## the string is not one. directed_parts()' twin, added at V1.3g because
+## GameState.pacts is the first symmetric register something ITERATES rather than
+## looks up: relations and agreements are always read for a pair the caller
+## already knows, and other() serves that. Splitting by hand in src/sim/ is what
+## this file exists to prevent, and the absence of this function was an invitation
+## to do it.
+static func pair_parts(pair_key: String) -> Array:
+	var parts := pair_key.split(SEPARATOR)
+	if parts.size() != 2:
+		return []
+	return [parts[0], parts[1]]
+
+
 ## The pair's current score, or `fallback` if the pair has none. A missing pair
 ## is a real possibility only before seed_relations() has run; after that every
 ## pair in the roster exists, and a fallback that silently reads as 0.0 -- the

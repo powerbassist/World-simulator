@@ -23,6 +23,9 @@ extends SceneTree
 const Relations = preload("res://src/core/relations.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const DefenceK = preload("res://src/sim/defence_constants.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -30,6 +33,11 @@ const OUT_DEFAULT := "user://screenshot.png"
 ## resize -- which is what triggers _fit_zoom() -- to have happened and been
 ## drawn. Below about ten the map is caught at zoom 1.0 mid-fit.
 const FRAMES_DEFAULT := 30
+
+## How far before the capture _apply_view() runs. Four rather than one: see the
+## note at the call site -- a window opened by --open needs a frame to become
+## visible and another for its panel to rebuild.
+const APPLY_LEAD_FRAMES := 4
 
 var _frames_wanted := FRAMES_DEFAULT
 var _out_path := OUT_DEFAULT
@@ -73,6 +81,7 @@ var _open := ""
 ## nobody, or on a partner who signs, shows the absence of the line rather than the
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
+var _defence := false
 var _main
 
 
@@ -93,6 +102,8 @@ func _init() -> void:
 			_bloc = true
 		elif args[i] == "--agenda":
 			_agenda = true
+		elif args[i] == "--defence":
+			_defence = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -104,10 +115,17 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	# One frame before the capture, not at _init(): the map has to have been laid
-	# out and fitted before a lon/lat can be turned into the screen point the
-	# hover needs, and the legend has to have run _ready() to be told anything.
-	if _frame == _frames_wanted - 1:
+	# Several frames before the capture, not one, and V1.3g is why. A panel refreshes
+	# in its own _process and returns early while it is not visible, so a window
+	# OPENED by --open has not rebuilt itself when the very next frame is captured:
+	# --defence --open budget showed an em dash on a live 0.498 bill, and the state
+	# was provably correct at the time. One frame was enough for a window that was
+	# already open, which is why every flag before this one got away with it.
+	#
+	# Not at _init() either, for the original reason: the map has to have been laid
+	# out and fitted before a lon/lat can be turned into the screen point the hover
+	# needs, and the legend has to have run _ready() to be told anything.
+	if _frame == _frames_wanted - APPLY_LEAD_FRAMES:
 		_apply_view()
 	if _frame < _frames_wanted:
 		return false
@@ -141,6 +159,8 @@ func _apply_view() -> void:
 		_open_the_council()
 	if _agenda:
 		_run_the_agenda()
+	if _defence:
+		_stand_up_an_alliance()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -150,6 +170,14 @@ func _apply_view() -> void:
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		_main._hud.map_legend.show_layer(_main._map_view.layer())
+	# EVERY setup flag above writes sim state behind panels that have already
+	# refreshed, and a panel refreshes once per dirty flag. Hiding a window frame
+	# does NOT clear the child panel's own `visible`, so every panel consumes its
+	# one refresh on frame 1 and never rebuilds -- --defence --open budget showed an
+	# em dash against a live 0.498 bill for exactly that reason, and --coerce and
+	# --bloc have been getting away with it only because they open a panel whose
+	# figures they happen not to change. Marked here, in main.gd's own idiom.
+	_mark_panels_dirty()
 	if _hover != "":
 		_main._map_view._hovered_id = _hover
 		_main._map_view.queue_redraw()
@@ -183,6 +211,59 @@ func _run_the_agenda() -> void:
 ## tools/coercion_probe.gd does -- this is a dev tool looking at pixels, not a
 ## test of the command path, and going through Diplomacy.execute() would tie the
 ## severities to whatever the shipped verbs happen to use.
+## V1.3g. A new game has no pact and no deployment, so a frame of the nation panel
+## shows one "Alliance: none" caption and an em dash on the budget panel, and proves
+## nothing about the rows that matter. Same argument --coerce, --bloc and --agenda
+## each made; this is the fourth time.
+##
+## Stands up BOTH kinds of commitment, because they are the two things the panel has
+## to be able to tell apart: a chosen deployment the player may end, and an obliged
+## one they may not. The obliged half is produced the way the game produces it --
+## somebody else's measure lands on an ally and the reconciler opens it -- rather
+## than by writing the register, so the frame captures a state the game can reach.
+func _stand_up_an_alliance() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var viewer: String = _main._map_view.viewer_id()
+
+	var chosen := "DEU" if viewer != "DEU" else "ITA"
+	var obliged := "ITA" if viewer != "ITA" and chosen != "ITA" else "ESP"
+	var aggressor := "GBR" if viewer != "GBR" else "CHE"
+
+	for ally in [chosen, obliged]:
+		if state.nations.has(ally):
+			Defence.sign_pact(state, viewer, String(ally), _PactStub.new())
+
+	if state.nations.has(chosen):
+		Defence.open_deployment(state, viewer, chosen, DefenceK.DEPLOYMENT_CHOSEN, null)
+	if state.nations.has(obliged) and state.nations.has(aggressor):
+		state.measures[Relations.directed_key(aggressor, obliged)] = _terms(state, "tariff", 0.6)
+
+	# The real reconciler, so the obliged entry and both prices are the ones the
+	# monthly tick would have produced.
+	Defence.tick_month(state)
+	Budget.recompute(state, state.player())
+	_main._map_view.queue_redraw()
+
+
+class _PactStub:
+	var id: String = "screenshot_pact"
+	var action_name: String = "Defensive Pact"
+
+
+## main.gd marks these on every month elapsed; a screenshot moves state without a
+## month elapsing, so it has to say so itself.
+func _mark_panels_dirty() -> void:
+	for name in [
+		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
+		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
+	]:
+		var panel = _main.get(name)
+		if panel != null and panel.has_method("mark_dirty"):
+			panel.mark_dirty()
+
+
 func _impose_a_spread() -> void:
 	var state = _main._state
 	if state == null:

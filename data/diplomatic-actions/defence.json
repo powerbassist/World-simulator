@@ -1,0 +1,111 @@
+{
+  "_note": "V1.3g's content, and the only four verbs that write GameState.pacts and the chosen half of GameState.deployments. No terms ride these actions, unlike an agreement's multiplier or a measure's severity: a pact has no intensity, and a deployment's cost is DERIVED from the actor's military capability rather than authored -- which is the same cut tools/coercion_probe.gd made when it deleted tariff_rate_pct as one intensity written twice. See docs/defence-model.md.",
+  "_price_note": "Every bloc_offset here is authored rather than left off, and that is V1.3f's correction applied in advance: the agenda's _act_domestic_price() reads this magnitude, so an act with no price at home is one the nine spend freely and forever. `settle_dispute` was 19 of the last 24 AI acts until the content started saying how hard each act was. 0.075 is the magnitude tools/diplomacy_probe.gd measured as moving one bloc's approval target 3.0 points, which is poll_noise.gd's NOISE_MAX_PCT.",
+  "_withdraw_note": "withdraw_forces gates on deployment_chosen, NOT deployment_active, and that single word is why diplomacy_constants.PRECONDITION_FIELDS carries four defence pair fields instead of one. An obligation is not the player's to close -- only the aggressor lifting its measure, or abandoning the pact outright, can do that. On deployment_active this verb would hand the player a free exit from the one commitment the whole session exists to make them feel.",
+  "actions": [
+    {
+      "id": "defence_pact",
+      "name": "Defensive Pact",
+      "summary": "A standing mutual defence commitment. If they are leaned on, you are in it -- and the bill arrives at home whether or not you agreed to that particular quarrel. Business reads it as stability; students read it as somebody else's war.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "pact_active",
+          "op": "==",
+          "value": 0
+        },
+        {
+          "field": "pact_count",
+          "op": "<",
+          "value": 3
+        }
+      ],
+      "effects": {
+        "relations": 7.0,
+        "bloc_offset": {
+          "business": 0.075,
+          "students": -0.09,
+          "workers": -0.05
+        },
+        "pact": {
+          "op": "sign"
+        }
+      }
+    },
+    {
+      "id": "abandon_pact",
+      "name": "Abandon the Pact",
+      "summary": "Walk away from the commitment, and from any forces standing under it. The obligation stops; so does the trust, and every nation with a stake in the ally you left takes their side.",
+      "cooldown_months": 24,
+      "preconditions": [
+        {
+          "field": "pact_active",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": -9.0,
+        "bloc_offset": {
+          "business": -0.075,
+          "students": 0.09,
+          "workers": 0.05
+        },
+        "pact": {
+          "op": "abandon"
+        }
+      }
+    },
+    {
+      "id": "deploy_forces",
+      "name": "Deploy in Support",
+      "summary": "Send forces to stand with an ally, of your own accord. It costs a standing share of the budget for as long as they are there, and the country notices.",
+      "cooldown_months": 12,
+      "preconditions": [
+        {
+          "field": "pact_active",
+          "op": "==",
+          "value": 1
+        },
+        {
+          "field": "deployment_active",
+          "op": "==",
+          "value": 0
+        }
+      ],
+      "effects": {
+        "relations": 5.0,
+        "bloc_offset": {
+          "rural": -0.075,
+          "students": -0.075
+        },
+        "pact": {
+          "op": "deploy"
+        }
+      }
+    },
+    {
+      "id": "withdraw_forces",
+      "name": "Bring Them Home",
+      "summary": "End a deployment you chose to make. The budget line goes with it. A commitment an alliance obliged you into cannot be ended this way -- for that, there is only the pact itself.",
+      "cooldown_months": 12,
+      "preconditions": [
+        {
+          "field": "deployment_chosen",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": -4.0,
+        "bloc_offset": {
+          "rural": 0.075,
+          "students": 0.075
+        },
+        "pact": {
+          "op": "withdraw"
+        }
+      }
+    }
+  ]
+}

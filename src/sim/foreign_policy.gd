@@ -51,6 +51,10 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const K = preload("res://src/sim/foreign_policy_constants.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
+## The CONSTANTS only, never src/sim/defence.gd itself. A constants file preloads
+## nothing, so this edge is a leaf; preloading the module would make a defence.gd
+## that ever needed stake() or amity() a cycle GDScript refuses outright.
+const DFK = preload("res://src/sim/defence_constants.gd")
 
 ## The largest distance between two points in the two-axis ideology space, used to
 ## normalise alignment onto [0, 1]. sqrt(2^2 + 2^2) over [-1, +1] on both axes.
@@ -64,7 +68,14 @@ const MAX_IDEOLOGY_DISTANCE := 2.8284271247
 const REFUSAL_LOW_STAKE := "low_stake"
 const REFUSAL_POOR_RELATIONS := "poor_relations"
 const REFUSAL_THIN_TERMS := "thin_terms"
-const REFUSAL_KEYS := [REFUSAL_LOW_STAKE, REFUSAL_POOR_RELATIONS, REFUSAL_THIN_TERMS]
+## V1.3g's, and the only one that is about the ASKER rather than the relationship:
+## an alliance with a nation that cannot fight is a liability wearing a treaty's
+## clothes, and it is the one refusal the player fixes with a budget rather than
+## with diplomacy.
+const REFUSAL_WEAK_PARTNER := "weak_partner"
+const REFUSAL_KEYS := [
+	REFUSAL_LOW_STAKE, REFUSAL_POOR_RELATIONS, REFUSAL_THIN_TERMS, REFUSAL_WEAK_PARTNER,
+]
 
 const VOTE_REASON_DRAWS_ON_IT := "draws_on_it"
 const VOTE_REASON_ALREADY_IN_BREACH := "already_in_breach"
@@ -271,6 +282,75 @@ static func refusal_reason(state, actor_id: String, target_id: String, terms: Di
 	if amity_term <= deal_term:
 		return REFUSAL_POOR_RELATIONS
 	return REFUSAL_THIN_TERMS
+
+
+# --- V1.3g: whether a partner signs a defensive pact -------------------------------------
+
+## The three terms of a pact offer, signed as they enter the sum. One builder so
+## would_accept_pact() and pact_refusal_reason() cannot drift apart -- the same
+## reason _appraisal_terms() and _desire_parts() exist, and the same failure they
+## exist to prevent (V1.3e shipped a vote_reason() naming a term that had lost by a
+## factor of five).
+##
+## Every term reads ZERO at neutral, so PACT_ACCEPT_MIN is interpretable on its own:
+## stake at an even ninth, a pair exactly at its resting value, a partner of exactly
+## reference capability.
+##
+##   stake      - is this partner worth more than a ninth of my attention?
+##   amity      - do I trust them, anchored on the pair's OWN resting value?
+##   capability - can they actually fight, against CAPABILITY_REFERENCE?
+##
+## Capability is read on the ASKER, not the answerer, and that is the whole point of
+## the term: a defensive pact is a promise to spend blood and money on somebody
+## else's behalf, so what the answerer wants to know is what it is being offered.
+## Expressed as a RATIO against the reference for the reason every threshold in this
+## file is expressed against EVEN_SHARE -- an absolutely-anchored term would read
+## every small nation as worthless by construction, which is V1.3e's GBR finding and
+## has fired five times.
+##
+## Read through Defence.capability_ratio()? NO -- and deliberately. This file must
+## never preload src/sim/defence.gd: defence.gd would then be unable to reach
+## stake() or amity() if the pact rule ever moved there, and GDScript refuses the
+## cycle outright. The field is read bare and divided here. See _resting() below,
+## which makes the same argument about the same graph.
+static func _pact_terms(state, actor_id: String, target_id: String) -> Dictionary:
+	var asker = state.nations.get(actor_id)
+	var asker_capability: float = 0.0 if asker == null else float(asker.military_capability)
+	return {
+		"stake": K.PACT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / K.EVEN_SHARE - 1.0),
+		"amity": K.PACT_AMITY_WEIGHT * amity(state, target_id, actor_id),
+		"capability": K.PACT_CAPABILITY_WEIGHT * (
+			asker_capability / DFK.CAPABILITY_REFERENCE - 1.0
+		),
+	}
+
+
+static func pact_accept_score(state, actor_id: String, target_id: String) -> float:
+	var parts := _pact_terms(state, actor_id, target_id)
+	return float(parts["stake"]) + float(parts["amity"]) + float(parts["capability"])
+
+
+## Whether `target_id` would sign a defensive pact with `actor_id`.
+##
+## NOT a stopgap and not replacing one: V1.3f discharged the last of those, and this
+## is a new counterparty decision written against the model that already exists.
+static func would_accept_pact(state, actor_id: String, target_id: String) -> bool:
+	return pact_accept_score(state, actor_id, target_id) >= K.PACT_ACCEPT_MIN
+
+
+## Which term is why a pact was refused, as a key. Names the WEAKEST rather than the
+## total, for refusal_reason()'s reason: the total is what the player cannot act on.
+static func pact_refusal_reason(state, actor_id: String, target_id: String) -> String:
+	var parts := _pact_terms(state, actor_id, target_id)
+	var stake_term: float = float(parts["stake"])
+	var amity_term: float = float(parts["amity"])
+	var capability_term: float = float(parts["capability"])
+
+	if stake_term <= amity_term and stake_term <= capability_term:
+		return REFUSAL_LOW_STAKE
+	if amity_term <= capability_term:
+		return REFUSAL_POOR_RELATIONS
+	return REFUSAL_WEAK_PARTNER
 
 
 # --- V1.3c's stopgap: how hard a target answers -----------------------------------------

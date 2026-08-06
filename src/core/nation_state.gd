@@ -444,6 +444,38 @@ var last_diplomatic_result := {}
 var diplo_months_to_act: int = 0
 
 
+## Military capability, V1.3g. DERIVED from sustained defence spending and never
+## authored — the treatment src/sim/cabinet.gd's competence gets, and for the same
+## reason: an authored per-nation strength is a second number somebody has to keep
+## in step with the spending line, and it disagrees with it the moment a player
+## moves the lever.
+##
+## The ONE field this session adds that earns SAVE_VERSION 13. Absent it reads as
+## 0.0, against a France that has spent 2.0 % of GDP on defence since before the
+## game started, and two readers break at once: the deployment cost divides by it,
+## so every commitment jumps to the clamp, and ForeignPolicy.would_accept_pact()
+## reads the whole roster as militarily worthless. A reloaded game runs a DIFFERENT
+## MODEL from the one that saved it, which is eu_member/neighbours' case in its
+## strongest form. Neither GameState.pacts nor GameState.deployments earns it, and
+## tests/test_save_load.gd asserts every half.
+##
+## Seeded AT equilibrium by Defence.init_nation(), not at zero: an army exists on
+## the day the game starts.
+var military_capability: float = 0.0
+
+## Both defence prices, recomputed once a month by Defence._recompute_prices() and
+## read from here rather than called for. Cached because of the preload graph
+## rather than for speed: budget.gd and opinion.gd reading Defence directly is an
+## edge each, and Opinion.issue_satisfaction(ns) would stop being pure-on-ns, which
+## elections.gd's attribution and overview_panel.gd both rely on.
+##
+## Neither earns a save bump on its own — both are recomputed from the registers on
+## the first tick after a load — but they are serialised anyway so a save read back
+## and never ticked reports the same budget it was saved with. bloc_transfer's shape.
+var deployment_bill_pct_gdp: float = 0.0
+var deployment_opinion_load: float = 0.0
+
+
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
 func duplicate_state():
@@ -566,6 +598,10 @@ func duplicate_state():
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
 	s.last_diplomatic_result = last_diplomatic_result.duplicate(true)
 	s.diplo_months_to_act = diplo_months_to_act
+
+	s.military_capability = military_capability
+	s.deployment_bill_pct_gdp = deployment_bill_pct_gdp
+	s.deployment_opinion_load = deployment_opinion_load
 
 	return s
 
@@ -694,6 +730,10 @@ func to_dict() -> Dictionary:
 		"diplo_cooldown_months": diplo_cooldown_months,
 		"last_diplomatic_result": last_diplomatic_result,
 		"diplo_months_to_act": diplo_months_to_act,
+
+		"military_capability": military_capability,
+		"deployment_bill_pct_gdp": deployment_bill_pct_gdp,
+		"deployment_opinion_load": deployment_opinion_load,
 	}
 
 
@@ -834,6 +874,13 @@ static func from_dict(d: Dictionary):
 	s.diplo_cooldown_months = d.get("diplo_cooldown_months", {})
 	s.last_diplomatic_result = d.get("last_diplomatic_result", {})
 	s.diplo_months_to_act = int(d.get("diplo_months_to_act", 0))
+	# The 0.0 fallback here is the one this session bumps SAVE_VERSION for, and it
+	# is deliberately NOT softened into "recompute it from spending" -- a fallback
+	# that quietly repairs the field would make the save version unnecessary and
+	# the next genuinely unrecoverable field would have no precedent to point at.
+	s.military_capability = float(d.get("military_capability", 0.0))
+	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))
+	s.deployment_opinion_load = float(d.get("deployment_opinion_load", 0.0))
 	s.passed_law_ids = d.get("passed_law_ids", {})
 	s.law_cooldown_months = d.get("law_cooldown_months", {})
 	s.last_law_result = d.get("last_law_result", {})

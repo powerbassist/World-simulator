@@ -147,6 +147,19 @@ static func issue_satisfaction(ns) -> Dictionary:
 		# the public_finances retune above argues for.
 		sat[key] = _scaled(d_spend * Cabinet.effectiveness(ns, key), K.SPEND_SCALE_PP)
 
+	# V1.3g. The deployments come off the `defence` issue, and the six-way split the
+	# tier bullet asks for needs no new machinery: BLOC_SALIENCE_BASE already weights
+	# `defence` differently for every bloc.
+	#
+	# Subtracted AFTER Cabinet.effectiveness() rather than multiplied through it, and
+	# that is a model call rather than an ordering detail. Effectiveness is a claim
+	# about how well a CHANGE OF POLICY is delivered; a deployment is a fact on the
+	# ground. Run through it, a competent defence minister would quietly cancel the
+	# whole price this session exists to charge.
+	#
+	# Re-clamped because _scaled() clamps its own argument and this arrives after it.
+	sat["defence"] = clampf(sat["defence"] - ns.deployment_opinion_load, -1.0, 1.0)
+
 	# Measured on the deficit, not the debt ratio. Debt walks upward every month
 	# by construction (r > g), so a debt-level term would make every bloc slowly
 	# unhappy no matter what the player did. The deficit answers to the player.

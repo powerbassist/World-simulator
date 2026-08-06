@@ -151,6 +151,52 @@ const ACCEPT_DEAL_WEIGHT := 1.50
 const ACCEPT_MIN := 1.20
 
 
+# --- Whether a partner signs a defensive pact (V1.3g) -----------------------------------
+
+## The three weights of a pact offer. Here rather than in defence_constants.gd
+## deliberately: whether a partner signs is the INTEREST model's question, and
+## splitting a counterparty decision across two files gives two notions of amity
+## that will drift. defence_constants.gd holds what a commitment costs; this holds
+## whether anyone agrees to one.
+##
+## Set from tools/defence_probe.gd table (g), which sweeps all ninety ordered pairs
+## at months 0, 24, 60 and 168.
+const PACT_STAKE_WEIGHT := 1.00
+
+## Above the stake weight, as ACCEPT_AMITY_WEIGHT is. An alliance is a promise to
+## bleed for somebody; trust should matter more in it than in a trade deal, not less.
+const PACT_AMITY_WEIGHT := 1.40
+
+## The asker's capability, as a ratio against DEFENCE's CAPABILITY_REFERENCE. The
+## smallest of the three on purpose: a strong ally is worth having, but nobody signs
+## a mutual defence treaty with a nation they distrust because its army is large.
+const PACT_CAPABILITY_WEIGHT := 0.60
+
+## The bar, and it was set at 1.60 on the argument that a permanent contingent
+## liability is a bigger ask than a trade agreement. THE SWEEP SAID OTHERWISE, and
+## it is V1.3e's Britain finding for the sixth time in this block:
+##
+##       bar    accepts   GBR-in   GBR asks
+##      0.80         51       13          5
+##      1.00         35        9          4
+##      1.20         24        4          1
+##      1.40         18        2          0
+##      1.60         13        1          0
+##
+## At 1.60 Britain could not ask ANY of the nine for a pact and appeared in exactly
+## one accepting pair of ninety -- structurally unable to have an alliance policy,
+## while three of the ten nations are playable. At 1.00 it can ask four and appears
+## in nine, and 61 % of ordered pairs still refuse, so the register keeps its
+## information.
+##
+## BELOW ACCEPT_MIN's 1.20 rather than above it, which inverts the original
+## argument and is worth stating: a trade agreement carries a third term the asker
+## can move -- a generous `weight_multiplier` pushes a marginal pair over the line.
+## A pact has no such lever. The same bar therefore excludes strictly more here, so
+## matching the numbers would not match the difficulty.
+const PACT_ACCEPT_MIN := 1.00
+
+
 # --- Whether and how hard a target retaliates -------------------------------------------
 
 ## Replaces coercion_constants.RETALIATION_FRACTION as the ANSWER; that constant

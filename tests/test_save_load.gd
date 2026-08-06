@@ -31,6 +31,8 @@ const Relations = preload("res://src/core/relations.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -92,6 +94,7 @@ func _init() -> void:
 	_run_coercion_roundtrip(loader)
 	_run_bloc_roundtrip(loader)
 	_run_agenda_roundtrip(loader)
+	_run_defence_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -677,8 +680,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 12:
-		_fail("SAVE_VERSION is %d -- V1.3f argued for 12, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 13:
+		_fail("SAVE_VERSION is %d -- V1.3g argued for 13, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -728,6 +731,90 @@ func _run_agenda_roundtrip(loader) -> void:
 	var revived = GameState.from_dict(no_acts)
 	if not revived.foreign_acts.is_empty():
 		_fail("a save with no foreign_acts key invented some")
+
+
+## V1.3g adds three serialised things and they fall on the rule FOUR different
+## ways, which is why this asserts four things rather than one. The rule is
+## unchanged: would a missing field read as something WRONG?
+##
+##   military_capability  LOUD  -- the bump. 0.0 against a France that has spent
+##                                2 % of GDP on defence for decades: the cost
+##                                divides by it and every reader inverts.
+##   pacts                QUIET -- {} is correct for every version-12 save,
+##                                because those games could not sign one.
+##   deployments/obliged  QUIET -- re-derived next tick from pacts x measures.
+##   deployments/chosen   LOUD  -- derivable from nothing.
+##
+## The obliged/chosen SPLIT is the assertion worth having, because it pins the
+## property rather than describing it: a later session that makes obligations
+## stateful turns this red and has to come and say why.
+func _run_defence_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+
+	# One pact, one chosen deployment under it, and one measure on a second ally so
+	# the reconciler has an obligation to re-derive.
+	Defence.sign_pact(state, "FRA", "DEU", _StubPact.new())
+	Defence.sign_pact(state, "FRA", "ITA", _StubPact.new())
+	Defence.open_deployment(state, "FRA", "DEU", DefenceK.DEPLOYMENT_CHOSEN, null)
+	state.measures[Relations.directed_key("GBR", "ITA")] = {
+		"action_id": "probe", "action_name": "Probe", "kind": "tariff",
+		"severity": 0.60, "since_year": state.year, "since_month": state.month,
+		"retaliated": false,
+	}
+	Defence.tick_month(state)
+
+	if Defence.deployment_kind(state, "FRA", "ITA") != DefenceK.DEPLOYMENT_OBLIGED:
+		_fail("the measure on ITA did not open an obliged deployment -- the fixture is wrong, not the save")
+		return
+	if is_zero_approx(state.player().deployment_bill_pct_gdp):
+		_fail("two deployments produced a zero bill -- the fixture is wrong, not the save")
+		return
+
+	var saved: Dictionary = state.to_dict()
+
+	# 1. The bump. An absent capability reads 0.0 and the cost inverts.
+	var cost_before := Defence.deployment_cost_pct_gdp(state.player())
+	var no_capability: Dictionary = state.to_dict()
+	for id in (no_capability["nations"] as Dictionary).keys():
+		(no_capability["nations"][id] as Dictionary).erase("military_capability")
+	var weakened = GameState.from_dict(no_capability)
+	if not is_zero_approx(weakened.player().military_capability):
+		_fail("an absent military_capability did not read as 0.0 -- the bump's premise is wrong")
+	if is_equal_approx(Defence.deployment_cost_pct_gdp(weakened.player()), cost_before):
+		_fail("dropping military_capability left the deployment cost unchanged -- the bump's premise is wrong")
+
+	# 2. Quiet: pacts absent read as nothing signed, which is correct for a
+	#    version-12 save. `measures`' case at V1.3c exactly.
+	var no_pacts: Dictionary = state.to_dict()
+	no_pacts.erase("pacts")
+	var unallied = GameState.from_dict(no_pacts)
+	if not unallied.pacts.is_empty():
+		_fail("a save with no pacts key invented some")
+
+	# 3 and 4. The split. Drop the whole register, tick once, and the obliged entry
+	#    must come back while the chosen one must not.
+	var no_deployments: Dictionary = saved.duplicate(true)
+	no_deployments.erase("deployments")
+	var stripped = GameState.from_dict(no_deployments)
+	if not stripped.deployments.is_empty():
+		_fail("a save with no deployments key invented some")
+	Defence.tick_month(stripped)
+
+	if Defence.deployment_kind(stripped, "FRA", "ITA") != DefenceK.DEPLOYMENT_OBLIGED:
+		_fail("the OBLIGED deployment did not come back after one tick -- it is supposed to be derived from pacts x measures, and if it is not then this half earns the bump too")
+	if Defence.deployment_kind(stripped, "FRA", "DEU") != "":
+		_fail("a CHOSEN deployment reappeared out of nothing -- it is derivable from nothing, which is half of what SAVE_VERSION 13 is for")
+
+	if not (stripped.player().deployment_bill_pct_gdp < state.player().deployment_bill_pct_gdp):
+		_fail("dropping deployments left the bill at or above its saved value -- the chosen half's loudness is unasserted")
+
+
+## A pact is signed by a verb in the real game. The test brings its own rather than
+## reaching into data/diplomatic-actions/, so the assertions above are about the
+## save format and do not fail when the content is retuned.
+class _StubPact:
+	var id: String = "test_pact"
+	var action_name: String = "Test Pact"
 
 
 func _run_roundtrip(state, clock) -> void:

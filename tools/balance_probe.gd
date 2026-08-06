@@ -34,6 +34,8 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const CoercionK = preload("res://src/sim/coercion_constants.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -204,6 +206,19 @@ const COERCION_REGIMES := {
 	"managed_imposes_tariffs": {"budget": REGIMES["managed"], "tariff_month": 6},
 }
 
+## V1.3g's own fourteen years, and the THIRTEENTH regime. Same argument as the
+## eleventh and twelfth, and this session needed one where V1.3d and V1.3f did not:
+## a pact and a deployment are VERBS, and no budget regime issues a command. The
+## council is an institution and meets whether or not the player engages, which is
+## why the bloc needed no regime of its own; an alliance does not sign itself.
+##
+## Signs with the player's largest partner and then deploys under it, so the run
+## carries a live bill for most of the term -- the channel this session added to the
+## budget, exercised once rather than nowhere.
+const DEFENCE_REGIMES := {
+	"managed_signs_pact": {"budget": REGIMES["managed"], "pact_month": 6, "deploy_month": 12},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -247,6 +262,9 @@ func _init() -> void:
 		for name in COERCION_REGIMES.keys():
 			var regime: Dictionary = COERCION_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, int(regime["tariff_month"]))
+		for name in DEFENCE_REGIMES.keys():
+			var regime: Dictionary = DEFENCE_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, int(regime["pact_month"]), int(regime["deploy_month"]))
 
 	quit(0)
 
@@ -271,7 +289,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -322,6 +340,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# read a relations score that never decays -- a different simulation from
 		# the one main.gd runs.
 		Diplomacy.tick_month(state, loader)
+		# Added at V1.3g, in main.gd's slot, and inert for every regime that signs no
+		# pact: with an empty pact register there is nothing to reconcile and the
+		# bill is exactly 0.0, so the ten budget regimes are provably unchanged.
+		# Capability DOES move here -- "managed" cuts defence by 1.4 points -- but
+		# nothing in the economy reads it, which is the "no economy reader" call
+		# stated where it can be checked rather than only in the model doc.
+		Defence.tick_month(state)
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -329,6 +354,12 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == tariff_month:
 			_impose_tariffs(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == pact_month:
+			_sign_pact(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == deploy_month:
+			_deploy_forces(state, loader, ns, regime_name, year, month)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -620,6 +651,83 @@ func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: i
 			year, month, regime_name, action.id, best, best_score,
 			"partner declined" if result.get("refused_by_partner", false) else "precondition or cooldown",
 		])
+
+
+## V1.3g. Sign with the largest trade partner, lifting the pair first if the
+## counterparty would refuse -- _sign_agreement()'s shape and for its reason: a
+## regime that measures the GATE rather than the model behind it tells the balance
+## harness nothing about the channel this session added to the budget.
+func _sign_pact(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = _pact_action(loader, "sign")
+	if action == null:
+		printerr("  no 'sign' pact action is authored")
+		return
+
+	var best := ""
+	var best_weight := -1.0
+	for id in Trade.weights(state, ns.id).keys():
+		var w: float = float(Trade.weights(state, ns.id)[id])
+		if w > best_weight:
+			best_weight = w
+			best = String(id)
+
+	for _attempt in range(GATE_LIFT_ATTEMPTS):
+		if ForeignPolicy.would_accept_pact(state, ns.id, best):
+			break
+		var lift = _strongest_positive(loader)
+		if lift == null:
+			break
+		var lifted := Diplomacy.execute(state, loader.diplomatic_actions, lift, ns.id, best)
+		if not lifted["applied"]:
+			break
+		ns.diplo_cooldown_months.erase(Diplomacy.cooldown_key(lift.id, best))
+
+	var result := Diplomacy.execute(state, loader.diplomatic_actions, action, ns.id, best)
+	if result["applied"]:
+		print("  %d-%02d %s: signed a pact with %s at relations %.1f" % [
+			year, month, regime_name, best, float(result["relations_before"]),
+		])
+	else:
+		print("  %d-%02d %s: pact with %s REFUSED — %s" % [
+			year, month, regime_name, best,
+			result.get("refusal_reason", "precondition or cooldown"),
+		])
+
+
+func _deploy_forces(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = _pact_action(loader, "deploy")
+	if action == null:
+		printerr("  no 'deploy' pact action is authored")
+		return
+
+	var allies: Array = Defence.allies(state, ns.id)
+	if allies.is_empty():
+		print("  %d-%02d %s: no pact to deploy under" % [year, month, regime_name])
+		return
+
+	var result := Diplomacy.execute(
+		state, loader.diplomatic_actions, action, ns.id, String(allies[0])
+	)
+	if result["applied"]:
+		# The bill is deliberately NOT printed here. Defence.tick_month() runs after
+		# this point in the month and Budget reads the figure the month after that,
+		# so a bill printed now reads 0.000 and looks like a broken feature rather
+		# than the one-month lag docs/defence-model.md argues for.
+		print("  %d-%02d %s: deployed to %s — %d deployment(s), billed from next month" % [
+			year, month, regime_name, String(allies[0]),
+			Defence.deployment_count(state, ns.id),
+		])
+	else:
+		print("  %d-%02d %s: deployment to %s refused" % [
+			year, month, regime_name, String(allies[0]),
+		])
+
+
+func _pact_action(loader, op: String):
+	for action in loader.diplomatic_actions:
+		if String(action.effects.get("pact", {}).get("op", "")) == op:
+			return action
+	return null
 
 
 func _strongest_positive(loader):

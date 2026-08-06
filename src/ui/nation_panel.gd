@@ -22,6 +22,8 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const DFK = preload("res://src/sim/defence_constants.gd")
 
 signal closed
 
@@ -50,7 +52,14 @@ func _ready() -> void:
 	# Exactly the failure docs/bloc-model.md records for the bloc panel's own
 	# budget section one session earlier. Well inside U5a's ~886px usable band,
 	# which is the ceiling a window must not grow through.
-	custom_minimum_size = Vector2(420, 780)
+	# 860 rather than V1.3e's 780, and V1.3g's screenshot pass is why: the four
+	# defence verbs took the list from ten rows to fourteen, and `Lift Sanctions`
+	# fell off the panel entirely while `Impose Sanctions` sat on the clip line.
+	# The same failure V1.3e recorded here one session earlier, at the same panel,
+	# for the same reason -- a list that grows with the block while the height does
+	# not. Height ALONE could not fix it: four rows are ~136px and the U5a ceiling is
+	# ~886, so this is 80px of height plus the two tightenings below.
+	custom_minimum_size = Vector2(420, 860)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -70,7 +79,10 @@ func _ready() -> void:
 	root.add_child(_body)
 
 	_actions = VBoxContainer.new()
-	_actions.add_theme_constant_override("separation", 6)
+	# 4 rather than 6: with fourteen verbs the separation is spent fourteen times,
+	# so two pixels a row is nearly a whole row back. Layout, so it stays at the
+	# call site -- see the styling rule in CLAUDE.md.
+	_actions.add_theme_constant_override("separation", 4)
 	root.add_child(_actions)
 
 	var close := Button.new()
@@ -116,8 +128,10 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
+	# The two blank spacers this block had are down to one, for the fold reason in
+	# _ready(): a blank line costs the same as a verb row, and there are fourteen
+	# verbs competing for the space now.
 	_add_line("Leader: %s (%s)" % [n.leader_name, n.leader_title])
-	_add_line("")
 	_add_line("GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct])
 	_add_line("Unemployment: %.1f%%" % ns.unemployment_pct)
 	_add_line("Debt: %.1f%% of GDP" % ns.debt_to_gdp_pct())
@@ -183,6 +197,14 @@ func _refresh_actions() -> void:
 	_actions.add_child(_measure_line("Measures imposed", player_id, _nation_id))
 	_actions.add_child(_measure_line("Measures received", _nation_id, player_id))
 
+	# V1.3g, and ONE line for two registers rather than the three it would take to
+	# give the pact, the outbound deployment and its kind a row each. The panel is at
+	# its height ceiling and this session adds four verbs to the list below; a
+	# register that is empty on a new game does not get to spend three rows saying so.
+	# The measure lines above are two because both directions cost the player
+	# something -- here only the player's own side bills them.
+	_actions.add_child(_alliance_line(player_id))
+
 	var available: Array = Diplomacy.available(
 		_state, _loader.diplomatic_actions, player_id, _nation_id
 	)
@@ -209,9 +231,46 @@ func _refresh_actions() -> void:
 ## True for every action that does not, so the caller can treat it as one gate.
 func _partner_would_accept(action, player_id: String) -> bool:
 	var terms: Dictionary = action.effects.get("agreement", {})
-	if String(terms.get("op", "")) != "enter":
-		return true
-	return Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms)
+	if String(terms.get("op", "")) == "enter":
+		return Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms)
+
+	# V1.3g's gate, folded into the same one. Only "sign" is asked: abandoning is
+	# unilateral, and deploying happens under a pact already agreed to.
+	var pact: Dictionary = action.effects.get("pact", {})
+	if String(pact.get("op", "")) == "sign":
+		return ForeignPolicy.would_accept_pact(_state, player_id, _nation_id)
+
+	return true
+
+
+## The pact and the player's own deployment under it, on one line. "none" as a
+## caption while there is nothing, the shape the agreement and measure lines use.
+func _alliance_line(player_id: String) -> Control:
+	var line := Label.new()
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	var pact = _state.pacts.get(Relations.key(player_id, _nation_id))
+	if pact == null:
+		line.text = "Alliance: none"
+		line.theme_type_variation = UiTheme.CAPTION
+		return line
+
+	var text := "Alliance: %s, since %d/%d" % [
+		pact.get("action_name", pact.get("action_id", "")),
+		int(pact.get("since_month", 0)), int(pact.get("since_year", 0)),
+	]
+
+	var kind := Defence.deployment_kind(_state, player_id, _nation_id)
+	if kind == DFK.DEPLOYMENT_OBLIGED:
+		# Named as obliged in the player's own words rather than as a register value.
+		# This is the one commitment they cannot end from this panel, and the sentence
+		# has to say so or the missing button reads as a bug.
+		text += " — forces committed under the pact; only abandoning it ends this"
+	elif kind == DFK.DEPLOYMENT_CHOSEN:
+		text += " — forces deployed by choice"
+
+	line.text = text
+	return line
 
 
 ## One direction of the coercion register, named. Reads "none" as a caption while
@@ -274,6 +333,16 @@ func _unavailable_reason(action, player_id: String) -> String:
 	if String(terms.get("op", "")) == "enter":
 		if not Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms):
 			return _refusal_text(Diplomacy.refusal_reason(_state, player_id, _nation_id, terms))
+
+	# V1.3g, same shape: a pact the partner would decline is a different problem
+	# from a precondition that is not met, and it is the one the player can fix.
+	var pact: Dictionary = action.effects.get("pact", {})
+	if String(pact.get("op", "")) == "sign":
+		if not ForeignPolicy.would_accept_pact(_state, player_id, _nation_id):
+			return _refusal_text(
+				ForeignPolicy.pact_refusal_reason(_state, player_id, _nation_id)
+			)
+
 	return "Conditions for this action are not met."
 
 
@@ -292,6 +361,12 @@ func _refusal_text(key: String) -> String:
 			return "%s will not sign: relations are not close enough." % _nation_id
 		ForeignPolicy.REFUSAL_THIN_TERMS:
 			return "%s will not sign: these terms are not worth it to them." % _nation_id
+		# V1.3g, and the only refusal in the set the player answers with a BUDGET
+		# rather than with diplomacy: nobody promises to bleed for an army that is
+		# not there. The sentence has to point at the defence line or the player
+		# reads it as another relations problem and does the wrong thing.
+		ForeignPolicy.REFUSAL_WEAK_PARTNER:
+			return "%s will not sign: your forces are too slight to be worth an alliance. Sustained defence spending is what changes this." % _nation_id
 	return "%s will not sign." % _nation_id
 
 
