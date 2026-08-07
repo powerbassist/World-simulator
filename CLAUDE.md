@@ -151,6 +151,7 @@ layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
 (V1.4a) `--subsidy`,
+(V1.4b) `--regulate`,
 so every map layer can be captured with something actually on it. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
@@ -566,7 +567,7 @@ fourteen regimes with no fifteenth needed** — predicted in advance, and a firs
 for this run: U6a and V1.3g each needed a new regime because each added a verb,
 and a name is not a decision.
 
-**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a is built.** The row
+**V1.4 is decomposed into three sessions, V1.4a–c; a and b are built.** The row
 was one line and one line is not a session: (a) the firm register and subsidies,
 (b) sector regulation, (c) nationalisation and privatisation. The split is on
 machine count — five machines — and **the a/b line is architectural rather than
@@ -634,7 +635,85 @@ half**: a firm's authored share and headcount are content, so the baseline every
 deviation is measured against round-trips through `data/companies/` rather than
 through the save.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.4b shipped sector regulation, and the session boundary was the whole point.**
+A regulation is a **law**: it reaches `effects.company` through
+`Legislature.apply()` and an assembly division where a subsidy reaches it directly
+through `Companies.execute()` — V1.3a's distinction one block later. `law.gd` grew
+a fifth `business` theme and a `_extract_company()` validator; `legislature.gd`
+grew **one dispatch branch**; nothing in `src/sim/` learned a new verb.
+
+**One quantity read twice, and no new channel at all.**
+`NationState.regulation_burden` is signed per-sector state written by
+`Legislature.apply()` and by nothing else, priced through the **two channels V1.4a
+already built** — a negative term inside `firm_impulse_pct()` and a
+`(1 − β·burden)` factor inside `headcount()`, which the existing
+`firm_jobs_offset_pct` picks up for free because it already measures live headcount
+against authored headcount. That is V1.3c's *one verb, two prices* **literally**
+rather than by analogy; a second growth impulse would have been a second machine
+wearing the phrase. No budget line and no clamp of its own.
+
+**`_extract_company()` refuses a firm id, and the refusal IS the design.** Share
+movement is the subsidy's persistent channel and a law that could name a firm would
+be a second writer of it. The a/b split lives in the schema, not only in the docs —
+and `tests/test_companies.gd` asserts every share is **exactly** unchanged after
+twenty rounds of every rule in the file. A law carrying both `effects.company` and
+`structural_unemployment_pct` is a **load error**: same act, same landing site, same
+units, so the legislature model's prose rule is mechanical for the one case where it
+could be.
+
+**V1.4a's escape from §6 does NOT transfer, and no validator could have caught
+it.** V1.4a refused a sector holding one named firm — a rule about the *target* —
+and a regulation's target *is* the sector. What separates them had to be found: a
+regulation reaches **only the named partition** (a sector 24 % named is a quarter as
+regulable; the unnamed residual is unregulated, a bound recorded), and its **jobs
+price has no analogue in a sector lever** because jobs-per-share is firm content.
+That is why widening the jobs channel's charter from pure reallocation to
+reallocation-plus-level was the right trade rather than a compromise — without it
+V1.4b *is* §6 early. Both are cross-referenced into `docs/tiers/v1.md` §4 **and**
+§6. The row's other miss: **"cost margin" names a quantity `src/sim/` does not
+have**, and the corporate-receipts channel that would have invented one was **cut
+before it was written**, because it creates V1.4c's dividend dependency instead of
+discharging it — a dividend is a yield on *output*, and if V1.4c wants margin,
+V1.4c owns it whole. Instances **twelve and thirteen**.
+
+**Deregulation is a direction, not an undo.** The clamp is symmetric, so a
+deregulation law carries a negative burden on the same accumulator. There is no
+repeal verb in this project and a `once` law never returns, so `[0, MAX]` would have
+been a permanent monotone charge — V1.3g's named failure — and a repeal law would
+have been *inert at burden 0*, breaking V1.3f's own property on the law list. It
+would also have needed a `PRECONDITION_FIELDS` entry carrying a sector parameter
+that whitelist has never had.
+
+**The probe corrected the content twice and itself once, eleven sessions running,
+and NOT ONE correction was to the model** — which is itself the finding, because both
+channels were V1.4a's and already measured. The kill switch **cleared** at 0.0942
+points against a pre-committed floor of 0.05, and the prediction written before the
+sweep — agriculture cannot clear it at any sane value — **held exactly** at
+0.0083–0.0126 and is recorded as a structural bound. The first `business.json` made
+the whole regulation stack **free**: +6.45 headline against a ±3.0 floor, because
+the design rule said a regulation's losers must not also be named in `bloc_offset`.
+The probe's own numbers say why that was too broad — a saturated burden moves growth
+~0.1 %/yr and unemployment ~0.02 points, **below the opinion model's resolution**, so
+a rule's political price cannot be expressed by the measured channel and must be
+authored. Then the cost-against-buy table's **unweighted** `bloc_offset` sum hid two
+same-sector dominations; one was fixed by **swapping two burdens** rather than
+retuning offsets, because a safety regime genuinely is the heavier compliance load
+and the fix that is also true is the better fix. Model:
+[docs/companies-model.md](docs/companies-model.md) §10–19.
+
+**`SAVE_VERSION` stays at 15 and the test pins it** — a version-15 save comes from a
+game that could not pass a `business` law, so an absent register reads as every
+burden 0.0, which is the truth about that save rather than a soft failure
+(`measures` at V1.3c, `pacts` at V1.3g, `appointments` at U6a). Serialised anyway,
+because a law writes it once and no tick recomputes it. **The re-run is bit-identical
+across all fifteen existing regimes, predicted in advance**, and the sixteenth regime
+was the **cheap kind**: `AMENDMENT_REGIMES` already applies a law at a month, so only
+the content was new. The screenshot pass earned its keep for the **eighth** session
+running, and the bug was the flag's: one rule each way came out at `-0.000 pts` on
+the ledger because industry's 186k jobs at +0.40 and services' 213k at −0.35 shed and
+hire within **fifteen people** of each other.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–b, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
@@ -709,7 +788,16 @@ is correct for every version-14 save because those games could not subsidise
 anybody. And the baseline is **content**: a firm's authored share and headcount
 round-trip through `data/companies/`, so the test asserts a save carries no company
 content and no register entry beyond `share` and `subsidy` — which pins that a
-later session storing a baseline turns it red and has to say why.
+later session storing a baseline turns it red and has to say why. **V1.4b adds a
+serialised field and earns NOTHING, and the test says so and then pins the number.**
+`regulation_burden` absent reads as every burden 0.0, correct for every version-15
+save because those games carried no `business` law — `measures`' case a third time.
+It is serialised regardless, and that half is not free: a law writes it once and no
+tick recomputes it, unlike V1.4a's three prices, so a save that dropped it would
+silently repeal every rule the assembly ever passed. The test checks that premise
+(dropping it moves `firm_impulse_pct`) rather than asserting it, then leaves V1.3c's
+device in place — *the version is still 15* — so V1.4c's ownership register has to
+come and say why it bumps.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

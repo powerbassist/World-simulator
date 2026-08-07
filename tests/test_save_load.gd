@@ -36,6 +36,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -100,6 +101,7 @@ func _init() -> void:
 	_run_defence_roundtrip(loader)
 	_run_diary_roundtrip(loader)
 	_run_companies_roundtrip(loader)
+	_run_regulation_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -1299,3 +1301,67 @@ func _run_companies_roundtrip(loader) -> void:
 		for key in (entry as Dictionary).keys():
 			if key != "share" and key != "subsidy":
 				_fail("a serialised register entry carries '%s' beyond the live half" % key)
+
+
+## V1.4b adds `regulation_burden` and earns NO bump, asserted rather than claimed.
+##
+## The rule applied literally: a version-15 save comes from a game with no
+## `business` laws in it at all, so an absent register reads as every burden 0.0 --
+## which is not a soft failure but the TRUTH about that save. `measures` at V1.3c,
+## `pacts` at V1.3g and `appointments` at U6a, and the third time the answer has
+## been "the games that predate the verb could not use it".
+##
+## It is still serialised, and that half is not free: a law writes the burden once
+## and no tick recomputes it, unlike the three prices above, so a save that dropped
+## it would silently repeal every rule the assembly ever passed.
+##
+## The V1.3c-style assertion at the end is the one worth having: V1.4c's ownership
+## register almost certainly bumps, and leaving the number pinned here forces that
+## session to come and say why rather than moving it in passing.
+func _run_regulation_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var law = null
+	for l in loader.laws:
+		if l.id == "emissions_standards":
+			law = l
+	if law == null:
+		_fail("emissions_standards is missing, so this roundtrip asserts nothing")
+		return
+
+	Legislature.apply(state, ns, law, loader)
+	var burden: float = float(ns.regulation_burden.get("industry", 0.0))
+	if burden <= 0.0:
+		_fail("no burden stands, so a round trip cannot tell a restored register from a fresh one")
+		return
+	Companies.tick_month(state, loader)
+
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	if not is_equal_approx(float(kept.player().regulation_burden.get("industry", 0.0)), burden):
+		_fail("a standing burden did not survive the round trip")
+
+	# The half that WOULD have earned a bump if it were true: dropping the field
+	# must be visibly wrong, not merely re-derived on the next tick. It is not
+	# re-derived from anything -- nothing but a law writes it -- so a stripped save
+	# runs an unregulated economy while the passed_law_ids list still says the rule
+	# is on the books.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("regulation_burden")
+	var lost = GameState.from_dict(without)
+	if not lost.player().regulation_burden.is_empty():
+		_fail("an absent regulation_burden did not read as empty")
+	Companies.tick_month(lost, loader)
+	if lost.player().firm_impulse_pct == state.player().firm_impulse_pct:
+		_fail("dropping the burden changed nothing -- either it is derived, or it reaches no channel")
+
+	# ...and yet no bump, because a version-15 save never had one to drop. The
+	# register is per SECTOR, so V1.4a's assertion about what a company entry may
+	# carry is untouched -- a later session moving the burden onto a firm turns that
+	# one red and has to come and say why.
+	for key in (state.to_dict()["nations"]["FRA"] as Dictionary)["regulation_burden"].keys():
+		if not EK.SECTOR_TREND.has(key):
+			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
+
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)

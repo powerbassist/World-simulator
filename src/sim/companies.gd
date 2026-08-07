@@ -6,6 +6,14 @@ extends RefCounted
 ## block. The model and every constant's rationale is docs/companies-model.md;
 ## src/sim/companies_constants.gd is the values.
 ##
+## V1.4b ADDS A SECOND WRITER AND NO SECOND CHANNEL. A regulation is a law, so it
+## reaches effects.company through Legislature.apply() and an assembly division
+## rather than through execute() below; what it writes is ns.regulation_burden, a
+## per-SECTOR signed register this file only ever reads. Both prices land in the two
+## channels V1.4a already built. Nothing here writes `share` but a subsidy: share
+## movement is the subsidy's persistent channel and a second writer of it would be
+## two answers to the question of who is winning the sector.
+##
 ## TAKES A LOADER, where trade.gd, coercion.gd and defence.gd take none. That is
 ## not a slip: a firm's authored share and headcount ARE its baseline, so keeping
 ## a copy on NationState would be the same fact in two places -- the duplication
@@ -97,6 +105,13 @@ static func subsidy_of(ns, company_id: String) -> float:
 	return float(entry.get("subsidy", 0.0)) if entry != null else 0.0
 
 
+## V1.4b. The accumulated regulatory burden on one sector, signed. Written only by
+## Legislature.apply(); this module reads it and never writes it, which is the same
+## one-way arrangement `law_structural_offset_pct` already has with economy.gd.
+static func regulation_burden_of(ns, sector: String) -> float:
+	return float(ns.regulation_burden.get(sector, 0.0))
+
+
 ## Revenue, EUR bn/yr. DERIVED and never stored: the sector total is the economy's
 ## number and the share is the firm's, so a stored revenue would be a third record
 ## of a product of two things that already exist.
@@ -111,14 +126,30 @@ static func output_eur_bn(ns, company) -> float:
 ## the economy grew -- which would make the jobs deviation below non-zero in every
 ## run that has ever been played, destroy V1.4a's bit-identity claim, and, worse,
 ## be a second answer to a question the macro model already answers. Aggregate
-## employment is Okun's law in Economy._update_unemployment(). What a firm layer
-## adds is REALLOCATION: two firms of equal share employ different numbers of
-## people, so moving share between them creates or destroys jobs on net. That is
-## the only thing this channel says, and it is the only thing it should say.
+## employment is Okun's law in Economy._update_unemployment(). V1.4b's burden term
+## does not weaken this: it reads no sector_output either.
+##
+## V1.4b WIDENS THIS CHANNEL'S CHARTER, and that is written down rather than
+## slipped in. V1.4a's claim was that a firm layer adds REALLOCATION and nothing
+## else -- two firms of equal share employ different numbers of people, so moving
+## share between them creates or destroys jobs on net. A sector burden is a LEVEL
+## effect on top of that: it sheds staff without moving a single share. The channel
+## now says two things, and the second one is why V1.4b is not
+## docs/tiers/v1.md section 6's sector lever wearing a firm's name -- jobs-per-share
+## is firm content, and no lever pointed at a sector can express it.
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
-	return company.headcount * share_of(ns, company.id) / company.share
+	var reallocated: float = company.headcount * share_of(ns, company.id) / company.share
+	# Signed, so a deregulation law lets the same firms carry more staff. Floored at
+	# zero rather than trusted to the burden clamp: a later session raising
+	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
+	# negative headcount and a positive employment effect from a rule that closed
+	# the sector.
+	var compliance: float = maxf(
+		1.0 - K.REGULATION_JOBS_BETA * regulation_burden_of(ns, company.sector), 0.0
+	)
+	return reallocated * compliance
 
 
 # --- The share partition -------------------------------------------------------
@@ -217,19 +248,41 @@ static func subsidy_bill_pct_gdp(ns) -> float:
 ## label: subsidising a national champion moves the country, subsidising a
 ## mid-sized rival mostly moves the rival.
 ##
-## Exactly 0.0 for every nation in every month with no subsidy standing.
+## V1.4b's burden runs through the SAME TERM with the opposite sign, rather than
+## through a second impulse beside it. One quantity read at two existing sites is
+## docs/coercion-model.md's "one verb, two prices"; a second growth impulse would
+## be a second machine wearing that phrase, with its own field, clamp and cached
+## price to keep in step with this one. A subsidy and a regulation on the same
+## sector therefore net off, which is the honest answer -- the player paid for one
+## and the assembly passed the other.
+##
+## THE BURDEN READS ONLY THE NAMED FIRMS, and that is structural rather than a
+## rounding choice. A sector that is a quarter named is a quarter as regulable,
+## because the unnamed residual is not in the register and this model does not
+## reach it. That bound is what separates the term from a lever pointed at
+## sector_output, which is docs/tiers/v1.md section 6's and not this session's.
+##
+## Exactly 0.0 for every nation in every month with no subsidy standing and no
+## burden on any sector.
 static func firm_impulse_pct(ns, loader) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
-	var total := 0.0
+	var subsidised := 0.0
+	var burdened := 0.0
 	for company in firms_of(loader, ns.id):
 		var intensity := subsidy_of(ns, company.id)
-		if intensity <= 0.0:
+		var burden := regulation_burden_of(ns, company.sector)
+		if intensity == 0.0 and burden == 0.0:
 			continue
+		# Read through the LIVE share, so a subsidy that grew a firm also raises what
+		# regulating its sector costs. That interaction is the point of running both
+		# verbs against one register rather than two.
 		var gdp_share: float = output_eur_bn(ns, company) / ns.gdp_eur_bn
-		total += intensity * gdp_share / K.GDP_SHARE_REFERENCE
+		subsidised += intensity * gdp_share / K.GDP_SHARE_REFERENCE
+		burdened += burden * gdp_share / K.GDP_SHARE_REFERENCE
 	return clampf(
-		K.SUBSIDY_GROWTH_BETA * total, -K.FIRM_IMPULSE_MAX_PCT, K.FIRM_IMPULSE_MAX_PCT
+		K.SUBSIDY_GROWTH_BETA * subsidised - K.REGULATION_GROWTH_BETA * burdened,
+		-K.FIRM_IMPULSE_MAX_PCT, K.FIRM_IMPULSE_MAX_PCT
 	)
 
 
@@ -237,8 +290,10 @@ static func firm_impulse_pct(ns, loader) -> float:
 ## register has net hired. Read by Economy._update_unemployment() beside
 ## `law_structural_offset_pct`, whose shape this is.
 ##
-## Exactly 0.0 while every firm sits at its authored share, which is every month of
-## every run in which no subsidy has ever been paid.
+## Exactly 0.0 while every firm sits at its authored share AND no sector carries a
+## burden -- which is every month of every run in which no subsidy has ever been
+## paid and no `business` law has ever passed. V1.4b widened that condition; see
+## headcount() for why the widening is the session's whole case.
 static func firm_jobs_offset_pct(ns, loader) -> float:
 	var labour_force: float = ns.population * K.LABOUR_FORCE_SHARE
 	if labour_force <= 0.0:

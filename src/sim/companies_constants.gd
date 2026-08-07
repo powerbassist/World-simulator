@@ -27,6 +27,23 @@ const COMPANY_OPS := ["subsidise", "withdraw"]
 ## state, exactly as coercion_constants.MAX_MEASURE_SEVERITY does.
 const MAX_SUBSIDY_INTENSITY := 1.00
 
+## V1.4b. How hard one authored regulation may lean on a sector, and equally how
+## far the ACCUMULATED burden may run in either direction -- unlike the subsidy
+## bound above, this one clamps the live state too, because laws stack and nothing
+## renormalises them.
+##
+## ONE CLAMP, not two. A per-law bound plus a separate accumulator bound would
+## double the exposure to the failure this project's probes have now found three
+## times: the clamp, and not the number being measured, setting the outcome. The
+## two channels the burden reaches already carry their own bounds
+## (FIRM_IMPULSE_MAX_PCT and FIRM_JOBS_MAX_PCT), so a third above them would be a
+## guard rail guarding a guard rail.
+##
+## SIGNED, and the sign is the whole of deregulation. See src/core/law.gd's
+## _extract_company() for why a one-directional burden would be a permanent
+## monotone charge rather than a lever.
+const REGULATION_BURDEN_MAX := 1.00
+
 ## What a company action's preconditions may ask about. `subsidy_active` and
 ## `subsidy_count` are about the firm and the register; the rest are the acting
 ## nation's own state, read exactly as Legislature._read_field() reads them.
@@ -172,3 +189,38 @@ const LABOUR_FORCE_SHARE := 0.45
 ## Hard clamp on the firm layer's contribution to structural unemployment, points.
 ## Same per-quantity bound as FIRM_IMPULSE_MAX_PCT above, on the other channel.
 const FIRM_JOBS_MAX_PCT := 1.50
+
+
+# --- V1.4b: what a sector burden costs ------------------------------------------
+
+## Fraction of a named firm's staff shed at a burden of 1.0.
+##
+## The burden reaches jobs through Companies.headcount() and therefore through the
+## EXISTING firm_jobs_offset_pct, which already measures live headcount against
+## authored headcount. That is not a saving of one field; it is the reason the jobs
+## price exists at all. A sector-wide rule priced on sector OUTPUT is
+## docs/tiers/v1.md section 6's sectoral lever with a minus sign, reproducible
+## without a firm register anywhere in it -- while jobs-per-share is firm content,
+## so no sector lever can express this number. Without it V1.4b is section 6 early
+## and the decomposition's a/b boundary collapses.
+##
+## Provisional. tools/companies_probe.gd table (g) sweeps it against a floor of
+## 0.05 unemployment points fixed before the sweep, and against the standing
+## prediction that agriculture cannot clear that floor at any sane value -- 39k
+## named jobs against a 30.9M labour force. If it does not, the bound is RECORDED
+## and not tuned around; see docs/defence-model.md's DEPLOYMENT_OPINION_CHOSEN.
+const REGULATION_JOBS_BETA := 0.10
+
+## %/yr of growth given up per unit of GDP-weighted burden, scaled by
+## GDP_SHARE_REFERENCE exactly as SUBSIDY_GROWTH_BETA is.
+##
+## Reads the burdened sector's NAMED firms and nothing else, so a sector that is a
+## quarter named is a quarter as regulable. That is the second thing separating a
+## regulation from a sector lever, and it is structural rather than a coefficient:
+## the unnamed residual of a sector is not reached by this model at all, which is a
+## bound docs/companies-model.md records rather than a rounding error.
+##
+## Provisional, swept by table (h) against the same 0.05-0.60 %/yr band table (c)
+## measured the subsidy on -- a rule on one sector must no more out-punch a whole
+## budget than a subsidy to one firm may.
+const REGULATION_GROWTH_BETA := 0.10

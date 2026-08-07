@@ -1,0 +1,202 @@
+{
+  "_note": "V1.4b. Sector regulation, as LAWS -- the assembly divides on them, which is why they are here and not in data/company-actions/. Each names one sector and a signed burden on it; src/sim/companies.gd prices that burden in growth and in jobs, both read through the named firms of data/companies/. See docs/companies-model.md.",
+  "_cost_and_buy": "EVERY law names its losers as well as its winners, and the first draft of this file did not -- which tools/companies_probe.gd table (j) caught. Written on the rule that bloc_offset must not restate a reaction the measured channels already register, the file gave the whole regulation stack +6.45 headline points against a noise floor of 3.0: free approval, and the strictly-dominated shape three previous sessions each hit. The rule was too broad. A saturated burden moves growth by ~0.1 %/yr and unemployment by ~0.02 points, which is BELOW the opinion model's resolution, so the political price of a rule is a fact the measured channels structurally cannot express and has to be authored -- docs/defence-model.md's finding about `defence` being weighted 0.00 by five blocs of six, reached from a second direction.",
+  "_weighting": "Offsets are set against opinion_constants.BLOC_SIZE, not by eye: workers are 0.30 of the electorate and business 0.10, so a rule that pleases business and costs workers is a net loss however it reads on the row. The full regulation stack is deliberately near approval-NEUTRAL and costs growth, and the full deregulation stack is an approval loss that buys growth. Neither direction is a free opening, which is what table (j) exists to check.",
+  "_no_agriculture_deregulation": "Deliberate. Agriculture's named payroll is 39k against a 30.9M labour force and its named output is 0.7% of GDP, so both measured channels sit below the readable floor there. A deregulation law on it would buy nothing measurable and cost real approval -- strictly dominated, which is the shape tools/companies_probe.gd table (k) exists to catch. The sector is regulable in one direction only, and that is a property of the content rather than a gap in it.",
+  "laws": [
+    {
+      "id": "emissions_standards",
+      "name": "Industrial Emissions Standards",
+      "theme": "business",
+      "summary": "Binding emissions limits on industrial plant, enforced by inspection and fines.",
+      "position": {
+        "economic": -0.45,
+        "social": -0.35
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "industry",
+          "burden": 0.3
+        },
+        "bloc_offset": {
+          "urban": 0.13,
+          "students": 0.11,
+          "rural": 0.06,
+          "workers": -0.1,
+          "business": -0.18
+        }
+      }
+    },
+    {
+      "id": "workplace_safety_act",
+      "name": "Workplace Safety Act",
+      "theme": "business",
+      "summary": "Mandatory safety standards, inspection rights and employer liability on the factory floor.",
+      "position": {
+        "economic": -0.55,
+        "social": -0.15
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "industry",
+          "burden": 0.4
+        },
+        "bloc_offset": {
+          "workers": 0.14,
+          "urban": 0.05,
+          "rural": -0.04,
+          "business": -0.24
+        }
+      }
+    },
+    {
+      "id": "banking_conduct_rules",
+      "name": "Banking Conduct Rules",
+      "theme": "business",
+      "summary": "Capital requirements, a duty of care to depositors, and a cap on retail lending charges.",
+      "position": {
+        "economic": -0.5,
+        "social": 0.0
+      },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "services",
+          "burden": 0.35
+        },
+        "bloc_offset": {
+          "pensioners": 0.16,
+          "workers": 0.09,
+          "urban": 0.06,
+          "rural": -0.08,
+          "students": -0.06,
+          "business": -0.26
+        }
+      }
+    },
+    {
+      "id": "competition_enforcement",
+      "name": "Competition Enforcement Act",
+      "theme": "business",
+      "summary": "An empowered competition authority with the power to break up dominant firms and block mergers.",
+      "position": {
+        "economic": -0.2,
+        "social": -0.1
+      },
+      "majority": "simple",
+      "cooldown_months": 36,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "services",
+          "burden": 0.3
+        },
+        "potential_growth_pct": 0.08,
+        "bloc_offset": {
+          "urban": 0.08,
+          "students": 0.06,
+          "workers": -0.04,
+          "business": -0.2
+        }
+      }
+    },
+    {
+      "id": "farm_standards_act",
+      "name": "Farm Standards Act",
+      "theme": "business",
+      "summary": "Animal welfare, pesticide and traceability standards on agricultural production.",
+      "position": {
+        "economic": -0.35,
+        "social": -0.3
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "agriculture",
+          "burden": 0.5
+        },
+        "bloc_offset": {
+          "urban": 0.09,
+          "students": 0.07,
+          "rural": -0.16,
+          "business": -0.06
+        }
+      }
+    },
+    {
+      "id": "industrial_deregulation",
+      "name": "Industrial Deregulation Act",
+      "theme": "business",
+      "summary": "Repeal of accumulated industrial rules: lighter inspection, faster consent, fewer reporting duties.",
+      "position": {
+        "economic": 0.6,
+        "social": 0.15
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "company": {
+          "sector": "industry",
+          "burden": -0.4
+        },
+        "bloc_offset": {
+          "business": 0.2,
+          "rural": 0.05,
+          "workers": -0.14,
+          "urban": -0.11,
+          "students": -0.09
+        }
+      }
+    },
+    {
+      "id": "financial_deregulation",
+      "name": "Financial Services Deregulation",
+      "theme": "business",
+      "summary": "Lighter capital rules and a simplified conduct regime for banks and insurers.",
+      "position": {
+        "economic": 0.7,
+        "social": 0.1
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "growth_annual_pct",
+          "op": "<=",
+          "value": 1.5
+        }
+      ],
+      "effects": {
+        "company": {
+          "sector": "services",
+          "burden": -0.35
+        },
+        "bloc_offset": {
+          "business": 0.22,
+          "rural": 0.04,
+          "pensioners": -0.13,
+          "workers": -0.08
+        }
+      }
+    }
+  ],
+  "_domination": "Domination is only meaningful BETWEEN LAWS ON ONE SECTOR -- two rules on different sectors are not substitutes, because which sector a rule lands on decides which of the player's own subsidised firms it reaches. Table (k) caught two same-sector pairs. Industry: workplace_safety_act was cheaper than emissions_standards on both costs AND bought more, so emissions was strictly dominated; the two burdens were swapped rather than the offsets retuned, because a safety regime genuinely is the heavier compliance load and the fix should be the one that is also true. Services: banking_conduct_rules cost double competition_enforcement for a buy 0.0009 larger, which is domination inside the rounding; pensioners went from 0.11 to 0.16, so it is now the bigger lever at the worse rate rather than the worse lever outright."
+}

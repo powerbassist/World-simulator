@@ -50,6 +50,7 @@ const OK = preload("res://src/sim/opinion_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 
 const PLAYABLE := ["FRA", "DEU", "GBR"]
 const TERM_MONTHS := 60
@@ -80,6 +81,11 @@ func _init() -> void:
 	_table_d_jobs()
 	_table_e_bill()
 	_table_f_approval()
+	_table_g_regulation_jobs()
+	_table_h_regulation_growth()
+	_table_i_redundancy()
+	_table_j_dominance()
+	_table_k_content()
 	quit(0)
 
 
@@ -372,3 +378,280 @@ func _table_f_approval() -> void:
 		"GDP bn", quiet.player().gdp_eur_bn, loud.player().gdp_eur_bn,
 		loud.player().gdp_eur_bn - quiet.player().gdp_eur_bn,
 	])
+
+
+# =================================================================================
+# V1.4b: the sector burden
+# =================================================================================
+#
+# Four more pre-committed bands, written before these sweeps ran:
+#
+#   (P6) JOBS      *** KILL SWITCH, again ***. A burden at REGULATION_BURDEN_MAX
+#                  reaches >= 0.05 points of unemployment on the widest sector.
+#                  STANDING PREDICTION, written in advance: agriculture cannot
+#                  clear it at any sane value -- 39k named jobs against a 30.9M
+#                  labour force -- and that is RECORDED as a structural bound
+#                  rather than tuned around.
+#
+#   (P7) GROWTH    The impulse from a saturated burden on one sector is
+#                  0.05-0.60 %/yr, the same band (c) held the subsidy to. A rule
+#                  on one sector must no more out-punch a whole budget than a
+#                  subsidy to one firm may.
+#
+#   (P8) REDUNDANCY  Neither beta may set the other's outcome. If moving one
+#                  changes nothing the other has not already decided, the loser is
+#                  DELETED rather than left unused -- U6a's precedent, and V1.4a's
+#                  own flat-rival-floor finding in a third place.
+#
+#   (P9) DOMINANCE  No authored law strictly dominates another, and a deregulation
+#                  stack from month 1 must not be a free opening. Fixed in the
+#                  CONTENT if it fires, not in a constant -- V1.3d's precedent.
+
+const REG_JOBS_CANDIDATES := [0.05, 0.10, 0.20, 0.40]
+const REG_GROWTH_CANDIDATES := [0.05, 0.10, 0.20, 0.40]
+
+
+func _business_laws() -> Array:
+	var out: Array = []
+	for law in _loader.laws:
+		if law.theme == "business":
+			out.append(law)
+	return out
+
+
+func _law(law_id: String):
+	for law in _loader.laws:
+		if law.id == law_id:
+			return law
+	return null
+
+
+## Sets one sector's burden directly. The probe measures the MODEL, not the
+## assembly: which laws pass is tests/test_legislature.gd's subject, and a sweep
+## whose rows depended on a vote going one way would be measuring two things.
+func _burden(ns, sector: String, value: float) -> void:
+	ns.regulation_burden[sector] = value
+
+
+func _named_payroll(nation_id: String, sector: String) -> float:
+	var total := 0.0
+	for company in Companies.firms_in_sector(_loader, nation_id, sector):
+		total += company.headcount
+	return total
+
+
+# --- (g) P6: the kill switch, on the other channel --------------------------------
+
+func _table_g_regulation_jobs() -> void:
+	print("\n=== (g) P6 KILL SWITCH: unemployment points from a saturated burden ===")
+	print("     floor 0.05 pts. standing prediction: agriculture cannot clear it.")
+	print("%-4s %-12s %6s %12s %12s %12s" % [
+		"nat", "sector", "beta", "named jobs", "shed", "unemp pts",
+	])
+
+	var best_by_beta := {}
+	for beta in REG_JOBS_CANDIDATES:
+		var best := 0.0
+		for nation_id in PLAYABLE:
+			for sector in EK.SECTOR_TREND.keys():
+				var state = _new_state(nation_id)
+				var ns = state.player()
+				_burden(ns, String(sector), K.REGULATION_BURDEN_MAX)
+				# The factor is linear in beta, so the shipped model is read once and
+				# scaled -- sweeping a const would mean editing the file per row.
+				var payroll: float = _named_payroll(nation_id, String(sector))
+				var shed: float = payroll * beta * K.REGULATION_BURDEN_MAX
+				var points: float = 100.0 * shed / (ns.population * K.LABOUR_FORCE_SHARE)
+				if points > best:
+					best = points
+				if is_equal_approx(beta, K.REGULATION_JOBS_BETA):
+					print("%-4s %-12s %6.2f %12.0f %12.0f %12.4f" % [
+						nation_id, sector, beta, payroll, shed, points,
+					])
+		best_by_beta[beta] = best
+
+	print("\n%6s %12s %s" % ["beta", "best pts", "verdict"])
+	for beta in REG_JOBS_CANDIDATES:
+		print("%6.2f %12.4f %s%s" % [
+			beta, best_by_beta[beta],
+			"in band" if float(best_by_beta[beta]) >= 0.05 else "BELOW FLOOR",
+			"   <-- shipped" if is_equal_approx(beta, K.REGULATION_JOBS_BETA) else "",
+		])
+
+	# And the clamp, which V1.4a measured slack for the subsidy and which a burden
+	# reaches from the other direction.
+	var worst = _new_state("FRA")
+	for sector in EK.SECTOR_TREND.keys():
+		_burden(worst.player(), String(sector), K.REGULATION_BURDEN_MAX)
+	Companies.tick_month(worst, _loader)
+	print("     worst reachable jobs offset %.4f against clamp %.3f -- %s" % [
+		absf(worst.player().firm_jobs_offset_pct), K.FIRM_JOBS_MAX_PCT,
+		"SLACK" if absf(worst.player().firm_jobs_offset_pct) < K.FIRM_JOBS_MAX_PCT else "BINDING",
+	])
+
+
+# --- (h) P7: what a burden costs in growth ---------------------------------------
+
+func _table_h_regulation_growth() -> void:
+	print("\n=== (h) P7: growth given up by a saturated burden, %/yr ===")
+	print("     band 0.05-0.60 %/yr, the same one (c) held the subsidy to")
+	print("%-4s %-12s %10s %12s %12s" % ["nat", "sector", "named %GDP", "beta", "%/yr"])
+
+	var best_by_beta := {}
+	for beta in REG_GROWTH_CANDIDATES:
+		best_by_beta[beta] = 0.0
+
+	for nation_id in PLAYABLE:
+		for sector in EK.SECTOR_TREND.keys():
+			var state = _new_state(nation_id)
+			var ns = state.player()
+			var named_gdp := 0.0
+			for company in Companies.firms_in_sector(_loader, nation_id, String(sector)):
+				named_gdp += Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
+			for beta in REG_GROWTH_CANDIDATES:
+				var cost: float = beta * K.REGULATION_BURDEN_MAX * named_gdp / K.GDP_SHARE_REFERENCE
+				if cost > float(best_by_beta[beta]):
+					best_by_beta[beta] = cost
+				if is_equal_approx(beta, K.REGULATION_GROWTH_BETA):
+					print("%-4s %-12s %10.4f %12.2f %12.4f" % [
+						nation_id, sector, named_gdp, beta, cost,
+					])
+
+	print("\n%6s %12s %s" % ["beta", "worst %/yr", "verdict"])
+	for beta in REG_GROWTH_CANDIDATES:
+		var v: float = float(best_by_beta[beta])
+		var verdict := "in band"
+		if v < 0.05:
+			verdict = "BELOW FLOOR"
+		elif v > 0.60:
+			verdict = "TOO LARGE"
+		print("%6.2f %12.4f %s%s" % [
+			beta, v, verdict,
+			"   <-- shipped" if is_equal_approx(beta, K.REGULATION_GROWTH_BETA) else "",
+		])
+
+
+# --- (i) P8: are the two betas telling one story? ---------------------------------
+
+## The failure V1.4a's flat rival floor was: a constant that looks tuned while
+## something else sets the outcome. Here the risk is the inverse -- two constants
+## that move the same number, so one of them is decorative and should be DELETED
+## rather than left unused.
+##
+## Measured as the RANK ORDER of the three sectors under each channel. If both
+## channels rank them identically and in proportion, a player choosing which sector
+## to regulate faces one decision wearing two names.
+func _table_i_redundancy() -> void:
+	print("\n=== (i) P8: do the two channels rank the sectors differently? ===")
+	print("%-4s %-12s %12s %12s %12s" % ["nat", "sector", "growth %/yr", "unemp pts", "ratio"])
+
+	for nation_id in PLAYABLE:
+		var state = _new_state(nation_id)
+		var base = state.player()
+		for sector in EK.SECTOR_TREND.keys():
+			var s2 = _new_state(nation_id)
+			var ns = s2.player()
+			_burden(ns, String(sector), K.REGULATION_BURDEN_MAX)
+			Companies.tick_month(s2, _loader)
+			var g: float = absf(ns.firm_impulse_pct)
+			var j: float = absf(ns.firm_jobs_offset_pct)
+			print("%-4s %-12s %12.4f %12.4f %12.2f" % [
+				nation_id, sector, g, j, (g / j) if j > 0.0 else INF,
+			])
+		# base is read only to keep the loop honest about which state is which.
+		if base == null:
+			return
+	print("     a CONSTANT ratio down a nation's three rows means one decision, two names.")
+
+
+# --- (j) P9: is a deregulation stack a free opening? ------------------------------
+
+func _table_j_dominance() -> void:
+	print("\n=== (j) P9: every business law stacked from month 1 (FRA, %d months) ===" % TERM_MONTHS)
+
+	var quiet = _new_state("FRA")
+	var regulated = _new_state("FRA")
+	var freed = _new_state("FRA")
+	for law in _business_laws():
+		var burden: Dictionary = law.effects.get("company", {})
+		if float(burden.get("burden", 0.0)) > 0.0:
+			Legislature.apply(regulated, regulated.player(), law, _loader)
+		else:
+			Legislature.apply(freed, freed.player(), law, _loader)
+
+	for _m in range(TERM_MONTHS):
+		for s in [quiet, regulated, freed]:
+			Economy.tick_month(s)
+			Budget.tick_month(s)
+			Opinion.tick_month(s)
+			Companies.tick_month(s, _loader)
+
+	print("%-14s %10s %12s %12s" % ["", "quiet", "regulated", "deregulated"])
+	for bloc in OK.BLOC_KEYS:
+		print("%-14s %10.2f %12.2f %12.2f" % [
+			bloc, quiet.player().bloc_approval[bloc],
+			regulated.player().bloc_approval[bloc], freed.player().bloc_approval[bloc],
+		])
+	print("%-14s %10.2f %12.2f %12.2f  (noise floor +-3.0)" % [
+		"HEADLINE", quiet.player().overall_approval_pct,
+		regulated.player().overall_approval_pct, freed.player().overall_approval_pct,
+	])
+	for row in [["GDP bn", "gdp_eur_bn"], ["unemployment", "unemployment_pct"]]:
+		print("%-14s %10.2f %12.2f %12.2f" % [
+			row[0], quiet.player().get(row[1]),
+			regulated.player().get(row[1]), freed.player().get(row[1]),
+		])
+	print("     a deregulated column better than quiet on EVERY row is a free opening.")
+
+	# The accumulated bloc_offset against the clamp legislature_constants has always
+	# carried. A stack that saturates it is the clamp-sets-the-number failure in a
+	# channel V1.1 built, so the worst reachable value is MEASURED here rather than
+	# assumed slack -- this project has now found that failure three times.
+	var worst := 0.0
+	var worst_bloc := ""
+	for s in [regulated, freed]:
+		for bloc in OK.BLOC_KEYS:
+			var v: float = absf(float(s.player().bloc_offset.get(bloc, 0.0)))
+			if v > worst:
+				worst = v
+				worst_bloc = bloc
+	print("     worst accumulated bloc_offset: %s at %.3f against clamp %.2f -- %s" % [
+		worst_bloc, worst, 1.0, "SLACK" if worst < 1.0 else "BINDING",
+	])
+
+
+# --- (k) P9: does any authored law strictly dominate another? ---------------------
+
+## Cost against buy, one row per law. Two laws with the same buy at different costs
+## is the strictly-dominated shape V1.3c, V1.3d and V1.4a each hit; the fix is
+## content, and this table is where it is visible.
+##
+## THE BUY COLUMN IS SIZE-WEIGHTED, and the first draft of this table was not --
+## which made financial_deregulation read as the best row on both axes when its
+## unweighted sum hid a charge on pensioners, 0.24 of the electorate, paid for with
+## a gift to business, 0.10 of it. A raw sum over blocs is a sum over unequal
+## things, and reading a decision off one is the failure this file exists to catch.
+func _table_k_content() -> void:
+	print("\n=== (k) P9: cost against buy, per authored law (FRA) ===")
+	print("%-26s %-12s %8s %10s %10s %12s %8s" % [
+		"law", "sector", "burden", "%/yr", "unemp pts", "buy (wtd)", "trend",
+	])
+
+	for law in _business_laws():
+		var state = _new_state("FRA")
+		var ns = state.player()
+		Legislature.apply(state, ns, law, _loader)
+		Companies.tick_month(state, _loader)
+		var weighted := 0.0
+		for bloc in law.effects.get("bloc_offset", {}).keys():
+			weighted += float(law.effects["bloc_offset"][bloc]) * float(OK.BLOC_SIZE[bloc])
+		# The trend column exists because competition_enforcement's whole buy is
+		# `potential_growth_pct` and a table without it reads that law as pure cost.
+		print("%-26s %-12s %8.2f %10.4f %10.4f %+12.4f %8.2f" % [
+			law.id, law.effects["company"]["sector"], law.effects["company"]["burden"],
+			ns.firm_impulse_pct, ns.firm_jobs_offset_pct, weighted,
+			float(law.effects.get("potential_growth_pct", 0.0)),
+		])
+	print("     domination is only meaningful WITHIN one sector: two rules on different")
+	print("     sectors are not substitutes, because the sector decides which of the")
+	print("     player's own subsidised firms the rule reaches.")

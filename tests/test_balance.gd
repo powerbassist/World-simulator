@@ -91,6 +91,7 @@ func _init() -> void:
 	_check_losing_names_the_number_the_player_moved()
 	_check_a_dissolution_stays_off_every_clamp()
 	_check_a_subsidised_run_stays_off_every_clamp()
+	_check_a_regulated_run_stays_off_every_clamp()
 	_finish()
 
 
@@ -296,7 +297,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1) -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -344,6 +345,9 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 
 		if i + 1 == subsidise_at_month:
 			_subsidise_the_largest(state, ns)
+
+		if i + 1 == regulate_at_month:
+			_regulate_everything(state, ns)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -395,6 +399,40 @@ func _check_a_subsidised_run_stays_off_every_clamp() -> void:
 		_fail("the firm jobs offset sits ON its clamp at %.3f" % ns.firm_jobs_offset_pct)
 
 
+## V1.4b's regime: fourteen years of every sector saturated with rules nobody
+## repeals, WITH the subsidy stack live underneath it. Both verbs at once, because
+## they share the two channels and their clamps -- a burden that only ever ran on a
+## clean register would never test the case the model actually allows.
+func _check_a_regulated_run_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, -1, "FRA", 6, 12)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("regulated run: %s" % p)
+
+	var burdened := 0
+	for sector in ns.regulation_burden.keys():
+		if absf(float(ns.regulation_burden[sector])) > 0.0:
+			burdened += 1
+	if burdened == 0:
+		_fail("the regulated run carries no burden, so it asserts nothing about the clamps")
+
+	if absf(ns.firm_impulse_pct) >= CompaniesK.FIRM_IMPULSE_MAX_PCT - 0.000001:
+		_fail("the firm growth impulse sits ON its clamp at %.3f under regulation" % ns.firm_impulse_pct)
+	if absf(ns.firm_jobs_offset_pct) >= CompaniesK.FIRM_JOBS_MAX_PCT - 0.000001:
+		_fail("the firm jobs offset sits ON its clamp at %.3f under regulation" % ns.firm_jobs_offset_pct)
+
+	# The burden clamp itself, which is the one this session added. Saturating it is
+	# EXPECTED here -- four copies of every rule is not a reachable game -- so what is
+	# asserted is that it holds rather than that it is slack.
+	for sector in ns.regulation_burden.keys():
+		if absf(float(ns.regulation_burden[sector])) > CompaniesK.REGULATION_BURDEN_MAX + 0.000001:
+			_fail("%s burden ran past REGULATION_BURDEN_MAX at %.3f" % [
+				sector, ns.regulation_burden[sector],
+			])
+
+
 ## The harshest authored subsidy, pointed at the largest firm by output -- the case
 ## both channels are widest for.
 func _subsidise_the_largest(state, ns) -> void:
@@ -422,6 +460,32 @@ func _subsidise_the_largest(state, ns) -> void:
 	var result := Companies.execute(state, ns, _loader.company_actions, action, best)
 	if not result.get("applied", false):
 		_fail("the subsidy was refused, so the subsidised regime asserts nothing")
+
+
+## V1.4b's regime. A regulation is a VERB and no budget regime passes a law, which
+## is why V1.3c, V1.3g, U6a and V1.4a each needed one of these -- but this one is
+## the cheap kind: tools/balance_probe.gd already carries AMENDMENT_REGIMES and
+## TRANSITION_REGIMES, both of which apply a law at a month, so the shape existed.
+##
+## Legislature.apply() rather than propose(): the assembly division is
+## tests/test_legislature.gd's subject, and a clamp assertion that only holds on the
+## months the chamber agrees asserts nothing on the months it does not.
+##
+## EVERY positive-burden law at once, which saturates all three sectors -- the
+## reachable worst case rather than a typical game, exactly as the subsidised regime
+## above is.
+func _regulate_everything(state, ns) -> void:
+	var applied := 0
+	for law in _loader.laws:
+		if law.theme != "business":
+			continue
+		if float(law.effects.get("company", {}).get("burden", 0.0)) <= 0.0:
+			continue
+		for _repeat in range(4):
+			Legislature.apply(state, ns, law, _loader)
+		applied += 1
+	if applied == 0:
+		_fail("no positive-burden business law is authored, so the regulated regime asserts nothing")
 
 
 func _problems(ns, year: int, month: int) -> Array[String]:

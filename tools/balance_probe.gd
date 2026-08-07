@@ -256,6 +256,20 @@ const COMPANY_REGIMES := {
 }
 
 
+## V1.4b's regime, and it is the CHEAP kind of new regime: a regulation is a verb
+## and no budget regime passes a law, but AMENDMENT_REGIMES and TRANSITION_REGIMES
+## above already apply a law at a month, so the shape existed and only the content
+## is new. That is the difference between this row and V1.3c's, V1.3g's and V1.4a's,
+## each of which had to teach the harness a verb it had never seen.
+##
+## Applies the heaviest positive-burden rule on EVERY sector at once and never
+## repeals it -- the reachable worst case the burden clamp is measured against,
+## exactly as the subsidy regime above is left standing.
+const REGULATION_REGIMES := {
+	"managed_regulates": {"budget": REGIMES["managed"], "regulate_month": 6},
+}
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
@@ -307,6 +321,9 @@ func _init() -> void:
 		for name in COMPANY_REGIMES.keys():
 			var regime: Dictionary = COMPANY_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, int(regime["subsidy_month"]))
+		for name in REGULATION_REGIMES.keys():
+			var regime: Dictionary = REGULATION_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, int(regime["regulate_month"]))
 
 	quit(0)
 
@@ -331,7 +348,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -414,6 +431,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == subsidy_month:
 			_subsidise(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == regulate_month:
+			_regulate(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -754,6 +774,34 @@ func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -
 		])
 	else:
 		print("  %d-%02d %s: subsidy for %s REFUSED" % [year, month, regime_name, best])
+
+
+## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
+## the assembly division belongs to tests/test_legislature.gd, and a balance row
+## whose numbers depend on a chamber agreeing is a row that measures two things.
+func _regulate(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var heaviest := {}
+	for law in loader.laws:
+		if law.theme != "business":
+			continue
+		var burden: float = float(law.effects.get("company", {}).get("burden", 0.0))
+		if burden <= 0.0:
+			continue
+		var sector: String = String(law.effects["company"]["sector"])
+		if not heaviest.has(sector) or burden > float(heaviest[sector].effects["company"]["burden"]):
+			heaviest[sector] = law
+	if heaviest.is_empty():
+		printerr("  no positive-burden business law is authored")
+		return
+
+	var sectors: Array = heaviest.keys()
+	sectors.sort()
+	for sector in sectors:
+		Legislature.apply(state, ns, heaviest[sector], loader)
+		print("  %d-%02d %s: applied %s -- %s burden now %+.2f" % [
+			year, month, regime_name, heaviest[sector].id, sector,
+			float(ns.regulation_burden.get(sector, 0.0)),
+		])
 
 
 func _sign_pact(state, loader, ns, regime_name: String, year: int, month: int) -> void:

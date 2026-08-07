@@ -21,6 +21,14 @@ extends SceneTree
 ##   - the seven nations with no companies file run the model they always ran;
 ##   - a firm's authored share and headcount are CONTENT and are never copied into
 ##     the register, so there is exactly one baseline and it cannot drift.
+##
+## V1.4b WIDENS THE FIRST OF THOSE AND SHARPENS THE SECOND. Both channels now read
+## exactly 0.0 only while no subsidy stands AND no sector carries a burden -- the
+## widening is deliberate and docs/companies-model.md says so. What replaces the
+## lost strength is a stronger claim about `share`: a regulation moves both channels
+## while leaving every share EXACTLY where the content put it, because share
+## movement is the subsidy's persistent channel and a second writer of it would be
+## two answers to who is winning the sector.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -30,6 +38,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -64,6 +73,11 @@ func _init() -> void:
 	_test_verb_refuses_when_unavailable()
 	_test_rivals_never_fall_below_the_floor()
 	_test_the_nine_never_subsidise()
+	_test_a_burden_moves_jobs_and_growth_and_no_share()
+	_test_a_burden_sheds_staff_without_moving_share()
+	_test_deregulation_is_the_other_direction()
+	_test_the_burden_clamp_holds_both_ways()
+	_test_the_nine_are_never_regulated()
 	_finish()
 
 
@@ -365,6 +379,157 @@ func _test_the_nine_never_subsidise() -> void:
 		for company_id in ns.companies.keys():
 			if Companies.subsidy_of(ns, String(company_id)) != 0.0:
 				_fail("%s subsidised %s with no player behind it" % [id, company_id])
+
+
+# --- V1.4b: the sector burden ---------------------------------------------------
+
+## Every `business` law in data/laws/, applied to the player without a vote.
+## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
+## the division is tests/test_legislature.gd's subject, and an assertion that only
+## holds when the assembly agrees asserts nothing on the month it does not.
+func _apply_business_laws(state, ns, only_id := "") -> int:
+	var applied := 0
+	for law in _loader.laws:
+		if law.theme != "business":
+			continue
+		if only_id != "" and law.id != only_id:
+			continue
+		Legislature.apply(state, ns, law, _loader)
+		applied += 1
+	return applied
+
+
+## THE SESSION'S CENTRAL PROPERTY. A regulation is sector-wide and a subsidy is
+## firm-targeted, so a burden must move both channels while leaving every share
+## exactly where the content put it. Exact equality, not is_equal_approx: share
+## movement is the subsidy's persistent channel and "nearly unmoved" is a second
+## writer of it that a tolerance would hide.
+func _test_a_burden_moves_jobs_and_growth_and_no_share() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	if _apply_business_laws(state, ns, "emissions_standards") != 1:
+		_fail("emissions_standards did not load, so the burden tests assert nothing")
+		return
+
+	for _m in range(24):
+		Companies.tick_month(state, _loader)
+
+	if Companies.regulation_burden_of(ns, "industry") <= 0.0:
+		_fail("a passed regulation left industry's burden at %s" % [
+			str(Companies.regulation_burden_of(ns, "industry"))
+		])
+	if ns.firm_impulse_pct >= 0.0:
+		_fail("a burden on industry left firm_impulse_pct at %s, not negative" % [
+			str(ns.firm_impulse_pct)
+		])
+	if ns.firm_jobs_offset_pct <= 0.0:
+		_fail("a burden on industry left firm_jobs_offset_pct at %s, not positive" % [
+			str(ns.firm_jobs_offset_pct)
+		])
+	if ns.subsidy_bill_pct_gdp != 0.0:
+		_fail("a regulation billed the treasury %s -- a burden falls on firms, not on the budget" % [
+			str(ns.subsidy_bill_pct_gdp)
+		])
+
+	for company in _loader.companies[PLAYER]:
+		if Companies.share_of(ns, company.id) != company.share:
+			_fail("%s share moved under a regulation: %s against authored %s" % [
+				company.id, str(Companies.share_of(ns, company.id)), str(company.share)
+			])
+
+
+## The burden reaches jobs through headcount() and therefore through the SAME
+## channel a subsidy reaches, which is what makes V1.4b two lines rather than a
+## second machine. Asserted on the firm rather than only on the aggregate, because
+## the aggregate could move for the reason V1.4a's reallocation moves it.
+func _test_a_burden_sheds_staff_without_moving_share() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var big = _company(BIG)
+	var before := Companies.headcount(ns, big)
+	if before != big.headcount:
+		_fail("%s did not start at its authored headcount" % BIG)
+		return
+
+	_apply_business_laws(state, ns, "emissions_standards")
+	var after := Companies.headcount(ns, big)
+	if after >= before:
+		_fail("%s carried %s staff under a burden, against %s before it" % [
+			BIG, str(after), str(before)
+		])
+	if Companies.share_of(ns, BIG) != big.share:
+		_fail("%s share moved when only its headcount should have" % BIG)
+
+
+## Deregulation is the negative direction on the same register, not a repeal verb.
+## The burden must be able to come back down, and past zero: without that a burden
+## is a permanent monotone charge and REGULATION_BURDEN_MAX stops being a guard
+## rail and becomes the number -- docs/defence-model.md's own finding.
+func _test_deregulation_is_the_other_direction() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	_apply_business_laws(state, ns, "emissions_standards")
+	var regulated := Companies.regulation_burden_of(ns, "industry")
+
+	_apply_business_laws(state, ns, "industrial_deregulation")
+	var after := Companies.regulation_burden_of(ns, "industry")
+	if after >= regulated:
+		_fail("deregulation left industry's burden at %s against %s before it" % [
+			str(after), str(regulated)
+		])
+
+	# And it runs past zero rather than flooring there.
+	_apply_business_laws(state, ns, "industrial_deregulation")
+	_apply_business_laws(state, ns, "industrial_deregulation")
+	if Companies.regulation_burden_of(ns, "industry") >= 0.0:
+		_fail("three deregulations could not take industry below an unregulated 0.0")
+
+	Companies.tick_month(state, _loader)
+	if ns.firm_impulse_pct <= 0.0:
+		_fail("a deregulated industry gave no growth impulse: %s" % [str(ns.firm_impulse_pct)])
+
+
+## Every authored burden stacks into one clamp, and the clamp holds in both
+## directions. The magnitude test the constant exists for.
+func _test_the_burden_clamp_holds_both_ways() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	for _i in range(20):
+		_apply_business_laws(state, ns)
+	for sector in EK.SECTOR_TREND.keys():
+		var burden := Companies.regulation_burden_of(ns, String(sector))
+		if absf(burden) > K.REGULATION_BURDEN_MAX + 1e-9:
+			_fail("%s burden reached %s, past REGULATION_BURDEN_MAX %s" % [
+				sector, str(burden), str(K.REGULATION_BURDEN_MAX)
+			])
+
+	# Every firm still holds exactly its authored share after twenty rounds of every
+	# rule in the file: nothing on this path may reach the partition.
+	for company in _loader.companies[PLAYER]:
+		if Companies.share_of(ns, company.id) != company.share:
+			_fail("%s share moved under a saturated burden" % company.id)
+
+
+## A regulation is a LAW, so the nine -- who have no assembly the player can move
+## and no autonomous agent that passes one -- must stay at zero burden for a full
+## run. The property that keeps the balance harness bit-identical.
+func _test_the_nine_are_never_regulated() -> void:
+	var state = _new_state()
+	for _m in range(168):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Companies.tick_month(state, _loader)
+	for id in state.nations.keys():
+		var ns = state.nations[id]
+		if not ns.regulation_burden.is_empty():
+			_fail("%s carries a burden with no law behind it: %s" % [id, str(ns.regulation_burden)])
+
+
+func _company(company_id: String):
+	for company in _loader.companies[PLAYER]:
+		if company.id == company_id:
+			return company
+	return null
 
 
 func _fail(message: String) -> void:

@@ -131,8 +131,14 @@ func _refresh() -> void:
 
 
 ## The three figures the register produces, in one place. Both deviation channels
-## read exactly 0.0 until a subsidy stands, so a player who has never subsidised
-## anybody sees three zeroes -- which is the honest readout and not a bug.
+## read exactly 0.0 until a subsidy stands or a `business` law passes, so a player
+## who has done neither sees three zeroes -- the honest readout and not a bug.
+##
+## The two deviation rows are NET, and deliberately not split into a subsidy half
+## and a regulation half. Splitting them would mean recomputing each channel against
+## a hypothetical register, which is a second model of the same quantity kept in
+## step by hand; the sector headings below carry the burden instead, so a player who
+## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
 	_header("The public cost")
 	_row("Subsidy bill", "%.3f %% of GDP" % ns.subsidy_bill_pct_gdp)
@@ -153,8 +159,17 @@ func _build_sector(ns, sector: String) -> void:
 	var named := 0.0
 	for company in firms:
 		named += Companies.share_of(ns, company.id)
-	_header("%s · %.0f bn · %.0f %% named" % [
-		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named,
+	# V1.4b. The burden is per SECTOR, so it belongs on the sector's own line and
+	# nowhere else -- putting it on a firm row would suggest a rule the player could
+	# point at one company, which is exactly what src/core/law.gd refuses.
+	var burden: float = Companies.regulation_burden_of(ns, sector)
+	var rule := ""
+	if burden > 0.0:
+		rule = " · regulated %+.2f" % burden
+	elif burden < 0.0:
+		rule = " · deregulated %+.2f" % burden
+	_header("%s · %.0f bn · %.0f %% named%s" % [
+		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
 	])
 
 	for company in firms:

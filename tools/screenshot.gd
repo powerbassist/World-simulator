@@ -103,6 +103,12 @@ var _book := false
 ## the panel exists to draw. Same argument --coerce, --bloc, --agenda and --defence
 ## each made; this is the fifth time.
 var _subsidy := false
+
+## V1.4b. Same argument once more, and this is the sixth time: a new game carries no
+## `business` law, so every sector heading on the companies panel reads its plain
+## caption and the law panel's `business` rows have never been proposed. A frame of
+## an unregulated economy proves nothing about the row the burden draws.
+var _regulate := false
 var _main
 
 
@@ -129,6 +135,8 @@ func _init() -> void:
 			_book = true
 		elif args[i] == "--subsidy":
 			_subsidy = true
+		elif args[i] == "--regulate":
+			_regulate = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -190,6 +198,8 @@ func _apply_view() -> void:
 		_fill_the_diary()
 	if _subsidy:
 		_subsidise_a_firm()
+	if _regulate:
+		_regulate_a_sector()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -325,6 +335,39 @@ func _subsidise_a_firm() -> void:
 	# still showing the starting GDP and deficit. --agenda has always had this and
 	# got away with it because nothing it does moves those figures; a subsidy moves
 	# both, and a frame that disagrees with itself is worse than no frame.
+	_main._update_top_bar()
+
+
+## V1.4b. Two rules in opposite directions on two different sectors, so the frame
+## carries both captions the sector heading can draw -- a regulated industry and a
+## deregulated services -- rather than one of them twice.
+##
+## Through Legislature.apply() rather than propose(), for the reason the balance
+## harness gives: whether the chamber agrees is a different question from whether
+## the panel draws the burden, and a capture flag that silently produced nothing on
+## the months it did not is exactly the class of bug this tool exists to find.
+func _regulate_a_sector() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	# Industry twice and services once, and the counts are not arbitrary. One rule
+	# each way came out at "-0.000 pts unemployment" on the ledger: industry's 186k
+	# named jobs at a 0.40 burden and services' 213k at a -0.35 one shed and hire
+	# within fifteen people of each other, so the frame drew both sector CAPTIONS and
+	# an empty jobs ROW -- a capture that proves one of the two things it exists to
+	# prove. The sixth session running in which running the tool found something.
+	for law_id in ["workplace_safety_act", "workplace_safety_act", "financial_deregulation"]:
+		for law in loader.laws:
+			if law.id == law_id:
+				Legislature.apply(state, ns, law, loader)
+
+	for i in range(24):
+		var year: int = state.year + (state.month + i - 1) / 12
+		var month: int = (state.month + i - 1) % 12 + 1
+		_main._on_month_elapsed(year, month)
 	_main._update_top_bar()
 
 

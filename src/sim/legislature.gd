@@ -20,6 +20,9 @@ const GK = preload("res://src/sim/government_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## V1.4b, for REGULATION_BURDEN_MAX alone. Not companies.gd: this file writes the
+## burden and never reads what it costs, so the dependency stops at the clamp.
+const CK = preload("res://src/sim/companies_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -30,6 +33,11 @@ static func init_nation(ns) -> void:
 	ns.law_potential_target_pct = 0.0
 	ns.law_other_revenue_pct_gdp = 0.0
 	ns.bloc_offset = {}
+	# V1.4b. Reset here rather than in Companies.init_nation() for the reason the
+	# three law_* accumulators above are: whatever WRITES a field resets it, and a
+	# regulation is a law. companies.gd only reads this one, exactly as economy.gd
+	# only reads `law_structural_offset_pct`.
+	ns.regulation_burden = {}
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
 	ns.last_law_result = {}
@@ -282,6 +290,24 @@ static func apply(state, ns, law, loader) -> void:
 				current + float(effects["bloc_offset"][bloc]),
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
+
+	# V1.4b, THE FIFTH EFFECT CHANNEL REACHED FROM THIS SIDE. A subsidy reaches
+	# effects.company through Companies.execute() as an executive act; a regulation
+	# reaches the same channel through here, having survived an assembly division
+	# first. That is the whole of the a/b split, and it is two lines of code because
+	# the split is about the APPROVAL PATH and not about the mechanism.
+	#
+	# Accumulates and is SIGNED, so a deregulation law is the negative direction on
+	# the same register rather than a repeal verb this project does not have. One
+	# clamp, on the accumulated value -- the two channels companies.gd reads it
+	# through carry their own.
+	if effects.has("company"):
+		var sector: String = String(effects["company"]["sector"])
+		var burden: float = float(effects["company"]["burden"])
+		ns.regulation_burden[sector] = clampf(
+			float(ns.regulation_burden.get(sector, 0.0)) + burden,
+			-CK.REGULATION_BURDEN_MAX, CK.REGULATION_BURDEN_MAX
+		)
 
 	# An institution is SET, not nudged -- every key here is an absolute value
 	# written straight onto NationState, unlike every channel above. Whether

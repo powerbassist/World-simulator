@@ -513,7 +513,7 @@ func _load_laws(laws_dir: String) -> void:
 			if typeof(entry) != TYPE_DICTIONARY:
 				errors.append("%s: laws[%d] is not an object" % [fname, i])
 				continue
-			var law = Law.from_dict(entry, fname, errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS)
+			var law = Law.from_dict(entry, fname, errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys())
 			if law.id != "":
 				if seen_ids.has(law.id):
 					errors.append("%s: duplicate law id '%s'" % [fname, law.id])

@@ -507,13 +507,31 @@ var companies := {}
 ## so a sixth line would be a sixth minister. `deployment_bill_pct_gdp` above took
 ## the same route for the same reason.
 ##
-## The other two are DEVIATION terms and read exactly 0.0 until a subsidy stands.
-## None of the three earns the bump on its own — all three are recomputed from
-## `companies` on the first tick after a load — but they are serialised anyway so a
-## save read back and never ticked reports the budget it was saved with.
+## The other two are DEVIATION terms and read exactly 0.0 until a subsidy stands —
+## or, since V1.4b, until a regulation does. None of the three earns the bump on
+## its own — all three are recomputed from `companies` and `regulation_burden` on
+## the first tick after a load — but they are serialised anyway so a save read back
+## and never ticked reports the budget it was saved with.
 var subsidy_bill_pct_gdp: float = 0.0
 var firm_impulse_pct: float = 0.0
 var firm_jobs_offset_pct: float = 0.0
+
+## V1.4b. Sector id → signed accumulated regulatory burden, clamped to
+## ±companies_constants.REGULATION_BURDEN_MAX. Written by Legislature.apply() and
+## by nothing else in the project.
+##
+## PER SECTOR AND NEVER PER FIRM. A regulation is sector-wide where a subsidy is
+## firm-targeted, and a per-firm burden field would put a second writer beside
+## `share` — two answers to the question of who is winning the sector — as well as
+## breaking tests/test_save_load.gd's assertion that a register entry holds nothing
+## beyond `share` and `subsidy`.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: a version-15 save
+## is a game that could not pass a regulation, so an absent register reads as every
+## burden 0.0, which is correct for it. `measures` at V1.3c, `pacts` at V1.3g and
+## `appointments` at U6a. Serialised all the same, because a law writes it once and
+## no tick recomputes it — unlike the three prices above.
+var regulation_burden := {}
 
 ## The most recent company action, for the companies panel to read after acting.
 ## Empty until the first one resolves. `last_diplomatic_result`'s shape.
@@ -651,6 +669,7 @@ func duplicate_state():
 	s.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp
 	s.firm_impulse_pct = firm_impulse_pct
 	s.firm_jobs_offset_pct = firm_jobs_offset_pct
+	s.regulation_burden = regulation_burden.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 
 	return s
@@ -789,6 +808,7 @@ func to_dict() -> Dictionary:
 		"subsidy_bill_pct_gdp": subsidy_bill_pct_gdp,
 		"firm_impulse_pct": firm_impulse_pct,
 		"firm_jobs_offset_pct": firm_jobs_offset_pct,
+		"regulation_burden": regulation_burden,
 		"last_company_result": last_company_result,
 	}
 
@@ -938,6 +958,10 @@ static func from_dict(d: Dictionary):
 	s.subsidy_bill_pct_gdp = float(d.get("subsidy_bill_pct_gdp", 0.0))
 	s.firm_impulse_pct = float(d.get("firm_impulse_pct", 0.0))
 	s.firm_jobs_offset_pct = float(d.get("firm_jobs_offset_pct", 0.0))
+	# V1.4b, and the empty fallback is CORRECT rather than merely tolerable: a
+	# version-15 save comes from a game with no `business` laws in it, so every
+	# burden really was 0.0. That is why this field earns no bump of its own.
+	s.regulation_burden = d.get("regulation_burden", {})
 	s.last_company_result = d.get("last_company_result", {})
 
 	s.military_capability = float(d.get("military_capability", 0.0))

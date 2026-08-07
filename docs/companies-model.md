@@ -306,9 +306,360 @@ model behind one and this is **not a declared stopgap** — nothing here stands 
 for a decision a later session has to make. Whether a firm should answer back is
 V1.4c's question, asked fresh.
 
-**Regulation and ownership.** V1.4b and V1.4c. Both read `effects.company`; the
-first reaches it through a **law**, which is the split the decomposition was taken
-on.
+> [!warning] V1.4b turns that into a stopgap after all, and says so
+> A subsidy is a gift and there is nothing to refuse. A **regulation is imposed**,
+> and a regulated firm that cannot relocate, exit, lobby or close is a visible
+> absence rather than an unasked question — the burden runs to
+> `REGULATION_BURDEN_MAX` and the register answers with arithmetic. **Declared as
+> a stopgap**, parked in [[someday]], and V1.4c's nationalisation is the nearest
+> thing in the plan to a firm responding to what is done to it.
+
+**Regulation and ownership.** ~~V1.4b and~~ V1.4c. Both read `effects.company`;
+the first reaches it through a **law**, which is the split the decomposition was
+taken on. V1.4b is built — see §10 below.
 
 **Bond markets.** Moved to [[v1]] §6, where the yield they write belongs — see
 [[ROADMAP]] for the argument.
+
+---
+
+# V1.4b — sector regulation
+
+## 10. A regulation is a law, and that is the entire session boundary
+
+`GameState`'s fourth companies-neighbourhood register is
+`NationState.regulation_burden` — sector id → signed accumulated burden — and it
+is written by `Legislature.apply()` and by **nothing else in the project**. A
+subsidy reaches `effects.company` through `Companies.execute()` as an executive
+act; a regulation reaches the same channel having first survived an assembly
+division. That is [[diplomacy-model|V1.3a]]'s distinction between a diplomatic
+action and a law, one block later, and it is worth a session because the
+**approval path** differs, not because the subject does.
+
+`src/core/law.gd` grows a fifth theme (`business`), a `_extract_company()`
+validator beside `_extract_institutional()`, and one new entry on the whitelist at
+`_extract_effects()`. `data/laws/business.json` is the content. Nothing else in
+`src/sim/` learned a new verb: `legislature.gd` gained one dispatch branch and one
+preload, for the clamp alone.
+
+### A firm-targeted channel, refused a firm
+
+`effects.company` is **the same channel name** `company_action.gd` uses with a
+deliberately different shape — an action names an `op` against the one firm it is
+pointed at, a law names a `sector` and a `burden`. `_extract_company()` refuses
+any third key, and the refusal is the point rather than tidiness: **share movement
+is the subsidy's persistent channel**, and a law that could name a firm would be a
+second writer of it — two answers to the question of who is winning the sector.
+The split is in the schema and not only in this file.
+
+`tests/test_companies.gd` asserts every share is **exactly** unchanged after
+twenty rounds of every rule in the file. Exact equality, not `is_equal_approx`:
+"nearly unmoved" is a second writer that a tolerance would hide.
+
+## 11. One quantity, read twice — and no new channel at all
+
+The burden is priced through the **two channels V1.4a already built**, with no new
+field, no new budget line and no new clamp:
+
+| Read | Where | Reaches opinion through |
+|---|---|---|
+| growth | a negative term inside `Companies.firm_impulse_pct()`, scaled by the burdened sector's **named firms' live GDP share** | `growth`, `jobs` |
+| jobs | a `(1 − REGULATION_JOBS_BETA × burden)` factor inside `Companies.headcount()`, which the existing `firm_jobs_offset_pct` picks up for free — it already measures live headcount against authored headcount | `jobs` |
+
+This is [[coercion-model|V1.3c]]'s "one verb, two prices" **literally** rather than
+by analogy: one quantity read at two existing sites. A second growth impulse
+beside `firm_impulse_pct` would have been a second machine wearing the phrase, with
+its own field, clamp and cached price to keep in step. A subsidy and a regulation
+on one sector therefore **net off**, which is the honest answer — the player paid
+for one and the assembly passed the other.
+
+Both reads go through the **live** share, so a subsidy that grew a firm raises what
+regulating its sector costs. That interaction is the whole reason both verbs run
+against one register instead of two.
+
+### The channel's charter is WIDENED, and it is written down as one
+
+V1.4a's claim was that a firm layer adds **reallocation and nothing else**. A
+sector burden is a **level** effect on top of that: it sheds staff without moving a
+single share. `firm_jobs_offset_pct` now says two things.
+
+That widening is not a compromise, it is the session's whole case — see §12.
+
+### What a regulation BUYS uses no new channel either
+
+`bloc_offset`, `potential_growth_pct`, `other_revenue_pct_gdp` and the budget
+levers already exist on a law. The sixth session running with no new content type,
+and the fifth with no new effect channel.
+
+## 12. Row 12: `_validate_companies()`'s defence against §6 does not transfer
+
+The sharpest thing in the session, and the **twelfth** instance of the
+stale/missing-row failure [[trade-model|V1.3b]] first recorded.
+
+V1.4a's answer to "*a subsidy IS [[v1]] §6's sectoral investment — a lever pointed
+at a sector*" was to refuse a sector holding one named firm. **That rule is about
+the target, and a regulation's target is the sector itself.** A sector-wide burden
+priced on sector output is §6's lever with a minus sign, however many firms sit in
+the sector, and no validator can catch it.
+
+Two things keep them apart, and both are structural rather than coefficients:
+
+1. **A regulation reaches only the named partition.** The growth term sums over
+   `firms_in_sector()`, so a sector that is 24 % named is a quarter as regulable as
+   one that is fully named. The **unnamed residual is unregulated** — a bound
+   recorded rather than a rounding error, and the line §6 must not cross.
+2. **The jobs price has no analogue in a sector lever**, because jobs-per-share is
+   firm content. Without it V1.4b *is* §6 early and the a/b/c boundary collapses.
+   That is why the jobs channel is not optional here, and why widening its charter
+   was the right trade.
+
+Both are cross-referenced from [[v1]] §4 **and** §6, so this does not become the
+thirteenth.
+
+## 13. Row 13: the margin quantity that was cut before it was written
+
+The ROADMAP row reads "*rules that cost margin*". A grep over `src/sim/` finds
+**no margin, profit or productivity quantity anywhere** — "cost margin" names
+something the model does not have.
+
+The obvious reading was a `regulation_margin_pct_gdp` landing on
+`revenue_pct_gdp["corporate"]`, mirroring V1.4a's computed spending line on the
+other side of the budget. It was **cut before it was written**, for three reasons
+and the third is the one that matters:
+
+- It is a negative `law_other_revenue_pct_gdp` with extra machinery, and a
+  computed subtraction from `corporate` is a corporate rate cut the player cannot
+  see on the slider — which [[legislature-model]]'s own anti-double-count rule
+  already forbids.
+- Its register read collapses to `burden × named-share × sector-GDP-share`, both
+  factors per-sector constants. **A §6 sector lever reproduces it exactly**, so it
+  fails the test §12 sets.
+- **It creates V1.4c's dependency rather than discharging it.** A dividend can be a
+  yield on *output* — `state_share × share × sector_output × DIVIDEND_YIELD`,
+  mirroring "revenue is not authored" — and needs no profit quantity. Ship a
+  half-invented margin here and V1.4c must either read it (a state-owned firm in a
+  burdened sector paying undiminished dividends is two answers to profitability) or
+  contradict it. **If V1.4c wants margin, V1.4c owns it whole.**
+
+## 14. Deregulation is a direction, not an undo
+
+There is no repeal verb in this project and a `once` law never returns. So the
+clamp is **symmetric**: a deregulation law carries a negative burden on the same
+accumulator.
+
+An asymmetric `[0, MAX]` would have been a **permanent monotone charge** —
+[[defence-model]]'s named failure mode, where a clamp stops being a guard rail and
+becomes the number — and it would have made a repeal law *inert at burden 0*,
+breaking [[foreign-policy-model|V1.3f]]'s inert-act property on the law list. It
+would also have needed a new whitelisted `PRECONDITION_FIELDS` entry carrying a
+sector parameter that list has never had. The signed burden costs none of that, and
+deregulation pays honestly in `bloc_offset` instead of being free.
+
+## 15. The anti-double-count is a load error, not a convention
+
+A law carrying **both** `effects.company` and `structural_unemployment_pct` fails
+at load. Same act, same landing site (`Economy._update_unemployment()`), same
+units.
+
+[[legislature-model]] states the equivalent rule for levers vs `bloc_offset` in
+**prose** — "the sixteen templates each pick one story and tell it once". This one
+is mechanical, because a convention only the docs enforce is one an author breaks
+by not reading them. [[coercion-model]]'s separator, which refuses a symmetric key
+where a directed one belongs, is the same shape.
+
+## 16. The probe corrected the content twice and itself once
+
+Eleven sessions running, and this time **not one correction was to the model** —
+which is itself the finding. The two channels were V1.4a's, already measured; what
+was unmeasured was the content.
+
+### (g) the kill switch cleared, and the standing prediction held
+
+`REGULATION_JOBS_BETA` was swept against a floor of **0.05 unemployment points**
+fixed before the sweep, and against a prediction written in advance that
+agriculture could not clear it at any sane value.
+
+| beta | best pts | verdict |
+|---|---|---|
+| 0.05 | 0.0471 | below floor |
+| **0.10** | **0.0942** | **in band — shipped** |
+| 0.20 | 0.1884 | in band |
+| 0.40 | 0.3768 | in band |
+
+0.10 is the **smallest passing value**, which is why it ships. Per sector at that
+value: DEU industry 0.0942, GBR services 0.0728, FRA services 0.0690, FRA industry
+0.0603 — and agriculture **0.0083–0.0126 across all three nations**. The prediction
+held exactly. That is **recorded as a structural bound**, not tuned around: 39 000
+named agricultural jobs against a 30.9 M labour force is arithmetic, and raising a
+constant until it moved would be tuning against the size of a real labour force —
+[[defence-model]]'s `DEPLOYMENT_OPINION_CHOSEN` finding reached from a second
+direction.
+
+`FIRM_JOBS_MAX_PCT` is **slack**: 0.1419 against 1.50 at the reachable worst case.
+
+### (h) growth, against the band the subsidy was held to
+
+| beta | worst %/yr | verdict |
+|---|---|---|
+| 0.05 | 0.2211 | in band |
+| **0.10** | **0.4422** | **in band — shipped** |
+| 0.20 | 0.8844 | too large |
+| 0.40 | 1.7688 | too large |
+
+The **ceiling is the half doing work**, exactly as it was for
+`SUBSIDY_GROWTH_BETA`: a rule on one sector must no more out-punch a whole budget
+than a subsidy to one firm may. 0.20 is the first row over it.
+
+### (i) the two betas are not one decision wearing two names
+
+The redundancy check — U6a's precedent is that a constant nothing distinguishes is
+**deleted**, not left unused. Growth-per-jobs-point, by sector:
+
+| | agriculture | industry | services |
+|---|---|---|---|
+| FRA | 2.79 | 3.82 | 6.32 |
+| DEU | 1.98 | 3.60 | 6.50 |
+| GBR | 1.60 | 4.80 | 6.07 |
+
+A **4× spread**, and nothing authored it: it is output-per-share divided by
+jobs-per-share, two fields written for unrelated reasons at V1.4a. A government
+that wants to shed the fewest jobs per point of growth given up regulates
+**services**; one that wants to give up the least growth per job shed regulates
+**agriculture**. Both constants earn their place; neither is deleted.
+
+### (j) the content correction: the first draft was free approval
+
+**The design rule this session set was too broad.** The plan said the burden is the
+cost and `bloc_offset` is the buy, and that a regulation's losers must not *also* be
+named in `bloc_offset` — one bloc's reaction to one fact, counted twice.
+
+Table (j) stacked every rule and got **+6.45 headline points against a noise floor
+of 3.0**. Passing everything was free, which is the strictly-dominated shape
+[[coercion-model|V1.3c]], [[bloc-model|V1.3d]] and V1.4a each hit.
+
+The rule was wrong because of a fact the probe itself had just measured: a
+saturated burden moves growth by ~0.1 %/yr and unemployment by ~0.02 points, which
+is **below the opinion model's resolution**. The measured channels cannot express
+the political price of a rule, so it has to be authored. Every law now names its
+losers, weighted against `BLOC_SIZE` rather than by eye — workers are 0.30 of the
+electorate and business 0.10.
+
+| | quiet | regulated | deregulated |
+|---|---|---|---|
+| workers | 49.63 | 51.86 | 41.45 |
+| pensioners | 49.54 | 55.39 | 44.58 |
+| urban | 49.61 | **65.15** | 45.60 |
+| rural | 49.61 | 40.16 | 53.48 |
+| business | 49.21 | **11.08** | 66.27 |
+| students | 49.69 | 55.88 | 46.53 |
+| **HEADLINE** | **49.57** | **49.42** | **47.28** |
+| GDP bn | 3108.00 | 3075.99 | 3127.54 |
+| unemployment | 7.39 | 7.65 | 7.25 |
+
+Neither column is a free opening, and the headline moves **less than the ±3.0 noise
+floor in both directions** while bloc rows move by 15 and 38 points. That is
+[[diplomacy-model|V1.3a]]'s finding for the fifth time, and V1.4a's for the second:
+*the decision is legible on a bloc row and not on the headline*.
+
+The worst accumulated `bloc_offset` is **business at −0.940 against a clamp of
+1.00 — slack, but only just**, and only because five rules on 24-to-36-month
+cooldowns cannot realistically pass inside one term. Measured rather than assumed,
+because the clamp-setting-the-number failure has now been found three times.
+
+### (k) the probe's own bug, and the two dominations it was hiding
+
+The cost-against-buy table summed `bloc_offset` **unweighted**. A sum over blocs is
+a sum over unequal things: it read `financial_deregulation` as the best row on both
+axes while hiding a charge on pensioners (0.24 of the electorate) paid for with a
+gift to business (0.10 of it). Weighting by `BLOC_SIZE` exposed two same-sector
+dominations:
+
+- **Industry.** `workplace_safety_act` was cheaper than `emissions_standards` on
+  both costs *and* bought more — emissions was strictly dominated. The two
+  **burdens were swapped** rather than the offsets retuned, because a safety regime
+  genuinely is the heavier compliance load and the fix that is also true is the
+  better fix.
+- **Services.** `banking_conduct_rules` cost double `competition_enforcement` for a
+  buy 0.0009 larger — domination inside the rounding. `pensioners` went 0.11 →
+  0.16, so it is now the bigger lever at the worse rate rather than the worse lever
+  outright.
+
+The table also gained a `trend` column, because `competition_enforcement`'s entire
+buy is `potential_growth_pct` and a table without it read that law as pure cost.
+
+**Domination is only meaningful within one sector.** Two rules on different sectors
+are not substitutes, because the sector decides which of the player's own
+subsidised firms the rule reaches — which is §11's interaction, showing up as a
+content property.
+
+`data/laws/business.json` ships **no agriculture deregulation**, deliberately: both
+measured channels are below the readable floor there, so such a law would buy
+nothing measurable and cost real approval — strictly dominated by construction. The
+sector is regulable in one direction only, and that is a property of the content
+rather than a gap in it.
+
+## 17. `SAVE_VERSION` stays at 15, and the test pins it
+
+The rule applied literally: a version-15 save comes from a game **with no `business`
+law in it at all**, so an absent `regulation_burden` reads as every burden 0.0 —
+which is not a soft failure but the truth about that save. `measures` at V1.3c,
+`pacts` at V1.3g, `appointments` at U6a.
+
+It is still serialised, and that half is not free: a law writes the burden once and
+**no tick recomputes it**, unlike the three cached prices, so a save that dropped it
+would silently repeal every rule the assembly ever passed.
+`tests/test_save_load.gd` checks that dropping it changes `firm_impulse_pct` — the
+premise, rather than the claim — and then asserts the version is **still 15**, so
+V1.4c's ownership register has to come and say why it bumps. V1.3c's own device.
+
+The register is keyed by **sector**, so V1.4a's assertion that a company entry
+carries nothing beyond `share` and `subsidy` stays green. A later session moving the
+burden onto a firm turns that one red and has to say why.
+
+## 18. Balance: bit-identical, and the cheap kind of new regime
+
+**Predicted in advance and confirmed: bit-identical across all fifteen existing
+regimes.** The only difference in the whole probe output is the forty lines of the
+new sixteenth. Nothing autonomous passes a law, and the burden reads exactly 0.0
+until one does.
+
+A regulation is a verb and no budget regime issues a command, which is why V1.3c,
+V1.3g, U6a and V1.4a each needed a new regime. **This one is the cheap kind**, and
+that is worth naming: `AMENDMENT_REGIMES` and `TRANSITION_REGIMES` already apply a
+*law* at a month, so the shape existed and only the content is new.
+
+Both harnesses call `Legislature.apply()` rather than `propose()`: the assembly
+division is `tests/test_legislature.gd`'s subject, and a balance row whose numbers
+depend on a chamber agreeing measures two things at once.
+`_check_a_regulated_run_stays_off_every_clamp()` runs fourteen years of every
+sector saturated **with the subsidy stack live underneath it**, because the two
+verbs share the channels and their clamps.
+
+## 19. The screenshot pass, eighth session running
+
+`--regulate` applies two rules in opposite directions on two sectors, so a frame
+carries both captions the sector heading can draw.
+
+**The first version of the flag drew an empty row.** One rule each way came out at
+`-0.000 pts unemployment` on the ledger: industry's 186 000 named jobs at a +0.40
+burden and services' 213 000 at a −0.35 one shed and hire within **fifteen people**
+of each other. The frame showed both sector captions and a dead jobs figure — a
+capture proving one of the two things it exists to prove. The flag now applies the
+industry rule twice.
+
+The ledger's two deviation rows are **net**, and deliberately not split into a
+subsidy half and a regulation half: splitting them means recomputing each channel
+against a hypothetical register, which is a second model of one quantity kept in
+step by hand. The sector headings carry the burden instead
+(`INDUSTRY · 570 BN · 24 % NAMED · REGULATED +0.80`), so attribution is read off
+which sectors are marked.
+
+`--open society` is the third capture rather than `--open budget`, and the reason is
+the session's shape: **a regulation has no budget line at all**, so a budget frame
+would prove nothing. The polling panel is where the price is, and it reads workers
++7, business −8, pensioners −5, urban +2 against a headline that has not moved.
+
+---
+
+Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
+[[coercion-model]] · [[defence-model]] · [[v1]] · [[ROADMAP]]

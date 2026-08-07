@@ -91,10 +91,10 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a is built.** The
-argument, the three calls it made, and the per-session table are under *V1.4 — the
-decomposition* below. Order: (a) the firm register and subsidies, (b) sector
-regulation, (c) nationalisation and privatisation.
+**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a and V1.4b are built.**
+The argument, the three calls it made, and the per-session table are under *V1.4 —
+the decomposition* below. Order: (a) the firm register and subsidies, (b) sector
+regulation, (c) nationalisation and privatisation. **Only (c) is left.**
 
 **V1.4a's own finding is the one worth carrying forward, and it is about content
 rather than about firms.** The jobs channel's whole spread comes from two authored
@@ -102,14 +102,29 @@ headcounts: subsidising a retailer over a bank moves **0.229 points** of
 unemployment, subsidising one industrial firm over another moves **0.010**, and
 nothing in `src/sim/` says "services". A firm layer is more than a sector lever
 exactly to the extent that firms sharing a sector are authored *differently* — so
-the differentiator is the field to argue about when V1.4b and V1.4c add theirs, and
-a firm with no rival is refused at load time rather than shipped as a lever that
-moves nothing.
+the differentiator is the field to argue about when V1.4c adds its own, and a firm
+with no rival is refused at load time rather than shipped as a lever that moves
+nothing.
 
-**The decomposition also caught the row double-booking twice where the prompt
-named once.** Bond markets belonged to §6, and a subsidy pointed at a firm *is*
-§6's sectoral investment unless a firm is smaller than a sector. That is the
-eleventh missing-row instance, and the second found by counting rather than by
+**V1.4b's finding is that V1.4a's escape from §6 does not transfer, and no
+validator could have caught it.** V1.4a refused a sector holding one named firm,
+which is a rule about the *target* — and a regulation's target IS the sector, so a
+sector-wide burden priced on sector output is §6's lever with a minus sign whatever
+the firm count. What separates them had to be found rather than inherited: a
+regulation reaches **only the named partition**, and its **jobs price has no
+analogue in a sector lever** because jobs-per-share is firm content. That is why
+the jobs channel is not optional in (b), and why widening its charter from pure
+reallocation to reallocation-plus-level was the right trade rather than a
+compromise. The row also called for rules that "cost margin" — a quantity
+`src/sim/` does not contain — and the corporate-receipts channel that would have
+invented one was **cut before it was written**, because it creates (c)'s dividend
+dependency instead of discharging it.
+
+**The decomposition has now caught the row double-booking four times where the
+prompt named once.** Bond markets belonged to §6; a subsidy pointed at a firm *is*
+§6's sectoral investment unless a firm is smaller than a sector; §6's collision came
+back at (b) in a form (a)'s refusal cannot catch; and "cost margin" named nothing.
+That is instances **eleven through thirteen**, all found by counting rather than by
 being told.
 
 **V1.3 was decomposed into six sessions, became seven, and is now COMPLETE** — the
@@ -553,6 +568,58 @@ also found a live **U6b bug**: `_people_panel` was never added to
 `main.gd`'s `_mark_all_dirty()`, so the People window refreshed once on the frame
 it was built and never again.
 
+### V1.4b — sector regulation (shipped)
+
+**A regulation is a law, and that is the entire session boundary.** It reaches
+`effects.company` through `Legislature.apply()` and an assembly division where a
+subsidy reaches it directly through `Companies.execute()` — V1.3a's distinction
+between a diplomatic action and a law, one block later. `src/core/law.gd` grew a
+fifth `business` theme and a `_extract_company()` validator; `legislature.gd` grew
+**one dispatch branch**. Nothing in `src/sim/` learned a new verb.
+
+**One quantity, read twice, and no new channel.** `NationState.regulation_burden`
+is a signed per-sector register written by `Legislature.apply()` and by nothing
+else, priced through the two deviation channels V1.4a already built: a negative
+term inside `firm_impulse_pct()` and a compliance factor inside `headcount()`,
+which the existing `firm_jobs_offset_pct` picks up for free. That is V1.3c's "one
+verb, two prices" **literally** — one quantity at two existing sites — where a
+second growth impulse would have been a second machine wearing the phrase. No new
+field beyond the register, no budget line, no clamp.
+
+**`_extract_company()` refuses a firm id, and the refusal is the design.** Share
+movement is the subsidy's persistent channel; a law that could name a firm would be
+a second writer of it. The a/b split is in the schema, not only in the docs. And a
+law carrying both `effects.company` and `structural_unemployment_pct` is a **load
+error** — same act, same landing site, same units — which is the legislature model's
+prose rule made mechanical for the one case where it could be.
+
+**The probe corrected the content twice and itself once, eleven sessions running,
+and not one correction was to the model.** Both channels were V1.4a's and already
+measured; what was unmeasured was the content. The kill switch **cleared** at
+0.0942 points against a floor of 0.05, and the standing prediction written before
+the sweep — that agriculture cannot clear it at any sane value — **held exactly**, at
+0.0083–0.0126, and is recorded as a structural bound. The first draft of
+`data/laws/business.json` made the whole regulation stack **free**: +6.45 headline
+against a ±3.0 floor, because the design rule said a regulation's losers must not be
+named in `bloc_offset`. That rule was too broad, and the probe's own numbers say
+why — a saturated burden moves growth ~0.1 %/yr and unemployment ~0.02 points,
+**below the opinion model's resolution**, so the political price has to be authored.
+Then the cost-against-buy table's unweighted `bloc_offset` sum hid two same-sector
+dominations, one of which was fixed by **swapping two burdens** rather than retuning
+offsets, because a safety regime genuinely is the heavier compliance load.
+
+**`SAVE_VERSION` stays at 15 and the test pins it.** A version-15 save comes from a
+game that could not pass a `business` law, so an absent register reads as every
+burden 0.0 — which is the truth about that save, not a soft failure. Serialised all
+the same, because a law writes it once and no tick recomputes it. The assertion that
+the version is *still* 15 is left in place so V1.4c's ownership register has to come
+and say why it bumps.
+
+**The re-run is bit-identical across all fifteen existing regimes, predicted in
+advance**, and the sixteenth was the **cheap kind**: `AMENDMENT_REGIMES` already
+applies a law at a month, so only the content was new. Model, every constant and
+every measured table: [docs/companies-model.md](docs/companies-model.md) §10–19.
+
 ### V1.4 — the decomposition, and why these three
 
 Written before any code, which is where a block-shaped row belongs: V1.4 was one
@@ -562,7 +629,7 @@ markets — and one line is not a session.
 | | Session | Content | Reads |
 |---|---|---|---|
 | **V1.4a** | ~~The firm register and subsidies~~ **shipped** | `data/companies/`, firms as a normalised partition of a sector, the `effects.company` channel, subsidies with a computed budget line and a domestic price, the Companies window | — |
-| **V1.4b** | Sector regulation | Rules that cost margin and buy an outcome, as **laws** — the assembly divides on them, so this reaches the channel from the other side | a |
+| **V1.4b** | ~~Sector regulation~~ **shipped** | `effects.company` on a **law**, a signed per-sector burden read by the two channels (a) built, a fifth `business` theme, deregulation as the negative direction rather than a repeal verb. No third channel, no budget line, no `SAVE_VERSION` bump | a |
 | **V1.4c** | Nationalisation and privatisation | Ownership as firm state, a purchase cost, a privatisation windfall, dividends as a computed revenue line, the permanent loss of control — and the `ISSUE_KEYS` question | a, b |
 
 Three calls, each of which could have gone the other way:
