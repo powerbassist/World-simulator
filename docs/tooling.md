@@ -266,6 +266,14 @@ Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothi
 
 `materialLayers` and `road-generator` both assume 3D. [[scope]] fixes "2D map plus dense UI panels, no 3D" as a constraint everything else is designed around, so neither has a use path without changing that — noted rather than judged; they cost nothing sitting there.
 
+## `tools/screenshot.gd` is CRLF where the rest of the tree is LF
+
+Noted because a scripted text edit against it fails **silently**: a
+search-and-replace written with LF endings simply matches nothing, and the tool
+goes on running with the old behaviour while the session believes the flag was
+added. Use an editor that matches the file's real bytes. `tools/balance_probe.gd`
+and `src/ui/budget_panel.gd` are the same.
+
 ## Deliberately not installed
 
 Ten-plus other Godot MCP servers exist. Two are installed, and they were chosen to **not** overlap: one drives the editor, one serves docs.

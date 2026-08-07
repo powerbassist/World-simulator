@@ -351,6 +351,20 @@ Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI read
 
 Live state is serialised to a JSON save file. The whole `GameState` object, written in one go, read in one go.
 
+> [!warning] `to_dict()` hands out the LIVE dictionaries, not copies
+> Found at [[ROADMAP|V1.4a]], in a test that had to be rewritten around it.
+> `GameState.to_dict()` and `NationState.to_dict()` build a fresh **outer**
+> dictionary and put the live inner ones straight into it, and `from_dict()`
+> assigns them straight back out — its own header says it expects freshly parsed
+> JSON, where every container is already unshared. That is correct for the real
+> save path, which goes through `JSON.stringify`/`JSON.parse_string`.
+>
+> It is a trap for anything that builds **two** states from two `to_dict()` calls
+> and then ticks both: they share one register, and the second tick advances a
+> state the first already moved. Round-trip through JSON when a test or a tool
+> needs two independent copies — or use `duplicate_state()`, which does deep-copy
+> and is what `Budget.project()` uses.
+
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
 **It is at 9, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
