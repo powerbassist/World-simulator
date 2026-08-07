@@ -37,7 +37,8 @@ data/
 ├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
 ├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])
 ├── diplomatic-actions/ the player's foreign-policy verbs ([[ROADMAP|V1.3a]])
-├── companies/         fictional firms (V1)
+├── companies/         fictional firms, playable nations only ([[ROADMAP|V1.4a]])
+├── company-actions/   the player's verbs pointed at a firm ([[ROADMAP|V1.4a]])
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
 ```

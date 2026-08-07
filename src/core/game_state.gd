@@ -23,6 +23,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -145,7 +146,29 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     bench that needed it. And `appointments`' `person_id` earns nothing: it is a
 ##     derived LABEL, so an absent one reads as "not recorded", and the entry's
 ##     identity is still Calendar.verb_key(), which U6b did not touch.
-const SAVE_VERSION := 14
+##   - V1.4a bumps to 15 on ONE field of five, and the four that earn nothing are
+##     the interesting half. `NationState.companies` is the bump: absent, every
+##     firm reads as share 0.0, so the partition simply is not there — a subsidy
+##     the save is still billing the player for through a serialised budget line
+##     moves a share that does not exist, and `output_eur_bn()` reports a register
+##     of firms that produce nothing. `military_capability` at V1.3g and
+##     `eu_member`/`neighbours` at V1.3b: a reloaded game running a DIFFERENT MODEL
+##     from the one that saved it.
+##
+##     The other four fail the rule cleanly. `subsidy_bill_pct_gdp`,
+##     `firm_impulse_pct` and `firm_jobs_offset_pct` are all recomputed from
+##     `companies` on the first tick after a load and read 0.0 when absent, which
+##     is exactly right for a version-14 save because those games could not
+##     subsidise anybody — `measures` at V1.3c and `appointments` at U6a, down to
+##     the reasoning. `last_company_result` is a UI record with no reader in
+##     src/sim/ at all.
+##
+##     And what V1.4a did NOT put in the register is what keeps the list short: a
+##     firm's authored share and headcount are CONTENT, so the baseline every
+##     deviation is measured against round-trips through data/companies/ rather
+##     than through the save. A saved baseline would be the same fact in two
+##     places, and the first version of it to drift would be the one in the save.
+const SAVE_VERSION := 15
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -375,8 +398,9 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	ids.sort()
 	for id in ids:
 		var party_list: Array = loader.parties.get(id, [])
+		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -417,7 +441,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 ## where that value first enters live state. Everything downstream (discipline,
 ## the coalition, the cabinet, dissolution) then reads the overridden figures
 ## and needs no scenario awareness of its own. See docs/scenario-model.md.
-static func _build_nation(n, is_player: bool, party_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null, bloc_net_position_pct_gdp: float = 0.0):
+static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null, bloc_net_position_pct_gdp: float = 0.0):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -508,6 +532,12 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	# defence spending line. Seeding at zero would mean every nation in the roster
 	# spends the first decade of every game acquiring an army it already had.
 	Defence.init_nation(ns)
+
+	# Every firm at its authored share with no subsidy standing, which is what
+	# makes both of V1.4a's channels read exactly 0.0 in the first month and every
+	# month after it until a player acts. An empty list is the normal case for the
+	# seven nations that are not yet playable.
+	Companies.init_nation(ns, company_list)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

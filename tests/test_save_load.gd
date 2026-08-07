@@ -35,6 +35,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -98,6 +99,7 @@ func _init() -> void:
 	_run_agenda_roundtrip(loader)
 	_run_defence_roundtrip(loader)
 	_run_diary_roundtrip(loader)
+	_run_companies_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -683,8 +685,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 14:
-		_fail("SAVE_VERSION is %d -- U6b argued for 14, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1202,5 +1204,98 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 14:
-		_fail("SAVE_VERSION is %d -- U6b argued for 14, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.4a adds five serialised fields and ONE of them earns the bump. The other
+## four fail the rule cleanly, and asserting the split is worth more than asserting
+## the bump: it pins the property that every firm figure except the register is
+## DERIVED, so a later session storing one turns this red and has to say why.
+##
+## The loud one: an absent `companies` register reads every firm as share 0.0, so
+## the partition simply is not there. `military_capability` at V1.3g and
+## `eu_member`/`neighbours` at V1.3b -- a reloaded game running a different model
+## from the one that saved it, not a game missing a label.
+##
+## The quiet ones: the bill and both deviation channels are recomputed from the
+## register on the first tick after a load and read 0.0 when absent, which is
+## exactly right for every version-14 save because those games could not subsidise
+## anybody. `measures`' case at V1.3c and `appointments`' at U6a.
+func _run_companies_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var target := "FRA_aurignac"
+
+	var subsidy = null
+	for a in loader.company_actions:
+		if a.id == "strategic_rescue":
+			subsidy = a
+	if subsidy == null:
+		_fail("the strategic_rescue verb is missing, so this roundtrip asserts nothing")
+		return
+
+	Companies.execute(state, ns, loader.company_actions, subsidy, target)
+	for _m in range(24):
+		Companies.tick_month(state, loader)
+	Budget.recompute(state, ns)
+
+	var moved_share: float = Companies.share_of(ns, target)
+	if is_equal_approx(moved_share, 0.14):
+		_fail("the share never moved, so the roundtrip below cannot tell a restored register from a fresh one")
+
+	var dict: Dictionary = state.to_dict()
+	var loaded = GameState.from_dict(dict)
+	if not is_equal_approx(Companies.share_of(loaded.player(), target), moved_share):
+		_fail("a moved share did not survive the round trip")
+	if not is_equal_approx(Companies.subsidy_of(loaded.player(), target), 1.0)	:
+		_fail("a standing subsidy did not survive the round trip")
+
+	# The bump's premise, checked rather than asserted: drop the key a version-14
+	# save would not have and the partition is gone -- every firm produces nothing,
+	# while the player is still being billed by a serialised budget line.
+	var without: Dictionary = state.to_dict()
+	(without["nations"]["FRA"] as Dictionary).erase("companies")
+	var lost = GameState.from_dict(without)
+	if not lost.player().companies.is_empty():
+		_fail("an absent companies register did not read as empty -- the premise of the bump is wrong")
+	for company in loader.companies["FRA"]:
+		if Companies.output_eur_bn(lost.player(), company) != 0.0:
+			_fail("%s still produced something with no register -- the bump's premise is wrong" % company.id)
+	if not is_equal_approx(lost.player().subsidy_bill_pct_gdp, state.player().subsidy_bill_pct_gdp):
+		_fail("the serialised bill did not survive, so the mismatch this bump is about cannot be shown")
+
+	# The four that earn nothing: recomputed from the register, so a save stripped
+	# of all of them comes back to the same numbers on one tick.
+	# Compared against a save that kept them and was ticked the same once, not
+	# against the pre-load state: the tick also advances the share, so the reference
+	# has to take the same step or this would be measuring a month rather than a
+	# missing field.
+	# Through JSON, not through to_dict() alone. to_dict() hands out the LIVE
+	# dictionaries -- from_dict()'s own header says it expects freshly parsed ones --
+	# so two states built from two to_dict() calls share one register, and ticking
+	# both would advance the same shares twice. The real save path parses, so this
+	# does too.
+	var no_derived: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for field in ["subsidy_bill_pct_gdp", "firm_impulse_pct", "firm_jobs_offset_pct", "last_company_result"]:
+		(no_derived["nations"]["FRA"] as Dictionary).erase(field)
+	var derived = GameState.from_dict(no_derived)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	Companies.tick_month(derived, loader)
+	Companies.tick_month(reference, loader)
+	if not is_equal_approx(derived.player().subsidy_bill_pct_gdp, reference.player().subsidy_bill_pct_gdp):
+		_fail("the bill did not come back on one tick, so it is not derived and would have earned the bump itself")
+	if not is_equal_approx(derived.player().firm_impulse_pct, reference.player().firm_impulse_pct):
+		_fail("the growth impulse did not come back on one tick")
+	if not is_equal_approx(derived.player().firm_jobs_offset_pct, reference.player().firm_jobs_offset_pct):
+		_fail("the jobs offset did not come back on one tick")
+
+	# And no baseline is carried. A firm's authored share and headcount are content;
+	# a copy in the save would be the same fact in two places, and the copy in the
+	# save is the one that would drift when the content was edited.
+	if dict.has("companies"):
+		_fail("a save carries the company CONTENT -- the baseline is data/companies/, and a stored copy is what a content edit would silently disagree with")
+	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
+		for key in (entry as Dictionary).keys():
+			if key != "share" and key != "subsidy":
+				_fail("a serialised register entry carries '%s' beyond the live half" % key)

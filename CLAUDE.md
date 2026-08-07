@@ -150,6 +150,7 @@ idiom, and `_apply_view()` runs four frames before the capture rather than one. 
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
+(V1.4a) `--subsidy`,
 so every map layer can be captured with something actually on it. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
@@ -565,13 +566,81 @@ fourteen regimes with no fifteenth needed** — predicted in advance, and a firs
 for this run: U6a and V1.3g each needed a new regime because each added a verb,
 and a name is not a decision.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a is built.** The row
+was one line and one line is not a session: (a) the firm register and subsidies,
+(b) sector regulation, (c) nationalisation and privatisation. The split is on
+machine count — five machines — and **the a/b line is architectural rather than
+thematic**: a subsidy is an executive act and a regulation is a **law**, so (b)
+reaches `effects.company` through an assembly division where (a) reaches it
+directly. That is V1.3a's own distinction one block later, and it is the only
+thing here worth a session boundary.
+
+**The row double-booked twice and named neither.** Bond markets were claimed by §4
+and §6 and went to **§6**, because a yield writes `debt_service_pct_gdp` and
+shares no state with a firm — and §6 re-baselines the balance harness anyway, so
+endogenising the rate there is one re-run rather than two. The second collision
+was found by counting: **a subsidy IS §6's "sectoral investment — a lever pointed
+at a sector" unless a firm is smaller than a sector**, so
+`_validate_companies()` refuses a sector holding one named firm at load time. That
+is the eleventh missing-row instance.
+
+**A firm is the first content class that fronts nothing**, so V1.4 owns
+`effects.company` — the fifth channel, and the first pointed at something that is
+not a nation. `data/company-actions/` takes `data/diplomatic-actions/`'s shape, so
+a, b and c share one content type the way V1.3a's directory served five sessions.
+A firm is four fields: `id`, `name`, `sector`, `share` of its **sector**, and
+`headcount`. Revenue is not authored — it is `share × sector_output`, and
+authoring it is one quantity written twice.
+
+**Firms are load-bearing on GDP with no second reconciliation.** A firm holds a
+share and its output is read through it, so the partition is exact by construction
+and `_apply_growth_to_sectors()`'s existing GDP reconciliation is untouched. What
+reaches the economy is **two deviation terms that read exactly 0.0** until a verb
+moves something — `trade_baseline_by_partner`'s idiom — which is what let the
+whole register go live with **every shared balance regime bit-identical**.
+`tests/test_companies.gd` asserts exact equality, not `is_zero_approx`.
+**Headcount follows share and not sector output**: read off the level a firm would
+hire every month the economy grew, which is a second answer to the Okun term the
+macro model already owns. Reallocation is all this channel adds, and all it should.
+
+**The probe corrected the model twice, ten sessions running.** A flat rival floor
+made 0.0020, 0.0040 and 0.0080 produce the **identical** five-year outcome — the
+clamp-sets-the-number failure in a third place — and the fix moved the model:
+`RIVAL_FLOOR_FRACTION`, so a rival keeps half its **authored** share, the endpoint
+becomes content, and the rate went back to setting speed and was re-chosen on a
+column that did not exist before the correction. `SUBSIDY_GROWTH_BETA` at 0.30 had
+one firm worth more than a percentage point of every tax at once and came down to
+0.20. **The kill switch cleared**: the jobs channel reaches 0.229 points, and the
+table says why in a way nothing authored — subsidising a retailer over a bank moves
+0.229, one industrial firm over another moves 0.010, and the whole spread comes
+from two authored headcounts. The bill clamp is **slack**, 1.800 against 2.500.
+Model: [docs/companies-model.md](docs/companies-model.md).
+
+**The screenshot pass earned its keep for the seventh session running, and it
+found a live U6b bug on the way**: `_people_panel` was never added to `main.gd`'s
+`_mark_all_dirty()`, so the People window refreshed once on the frame it was built
+and never again — a censure, a reshuffle and every seat count after an election
+were stale on it until reload. The comment above that list predicted exactly this
+failure, about the panel added in the session that wrote the comment. Its own two
+bugs were the panel's and the tool's: ledger figures ran under the scroll bar, and
+twenty-four ticked months were captured under a top bar still showing the starting
+GDP, which `--agenda` has always done and got away with.
+
+`SAVE_VERSION` is **15**, on one field of five. `NationState.companies` earns it —
+absent, every firm reads as share 0.0, so the partition is not there and a subsidy
+the save is still billing for moves a share that does not exist. The other four are
+recomputed on the first tick. **What is not in the register is the interesting
+half**: a firm's authored share and headcount are content, so the baseline every
+deviation is measured against round-trips through `data/companies/` rather than
+through the save.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 14**. There has never been a migration: a superseded
+Save format is at **version 15**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -629,7 +698,18 @@ while the file looks intact and the game renders a government nobody governs —
 strongest form yet. And U6b adds **no per-person serialised state at all**, because
 a person is pure content; the one field that would have earned the bump on its own,
 a stored `ns.cabinet_person`, was never written because the probe cut the bench
-that needed it.
+that needed it. **V1.4a bumps to 15 on one field of five, and the split is again
+the assertion worth having.** `NationState.companies` is the bump: absent, every
+firm reads as share 0.0, so the partition is not there, every firm produces
+nothing, and a subsidy the save is still billing for through a serialised budget
+line moves a share that does not exist — `military_capability` at V1.3g in its
+strongest form. The bill and both deviation channels fail the rule cleanly, being
+recomputed from the register on the first tick and reading 0.0 when absent, which
+is correct for every version-14 save because those games could not subsidise
+anybody. And the baseline is **content**: a firm's authored share and headcount
+round-trip through `data/companies/`, so the test asserts a save carries no company
+content and no register entry beyond `share` and `subsidy` — which pins that a
+later session storing a baseline turns it red and has to say why.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

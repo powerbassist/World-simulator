@@ -62,7 +62,14 @@ const FIGURE_ROWS := [
 	# spending the player did not choose AT ALL, so a panel that did not show it
 	# would leave a deficit moving for a reason nothing on screen names.
 	# Reads "—" while nothing is deployed, which is every game that has not allied.
-	["deployments", "  of which deployments"],
+	# V1.4a, beside the deployment line and on the same argument a fourth time:
+	# money leaving the budget that the player set with no slider. Without it a
+	# subsidy signed on the Companies panel would widen the deficit here with
+	# nothing on this screen naming the reason -- which is the failure this row and
+	# the three above it all exist to prevent.
+	# Reads "—" while nothing is subsidised, which is every game that has not used
+	# the verb.
+	["subsidies", "  of which subsidies"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	["", ""],
@@ -309,6 +316,7 @@ func _refresh() -> void:
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
 	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
+	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 
@@ -341,6 +349,15 @@ func _deployment_text(snap: Dictionary) -> String:
 	if is_zero_approx(pct):
 		return "—"
 	return _pct_and_eur(snap, "deployment_bill_pct_gdp")
+
+
+## The same em dash a fourth time. Unsigned like the deployment line: a subsidy only
+## ever costs, and the money the firm makes with it is private.
+func _subsidy_text(snap: Dictionary) -> String:
+	var pct: float = float(snap.get("subsidy_bill_pct_gdp", 0.0))
+	if is_zero_approx(pct):
+		return "—"
+	return _pct_and_eur(snap, "subsidy_bill_pct_gdp")
 
 
 func _tariff_text(snap: Dictionary) -> String:

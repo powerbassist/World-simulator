@@ -33,6 +33,8 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -88,6 +90,7 @@ func _init() -> void:
 	_check_a_ruinous_budget_loses()
 	_check_losing_names_the_number_the_player_moved()
 	_check_a_dissolution_stays_off_every_clamp()
+	_check_a_subsidised_run_stays_off_every_clamp()
 	_finish()
 
 
@@ -293,7 +296,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA") -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -330,10 +333,17 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state)
 		Dissolution.tick_month(state)
+		# V1.4a, in main.gd's slot. Inert for every regime here that subsidises
+		# nobody -- the share shift is exactly zero with no subsidy standing and all
+		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
+		Companies.tick_month(state, _loader)
 		Cabinet.tick_month(state, _loader)
 
 		if i + 1 == dissolve_at_month:
 			Dissolution.dissolve(state, ns)
+
+		if i + 1 == subsidise_at_month:
+			_subsidise_the_largest(state, ns)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -357,6 +367,63 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 ## Non-finite, non-positive, or resting on a guard clamp. The clamps are
 ## deliberately set where sane play never reaches them, so touching one is a
 ## finding rather than a safety net doing its job.
+## V1.4a's regime, and it exists for the reason V1.3g's and U6a's did: a subsidy is
+## a VERB, and no budget regime issues a command. The other eight checks here prove
+## the register is inert; this one is the only place the channels are ever non-zero,
+## so it is the only place their clamps can be reached.
+##
+## Fourteen years of a subsidy nobody withdraws, which is the reachable worst case
+## rather than a typical game: if the bill clamp or either channel clamp BINDS here,
+## the clamp and not the model is setting the number -- the IMPULSE_MAX failure
+## docs/economy-model.md records, and the escalation this session declared in
+## advance.
+func _check_a_subsidised_run_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, -1, "FRA", 6)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("subsidised run: %s" % p)
+
+	if ns.subsidy_bill_pct_gdp <= 0.0:
+		_fail("the subsidised run never billed anything, so it asserts nothing about the clamps")
+	if ns.subsidy_bill_pct_gdp >= CompaniesK.SUBSIDY_BILL_MAX_PCT_GDP - 0.000001:
+		_fail("the subsidy bill sits ON its clamp at %.3f -- the clamp is setting the number, not the model" % ns.subsidy_bill_pct_gdp)
+	if absf(ns.firm_impulse_pct) >= CompaniesK.FIRM_IMPULSE_MAX_PCT - 0.000001:
+		_fail("the firm growth impulse sits ON its clamp at %.3f" % ns.firm_impulse_pct)
+	if absf(ns.firm_jobs_offset_pct) >= CompaniesK.FIRM_JOBS_MAX_PCT - 0.000001:
+		_fail("the firm jobs offset sits ON its clamp at %.3f" % ns.firm_jobs_offset_pct)
+
+
+## The harshest authored subsidy, pointed at the largest firm by output -- the case
+## both channels are widest for.
+func _subsidise_the_largest(state, ns) -> void:
+	var action = null
+	for a in _loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
+			continue
+		if action == null or float(a.effects["company"]["intensity"]) > float(action.effects["company"]["intensity"]):
+			action = a
+	if action == null:
+		_fail("no 'subsidise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(_loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		_fail("the player's nation has no named firms, so the subsidised regime asserts nothing")
+		return
+
+	var result := Companies.execute(state, ns, _loader.company_actions, action, best)
+	if not result.get("applied", false):
+		_fail("the subsidy was refused, so the subsidised regime asserts nothing")
+
+
 func _problems(ns, year: int, month: int) -> Array[String]:
 	var out: Array[String] = []
 	var at := "%d-%02d" % [year, month]

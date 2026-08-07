@@ -17,10 +17,12 @@ const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
+const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -89,6 +91,7 @@ var _nation_panel
 var _bloc_panel
 var _calendar_panel
 var _people_panel
+var _companies_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -258,6 +261,21 @@ func _ready() -> void:
 	_windows.register("people", "People", _people_panel)
 	_people_panel.setup(_state, _loader)
 
+	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
+	# actor and the verb pointed at it is a spending decision, which is why the bill
+	# lands on the budget panel beside the deployment bill and not anywhere near
+	# Diplomacy.
+	_companies_panel = CompaniesPanel.new()
+	_windows.register("companies", "Companies", _companies_panel)
+	_companies_panel.setup(_state, _loader)
+	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
+	# subsidy is a player command with a domestic price and a budget line, so it
+	# earns a U4 decision delta on exactly the same terms.
+	_companies_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -339,6 +357,9 @@ func _build_action_bar() -> void:
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		{"id": "economy", "label": "Economy"},
 		{"id": "budget", "label": "Budget"},
+		# V1.4a. One line, exactly as this function's own comment has now correctly
+		# predicted for four sessions running.
+		{"id": "companies", "label": "Companies"},
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		{"id": "society", "label": "Polling"},
@@ -582,6 +603,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# V1.3f: and now the nine act on their own initiative inside that tick, so
 	# whatever they just did is read off the record and put in front of the player.
 	_card_foreign_acts(year, month)
+
+	# V1.4a: subsidised firms take share from their named rivals, and all three firm
+	# prices are recomputed. In Defence's slot and for Defence's reason -- Budget has
+	# closed this month's books, so the bill and both deviation channels lag by
+	# exactly one month TOGETHER rather than one of them lagging alone, and the lag
+	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
+	# entry -> which verbs are available -> a new subsidy -> bill.
+	Companies.tick_month(_state, _loader)
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
@@ -873,6 +902,7 @@ func _on_load_requested(slot: String) -> void:
 	_government_panel.setup(_state, _loader)
 	_bloc_panel.setup(_state, _loader)
 	_people_panel.setup(_state, _loader)
+	_companies_panel.setup(_state, _loader)
 
 	_calendar_panel.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to
@@ -897,6 +927,13 @@ func _mark_all_dirty() -> void:
 	for panel in [
 		_overview_panel, _economy_panel, _budget_panel, _polling_panel,
 		_law_panel, _nation_panel, _government_panel, _bloc_panel, _calendar_panel,
+		# `_people_panel` was missing from this list from U6b until V1.4a found it,
+		# which is the failure the comment above predicted happening to the panel that
+		# was added in the same session the comment was written. It refreshed once, on
+		# the frame it was built, and then never again: a censure that changed the head
+		# of government, a reshuffle that changed a portfolio and every seat count after
+		# an election were all stale on it until the game was reloaded.
+		_people_panel, _companies_panel,
 	]:
 		if panel != null:
 			panel.mark_dirty()

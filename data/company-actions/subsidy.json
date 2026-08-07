@@ -1,0 +1,41 @@
+{
+  "_note": "V1.4a's verbs, on the effects.company channel. Two intensities and a withdrawal, so the dial is visibly a dial rather than a single on/off the model could have hard-coded. A subsidy is STANDING state, so there is no cooldown: `subsidy_active` is the gate, and going from the smaller package to the larger one means withdrawing first, which costs the political ground the first one bought.",
+  "actions": [
+    {
+      "id": "industrial_subsidy",
+      "name": "Industrial Subsidy",
+      "summary": "A standing public subsidy. The firm takes market share from its domestic rivals for as long as the money flows, and keeps what it has taken when it stops.",
+      "preconditions": [
+        { "field": "subsidy_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "company": { "op": "subsidise", "intensity": 0.60 },
+        "bloc_offset": { "workers": 0.10, "business": 0.06, "urban": -0.05, "students": -0.04 }
+      }
+    },
+    {
+      "id": "strategic_rescue",
+      "name": "Strategic Rescue Package",
+      "summary": "The state underwrites the firm outright. Twice the effect and more than twice the argument -- money on this scale is visibly money not spent on something else.",
+      "preconditions": [
+        { "field": "subsidy_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "company": { "op": "subsidise", "intensity": 1.00 },
+        "bloc_offset": { "workers": 0.14, "business": 0.10, "urban": -0.09, "students": -0.08, "pensioners": -0.05 }
+      }
+    },
+    {
+      "id": "withdraw_support",
+      "name": "Withdraw Support",
+      "summary": "The subsidy ends. The bill stops, the political credit is handed back, and the market share the firm won with public money stays won.",
+      "preconditions": [
+        { "field": "subsidy_active", "op": "==", "value": 1 }
+      ],
+      "effects": {
+        "company": { "op": "withdraw" },
+        "bloc_offset": { "workers": -0.10, "business": -0.06, "urban": 0.05, "students": 0.04 }
+      }
+    }
+  ]
+}

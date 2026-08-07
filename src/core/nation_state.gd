@@ -476,6 +476,50 @@ var deployment_bill_pct_gdp: float = 0.0
 var deployment_opinion_load: float = 0.0
 
 
+# --- Private companies (V1.4a) --------------------------------------------------
+
+## company id -> {"share": float, "subsidy": float}. The live half of the firm
+## register, and ONLY the live half: a firm's authored share and headcount are
+## content, so DataLoader.companies is the baseline and this carries what moved.
+## Storing the baseline here too is the duplication data/people/ was built to
+## remove.
+##
+## THE FIELD THAT EARNS SAVE_VERSION 15. Absent, every firm reads as share 0.0 —
+## the partition vanishes, `output_eur_bn()` returns nothing for every firm, and a
+## subsidy the player is still paying for through a serialised budget line moves a
+## share that is not there. That is `military_capability` at V1.3g and
+## `eu_member`/`neighbours` at V1.3b: a reloaded game running a DIFFERENT MODEL
+## from the one that saved it, not merely a game missing a number.
+##
+## Per-nation and keyed by a content id, which is `party_discipline`'s and
+## `cabinet`'s shape — so V1.4a adds a register and NO NEW KIND of live state, the
+## claim V1.3g made for its two.
+var companies := {}
+
+## The three prices, recomputed once a month by Companies._recompute_prices() and
+## read from here rather than called for. Cached because of the preload graph
+## rather than for speed: companies.gd takes a LOADER, and economy.gd's twenty-eight
+## call sites and budget.gd's recompute() would all have to grow one to ask it
+## anything.
+##
+## `subsidy_bill_pct_gdp` is a computed spending line, NOT a sixth entry in
+## economy_constants.SPENDING_KEYS — that list is keyed 1:1 to cabinet portfolios,
+## so a sixth line would be a sixth minister. `deployment_bill_pct_gdp` above took
+## the same route for the same reason.
+##
+## The other two are DEVIATION terms and read exactly 0.0 until a subsidy stands.
+## None of the three earns the bump on its own — all three are recomputed from
+## `companies` on the first tick after a load — but they are serialised anyway so a
+## save read back and never ticked reports the budget it was saved with.
+var subsidy_bill_pct_gdp: float = 0.0
+var firm_impulse_pct: float = 0.0
+var firm_jobs_offset_pct: float = 0.0
+
+## The most recent company action, for the companies panel to read after acting.
+## Empty until the first one resolves. `last_diplomatic_result`'s shape.
+var last_company_result := {}
+
+
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
 func duplicate_state():
@@ -602,6 +646,12 @@ func duplicate_state():
 	s.military_capability = military_capability
 	s.deployment_bill_pct_gdp = deployment_bill_pct_gdp
 	s.deployment_opinion_load = deployment_opinion_load
+
+	s.companies = companies.duplicate(true)
+	s.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp
+	s.firm_impulse_pct = firm_impulse_pct
+	s.firm_jobs_offset_pct = firm_jobs_offset_pct
+	s.last_company_result = last_company_result.duplicate(true)
 
 	return s
 
@@ -734,6 +784,12 @@ func to_dict() -> Dictionary:
 		"military_capability": military_capability,
 		"deployment_bill_pct_gdp": deployment_bill_pct_gdp,
 		"deployment_opinion_load": deployment_opinion_load,
+
+		"companies": companies,
+		"subsidy_bill_pct_gdp": subsidy_bill_pct_gdp,
+		"firm_impulse_pct": firm_impulse_pct,
+		"firm_jobs_offset_pct": firm_jobs_offset_pct,
+		"last_company_result": last_company_result,
 	}
 
 
@@ -878,6 +934,12 @@ static func from_dict(d: Dictionary):
 	# is deliberately NOT softened into "recompute it from spending" -- a fallback
 	# that quietly repairs the field would make the save version unnecessary and
 	# the next genuinely unrecoverable field would have no precedent to point at.
+	s.companies = d.get("companies", {})
+	s.subsidy_bill_pct_gdp = float(d.get("subsidy_bill_pct_gdp", 0.0))
+	s.firm_impulse_pct = float(d.get("firm_impulse_pct", 0.0))
+	s.firm_jobs_offset_pct = float(d.get("firm_jobs_offset_pct", 0.0))
+	s.last_company_result = d.get("last_company_result", {})
+
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))
 	s.deployment_opinion_load = float(d.get("deployment_opinion_load", 0.0))

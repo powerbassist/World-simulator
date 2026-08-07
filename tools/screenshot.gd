@@ -27,6 +27,7 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -95,6 +96,13 @@ var _defence := false
 ## the strip exists to draw. Books three acts and acts once, so the frame carries
 ## a booking, a kept appointment and a cooldown expiry the player never entered.
 var _book := false
+
+## V1.4a. A new game's firm register is every firm at its authored share with no
+## subsidy standing, so a frame of the companies panel shows three zeroes on the
+## ledger and "no support" against every firm -- which proves nothing about the row
+## the panel exists to draw. Same argument --coerce, --bloc, --agenda and --defence
+## each made; this is the fifth time.
+var _subsidy := false
 var _main
 
 
@@ -119,6 +127,8 @@ func _init() -> void:
 			_defence = true
 		elif args[i] == "--book":
 			_book = true
+		elif args[i] == "--subsidy":
+			_subsidy = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -178,6 +188,8 @@ func _apply_view() -> void:
 		_stand_up_an_alliance()
 	if _book:
 		_fill_the_diary()
+	if _subsidy:
+		_subsidise_a_firm()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -269,13 +281,60 @@ class _PactStub:
 	var action_name: String = "Defensive Pact"
 
 
+## V1.4a. Subsidises the player's largest firm through the panel's OWN command path
+## -- Companies.execute() with a shipped verb -- rather than by writing the register,
+## because the thing being looked at is a row the panel draws from a real result.
+##
+## Then runs two years of months so the share has actually moved: at the measured
+## rate the firm is 90 % of the way to its endpoint at 25 months, and a frame taken
+## the instant the button is pressed shows a subsidy standing against figures that
+## have not answered it yet.
+func _subsidise_a_firm() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
+			continue
+		if action == null or float(a.effects["company"]["intensity"]) > float(action.effects["company"]["intensity"]):
+			action = a
+	if action == null:
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		return
+
+	Companies.execute(state, ns, loader.company_actions, action, best)
+	for i in range(24):
+		var year: int = state.year + (state.month + i - 1) / 12
+		var month: int = (state.month + i - 1) % 12 + 1
+		_main._on_month_elapsed(year, month)
+	# _on_month_elapsed() does not touch the strip -- in a played game the clock does
+	# -- so twenty-four ticked months would otherwise be captured under a top bar
+	# still showing the starting GDP and deficit. --agenda has always had this and
+	# got away with it because nothing it does moves those figures; a subsidy moves
+	# both, and a frame that disagrees with itself is worse than no frame.
+	_main._update_top_bar()
+
+
 ## main.gd marks these on every month elapsed; a screenshot moves state without a
 ## month elapsing, so it has to say so itself.
 func _mark_panels_dirty() -> void:
 	for name in [
 		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
-		"_calendar_panel", "_people_panel",
+		"_calendar_panel", "_people_panel", "_companies_panel",
 	]:
 		var panel = _main.get(name)
 		if panel != null and panel.has_method("mark_dirty"):

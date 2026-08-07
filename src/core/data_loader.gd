@@ -12,6 +12,8 @@ const Scenario = preload("res://src/core/scenario.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const BlocProposal = preload("res://src/core/bloc_proposal.gd")
 const Person = preload("res://src/core/person.gd")
+const Company = preload("res://src/core/company.gd")
+const CompanyAction = preload("res://src/core/company_action.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -37,6 +39,18 @@ var people: Dictionary = {}
 ## self-describing and globally unique. Hence the `<NATION>_<surname>` scheme and
 ## the prefix check in _validate_people(). See docs/people-model.md.
 var person_by_id: Dictionary = {}
+## nation id -> Array[Company], in authored file order — the order the Companies
+## window reads. UNLIKE `people`, a nation may legitimately be ABSENT here: a
+## nation with no data/companies/<ID>.json has unpartitioned sectors, which is
+## what every nation looked like before V1.4a. That is why _load_companies() does
+## not append a "could not read file" error the way _load_people() does.
+var companies: Dictionary = {}
+
+## Ordered, not keyed by id, the same way `laws` and `diplomatic_actions` are:
+## the companies panel offers them as a list in authored order and nothing looks
+## one up by id at runtime.
+var company_actions: Array[CompanyAction] = []
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -74,11 +88,13 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
 	person_by_id.clear()
+	companies.clear()
+	company_actions.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
@@ -126,7 +142,10 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		_load_people(id, people_dir)
 	for id in nations.keys():
 		_load_parties(id, parties_dir)
+	for id in nations.keys():
+		_load_companies(id, companies_dir)
 
+	_load_company_actions(company_actions_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
@@ -143,6 +162,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_neighbours()
 	_validate_bloc_proposals()
 	_validate_people()
+	_validate_companies()
 
 
 ## Resolve a person id to the name a screen prints. The ONLY reader of
@@ -260,6 +280,145 @@ func _check_person_ref(nation_id: String, where: String, slot: String, pid: Stri
 		errors.append("%s: %s names person '%s', who belongs to another nation" % [where, slot, pid])
 		return
 	referenced[pid] = true
+
+
+## One data/companies/<NATION>.json per nation, {"companies": [...]}, the same
+## shape as data/people/*.json. See docs/companies-model.md.
+##
+## AN ABSENT FILE IS NOT AN ERROR, where an absent people file is. Every nation
+## needs a leader; only a nation somebody can play needs firms, because only a
+## player can subsidise one and _validate_companies() below refuses content
+## nothing can reach. A nation with no file has unpartitioned sectors, which is
+## what all ten had before this session -- so the seven that are not yet playable
+## keep running the model they always ran.
+func _load_companies(nation_id: String, companies_dir: String) -> void:
+	var fname := "%s.json" % nation_id
+	var path := companies_dir.path_join(fname)
+	var text := FileAccess.get_file_as_string(path)
+	if text.is_empty():
+		companies[nation_id] = []
+		return
+
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("companies")) != TYPE_ARRAY:
+		errors.append("%s: invalid companies file, expected {\"companies\": [...]}" % fname)
+		companies[nation_id] = []
+		return
+
+	var raw_list: Array = parsed["companies"]
+	var parsed_companies: Array = []
+	var per_file_errors: Array[String] = []
+	var seen_ids := {}
+
+	for i in raw_list.size():
+		var entry = raw_list[i]
+		if typeof(entry) != TYPE_DICTIONARY:
+			per_file_errors.append("%s: companies[%d] is not an object" % [fname, i])
+			continue
+		var company = Company.from_dict(entry, i, fname, per_file_errors)
+		if company.id == "":
+			continue
+
+		# The prefix rule people-model.md argues for, applied to a second register
+		# and for a weaker reason honestly stated: a company id is read inside a
+		# nation's context today, the way a party id is. It is namespaced anyway
+		# because the register is keyed by it in a save and on an appointment entry
+		# a later session may well book -- and re-namespacing after that happens is
+		# the migration U6b had to perform on three fields.
+		if not company.id.begins_with("%s_" % nation_id):
+			per_file_errors.append(
+				"%s: company id '%s' must begin with '%s_'" % [fname, company.id, nation_id]
+			)
+		if seen_ids.has(company.id):
+			per_file_errors.append("%s: duplicate company id '%s'" % [fname, company.id])
+		seen_ids[company.id] = true
+		parsed_companies.append(company)
+
+	errors.append_array(per_file_errors)
+	companies[nation_id] = parsed_companies
+
+
+## The cross-file half, and both checks are about content that cannot do anything.
+##
+## A sector's named shares summing past 1.0 is a partition claiming more than the
+## sector holds. A sector holding exactly ONE named firm is subtler and is the
+## check worth having: a lone firm has no rival to take share from, so a subsidy
+## pointed at it moves nothing at all and the player pays a real bill for it. That
+## is docs/tiers/v1.md section 6's "sectoral investment -- a lever pointed at a
+## sector" wearing a firm's name, and refusing it at load is what keeps V1.4's
+## subsidy and V1.6's sector lever distinguishable.
+func _validate_companies() -> void:
+	for nation_id in companies.keys():
+		var by_sector := {}
+		for company in companies[nation_id]:
+			if company.sector == "":
+				continue
+			if not by_sector.has(company.sector):
+				by_sector[company.sector] = []
+			by_sector[company.sector].append(company)
+
+		for sector in by_sector.keys():
+			var group: Array = by_sector[sector]
+			if group.size() < 2:
+				errors.append(
+					"companies/%s.json: sector '%s' has one named firm ('%s') -- a firm with no rival cannot gain share from anybody, so a subsidy pointed at it is a sector lever with a company's name on it"
+					% [nation_id, sector, group[0].id]
+				)
+			var total := 0.0
+			for company in group:
+				total += company.share
+			if total > 1.0 + 0.000001:
+				errors.append(
+					"companies/%s.json: sector '%s' shares sum to %s, above 1.0 -- the named firms would hold more than the sector does"
+					% [nation_id, sector, str(total)]
+				)
+
+
+## Directory-scanned, exactly like _load_diplomatic_actions() -- adding a verb is
+## a file, not a file plus an index entry. Every file holds {"actions": [...]}.
+func _load_company_actions(actions_dir: String) -> void:
+	var da := DirAccess.open(actions_dir)
+	if da == null:
+		errors.append("%s: directory not found" % actions_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := actions_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("actions")) != TYPE_ARRAY:
+			errors.append("%s: invalid company-action file, expected {\"actions\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["actions"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: actions[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = CompanyAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate company action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+			company_actions.append(action)
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:

@@ -17,6 +17,7 @@ const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Companies = preload("res://src/sim/companies.gd")
 
 
 static func tick_month(state) -> void:
@@ -73,6 +74,13 @@ static func recompute(state, ns) -> void:
 		# bill that widened the deficit inside the month would feed the deficit
 		# precondition that decides which verbs are available.
 		+ ns.deployment_bill_pct_gdp
+		# V1.4a's line, and the third to take this route rather than the fourth: the
+		# argument above is now the settled one for any bill the player does not set
+		# with a slider. Companies.tick_month() runs after this, so a subsidy signed
+		# this month bills next month -- the lag the bloc transfer and the deployment
+		# bill both take, and for the same reason, since `deficit_pct_gdp` is a
+		# company action's own precondition field.
+		+ ns.subsidy_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -223,6 +231,12 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# an obligation arriving inside the projected window entirely. V1.3b's repair,
 		# made a third time rather than rediscovered a third time.
 		Defence.tick_month(sim)
+		# In main.gd's slot a fourth time, and required for the same reason the three
+		# above it are: a projection that held the firm register frozen would report a
+		# standing subsidy as costing nothing and would hold the share shift still, so
+		# the one surface in the game that promises "this is what will happen" would be
+		# wrong about the thing the player just paid for.
+		Companies.tick_month(sim, loader)
 		out.append(snapshot(sim))
 	return out
 
@@ -257,6 +271,12 @@ static func snapshot(state) -> Dictionary:
 		# NationState the panel can reach.
 		"deployment_bill_pct_gdp": ns.deployment_bill_pct_gdp,
 		"military_capability": ns.military_capability,
+		# V1.4a, on the snapshot for V1.3g's reason above. The two deviation channels
+		# are here as well, because the budget panel's projection is the one surface
+		# that can show a subsidy's growth effect arriving before it has arrived.
+		"subsidy_bill_pct_gdp": ns.subsidy_bill_pct_gdp,
+		"firm_impulse_pct": ns.firm_impulse_pct,
+		"firm_jobs_offset_pct": ns.firm_jobs_offset_pct,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,

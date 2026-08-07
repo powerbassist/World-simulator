@@ -91,6 +91,27 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
+**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a is built.** The
+argument, the three calls it made, and the per-session table are under *V1.4 — the
+decomposition* below. Order: (a) the firm register and subsidies, (b) sector
+regulation, (c) nationalisation and privatisation.
+
+**V1.4a's own finding is the one worth carrying forward, and it is about content
+rather than about firms.** The jobs channel's whole spread comes from two authored
+headcounts: subsidising a retailer over a bank moves **0.229 points** of
+unemployment, subsidising one industrial firm over another moves **0.010**, and
+nothing in `src/sim/` says "services". A firm layer is more than a sector lever
+exactly to the extent that firms sharing a sector are authored *differently* — so
+the differentiator is the field to argue about when V1.4b and V1.4c add theirs, and
+a firm with no rival is refused at load time rather than shipped as a lever that
+moves nothing.
+
+**The decomposition also caught the row double-booking twice where the prompt
+named once.** Bond markets belonged to §6, and a subsidy pointed at a firm *is*
+§6's sectoral investment unless a firm is smaller than a sector. That is the
+eleventh missing-row instance, and the second found by counting rather than by
+being told.
+
 **V1.3 was decomposed into six sessions, became seven, and is now COMPLETE** — the
 argument, and the four calls it made, are under *V1.3 — the decomposition* below.
 **V1.3a–g are all shipped.** V1.3e discharged all four declared stopgaps and
@@ -490,6 +511,91 @@ retaliation, no third pair moves. `tests/test_diplomacy.gd` asserts that acting
 on Germany leaves `DEU|ITA` exactly at its resting value, so V1.3e replacing
 the stopgap is a visible test change rather than a silent one.
 
+
+### V1.4a — the firm register and subsidies (shipped)
+
+The first content class in the project that is **not the face of something that
+already exists**. U6b's "no new effect channel" held because a leader fronts a
+nation and a party leader fronts a party; a firm fronts nothing, so V1.4 owns
+`effects.company` — and `data/company-actions/` takes
+`data/diplomatic-actions/`'s shape so that a, b and c share one content type the
+way V1.3a's directory served five sessions.
+
+**Firms are load-bearing on GDP without a second reconciliation.** A firm holds a
+`share` of its sector and its output is read through it, so the partition is exact
+by construction and `Economy._apply_growth_to_sectors()`'s existing GDP
+reconciliation is untouched. What reaches the economy is two **deviation** terms
+that read exactly 0.0 until a verb moves something, which is what let the whole
+register go live with **every shared balance regime bit-identical**.
+
+**Headcount follows share and not sector output**, and that is the file's sharpest
+call: read off the level, a firm would hire every month the economy grew, which is
+a second answer to the Okun term the macro model already owns. What a firm layer
+adds is reallocation, and reallocation is all it should add.
+
+**The probe corrected the model twice, ten sessions running.** A flat rival floor
+made three different values of `SHARE_SHIFT_PER_MONTH` produce the identical
+five-year outcome — the clamp-sets-the-number failure in a third place — and the
+fix moved the model rather than the constant: a rival keeps half its **authored**
+share, so the endpoint of a subsidy is content and the rate went back to setting
+speed, re-chosen on a column that did not exist before the correction. Then
+`SUBSIDY_GROWTH_BETA` at 0.30 had one firm worth more than a percentage point of
+every tax at once, and came down to 0.20. The kill switch — the jobs channel
+against a floor fixed before the sweep — **cleared**, at 0.229 points. Model:
+[docs/companies-model.md](docs/companies-model.md).
+
+**The screenshot pass earned its keep for the seventh session running**, and this
+time both bugs were the tool's and the panel's rather than the model's: the ledger
+figures ran underneath the scroll bar, and twenty-four ticked months were captured
+under a top bar still showing the starting GDP — `--agenda` has always had that
+second one and got away with it because nothing it does moves those figures. It
+also found a live **U6b bug**: `_people_panel` was never added to
+`main.gd`'s `_mark_all_dirty()`, so the People window refreshed once on the frame
+it was built and never again.
+
+### V1.4 — the decomposition, and why these three
+
+Written before any code, which is where a block-shaped row belongs: V1.4 was one
+line — named firms, subsidies, regulation, nationalisation, privatisation, bond
+markets — and one line is not a session.
+
+| | Session | Content | Reads |
+|---|---|---|---|
+| **V1.4a** | ~~The firm register and subsidies~~ **shipped** | `data/companies/`, firms as a normalised partition of a sector, the `effects.company` channel, subsidies with a computed budget line and a domestic price, the Companies window | — |
+| **V1.4b** | Sector regulation | Rules that cost margin and buy an outcome, as **laws** — the assembly divides on them, so this reaches the channel from the other side | a |
+| **V1.4c** | Nationalisation and privatisation | Ownership as firm state, a purchase cost, a privatisation windfall, dividends as a computed revenue line, the permanent loss of control — and the `ISSUE_KEYS` question | a, b |
+
+Three calls, each of which could have gone the other way:
+
+1. **Bond markets belong to §6, not here.** A yield writes
+   `debt_service_pct_gdp` against `DEBT_REAL_RATE_PCT` and shares no state with a
+   firm. §6 is where inflation and the business cycle re-baseline every measured
+   balance number anyway, so endogenising the rate there is **one** re-run instead
+   of two — and a credit rating is that machine read at a second point, V1.3c's
+   "one verb, two prices" shape, so it does not split back off. Both rows carry
+   the cross-reference, so this does not become the twelfth missing row.
+2. **The a/b line is architectural, not thematic.** A subsidy is an executive act
+   and a regulation is a **law**: one goes through `companies.gd`'s own
+   `execute()`, the other through `legislature.gd` and an assembly division. That
+   is V1.3a's distinction between a diplomatic action and a law, one block later,
+   and it is worth a session boundary because the approval path differs, not
+   because the subject does.
+3. **A firm must be smaller than a sector, or §4 IS §6.** "Subsidise a firm" and
+   "sectoral investment — a lever pointed at a sector" are the same lever when a
+   sector holds one named firm. So `_validate_companies()` refuses that at load,
+   and the differentiator — `headcount` at the authored share — is what makes
+   *which* firm a decision. The row named neither this collision nor the bond-market
+   one.
+
+Two things the cold read found that the decomposition rests on:
+
+- **`SPENDING_KEYS` and `PORTFOLIO_KEYS` are the same list**, so a subsidy could
+  not be a sixth spending line without being a sixth minister — which
+  [docs/tiers/v1.md](docs/tiers/v1.md) §6 forbids. V1.3c's tariff revenue and
+  V1.3g's deployment bill had already built the way out, and V1.4a is the fourth
+  computed line rather than the first exception.
+- **`data/companies/` was in the data-architecture tree and did not exist.** A
+  plan, not a record — and now a record.
 
 ### V1.3 — the decomposition, and why these six
 
@@ -929,9 +1035,9 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 |---|---|
 | **V1.2 Political systems** | ~~Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios~~ — **all shipped, block closed at V1.2e** |
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
-| **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets |
+| **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, ~~bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |
-| **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three |
+| **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
 

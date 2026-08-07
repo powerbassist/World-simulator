@@ -36,6 +36,7 @@ const Trade = preload("res://src/sim/trade.gd")
 const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
@@ -240,6 +241,21 @@ const CALENDAR_REGIMES := {
 }
 
 
+## V1.4a's regime, and it is needed for the reason V1.3g's and U6a's were and
+## V1.3d's and V1.3f's were not: a subsidy is a VERB, and no budget regime issues a
+## command. An institution meets whether or not the player engages; a verb does not
+## fire unless somebody presses it.
+##
+## Points at the player's largest firm by output, which is the case both channels
+## are widest for -- the growth impulse scales with the firm's weight in the economy,
+## and the jobs channel with the gap in labour intensity between it and the rival it
+## takes share from. Left standing for the rest of the run, so the bill this regime
+## reaches is the reachable worst case the clamp is measured against.
+const COMPANY_REGIMES := {
+	"managed_subsidises": {"budget": REGIMES["managed"], "subsidy_month": 6},
+}
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
@@ -288,6 +304,9 @@ func _init() -> void:
 		for name in CALENDAR_REGIMES.keys():
 			var regime: Dictionary = CALENDAR_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, int(regime["book_month"]))
+		for name in COMPANY_REGIMES.keys():
+			var regime: Dictionary = COMPANY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, int(regime["subsidy_month"]))
 
 	quit(0)
 
@@ -312,7 +331,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -370,6 +389,12 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# nothing in the economy reads it, which is the "no economy reader" call
 		# stated where it can be checked rather than only in the model doc.
 		Defence.tick_month(state)
+		# Added at V1.4a, in main.gd's slot, and inert for every regime that subsidises
+		# nobody: with no subsidy standing the share shift is exactly zero for every
+		# firm and all three prices are exactly 0.0, so the fourteen regimes above are
+		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
+		# under an unsubsidised run at all -- not even a figure the economy ignores.
+		Companies.tick_month(state, loader)
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -386,6 +411,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == book_month:
 			_book_ahead(state, loader, regime_name, year, month)
+
+		if i + 1 == subsidy_month:
+			_subsidise(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -695,6 +723,39 @@ func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: i
 ## counterparty would refuse -- _sign_agreement()'s shape and for its reason: a
 ## regime that measures the GATE rather than the model behind it tells the balance
 ## harness nothing about the channel this session added to the budget.
+## V1.4a. Subsidises the largest firm by output at the harshest authored intensity
+## and leaves it standing for the rest of the run.
+func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
+			continue
+		if action == null or float(a.effects["company"]["intensity"]) > float(action.effects["company"]["intensity"]):
+			action = a
+	if action == null:
+		printerr("  no 'subsidise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
+		return
+
+	var result := Companies.execute(state, ns, loader.company_actions, action, best)
+	if result["applied"]:
+		print("  %d-%02d %s: subsidised %s at intensity %.2f (%.1f bn)" % [
+			year, month, regime_name, best, float(result["subsidy_after"]), best_output,
+		])
+	else:
+		print("  %d-%02d %s: subsidy for %s REFUSED" % [year, month, regime_name, best])
+
+
 func _sign_pact(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var action = _pact_action(loader, "sign")
 	if action == null:
