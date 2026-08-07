@@ -5,9 +5,9 @@ extends RefCounted
 ## data/company-actions/*.json file. See docs/companies-model.md.
 ##
 ## THE FIFTH EFFECT CHANNEL, and the first one pointed at something that is not a
-## nation. `effects.company` names an op and, for `subsidise`, an intensity;
-## src/sim/companies.gd dispatches it against one firm of the acting nation's own
-## register.
+## nation. `effects.company` names an op and, for the two setting ops, that op's
+## one dial; src/sim/companies.gd dispatches it against one firm of the acting
+## nation's own register.
 ##
 ## Mirrors src/core/diplomatic_action.gd, which is the point: V1.3a's shape served
 ## a, b, c, f and g without a new content type, and V1.4a, b and c are meant to
@@ -126,10 +126,19 @@ static func _extract_effects(d: Dictionary, action_id: String, filename: String,
 	return out
 
 
-## A `withdraw` carries no terms. It names nothing and sets nothing; it clears the
-## firm's subsidy. Terms on it would be an author believing they had written
-## something read by nobody -- the rule a measure's "lift" and an agreement's
-## "exit" already get, and the third time this project has applied it.
+## An op names EXACTLY ONE DIAL or names none, and companies_constants.
+## COMPANY_OP_TERM is the table that says which. `withdraw` and `privatise` carry
+## no terms: they name nothing and set nothing, they clear. Terms on either would
+## be an author believing they had written something read by nobody -- the rule a
+## measure's "lift" and an agreement's "exit" already get.
+##
+## One dial per op, and the refusal at the bottom is what keeps it that way. An
+## authored per-action cost, share-shift rate, jobs multiplier or purchase price
+## would each be a second number describing one strength -- the redundancy
+## tools/coercion_probe.gd found between an authored tariff rate and a measure's
+## severity, and deleted rather than documented. V1.4c's price is DERIVED from the
+## firm's own output for exactly that reason: an authored one would let a content
+## file disagree with the register about what a firm is worth.
 static func _extract_company(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects.company must be an object" % [filename, action_id])
@@ -143,35 +152,32 @@ static func _extract_company(raw, action_id: String, filename: String, errors: A
 		return {}
 
 	var out := {"op": op}
+	var term := String(K.COMPANY_OP_TERM.get(op, ""))
 
-	if op == "withdraw":
+	if term == "":
 		for key in raw.keys():
 			if key != "op":
-				errors.append("%s: %s effects.company.%s is set on a \"withdraw\" -- a withdrawal clears the firm's subsidy and reads no terms" % [
-					filename, action_id, key
+				errors.append("%s: %s effects.company.%s is set on a \"%s\" -- it clears the firm's state and reads no terms" % [
+					filename, action_id, key, op
 				])
 		return out
 
-	var intensity := float(raw.get("intensity", 0.0))
-	if intensity <= 0.0:
-		errors.append("%s: %s effects.company.intensity must be > 0 -- a subsidy that pays nothing is not a subsidy" % [
-			filename, action_id
+	var ceiling: float = K.MAX_SUBSIDY_INTENSITY if term == "intensity" else K.MAX_STAKE
+	var value := float(raw.get(term, 0.0))
+	if value <= 0.0:
+		errors.append("%s: %s effects.company.%s must be > 0 -- a \"%s\" that moves nothing is not one" % [
+			filename, action_id, term, op
 		])
-	elif intensity > K.MAX_SUBSIDY_INTENSITY:
-		errors.append("%s: %s effects.company.intensity = %s exceeds MAX_SUBSIDY_INTENSITY (%s)" % [
-			filename, action_id, str(intensity), str(K.MAX_SUBSIDY_INTENSITY)
+	elif value > ceiling:
+		errors.append("%s: %s effects.company.%s = %s exceeds its ceiling (%s)" % [
+			filename, action_id, term, str(value), str(ceiling)
 		])
-	out["intensity"] = intensity
+	out[term] = value
 
-	# Intensity is the ONLY dial, and the refusal below is what keeps it that way.
-	# An authored per-action cost, share-shift rate or jobs multiplier would each be
-	# a second number describing one strength -- the redundancy
-	# tools/coercion_probe.gd found between an authored tariff rate and a measure's
-	# severity, and deleted rather than documented.
 	for key in raw.keys():
-		if key != "op" and key != "intensity":
-			errors.append("%s: %s effects.company.%s is not a recognised term -- intensity is the only dial, and a cost or a share rate beside it is one strength written twice" % [
-				filename, action_id, key
+		if key != "op" and key != term:
+			errors.append("%s: %s effects.company.%s is not a recognised term on a \"%s\" -- %s is its only dial, and a cost or a rate beside it is one strength written twice" % [
+				filename, action_id, key, op, term
 			])
 
 	return out

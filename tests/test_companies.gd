@@ -78,6 +78,13 @@ func _init() -> void:
 	_test_deregulation_is_the_other_direction()
 	_test_the_burden_clamp_holds_both_ways()
 	_test_the_nine_are_never_regulated()
+	_test_unowned_dividend_is_exactly_zero()
+	_test_nationalising_pays_the_debt_and_not_the_deficit()
+	_test_a_holding_pays_a_dividend_and_privatising_stops_it()
+	_test_ownership_shields_jobs_in_both_directions()
+	_test_no_law_ever_moves_state_share()
+	_test_ownership_verbs_refuse_when_unavailable()
+	_test_the_nine_never_nationalise()
 	_finish()
 
 
@@ -126,11 +133,15 @@ func _test_register_seeds_from_content() -> void:
 		if Companies.subsidy_of(ns, company.id) != 0.0:
 			_fail("%s seeded with a subsidy standing" % company.id)
 
+		if Companies.state_share_of(ns, company.id) != 0.0:
+			_fail("%s seeded already in public hands" % company.id)
+
 	# The register carries the LIVE half only. A copied baseline would be the same
 	# fact in two places, and the copy in the save is the one that would drift.
+	# Three keys since V1.4c, and three writers -- one apiece.
 	for entry in ns.companies.values():
 		for key in entry.keys():
-			if key != "share" and key != "subsidy":
+			if not ["share", "subsidy", "state_share"].has(key):
 				_fail("register entry carries '%s' -- the baseline is content, not state" % key)
 
 
@@ -208,7 +219,7 @@ func _test_subsidy_conserves_the_named_share() -> void:
 	var ns = state.nations[PLAYER]
 	var before := _named_share(ns, "industry")
 
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	for _m in range(60):
 		Companies.tick_month(state, _loader)
 
@@ -225,7 +236,7 @@ func _test_subsidy_moves_share_to_the_subsidised_firm() -> void:
 	var big_before := Companies.share_of(ns, BIG)
 	var rival_before := Companies.share_of(ns, RIVAL)
 
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	for _m in range(24):
 		Companies.tick_month(state, _loader)
 
@@ -261,7 +272,7 @@ func _test_bill_reaches_the_budget() -> void:
 	var ns = state.nations[PLAYER]
 	var deficit_before: float = ns.deficit_pct_gdp
 
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 
@@ -278,7 +289,7 @@ func _test_impulse_reaches_growth() -> void:
 	var subsidised = _new_state()
 	Companies.execute(
 		subsidised, subsidised.nations[PLAYER], _loader.company_actions,
-		_action("strategic_rescue"), BIG
+		_action("strategic_rescue"), BIG, _loader
 	)
 	Companies.tick_month(subsidised, _loader)
 
@@ -297,12 +308,12 @@ func _test_withdraw_stops_the_bill_and_keeps_the_share() -> void:
 	var state = _new_state()
 	var ns = state.nations[PLAYER]
 
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	for _m in range(36):
 		Companies.tick_month(state, _loader)
 	var won := Companies.share_of(ns, BIG)
 
-	Companies.execute(state, ns, _loader.company_actions, _action("withdraw_support"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("withdraw_support"), BIG, _loader)
 	Companies.tick_month(state, _loader)
 
 	if ns.subsidy_bill_pct_gdp != 0.0:
@@ -327,16 +338,16 @@ func _test_verb_refuses_when_unavailable() -> void:
 
 	# Withdrawing from a firm with no subsidy: `subsidy_active == 1` is unmet.
 	var refused := Companies.execute(
-		state, ns, _loader.company_actions, _action("withdraw_support"), BIG
+		state, ns, _loader.company_actions, _action("withdraw_support"), BIG, _loader
 	)
 	if refused.get("applied", true) or not refused.get("refused", false):
 		_fail("withdrawing support from an unsubsidised firm was applied")
 
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	# And subsidising twice: `subsidy_active == 0` is now unmet, so going from the
 	# smaller package to the larger one costs a withdrawal first.
 	var twice := Companies.execute(
-		state, ns, _loader.company_actions, _action("industrial_subsidy"), BIG
+		state, ns, _loader.company_actions, _action("industrial_subsidy"), BIG, _loader
 	)
 	if twice.get("applied", true):
 		_fail("a second subsidy was stacked on a firm that already had one")
@@ -345,7 +356,7 @@ func _test_verb_refuses_when_unavailable() -> void:
 func _test_rivals_never_fall_below_the_floor() -> void:
 	var state = _new_state()
 	var ns = state.nations[PLAYER]
-	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG)
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), BIG, _loader)
 	# Far longer than a game: the floor has to hold under a subsidy nobody ever
 	# withdraws, because that is the run in which it would be found broken.
 	for _m in range(600):
@@ -523,6 +534,194 @@ func _test_the_nine_are_never_regulated() -> void:
 		var ns = state.nations[id]
 		if not ns.regulation_burden.is_empty():
 			_fail("%s carries a burden with no law behind it: %s" % [id, str(ns.regulation_burden)])
+
+
+# --- V1.4c: ownership -----------------------------------------------------------
+
+## The zero property, extended to the third channel. EXACT equality for V1.4a's own
+## reason: the claim is that the whole register changes nothing until a player acts,
+## and is_zero_approx would let a drift through.
+func _test_unowned_dividend_is_exactly_zero() -> void:
+	var state = _new_state()
+	for _m in range(168):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Companies.tick_month(state, _loader)
+	for id in state.nations.keys():
+		var ns = state.nations[id]
+		if ns.dividend_revenue_pct_gdp != 0.0:
+			_fail("%s dividend_revenue_pct_gdp is %s over 168 months with no holding, not exactly 0.0" % [
+				id, str(ns.dividend_revenue_pct_gdp)
+			])
+		for entry in ns.companies.values():
+			if float((entry as Dictionary).get("state_share", 0.0)) != 0.0:
+				_fail("%s holds a stake nobody bought" % id)
+
+
+## THE SESSION'S SHARPEST ASSERTION, and the reason V1.4c added no save field. A
+## purchase is a balance-sheet swap: it moves the debt STOCK at once and the deficit
+## by exactly zero. A one-off on the revenue side would have moved the deficit --
+## which is a company action's own precondition field, so the verb list would answer
+## to its own last use inside the same month.
+func _test_nationalising_pays_the_debt_and_not_the_deficit() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var big = _company(BIG)
+	var expected: float = Companies.value_eur_bn(ns, big)
+	if expected <= 0.0:
+		_fail("%s is valued at nothing, so the purchase asserts nothing" % BIG)
+		return
+
+	var debt_before: float = ns.debt_eur_bn
+	var deficit_before: float = ns.deficit_pct_gdp
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+
+	if not is_equal_approx(ns.debt_eur_bn - debt_before, expected):
+		_fail("nationalising %s moved the debt by %s against a derived price of %s" % [
+			BIG, str(ns.debt_eur_bn - debt_before), str(expected)
+		])
+	if ns.deficit_pct_gdp != deficit_before:
+		_fail("nationalising moved the deficit by %s in the month it happened" % [
+			str(ns.deficit_pct_gdp - deficit_before)
+		])
+	if Companies.state_share_of(ns, BIG) != 1.0:
+		_fail("a full nationalisation left the state holding %s" % [
+			str(Companies.state_share_of(ns, BIG))
+		])
+
+	# And the windfall is the same machine run backwards: selling returns the debt to
+	# where it was, because the price is read off the same live output both times.
+	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader)
+	if not is_equal_approx(ns.debt_eur_bn, debt_before):
+		_fail("selling %s left the debt at %s against %s before it was bought" % [
+			BIG, str(ns.debt_eur_bn), str(debt_before)
+		])
+
+
+func _test_a_holding_pays_a_dividend_and_privatising_stops_it() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.tick_month(state, _loader)
+	Budget.recompute(state, ns)
+
+	var paid: float = ns.dividend_revenue_pct_gdp
+	if paid <= 0.0:
+		_fail("a wholly state-owned firm paid %s of GDP" % str(paid))
+		return
+	if not is_equal_approx(float(ns.revenue_pct_gdp.get("dividends", -1.0)), paid):
+		_fail("the dividend line did not reach the budget's revenue table")
+
+	# Sold, it is gone -- exactly, not nearly. "A permanent loss of control" is the
+	# row's phrase and this is the whole of what it means in the model.
+	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader)
+	Companies.tick_month(state, _loader)
+	Budget.recompute(state, ns)
+	if ns.dividend_revenue_pct_gdp != 0.0:
+		_fail("a privatised firm still paid %s" % str(ns.dividend_revenue_pct_gdp))
+	if float(ns.revenue_pct_gdp.get("dividends", -1.0)) != 0.0:
+		_fail("the budget still carries a dividend line after the sale")
+
+
+## ROW 14's ANSWER, asserted in BOTH DIRECTIONS. A state holding shields the firm's
+## payroll from the sector's compliance cost -- and gives up the hiring a
+## deregulation would have brought, which is what stops the shield being free. A
+## test that only checked the helpful direction would pass on the strictly-dominated
+## shape three probes have already caught.
+func _test_ownership_shields_jobs_in_both_directions() -> void:
+	var big = _company(BIG)
+
+	var regulated = _new_state()
+	var reg_ns = regulated.nations[PLAYER]
+	if _apply_business_laws(regulated, reg_ns, "emissions_standards") != 1:
+		_fail("emissions_standards did not load, so the shield asserts nothing")
+		return
+	var exposed := Companies.headcount(reg_ns, big)
+	Companies.execute(regulated, reg_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	var sheltered := Companies.headcount(reg_ns, big)
+	if sheltered <= exposed:
+		_fail("a burdened firm carried %s staff in public hands against %s in private" % [
+			str(sheltered), str(exposed)
+		])
+	if not is_equal_approx(sheltered, big.headcount):
+		_fail("a wholly public firm shed %s staff to a rule it does not pay for" % [
+			str(big.headcount - sheltered)
+		])
+
+	var freed = _new_state()
+	var free_ns = freed.nations[PLAYER]
+	_apply_business_laws(freed, free_ns, "industrial_deregulation")
+	var hiring := Companies.headcount(free_ns, big)
+	Companies.execute(freed, free_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	var forgone := Companies.headcount(free_ns, big)
+	if forgone >= hiring:
+		_fail("a deregulated firm in public hands carried %s staff against %s in private -- the shield only ever helps" % [
+			str(forgone), str(hiring)
+		])
+
+
+## `state_share` has exactly ONE writer, the way `share` does. src/core/law.gd's
+## _extract_company() names a sector and a burden and refuses any third key, so no
+## `business` law can reach a firm at all -- asserted here as a property of the
+## shipped content rather than only of the validator. Exact equality: "nearly
+## unmoved" is a second writer a tolerance would hide.
+func _test_no_law_ever_moves_state_share() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	Companies.execute(state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader)
+	var held := Companies.state_share_of(ns, BIG)
+
+	for _i in range(20):
+		_apply_business_laws(state, ns)
+		Companies.tick_month(state, _loader)
+
+	if Companies.state_share_of(ns, BIG) != held:
+		_fail("%s state_share moved from %s to %s under twenty rounds of every business law" % [
+			BIG, str(held), str(Companies.state_share_of(ns, BIG))
+		])
+	for company in _loader.companies[PLAYER]:
+		if company.id == BIG:
+			continue
+		if Companies.state_share_of(ns, company.id) != 0.0:
+			_fail("%s was taken into public ownership by a law" % company.id)
+
+
+## A holding is standing state, so `state_owned` gates the buy exactly as
+## `subsidy_active` gates the subsidy -- and the only route down is the sale. Without
+## that, buying a minority stake in a wholly-owned firm would be a partial sale that
+## paid no windfall.
+func _test_ownership_verbs_refuse_when_unavailable() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+
+	var early := Companies.execute(
+		state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader
+	)
+	if early.get("applied", true) or not early.get("refused", false):
+		_fail("selling a firm the state does not own was applied")
+
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	var debt_after: float = ns.debt_eur_bn
+	var down := Companies.execute(
+		state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader
+	)
+	if down.get("applied", true):
+		_fail("a minority stake was taken in a firm the state already owned outright")
+	if ns.debt_eur_bn != debt_after:
+		_fail("a refused ownership verb still moved the debt")
+
+
+## The ownership verbs are player commands and nothing in src/sim/ issues one, which
+## is what makes the balance harness bit-identical across every existing regime.
+func _test_the_nine_never_nationalise() -> void:
+	var state = _new_state()
+	for _m in range(168):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Companies.tick_month(state, _loader)
+	for id in state.nations.keys():
+		if Companies.state_owned_count(state.nations[id]) != 0:
+			_fail("%s nationalised something with no player behind it" % id)
 
 
 func _company(company_id: String):

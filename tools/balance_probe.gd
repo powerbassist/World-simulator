@@ -270,6 +270,20 @@ const REGULATION_REGIMES := {
 }
 
 
+## V1.4c's regime, and it is the EXPENSIVE kind again: an ownership op is a verb no
+## budget regime issues, so the harness had to learn it, exactly as V1.3c, V1.3g,
+## U6a and V1.4a each did. V1.4b's was the cheap kind only because a law was already
+## a shape the harness knew.
+##
+## Nationalises the largest firm and never sells it, which is the reachable worst
+## case for both new numbers at once: the debt jump the bloc's own `debt_to_gdp_pct`
+## rule reads, and the dividend line the clamp is measured against. Left standing
+## for the same reason the subsidy and the burden are.
+const OWNERSHIP_REGIMES := {
+	"managed_nationalises": {"budget": REGIMES["managed"], "nationalise_month": 6},
+}
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
@@ -324,6 +338,9 @@ func _init() -> void:
 		for name in REGULATION_REGIMES.keys():
 			var regime: Dictionary = REGULATION_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, int(regime["regulate_month"]))
+		for name in OWNERSHIP_REGIMES.keys():
+			var regime: Dictionary = OWNERSHIP_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
 
 	quit(0)
 
@@ -348,7 +365,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -434,6 +451,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == regulate_month:
 			_regulate(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == nationalise_month:
+			_nationalise(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -767,13 +787,50 @@ func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -
 		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
 		return
 
-	var result := Companies.execute(state, ns, loader.company_actions, action, best)
+	var result := Companies.execute(state, ns, loader.company_actions, action, best, loader)
 	if result["applied"]:
 		print("  %d-%02d %s: subsidised %s at intensity %.2f (%.1f bn)" % [
 			year, month, regime_name, best, float(result["subsidy_after"]), best_output,
 		])
 	else:
 		print("  %d-%02d %s: subsidy for %s REFUSED" % [year, month, regime_name, best])
+
+
+## V1.4c. Nationalises the largest firm by output at the largest authored stake and
+## never sells it -- _subsidise()'s shape, and left standing for its reason. Both of
+## this session's numbers reach their reachable worst case this way: the debt jump at
+## once and the dividend line for the rest of the run.
+func _nationalise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "nationalise":
+			continue
+		if action == null or float(a.effects["company"]["stake"]) > float(action.effects["company"]["stake"]):
+			action = a
+	if action == null:
+		printerr("  no 'nationalise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
+		return
+
+	var debt_before: float = ns.debt_eur_bn
+	var result := Companies.execute(state, ns, loader.company_actions, action, best, loader)
+	if result["applied"]:
+		print("  %d-%02d %s: nationalised %s at stake %.2f (%.1f bn, debt %+.1f bn)" % [
+			year, month, regime_name, best, float(result["state_share_after"]),
+			best_output, ns.debt_eur_bn - debt_before,
+		])
+	else:
+		print("  %d-%02d %s: nationalisation of %s REFUSED" % [year, month, regime_name, best])
 
 
 ## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:

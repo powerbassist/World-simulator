@@ -91,10 +91,10 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.4 is decomposed into three sessions, V1.4a–c, and V1.4a and V1.4b are built.**
+**V1.4 was decomposed into three sessions, V1.4a–c, and the block is COMPLETE.**
 The argument, the three calls it made, and the per-session table are under *V1.4 —
 the decomposition* below. Order: (a) the firm register and subsidies, (b) sector
-regulation, (c) nationalisation and privatisation. **Only (c) is left.**
+regulation, (c) nationalisation and privatisation.
 
 **V1.4a's own finding is the one worth carrying forward, and it is about content
 rather than about firms.** The jobs channel's whole spread comes from two authored
@@ -120,12 +120,37 @@ compromise. The row also called for rules that "cost margin" — a quantity
 invented one was **cut before it was written**, because it creates (c)'s dividend
 dependency instead of discharging it.
 
-**The decomposition has now caught the row double-booking four times where the
+**V1.4c's finding is that the row named a control the model did not have, which is
+"cost margin" one session on.** "A permanent loss of control" was the phrase, and a
+grep says a subsidy works on any firm whoever owns it while a regulation targets the
+sector — so before (c), ownership controlled nothing. The answer is one factor at one
+existing site: a state holding absorbs the sector's compliance cost so the payroll
+does not, it is **signed** so a public firm in a deregulated sector forgoes the
+hiring too, and it adds **no constant at all**, because a total holding cancels a
+term (b) had already measured. That is the **fourteenth** stale-row instance.
+
+**Its second finding is that a band can pass three rows and still not choose a
+constant.** `DIVIDEND_YIELD` landed inside its pre-committed 0.05–0.40 % of GDP at
+0.02, 0.04 *and* 0.06, because that band measures whether the line is **readable**
+rather than whether it is right. What chose was the ratio against
+`DEBT_REAL_RATE_PCT`: at 0.04 every nationalisation paid for itself twice over and
+came back better than a quiet run on the headline **and** the deficit — free on both
+axes, the strictly-dominated shape for the fifth time. The correction moved what the
+number is measured against, not the band.
+
+**The `ISSUE_KEYS` question a, b and the whole V1.3 block deferred to (c) is answered
+NO**, and the deciding number is structural rather than thematic: the S10 ratio
+drifts **−1.46 %** where [[docs/bloc-model.md](docs/bloc-model.md)'s V1.3d moved
++0.39 %, because `business` carries `public_finances` at 0.34 and is the bloc that
+makes ownership divisive at all. **The mechanic and the cost are the same number.** A
+regulation had the same claim to a key and V1.4b took none.
+
+**The decomposition has now caught the row double-booking five times where the
 prompt named once.** Bond markets belonged to §6; a subsidy pointed at a firm *is*
 §6's sectoral investment unless a firm is smaller than a sector; §6's collision came
-back at (b) in a form (a)'s refusal cannot catch; and "cost margin" named nothing.
-That is instances **eleven through thirteen**, all found by counting rather than by
-being told.
+back at (b) in a form (a)'s refusal cannot catch; "cost margin" named nothing; and
+"a permanent loss of control" named nothing either. That is instances **eleven
+through fourteen**, all found by counting rather than by being told.
 
 **V1.3 was decomposed into six sessions, became seven, and is now COMPLETE** — the
 argument, and the four calls it made, are under *V1.3 — the decomposition* below.
@@ -620,6 +645,58 @@ advance**, and the sixteenth was the **cheap kind**: `AMENDMENT_REGIMES` already
 applies a law at a month, so only the content was new. Model, every constant and
 every measured table: [docs/companies-model.md](docs/companies-model.md) §10–19.
 
+### V1.4c — nationalisation and privatisation (shipped)
+
+**Three fields on one register, three writers, one apiece.** `state_share` joins
+`share` and `regulation_burden`, and the split is the whole of what V1.4 built: a
+subsidy moves the first, an ownership op the second, a law the third.
+`tests/test_save_load.gd`'s assertion that a serialised entry carries nothing beyond
+`share` and `subsidy` was **turned red on purpose and widened by exactly one key** —
+a fourth still fails, so a later session storing a baseline has to come and say why.
+
+**A dividend is a yield on OUTPUT, and `companies-model.md` §13 called it a session
+early.** `state_share × share × sector_output × DIVIDEND_YIELD`, with no margin,
+profit or productivity quantity invented — owning margin whole is
+[docs/tiers/v1.md](docs/tiers/v1.md) §6's ground and a re-baseline of every measured
+number. It lands as the second computed **revenue** line after V1.3c's tariffs.
+
+**The purchase and the windfall are a BALANCE-SHEET write, and that is the call that
+paid for itself three times.** `Companies.execute()` writes `debt_eur_bn` — a capital
+transaction is a swap, not income; every existing budget line is a standing rate; and
+a one-off on the revenue side would move `deficit_pct_gdp` inside the month, which is
+**a company action's own precondition field**. Writing the stock instead means the
+interest is priced by `Budget.recompute()`, the level is read by the bloc's own
+`debt_to_gdp_pct` rule, and it has been serialised since the MVP. **Nationalising a
+champion can put the player in breach of a rule Brussels passed** — V1.3d meeting
+V1.4c the way V1.3d met V1.3g.
+
+**`SAVE_VERSION` stays at 15, which is not what the row expected**, and the test says
+so. An absent `state_share` reads 0.0 — *the state owns nothing* — which is the truth
+about every version-15 save. The dividend line is recomputed on the first tick, and
+the purchase was never a field. The one thing that would have bumped it is a
+`start_state_ownership` baseline for a thirteenth issue, and there is none.
+
+**The probe corrected the model once and the content once, twelve sessions running**,
+and the kill switch **cleared at 0.0942 points** with V1.4b's standing prediction
+about agriculture holding exactly — because the shield's size *is* V1.4b's own jobs
+price read from the other side, to the digit. `PRICE_TO_OUTPUT` had exactly one row
+in band, the only sweep in the file where that happened. Model, every constant and
+every measured table: [docs/companies-model.md](docs/companies-model.md) §20–29.
+
+**The re-run is bit-identical across all sixteen existing regimes, predicted in
+advance**, and the seventeenth is the *expensive* kind — an ownership op is a verb no
+budget regime issues. A **no** on `ISSUE_KEYS` is what kept it clean, and that trade
+was written down before the measurement rather than discovered after it.
+
+**The screenshot pass earned its keep for the ninth session running, and two of its
+three bugs were older than the session.** The date has read `01 JAN 2026` under every
+tick-forward flag since `--agenda`, because a hand-rolled month loop moves the
+simulation and leaves the Clock node alone — V1.4a found the same disagreement one
+row up on the top bar and fixed only that. And **the budget panel has never had a
+deployments row**: V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
+entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
+"beside the deployment line" about a line that was not there.
+
 ### V1.4 — the decomposition, and why these three
 
 Written before any code, which is where a block-shaped row belongs: V1.4 was one
@@ -630,7 +707,7 @@ markets — and one line is not a session.
 |---|---|---|---|
 | **V1.4a** | ~~The firm register and subsidies~~ **shipped** | `data/companies/`, firms as a normalised partition of a sector, the `effects.company` channel, subsidies with a computed budget line and a domestic price, the Companies window | — |
 | **V1.4b** | ~~Sector regulation~~ **shipped** | `effects.company` on a **law**, a signed per-sector burden read by the two channels (a) built, a fifth `business` theme, deregulation as the negative direction rather than a repeal verb. No third channel, no budget line, no `SAVE_VERSION` bump | a |
-| **V1.4c** | Nationalisation and privatisation | Ownership as firm state, a purchase cost, a privatisation windfall, dividends as a computed revenue line, the permanent loss of control — and the `ISSUE_KEYS` question | a, b |
+| **V1.4c** | ~~Nationalisation and privatisation~~ **shipped** | `state_share` as a third field with a third single writer, a derived purchase price and windfall written to the **debt stock**, dividends as a computed revenue line yielding on output, and the jobs shield that is what "loss of control" turned out to mean. No `SAVE_VERSION` bump; `ISSUE_KEYS` answered **no** | a, b |
 
 Three calls, each of which could have gone the other way:
 
@@ -1102,7 +1179,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 |---|---|
 | **V1.2 Political systems** | ~~Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios~~ — **all shipped, block closed at V1.2e** |
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
-| **V1.4 Companies** | Named fictional firms, subsidies, regulation, nationalisation, privatisation, ~~bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
+| **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |
 | **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |

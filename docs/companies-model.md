@@ -7,10 +7,10 @@ tags:
 
 # Companies Model
 
-**V1.4a.** Named private firms partitioning a sector, a standing subsidy as the
-player's first verb, and the two channels through which a firm reaches the
-national economy. `src/sim/companies_constants.gd` holds the values; this page is
-the argument.
+**V1.4a–c, complete.** Named private firms partitioning a sector, a standing subsidy,
+a sector burden the assembly passes as a law, and public ownership with a dividend
+and a windfall. `src/sim/companies_constants.gd` holds the values; this page is the
+argument. §1–9 are V1.4a, §10–19 V1.4b, §20–29 V1.4c.
 
 Related: [[economy-model]] · [[people-model]] · [[coercion-model]] ·
 [[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]] ·
@@ -314,9 +314,17 @@ V1.4c's question, asked fresh.
 > a stopgap**, parked in [[someday]], and V1.4c's nationalisation is the nearest
 > thing in the plan to a firm responding to what is done to it.
 
-**Regulation and ownership.** ~~V1.4b and~~ V1.4c. Both read `effects.company`;
+**Regulation and ownership.** ~~V1.4b and V1.4c.~~ Both read `effects.company`;
 the first reaches it through a **law**, which is the split the decomposition was
-taken on. V1.4b is built — see §10 below.
+taken on. Both are built — §10 and §20 below.
+
+> [!warning] V1.4c INHERITS the stopgap above rather than discharging it
+> Nationalisation is the state acting **on** a firm, not a firm acting: the price is
+> derived rather than negotiated and there is nobody to refuse. A firm still cannot
+> relocate, exit, lobby or close. What V1.4c answers is the half about *regulation* —
+> a regulated firm now has one outcome other than arithmetic, and the state chose it.
+> Still parked in [[someday]]; what discharges it is a firm interest model, which is a
+> session and not a constant. See §28.
 
 **Bond markets.** Moved to [[v1]] §6, where the yield they write belongs — see
 [[ROADMAP]] for the argument.
@@ -661,5 +669,295 @@ would prove nothing. The polling panel is where the price is, and it reads worke
 
 ---
 
+# V1.4c — nationalisation and privatisation
+
+## 20. Three fields, three writers, one apiece
+
+`NationState.companies[id]` gains `state_share`, and the register is now the whole
+of what V1.4 built:
+
+| field | sole writer | scope | earned a bump? |
+|---|---|---|---|
+| `share` | `Companies.execute()`, subsidy ops | firm | **yes**, V1.4a |
+| `state_share` | `Companies.execute()`, ownership ops | firm | no — see §24 |
+| `regulation_burden` | `Legislature.apply()` | **sector** | no, V1.4b |
+
+`tests/test_save_load.gd` asserted a serialised entry carried nothing beyond
+`share` and `subsidy`. **That was turned red on purpose and widened by exactly one
+key**, which is the change worth recording rather than the widening: the three
+fields are the three things about a firm that *move*, and `name`, `sector`,
+`headcount` and the *authored* share stay content. A fourth key still fails.
+
+## 21. A dividend is a yield on OUTPUT, and §13 called it a session early
+
+The binding decision V1.4b handed forward, taken as §13 argued it:
+
+```
+dividend = state_share × share × sector_output × DIVIDEND_YIELD
+```
+
+Owning margin whole would mean a profit or productivity quantity across three
+sectors reconciled against `Economy._apply_growth_to_sectors()`, which is [[v1]]
+§6's ground and a re-baseline of every measured balance number. A yield on output
+needs none of it, and it is `output_eur_bn()`'s own "revenue is not authored" shape
+one step on. **No third option was shipped.**
+
+It lands as a computed **revenue** line — the second on that side after V1.3c's
+tariffs, the fifth computed line overall, and read straight off `NationState` so it
+takes the one-month lag the subsidy bill takes and for the same reason.
+
+## 22. The purchase is a BALANCE-SHEET write, and that is why the session added no save field
+
+`Companies.execute()` writes `ns.debt_eur_bn` directly — the only place in the
+project outside `Budget.tick_month()` that does. Three reasons, and the third
+decided it:
+
+- A capital transaction is a swap, not income. Every existing line on this budget is
+  a standing rate; a one-off has no shape here.
+- It would move `deficit_pct_gdp` inside the month, and the deficit is **a company
+  action's own precondition field** — the loop V1.4a's one-month lag exists to
+  avoid. `tests/test_companies.gd` asserts the deficit moves by exactly zero.
+- It costs nothing and buys three built machines: the interest is priced by
+  `Budget.recompute()` at `DEBT_REAL_RATE_PCT`, the level is read by the bloc's own
+  `debt_to_gdp_pct` rule in `data/bloc-proposals/fiscal.json`, and `debt_eur_bn` has
+  been serialised since the MVP. **Nationalising a champion can put the player in
+  breach of a rule Brussels passed** — V1.3d meeting V1.4c the way V1.3d met V1.3g.
+
+The price is derived for the same reason revenue is: `value = output × PRICE_TO_OUTPUT`,
+read through the **live** share, so a subsidy that grew a firm raises what
+nationalising it costs. An authored valuation would let a content file disagree with
+the register about what a firm is worth.
+
+## 23. Row 14 — "a permanent loss of control" named a control the model did not have
+
+The **fourteenth** instance of the stale/missing-row failure, and §13's shape
+exactly. A grep says a subsidy works on any firm whoever owns it and a regulation
+targets the sector, so before this session ownership controlled nothing.
+
+The answer is one factor at one existing site, in `Companies.headcount()`:
+
+```gdscript
+var exposure: float = 1.0 - state_share_of(ns, company.id)
+var compliance: float = maxf(
+    1.0 - K.REGULATION_JOBS_BETA * regulation_burden_of(ns, company.sector) * exposure, 0.0
+)
+```
+
+A state holding absorbs the sector's compliance cost so the payroll does not. It is
+V1.4b's "one quantity, two prices" one quantity later, and it adds **no constant at
+all** — which is why §26 can report its size as a finding rather than defend it as a
+choice, exactly as V1.4a's jobs channel could.
+
+**The shield is signed**, so a public firm in a *deregulated* sector also gives up
+the hiring the deregulation would have brought. That is what stops it being free,
+and `tests/test_companies.gd` asserts both directions — a shield that only ever
+helps is the strictly-dominated shape three probes have already caught.
+
+This is also what makes V1.4c read **(a) and (b)** as the decomposition table
+claims, rather than (a) alone.
+
+## 24. `SAVE_VERSION` stays at 15, which is not what the row expected
+
+The rule applied literally a fourth time. An absent `state_share` reads 0.0 — *the
+state owns nothing* — which is the **truth** about every version-15 save, because
+those games had no ownership verb. `measures` at V1.3c, `pacts` at V1.3g,
+`appointments` at U6a, `regulation_burden` at V1.4b.
+
+The two halves that could have earned one and do not:
+
+- `dividend_revenue_pct_gdp` is recomputed from the register on the first tick.
+- The purchase and the windfall were **never a field**: they are in `debt_eur_bn`.
+  A capital transaction that needed its own save entry would have been the sign it
+  should not have been a balance-sheet write, and `tests/test_save_load.gd` checks
+  that premise rather than asserting it.
+
+The one thing that *would* have bumped it is a `start_state_ownership` baseline for
+a thirteenth issue — `start_bloc_burden` at V1.3d exactly. §27 is why there is none.
+V1.3c's device is left in place a third time.
+
+## 25. The probe corrected the model once and the content once, twelve sessions running
+
+### (P10/P11) the price is chosen and the yield's band could NOT choose
+
+`PRICE_TO_OUTPUT` swept against the debt jump from nationalising the largest firm,
+banded 2–8 points of debt-to-GDP before the sweep:
+
+| multiple | FRA | DEU | GBR | |
+|---|---|---|---|---|
+| 0.50 | 2.38 | 1.84 | 2.41 | split |
+| **1.00** | **4.76** | **3.68** | **4.82** | **in band — shipped** |
+| 2.00 | 9.52 | 7.36 | 9.65 | split |
+| 3.00 | 14.27 | 11.04 | 14.47 | too large |
+
+One row in band, and it is the only sweep in this file where that happened.
+
+`DIVIDEND_YIELD` did the opposite. **Three of four rows passed** — 0.02, 0.04 and
+0.06 all land inside 0.05–0.40 % of GDP — so the band did not choose the constant.
+That is a finding rather than a nuisance: the band measures whether the line is
+**readable**, which is not the same question as whether it is right.
+
+### (C1) the model correction — a verb free on both axes
+
+Shipped provisionally at 0.04, the yield on price was 4.0 % against a 2.0 %
+borrowing rate, so every nationalisation paid for itself twice over. Table (p) came
+back **better than a quiet run on the headline *and* on the deficit**, losing only a
+debt ratio that reaches no opinion term at all. Free on both axes — V1.3c's, V1.3d's,
+V1.4a's and V1.4b's shape a fifth time.
+
+The correction moved **what the number is measured against**, not the band:
+`DIVIDEND_YIELD / PRICE_TO_OUTPUT` is set **equal to `DEBT_REAL_RATE_PCT`**. At the
+borrowing rate the treasury neither gains nor loses on the exchange, which is the
+honest model when there is no risk and no business cycle for an equity premium to be
+compensation *for* — [[v1]] §6 owns both. What nationalising costs is then a **stock
+rather than a flow**: the whole purchase lands on `debt_to_gdp_pct` at once, and
+privatising is the only lever in the game that moves a stock back down.
+
+| | price bn | div bn/yr | interest bn | net | payback |
+|---|---|---|---|---|---|
+| FRA Méridienne | 138.5 | 2.77 | 2.77 | **+0.00** | 50 yr |
+| DEU Rheinwerk | 158.6 | 3.17 | 3.17 | **+0.00** | 50 yr |
+| GBR Sterling Mutual | 164.0 | 3.28 | 3.28 | **+0.00** | 50 yr |
+
+### (C2) the content correction — the offsets that made it free
+
+With the fiscal gain gone the politics still was not paid for, so every
+`bloc_offset` in `data/company-actions/ownership.json` was re-authored against
+`BLOC_SIZE` rather than by eye — V1.4b's table (j) discipline, and the same answer:
+**a firm layer's own channels cannot express a political price, so it has to be
+written down.**
+
+| bloc | quiet | nationalised | sold |
+|---|---|---|---|
+| workers | 49.63 | **53.64** | 48.83 |
+| pensioners | 49.54 | 50.75 | 49.15 |
+| urban | 49.61 | **44.02** | 48.02 |
+| rural | 49.61 | 47.62 | 48.81 |
+| business | 49.21 | **43.23** | 48.81 |
+| students | 49.69 | 50.50 | 49.69 |
+| **HEADLINE** | **49.57** | **49.43** | **48.85** |
+| deficit | 5.34 | 5.33 | 5.34 |
+| **debt ratio** | **133.64** | **138.08** | **133.57** |
+
+Neither column is a free opening; the headline moves less than the ±3.0 noise floor
+in both directions while workers move +4 and business −6. [[diplomacy-model|V1.3a]]'s
+finding for the **sixth** time.
+
+The `sold` column is a purchase *and* a sale, because a state that never nationalised
+has nothing to sell. It is there to answer one question: **is buy-and-flip a pump?**
+It is not — the round trip ends 0.07 points better on the debt ratio and 0.72 worse
+on the headline.
+
+## 26. (P13) the kill switch cleared, and its size is not a new number
+
+The jobs shield against the 0.05-point floor V1.4b fixed, with the standing
+prediction that agriculture cannot clear it:
+
+| | agriculture | industry | services |
+|---|---|---|---|
+| FRA | 0.0126 | 0.0603 | 0.0690 |
+| DEU | 0.0104 | **0.0942** | 0.0490 |
+| GBR | 0.0083 | 0.0414 | 0.0728 |
+
+**Clears at 0.0942, and the prediction held exactly.** But the sharper thing is that
+these are **V1.4b's table (g) numbers, to the digit**: a total holding cancels the
+compliance factor, so the shield's size *is* the burden's own jobs price read from
+the other side. There was never a constant to sweep, and the identity is confirmed
+through the live model rather than by arithmetic.
+
+Agriculture is recorded as a **structural bound** for the second session running,
+and for the same reason: 39 000 named jobs against a 30.9 M labour force.
+
+## 27. The `ISSUE_KEYS` call, answered NO — and the reason is the business row
+
+The call V1.4a, V1.4b and the whole V1.3 block deferred here by name. Measured the
+way V1.3d measured it, against V1.3d's four tests and a fifth V1.4b forced.
+
+Tests **1** (the price is not nameable otherwise) and **3** (a flat offset cannot
+become more salient) hold, identically to `europe`'s. The other three fail:
+
+**Test 5, the new one.** A regulation has 1 and 3 identically too, and V1.4b took no
+key. The proposed distinction was that state ownership is a single standing **stock**
+the player can point at where a burden is a per-sector rule — it does not survive,
+because `regulation_burden` summed over three sectors is equally a stock and nothing
+about ownership's is more pointable-at. Same footing, same answer.
+
+**Test 2.** V1.4b measured this layer's channels at ~0.1 %/yr of growth and ~0.02
+points of unemployment, **below the opinion model's resolution**. A thirteenth row of
+near-zeroes on the polling panel is worse than no row.
+
+**Test 4, and it is the one with a number.** The S10 ratio drifts **−1.46 %**, where
+V1.3d's moved **+0.39 %** — 3.7× larger and in the *unsafe* direction:
+
+| | `public_finances` | five spending lines | ratio |
+|---|---|---|---|
+| twelve keys | 0.1801 | 0.3493 | 0.5155 |
+| thirteen | 0.1671 | 0.3290 | 0.5080 |
+| | | | **−1.46 %** |
+
+**That is structural, not a badly chosen candidate row.** `business` carries
+`public_finances` at 0.34 and is the bloc that makes ownership divisive at all, so
+any row expressing the mechanic leans on the bloc S10's ratio lives in. Re-measured
+with business at 0.04 instead of 0.14 the drift falls to −0.29 % — and a row that
+light does not express the mechanic. **The mechanic and the cost are the same
+number.**
+
+What names ownership to the player instead is the authored `bloc_offset`, read on the
+polling panel's bloc rows — the surface [[diplomacy-model]]'s finding has now pointed
+at six times. Recorded in `opinion_constants.gd` beside `ISSUE_KEYS`, so a later
+session finds the reasons rather than the silence.
+
+## 28. What V1.4c does NOT discharge
+
+**V1.4b's declared stopgap is INHERITED and narrowed, not discharged.** A firm still
+cannot refuse, exit, relocate, lobby or close. Nationalisation is the **state acting
+on a firm**, not a firm acting: the price is derived rather than negotiated and there
+is nobody to say no. What would discharge it is a firm interest model — a session,
+not a constant, and [[someday]] keeps it.
+
+What V1.4c *does* answer is the half the stopgap named about **regulation**: a
+regulated firm now has one outcome other than arithmetic. The state chose it.
+
+**The dividend is inert against a cycle that does not exist.** Owning a claim on
+output is a procyclical position, and there is no business cycle until [[v1]] §6. The
+asset is real and its risk is not modelled — which is the same fact §25's correction
+took the other way, and it is recorded here so §6 finds it.
+
+## 29. Balance, and the screenshot pass's ninth session
+
+**Bit-identical across all sixteen existing regimes**, predicted in advance: both new
+channels read exactly 0.0 until a verb runs and no autonomous actor issues one. The
+whole difference in the probe output is the 38 lines of the **seventeenth** regime,
+which is the *expensive* kind — an ownership op is a verb no budget regime issues,
+the way V1.3c's, V1.3g's, U6a's and V1.4a's were. A **no** on §27 is what kept the
+re-run clean; a yes would have renormalised every salience weight in every month and
+forced a re-baseline, and that trade was written down before the measurement rather
+than discovered after it.
+
+**The screenshot pass earned its keep for the ninth session running, and two of the
+three bugs it found were older than this session.**
+
+- **The date has read `01 JAN 2026` under every tick-forward flag since `--agenda`.**
+  Each flag hand-rolled a month loop calling `main.gd`'s `_on_month_elapsed()`, which
+  advances the simulation and leaves the Clock node alone, so
+  `clock_cluster.refresh()` had nothing new to draw. V1.4a found the same
+  disagreement one row up on the top bar and fixed *that*; the date under it stayed
+  wrong for four flags. `_tick_months()` now drives `advance_one_day()`, which is the
+  path a played game takes — and immediately surfaced a second thing no hand-rolled
+  loop ever saw: two years of the real clock cross a real election, and the result
+  screen opens over the panel the flag just set up.
+- **The budget panel has never had a deployments row.** V1.3g wrote
+  `_set_figure("deployments", …)` and no `FIGURE_ROWS` entry; `_set_figure()` returns
+  silently on an unknown key. V1.4a then wrote *"beside the deployment line"* about a
+  line that was not there. V1.3g's own pass could not catch it — the tool bug it did
+  find made that figure an em dash anyway.
+- And the flag's own: the first draft put both holdings on the two largest firms,
+  which are both in **services**, and the companies panel is sorted by sector. Every
+  visible firm read `private`, every visible sector heading read its plain caption,
+  and the live figures sat in the ledger above rows that proved nothing. The whole
+  holding stays on the largest firm; the minority stake and a second burden go where
+  the frame can reach them.
+
+---
+
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
-[[coercion-model]] · [[defence-model]] · [[v1]] · [[ROADMAP]]
+[[coercion-model]] · [[defence-model]] · [[bloc-model]] · [[v1]] · [[ROADMAP]]

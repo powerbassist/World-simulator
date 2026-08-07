@@ -140,8 +140,12 @@ func _refresh() -> void:
 ## step by hand; the sector headings below carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
-	_header("The public cost")
+	_header("The public account")
 	_row("Subsidy bill", "%.3f %% of GDP" % ns.subsidy_bill_pct_gdp)
+	# V1.4c. On the same ledger and not on a second one, because it is the same
+	# register read from the other side of the budget -- and it lags a month, like the
+	# bill above it, so a firm nationalised this month shows 0.000 until the next tick.
+	_row("Dividend income", "%.3f %% of GDP" % ns.dividend_revenue_pct_gdp)
 	_row("Growth effect", "%+.3f %%/yr" % ns.firm_impulse_pct)
 	# Signed the way the player reads it -- jobs, not unemployment points -- because
 	# the stored figure is an offset ADDED to structural unemployment and a positive
@@ -187,14 +191,25 @@ func _build_firm(ns, company) -> void:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_row.add_child(name_label)
 
+	# Two facts about one firm, and both are live state with one writer each -- a
+	# subsidy is not an ownership and a player who has done both must see both. Joined
+	# on one label rather than given a row apiece, for the reason the figures caption
+	# below is one line: eighteen firms across the roster.
 	var intensity := Companies.subsidy_of(ns, company.id)
-	var state_label := Label.new()
+	var held := Companies.state_share_of(ns, company.id)
+	var parts: Array[String] = []
+	if held > 0.0:
+		parts.append("public %.0f %%" % (100.0 * held))
 	if intensity > 0.0:
-		state_label.text = "subsidised %.0f %%" % (100.0 * intensity)
-		state_label.theme_type_variation = UiTheme.GOOD_TEXT
-	else:
-		state_label.text = "no support"
+		parts.append("subsidised %.0f %%" % (100.0 * intensity))
+
+	var state_label := Label.new()
+	if parts.is_empty():
+		state_label.text = "private · no support"
 		state_label.theme_type_variation = UiTheme.CAPTION
+	else:
+		state_label.text = " · ".join(parts)
+		state_label.theme_type_variation = UiTheme.GOOD_TEXT
 	name_row.add_child(state_label)
 	block.add_child(name_row)
 
@@ -209,6 +224,22 @@ func _build_firm(ns, company) -> void:
 	]
 	figures.theme_type_variation = UiTheme.CAPTION
 	block.add_child(figures)
+
+	# V1.4c. The price is DERIVED, so it exists nowhere an author could have written
+	# it down and the panel is the only place the player can read it before deciding.
+	# A button labelled "Nationalisation" with the cost invisible is the fold V1.3e
+	# paid for in a different shape: the figure that decides the act, not on screen.
+	var money := Label.new()
+	var value := Companies.value_eur_bn(ns, company)
+	if held > 0.0:
+		money.text = "worth %.1f bn · %.1f bn held · %.2f bn/yr to the treasury" % [
+			value, held * value,
+			held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD,
+		]
+	else:
+		money.text = "worth %.1f bn" % value
+	money.theme_type_variation = UiTheme.CAPTION
+	block.add_child(money)
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
@@ -232,7 +263,7 @@ func _action_button(ns, company, action) -> Button:
 ## reason `acted` carries a snapshot rather than a label alone.
 func _on_act(ns, company, action) -> void:
 	var before := Budget.snapshot(_state)
-	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id)
+	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
 	if not result.get("applied", false):
 		return
 	_dirty = true

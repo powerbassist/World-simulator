@@ -152,7 +152,13 @@ warm end until a frame was looked at. It saves a PNG of the running game — run
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
 (V1.4a) `--subsidy`,
 (V1.4b) `--regulate`,
-so every map layer can be captured with something actually on it. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
+(V1.4c) `--nationalise`,
+so every map layer can be captured with something actually on it. **V1.4c replaced
+the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
+which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
+to draw, so the date read `01 JAN 2026` under `--agenda`, `--book`, `--subsidy` and
+`--regulate` while the figures beside it moved. Dismissing the election two real
+years now cross is part of the same helper. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
 same argument — a new game's council is empty and a frame of three "None" captions
@@ -713,7 +719,83 @@ running, and the bug was the flag's: one rule each way came out at `-0.000 pts` 
 the ledger because industry's 186k jobs at +0.40 and services' 213k at −0.35 shed and
 hire within **fifteen people** of each other.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–b, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.4c shipped ownership, and the V1.4 block is complete.** `state_share` is a
+third field on the firm register with a **third single writer**, so `share` moves
+only under a subsidy, `state_share` only under an ownership op and
+`regulation_burden` only under a law. A dividend is a yield on **output** —
+`state_share × share × sector_output × DIVIDEND_YIELD` — exactly as
+`companies-model.md` §13 argued a session in advance, so **no margin, profit or
+productivity quantity was invented**; it lands as the second computed *revenue* line
+after V1.3c's tariffs.
+
+**The purchase and the windfall write the DEBT STOCK, and that one call paid for
+itself three times.** A capital transaction is a balance-sheet swap rather than
+income, every existing budget line is a standing rate, and a one-off on the revenue
+side would move `deficit_pct_gdp` inside the month — which is a company action's own
+precondition field, the loop V1.4a's one-month lag exists to avoid. Writing
+`debt_eur_bn` instead means the interest is priced by `Budget.recompute()` at
+`DEBT_REAL_RATE_PCT`, the level is read by the bloc's own `debt_to_gdp_pct` rule, and
+it has been serialised since the MVP. **Nationalising a champion can put the player
+in breach of a rule Brussels passed.**
+
+**Row 14: "a permanent loss of control" named a control the model did not have** —
+a subsidy works on any firm whoever owns it and a regulation targets the sector — and
+that is §13's "cost margin" one session on. The answer is one factor at one existing
+site: a state holding absorbs the sector's compliance cost so the payroll does not.
+It adds **no constant at all**, because a total holding cancels a term V1.4b had
+already measured, and the shield is **signed** so a public firm in a *deregulated*
+sector forgoes the hiring too. `tests/test_companies.gd` asserts both directions.
+
+**The probe corrected the model once and the content once, twelve sessions running,
+and the model correction is about what a band can and cannot decide.**
+`DIVIDEND_YIELD`'s pre-committed band passed **three of four rows**, because it
+measures whether the line is *readable* rather than whether it is right. What chose
+was the ratio against `DEBT_REAL_RATE_PCT`: at 0.04 the yield on price was 4.0 %
+against a 2.0 % borrowing rate, so every nationalisation paid for itself twice over
+and came back better than a quiet run on the headline **and** the deficit — free on
+both axes, the strictly-dominated shape a fifth time. Set **equal to the borrowing
+rate**, the treasury neither gains nor loses on the exchange, which is the honest
+model where there is no cycle for an equity premium to compensate for; what
+nationalising costs is a **stock** where every other lever in this game is a flow.
+The content correction re-authored every `bloc_offset` against `BLOC_SIZE`, V1.4b's
+own table (j) discipline. The kill switch **cleared at 0.0942 points** and the
+agriculture prediction held exactly — because the shield's size *is* V1.4b's jobs
+price read from the other side, to the digit.
+
+**The `ISSUE_KEYS` question a, b and the whole V1.3 block deferred here is answered
+NO**, recorded in `opinion_constants.gd` beside `ISSUE_KEYS` so a later session finds
+the reasons rather than the silence. V1.3d's tests 1 and 3 hold; the other three
+fail. A **regulation** has 1 and 3 identically and V1.4b took no key, and the
+proposed distinction — ownership as a single standing stock — does not survive, since
+`regulation_burden` summed over sectors is equally a stock. The deciding number is
+that the S10 ratio drifts **−1.46 %** where V1.3d's moved **+0.39 %**, and it is
+structural: `business` carries `public_finances` at 0.34 and is the bloc that makes
+ownership divisive at all, so **the mechanic and the cost are the same number** (at
+business 0.04 the drift falls to −0.29 %, and a row that light says nothing).
+
+**`SAVE_VERSION` stays at 15, which is not what the row expected, and the test says
+so before pinning it.** An absent `state_share` reads 0.0 — the state owns nothing —
+true of every version-15 save; the dividend line is recomputed on the first tick; and
+the purchase was never a field. **V1.4b's declared stopgap is INHERITED, not
+discharged**: nationalisation is the state acting *on* a firm, and a firm still
+cannot refuse, exit, relocate or lobby. **The re-run is bit-identical across all
+sixteen existing regimes, predicted in advance**, and the seventeenth is the
+expensive kind — an ownership op is a verb no budget regime issues.
+
+**The screenshot pass earned its keep for the ninth session running, and two of its
+three bugs were older than the session.** The date has read `01 JAN 2026` under every
+tick-forward flag since `--agenda`: each hand-rolled a month loop calling
+`_on_month_elapsed()`, which advances the simulation and leaves the Clock node alone,
+so `clock_cluster.refresh()` had nothing to draw — V1.4a found the same disagreement
+one row up on the top bar and fixed only that. `_tick_months()` now drives
+`advance_one_day()`, which immediately surfaced a second thing no hand-rolled loop
+ever saw: two years of the real clock cross a real election and the result screen
+opens over the panel the flag just set up. And **the budget panel has never had a
+deployments row** — V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
+entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
+"beside the deployment line" about a line that was not there.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
@@ -797,7 +879,19 @@ tick recomputes it, unlike V1.4a's three prices, so a save that dropped it would
 silently repeal every rule the assembly ever passed. The test checks that premise
 (dropping it moves `firm_impulse_pct`) rather than asserting it, then leaves V1.3c's
 device in place — *the version is still 15* — so V1.4c's ownership register has to
-come and say why it bumps.
+come and say why it bumps. **V1.4c came and said it does not, which is not what the
+row expected.** `state_share` absent reads 0.0 — the state owns nothing — correct for
+every version-15 save because those games had no ownership verb;
+`dividend_revenue_pct_gdp` is recomputed on the first tick; and the purchase and the
+windfall were **never a field**, because they are in `debt_eur_bn`, serialised since
+the MVP. A capital transaction needing its own save entry would have been the sign it
+should not have been a balance-sheet write, and the test checks that premise rather
+than asserting it. The only thing that *would* have bumped it is a
+`start_state_ownership` baseline for a thirteenth issue — `start_bloc_burden` at
+V1.3d exactly — and the `ISSUE_KEYS` answer was no, so the device points at the next
+session a third time. What V1.4c *did* turn red on purpose is V1.4a's **other**
+assertion: a serialised register entry now carries three keys rather than two,
+widened by exactly one, and a fourth still fails.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

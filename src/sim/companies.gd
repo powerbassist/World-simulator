@@ -14,6 +14,27 @@ extends RefCounted
 ## movement is the subsidy's persistent channel and a second writer of it would be
 ## two answers to the question of who is winning the sector.
 ##
+## V1.4c ADDS A THIRD WRITER AND A THIRD CHANNEL, and the writers stay one apiece:
+##
+##     share             <- execute(), subsidy ops        per firm
+##     state_share       <- execute(), ownership ops      per firm
+##     regulation_burden <- Legislature.apply()           per SECTOR
+##
+## The third channel is a computed REVENUE line, where V1.4a's was a computed
+## spending line -- the second on this side of the budget after V1.3c's tariffs, and
+## the fifth computed line overall. A dividend is a yield on OUTPUT and not on
+## profit, because there is no margin, profit or productivity quantity anywhere in
+## src/sim/ and half-inventing one is the trap docs/companies-model.md section 13
+## refused in advance.
+##
+## The purchase and the windfall are NOT a fourth channel. They write ns.debt_eur_bn
+## -- a capital transaction is a balance-sheet swap and not income, every existing
+## budget line is a standing rate, and a one-off on the revenue side would close a
+## loop through `deficit_pct_gdp`, which is a company action's own precondition
+## field. Writing the debt stock instead buys three built machines for free: the
+## interest is priced by Budget.recompute(), the level is read by the bloc's own
+## `debt_to_gdp_pct` rule, and it has been serialised since the MVP.
+##
 ## TAKES A LOADER, where trade.gd, coercion.gd and defence.gd take none. That is
 ## not a slip: a firm's authored share and headcount ARE its baseline, so keeping
 ## a copy on NationState would be the same fact in two places -- the duplication
@@ -57,8 +78,11 @@ static func init_nation(ns, company_list: Array) -> void:
 	ns.subsidy_bill_pct_gdp = 0.0
 	ns.firm_impulse_pct = 0.0
 	ns.firm_jobs_offset_pct = 0.0
+	ns.dividend_revenue_pct_gdp = 0.0
 	for company in company_list:
-		ns.companies[company.id] = {"share": company.share, "subsidy": 0.0}
+		ns.companies[company.id] = {
+			"share": company.share, "subsidy": 0.0, "state_share": 0.0
+		}
 
 
 ## Runs after Diplomacy and Defence in src/ui/main.gd's order, and Budget.project()
@@ -105,6 +129,15 @@ static func subsidy_of(ns, company_id: String) -> float:
 	return float(entry.get("subsidy", 0.0)) if entry != null else 0.0
 
 
+## V1.4c. How much of the firm the state holds, 0.0 to 1.0. Written only by the
+## ownership ops in execute(); a `business` law cannot reach it, because
+## src/core/law.gd's _extract_company() names a sector and a burden and refuses any
+## third key -- the same refusal that keeps `share` to one writer.
+static func state_share_of(ns, company_id: String) -> float:
+	var entry = ns.companies.get(company_id)
+	return float(entry.get("state_share", 0.0)) if entry != null else 0.0
+
+
 ## V1.4b. The accumulated regulatory burden on one sector, signed. Written only by
 ## Legislature.apply(); this module reads it and never writes it, which is the same
 ## one-way arrangement `law_structural_offset_pct` already has with economy.gd.
@@ -117,6 +150,17 @@ static func regulation_burden_of(ns, sector: String) -> float:
 ## of a product of two things that already exist.
 static func output_eur_bn(ns, company) -> float:
 	return share_of(ns, company.id) * float(ns.sector_output.get(company.sector, 0.0))
+
+
+## V1.4c. What the whole firm is worth, EUR bn. DERIVED for revenue's own reason:
+## an authored valuation on a firm would be a third record of a product of two
+## things that already exist, and the one a content edit would silently disagree
+## with.
+##
+## Read through the LIVE share, so a subsidy that grew a firm also raises what
+## nationalising it costs -- firm_impulse_pct()'s interaction, in a third place.
+static func value_eur_bn(ns, company) -> float:
+	return output_eur_bn(ns, company) * K.PRICE_TO_OUTPUT
 
 
 ## Jobs, live.
@@ -137,6 +181,20 @@ static func output_eur_bn(ns, company) -> float:
 ## now says two things, and the second one is why V1.4b is not
 ## docs/tiers/v1.md section 6's sector lever wearing a firm's name -- jobs-per-share
 ## is firm content, and no lever pointed at a sector can express it.
+##
+## V1.4c PUTS THE ONE THING OWNERSHIP CONTROLS HERE, and it is a factor on the
+## existing compliance term rather than a machine of its own. The ROADMAP row
+## promised "a permanent loss of control" and a grep found that ownership controlled
+## nothing: a subsidy already works on any firm whoever owns it, and a regulation
+## targets the sector. So what a state holding buys is that the firm does not shed
+## staff to meet a rule -- the state absorbs the compliance cost instead of the
+## payroll doing it. V1.4b's own "one quantity, two prices" discipline, one quantity
+## later.
+##
+## THE SHIELD IS SIGNED, which is what stops it being free: a state-owned firm in a
+## DEREGULATED sector also gives up the hiring the deregulation would have brought.
+## Both directions are asserted in tests/test_companies.gd, because a shield that
+## only ever helps is the strictly-dominated shape three probes have already caught.
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
@@ -146,8 +204,9 @@ static func headcount(ns, company) -> float:
 	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
 	# negative headcount and a positive employment effect from a rule that closed
 	# the sector.
+	var exposure: float = 1.0 - state_share_of(ns, company.id)
 	var compliance: float = maxf(
-		1.0 - K.REGULATION_JOBS_BETA * regulation_burden_of(ns, company.sector), 0.0
+		1.0 - K.REGULATION_JOBS_BETA * regulation_burden_of(ns, company.sector) * exposure, 0.0
 	)
 	return reallocated * compliance
 
@@ -310,7 +369,34 @@ static func firm_jobs_offset_pct(ns, loader) -> float:
 	)
 
 
-## All three cached onto NationState once a month and read from there, for the
+## V1.4c's line, points of GDP per year. A computed REVENUE line -- the second on
+## that side of the budget after V1.3c's tariffs, and the fifth computed line
+## overall -- read by Budget.recompute() and not a fourth entry in
+## economy_constants.TAX_KEYS. A dividend has no rate, no base share and no erosion
+## curve; it is a yield on output the state happens to own.
+##
+## THE YIELD IS ON OUTPUT AND NOT ON PROFIT, which is the call
+## docs/companies-model.md section 13 made a session in advance: there is no margin,
+## profit or productivity quantity anywhere in src/sim/, and a half-invented one
+## here would have to be either read or contradicted by everything downstream.
+##
+## Exactly 0.0 for every nation in every month in which the state holds nothing,
+## which is every month of every run V1.4a's and V1.4b's bit-identity claims cover.
+static func dividend_revenue_pct_gdp(ns, loader) -> float:
+	if ns.gdp_eur_bn <= 0.0:
+		return 0.0
+	var paid := 0.0
+	for company in firms_of(loader, ns.id):
+		var held := state_share_of(ns, company.id)
+		if held <= 0.0:
+			continue
+		paid += held * output_eur_bn(ns, company) * K.DIVIDEND_YIELD
+	if paid == 0.0:
+		return 0.0
+	return minf(100.0 * paid / ns.gdp_eur_bn, K.DIVIDEND_MAX_PCT_GDP)
+
+
+## All four cached onto NationState once a month and read from there, for the
 ## reason Defence._recompute_prices() gives: budget.gd and economy.gd calling this
 ## module directly is an edge each, and both would have to grow a loader argument
 ## that economy.gd's twenty-eight call sites do not have.
@@ -324,6 +410,7 @@ static func _recompute_prices(ns, loader) -> void:
 	ns.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp(ns)
 	ns.firm_impulse_pct = firm_impulse_pct(ns, loader)
 	ns.firm_jobs_offset_pct = firm_jobs_offset_pct(ns, loader)
+	ns.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp(ns, loader)
 
 
 # --- The verb ------------------------------------------------------------------
@@ -369,6 +456,8 @@ static func _read_field(state, ns, field: String, company_id: String) -> float:
 	match field:
 		"subsidy_active": return 1.0 if subsidy_of(ns, company_id) > 0.0 else 0.0
 		"subsidy_count": return float(subsidised_count(ns))
+		"state_owned": return 1.0 if state_share_of(ns, company_id) > 0.0 else 0.0
+		"state_owned_count": return float(state_owned_count(ns))
 		"deficit_pct_gdp": return ns.deficit_pct_gdp
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -386,6 +475,14 @@ static func subsidised_count(ns) -> int:
 	return n
 
 
+static func state_owned_count(ns) -> int:
+	var n := 0
+	for company_id in ns.companies.keys():
+		if state_share_of(ns, String(company_id)) > 0.0:
+			n += 1
+	return n
+
+
 ## The player command: set or clear the standing subsidy, pay the domestic price,
 ## and record the result for the panel to read. Diplomacy.execute()'s shape and
 ## Legislature.propose()'s contract -- returns the result rather than mutating a
@@ -393,10 +490,21 @@ static func subsidised_count(ns) -> int:
 ##
 ## Refuses rather than half-applies when the action is not currently available, so
 ## a UI offering a stale button cannot produce the effect the precondition exists
-## to prevent. There is no counterparty gate: a firm has no interest model, and
-## whether one should is V1.4c's question rather than a stopgap this session is
-## declaring -- nothing here is standing in for a decision a later session makes.
-static func execute(state, ns, all_actions: Array, action, company_id: String) -> Dictionary:
+## to prevent.
+##
+## THERE IS STILL NO COUNTERPARTY GATE, and V1.4c INHERITS that stopgap rather than
+## discharging it. V1.4a declared none; V1.4b declared one, because a regulation is
+## imposed and a firm that cannot relocate, exit, lobby or close is a visible
+## absence. Nationalisation is the state acting ON a firm, not a firm acting: the
+## price below is derived rather than negotiated and there is nobody to say no. What
+## would discharge it is a firm interest model, which is a session and not a
+## constant. Parked in docs/someday.md; the half V1.4c does answer is that a
+## regulated firm now has one outcome other than arithmetic -- see headcount().
+##
+## Takes the loader, last, as every content-reading function in this file does. It
+## is required rather than defaulted: a null loader would silently value every firm
+## at zero and hand the player a free nationalisation.
+static func execute(state, ns, all_actions: Array, action, company_id: String, loader) -> Dictionary:
 	if not available(state, ns, all_actions, company_id).has(action):
 		var refused := {
 			"action_id": action.id,
@@ -410,10 +518,31 @@ static func execute(state, ns, all_actions: Array, action, company_id: String) -
 	var terms: Dictionary = action.effects.get("company", {})
 	var entry: Dictionary = ns.companies[company_id]
 	var before := float(entry.get("subsidy", 0.0))
+	var held_before := float(entry.get("state_share", 0.0))
+	var price := 0.0
 
 	match String(terms.get("op", "")):
 		"subsidise": entry["subsidy"] = float(terms.get("intensity", 0.0))
 		"withdraw": entry["subsidy"] = 0.0
+		"nationalise":
+			var stake := float(terms.get("stake", 0.0))
+			price = (stake - held_before) * _value_of(ns, loader, company_id)
+			entry["state_share"] = stake
+		"privatise":
+			price = -held_before * _value_of(ns, loader, company_id)
+			entry["state_share"] = 0.0
+
+	# A CAPITAL TRANSACTION IS A BALANCE-SHEET SWAP, not income, and this is the one
+	# place in the project that writes the debt stock outside Budget.tick_month().
+	# Three things follow for free and none of them needed building: the interest on
+	# it is priced by Budget.recompute() at DEBT_REAL_RATE_PCT, the level is read by
+	# the bloc's own `debt_to_gdp_pct` rule, and it has been serialised since the MVP.
+	#
+	# It also moves `deficit_pct_gdp` by exactly zero in the month it happens, which
+	# matters rather than being tidy: the deficit is a company action's own
+	# precondition field, so a one-off on the revenue side would close the loop the
+	# subsidy bill's one-month lag exists to avoid.
+	ns.debt_eur_bn += price
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
 		ns.bloc_offset[bloc_id] = (
@@ -429,6 +558,16 @@ static func execute(state, ns, all_actions: Array, action, company_id: String) -
 		"refused": false,
 		"subsidy_before": before,
 		"subsidy_after": float(entry["subsidy"]),
+		"state_share_before": held_before,
+		"state_share_after": float(entry["state_share"]),
+		"price_eur_bn": price,
 	}
 	ns.last_company_result = result
 	return result
+
+
+static func _value_of(ns, loader, company_id: String) -> float:
+	for company in firms_of(loader, ns.id):
+		if company.id == company_id:
+			return value_eur_bn(ns, company)
+	return 0.0

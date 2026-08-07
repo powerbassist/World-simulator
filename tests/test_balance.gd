@@ -92,6 +92,7 @@ func _init() -> void:
 	_check_a_dissolution_stays_off_every_clamp()
 	_check_a_subsidised_run_stays_off_every_clamp()
 	_check_a_regulated_run_stays_off_every_clamp()
+	_check_a_nationalised_run_stays_off_every_clamp()
 	_finish()
 
 
@@ -297,7 +298,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1) -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -348,6 +349,9 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 
 		if i + 1 == regulate_at_month:
 			_regulate_everything(state, ns)
+
+		if i + 1 == nationalise_at_month:
+			_nationalise_the_largest(state, ns)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -457,7 +461,7 @@ func _subsidise_the_largest(state, ns) -> void:
 		_fail("the player's nation has no named firms, so the subsidised regime asserts nothing")
 		return
 
-	var result := Companies.execute(state, ns, _loader.company_actions, action, best)
+	var result := Companies.execute(state, ns, _loader.company_actions, action, best, _loader)
 	if not result.get("applied", false):
 		_fail("the subsidy was refused, so the subsidised regime asserts nothing")
 
@@ -486,6 +490,69 @@ func _regulate_everything(state, ns) -> void:
 		applied += 1
 	if applied == 0:
 		_fail("no positive-burden business law is authored, so the regulated regime asserts nothing")
+
+
+## V1.4c's regime, and the expensive kind again: an ownership op is a verb no budget
+## regime issues, so this had to be taught the way V1.3c's, V1.3g's, U6a's and
+## V1.4a's were -- V1.4b's was cheap only because a law was a shape the harness knew.
+##
+## Fourteen years of a holding nobody sells, WITH the subsidy stack and the whole
+## regulation stack live underneath it. All three verbs at once, for the reason the
+## regulated run runs two: they share one register, the jobs channel is where the
+## ownership shield and the regulation burden meet, and a holding that only ever ran
+## on a clean register would never test the case the model allows.
+##
+## The clamp this session added is the dividend one, and unlike the burden clamp it
+## is expected to be SLACK: a reachable stack sitting on it means the clamp and not
+## the model is setting the number.
+func _check_a_nationalised_run_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, -1, "FRA", 6, 12, 18)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("nationalised run: %s" % p)
+
+	if Companies.state_owned_count(ns) == 0:
+		_fail("the nationalised run holds nothing, so it asserts nothing about the clamps")
+	if ns.dividend_revenue_pct_gdp <= 0.0:
+		_fail("the nationalised run collected no dividend, so it asserts nothing about the clamp")
+	if ns.dividend_revenue_pct_gdp >= CompaniesK.DIVIDEND_MAX_PCT_GDP - 0.000001:
+		_fail("the dividend line sits ON its clamp at %.3f -- the clamp is setting the number, not the model" % ns.dividend_revenue_pct_gdp)
+	if absf(ns.firm_impulse_pct) >= CompaniesK.FIRM_IMPULSE_MAX_PCT - 0.000001:
+		_fail("the firm growth impulse sits ON its clamp at %.3f under ownership" % ns.firm_impulse_pct)
+	if absf(ns.firm_jobs_offset_pct) >= CompaniesK.FIRM_JOBS_MAX_PCT - 0.000001:
+		_fail("the firm jobs offset sits ON its clamp at %.3f under ownership" % ns.firm_jobs_offset_pct)
+
+
+## The stake the register can actually reach, on the firm the two other verbs are
+## already pointed at -- so the shield, the burden and the subsidy all meet on one
+## company rather than on three that never interact.
+func _nationalise_the_largest(state, ns) -> void:
+	var action = null
+	for a in _loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "nationalise":
+			continue
+		if action == null or float(a.effects["company"]["stake"]) > float(action.effects["company"]["stake"]):
+			action = a
+	if action == null:
+		_fail("no 'nationalise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(_loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		_fail("the player's nation has no named firms, so the nationalised regime asserts nothing")
+		return
+
+	var result := Companies.execute(state, ns, _loader.company_actions, action, best, _loader)
+	if not result.get("applied", false):
+		_fail("the nationalisation was refused, so the regime asserts nothing")
 
 
 func _problems(ns, year: int, month: int) -> Array[String]:

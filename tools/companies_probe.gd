@@ -86,6 +86,13 @@ func _init() -> void:
 	_table_i_redundancy()
 	_table_j_dominance()
 	_table_k_content()
+	_table_l_valuation()
+	_table_m_dividend()
+	_table_n_fiscal()
+	_table_o_shield()
+	_table_p_approval()
+	_table_q_issue_keys()
+	_table_r_redundancy()
 	quit(0)
 
 
@@ -290,7 +297,7 @@ func _table_d_jobs() -> void:
 			var state = _new_state(nation_id)
 			var ns = state.player()
 			var action = _subsidise_action(1.0)
-			Companies.execute(state, ns, _loader.company_actions, action, company.id)
+			Companies.execute(state, ns, _loader.company_actions, action, company.id, _loader)
 			for _m in range(TERM_MONTHS):
 				Companies.tick_month(state, _loader)
 
@@ -324,7 +331,7 @@ func _table_e_bill() -> void:
 	var action = _subsidise_action(1.0)
 	var n := 0
 	for company in Companies.firms_of(_loader, "FRA"):
-		Companies.execute(state, ns, _loader.company_actions, action, company.id)
+		Companies.execute(state, ns, _loader.company_actions, action, company.id, _loader)
 		Companies.tick_month(state, _loader)
 		n += 1
 		print("%-30d %9.3f%% %14.2f" % [n, ns.subsidy_bill_pct_gdp, ns.subsidy_bill_pct_gdp / 0.50])
@@ -346,7 +353,7 @@ func _table_f_approval() -> void:
 	var quiet = _new_state("FRA")
 	var loud = _new_state("FRA")
 	var action = _subsidise_action(1.0)
-	Companies.execute(loud, loud.player(), _loader.company_actions, action, _largest(loud, loud.player()))
+	Companies.execute(loud, loud.player(), _loader.company_actions, action, _largest(loud, loud.player()), _loader)
 
 	for _m in range(TERM_MONTHS):
 		for s in [quiet, loud]:
@@ -655,3 +662,462 @@ func _table_k_content() -> void:
 	print("     domination is only meaningful WITHIN one sector: two rules on different")
 	print("     sectors are not substitutes, because the sector decides which of the")
 	print("     player's own subsidised firms the rule reaches.")
+
+
+# =================================================================================
+# V1.4c: ownership
+# =================================================================================
+#
+# Six more pre-committed bands, written before these sweeps ran:
+#
+#   (P10) PRICE    The debt jump from nationalising the largest firm in the register
+#                  is 2-8 points of debt-to-GDP. The purchase must be able to matter
+#                  against the bloc's own `debt_to_gdp_pct` rule without breaching it
+#                  from a single act.
+#
+#   (P11) DIVIDEND The line a wholly nationalised champion pays is 0.05-0.40 % of
+#                  GDP -- the band SUBSIDY_COST_PCT_GDP sits in, and appreciably
+#                  under the ~0.50 one point of income tax is worth.
+#
+#   (P12) FISCAL   *** NON-DOMINATION ***. Neither verb may be free on both axes. If
+#                  nationalising is fiscally positive AND politically positive, the
+#                  shape is strictly dominated -- and the fix is CONTENT, not a
+#                  constant, which is V1.3d's precedent and V1.4b's table (j).
+#
+#   (P13) SHIELD   *** KILL SWITCH ***. The jobs shield reaches >= 0.05 points of
+#                  unemployment, V1.4b's own floor. STANDING PREDICTION written in
+#                  advance: agriculture cannot clear it, for exactly the reason
+#                  V1.4b's table (g) measured. Recorded as a bound if it fails.
+#
+#   (P14) APPROVAL Reported, not banded, and the expectation is V1.4a's and V1.3a's
+#                  for the sixth time: the headline does not clear +-3.0 while the
+#                  workers and business rows plainly do.
+#
+#   (P15) ISSUE_KEYS  The call V1.4a, V1.4b and the whole V1.3 block deferred here.
+#                  Five tests, four of them V1.3d's and the fifth forced by V1.4b.
+#                  Measured before it is decided, the same way V1.3d measured it.
+
+## Swept for (P10). A revenue multiple: 1.0 means a firm is worth one year of what
+## it sells.
+const PRICE_CANDIDATES := [0.50, 1.00, 2.00, 3.00]
+
+## Swept for (P11).
+const YIELD_CANDIDATES := [0.02, 0.04, 0.06, 0.10]
+
+## The candidate thirteenth row, for (P15). Sized against `europe`'s: a mechanic
+## that divides the country the way membership does, weighted heaviest on the two
+## blocs the authored bloc_offset already splits hardest.
+const OWNERSHIP_CANDIDATE := {
+	"workers": 0.10, "pensioners": 0.06, "urban": 0.07,
+	"rural": 0.05, "business": 0.14, "students": 0.05,
+}
+
+## A second candidate, leaning on business as little as the mechanic can bear. Here
+## to test whether the dilution the first one causes is a property of THE CANDIDATE
+## or of the mechanic: business carries `public_finances` at 0.34, which is where
+## S10's ratio lives, and ownership is divisive precisely because business cares.
+const OWNERSHIP_CANDIDATE_LIGHT := {
+	"workers": 0.10, "pensioners": 0.06, "urban": 0.07,
+	"rural": 0.05, "business": 0.04, "students": 0.05,
+}
+
+
+func _ownership_action(op: String):
+	var best = null
+	for a in _loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != op:
+			continue
+		if op == "privatise":
+			return a
+		if best == null or float(a.effects["company"]["stake"]) > float(best.effects["company"]["stake"]):
+			best = a
+	return best
+
+
+# --- (l) P10: what a firm is worth, and what buying it does to the debt ------------
+
+func _table_l_valuation() -> void:
+	print("\n=== (l) P10: firm valuations and the debt jump from buying one ===")
+	print("     band 2-8 points of debt-to-GDP for the largest firm. shipped multiple: %s" % str(K.PRICE_TO_OUTPUT))
+	print("%-4s %-22s %10s %10s %12s" % ["nat", "firm", "bn/yr", "value bn", "debt pts"])
+
+	for nation_id in PLAYABLE:
+		var state = _new_state(nation_id)
+		var ns = state.player()
+		for company in Companies.firms_of(_loader, nation_id):
+			var out: float = Companies.output_eur_bn(ns, company)
+			print("%-4s %-22s %10.1f %10.1f %12.2f" % [
+				nation_id, company.id.substr(4), out, out * K.PRICE_TO_OUTPUT,
+				100.0 * out * K.PRICE_TO_OUTPUT / ns.gdp_eur_bn,
+			])
+
+	print("\n%-10s %10s %10s %10s %s" % ["multiple", "FRA", "DEU", "GBR", "verdict"])
+	for multiple in PRICE_CANDIDATES:
+		var jumps: Array[float] = []
+		for nation_id in PLAYABLE:
+			var state = _new_state(nation_id)
+			var ns = state.player()
+			var target := _largest(state, ns)
+			var out := 0.0
+			for company in Companies.firms_of(_loader, nation_id):
+				if company.id == target:
+					out = Companies.output_eur_bn(ns, company)
+			jumps.append(100.0 * out * multiple / ns.gdp_eur_bn)
+		var worst: float = jumps.min()
+		var best: float = jumps.max()
+		var verdict := "in band"
+		if best < 2.0:
+			verdict = "INVISIBLE"
+		elif worst > 8.0:
+			verdict = "TOO LARGE"
+		elif worst < 2.0 or best > 8.0:
+			verdict = "split"
+		print("%-10s %10.2f %10.2f %10.2f %s%s" % [
+			str(multiple), jumps[0], jumps[1], jumps[2], verdict,
+			"   <-- shipped" if is_equal_approx(multiple, K.PRICE_TO_OUTPUT) else "",
+		])
+
+
+# --- (m) P11: what owning it pays -------------------------------------------------
+
+func _table_m_dividend() -> void:
+	print("\n=== (m) P11: the dividend line for a wholly nationalised champion, %% of GDP ===")
+	print("     band 0.05-0.40 %% of GDP. one income-tax point is ~0.50. shipped yield: %s" % str(K.DIVIDEND_YIELD))
+	print("%-10s %10s %10s %10s %s" % ["yield", "FRA", "DEU", "GBR", "verdict"])
+
+	for y in YIELD_CANDIDATES:
+		var lines: Array[float] = []
+		for nation_id in PLAYABLE:
+			var state = _new_state(nation_id)
+			var ns = state.player()
+			var target := _largest(state, ns)
+			var out := 0.0
+			for company in Companies.firms_of(_loader, nation_id):
+				if company.id == target:
+					out = Companies.output_eur_bn(ns, company)
+			lines.append(100.0 * out * y / ns.gdp_eur_bn)
+		var worst: float = lines.min()
+		var best: float = lines.max()
+		var verdict := "in band"
+		if best < 0.05:
+			verdict = "BELOW FLOOR"
+		elif worst > 0.40:
+			verdict = "TOO LARGE"
+		elif worst < 0.05 or best > 0.40:
+			verdict = "split"
+		print("%-10s %10.4f %10.4f %10.4f %s%s" % [
+			str(y), lines[0], lines[1], lines[2], verdict,
+			"   <-- shipped" if is_equal_approx(y, K.DIVIDEND_YIELD) else "",
+		])
+
+	# The whole register at once, against the clamp. V1.4a's bill clamp came back
+	# slack and this is the same measurement on the other side of the budget.
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var buy = _ownership_action("nationalise")
+	for company in Companies.firms_of(_loader, "FRA"):
+		Companies.execute(state, ns, _loader.company_actions, buy, company.id, _loader)
+	Companies.tick_month(state, _loader)
+	print("     THREE ROWS PASS, so this band did not choose the constant -- it measures")
+	print("     whether the line is READABLE, not whether it is right. Table (n) chose.")
+	print("     whole FRA register nationalised: %.3f%% of GDP against clamp %.2f -- %s" % [
+		ns.dividend_revenue_pct_gdp, K.DIVIDEND_MAX_PCT_GDP,
+		"SLACK" if ns.dividend_revenue_pct_gdp < K.DIVIDEND_MAX_PCT_GDP else "BINDING",
+	])
+	print("     ...and it cost %.1f points of debt-to-GDP to get there." % [
+		100.0 * (ns.debt_eur_bn - _new_state("FRA").player().debt_eur_bn) / ns.gdp_eur_bn
+	])
+
+
+# --- (n) P12: the fiscal identity, and whether either verb is free -----------------
+
+## THE WHOLE FISCAL SHAPE OF THE SESSION IS TWO CONSTANTS AGAINST A THIRD, and this
+## table is where that is visible rather than asserted. The yield ON PRICE is
+## DIVIDEND_YIELD / PRICE_TO_OUTPUT; above economy_constants.DEBT_REAL_RATE_PCT,
+## nationalising is a slow fiscal gain bought with an instant debt-to-GDP spike, and
+## privatising is the mirror. Neither may be free on BOTH axes -- the politics is
+## table (p) and this is the money.
+func _table_n_fiscal() -> void:
+	print("\n=== (n) P12 NON-DOMINATION: the fiscal identity of one nationalisation ===")
+	print("     real rate on the debt that buys it: %s %%/yr" % str(EK.DEBT_REAL_RATE_PCT))
+	print("     yield on price = DIVIDEND_YIELD / PRICE_TO_OUTPUT = %.2f %%" % (
+		100.0 * K.DIVIDEND_YIELD / K.PRICE_TO_OUTPUT
+	))
+	print("%-4s %-22s %10s %10s %12s %12s %10s" % [
+		"nat", "firm", "price bn", "div bn/yr", "interest bn", "net bn/yr", "payback yr",
+	])
+
+	for nation_id in PLAYABLE:
+		var state = _new_state(nation_id)
+		var ns = state.player()
+		var target := _largest(state, ns)
+		for company in Companies.firms_of(_loader, nation_id):
+			if company.id != target:
+				continue
+			var out: float = Companies.output_eur_bn(ns, company)
+			var price: float = out * K.PRICE_TO_OUTPUT
+			var div: float = out * K.DIVIDEND_YIELD
+			var interest: float = price * EK.DEBT_REAL_RATE_PCT / 100.0
+			print("%-4s %-22s %10.1f %10.2f %12.2f %+12.2f %10.1f" % [
+				nation_id, company.id.substr(4), price, div, interest, div - interest,
+				price / div if div > 0.0 else 0.0,
+			])
+
+	var on_price: float = 100.0 * K.DIVIDEND_YIELD / K.PRICE_TO_OUTPUT
+	var sign_note := "NEUTRAL"
+	if on_price > EK.DEBT_REAL_RATE_PCT + 0.0001:
+		sign_note = "POSITIVE"
+	elif on_price < EK.DEBT_REAL_RATE_PCT - 0.0001:
+		sign_note = "NEGATIVE"
+	print("     nationalising is fiscally %s as a FLOW and costs the whole debt jump at" % sign_note)
+	print("     once as a STOCK; privatising is the mirror and is the only lever in the")
+	print("     game that moves a stock back down. Whether that is a DOMINATED shape is")
+	print("     table (p)'s question: a verb free on the money AND on the politics is the")
+	print("     failure V1.3c, V1.3d, V1.4a and V1.4b each hit -- and the first draft of")
+	print("     this session hit it too, at a yield of 0.04.")
+
+
+# --- (o) P13: the kill switch on the jobs shield -----------------------------------
+
+## ROW 14's answer, measured. A state holding cancels the compliance factor in
+## Companies.headcount(), so its size at full ownership is EXACTLY V1.4b's own jobs
+## price read from the other side -- there is no new constant here at all, which is
+## why this table confirms an identity through the live model rather than sweeping.
+func _table_o_shield() -> void:
+	print("\n=== (o) P13 KILL SWITCH: unemployment points saved by a state holding ===")
+	print("     floor 0.05 pts, V1.4b's own. standing prediction: agriculture cannot clear it.")
+	print("%-4s %-12s %12s %12s %12s" % ["nat", "sector", "private pts", "public pts", "saved"])
+
+	var best := 0.0
+	var best_row := ""
+	var buy = _ownership_action("nationalise")
+	for nation_id in PLAYABLE:
+		for sector in EK.SECTOR_TREND.keys():
+			var exposed = _new_state(nation_id)
+			_burden(exposed.player(), String(sector), K.REGULATION_BURDEN_MAX)
+			Companies.tick_month(exposed, _loader)
+
+			var sheltered = _new_state(nation_id)
+			_burden(sheltered.player(), String(sector), K.REGULATION_BURDEN_MAX)
+			for company in Companies.firms_in_sector(_loader, nation_id, String(sector)):
+				Companies.execute(
+					sheltered, sheltered.player(), _loader.company_actions, buy, company.id, _loader
+				)
+			Companies.tick_month(sheltered, _loader)
+
+			var saved: float = exposed.player().firm_jobs_offset_pct - sheltered.player().firm_jobs_offset_pct
+			if saved > best:
+				best = saved
+				best_row = "%s %s" % [nation_id, sector]
+			print("%-4s %-12s %12.4f %12.4f %12.4f" % [
+				nation_id, sector, exposed.player().firm_jobs_offset_pct,
+				sheltered.player().firm_jobs_offset_pct, saved,
+			])
+
+	print("     best: %s at %.4f pts -- %s" % [
+		best_row, best,
+		"CLEARS the floor" if best >= 0.05 else "BELOW THE FLOOR, recorded as a bound",
+	])
+
+	# And the other direction, which is what stops the shield being free: a public
+	# firm in a DEREGULATED sector gives up the hiring the deregulation would bring.
+	var freed = _new_state("FRA")
+	_burden(freed.player(), "industry", -K.REGULATION_BURDEN_MAX)
+	Companies.tick_month(freed, _loader)
+	var private_gain: float = freed.player().firm_jobs_offset_pct
+	for company in Companies.firms_in_sector(_loader, "FRA", "industry"):
+		Companies.execute(freed, freed.player(), _loader.company_actions, buy, company.id, _loader)
+	Companies.tick_month(freed, _loader)
+	print("     FRA industry deregulated: %.4f pts in private hands, %.4f in public --" % [
+		private_gain, freed.player().firm_jobs_offset_pct,
+	])
+	print("     the shield is SIGNED, so it forgoes as well as protects.")
+
+
+# --- (p) P14: what ownership costs politically --------------------------------------
+
+func _table_p_approval() -> void:
+	print("\n=== (p) P14: approval after %d months -- quiet, nationalised, sold (FRA) ===" % TERM_MONTHS)
+
+	var quiet = _new_state("FRA")
+	var held = _new_state("FRA")
+	var sold = _new_state("FRA")
+	var buy = _ownership_action("nationalise")
+	var sell = _ownership_action("privatise")
+	for s in [held, sold]:
+		Companies.execute(s, s.player(), _loader.company_actions, buy, _largest(s, s.player()), _loader)
+
+	for m in range(TERM_MONTHS):
+		for s in [quiet, held, sold]:
+			Economy.tick_month(s)
+			Budget.tick_month(s)
+			Opinion.tick_month(s)
+			Companies.tick_month(s, _loader)
+		# Sold a year in, so the column carries the purchase AND the sale -- which is
+		# the only way to reach a privatisation at all, since a state that never
+		# nationalised has nothing to sell.
+		if m == 11:
+			Companies.execute(
+				sold, sold.player(), _loader.company_actions, sell,
+				_largest(sold, sold.player()), _loader
+			)
+
+	print("%-14s %10s %12s %10s %12s" % ["bloc", "quiet", "nationalised", "sold", "held delta"])
+	for bloc in OK.BLOC_KEYS:
+		var a: float = float(quiet.player().bloc_approval[bloc])
+		var b: float = float(held.player().bloc_approval[bloc])
+		var c: float = float(sold.player().bloc_approval[bloc])
+		print("%-14s %10.2f %12.2f %10.2f %+12.2f" % [bloc, a, b, c, b - a])
+	print("%-14s %10.2f %12.2f %10.2f %+12.2f  (noise floor +-3.0)" % [
+		"HEADLINE", quiet.player().overall_approval_pct, held.player().overall_approval_pct,
+		sold.player().overall_approval_pct,
+		held.player().overall_approval_pct - quiet.player().overall_approval_pct,
+	])
+	for row in [["deficit", "deficit_pct_gdp"], ["debt ratio", "debt_to_gdp_pct"], ["unemployment", "unemployment_pct"], ["GDP bn", "gdp_eur_bn"]]:
+		var a: float = (
+			quiet.player().debt_to_gdp_pct() if row[1] == "debt_to_gdp_pct"
+			else float(quiet.player().get(row[1]))
+		)
+		var b: float = (
+			held.player().debt_to_gdp_pct() if row[1] == "debt_to_gdp_pct"
+			else float(held.player().get(row[1]))
+		)
+		var c: float = (
+			sold.player().debt_to_gdp_pct() if row[1] == "debt_to_gdp_pct"
+			else float(sold.player().get(row[1]))
+		)
+		print("%-14s %10.2f %12.2f %10.2f" % [row[0], a, b, c])
+	print("     a column better than quiet on EVERY row is a free opening.")
+
+
+# --- (q) P15: the ISSUE_KEYS call ---------------------------------------------------
+
+## THE CALL a, b AND THE WHOLE V1.3 BLOCK DEFERRED HERE. Four of V1.3d's five tests
+## are reproduced from tools/bloc_probe.gd table (a); the fifth is new and is the one
+## most likely to decide it, because a REGULATION has V1.3d's tests 1 and 3 identically
+## and V1.4b did not take a key.
+func _table_q_issue_keys() -> void:
+	print("\n=== (q) P15: what a THIRTEENTH issue would cost the twelve that are measured ===")
+	print("     candidate `ownership` row: %s" % str(OWNERSHIP_CANDIDATE))
+	print("%-12s %8s %12s %14s" % ["bloc", "size", "ownership w", "scale on rest"])
+	for bloc in OK.BLOC_KEYS:
+		var base: Dictionary = OK.BLOC_SALIENCE_BASE[bloc]
+		var before_sum := 0.0
+		for issue in base:
+			before_sum += float(base[issue])
+		var w: float = float(OWNERSHIP_CANDIDATE[bloc])
+		print("%-12s %8.2f %12.3f %14.4f" % [bloc, float(OK.BLOC_SIZE[bloc]), w, before_sum / (before_sum + w)])
+
+	var before := _national_agenda(false, OWNERSHIP_CANDIDATE)
+	var after := _national_agenda(true, OWNERSHIP_CANDIDATE)
+
+	print("\n%-18s %12s %12s %12s" % ["issue", "before", "after", "change"])
+	var keys: Array = OK.ISSUE_KEYS.duplicate()
+	keys.append("ownership")
+	for issue in keys:
+		print("%-18s %12.4f %12.4f %+12.4f" % [
+			issue, float(before.get(issue, 0.0)), float(after.get(issue, 0.0)),
+			float(after.get(issue, 0.0)) - float(before.get(issue, 0.0)),
+		])
+
+	var spending: Array = ["health", "education", "defence", "pensions", "infrastructure"]
+	var pf_b: float = float(before["public_finances"])
+	var pf_a: float = float(after["public_finances"])
+	var sp_b := 0.0
+	var sp_a := 0.0
+	for issue in spending:
+		sp_b += float(before[issue])
+		sp_a += float(after[issue])
+	print("\nTHE S10 RATIO -- public_finances : the five spending lines")
+	print("  before  %.4f : %.4f  =  %.4f" % [pf_b, sp_b, pf_b / sp_b])
+	print("  after   %.4f : %.4f  =  %.4f" % [pf_a, sp_a, pf_a / sp_a])
+	print("  drift   %+.4f%% of the ratio (V1.3d's own move was +0.39%%)" % (
+		100.0 * ((pf_a / sp_a) / (pf_b / sp_b) - 1.0)
+	))
+	print("  `ownership` would take %.4f of the national agenda." % float(after["ownership"]))
+
+	# Is the drift the CANDIDATE's or the MECHANIC's? Business carries
+	# `public_finances` at 0.34, which is where S10's ratio lives, and ownership is
+	# divisive precisely because business cares. A row that leans on business less
+	# dilutes less -- and expresses less.
+	var light := _national_agenda(true, OWNERSHIP_CANDIDATE_LIGHT)
+	var sp_l := 0.0
+	for issue in spending:
+		sp_l += float(light[issue])
+	print("  with business at 0.04 instead of 0.14 the drift is %+.4f%% -- so the" % (
+		100.0 * ((float(light["public_finances"]) / sp_l) / (pf_b / sp_b) - 1.0)
+	))
+	print("  dilution is the BUSINESS WEIGHT's, and the business weight is the mechanic.")
+
+	# TEST 2, measured: is the price already legible on a bloc row without a key?
+	# TEST 5, the new one: state ownership as a share of GDP is a single standing
+	# stock; a regulation burden is a per-sector rule with no aggregate. Whether that
+	# survives is a write-up question, and the number below is what it is weighed
+	# against -- how much of the economy the verb can actually move.
+	var full = _new_state("FRA")
+	var ns = full.player()
+	var buy = _ownership_action("nationalise")
+	for company in Companies.firms_of(_loader, "FRA"):
+		Companies.execute(full, ns, _loader.company_actions, buy, company.id, _loader)
+	Companies.tick_month(full, _loader)
+	var owned := 0.0
+	for company in Companies.firms_of(_loader, "FRA"):
+		owned += Companies.state_share_of(ns, company.id) * Companies.output_eur_bn(ns, company)
+	print("\n  the WHOLE reachable stock: %.2f%% of GDP in public hands." % (100.0 * owned / ns.gdp_eur_bn))
+	print("  compare V1.4b's finding that this layer's own channels move growth ~0.1 %%/yr")
+	print("  and unemployment ~0.02 pts -- BELOW the opinion model's resolution. An issue")
+	print("  whose satisfaction cannot clear resolution is a row of zeroes on the polling")
+	print("  panel, which is worse than no row at all.")
+
+
+## opinion.gd's own roll-up at rest, rebuilt locally: at zero satisfaction
+## salience_weights() is the base row renormalised, and the national agenda is the
+## size-weighted sum. tools/bloc_probe.gd table (a) rebuilds it the same way and for
+## the same reason -- neither table needs a game or a nation.
+func _national_agenda(with_ownership: bool, candidate: Dictionary) -> Dictionary:
+	var out := {}
+	for bloc in OK.BLOC_KEYS:
+		var row: Dictionary = (OK.BLOC_SALIENCE_BASE[bloc] as Dictionary).duplicate()
+		if with_ownership:
+			row["ownership"] = float(candidate[bloc])
+		var total := 0.0
+		for issue in row:
+			total += float(row[issue])
+		for issue in row:
+			out[issue] = float(out.get(issue, 0.0)) + float(OK.BLOC_SIZE[bloc]) * float(row[issue]) / total
+	return out
+
+
+# --- (r) redundancy: are the two constants one decision wearing two names? ----------
+
+## U6a's precedent: a constant the probe cannot distinguish from another is DELETED,
+## not left unused. These two multiply into one ratio for the fiscal SIGN, which is
+## the case for suspecting them -- so the table has to show they separate somewhere
+## else, or one of them goes and the survivor is expressed as a payback period.
+func _table_r_redundancy() -> void:
+	print("\n=== (r) redundancy: PRICE_TO_OUTPUT against DIVIDEND_YIELD ===")
+	print("     rows sharing a RATIO share a fiscal sign. If they share everything")
+	print("     else too, one of them is deleted.")
+	print("%-10s %10s %12s %12s %12s" % ["multiple", "yield", "debt pts", "div %GDP", "payback yr"])
+
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var target := _largest(state, ns)
+	var out := 0.0
+	for company in Companies.firms_of(_loader, "FRA"):
+		if company.id == target:
+			out = Companies.output_eur_bn(ns, company)
+
+	# Three pairs on ONE ratio, so the fiscal sign is identical down the column and
+	# anything that still moves is what keeps both constants.
+	for pair in [[0.50, 0.01], [1.00, 0.02], [2.00, 0.04], [3.00, 0.06]]:
+		var multiple: float = pair[0]
+		var y: float = pair[1]
+		print("%-10s %10s %12.2f %12.4f %12.1f" % [
+			str(multiple), str(y), 100.0 * out * multiple / ns.gdp_eur_bn,
+			100.0 * out * y / ns.gdp_eur_bn, multiple / y,
+		])
+	print("     the ratio -- and therefore the payback and the fiscal sign -- is fixed")
+	print("     down that column while the debt jump moves 6x and the dividend line with")
+	print("     it. The price hits debt-to-GDP ONCE and the yield hits the budget")
+	print("     FOREVER, so they are two decisions and both are kept.")

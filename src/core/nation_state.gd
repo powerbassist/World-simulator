@@ -494,9 +494,16 @@ var deployment_opinion_load: float = 0.0
 ## Per-nation and keyed by a content id, which is `party_discipline`'s and
 ## `cabinet`'s shape — so V1.4a adds a register and NO NEW KIND of live state, the
 ## claim V1.3g made for its two.
+##
+## V1.4c adds `state_share` to each entry — a THIRD field with a THIRD single
+## writer, and the writers stay one apiece: `share` moves only under a subsidy,
+## `state_share` only under an ownership op, `regulation_burden` below only under a
+## law. It earns no SAVE_VERSION bump on the literal rule — absent it reads 0.0, "the
+## state owns nothing", which is the truth about every version-15 save because those
+## games could not nationalise anybody.
 var companies := {}
 
-## The three prices, recomputed once a month by Companies._recompute_prices() and
+## The four prices, recomputed once a month by Companies._recompute_prices() and
 ## read from here rather than called for. Cached because of the preload graph
 ## rather than for speed: companies.gd takes a LOADER, and economy.gd's twenty-eight
 ## call sites and budget.gd's recompute() would all have to grow one to ask it
@@ -507,14 +514,19 @@ var companies := {}
 ## so a sixth line would be a sixth minister. `deployment_bill_pct_gdp` above took
 ## the same route for the same reason.
 ##
+## `dividend_revenue_pct_gdp` is V1.4c's, and a computed REVENUE line — the second
+## on that side after V1.3c's tariffs, and not a fourth entry in TAX_KEYS: a
+## dividend has no rate, no base share and no erosion curve.
+##
 ## The other two are DEVIATION terms and read exactly 0.0 until a subsidy stands —
-## or, since V1.4b, until a regulation does. None of the three earns the bump on
-## its own — all three are recomputed from `companies` and `regulation_burden` on
+## or, since V1.4b, until a regulation does. None of the four earns the bump on
+## its own — all four are recomputed from `companies` and `regulation_burden` on
 ## the first tick after a load — but they are serialised anyway so a save read back
 ## and never ticked reports the budget it was saved with.
 var subsidy_bill_pct_gdp: float = 0.0
 var firm_impulse_pct: float = 0.0
 var firm_jobs_offset_pct: float = 0.0
+var dividend_revenue_pct_gdp: float = 0.0
 
 ## V1.4b. Sector id → signed accumulated regulatory burden, clamped to
 ## ±companies_constants.REGULATION_BURDEN_MAX. Written by Legislature.apply() and
@@ -669,6 +681,7 @@ func duplicate_state():
 	s.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp
 	s.firm_impulse_pct = firm_impulse_pct
 	s.firm_jobs_offset_pct = firm_jobs_offset_pct
+	s.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp
 	s.regulation_burden = regulation_burden.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 
@@ -808,6 +821,7 @@ func to_dict() -> Dictionary:
 		"subsidy_bill_pct_gdp": subsidy_bill_pct_gdp,
 		"firm_impulse_pct": firm_impulse_pct,
 		"firm_jobs_offset_pct": firm_jobs_offset_pct,
+		"dividend_revenue_pct_gdp": dividend_revenue_pct_gdp,
 		"regulation_burden": regulation_burden,
 		"last_company_result": last_company_result,
 	}
@@ -958,6 +972,7 @@ static func from_dict(d: Dictionary):
 	s.subsidy_bill_pct_gdp = float(d.get("subsidy_bill_pct_gdp", 0.0))
 	s.firm_impulse_pct = float(d.get("firm_impulse_pct", 0.0))
 	s.firm_jobs_offset_pct = float(d.get("firm_jobs_offset_pct", 0.0))
+	s.dividend_revenue_pct_gdp = float(d.get("dividend_revenue_pct_gdp", 0.0))
 	# V1.4b, and the empty fallback is CORRECT rather than merely tolerable: a
 	# version-15 save comes from a game with no `business` laws in it, so every
 	# burden really was 0.0. That is why this field earns no bump of its own.

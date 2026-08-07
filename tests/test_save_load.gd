@@ -102,6 +102,7 @@ func _init() -> void:
 	_run_diary_roundtrip(loader)
 	_run_companies_roundtrip(loader)
 	_run_regulation_roundtrip(loader)
+	_run_ownership_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -1237,7 +1238,7 @@ func _run_companies_roundtrip(loader) -> void:
 		_fail("the strategic_rescue verb is missing, so this roundtrip asserts nothing")
 		return
 
-	Companies.execute(state, ns, loader.company_actions, subsidy, target)
+	Companies.execute(state, ns, loader.company_actions, subsidy, target, loader)
 	for _m in range(24):
 		Companies.tick_month(state, loader)
 	Budget.recompute(state, ns)
@@ -1297,9 +1298,18 @@ func _run_companies_roundtrip(loader) -> void:
 	# save is the one that would drift when the content was edited.
 	if dict.has("companies"):
 		_fail("a save carries the company CONTENT -- the baseline is data/companies/, and a stored copy is what a content edit would silently disagree with")
+	# V1.4c TURNED THIS RED ON PURPOSE and widened it by exactly one key, which is
+	# the change worth recording rather than the widening. `share`, `subsidy` and
+	# `state_share` are the three things about a firm that MOVE, and each has exactly
+	# one writer -- a subsidy, a subsidy, an ownership op. `name`, `sector`,
+	# `headcount` and the AUTHORED share are content and must never appear here, for
+	# the reason above: the copy in the save is the one a content edit would silently
+	# disagree with. A fourth key still fails, so a later session storing a baseline
+	# or a per-firm burden has to come and say why.
+	const LIVE_KEYS := ["share", "subsidy", "state_share"]
 	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
 		for key in (entry as Dictionary).keys():
-			if key != "share" and key != "subsidy":
+			if not LIVE_KEYS.has(key):
 				_fail("a serialised register entry carries '%s' beyond the live half" % key)
 
 
@@ -1365,3 +1375,87 @@ func _run_regulation_roundtrip(loader) -> void:
 
 	if GameState.SAVE_VERSION != 15:
 		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.4c adds `state_share` to every register entry and a fourth cached price, and
+## earns NO bump either -- which is not what the row expected, so it is asserted
+## rather than assumed.
+##
+## The rule applied literally a fourth time: an absent `state_share` reads 0.0, "the
+## state owns nothing", which is the TRUTH about every version-15 save because those
+## games had no ownership verb to use. `measures` at V1.3c, `pacts` at V1.3g,
+## `appointments` at U6a and `regulation_burden` at V1.4b.
+##
+## The two halves that could have earned one, and why neither does:
+##
+##   `dividend_revenue_pct_gdp` is recomputed from the register on the first tick and
+##     reads 0.0 when absent -- the four-prices case V1.4a already argued.
+##   The PURCHASE and the WINDFALL are already carried, because they were never a
+##     field: Companies.execute() writes `debt_eur_bn`, serialised since the MVP. A
+##     capital transaction that needed its own save field would have been the sign it
+##     should not have been a balance-sheet write, and this checks the premise.
+func _run_ownership_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var target := "FRA_halbert"
+
+	var buy = null
+	for a in loader.company_actions:
+		if a.id == "full_nationalisation":
+			buy = a
+	if buy == null:
+		_fail("full_nationalisation is missing, so this roundtrip asserts nothing")
+		return
+
+	var debt_before: float = ns.debt_eur_bn
+	var deficit_before: float = ns.deficit_pct_gdp
+	Companies.execute(state, ns, loader.company_actions, buy, target, loader)
+
+	# The price is derived and lands on the debt stock in the same instant, while the
+	# deficit does not move at all. Checked here rather than only in
+	# tests/test_companies.gd because it is the whole reason this session added no
+	# save field: a one-off on the revenue side would have needed one.
+	if not (ns.debt_eur_bn > debt_before):
+		_fail("nationalising moved no debt, so the purchase reached nothing")
+	if ns.deficit_pct_gdp != deficit_before:
+		_fail("nationalising moved the deficit in the month it happened -- that closes the loop through a company action's own precondition field")
+
+	for _m in range(3):
+		Companies.tick_month(state, loader)
+	Budget.recompute(state, ns)
+	if ns.dividend_revenue_pct_gdp <= 0.0:
+		_fail("a fully state-owned firm pays no dividend, so the round trip below asserts nothing")
+		return
+
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	if not is_equal_approx(Companies.state_share_of(kept.player(), target), 1.0):
+		_fail("a standing state holding did not survive the round trip")
+	if not is_equal_approx(kept.player().debt_eur_bn, ns.debt_eur_bn):
+		_fail("the debt the purchase was paid with did not survive the round trip")
+
+	# The premise of NOT bumping: dropping the key reads as "the state owns nothing",
+	# which is a correct save rather than a broken one -- the dividend line goes with
+	# it on the next tick, and no figure is left claiming a holding that is not there.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for entry in (without["nations"]["FRA"] as Dictionary)["companies"].values():
+		(entry as Dictionary).erase("state_share")
+	var lost = GameState.from_dict(without)
+	if Companies.state_share_of(lost.player(), target) != 0.0:
+		_fail("an absent state_share did not read as 0.0 -- the reason for NOT bumping is wrong")
+	Companies.tick_month(lost, loader)
+	if lost.player().dividend_revenue_pct_gdp != 0.0:
+		_fail("a save with no holdings still paid a dividend")
+
+	# And the fourth price is derived, so a save stripped of it comes back on one
+	# tick. Same reference-and-tick shape as the three above it.
+	var no_derived: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_derived["nations"]["FRA"] as Dictionary).erase("dividend_revenue_pct_gdp")
+	var derived = GameState.from_dict(no_derived)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	Companies.tick_month(derived, loader)
+	Companies.tick_month(reference, loader)
+	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
+		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
+
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15 on the register alone, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)

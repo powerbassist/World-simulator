@@ -40,6 +40,20 @@ static func recompute(state, ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
+	# V1.4c's line, and the second computed REVENUE line after the tariff one above.
+	# Read straight off NationState rather than recomputed here, unlike the tariff
+	# line and exactly like the subsidy bill below: Companies.tick_month() runs after
+	# this, so a firm nationalised this month pays its first dividend next month --
+	# the one-month lag the bloc transfer, the deployment bill and the subsidy bill
+	# all take, and for the same reason, since `deficit_pct_gdp` is a company action's
+	# own precondition field.
+	#
+	# The PURCHASE is not here and is not a revenue or a spending line at all. A
+	# capital transaction is a balance-sheet swap: Companies.execute() writes
+	# `debt_eur_bn` directly, so the price reaches this function next month as
+	# `debt_service_pct_gdp` and never as a one-off nothing on this budget has a shape
+	# for.
+	ns.revenue_pct_gdp["dividends"] = ns.dividend_revenue_pct_gdp
 
 	var revenue := 0.0
 	for v in ns.revenue_pct_gdp.values():
@@ -277,6 +291,9 @@ static func snapshot(state) -> Dictionary:
 		"subsidy_bill_pct_gdp": ns.subsidy_bill_pct_gdp,
 		"firm_impulse_pct": ns.firm_impulse_pct,
 		"firm_jobs_offset_pct": ns.firm_jobs_offset_pct,
+		# V1.4c, here for the same reason: the dividend line lags a month, so the
+		# projection is the surface that shows it arriving.
+		"dividend_revenue_pct_gdp": ns.dividend_revenue_pct_gdp,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,

@@ -48,6 +48,14 @@ const FIGURE_ROWS := [
 	# docs/scenario-model.md records, with a different label. Reads "—" while
 	# nothing is imposed, which is every game that has not used the verb.
 	["tariffs", "  of which tariffs"],
+	# V1.4c, beside the tariff line and on the same argument: a revenue source the
+	# player chose, which no slider on this panel sets. It differs from tariffs in
+	# that it arrives from a decision taken on a different screen entirely, so a
+	# budget that quietly widened its revenue after a nationalisation would be the
+	# unnamed-reason failure the four indented lines here all exist to prevent.
+	# Reads "—" while the state holds nothing, which is every game that has not used
+	# the verb.
+	["dividends", "  of which dividends"],
 	["spending", "Spending"],
 	["debt_service", "  of which debt service"],
 	# V1.3d, indented under Spending for the same reason tariffs are indented under
@@ -62,6 +70,14 @@ const FIGURE_ROWS := [
 	# spending the player did not choose AT ALL, so a panel that did not show it
 	# would leave a deficit moving for a reason nothing on screen names.
 	# Reads "—" while nothing is deployed, which is every game that has not allied.
+	#
+	# THIS ROW WAS MISSING UNTIL V1.4c, and its comment was here without it. V1.3g
+	# wrote `_set_figure("deployments", ...)` and no ["deployments", ...] entry, and
+	# _set_figure() returns silently on an unknown key -- so the deployment bill has
+	# never appeared on this panel, and V1.4a then wrote "beside the deployment line"
+	# about a line that was not there. V1.3g's own screenshot pass could not catch it:
+	# the tool bug it did find made that figure an em dash anyway.
+	["deployments", "  of which deployments"],
 	# V1.4a, beside the deployment line and on the same argument a fourth time:
 	# money leaving the budget that the player set with no slider. Without it a
 	# subsidy signed on the Companies panel would widen the deficit here with
@@ -312,6 +328,7 @@ func _refresh() -> void:
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
 	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))
+	_set_figure("dividends", _dividend_text(now), _dividend_text(proposed))
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
@@ -358,6 +375,17 @@ func _subsidy_text(snap: Dictionary) -> String:
 	if is_zero_approx(pct):
 		return "—"
 	return _pct_and_eur(snap, "subsidy_bill_pct_gdp")
+
+
+## The same em dash a fifth time, on the revenue side. Unsigned: a holding pays or
+## the state does not have one, and a firm that loses money still hands over nothing
+## rather than billing the treasury -- there is no margin quantity here for it to
+## lose, which is docs/companies-model.md section 13's call showing up on a panel.
+func _dividend_text(snap: Dictionary) -> String:
+	var pct: float = float(snap.get("dividend_revenue_pct_gdp", 0.0))
+	if is_zero_approx(pct):
+		return "—"
+	return _pct_and_eur(snap, "dividend_revenue_pct_gdp")
 
 
 func _tariff_text(snap: Dictionary) -> String:

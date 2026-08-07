@@ -14,18 +14,39 @@ extends RefCounted
 
 # --- Content limits -----------------------------------------------------------
 
-## The two ops the effects.company channel takes. `subsidise` sets a standing
-## subsidy on one firm; `withdraw` clears it.
+## The ops the effects.company channel takes. `subsidise` sets a standing subsidy
+## on one firm and `withdraw` clears it; V1.4c's `nationalise` sets a standing
+## state holding and `privatise` sells it.
 ##
-## Two ops rather than one signed intensity, for the reason
+## Paired setter/clearer rather than one signed dial, for the reason
 ## src/core/diplomatic_action.gd gives an agreement's "exit" and a measure's
-## "lift": withdrawing carries no terms, and a channel where the terms are read
+## "lift": the clearer carries no terms, and a channel where the terms are read
 ## for one op and ignored for the other is a channel an author gets wrong once.
-const COMPANY_OPS := ["subsidise", "withdraw"]
+##
+## V1.4c adds two ops and no new channel, which is the seventh session running with
+## no new content type. `data/company-actions/` now serves three sessions the way
+## `data/diplomatic-actions/` served five.
+const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise"]
+
+## The term each op reads, or "" for the ops that read none. Declared as a table
+## rather than as branches in src/core/company_action.gd because the property worth
+## having is that EVERY op names its one dial or names none -- a fifth op added
+## without a row here fails to load rather than silently ignoring its terms.
+const COMPANY_OP_TERM := {
+	"subsidise": "intensity",
+	"withdraw": "",
+	"nationalise": "stake",
+	"privatise": "",
+}
 
 ## How large one authored subsidy may be. Bounds the content, not the accumulated
 ## state, exactly as coercion_constants.MAX_MEASURE_SEVERITY does.
 const MAX_SUBSIDY_INTENSITY := 1.00
+
+## V1.4c. How much of one firm an authored nationalisation may take. The whole of
+## it: a state that may not own a firm outright has no privatisation to sell, and
+## "a permanent loss of control" needs something whole to lose.
+const MAX_STAKE := 1.00
 
 ## V1.4b. How hard one authored regulation may lean on a sector, and equally how
 ## far the ACCUMULATED burden may run in either direction -- unlike the subsidy
@@ -53,6 +74,7 @@ const REGULATION_BURDEN_MAX := 1.00
 ## list gets its entries the same way, when V1.4b and V1.4c have something to ask.
 const PRECONDITION_FIELDS := [
 	"subsidy_active", "subsidy_count",
+	"state_owned", "state_owned_count",
 	"deficit_pct_gdp", "debt_to_gdp_pct", "unemployment_pct", "overall_approval_pct",
 ]
 
@@ -224,3 +246,63 @@ const REGULATION_JOBS_BETA := 0.10
 ## measured the subsidy on -- a rule on one sector must no more out-punch a whole
 ## budget than a subsidy to one firm may.
 const REGULATION_GROWTH_BETA := 0.10
+
+
+# --- V1.4c: what a firm is worth, and what owning it pays -----------------------
+
+## What the state pays for a whole firm, as a multiple of that firm's ANNUAL
+## OUTPUT.
+##
+## A price multiple rather than an authored valuation, for the reason revenue is
+## not authored: `output_eur_bn()` is already share x sector output, so a valuation
+## field on a firm would be a third record of a product of two things that exist,
+## and one a content edit would silently disagree with.
+##
+## Priced on OUTPUT and not on profit, which is the call docs/companies-model.md
+## section 13 made in advance and V1.4c is bound by: there is no margin, profit or
+## productivity quantity anywhere in src/sim/, and half-inventing one here would
+## leave every later reader to either read it or contradict it.
+##
+## Provisional. tools/companies_probe.gd table (l) sweeps it against the DEBT JUMP
+## from nationalising the largest firm in the register, banded 2-8 points of
+## debt-to-GDP: the purchase must be able to matter against the bloc's own
+## `debt_to_gdp_pct` rule without breaching it from a single act.
+const PRICE_TO_OUTPUT := 1.00
+
+## Fraction of a state-held firm's annual output that reaches the treasury.
+##
+##     dividend = state_share x share x sector_output x DIVIDEND_YIELD
+##
+## THE WHOLE FISCAL SHAPE OF THE SESSION FALLS OUT OF THIS AGAINST
+## PRICE_TO_OUTPUT AND economy_constants.DEBT_REAL_RATE_PCT, and none of it is
+## authored. The yield ON PRICE is DIVIDEND_YIELD / PRICE_TO_OUTPUT, and it is set
+## EQUAL to the real rate on the debt that bought the firm.
+##
+## THE PROBE'S CORRECTION, from 0.04, and it moved what the number is measured
+## AGAINST rather than the band. Table (m)'s band could not choose: three of four
+## candidate rows landed inside 0.05-0.40 % of GDP, which is a band measuring
+## whether the line is READABLE and not whether it is right. What chose is table
+## (n). At 0.04 the yield on price was 4.0 % against a 2.0 % borrowing rate, so
+## every nationalisation paid for itself twice over and table (p) came back better
+## than a quiet run on the headline AND on the deficit -- free on both axes, which
+## is the strictly-dominated shape V1.3c, V1.3d, V1.4a and V1.4b each hit.
+##
+## At the borrowing rate the treasury neither gains nor loses on the exchange, which
+## is the honest model when there is no risk and no business cycle for an equity
+## premium to be compensation FOR -- docs/tiers/v1.md section 6 owns both. What
+## nationalising costs is then a stock rather than a flow: the whole purchase lands
+## on `debt_to_gdp_pct` at once, which is a bloc rule's field and a precondition
+## field in four modules, and privatising is the only lever in the game that moves a
+## stock back down. What it buys is the jobs shield and the workers' row.
+##
+## NOT deleted and NOT derived, though it is anchored -- table (r)'s question, asked
+## again after the correction. PRICE_TO_OUTPUT sets the SIZE of the act and this
+## sets its fiscal SIGN; they are two decisions, and a session that wanted state
+## ownership to be a slow fiscal gain or a slow drain would move this one alone.
+const DIVIDEND_YIELD := 0.02
+
+## Hard clamp on the whole dividend line, points of GDP. SUBSIDY_BILL_MAX_PCT_GDP's
+## role on the other side of the budget, and measured the same way: a reachable
+## stack sitting ON the clamp means the clamp and not the model is setting the
+## number.
+const DIVIDEND_MAX_PCT_GDP := 1.50
