@@ -5,7 +5,7 @@
   "capital": "Berlin",
   "playable": true,
   "leader": {
-    "name": "Matthias Vogler",
+    "person": "DEU_vogler",
     "title": "Federal Chancellor",
     "party": "buergerunion"
   },
@@ -42,7 +42,7 @@
       "_note": "The Bundespräsident, elected by the Federal Convention for a five-year term; last elected February 2022, so the next is due February 2027. Ceremonial -- no reader beyond the government panel. Wikipedia, 'President of Germany'.",
       "kind": "elected_president",
       "title": "Federal President",
-      "name": "Wolfgang Emmerich",
+      "person": "DEU_emmerich",
       "term_years": 5,
       "next": {
         "year": 2027,
@@ -63,8 +63,10 @@
       "method": "chancellor_election",
       "censure": "constructive_absolute",
       "head_of_government_title": "Federal Chancellor",
-      "head_of_government_name": "Matthias Vogler"
+      "head_of_government_person": "DEU_vogler"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "DEU_friedrich_iv",
     "eu": {
       "member": true,
       "ep_seats": 96

@@ -324,27 +324,35 @@ static func apply(state, ns, law, loader) -> void:
 
 
 ## Writes a system transition's new head of state. `hos` is law.gd's already-
-## validated {kind, title, name?, term_years?} -- for `elected_president` the
-## holder is DERIVED from the largest party's own leader_name rather than
-## authored, because an elected president is someone already on the board,
-## unlike a restored monarch, who is not. See docs/transition-model.md.
+## validated {kind, title, term_years?} -- and it carries NO name for any kind
+## now. The holder is derived on both branches: for `elected_president` from the
+## largest party's own leader, because an elected president is someone already on
+## the board; and for anything else from the acting nation's own
+## `government.pretender_person`.
+##
+## That second branch is U6b's, and it fixed a real content bug rather than
+## tidying one. The Restoration Act authored "Alexander IV" inline, and it
+## applies to any `parliamentary_republic` -- so every republic in Europe
+## restored the same king. A law names an OFFICE; a nation names the person.
+## See docs/transition-model.md and docs/people-model.md.
 static func _apply_head_of_state(state, ns, loader, hos: Dictionary) -> void:
 	ns.head_of_state_kind = hos["kind"]
 	ns.head_of_state_title = hos["title"]
 	if hos["kind"] == "elected_president":
 		var party_list: Array = loader.parties.get(ns.id, [])
 		var largest_id := Government.largest_party_id(ns, party_list)
-		var holder_name := ""
+		var holder_id := ""
 		for party in party_list:
 			if party.id == largest_id:
-				holder_name = party.leader_name
+				holder_id = party.leader_person_id
 				break
-		ns.head_of_state_name = holder_name
+		ns.head_of_state_person_id = holder_id
 		var term_years := int(hos["term_years"])
 		ns.head_of_state_next_year = int(state.year) + term_years
 		ns.head_of_state_next_month = int(state.month)
 	else:
-		ns.head_of_state_name = hos["name"]
+		var nation = loader.nations.get(ns.id, null)
+		ns.head_of_state_person_id = nation.pretender_person_id if nation != null else ""
 		ns.head_of_state_next_year = 0
 		ns.head_of_state_next_month = 0
 

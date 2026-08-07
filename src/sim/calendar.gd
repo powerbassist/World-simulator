@@ -56,15 +56,22 @@ static func entry_ordinal(entry: Dictionary) -> int:
 	return ordinal(int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1)))
 
 
-## Build an entry. `person_id` is carried from this session, written by nobody and
-## read by nobody: U6b keys appointments on named individuals, and an entry that
-## has to be re-keyed then would bump SAVE_VERSION a second time. The additive
-## escape hatch V1.3c named in advance for `measures`, declared here rather than
-## discovered there.
+## Build an entry. `person_id` was carried by U6a written by nobody, against the
+## possibility that U6b would key appointments on named individuals and have to
+## re-key the register. **It did not**, and the reason is the same argument that
+## shrank the session: a person is the FACE of a target that already exists, so
+## booking a state visit to Germany IS booking its leader. One act, one key.
+##
+## So `verb_key()` above is untouched, `person_id` stays out of it, and the field
+## is a derived LABEL the diary prints -- passed in by the caller that knows the
+## target, since src/sim/calendar.gd preloads nothing and cannot resolve one.
+## Two bookings differing only in `person_id` are still the same verb, and
+## tests/test_calendar.gd asserts exactly that rather than leaving it to this
+## comment.
 static func make_entry(
 	kind: String, year: int, month: int, day: int,
 	action_id := "", target_id := "", law_id := "",
-	portfolio := "", party_id := ""
+	portfolio := "", party_id := "", person_id := ""
 ) -> Dictionary:
 	return {
 		"kind": kind,
@@ -76,7 +83,7 @@ static func make_entry(
 		"law_id": law_id,
 		"portfolio": portfolio,
 		"party_id": party_id,
-		"person_id": "",
+		"person_id": person_id,
 		"status": K.STATUS_BOOKED,
 	}
 

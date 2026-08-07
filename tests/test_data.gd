@@ -25,7 +25,7 @@ func _init() -> void:
 		if absf(total - 1.0) > 0.001:
 			failures.append("%s: sectors sum to %s, expected 1.0" % [id, total])
 
-		if n.leader_name == "":
+		if n.leader_person_id == "":
 			failures.append("%s: no leader name" % id)
 
 		if n.dissolution_rule == "" or not Nation.KNOWN_DISSOLUTION_RULES.has(n.dissolution_rule):

@@ -683,8 +683,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 13:
-		_fail("SAVE_VERSION is %d -- V1.3g argued for 13, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 14:
+		_fail("SAVE_VERSION is %d -- U6b argued for 14, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1106,7 +1106,8 @@ func _run_diary_roundtrip(loader) -> void:
 	state.day = 17
 
 	var entry := Calendar.make_entry(
-		CalendarK.KIND_DIPLOMATIC, state.year, state.month + 2, 9, "state_visit", "DEU"
+		CalendarK.KIND_DIPLOMATIC, state.year, state.month + 2, 9, "state_visit", "DEU",
+		"", "", "", loader.nations["DEU"].leader_person_id
 	)
 	var booked: Dictionary = Calendar.book(state, entry)
 	if not bool(booked["ok"]):
@@ -1137,8 +1138,14 @@ func _run_diary_roundtrip(loader) -> void:
 		_fail("%d bookings survived the round trip, expected 1" % still_booked.size())
 	elif String(still_booked[0]["action_id"]) != "state_visit" or String(still_booked[0]["target_id"]) != "DEU":
 		_fail("the booking came back as %s -- a save that garbles a command is worse than one that drops it" % [still_booked[0]])
-	if String(still_booked[0].get("person_id", "MISSING")) != "":
-		_fail("the entry's unread person_id did not survive -- U6b re-keys the register if it has to add one")
+	# U6a carried `person_id` unread against the possibility that U6b would key
+	# appointments on people. It did not: a person is the FACE of a target that
+	# already exists, so a state visit to Germany IS its leader -- one act, one
+	# key. The field is a derived LABEL, written here and read only for display.
+	if String(still_booked[0].get("person_id", "MISSING")) == "MISSING":
+		_fail("the entry's person_id did not survive the round trip")
+	elif String(still_booked[0]["person_id"]) != "DEU_vogler":
+		_fail("a booked state visit to DEU carries person_id '%s', expected the leader the diary showed at booking time" % still_booked[0]["person_id"])
 
 	# (2) Absent, and correct rather than silently wrong.
 	var without: Dictionary = state.to_dict()
@@ -1149,5 +1156,51 @@ func _run_diary_roundtrip(loader) -> void:
 	if not Calendar.due(no_diary, no_diary.year + 5, 12, 28).is_empty():
 		_fail("an absent diary produced appointments out of nothing -- 'nothing booked' is the only correct reading of a version-13 save")
 
-	if GameState.SAVE_VERSION != 13:
-		_fail("SAVE_VERSION is %d -- U6a argued for it STAYING 13, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	_run_person_rekey(loader)
+
+
+## U6b bumps on a RE-KEY, not on a new field, and this is the assertion that pins
+## why. Three NationState fields stopped holding names and started holding person
+## ids; nothing was added. The naive reading is that nothing is at risk -- but a
+## version-13 save carries the OLD keys, so without the bump all three would load
+## as "" while the file itself looked intact, and the game would render a
+## government nobody governs. That is `military_capability`'s case at V1.3g and
+## `eu_member`/`neighbours` at V1.3b, in their strongest form yet.
+##
+## The other half is what U6b did NOT add: there is no per-person serialised
+## state at all, because a person is pure content -- an id and a name, with every
+## relationship expressed by the reference that owns it. The field that would have
+## earned this bump on its own, a stored `ns.cabinet_person`, was never written,
+## because the probe cut the minister bench that needed it.
+func _run_person_rekey(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	if ns.pm_person_id == "" or ns.head_of_state_person_id == "":
+		_fail("a new game did not seat a head of state and a head of government as person ids")
+		return
+	if loader.person_name(ns.head_of_state_person_id) == "":
+		_fail("the head of state's person id does not resolve to a name")
+
+	var dict: Dictionary = state.to_dict()
+	var loaded = GameState.from_dict(dict)
+	for field in ["pm_person_id", "head_of_state_person_id", "start_head_of_government_person_id"]:
+		if String(loaded.player().get(field)) != String(ns.get(field)):
+			_fail("%s did not survive the round trip" % field)
+
+	# The bump's own premise, checked rather than asserted: drop the key a
+	# version-13 save would not have and the government stops existing.
+	var without: Dictionary = state.to_dict()
+	(without["nations"]["FRA"] as Dictionary).erase("pm_person_id")
+	var lost = GameState.from_dict(without)
+	if lost.player().pm_person_id != "":
+		_fail("an absent pm_person_id did not read as empty -- the premise of the bump is wrong")
+	if loader.person_name(lost.player().pm_person_id) != "":
+		_fail("an absent pm_person_id still resolved to somebody")
+
+	# No per-person register was added, and this pins it: a later session storing
+	# a minister turns it red and has to come and say why.
+	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
+		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
+
+	if GameState.SAVE_VERSION != 14:
+		_fail("SAVE_VERSION is %d -- U6b argued for 14, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

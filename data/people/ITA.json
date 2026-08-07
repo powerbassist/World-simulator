@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "ITA_bagnasco", "name": "Lorenzo Bagnasco" },
+    { "id": "ITA_ronchi", "name": "Piergiorgio Ronchi" },
+    { "id": "ITA_lambertini", "name": "Vittorio Lambertini" },
+    { "id": "ITA_fossati", "name": "Chiara Fossati" },
+    { "id": "ITA_trevisan", "name": "Enzo Trevisan" },
+    { "id": "ITA_caputo", "name": "Serena Caputo" },
+    { "id": "ITA_salvagno", "name": "Umberto Salvagno" },
+    { "id": "ITA_carlo_alberto_ii", "name": "Carlo Alberto II" }
+  ]
+}

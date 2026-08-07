@@ -5,7 +5,7 @@
       "name": "National Unity Party",
       "ideology_slot": "centre_right",
       "seat_share": 0.3,
-      "leader_name": "Caroline Wexford",
+      "leader_person": "GBR_wexford",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -17,7 +17,7 @@
       "name": "Progress Alliance",
       "ideology_slot": "social_democratic",
       "seat_share": 0.32,
-      "leader_name": "Edward Marchbanks",
+      "leader_person": "GBR_marchbanks",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -29,7 +29,7 @@
       "name": "Liberal Union",
       "ideology_slot": "liberal",
       "seat_share": 0.12,
-      "leader_name": "Adrian Pell",
+      "leader_person": "GBR_pell",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": []
@@ -39,7 +39,7 @@
       "name": "Patriot Front",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.14,
-      "leader_name": "Duncan Harlow",
+      "leader_person": "GBR_harlow",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -49,7 +49,7 @@
       "name": "Ecology Alliance",
       "ideology_slot": "green",
       "seat_share": 0.06,
-      "leader_name": "Miriam Cobbett",
+      "leader_person": "GBR_cobbett",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": []
@@ -59,7 +59,7 @@
       "name": "Home Nations Bloc",
       "ideology_slot": "regionalist",
       "seat_share": 0.06,
-      "leader_name": "Rhona Kilbride",
+      "leader_person": "GBR_kilbride",
       "discipline": 0.75,
       "competence": 0.55,
       "excluded_partners": []

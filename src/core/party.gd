@@ -10,9 +10,11 @@ var party_name: String = ""
 var ideology_slot: String = ""
 var seat_share: float = 0.0
 
-## Invented, per docs/fictionalization.md. Where this party governs its nation,
-## the name matches that nation's authored leader.
-var leader_name: String = ""
+## A reference into data/people/, per docs/people-model.md. Where this party
+## governs its nation, this is the SAME person the nation's own leader slot
+## points at — which used to be two authored name strings that happened to
+## agree, in all ten files, and is now one record with two references.
+var leader_person_id: String = ""
 
 ## How reliably the party delivers its seats behind a position it has signed up
 ## to, in [0, 1]. Scales the coalition bonus in src/sim/legislature.gd — see
@@ -57,10 +59,10 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		if p.seat_share < 0.0 or p.seat_share > 1.0:
 			errors.append("%s: %s seat_share = %s out of range [0, 1]" % [filename, path, str(p.seat_share)])
 
-	if not d.has("leader_name") or typeof(d["leader_name"]) != TYPE_STRING or d["leader_name"] == "":
-		errors.append("%s: %s missing or invalid string field 'leader_name'" % [filename, path])
+	if not d.has("leader_person") or typeof(d["leader_person"]) != TYPE_STRING or d["leader_person"] == "":
+		errors.append("%s: %s missing or invalid string field 'leader_person'" % [filename, path])
 	else:
-		p.leader_name = d["leader_name"]
+		p.leader_person_id = d["leader_person"]
 
 	if not d.has("discipline") or not (typeof(d["discipline"]) == TYPE_INT or typeof(d["discipline"]) == TYPE_FLOAT):
 		errors.append("%s: %s missing or invalid numeric field 'discipline'" % [filename, path])

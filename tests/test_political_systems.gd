@@ -86,7 +86,7 @@ func _init() -> void:
 			failures.append("%s: head_of_state_kind is '%s', expected '%s'" % [id, n.head_of_state_kind, EXPECTED_HEAD_OF_STATE_KIND[id]])
 		if n.amendment_rule != EXPECTED_AMENDMENT_RULE[id]:
 			failures.append("%s: amendment_rule is '%s', expected '%s'" % [id, n.amendment_rule, EXPECTED_AMENDMENT_RULE[id]])
-		if n.head_of_state_name == "":
+		if n.head_of_state_person_id == "":
 			failures.append("%s: head_of_state has no name" % id)
 
 		var system: PoliticalSystem = loader.political_systems.get(n.system_id)

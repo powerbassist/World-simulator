@@ -31,6 +31,12 @@ var _title: Label
 var _list: VBoxContainer
 
 var _nations: Array = []
+
+## person id -> name, and deliberately NOT the loader. This is the one panel that
+## resolves a person without holding a DataLoader, and the menu passes the map
+## rather than the object it came from: the panel needs a name, not a data layer,
+## and handing it the loader would let a later edit reach for anything in there.
+var _person_names: Dictionary = {}
 ## nation id -> Array of Scenario, built once in set_nations(). Empty for a
 ## nation nobody has authored a start for, which is the majority case and the
 ## one that must stay a single click.
@@ -92,8 +98,9 @@ func _build_footer() -> Control:
 ## caller -- this panel only lays them out. `scenarios` is DataLoader.scenarios
 ## whole; the panel indexes it by nation itself, because which nations have a
 ## start authored is not something the caller should have to know either.
-func set_nations(nations: Array, scenarios: Dictionary = {}) -> void:
+func set_nations(nations: Array, scenarios: Dictionary = {}, person_names: Dictionary = {}) -> void:
 	_nations = nations
+	_person_names = person_names
 
 	_scenarios_by_nation = {}
 	var ids: Array = scenarios.keys()
@@ -148,7 +155,9 @@ func _build_nation_row(n) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var label := Label.new()
-	label.text = "%s -- %s (%s)" % [n.nation_name, n.leader_title, n.leader_name]
+	label.text = "%s -- %s (%s)" % [
+		n.nation_name, n.leader_title, String(_person_names.get(n.leader_person_id, "")),
+	]
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 

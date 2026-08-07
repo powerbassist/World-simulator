@@ -5,7 +5,7 @@
   "capital": "Vienna",
   "playable": false,
   "leader": {
-    "name": "Bernhard Kettler",
+    "person": "AUT_kettler",
     "title": "Federal Chancellor",
     "party": "buergerliche_mitte"
   },
@@ -42,7 +42,7 @@
       "_note": "The Bundespräsident, popularly elected for a six-year term; last elected October 2022, so the next is due October 2028. Ceremonial -- no reader beyond the government panel. Wikipedia, 'President of Austria'.",
       "kind": "elected_president",
       "title": "Federal President",
-      "name": "Elisabeth Kranzler",
+      "person": "AUT_kranzler",
       "term_years": 6,
       "next": {
         "year": 2028,
@@ -63,8 +63,10 @@
       "method": "coalition_negotiation",
       "censure": "simple_present",
       "head_of_government_title": "Federal Chancellor",
-      "head_of_government_name": "Bernhard Kettler"
+      "head_of_government_person": "AUT_kettler"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "AUT_rudolf_v",
     "eu": {
       "member": true,
       "ep_seats": 20

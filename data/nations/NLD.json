@@ -5,7 +5,7 @@
   "capital": "Amsterdam",
   "playable": false,
   "leader": {
-    "name": "Willem Terborg",
+    "person": "NLD_terborg",
     "title": "Prime Minister",
     "party": "liberaal_verbond"
   },
@@ -40,7 +40,7 @@
     "head_of_state": {
       "kind": "hereditary_monarch",
       "title": "King",
-      "name": "Maurits III"
+      "person": "NLD_maurits_iii"
     },
     "term_limit": 0,
     "amendment": {
@@ -56,8 +56,10 @@
       "method": "coalition_negotiation",
       "censure": "simple_present",
       "head_of_government_title": "Prime Minister",
-      "head_of_government_name": "Willem Terborg"
+      "head_of_government_person": "NLD_terborg"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "NLD_maurits_iii",
     "eu": {
       "member": true,
       "ep_seats": 31

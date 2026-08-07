@@ -41,7 +41,9 @@ Real nations give the game its hook — the player wants to run *France*, not Ru
 
 ## Naming conventions
 
-**People** — use names that sound native to the nation. French leaders get French names, German leaders get German names. Avoid names of currently serving or recently serving officeholders anywhere in the world, and avoid names of internationally famous figures generally.
+**People** — every person lives in `data/people/<NATION>.json` as an `{id, name}` record, and nothing else in `data/` spells a person's name out; see [[people-model]]. The id is `<NATION>_<surname>`, ASCII-folded by the nation's own convention (`Müller → DEU_mueller`), with a nobiliary particle kept because it belongs to the surname (`Van Craen → BEL_van_craen`) and a regnal name slugged whole because it has none (`Baudouin III → BEL_baudouin_iii`). Two people sharing a surname inside one nation take the forename initial. No surname is reused across the ten, so a `check_names.sh` hit is always traceable to one file.
+
+Use names that sound native to the nation. French leaders get French names, German leaders get German names. Avoid names of currently serving or recently serving officeholders anywhere in the world, and avoid names of internationally famous figures generally.
 
 **Parties** — build from real political vocabulary, but never reproduce a real party's actual name or its common abbreviation. The name should telegraph the ideology slot so a player can read the assembly at a glance.
 
@@ -74,6 +76,8 @@ Companies, for the [[v1]] economic layer:
 ## Enforcement
 
 This is checkable, so it gets checked. A banned-names list lives alongside the project and is grepped over the whole repository before any milestone commit: real heads of state and government, real party names and abbreviations, and real company names for every nation in scope. Zero hits, or the content is wrong.
+
+**`tools/check_names.sh` iterates `git ls-files`, so it cannot see an untracked file.** U6b added `data/people/` and the first run of the check over it passed with zero hits and zero files scanned. Any session authoring a NEW content directory must `git add` before the check means anything — the largest exposure this check has ever had was, for one run, not being checked at all.
 
 The check is cheap now and gets expensive to retrofit once there are hundreds of data files, which is exactly why it starts at [[ROADMAP|session S2]].
 

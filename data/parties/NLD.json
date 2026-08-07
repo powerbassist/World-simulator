@@ -5,7 +5,7 @@
       "name": "Nationale Vrijheid",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.19,
-      "leader_name": "Sander Kuiperink",
+      "leader_person": "NLD_kuiperink",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -15,7 +15,7 @@
       "name": "Liberaal Verbond",
       "ideology_slot": "liberal",
       "seat_share": 0.21,
-      "leader_name": "Willem Terborg",
+      "leader_person": "NLD_terborg",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": []
@@ -25,7 +25,7 @@
       "name": "Sociale Unie",
       "ideology_slot": "social_democratic",
       "seat_share": 0.18,
-      "leader_name": "Ellen Bosveld",
+      "leader_person": "NLD_bosveld",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -37,7 +37,7 @@
       "name": "Democraten Nu",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.14,
-      "leader_name": "Ruben Aalders",
+      "leader_person": "NLD_aalders",
       "discipline": 0.8,
       "competence": 0.65,
       "excluded_partners": []
@@ -47,7 +47,7 @@
       "name": "Christelijk Midden",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.13,
-      "leader_name": "Marijke Stoffels",
+      "leader_person": "NLD_stoffels",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": []
@@ -57,7 +57,7 @@
       "name": "Groen Polder",
       "ideology_slot": "green",
       "seat_share": 0.15,
-      "leader_name": "Fenna Wielinga",
+      "leader_person": "NLD_wielinga",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [

@@ -5,7 +5,7 @@
       "name": "Bürgerunion",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.28,
-      "leader_name": "Matthias Vogler",
+      "leader_person": "DEU_vogler",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -18,7 +18,7 @@
       "name": "Sozialer Fortschritt",
       "ideology_slot": "social_democratic",
       "seat_share": 0.24,
-      "leader_name": "Katrin Bohlen",
+      "leader_person": "DEU_bohlen",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -30,7 +30,7 @@
       "name": "Freiheitliche Mitte",
       "ideology_slot": "liberal",
       "seat_share": 0.1,
-      "leader_name": "Jens Ruppert",
+      "leader_person": "DEU_ruppert",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -42,7 +42,7 @@
       "name": "Grüne Zukunft",
       "ideology_slot": "green",
       "seat_share": 0.13,
-      "leader_name": "Annika Seibold",
+      "leader_person": "DEU_seibold",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [
@@ -54,7 +54,7 @@
       "name": "Nationale Erneuerung",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.16,
-      "leader_name": "Dietrich Falk",
+      "leader_person": "DEU_falk",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -64,7 +64,7 @@
       "name": "Linke Allianz",
       "ideology_slot": "left_populist",
       "seat_share": 0.09,
-      "leader_name": "Marlene Grotholt",
+      "leader_person": "DEU_grotholt",
       "discipline": 0.65,
       "competence": 0.5,
       "excluded_partners": []

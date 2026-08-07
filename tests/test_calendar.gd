@@ -55,7 +55,49 @@ func _init() -> void:
 	_check_cancel()
 	_check_fixed_dates()
 	_check_upcoming_window()
+	_check_person_is_a_label_not_an_identity()
 	_finish()
+
+
+## U6a declared `person_id` unread so U6b could key appointments on people
+## without a second SAVE_VERSION bump. **U6b did not need it**, and this is where
+## that decision is pinned rather than left to a comment.
+##
+## A person is the FACE of a target that already exists -- booking a state visit
+## to Germany IS booking its leader -- so a person cannot change what an
+## appointment is. verb_key() therefore stays out of it, and two entries that
+## differ ONLY in person_id are the same verb: the second is refused while the
+## first is in flight, exactly as two identical ones are.
+##
+## If a later session makes a person part of an appointment's identity, this
+## turns red and it has to come and say why -- and it will owe a bump, because
+## every booking in an existing save would silently re-key.
+func _check_person_is_a_label_not_an_identity() -> void:
+	var state = _fresh()
+	var when := _months_ahead(state, 3)
+
+	var plain := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 14, "state_visit", PARTNER
+	)
+	var with_person := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 14, "state_visit", PARTNER,
+		"", "", "", "DEU_vogler"
+	)
+	if Calendar.verb_key(plain) != Calendar.verb_key(with_person):
+		_fail("person_id changed an appointment's identity: '%s' vs '%s'" % [
+			Calendar.verb_key(plain), Calendar.verb_key(with_person),
+		])
+
+	if not bool(Calendar.book(state, with_person)["ok"]):
+		_fail("a booking carrying a person was refused")
+	if Calendar.can_book(state, plain):
+		_fail("the same verb was bookable again with the person stripped -- a label must not open a second slot")
+
+	# And cancelling by the key derived from the OTHER one still finds it, which
+	# is the practical consequence: a panel need not know the person to cancel.
+	Calendar.cancel(state, Calendar.verb_key(plain))
+	if not Calendar.booked(state).is_empty():
+		_fail("cancelling by a key derived without the person left the booking in place")
 
 
 ## The property the whole file's shape exists to keep. Read the source, not the

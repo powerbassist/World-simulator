@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "AUT_kettler", "name": "Bernhard Kettler" },
+    { "id": "AUT_haslinger", "name": "Ingrid Haslinger" },
+    { "id": "AUT_prantl", "name": "Wolfgang Prantl" },
+    { "id": "AUT_aichinger", "name": "Theresa Aichinger" },
+    { "id": "AUT_steinhauser", "name": "Lukas Steinhauser" },
+    { "id": "AUT_kranzler", "name": "Elisabeth Kranzler" },
+    { "id": "AUT_rudolf_v", "name": "Rudolf V" }
+  ]
+}

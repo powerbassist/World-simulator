@@ -369,10 +369,14 @@ func _cooldown_name(ref: String) -> String:
 func _booking_text(entry: Dictionary) -> String:
 	match String(entry.get("kind", "")):
 		K.KIND_DIPLOMATIC:
-			return "%s with %s" % [
+			# The person is a LABEL on the act, never part of its identity -- so
+			# it is appended to the text and stays out of Calendar.verb_key().
+			var who: String = _loader.person_name(String(entry.get("person_id", "")))
+			var line := "%s with %s" % [
 				_action_name(String(entry.get("action_id", ""))),
 				_nation_name(String(entry.get("target_id", ""))),
 			]
+			return "%s — %s" % [line, who] if who != "" else line
 		K.KIND_LAW:
 			return "Propose %s" % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
@@ -498,8 +502,14 @@ func _entry_from_form() -> Dictionary:
 
 	match kind:
 		K.KIND_DIPLOMATIC:
+			# The one verb that is literally "meet someone", so it is the one that
+			# carries a person. A law is proposed to an assembly and a reshuffle
+			# hands a department to a PARTY -- U6b's probe cut the minister bench,
+			# so neither has a person to name, and "" says so rather than guessing
+			# at a party leader who is not taking the job.
 			return Calendar.make_entry(
-				kind, int(when["year"]), int(when["month"]), day, act, subject
+				kind, int(when["year"]), int(when["month"]), day, act, subject,
+				"", "", "", _leader_person_id(subject)
 			)
 		K.KIND_LAW:
 			return Calendar.make_entry(
@@ -532,6 +542,15 @@ func _month_at(offset: int) -> Dictionary:
 func _nation_name(id: String) -> String:
 	var n = _loader.nations.get(id)
 	return String(n.nation_name) if n != null else id
+
+
+## Whom a state visit to `nation_id` actually meets. Resolved at BOOKING time
+## rather than at arrival, so the diary shows the person the president intended
+## to see -- a foreign government that changes in the meantime is a thing the
+## player should be able to notice, not something the entry rewrites behind them.
+func _leader_person_id(nation_id: String) -> String:
+	var n = _loader.nations.get(nation_id)
+	return String(n.leader_person_id) if n != null else ""
 
 
 func _action_name(id: String) -> String:

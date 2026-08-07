@@ -37,12 +37,12 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.amendment_rule = nation.amendment_rule
 	ns.permits_system_change = nation.permits_system_change
 	ns.head_of_government_title = nation.head_of_government_title
-	ns.start_head_of_government_name = nation.head_of_government_name
+	ns.start_head_of_government_person_id = nation.head_of_government_person_id
 
 	ns.system_id = nation.system_id
 	ns.head_of_state_kind = nation.head_of_state_kind
 	ns.head_of_state_title = nation.head_of_state_title
-	ns.head_of_state_name = nation.head_of_state_name
+	ns.head_of_state_person_id = nation.head_of_state_person_id
 	ns.head_of_state_next_year = nation.head_of_state_next_year
 	ns.head_of_state_next_month = nation.head_of_state_next_month
 	ns.term_limit = nation.term_limit
@@ -51,7 +51,7 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.coalition_seats = 0
 	ns.coalition_position = NEUTRAL_POSITION.duplicate()
 	ns.pm_party_id = ""
-	ns.pm_name = ""
+	ns.pm_person_id = ""
 	ns.is_cohabitation = false
 	ns.is_minority = false
 	ns.last_formation = {}
@@ -88,7 +88,7 @@ static func form(ns, party_list: Array) -> Dictionary:
 	ns.coalition_seats = result["coalition_seats"]
 	ns.coalition_position = result["position"]
 	ns.pm_party_id = result["pm_party_id"]
-	ns.pm_name = result["pm_name"]
+	ns.pm_person_id = result["pm_person_id"]
 	ns.is_cohabitation = result["cohabitation"]
 	ns.is_minority = result["minority"]
 	ns.last_formation = result
@@ -101,7 +101,7 @@ static func _empty_result() -> Dictionary:
 		"coalition_seats": 0,
 		"position": NEUTRAL_POSITION.duplicate(),
 		"pm_party_id": "",
-		"pm_name": "",
+		"pm_person_id": "",
 		"cohabitation": false,
 		"minority": true,
 		"method": "",
@@ -233,23 +233,26 @@ static func _describe(ns, chosen: Array, by_id: Dictionary, pm_party_id: String,
 	for pid in chosen:
 		total += _seats(ns, pid)
 
-	var pm_name := ""
+	# A person id, never a name: src/sim/ handles no names at all after U6b, and
+	# the UI resolves against loader.person_by_id. That is what the re-key bought
+	# -- this function used to reach into a Party for a display string.
+	var pm_person_id := ""
 	if by_id.has(pm_party_id):
 		# The head of government named in the nation file holds office at game
 		# start and comes back whenever the executive's own party takes the
 		# premiership -- in France the President is not the Prime Minister, so
 		# that party's authored leader is the wrong person to name.
-		if pm_party_id == ns.incumbent_party_id and ns.start_head_of_government_name != "":
-			pm_name = ns.start_head_of_government_name
+		if pm_party_id == ns.incumbent_party_id and ns.start_head_of_government_person_id != "":
+			pm_person_id = ns.start_head_of_government_person_id
 		else:
-			pm_name = by_id[pm_party_id].leader_name
+			pm_person_id = by_id[pm_party_id].leader_person_id
 
 	return {
 		"coalition_party_ids": chosen,
 		"coalition_seats": total,
 		"position": position_of(ns.seats_by_party, chosen, by_id),
 		"pm_party_id": pm_party_id,
-		"pm_name": pm_name,
+		"pm_person_id": pm_person_id,
 		"cohabitation": cohabitation,
 		"minority": total <= majority_seats(ns),
 		"method": ns.formation_method,
@@ -511,7 +514,10 @@ static func resolve_censure(ns, party_list: Array, forced := false) -> Dictionar
 		"party_votes": votes,
 		"party_rebels": rebels_by_party,
 		"defectors": defectors,
-		"pm_name": ns.pm_name,
+		# The censured premier, as an id rather than the frozen name string this
+		# used to carry. A historical record keyed by id stays resolvable; a name
+		# copied into a save was a label nothing could ever re-read.
+		"pm_person_id": ns.pm_person_id,
 		"pm_party_id": ns.pm_party_id,
 	}
 

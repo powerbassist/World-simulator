@@ -11,6 +11,7 @@ const PoliticalSystem = preload("res://src/core/political_system.gd")
 const Scenario = preload("res://src/core/scenario.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const BlocProposal = preload("res://src/core/bloc_proposal.gd")
+const Person = preload("res://src/core/person.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -22,6 +23,20 @@ const EU = preload("res://src/core/eu.gd")
 
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
+
+## nation id -> Array[Person], in authored file order — the order the People
+## window reads, and the only order anything reads, since nothing looks a person
+## up by position.
+var people: Dictionary = {}
+
+## person id -> Person, FLAT and global. This is the dictionary that matters: a
+## party id is only ever read inside a nation's context, so `parties` can be
+## keyed by nation and party ids can collide across nations silently. A person id
+## is read BARE — off NationState.pm_person_id, off an appointment entry that
+## carries no nation field, out of last_censure in a save — so it has to be
+## self-describing and globally unique. Hence the `<NATION>_<surname>` scheme and
+## the prefix check in _validate_people(). See docs/people-model.md.
+var person_by_id: Dictionary = {}
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -59,9 +74,11 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people") -> void:
 	nations.clear()
 	parties.clear()
+	people.clear()
+	person_by_id.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
@@ -102,6 +119,11 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		if nation.id != "":
 			nations[nation.id] = nation
 
+	# People before parties, because _load_parties() resolves each party's
+	# leader_person_id against the register and a reference cannot be checked
+	# against a dictionary that has not been filled yet.
+	for id in nations.keys():
+		_load_people(id, people_dir)
 	for id in nations.keys():
 		_load_parties(id, parties_dir)
 
@@ -120,6 +142,124 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_scenarios()
 	_validate_neighbours()
 	_validate_bloc_proposals()
+	_validate_people()
+
+
+## Resolve a person id to the name a screen prints. The ONLY reader of
+## `person_by_id` outside this file, and the reason U6b needed no `people.gd`
+## module: a name lookup is a dictionary read, and every panel that wants one
+## already holds the loader. An unknown or empty id gives "", which is what the
+## panels already did with an empty name field before the re-key -- so a
+## government that does not exist still reads as one that does not exist.
+func person_name(person_id: String) -> String:
+	var person = person_by_id.get(person_id, null)
+	return person.person_name if person != null else ""
+
+
+## One data/people/<NATION>.json per nation, {"people": [...]}, the same shape
+## and the same failure modes as data/parties/*.json. See docs/people-model.md.
+func _load_people(nation_id: String, people_dir: String) -> void:
+	var fname := "%s.json" % nation_id
+	var path := people_dir.path_join(fname)
+	var text := FileAccess.get_file_as_string(path)
+	if text.is_empty():
+		errors.append("%s: could not read file" % path)
+		return
+
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("people")) != TYPE_ARRAY:
+		errors.append("%s: invalid people file, expected {\"people\": [...]}" % fname)
+		return
+
+	var raw_list: Array = parsed["people"]
+	var parsed_people: Array[Person] = []
+	var per_file_errors: Array[String] = []
+	var seen_ids := {}
+
+	for i in raw_list.size():
+		var entry = raw_list[i]
+		if typeof(entry) != TYPE_DICTIONARY:
+			per_file_errors.append("%s: people[%d] is not an object" % [fname, i])
+			continue
+		var person = Person.from_dict(entry, i, fname, per_file_errors)
+		if person.id == "":
+			continue
+
+		# The prefix rule is the load-bearing one: global uniqueness follows from
+		# per-file uniqueness plus a prefix that cannot repeat across files, since
+		# a nation gets exactly one file named after it. The flat duplicate check
+		# below is therefore redundant BY DESIGN — it can only fire if this rule is
+		# ever relaxed, which is exactly when a duplicate stops being impossible.
+		if not person.id.begins_with("%s_" % nation_id):
+			per_file_errors.append(
+				"%s: person id '%s' must begin with '%s_'" % [fname, person.id, nation_id]
+			)
+		if seen_ids.has(person.id):
+			per_file_errors.append("%s: duplicate person id '%s'" % [fname, person.id])
+		seen_ids[person.id] = true
+
+		if person_by_id.has(person.id):
+			per_file_errors.append(
+				"%s: person id '%s' is already used in another nation's file" % [fname, person.id]
+			)
+		else:
+			person_by_id[person.id] = person
+		parsed_people.append(person)
+
+	errors.append_array(per_file_errors)
+	people[nation_id] = parsed_people
+
+
+## Every person is referenced, and every reference resolves inside its own
+## nation. The first half is the unusual one and it is deliberate: an
+## unreferenced person is content with no caller, which is what U6b's own probe
+## cut a five-deep minister bench for. Authoring a name nobody can reach should
+## fail the load rather than sit in a file looking like a feature.
+func _validate_people() -> void:
+	var referenced := {}
+
+	for nation_id in nations.keys():
+		var nation = nations[nation_id]
+		var slots := {
+			"leader.person": nation.leader_person_id,
+			"government.head_of_state.person": nation.head_of_state_person_id,
+			"government.formation.head_of_government_person": nation.head_of_government_person_id,
+			"government.pretender_person": nation.pretender_person_id,
+		}
+		for slot in slots.keys():
+			var pid: String = String(slots[slot])
+			if pid == "":
+				continue
+			_check_person_ref(nation_id, "%s.json" % nation_id, slot, pid, referenced)
+
+		for party in parties.get(nation_id, []):
+			if party.leader_person_id == "":
+				continue
+			_check_person_ref(
+				nation_id, "parties/%s.json" % nation_id,
+				"party '%s' leader_person" % party.id, party.leader_person_id, referenced
+			)
+
+	for nation_id in people.keys():
+		for person in people[nation_id]:
+			if not referenced.has(person.id):
+				errors.append(
+					"people/%s.json: person '%s' (%s) is referenced by nothing"
+					% [nation_id, person.id, person.person_name]
+				)
+
+
+func _check_person_ref(nation_id: String, where: String, slot: String, pid: String, referenced: Dictionary) -> void:
+	if not person_by_id.has(pid):
+		errors.append("%s: %s names person '%s', which is not in the register" % [where, slot, pid])
+		return
+	# A nation pointing at another nation's person would resolve to a name and be
+	# wrong in the one way a resolving reference can be — the same reason
+	# _validate_neighbours() checks mutuality rather than mere existence.
+	if not pid.begins_with("%s_" % nation_id):
+		errors.append("%s: %s names person '%s', who belongs to another nation" % [where, slot, pid])
+		return
+	referenced[pid] = true
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:

@@ -5,7 +5,7 @@
       "name": "Renouveau Civique",
       "ideology_slot": "centrist_liberal",
       "seat_share": 0.28,
-      "leader_name": "Daniel Moucron",
+      "leader_person": "FRA_moucron",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -17,7 +17,7 @@
       "name": "Union Conservatrice",
       "ideology_slot": "centre_right",
       "seat_share": 0.2,
-      "leader_name": "Hélène Vasseur",
+      "leader_person": "FRA_vasseur",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -30,7 +30,7 @@
       "name": "Parti Social Uni",
       "ideology_slot": "social_democratic",
       "seat_share": 0.18,
-      "leader_name": "Bruno Lachapelle",
+      "leader_person": "FRA_lachapelle",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -42,7 +42,7 @@
       "name": "Alliance Verte",
       "ideology_slot": "green",
       "seat_share": 0.09,
-      "leader_name": "Camille Ferrand",
+      "leader_person": "FRA_ferrand",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [
@@ -54,7 +54,7 @@
       "name": "Front Souverainiste",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.16,
-      "leader_name": "Gilles Aubertin",
+      "leader_person": "FRA_aubertin",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -64,7 +64,7 @@
       "name": "Gauche Populaire",
       "ideology_slot": "left_populist",
       "seat_share": 0.09,
-      "leader_name": "Nadia Perrault",
+      "leader_person": "FRA_perrault",
       "discipline": 0.65,
       "competence": 0.5,
       "excluded_partners": []

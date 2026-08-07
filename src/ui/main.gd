@@ -20,6 +20,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
+const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -87,6 +88,7 @@ var _minimap
 var _nation_panel
 var _bloc_panel
 var _calendar_panel
+var _people_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -250,6 +252,12 @@ func _ready() -> void:
 	# panel whose contents just changed.
 	_calendar_panel.diary_changed.connect(func(): _calendar_panel.mark_dirty())
 
+	# U6b. Read-only, and the only surface that shows the whole register rather
+	# than the one person a given screen happens to be about.
+	_people_panel = PeoplePanel.new()
+	_windows.register("people", "People", _people_panel)
+	_people_panel.setup(_state, _loader)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -325,6 +333,8 @@ func _build_action_bar() -> void:
 		# A president's diary is state. One line, exactly as the comment above
 		# this function predicted three sessions ago.
 		{"id": "calendar", "label": "Diary"},
+		# A president's people are state too, by the same argument the diary took.
+		{"id": "people", "label": "People"},
 	])
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		{"id": "economy", "label": "Economy"},
@@ -862,6 +872,7 @@ func _on_load_requested(slot: String) -> void:
 	_nation_panel.setup(_state, _loader)
 	_government_panel.setup(_state, _loader)
 	_bloc_panel.setup(_state, _loader)
+	_people_panel.setup(_state, _loader)
 
 	_calendar_panel.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to

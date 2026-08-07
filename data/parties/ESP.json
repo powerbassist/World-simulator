@@ -5,7 +5,7 @@
       "name": "Unión Popular",
       "ideology_slot": "centre_right",
       "seat_share": 0.28,
-      "leader_name": "Álvaro Bustamante",
+      "leader_person": "ESP_bustamante",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": []
@@ -15,7 +15,7 @@
       "name": "Frente Progresista",
       "ideology_slot": "social_democratic",
       "seat_share": 0.3,
-      "leader_name": "Mateo Larrañaga",
+      "leader_person": "ESP_larranaga",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -27,7 +27,7 @@
       "name": "Voz Nacional",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.14,
-      "leader_name": "Rocío Sanchís",
+      "leader_person": "ESP_sanchis",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -37,7 +37,7 @@
       "name": "Convergencia Ciudadana",
       "ideology_slot": "left_populist",
       "seat_share": 0.16,
-      "leader_name": "Iker Mendiola",
+      "leader_person": "ESP_mendiola",
       "discipline": 0.65,
       "competence": 0.5,
       "excluded_partners": []
@@ -47,7 +47,7 @@
       "name": "Verdes Iberia",
       "ideology_slot": "green",
       "seat_share": 0.12,
-      "leader_name": "Nuria Palomares",
+      "leader_person": "ESP_palomares",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [

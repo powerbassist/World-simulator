@@ -5,7 +5,7 @@
   "capital": "Brussels",
   "playable": false,
   "leader": {
-    "name": "Bram Vandekerckhove",
+    "person": "BEL_vandekerckhove",
     "title": "Prime Minister",
     "party": "burgerforum"
   },
@@ -40,7 +40,7 @@
     "head_of_state": {
       "kind": "hereditary_monarch",
       "title": "King",
-      "name": "Baudouin III"
+      "person": "BEL_baudouin_iii"
     },
     "term_limit": 0,
     "amendment": {
@@ -56,8 +56,10 @@
       "method": "coalition_negotiation",
       "censure": "simple_present",
       "head_of_government_title": "Prime Minister",
-      "head_of_government_name": "Bram Vandekerckhove"
+      "head_of_government_person": "BEL_vandekerckhove"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "BEL_baudouin_iii",
     "eu": {
       "member": true,
       "ep_seats": 22

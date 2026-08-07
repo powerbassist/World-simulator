@@ -124,7 +124,28 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     records of one fact. tests/test_save_load.gd asserts the version is STILL 13,
 ##     so a later session raising it has to come and say why -- the shape V1.3c left
 ##     and V1.3d answered.
-const SAVE_VERSION := 13
+##
+##   - U6b is that session, and it bumps on a RE-KEY rather than on a new field.
+##     `pm_name`, `head_of_state_person_id` and `start_head_of_government_person_id`
+##     used to hold NAMES and now hold person ids into data/people/. Nothing was
+##     added, so the naive reading is that nothing is at risk -- but the rule is
+##     "would a missing field read as something wrong?", and an absent
+##     `pm_person_id` reads as a nation with NO head of government, which is a
+##     claim about the world rather than a missing label. A version-13 save also
+##     carries the old keys, so without the bump every one of the three would load
+##     as "" while the save itself looks intact: `military_capability`'s case at
+##     V1.3g, and `eu_member`/`neighbours` at V1.3b, in their strongest form yet --
+##     the reloaded game would render a government nobody governs.
+##
+##     What U6b did NOT add is again the interesting half. There is no per-person
+##     serialised state at all, because a person is pure content: an id and a name,
+##     with every relationship expressed by the reference that owns it. The one
+##     field that would have earned this bump on its own -- a stored
+##     `ns.cabinet_person` -- was never written, because the probe cut the minister
+##     bench that needed it. And `appointments`' `person_id` earns nothing: it is a
+##     derived LABEL, so an absent one reads as "not recorded", and the entry's
+##     identity is still Calendar.verb_key(), which U6b did not touch.
+const SAVE_VERSION := 14
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

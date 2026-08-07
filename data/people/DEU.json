@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "DEU_vogler", "name": "Matthias Vogler" },
+    { "id": "DEU_bohlen", "name": "Katrin Bohlen" },
+    { "id": "DEU_ruppert", "name": "Jens Ruppert" },
+    { "id": "DEU_seibold", "name": "Annika Seibold" },
+    { "id": "DEU_falk", "name": "Dietrich Falk" },
+    { "id": "DEU_grotholt", "name": "Marlene Grotholt" },
+    { "id": "DEU_emmerich", "name": "Wolfgang Emmerich" },
+    { "id": "DEU_friedrich_iv", "name": "Friedrich IV" }
+  ]
+}

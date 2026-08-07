@@ -100,7 +100,7 @@ func setup(state, loader) -> void:
 	if nation == null:
 		return
 	_nation_label.text = nation.nation_name
-	_leader_label.text = "%s, %s" % [nation.leader_name, nation.leader_title]
+	_leader_label.text = "%s, %s" % [loader.person_name(nation.leader_person_id), nation.leader_title]
 	_flag.setup(nation.flag_bands, nation.flag_layout)
 	refresh()
 

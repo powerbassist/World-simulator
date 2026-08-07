@@ -227,7 +227,7 @@ var system_id: String = ""
 ## dissolution.gd reads for head_of_state_limited. See political_system.gd.
 var head_of_state_kind: String = ""
 var head_of_state_title: String = ""
-var head_of_state_name: String = ""
+var head_of_state_person_id: String = ""
 var head_of_state_next_year: int = 0
 var head_of_state_next_month: int = 0
 
@@ -289,7 +289,7 @@ var head_of_government_title: String = ""
 ## premiership returns to the executive's own party, because in a
 ## semi-presidential system that party's authored leader is the President, not
 ## the Prime Minister.
-var start_head_of_government_name: String = ""
+var start_head_of_government_person_id: String = ""
 
 ## The live government: which parties are in it, how many seats they carry
 ## between them, and the seat-weighted mean of their ideology positions. That
@@ -299,7 +299,7 @@ var coalition_seats: int = 0
 var coalition_position := {"economic": 0.0, "social": 0.0}
 
 var pm_party_id: String = ""
-var pm_name: String = ""
+var pm_person_id: String = ""
 
 ## True when the assembly majority is a bloc that excludes the executive's own
 ## party — the player keeps the office and loses the legislature.
@@ -545,7 +545,7 @@ func duplicate_state():
 	s.system_id = system_id
 	s.head_of_state_kind = head_of_state_kind
 	s.head_of_state_title = head_of_state_title
-	s.head_of_state_name = head_of_state_name
+	s.head_of_state_person_id = head_of_state_person_id
 	s.head_of_state_next_year = head_of_state_next_year
 	s.head_of_state_next_month = head_of_state_next_month
 	s.lose_condition = lose_condition
@@ -564,12 +564,12 @@ func duplicate_state():
 	s.formation_method = formation_method
 	s.censure_rule = censure_rule
 	s.head_of_government_title = head_of_government_title
-	s.start_head_of_government_name = start_head_of_government_name
+	s.start_head_of_government_person_id = start_head_of_government_person_id
 	s.coalition_party_ids = coalition_party_ids.duplicate(true)
 	s.coalition_seats = coalition_seats
 	s.coalition_position = coalition_position.duplicate(true)
 	s.pm_party_id = pm_party_id
-	s.pm_name = pm_name
+	s.pm_person_id = pm_person_id
 	s.is_cohabitation = is_cohabitation
 	s.is_minority = is_minority
 	s.last_formation = last_formation.duplicate(true)
@@ -677,7 +677,7 @@ func to_dict() -> Dictionary:
 		"system_id": system_id,
 		"head_of_state_kind": head_of_state_kind,
 		"head_of_state_title": head_of_state_title,
-		"head_of_state_name": head_of_state_name,
+		"head_of_state_person_id": head_of_state_person_id,
 		"head_of_state_next_year": head_of_state_next_year,
 		"head_of_state_next_month": head_of_state_next_month,
 		"lose_condition": lose_condition,
@@ -696,12 +696,12 @@ func to_dict() -> Dictionary:
 		"formation_method": formation_method,
 		"censure_rule": censure_rule,
 		"head_of_government_title": head_of_government_title,
-		"start_head_of_government_name": start_head_of_government_name,
+		"start_head_of_government_person_id": start_head_of_government_person_id,
 		"coalition_party_ids": coalition_party_ids,
 		"coalition_seats": coalition_seats,
 		"coalition_position": coalition_position,
 		"pm_party_id": pm_party_id,
-		"pm_name": pm_name,
+		"pm_person_id": pm_person_id,
 		"is_cohabitation": is_cohabitation,
 		"is_minority": is_minority,
 		"last_formation": last_formation,
@@ -825,7 +825,7 @@ static func from_dict(d: Dictionary):
 	s.system_id = d.get("system_id", "")
 	s.head_of_state_kind = d.get("head_of_state_kind", "")
 	s.head_of_state_title = d.get("head_of_state_title", "")
-	s.head_of_state_name = d.get("head_of_state_name", "")
+	s.head_of_state_person_id = d.get("head_of_state_person_id", "")
 	s.head_of_state_next_year = int(d.get("head_of_state_next_year", 0))
 	s.head_of_state_next_month = int(d.get("head_of_state_next_month", 0))
 	s.lose_condition = d.get("lose_condition", "")
@@ -844,12 +844,12 @@ static func from_dict(d: Dictionary):
 	s.formation_method = d.get("formation_method", "")
 	s.censure_rule = d.get("censure_rule", "")
 	s.head_of_government_title = d.get("head_of_government_title", "")
-	s.start_head_of_government_name = d.get("start_head_of_government_name", "")
+	s.start_head_of_government_person_id = d.get("start_head_of_government_person_id", "")
 	s.coalition_party_ids = d.get("coalition_party_ids", [])
 	s.coalition_seats = int(d.get("coalition_seats", 0))
 	s.coalition_position = d.get("coalition_position", {"economic": 0.0, "social": 0.0})
 	s.pm_party_id = d.get("pm_party_id", "")
-	s.pm_name = d.get("pm_name", "")
+	s.pm_person_id = d.get("pm_person_id", "")
 	s.is_cohabitation = d.get("is_cohabitation", false)
 	s.is_minority = d.get("is_minority", false)
 	s.last_formation = d.get("last_formation", {})

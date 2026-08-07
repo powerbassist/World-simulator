@@ -32,6 +32,7 @@ Static data is **read once at startup and never mutated**. When the simulation r
 data/
 ├── nations/           one file per nation — FRA.json, DEU.json, …
 ├── parties/           one file per nation's party system
+├── people/            one file per nation — every named individual ([[ROADMAP|U6b]])
 ├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
 ├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
 ├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])

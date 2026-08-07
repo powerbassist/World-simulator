@@ -260,6 +260,18 @@ twice. The slot is carried from this session, written by nobody — the additive
 escape hatch V1.3c named in advance for `measures` and then took without touching
 relations or agreements.
 
+> [!note] [[people-model|U6b]] did not need it, and `verb_key()` is unchanged
+> The hatch was carried against the wrong risk. A person is the **face** of a
+> target that already exists, so booking a state visit to Germany *is* booking
+> its leader — one act, one key. `person_id` is now written as a derived
+> **label**, resolved by the panel that knows the target, and it stays out of
+> `verb_key()`: `tests/test_calendar.gd` asserts two entries differing only in
+> `person_id` are the same verb, refused as a duplicate and cancellable by a key
+> derived without the person. The hatch cost nothing and was right to carry;
+> what it insured against did not happen. Only the diplomatic kind carries a
+> person — a law is proposed to an assembly, and U6b's probe cut the minister
+> bench, so a reshuffle has nobody to name.
+
 ## 7. Constants
 
 `src/sim/calendar_constants.gd`. **None of these was swept.** Each is a bound —

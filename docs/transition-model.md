@@ -115,11 +115,17 @@ validated by `Law._extract_head_of_state()`:
 .largest_party_id()`'s own leader — the same "largest party" formation
   already computes, not a second implementation. The clock is set to the
   transition month plus `term_years`.
-- `hereditary_monarch` → `name` **required**, `term_years` **forbidden**.
+- `hereditary_monarch` → `term_years` **forbidden**.
 
-Not an inconsistency between the two: an elected president is someone
-already on the board (a party leader); a restored monarch is not — nothing
-in this game's authored content is a plausible dynasty. Load-time checkable,
+A name is forbidden for **both**, and that is [[people-model|U6b]]'s
+correction. It used to be *required* for a monarch, on the reasoning that an
+elected president is someone already on the board (a party leader) while a
+restored monarch is not. The reasoning was right and the conclusion was
+wrong: the law applies to any `parliamentary_republic`, so one authored king
+meant **every republic in Europe restored the same man**. A law names an
+OFFICE; the acting nation's own `government.pretender_person` names the
+person, and a monarchy points that slot at its own sitting monarch so a
+republic-then-restoration returns the right house. Load-time checkable,
 the same present-only-if-required, complete-if-present rule `Nation.gd`
 already applies to its own head-of-state block.
 
@@ -155,7 +161,7 @@ fires. Corrected here rather than left standing.
 | Law | `systems` | Target | Bundle |
 |---|---|---|---|
 | `abolish_the_monarchy` | `constitutional_monarchy` | `parliamentary_republic` | `investiture` / `simple_present` / `confidence_failure` / `two_thirds` / `term_limit: 0` / `elected_president` "President", 5-year term |
-| `restore_the_monarchy` | `parliamentary_republic` | `constitutional_monarchy` | `largest_party` / `simple_present` / `executive_discretion` / `ordinary_law` / `term_limit: 0` / `hereditary_monarch` "King Alexander IV" |
+| `restore_the_monarchy` | `parliamentary_republic` | `constitutional_monarchy` | `largest_party` / `simple_present` / `executive_discretion` / `ordinary_law` / `term_limit: 0` / `hereditary_monarch`, holder from the nation's own `pretender_person` |
 
 `investiture` and `confidence_failure` are chosen for `abolish_the_monarchy`
 because GBR's own `largest_party`/`executive_discretion` are illegal under

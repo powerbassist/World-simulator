@@ -150,7 +150,7 @@ idiom, and `_apply_view()` runs four frames before the capture rather than one. 
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
-so every map layer can be captured with something actually on it. That last flag
+so every map layer can be captured with something actually on it. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
 same argument — a new game's council is empty and a frame of three "None" captions
@@ -510,20 +510,68 @@ pushes a float sentinel, every copied Array had been untyped until now, and the
 three `Array[Dictionary]` fields were all excluded for unrelated reasons — so it
 reported "shared with the copy" for a field that is duplicated correctly.
 
-**Next: U6b** — the named-individual roster, **political faces only** (foreign
-leaders, party leaders, ministers). Each is the face of a target that already
-exists, so *no new effect channel* stays literally true; a journalist has none,
-and journalists, celebrities and business therefore belong to `docs/tiers/v1.md`
-§4 and §5 with the mechanisms that give them something to do. The diary's entry
-already carries an unread `person_id`, so U6b is additive.
+**U6b shipped the register, and the row was wrong about what the work was.**
+The roster half already existed: ~70 named people were live as loose strings in
+**five** places, and **every one of the ten nation files wrote a person's name
+twice** — `party.gd` even documented the duplication as a convention. So U6b was
+a *migration* into `data/people/` plus a re-key, not an authoring exercise. Only
+**five** names are new, the pretenders for the five republics, and authoring them
+fixed a live content bug: `amendments.json` named one king inline and the
+Restoration Act applies to any `parliamentary_republic`, so **every republic in
+Europe restored the same man**. A law names an office; the nation's own
+`government.pretender_person` names the person, and a monarchy points that slot at
+its sitting monarch.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, U1–U5 and U6a are done. V1.1e (upper house and
+**A person is an id and a NAME, and the three fields that were cut are the
+design.** `role`, `title` and `party_id` all went before `person.gd` was written,
+because the reference that owns each relationship already states it — a title
+belongs to the office, a party leader is whoever `leader_person_id` points at, and
+an office is *the slot pointing at you*, which Moucron proves cannot even be
+single-valued. That leaves **no field that could carry a mechanism**, so "no
+mechanism on a person" is true by construction; `tests/test_people.gd` reads the
+file and fails if a third field appears. `docs/tiers/v1.md` §4 and §5 inherit the
+register and extend it. There is **no `src/core/people.gd`**: it was deleted
+before it was written once the bench was cut, because a name lookup is a
+dictionary read and every panel already holds the loader.
+
+**The probe corrected the model once and itself twice, nine sessions running, and
+its kill switch FIRED and was honoured.** A flat ordered bench picked by rank made
+adding one portfolio renumber every minister a party already held — 22 department
+changes in one run, for reasons about nobody — so it became a **shadow cabinet**
+keyed by portfolio, where churn is structurally impossible rather than damped.
+Then its own election counter reported **zero elections for every nation over
+fourteen years**, and churn was gated on it; and the first cast table had no
+vacancy column, so a collapsed government read the same as a thin roster. With
+those fixed, distinct-people-seen came back **6** worst case against a
+pre-committed floor of **12** — and a perfectly healthy single-party GBR at **7**
+with zero vacancy across three elections. **The minister bench was cut before it
+was authored**, U6a's currency deletion one session on; a portfolio still names a
+party, and `docs/cabinet-model.md`'s deferral is recorded as still correct rather
+than reversed. Model: [docs/people-model.md](docs/people-model.md).
+
+**`verb_key()` is unchanged and U6a's `person_id` hatch was not needed.** A person
+is the *face* of a target that already exists, so booking a state visit to Germany
+IS booking its leader — one act, one key. `person_id` is a derived label, and
+`tests/test_calendar.gd` asserts two entries differing only in it are the same
+verb. The hatch cost nothing and was right to carry; what it insured against did
+not happen.
+
+**`tools/check_names.sh` cannot see an untracked file**, and the first run over
+the new register passed with zero hits and **zero files scanned** — it iterates
+`git ls-files`. The largest exposure that check has ever had was, for one run, not
+being checked at all. Any session authoring a new content directory must `git add`
+before the check means anything. **The balance re-run is bit-identical across all
+fourteen regimes with no fifteenth needed** — predicted in advance, and a first
+for this run: U6a and V1.3g each needed a new regime because each added a verb,
+and a name is not a decision.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 13**. There has never been a migration: a superseded
+Save format is at **version 14**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -571,7 +619,17 @@ copy in `to_dict()` would be two records of one fact; the test asserts its
 **absence**, which pins that property. And the field that *would* have earned a
 bump — a spent-days counter, which reads 0 when absent and hands a save-scumming
 player their month back — was never written, because the probe cut the currency it
-counted first.
+counted first. **U6b bumps to 14 on a RE-KEY rather than a new
+field, which is new on this list.** Nothing was added: `pm_name`,
+`head_of_state_name` and `start_head_of_government_name` stopped holding names and
+started holding person ids. The naive reading is that nothing is at risk, but a
+version-13 save carries the *old* keys, so without the bump all three load as `""`
+while the file looks intact and the game renders a government nobody governs —
+`military_capability` at V1.3g and `eu_member`/`neighbours` at V1.3b, in their
+strongest form yet. And U6b adds **no per-person serialised state at all**, because
+a person is pure content; the one field that would have earned the bump on its own,
+a stored `ns.cabinet_person`, was never written because the probe cut the bench
+that needed it.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

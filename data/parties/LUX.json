@@ -5,7 +5,7 @@
       "name": "Union Chrétienne",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.27,
-      "leader_name": "Marc Everling",
+      "leader_person": "LUX_everling",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -17,7 +17,7 @@
       "name": "Alliance Libérale",
       "ideology_slot": "liberal",
       "seat_share": 0.2,
-      "leader_name": "Nathalie Weiler",
+      "leader_person": "LUX_weiler",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -29,7 +29,7 @@
       "name": "Parti Ouvrier Uni",
       "ideology_slot": "social_democratic",
       "seat_share": 0.24,
-      "leader_name": "Serge Hoffmann",
+      "leader_person": "LUX_hoffmann",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -41,7 +41,7 @@
       "name": "Verts Nationaux",
       "ideology_slot": "green",
       "seat_share": 0.16,
-      "leader_name": "Anouk Reiland",
+      "leader_person": "LUX_reiland",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": []
@@ -51,7 +51,7 @@
       "name": "Renouveau Populaire",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.13,
-      "leader_name": "Jean-Paul Steichen",
+      "leader_person": "LUX_steichen",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []

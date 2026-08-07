@@ -5,7 +5,7 @@
   "capital": "Paris",
   "playable": true,
   "leader": {
-    "name": "Daniel Moucron",
+    "person": "FRA_moucron",
     "title": "President of the Republic",
     "party": "renouveau_civique"
   },
@@ -33,7 +33,7 @@
     "head_of_state": {
       "kind": "executive_president",
       "title": "President of the Republic",
-      "name": "Daniel Moucron"
+      "person": "FRA_moucron"
     },
     "term_limit": 2,
     "amendment": { "rule": "three_fifths", "permits_system_change": false },
@@ -46,8 +46,9 @@
       "method": "coalition_negotiation",
       "censure": "absolute_members",
       "head_of_government_title": "Prime Minister",
-      "head_of_government_name": "Cécile Aumont"
+      "head_of_government_person": "FRA_aumont"
     },
+    "pretender_person": "FRA_charles_xi",
     "eu": { "member": true, "ep_seats": 81 },
     "neighbours": ["BEL", "CHE", "DEU", "ESP", "ITA", "LUX"]
   },

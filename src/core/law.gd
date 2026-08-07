@@ -331,9 +331,17 @@ static func _extract_head_of_state(raw, law_id: String, filename: String, errors
 	else:
 		out["title"] = title
 
+	# A transition names an OFFICE; the acting nation's own content names who
+	# fills it. That is true for every kind now, where before it was true only
+	# for elected_president: the Restoration Act used to author "Alexander IV"
+	# inline, so every parliamentary republic in Europe restored the SAME king.
+	# The nation's `government.pretender_person` answers it per nation instead —
+	# and a monarchy points that reference at its own sitting monarch, so a
+	# restoration puts the right dynasty back. See docs/transition-model.md.
+	if raw.has("name"):
+		errors.append("%s: %s effects.institutional.head_of_state.name must not be set for any kind -- the holder is derived at apply() time, from the largest party's leader for 'elected_president' and from the nation's own government.pretender_person otherwise" % [filename, law_id])
+
 	if kind == "elected_president":
-		if raw.has("name"):
-			errors.append("%s: %s effects.institutional.head_of_state.name must not be set for kind 'elected_president' -- the holder is derived from the largest party's leader at apply() time" % [filename, law_id])
 		if not raw.has("term_years") or not (typeof(raw["term_years"]) == TYPE_INT or typeof(raw["term_years"]) == TYPE_FLOAT):
 			errors.append("%s: %s effects.institutional.head_of_state.term_years is missing or not numeric, required for kind 'elected_president'" % [filename, law_id])
 		else:
@@ -341,14 +349,8 @@ static func _extract_head_of_state(raw, law_id: String, filename: String, errors
 			if term_years < 1 or term_years > 10:
 				errors.append("%s: %s effects.institutional.head_of_state.term_years = %d out of range [1, 10]" % [filename, law_id, term_years])
 			out["term_years"] = term_years
-	else:
-		if raw.has("term_years"):
-			errors.append("%s: %s effects.institutional.head_of_state.term_years must not be set for kind '%s'" % [filename, law_id, kind])
-		var name = raw.get("name", "")
-		if typeof(name) != TYPE_STRING or name == "":
-			errors.append("%s: %s effects.institutional.head_of_state.name is missing or invalid, required for kind '%s'" % [filename, law_id, kind])
-		else:
-			out["name"] = name
+	elif raw.has("term_years"):
+		errors.append("%s: %s effects.institutional.head_of_state.term_years must not be set for kind '%s'" % [filename, law_id, kind])
 
 	return out
 

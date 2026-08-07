@@ -5,7 +5,7 @@
   "capital": "Madrid",
   "playable": false,
   "leader": {
-    "name": "Mateo Larrañaga",
+    "person": "ESP_larranaga",
     "title": "President of the Government",
     "party": "frente_progresista"
   },
@@ -40,7 +40,7 @@
     "head_of_state": {
       "kind": "hereditary_monarch",
       "title": "King",
-      "name": "Alfonso VII"
+      "person": "ESP_alfonso_vii"
     },
     "term_limit": 0,
     "amendment": {
@@ -56,8 +56,10 @@
       "method": "investiture",
       "censure": "constructive_absolute",
       "head_of_government_title": "President of the Government",
-      "head_of_government_name": "Mateo Larrañaga"
+      "head_of_government_person": "ESP_larranaga"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "ESP_alfonso_vii",
     "eu": {
       "member": true,
       "ep_seats": 61

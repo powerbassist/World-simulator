@@ -412,6 +412,20 @@ a budget and an opinion model — the same "code with no caller" reasoning
 requirement, and the same content-cost argument that kept this session's
 scope to eleven surfaces instead of fourteen.
 
+> [!note] [[people-model|U6b]] took this deferral up and CONFIRMED it
+> U6b built the named-individual register and measured the bench this
+> deferral was about, *before authoring it*: a five-deep shadow cabinet per
+> party, against a pre-committed floor of twelve distinct people seen over a
+> fourteen-year run. The worst case came back **6**, and a perfectly healthy
+> single-party GBR government came back **7** with zero vacancy across three
+> elections — roughly a fifth of what the bench would cost to author. **The
+> bench was cut before it existed**, so a portfolio still names the party that
+> holds it, and V1.1d's fork row above is recorded as still correct rather
+> than reversed. What U6b did build is the register everything else needed:
+> one record per person, ids in state, and no name anywhere in `src/sim/`.
+> The measurement, and the churn correction that preceded it, are
+> [[people-model]] §5.
+
 **A Cabinet dashboard tab.** The player reads and reassigns the cabinet from
 the existing Government panel. A dedicated tab is **U5** — and this session
 is ROADMAP's own trigger for building one: "until a system session ends by

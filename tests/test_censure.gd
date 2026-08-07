@@ -234,7 +234,7 @@ func _check_a_weak_government_is_censured_and_falls() -> void:
 	var ns = state.player()
 	_install_narrow_government(ns, "union_conservatrice")
 
-	var before_pm: String = ns.pm_name
+	var before_pm: String = ns.pm_person_id
 	var law = _first_law()
 	var result := Legislature.propose(state, _loader, law, true)
 	var censure: Dictionary = result["censure"]
@@ -252,7 +252,7 @@ func _check_a_weak_government_is_censured_and_falls() -> void:
 		_fail("governments_fallen is %d after one carried censure" % ns.governments_fallen)
 	if not ns.in_government:
 		_fail("a censured French government cost the President the presidency")
-	if ns.pm_name == before_pm and ns.pm_party_id == "union_conservatrice":
+	if ns.pm_person_id == before_pm and ns.pm_party_id == "union_conservatrice":
 		_fail("the censured head of government is still in office")
 	if ns.coalition_party_ids.is_empty():
 		_fail("no replacement government formed after the censure")
@@ -408,7 +408,7 @@ func _install_narrow_government(ns, party_id: String) -> void:
 	ns.coalition_seats = int(ns.seats_by_party.get(party_id, 0))
 	ns.coalition_position = Government.position_of(ns.seats_by_party, [party_id], by_id)
 	ns.pm_party_id = party_id
-	ns.pm_name = by_id[party_id].leader_name
+	ns.pm_person_id = by_id[party_id].leader_person_id
 	ns.is_minority = true
 	ns.is_cohabitation = false
 	ns.force_cooldown_months = 0

@@ -32,9 +32,11 @@ tests=(
   tests/test_foreign_policy.gd
   tests/test_defence.gd
   tests/test_calendar.gd
+  tests/test_people.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
+  tests/test_people_panel.gd
   tests/test_game_loop.gd
   tests/test_menu.gd
   tests/test_map_view.gd

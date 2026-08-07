@@ -275,7 +275,7 @@ func _mark_panels_dirty() -> void:
 	for name in [
 		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
-		"_calendar_panel",
+		"_calendar_panel", "_people_panel",
 	]:
 		var panel = _main.get(name)
 		if panel != null and panel.has_method("mark_dirty"):
@@ -476,9 +476,14 @@ func _fill_the_diary() -> void:
 			var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
 			if acts.is_empty():
 				continue
+			# U6b: the person the visit actually meets, resolved the way
+			# calendar_panel.gd resolves it at booking time. Without this the frame
+			# proves nothing about the new label -- a capture of a field nobody
+			# filled in is the pre-mutation frame V1.3g found in this same tool.
 			Calendar.book(state, Calendar.make_entry(
 				CalendarK.KIND_DIPLOMATIC, year, month, int(spec["day"]),
-				String(acts[0].id), String(target_id)
+				String(acts[0].id), String(target_id), "", "", "",
+				String(loader.nations[String(target_id)].leader_person_id)
 			))
 			break
 
