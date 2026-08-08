@@ -594,6 +594,66 @@ var start_service_quality := {}
 ## anti-corruption act the assembly ever passed.
 var corruption: float = 0.0
 
+## V1.5b. The share of the population aged 0–14 and 65+, as fractions. Written by
+## Demography.tick_month() and by nothing else. The 15–64 share is NOT here: it is
+## the residual `1 - young - old`, derived by Demography.working_share() at every
+## read, so the three sum to 1.0 by construction and a conservation bug is
+## structurally impossible — _apply_growth_to_sectors()'s discipline, which keeps
+## sector output summing to GDP with no reconciliation.
+##
+## BOTH EARN THE SAVE_VERSION BUMP, 16 → 17. Absent they read 0.0, which is not a
+## neutral default but a different model: the working share becomes 1.0, the
+## dependency ratio 0.0, the denominator under the quality stock 0/start, and the
+## labour force the entire population. `military_capability`'s case at V1.3g and
+## `eu_member`/`neighbours`' at V1.3b — a reloaded game running a different model
+## from the one that saved it. Init-from-content does NOT rescue them, for
+## `service_quality`'s reason one session earlier: re-deriving on load would erase a
+## drift the player spent a term living through.
+var young_share: float = 0.0
+var old_share: float = 0.0
+
+## The references the dependency factor is measured against — captured at init, so
+## Demography.dependency_factor() is exactly 1.0 at new game for all ten nations.
+## `start_service_quality`'s treatment and `start_bloc_burden`'s.
+##
+## EARN NOTHING. Recomputed at init from the `imported.cohorts` every nation file now
+## carries, so they round-trip through `data/nations/` rather than through the save.
+## Serialised all the same, for start_service_quality's reason: a save reloaded
+## before its first tick must measure against the reference it was saved with.
+var start_young_share: float = 0.0
+var start_old_share: float = 0.0
+
+## Static per-nation facts copied off `imported.cohorts` at init and never written
+## again — the treatment `eu_member` and `neighbours` get, and for the same reason:
+## it is what lets Demography take no loader, so Budget.project() runs the real model
+## forward on a copy and gets the real answer.
+##
+## `pop_growth_pct` replaces economy_constants.POP_GROWTH_PCT, one flat 0.15 shared by
+## all ten. Measured, it spans Italy's **−0.238** to Luxembourg's **+1.938**, so the
+## constant had every nation in the roster growing and one of them shrinks.
+##
+## EARN NOTHING, and they are the clearest case of it on this list: they are content.
+var young_share_per_yr: float = 0.0
+var old_share_per_yr: float = 0.0
+var participation_share: float = 0.0
+var pop_growth_pct: float = 0.0
+
+## V1.5b. Signed accumulated migration stance, clamped to
+## ±demography_constants.MIGRATION_STANCE_MAX. Written by Legislature.apply() through
+## the `society` effect channel and by nothing else — `corruption` above has the
+## identical discipline, and Demography only ever reads this.
+##
+## The second term on `effects.society`, which V1.5a declared as schema two later
+## sessions would read rather than one session's private field. This is the first of
+## them, so the channel needed no widening beyond one key.
+##
+## EARNS NOTHING. Absent it reads 0.0 — no standing migration policy — which is
+## correct for every version-16 save, because those games had no migration law to
+## pass. `corruption`'s case one session earlier. Serialised regardless and for
+## `corruption`'s reason: a law writes it once and no tick recomputes it, so a save
+## that dropped it would silently repeal every migration act the assembly passed.
+var migration_stance: float = 0.0
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -732,6 +792,15 @@ func duplicate_state():
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
 	s.corruption = corruption
+	s.young_share = young_share
+	s.old_share = old_share
+	s.start_young_share = start_young_share
+	s.start_old_share = start_old_share
+	s.young_share_per_yr = young_share_per_yr
+	s.old_share_per_yr = old_share_per_yr
+	s.participation_share = participation_share
+	s.pop_growth_pct = pop_growth_pct
+	s.migration_stance = migration_stance
 
 	return s
 
@@ -875,6 +944,15 @@ func to_dict() -> Dictionary:
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
 		"corruption": corruption,
+		"young_share": young_share,
+		"old_share": old_share,
+		"start_young_share": start_young_share,
+		"start_old_share": start_old_share,
+		"young_share_per_yr": young_share_per_yr,
+		"old_share_per_yr": old_share_per_yr,
+		"participation_share": participation_share,
+		"pop_growth_pct": pop_growth_pct,
+		"migration_stance": migration_stance,
 	}
 
 
@@ -1032,6 +1110,15 @@ static func from_dict(d: Dictionary):
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
 	s.corruption = float(d.get("corruption", 0.0))
+	s.young_share = float(d.get("young_share", 0.0))
+	s.old_share = float(d.get("old_share", 0.0))
+	s.start_young_share = float(d.get("start_young_share", 0.0))
+	s.start_old_share = float(d.get("start_old_share", 0.0))
+	s.young_share_per_yr = float(d.get("young_share_per_yr", 0.0))
+	s.old_share_per_yr = float(d.get("old_share_per_yr", 0.0))
+	s.participation_share = float(d.get("participation_share", 0.0))
+	s.pop_growth_pct = float(d.get("pop_growth_pct", 0.0))
+	s.migration_stance = float(d.get("migration_stance", 0.0))
 
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))

@@ -152,8 +152,9 @@ warm end until a frame was looked at. It saves a PNG of the running game — run
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
 (V1.4a) `--subsidy`,
 (V1.4b) `--regulate`,
-(V1.4c) `--nationalise` and
-(V1.5a) `--corrupt`,
+(V1.4c) `--nationalise`,
+(V1.5a) `--corrupt` and
+(V1.5b) `--migrate`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -900,13 +901,101 @@ missing from a green suite; it is `check_names.sh`'s U6b failure in a new place,
 check that silently covers less than it appears to. Both are wired in now and both
 pass.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.5b shipped demographics and migration, and the row's central premise was wrong.**
+The decomposition deferred (b) partly because ten authored age structures with **no
+dataset behind them** would be the clustered `coalition_position` failure a block later.
+The dataset exists: the World Bank publishes age structure and 15–64 participation for
+all ten, on the same licence through the same loop, and `docs/data-sources.md`'s loop has
+always fetched `date=2015:2024` — so a per-nation ageing **slope** cost one extra read of
+a series already on disk and **no extra download**. Old-age dependency spans **LUX 0.225
+to ITA 0.388**, the slopes span **2.58×**, and nothing clusters. Twenty-third stale-row
+instance.
+
+**The cohort machine was designed and CUT, and Luxembourg is the proof.** Nothing reads a
+head *count* — `population` enters no equation in `economy.gd`, and
+`firm_jobs_offset_pct()` returns before its denominator unless a firm has moved. A
+uniform 15–64 bucket predicts Luxembourg ages **fastest** of the ten; measured, it ages
+**slowest**. And fertility and life expectancy are *inputs* to a projection whose output
+the dataset already publishes. So `src/sim/demography.gd` carries two live shares on a
+**linear measured drift**, the working share is the **residual** (`1 − young − old`,
+never stored, so the three sum to 1.0 by construction), and
+`demography_constants.gd` has **exactly one tuned constant**. Deliberately *not*
+`capability_target()`/`capability_step()`'s shape: those converge on a target the player
+sets, and a population converges on nothing a president decides.
+
+**The shortfall is a DENOMINATOR at one existing site.** `spending_pct_gdp` is a
+player-set rate, so ageing cannot drive it; what ageing does is make the same rate buy
+less. `Society.quality_target()` divides by `Demography.dependency_factor()`, exactly 1.0
+at new game for all ten — which discharged `QUALITY_KEYS`'s own promise word for word
+(*"It joins by becoming an entry"*) for **one entry and zero lines in `opinion.gd`**.
+Migration is the **second `effects.society` term**, signed both ways, and the sign is
+load-bearing rather than symmetric: ageing is otherwise a permanent monotone charge no
+verb can close. `immigration_tightening` was re-authored off `structural_unemployment_pct`
+as booked, `labour_migration_scheme` is the other direction, and `law.gd` gained the third
+anti-double-count pair — scoped to the **pair**, not the channel, so `labour.json`'s four
+laws keep the scalar.
+
+**A pre-committed tiebreaker failed for a THIRD distinct reason and the rule is
+extended.** `MIGRATION_SHARE_BETA`'s was a genuine strict ordering — exactly what V1.5a's
+restated rule demands — and it still failed, because **both bands are one-sided
+minimums**: every candidate above the threshold passes, so "largest passing" returns the
+top row of whatever grid was swept, and widening the grid moved the answer from 0.010 to
+0.016. **The range was choosing the constant.** The rule now reads: a tiebreaker must
+strictly order the survivors **and its answer must not move when the candidate range is
+widened**. The corrected selector (smallest passing) chose **0.0090**, *interior* to the
+grid. A cheap diagnostic falls out: **a value sitting at an endpoint of the swept range is
+a suspect, not a result.** Separately the **kill switch fired** on
+`DEPENDENCY_ELASTICITY["health"]` — −0.51 on its widest bloc row even at 1.00 against a
+±3.0 floor — so the entry was **deleted** and the table ships with one.
+
+**Two constants were deleted and only content replaced them.** `POP_GROWTH_PCT` (one flat
+0.15 for all ten, against measured ITA **−0.238** and LUX **+1.938** — it had every nation
+in Europe growing and one of them shrinks) and `LABOUR_FORCE_SHARE` (0.45, whose own
+comment called it "measured, not a dial" — true for France to three digits at 0.4543, and
+wrong for Germany at 0.5027). `tools/companies_probe.gd` read the second directly and was
+fixed in the same commit, which is V1.3e's parse break avoided rather than repeated.
+
+**The re-run held the prediction: 23 of 24 shared regimes bit-identical in GDP, growth,
+trend, unemployment, debt and deficit, and ZERO outcome changes.** The one mover is
+`managed_subsidises`, exactly the regime the labour-force denominator was predicted to
+reach. **The bloc transfer moved nothing and the handoff was wrong to expect it to**:
+`Bloc.net_positions()` reads the loader's Nation objects and is called once at new-game,
+never re-ticked. The nineteenth regime is the cheap kind, and the legibility evidence is
+sharper than the headline — under `managed_corrupts` the result screen now attributes
+`pensions` at salience 0.17, where before it could not appear at all. Model:
+[docs/demography-model.md](docs/demography-model.md).
+
+**`BLOC_SIZE.pensioners` stays authored and the refusal is recorded beside it**, pinned by
+`tests/test_demography.gd`. It is 0.24 against a measured 65+ share of 0.2215 drifting to
+~0.27 — one quantity, two writers — but it is an *electorate* share, `BLOC_TURNOUT` already
+models the age effect a second time, and the table is read by `elections.gd` twice plus
+`cabinet.gd`, `opinion.gd` and `polling_panel.gd`, so making it live would move election
+**results** and re-baseline every opinion constant ever measured.
+
+**`tools/import_data.py` was silently deleting fields, and the diff is how it was found.**
+`write_nation_file()` rebuilt each nation file from an *enumerated* key list, so every
+top-level field a later session added was dropped on the next import — U6b's `leader`
+block and the `flag` block both already had been. It now rebuilds from the file's own key
+order and writes short scalar arrays back on one line, which is what makes *the diff shows
+only what you meant to change* a usable check. **Two test fixtures also predated
+`imported.cohorts`** and began failing for a second, unrelated reason before reaching the
+check each exists for; both were repaired rather than worked around.
+
+The readout is split: the **dependency ratio** is on the economy panel under the
+population caption it decomposes (a fact about the *country*), and the **pensions delivery
+line** arrives free on the overview because `_fill_services()` already loops
+`QUALITY_KEYS` (a fact about the *government*). `screenshot.gd` gained `--migrate`, and
+the pass confirmed both: the economy panel reads *"43 retired per 100 of working age, +7
+since the start"* with the clock correctly at 2030, and the overview reads *"Pensions
+delivery −0.34 on baseline"* in red while the health line stays **silent**.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a–b, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 16**. There has never been a migration: a superseded
+Save format is at **version 17**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -1008,7 +1097,23 @@ at V1.4a). Both are serialised regardless and for two *different* reasons, which
 test states separately rather than folding together. The assertion worth having is
 again the split: the test checks that `service_quality` does **not** come back on one
 tick, which is exactly what separates it from V1.4a's and V1.4c's four derived prices,
-so a later session making the stock derivable turns it red and has to say why.
+so a later session making the stock derivable turns it red and has to say why. **V1.5b
+bumps to 17, earns it TWICE, and the second half adds no field at all — which is new on
+this list.** `young_share` and `old_share` are the ordinary half: absent they read 0.0,
+which is not a neutral default but a *different model* (working share 1.0, dependency
+ratio 0.0, labour force the whole population), and init-from-content does not rescue them
+for `service_quality`'s reason. The sharp half is **`service_quality["pensions"]`**, a key
+added to a dictionary that was already serialised: a version-16 save carries
+`{"health": …}` and no `pensions` entry, `_tick_nation()` reads `.get(key, 0.0)` so the
+stock starts at zero, and `quality_deviation()` measures it against a
+`start_service_quality` that is also absent — so the deviation reads as a large and
+growing **positive**, a France whose pension system has just been invented and is
+improving fast. A windfall the player did not earn, mis-signed for the rest of the run.
+The two references, the four content fields and `migration_stance` all earn nothing and
+are serialised anyway for the reasons already on this list. `tests/test_save_load.gd`
+asserts the two halves **separately**, and that split is the assertion worth having: it
+pins that **growing a registry dictionary can earn a bump**, which nothing here had said
+out loud and which V1.5c and V1.5d will each be tempted to do.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

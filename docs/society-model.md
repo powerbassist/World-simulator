@@ -29,7 +29,7 @@ spending, feeding back into opinion."* Counted cold, of the five spending lines
 | `education` | `potential_shift_pct`, via `EDU_BETA` | S4 |
 | `infrastructure` | `potential_shift_pct`, via `INFRA_BETA` | S4 |
 | `health` | — | **V1.5a** |
-| `pensions` | — | V1.5b |
+| `pensions` | `service_quality`, given a denominator | **V1.5b** |
 
 So V1.5a **completes and names a pattern rather than inventing one**, and
 `src/sim/society.gd` lifts `capability_target()` / `capability_step()` from
@@ -39,10 +39,23 @@ decades has hospitals on the day the game starts.
 
 `education` is excluded **forever**, and `society_constants.QUALITY_KEYS` is the
 place that refusal lives rather than a doc: a second stock on the same input is
-[[companies-model|V1.4b]]'s collision in a new place. `pensions` is excluded
+[[companies-model|V1.4b]]'s collision in a new place. `pensions` was excluded
 **temporarily** — adequacy is spend per *dependent*, and the dependent count is
 V1.5b's. `tests/test_society.gd` reads the list and fails if any of the three
 permanent exclusions appears in it.
+
+> [!note] The temporary exclusion is DISCHARGED, and it cost one entry
+> [[demography-model|V1.5b]] shipped the dependency ratio, and `pensions` joined
+> `QUALITY_KEYS` exactly as the paragraph above said it would — *"It joins by becoming
+> an entry"* — for **one entry here and zero lines in `opinion.gd`**, which is what
+> the registry was for. What it was waiting on was the denominator:
+> `Society.quality_target()` now divides by `Demography.dependency_factor()`, so the
+> same spending rate buys less pension as the country ages. §13's *"Pension adequacy.
+> Needs a dependent count, which is V1.5b's"* is discharged with it.
+>
+> The same session found that a `health` ageing elasticity **cannot clear the readable
+> floor at any value** — −0.51 on its widest bloc row even at 1.0 — so the entry was
+> deleted and `DEPENDENCY_ELASTICITY` ships with one. See [[demography-model]] §7.
 
 ## 2. Two fields, three writers, and no new kind of state
 
@@ -375,7 +388,9 @@ figure computed and displayed nowhere is the failure this project has hit four t
 **A second education stock.** §1. `potential_shift_pct` is that stock, and
 `QUALITY_KEYS` enforces the exclusion.
 
-**Pension adequacy.** Needs a dependent count, which is V1.5b's.
+**Pension adequacy.** ~~Needs a dependent count, which is V1.5b's.~~ **Built at
+[[demography-model|V1.5b]]**, as a denominator under this stock rather than as a
+machine of its own. §1.
 
 **Any recovered-revenue line for anti-corruption.** `anti_corruption_agency` used to
 price itself as `other_revenue_pct_gdp: 0.1` — recovered money — which described the

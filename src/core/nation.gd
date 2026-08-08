@@ -8,10 +8,35 @@ extends RefCounted
 const C = preload("res://src/sim/economy_constants.gd")
 
 const KNOWN_IMPORTED_KEYS: Array[String] = [
-	"_source", "_year", "_usd_eur", "population", "gdp_eur_bn",
-	"unemployment_pct", "sectors",
+	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
+	"unemployment_pct", "sectors", "cohorts",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
+
+## V1.5b. imported.cohorts, all six required and no others accepted -- KNOWN_SECTOR_KEYS'
+## treatment, for the same reason: this block is script-written, so a key that is absent
+## or misspelled is a broken import rather than an authoring choice to be tolerated.
+const KNOWN_COHORT_KEYS: Array[String] = [
+	"young_pct", "old_pct", "young_pct_per_yr", "old_pct_per_yr",
+	"participation_pct", "pop_growth_pct",
+]
+
+## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
+## Demography.working_share() is 1 - young - old and is a DENOMINATOR twice over, in
+## dependency_ratio() and in labour_force(), so a nation authored close to 100 % young
+## plus old divides by nearly nothing and every figure downstream diverges. The roster's
+## thinnest is Italy at 63.49, so 30.0 is a guard rail rather than a lever -- the
+## treatment defence_constants.CAPABILITY_MAX gets.
+const MIN_WORKING_PCT := 30.0
+
+## Bounds on the compound annual population rate, in percent. Signed, because Italy's
+## is measured at -0.238: a roster where every nation grows was economy_constants'
+## flat POP_GROWTH_PCT = 0.15, and replacing it with a measured figure means admitting
+## the ones that shrink. The floor is what stops a nation being authored into a
+## negative population, which docs/data-architecture.md's checklist has always asked
+## for and which was trivially true while the rate was one shared constant.
+const MIN_POP_GROWTH_PCT := -3.0
+const MAX_POP_GROWTH_PCT := 5.0
 const KNOWN_ELECTION_SYSTEMS: Array[String] = ["pr_dhondt", "pr_national", "fptp", "two_round", "parallel"]
 
 ## Moved from data_loader.gd's now-deleted _load_policy_defaults() at V1.2a,
@@ -222,6 +247,17 @@ var gdp_eur_bn: float = 0.0
 var unemployment_pct: float = 0.0
 var sectors: Dictionary = {}
 
+## V1.5b. The age structure, its measured slope, and the participation rate --
+## imported.cohorts, written by tools/import_data.py from World Bank indicators over
+## 2015-2024 and never authored. Keys are KNOWN_COHORT_KEYS below.
+##
+## The 15-64 share is NOT here, deliberately: Demography.working_share() derives it as
+## the residual 1 - young - old, so there is exactly one answer and a conservation bug
+## is structurally impossible. That is _apply_growth_to_sectors()'s discipline, and it
+## is why _validate_cohorts() bounds the two shares against each other rather than
+## checking a third against their sum.
+var cohorts: Dictionary = {}
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -390,6 +426,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.sectors = _extract_dict(imported, "sectors", filename, errors)
 	_validate_sectors(n.sectors, filename, errors)
 
+	n.cohorts = _extract_dict(imported, "cohorts", filename, errors)
+	_validate_cohorts(n.cohorts, filename, errors)
+
 	return n
 
 
@@ -440,6 +479,56 @@ static func _validate_sectors(sectors: Dictionary, filename: String, errors: Arr
 
 	if absf(total - 1.0) > 0.001:
 		errors.append("%s: imported.sectors sums to %s, expected 1.0" % [filename, str(total)])
+
+
+## V1.5b. _validate_sectors()'s shape, with one difference that is the whole point:
+## sectors are checked against a SUM because all three are authored, and cohorts are
+## checked against a RESIDUAL because the third is not.
+##
+## The two range checks that are not obvious, and neither is decoration:
+##
+##   (1) young + old must leave MIN_WORKING_PCT of working age. working_share() is a
+##       denominator in both dependency_ratio() and labour_force(), so a nation
+##       authored near 100 % dependent divides by nearly nothing and every figure
+##       downstream diverges. Checked here rather than clamped in demography.gd,
+##       because a clamp would silently accept a broken import and run the game on it.
+##   (2) pop_growth_pct is bounded and SIGNED. Italy's is -0.238, so a one-sided check
+##       would refuse the roster; an unbounded one lets a bad import author a nation
+##       into a negative population over fourteen years.
+static func _validate_cohorts(cohorts: Dictionary, filename: String, errors: Array[String]) -> void:
+	var keys := cohorts.keys()
+	keys.sort()
+	var expected := KNOWN_COHORT_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.cohorts must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	for key in KNOWN_COHORT_KEYS:
+		var raw = cohorts[key]
+		if not (typeof(raw) == TYPE_FLOAT or typeof(raw) == TYPE_INT):
+			errors.append("%s: imported.cohorts.%s is not numeric" % [filename, key])
+			return
+
+	var young: float = cohorts["young_pct"]
+	var old: float = cohorts["old_pct"]
+	_check_range_float(young, 0.0, 100.0, "imported.cohorts.young_pct", filename, errors)
+	_check_range_float(old, 0.0, 100.0, "imported.cohorts.old_pct", filename, errors)
+
+	var working: float = 100.0 - young - old
+	if working < MIN_WORKING_PCT:
+		errors.append("%s: imported.cohorts leaves %s%% of working age, below the %s%% floor -- Demography.working_share() is a denominator twice over" % [filename, str(snappedf(working, 0.01)), str(MIN_WORKING_PCT)])
+
+	# The slopes are bounded by the share they move: a share cannot travel more than
+	# its own range per year, and a figure anywhere near that is a broken import
+	# rather than a fast-ageing country. The roster's largest is France at +0.366.
+	_check_range_float(cohorts["young_pct_per_yr"], -100.0, 100.0, "imported.cohorts.young_pct_per_yr", filename, errors)
+	_check_range_float(cohorts["old_pct_per_yr"], -100.0, 100.0, "imported.cohorts.old_pct_per_yr", filename, errors)
+
+	# Not [0, 100]: participation is a share of the 15-64 population, and a rate of
+	# zero would put the labour force at zero and divide firm_jobs_offset_pct() by it.
+	_check_range_float(cohorts["participation_pct"], 1.0, 100.0, "imported.cohorts.participation_pct", filename, errors)
+	_check_range_float(cohorts["pop_growth_pct"], MIN_POP_GROWTH_PCT, MAX_POP_GROWTH_PCT, "imported.cohorts.pop_growth_pct", filename, errors)
 
 
 ## Hex strings in, Colors out, validated here rather than at the draw call --

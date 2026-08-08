@@ -36,6 +36,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -343,6 +344,9 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
 		# quality stock reads the live spending line, so any regime that moves one moves
 		# the `health` satisfaction term with it.
+		# V1.5b, immediately before Society: the quality stock divides by this layer's
+		# dependency factor, so demography must have settled before quality reads it.
+		Demography.tick_month(state)
 		Society.tick_month(state)
 		Cabinet.tick_month(state, _loader)
 

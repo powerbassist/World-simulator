@@ -19,6 +19,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
 
 
 static func tick_month(state) -> void:
@@ -257,6 +258,9 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# spending cut as costing nothing beyond its own delta, when the whole point of
 		# the stock is that the consequence arrives over the following three years.
 		# V1.3b's repair, made a fifth time rather than rediscovered a fifth time.
+		# V1.5b, immediately before Society: the quality stock divides by this layer's
+		# dependency factor, so demography must have settled before quality reads it.
+		Demography.tick_month(sim)
 		Society.tick_month(sim)
 		out.append(snapshot(sim))
 	return out

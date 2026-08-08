@@ -24,6 +24,33 @@ const BLOC_KEYS := ["workers", "pensioners", "urban", "rural", "business", "stud
 
 ## Share of the electorate. A partition by dominant identity, summing to 1.0 —
 ## which is what makes the weighted roll-up defensible rather than arbitrary.
+## V1.5b ASKED WHETHER `pensioners` SHOULD BECOME COHORT-DERIVED AND THE ANSWER IS NO,
+## recorded here rather than in a doc for V1.4c's reason -- so a later session finds the
+## reasons instead of the silence.
+##
+## The question is real and it is this project's most-named failure: `pensioners` is
+## 0.24 and src/sim/demography.gd now carries France's measured 65+ share at 0.2215,
+## drifting to about 0.27 over fourteen years. One quantity, two writers.
+##
+## Three reasons it stays authored, and the third is the one that decides:
+##
+##   1. It is an ELECTORATE share, not a population share. It excludes everyone under
+##      18, so it is not the same quantity even before the drift -- and 0.24 against a
+##      voting-age 65+ share is much closer than 0.24 against 0.2215 looks.
+##   2. election_constants.BLOC_TURNOUT ALREADY models the age effect a second time.
+##      Making this live would be the third writer of one story, not the second.
+##   3. THE BLAST RADIUS IS ELECTIONS AND NOT APPROVAL. This table is read by
+##      elections.gd twice (turnout and seats), cabinet.gd, opinion.gd and
+##      polling_panel.gd -- so a live share moves election RESULTS, and would
+##      re-baseline every constant measured at S5, S10, V1.3d, V1.4c and V1.5a at once,
+##      inside the session that also re-baselines demographics. No measurement could
+##      then attribute anything to either.
+##
+## THE STANDING CONSEQUENCE IS RECORDED RATHER THAN HIDDEN: over a fourteen-year run the
+## model carries a growing disagreement between how many pensioners the budget serves
+## and how many of them vote. V1.5c's unrest agent and docs/tiers/v1.md section 7 will
+## both reach for a live electorate share, and this is the note that tells them the
+## disagreement is known and priced rather than overlooked.
 const BLOC_SIZE := {
 	"workers": 0.30,
 	"pensioners": 0.24,

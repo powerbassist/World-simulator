@@ -172,12 +172,22 @@ rather than a bespoke one.
 ### 7. Population
 
 ```
-population *= (1 + POP_GROWTH_PCT/100) ^ (1/12)
+population *= (1 + ns.pop_growth_pct/100) ^ (1/12)
 ```
 
-`POP_GROWTH_PCT = 0.15 %/yr`. Flat. Demographics is [[v1|V1.5]]; this exists so
-the field is live rather than frozen, which is what makes the done-when check
-"no negative population" mean something.
+**Per nation and measured, since [[demography-model|V1.5b]].** This was
+`POP_GROWTH_PCT = 0.15 %/yr`, one flat constant shared by all ten, and the constant is
+**deleted** rather than left unused. `pop_growth_pct` is read off
+`imported.cohorts`, from the World Bank series 2015→2024, and it spans Italy's
+**−0.238** to Luxembourg's **+1.938** — so the old constant had every nation in Europe
+growing and one of them shrinks.
+
+The done-when check "no negative population" stops being trivially true the moment the
+rate can be negative, which is why `nation.gd` now bounds it at load
+(`MIN_POP_GROWTH_PCT`) rather than trusting the one constant.
+
+The age structure that sits under this figure, and the dependency ratio derived from it,
+belong to `src/sim/demography.gd` rather than here — see [[demography-model]].
 
 ## Budget
 

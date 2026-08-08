@@ -856,6 +856,48 @@ generalisation is worth more than either instance: **a green check is evidence o
 about what it enumerated.** Any session adding a test file must confirm the runner
 names it.
 
+## V1.5b — a tiebreaker can be a strict ordering and STILL let the range choose
+
+[[society-model|V1.5a]] restated the rule above as: *a pre-committed tiebreaker must be a
+strict ordering over the candidates that survive the band*, checked by asking what it
+would say if every row passed. `MIGRATION_SHARE_BETA`'s tiebreaker **satisfied that rule
+and still failed**, which is the third distinct failure mode in two sessions.
+
+It said: strictly less legible on the pensions bloc row than a saturated corruption
+register is on health's — their common landing site, and a genuinely measured quantity —
+then take the **largest** passing candidate. That is a strict ordering by size. It orders
+every row. It is not a tautology and not a bound.
+
+**The defect is that both of its bands are one-sided minimums.** Band (i) asks the lever
+to be *readable*, band (ii) asks it to be *closable*, and a bigger constant satisfies both
+more easily. So every candidate above the threshold passes, "largest" returns the top row
+of the grid, and the answer moves when the grid moves: the first sweep stopped at 0.010
+and chose 0.010; widening it to 0.016 chose 0.016. **The candidate range was choosing the
+constant, and no amount of ordering fixes that.**
+
+**The rule, extended:** a pre-committed tiebreaker must strictly order the survivors
+**and its answer must not move when the candidate range is widened.** The second clause
+is the one with teeth, because it is checkable *before* trusting the result — widen the
+grid and re-read — where "is this a strict ordering?" is answerable in the affirmative by
+a tiebreaker that is nonetheless useless.
+
+**The corrected selector was forced rather than chosen**, which is the useful part: when
+every band is a minimum, the **smallest** passing candidate is the least-invasive value
+that clears them, and it is stable under widening by construction. It chose **0.0090**,
+which is *interior* to the widened grid — two candidates fail below it, three pass above
+— and interiority is the observable that distinguishes a chosen number from a ceiling.
+
+**A cheap diagnostic falls out of this.** If the selected value sits at an endpoint of
+the swept range, the range is a suspect, not a result. That is true regardless of how the
+tiebreaker is phrased, and it costs one glance at the table.
+
+**And the kill switch fired in the same session, which is the counter-example worth
+keeping beside it.** `DEPENDENCY_ELASTICITY["health"]` failed its band at *every*
+candidate including the largest defensible one, so the entry was **deleted** rather than
+shipped. A constant whose range cannot be trusted and a constant that cannot clear its
+floor are different failures with different remedies — widen and re-select, versus
+delete — and a session that meets both should not treat them alike.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

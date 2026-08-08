@@ -16,6 +16,7 @@ const Nation = preload("res://src/core/nation.gd")
 ## strength written twice.
 const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
+const DK = preload("res://src/sim/demography_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -291,6 +292,23 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("society") and raw.has("spending_pct_gdp"):
 		errors.append("%s: %s carries both effects.society and effects.spending_pct_gdp -- corruption already reaches the spending issues through the quality stock, so the two are one story told twice. Pick one." % [filename, law_id])
 
+	# THE SAME ANTI-DOUBLE-COUNT, at the third place it can happen, and V1.5b's own.
+	# A migration stance reaches structural unemployment through the labour force:
+	# Demography.labour_force() is firm_jobs_offset_pct()'s denominator and
+	# Economy._update_unemployment() reads that beside `law_structural_offset_pct`.
+	# Same act, same landing site, same units -- and data/laws/social.json's
+	# `immigration_tightening` was the law that had it BOTH ways until this session
+	# re-authored it, pricing a migration flow as a structural unemployment offset
+	# because there was no flow to price it on.
+	#
+	# Scoped to the PAIR and not to the channel, deliberately: data/laws/labour.json's
+	# four laws keep `structural_unemployment_pct` and are right to, because a labour
+	# reform genuinely is a claim about the matching rate rather than about who is in
+	# the country. A blanket refusal of the scalar would have cost four working laws
+	# to catch one.
+	if raw.has("society") and raw.has("structural_unemployment_pct") and typeof(raw["society"]) == TYPE_DICTIONARY and raw["society"].has("migration"):
+		errors.append("%s: %s carries both effects.society.migration and effects.structural_unemployment_pct -- a migration stance already reaches structural unemployment through the labour force, so the two are one story told twice. Pick one." % [filename, law_id])
+
 	for key in raw.keys():
 		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
@@ -302,43 +320,68 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 ## `effects.company` -- (c)'s unrest and (d)'s press freedom reach it through here,
 ## so this is schema two later sessions read rather than one session's private field.
 ##
-## A law names ONE term, `corruption`, and that is the whole schema. Refused if
-## anything else appears, for `_extract_company()`'s reason stated about a different
-## register: `service_quality` has exactly one writer and it is Society.tick_month().
-## A law that could set a quality level directly would be a second writer of it --
-## two answers to the question of how good the hospitals are -- and it would bypass
-## the stock, which is the one thing in this session that makes the consequence lag
-## the decision.
+## A law names terms from a CLOSED LIST -- `corruption` at V1.5a, `migration` at
+## V1.5b -- and at least one of them. Anything else is refused, for
+## `_extract_company()`'s reason stated about a different register: `service_quality`
+## has exactly one writer and it is Society.tick_month(), and the age shares have one
+## and it is Demography.tick_month(). A law that could set a quality level or an age
+## share directly would be a second writer of it -- two answers to the question of how
+## good the hospitals are, or how old the country is -- and it would bypass the stock
+## and the drift, which are the things that make the consequence lag the decision.
 ##
-## The value is SIGNED. Anti-corruption is the negative direction on the same
-## accumulator, not a repeal verb: V1.4b's argument for deregulation transferred
-## whole, plus one V1.4b did not need -- a one-directional level would make an
-## anti-corruption law INERT on a clean state, and V1.3f's own property is that
-## nothing on the law list does nothing.
+## V1.5b WIDENED THE LIST BY EXACTLY ONE KEY AND NOTHING ELSE, which is what V1.5a
+## meant by declaring this "schema two later sessions read rather than one session's
+## private field". The channel needed no new shape to carry a second register.
+##
+## Both values are SIGNED. Anti-corruption is the negative direction on one
+## accumulator and a migration tightening the negative direction on the other, not
+## repeal verbs: V1.4b's argument for deregulation transferred whole, plus one V1.4b
+## did not need -- a one-directional level would make an anti-corruption law INERT on
+## a clean state, and V1.3f's own property is that nothing on the law list does
+## nothing. For migration the sign carries a second load: ageing is a charge no verb
+## in this game can otherwise close, so an opening direction is what makes the
+## dependency ratio admissible at all rather than a permanent monotone ratchet.
+const SOCIETY_TERMS := {
+	"corruption": SK.CORRUPTION_MAX,
+	"migration": DK.MIGRATION_STANCE_MAX,
+}
+
+
 static func _extract_society(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects.society must be an object" % [filename, law_id])
 		return {}
 
-	if not raw.has("corruption") or not (typeof(raw["corruption"]) == TYPE_INT or typeof(raw["corruption"]) == TYPE_FLOAT):
-		errors.append("%s: %s effects.society.corruption is missing or not numeric" % [filename, law_id])
+	var out := {}
+	for term in SOCIETY_TERMS:
+		if not raw.has(term):
+			continue
+		if not (typeof(raw[term]) == TYPE_INT or typeof(raw[term]) == TYPE_FLOAT):
+			errors.append("%s: %s effects.society.%s is not numeric" % [filename, law_id, term])
+			continue
+		var value := float(raw[term])
+		var limit: float = float(SOCIETY_TERMS[term])
+		if value == 0.0:
+			errors.append("%s: %s effects.society.%s is 0.0 -- a reform that changes nothing is not a reform" % [filename, law_id, term])
+		elif absf(value) > limit:
+			errors.append("%s: %s effects.society.%s = %s exceeds its maximum (%s)" % [
+				filename, law_id, term, str(value), str(limit)
+			])
+		out[term] = value
+
+	if out.is_empty():
+		errors.append("%s: %s effects.society names none of %s" % [
+			filename, law_id, SOCIETY_TERMS.keys()
+		])
 		return {}
 
-	var corruption := float(raw["corruption"])
-	if corruption == 0.0:
-		errors.append("%s: %s effects.society.corruption is 0.0 -- a reform that changes nothing is not a reform" % [filename, law_id])
-	elif absf(corruption) > SK.CORRUPTION_MAX:
-		errors.append("%s: %s effects.society.corruption = %s exceeds CORRUPTION_MAX (%s)" % [
-			filename, law_id, str(corruption), str(SK.CORRUPTION_MAX)
-		])
-
 	for key in raw.keys():
-		if key != "corruption":
-			errors.append("%s: %s effects.society.%s is not a recognised term -- a law names a corruption level and nothing else, and a quality figure beside it would make a law the second writer of the stock's channel" % [
-				filename, law_id, key
+		if not SOCIETY_TERMS.has(key):
+			errors.append("%s: %s effects.society.%s is not a recognised term -- a law names %s and nothing else, and a quality figure or an age share beside them would make a law the second writer of a register that has one" % [
+				filename, law_id, key, SOCIETY_TERMS.keys()
 			])
 
-	return {"corruption": corruption}
+	return out
 
 
 ## V1.4b. A regulation names a SECTOR and a burden on it, and that is the whole

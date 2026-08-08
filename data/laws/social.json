@@ -50,15 +50,30 @@
       "id": "immigration_tightening",
       "name": "Immigration Tightening Act",
       "theme": "social",
-      "summary": "Tighten immigration rules for new labour-market entrants.",
+      "summary": "Tighten immigration rules for new labour-market entrants. Fewer arrivals of working age, and a country that ages faster for it.",
       "position": { "economic": 0.2, "social": 0.7 },
       "majority": "simple",
       "cooldown_months": 24,
       "once": false,
       "preconditions": [],
       "effects": {
-        "structural_unemployment_pct": -0.05,
+        "society": { "migration": -0.35 },
         "bloc_offset": { "rural": 0.25, "urban": -0.15, "business": 0.05 }
+      }
+    },
+    {
+      "id": "labour_migration_scheme",
+      "name": "Labour Migration Scheme",
+      "theme": "social",
+      "summary": "Open a managed route for workers in shortage occupations. More arrivals of working age, and a slower rise in the dependency ratio.",
+      "position": { "economic": -0.1, "social": -0.6 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "migration": 0.35 },
+        "bloc_offset": { "business": 0.20, "urban": 0.15, "rural": -0.25, "workers": -0.10 }
       }
     }
   ]

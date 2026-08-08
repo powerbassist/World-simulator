@@ -98,6 +98,7 @@
   "imported": {
     "_source": "worldbank",
     "_year": 2024,
+    "_trend_from_year": 2015,
     "_usd_eur": 0.92,
     "population": 68600000,
     "gdp_eur_bn": 2910.0,
@@ -106,6 +107,14 @@
       "agriculture": 0.015,
       "industry": 0.192,
       "services": 0.793
+    },
+    "cohorts": {
+      "young_pct": 16.51,
+      "old_pct": 22.15,
+      "young_pct_per_yr": -0.193,
+      "old_pct_per_yr": 0.366,
+      "participation_pct": 74.07,
+      "pop_growth_pct": 0.33
     }
   }
 }

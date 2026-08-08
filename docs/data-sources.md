@@ -38,8 +38,9 @@ Which open datasets seed the game's content, what each one is licensed under, an
 ### World Bank Open Data — economic seed values
 
 - **License:** CC BY 4.0. Attribution required.
-- **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`).
+- **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`). **And, since [[ROADMAP|V1.5b]], age structure** — population aged 0–14 (`SP.POP.0014.TO.ZS`) and 65+ (`SP.POP.65UP.TO.ZS`) — **plus the 15–64 labour-force participation rate (`SL.TLF.ACTI.ZS`)**.
 - **Used for:** Starting statistics for every nation in scope, **rounded**. GDP converted USD → EUR at a fixed rate pinned in the import script (see below), so re-running the import doesn't drift on exchange-rate noise. Sector shares are normalised to sum to 1.0 — the three World Bank value-added indicators sum to roughly 89–95% of GDP on their own (the residual is taxes less subsidies on products), so dividing by their sum is required, not optional polish.
+- **Read at two years, not one, and that is what makes ageing measured rather than modelled.** The download loop below has always fetched `date=2015:2024`, so [[ROADMAP|V1.5b]]'s per-nation ageing slope cost one extra read of a series already on disk and no extra download. `imported._trend_from_year` records the base year in the data, beside `_year`, for the reason `_usd_eur` is echoed there: without it the provenance record claims the block describes one year while the cohort slopes describe two. The slopes genuinely differ — Luxembourg **+0.142** points of 65+ share per year against France's **+0.366** — which is why the ten pyramids are not the clustered `coalition_position` failure the decomposition feared. See [[demography-model]].
 - **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
 
 ### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
@@ -104,7 +105,8 @@ curl -L -o "sources/ne_50m_admin_0_countries.geojson" \
 curl -L -o "sources/ne_110m_admin_0_countries.geojson" \
   "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_admin_0_countries.geojson"
 
-for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS; do
+for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS \
+         SP.POP.0014.TO.ZS SP.POP.65UP.TO.ZS SL.TLF.ACTI.ZS; do
   curl -L -o "sources/wb/$I.json" \
     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
@@ -113,6 +115,18 @@ done
 The Natural Earth URLs are pinned to tag `v5.1.2` rather than `master`, so the
 files don't silently change under a future re-download. Then run
 `python tools/import_data.py`.
+
+> [!warning] An import used to delete fields it did not know about, and that is why the diff is the check
+> `write_nation_file()` rebuilt each file from an **enumerated** key list — `id`,
+> `name`, `geo_id`, `capital`, `playable`, `government`, `fiscal`, `imported` — so
+> every top-level field a later session added was silently dropped the next time
+> anyone ran the import. Two already had been: U6b's `leader` block and the `flag`
+> block. Found at [[ROADMAP|V1.5b]] by diffing the ten files after an import and
+> asking why the change was larger than the block it claimed to add. It now rebuilds
+> from the file's own key order, so there is no list to forget to update, and short
+> scalar arrays are written back on one line so the output already matches what is
+> committed. **After any import, `git diff data/nations/` should show only what you
+> meant to change** — that check is only readable because of the second fix.
 
 The map raster is **not** fetched here, because it is not a dataset — it is a
 committed asset and is already in the repo at

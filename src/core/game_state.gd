@@ -25,6 +25,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -182,7 +183,23 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     `start_service_quality` earns nothing either, being recomputed at init from
 ##     the `spending_pct_gdp` every nation file already authors. Both are serialised
 ##     regardless, and for two different reasons the test states separately.
-const SAVE_VERSION := 16
+##
+##   V1.5b bumps to 17, and it is earned TWICE over — by a new field and, for the
+##     first time on this list, by a KEY ADDED TO A DICTIONARY THAT WAS ALREADY
+##     SERIALISED. `young_share`/`old_share` are the ordinary half: absent they read
+##     0.0, which is not a neutral default but a different model — working share 1.0,
+##     dependency ratio 0.0, and the labour force the whole population. The sharp half
+##     is `service_quality["pensions"]`, which adds no field at all, so the naive
+##     reading is that it cannot bump anything. A version-16 save carries
+##     `{"health": …}` and no `pensions` key; `_tick_nation()` reads `.get(key, 0.0)`
+##     so the stock starts at zero and climbs, while `quality_deviation()` measures it
+##     against a `start_service_quality` that is also 0.0 — so the deviation reads as a
+##     large and growing POSITIVE, a France whose pension system has just been invented
+##     and is improving fast. A windfall the player did not earn, mis-signed for the
+##     rest of the run. The five content fields and `migration_stance` earn nothing;
+##     the test asserts the halves separately, because the split is what pins that
+##     adding a registry key can earn a bump at all.
+const SAVE_VERSION := 17
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -590,6 +607,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# decade of every game with no player action -- which is exactly the authored
 	# transient defence.gd's own equilibrium-not-zero comment exists to prevent,
 	# arriving through the back door.
+	# V1.5b, and it must come BEFORE Society.init_nation() for a second, independent
+	# ordering constraint of the same kind: Society.quality_target() divides by
+	# Demography.dependency_factor(), which reads start_old_share and start_young_share.
+	# Initialised after Society, those references are 0.0 when the quality equilibrium
+	# is captured, the factor is not 1.0 on the first tick, and every nation's quality
+	# steps on frame one of every game with no player action.
+	Demography.init_nation(ns, n)
+
 	Society.init_nation(ns)
 
 	return ns

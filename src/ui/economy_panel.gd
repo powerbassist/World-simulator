@@ -15,6 +15,7 @@ extends PanelContainer
 ## Economy's own model is built around (docs/economy-model.md).
 
 const Economy = preload("res://src/sim/economy.gd")
+const Demography = preload("res://src/sim/demography.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -139,6 +140,22 @@ func _refresh() -> void:
 	_caption(_labour, "Structural floor %.1f%%." % ns.structural_unemployment_pct)
 	_trend(_labour, "unemployment_pct")
 	_caption(_labour, "Population %.1fM." % (ns.population / 1_000_000.0))
+
+	# V1.5b. Here rather than under GOVERNMENT on the overview beside the delivery
+	# lines, and the split is deliberate: a delivery figure is a fact about the
+	# GOVERNMENT -- how much of what it spends arrives -- and an age structure is a
+	# fact about the COUNTRY, which is what this column already reports. It sits under
+	# the population caption it is a decomposition of.
+	#
+	# Leads with the ratio and states the drift beside it, which is _fill_society()'s
+	# lesson one panel over: a level alone is a number with no units the player can
+	# act on. Unlike the two lines there this one is NEVER silent -- every nation has
+	# an age structure from the first frame, where a delivery factor of exactly 1.0 is
+	# a game in which nothing has happened yet.
+	_caption(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
+		100.0 * Demography.dependency_ratio(ns),
+		100.0 * (Demography.dependency_ratio(ns) - Demography.start_dependency_ratio(ns)),
+	])
 
 	_figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
 	_trend(_finances, "deficit_pct_gdp")

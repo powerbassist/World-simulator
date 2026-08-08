@@ -60,8 +60,16 @@ const STRUCT_MIN_PCT := 2.0
 const STRUCT_MAX_PCT := 25.0
 
 # --- Population --------------------------------------------------------------
-
-const POP_GROWTH_PCT := 0.15
+#
+# POP_GROWTH_PCT was here, one flat 0.15 % a year shared by all ten nations, and V1.5b
+# DELETED it rather than leaving it unused -- AGREEMENT_ACCEPT_MIN's treatment at
+# V1.3e and the day budget's at U6a, because a tuned constant nothing reads is a
+# number a later session finds and reasons from.
+#
+# What replaced it is not another constant but ten measured facts:
+# NationState.pop_growth_pct, read off imported.cohorts, which spans Italy's -0.238 to
+# Luxembourg's +1.938. The old constant had every nation in Europe growing, and one of
+# them shrinks. See src/sim/demography.gd and docs/demography-model.md.
 
 # --- Revenue -----------------------------------------------------------------
 

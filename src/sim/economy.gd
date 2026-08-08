@@ -100,7 +100,10 @@ static func _tick_nation(state, ns) -> void:
 	_apply_growth_to_sectors(state, ns, growth)
 	_update_unemployment(ns, trend, growth)
 
-	ns.population *= C.monthly_factor(C.POP_GROWTH_PCT)
+	# V1.5b: per-nation and measured, where this was one flat constant for all ten.
+	# Compound rather than linear, because a population does compound -- unlike the
+	# age SHARES demography.gd drifts, which cannot.
+	ns.population *= C.monthly_factor(ns.pop_growth_pct)
 
 	ns.demand_impulse_pct = clampf(
 		ns.demand_impulse_pct * C.IMPULSE_DECAY, -C.IMPULSE_MAX_PCT, C.IMPULSE_MAX_PCT

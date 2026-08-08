@@ -57,6 +57,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/companies_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
+const Demography = preload("res://src/sim/demography.gd")
 
 
 ## Seeds the live register from content: every firm starts at its authored share
@@ -353,8 +354,16 @@ static func firm_impulse_pct(ns, loader) -> float:
 ## burden -- which is every month of every run in which no subsidy has ever been
 ## paid and no `business` law has ever passed. V1.4b widened that condition; see
 ## headcount() for why the widening is the session's whole case.
+##
+## V1.5b: the denominator is now Demography.labour_force(), per nation and measured,
+## where it was population x one flat 0.45. That re-baselines the jobs figures
+## docs/companies-model.md reports -- the roster spans Italy 0.423 to the Netherlands
+## 0.551 -- so V1.4a's measured 0.229/0.010 spread was re-measured rather than left to
+## drift silently. It also means this term MOVES with the age structure: an ageing
+## nation's labour force shrinks as a share of its population, so the same firm shedding
+## the same jobs costs more points of unemployment later in a run than at the start.
 static func firm_jobs_offset_pct(ns, loader) -> float:
-	var labour_force: float = ns.population * K.LABOUR_FORCE_SHARE
+	var labour_force: float = Demography.labour_force(ns)
 	if labour_force <= 0.0:
 		return 0.0
 

@@ -24,6 +24,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 ## burden and never reads what it costs, so the dependency stops at the clamp.
 const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
+const DemoK = preload("res://src/sim/demography_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -318,11 +319,23 @@ static func apply(state, ns, law, loader) -> void:
 	# One clamp, on the accumulated value, exactly as the burden above. The factor
 	# society.gd reads it through carries its own bounds, so a second clamp here
 	# would be a guard rail guarding a guard rail.
+	#
+	# V1.5b adds `migration` as a SIBLING accumulator on the same channel, and the two
+	# are independent: a law may name either or both, law.gd's _extract_society()
+	# requires at least one, and each clamps against its own maximum. This is the only
+	# writer of ns.migration_stance in the project, as it is of ns.corruption.
 	if effects.has("society"):
-		ns.corruption = clampf(
-			ns.corruption + float(effects["society"]["corruption"]),
-			-SK.CORRUPTION_MAX, SK.CORRUPTION_MAX
-		)
+		var society: Dictionary = effects["society"]
+		if society.has("corruption"):
+			ns.corruption = clampf(
+				ns.corruption + float(society["corruption"]),
+				-SK.CORRUPTION_MAX, SK.CORRUPTION_MAX
+			)
+		if society.has("migration"):
+			ns.migration_stance = clampf(
+				ns.migration_stance + float(society["migration"]),
+				-DemoK.MIGRATION_STANCE_MAX, DemoK.MIGRATION_STANCE_MAX
+			)
 
 	# An institution is SET, not nudged -- every key here is an absolute value
 	# written straight onto NationState, unlike every channel above. Whether

@@ -40,6 +40,7 @@ tests=(
   # covers less than it appears to.
   tests/test_companies.gd
   tests/test_society.gd
+  tests/test_demography.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

@@ -201,10 +201,32 @@ pairs are nearly matched. Nothing in the model says "services"; the whole
 spread comes from two authored headcounts. That is the differentiator earning its
 place, and it is the answer to whether a firm layer is more than a sector lever.
 
-The jobs channel has **no tuned constant in it at all** — only
-`LABOUR_FORCE_SHARE`, which is a measured participation figure and not a dial,
-and a clamp. That is what lets its size be reported as a finding rather than
+The jobs channel has **no tuned constant in it at all** — only the labour-force
+conversion and a clamp. That is what lets its size be reported as a finding rather than
 defended as a choice.
+
+> [!note] [[demography-model|V1.5b]] deleted `LABOUR_FORCE_SHARE` and re-measured these figures
+> That constant was 0.45 and its own comment defended it as "the measured
+> participation-times-working-age figure for the roster, not a dial". V1.5b took the
+> claim at its word and checked it: France is 0.7407 × 0.6134 = **0.4543**, right to
+> three digits — and Germany is 0.7994 × 0.6289 = **0.5027**, with the roster spanning
+> Italy 0.423 to the Netherlands 0.551. One number right for one nation. It is now
+> `Demography.labour_force()`, two measured facts per nation, and the "no tuned
+> constant" property above survives intact.
+>
+> The figures in this section are **re-measured rather than silently invalidated**. The
+> new denominator ÷ old, by nation: ITA 0.940, BEL 1.001, FRA 1.010, GBR 1.080, ESP
+> 1.101, DEU 1.117, AUT 1.128, LUX 1.141, CHE 1.215, NLD 1.225. France's is 1.010, so
+> the **0.229 / 0.010** spread becomes ≈**0.227 / 0.0099** and V1.4b's kill-switch
+> figure of 0.0942 becomes ≈0.0933, still clear of its 0.05 floor. Both France figures
+> scale by one factor, so **the ordering is untouched** — which was the pre-committed
+> condition for calling this a re-measure rather than a model change.
+>
+> Italy is the row worth noticing: its denominator **shrinks**, so it is the one nation
+> where a given firm shedding a given number of jobs now costs *more* points of
+> unemployment than the flat constant said. And the term now **moves over a run**: an
+> ageing nation's labour force falls as a share of its population even where the
+> population grows.
 
 ## 5. What a subsidy costs, and who notices
 

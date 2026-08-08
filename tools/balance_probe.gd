@@ -38,6 +38,8 @@ const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
@@ -304,6 +306,27 @@ const SOCIETY_REGIMES := {
 	"managed_corrupts": {"budget": REGIMES["managed"], "corrupt_month": 6},
 }
 
+## V1.5b's regime, the NINETEENTH, and it is the CHEAP kind for the same reason V1.5a's
+## was: a migration stance reaches the dependency ratio through a LAW, and applying a
+## law at a month is a shape this harness has known since AMENDMENT_REGIMES. Only the
+## content is new.
+##
+## Applies every migration-TIGHTENING law and never repeals it -- the direction that
+## makes the country age faster, which is the reachable worst case the dependency
+## clamp is measured against, and the treatment the subsidy, the burden, the
+## nationalisation and the corruption register all get.
+##
+## THE EIGHTEEN REGIMES ABOVE ARE NOT BIT-IDENTICAL AFTER V1.5b EITHER, and the cause
+## is narrower than V1.5a's: `pensions` joined QUALITY_KEYS with a denominator that
+## begins drifting in month one, so every regime moves through the pensions issue with
+## no player command at all. What does NOT move any regime is the labour-force change,
+## because firm_jobs_offset_pct() returns before its denominator unless a firm has
+## moved, and the bloc transfer, because Bloc.net_positions() is loader-side and called
+## once. Predicted in the plan before the run rather than read off the diff.
+const DEMOGRAPHY_REGIMES := {
+	"managed_tightens_migration": {"budget": REGIMES["managed"], "migrate_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -365,6 +388,9 @@ func _init() -> void:
 		for name in SOCIETY_REGIMES.keys():
 			var regime: Dictionary = SOCIETY_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, int(regime["corrupt_month"]))
+		for name in DEMOGRAPHY_REGIMES.keys():
+			var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
 
 	quit(0)
 
@@ -389,7 +415,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -459,6 +485,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# reference in every regime that moves one -- `managed` and `austerity` both do.
 		# The seventeen regimes above are therefore NOT bit-identical after this session,
 		# which the plan predicted before the run.
+		# V1.5b, immediately before Society: the quality stock divides by this layer's
+		# dependency factor, so demography must have settled before quality reads it.
+		Demography.tick_month(state)
 		Society.tick_month(state)
 		Cabinet.tick_month(state, loader)
 
@@ -488,6 +517,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == corrupt_month:
 			_corrupt(state, loader, ns, regime_name, year, month)
+		if i + 1 == migrate_month:
+			_tighten_migration(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -894,6 +925,32 @@ func _corrupt(state, loader, ns, regime_name: String, year: int, month: int) -> 
 
 	print("  [%s] %04d-%02d corruption %.2f, delivery %.3f after %d rounds" % [
 		regime_name, year, month, ns.corruption, Society.delivery_factor(ns), applied,
+	])
+
+
+## V1.5b. Every migration-tightening law at once, never repealed -- the reachable worst
+## case for the dependency ratio, and _corrupt()'s treatment one register over. Both
+## migration laws carry a 24-month cooldown, so applying them directly here rather than
+## through the cooldown gate is what makes "worst case" mean the clamp rather than one
+## pass of one law.
+func _tighten_migration(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("migration", 0.0)) < 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no migration-tightening society law is authored")
+		return
+
+	while ns.migration_stance > -DemographyK.MIGRATION_STANCE_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d migration stance %.2f, dependency ratio %.4f after %d rounds" % [
+		regime_name, year, month, ns.migration_stance,
+		Demography.dependency_ratio(ns), applied,
 	])
 
 

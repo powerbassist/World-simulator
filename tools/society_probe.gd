@@ -61,6 +61,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
 const K = preload("res://src/sim/society_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
@@ -122,6 +123,9 @@ func _step(state) -> void:
 	Economy.tick_month(state)
 	Budget.tick_month(state)
 	Opinion.tick_month(state)
+	# V1.5b, immediately before Society: the quality stock divides by this layer's
+	# dependency factor, so demography must have settled before quality reads it.
+	Demography.tick_month(state)
 	Society.tick_month(state)
 
 

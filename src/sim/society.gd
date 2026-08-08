@@ -28,6 +28,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/society_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Demography = preload("res://src/sim/demography.gd")
 
 
 ## A nation's starting quality is its EQUILIBRIUM, not zero — defence.gd's
@@ -89,12 +90,43 @@ static func tick_month(state) -> void:
 ## claims that happen to be commensurable: Cabinet.effectiveness() is how well this
 ## government runs the department, delivery is how much of the money reaches the
 ## service at all. A vacant ministry and a corrupt state are independently bad.
+##
+## V1.5b DIVIDES BY THE DEPENDENCY FACTOR, and that one divisor is the whole of
+## "ageing driving pension and health costs". docs/tiers/v1.md section 5 asks for a
+## COST and `spending_pct_gdp` is a player-set RATE, so ageing cannot drive it; what
+## ageing can do is make the same rate buy less. A nation's own starting spending is
+## by definition adequate for its own starting dependency, so the required rate scales
+## with the ratio and nothing has to be authored — no per-capita benefit, no
+## beneficiary count, no cost side. The factor is exactly 1.0 at new game for all ten
+## nations, so this is inert until the clock runs.
+##
+## Raised to a per-line elasticity, because a pension is spent per pensioner and a
+## health budget is only age-graded. See society_constants.DEPENDENCY_ELASTICITY —
+## `pensions` at 1.0 is definitional rather than tuned, and it is what finally gives
+## `pensions` the denominator that kept it out of QUALITY_KEYS at V1.5a.
 static func quality_target(ns, key: String) -> float:
 	var spend: float = float(ns.spending_pct_gdp.get(key, 0.0))
 	return clampf(
-		spend * Cabinet.effectiveness(ns, key) * delivery_factor(ns),
+		spend * Cabinet.effectiveness(ns, key) * delivery_factor(ns)
+		/ dependency_divisor(ns, key),
 		K.QUALITY_MIN, K.QUALITY_MAX
 	)
+
+
+## What ageing has done to what a point of GDP on this line buys, since the game
+## began. Exactly 1.0 for a line with no entry in DEPENDENCY_ELASTICITY, and exactly
+## 1.0 at new game for every line that has one — so a caller need not know which lines
+## are age-graded, which is quality_deviation()'s own property and what keeps the
+## elasticity table a registry.
+##
+## Read through here rather than inline so the clamp on the FACTOR is what bounds this
+## and the clamp inside quality_target() stays slack. A divisor bounded away from zero
+## is the difference between a guard rail and the clamp setting the number.
+static func dependency_divisor(ns, key: String) -> float:
+	var elasticity: float = float(K.DEPENDENCY_ELASTICITY.get(key, 0.0))
+	if elasticity == 0.0:
+		return 1.0
+	return pow(Demography.dependency_factor(ns), elasticity)
 
 
 ## One month of convergence. Pure, so tools/society_probe.gd can sweep the constant

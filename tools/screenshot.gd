@@ -135,6 +135,20 @@ var _nationalise := false
 ## panel prints -- a frame captured at month 1 would show a live corruption level
 ## against an unchanged quality figure and look like the readout was broken.
 var _corrupt := false
+
+## V1.5b, and the ninth flag. The economy panel's dependency line is never silent -- a
+## country has an age structure on frame 1 -- but the figure it leads with is a
+## DEVIATION, and on frame 1 that deviation is exactly 0.0 for all ten nations. So an
+## unflagged capture proves the caption renders and proves nothing about whether the
+## drift reaches it, which is the same argument --corrupt made one session ago and
+## --coerce three blocks before that.
+##
+## Passes the migration law rather than poking `ns.migration_stance`, so the frame is
+## evidence that the widened effects.society channel dispatches and not only that the
+## label draws. Ticks far enough for the SHARES to have travelled: the drift is a
+## fraction of a point a year, so a frame at month 1 would show a live stance against
+## an unchanged ratio and look like the readout was broken.
+var _migrate := false
 var _main
 
 
@@ -167,6 +181,8 @@ func _init() -> void:
 			_nationalise = true
 		elif args[i] == "--corrupt":
 			_corrupt = true
+		elif args[i] == "--migrate":
+			_migrate = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -234,6 +250,8 @@ func _apply_view() -> void:
 		_nationalise_a_firm()
 	if _corrupt:
 		_corrupt_the_state()
+	if _migrate:
+		_tighten_migration()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -390,6 +408,27 @@ func _corrupt_the_state() -> void:
 			Legislature.apply(state, ns, law, loader)
 
 	_tick_months(24)
+
+
+## V1.5b. Passes every migration-tightening law twice, then ticks four years -- longer
+## than --corrupt's two, and for a reason worth stating: corruption moves the delivery
+## factor the month it passes, where a migration stance moves a SHARE that then has to
+## move the ratio that then has to move the stock. Three lags in series need a horizon,
+## and a flag that captured a frame before the last of them had moved would be the
+## measuring-the-wrong-state error this tool has now found twice.
+func _tighten_migration() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("migration", 0.0)) < 0.0:
+			Legislature.apply(state, ns, law, loader)
+			Legislature.apply(state, ns, law, loader)
+
+	_tick_months(48)
 
 
 func _regulate_a_sector() -> void:

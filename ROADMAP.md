@@ -729,7 +729,7 @@ migration, inequality — and one line is not a session.
 | | Session | Content | Reads |
 |---|---|---|---|
 | **V1.5a** | The delivery layer | `service_quality` as a stock converging on sustained spending, corruption as the factor that degrades **delivery**, and `effects.society` — the sixth channel, which V1.5 then owns the way V1.4 owns `effects.company`. No new content directory, no new window, no new per-nation data | — |
-| **V1.5b** | Demographics and migration | Cohort/dependency structure replacing flat `POP_GROWTH_PCT`; the **required-vs-set-rate shortfall** that makes ageing a cost at all; pension adequacy as (a)'s stock given a denominator; a migration lever. Takes the harness re-baseline, and carries the block's one unmade content decision | a |
+| **V1.5b** | ~~Demographics and migration~~ **shipped** | Two live age shares on a **measured** drift, the dependency ratio derived from them, that ratio as a **denominator** under (a)'s stock -- which is what let `pensions` join `QUALITY_KEYS` -- and migration as the second `effects.society` term. `POP_GROWTH_PCT` and `LABOUR_FORCE_SHARE` both **deleted**. `SAVE_VERSION` 17. The block's "one unmade content decision" was not one: the dataset exists | a |
 | **V1.5c** | Unrest: unions, strikes and protests | The grievance stock and the acting agent — strikes on a decaying output channel, protests forcing a response. Inequality and poverty ship here as a **declared stopgap read**, with §6 named as their real writer | a, b |
 | **V1.5d** | Media and information | Outlets with leanings, framing, press freedom as a dial, government messaging | a, c |
 
@@ -826,6 +826,104 @@ corruption as `other_revenue_pct_gdp: 0.1`, and `data/laws/social.json` prices
 immigration as `structural_unemployment_pct: -0.05`. Re-authoring both is a cost
 booked to this block rather than a surprise inside it: (a) pays the first, (b) the
 second. That is V1.4b's retro-fit, found in advance this time.
+
+### V1.5b -- demographics and migration, and the dataset the row said did not exist
+
+**The decomposition's own reason for deferring (b) was wrong, and that is the session's
+headline.** Call 2 defers it partly because ten authored age structures with *no dataset
+behind them* would be [docs/foreign-policy-model.md](docs/foreign-policy-model.md)'s
+clustered `coalition_position` finding a block later. But the World Bank publishes age
+structure (`SP.POP.0014.TO.ZS`, `SP.POP.65UP.TO.ZS`) and 15-64 participation
+(`SL.TLF.ACTI.ZS`) for all ten, on the same licence through the same loop -- and
+[docs/data-sources.md](docs/data-sources.md)'s loop has always fetched `date=2015:2024`,
+so a per-nation ageing **slope** cost one extra read of a series already on disk and **no
+extra download**. Old-age dependency spans **LUX 0.225 to ITA 0.388**; the slopes span
+**2.58x**, wider than the levels. **Twenty-third** stale-row instance.
+
+**A cohort machine was designed and then CUT, and Luxembourg is the proof.** Nothing in
+the model reads a head *count* -- `population` enters no equation in `economy.gd`, and
+`firm_jobs_offset_pct()` returns before its denominator unless a firm has moved. A
+uniform 15-64 bucket also predicts **Luxembourg ages fastest of the ten**; measured, it
+ages **slowest**, because its working cohort is bulged young by migration and a uniform
+outflow over-ages it. And fertility and life expectancy are *inputs* to a projection
+whose *output* the dataset already publishes. So the drift is linear at its measured
+rate, `demography_constants.gd` carries **exactly one tuned constant**, and this is
+deliberately *not* `capability_target()`/`capability_step()`'s shape: those converge on a
+target the player sets, and a population converges on nothing a president decides.
+
+**The shortfall is a DENOMINATOR at one existing site.** `spending_pct_gdp` is a
+player-set rate, so ageing cannot drive it; what ageing does is make the same rate buy
+less. `Society.quality_target()` divides by the dependency factor, which is **exactly
+1.0** at new game for all ten nations. That discharged `society_constants.QUALITY_KEYS`'s
+own promise word for word -- *"It joins by becoming an entry"* -- for **one entry and
+zero lines in `opinion.gd`**.
+
+**A pre-committed tiebreaker failed for a THIRD distinct reason, and the rule is
+extended.** `MIGRATION_SHARE_BETA`'s was *"strictly less legible than a saturated
+corruption register, then take the largest passing candidate"* -- a genuine strict
+ordering, which is exactly what V1.5a's restated rule demands. It still failed, because
+**both bands are one-sided minimums**: every candidate above the threshold passes, so
+"largest" returns the top row of whatever grid was swept, and widening the grid moved the
+answer from 0.010 to 0.016. **The range was choosing the constant.** The rule now reads:
+a tiebreaker must strictly order the survivors **and its answer must not move when the
+candidate range is widened** -- which is checkable in advance by widening the grid, where
+*is it a strict ordering?* is not. The corrected selector (smallest passing, since both
+bands are minimums) chooses **0.0090**, *interior* to the grid, which is the evidence the
+correction did something.
+
+**The kill switch fired on `DEPENDENCY_ELASTICITY["health"]` and the entry was DELETED.**
+The row asks for ageing to drive pension **and health** costs; health's widest bloc row
+moves -0.07 at an elasticity of 0.15 and only **-0.51 at 1.00**, against a +-3.0 floor.
+The dependency factor reaches only ~1.10 over a term, so even the largest defensible
+elasticity moves a fraction of a point of GDP -- V1.4b's finding that this layer's
+channels sit below the opinion model's resolution. Ageing is a health cost in the world;
+it is not one this model can make a voter notice inside a term.
+
+**Two constants were deleted and nothing replaced them but content.** `POP_GROWTH_PCT`
+(one flat 0.15 for all ten, against measured ITA **-0.238** and LUX **+1.938** -- the
+constant had every nation in Europe growing and one of them shrinks) and
+`LABOUR_FORCE_SHARE` (0.45, whose own comment called it "measured, not a dial" -- true
+for France to three digits at 0.4543, and wrong for Germany at 0.5027, with the roster
+spanning ITA 0.423 to NLD 0.551).
+
+**`SAVE_VERSION` is 17, earned twice, and the second half adds NO FIELD AT ALL.** The two
+live shares are the ordinary half: absent they read 0.0, which is a different model
+rather than a neutral default. The sharp half is `service_quality["pensions"]` -- a
+version-16 save carries `{"health": ...}` and no `pensions` key, `.get(key, 0.0)` starts
+the stock at zero against a reference that is also zero, so the deviation reads as a large
+and growing **positive**: a pension system that has just been invented and is improving
+fast, a windfall the player did not earn. `tests/test_save_load.gd` asserts both halves
+separately, which pins that **growing a registry dictionary can earn a bump**.
+
+**The re-run held the prediction where it counts.** 23 of 24 shared regimes are
+bit-identical in GDP, growth, trend, unemployment, debt and deficit; the one exception is
+`managed_subsidises`, exactly the regime the labour-force denominator was predicted to
+reach. **Zero outcome changes.** The bloc transfer moved nothing, and the handoff's
+assumption that cohorts re-baseline it was wrong: `Bloc.net_positions()` reads the
+loader's Nation objects and is called once at new-game, never re-ticked. The nineteenth
+regime is the cheap kind, and the legibility evidence is sharper than the headline --
+under `managed_corrupts` the result screen now attributes `pensions` at salience 0.17,
+where before V1.5b it could not appear at all. Model:
+[docs/demography-model.md](docs/demography-model.md).
+
+**`BLOC_SIZE.pensioners` stays authored, and the refusal is recorded beside it.** It is
+0.24 against a measured 65+ share of 0.2215 drifting to about 0.27 -- one quantity, two
+writers, the failure this project names most often. It stays because it is an
+*electorate* share and excludes under-18s, because `BLOC_TURNOUT` already models the age
+effect a second time, and above all because the table is read by `elections.gd` twice
+plus `cabinet.gd`, `opinion.gd` and `polling_panel.gd`: a live share would move election
+**results**, not just approval, and re-baseline every constant measured at S5, S10,
+V1.3d, V1.4c and V1.5a inside the session that also re-baselines demographics.
+`tests/test_demography.gd` pins the refusal so a later session has to come and say why.
+
+**`tools/import_data.py` was silently deleting fields, and the diff is how it was
+found.** `write_nation_file()` rebuilt each nation file from an *enumerated* key list, so
+every top-level field a later session added was dropped the next time anyone ran the
+import -- U6b's `leader` block and the `flag` block both already had been. Found by
+diffing the ten files after an import and asking why the change was larger than the block
+it claimed to add. It now rebuilds from the file's own key order, and short scalar arrays
+are written back on one line so the output already matches what is committed -- which is
+what makes *the diff shows only what you meant to change* a usable check at all.
 
 ### V1.4 — the decomposition, and why these three
 

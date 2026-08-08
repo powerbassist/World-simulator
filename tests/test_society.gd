@@ -344,7 +344,14 @@ func _test_society_is_a_leaf() -> void:
 	if src == "":
 		_fail("could not read src/sim/society.gd")
 		return
-	var allowed := ["res://src/sim/society_constants.gd", "res://src/sim/cabinet.gd"]
+	# V1.5b added demography.gd, and the addition does not weaken the property: that
+	# file is the strictest leaf in the project, preloading only its own constants, so
+	# the chain this test exists to bound is still two deep and still ends.
+	var allowed := [
+		"res://src/sim/society_constants.gd",
+		"res://src/sim/cabinet.gd",
+		"res://src/sim/demography.gd",
+	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):
 			continue
@@ -370,14 +377,22 @@ func _test_content_loads() -> void:
 	# corruption-RAISING law the positive half of CORRUPTION_MAX is unreachable and
 	# the probe would be sweeping a state the game cannot produce -- V1.3f's
 	# measuring-the-wrong-state error.
+	#
+	# V1.5b: `corruption` is no longer the only term on the channel, so the reads below
+	# are guarded rather than assumed. A migration law carries no corruption figure at
+	# all, and treating an absent key as a zero would silently pass a file in which
+	# nothing raises corruption any more.
 	var raises := false
 	var lowers := false
 	for law in _loader.laws:
 		if not law.effects.has("society"):
 			continue
-		if float(law.effects["society"]["corruption"]) > 0.0:
+		var society: Dictionary = law.effects["society"]
+		if not society.has("corruption"):
+			continue
+		if float(society["corruption"]) > 0.0:
 			raises = true
-		if float(law.effects["society"]["corruption"]) < 0.0:
+		if float(society["corruption"]) < 0.0:
 			lowers = true
 	if not raises:
 		_fail("no law raises corruption -- the positive half of the clamp is unreachable in play")

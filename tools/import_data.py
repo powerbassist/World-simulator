@@ -6,6 +6,7 @@ implements.
 """
 import argparse
 import json
+import re
 import sys
 from math import floor, log10
 from pathlib import Path
@@ -20,6 +21,17 @@ NATIONS = ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT"]
 
 YEAR = 2024
 USD_TO_EUR = 0.92
+
+# V1.5b. The year the demographic trend is measured FROM. Every indicator is already
+# fetched over date=2015:2024 (docs/data-sources.md), so a per-nation ageing slope
+# costs one extra read of a series already on disk and no extra download.
+#
+# Measured rather than modelled, and that is the session's central call: a cohort
+# machine driven by fertility and life expectancy re-derives, badly, a number the
+# World Bank already publishes. A uniform 15-64 bucket predicts Luxembourg ages
+# fastest of the ten; measured, it ages slowest (+0.142 pt/yr against France's
+# +0.366). See docs/demography-model.md.
+TREND_FROM_YEAR = 2015
 
 # Drops overseas territories (e.g. French Guiana, Réunion) that bloat S8's map bounds.
 LON_MIN, LON_MAX = -11, 32
@@ -49,6 +61,23 @@ INDICATORS = {
     "services": "NV.SRV.TOTL.ZS",
 }
 
+# V1.5b, read at TREND_FROM_YEAR as well as at YEAR. Split from INDICATORS above
+# rather than merged into it because only these three are read twice, and a reader
+# who cannot see which are which has to go and find out.
+#
+# Participation is the 15-64 rate, which is what makes it multiply the working share
+# cleanly. It is also what lets companies_constants.LABOUR_FORCE_SHARE be DELETED
+# rather than re-derived: that constant's own comment called 0.45 "the measured
+# participation-times-working-age figure for the roster, not a dial", and the claim
+# checks out for France (74.07 x 61.34 = 0.4543) and fails for Germany (79.94 x
+# 62.89 = 0.5027). One constant right for one nation becomes two measured facts for
+# all ten.
+COHORT_INDICATORS = {
+    "young": "SP.POP.0014.TO.ZS",
+    "old": "SP.POP.65UP.TO.ZS",
+    "participation": "SL.TLF.ACTI.ZS",
+}
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -72,15 +101,60 @@ def round_to_nearest(value, step):
     return int(round(value / step) * step)
 
 
+def build_cohorts_block(nid, now, base, years):
+    """V1.5b. Two age shares, their measured slopes, and the participation rate.
+
+    The 15-64 share is deliberately NOT emitted: src/sim/demography.gd derives it as
+    the residual 1 - young - old, so there is exactly one answer and a conservation
+    bug is structurally impossible. That is _apply_growth_to_sectors()'s discipline,
+    which keeps sector output summing to GDP with no reconciliation.
+
+    Shares carry a LINEAR slope in points per year, because a share cannot compound;
+    population carries a compound rate, because it does. The pair replaces
+    economy_constants.POP_GROWTH_PCT, one flat 0.15 shared by all ten.
+    """
+    return {
+        "young_pct": round(now["young"], 2),
+        "old_pct": round(now["old"], 2),
+        "young_pct_per_yr": round((now["young"] - base["young"]) / years, 3),
+        "old_pct_per_yr": round((now["old"] - base["old"]) / years, 3),
+        "participation_pct": round(now["participation"], 2),
+        "pop_growth_pct": round(
+            100.0 * ((now["population"] / base["population"]) ** (1.0 / years) - 1.0), 3
+        ),
+    }
+
+
 def build_imported_block(year):
-    wb = {name: load_wb_indicator_for_year(code, year) for name, code in INDICATORS.items()}
+    every = dict(INDICATORS)
+    every.update(COHORT_INDICATORS)
+    wb = {name: load_wb_indicator_for_year(code, year) for name, code in every.items()}
+    # The trend year needs the cohort indicators and population; reading the whole
+    # set is one dict comprehension over files already open and keeps the two passes
+    # symmetrical, which is worth more than the four values it discards.
+    wb_base = {
+        name: load_wb_indicator_for_year(code, TREND_FROM_YEAR)
+        for name, code in every.items()
+    }
+    trend_years = float(year - TREND_FROM_YEAR)
+    if trend_years <= 0.0:
+        sys.exit(f"--year {year} is not after TREND_FROM_YEAR {TREND_FROM_YEAR}")
 
     imported = {}
     for nid in NATIONS:
-        values = {name: wb[name].get(nid) for name in INDICATORS}
+        values = {name: wb[name].get(nid) for name in every}
         missing = [name for name, v in values.items() if v is None]
         if missing:
             sys.exit(f"{nid}: missing {year} data for indicators {missing}")
+
+        base = {name: wb_base[name].get(nid) for name in COHORT_INDICATORS}
+        base["population"] = wb_base["population"].get(nid)
+        missing_base = [name for name, v in base.items() if v is None]
+        if missing_base:
+            sys.exit(
+                f"{nid}: missing {TREND_FROM_YEAR} data for indicators {missing_base} "
+                f"-- the demographic slope cannot be measured without both years"
+            )
 
         gdp_eur_bn = round_sig(values["gdp"] * USD_TO_EUR / 1e9, 3)
         population = round_to_nearest(values["population"], 100_000)
@@ -100,16 +174,34 @@ def build_imported_block(year):
         imported[nid] = {
             "_source": "worldbank",
             "_year": year,
+            # V1.5b. Without this the provenance record lies: `_year` alone claims the
+            # block describes one year, and the cohort slopes describe two.
+            "_trend_from_year": TREND_FROM_YEAR,
             "_usd_eur": USD_TO_EUR,
             "population": population,
             "gdp_eur_bn": gdp_eur_bn,
             "unemployment_pct": unemployment_pct,
             "sectors": sectors,
+            "cohorts": build_cohorts_block(nid, values, base, trend_years),
         }
     return imported
 
 
 def write_nation_file(nid, imported_block):
+    """Refreshes ONLY the `imported` block, preserving every other key and its order.
+
+    It used to enumerate the keys it kept -- id, name, geo_id, capital, playable,
+    government, fiscal, imported -- and rebuild the file from that list. Which meant
+    that every top-level field a later session added was SILENTLY DELETED the next
+    time anyone ran the import, and two already had been: U6b's `leader` block and
+    the `flag` block. Found at V1.5b by diffing the ten files after an import and
+    asking why the change was larger than the block it added.
+
+    Rebuilding from the file's own key order preserves whatever is there, so this
+    cannot happen again -- there is no list to forget to update. The docstring at the
+    top of this function's error message already claimed this was the behaviour; now
+    it is.
+    """
     path = NATIONS_DIR / f"{nid}.json"
     if not path.exists():
         sys.exit(f"{nid}: {path} does not exist. The import script never creates "
@@ -118,19 +210,34 @@ def write_nation_file(nid, imported_block):
     with open(path, encoding="utf-8") as f:
         nation = json.load(f)
 
-    ordered = {
-        "id": nation["id"],
-        "name": nation["name"],
-        "geo_id": nation["geo_id"],
-        "capital": nation["capital"],
-        "playable": nation["playable"],
-        "government": nation["government"],
-        "fiscal": nation["fiscal"],
-        "imported": imported_block,
-    }
+    if "imported" not in nation:
+        sys.exit(f"{nid}: {path} has no 'imported' block to refresh")
+
+    ordered = {key: nation[key] for key in nation}
+    ordered["imported"] = imported_block
+
+    text = json.dumps(ordered, ensure_ascii=False, indent=2)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(ordered, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+        f.write(compact_scalar_arrays(text) + "\n")
+
+
+# A flat array of scalars, exploded by indent=2 over one line per element.
+FLAT_ARRAY = re.compile(r"\[\s*\n\s*([^\[\]{}]*?)\s*\n\s*\]", re.DOTALL)
+
+
+def compact_scalar_arrays(text):
+    """Puts `["BEL", "CHE"]` back on one line, the way the nation files are written.
+
+    json.dumps(indent=2) explodes every array, so without this an import rewrites
+    `neighbours` and `flag.bands` in all ten files and the demographic block arrives
+    buried in twenty lines of formatting churn. That matters beyond tidiness: the
+    check that an import added ONLY what it claims to add is only readable if the
+    script's output already matches what is committed.
+
+    Scalars only -- an array holding an object or another array keeps its indented
+    form, which is what leaves data/geo/ untouched (it uses write_geojson, not this).
+    """
+    return FLAT_ARRAY.sub(lambda m: "[" + " ".join(m.group(1).split()) + "]", text)
 
 
 def bbox_outside(ring):

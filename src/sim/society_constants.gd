@@ -36,7 +36,54 @@ extends RefCounted
 ## tests/test_society.gd reads this list and fails if `education`, `defence` or
 ## `infrastructure` appears in it -- the refusal is the design, the way
 ## src/core/law.gd's _extract_company() refuses a firm id.
-const QUALITY_KEYS := ["health"]
+##
+## V1.5b ADDED `pensions`, exactly as the paragraph above said it would ("It joins by
+## becoming an entry"), and it cost one entry here and ZERO lines in opinion.gd --
+## which is what the registry was for. What it was waiting on was the denominator: a
+## pension budget's adequacy is spend per DEPENDENT, and until Demography shipped the
+## dependency ratio there was no dependent to divide by. The two permanent exclusions
+## are unchanged and still asserted.
+const QUALITY_KEYS := ["health", "pensions"]
+
+## V1.5b. How hard each line's quality is divided by the nation's own accumulated
+## ageing -- Society.dependency_divisor() raises the dependency factor to this power.
+## A REGISTRY like QUALITY_KEYS above, sparse: a line with no entry here divides by
+## exactly 1.0 and is untouched by demography, which is the four lines that are not
+## age-graded at all.
+##
+## `pensions` AT 1.0 IS NOT A TUNED CONSTANT and is deliberately not named like one.
+## It is what "spend per dependent" MEANS: twice the pensioners per worker is half the
+## pension per pensioner at an unchanged rate. It is written here rather than derived
+## so the table has one shape, and it is called out because a bare 1.0 in a
+## tuned-constants file is a number a later session finds and sweeps --
+## companies_constants.LABOUR_FORCE_SHARE's comment made the same defence of itself
+## and was right to.
+##
+## THERE IS NO `health` ENTRY, AND THE KILL SWITCH IS WHY. docs/tiers/v1.md section 5
+## says "ageing driving pension AND HEALTH costs", so a health elasticity was written,
+## provisionally set to 0.35, and swept against a band fixed before the sweep ran: with
+## the pensions entry held out of the comparison, ageing alone over one 60-month term
+## had to move the `health` issue's widest bloc row past the ±3.0 noise floor.
+##
+## IT FAILED AT EVERY CANDIDATE -- 0.15 moves -0.08, 0.35 moves -0.18, 0.60 moves -0.33
+## and even 1.00, equal to the pensions entry and therefore the largest defensible
+## value, moves only -0.58. So the entry was DELETED rather than shipped at a value
+## that looks alive in a constants file and is invisible in play: V1.5a's own kill
+## switch, AGREEMENT_ACCEPT_MIN's treatment at V1.3e, SUPPORT_SIGMA's, and U6a's day
+## budget. A tuned constant nothing can observe is a number a later session finds and
+## reasons from.
+##
+## The reason is structural rather than a bad candidate row, and it is worth recording
+## because a later session will be tempted to try again: health spending is ~11 % of
+## GDP against pensions' ~14.5 %, but the deciding term is that the dependency factor
+## reaches only ~1.10 over a term, so even at an elasticity of 1.0 the health target
+## moves a fraction of a point of GDP -- and V1.4b measured this whole layer's channels
+## at below the opinion model's resolution for the same reason. Ageing IS a health cost
+## in the world; it is not one this model can make a voter notice inside a term.
+## docs/demography-model.md table (T2).
+const DEPENDENCY_ELASTICITY := {
+	"pensions": 1.0,
+}
 
 ## Fraction of the gap to target closed per month.
 ##
