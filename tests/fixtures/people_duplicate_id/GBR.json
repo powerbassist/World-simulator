@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "GBR_wexford", "name": "Caroline Wexford" },
+    { "id": "GBR_marchbanks", "name": "Edward Marchbanks" },
+    { "id": "GBR_pell", "name": "Adrian Pell" },
+    { "id": "GBR_harlow", "name": "Duncan Harlow" },
+    { "id": "GBR_cobbett", "name": "Miriam Cobbett" },
+    { "id": "GBR_kilbride", "name": "Rhona Kilbride" },
+    { "id": "GBR_robert_iii", "name": "Robert III" }
+  ]
+}

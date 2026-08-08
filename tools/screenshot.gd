@@ -10,6 +10,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -26,6 +27,12 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -82,6 +89,39 @@ var _open := ""
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _defence := false
+
+## U6a, and --coerce's argument a sixth time. A new game's diary is EMPTY inside
+## its own horizon -- France's nearest dated event is sixteen months out and
+## cooldowns do not exist until the player has acted -- so a frame of it shows a
+## page of em dashes and a `later` footer, and proves nothing about the one thing
+## the strip exists to draw. Books three acts and acts once, so the frame carries
+## a booking, a kept appointment and a cooldown expiry the player never entered.
+var _book := false
+
+## V1.4a. A new game's firm register is every firm at its authored share with no
+## subsidy standing, so a frame of the companies panel shows three zeroes on the
+## ledger and "no support" against every firm -- which proves nothing about the row
+## the panel exists to draw. Same argument --coerce, --bloc, --agenda and --defence
+## each made; this is the fifth time.
+var _subsidy := false
+
+## V1.4b. Same argument once more, and this is the sixth time: a new game carries no
+## `business` law, so every sector heading on the companies panel reads its plain
+## caption and the law panel's `business` rows have never been proposed. A frame of
+## an unregulated economy proves nothing about the row the burden draws.
+var _regulate := false
+
+## V1.4c, and the seventh time. A new game's register has nothing in public hands,
+## so the companies panel reads "private" against every firm, the budget panel's
+## dividend line reads an em dash, and the ledger's fourth row reads 0.000.
+##
+## IT APPLIES A BURDEN TOO, and that is not the --regulate flag repeated. The one
+## thing ownership CONTROLS is the jobs shield, and a shield with nothing to shield
+## against is a row of zeroes -- which is V1.4b's own --regulate bug, whose whole
+## lesson was that a capture flag must move every figure the frame is there to
+## prove. So this nationalises a firm in a sector it then regulates, and the frame
+## carries the holding, the dividend, the burden and the jobs figure at once.
+var _nationalise := false
 var _main
 
 
@@ -104,6 +144,14 @@ func _init() -> void:
 			_agenda = true
 		elif args[i] == "--defence":
 			_defence = true
+		elif args[i] == "--book":
+			_book = true
+		elif args[i] == "--subsidy":
+			_subsidy = true
+		elif args[i] == "--regulate":
+			_regulate = true
+		elif args[i] == "--nationalise":
+			_nationalise = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -161,6 +209,14 @@ func _apply_view() -> void:
 		_run_the_agenda()
 	if _defence:
 		_stand_up_an_alliance()
+	if _book:
+		_fill_the_diary()
+	if _subsidy:
+		_subsidise_a_firm()
+	if _regulate:
+		_regulate_a_sector()
+	if _nationalise:
+		_nationalise_a_firm()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -200,10 +256,7 @@ func _run_the_agenda() -> void:
 	var state = _main._state
 	if state == null:
 		return
-	for i in range(48):
-		var year: int = state.year + (state.month + i - 1) / 12
-		var month: int = (state.month + i - 1) % 12 + 1
-		_main._on_month_elapsed(year, month)
+	_tick_months(48)
 
 
 ## One measure at each legend stop, so the captured frame shows the whole ramp
@@ -252,12 +305,194 @@ class _PactStub:
 	var action_name: String = "Defensive Pact"
 
 
+## V1.4a. Subsidises the player's largest firm through the panel's OWN command path
+## -- Companies.execute() with a shipped verb -- rather than by writing the register,
+## because the thing being looked at is a row the panel draws from a real result.
+##
+## Then runs two years of months so the share has actually moved: at the measured
+## rate the firm is 90 % of the way to its endpoint at 25 months, and a frame taken
+## the instant the button is pressed shows a subsidy standing against figures that
+## have not answered it yet.
+func _subsidise_a_firm() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
+			continue
+		if action == null or float(a.effects["company"]["intensity"]) > float(action.effects["company"]["intensity"]):
+			action = a
+	if action == null:
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		return
+
+	Companies.execute(state, ns, loader.company_actions, action, best, loader)
+	# V1.4a's own note lived here: twenty-four ticked months were being captured under
+	# a top bar still showing the starting GDP, because a hand-rolled month loop moves
+	# the simulation and not the clock. _tick_months() now drives the real clock, so
+	# the top bar AND the date agree with the figures -- see its header for the half
+	# V1.4a's fix did not reach.
+	_tick_months(24)
+
+
+## V1.4b. Two rules in opposite directions on two different sectors, so the frame
+## carries both captions the sector heading can draw -- a regulated industry and a
+## deregulated services -- rather than one of them twice.
+##
+## Through Legislature.apply() rather than propose(), for the reason the balance
+## harness gives: whether the chamber agrees is a different question from whether
+## the panel draws the burden, and a capture flag that silently produced nothing on
+## the months it did not is exactly the class of bug this tool exists to find.
+func _regulate_a_sector() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	# Industry twice and services once, and the counts are not arbitrary. One rule
+	# each way came out at "-0.000 pts unemployment" on the ledger: industry's 186k
+	# named jobs at a 0.40 burden and services' 213k at a -0.35 one shed and hire
+	# within fifteen people of each other, so the frame drew both sector CAPTIONS and
+	# an empty jobs ROW -- a capture that proves one of the two things it exists to
+	# prove. The sixth session running in which running the tool found something.
+	for law_id in ["workplace_safety_act", "workplace_safety_act", "financial_deregulation"]:
+		for law in loader.laws:
+			if law.id == law_id:
+				Legislature.apply(state, ns, law, loader)
+
+	_tick_months(24)
+
+
+## V1.4c. Nationalises the largest firm outright, takes a minority stake in a
+## second one so the frame carries both a whole holding and a partial one, and then
+## regulates the sector the big one sits in -- because the jobs shield is what
+## ownership buys and a shield with nothing to shield against draws a zero. That is
+## V1.4b's own --regulate bug applied in advance rather than found afterwards.
+##
+## Through Companies.execute() with shipped verbs rather than by writing the
+## register, for the reason --subsidy gives: the precondition path is part of what
+## the frame is meant to prove.
+func _nationalise_a_firm() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var full = null
+	var minority = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "nationalise":
+			continue
+		var stake := float(a.effects["company"]["stake"])
+		if full == null or stake > float(full.effects["company"]["stake"]):
+			full = a
+		if minority == null or stake < float(minority.effects["company"]["stake"]):
+			minority = a
+	if full == null:
+		return
+
+	var ranked: Array = []
+	for company in Companies.firms_of(loader, ns.id):
+		ranked.append([Companies.output_eur_bn(ns, company), String(company.id), String(company.sector)])
+	ranked.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	if ranked.is_empty():
+		return
+
+	# The whole holding goes on the LARGEST firm, which is the row the model's claims
+	# are about -- and the minority stake goes on the largest firm of the panel's
+	# FIRST sector, which is the row the frame can actually show. The first draft put
+	# both on the two largest, and both are services: every visible firm read
+	# "private", every visible sector heading read its plain caption, and the capture
+	# proved nothing about either row it exists to draw while the live figures sat in
+	# the ledger above them. The register is sorted by sector on that panel and the
+	# largest firms are not in the first one -- which no amount of correct state fixes.
+	var head := String(ranked[0][1])
+	var head_sector := String(ranked[0][2])
+	var first_sector := String(EK.SECTOR_TREND.keys()[0])
+	var visible := ""
+	for row in ranked:
+		if String(row[2]) == first_sector:
+			visible = String(row[1])
+			break
+
+	Companies.execute(state, ns, loader.company_actions, full, head, loader)
+	if minority != null and minority != full and visible != "":
+		Companies.execute(state, ns, loader.company_actions, minority, visible, loader)
+
+	# The burden the shield is there to absorb, on BOTH sectors: the wholly-owned
+	# firm's, because that is where the shield is total, and the visible one's,
+	# because a sector caption the frame cannot reach proves nothing.
+	for law in loader.laws:
+		if law.theme != "business":
+			continue
+		var sector := String(law.effects.get("company", {}).get("sector", ""))
+		if sector != head_sector and sector != first_sector:
+			continue
+		if float(law.effects["company"].get("burden", 0.0)) <= 0.0:
+			continue
+		Legislature.apply(state, ns, law, loader)
+
+	_tick_months(24)
+
+
+## Runs the world forward N months through the REAL clock, and the fifth flag to
+## need this is the one that found why that matters.
+##
+## Every flag before this one hand-rolled the loop and called main.gd's
+## `_on_month_elapsed()` directly, which advances the simulation and leaves the
+## Clock node where it was -- so `clock_cluster.refresh(_clock)` had nothing new to
+## draw and every frame with a tick loop behind it was captured under a date reading
+## 01 JAN 2026. V1.4a found the same disagreement one row up, on the top bar, and
+## fixed it with `_update_top_bar()`; the date underneath it stayed wrong, and
+## `--agenda`, `--book`, `--subsidy` and `--regulate` have all been shipping frames
+## that disagree with themselves since.
+##
+## Driving `advance_one_day()` fixes it at the source rather than by refreshing a
+## second widget: main.gd connects both clock signals in `_ready()`, so this is the
+## path a played game takes, day resolution and all. U6a's dispatch runs here too,
+## which no hand-rolled month loop ever exercised.
+func _tick_months(months: int) -> void:
+	if _main == null or _main._clock == null:
+		return
+	# Absolute month index rather than a (year, month) pair, so the loop cannot walk
+	# past its target on a December rollover and run for a further eleven months.
+	var target: int = _main._clock.year * 12 + _main._clock.month + months
+	while _main._clock.year * 12 + _main._clock.month < target:
+		_main._clock.advance_one_day()
+
+	# Two years of the real clock cross a real election, and main.gd answers one by
+	# opening the result screen over everything and pausing -- so the first frame
+	# captured through this helper was a modal on top of the panel the flag had just
+	# set up. The hand-rolled loops never saw it. Dismissed the way the Continue
+	# button does, because a capture aimed at a window wants that window.
+	if _main._election_panel != null and _main._election_panel.visible:
+		_main._election_panel.hide()
+		_main._clock.paused = false
+	_main._update_top_bar()
+
+
 ## main.gd marks these on every month elapsed; a screenshot moves state without a
 ## month elapsing, so it has to say so itself.
 func _mark_panels_dirty() -> void:
 	for name in [
 		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
+		"_calendar_panel", "_people_panel", "_companies_panel",
 	]:
 		var panel = _main.get(name)
 		if panel != null and panel.has_method("mark_dirty"):
@@ -404,3 +639,77 @@ func _open_the_council() -> void:
 	_main._windows.open("bloc")
 	if _main._bloc_panel != null:
 		_main._bloc_panel.mark_dirty()
+
+
+## Fill the diary so a frame of it shows something. U6a.
+##
+## Three bookings and one act, because the strip draws three different things and
+## a frame that only proves one of them is the class of frame --coerce exists to
+## avoid: a booking in a future month, a KEPT appointment in the past (so the
+## resolved styling is visible), and a cooldown expiry the player never entered,
+## which is the headline -- dated state the game already carried and never showed.
+##
+## Through Calendar.book() and main.gd's own dispatch rather than by appending to
+## the register, so the frame captures what the game produces rather than what a
+## tool arranged.
+func _fill_the_diary() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var loader = _main._loader
+	var ns = state.player()
+
+	# The act. Fires now, so its own cooldown becomes a future date on the strip.
+	var partners: Array = state.nations.keys()
+	partners.sort()
+	for target_id in partners:
+		if String(target_id) == ns.id:
+			continue
+		var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+		if acts.is_empty():
+			continue
+		Diplomacy.execute(state, loader.diplomatic_actions, acts[0], ns.id, String(target_id))
+		break
+
+	# A booking two months out, and a law next month.
+	for spec in [
+		{"months": 2, "day": 12, "kind": CalendarK.KIND_DIPLOMATIC},
+		{"months": 1, "day": 19, "kind": CalendarK.KIND_LAW},
+	]:
+		var total: int = state.year * 12 + (state.month - 1) + int(spec["months"])
+		var year: int = total / 12
+		var month: int = total % 12 + 1
+		if String(spec["kind"]) == CalendarK.KIND_LAW:
+			var laws := Legislature.available(ns, loader.laws)
+			if not laws.is_empty():
+				Calendar.book(state, Calendar.make_entry(
+					CalendarK.KIND_LAW, year, month, int(spec["day"]),
+					"", "", String(laws[0].id)
+				))
+			continue
+		for target_id in partners:
+			if String(target_id) == ns.id:
+				continue
+			var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+			if acts.is_empty():
+				continue
+			# U6b: the person the visit actually meets, resolved the way
+			# calendar_panel.gd resolves it at booking time. Without this the frame
+			# proves nothing about the new label -- a capture of a field nobody
+			# filled in is the pre-mutation frame V1.3g found in this same tool.
+			Calendar.book(state, Calendar.make_entry(
+				CalendarK.KIND_DIPLOMATIC, year, month, int(spec["day"]),
+				String(acts[0].id), String(target_id), "", "", "",
+				String(loader.nations[String(target_id)].leader_person_id)
+			))
+			break
+
+	# One already kept, dated a fortnight ago, so the resolved styling is in the
+	# frame too. Appended directly and resolved: a past date cannot be booked
+	# through book(), which is the refusal the panel test asserts.
+	var kept := Calendar.make_entry(
+		CalendarK.KIND_RESHUFFLE, state.year, state.month, maxi(int(state.day) - 14, 1),
+		"", "", "", "health", String(ns.coalition_party_ids[0]) if not ns.coalition_party_ids.is_empty() else ""
+	)
+	state.appointments.append(kept)
+	Calendar.resolve(state, Calendar.verb_key(kept), true)

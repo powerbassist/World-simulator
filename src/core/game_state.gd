@@ -23,6 +23,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -110,7 +111,64 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     their bill with them. The test asserts all four, and the split is the
 ##     assertion worth having: it PINS the property that obliged deployments are
 ##     derived, so a later session that makes them stateful turns it red.
-const SAVE_VERSION := 13
+##
+##   - U6a adds `appointments` and does NOT bump, and the interesting half is what
+##     it did not add. An absent diary reads as "nothing booked", correct for every
+##     version-13 save because those games could not book -- `measures` at V1.3c,
+##     down to being player-created state derivable from nothing. The field that
+##     WOULD have earned a bump was a spent-days counter, which reads 0 when absent
+##     and hands a player eight days into a month all of them back on reload; the
+##     probe cut the currency it counted before any of it was written, so the
+##     question never reached this list. And `day` earns nothing because it is not
+##     serialised at all: save_manager.gd already carries clock.day at the payload's
+##     top level, so the mirror's source round-trips and a copy here would be two
+##     records of one fact. tests/test_save_load.gd asserts the version is STILL 13,
+##     so a later session raising it has to come and say why -- the shape V1.3c left
+##     and V1.3d answered.
+##
+##   - U6b is that session, and it bumps on a RE-KEY rather than on a new field.
+##     `pm_name`, `head_of_state_person_id` and `start_head_of_government_person_id`
+##     used to hold NAMES and now hold person ids into data/people/. Nothing was
+##     added, so the naive reading is that nothing is at risk -- but the rule is
+##     "would a missing field read as something wrong?", and an absent
+##     `pm_person_id` reads as a nation with NO head of government, which is a
+##     claim about the world rather than a missing label. A version-13 save also
+##     carries the old keys, so without the bump every one of the three would load
+##     as "" while the save itself looks intact: `military_capability`'s case at
+##     V1.3g, and `eu_member`/`neighbours` at V1.3b, in their strongest form yet --
+##     the reloaded game would render a government nobody governs.
+##
+##     What U6b did NOT add is again the interesting half. There is no per-person
+##     serialised state at all, because a person is pure content: an id and a name,
+##     with every relationship expressed by the reference that owns it. The one
+##     field that would have earned this bump on its own -- a stored
+##     `ns.cabinet_person` -- was never written, because the probe cut the minister
+##     bench that needed it. And `appointments`' `person_id` earns nothing: it is a
+##     derived LABEL, so an absent one reads as "not recorded", and the entry's
+##     identity is still Calendar.verb_key(), which U6b did not touch.
+##   - V1.4a bumps to 15 on ONE field of five, and the four that earn nothing are
+##     the interesting half. `NationState.companies` is the bump: absent, every
+##     firm reads as share 0.0, so the partition simply is not there — a subsidy
+##     the save is still billing the player for through a serialised budget line
+##     moves a share that does not exist, and `output_eur_bn()` reports a register
+##     of firms that produce nothing. `military_capability` at V1.3g and
+##     `eu_member`/`neighbours` at V1.3b: a reloaded game running a DIFFERENT MODEL
+##     from the one that saved it.
+##
+##     The other four fail the rule cleanly. `subsidy_bill_pct_gdp`,
+##     `firm_impulse_pct` and `firm_jobs_offset_pct` are all recomputed from
+##     `companies` on the first tick after a load and read 0.0 when absent, which
+##     is exactly right for a version-14 save because those games could not
+##     subsidise anybody — `measures` at V1.3c and `appointments` at U6a, down to
+##     the reasoning. `last_company_result` is a UI record with no reader in
+##     src/sim/ at all.
+##
+##     And what V1.4a did NOT put in the register is what keeps the list short: a
+##     firm's authored share and headcount are CONTENT, so the baseline every
+##     deviation is measured against round-trips through data/companies/ rather
+##     than through the save. A saved baseline would be the same fact in two
+##     places, and the first version of it to drift would be the one in the save.
+const SAVE_VERSION := 15
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -131,6 +189,19 @@ var scenario_id: String = ""
 ## The Clock stays authoritative for the date; folding it in here is S9's call.
 var year: int = 0
 var month: int = 0
+
+## Mirrored from the Clock on each DAILY tick — U6a, the first thing in this
+## project to need a resolution finer than a month. Same S9 call as year/month:
+## the Clock stays authoritative, this is a copy so src/sim/ can read a date
+## without knowing a Clock exists.
+##
+## NOT serialised, and that is a property rather than an oversight:
+## save_manager.gd already writes `clock.day` at the payload's top level and
+## restores it, so the mirror's source round-trips and main.gd re-mirrors it on
+## the first day tick after a load. A second copy in game_state's own dict would
+## be two records of one fact that can disagree — the divergence the symmetric
+## pair key exists to make impossible, in a smaller place.
+var day: int = 1
 
 var nations := {}  # String id -> NationState
 
@@ -237,6 +308,28 @@ var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 ## command, because nobody issues an obligation.
 var deployments := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of deployment terms
 
+## The president's diary — U6a. The player's own bookings, each a deferred call
+## to a command that already exists: {kind, year, month, day, action_id,
+## target_id, law_id, portfolio, party_id, person_id, status}. Ids only, never
+## object references — which is what makes it serialisable, and is the constraint
+## that kept src/sim/calendar.gd from needing to know what a Law or a
+## DiplomaticAction is.
+##
+## Global rather than per-nation, and it stays correct when a second nation
+## becomes playable: a diary belongs to whoever is holding the pen, and there is
+## exactly one player. Bounded by calendar_constants.MAX_APPOINTMENTS and pruned
+## of resolved entries by Calendar.tick_month(), so it is the one register here
+## with no accumulator behind it.
+##
+## Earns NO SAVE_VERSION bump, and the test says so rather than this comment:
+## absent, it reads as "nothing booked", which is correct for every version-13
+## save because those games could not book one. That is `measures`' case exactly
+## — likewise player-created state derivable from nothing, and likewise not a
+## bump. This is the WHOLE of what U6a serialises: the one field that would have
+## earned a bump was a spent-days counter, and U6a's probe cut the currency it
+## counted before any of it was written. See docs/calendar-model.md §2.
+var appointments: Array[Dictionary] = []
+
 var history: Array[Dictionary] = []
 
 ## What the player's last few commands actually did -- U4. Newest first, each
@@ -305,8 +398,9 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	ids.sort()
 	for id in ids:
 		var party_list: Array = loader.parties.get(id, [])
+		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -347,7 +441,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 ## where that value first enters live state. Everything downstream (discipline,
 ## the coalition, the cabinet, dissolution) then reads the overridden figures
 ## and needs no scenario awareness of its own. See docs/scenario-model.md.
-static func _build_nation(n, is_player: bool, party_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null, bloc_net_position_pct_gdp: float = 0.0):
+static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null, bloc_net_position_pct_gdp: float = 0.0):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -439,6 +533,12 @@ static func _build_nation(n, is_player: bool, party_list: Array, eu, political_s
 	# spends the first decade of every game acquiring an army it already had.
 	Defence.init_nation(ns)
 
+	# Every firm at its authored share with no subsidy standing, which is what
+	# makes both of V1.4a's channels read exactly 0.0 in the first month and every
+	# month after it until a player acts. An empty list is the normal case for the
+	# seven nations that are not yet playable.
+	Companies.init_nation(ns, company_list)
+
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
 
@@ -506,6 +606,11 @@ func duplicate_state():
 	# mutate the live register -- silently, sixty times per refresh.
 	gs.pacts = pacts.duplicate(true)
 	gs.deployments = deployments.duplicate(true)
+	# Nothing in Budget.project()'s pipeline ticks Calendar today, so this copy
+	# buys nothing yet -- and it is taken anyway for the reason the two lines
+	# above spell out: a shared reference is one added tick away from a budget
+	# panel repaint mutating the player's live diary, sixty times a second.
+	gs.appointments = appointments.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs
@@ -542,6 +647,7 @@ func to_dict() -> Dictionary:
 		"bloc": bloc,
 		"pacts": pacts,
 		"deployments": deployments,
+		"appointments": appointments,
 		"history": history,
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
@@ -695,5 +801,17 @@ static func from_dict(d: Dictionary):
 	for entry in acts:
 		typed_acts.append(entry as Dictionary)
 	gs.foreign_acts = typed_acts
+
+	# Absent, this reads as "nothing booked" -- correct for every version-13 save,
+	# because those games had no diary to book into. `measures`' case at V1.3c,
+	# and like `measures` it earns no bump. `day` is deliberately NOT read back
+	# here: save_manager.gd carries clock.day at the payload's top level and
+	# main.gd re-mirrors it, so a second copy in this dict would be two records of
+	# one fact. tests/test_save_load.gd asserts both halves.
+	var appts: Array = d.get("appointments", [])
+	var typed_appts: Array[Dictionary] = []
+	for entry in appts:
+		typed_appts.append(entry as Dictionary)
+	gs.appointments = typed_appts
 
 	return gs

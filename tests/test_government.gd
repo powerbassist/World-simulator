@@ -73,7 +73,7 @@ func _check_every_nation_forms_a_government() -> void:
 		if ns.coalition_party_ids.is_empty():
 			_fail("%s: formed no government at all" % id)
 			continue
-		if ns.pm_party_id == "" or ns.pm_name == "":
+		if ns.pm_party_id == "" or ns.pm_person_id == "":
 			_fail("%s: government has no named head of government" % id)
 		if not ns.coalition_party_ids.has(ns.pm_party_id):
 			_fail("%s: head of government's party '%s' is not in the coalition" % [id, ns.pm_party_id])
@@ -272,7 +272,7 @@ func _check_cohabitation_is_reachable() -> void:
 		_fail("cohabitation declared on %d of %d seats, which is not a majority" % [
 			result["coalition_seats"], ns.assembly_seats
 		])
-	if result["pm_party_id"] == "renouveau_civique" or result["pm_name"] == "":
+	if result["pm_party_id"] == "renouveau_civique" or result["pm_person_id"] == "":
 		_fail("cohabitation left the premiership with the President's party or unnamed")
 	if not ns.is_cohabitation:
 		_fail("form() returned cohabitation but did not write it onto the state")
@@ -410,7 +410,7 @@ func _check_government_stays_coherent_over_fourteen_years() -> void:
 				state.year, state.month, ns.coalition_seats, ns.assembly_seats
 			])
 			return
-		if ns.pm_party_id == "" or ns.pm_name == "":
+		if ns.pm_party_id == "" or ns.pm_person_id == "":
 			_fail("month %d-%d: government has no head" % [state.year, state.month])
 			return
 		for axis in ["economic", "social"]:
@@ -452,9 +452,9 @@ func _compare_government(label: String, a, b) -> void:
 		_fail("%s: coalition changed from %s to %s" % [label, a.coalition_party_ids, b.coalition_party_ids])
 	if a.coalition_seats != b.coalition_seats:
 		_fail("%s: coalition_seats changed from %d to %d" % [label, a.coalition_seats, b.coalition_seats])
-	if a.pm_party_id != b.pm_party_id or a.pm_name != b.pm_name:
+	if a.pm_party_id != b.pm_party_id or a.pm_person_id != b.pm_person_id:
 		_fail("%s: head of government changed from %s/%s to %s/%s" % [
-			label, a.pm_name, a.pm_party_id, b.pm_name, b.pm_party_id
+			label, a.pm_person_id, a.pm_party_id, b.pm_person_id, b.pm_party_id
 		])
 	if a.formation_method != b.formation_method or a.censure_rule != b.censure_rule:
 		_fail("%s: formation rules changed from %s/%s to %s/%s" % [

@@ -193,8 +193,9 @@ func _check_panel_content() -> void:
 
 	windows.open("politics")
 	_main._government_panel._process(0.0)
-	if not _collect_text(_main._government_panel).contains(ns.pm_name):
-		_fail("politics panel does not name the head of government '%s'" % ns.pm_name)
+	var pm_name: String = _main._loader.person_name(ns.pm_person_id)
+	if not _collect_text(_main._government_panel).contains(pm_name):
+		_fail("politics panel does not name the head of government '%s'" % pm_name)
 
 	windows.open("society")
 	_main._polling_panel._process(0.0)

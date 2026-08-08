@@ -5,7 +5,7 @@
   "capital": "Rome",
   "playable": false,
   "leader": {
-    "name": "Lorenzo Bagnasco",
+    "person": "ITA_bagnasco",
     "title": "President of the Council of Ministers",
     "party": "fratelli_della_nazione"
   },
@@ -42,7 +42,7 @@
       "_note": "The President of the Republic, elected by Parliament for a seven-year term; last elected January 2022, so the next is due January 2029. Whose own clock the head_of_state_limited semestre bianco is measured against -- see docs/dissolution-model.md. Wikipedia, 'President of Italy'.",
       "kind": "elected_president",
       "title": "President of the Republic",
-      "name": "Umberto Salvagno",
+      "person": "ITA_salvagno",
       "term_years": 7,
       "next": {
         "year": 2029,
@@ -63,8 +63,10 @@
       "method": "investiture",
       "censure": "simple_present",
       "head_of_government_title": "President of the Council of Ministers",
-      "head_of_government_name": "Lorenzo Bagnasco"
+      "head_of_government_person": "ITA_bagnasco"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "ITA_carlo_alberto_ii",
     "eu": {
       "member": true,
       "ep_seats": 76

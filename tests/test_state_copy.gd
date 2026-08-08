@@ -126,10 +126,27 @@ func _check_pair(where: String, original, copy) -> void:
 			a.erase(SENTINEL_KEY)
 			_check_nested(where, name, a, b)
 		elif typeof(a) == TYPE_ARRAY:
-			a.append(SENTINEL_NUMBER)
+			a.append(_array_sentinel(a))
 			if b.size() != a.size() - 1:
 				_fail("%s.%s: Array is shared with the copy, not duplicated" % [where, name])
 			a.pop_back()
+
+
+## A sentinel the array will actually accept. Until U6a every copied Array on
+## either state object was untyped, so a bare float worked and the three
+## Array[Dictionary] fields were all in NOT_COPIED for unrelated reasons -- which
+## means this branch had never once run against a typed array. GameState.appointments
+## is the first, and it pushed the gap into the open: a TypedArray refuses a
+## push_back of the wrong type, the size check then reads unchanged, and the test
+## reports "shared with the copy" for a field that is duplicated correctly. A
+## guard rail that fails for the wrong reason is worse than one that does not run.
+func _array_sentinel(a: Array):
+	match a.get_typed_builtin():
+		TYPE_DICTIONARY: return {SENTINEL_KEY: SENTINEL_NUMBER}
+		TYPE_ARRAY: return [SENTINEL_NUMBER]
+		TYPE_STRING: return SENTINEL_KEY
+		TYPE_INT: return int(SENTINEL_NUMBER)
+	return SENTINEL_NUMBER
 
 
 ## A Dictionary of Dictionaries duplicated shallowly passes the check above and

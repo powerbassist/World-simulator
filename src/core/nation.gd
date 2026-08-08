@@ -74,7 +74,12 @@ var geo_id: String = ""
 var capital: String = ""
 var playable: bool = false
 
-var leader_name: String = ""
+## The face of the nation, as a reference into data/people/. In nine of the ten
+## this is the head of government and in France it is the head of state, so it
+## resolves to a person another slot also points at -- which is fine and is the
+## point of a register: two references may name one person, where two authored
+## NAMES could disagree. Before U6b every nation file wrote this name twice.
+var leader_person_id: String = ""
 var leader_title: String = ""
 var leader_party_id: String = ""
 
@@ -124,7 +129,7 @@ var head_of_government_title: String = ""
 ## Who holds the head-of-government office at game start. Equal to the national
 ## leader for nine of the ten; France is the exception, where the leader is the
 ## President and the Prime Minister is a separate person.
-var head_of_government_name: String = ""
+var head_of_government_person_id: String = ""
 
 ## The nation's own next scheduled election, real and sourced — see
 ## docs/electoral-systems.md. Authored, not imported: tools/import_data.py never
@@ -152,8 +157,15 @@ var system_id: String = ""
 ## has_executive already uses below.
 var head_of_state_kind: String = ""
 var head_of_state_title: String = ""
-var head_of_state_name: String = ""
+var head_of_state_person_id: String = ""
 var head_of_state_term_years: int = 0
+
+## Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored
+## per nation because the law is generic and the dynasty is not -- before U6b the
+## law named "Alexander IV" inline, so every parliamentary republic in Europe
+## restored one shared king. A nation that already has a monarch points this at
+## that same person, so a republic-then-restoration returns the right house.
+var pretender_person_id: String = ""
 var head_of_state_next_year: int = 0
 var head_of_state_next_month: int = 0
 
@@ -227,7 +239,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.playable = _extract_bool(d, "playable", filename, errors)
 
 	var leader: Dictionary = _extract_dict(d, "leader", filename, errors)
-	n.leader_name = _extract_string(leader, "name", filename, errors)
+	n.leader_person_id = _extract_string(leader, "person", filename, errors)
 	n.leader_title = _extract_string(leader, "title", filename, errors)
 	n.leader_party_id = _extract_string(leader, "party", filename, errors)
 
@@ -289,7 +301,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	if n.head_of_state_kind != "" and not KNOWN_HEAD_OF_STATE_KINDS.has(n.head_of_state_kind):
 		errors.append("%s: government.head_of_state.kind '%s' is not a recognised kind" % [filename, n.head_of_state_kind])
 	n.head_of_state_title = _extract_string(head_of_state, "title", filename, errors)
-	n.head_of_state_name = _extract_string(head_of_state, "name", filename, errors)
+	n.head_of_state_person_id = _extract_string(head_of_state, "person", filename, errors)
 	# Only an elected head of state has a clock of its own -- a monarch, a
 	# collegial presidency, or a president who IS the executive (France) does
 	# not. Present-only-if-required, complete-if-present -- the same rule
@@ -323,7 +335,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	if n.censure_rule != "" and not KNOWN_CENSURE_RULES.has(n.censure_rule):
 		errors.append("%s: government.formation.censure '%s' is not a recognised rule" % [filename, n.censure_rule])
 	n.head_of_government_title = _extract_string(formation, "head_of_government_title", filename, errors)
-	n.head_of_government_name = _extract_string(formation, "head_of_government_name", filename, errors)
+	n.head_of_government_person_id = _extract_string(formation, "head_of_government_person", filename, errors)
+
+	n.pretender_person_id = _extract_string(government, "pretender_person", filename, errors)
 
 	var eu: Dictionary = _extract_dict(government, "eu", filename, errors)
 	n.eu_member = _extract_bool(eu, "member", filename, errors)

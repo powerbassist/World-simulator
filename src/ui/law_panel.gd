@@ -204,11 +204,11 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 	var verdict := Label.new()
 	if censure["carried"]:
 		verdict.text = "CENSURED. %s falls; %s %s now heads the government." % [
-			censure["pm_name"], ns.head_of_government_title, ns.pm_name
+			_loader.person_name(censure["pm_person_id"]), ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 		]
 	else:
 		verdict.text = "The motion failed. %s %s survives and the law stands." % [
-			ns.head_of_government_title, ns.pm_name
+			ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 		]
 	box.add_child(verdict)
 

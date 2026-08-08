@@ -79,13 +79,20 @@ static func _tick_nation(state, ns) -> void:
 	if ns.potential_gdp_eur_bn > 0.0:
 		gap = 100.0 * (ns.gdp_eur_bn - ns.potential_gdp_eur_bn) / ns.potential_gdp_eur_bn
 
-	# Four terms since V1.3c. coercion_impulse_pct is sustained rather than decayed
+	# Five terms since V1.4a. coercion_impulse_pct is sustained rather than decayed
 	# -- a measure in force is a standing condition, not a shock -- and carries its
 	# own clamp in coercion_constants.gd, because docs/economy-model.md's
 	# divergence argument is per-quantity and a new quantity owes it a bound.
+	#
+	# firm_impulse_pct is sustained for the same reason and carries its own clamp in
+	# companies_constants.gd for the same one: a subsidy in force is a standing
+	# condition. It reads EXACTLY 0.0 in every month of every game in which no
+	# subsidy has ever been paid, which is what lets the whole firm register go live
+	# with the balance harness bit-identical across all fourteen existing regimes.
 	var growth: float = (
 		trend + C.GAP_CLOSE * (-gap)
 		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
+		+ ns.firm_impulse_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth
@@ -171,7 +178,15 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 				float(ns.tax_rates_pct.get("income", 0.0))
 				- float(ns.start_tax_rates_pct.get("income", 0.0))
 			)
-			+ ns.law_structural_offset_pct,
+			+ ns.law_structural_offset_pct
+			# V1.4a, beside the law offset because it is the same shape: a signed
+			# adjustment to where unemployment is heading, not a claim about this
+			# month's cycle. It is REALLOCATION and nothing else -- two firms of equal
+			# share employ different numbers of people, so moving share between them
+			# changes total jobs, and a firm hiring because the whole economy grew
+			# would be a second answer to the Okun term below. Exactly 0.0 while every
+			# firm sits at its authored share. See src/sim/companies.gd.
+			+ ns.firm_jobs_offset_pct,
 		C.STRUCT_MIN_PCT,
 		C.STRUCT_MAX_PCT
 	)

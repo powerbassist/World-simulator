@@ -32,11 +32,13 @@ Static data is **read once at startup and never mutated**. When the simulation r
 data/
 ├── nations/           one file per nation — FRA.json, DEU.json, …
 ├── parties/           one file per nation's party system
+├── people/            one file per nation — every named individual ([[ROADMAP|U6b]])
 ├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
 ├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
 ├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])
 ├── diplomatic-actions/ the player's foreign-policy verbs ([[ROADMAP|V1.3a]])
-├── companies/         fictional firms (V1)
+├── companies/         fictional firms, playable nations only ([[ROADMAP|V1.4a]])
+├── company-actions/   the player's verbs pointed at a firm ([[ROADMAP|V1.4a]])
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
 ```
@@ -348,6 +350,20 @@ Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI read
 ### Persistence
 
 Live state is serialised to a JSON save file. The whole `GameState` object, written in one go, read in one go.
+
+> [!warning] `to_dict()` hands out the LIVE dictionaries, not copies
+> Found at [[ROADMAP|V1.4a]], in a test that had to be rewritten around it.
+> `GameState.to_dict()` and `NationState.to_dict()` build a fresh **outer**
+> dictionary and put the live inner ones straight into it, and `from_dict()`
+> assigns them straight back out — its own header says it expects freshly parsed
+> JSON, where every container is already unshared. That is correct for the real
+> save path, which goes through `JSON.stringify`/`JSON.parse_string`.
+>
+> It is a trap for anything that builds **two** states from two `to_dict()` calls
+> and then ticks both: they share one register, and the second tick advances a
+> state the first already moved. Round-trip through JSON when a test or a tool
+> needs two independent copies — or use `duplicate_state()`, which does deep-copy
+> and is what `Budget.project()` uses.
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 

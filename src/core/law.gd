@@ -10,8 +10,17 @@ extends RefCounted
 
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Nation = preload("res://src/core/nation.gd")
+## V1.4b. Borrowed rather than re-declared, exactly as src/core/company_action.gd
+## borrows it: the bound on how hard one authored rule may lean on a sector is a
+## property of the companies model, and a second number for it here would be one
+## strength written twice.
+const CK = preload("res://src/sim/companies_constants.gd")
 
-const THEME_KEYS := ["tax", "labour", "social", "institutional"]
+## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
+## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
+## investment would wrongly land -- that is a lever pointed at a sector too, and
+## the thing that separates them is the register, not the word.
+const THEME_KEYS := ["tax", "labour", "social", "institutional", "business"]
 
 ## Effect keys that are a single float delta into one of the non-budget
 ## channels legislature.gd accumulates onto NationState.
@@ -72,7 +81,13 @@ var preconditions: Array = []
 ## {"tax_rates_pct": {...}, "spending_pct_gdp": {...},
 ##  "structural_unemployment_pct": float, "potential_growth_pct": float,
 ##  "other_revenue_pct_gdp": float, "bloc_offset": {...},
-##  "institutional": {...}} -- any subset.
+##  "institutional": {...}, "company": {...}} -- any subset.
+##
+## `company` is V1.4b's, and it is the SAME CHANNEL NAME company_action.gd uses
+## with a deliberately different shape: an action names an op against the one firm
+## it is pointed at, a law names a SECTOR and a burden. That is the a/b split
+## written into the schema rather than only into the docs -- a subsidy is an
+## executive act aimed at a firm, a regulation is a law aimed at a sector.
 var effects: Dictionary = {}
 
 ## A constitutional amendment: resolve_vote() reads the proposing nation's own
@@ -93,7 +108,11 @@ var systems: Array[String] = []
 var changes_system: bool = false
 
 
-static func from_dict(d: Dictionary, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array):
+## `sector_keys` is PASSED rather than preloaded, the way tax_keys, spending_keys
+## and bloc_keys already are: which sectors exist is the economy model's list, and
+## a validator reaching sideways for it is the dependency data_loader.gd exists to
+## carry. The bound on a burden's size is a different question and comes from CK.
+static func from_dict(d: Dictionary, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, sector_keys: Array):
 	var law := new()
 
 	if not d.has("id") or typeof(d["id"]) != TYPE_STRING or d["id"] == "":
@@ -143,7 +162,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 		errors.append("%s: %s 'systems' is only valid on a constitutional law" % [filename, law.id])
 
 	law.preconditions = _extract_preconditions(d, law.id, filename, errors)
-	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, law.constitutional)
+	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, sector_keys, law.constitutional)
 	law.changes_system = law.effects.get("institutional", {}).has("system_id")
 
 	return law
@@ -210,7 +229,7 @@ static func _extract_preconditions(d: Dictionary, law_id: String, filename: Stri
 	return out
 
 
-static func _extract_effects(d: Dictionary, law_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, allow_institutional: bool) -> Dictionary:
+static func _extract_effects(d: Dictionary, law_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, sector_keys: Array, allow_institutional: bool) -> Dictionary:
 	var raw: Dictionary = d.get("effects", {})
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects must be an object" % [filename, law_id])
@@ -240,11 +259,78 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 		else:
 			out["institutional"] = _extract_institutional(raw["institutional"], law_id, filename, errors)
 
+	if raw.has("company"):
+		out["company"] = _extract_company(raw["company"], law_id, filename, errors, sector_keys)
+
+	# THE ANTI-DOUBLE-COUNT, MADE MECHANICAL. A regulation's burden reaches
+	# structural unemployment through Companies.headcount(), which is the same act
+	# (a law passing), the same landing site (Economy._update_unemployment()) and
+	# the same units as `structural_unemployment_pct`. A law carrying both would be
+	# two answers to one question with no way for a reader to tell which one the
+	# number came from.
+	#
+	# docs/legislature-model.md's existing lever-vs-bloc_offset rule says the same
+	# thing about a different pair and says it in PROSE -- "the sixteen templates
+	# each pick one story and tell it once". This one is a load error instead,
+	# because a convention that only the docs enforce is one an author breaks by
+	# not reading them. Same shape as the directed key that refuses a symmetric one.
+	if raw.has("company") and raw.has("structural_unemployment_pct"):
+		errors.append("%s: %s carries both effects.company and effects.structural_unemployment_pct -- a sector burden already reaches structural unemployment through the firm register, so the two are one story told twice. Pick one." % [filename, law_id])
+
 	for key in raw.keys():
-		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and not SCALAR_EFFECT_KEYS.has(key):
+		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and not SCALAR_EFFECT_KEYS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
 
 	return out
+
+
+## V1.4b. A regulation names a SECTOR and a burden on it, and that is the whole
+## schema -- `sector` and `burden`, refused if anything else appears.
+##
+## MUST NOT NAME A FIRM, and the refusal below is where that is enforced rather
+## than merely intended. Share movement is the subsidy's persistent channel, and a
+## law that could point at one firm would be a second writer of it -- two answers
+## to the question of who is winning the sector. A regulation is sector-wide by
+## construction, and the register is what it reads rather than what it moves.
+##
+## The burden is SIGNED. Deregulation is the negative direction on the same
+## accumulator, not a repeal verb: there is no repeal in this project and a `once`
+## law never returns, so a burden that could only ever rise would be a permanent
+## monotone charge -- the failure docs/defence-model.md names, where a clamp stops
+## being a guard rail and becomes the number. A signed burden also costs no new
+## precondition field, and legislature_constants.PRECONDITION_FIELDS has no sector
+## parameter and should not grow one.
+static func _extract_company(raw, law_id: String, filename: String, errors: Array[String], sector_keys: Array) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.company must be an object" % [filename, law_id])
+		return {}
+
+	var sector = raw.get("sector", "")
+	if typeof(sector) != TYPE_STRING or not sector_keys.has(sector):
+		errors.append("%s: %s effects.company.sector '%s' is not a recognised sector (%s)" % [
+			filename, law_id, str(sector), str(sector_keys)
+		])
+		return {}
+
+	if not raw.has("burden") or not (typeof(raw["burden"]) == TYPE_INT or typeof(raw["burden"]) == TYPE_FLOAT):
+		errors.append("%s: %s effects.company.burden is missing or not numeric" % [filename, law_id])
+		return {}
+
+	var burden := float(raw["burden"])
+	if burden == 0.0:
+		errors.append("%s: %s effects.company.burden is 0.0 -- a rule that binds nobody is not a rule" % [filename, law_id])
+	elif absf(burden) > CK.REGULATION_BURDEN_MAX:
+		errors.append("%s: %s effects.company.burden = %s exceeds REGULATION_BURDEN_MAX (%s)" % [
+			filename, law_id, str(burden), str(CK.REGULATION_BURDEN_MAX)
+		])
+
+	for key in raw.keys():
+		if key != "sector" and key != "burden":
+			errors.append("%s: %s effects.company.%s is not a recognised term -- a regulation names a sector and a burden, and a firm id or a share rate beside them would make a law the second writer of the subsidy's channel" % [
+				filename, law_id, key
+			])
+
+	return {"sector": sector, "burden": burden}
 
 
 ## Absolute values written straight onto NationState -- see
@@ -331,9 +417,17 @@ static func _extract_head_of_state(raw, law_id: String, filename: String, errors
 	else:
 		out["title"] = title
 
+	# A transition names an OFFICE; the acting nation's own content names who
+	# fills it. That is true for every kind now, where before it was true only
+	# for elected_president: the Restoration Act used to author "Alexander IV"
+	# inline, so every parliamentary republic in Europe restored the SAME king.
+	# The nation's `government.pretender_person` answers it per nation instead —
+	# and a monarchy points that reference at its own sitting monarch, so a
+	# restoration puts the right dynasty back. See docs/transition-model.md.
+	if raw.has("name"):
+		errors.append("%s: %s effects.institutional.head_of_state.name must not be set for any kind -- the holder is derived at apply() time, from the largest party's leader for 'elected_president' and from the nation's own government.pretender_person otherwise" % [filename, law_id])
+
 	if kind == "elected_president":
-		if raw.has("name"):
-			errors.append("%s: %s effects.institutional.head_of_state.name must not be set for kind 'elected_president' -- the holder is derived from the largest party's leader at apply() time" % [filename, law_id])
 		if not raw.has("term_years") or not (typeof(raw["term_years"]) == TYPE_INT or typeof(raw["term_years"]) == TYPE_FLOAT):
 			errors.append("%s: %s effects.institutional.head_of_state.term_years is missing or not numeric, required for kind 'elected_president'" % [filename, law_id])
 		else:
@@ -341,14 +435,8 @@ static func _extract_head_of_state(raw, law_id: String, filename: String, errors
 			if term_years < 1 or term_years > 10:
 				errors.append("%s: %s effects.institutional.head_of_state.term_years = %d out of range [1, 10]" % [filename, law_id, term_years])
 			out["term_years"] = term_years
-	else:
-		if raw.has("term_years"):
-			errors.append("%s: %s effects.institutional.head_of_state.term_years must not be set for kind '%s'" % [filename, law_id, kind])
-		var name = raw.get("name", "")
-		if typeof(name) != TYPE_STRING or name == "":
-			errors.append("%s: %s effects.institutional.head_of_state.name is missing or invalid, required for kind '%s'" % [filename, law_id, kind])
-		else:
-			out["name"] = name
+	elif raw.has("term_years"):
+		errors.append("%s: %s effects.institutional.head_of_state.term_years must not be set for kind '%s'" % [filename, law_id, kind])
 
 	return out
 

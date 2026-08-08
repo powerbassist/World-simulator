@@ -20,6 +20,9 @@ const GK = preload("res://src/sim/government_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## V1.4b, for REGULATION_BURDEN_MAX alone. Not companies.gd: this file writes the
+## burden and never reads what it costs, so the dependency stops at the clamp.
+const CK = preload("res://src/sim/companies_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -30,6 +33,11 @@ static func init_nation(ns) -> void:
 	ns.law_potential_target_pct = 0.0
 	ns.law_other_revenue_pct_gdp = 0.0
 	ns.bloc_offset = {}
+	# V1.4b. Reset here rather than in Companies.init_nation() for the reason the
+	# three law_* accumulators above are: whatever WRITES a field resets it, and a
+	# regulation is a law. companies.gd only reads this one, exactly as economy.gd
+	# only reads `law_structural_offset_pct`.
+	ns.regulation_burden = {}
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
 	ns.last_law_result = {}
@@ -283,6 +291,24 @@ static func apply(state, ns, law, loader) -> void:
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
 
+	# V1.4b, THE FIFTH EFFECT CHANNEL REACHED FROM THIS SIDE. A subsidy reaches
+	# effects.company through Companies.execute() as an executive act; a regulation
+	# reaches the same channel through here, having survived an assembly division
+	# first. That is the whole of the a/b split, and it is two lines of code because
+	# the split is about the APPROVAL PATH and not about the mechanism.
+	#
+	# Accumulates and is SIGNED, so a deregulation law is the negative direction on
+	# the same register rather than a repeal verb this project does not have. One
+	# clamp, on the accumulated value -- the two channels companies.gd reads it
+	# through carry their own.
+	if effects.has("company"):
+		var sector: String = String(effects["company"]["sector"])
+		var burden: float = float(effects["company"]["burden"])
+		ns.regulation_burden[sector] = clampf(
+			float(ns.regulation_burden.get(sector, 0.0)) + burden,
+			-CK.REGULATION_BURDEN_MAX, CK.REGULATION_BURDEN_MAX
+		)
+
 	# An institution is SET, not nudged -- every key here is an absolute value
 	# written straight onto NationState, unlike every channel above. Whether
 	# the value is legal for this nation's system was already checked at load
@@ -324,27 +350,35 @@ static func apply(state, ns, law, loader) -> void:
 
 
 ## Writes a system transition's new head of state. `hos` is law.gd's already-
-## validated {kind, title, name?, term_years?} -- for `elected_president` the
-## holder is DERIVED from the largest party's own leader_name rather than
-## authored, because an elected president is someone already on the board,
-## unlike a restored monarch, who is not. See docs/transition-model.md.
+## validated {kind, title, term_years?} -- and it carries NO name for any kind
+## now. The holder is derived on both branches: for `elected_president` from the
+## largest party's own leader, because an elected president is someone already on
+## the board; and for anything else from the acting nation's own
+## `government.pretender_person`.
+##
+## That second branch is U6b's, and it fixed a real content bug rather than
+## tidying one. The Restoration Act authored "Alexander IV" inline, and it
+## applies to any `parliamentary_republic` -- so every republic in Europe
+## restored the same king. A law names an OFFICE; a nation names the person.
+## See docs/transition-model.md and docs/people-model.md.
 static func _apply_head_of_state(state, ns, loader, hos: Dictionary) -> void:
 	ns.head_of_state_kind = hos["kind"]
 	ns.head_of_state_title = hos["title"]
 	if hos["kind"] == "elected_president":
 		var party_list: Array = loader.parties.get(ns.id, [])
 		var largest_id := Government.largest_party_id(ns, party_list)
-		var holder_name := ""
+		var holder_id := ""
 		for party in party_list:
 			if party.id == largest_id:
-				holder_name = party.leader_name
+				holder_id = party.leader_person_id
 				break
-		ns.head_of_state_name = holder_name
+		ns.head_of_state_person_id = holder_id
 		var term_years := int(hos["term_years"])
 		ns.head_of_state_next_year = int(state.year) + term_years
 		ns.head_of_state_next_month = int(state.month)
 	else:
-		ns.head_of_state_name = hos["name"]
+		var nation = loader.nations.get(ns.id, null)
+		ns.head_of_state_person_id = nation.pretender_person_id if nation != null else ""
 		ns.head_of_state_next_year = 0
 		ns.head_of_state_next_month = 0
 

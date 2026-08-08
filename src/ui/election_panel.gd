@@ -115,15 +115,15 @@ func show_results(results: Array) -> void:
 		var gov := Label.new()
 		if ns.is_cohabitation:
 			gov.text = "The new Assembly is against you. %s %s leads a government you did not choose." % [
-				ns.head_of_government_title, ns.pm_name
+				ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 			]
 		elif ns.is_minority:
 			gov.text = "%s %s heads a minority government: %d of %d seats." % [
-				ns.head_of_government_title, ns.pm_name, ns.coalition_seats, ns.assembly_seats
+				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
 		else:
 			gov.text = "%s %s forms a government with %d of %d seats." % [
-				ns.head_of_government_title, ns.pm_name, ns.coalition_seats, ns.assembly_seats
+				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
 		_sections.add_child(gov)
 

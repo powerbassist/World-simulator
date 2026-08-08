@@ -227,7 +227,7 @@ var system_id: String = ""
 ## dissolution.gd reads for head_of_state_limited. See political_system.gd.
 var head_of_state_kind: String = ""
 var head_of_state_title: String = ""
-var head_of_state_name: String = ""
+var head_of_state_person_id: String = ""
 var head_of_state_next_year: int = 0
 var head_of_state_next_month: int = 0
 
@@ -289,7 +289,7 @@ var head_of_government_title: String = ""
 ## premiership returns to the executive's own party, because in a
 ## semi-presidential system that party's authored leader is the President, not
 ## the Prime Minister.
-var start_head_of_government_name: String = ""
+var start_head_of_government_person_id: String = ""
 
 ## The live government: which parties are in it, how many seats they carry
 ## between them, and the seat-weighted mean of their ideology positions. That
@@ -299,7 +299,7 @@ var coalition_seats: int = 0
 var coalition_position := {"economic": 0.0, "social": 0.0}
 
 var pm_party_id: String = ""
-var pm_name: String = ""
+var pm_person_id: String = ""
 
 ## True when the assembly majority is a bloc that excludes the executive's own
 ## party — the player keeps the office and loses the legislature.
@@ -476,6 +476,80 @@ var deployment_bill_pct_gdp: float = 0.0
 var deployment_opinion_load: float = 0.0
 
 
+# --- Private companies (V1.4a) --------------------------------------------------
+
+## company id -> {"share": float, "subsidy": float}. The live half of the firm
+## register, and ONLY the live half: a firm's authored share and headcount are
+## content, so DataLoader.companies is the baseline and this carries what moved.
+## Storing the baseline here too is the duplication data/people/ was built to
+## remove.
+##
+## THE FIELD THAT EARNS SAVE_VERSION 15. Absent, every firm reads as share 0.0 —
+## the partition vanishes, `output_eur_bn()` returns nothing for every firm, and a
+## subsidy the player is still paying for through a serialised budget line moves a
+## share that is not there. That is `military_capability` at V1.3g and
+## `eu_member`/`neighbours` at V1.3b: a reloaded game running a DIFFERENT MODEL
+## from the one that saved it, not merely a game missing a number.
+##
+## Per-nation and keyed by a content id, which is `party_discipline`'s and
+## `cabinet`'s shape — so V1.4a adds a register and NO NEW KIND of live state, the
+## claim V1.3g made for its two.
+##
+## V1.4c adds `state_share` to each entry — a THIRD field with a THIRD single
+## writer, and the writers stay one apiece: `share` moves only under a subsidy,
+## `state_share` only under an ownership op, `regulation_burden` below only under a
+## law. It earns no SAVE_VERSION bump on the literal rule — absent it reads 0.0, "the
+## state owns nothing", which is the truth about every version-15 save because those
+## games could not nationalise anybody.
+var companies := {}
+
+## The four prices, recomputed once a month by Companies._recompute_prices() and
+## read from here rather than called for. Cached because of the preload graph
+## rather than for speed: companies.gd takes a LOADER, and economy.gd's twenty-eight
+## call sites and budget.gd's recompute() would all have to grow one to ask it
+## anything.
+##
+## `subsidy_bill_pct_gdp` is a computed spending line, NOT a sixth entry in
+## economy_constants.SPENDING_KEYS — that list is keyed 1:1 to cabinet portfolios,
+## so a sixth line would be a sixth minister. `deployment_bill_pct_gdp` above took
+## the same route for the same reason.
+##
+## `dividend_revenue_pct_gdp` is V1.4c's, and a computed REVENUE line — the second
+## on that side after V1.3c's tariffs, and not a fourth entry in TAX_KEYS: a
+## dividend has no rate, no base share and no erosion curve.
+##
+## The other two are DEVIATION terms and read exactly 0.0 until a subsidy stands —
+## or, since V1.4b, until a regulation does. None of the four earns the bump on
+## its own — all four are recomputed from `companies` and `regulation_burden` on
+## the first tick after a load — but they are serialised anyway so a save read back
+## and never ticked reports the budget it was saved with.
+var subsidy_bill_pct_gdp: float = 0.0
+var firm_impulse_pct: float = 0.0
+var firm_jobs_offset_pct: float = 0.0
+var dividend_revenue_pct_gdp: float = 0.0
+
+## V1.4b. Sector id → signed accumulated regulatory burden, clamped to
+## ±companies_constants.REGULATION_BURDEN_MAX. Written by Legislature.apply() and
+## by nothing else in the project.
+##
+## PER SECTOR AND NEVER PER FIRM. A regulation is sector-wide where a subsidy is
+## firm-targeted, and a per-firm burden field would put a second writer beside
+## `share` — two answers to the question of who is winning the sector — as well as
+## breaking tests/test_save_load.gd's assertion that a register entry holds nothing
+## beyond `share` and `subsidy`.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: a version-15 save
+## is a game that could not pass a regulation, so an absent register reads as every
+## burden 0.0, which is correct for it. `measures` at V1.3c, `pacts` at V1.3g and
+## `appointments` at U6a. Serialised all the same, because a law writes it once and
+## no tick recomputes it — unlike the three prices above.
+var regulation_burden := {}
+
+## The most recent company action, for the companies panel to read after acting.
+## Empty until the first one resolves. `last_diplomatic_result`'s shape.
+var last_company_result := {}
+
+
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
 func duplicate_state():
@@ -545,7 +619,7 @@ func duplicate_state():
 	s.system_id = system_id
 	s.head_of_state_kind = head_of_state_kind
 	s.head_of_state_title = head_of_state_title
-	s.head_of_state_name = head_of_state_name
+	s.head_of_state_person_id = head_of_state_person_id
 	s.head_of_state_next_year = head_of_state_next_year
 	s.head_of_state_next_month = head_of_state_next_month
 	s.lose_condition = lose_condition
@@ -564,12 +638,12 @@ func duplicate_state():
 	s.formation_method = formation_method
 	s.censure_rule = censure_rule
 	s.head_of_government_title = head_of_government_title
-	s.start_head_of_government_name = start_head_of_government_name
+	s.start_head_of_government_person_id = start_head_of_government_person_id
 	s.coalition_party_ids = coalition_party_ids.duplicate(true)
 	s.coalition_seats = coalition_seats
 	s.coalition_position = coalition_position.duplicate(true)
 	s.pm_party_id = pm_party_id
-	s.pm_name = pm_name
+	s.pm_person_id = pm_person_id
 	s.is_cohabitation = is_cohabitation
 	s.is_minority = is_minority
 	s.last_formation = last_formation.duplicate(true)
@@ -602,6 +676,14 @@ func duplicate_state():
 	s.military_capability = military_capability
 	s.deployment_bill_pct_gdp = deployment_bill_pct_gdp
 	s.deployment_opinion_load = deployment_opinion_load
+
+	s.companies = companies.duplicate(true)
+	s.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp
+	s.firm_impulse_pct = firm_impulse_pct
+	s.firm_jobs_offset_pct = firm_jobs_offset_pct
+	s.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp
+	s.regulation_burden = regulation_burden.duplicate(true)
+	s.last_company_result = last_company_result.duplicate(true)
 
 	return s
 
@@ -677,7 +759,7 @@ func to_dict() -> Dictionary:
 		"system_id": system_id,
 		"head_of_state_kind": head_of_state_kind,
 		"head_of_state_title": head_of_state_title,
-		"head_of_state_name": head_of_state_name,
+		"head_of_state_person_id": head_of_state_person_id,
 		"head_of_state_next_year": head_of_state_next_year,
 		"head_of_state_next_month": head_of_state_next_month,
 		"lose_condition": lose_condition,
@@ -696,12 +778,12 @@ func to_dict() -> Dictionary:
 		"formation_method": formation_method,
 		"censure_rule": censure_rule,
 		"head_of_government_title": head_of_government_title,
-		"start_head_of_government_name": start_head_of_government_name,
+		"start_head_of_government_person_id": start_head_of_government_person_id,
 		"coalition_party_ids": coalition_party_ids,
 		"coalition_seats": coalition_seats,
 		"coalition_position": coalition_position,
 		"pm_party_id": pm_party_id,
-		"pm_name": pm_name,
+		"pm_person_id": pm_person_id,
 		"is_cohabitation": is_cohabitation,
 		"is_minority": is_minority,
 		"last_formation": last_formation,
@@ -734,6 +816,14 @@ func to_dict() -> Dictionary:
 		"military_capability": military_capability,
 		"deployment_bill_pct_gdp": deployment_bill_pct_gdp,
 		"deployment_opinion_load": deployment_opinion_load,
+
+		"companies": companies,
+		"subsidy_bill_pct_gdp": subsidy_bill_pct_gdp,
+		"firm_impulse_pct": firm_impulse_pct,
+		"firm_jobs_offset_pct": firm_jobs_offset_pct,
+		"dividend_revenue_pct_gdp": dividend_revenue_pct_gdp,
+		"regulation_burden": regulation_burden,
+		"last_company_result": last_company_result,
 	}
 
 
@@ -825,7 +915,7 @@ static func from_dict(d: Dictionary):
 	s.system_id = d.get("system_id", "")
 	s.head_of_state_kind = d.get("head_of_state_kind", "")
 	s.head_of_state_title = d.get("head_of_state_title", "")
-	s.head_of_state_name = d.get("head_of_state_name", "")
+	s.head_of_state_person_id = d.get("head_of_state_person_id", "")
 	s.head_of_state_next_year = int(d.get("head_of_state_next_year", 0))
 	s.head_of_state_next_month = int(d.get("head_of_state_next_month", 0))
 	s.lose_condition = d.get("lose_condition", "")
@@ -844,12 +934,12 @@ static func from_dict(d: Dictionary):
 	s.formation_method = d.get("formation_method", "")
 	s.censure_rule = d.get("censure_rule", "")
 	s.head_of_government_title = d.get("head_of_government_title", "")
-	s.start_head_of_government_name = d.get("start_head_of_government_name", "")
+	s.start_head_of_government_person_id = d.get("start_head_of_government_person_id", "")
 	s.coalition_party_ids = d.get("coalition_party_ids", [])
 	s.coalition_seats = int(d.get("coalition_seats", 0))
 	s.coalition_position = d.get("coalition_position", {"economic": 0.0, "social": 0.0})
 	s.pm_party_id = d.get("pm_party_id", "")
-	s.pm_name = d.get("pm_name", "")
+	s.pm_person_id = d.get("pm_person_id", "")
 	s.is_cohabitation = d.get("is_cohabitation", false)
 	s.is_minority = d.get("is_minority", false)
 	s.last_formation = d.get("last_formation", {})
@@ -878,6 +968,17 @@ static func from_dict(d: Dictionary):
 	# is deliberately NOT softened into "recompute it from spending" -- a fallback
 	# that quietly repairs the field would make the save version unnecessary and
 	# the next genuinely unrecoverable field would have no precedent to point at.
+	s.companies = d.get("companies", {})
+	s.subsidy_bill_pct_gdp = float(d.get("subsidy_bill_pct_gdp", 0.0))
+	s.firm_impulse_pct = float(d.get("firm_impulse_pct", 0.0))
+	s.firm_jobs_offset_pct = float(d.get("firm_jobs_offset_pct", 0.0))
+	s.dividend_revenue_pct_gdp = float(d.get("dividend_revenue_pct_gdp", 0.0))
+	# V1.4b, and the empty fallback is CORRECT rather than merely tolerable: a
+	# version-15 save comes from a game with no `business` laws in it, so every
+	# burden really was 0.0. That is why this field earns no bump of its own.
+	s.regulation_burden = d.get("regulation_burden", {})
+	s.last_company_result = d.get("last_company_result", {})
+
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))
 	s.deployment_opinion_load = float(d.get("deployment_opinion_load", 0.0))

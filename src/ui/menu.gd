@@ -71,7 +71,9 @@ func _ready() -> void:
 	_nation_select_panel = NationSelectPanel.new()
 	_nation_select_panel.nation_selected.connect(func(id, scenario_id): _start_game("", id, scenario_id))
 	_add_overlay(_nation_select_panel)
-	_nation_select_panel.set_nations(_playable_nations(), _loader.scenarios)
+	_nation_select_panel.set_nations(
+		_playable_nations(), _loader.scenarios, _person_name_map()
+	)
 
 	# Godot focuses nothing by default, and a menu with no focused control
 	# cannot be driven from the keyboard at all -- arrow keys and Enter go
@@ -91,6 +93,15 @@ func _playable_nations() -> Array:
 		var n = _loader.nations[id]
 		if n.playable:
 			out.append(n)
+	return out
+
+
+## Flattened for nation_select_panel.gd, which is the one surface that resolves a
+## person without holding a loader -- see that file's `_person_names`.
+func _person_name_map() -> Dictionary:
+	var out := {}
+	for pid in _loader.person_by_id.keys():
+		out[pid] = _loader.person_by_id[pid].person_name
 	return out
 
 

@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "XXX_wrong", "name": "Joris Van Craen" },
+    { "id": "BEL_vandekerckhove", "name": "Bram Vandekerckhove" },
+    { "id": "BEL_dewilde", "name": "Naima Dewilde" },
+    { "id": "BEL_coussement", "name": "Pieter Coussement" },
+    { "id": "BEL_vanhamme", "name": "Lore Vanhamme" },
+    { "id": "BEL_segers", "name": "Tom Segers" },
+    { "id": "BEL_baudouin_iii", "name": "Baudouin III" }
+  ]
+}

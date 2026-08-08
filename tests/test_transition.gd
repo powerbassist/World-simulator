@@ -162,9 +162,11 @@ func _check_transition_writes_every_field_legally_under_the_target() -> void:
 		_fail("post-transition lose_condition '%s' does not match the target template's '%s'" % [ns.lose_condition, system.lose_condition])
 
 
-## An elected_president's holder is DERIVED from the largest party's own
-## leader_name, not authored -- proven against the real largest party, not a
-## re-derivation of "largest".
+## An elected_president's holder is DERIVED from the largest party's own leader,
+## not authored -- proven against the real largest party, not a re-derivation of
+## "largest". Since U6b it is derived as a person ID, and the other branch is
+## derived too: a restored monarch comes from the nation's own pretender rather
+## than from a name the law carried, which is checked below.
 func _check_derived_president_is_largest_partys_leader() -> void:
 	var state = _new_state("GBR")
 	var ns = state.player()
@@ -174,17 +176,17 @@ func _check_derived_president_is_largest_partys_leader() -> void:
 		return
 
 	var largest_id := Government.largest_party_id(ns, party_list)
-	var expected_name := ""
+	var expected_person := ""
 	for party in party_list:
 		if party.id == largest_id:
-			expected_name = party.leader_name
+			expected_person = party.leader_person_id
 
 	Legislature.apply(state, ns, law, _loader)
 
 	if ns.head_of_state_kind != "elected_president":
 		_fail("post-transition head_of_state_kind is '%s', expected elected_president" % ns.head_of_state_kind)
-	if ns.head_of_state_name != expected_name:
-		_fail("derived president is '%s', expected the largest party's leader '%s'" % [ns.head_of_state_name, expected_name])
+	if ns.head_of_state_person_id != expected_person:
+		_fail("derived president is '%s', expected the largest party's leader '%s'" % [ns.head_of_state_person_id, expected_person])
 	var expected_next_year := GAME_START_YEAR + 5  # abolish_the_monarchy's term_years
 	if ns.head_of_state_next_year != expected_next_year or ns.head_of_state_next_month != GAME_START_MONTH:
 		_fail("derived president's clock is %d-%02d, expected %d-%02d" % [ns.head_of_state_next_year, ns.head_of_state_next_month, expected_next_year, GAME_START_MONTH])

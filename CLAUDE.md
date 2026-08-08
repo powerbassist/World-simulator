@@ -149,8 +149,16 @@ capturing pre-mutation figures. The tool now marks panels dirty in `main.gd`'s o
 idiom, and `_apply_view()` runs four frames before the capture rather than one. `--headless` draws nothing, so a green suite says nothing about
 layout; U5a shipped two bugs invisible to one, and U5c's ramp was wrong at the
 warm end until a frame was looked at. It saves a PNG of the running game — run it
-windowed, not headless — and takes `--layer`, `--hover` and (V1.3c) `--coerce`,
-so every map layer can be captured with something actually on it. That last flag
+windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
+(V1.4a) `--subsidy`,
+(V1.4b) `--regulate`,
+(V1.4c) `--nationalise`,
+so every map layer can be captured with something actually on it. **V1.4c replaced
+the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
+which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
+to draw, so the date read `01 JAN 2026` under `--agenda`, `--book`, `--subsidy` and
+`--regulate` while the figures beside it moved. Dismissing the election two real
+years now cross is part of the same helper. U6b added no flag — a new game already seats a cabinet and a head of state, so `--open people` captures a full window on frame 1 — but it did extend `--book`, because the diary's new person label is written at booking time and a frame of a field nobody filled in proves nothing. That last flag
 exists because a frame of an all-zero data layer proves nothing about its ramp,
 which is the one claim a screenshot is there to check. V1.3d added `--bloc` on the
 same argument — a new game's council is empty and a frame of three "None" captions
@@ -437,16 +445,363 @@ dirty in `main.gd`'s own idiom. The nation panel's fold also reappeared one sess
 after V1.3e paid for it there, and **height alone could not fix it**: four verbs are
 ~136px against a ~886px ceiling, so it took 80px of height plus two tightenings.
 
-**Next: U6** — the calendar as a scheduling skin over existing verbs, plus the
-named-individual roster V1.1d deferred. It is the only named successor left.
+**U6 split, and U6a shipped the president's diary.** The row counted **~40
+surfaces and four machines** — the largest ever on this project — so it split on
+machine count, V1.3e's trigger, cutting the half with the unmade content
+decision exactly as U5b cut U5c. **U6b is the roster.**
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g and U1–U5 are done. V1.1e (upper house and
+**The session is judged on legibility, not on scarcity, and that is a
+measurement rather than a preference.** Every observable here is
+piecewise-constant across a month: `clock.gd` has emitted `day_advanced` since
+the MVP and nothing in `src/sim/` has ever listened, so 14 March and 22 March
+differ only in the label — which makes booking *as a replacement for acting* a
+deferral that buys nothing, V1.3c's and V1.3d's strictly-dominated shape a third
+time. So **booking is optional**, every verb keeps its act-now button, and
+`tests/test_calendar.gd` asserts a booking moves nothing at the moment it is
+made. What the diary shows instead is dated state the game has carried for
+sessions with no surface anywhere: election day, the European election, the
+presidential term, the council's next proposal and its pending vote, the
+dissolution lockout, and every diplomatic and legislative cooldown expiry.
+
+**The one tuned constant this session would have added was DELETED by its own
+probe, which is a first.** A monthly budget of the player's days was swept
+against a band fixed before the sweep ran, and the band is not mis-tuned but
+**structurally unreachable**: the median month offers 27 legal acts asking 124
+days, so every budget from 4 to 24 bound in **100 %** of months. A ceiling that
+always binds is a cap, not an allocation. Deleted rather than left unused —
+V1.3e's treatment of `AGREEMENT_ACCEPT_MIN` — so `src/sim/calendar_constants.gd`
+carries **no tuned constant at all**. The reason is carried forward because it is
+not about calendars: `available()` returns what is **legal** and nothing yet
+models what the player **wants**, so any ceiling priced against legality always
+binds. That gap is a session, not a constant.
+
+**The probe corrected itself twice and a panel test found the third, which is
+eight sessions running.** The fixed-date density table read a player who never
+acts, so cooldowns — much the densest source — reported exactly **0**; and it
+counted *after* the tick, so an election had already pushed its own date forward
+and 168 months showed **one**. Both are V1.3f's measuring-the-wrong-state error,
+in the file written to avoid it: 19.6 % → **31.0 %**. The third is sharper than
+the average: a **new game's next twelve months are completely empty**, because
+France's nearest dated event is sixteen months out and cooldowns do not exist
+until the player has acted — so the page every player sees first is the page with
+nothing on it. The pre-committed response to a thin diary was shape rather than a
+constant (widening the horizon would have been the constant, since it also bounds
+booking), so: a **twelve-month strip** rather than a month's page, a `later`
+footer, and a `Next:` line outside the scroll.
+
+**`src/sim/calendar.gd` preloads no other system, and the test reads the file to
+say so.** `due()` returns entries as **data** and `main.gd` fires the verb —
+`cabinet-model.md`'s orchestrator precedent one scale wider, and it cost **zero**
+new preloads because `main.gd` already had all three. `_queue_effect()`'s U4
+baseline moved from the button press to arrival, because a booking commits
+nothing in the month it is made. `clock.gd` emits `month_elapsed` **before**
+`day_advanced`, so a day-1 booking acts *after* that month's tick; `due()` reads
+`<=` rather than `==`, so a save reloaded past a date still fires it.
+
+**The re-run is bit-identical across all thirteen existing regimes, and a
+fourteenth was needed for a reason V1.3g's was not.** `balance_probe.gd` and
+`tests/test_balance.gd` are month loops with **no clock** — this harness has never
+called `advance_one_day()` — so a day-resolution dispatch was structurally
+invisible to all thirteen and their bit-identity would have meant nothing. The day
+loop now runs for every regime; with an empty register it is one `is_empty()`
+check.
+
+**Booking does NOT go on `nation_panel.gd`, and the plan said it would.** Every
+verb row there is an HBox holding an autowrapping summary label beside one button:
+a second button narrows the label, the wrap grows the row, and that panel is at
+860px against a ~886 ceiling having paid for that fold twice. Booking lives on the
+diary alone. The **screenshot pass earned its keep for the sixth session running**
+— `upcoming()` filtered to unfired entries, so the strip's own resolved-entry
+styling was dead code and a kept appointment vanished from the diary. And
+`tests/test_state_copy.gd` had a branch that had **never run**: its array probe
+pushes a float sentinel, every copied Array had been untyped until now, and the
+three `Array[Dictionary]` fields were all excluded for unrelated reasons — so it
+reported "shared with the copy" for a field that is duplicated correctly.
+
+**U6b shipped the register, and the row was wrong about what the work was.**
+The roster half already existed: ~70 named people were live as loose strings in
+**five** places, and **every one of the ten nation files wrote a person's name
+twice** — `party.gd` even documented the duplication as a convention. So U6b was
+a *migration* into `data/people/` plus a re-key, not an authoring exercise. Only
+**five** names are new, the pretenders for the five republics, and authoring them
+fixed a live content bug: `amendments.json` named one king inline and the
+Restoration Act applies to any `parliamentary_republic`, so **every republic in
+Europe restored the same man**. A law names an office; the nation's own
+`government.pretender_person` names the person, and a monarchy points that slot at
+its sitting monarch.
+
+**A person is an id and a NAME, and the three fields that were cut are the
+design.** `role`, `title` and `party_id` all went before `person.gd` was written,
+because the reference that owns each relationship already states it — a title
+belongs to the office, a party leader is whoever `leader_person_id` points at, and
+an office is *the slot pointing at you*, which Moucron proves cannot even be
+single-valued. That leaves **no field that could carry a mechanism**, so "no
+mechanism on a person" is true by construction; `tests/test_people.gd` reads the
+file and fails if a third field appears. `docs/tiers/v1.md` §4 and §5 inherit the
+register and extend it. There is **no `src/core/people.gd`**: it was deleted
+before it was written once the bench was cut, because a name lookup is a
+dictionary read and every panel already holds the loader.
+
+**The probe corrected the model once and itself twice, nine sessions running, and
+its kill switch FIRED and was honoured.** A flat ordered bench picked by rank made
+adding one portfolio renumber every minister a party already held — 22 department
+changes in one run, for reasons about nobody — so it became a **shadow cabinet**
+keyed by portfolio, where churn is structurally impossible rather than damped.
+Then its own election counter reported **zero elections for every nation over
+fourteen years**, and churn was gated on it; and the first cast table had no
+vacancy column, so a collapsed government read the same as a thin roster. With
+those fixed, distinct-people-seen came back **6** worst case against a
+pre-committed floor of **12** — and a perfectly healthy single-party GBR at **7**
+with zero vacancy across three elections. **The minister bench was cut before it
+was authored**, U6a's currency deletion one session on; a portfolio still names a
+party, and `docs/cabinet-model.md`'s deferral is recorded as still correct rather
+than reversed. Model: [docs/people-model.md](docs/people-model.md).
+
+**`verb_key()` is unchanged and U6a's `person_id` hatch was not needed.** A person
+is the *face* of a target that already exists, so booking a state visit to Germany
+IS booking its leader — one act, one key. `person_id` is a derived label, and
+`tests/test_calendar.gd` asserts two entries differing only in it are the same
+verb. The hatch cost nothing and was right to carry; what it insured against did
+not happen.
+
+**`tools/check_names.sh` cannot see an untracked file**, and the first run over
+the new register passed with zero hits and **zero files scanned** — it iterates
+`git ls-files`. The largest exposure that check has ever had was, for one run, not
+being checked at all. Any session authoring a new content directory must `git add`
+before the check means anything. **The balance re-run is bit-identical across all
+fourteen regimes with no fifteenth needed** — predicted in advance, and a first
+for this run: U6a and V1.3g each needed a new regime because each added a verb,
+and a name is not a decision.
+
+**V1.4 is decomposed into three sessions, V1.4a–c; a and b are built.** The row
+was one line and one line is not a session: (a) the firm register and subsidies,
+(b) sector regulation, (c) nationalisation and privatisation. The split is on
+machine count — five machines — and **the a/b line is architectural rather than
+thematic**: a subsidy is an executive act and a regulation is a **law**, so (b)
+reaches `effects.company` through an assembly division where (a) reaches it
+directly. That is V1.3a's own distinction one block later, and it is the only
+thing here worth a session boundary.
+
+**The row double-booked twice and named neither.** Bond markets were claimed by §4
+and §6 and went to **§6**, because a yield writes `debt_service_pct_gdp` and
+shares no state with a firm — and §6 re-baselines the balance harness anyway, so
+endogenising the rate there is one re-run rather than two. The second collision
+was found by counting: **a subsidy IS §6's "sectoral investment — a lever pointed
+at a sector" unless a firm is smaller than a sector**, so
+`_validate_companies()` refuses a sector holding one named firm at load time. That
+is the eleventh missing-row instance.
+
+**A firm is the first content class that fronts nothing**, so V1.4 owns
+`effects.company` — the fifth channel, and the first pointed at something that is
+not a nation. `data/company-actions/` takes `data/diplomatic-actions/`'s shape, so
+a, b and c share one content type the way V1.3a's directory served five sessions.
+A firm is four fields: `id`, `name`, `sector`, `share` of its **sector**, and
+`headcount`. Revenue is not authored — it is `share × sector_output`, and
+authoring it is one quantity written twice.
+
+**Firms are load-bearing on GDP with no second reconciliation.** A firm holds a
+share and its output is read through it, so the partition is exact by construction
+and `_apply_growth_to_sectors()`'s existing GDP reconciliation is untouched. What
+reaches the economy is **two deviation terms that read exactly 0.0** until a verb
+moves something — `trade_baseline_by_partner`'s idiom — which is what let the
+whole register go live with **every shared balance regime bit-identical**.
+`tests/test_companies.gd` asserts exact equality, not `is_zero_approx`.
+**Headcount follows share and not sector output**: read off the level a firm would
+hire every month the economy grew, which is a second answer to the Okun term the
+macro model already owns. Reallocation is all this channel adds, and all it should.
+
+**The probe corrected the model twice, ten sessions running.** A flat rival floor
+made 0.0020, 0.0040 and 0.0080 produce the **identical** five-year outcome — the
+clamp-sets-the-number failure in a third place — and the fix moved the model:
+`RIVAL_FLOOR_FRACTION`, so a rival keeps half its **authored** share, the endpoint
+becomes content, and the rate went back to setting speed and was re-chosen on a
+column that did not exist before the correction. `SUBSIDY_GROWTH_BETA` at 0.30 had
+one firm worth more than a percentage point of every tax at once and came down to
+0.20. **The kill switch cleared**: the jobs channel reaches 0.229 points, and the
+table says why in a way nothing authored — subsidising a retailer over a bank moves
+0.229, one industrial firm over another moves 0.010, and the whole spread comes
+from two authored headcounts. The bill clamp is **slack**, 1.800 against 2.500.
+Model: [docs/companies-model.md](docs/companies-model.md).
+
+**The screenshot pass earned its keep for the seventh session running, and it
+found a live U6b bug on the way**: `_people_panel` was never added to `main.gd`'s
+`_mark_all_dirty()`, so the People window refreshed once on the frame it was built
+and never again — a censure, a reshuffle and every seat count after an election
+were stale on it until reload. The comment above that list predicted exactly this
+failure, about the panel added in the session that wrote the comment. Its own two
+bugs were the panel's and the tool's: ledger figures ran under the scroll bar, and
+twenty-four ticked months were captured under a top bar still showing the starting
+GDP, which `--agenda` has always done and got away with.
+
+`SAVE_VERSION` is **15**, on one field of five. `NationState.companies` earns it —
+absent, every firm reads as share 0.0, so the partition is not there and a subsidy
+the save is still billing for moves a share that does not exist. The other four are
+recomputed on the first tick. **What is not in the register is the interesting
+half**: a firm's authored share and headcount are content, so the baseline every
+deviation is measured against round-trips through `data/companies/` rather than
+through the save.
+
+**V1.4b shipped sector regulation, and the session boundary was the whole point.**
+A regulation is a **law**: it reaches `effects.company` through
+`Legislature.apply()` and an assembly division where a subsidy reaches it directly
+through `Companies.execute()` — V1.3a's distinction one block later. `law.gd` grew
+a fifth `business` theme and a `_extract_company()` validator; `legislature.gd`
+grew **one dispatch branch**; nothing in `src/sim/` learned a new verb.
+
+**One quantity read twice, and no new channel at all.**
+`NationState.regulation_burden` is signed per-sector state written by
+`Legislature.apply()` and by nothing else, priced through the **two channels V1.4a
+already built** — a negative term inside `firm_impulse_pct()` and a
+`(1 − β·burden)` factor inside `headcount()`, which the existing
+`firm_jobs_offset_pct` picks up for free because it already measures live headcount
+against authored headcount. That is V1.3c's *one verb, two prices* **literally**
+rather than by analogy; a second growth impulse would have been a second machine
+wearing the phrase. No budget line and no clamp of its own.
+
+**`_extract_company()` refuses a firm id, and the refusal IS the design.** Share
+movement is the subsidy's persistent channel and a law that could name a firm would
+be a second writer of it. The a/b split lives in the schema, not only in the docs —
+and `tests/test_companies.gd` asserts every share is **exactly** unchanged after
+twenty rounds of every rule in the file. A law carrying both `effects.company` and
+`structural_unemployment_pct` is a **load error**: same act, same landing site, same
+units, so the legislature model's prose rule is mechanical for the one case where it
+could be.
+
+**V1.4a's escape from §6 does NOT transfer, and no validator could have caught
+it.** V1.4a refused a sector holding one named firm — a rule about the *target* —
+and a regulation's target *is* the sector. What separates them had to be found: a
+regulation reaches **only the named partition** (a sector 24 % named is a quarter as
+regulable; the unnamed residual is unregulated, a bound recorded), and its **jobs
+price has no analogue in a sector lever** because jobs-per-share is firm content.
+That is why widening the jobs channel's charter from pure reallocation to
+reallocation-plus-level was the right trade rather than a compromise — without it
+V1.4b *is* §6 early. Both are cross-referenced into `docs/tiers/v1.md` §4 **and**
+§6. The row's other miss: **"cost margin" names a quantity `src/sim/` does not
+have**, and the corporate-receipts channel that would have invented one was **cut
+before it was written**, because it creates V1.4c's dividend dependency instead of
+discharging it — a dividend is a yield on *output*, and if V1.4c wants margin,
+V1.4c owns it whole. Instances **twelve and thirteen**.
+
+**Deregulation is a direction, not an undo.** The clamp is symmetric, so a
+deregulation law carries a negative burden on the same accumulator. There is no
+repeal verb in this project and a `once` law never returns, so `[0, MAX]` would have
+been a permanent monotone charge — V1.3g's named failure — and a repeal law would
+have been *inert at burden 0*, breaking V1.3f's own property on the law list. It
+would also have needed a `PRECONDITION_FIELDS` entry carrying a sector parameter
+that whitelist has never had.
+
+**The probe corrected the content twice and itself once, eleven sessions running,
+and NOT ONE correction was to the model** — which is itself the finding, because both
+channels were V1.4a's and already measured. The kill switch **cleared** at 0.0942
+points against a pre-committed floor of 0.05, and the prediction written before the
+sweep — agriculture cannot clear it at any sane value — **held exactly** at
+0.0083–0.0126 and is recorded as a structural bound. The first `business.json` made
+the whole regulation stack **free**: +6.45 headline against a ±3.0 floor, because
+the design rule said a regulation's losers must not also be named in `bloc_offset`.
+The probe's own numbers say why that was too broad — a saturated burden moves growth
+~0.1 %/yr and unemployment ~0.02 points, **below the opinion model's resolution**, so
+a rule's political price cannot be expressed by the measured channel and must be
+authored. Then the cost-against-buy table's **unweighted** `bloc_offset` sum hid two
+same-sector dominations; one was fixed by **swapping two burdens** rather than
+retuning offsets, because a safety regime genuinely is the heavier compliance load
+and the fix that is also true is the better fix. Model:
+[docs/companies-model.md](docs/companies-model.md) §10–19.
+
+**`SAVE_VERSION` stays at 15 and the test pins it** — a version-15 save comes from a
+game that could not pass a `business` law, so an absent register reads as every
+burden 0.0, which is the truth about that save rather than a soft failure
+(`measures` at V1.3c, `pacts` at V1.3g, `appointments` at U6a). Serialised anyway,
+because a law writes it once and no tick recomputes it. **The re-run is bit-identical
+across all fifteen existing regimes, predicted in advance**, and the sixteenth regime
+was the **cheap kind**: `AMENDMENT_REGIMES` already applies a law at a month, so only
+the content was new. The screenshot pass earned its keep for the **eighth** session
+running, and the bug was the flag's: one rule each way came out at `-0.000 pts` on
+the ledger because industry's 186k jobs at +0.40 and services' 213k at −0.35 shed and
+hire within **fifteen people** of each other.
+
+**V1.4c shipped ownership, and the V1.4 block is complete.** `state_share` is a
+third field on the firm register with a **third single writer**, so `share` moves
+only under a subsidy, `state_share` only under an ownership op and
+`regulation_burden` only under a law. A dividend is a yield on **output** —
+`state_share × share × sector_output × DIVIDEND_YIELD` — exactly as
+`companies-model.md` §13 argued a session in advance, so **no margin, profit or
+productivity quantity was invented**; it lands as the second computed *revenue* line
+after V1.3c's tariffs.
+
+**The purchase and the windfall write the DEBT STOCK, and that one call paid for
+itself three times.** A capital transaction is a balance-sheet swap rather than
+income, every existing budget line is a standing rate, and a one-off on the revenue
+side would move `deficit_pct_gdp` inside the month — which is a company action's own
+precondition field, the loop V1.4a's one-month lag exists to avoid. Writing
+`debt_eur_bn` instead means the interest is priced by `Budget.recompute()` at
+`DEBT_REAL_RATE_PCT`, the level is read by the bloc's own `debt_to_gdp_pct` rule, and
+it has been serialised since the MVP. **Nationalising a champion can put the player
+in breach of a rule Brussels passed.**
+
+**Row 14: "a permanent loss of control" named a control the model did not have** —
+a subsidy works on any firm whoever owns it and a regulation targets the sector — and
+that is §13's "cost margin" one session on. The answer is one factor at one existing
+site: a state holding absorbs the sector's compliance cost so the payroll does not.
+It adds **no constant at all**, because a total holding cancels a term V1.4b had
+already measured, and the shield is **signed** so a public firm in a *deregulated*
+sector forgoes the hiring too. `tests/test_companies.gd` asserts both directions.
+
+**The probe corrected the model once and the content once, twelve sessions running,
+and the model correction is about what a band can and cannot decide.**
+`DIVIDEND_YIELD`'s pre-committed band passed **three of four rows**, because it
+measures whether the line is *readable* rather than whether it is right. What chose
+was the ratio against `DEBT_REAL_RATE_PCT`: at 0.04 the yield on price was 4.0 %
+against a 2.0 % borrowing rate, so every nationalisation paid for itself twice over
+and came back better than a quiet run on the headline **and** the deficit — free on
+both axes, the strictly-dominated shape a fifth time. Set **equal to the borrowing
+rate**, the treasury neither gains nor loses on the exchange, which is the honest
+model where there is no cycle for an equity premium to compensate for; what
+nationalising costs is a **stock** where every other lever in this game is a flow.
+The content correction re-authored every `bloc_offset` against `BLOC_SIZE`, V1.4b's
+own table (j) discipline. The kill switch **cleared at 0.0942 points** and the
+agriculture prediction held exactly — because the shield's size *is* V1.4b's jobs
+price read from the other side, to the digit.
+
+**The `ISSUE_KEYS` question a, b and the whole V1.3 block deferred here is answered
+NO**, recorded in `opinion_constants.gd` beside `ISSUE_KEYS` so a later session finds
+the reasons rather than the silence. V1.3d's tests 1 and 3 hold; the other three
+fail. A **regulation** has 1 and 3 identically and V1.4b took no key, and the
+proposed distinction — ownership as a single standing stock — does not survive, since
+`regulation_burden` summed over sectors is equally a stock. The deciding number is
+that the S10 ratio drifts **−1.46 %** where V1.3d's moved **+0.39 %**, and it is
+structural: `business` carries `public_finances` at 0.34 and is the bloc that makes
+ownership divisive at all, so **the mechanic and the cost are the same number** (at
+business 0.04 the drift falls to −0.29 %, and a row that light says nothing).
+
+**`SAVE_VERSION` stays at 15, which is not what the row expected, and the test says
+so before pinning it.** An absent `state_share` reads 0.0 — the state owns nothing —
+true of every version-15 save; the dividend line is recomputed on the first tick; and
+the purchase was never a field. **V1.4b's declared stopgap is INHERITED, not
+discharged**: nationalisation is the state acting *on* a firm, and a firm still
+cannot refuse, exit, relocate or lobby. **The re-run is bit-identical across all
+sixteen existing regimes, predicted in advance**, and the seventeenth is the
+expensive kind — an ownership op is a verb no budget regime issues.
+
+**The screenshot pass earned its keep for the ninth session running, and two of its
+three bugs were older than the session.** The date has read `01 JAN 2026` under every
+tick-forward flag since `--agenda`: each hand-rolled a month loop calling
+`_on_month_elapsed()`, which advances the simulation and leaves the Clock node alone,
+so `clock_cluster.refresh()` had nothing to draw — V1.4a found the same disagreement
+one row up on the top bar and fixed only that. `_tick_months()` now drives
+`advance_one_day()`, which immediately surfaced a second thing no hand-rolled loop
+ever saw: two years of the real clock cross a real election and the result screen
+opens over the panel the flag just set up. And **the budget panel has never had a
+deployments row** — V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
+entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
+"beside the deployment line" about a line that was not there.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 13**. There has never been a migration: a superseded
+Save format is at **version 15**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -485,7 +840,58 @@ nothing, so an absent register silently withdraws the player's own forces and dr
 their bill with them. `tests/test_save_load.gd` asserts all four, and the split is
 the assertion worth having rather than the bump: it **pins** the property that
 obliged deployments are derived, so a later session making them stateful turns it
-red and has to come and say why.
+red and has to come and say why. **U6a adds one field and earns nothing, and what
+it did NOT add is the interesting half**: `appointments` absent reads as "nothing
+booked", correct for every version-13 save because those games could not book one
+— `measures`' case exactly. `GameState.day` is not serialised at all, because
+`save_manager.gd` already carries `clock.day` at the payload's top level and a
+copy in `to_dict()` would be two records of one fact; the test asserts its
+**absence**, which pins that property. And the field that *would* have earned a
+bump — a spent-days counter, which reads 0 when absent and hands a save-scumming
+player their month back — was never written, because the probe cut the currency it
+counted first. **U6b bumps to 14 on a RE-KEY rather than a new
+field, which is new on this list.** Nothing was added: `pm_name`,
+`head_of_state_name` and `start_head_of_government_name` stopped holding names and
+started holding person ids. The naive reading is that nothing is at risk, but a
+version-13 save carries the *old* keys, so without the bump all three load as `""`
+while the file looks intact and the game renders a government nobody governs —
+`military_capability` at V1.3g and `eu_member`/`neighbours` at V1.3b, in their
+strongest form yet. And U6b adds **no per-person serialised state at all**, because
+a person is pure content; the one field that would have earned the bump on its own,
+a stored `ns.cabinet_person`, was never written because the probe cut the bench
+that needed it. **V1.4a bumps to 15 on one field of five, and the split is again
+the assertion worth having.** `NationState.companies` is the bump: absent, every
+firm reads as share 0.0, so the partition is not there, every firm produces
+nothing, and a subsidy the save is still billing for through a serialised budget
+line moves a share that does not exist — `military_capability` at V1.3g in its
+strongest form. The bill and both deviation channels fail the rule cleanly, being
+recomputed from the register on the first tick and reading 0.0 when absent, which
+is correct for every version-14 save because those games could not subsidise
+anybody. And the baseline is **content**: a firm's authored share and headcount
+round-trip through `data/companies/`, so the test asserts a save carries no company
+content and no register entry beyond `share` and `subsidy` — which pins that a
+later session storing a baseline turns it red and has to say why. **V1.4b adds a
+serialised field and earns NOTHING, and the test says so and then pins the number.**
+`regulation_burden` absent reads as every burden 0.0, correct for every version-15
+save because those games carried no `business` law — `measures`' case a third time.
+It is serialised regardless, and that half is not free: a law writes it once and no
+tick recomputes it, unlike V1.4a's three prices, so a save that dropped it would
+silently repeal every rule the assembly ever passed. The test checks that premise
+(dropping it moves `firm_impulse_pct`) rather than asserting it, then leaves V1.3c's
+device in place — *the version is still 15* — so V1.4c's ownership register has to
+come and say why it bumps. **V1.4c came and said it does not, which is not what the
+row expected.** `state_share` absent reads 0.0 — the state owns nothing — correct for
+every version-15 save because those games had no ownership verb;
+`dividend_revenue_pct_gdp` is recomputed on the first tick; and the purchase and the
+windfall were **never a field**, because they are in `debt_eur_bn`, serialised since
+the MVP. A capital transaction needing its own save entry would have been the sign it
+should not have been a balance-sheet write, and the test checks that premise rather
+than asserting it. The only thing that *would* have bumped it is a
+`start_state_ownership` baseline for a thirteenth issue — `start_bloc_burden` at
+V1.3d exactly — and the `ISSUE_KEYS` answer was no, so the device points at the next
+session a third time. What V1.4c *did* turn red on purpose is V1.4a's **other**
+assertion: a serialised register entry now carries three keys rather than two,
+widened by exactly one, and a fourth still fails.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

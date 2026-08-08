@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "FRA_moucron", "name": "Daniel Moucron" },
+    { "id": "FRA_vasseur", "name": "Hélène Vasseur" },
+    { "id": "FRA_lachapelle", "name": "Bruno Lachapelle" },
+    { "id": "FRA_ferrand", "name": "Camille Ferrand" },
+    { "id": "FRA_aubertin", "name": "Gilles Aubertin" },
+    { "id": "FRA_perrault", "name": "Nadia Perrault" },
+    { "id": "FRA_aumont", "name": "Cécile Aumont" },
+    { "id": "FRA_charles_xi", "name": "Charles XI" }
+  ]
+}

@@ -66,8 +66,9 @@ func _check_portrait_names_the_player() -> void:
 	var nation = _main._loader.nations[_main._state.player_nation_id]
 	var text := _collect_text(_main._hud.portrait_card)
 
-	if not text.contains(nation.leader_name):
-		_fail("the portrait card does not name the leader '%s': %s" % [nation.leader_name, text])
+	var leader_name: String = _main._loader.person_name(nation.leader_person_id)
+	if not text.contains(leader_name):
+		_fail("the portrait card does not name the leader '%s': %s" % [leader_name, text])
 	if not text.contains(nation.leader_title):
 		_fail("the portrait card does not carry the leader's title '%s'" % nation.leader_title)
 	if not text.contains(nation.nation_name):

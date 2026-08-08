@@ -35,6 +35,9 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
@@ -219,6 +222,67 @@ const DEFENCE_REGIMES := {
 	"managed_signs_pact": {"budget": REGIMES["managed"], "pact_month": 6, "deploy_month": 12},
 }
 
+## U6a's fourteen years, and the FOURTEENTH regime. Same argument as the
+## eleventh, twelfth and thirteenth: a booking is a VERB, and no budget regime
+## issues a command.
+##
+## But this one exists for a second reason the others did not have, and it is the
+## structural one. Every regime above is a MONTH LOOP WITH NO CLOCK -- this file
+## has never once called advance_one_day() -- so a diary that fires on a day is
+## invisible to all thirteen, and their coming back bit-identical would mean
+## nothing rather than something. The regime below steps days itself so that the
+## day-resolution dispatch main.gd runs is exercised at least once here.
+##
+## The other thirteen call Calendar nowhere at all, so their bit-identity is a
+## property of the code rather than a measurement: with an empty register the
+## dispatch is one is_empty() check, and no regime books.
+const CALENDAR_REGIMES := {
+	"managed_books_ahead": {"budget": REGIMES["managed"], "book_month": 6},
+}
+
+
+## V1.4a's regime, and it is needed for the reason V1.3g's and U6a's were and
+## V1.3d's and V1.3f's were not: a subsidy is a VERB, and no budget regime issues a
+## command. An institution meets whether or not the player engages; a verb does not
+## fire unless somebody presses it.
+##
+## Points at the player's largest firm by output, which is the case both channels
+## are widest for -- the growth impulse scales with the firm's weight in the economy,
+## and the jobs channel with the gap in labour intensity between it and the rival it
+## takes share from. Left standing for the rest of the run, so the bill this regime
+## reaches is the reachable worst case the clamp is measured against.
+const COMPANY_REGIMES := {
+	"managed_subsidises": {"budget": REGIMES["managed"], "subsidy_month": 6},
+}
+
+
+## V1.4b's regime, and it is the CHEAP kind of new regime: a regulation is a verb
+## and no budget regime passes a law, but AMENDMENT_REGIMES and TRANSITION_REGIMES
+## above already apply a law at a month, so the shape existed and only the content
+## is new. That is the difference between this row and V1.3c's, V1.3g's and V1.4a's,
+## each of which had to teach the harness a verb it had never seen.
+##
+## Applies the heaviest positive-burden rule on EVERY sector at once and never
+## repeals it -- the reachable worst case the burden clamp is measured against,
+## exactly as the subsidy regime above is left standing.
+const REGULATION_REGIMES := {
+	"managed_regulates": {"budget": REGIMES["managed"], "regulate_month": 6},
+}
+
+
+## V1.4c's regime, and it is the EXPENSIVE kind again: an ownership op is a verb no
+## budget regime issues, so the harness had to learn it, exactly as V1.3c, V1.3g,
+## U6a and V1.4a each did. V1.4b's was the cheap kind only because a law was already
+## a shape the harness knew.
+##
+## Nationalises the largest firm and never sells it, which is the reachable worst
+## case for both new numbers at once: the debt jump the bloc's own `debt_to_gdp_pct`
+## rule reads, and the dividend line the clamp is measured against. Left standing
+## for the same reason the subsidy and the burden are.
+const OWNERSHIP_REGIMES := {
+	"managed_nationalises": {"budget": REGIMES["managed"], "nationalise_month": 6},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -265,6 +329,18 @@ func _init() -> void:
 		for name in DEFENCE_REGIMES.keys():
 			var regime: Dictionary = DEFENCE_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, int(regime["pact_month"]), int(regime["deploy_month"]))
+		for name in CALENDAR_REGIMES.keys():
+			var regime: Dictionary = CALENDAR_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, int(regime["book_month"]))
+		for name in COMPANY_REGIMES.keys():
+			var regime: Dictionary = COMPANY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, int(regime["subsidy_month"]))
+		for name in REGULATION_REGIMES.keys():
+			var regime: Dictionary = REGULATION_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, int(regime["regulate_month"]))
+		for name in OWNERSHIP_REGIMES.keys():
+			var regime: Dictionary = OWNERSHIP_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
 
 	quit(0)
 
@@ -289,7 +365,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -347,6 +423,12 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# nothing in the economy reads it, which is the "no economy reader" call
 		# stated where it can be checked rather than only in the model doc.
 		Defence.tick_month(state)
+		# Added at V1.4a, in main.gd's slot, and inert for every regime that subsidises
+		# nobody: with no subsidy standing the share shift is exactly zero for every
+		# firm and all three prices are exactly 0.0, so the fourteen regimes above are
+		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
+		# under an unsubsidised run at all -- not even a figure the economy ignores.
+		Companies.tick_month(state, loader)
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -360,6 +442,30 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == deploy_month:
 			_deploy_forces(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == book_month:
+			_book_ahead(state, loader, regime_name, year, month)
+
+		if i + 1 == subsidy_month:
+			_subsidise(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == regulate_month:
+			_regulate(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == nationalise_month:
+			_nationalise(state, loader, ns, regime_name, year, month)
+
+		# U6a. The day loop this file has never had, and it runs for EVERY regime
+		# rather than only the one that books -- a dispatch that only ever executes
+		# under the regime designed to exercise it is not a dispatch anybody has
+		# tested. With an empty register Calendar.due() is one is_empty() check, so
+		# the thirteen regimes above are provably unchanged by it.
+		state.day = 0
+		for d in range(_days_in_month(month, year)):
+			state.day = d + 1
+			for appointment in Calendar.due(state, year, month, state.day):
+				_keep_appointment(state, loader, appointment, regime_name)
+		Calendar.tick_month(state)
 
 		if i + 1 == dissolve_month:
 			var before_seats: int = ns.coalition_seats
@@ -657,6 +763,104 @@ func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: i
 ## counterparty would refuse -- _sign_agreement()'s shape and for its reason: a
 ## regime that measures the GATE rather than the model behind it tells the balance
 ## harness nothing about the channel this session added to the budget.
+## V1.4a. Subsidises the largest firm by output at the harshest authored intensity
+## and leaves it standing for the rest of the run.
+func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
+			continue
+		if action == null or float(a.effects["company"]["intensity"]) > float(action.effects["company"]["intensity"]):
+			action = a
+	if action == null:
+		printerr("  no 'subsidise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
+		return
+
+	var result := Companies.execute(state, ns, loader.company_actions, action, best, loader)
+	if result["applied"]:
+		print("  %d-%02d %s: subsidised %s at intensity %.2f (%.1f bn)" % [
+			year, month, regime_name, best, float(result["subsidy_after"]), best_output,
+		])
+	else:
+		print("  %d-%02d %s: subsidy for %s REFUSED" % [year, month, regime_name, best])
+
+
+## V1.4c. Nationalises the largest firm by output at the largest authored stake and
+## never sells it -- _subsidise()'s shape, and left standing for its reason. Both of
+## this session's numbers reach their reachable worst case this way: the debt jump at
+## once and the dividend line for the rest of the run.
+func _nationalise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var action = null
+	for a in loader.company_actions:
+		if String(a.effects.get("company", {}).get("op", "")) != "nationalise":
+			continue
+		if action == null or float(a.effects["company"]["stake"]) > float(action.effects["company"]["stake"]):
+			action = a
+	if action == null:
+		printerr("  no 'nationalise' company action is authored")
+		return
+
+	var best := ""
+	var best_output := -1.0
+	for company in Companies.firms_of(loader, ns.id):
+		var out: float = Companies.output_eur_bn(ns, company)
+		if out > best_output:
+			best_output = out
+			best = String(company.id)
+	if best == "":
+		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
+		return
+
+	var debt_before: float = ns.debt_eur_bn
+	var result := Companies.execute(state, ns, loader.company_actions, action, best, loader)
+	if result["applied"]:
+		print("  %d-%02d %s: nationalised %s at stake %.2f (%.1f bn, debt %+.1f bn)" % [
+			year, month, regime_name, best, float(result["state_share_after"]),
+			best_output, ns.debt_eur_bn - debt_before,
+		])
+	else:
+		print("  %d-%02d %s: nationalisation of %s REFUSED" % [year, month, regime_name, best])
+
+
+## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
+## the assembly division belongs to tests/test_legislature.gd, and a balance row
+## whose numbers depend on a chamber agreeing is a row that measures two things.
+func _regulate(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var heaviest := {}
+	for law in loader.laws:
+		if law.theme != "business":
+			continue
+		var burden: float = float(law.effects.get("company", {}).get("burden", 0.0))
+		if burden <= 0.0:
+			continue
+		var sector: String = String(law.effects["company"]["sector"])
+		if not heaviest.has(sector) or burden > float(heaviest[sector].effects["company"]["burden"]):
+			heaviest[sector] = law
+	if heaviest.is_empty():
+		printerr("  no positive-burden business law is authored")
+		return
+
+	var sectors: Array = heaviest.keys()
+	sectors.sort()
+	for sector in sectors:
+		Legislature.apply(state, ns, heaviest[sector], loader)
+		print("  %d-%02d %s: applied %s -- %s burden now %+.2f" % [
+			year, month, regime_name, heaviest[sector].id, sector,
+			float(ns.regulation_burden.get(sector, 0.0)),
+		])
+
+
 func _sign_pact(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var action = _pact_action(loader, "sign")
 	if action == null:
@@ -827,3 +1031,107 @@ func _check(state, ns, year: int, month: int) -> Array[String]:
 		out.append("%s debt ratio running away at %.0f%%" % [at, ns.debt_to_gdp_pct()])
 
 	return out
+
+
+## U6a. Books three acts three months out -- one of each bookable kind, so the
+## dispatch below runs every branch of its own match rather than only the
+## diplomatic one.
+func _book_ahead(state, loader, regime_name: String, year: int, month: int) -> void:
+	var ns = state.player()
+	var when := _months_ahead(year, month, 3)
+	var booked := 0
+
+	var partners: Array = state.nations.keys()
+	partners.sort()
+	for target_id in partners:
+		if String(target_id) == ns.id:
+			continue
+		var acts := Diplomacy.available(state, loader.diplomatic_actions, ns.id, String(target_id))
+		if acts.is_empty():
+			continue
+		if bool(Calendar.book(state, Calendar.make_entry(
+			CalendarK.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 7,
+			String(acts[0].id), String(target_id)
+		))["ok"]):
+			booked += 1
+		break
+
+	var laws := Legislature.available(ns, loader.laws)
+	if not laws.is_empty():
+		if bool(Calendar.book(state, Calendar.make_entry(
+			CalendarK.KIND_LAW, int(when["year"]), int(when["month"]), 14,
+			"", "", String(laws[0].id)
+		))["ok"]):
+			booked += 1
+
+	if not ns.coalition_party_ids.is_empty():
+		var party_id := String(ns.coalition_party_ids[0])
+		for portfolio in ns.cabinet.keys():
+			if not Cabinet.can_assign(ns, String(portfolio), party_id):
+				continue
+			if bool(Calendar.book(state, Calendar.make_entry(
+				CalendarK.KIND_RESHUFFLE, int(when["year"]), int(when["month"]), 21,
+				"", "", "", String(portfolio), party_id
+			))["ok"]):
+				booked += 1
+			break
+
+	print("  %d-%02d %s: booked %d appointment(s) for %d-%02d" % [
+		year, month, regime_name, booked, int(when["year"]), int(when["month"]),
+	])
+
+
+## main.gd's _resolve_appointments() dispatch, in a probe that has no orchestrator.
+## Kept deliberately close to it: the point of the fourteenth regime is that the
+## day-resolution path the game runs is exercised here at least once, and a
+## dispatch that diverged from main.gd's would exercise something else.
+func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) -> void:
+	var ns = state.player()
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var ok := false
+	var label := ""
+
+	match String(entry.get("kind", "")):
+		CalendarK.KIND_DIPLOMATIC:
+			for action in loader.diplomatic_actions:
+				if String(action.id) != String(entry.get("action_id", "")):
+					continue
+				var result := Diplomacy.execute(
+					state, loader.diplomatic_actions, action, ns.id,
+					String(entry.get("target_id", ""))
+				)
+				ok = bool(result.get("ok", false))
+				label = String(action.action_name)
+		CalendarK.KIND_LAW:
+			var law = _find_law(loader, String(entry.get("law_id", "")))
+			if law != null:
+				var result := Legislature.propose(state, loader, law)
+				ok = bool(result.get("passed", false))
+				label = String(law.law_name)
+		CalendarK.KIND_RESHUFFLE:
+			var portfolio := String(entry.get("portfolio", ""))
+			var party_id := String(entry.get("party_id", ""))
+			if Cabinet.can_assign(ns, portfolio, party_id):
+				Cabinet.assign(state, portfolio, party_id, party_list)
+				ok = true
+			label = portfolio
+
+	Calendar.resolve(state, Calendar.verb_key(entry), ok)
+	print("  %d-%02d-%02d %s: kept '%s' — %s" % [
+		state.year, state.month, state.day, regime_name, label,
+		"carried" if ok else "did not carry",
+	])
+
+
+func _months_ahead(year: int, month: int, delta: int) -> Dictionary:
+	var total := year * 12 + (month - 1) + delta
+	return {"year": total / 12, "month": total % 12 + 1}
+
+
+## Duplicated from src/core/clock.gd rather than reached for: this file preloads
+## no Node, and a probe that instantiated a Clock to ask how long February is
+## would be carrying a scene-tree object through a headless month loop.
+func _days_in_month(m: int, y: int) -> int:
+	if m == 2 and (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)):
+		return 29
+	return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]

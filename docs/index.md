@@ -40,6 +40,9 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[bloc-model]] — the supranational bloc: proposals, the council, rules in force, transfers, and the twelfth opinion issue
 - [[foreign-policy-model]] — why the other nine answer as they do, and how they choose a target and a verb unprompted
 - [[defence-model]] — capability derived from sustained spending, defensive pacts, and the alliance obligation that bills you at home
+- [[calendar-model]] — the president's diary: dated state put on a timeline, optional booking, and the currency a probe deleted
+- [[people-model]] — the named-individual register: one record per person, ids in state, and the minister bench a probe cut before it was authored
+- [[companies-model]] — named firms as a partition of a sector, subsidies as the first verb pointed at something that is not a nation, and the two channels that read exactly zero until the player acts
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

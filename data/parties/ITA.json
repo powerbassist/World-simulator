@@ -5,7 +5,7 @@
       "name": "Fratelli della Nazione",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.27,
-      "leader_name": "Lorenzo Bagnasco",
+      "leader_person": "ITA_bagnasco",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -15,7 +15,7 @@
       "name": "Alleanza Settentrionale",
       "ideology_slot": "regionalist_right",
       "seat_share": 0.11,
-      "leader_name": "Piergiorgio Ronchi",
+      "leader_person": "ITA_ronchi",
       "discipline": 0.75,
       "competence": 0.55,
       "excluded_partners": []
@@ -25,7 +25,7 @@
       "name": "Forza Patria",
       "ideology_slot": "centre_right",
       "seat_share": 0.1,
-      "leader_name": "Vittorio Lambertini",
+      "leader_person": "ITA_lambertini",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": []
@@ -35,7 +35,7 @@
       "name": "Democrazia Popolare",
       "ideology_slot": "social_democratic",
       "seat_share": 0.22,
-      "leader_name": "Chiara Fossati",
+      "leader_person": "ITA_fossati",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -47,7 +47,7 @@
       "name": "Movimento Cittadino",
       "ideology_slot": "left_populist",
       "seat_share": 0.23,
-      "leader_name": "Enzo Trevisan",
+      "leader_person": "ITA_trevisan",
       "discipline": 0.65,
       "competence": 0.5,
       "excluded_partners": []
@@ -57,7 +57,7 @@
       "name": "Verdi Italiani",
       "ideology_slot": "green",
       "seat_share": 0.07,
-      "leader_name": "Serena Caputo",
+      "leader_person": "ITA_caputo",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [

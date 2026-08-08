@@ -14,6 +14,9 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 const GAME_START_YEAR := 2026
 const GAME_START_MONTH := 1
@@ -38,6 +41,8 @@ func _init() -> void:
 	_check_failed_vote_names_opponents()
 	_check_passed_law_moves_economy_and_opinion()
 	_check_finite_over_ten_years_with_every_law_applied()
+	_check_business_law_reaches_the_company_channel()
+	_check_the_company_channel_refuses_what_it_must()
 
 	_finish()
 
@@ -59,7 +64,7 @@ func _check_template_count_and_themes() -> void:
 	var themes := {}
 	for law in _loader.laws:
 		themes[law.theme] = true
-	for theme in ["tax", "labour", "social", "institutional"]:
+	for theme in ["tax", "labour", "social", "institutional", "business"]:
 		if not themes.has(theme):
 			_fail("no law template found with theme '%s'" % theme)
 
@@ -278,6 +283,79 @@ func _find_law(law_id: String):
 		if law.id == law_id:
 			return law
 	return null
+
+
+# --- V1.4b: effects.company ------------------------------------------------------
+
+## The channel a subsidy reaches through Companies.execute(), reached from the
+## other side: a `business` law survives a division and writes a sector burden.
+## The whole of the a/b split, asserted rather than only argued.
+func _check_business_law_reaches_the_company_channel() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _find_law("emissions_standards")
+	if law == null:
+		_fail("fixture law 'emissions_standards' not found")
+		return
+	if not law.effects.has("company"):
+		_fail("emissions_standards carries no effects.company")
+		return
+
+	Legislature.apply(state, ns, law, _loader)
+	if float(ns.regulation_burden.get("industry", 0.0)) <= 0.0:
+		_fail("applying emissions_standards left industry's burden at %s" % [
+			str(ns.regulation_burden.get("industry", 0.0))
+		])
+	# And it reached nothing else the channel does not own.
+	if not ns.companies.is_empty() and Companies.share_of(ns, "FRA_aurignac") != 0.14:
+		_fail("a regulation moved a firm's share, which is the subsidy's channel")
+
+
+## The load-time refusals. Each is a rule this session states in prose somewhere,
+## made mechanical -- a convention only the docs enforce is one an author breaks by
+## not reading them, which is the argument docs/coercion-model.md's separator makes.
+func _check_the_company_channel_refuses_what_it_must() -> void:
+	var sectors: Array = EK.SECTOR_TREND.keys()
+
+	var cases := {
+		"both channels": {
+			"company": {"sector": "industry", "burden": 0.3},
+			"structural_unemployment_pct": 0.2,
+		},
+		"an unknown sector": {"company": {"sector": "tourism", "burden": 0.3}},
+		"a burden of zero": {"company": {"sector": "industry", "burden": 0.0}},
+		"a burden past the clamp": {"company": {"sector": "industry", "burden": 9.0}},
+		"a firm id": {"company": {"sector": "industry", "burden": 0.3, "company_id": "FRA_aurignac"}},
+		"a missing burden": {"company": {"sector": "industry"}},
+	}
+
+	for label in cases.keys():
+		var errors: Array[String] = []
+		Law.from_dict(
+			{
+				"id": "probe_%s" % label, "name": "Probe", "theme": "business",
+				"summary": "", "position": {"economic": 0.0, "social": 0.0},
+				"majority": "simple", "effects": cases[label],
+			},
+			"test_legislature.gd", errors,
+			EK.TAX_KEYS, EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
+		)
+		if errors.is_empty():
+			_fail("a law with %s loaded without an error" % label)
+
+	# ...and the shape that must still load.
+	var ok: Array[String] = []
+	Law.from_dict(
+		{
+			"id": "probe_ok", "name": "Probe", "theme": "business", "summary": "",
+			"position": {"economic": 0.0, "social": 0.0}, "majority": "simple",
+			"effects": {"company": {"sector": "services", "burden": -0.25}},
+		},
+		"test_legislature.gd", ok,
+		EK.TAX_KEYS, EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
+	)
+	if not ok.is_empty():
+		_fail("a valid deregulation law was refused: %s" % [ok])
 
 
 func _fail(message: String) -> void:

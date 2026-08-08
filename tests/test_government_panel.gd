@@ -83,8 +83,9 @@ func _check_majority() -> void:
 	var ns = _state.player()
 	var text := _refresh_text()
 
-	if not text.contains(ns.pm_name):
-		_fail("panel does not name the head of government ('%s'): %s" % [ns.pm_name, text])
+	var pm_name: String = _loader.person_name(ns.pm_person_id)
+	if not text.contains(pm_name):
+		_fail("panel does not name the head of government ('%s'): %s" % [pm_name, text])
 	if not text.contains(ns.head_of_government_title):
 		_fail("panel does not give the head of government's title ('%s')" % ns.head_of_government_title)
 	if not text.contains("%d" % ns.coalition_seats):
@@ -133,7 +134,7 @@ func _check_cohabitation() -> void:
 	ns.is_minority = false
 	ns.is_cohabitation = true
 	ns.pm_party_id = "union_conservatrice"
-	ns.pm_name = "Hélène Vasseur"
+	ns.pm_person_id = "FRA_vasseur"
 
 	var text := _refresh_text()
 	if not text.contains("COHABITATION"):

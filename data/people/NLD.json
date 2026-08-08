@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "NLD_kuiperink", "name": "Sander Kuiperink" },
+    { "id": "NLD_terborg", "name": "Willem Terborg" },
+    { "id": "NLD_bosveld", "name": "Ellen Bosveld" },
+    { "id": "NLD_aalders", "name": "Ruben Aalders" },
+    { "id": "NLD_stoffels", "name": "Marijke Stoffels" },
+    { "id": "NLD_wielinga", "name": "Fenna Wielinga" },
+    { "id": "NLD_maurits_iii", "name": "Maurits III" }
+  ]
+}

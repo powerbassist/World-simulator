@@ -33,6 +33,10 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
@@ -95,6 +99,10 @@ func _init() -> void:
 	_run_bloc_roundtrip(loader)
 	_run_agenda_roundtrip(loader)
 	_run_defence_roundtrip(loader)
+	_run_diary_roundtrip(loader)
+	_run_companies_roundtrip(loader)
+	_run_regulation_roundtrip(loader)
+	_run_ownership_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -680,8 +688,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 13:
-		_fail("SAVE_VERSION is %d -- V1.3g argued for 13, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1076,3 +1084,378 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## U6a adds ONE serialised field and earns NO bump, and the interesting half is
+## what it did not add. Three claims, each asserted rather than argued:
+##
+##   1. `appointments` round-trips. A booking is a command the player issued; a
+##      save that lost it would eat that command silently.
+##   2. An ABSENT `appointments` reads as "nothing booked", which is CORRECT for
+##      every version-13 save because those games had no diary to book into.
+##      `measures`' case at V1.3c, down to being player-created state derivable
+##      from nothing -- and like `measures` it earns no bump.
+##   3. `day` is NOT in the game_state dict at all, and round-trips anyway
+##      because save_manager.gd carries clock.day at the payload's top level.
+##      This is the assertion worth having rather than the bump: it PINS the
+##      property that there is exactly one record of the date, so a later session
+##      that folds the day into GameState.to_dict() turns this red and has to
+##      come and say why it wants two records of one fact.
+##
+## The field that WOULD have earned a bump was a spent-days counter -- absent it
+## reads 0, and a player eight days into a month reloads with all of them back.
+## U6a's probe cut the currency it counted before any of it was written, so the
+## question never reached game_state.gd's list at all. docs/calendar-model.md §2.
+func _run_diary_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.day = 17
+
+	var entry := Calendar.make_entry(
+		CalendarK.KIND_DIPLOMATIC, state.year, state.month + 2, 9, "state_visit", "DEU",
+		"", "", "", loader.nations["DEU"].leader_person_id
+	)
+	var booked: Dictionary = Calendar.book(state, entry)
+	if not bool(booked["ok"]):
+		_fail("diary round trip could not book: %s" % String(booked["error"]))
+		return
+	# One resolved entry too, so the round trip covers a status the pruner reads
+	# rather than only the one it never touches.
+	var done := Calendar.make_entry(
+		CalendarK.KIND_LAW, state.year, state.month, 3, "", "", "high_earner_surtax"
+	)
+	state.appointments.append(done)
+	Calendar.resolve(state, Calendar.verb_key(done), true)
+
+	var dict: Dictionary = state.to_dict()
+
+	# (3) The day is deliberately absent from the state's own dictionary.
+	if dict.has("day"):
+		_fail("GameState.to_dict() carries `day` -- that is a second record of a fact save_manager.gd already saves, and the two can disagree")
+
+	var loaded = GameState.from_dict(dict)
+	if loaded.appointments.size() != 2:
+		_fail("diary round-tripped %d entries, expected 2" % loaded.appointments.size())
+		return
+
+	# (1) Both halves, by content rather than by count.
+	var still_booked := Calendar.booked(loaded)
+	if still_booked.size() != 1:
+		_fail("%d bookings survived the round trip, expected 1" % still_booked.size())
+	elif String(still_booked[0]["action_id"]) != "state_visit" or String(still_booked[0]["target_id"]) != "DEU":
+		_fail("the booking came back as %s -- a save that garbles a command is worse than one that drops it" % [still_booked[0]])
+	# U6a carried `person_id` unread against the possibility that U6b would key
+	# appointments on people. It did not: a person is the FACE of a target that
+	# already exists, so a state visit to Germany IS its leader -- one act, one
+	# key. The field is a derived LABEL, written here and read only for display.
+	if String(still_booked[0].get("person_id", "MISSING")) == "MISSING":
+		_fail("the entry's person_id did not survive the round trip")
+	elif String(still_booked[0]["person_id"]) != "DEU_vogler":
+		_fail("a booked state visit to DEU carries person_id '%s', expected the leader the diary showed at booking time" % still_booked[0]["person_id"])
+
+	# (2) Absent, and correct rather than silently wrong.
+	var without: Dictionary = state.to_dict()
+	without.erase("appointments")
+	var no_diary = GameState.from_dict(without)
+	if not no_diary.appointments.is_empty():
+		_fail("an absent appointments register did not read as an empty diary")
+	if not Calendar.due(no_diary, no_diary.year + 5, 12, 28).is_empty():
+		_fail("an absent diary produced appointments out of nothing -- 'nothing booked' is the only correct reading of a version-13 save")
+
+	_run_person_rekey(loader)
+
+
+## U6b bumps on a RE-KEY, not on a new field, and this is the assertion that pins
+## why. Three NationState fields stopped holding names and started holding person
+## ids; nothing was added. The naive reading is that nothing is at risk -- but a
+## version-13 save carries the OLD keys, so without the bump all three would load
+## as "" while the file itself looked intact, and the game would render a
+## government nobody governs. That is `military_capability`'s case at V1.3g and
+## `eu_member`/`neighbours` at V1.3b, in their strongest form yet.
+##
+## The other half is what U6b did NOT add: there is no per-person serialised
+## state at all, because a person is pure content -- an id and a name, with every
+## relationship expressed by the reference that owns it. The field that would have
+## earned this bump on its own, a stored `ns.cabinet_person`, was never written,
+## because the probe cut the minister bench that needed it.
+func _run_person_rekey(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	if ns.pm_person_id == "" or ns.head_of_state_person_id == "":
+		_fail("a new game did not seat a head of state and a head of government as person ids")
+		return
+	if loader.person_name(ns.head_of_state_person_id) == "":
+		_fail("the head of state's person id does not resolve to a name")
+
+	var dict: Dictionary = state.to_dict()
+	var loaded = GameState.from_dict(dict)
+	for field in ["pm_person_id", "head_of_state_person_id", "start_head_of_government_person_id"]:
+		if String(loaded.player().get(field)) != String(ns.get(field)):
+			_fail("%s did not survive the round trip" % field)
+
+	# The bump's own premise, checked rather than asserted: drop the key a
+	# version-13 save would not have and the government stops existing.
+	var without: Dictionary = state.to_dict()
+	(without["nations"]["FRA"] as Dictionary).erase("pm_person_id")
+	var lost = GameState.from_dict(without)
+	if lost.player().pm_person_id != "":
+		_fail("an absent pm_person_id did not read as empty -- the premise of the bump is wrong")
+	if loader.person_name(lost.player().pm_person_id) != "":
+		_fail("an absent pm_person_id still resolved to somebody")
+
+	# No per-person register was added, and this pins it: a later session storing
+	# a minister turns it red and has to come and say why.
+	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
+		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
+
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.4a adds five serialised fields and ONE of them earns the bump. The other
+## four fail the rule cleanly, and asserting the split is worth more than asserting
+## the bump: it pins the property that every firm figure except the register is
+## DERIVED, so a later session storing one turns this red and has to say why.
+##
+## The loud one: an absent `companies` register reads every firm as share 0.0, so
+## the partition simply is not there. `military_capability` at V1.3g and
+## `eu_member`/`neighbours` at V1.3b -- a reloaded game running a different model
+## from the one that saved it, not a game missing a label.
+##
+## The quiet ones: the bill and both deviation channels are recomputed from the
+## register on the first tick after a load and read 0.0 when absent, which is
+## exactly right for every version-14 save because those games could not subsidise
+## anybody. `measures`' case at V1.3c and `appointments`' at U6a.
+func _run_companies_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var target := "FRA_aurignac"
+
+	var subsidy = null
+	for a in loader.company_actions:
+		if a.id == "strategic_rescue":
+			subsidy = a
+	if subsidy == null:
+		_fail("the strategic_rescue verb is missing, so this roundtrip asserts nothing")
+		return
+
+	Companies.execute(state, ns, loader.company_actions, subsidy, target, loader)
+	for _m in range(24):
+		Companies.tick_month(state, loader)
+	Budget.recompute(state, ns)
+
+	var moved_share: float = Companies.share_of(ns, target)
+	if is_equal_approx(moved_share, 0.14):
+		_fail("the share never moved, so the roundtrip below cannot tell a restored register from a fresh one")
+
+	var dict: Dictionary = state.to_dict()
+	var loaded = GameState.from_dict(dict)
+	if not is_equal_approx(Companies.share_of(loaded.player(), target), moved_share):
+		_fail("a moved share did not survive the round trip")
+	if not is_equal_approx(Companies.subsidy_of(loaded.player(), target), 1.0)	:
+		_fail("a standing subsidy did not survive the round trip")
+
+	# The bump's premise, checked rather than asserted: drop the key a version-14
+	# save would not have and the partition is gone -- every firm produces nothing,
+	# while the player is still being billed by a serialised budget line.
+	var without: Dictionary = state.to_dict()
+	(without["nations"]["FRA"] as Dictionary).erase("companies")
+	var lost = GameState.from_dict(without)
+	if not lost.player().companies.is_empty():
+		_fail("an absent companies register did not read as empty -- the premise of the bump is wrong")
+	for company in loader.companies["FRA"]:
+		if Companies.output_eur_bn(lost.player(), company) != 0.0:
+			_fail("%s still produced something with no register -- the bump's premise is wrong" % company.id)
+	if not is_equal_approx(lost.player().subsidy_bill_pct_gdp, state.player().subsidy_bill_pct_gdp):
+		_fail("the serialised bill did not survive, so the mismatch this bump is about cannot be shown")
+
+	# The four that earn nothing: recomputed from the register, so a save stripped
+	# of all of them comes back to the same numbers on one tick.
+	# Compared against a save that kept them and was ticked the same once, not
+	# against the pre-load state: the tick also advances the share, so the reference
+	# has to take the same step or this would be measuring a month rather than a
+	# missing field.
+	# Through JSON, not through to_dict() alone. to_dict() hands out the LIVE
+	# dictionaries -- from_dict()'s own header says it expects freshly parsed ones --
+	# so two states built from two to_dict() calls share one register, and ticking
+	# both would advance the same shares twice. The real save path parses, so this
+	# does too.
+	var no_derived: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for field in ["subsidy_bill_pct_gdp", "firm_impulse_pct", "firm_jobs_offset_pct", "last_company_result"]:
+		(no_derived["nations"]["FRA"] as Dictionary).erase(field)
+	var derived = GameState.from_dict(no_derived)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	Companies.tick_month(derived, loader)
+	Companies.tick_month(reference, loader)
+	if not is_equal_approx(derived.player().subsidy_bill_pct_gdp, reference.player().subsidy_bill_pct_gdp):
+		_fail("the bill did not come back on one tick, so it is not derived and would have earned the bump itself")
+	if not is_equal_approx(derived.player().firm_impulse_pct, reference.player().firm_impulse_pct):
+		_fail("the growth impulse did not come back on one tick")
+	if not is_equal_approx(derived.player().firm_jobs_offset_pct, reference.player().firm_jobs_offset_pct):
+		_fail("the jobs offset did not come back on one tick")
+
+	# And no baseline is carried. A firm's authored share and headcount are content;
+	# a copy in the save would be the same fact in two places, and the copy in the
+	# save is the one that would drift when the content was edited.
+	if dict.has("companies"):
+		_fail("a save carries the company CONTENT -- the baseline is data/companies/, and a stored copy is what a content edit would silently disagree with")
+	# V1.4c TURNED THIS RED ON PURPOSE and widened it by exactly one key, which is
+	# the change worth recording rather than the widening. `share`, `subsidy` and
+	# `state_share` are the three things about a firm that MOVE, and each has exactly
+	# one writer -- a subsidy, a subsidy, an ownership op. `name`, `sector`,
+	# `headcount` and the AUTHORED share are content and must never appear here, for
+	# the reason above: the copy in the save is the one a content edit would silently
+	# disagree with. A fourth key still fails, so a later session storing a baseline
+	# or a per-firm burden has to come and say why.
+	const LIVE_KEYS := ["share", "subsidy", "state_share"]
+	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
+		for key in (entry as Dictionary).keys():
+			if not LIVE_KEYS.has(key):
+				_fail("a serialised register entry carries '%s' beyond the live half" % key)
+
+
+## V1.4b adds `regulation_burden` and earns NO bump, asserted rather than claimed.
+##
+## The rule applied literally: a version-15 save comes from a game with no
+## `business` laws in it at all, so an absent register reads as every burden 0.0 --
+## which is not a soft failure but the TRUTH about that save. `measures` at V1.3c,
+## `pacts` at V1.3g and `appointments` at U6a, and the third time the answer has
+## been "the games that predate the verb could not use it".
+##
+## It is still serialised, and that half is not free: a law writes the burden once
+## and no tick recomputes it, unlike the three prices above, so a save that dropped
+## it would silently repeal every rule the assembly ever passed.
+##
+## The V1.3c-style assertion at the end is the one worth having: V1.4c's ownership
+## register almost certainly bumps, and leaving the number pinned here forces that
+## session to come and say why rather than moving it in passing.
+func _run_regulation_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var law = null
+	for l in loader.laws:
+		if l.id == "emissions_standards":
+			law = l
+	if law == null:
+		_fail("emissions_standards is missing, so this roundtrip asserts nothing")
+		return
+
+	Legislature.apply(state, ns, law, loader)
+	var burden: float = float(ns.regulation_burden.get("industry", 0.0))
+	if burden <= 0.0:
+		_fail("no burden stands, so a round trip cannot tell a restored register from a fresh one")
+		return
+	Companies.tick_month(state, loader)
+
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	if not is_equal_approx(float(kept.player().regulation_burden.get("industry", 0.0)), burden):
+		_fail("a standing burden did not survive the round trip")
+
+	# The half that WOULD have earned a bump if it were true: dropping the field
+	# must be visibly wrong, not merely re-derived on the next tick. It is not
+	# re-derived from anything -- nothing but a law writes it -- so a stripped save
+	# runs an unregulated economy while the passed_law_ids list still says the rule
+	# is on the books.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("regulation_burden")
+	var lost = GameState.from_dict(without)
+	if not lost.player().regulation_burden.is_empty():
+		_fail("an absent regulation_burden did not read as empty")
+	Companies.tick_month(lost, loader)
+	if lost.player().firm_impulse_pct == state.player().firm_impulse_pct:
+		_fail("dropping the burden changed nothing -- either it is derived, or it reaches no channel")
+
+	# ...and yet no bump, because a version-15 save never had one to drop. The
+	# register is per SECTOR, so V1.4a's assertion about what a company entry may
+	# carry is untouched -- a later session moving the burden onto a firm turns that
+	# one red and has to come and say why.
+	for key in (state.to_dict()["nations"]["FRA"] as Dictionary)["regulation_burden"].keys():
+		if not EK.SECTOR_TREND.has(key):
+			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
+
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.4c adds `state_share` to every register entry and a fourth cached price, and
+## earns NO bump either -- which is not what the row expected, so it is asserted
+## rather than assumed.
+##
+## The rule applied literally a fourth time: an absent `state_share` reads 0.0, "the
+## state owns nothing", which is the TRUTH about every version-15 save because those
+## games had no ownership verb to use. `measures` at V1.3c, `pacts` at V1.3g,
+## `appointments` at U6a and `regulation_burden` at V1.4b.
+##
+## The two halves that could have earned one, and why neither does:
+##
+##   `dividend_revenue_pct_gdp` is recomputed from the register on the first tick and
+##     reads 0.0 when absent -- the four-prices case V1.4a already argued.
+##   The PURCHASE and the WINDFALL are already carried, because they were never a
+##     field: Companies.execute() writes `debt_eur_bn`, serialised since the MVP. A
+##     capital transaction that needed its own save field would have been the sign it
+##     should not have been a balance-sheet write, and this checks the premise.
+func _run_ownership_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var target := "FRA_halbert"
+
+	var buy = null
+	for a in loader.company_actions:
+		if a.id == "full_nationalisation":
+			buy = a
+	if buy == null:
+		_fail("full_nationalisation is missing, so this roundtrip asserts nothing")
+		return
+
+	var debt_before: float = ns.debt_eur_bn
+	var deficit_before: float = ns.deficit_pct_gdp
+	Companies.execute(state, ns, loader.company_actions, buy, target, loader)
+
+	# The price is derived and lands on the debt stock in the same instant, while the
+	# deficit does not move at all. Checked here rather than only in
+	# tests/test_companies.gd because it is the whole reason this session added no
+	# save field: a one-off on the revenue side would have needed one.
+	if not (ns.debt_eur_bn > debt_before):
+		_fail("nationalising moved no debt, so the purchase reached nothing")
+	if ns.deficit_pct_gdp != deficit_before:
+		_fail("nationalising moved the deficit in the month it happened -- that closes the loop through a company action's own precondition field")
+
+	for _m in range(3):
+		Companies.tick_month(state, loader)
+	Budget.recompute(state, ns)
+	if ns.dividend_revenue_pct_gdp <= 0.0:
+		_fail("a fully state-owned firm pays no dividend, so the round trip below asserts nothing")
+		return
+
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	if not is_equal_approx(Companies.state_share_of(kept.player(), target), 1.0):
+		_fail("a standing state holding did not survive the round trip")
+	if not is_equal_approx(kept.player().debt_eur_bn, ns.debt_eur_bn):
+		_fail("the debt the purchase was paid with did not survive the round trip")
+
+	# The premise of NOT bumping: dropping the key reads as "the state owns nothing",
+	# which is a correct save rather than a broken one -- the dividend line goes with
+	# it on the next tick, and no figure is left claiming a holding that is not there.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for entry in (without["nations"]["FRA"] as Dictionary)["companies"].values():
+		(entry as Dictionary).erase("state_share")
+	var lost = GameState.from_dict(without)
+	if Companies.state_share_of(lost.player(), target) != 0.0:
+		_fail("an absent state_share did not read as 0.0 -- the reason for NOT bumping is wrong")
+	Companies.tick_month(lost, loader)
+	if lost.player().dividend_revenue_pct_gdp != 0.0:
+		_fail("a save with no holdings still paid a dividend")
+
+	# And the fourth price is derived, so a save stripped of it comes back on one
+	# tick. Same reference-and-tick shape as the three above it.
+	var no_derived: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_derived["nations"]["FRA"] as Dictionary).erase("dividend_revenue_pct_gdp")
+	var derived = GameState.from_dict(no_derived)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	Companies.tick_month(derived, loader)
+	Companies.tick_month(reference, loader)
+	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
+		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
+
+	if GameState.SAVE_VERSION != 15:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15 on the register alone, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)

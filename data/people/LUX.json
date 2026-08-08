@@ -1,0 +1,10 @@
+{
+  "people": [
+    { "id": "LUX_everling", "name": "Marc Everling" },
+    { "id": "LUX_weiler", "name": "Nathalie Weiler" },
+    { "id": "LUX_hoffmann", "name": "Serge Hoffmann" },
+    { "id": "LUX_reiland", "name": "Anouk Reiland" },
+    { "id": "LUX_steichen", "name": "Jean-Paul Steichen" },
+    { "id": "LUX_adolphe_iii", "name": "Adolphe III" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "people": [
+    { "id": "ESP_bustamante", "name": "Álvaro Bustamante" },
+    { "id": "ESP_larranaga", "name": "Mateo Larrañaga" },
+    { "id": "ESP_sanchis", "name": "Rocío Sanchís" },
+    { "id": "ESP_mendiola", "name": "Iker Mendiola" },
+    { "id": "ESP_palomares", "name": "Nuria Palomares" },
+    { "id": "ESP_alfonso_vii", "name": "Alfonso VII" }
+  ]
+}

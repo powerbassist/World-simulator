@@ -5,7 +5,7 @@
   "capital": "London",
   "playable": true,
   "leader": {
-    "name": "Edward Marchbanks",
+    "person": "GBR_marchbanks",
     "title": "Prime Minister",
     "party": "progress_alliance"
   },
@@ -40,7 +40,7 @@
     "head_of_state": {
       "kind": "hereditary_monarch",
       "title": "King",
-      "name": "Robert III"
+      "person": "GBR_robert_iii"
     },
     "term_limit": 0,
     "amendment": {
@@ -56,8 +56,10 @@
       "method": "largest_party",
       "censure": "simple_present",
       "head_of_government_title": "Prime Minister",
-      "head_of_government_name": "Edward Marchbanks"
+      "head_of_government_person": "GBR_marchbanks"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "GBR_robert_iii",
     "eu": {
       "member": false
     },

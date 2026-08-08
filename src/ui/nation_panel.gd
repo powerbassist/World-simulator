@@ -131,7 +131,7 @@ func _refresh() -> void:
 	# The two blank spacers this block had are down to one, for the fold reason in
 	# _ready(): a blank line costs the same as a verb row, and there are fourteen
 	# verbs competing for the space now.
-	_add_line("Leader: %s (%s)" % [n.leader_name, n.leader_title])
+	_add_line("Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title])
 	_add_line("GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct])
 	_add_line("Unemployment: %.1f%%" % ns.unemployment_pct)
 	_add_line("Debt: %.1f%% of GDP" % ns.debt_to_gdp_pct())

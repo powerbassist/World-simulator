@@ -5,7 +5,7 @@
   "capital": "Paris",
   "playable": true,
   "leader": {
-    "name": "Daniel Moucron",
+    "person": "FRA_moucron",
     "title": "President of the Republic",
     "party": "renouveau_civique"
   },
@@ -40,7 +40,7 @@
     "head_of_state": {
       "kind": "executive_president",
       "title": "President of the Republic",
-      "name": "Daniel Moucron"
+      "person": "FRA_moucron"
     },
     "term_limit": 2,
     "amendment": {
@@ -66,8 +66,10 @@
       "method": "presidential_appointment",
       "censure": "absolute_members",
       "head_of_government_title": "Prime Minister",
-      "head_of_government_name": "Cécile Aumont"
+      "head_of_government_person": "FRA_aumont"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "FRA_charles_xi",
     "eu": {
       "member": true,
       "ep_seats": 81

@@ -5,7 +5,7 @@
   "capital": "Bern",
   "playable": false,
   "leader": {
-    "name": "Reto Baumgartner",
+    "person": "CHE_baumgartner",
     "title": "President of the Confederation",
     "party": "alliance_nationale_suisse"
   },
@@ -41,7 +41,7 @@
       "_note": "The presidency of the Confederation is a one-year rotation among the seven Federal Councillors, held this year by the same Councillor already authored as leader -- one office, one name, no separate clock.",
       "kind": "collegial",
       "title": "President of the Confederation",
-      "name": "Reto Baumgartner"
+      "person": "CHE_baumgartner"
     },
     "term_limit": 0,
     "amendment": {
@@ -57,8 +57,10 @@
       "method": "directorial",
       "censure": "none",
       "head_of_government_title": "President of the Confederation",
-      "head_of_government_name": "Reto Baumgartner"
+      "head_of_government_person": "CHE_baumgartner"
     },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "CHE_ulrich_iv",
     "eu": {
       "member": false
     },

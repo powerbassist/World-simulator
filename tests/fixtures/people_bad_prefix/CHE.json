@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "CHE_baumgartner", "name": "Reto Baumgartner" },
+    { "id": "CHE_perrenoud", "name": "Céline Perrenoud" },
+    { "id": "CHE_zbinden", "name": "Markus Zbinden" },
+    { "id": "CHE_bissig", "name": "Andrea Bissig" },
+    { "id": "CHE_frei", "name": "Livia Frei" },
+    { "id": "CHE_bernasconi", "name": "Fabio Bernasconi" },
+    { "id": "CHE_ulrich_iv", "name": "Ulrich IV" }
+  ]
+}

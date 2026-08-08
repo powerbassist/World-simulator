@@ -5,7 +5,7 @@
       "name": "Vlaamse Toekomst",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.17,
-      "leader_name": "Joris Van Craen",
+      "leader_person": "BEL_van_craen",
       "discipline": 0.7,
       "competence": 0.55,
       "excluded_partners": []
@@ -15,7 +15,7 @@
       "name": "Burgerforum",
       "ideology_slot": "liberal",
       "seat_share": 0.2,
-      "leader_name": "Bram Vandekerckhove",
+      "leader_person": "BEL_vandekerckhove",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -27,7 +27,7 @@
       "name": "Sociale Vooruitgang",
       "ideology_slot": "social_democratic",
       "seat_share": 0.19,
-      "leader_name": "Naima Dewilde",
+      "leader_person": "BEL_dewilde",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -39,7 +39,7 @@
       "name": "Federaal Herstel",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.16,
-      "leader_name": "Pieter Coussement",
+      "leader_person": "BEL_coussement",
       "discipline": 0.85,
       "competence": 0.75,
       "excluded_partners": [
@@ -51,7 +51,7 @@
       "name": "Groen Front",
       "ideology_slot": "green",
       "seat_share": 0.13,
-      "leader_name": "Lore Vanhamme",
+      "leader_person": "BEL_vanhamme",
       "discipline": 0.8,
       "competence": 0.6,
       "excluded_partners": [
@@ -63,7 +63,7 @@
       "name": "Linkse Eenheid",
       "ideology_slot": "left_populist",
       "seat_share": 0.15,
-      "leader_name": "Tom Segers",
+      "leader_person": "BEL_segers",
       "discipline": 0.65,
       "competence": 0.5,
       "excluded_partners": [

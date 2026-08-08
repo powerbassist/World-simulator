@@ -17,6 +17,12 @@ const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
+const PeoplePanel = preload("res://src/ui/people_panel.gd")
+const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -83,6 +89,9 @@ var _map_view
 var _minimap
 var _nation_panel
 var _bloc_panel
+var _calendar_panel
+var _people_panel
+var _companies_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -235,6 +244,38 @@ func _ready() -> void:
 	_windows.register("bloc", "The Union", _bloc_panel)
 	_bloc_panel.setup(_state, _loader)
 
+	# U6a. The one surface that reads dated state the game has carried since the
+	# MVP and never showed anywhere -- an election date, the council's next
+	# proposal, every cooldown expiry -- and the only place a booking is made.
+	_calendar_panel = CalendarPanel.new()
+	_windows.register("calendar", "Diary", _calendar_panel)
+	_calendar_panel.setup(_state, _loader)
+	# A booking commits nothing this month, so unlike `acted` and `proposed` there
+	# is no baseline to queue. The repaint is all this needs: the diary is the only
+	# panel whose contents just changed.
+	_calendar_panel.diary_changed.connect(func(): _calendar_panel.mark_dirty())
+
+	# U6b. Read-only, and the only surface that shows the whole register rather
+	# than the one person a given screen happens to be about.
+	_people_panel = PeoplePanel.new()
+	_windows.register("people", "People", _people_panel)
+	_people_panel.setup(_state, _loader)
+
+	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
+	# actor and the verb pointed at it is a spending decision, which is why the bill
+	# lands on the budget panel beside the deployment bill and not anywhere near
+	# Diplomacy.
+	_companies_panel = CompaniesPanel.new()
+	_windows.register("companies", "Companies", _companies_panel)
+	_companies_panel.setup(_state, _loader)
+	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
+	# subsidy is a player command with a domestic price and a budget line, so it
+	# earns a U4 decision delta on exactly the same terms.
+	_companies_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -307,10 +348,18 @@ func _build_action_bar() -> void:
 		{"id": "overview", "label": "Overview"},
 		{"id": "politics", "label": "Politics"},
 		{"id": "legislature", "label": "Legislature"},
+		# A president's diary is state. One line, exactly as the comment above
+		# this function predicted three sessions ago.
+		{"id": "calendar", "label": "Diary"},
+		# A president's people are state too, by the same argument the diary took.
+		{"id": "people", "label": "People"},
 	])
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		{"id": "economy", "label": "Economy"},
 		{"id": "budget", "label": "Budget"},
+		# V1.4a. One line, exactly as this function's own comment has now correctly
+		# predicted for four sessions running.
+		{"id": "companies", "label": "Companies"},
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		{"id": "society", "label": "Polling"},
@@ -503,22 +552,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
 		_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
 
-	if _overview_panel != null:
-		_overview_panel.mark_dirty()
-	if _economy_panel != null:
-		_economy_panel.mark_dirty()
-	if _budget_panel != null:
-		_budget_panel.mark_dirty()
-	if _polling_panel != null:
-		_polling_panel.mark_dirty()
-	if _law_panel != null:
-		_law_panel.mark_dirty()
-	if _nation_panel != null:
-		_nation_panel.mark_dirty()
-	if _government_panel != null:
-		_government_panel.mark_dirty()
-	if _bloc_panel != null:
-		_bloc_panel.mark_dirty()
+	# U6a prunes resolved bookings older than the strip can reach. The register is
+	# the diary's whole memory, so this is what keeps a save file finite.
+	Calendar.tick_month(_state)
+
+	_mark_all_dirty()
 
 	# U5c. The map draws only on hover, pan, zoom and resize, which was complete
 	# while its colours came from a hash of the nation id and is not now: relations
@@ -565,6 +603,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# V1.3f: and now the nine act on their own initiative inside that tick, so
 	# whatever they just did is read off the record and put in front of the player.
 	_card_foreign_acts(year, month)
+
+	# V1.4a: subsidised firms take share from their named rivals, and all three firm
+	# prices are recomputed. In Defence's slot and for Defence's reason -- Budget has
+	# closed this month's books, so the bill and both deviation channels lag by
+	# exactly one month TOGETHER rather than one of them lagging alone, and the lag
+	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
+	# entry -> which verbs are available -> a new subsidy -> bill.
+	Companies.tick_month(_state, _loader)
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
@@ -694,8 +740,129 @@ func _nation_name(nation_id: String) -> String:
 	return String(n.nation_name) if n != null else nation_id
 
 
-func _on_day_advanced(_year: int, _month: int, _day: int) -> void:
+## U6a, and the first time anything but the top bar has cared what day it is.
+##
+## ORDERING, stated rather than inherited from emission order: clock.gd emits
+## month_elapsed BEFORE day_advanced on a rollover, so on the 1st of a month the
+## whole monthly pipeline has already run by the time this fires. An appointment
+## booked for the 1st therefore acts AFTER that month's tick, which is the reading
+## that matches the fiction -- the month begins, and then the president spends it.
+func _on_day_advanced(year: int, month: int, day: int) -> void:
+	if _state != null:
+		# The mirror. game_state.gd does not serialise this; save_manager.gd
+		# carries clock.day at the payload's top level, and _on_load_requested()
+		# re-mirrors it, so there is exactly one record of the date.
+		_state.day = day
+		_resolve_appointments(year, month, day)
 	_update_top_bar()
+
+
+## The dispatcher. src/sim/calendar.gd hands back entries and knows nothing about
+## what they mean; this fires the command. Every system named here was already
+## preloaded by this file, so the diary added no dependency to it -- and composing
+## two systems' effects is the orchestrator's job, which is the call
+## docs/cabinet-model.md records for Cabinet.seat() and the reason a scheduler
+## reaching into three systems was refused.
+##
+## The `match` is a fixed, small set of system verbs -- the same class as
+## _act_reason_text()'s key-to-wording map -- not per-nation or per-law content,
+## so docs/engine-decision.md Rule 1 holds.
+func _resolve_appointments(year: int, month: int, day: int) -> void:
+	var due: Array = Calendar.due(_state, year, month, day)
+	if due.is_empty():
+		return
+
+	var ns = _state.player()
+	var party_list: Array = _loader.parties.get(_state.player_nation_id, [])
+
+	for entry in due:
+		# THE BASELINE IS TAKEN HERE, not when the player booked. U4's decision
+		# delta measures a command against the next history entry, and a booking
+		# commits nothing in the month it is made -- measured from the press, a
+		# deferred act would report the movements of a month in which it did not
+		# happen. _pending_effects is also documented as not persisted, so a save
+		# across a booking would lose a baseline taken at the press entirely.
+		var before := Budget.snapshot(_state)
+		before.merge(Opinion.snapshot(_state))
+
+		var label := ""
+		var ok := false
+		match String(entry.get("kind", "")):
+			CalendarK.KIND_DIPLOMATIC:
+				var action = _action_by_id(String(entry.get("action_id", "")))
+				if action != null:
+					var result := Diplomacy.execute(
+						_state, _loader.diplomatic_actions, action,
+						_state.player_nation_id, String(entry.get("target_id", "")),
+					)
+					ok = bool(result.get("ok", false))
+					label = String(action.action_name)
+			CalendarK.KIND_LAW:
+				var law = _law_by_id(String(entry.get("law_id", "")))
+				if law != null:
+					var result := Legislature.propose(_state, _loader, law)
+					ok = bool(result.get("passed", false))
+					label = String(law.law_name)
+			CalendarK.KIND_RESHUFFLE:
+				var portfolio := String(entry.get("portfolio", ""))
+				var party_id := String(entry.get("party_id", ""))
+				if ns != null and Cabinet.can_assign(ns, portfolio, party_id):
+					Cabinet.assign(_state, portfolio, party_id, party_list)
+					ok = true
+				label = portfolio.capitalize()
+
+		Calendar.resolve(_state, Calendar.verb_key(entry), ok)
+		if not label.is_empty():
+			_queue_effect(label, before)
+		_card_appointment(entry, label, ok)
+
+	_mark_all_dirty()
+	# A booked diplomatic act moves relations, and on that map layer it is a
+	# colour change the player should see the day it happens -- the same reason
+	# nation_panel's own `acted` handler redraws.
+	if _map_view != null:
+		_map_view.queue_redraw()
+
+
+## A kept appointment is something that happened to the player's government with
+## no button pressed that day, so it is exactly the class of event the message
+## column exists for -- alongside an alliance obligation opening and a foreign
+## act. An act that REFUSED on arrival matters more, not less: it is the one
+## outcome the player could not have predicted when they booked it.
+func _card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	if label.is_empty():
+		_hud.message_stack.push(
+			"Appointment lapsed",
+			"Something booked for today no longer exists to be done.",
+		)
+		return
+
+	var kind := String(entry.get("kind", ""))
+	var where := ""
+	if kind == CalendarK.KIND_DIPLOMATIC:
+		where = " with %s" % _nation_name(String(entry.get("target_id", "")))
+	_hud.message_stack.push(
+		"Kept: %s" % label,
+		"%s%s, as booked.%s" % [
+			label, where, "" if ok else " It did not carry.",
+		],
+	)
+
+
+func _action_by_id(id: String):
+	for action in _loader.diplomatic_actions:
+		if String(action.id) == id:
+			return action
+	return null
+
+
+func _law_by_id(id: String):
+	for law in _loader.laws:
+		if String(law.id) == id:
+			return law
+	return null
 
 
 func _on_save_requested(slot: String) -> void:
@@ -734,19 +901,42 @@ func _on_load_requested(slot: String) -> void:
 	_nation_panel.setup(_state, _loader)
 	_government_panel.setup(_state, _loader)
 	_bloc_panel.setup(_state, _loader)
+	_people_panel.setup(_state, _loader)
+	_companies_panel.setup(_state, _loader)
 
-	_overview_panel.mark_dirty()
-	_economy_panel.mark_dirty()
-	_budget_panel.mark_dirty()
-	_polling_panel.mark_dirty()
-	_law_panel.mark_dirty()
-	_nation_panel.mark_dirty()
-	_government_panel.mark_dirty()
-	_bloc_panel.mark_dirty()
+	_calendar_panel.setup(_state, _loader)
+	# The mirror is re-established here rather than waiting for the first day to
+	# elapse, because a loaded game opens PAUSED: without this the diary would
+	# refuse a booking for today as "that date has passed" until the player
+	# unpaused, which is a rule the player cannot see and did not break.
+	_state.day = _clock.day
+
+	_mark_all_dirty()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
 	_update_top_bar()
+
+
+## Every panel that reads GameState, marked for one repaint. Extracted at U6a
+## from the three places that had grown identical copies of this list -- the
+## monthly tick, the load path, and now an appointment resolving on a day nothing
+## else happens. A fourth copy is how a panel gets forgotten, and tools/screenshot.gd
+## found exactly that class of bug one session ago.
+func _mark_all_dirty() -> void:
+	for panel in [
+		_overview_panel, _economy_panel, _budget_panel, _polling_panel,
+		_law_panel, _nation_panel, _government_panel, _bloc_panel, _calendar_panel,
+		# `_people_panel` was missing from this list from U6b until V1.4a found it,
+		# which is the failure the comment above predicted happening to the panel that
+		# was added in the same session the comment was written. It refreshed once, on
+		# the frame it was built, and then never again: a censure that changed the head
+		# of government, a reshuffle that changed a portfolio and every seat count after
+		# an election were all stale on it until the game was reloaded.
+		_people_panel, _companies_panel,
+	]:
+		if panel != null:
+			panel.mark_dirty()
 
 
 ## Everything on screen that is not inside a window. Kept under U2's name

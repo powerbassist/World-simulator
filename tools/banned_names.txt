@@ -26,6 +26,16 @@ TotalEnergies
 Airbus
 Orange
 BNP Paribas
+Carrefour
+Danone
+LVMH
+L'Oréal
+Michelin
+Renault
+Peugeot
+Sanofi
+Société Générale
+Crédit Agricole
 
 # --- Germany ---
 Olaf Scholz
@@ -44,6 +54,14 @@ BASF
 Siemens
 Deutsche Telekom
 Deutsche Bank
+Volkswagen
+Bayer
+Bosch
+Mercedes-Benz
+Lufthansa
+Adidas
+Thyssenkrupp
+Commerzbank
 
 # --- Italy ---
 Giorgia Meloni
@@ -147,6 +165,15 @@ HSBC
 Unilever
 GlaxoSmithKline
 AstraZeneca
+Tesco
+Sainsbury's
+Barclays
+Lloyds Banking Group
+Vodafone
+Rolls-Royce
+BAE Systems
+Diageo
+NatWest
 
 # --- Austria ---
 Christian Stocker

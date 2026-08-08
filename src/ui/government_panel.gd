@@ -174,7 +174,7 @@ func _refresh() -> void:
 	if n == null:
 		return
 
-	_title.text = "%s %s — %s" % [ns.head_of_government_title, ns.pm_name, n.chamber_name]
+	_title.text = "%s %s — %s" % [ns.head_of_government_title, _loader.person_name(ns.pm_person_id), n.chamber_name]
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -182,7 +182,7 @@ func _refresh() -> void:
 	var system = _loader.political_systems.get(ns.system_id)
 	_add_line("%s." % (system.display_name if system != null else ns.system_id))
 	if ns.head_of_state_kind != "executive_president":
-		_add_line("Head of state: %s %s." % [ns.head_of_state_title, ns.head_of_state_name])
+		_add_line("Head of state: %s %s." % [ns.head_of_state_title, _loader.person_name(ns.head_of_state_person_id)])
 	if ns.term_limit > 0:
 		_add_line("Term limit: %d of %d served." % [ns.terms_served, ns.term_limit])
 

@@ -64,6 +64,33 @@ const BLOC_LABEL := {
 ## below is scaled by 1/(1+w) once europe joins it, and S10's finding was the
 ## RATIO of public_finances to the five spending lines, which moves by +0.39%.
 ## See docs/bloc-model.md.
+##
+## V1.4c ASKED THE SAME QUESTION FOR `ownership` AND THE ANSWER IS NO, measured the
+## same way and recorded here so a later session finds the reasons rather than the
+## silence. tools/companies_probe.gd table (q), against V1.3d's four tests plus a
+## fifth V1.4b forced:
+##
+##   1. The price is not nameable otherwise -- HOLDS, identically to europe's.
+##   3. A flat offset cannot become more salient -- HOLDS, identically.
+##   5. But a REGULATION has 1 and 3 identically too, and V1.4b took no key. The
+##      proposed distinction was that state ownership is a single standing STOCK the
+##      player can point at where a burden is a per-sector rule; it does not survive,
+##      because `regulation_burden` summed over three sectors is equally a stock and
+##      nothing about ownership's is more pointable-at. Same footing, same answer.
+##   2. The satisfaction could not clear the model's own resolution: V1.4b measured
+##      this layer's channels at ~0.1 %/yr of growth and ~0.02 points of
+##      unemployment. A thirteenth row of near-zeroes on the polling panel is worse
+##      than no row.
+##   4. And the measured cost is -1.46% on the S10 ratio, in the UNSAFE direction,
+##      where V1.3d's was +0.39% in the safe one. That is STRUCTURAL rather than a
+##      bad candidate row: business carries `public_finances` at 0.34 and is the bloc
+##      that makes ownership divisive at all, so any row expressing the mechanic
+##      leans on the bloc S10's ratio lives in. Re-measured with business at 0.04 the
+##      drift falls to -0.29% -- and a row that light does not express the mechanic.
+##
+## What names ownership to the player instead is the authored `bloc_offset` on
+## data/company-actions/ownership.json, read on the polling panel's bloc rows -- the
+## surface docs/diplomacy-model.md's finding has pointed at five times.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat",

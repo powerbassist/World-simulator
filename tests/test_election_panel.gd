@@ -102,8 +102,9 @@ func _run() -> void:
 
 	# A legislative election cannot end a presidency, so this panel must name the
 	# government that came out of it and must always offer Continue.
-	if not text.contains(ns.pm_name):
-		_fail("panel text does not name the head of government ('%s'): %s" % [ns.pm_name, text])
+	var pm_name: String = _main._loader.person_name(ns.pm_person_id)
+	if not text.contains(pm_name):
+		_fail("panel text does not name the head of government ('%s'): %s" % [pm_name, text])
 
 	var has_continue := false
 	for child in _main._election_panel._footer.get_children():

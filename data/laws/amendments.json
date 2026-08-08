@@ -113,7 +113,7 @@
           "dissolution_rule": "executive_discretion",
           "amendment_rule": "ordinary_law",
           "term_limit": 0,
-          "head_of_state": { "kind": "hereditary_monarch", "title": "King", "name": "Alexander IV" }
+          "head_of_state": { "kind": "hereditary_monarch", "title": "King" }
         },
         "bloc_offset": { "pensioners": 0.15, "rural": 0.05, "students": -0.15 }
       }

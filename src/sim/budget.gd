@@ -17,6 +17,7 @@ const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
+const Companies = preload("res://src/sim/companies.gd")
 
 
 static func tick_month(state) -> void:
@@ -39,6 +40,20 @@ static func recompute(state, ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
+	# V1.4c's line, and the second computed REVENUE line after the tariff one above.
+	# Read straight off NationState rather than recomputed here, unlike the tariff
+	# line and exactly like the subsidy bill below: Companies.tick_month() runs after
+	# this, so a firm nationalised this month pays its first dividend next month --
+	# the one-month lag the bloc transfer, the deployment bill and the subsidy bill
+	# all take, and for the same reason, since `deficit_pct_gdp` is a company action's
+	# own precondition field.
+	#
+	# The PURCHASE is not here and is not a revenue or a spending line at all. A
+	# capital transaction is a balance-sheet swap: Companies.execute() writes
+	# `debt_eur_bn` directly, so the price reaches this function next month as
+	# `debt_service_pct_gdp` and never as a one-off nothing on this budget has a shape
+	# for.
+	ns.revenue_pct_gdp["dividends"] = ns.dividend_revenue_pct_gdp
 
 	var revenue := 0.0
 	for v in ns.revenue_pct_gdp.values():
@@ -73,6 +88,13 @@ static func recompute(state, ns) -> void:
 		# bill that widened the deficit inside the month would feed the deficit
 		# precondition that decides which verbs are available.
 		+ ns.deployment_bill_pct_gdp
+		# V1.4a's line, and the third to take this route rather than the fourth: the
+		# argument above is now the settled one for any bill the player does not set
+		# with a slider. Companies.tick_month() runs after this, so a subsidy signed
+		# this month bills next month -- the lag the bloc transfer and the deployment
+		# bill both take, and for the same reason, since `deficit_pct_gdp` is a
+		# company action's own precondition field.
+		+ ns.subsidy_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -223,6 +245,12 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# an obligation arriving inside the projected window entirely. V1.3b's repair,
 		# made a third time rather than rediscovered a third time.
 		Defence.tick_month(sim)
+		# In main.gd's slot a fourth time, and required for the same reason the three
+		# above it are: a projection that held the firm register frozen would report a
+		# standing subsidy as costing nothing and would hold the share shift still, so
+		# the one surface in the game that promises "this is what will happen" would be
+		# wrong about the thing the player just paid for.
+		Companies.tick_month(sim, loader)
 		out.append(snapshot(sim))
 	return out
 
@@ -257,6 +285,15 @@ static func snapshot(state) -> Dictionary:
 		# NationState the panel can reach.
 		"deployment_bill_pct_gdp": ns.deployment_bill_pct_gdp,
 		"military_capability": ns.military_capability,
+		# V1.4a, on the snapshot for V1.3g's reason above. The two deviation channels
+		# are here as well, because the budget panel's projection is the one surface
+		# that can show a subsidy's growth effect arriving before it has arrived.
+		"subsidy_bill_pct_gdp": ns.subsidy_bill_pct_gdp,
+		"firm_impulse_pct": ns.firm_impulse_pct,
+		"firm_jobs_offset_pct": ns.firm_jobs_offset_pct,
+		# V1.4c, here for the same reason: the dividend line lags a month, so the
+		# projection is the surface that shows it arriving.
+		"dividend_revenue_pct_gdp": ns.dividend_revenue_pct_gdp,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,

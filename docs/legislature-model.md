@@ -185,6 +185,7 @@ into a formula that already exists — nothing here is a new equation.
 | Off-budget revenue | `law_other_revenue_pct_gdp` | `budget.gd:recompute()`, added to `other_revenue_pct_gdp` | For levies with no slider — a carbon levy, a lobbying-registration fee — the same "authored residual" slot `other_revenue_pct_gdp` already fills for social contributions and local taxes. |
 | Direct opinion | `bloc_offset{}` | `opinion.gd:_tick_nation()`, added to a bloc's approval **target**, clamped together with the satisfaction score before scaling | For laws with no budget footprint and so no matching issue — immigration rules, an anti-corruption agency. Added to the *target*, not to approval directly, so `INERTIA_RATE` and every bound in [[opinion-model|opinion's own stability argument]] still apply; a law cannot make approval jump in one month any more than a policy change can. |
 | Institutional | `censure_rule`, `dissolution_rule`, `formation_method`, `amendment_rule`, `term_limit`, `term_months` on `NationState` | Whichever system already reads that field — `government.gd`, `dissolution.gd`, `elections.gd` | The only channel that sets an **absolute value** rather than accumulating a delta — an institution is changed, not nudged. Constitutional-amendment-only (`law.constitutional == true`); see [[amendment-model]] for the load-bearing check that stops an amendment writing a value its own declared system doesn't permit. |
+| Sector regulation (V1.4b) | `regulation_burden{}`, keyed by sector | `companies.gd:headcount()` and `firm_impulse_pct()`, the two channels V1.4a already built | The only channel pointed at something that is **not the nation** — a firm, through the sector it sits in. A law names a `sector` and a signed `burden` and may never name a firm, because share movement is the subsidy's channel and a second writer of it would be two answers to one question. Adds no price and no clamp of its own: one quantity read at two existing sites. See [[companies-model]] §10–15. |
 
 **The rule that prevents double-counting:** a law with a genuine budget effect
 expresses it as a lever, through `tax_rates_pct` or `spending_pct_gdp`. The
@@ -194,6 +195,22 @@ about in the first place. A law is never authored with both a lever and a
 `bloc_offset` entry for the same bloc's reaction to that lever; the sixteen
 templates each pick one story and tell it once.
 
+> [!note] V1.4b makes one instance of that rule a LOAD ERROR
+> A law carrying both `effects.company` and `structural_unemployment_pct` fails at
+> load in `law.gd`: a sector burden already reaches structural unemployment through
+> the firm register, so the two are the same act, the same landing site and the same
+> units. The rule above is enforced by convention, which is something an author
+> breaks by not reading this file; that one is enforced by the loader. Where a rule
+> *can* be mechanical it should be — [[coercion-model]]'s separator, which refuses a
+> symmetric key where a directed one belongs, is the precedent.
+>
+> The `bloc_offset` half went the other way, and the probe is why. A saturated
+> burden moves growth ~0.1 %/yr and unemployment ~0.02 points, **below the opinion
+> model's resolution** — so a regulation's political price cannot be expressed by the
+> measured channel and must be authored. Refusing to name the losers made the whole
+> regulation stack free: +6.45 headline against a ±3.0 floor. See
+> [[companies-model]] §16.
+
 `opinion.gd`'s invariant that a bloc's target lives in `[10, 90]` is preserved
 by construction: `score + law_offset` is clamped to `[−1, +1]` before being
 scaled by `APPROVAL_SPAN`, the same bound a pure satisfaction score already
@@ -201,7 +218,12 @@ respects on its own.
 
 ## Template schema
 
-`data/laws/{tax,labour,social,institutional}.json`, each `{"laws": [...]}` —
+`data/laws/{tax,labour,social,institutional,business}.json`, each `{"laws": [...]}` —
+the fifth theme is V1.4b's and is named for a **domain** like the other four rather
+than for a mechanism: a theme called "regulation" is where [[v1]] §6's sectoral
+investment would wrongly land, and what separates those two is the firm register,
+not the word. `_load_laws()` directory-scans, so a fifth file needed no loader
+change —
 the same shape `data/parties/*.json` uses. See [[data-architecture]] for the
 full field list and `src/core/law.gd` for validation.
 

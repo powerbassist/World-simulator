@@ -1,0 +1,12 @@
+{
+  "_source": "invented",
+  "_note": "See data/companies/FRA.json for the schema and the reasoning. Germany's industry sector is the roster's largest at 0.283 of GDP, so its two industrial firms are the biggest employers in the register.",
+  "companies": [
+    { "id": "DEU_nordfeld", "name": "Nordfeld Agrar", "sector": "agriculture", "share": 0.24, "headcount": 18000 },
+    { "id": "DEU_bauerhof", "name": "Bauerhof Gruppe", "sector": "agriculture", "share": 0.17, "headcount": 21000 },
+    { "id": "DEU_rheinwerk", "name": "Rheinwerk AG", "sector": "industry", "share": 0.13, "headcount": 198000 },
+    { "id": "DEU_kellermann", "name": "Kellermann Motoren", "sector": "industry", "share": 0.11, "headcount": 156000 },
+    { "id": "DEU_hanseatische", "name": "Hanseatische Bank", "sector": "services", "share": 0.05, "headcount": 52000 },
+    { "id": "DEU_vollmar", "name": "Vollmar Handel", "sector": "services", "share": 0.04, "headcount": 132000 }
+  ]
+}
