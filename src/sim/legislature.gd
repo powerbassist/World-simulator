@@ -23,6 +23,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 ## V1.4b, for REGULATION_BURDEN_MAX alone. Not companies.gd: this file writes the
 ## burden and never reads what it costs, so the dependency stops at the clamp.
 const CK = preload("res://src/sim/companies_constants.gd")
+const SK = preload("res://src/sim/society_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -307,6 +308,20 @@ static func apply(state, ns, law, loader) -> void:
 		ns.regulation_burden[sector] = clampf(
 			float(ns.regulation_burden.get(sector, 0.0)) + burden,
 			-CK.REGULATION_BURDEN_MAX, CK.REGULATION_BURDEN_MAX
+		)
+
+	# V1.5a's sixth channel, and the ONLY writer of ns.corruption in the project.
+	# Accumulates and is SIGNED for the two reasons src/core/law.gd's
+	# _extract_society() gives -- the second of which V1.4b did not need: a
+	# one-directional level would make an anti-corruption law inert on a clean state.
+	#
+	# One clamp, on the accumulated value, exactly as the burden above. The factor
+	# society.gd reads it through carries its own bounds, so a second clamp here
+	# would be a guard rail guarding a guard rail.
+	if effects.has("society"):
+		ns.corruption = clampf(
+			ns.corruption + float(effects["society"]["corruption"]),
+			-SK.CORRUPTION_MAX, SK.CORRUPTION_MAX
 		)
 
 	# An institution is SET, not nudged -- every key here is an absolute value

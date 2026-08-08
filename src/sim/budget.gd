@@ -18,6 +18,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
 
 
 static func tick_month(state) -> void:
@@ -251,6 +252,12 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
 		Companies.tick_month(sim, loader)
+		# In main.gd's slot a fifth time, and required for the same reason the four
+		# above it are: a projection that held the quality stock frozen would report a
+		# spending cut as costing nothing beyond its own delta, when the whole point of
+		# the stock is that the consequence arrives over the following three years.
+		# V1.3b's repair, made a fifth time rather than rediscovered a fifth time.
+		Society.tick_month(sim)
 		out.append(snapshot(sim))
 	return out
 

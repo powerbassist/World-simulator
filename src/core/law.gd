@@ -15,6 +15,7 @@ const Nation = preload("res://src/core/nation.gd")
 ## property of the companies model, and a second number for it here would be one
 ## strength written twice.
 const CK = preload("res://src/sim/companies_constants.gd")
+const SK = preload("res://src/sim/society_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -262,6 +263,9 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("company"):
 		out["company"] = _extract_company(raw["company"], law_id, filename, errors, sector_keys)
 
+	if raw.has("society"):
+		out["society"] = _extract_society(raw["society"], law_id, filename, errors)
+
 	# THE ANTI-DOUBLE-COUNT, MADE MECHANICAL. A regulation's burden reaches
 	# structural unemployment through Companies.headcount(), which is the same act
 	# (a law passing), the same landing site (Economy._update_unemployment()) and
@@ -277,11 +281,64 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("company") and raw.has("structural_unemployment_pct"):
 		errors.append("%s: %s carries both effects.company and effects.structural_unemployment_pct -- a sector burden already reaches structural unemployment through the firm register, so the two are one story told twice. Pick one." % [filename, law_id])
 
+	# THE SAME ANTI-DOUBLE-COUNT, at the second place it can happen. Corruption
+	# reaches the `health` opinion issue through Society.quality_target(), which is
+	# the same act, the same landing site and the same units as a law moving
+	# `spending_pct_gdp.health` directly. A law carrying both would be two answers to
+	# one question -- and the more insidious half is that they can be given OPPOSITE
+	# signs, so a law could buy approval on a service while quietly degrading it and
+	# the ledger would net them to nothing.
+	if raw.has("society") and raw.has("spending_pct_gdp"):
+		errors.append("%s: %s carries both effects.society and effects.spending_pct_gdp -- corruption already reaches the spending issues through the quality stock, so the two are one story told twice. Pick one." % [filename, law_id])
+
 	for key in raw.keys():
-		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and not SCALAR_EFFECT_KEYS.has(key):
+		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
 
 	return out
+
+
+## V1.5a. The SIXTH effect channel, and V1.5 owns it the way V1.4 owns
+## `effects.company` -- (c)'s unrest and (d)'s press freedom reach it through here,
+## so this is schema two later sessions read rather than one session's private field.
+##
+## A law names ONE term, `corruption`, and that is the whole schema. Refused if
+## anything else appears, for `_extract_company()`'s reason stated about a different
+## register: `service_quality` has exactly one writer and it is Society.tick_month().
+## A law that could set a quality level directly would be a second writer of it --
+## two answers to the question of how good the hospitals are -- and it would bypass
+## the stock, which is the one thing in this session that makes the consequence lag
+## the decision.
+##
+## The value is SIGNED. Anti-corruption is the negative direction on the same
+## accumulator, not a repeal verb: V1.4b's argument for deregulation transferred
+## whole, plus one V1.4b did not need -- a one-directional level would make an
+## anti-corruption law INERT on a clean state, and V1.3f's own property is that
+## nothing on the law list does nothing.
+static func _extract_society(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.society must be an object" % [filename, law_id])
+		return {}
+
+	if not raw.has("corruption") or not (typeof(raw["corruption"]) == TYPE_INT or typeof(raw["corruption"]) == TYPE_FLOAT):
+		errors.append("%s: %s effects.society.corruption is missing or not numeric" % [filename, law_id])
+		return {}
+
+	var corruption := float(raw["corruption"])
+	if corruption == 0.0:
+		errors.append("%s: %s effects.society.corruption is 0.0 -- a reform that changes nothing is not a reform" % [filename, law_id])
+	elif absf(corruption) > SK.CORRUPTION_MAX:
+		errors.append("%s: %s effects.society.corruption = %s exceeds CORRUPTION_MAX (%s)" % [
+			filename, law_id, str(corruption), str(SK.CORRUPTION_MAX)
+		])
+
+	for key in raw.keys():
+		if key != "corruption":
+			errors.append("%s: %s effects.society.%s is not a recognised term -- a law names a corruption level and nothing else, and a quality figure beside it would make a law the second writer of the stock's channel" % [
+				filename, law_id, key
+			])
+
+	return {"corruption": corruption}
 
 
 ## V1.4b. A regulation names a SECTOR and a burden on it, and that is the whole

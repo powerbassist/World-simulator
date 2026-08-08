@@ -36,6 +36,8 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
+const SK = preload("res://src/sim/society_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
@@ -103,6 +105,7 @@ func _init() -> void:
 	_run_companies_roundtrip(loader)
 	_run_regulation_roundtrip(loader)
 	_run_ownership_roundtrip(loader)
+	_check_society_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -688,8 +691,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 15:
-		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 16:
+		_fail("SAVE_VERSION is %d -- V1.5a argued for 16, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1207,8 +1210,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 15:
-		_fail("SAVE_VERSION is %d -- V1.4a argued for 15, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 16:
+		_fail("SAVE_VERSION is %d -- V1.5a argued for 16, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1373,8 +1376,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 15:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 16:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15 and V1.5a raised it to 16, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1457,5 +1460,78 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 15:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15 on the register alone, so a bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 16:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15 and V1.5a raised it to 16, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
+## the assertion worth having rather than the bump itself.
+func _check_society_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+
+	# (1) service_quality EARNS the bump. Absent it reads 0.0 against a France that
+	# has spent 11.0 % of GDP on health for decades, so the satisfaction term reads a
+	# collapse the player did not cause. military_capability's case at V1.3g -- and in
+	# its strongest form, because equilibrium-init does NOT rescue it: the check below
+	# is that the field does not come back on a tick, which is exactly what separates
+	# it from the four derived prices V1.4a and V1.4c argued about.
+	if state.player().service_quality.is_empty():
+		_fail("service_quality is empty at new game -- the stock has no entry to lose")
+
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("service_quality")
+	var lost = GameState.from_dict(without)
+	Society.tick_month(lost)
+	for key in SK.QUALITY_KEYS:
+		if is_equal_approx(
+			float(lost.player().service_quality.get(key, 0.0)),
+			float(state.player().service_quality.get(key, 0.0))
+		):
+			_fail("service_quality['%s'] came back on one tick, so it is derived and would NOT have earned the bump" % key)
+
+	# ...and the consequence is the one the bump exists to prevent: a reloaded save
+	# scoring a health collapse the player never caused.
+	if not (
+		float(Opinion.issue_satisfaction(lost.player())["health"])
+		< float(Opinion.issue_satisfaction(state.player())["health"])
+	):
+		_fail("dropping service_quality left the health issue no worse -- the premise of the bump is wrong")
+
+	# (2) corruption earns NOTHING. Absent it reads 0.0, which is the truth about
+	# every version-15 save because those games had no `society` law to pass --
+	# `measures` at V1.3c, `regulation_burden` at V1.4b. Serialised anyway, and that
+	# half is not free: a law writes it once and no tick recomputes it, so the check is
+	# that dropping it moves the stock's target rather than that it is merely present.
+	state.player().corruption = 0.4
+	var carried: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if not is_equal_approx(float(GameState.from_dict(carried).player().corruption), 0.4):
+		_fail("corruption did not round-trip -- a law writes it once and no tick recomputes it")
+	(carried["nations"]["FRA"] as Dictionary).erase("corruption")
+	var no_corruption = GameState.from_dict(carried)
+	if not is_zero_approx(no_corruption.player().corruption):
+		_fail("an absent corruption did not read as 0.0 -- the premise of NOT bumping for it is wrong")
+	if is_equal_approx(
+		Society.quality_target(no_corruption.player(), "health"),
+		Society.quality_target(state.player(), "health")
+	):
+		_fail("dropping corruption changed no target -- either it is derived, or it reaches no channel")
+
+	# (3) start_service_quality earns NOTHING either, and for the OTHER reason on this
+	# list: it is recomputed at init from the spending_pct_gdp every nation file already
+	# authors, so like a firm's authored share it round-trips through data/nations/.
+	# Pinned by re-deriving it rather than by asserting the value.
+	var fresh = GameState.new_game(loader, "FRA")
+	for key in SK.QUALITY_KEYS:
+		if not is_equal_approx(
+			float(fresh.player().start_service_quality[key]),
+			Society.quality_target(fresh.player(), key)
+		):
+			_fail("start_service_quality['%s'] is not the equilibrium, so it is authored state rather than a re-derivable reference" % key)
+
+	# The register carries the stock and the reference and NOTHING ELSE per line --
+	# V1.4a's own assertion about a company entry, made about this one so a later
+	# session storing a per-line rate or an authored target turns it red and has to
+	# come and say why.
+	for key in (state.to_dict()["nations"]["FRA"] as Dictionary)["service_quality"].keys():
+		if not SK.QUALITY_KEYS.has(key):
+			_fail("service_quality is keyed by '%s', which is not in QUALITY_KEYS" % key)

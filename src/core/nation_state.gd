@@ -549,6 +549,51 @@ var regulation_burden := {}
 ## Empty until the first one resolves. `last_diplomatic_result`'s shape.
 var last_company_result := {}
 
+## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
+## converging on what the nation actually spends on it delivered. Written by
+## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
+## which holds `health` alone today for a reason that is the design rather than a
+## limitation: `defence` already has military_capability and `education` and
+## `infrastructure` already share potential_shift_pct, so a second stock on either
+## would be that lever twice.
+##
+## EARNS THE SAVE_VERSION BUMP, 15 → 16, and it is the only one of the three fields
+## here that does. Absent it reads 0.0 against a France that has spent 11.0 % of GDP
+## on health for decades — every reader then sees a country whose hospitals have
+## ceased to exist, and the satisfaction term reads a collapse the player did not
+## cause. `military_capability`'s case at V1.3g verbatim, and it is the strongest
+## form of it: equilibrium-init does not rescue the field, because re-deriving it on
+## load would silently erase an accumulated decline the player spent a term earning.
+var service_quality := {}
+
+## The reference every quality satisfaction term is measured against — captured at
+## init from the equilibrium, so `service_quality - start_service_quality` is exactly
+## 0.0 at new game. `start_deficit_pct_gdp`'s and `start_bloc_burden`'s treatment.
+##
+## EARNS NOTHING. It is recomputed at init from the `spending_pct_gdp` every nation
+## file already authors, so like a firm's authored share it round-trips through
+## `data/nations/` rather than through the save. Serialised all the same, because a
+## save reloaded before its first tick must measure against the same reference it was
+## saved with rather than against a fresh equilibrium.
+var start_service_quality := {}
+
+## V1.5a. Signed accumulated corruption, clamped to
+## ±society_constants.CORRUPTION_MAX. Written by Legislature.apply() through the
+## `society` effect channel and by nothing else in the project — `regulation_burden`
+## above has the identical discipline, and `Society` only ever reads this.
+##
+## Read as a factor on the quality stock's TARGET, not on the satisfaction delta.
+## Cabinet.effectiveness() multiplies deltas only, so a corruption factor placed
+## there would cost a player who never moves a spending line exactly zero.
+##
+## EARNS NOTHING. Absent it reads 0.0 — no corruption — which is correct for every
+## version-15 save, because those games carried no `society` law to pass. `measures`
+## at V1.3c, `pacts` at V1.3g, `appointments` at U6a and `regulation_burden` at
+## V1.4b. Serialised regardless, for V1.4b's reason: a law writes it once and no tick
+## recomputes it, so a save that dropped it would silently repeal every
+## anti-corruption act the assembly ever passed.
+var corruption: float = 0.0
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -684,6 +729,9 @@ func duplicate_state():
 	s.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp
 	s.regulation_burden = regulation_burden.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
+	s.service_quality = service_quality.duplicate(true)
+	s.start_service_quality = start_service_quality.duplicate(true)
+	s.corruption = corruption
 
 	return s
 
@@ -824,6 +872,9 @@ func to_dict() -> Dictionary:
 		"dividend_revenue_pct_gdp": dividend_revenue_pct_gdp,
 		"regulation_burden": regulation_burden,
 		"last_company_result": last_company_result,
+		"service_quality": service_quality,
+		"start_service_quality": start_service_quality,
+		"corruption": corruption,
 	}
 
 
@@ -978,6 +1029,9 @@ static func from_dict(d: Dictionary):
 	# burden really was 0.0. That is why this field earns no bump of its own.
 	s.regulation_burden = d.get("regulation_burden", {})
 	s.last_company_result = d.get("last_company_result", {})
+	s.service_quality = d.get("service_quality", {})
+	s.start_service_quality = d.get("start_service_quality", {})
+	s.corruption = float(d.get("corruption", 0.0))
 
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))

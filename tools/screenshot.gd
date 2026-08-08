@@ -122,6 +122,19 @@ var _regulate := false
 ## prove. So this nationalises a firm in a sector it then regulates, and the frame
 ## carries the holding, the dividend, the burden and the jobs figure at once.
 var _nationalise := false
+
+## V1.5a, and the eighth time. A new game's quality stock sits EXACTLY on its own
+## reference for all ten nations -- that is the property the whole session rests on --
+## so the overview's two service lines are deliberately silent on frame 1 and a capture
+## with no flag proves only that they stay quiet. This is the flag that makes them speak.
+##
+## It passes the corruption law rather than poking `ns.corruption`, so the frame proves
+## the sixth effect channel dispatches as well as that the readout draws. And it ticks
+## far enough for the STOCK to have moved off its reference: at QUALITY_CONVERGENCE the
+## first month's move is ~2 % of the gap, which rounds to the same two decimals the
+## panel prints -- a frame captured at month 1 would show a live corruption level
+## against an unchanged quality figure and look like the readout was broken.
+var _corrupt := false
 var _main
 
 
@@ -152,6 +165,8 @@ func _init() -> void:
 			_regulate = true
 		elif args[i] == "--nationalise":
 			_nationalise = true
+		elif args[i] == "--corrupt":
+			_corrupt = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -217,6 +232,8 @@ func _apply_view() -> void:
 		_regulate_a_sector()
 	if _nationalise:
 		_nationalise_a_firm()
+	if _corrupt:
+		_corrupt_the_state()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -356,6 +373,25 @@ func _subsidise_a_firm() -> void:
 ## harness gives: whether the chamber agrees is a different question from whether
 ## the panel draws the burden, and a capture flag that silently produced nothing on
 ## the months it did not is exactly the class of bug this tool exists to find.
+## V1.5a. Passes the corruption-raising law twice, so the level is well clear of the
+## rounding the panel prints, then ticks two years for the stock to travel. Through
+## Legislature.apply() rather than by writing ns.corruption, so the frame is evidence
+## about the channel and not only about the label.
+func _corrupt_the_state() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("corruption", 0.0)) > 0.0:
+			Legislature.apply(state, ns, law, loader)
+			Legislature.apply(state, ns, law, loader)
+
+	_tick_months(24)
+
+
 func _regulate_a_sector() -> void:
 	var state = _main._state
 	var loader = _main._loader

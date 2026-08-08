@@ -788,6 +788,74 @@ block in all ten nation files, a field on `Nation`, and a validator. It earns no
 `SAVE_VERSION` bump, since a flag is static content read at startup and never
 written to a save.
 
+## V1.5a — a pre-committed tiebreaker is not enough, and two ways it fails
+
+[[companies-model|V1.4c]] added a rule to this project's measurement discipline: fix
+the **tiebreaker** before the sweep as well as the band, because a band can pass three
+rows and choose nothing. V1.5a is the first session to follow that rule, and it found
+the rule incomplete in **two distinct ways** — recorded here rather than in the model
+doc, because it is about how this project measures rather than about services.
+
+**(1) A tiebreaker can be a test that cannot fail.** `QUALITY_SCALE_PP`'s said: if the
+two satisfaction terms summed exceed what `SPEND_SCALE_PP` produced alone, re-measure
+`SPEND_SCALE_PP` downward. Any positive stock term adds to a total, so the condition
+fires for every candidate — it is not a discriminator, it is a tautology wearing one.
+That is exactly [[foreign-policy-model|V1.3e]]'s criticism of its own split trigger
+(*a plan-time count above V1.3a's ~25*, which had already fired on three sessions that
+did not split), arrived at independently in a different part of the process.
+
+**(2) A tiebreaker can be a bound rather than a selector.**
+`CORRUPTION_DELIVERY_BETA`'s was a ratio against `VACANT_EFFECTIVENESS` — and every
+candidate satisfied it, because it constrains the *range* without ordering the
+candidates inside it. The kill-switch band then cleared at all four values too, so
+band and tiebreaker together chose nothing. **This is V1.4c's failure repeating inside
+the session written to prevent it**, which is the strongest available evidence that the
+rule as V1.4c stated it was under-specified.
+
+**The rule, restated:** a pre-committed tiebreaker must be a **strict ordering over
+the candidates that survive the band**. "Nearest to constant X" is one
+(`QUALITY_CONVERGENCE`'s, the only pair in this session that worked as designed —
+band passed two rows, tiebreaker chose one). "Below constant X" is not. Check that the
+tiebreaker discriminates *before* running the sweep, by asking what it would say if
+every row passed the band.
+
+**A third failure, and it is the older one.** `QUALITY_SCALE_PP`'s *band* was measured
+through a path that could not observe the thing being banded: it asked whether the
+quality channel **alone** moved the headline, via a spending increase — and raising a
+spending line necessarily widens the deficit, so the channel was never isolated. The
+headline came back **negative for a spending increase**. That is
+[[foreign-policy-model|V1.3f]]'s measuring-the-wrong-state error for the third session
+running, and the pattern across all three is the same: **the measurement was designed
+before it was asked what state it would be taken in.**
+
+**What the corrections cost and bought.** Nothing was tuned to a number already
+picked, and there is checkable evidence: the replacement rule for `QUALITY_SCALE_PP`
+chose **4.5** where the constant had been provisionally set to **6.0**. A rule that
+moves the author's own guess is a rule that was not written backwards from it.
+
+**One unplanned model widening, kept on the evidence.** The balance re-run's second
+cause of divergence was not predicted: `quality_target()` multiplies by
+`Cabinet.effectiveness()`, so a reshuffle or a resignation moves the quality stock with
+every spending line untouched. [[cabinet-model|V1.1d]] had deliberately made
+effectiveness multiply the *delta only*, so that a player who never moves a line is
+untouched by the cabinet system; V1.5a un-chooses that through a different channel.
+Kept rather than gated, because the alternative is a model in which a **corrupt** state
+delivers less but an **incompetently run** one delivers the same — and the evidence for
+keeping it is that zero outcomes moved across 182 outcome lines. Recorded because it
+was not planned, not because it was wrong.
+
+**And a check that silently covered less than it appeared to.**
+`tools/run_tests.sh` never contained `tests/test_companies.gd`. It was authored at
+V1.4a and omitted from the list, so V1.4a, V1.4b and V1.4c each shipped with their own
+test file running only when invoked by hand — three sessions of green suites that were
+not testing the thing those sessions built. Found by noticing that a *new* test file
+was absent from a passing run and then reading the list. This is
+[[people-model|U6b]]'s `check_names.sh` finding in a new place (that check iterates
+`git ls-files`, so an untracked directory passes with zero files scanned), and the
+generalisation is worth more than either instance: **a green check is evidence only
+about what it enumerated.** Any session adding a test file must confirm the runner
+names it.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

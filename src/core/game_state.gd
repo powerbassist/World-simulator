@@ -24,6 +24,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -168,7 +169,20 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     deviation is measured against round-trips through data/companies/ rather
 ##     than through the save. A saved baseline would be the same fact in two
 ##     places, and the first version of it to drift would be the one in the save.
-const SAVE_VERSION := 15
+##     V1.5a bumps to 16, on ONE field of three, and the split is again the
+##     assertion worth having. `service_quality` earns it: absent it reads 0.0
+##     against a France that has spent 11.0 % of GDP on health for decades, so every
+##     reader sees a country whose hospitals have ceased to exist and the
+##     satisfaction term reads a collapse the player did not cause —
+##     `military_capability`'s case at V1.3g, in its strongest form yet, because
+##     equilibrium-init does NOT rescue it: re-deriving on load would erase an
+##     accumulated decline the player spent a term earning. `corruption` earns
+##     nothing (absent it reads 0.0, and a version-15 save is a game that had no
+##     `society` law to pass — `regulation_burden`'s case at V1.4b), and
+##     `start_service_quality` earns nothing either, being recomputed at init from
+##     the `spending_pct_gdp` every nation file already authors. Both are serialised
+##     regardless, and for two different reasons the test states separately.
+const SAVE_VERSION := 16
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -565,6 +579,18 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	Cabinet.init_nation(ns)
 	Cabinet.seat(ns, party_list)
 	Dissolution.init_nation(ns, n)
+
+	# V1.5a, and it MUST come after Cabinet.seat() rather than beside the other
+	# init_nation() calls above -- an ordering constraint rather than a preference,
+	# and the one thing in this session that a comment is cheaper than a test for.
+	# Society.quality_target() reads Cabinet.effectiveness(), which returns
+	# VACANT_EFFECTIVENESS until a cabinet is seated. Initialised any earlier,
+	# start_service_quality captures the equilibrium of a country with no ministers,
+	# the real equilibrium is then higher, and every nation's quality climbs for a
+	# decade of every game with no player action -- which is exactly the authored
+	# transient defence.gd's own equilibrium-not-zero comment exists to prevent,
+	# arriving through the back door.
+	Society.init_nation(ns)
 
 	return ns
 

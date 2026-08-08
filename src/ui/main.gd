@@ -18,6 +18,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
@@ -611,6 +612,15 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+
+	# V1.5a: services converge on what the country actually spends on them, delivered.
+	# In Companies' slot for Companies' reason and not for the general tick-order one:
+	# quality reaches `overall_approval_pct`, which is a PRECONDITION_FIELDS entry, so
+	# quality -> approval -> which laws are available -> a `society` law -> corruption
+	# -> quality closes exactly the loop the one-month lag exists to break. Fifth time
+	# this argument has been made, and the first where the loop runs through opinion
+	# rather than through the deficit.
+	Society.tick_month(_state)
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this

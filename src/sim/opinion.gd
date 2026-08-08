@@ -18,6 +18,11 @@ extends RefCounted
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## V1.5a. Read-only, and one-way: society.gd does not preload this file, so the
+## quality stock cannot see the opinion it moves. That is what keeps the double count
+## resolvable in one place -- the block above.
+const Society = preload("res://src/sim/society.gd")
+const SK = preload("res://src/sim/society_constants.gd")
 ## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes bloc_offset for a
 ## start scenario, and must respect the same bounds a law is held to.
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -159,6 +164,42 @@ static func issue_satisfaction(ns) -> Dictionary:
 	#
 	# Re-clamped because _scaled() clamps its own argument and this arrives after it.
 	sat["defence"] = clampf(sat["defence"] - ns.deployment_opinion_load, -1.0, 1.0)
+
+	# V1.5a. The delivery half of a spending line, ADDED to the delta half above
+	# rather than replacing or multiplying it — the row asks for "quality as an
+	# outcome of spending, feeding back into opinion" and `health` was already an
+	# opinion issue, so the double count had to be resolved rather than avoided.
+	# Three of the four resolutions were rejected on this project's own record:
+	#
+	#   REPLACE  — this file's own APPROVAL_NEUTRAL comment commits to no lag and
+	#              warns against "two lags in series", and a stock at
+	#              QUALITY_CONVERGENCE has a ~34-month half-life. Replacing builds
+	#              precisely the thing that comment exists to forbid.
+	#   MULTIPLY — that is Cabinet.effectiveness() a second time on one expression,
+	#              and two multipliers on one delta are unattributable: the player
+	#              cannot tell an incompetent minister from a decayed service, and
+	#              elections.gd's attribution has one slot per issue.
+	#   A 13th   — `spending.health` writes both keys, so they are collinear and the
+	#   ISSUE_KEY  salience simplex merely re-splits one issue's weight. That is the
+	#              case V1.4c answered NO for, on the same test.
+	#
+	# So: additive and post-effectiveness, which is deployment_opinion_load's shape
+	# directly above, and the argument transfers verbatim — the delta is a claim about
+	# how well a CHANGE OF POLICY is delivered, quality is a FACT ON THE GROUND, and
+	# running it through effectiveness would let a competent minister cancel it.
+	#
+	# The two then price DIFFERENT TIMES rather than the same thing twice: the delta
+	# prices the announcement, the stock prices the delivery. Fast in, slow out.
+	#
+	# Exactly 0.0 at new game for all ten nations, because Society.init_nation()
+	# captures the reference at the equilibrium — so this term is silent in every game
+	# until the player moves a spending line or passes a `society` law.
+	#
+	# Loops QUALITY_KEYS rather than SPENDING_KEYS, so a line without a stock costs
+	# nothing here and V1.5b adds `pensions` without touching this file.
+	for key in SK.QUALITY_KEYS:
+		var q: float = _scaled(Society.quality_deviation(ns, key), K.QUALITY_SCALE_PP)
+		sat[key] = clampf(float(sat.get(key, 0.0)) + q, -1.0, 1.0)
 
 	# Measured on the deficit, not the debt ratio. Debt walks upward every month
 	# by construction (r > g), so a debt-level term would make every bloc slowly

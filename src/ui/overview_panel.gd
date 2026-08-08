@@ -15,6 +15,8 @@ extends PanelContainer
 ## government_panel.gd already reads it the same way.
 
 const Defence = preload("res://src/sim/defence.gd")
+const Society = preload("res://src/sim/society.gd")
+const SocietyK = preload("res://src/sim/society_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -184,6 +186,7 @@ func _refresh() -> void:
 
 	_fill_government(ns, censure)
 	_fill_defence(ns)
+	_fill_services(ns)
 	_fill_election(ns, months_to_election)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
@@ -331,6 +334,53 @@ func _fill_defence(ns) -> void:
 		_note("government", "Allied with %s; %d deployment%s running." % [
 			", ".join(allies), deployed, "" if deployed == 1 else "s",
 		], UiTheme.BAD_TEXT)
+
+
+## V1.5a. Under GOVERNMENT beside capability, which is where docs/tiers/v1.md §3 put
+## the last derived national statistic of this shape, and _fill_defence() above is the
+## template rather than a coincidence: its comment says capability alone is a number
+## with no units the player can act on, and capability WITH the price it sets is the
+## loop. Service quality has exactly that problem and exactly that answer.
+##
+## NOT ON THE POLLING PANEL, and the plan said it would be. That panel's contract is
+## that EVERY figure on it has been through PollNoise -- the player never sees a true
+## number there -- and a service statistic is not a poll: the government knows what its
+## own hospitals cost and how well they run. Putting an un-noised figure on a screen
+## whose whole discipline is that nothing is un-noised would be a contract the player
+## cannot see being broken. The window is still the one that exists, so the "no new
+## window" cut holds; only the panel changed.
+##
+## Silent when there is nothing to say. A permanent "delivery 100 %, quality unchanged"
+## row is the line that says nothing in every game that never passes a `society` law,
+## which is the failure the alliance line directly above avoids the same way.
+func _fill_services(ns) -> void:
+	for key in SocietyK.QUALITY_KEYS:
+		var deviation: float = Society.quality_deviation(ns, key)
+		if is_zero_approx(deviation):
+			continue
+		# Leads with the DEVIATION and not the level, which is _fill_defence()'s lesson
+		# applied rather than restated: the stock's absolute value is a number in no
+		# units the player can act on, and its distance from its own baseline is the
+		# thing they caused. Short, because this column is ~110px wide and the
+		# capability line above it already wraps to four lines.
+		var label: String = K.ISSUE_LABEL.get(key, key)
+		var text := "%s delivery %+.2f on baseline." % [label, deviation]
+		if deviation < 0.0:
+			_note("government", text, UiTheme.BAD_TEXT)
+		else:
+			_caption("government", text)
+
+	# The cause, beside the effect, and only when the player has moved it. Reads the
+	# factor rather than the level, because the level is a signed abstraction and the
+	# factor is what it does: what share of a spending line reaches the service.
+	if is_zero_approx(ns.corruption):
+		return
+	var delivery: float = Society.delivery_factor(ns)
+	var text := "Administration delivers %.0f%% of funding." % (delivery * 100.0)
+	if delivery < 1.0:
+		_note("government", text, UiTheme.BAD_TEXT)
+	else:
+		_caption("government", text)
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:

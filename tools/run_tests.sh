@@ -33,6 +33,13 @@ tests=(
   tests/test_defence.gd
   tests/test_calendar.gd
   tests/test_people.gd
+  # test_companies.gd was authored at V1.4a and NEVER ADDED HERE, so V1.4a, V1.4b and
+  # V1.4c all shipped with their own test file running only when invoked by hand. Found
+  # at V1.5a by noticing test_society.gd was absent from a green suite and looking at
+  # the list -- docs/people-model.md §9's finding in a new place: a check that silently
+  # covers less than it appears to.
+  tests/test_companies.gd
+  tests/test_society.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

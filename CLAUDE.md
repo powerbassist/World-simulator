@@ -152,7 +152,8 @@ warm end until a frame was looked at. It saves a PNG of the running game — run
 windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V1.3c) `--coerce`,
 (V1.4a) `--subsidy`,
 (V1.4b) `--regulate`,
-(V1.4c) `--nationalise`,
+(V1.4c) `--nationalise` and
+(V1.5a) `--corrupt`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -795,13 +796,117 @@ deployments row** — V1.3g wrote `_set_figure("deployments", …)` with no `FIG
 entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
 "beside the deployment line" about a line that was not there.
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.5 is decomposed into four sessions, V1.5a–d, and (a) is built.** The row was
+nine bullets and nine bullets is not a session: (a) the delivery layer, (b)
+demographics and migration, (c) unrest, (d) media and information — with **(d)
+recorded in advance as the row most likely to split**, scandals being the cut. Five
+machines. **The block breaks the rule every previous block was built on**: V1.3 and
+V1.4 each shipped a player command per session and V1.3a's rule was that state ships
+*with* a verb, where §5 has at most two verbs across nine bullets. So the rule
+inverts — **every session ships a statistic and the price it charges**.
+
+**The row missed eight rows, instances fifteen through twenty-two, all found by
+counting.** Five collisions, each now cross-referenced into *both* rows: rule of law
+is §1's judiciary (and left the block); education quality already exists as
+`potential_shift_pct`; scandals are §8's own definition; inequality's instruments are
+§6's; government messaging is §7's campaign phase. Three orphans tiered V1 in
+`docs/brainstorm/mechanics-society.md` and named in no row at all — government
+messaging, **honeymoon and fatigue** (deferred *in code* since S5 and the oldest miss
+on the list), and birth rate and life expectancy, for which no data exists. And three
+bullets assume quantities the model does not have: `spending_pct_gdp` is a player-set
+**rate** so ageing cannot drive a *cost*, `Cabinet.effectiveness()` multiplies
+**deltas only** so corruption placed there is free to a do-nothing player, and there
+is **no legitimacy quantity** for press freedom to charge against.
+
+**V1.5a's headline is that §5's bullet 9 asks for a machine the project had already
+built three times under three names.** `military_capability` is defence's outcome
+stock; `potential_shift_pct` is education's *and* infrastructure's, since S4. Of five
+spending lines only **health and pensions** have none, and pensions needs V1.5b's
+dependent count — so `society_constants.QUALITY_KEYS` holds **one entry**, and the
+exclusions are the design: `tests/test_society.gd` fails if `education`, `defence` or
+`infrastructure` appears in it. `society.gd` lifts `capability_target()` /
+`capability_step()` from `defence.gd` outright, equilibrium-not-zero included.
+
+**Corruption multiplies the STOCK'S TARGET, not the satisfaction delta, and that is
+the session's second call.** The row says it degrades "policy effectiveness", which
+names `Cabinet.effectiveness()` — but that function multiplies the **delta** only, so
+a factor there costs a player who never moves a spending line **exactly zero**, free
+to precisely the player most likely to deserve it. Degrading the target means a
+corrupt state's hospitals decay at unchanged spending. Signed both ways, which is
+V1.4b's deregulation argument plus one V1.4b did not need: a one-way level makes an
+anti-corruption law **inert on a clean state**. `effects.society` is the **sixth
+channel** and V1.5 owns it the way V1.4 owns `effects.company`; no sixth law theme was
+needed, `institutional` already existed.
+
+**The double count had to be resolved rather than avoided, and three of four
+resolutions fail on the project's own record.** `health` was already an opinion issue
+keyed to the spending delta. Replace fails because `opinion_constants.gd` commits to
+no lag and warns against "two lags in series"; multiply fails because two multipliers
+on one delta are unattributable and `elections.gd` has one attribution slot; a 13th
+`ISSUE_KEYS` entry fails V1.4c's own collinearity test. What ships is **additive and
+post-effectiveness** — `deployment_opinion_load`'s shape — so the two price
+*different times*: the delta prices the announcement, the stock prices the delivery.
+
+**The probe corrected itself three times, thirteen sessions running, and the finding
+is that naming a tiebreaker in advance is STILL NOT ENOUGH.** `QUALITY_CONVERGENCE`
+was the only pre-committed pair that worked as designed (band passed 0.01 and 0.02;
+tiebreaker chose 0.02 at a ratio of exactly 1.00 against `CAPABILITY_CONVERGENCE`).
+`QUALITY_SCALE_PP`'s band was **measured on a path that could not observe it** —
+raising a spending line necessarily widens the deficit, so "the quality channel alone"
+was never visible there, and the headline came back **−0.70 for a spending INCREASE**;
+on the isolated path it passes 3.0/4.5/6.0. Its tiebreaker was **a test that could not
+fail** (any positive stock term adds to the total, so "re-measure `SPEND_SCALE_PP`
+down" fires for every candidate — V1.3e's own criticism of its split trigger). The
+replacement rule chose **4.5** where the constant had been provisionally set to 6.0,
+which is the evidence it was not written backwards. And
+`CORRUPTION_DELIVERY_BETA`'s **kill switch cleared at every candidate**, which meant
+its tiebreaker was a **bound and not a selector** — V1.4c's failure repeating inside
+the session written to avoid it. A two-part selector (one law legible on a bloc row;
+the saturated value leaving `DELIVERY_MIN` slack) passes **exactly one row**, 0.30.
+
+**`SAVE_VERSION` is 16, on one field of three.** `service_quality` earns it — absent
+it reads 0.0 against a France that has funded hospitals for decades, and
+equilibrium-init does *not* rescue it because re-deriving on load would erase a
+decline the player spent a term earning. `corruption` and `start_service_quality` earn
+nothing and are serialised anyway for two different reasons the test states
+separately; the split assertion is that `service_quality` does **not** come back on
+one tick.
+
+**The re-run is not bit-identical, predicted in advance, and one of its two causes was
+not.** 18 of 23 shared regimes identical, 5 movers, **zero outcome changes** across
+182 outcome lines. Three movers touch the `health` line as predicted. Two —
+`managed_cabinet_shorted` and `austerity_cabinet_shorted` — move because
+`quality_target()` multiplies by `Cabinet.effectiveness()`, so **a reshuffle moves the
+stock with every spending line untouched**. That widens the cabinet system's charter,
+which V1.1d had deliberately kept surgical; kept rather than gated, because a model
+where a corrupt state delivers less but an incompetently-run one delivers the same is
+not defensible. The eighteenth regime is the **cheap kind** (a law at a month is a
+shape the harness has known since `AMENDMENT_REGIMES`) and it is the legibility
+evidence: same budget, `managed` **HELD** at 26.8 % in 2032, `managed_corrupts`
+**LOST** at 23.8 % with `health` the top attributed issue at salience 0.29. Model:
+[docs/society-model.md](docs/society-model.md).
+
+**The readout is on the OVERVIEW and the plan said the polling panel.** That panel's
+contract is that *every* figure on it has been through `PollNoise`, and a service
+statistic is not a poll — the government knows how well its own hospitals run. Both
+lines sit under GOVERNMENT beside `military_capability`, `_fill_defence()`'s slot and
+its argument. **The screenshot pass earned its keep for the tenth session running**,
+and this time by catching layout rather than a bug: the GOVERNMENT column is ~110px
+and the first captions wrapped to eight lines, so both now lead with the deviation
+rather than the level. **`tools/run_tests.sh` never ran `tests/test_companies.gd`** —
+authored at V1.4a and absent from the list, so V1.4a, V1.4b and V1.4c all shipped with
+their own test file running only by hand. Found by noticing `test_society.gd` was
+missing from a green suite; it is `check_names.sh`'s U6b failure in a new place, a
+check that silently covers less than it appears to. Both are wired in now and both
+pass.
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 15**. There has never been a migration: a superseded
+Save format is at **version 16**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -891,7 +996,19 @@ than asserting it. The only thing that *would* have bumped it is a
 V1.3d exactly — and the `ISSUE_KEYS` answer was no, so the device points at the next
 session a third time. What V1.4c *did* turn red on purpose is V1.4a's **other**
 assertion: a serialised register entry now carries three keys rather than two,
-widened by exactly one, and a fourth still fails.
+widened by exactly one, and a fourth still fails. **V1.5a is the session V1.4c's device
+pointed at, and it bumps to 16 on one field of three.** `service_quality` earns it, and
+it is `military_capability`'s case in its strongest form yet: absent it reads 0.0
+against a France that has funded hospitals for decades, *and* equilibrium-init does not
+rescue it, because re-deriving on load would erase an accumulated decline the player
+spent a term earning. `corruption` earns nothing (`regulation_burden`'s case a fourth
+time) and `start_service_quality` earns nothing either (recomputed at init from
+authored spending, so it round-trips through `data/nations/` — a firm's authored share
+at V1.4a). Both are serialised regardless and for two *different* reasons, which the
+test states separately rather than folding together. The assertion worth having is
+again the split: the test checks that `service_quality` does **not** come back on one
+tick, which is exactly what separates it from V1.4a's and V1.4c's four derived prices,
+so a later session making the stock derivable turns it red and has to say why.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

@@ -37,6 +37,8 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
+const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
@@ -284,6 +286,25 @@ const OWNERSHIP_REGIMES := {
 }
 
 
+## V1.5a's regime, and it is the CHEAP kind for V1.4b's reason: corruption reaches the
+## quality stock through a LAW, and applying a law at a month is a shape this harness
+## has known since AMENDMENT_REGIMES. Only the content is new.
+##
+## Applies every corruption-RAISING law and never repeals it, which is the reachable
+## worst case the delivery clamp is measured against -- the treatment the subsidy, the
+## burden and the nationalisation all get.
+##
+## THE SEVENTEEN REGIMES ABOVE ARE NOT BIT-IDENTICAL AFTER V1.5a, and this file is
+## where that shows. Every session since V1.3d has had a channel reading exactly 0.0
+## until a player COMMAND fired; this one's second trigger is the budget slider, which
+## `managed` and `austerity` both move, so the quality stock diverges from its own
+## reference in every regime that touches a spending line. Predicted in the plan before
+## the run rather than discovered in the diff.
+const SOCIETY_REGIMES := {
+	"managed_corrupts": {"budget": REGIMES["managed"], "corrupt_month": 6},
+}
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
@@ -341,6 +362,9 @@ func _init() -> void:
 		for name in OWNERSHIP_REGIMES.keys():
 			var regime: Dictionary = OWNERSHIP_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
+		for name in SOCIETY_REGIMES.keys():
+			var regime: Dictionary = SOCIETY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, int(regime["corrupt_month"]))
 
 	quit(0)
 
@@ -365,7 +389,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -429,6 +453,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
+		# additions above it, and that is the difference this row exists to record: the
+		# quality stock reads the live spending line, so it diverges from its own
+		# reference in every regime that moves one -- `managed` and `austerity` both do.
+		# The seventeen regimes above are therefore NOT bit-identical after this session,
+		# which the plan predicted before the run.
+		Society.tick_month(state)
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -454,6 +485,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == nationalise_month:
 			_nationalise(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == corrupt_month:
+			_corrupt(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -836,6 +870,33 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 ## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
 ## the assembly division belongs to tests/test_legislature.gd, and a balance row
 ## whose numbers depend on a chamber agreeing is a row that measures two things.
+## V1.5a. Every corruption-raising law at once, never repealed -- the reachable worst
+## case for the delivery factor, and the treatment _regulate() and _nationalise() both
+## get. `emergency_procurement_powers` carries a 48-month cooldown, so applying it
+## directly here rather than through the cooldown gate is what makes "worst case" mean
+## the clamp rather than one pass of one law.
+func _corrupt(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("corruption", 0.0)) > 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no corruption-raising society law is authored")
+		return
+
+	# Repeated until the register saturates, so the regime measures the clamp rather
+	# than the content's own magnitude.
+	while ns.corruption < SocietyK.CORRUPTION_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d corruption %.2f, delivery %.3f after %d rounds" % [
+		regime_name, year, month, ns.corruption, Society.delivery_factor(ns), applied,
+	])
+
+
 func _regulate(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var heaviest := {}
 	for law in loader.laws:
