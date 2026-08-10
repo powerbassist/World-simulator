@@ -321,7 +321,12 @@ is what keeps the pair out of a cycle.
 
 `Budget.project()` runs it in the same slot, the **sixth** instance of V1.3b's repair and
 the sharpest: the other five report a standing cost the player has already chosen, and
-this one reports an act nobody has chosen at all.
+this one reports an act nobody has chosen at all. `tests/test_budget.gd` gained a
+**third displaced** projection check to go with it, and the displacement is the whole
+point: from an undisplaced state the grievance is exactly 0.0, the agent never fires
+inside the window, and the projection agrees with reality for the boring reason. That is
+the same blind spot at a smaller scale that made all twenty-five balance regimes report
+zero acts.
 
 ## 10. The probe corrected the session six times, fourteen sessions running
 
