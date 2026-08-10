@@ -137,6 +137,14 @@ const WORKING_SHARE_MIN := 0.20
 const DEPENDENCY_FACTOR_MIN := 0.50
 const DEPENDENCY_FACTOR_MAX := 2.50
 
+## V1.5c. Bounds on the drifting Gini index. DEFINITIONAL rather than tuned -- a Gini
+## coefficient is a share of a share and lives in [0, 100] by construction, and no
+## roster nation comes near either end: the widest fourteen-year drift is Germany's
+## +0.329/yr from 33.7, which lands at 38.3. They are here because a new quantity in
+## the tick owes docs/economy-model.md a bound, not because either could bind.
+const GINI_MIN := 0.0
+const GINI_MAX := 100.0
+
 # Measured slack, table (e), over 168 months at a saturated stance in both directions
 # across all three playable nations -- docs/defence-model.md's bill-clamp discipline,
 # and the answer to the clamp-sets-the-number failure this project has named five times:

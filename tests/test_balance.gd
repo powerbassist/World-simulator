@@ -37,6 +37,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -348,6 +349,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# dependency factor, so demography must have settled before quality reads it.
 		Demography.tick_month(state)
 		Society.tick_month(state)
+		Unrest.tick_month(state)
 		Cabinet.tick_month(state, _loader)
 
 		if i + 1 == dissolve_at_month:

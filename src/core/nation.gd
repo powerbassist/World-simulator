@@ -9,7 +9,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
-	"unemployment_pct", "sectors", "cohorts",
+	"unemployment_pct", "sectors", "cohorts", "inequality",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -19,6 +19,14 @@ const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 const KNOWN_COHORT_KEYS: Array[String] = [
 	"young_pct", "old_pct", "young_pct_per_yr", "old_pct_per_yr",
 	"participation_pct", "pop_growth_pct",
+]
+
+## V1.5c. imported.inequality, KNOWN_COHORT_KEYS' treatment for the same reason. The two
+## provenance keys are required rather than optional: this series is the only one in the
+## block read at a year the rest of it does not describe, so a file that omits them
+## claims a 2024 Gini it does not have.
+const KNOWN_INEQUALITY_KEYS: Array[String] = [
+	"gini_index", "gini_index_per_yr", "_year", "_from_year",
 ]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
@@ -258,6 +266,18 @@ var sectors: Dictionary = {}
 ## checking a third against their sum.
 var cohorts: Dictionary = {}
 
+## V1.5c. imported.inequality -- the Gini index, its measured slope, and the two years
+## they came from. Written by tools/import_data.py from World Bank SI.POV.GINI and never
+## authored, the same standing as `cohorts` above.
+##
+## docs/tiers/v1.md section 6 says section 5's index "cannot be DERIVED", and it is
+## right: there are no brackets, no deciles and no capital/labour split anywhere in this
+## model. It does not follow that the index has to be invented. The provider that
+## supplies every other figure in this block publishes it, which is why this is content
+## and not a constant -- and why Unrest.inequality_deviation() can be a pure read with
+## no field, no accumulator and no save entry.
+var inequality: Dictionary = {}
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -429,6 +449,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.cohorts = _extract_dict(imported, "cohorts", filename, errors)
 	_validate_cohorts(n.cohorts, filename, errors)
 
+	n.inequality = _extract_dict(imported, "inequality", filename, errors)
+	_validate_inequality(n.inequality, filename, errors)
+
 	return n
 
 
@@ -529,6 +552,39 @@ static func _validate_cohorts(cohorts: Dictionary, filename: String, errors: Arr
 	# zero would put the labour force at zero and divide firm_jobs_offset_pct() by it.
 	_check_range_float(cohorts["participation_pct"], 1.0, 100.0, "imported.cohorts.participation_pct", filename, errors)
 	_check_range_float(cohorts["pop_growth_pct"], MIN_POP_GROWTH_PCT, MAX_POP_GROWTH_PCT, "imported.cohorts.pop_growth_pct", filename, errors)
+
+
+## V1.5c. _validate_cohorts()'s shape. The one check worth explaining is the last: the
+## two provenance years must differ, because the slope is measured over their span and a
+## single-year series would divide by zero. tools/import_data.py refuses that case at
+## import time; this refuses a hand-edited file that reintroduces it.
+static func _validate_inequality(inequality: Dictionary, filename: String, errors: Array[String]) -> void:
+	var keys := inequality.keys()
+	keys.sort()
+	var expected := KNOWN_INEQUALITY_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.inequality must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	for key in KNOWN_INEQUALITY_KEYS:
+		var raw = inequality[key]
+		if not (typeof(raw) == TYPE_FLOAT or typeof(raw) == TYPE_INT):
+			errors.append("%s: imported.inequality.%s is not numeric" % [filename, key])
+			return
+
+	# The Gini index is bounded [0, 100] by definition; the roster spans 25.7 to 34.3.
+	_check_range_float(inequality["gini_index"], 0.0, 100.0, "imported.inequality.gini_index", filename, errors)
+
+	# SIGNED, and that is the interesting half: six of the ten are falling and four are
+	# rising, so a one-sided check would refuse the roster. Bounded by the index's own
+	# range per year, the treatment the cohort slopes get.
+	_check_range_float(inequality["gini_index_per_yr"], -100.0, 100.0, "imported.inequality.gini_index_per_yr", filename, errors)
+
+	if int(inequality["_year"]) <= int(inequality["_from_year"]):
+		errors.append("%s: imported.inequality._year (%s) must be after _from_year (%s) -- the slope is measured over their span" % [
+			filename, str(inequality["_year"]), str(inequality["_from_year"])
+		])
 
 
 ## Hex strings in, Colors out, validated here rather than at the draw call --

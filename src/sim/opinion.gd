@@ -112,7 +112,23 @@ static func _tick_nation(ns) -> void:
 		# and clamped before scaling, so the target stays inside the same
 		# [10, 90] bound a pure satisfaction score would produce on its own.
 		var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
-		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(score + law_offset, -1.0, 1.0)
+		# V1.5c. Grievance, charged at the same site and clamped with it for the same
+		# reason. UNIFORM across the six blocs: a general strike inconveniences
+		# everybody, and an authored per-bloc row would be a table with no measurement
+		# behind it. Which blocs GENERATE the grievance is a different question, and
+		# unrest_constants.UNREST_BLOCS answers it out of BLOC_SALIENCE_BASE.
+		#
+		# Here rather than inside issue_satisfaction(), and that placement is the one
+		# thing about this term worth being careful about. Subtracted from `jobs` --
+		# deployment_opinion_load's shape, and the obvious move -- it would land inside
+		# the dictionary Unrest.hardship() reads, closing a same-quantity loop through
+		# the salience simplex that nothing bounds. This site is outside that read by
+		# construction. See unrest_constants.UNREST_OPINION_SCALE for why the term
+		# exists at all: an output-only price was designed, measured, and found unable
+		# to reach a voter in a model that prices rates.
+		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(
+			score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
+		)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE
 		ns.bloc_approval[bloc] = clampf(approval, K.APPROVAL_MIN, K.APPROVAL_MAX)

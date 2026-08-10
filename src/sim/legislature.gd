@@ -25,6 +25,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const DemoK = preload("res://src/sim/demography_constants.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -111,6 +112,13 @@ static func _read_field(ns, field: String) -> float:
 		"overall_approval_pct": return ns.overall_approval_pct
 		"growth_annual_pct": return ns.growth_annual_pct
 		"terms_served": return float(ns.terms_served)
+		"unrest_pct": return ns.unrest_pct
+		# V1.5c added the entry above and legislature_constants.PRECONDITION_FIELDS in
+		# two separate edits, and the suite caught the gap between them: the whitelist
+		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE
+		# and a session can add half of it. Not merged here -- src/core/law.gd validates
+		# against the constant at LOAD time and this runs per frame, so the constant has
+		# to be a plain array -- but recorded, because the next field added will hit it.
 		_:
 			push_error("legislature: unknown precondition field '%s'" % field)
 			return 0.0
@@ -335,6 +343,14 @@ static func apply(state, ns, law, loader) -> void:
 			ns.migration_stance = clampf(
 				ns.migration_stance + float(society["migration"]),
 				-DemoK.MIGRATION_STANCE_MAX, DemoK.MIGRATION_STANCE_MAX
+			)
+		# V1.5c adds `settlement` as a THIRD sibling on the same terms, and this is the
+		# only writer of ns.settlement_stance in the project. A third register on one
+		# channel with no new shape is what turns V1.5a's declaration into a fact.
+		if society.has("settlement"):
+			ns.settlement_stance = clampf(
+				ns.settlement_stance + float(society["settlement"]),
+				-UnrestK.SETTLEMENT_STANCE_MAX, UnrestK.SETTLEMENT_STANCE_MAX
 			)
 
 	# An institution is SET, not nudged -- every key here is an absolute value

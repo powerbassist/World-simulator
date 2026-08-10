@@ -26,6 +26,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -199,7 +200,20 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     rest of the run. The five content fields and `migration_stance` earn nothing;
 ##     the test asserts the halves separately, because the split is what pins that
 ##     adding a registry key can earn a bump at all.
-const SAVE_VERSION := 17
+##
+##   V1.5c bumps to 18 on two fields of seven, and the two earn it by DIFFERENT
+##     failures, which is why tests/test_save_load.gd asserts them separately rather
+##     than together. `unrest_pct` is `service_quality`'s case: absent it reads 0.0, a
+##     perfectly calm France, so a save reloaded mid-crisis silently ends the crisis,
+##     and re-deriving on load cannot rescue it because the accumulation IS the state.
+##     `unrest_cooldown_months` is U6a's `diplo_months_to_act` case: absent it reads 0,
+##     0 means ACT NOW, and a reloaded save therefore fires a strike in its first month
+##     whatever the player was doing. `gini_index` would have earned it a third time on
+##     `young_share`'s reasoning and is folded into the same bump.
+##     `start_gini_index`, `gini_index_per_yr`, `settlement_stance`,
+##     `unrest_impulse_pct` and `unrest_acts` all earn nothing, for four reasons already
+##     on this list.
+const SAVE_VERSION := 18
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -388,6 +402,25 @@ var recent_effects: Array[Dictionary] = []
 ## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
 ## preloads diplomacy.gd, so the dependency only runs one way.
 var foreign_acts: Array[Dictionary] = []
+
+## What the unions did — V1.5c. Newest last, each {nation_id, year, month, label,
+## unrest_pct}, appended by src/sim/unrest.gd's _tick_nation() and capped at
+## unrest_constants.ACTS_KEPT by the writer, for the reason `foreign_acts` above states:
+## src/core/ cannot hold the cap because the dependency only runs one way.
+##
+## > [!important] A DISPLAY RECORD, and here the point is sharper than at V1.3f.
+## > This is the one session in the project that could have been tempted to build a
+## > literal grievance ledger, and did not: the unrest number IS the memory, exactly as
+## > the relations number is. The moment a decision consults this list, the model has
+## > two memories that can disagree and the stock stops being the one place anger lives.
+## > tests/test_unrest.gd asserts no reader in src/sim/ rather than trusting this
+## > comment, which is the assertion tests/test_foreign_policy.gd already makes.
+##
+## EARNS NO SAVE_VERSION BUMP and is not carried by duplicate_state() —
+## tests/test_state_copy.gd's NOT_COPIED list says why: a projection has no past, and
+## the SCHEDULE that produces acts (`unrest_cooldown_months`) is on NationState and IS
+## copied. `foreign_acts`' split exactly.
+var unrest_acts: Array[Dictionary] = []
 
 ## Problems found while building the state. Surfaced the same way the loader's
 ## are — loudly, naming the nation and the field.
@@ -617,6 +650,13 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 
 	Society.init_nation(ns)
 
+	# V1.5c, last, and unlike the two above it this is NOT an ordering constraint: every
+	# term of the grievance target is a deviation against a reference the calls above have
+	# already captured, so the target is exactly 0.0 whenever this runs. It sits here
+	# because that is the tick order, and a reader should be able to read the two in the
+	# same sequence.
+	Unrest.init_nation(ns)
+
 	return ns
 
 
@@ -702,6 +742,7 @@ func to_dict() -> Dictionary:
 		"history": history,
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
+		"unrest_acts": unrest_acts,
 	}
 
 
@@ -852,6 +893,15 @@ static func from_dict(d: Dictionary):
 	for entry in acts:
 		typed_acts.append(entry as Dictionary)
 	gs.foreign_acts = typed_acts
+
+	# Absent, this reads as an empty list, which is CORRECT rather than silently wrong --
+	# a version-17 save's unions could not act. `foreign_acts`' case directly above, and
+	# like it this is not what earned SAVE_VERSION 18; unrest_pct and the cooldown are.
+	var strikes: Array = d.get("unrest_acts", [])
+	var typed_strikes: Array[Dictionary] = []
+	for entry in strikes:
+		typed_strikes.append(entry as Dictionary)
+	gs.unrest_acts = typed_strikes
 
 	# Absent, this reads as "nothing booked" -- correct for every version-13 save,
 	# because those games had no diary to book into. `measures`' case at V1.3c,

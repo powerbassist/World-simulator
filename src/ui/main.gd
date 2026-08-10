@@ -20,6 +20,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
@@ -625,6 +626,17 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# dependency factor, so demography must have settled before quality reads it.
 	Demography.tick_month(_state)
 	Society.tick_month(_state)
+	# V1.5c, immediately after Society: the grievance target reads the `health` and
+	# `pensions` satisfactions, which read the quality stock the line above just settled.
+	# It stays after Opinion for the same reason the two above it do, and the loop it
+	# breaks is a second one -- `unrest_pct` is itself a PRECONDITION_FIELDS entry, so
+	# unrest -> which laws are available -> a settlement law -> the stance -> unrest.
+	Unrest.tick_month(_state)
+	# V1.5c: the unions act inside that tick, and whatever they just did is read off
+	# the record and put in front of the player. _card_foreign_acts()'s split exactly --
+	# the sim writes the record, the UI decides what earns a card, and src/sim/ never
+	# reads the list back, which tests/test_unrest.gd asserts over the whole directory.
+	_card_unrest_acts(year, month)
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
@@ -736,6 +748,39 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		# -- a field src/sim/ fills in and no surface shows, which this block has now
 		# recorded twice and fixed once.
 		_hud.message_stack.push(title, "%s %s" % [body, _act_reason_text(String(act["reason"]))])
+
+
+## V1.5c. What the unions did this month, as a card.
+##
+## No filter, unlike _card_foreign_acts() above, and the asymmetry is the content rather
+## than an oversight: nine nations on a cadence produce more acts than the column has
+## slots, where the player's own country strikes at most once a year. Every act is
+## aimed at the player by definition, so there is nothing to be relevant ABOUT.
+##
+## The LABEL is read here and nowhere in src/sim/ -- unrest_constants.ACT_LABELS carries
+## `protest` and `strike`, the sim picks one off the stock, and this file owns the
+## wording. That is the same split nation_panel.gd has for a refusal and
+## _act_reason_text() below has for a reason, and it is what makes one machine with two
+## names honest rather than two machines wearing the row's vocabulary.
+func _card_unrest_acts(year: int, month: int) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	for act in _state.unrest_acts:
+		if int(act["year"]) != year or int(act["month"]) != month:
+			continue
+		if String(act["nation_id"]) != _state.player_nation_id:
+			continue
+		_hud.message_stack.push(
+			_unrest_title(String(act["label"])),
+			"Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
+		)
+
+
+func _unrest_title(label: String) -> String:
+	match label:
+		"protest": return "Demonstrations"
+		"strike": return "General strike"
+	return "Industrial action"
 
 
 ## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and

@@ -898,6 +898,87 @@ shipped. A constant whose range cannot be trusted and a constant that cannot cle
 floor are different failures with different remedies — widen and re-select, versus
 delete — and a session that meets both should not treat them alike.
 
+## V1.5c — four more ways a pre-committed measurement fails, and the harness that could not see the thing it was measuring
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] extended
+it with the widening clause and the endpoint diagnostic. V1.5c ran six pre-committed
+sweeps and **four of them failed in ways neither clause catches**. They are collected
+here because they are about how this project measures rather than about strikes, and each
+is checkable *before* the sweep.
+
+**(1) A nearest-to-X tiebreaker is only as good as the grid's RESOLUTION.**
+`UNREST_CONVERGENCE`'s band is two-sided by construction and its tiebreaker — nearest the
+geometric mean of the two bracketing half-lives — is a genuine strict ordering with an
+interior answer. It still gave the wrong number: on a doubling ladder it chose **0.08**,
+0.78 months from the target, and refining the grid to 0.01 put **0.07** at 0.46. V1.5b's
+diagnostic is about *widening* the range; this is the same failure under **refinement**,
+and it is checkable the same way. **Refine as well as widen, and re-read.**
+
+**(2) A band whose ceiling is one regime's measured peak makes "largest passing" mean
+"that peak".** `UNREST_THRESHOLD_PCT`'s band was *fires under `austerity`, never under
+`hands_off` or `managed`* — two-sided, so V1.5b's failure was avoided by design. The
+tiebreaker chose **52.0** against `austerity`'s own peak of 52.82. It passes V1.5a's
+ordering check and V1.5b's widening check and is still wrong twice over: the margin is
+0.8 points on a 100-point range, and at 52.0 a budget that **zeroes every spending line**
+produces no industrial action at all. The band's ceiling was a *measurement*, not a
+criterion, so the selector had nothing to choose between. The fix is a criterion the band
+should have contained — V1.3f's `AGENDA_ACT_MIN` again.
+
+**(3) When the interval becomes two-sided, V1.5b's own correction INVERTS.** V1.5b forced
+*smallest passing* because both bands were one-sided minimums and *largest* returned the
+top of the grid. `UNREST_SETTLEMENT_BETA` pre-committed to that rule; then band (i) was
+corrected and the interval became genuinely two-sided — at which point *smallest passing*
+**lands back on an edge** and is grid-dependent all over again (7.0 left the stock at
+45.24 against a threshold of 45.0, a 0.5 % margin).
+
+> **The rule, extended:** when the passing interval is bounded by **two model criteria**,
+> take the value nearest its **midpoint** — interior by construction, and it moves only if
+> the interval moves. When one edge is a **guard rail** rather than a model criterion, the
+> guard rail does not select and the model edge governs.
+
+Both halves fired in the same session: `UNREST_SETTLEMENT_BETA` took the midpoint of
+`[7.3, 16.3]`, and `UNREST_OPINION_SCALE` kept smallest-passing because its upper edge is
+`opinion.gd`'s own ±1.0 clamp.
+
+**(4) A band can be applied to an observable the channel does not reach.** V1.5a's
+`QUALITY_SCALE_PP` was measured on a *path* that could not observe the channel. This is
+the neighbouring error: `UNREST_IMPULSE_SCALE`'s band asked an **output** channel to move
+an **approval** figure, and it failed at every candidate while the same channel moved GDP
+by 4.94 %. The constant was right and the band was measuring something else. Distinguish
+before deleting: *the band failed* and *the constant cannot clear its floor* look
+identical in a table and have opposite remedies.
+
+**And a fifth failure, the oldest one, a third time.** `UNREST_COOLDOWN_MONTHS`: every
+candidate from 3 to 36 passed both clauses, so the band was a bound and not a selector —
+V1.4c's failure and V1.5a's `CORRUPTION_DELIVERY_BETA`. Set by argument instead, and the
+constants file says so rather than dressing the argument as a measurement. **A constant
+set by argument is not a failure; a constant set by argument that claims to have been
+swept is.**
+
+## V1.5c — a probe can inherit the blind spot it was written to catch
+
+Separate from the tiebreaker list, and the sharper finding of the two.
+
+`tools/unrest_probe.gd`'s reachability table reported twelve strikes under `austerity`
+over fourteen years. `tools/balance_probe.gd` then reported **zero acts in all
+twenty-five shared regimes**. Both were right about their own harness: the balance harness
+runs elections and stops on the lose condition, so a budget provocative enough to anger
+the country loses the 2027 presidential election at month 16 and the run ends long before
+a stock converging at 0.07 matures. The unrest probe's loop has no elections, so it ran a
+government that had already been thrown out for fourteen more years.
+
+**That is V1.3f's measuring-the-wrong-state error, in the probe written to avoid it, for
+the third time in three sessions** — and the new part is that the *cross-check* is what
+caught it, not either probe. Two harnesses disagreeing is information; one harness
+agreeing with itself is not.
+
+The consequence generalises past unrest: **a channel whose trigger no regime reaches makes
+every bit-identical regime meaningless**, which is [[calendar-model|U6a]]'s day-loop
+finding at a larger scale. `balance_probe.gd` now prints a reachability column for every
+regime, and it gained a **mid-run budget switch** — the first regime shape in this project
+that changes policy part-way through a run — because the reachable case is *govern well,
+win, and then provoke*, and no month-1 regime could express it.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

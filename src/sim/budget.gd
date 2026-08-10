@@ -20,6 +20,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 
 
 static func tick_month(state) -> void:
@@ -262,6 +263,15 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# dependency factor, so demography must have settled before quality reads it.
 		Demography.tick_month(sim)
 		Society.tick_month(sim)
+		# In main.gd's slot a sixth time, and required for the same reason the five above
+		# it are -- but this one is the sharpest case yet, because the others report a
+		# standing cost the player has already chosen and this one reports an act nobody
+		# has chosen at all. A projection that held unrest frozen would show a country
+		# heading into a general strike as growing normally for twelve months, which is
+		# the one surface in the game that promises "this is what will happen" being
+		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
+		# time rather than rediscovered a sixth time.
+		Unrest.tick_month(sim)
 		out.append(snapshot(sim))
 	return out
 

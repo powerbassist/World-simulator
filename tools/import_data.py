@@ -78,6 +78,25 @@ COHORT_INDICATORS = {
     "participation": "SL.TLF.ACTI.ZS",
 }
 
+# V1.5c. The inequality statistic docs/tiers/v1.md section 5 books to this session as a
+# "declared stopgap read" -- on the premise, stated at section 6, that the index CANNOT
+# BE DERIVED because the model has no brackets, deciles or capital/labour split. That
+# premise is right and it does not matter: the index does not have to be derived,
+# because the World Bank publishes it. All ten nations, 7-9 years each, on the same
+# provider, the same licence and the same download loop as everything above.
+#
+# Held apart from COHORT_INDICATORS for one reason: coverage is EU-SILC-based and
+# SPARSE. Nothing is published at YEAR for any of the ten -- the latest is 2021 (GBR,
+# NLD), 2022 (CHE, DEU) or 2023 (the other six) -- so this series alone needs a
+# nearest-year fallback, and load_wb_indicator_for_year()'s exact-year match plus
+# build_imported_block()'s sys.exit would refuse the whole import. Which year was
+# actually used is written into the block, per nation, for the reason
+# `_trend_from_year` is: a provenance record that names a year the number does not come
+# from is worse than no record.
+SPARSE_INDICATORS = {
+    "gini": "SI.POV.GINI",
+}
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -88,6 +107,36 @@ def load_wb_indicator_for_year(code, year):
         for row in (data[1] or [])
         if row["date"] == str(year)
     }
+
+
+def load_wb_indicator_nearest_year(code, year):
+    """V1.5c. Value and the year it came from, per nation, for a series with gaps.
+
+    Returns {iso3: (value, year_used)}. Nearest by absolute distance, ties broken
+    toward the year ASKED FOR being the later one -- i.e. prefer a value from before
+    the target over one from after it, because a Gini published after `YEAR` would
+    describe a country the rest of the block does not.
+
+    Deliberately not folded into load_wb_indicator_for_year(). Every other indicator
+    is complete at both years, and a silent fallback on those would turn a missing
+    2024 GDP -- which is a broken download and should stop the import -- into a
+    quietly stale figure nobody notices.
+    """
+    path = SOURCES / "wb" / f"{code}.json"
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    by_nation = {}
+    for row in (data[1] or []):
+        if row["value"] is None:
+            continue
+        by_nation.setdefault(row["countryiso3code"], {})[int(row["date"])] = row["value"]
+
+    out = {}
+    for nid, series in by_nation.items():
+        best = min(series, key=lambda y: (abs(y - year), y > year))
+        out[nid] = (series[best], best)
+    return out
 
 
 def round_sig(value, sig):
@@ -125,6 +174,36 @@ def build_cohorts_block(nid, now, base, years):
     }
 
 
+def build_inequality_block(nid, now, base):
+    """V1.5c. The Gini index and its measured slope, with the years both came from.
+
+    `now` and `base` are (value, year_used) pairs from
+    load_wb_indicator_nearest_year(). The slope divides by the ACTUAL span between the
+    two years used, not by trend_years -- GBR's latest is 2021 and Austria's is 2023,
+    so a shared denominator would understate one and overstate the other by two years
+    of drift each.
+
+    Same shape as the cohort slopes and for the same reason: an index cannot compound.
+    The spread is real and the SIGNS DIFFER -- Spain 36.2 -> 33.4 falling against
+    Germany 31.4 -> 33.7 rising -- which is what makes this a measured fact rather
+    than the clustered `coalition_position` failure a stopgap would risk.
+    """
+    value, year_used = now
+    base_value, base_year = base
+    span = float(year_used - base_year)
+    if span <= 0.0:
+        sys.exit(
+            f"{nid}: Gini is published for only one year ({year_used}) in the "
+            f"downloaded window -- a slope cannot be measured from one point"
+        )
+    return {
+        "gini_index": round(value, 2),
+        "gini_index_per_yr": round((value - base_value) / span, 3),
+        "_year": year_used,
+        "_from_year": base_year,
+    }
+
+
 def build_imported_block(year):
     every = dict(INDICATORS)
     every.update(COHORT_INDICATORS)
@@ -140,6 +219,17 @@ def build_imported_block(year):
     if trend_years <= 0.0:
         sys.exit(f"--year {year} is not after TREND_FROM_YEAR {TREND_FROM_YEAR}")
 
+    # V1.5c, read through the nearest-year loader rather than the exact-year one --
+    # see SPARSE_INDICATORS.
+    sparse = {
+        name: load_wb_indicator_nearest_year(code, year)
+        for name, code in SPARSE_INDICATORS.items()
+    }
+    sparse_base = {
+        name: load_wb_indicator_nearest_year(code, TREND_FROM_YEAR)
+        for name, code in SPARSE_INDICATORS.items()
+    }
+
     imported = {}
     for nid in NATIONS:
         values = {name: wb[name].get(nid) for name in every}
@@ -154,6 +244,13 @@ def build_imported_block(year):
             sys.exit(
                 f"{nid}: missing {TREND_FROM_YEAR} data for indicators {missing_base} "
                 f"-- the demographic slope cannot be measured without both years"
+            )
+
+        missing_sparse = [name for name in SPARSE_INDICATORS if nid not in sparse[name]]
+        if missing_sparse:
+            sys.exit(
+                f"{nid}: no {missing_sparse} value at ANY year in the downloaded "
+                f"window -- the nearest-year fallback had nothing to fall back to"
             )
 
         gdp_eur_bn = round_sig(values["gdp"] * USD_TO_EUR / 1e9, 3)
@@ -183,6 +280,9 @@ def build_imported_block(year):
             "unemployment_pct": unemployment_pct,
             "sectors": sectors,
             "cohorts": build_cohorts_block(nid, values, base, trend_years),
+            "inequality": build_inequality_block(
+                nid, sparse["gini"][nid], sparse_base["gini"][nid]
+            ),
         }
     return imported
 

@@ -39,6 +39,8 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -327,6 +329,40 @@ const DEMOGRAPHY_REGIMES := {
 	"managed_tightens_migration": {"budget": REGIMES["managed"], "migrate_month": 6},
 }
 
+## V1.5c's regimes, the TWENTIETH and TWENTY-FIRST, and they are two DIFFERENT kinds --
+## the first time this list has needed both in one session.
+##
+## `managed_settles` is the cheap kind, V1.5a's and V1.5b's: a settlement reaches the
+## grievance through a LAW, and applying a law at a month is a shape this harness has
+## known since AMENDMENT_REGIMES. It is also the legibility evidence, in `managed`
+## vs `managed_corrupts` form -- same budget, one law, and the grievance path differs.
+##
+## `austerity_provokes` is the honest kind, and it exists because the probe MEASURED
+## that it had to. tools/unrest_probe.gd table (a) reports the unforced grievance peak
+## per existing regime: `hands_off` 6.7, `managed` 5.3, `spendthrift` 33.0, `ruinous`
+## 23.5 -- all under a threshold of 45 -- against `austerity` 53.9, `spend_zero` 49.3
+## and `tax_max` 79.7. So the channel IS reachable by three existing regimes and this
+## one adds the settlement verb on top of the budget that provokes, which is the
+## combination no other regime produces: a player who causes a strike and then answers
+## it. Without the measurement the reachability would have been assumed, and if it had
+## been wrong every shared regime would have come back bit-identical and their
+## bit-identity would have meant nothing -- U6a's day-loop finding in a new place.
+const UNREST_REGIMES := {
+	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
+	"managed_then_austerity": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": REGIMES["austerity"],
+		"settle_month": -1,
+	},
+	"managed_then_austerity_settles": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": REGIMES["austerity"],
+		"settle_month": 60,
+	},
+}
+
 
 func _init() -> void:
 	var only := ""
@@ -391,6 +427,13 @@ func _init() -> void:
 		for name in DEMOGRAPHY_REGIMES.keys():
 			var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
+		for name in UNREST_REGIMES.keys():
+			var regime: Dictionary = UNREST_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime["settle_month"]),
+				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+			)
 
 	quit(0)
 
@@ -415,7 +458,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -438,6 +481,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 	var elections: Array[String] = []
 	var problems: Array[String] = []
+	var peak_unrest := 0.0
 
 	var year := START_YEAR
 	var month := 1
@@ -489,6 +533,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# dependency factor, so demography must have settled before quality reads it.
 		Demography.tick_month(state)
 		Society.tick_month(state)
+		Unrest.tick_month(state)
+		peak_unrest = maxf(peak_unrest, float(ns.unrest_pct))
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -519,6 +565,10 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_corrupt(state, loader, ns, regime_name, year, month)
 		if i + 1 == migrate_month:
 			_tighten_migration(state, loader, ns, regime_name, year, month)
+		if i + 1 == switch_month:
+			_switch_budget(state, ns, switch_delta, regime_name, year, month)
+		if i + 1 == settle_month:
+			_settle(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -612,6 +662,15 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 	for line in elections:
 		print("  " + line)
+
+	# V1.5c. The reachability column, printed for EVERY regime rather than only the two
+	# that settle. A channel whose act never fires makes twenty-five bit-identical
+	# regimes prove nothing about it -- U6a's day-loop finding, and it is measured here
+	# rather than assumed because tools/unrest_probe.gd's own harness has no elections
+	# and so cannot see a run that ENDS before the grievance matures.
+	print("  unrest: peak %.2f, ended at %.2f, acts %d (threshold %.1f)" % [
+		peak_unrest, ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
+	])
 	if cabinet_shortfall_month > 0:
 		print("  resignations over the run: %d (last: %s)" % [ns.resignations_count, ns.last_resignation])
 	if problems.is_empty():
@@ -951,6 +1010,55 @@ func _tighten_migration(state, loader, ns, regime_name: String, year: int, month
 	print("  [%s] %04d-%02d migration stance %.2f, dependency ratio %.4f after %d rounds" % [
 		regime_name, year, month, ns.migration_stance,
 		Demography.dependency_ratio(ns), applied,
+	])
+
+
+## Applies every settlement law that CALMS, and never the ones that impose. Same call
+## the subsidy, the burden, the nationalisation, the corruption register and the
+## migration stance all get: the harness drives the direction the session's own bands
+## are measured against, so the regime and the probe describe the same world.
+## V1.5c. A budget change PART-WAY THROUGH A RUN, which this harness has never had.
+##
+## Every regime above commits at month 1 and never moves again, so every provocative
+## budget meets the 2027 presidential election with its full damage already done and
+## loses -- the run stops around month 16 and the grievance, which converges at
+## UNREST_CONVERGENCE on a target it takes two years to approach, never matures. All
+## twenty-five shared regimes therefore reported ZERO acts, and their bit-identity said
+## nothing whatever about the channel this session added: U6a's day-loop finding, third
+## instance, and this time the probe that was supposed to catch it had the same blind
+## spot (tools/unrest_probe.gd's own loop has no elections, so it happily ran a losing
+## government for fourteen years and reported twelve acts).
+##
+## What a player can actually do and no regime could express: govern well, WIN, and then
+## spend the second term on a budget that provokes. That is the reachability question,
+## and it needs a mid-run switch to ask.
+func _switch_budget(state, ns, delta: Dictionary, regime_name: String, year: int, month: int) -> void:
+	if delta.is_empty():
+		return
+	var pending := _resolve_pending(ns, delta)
+	if pending.is_empty():
+		return
+	Budget.commit(state, pending)
+	print("  %d-%02d %s: budget switched mid-run" % [year, month, regime_name])
+
+
+func _settle(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("settlement", 0.0)) > 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no calming settlement law is authored")
+		return
+
+	while ns.settlement_stance < UnrestK.SETTLEMENT_STANCE_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d settlement stance %.2f, unrest %.2f after %d rounds" % [
+		regime_name, year, month, ns.settlement_stance, ns.unrest_pct, applied,
 	])
 
 

@@ -33,10 +33,18 @@ extends RefCounted
 ## nobody. tests/test_demography.gd reads this file and fails if that changes, the
 ## read-the-file idiom test_society.gd, test_people.gd and test_calendar.gd all use.
 ##
-## WRITES ns.young_share and ns.old_share and nothing else. `migration_stance` has
-## exactly one writer in the project and it is Legislature.apply(); this file only
-## ever reads it. That is `corruption`'s discipline at V1.5a and `regulation_burden`'s
-## at V1.4b, and tests/test_demography.gd asserts it by reading the file.
+## WRITES ns.young_share, ns.old_share and (V1.5c) ns.gini_index, and nothing else.
+## `migration_stance` has exactly one writer in the project and it is
+## Legislature.apply(); this file only ever reads it. That is `corruption`'s discipline
+## at V1.5a and `regulation_burden`'s at V1.4b, and tests/test_demography.gd asserts it
+## by reading the file.
+##
+## V1.5c PUT THE GINI DRIFT HERE RATHER THAN IN unrest.gd, and the split is V1.5b's own
+## one made again: this layer owns measured facts about the POPULATION that drift on
+## their own, and the session that prices a fact owns the price rather than the fact.
+## Demography owns the dependency ratio and Society owns the denominator it becomes;
+## Demography owns the Gini drift and Unrest owns what it costs. It also keeps
+## unrest.gd free of any accumulator of its own, which is what its own test asserts.
 
 const K = preload("res://src/sim/demography_constants.gd")
 
@@ -74,6 +82,16 @@ static func init_nation(ns, nation) -> void:
 	ns.old_share_per_yr = float(cohorts.get("old_pct_per_yr", 0.0)) / 100.0
 	ns.participation_share = float(cohorts.get("participation_pct", 0.0)) / 100.0
 	ns.pop_growth_pct = float(cohorts.get("pop_growth_pct", 0.0))
+
+	# V1.5c. The same treatment one block down: a measured level, a measured slope, and
+	# the reference the deviation is taken against captured here so it cannot drift by
+	# its own baseline moving. The slope is content and signed -- six of the ten nations
+	# are growing more equal and four less -- so a one-sided model would be wrong about
+	# most of the roster. Unrest.inequality_deviation() reads exactly these two.
+	var inequality: Dictionary = nation.inequality
+	ns.gini_index = float(inequality.get("gini_index", 0.0))
+	ns.start_gini_index = ns.gini_index
+	ns.gini_index_per_yr = float(inequality.get("gini_index_per_yr", 0.0))
 
 
 ## One month of drift, for all ten nations.
@@ -235,3 +253,13 @@ static func _tick_nation(ns) -> void:
 
 	ns.young_share = young
 	ns.old_share = old
+
+	# V1.5c. Linear at its own measured rate, for section 2's reason exactly: an index is
+	# not a stock and does not compound, and nothing a president decides moves it. The
+	# clamp is the index's own definitional range rather than a tuned bound -- it is not
+	# reachable from any starting value in the roster over any run length this game has,
+	# and it is here because docs/economy-model.md's divergence rule is per-quantity.
+	ns.gini_index = clampf(
+		float(ns.gini_index) + float(ns.gini_index_per_yr) / 12.0,
+		K.GINI_MIN, K.GINI_MAX
+	)

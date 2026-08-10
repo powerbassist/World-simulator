@@ -106,11 +106,32 @@ curl -L -o "sources/ne_110m_admin_0_countries.geojson" \
   "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_admin_0_countries.geojson"
 
 for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS \
-         SP.POP.0014.TO.ZS SP.POP.65UP.TO.ZS SL.TLF.ACTI.ZS; do
+         SP.POP.0014.TO.ZS SP.POP.65UP.TO.ZS SL.TLF.ACTI.ZS SI.POV.GINI; do
   curl -L -o "sources/wb/$I.json" \
     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
 ```
+
+> [!warning] `SI.POV.GINI` is the one series with gaps, and it needs the fallback
+> [[ROADMAP|V1.5c]] added it for section 5's inequality statistic, and it is the only
+> indicator in the loop above that is **not published at `YEAR` for any of the ten**:
+> coverage stops at 2021 (GBR, NLD), 2022 (CHE, DEU) or 2023 (the other six), because it
+> is EU-SILC-based rather than an annual national account.
+> `load_wb_indicator_for_year()`'s exact-year match would return nothing and
+> `build_imported_block()`'s `sys.exit` would refuse the whole import, so
+> `tools/import_data.py` carries `load_wb_indicator_nearest_year()` and a
+> `SPARSE_INDICATORS` table holding this series alone.
+>
+> **Scoped to that one series deliberately.** A silent nearest-year fallback on GDP or
+> population would turn a broken download -- which should stop the import loudly -- into
+> a quietly stale figure nobody notices. And `imported.inequality` records **both** years
+> it used, beside `_year` and `_trend_from_year`, for the reason those two exist: a
+> provenance record that names a year the number does not come from is worse than no
+> record.
+>
+> The measured spread is what made the series worth adding: **NLD 25.7 to ITA 34.3** on
+> the level, and the slopes differ in **sign** -- six nations growing more equal, four
+> less. See [[unrest-model]].
 
 The Natural Earth URLs are pinned to tag `v5.1.2` rather than `master`, so the
 files don't silently change under a future re-download. Then run

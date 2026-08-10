@@ -105,6 +105,12 @@
       "old_pct_per_yr": 0.142,
       "participation_pct": 74.72,
       "pop_growth_pct": 1.938
+    },
+    "inequality": {
+      "gini_index": 33.6,
+      "gini_index_per_yr": 0.088,
+      "_year": 2023,
+      "_from_year": 2015
     }
   }
 }

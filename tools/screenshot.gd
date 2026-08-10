@@ -149,6 +149,12 @@ var _corrupt := false
 ## fraction of a point a year, so a frame at month 1 would show a live stance against
 ## an unchanged ratio and look like the readout was broken.
 var _migrate := false
+
+## V1.5c: run a budget bad enough that the unions walk out, and hold the clock until
+## they have. Both halves of the session need it -- the economy panel's unrest caption
+## is SILENT below a grievance of 0.05, so an unflagged capture proves the caption
+## compiles and nothing else, and the message card only exists in a month an act fires.
+var _unrest := false
 var _main
 
 
@@ -183,6 +189,8 @@ func _init() -> void:
 			_corrupt = true
 		elif args[i] == "--migrate":
 			_migrate = true
+		elif args[i] == "--unrest":
+			_unrest = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -252,6 +260,8 @@ func _apply_view() -> void:
 		_corrupt_the_state()
 	if _migrate:
 		_tighten_migration()
+	if _unrest:
+		_provoke_the_unions()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -427,6 +437,40 @@ func _tighten_migration() -> void:
 		if float(law.effects.get("society", {}).get("migration", 0.0)) < 0.0:
 			Legislature.apply(state, ns, law, loader)
 			Legislature.apply(state, ns, law, loader)
+
+	_tick_months(48)
+
+
+## V1.5c. Cut every service the mobilised blocs care about, then run the clock until the
+## unions have actually walked out.
+##
+## The horizon is the longest of any flag here and it has to be, for --migrate's reason
+## one step further along: a grievance is a STOCK converging at UNREST_CONVERGENCE on a
+## target that is itself built out of satisfactions that have to move first, so the
+## chain is budget -> issue -> hardship -> stock -> threshold -> act -> card. The probe
+## measures the first act under this budget at around month 36, so a flag that captured
+## a frame at 24 would show a live grievance and an empty message column and prove
+## nothing about the half of this session that is an agent.
+func _provoke_the_unions() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	# balance_probe.gd's `austerity` deltas, which is the regime the probe's own bands
+	# are measured against -- so the frame shows a state the measurement describes
+	# rather than one invented for the screenshot.
+	var lines := {}
+	for pair in [["health", -2.5], ["education", -2.0], ["defence", -1.0], ["pensions", -3.5], ["infrastructure", -2.0]]:
+		lines[pair[0]] = maxf(float(ns.start_spending_pct_gdp.get(pair[0], 0.0)) + float(pair[1]), 0.0)
+	Budget.commit(state, {
+		"spending_pct_gdp": lines,
+		"tax_rates_pct": {
+			"income": float(ns.start_tax_rates_pct["income"]) + 6.0,
+			"corporate": float(ns.start_tax_rates_pct["corporate"]) + 5.0,
+			"vat": float(ns.start_tax_rates_pct["vat"]) + 4.0,
+		},
+	})
 
 	_tick_months(48)
 

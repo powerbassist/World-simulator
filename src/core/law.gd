@@ -17,6 +17,7 @@ const Nation = preload("res://src/core/nation.gd")
 const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const DK = preload("res://src/sim/demography_constants.gd")
+const UK = preload("res://src/sim/unrest_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -289,8 +290,19 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	# one question -- and the more insidious half is that they can be given OPPOSITE
 	# signs, so a law could buy approval on a service while quietly degrading it and
 	# the ledger would net them to nothing.
-	if raw.has("society") and raw.has("spending_pct_gdp"):
-		errors.append("%s: %s carries both effects.society and effects.spending_pct_gdp -- corruption already reaches the spending issues through the quality stock, so the two are one story told twice. Pick one." % [filename, law_id])
+	#
+	# V1.5c NARROWED THIS FROM THE CHANNEL TO THE PAIR, and the narrowing is argued
+	# rather than slipped in because it turns an existing refusal green. The reason
+	# written above is about CORRUPTION reaching the spending issues through the quality
+	# stock -- it was never true of the channel, only of that one term, and V1.5a scoped
+	# it to the channel because `corruption` was the only term there was. A settlement
+	# law is naturally a spending law (public-sector pay, a pension restoration), and
+	# under the wide scope every one of those was a load error. That is exactly what
+	# V1.5b did to its own refusal below for data/laws/labour.json's sake, one session
+	# earlier, and for the same reason: a blanket rule that catches working content to
+	# stop one bad case is the wrong shape.
+	if raw.has("society") and raw.has("spending_pct_gdp") and typeof(raw["society"]) == TYPE_DICTIONARY and raw["society"].has("corruption"):
+		errors.append("%s: %s carries both effects.society.corruption and effects.spending_pct_gdp -- corruption already reaches the spending issues through the quality stock, so the two are one story told twice. Pick one." % [filename, law_id])
 
 	# THE SAME ANTI-DOUBLE-COUNT, at the third place it can happen, and V1.5b's own.
 	# A migration stance reaches structural unemployment through the labour force:
@@ -308,6 +320,28 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	# to catch one.
 	if raw.has("society") and raw.has("structural_unemployment_pct") and typeof(raw["society"]) == TYPE_DICTIONARY and raw["society"].has("migration"):
 		errors.append("%s: %s carries both effects.society.migration and effects.structural_unemployment_pct -- a migration stance already reaches structural unemployment through the labour force, so the two are one story told twice. Pick one." % [filename, law_id])
+
+	# THERE IS NO FOURTH, AND REFUSING TO ADD ONE IS V1.5c's CONTRIBUTION TO THIS RULE.
+	# `society.settlement` + `structural_unemployment_pct` was written, and then deleted
+	# once it was checked against the criterion the three above actually use rather than
+	# against the pattern they make. The first refusal states it in full: "the same act,
+	# the same landing site AND THE SAME UNITS". A settlement is in units of stance and
+	# lands on the unrest target directly; structural unemployment is in points and
+	# lands on Economy._update_unemployment(), reaching unrest only afterwards through
+	# the `jobs` satisfaction. Two of the three criteria fail.
+	#
+	# The difference is one MECHANISM priced twice against two mechanisms landing on one
+	# number, and the three refusals above are all the first kind: a regulation's burden
+	# IS headcount, corruption's degradation IS the spending issue, and
+	# `immigration_tightening`'s structural offset was literally a stand-in for the
+	# migration flow because there was no flow to price it on. But "a minimum wage rise
+	# makes hiring harder" and "a minimum wage rise buys industrial peace" are two true
+	# sentences about two mechanisms, and a rule that forbade them would forbid
+	# `bloc_offset` beside anything.
+	#
+	# Recorded here rather than in the model doc because the next session to add a term
+	# on this channel will reach for a fourth refusal by symmetry, and symmetry is not
+	# the test.
 
 	for key in raw.keys():
 		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
@@ -341,9 +375,17 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 ## nothing. For migration the sign carries a second load: ageing is a charge no verb
 ## in this game can otherwise close, so an opening direction is what makes the
 ## dependency ratio admissible at all rather than a permanent monotone ratchet.
+##
+## V1.5c WIDENED IT BY ONE KEY AGAIN, which is the second piece of evidence for V1.5a's
+## claim and a better one than the first: a channel that carries a second register might
+## be lucky, and one that carries a third is schema. `settlement` is what makes unrest
+## CLOSABLE -- without it the only lever pointed at a strike is a spending increase, and
+## society_probe.gd table (c) established that raising a line necessarily widens the
+## deficit, so the player could buy industrial peace only by opening `public_finances`.
 const SOCIETY_TERMS := {
 	"corruption": SK.CORRUPTION_MAX,
 	"migration": DK.MIGRATION_STANCE_MAX,
+	"settlement": UK.SETTLEMENT_STANCE_MAX,
 }
 
 

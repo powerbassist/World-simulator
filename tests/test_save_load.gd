@@ -39,6 +39,8 @@ const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const UK = preload("res://src/sim/unrest_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
 
@@ -108,6 +110,7 @@ func _init() -> void:
 	_run_ownership_roundtrip(loader)
 	_check_society_fields(loader)
 	_check_demography_fields(loader)
+	_check_unrest_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -693,8 +696,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 17:
-		_fail("SAVE_VERSION is %d -- V1.5a argued for 16 and V1.5b raised it to 17, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 18:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1212,8 +1215,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 17:
-		_fail("SAVE_VERSION is %d -- V1.5a argued for 16 and V1.5b raised it to 17, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 18:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1378,8 +1381,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 17:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15 and V1.5a raised it to 16 and V1.5b to 17, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 18:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1462,8 +1465,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 17:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15 and V1.5a raised it to 16 and V1.5b to 17, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 18:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1629,3 +1632,112 @@ func _check_demography_fields(loader) -> void:
 			_fail("%s starts at a dependency factor of %s rather than exactly 1.0" % [
 				id, str(Demography.dependency_factor(fresh.nations[id]))
 			])
+
+
+## V1.5c adds seven serialised fields and the bump rests on TWO of them, which is new on
+## this list: every previous session's bump rested on one. They are asserted separately
+## because they fail the rule by DIFFERENT failures -- one erases accumulated state, the
+## other resets a schedule to "now" -- and a single combined check would let either half
+## be quietly wrong.
+func _check_unrest_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.year = 2026
+	state.month = 1
+
+	# (1) unrest_pct EARNS IT, and this is service_quality's case at V1.5a. Drive the
+	# stock up the way a bad government would, then drop the field and show the crisis
+	# ends. Re-deriving on load cannot rescue it: the accumulation IS the state.
+	state.player().unrest_pct = 55.0
+	state.player().unrest_cooldown_months = 7
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if not is_equal_approx(float(GameState.from_dict(dict).player().unrest_pct), 55.0):
+		_fail("unrest_pct did not round-trip")
+
+	var no_unrest: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_unrest["nations"]["FRA"] as Dictionary).erase("unrest_pct")
+	var calm = GameState.from_dict(no_unrest)
+	if not is_zero_approx(calm.player().unrest_pct):
+		_fail("an absent unrest_pct did not read as 0.0 -- the premise of the bump is wrong")
+	# The stock does NOT come back on one tick, which is exactly what separates it from
+	# the derived prices V1.4a and V1.4c added and is the assertion worth having.
+	Unrest.tick_month(calm)
+	if calm.player().unrest_pct >= 55.0:
+		_fail("unrest_pct recovered on one tick, so it is derivable and the bump is unearned")
+
+	# (2) unrest_cooldown_months EARNS IT SEPARATELY, and it is U6a's diplo_months_to_act
+	# case: absent it reads 0, 0 means ACT NOW, so a save reloaded mid-cooldown fires a
+	# strike in its first month. Set the stock above the threshold so would_act() is
+	# gated on the counter alone -- otherwise this check passes for the wrong reason.
+	var mid_dispute: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if Unrest.would_act(GameState.from_dict(mid_dispute).player()):
+		_fail("a save carrying its cooldown still wanted to act -- the counter is not gating")
+	(mid_dispute["nations"]["FRA"] as Dictionary).erase("unrest_cooldown_months")
+	if not Unrest.would_act(GameState.from_dict(mid_dispute).player()):
+		_fail("an absent unrest_cooldown_months did not read as ACT NOW -- the second half of the bump's premise is wrong")
+
+	# (3) gini_index would have earned it a third time, on young_share's reasoning:
+	# absent, the live index reads 0.0 against a France sitting at 31.8, so the
+	# deviation the inequality term is built on is measured from a country with no
+	# inequality at all. Folded into the same bump rather than argued as a third.
+	var no_gini: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_gini["nations"]["FRA"] as Dictionary).erase("gini_index")
+	if is_equal_approx(
+		Unrest.inequality_deviation(GameState.from_dict(no_gini).player()),
+		Unrest.inequality_deviation(state.player())
+	):
+		_fail("dropping gini_index left the inequality deviation unchanged -- that half of the premise is wrong")
+
+	# (4) settlement_stance earns NOTHING -- absent it reads 0.0, no standing settlement,
+	# the truth about every version-17 save because those games had no settlement law.
+	# migration_stance's case one session earlier, and serialised for its reason, so the
+	# check is that dropping it MOVES something rather than that it is merely present.
+	#
+	# Measured from a DISPLACED state, and the first version of this check was not: on a
+	# calm country the target sits at the UNREST_MIN floor with or without a settlement,
+	# so both sides read 0.0 and the check passed for a reason that had nothing to do
+	# with serialisation. That is society_probe.gd table (c)'s error -- a measurement
+	# taken on a path that cannot observe the thing being measured -- and the floor is
+	# working as designed: a settlement on a quiet country raises the bar rather than
+	# lowering a number that is already at the bottom.
+	state.player().unemployment_pct = state.player().start_unemployment_pct + 4.0
+	state.player().settlement_stance = 0.5
+	var carried: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if not is_equal_approx(float(GameState.from_dict(carried).player().settlement_stance), 0.5):
+		_fail("settlement_stance did not round-trip -- a law writes it once and no tick recomputes it")
+	var quiet: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(quiet["nations"]["FRA"] as Dictionary).erase("settlement_stance")
+	var no_settlement = GameState.from_dict(quiet)
+	if not is_zero_approx(no_settlement.player().settlement_stance):
+		_fail("an absent settlement_stance did not read as 0.0 -- the premise of NOT bumping for it is wrong")
+	if is_equal_approx(Unrest.unrest_target(no_settlement.player()), Unrest.unrest_target(state.player())):
+		_fail("dropping the settlement moved nothing, so serialising it buys nothing either")
+	state.player().settlement_stance = 0.0
+
+	# (5) unrest_acts earns NOTHING and is a DISPLAY RECORD. The assertion worth having
+	# is not that it round-trips but that src/sim/ never reads it back -- that lives in
+	# tests/test_unrest.gd. Here: absent, it reads as an empty list, which is correct for
+	# every version-17 save because those games' unions could not act.
+	var no_acts: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	no_acts.erase("unrest_acts")
+	if not GameState.from_dict(no_acts).unrest_acts.is_empty():
+		_fail("an absent unrest_acts did not read as an empty list")
+
+	# (6) The inequality read has NO serialised field of its own, and pinning the absence
+	# is the point: it is a pure function of imported.inequality and Demography's drift,
+	# so a later session storing an index turns this red and has to come and say why.
+	var fra_dict: Dictionary = (JSON.parse_string(JSON.stringify(state.to_dict()))["nations"]["FRA"] as Dictionary)
+	for key in fra_dict.keys():
+		var name := String(key)
+		if name.begins_with("inequality") or name == "gini_deviation":
+			_fail("a save carries %s -- the inequality read is a stopgap with no state, and storing one is the escalation the plan declared in advance" % name)
+
+	# The stock is EXACTLY 0.0 at new game for all ten nations -- not approximately --
+	# which is what lets a channel that writes a growth impulse ship without moving a
+	# figure anywhere. Exact equality, test_companies.gd's discipline.
+	var fresh = GameState.new_game(loader, "FRA")
+	for id in fresh.nations:
+		if fresh.nations[id].unrest_pct != 0.0:
+			_fail("%s starts at unrest %s rather than exactly 0.0" % [id, str(fresh.nations[id].unrest_pct)])
+
+	if GameState.SAVE_VERSION != 18:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

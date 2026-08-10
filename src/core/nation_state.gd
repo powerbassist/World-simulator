@@ -654,6 +654,103 @@ var pop_growth_pct: float = 0.0
 ## that dropped it would silently repeal every migration act the assembly passed.
 var migration_stance: float = 0.0
 
+## V1.5c. The Gini index, drifting at its own measured rate, and the reference the
+## deviation is taken against. Written by Demography.tick_month() and by nothing else —
+## `young_share`'s discipline, and it lives beside it rather than beside the unrest
+## fields below because this layer owns measured facts about the POPULATION and the
+## session that prices a fact owns the price rather than the fact.
+##
+## THE DECLARED STOPGAP docs/tiers/v1.md §5 books to V1.5c, with §6 named as its real
+## writer. That row says the index "cannot be DERIVED", which is true — there are no
+## brackets, no deciles and no capital/labour split anywhere — and it does not follow
+## that it has to be invented: the provider behind every other figure in
+## `imported` publishes it for all ten. Nothing the player does moves this number, and
+## that is the mechanical form of the §5/§6 split rather than a limitation.
+##
+## `gini_index` EARNS THE BUMP, 17 → 18, and `start_gini_index` earns nothing.
+## `young_share`'s split exactly: absent, the live index reads 0.0 against a France
+## sitting at 31.8, so the deviation the whole term is built on is measured from a
+## country with no inequality at all — and re-deriving on load would erase a drift the
+## player spent a term living through, which is `service_quality`'s reason. The
+## reference is recomputed at init from `imported.inequality` and round-trips through
+## `data/nations/`; serialised regardless, `start_young_share`'s treatment.
+var gini_index: float = 0.0
+var start_gini_index: float = 0.0
+
+## Static per-nation fact off `imported.inequality`, never written again —
+## `young_share_per_yr`'s treatment and standing. SIGNED, and that is the roster rather
+## than a courtesy: six of the ten are growing more equal (NLD −0.417, ESP −0.350) and
+## four less (DEU +0.329, CHE +0.214), so a one-directional model would be wrong about
+## most of Europe. EARNS NOTHING — it is content.
+var gini_index_per_yr: float = 0.0
+
+## V1.5c. The grievance index, 0–100, written by Unrest.tick_month() and by nothing
+## else. Exactly 0.0 at new game for all ten nations, because every term of its target
+## is a deviation against the nation's own start — `trade_baseline_by_partner`'s idiom
+## and `delivery_factor`'s, and what lets the whole layer go live with the shared
+## balance regimes moving only where an act actually fires.
+##
+## EARNS THE SAVE_VERSION BUMP, 17 → 18. Absent it reads 0.0 — a perfectly calm France
+## — which silently ends a crisis the player spent a term living through, and
+## init-from-equilibrium does not rescue it for `service_quality`'s reason at V1.5a:
+## re-deriving on load erases the accumulation, which IS the state.
+var unrest_pct: float = 0.0
+
+## Months until industrial action can fire again. Written by Unrest.tick_month().
+##
+## ALSO EARNS THE BUMP, and separately, which is why the two are asserted separately in
+## tests/test_save_load.gd. Absent it reads 0, and 0 means *act now* — so a reloaded
+## save fires a strike in its first month regardless of what the player was doing.
+## U6a's `diplo_months_to_act` case, where an absent counter read as "act now" and fired
+## nine acts in one month.
+var unrest_cooldown_months: int = 0
+
+## Points of annual growth the standing industrial action is costing, negative, decaying
+## toward zero. A SIXTH addend in economy.gd's growth sum and the only price unrest
+## charges — see docs/unrest-model.md §4 for why there is no direct opinion term.
+##
+## DECAYING and not sustained, which is the distinction economy.gd's own comment draws
+## about the five terms already there: a measure in force and a subsidy in force are
+## standing conditions, and a strike is a SHOCK. Decayed by Unrest.tick_month() rather
+## than by Economy, so this field keeps one writer.
+##
+## EARNS NOTHING. Absent it reads 0.0 — a shock already over — which is soft and
+## self-correcting within months, `trade_baseline_by_partner`'s case.
+var unrest_impulse_pct: float = 0.0
+
+## What the country's grievance takes off every bloc's approval target, on the [-1, +1]
+## scale opinion.gd's satisfaction terms use. Written by Unrest.tick_month() and read by
+## opinion.gd from here rather than by calling Unrest — `deployment_opinion_load`'s
+## arrangement, and here it is what keeps the two files out of a preload cycle.
+##
+## THE PRICE THE PROBE FORCED. V1.5c was designed with an output-only price, on the
+## premise that approval would fall through `growth` and `jobs`; measured on an isolated
+## path, fourteen years at maximum grievance costs 4.94 % of GDP and 0.42 points of
+## workers approval, because this opinion model prices RATES and a permanent LEVEL loss
+## is invisible to it. See unrest_constants.UNREST_OPINION_SCALE.
+##
+## EARNS NOTHING. Absent it reads 0.0 and Unrest.tick_month() recomputes it from
+## `unrest_pct` on the next tick, so it fails soft for exactly one month —
+## `unrest_impulse_pct`'s case and `trade_baseline_by_partner`'s.
+var unrest_opinion_load: float = 0.0
+
+## V1.5c. Signed accumulated settlement stance, clamped to
+## ±unrest_constants.SETTLEMENT_STANCE_MAX. Written by Legislature.apply() through the
+## `society` channel and by nothing else — the THIRD term on that channel, after
+## `corruption` at V1.5a and `migration` at V1.5b, and the second piece of evidence that
+## V1.5a was right to call it schema rather than one session's private field.
+##
+## It is what makes unrest CLOSABLE. Without it the only lever pointed at a strike is a
+## spending increase, and society_probe.gd table (c) established that raising a line
+## necessarily widens the deficit — so the player could buy industrial peace only by
+## opening `public_finances`, and unrest would be the permanent monotone charge
+## docs/defence-model.md names.
+##
+## EARNS NOTHING. Absent it reads 0.0 — no standing settlement — correct for every
+## version-17 save, because those games had no settlement law to pass.
+## `migration_stance`'s case one session earlier, and serialised for its reason.
+var settlement_stance: float = 0.0
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -801,6 +898,14 @@ func duplicate_state():
 	s.participation_share = participation_share
 	s.pop_growth_pct = pop_growth_pct
 	s.migration_stance = migration_stance
+	s.gini_index = gini_index
+	s.start_gini_index = start_gini_index
+	s.gini_index_per_yr = gini_index_per_yr
+	s.unrest_pct = unrest_pct
+	s.unrest_cooldown_months = unrest_cooldown_months
+	s.unrest_impulse_pct = unrest_impulse_pct
+	s.unrest_opinion_load = unrest_opinion_load
+	s.settlement_stance = settlement_stance
 
 	return s
 
@@ -953,6 +1058,14 @@ func to_dict() -> Dictionary:
 		"participation_share": participation_share,
 		"pop_growth_pct": pop_growth_pct,
 		"migration_stance": migration_stance,
+		"gini_index": gini_index,
+		"start_gini_index": start_gini_index,
+		"gini_index_per_yr": gini_index_per_yr,
+		"unrest_pct": unrest_pct,
+		"unrest_cooldown_months": unrest_cooldown_months,
+		"unrest_impulse_pct": unrest_impulse_pct,
+		"unrest_opinion_load": unrest_opinion_load,
+		"settlement_stance": settlement_stance,
 	}
 
 
@@ -1119,6 +1232,14 @@ static func from_dict(d: Dictionary):
 	s.participation_share = float(d.get("participation_share", 0.0))
 	s.pop_growth_pct = float(d.get("pop_growth_pct", 0.0))
 	s.migration_stance = float(d.get("migration_stance", 0.0))
+	s.gini_index = float(d.get("gini_index", 0.0))
+	s.start_gini_index = float(d.get("start_gini_index", 0.0))
+	s.gini_index_per_yr = float(d.get("gini_index_per_yr", 0.0))
+	s.unrest_pct = float(d.get("unrest_pct", 0.0))
+	s.unrest_cooldown_months = int(d.get("unrest_cooldown_months", 0))
+	s.unrest_impulse_pct = float(d.get("unrest_impulse_pct", 0.0))
+	s.unrest_opinion_load = float(d.get("unrest_opinion_load", 0.0))
+	s.settlement_stance = float(d.get("settlement_stance", 0.0))
 
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))
