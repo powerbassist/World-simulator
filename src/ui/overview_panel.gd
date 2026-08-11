@@ -187,6 +187,7 @@ func _refresh() -> void:
 	_fill_government(ns, censure)
 	_fill_defence(ns)
 	_fill_services(ns)
+	_fill_press(ns)
 	_fill_election(ns, months_to_election)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
@@ -381,6 +382,28 @@ func _fill_services(ns) -> void:
 		_note("government", text, UiTheme.BAD_TEXT)
 	else:
 		_caption("government", text)
+
+
+## V1.5d. The press, in one line, and only when the player has moved it.
+##
+## SILENT AT ZERO, which is _fill_services()' rule above and the reason it is the press
+## FREEDOM STANCE that is printed rather than the framing spread. The spread is non-zero
+## from month 1 in all three authored nations -- it is a fact about the country, not
+## about the government -- so a line on it would be permanent furniture saying nothing,
+## exactly the failure this column has avoided four times. The stance is zero until a
+## press law passes, so the line appears when there is something to say about a decision.
+##
+## Reads the STANCE and not the gain, for _fill_services()' reason one line down: the
+## per-bloc gain is an abstraction in no units the player can act on, and the polling
+## panel already shows what it DOES by reordering the agenda list. This says what they
+## did; that shows what it cost.
+func _fill_press(ns) -> void:
+	if is_zero_approx(ns.press_freedom):
+		return
+	if ns.press_freedom < 0.0:
+		_note("government", "Press under state oversight (%+.2f)." % ns.press_freedom, UiTheme.BAD_TEXT)
+	else:
+		_caption("government", "Press independence guaranteed (%+.2f)." % ns.press_freedom)
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:

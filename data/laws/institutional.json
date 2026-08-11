@@ -52,15 +52,47 @@
       "id": "public_broadcasting_reform",
       "name": "Public Broadcasting Reform Act",
       "theme": "institutional",
-      "summary": "Restructure the public broadcaster's funding and mandate.",
+      "summary": "Guarantee the broadcaster's editorial independence in statute.",
       "position": { "economic": -0.1, "social": -0.3 },
       "majority": "simple",
       "cooldown_months": 24,
       "once": false,
       "preconditions": [],
       "effects": {
-        "other_revenue_pct_gdp": -0.05,
+        "society": { "press_freedom": 0.25 },
         "bloc_offset": { "urban": 0.1, "rural": -0.05 }
+      }
+    },
+    {
+      "id": "broadcasting_oversight_act",
+      "name": "Broadcasting Oversight Act",
+      "theme": "institutional",
+      "summary": "Put licensing and editorial standards under a ministerial board.",
+      "position": { "economic": 0.1, "social": 0.6 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "press_freedom": -0.25 },
+        "bloc_offset": { "rural": 0.1, "pensioners": 0.05, "urban": -0.15, "students": -0.2 }
+      }
+    },
+    {
+      "id": "emergency_broadcasting_powers",
+      "name": "Emergency Broadcasting Powers",
+      "theme": "institutional",
+      "summary": "Suspend licences and vet coverage while public order is at risk.",
+      "position": { "economic": 0.1, "social": 0.8 },
+      "majority": "absolute",
+      "cooldown_months": 36,
+      "once": false,
+      "preconditions": [
+        { "field": "unrest_pct", "op": ">=", "value": 35.0 }
+      ],
+      "effects": {
+        "society": { "press_freedom": -0.4 },
+        "bloc_offset": { "rural": 0.15, "pensioners": 0.1, "urban": -0.2, "students": -0.3, "workers": -0.1 }
       }
     },
     {

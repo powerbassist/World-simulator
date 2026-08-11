@@ -1,0 +1,12 @@
+{
+  "_source": "invented",
+  "_note": "Fictional newspapers per docs/fictionalization.md. See data/outlets/FRA.json for the field conventions. Germany's press is authored NARROWER than France's on the economic axis -- spanning -0.60..+0.60 against France's -0.70..+0.70 -- because the consensual-coalition politics its data already models has no equivalent of a paper campaigning against the government of the day. That is content saying something the constants do not, which is the whole reason outlets are per-nation files rather than one shared table.",
+  "outlets": [
+    { "id": "DEU_arbeitsbote", "name": "Der Arbeitsbote", "audience": "workers", "reach": 0.40, "position": { "economic": -0.50, "social": -0.10 } },
+    { "id": "DEU_rheinbote", "name": "Der Rheinbote", "audience": "pensioners", "reach": 0.50, "position": { "economic": 0.30, "social": 0.50 } },
+    { "id": "DEU_hauptstadtblatt", "name": "Hauptstadtblatt", "audience": "urban", "reach": 0.45, "position": { "economic": 0.00, "social": -0.40 } },
+    { "id": "DEU_landkurier", "name": "Der Landkurier", "audience": "rural", "reach": 0.47, "position": { "economic": 0.20, "social": 0.60 } },
+    { "id": "DEU_marktkurier", "name": "Marktkurier", "audience": "business", "reach": 0.58, "position": { "economic": 0.60, "social": 0.10 } },
+    { "id": "DEU_campus_echo", "name": "Campus Echo", "audience": "students", "reach": 0.35, "position": { "economic": -0.60, "social": -0.70 } }
+  ]
+}

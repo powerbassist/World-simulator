@@ -117,7 +117,14 @@ static func unrest_target(ns) -> float:
 	return clampf(
 		K.UNREST_MAX * hardship(sat)
 		+ K.INEQUALITY_BETA * inequality_deviation(ns)
-		- K.SETTLEMENT_BETA * float(ns.settlement_stance),
+		- K.SETTLEMENT_BETA * float(ns.settlement_stance)
+		# V1.5d, and the MINUS is the term: press_freedom is negative when the press is
+		# restricted, so censorship ADDS grievance and a freer-than-baseline press takes
+		# a little away. Read by no opinion issue, which is what puts it with the other
+		# two independent terms rather than with hardship -- section 5's "second approval
+		# number" warning is answered by a fourth term the approval figure cannot see, on
+		# exactly the argument the third one was added on.
+		- K.PRESS_UNREST_BETA * float(ns.press_freedom),
 		K.UNREST_MIN, K.UNREST_MAX
 	)
 
@@ -142,7 +149,19 @@ static func hardship(sat: Dictionary) -> float:
 	var share_sum := 0.0
 	for bloc in K.UNREST_BLOCS:
 		var size: float = float(OpinionK.BLOC_SIZE.get(bloc, 0.0))
-		var weights: Dictionary = Opinion.salience_weights(OpinionK.BLOC_SALIENCE_BASE[bloc], sat)
+		# V1.5d. The UNFRAMED gain, stated explicitly, and this line is the session's
+		# real anti-double-count. Passing ns.framing_gain here would let press_freedom
+		# reach the grievance target twice -- once through this term and once through
+		# media_constants.PRESS_UNREST_BETA -- which is the same act, the same landing
+		# site and the same units, the first-kind double count law.gd's three refusals
+		# are all examples of. It is refused in the SIGNATURE rather than at load,
+		# because it is one register reaching one number twice through code and not two
+		# keys on one law; see Opinion.salience_weights(). The distinction is also the
+		# right one on the merits: framing is about what the electorate NOTICES, and
+		# this term is about what two rows of it actually SUFFER.
+		var weights: Dictionary = Opinion.salience_weights(
+			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN
+		)
 		var row := 0.0
 		for issue in weights:
 			row += float(weights[issue]) * float(sat.get(issue, 0.0))

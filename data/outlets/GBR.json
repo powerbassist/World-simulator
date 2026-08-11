@@ -1,0 +1,12 @@
+{
+  "_source": "invented",
+  "_note": "Fictional newspapers per docs/fictionalization.md. See data/outlets/FRA.json for the field conventions. Two things are authored here that the other two files do not say. FIRST: `workers` is reached by two titles pulling in opposite directions, and the larger of the two is the one on the right -- a popular paper whose readers are not its politics, which is the case the per-bloc audience field exists to be able to express at all. SECOND: `students` has NO national title, deliberately. A bloc with no press gets the negative of the national mean in media.gd, so it is un-amplified rather than merely average, and leaving one bloc empty in content means that path is exercised by a real game and not only by a test.",
+  "outlets": [
+    { "id": "GBR_daily_beacon", "name": "The Daily Beacon", "audience": "workers", "reach": 0.46, "position": { "economic": 0.40, "social": 0.70 } },
+    { "id": "GBR_union_herald", "name": "The Union Herald", "audience": "workers", "reach": 0.22, "position": { "economic": -0.70, "social": -0.20 } },
+    { "id": "GBR_national_chronicle", "name": "The National Chronicle", "audience": "pensioners", "reach": 0.57, "position": { "economic": 0.50, "social": 0.80 } },
+    { "id": "GBR_metropolitan", "name": "The Metropolitan", "audience": "urban", "reach": 0.44, "position": { "economic": -0.20, "social": -0.60 } },
+    { "id": "GBR_county_gazette", "name": "The County Gazette", "audience": "rural", "reach": 0.49, "position": { "economic": 0.30, "social": 0.60 } },
+    { "id": "GBR_city_ledger", "name": "The City Ledger", "audience": "business", "reach": 0.63, "position": { "economic": 0.80, "social": 0.00 } }
+  ]
+}

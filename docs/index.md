@@ -45,6 +45,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[companies-model]] — named firms as a partition of a sector, subsidies as the first verb pointed at something that is not a nation, and the two channels that read exactly zero until the player acts
 - [[society-model]] — service quality as a stock the project had already built three times under other names, corruption as the factor that decides what a spending line buys, and the double count that had to be resolved rather than avoided
 - [[unrest-model]] — the grievance stock and the unions that act on it, an inequality statistic nothing the player can move, and the output-only price its own probe refuted
+- [[media-model]] — outlets with leanings, framing as a per-bloc salience gain on a machine `opinion.gd` had been running since S10, and press freedom priced in a legitimacy quantity that turned out to already exist
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

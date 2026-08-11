@@ -26,6 +26,7 @@ const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const DemoK = preload("res://src/sim/demography_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const MediaK = preload("res://src/sim/media_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -351,6 +352,15 @@ static func apply(state, ns, law, loader) -> void:
 			ns.settlement_stance = clampf(
 				ns.settlement_stance + float(society["settlement"]),
 				-UnrestK.SETTLEMENT_STANCE_MAX, UnrestK.SETTLEMENT_STANCE_MAX
+			)
+		# V1.5d adds `press_freedom` as a FOURTH sibling, and this is the only writer of
+		# ns.press_freedom in the project. Four registers on one channel written by four
+		# consecutive sessions, each needing exactly this many lines, is the strongest
+		# form of the claim society-model.md section 3 made with one term.
+		if society.has("press_freedom"):
+			ns.press_freedom = clampf(
+				ns.press_freedom + float(society["press_freedom"]),
+				-MediaK.PRESS_FREEDOM_MAX, MediaK.PRESS_FREEDOM_MAX
 			)
 
 	# An institution is SET, not nudged -- every key here is an absolute value

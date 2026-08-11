@@ -751,6 +751,45 @@ var unrest_opinion_load: float = 0.0
 ## `migration_stance`'s case one session earlier, and serialised for its reason.
 var settlement_stance: float = 0.0
 
+## V1.5d. Signed accumulated press-freedom stance, clamped to
+## ±media_constants.PRESS_FREEDOM_MAX. Written by Legislature.apply() through the
+## `society` channel and by nothing else — the FOURTH term on that channel, after
+## `corruption`, `migration` and `settlement`. A channel carrying four registers written
+## by four different sessions is schema rather than luck, which is what
+## docs/society-model.md section 3 bet on when it opened the channel with one term.
+##
+## TWO PRICES, ONE VERB, which is docs/coercion-model.md's shape: it scales the framing
+## deviation below, and it adds a signed term to Unrest.unrest_target(). The second is
+## this session's answer to "press freedom as a dial with LEGITIMACY costs" — there is
+## no legitimacy quantity and the row handed V1.5d the choice of inventing one or
+## dropping the clause. Neither: legitimacy is willingness to accept your rule outside
+## the ballot box, which is the grievance V1.5c already built. See
+## media_constants.PRESS_UNREST_BETA.
+##
+## EARNS NOTHING. Absent it reads 0.0 — no standing press law — correct for every
+## version-18 save, because those games had none to pass. `settlement_stance`'s case one
+## session later, and serialised for its reason: a law writes it once and no tick
+## recomputes it, so a save that dropped it would silently repeal the act.
+var press_freedom: float = 0.0
+
+## V1.5d. Per-bloc salience gain, keyed by opinion_constants.BLOC_KEYS. Written by
+## Media.tick_month() and read by opinion.gd from here rather than by calling Media —
+## `deployment_opinion_load`'s and `unrest_opinion_load`'s arrangement for the third
+## time, and here it does two jobs at once: it keeps opinion.gd out of a preload cycle
+## AND it keeps opinion.gd from needing a DataLoader, which it has never had and which
+## would have cost fourteen call sites to give it.
+##
+## Every entry is exactly opinion_constants.SALIENCE_GAIN at new game for all ten
+## nations, and forever for the seven with no data/outlets/ file. The size-weighted mean
+## across the six blocs is exactly SALIENCE_GAIN in EVERY state, because the deviation
+## media.gd computes is anchored on that mean — which is what lets this session change
+## what the electorate notices without re-baselining a constant measured at S10.
+## tests/test_media.gd asserts both with exact equality.
+##
+## EARNS NOTHING. Absent it reads empty and Media.tick_month() rewrites it in full on
+## the next tick, so it fails soft for exactly one month — `unrest_opinion_load`'s case.
+var framing_gain: Dictionary = {}
+
 
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
@@ -906,6 +945,8 @@ func duplicate_state():
 	s.unrest_impulse_pct = unrest_impulse_pct
 	s.unrest_opinion_load = unrest_opinion_load
 	s.settlement_stance = settlement_stance
+	s.press_freedom = press_freedom
+	s.framing_gain = framing_gain.duplicate(true)
 
 	return s
 
@@ -1066,6 +1107,8 @@ func to_dict() -> Dictionary:
 		"unrest_impulse_pct": unrest_impulse_pct,
 		"unrest_opinion_load": unrest_opinion_load,
 		"settlement_stance": settlement_stance,
+		"press_freedom": press_freedom,
+		"framing_gain": framing_gain,
 	}
 
 
@@ -1240,6 +1283,8 @@ static func from_dict(d: Dictionary):
 	s.unrest_impulse_pct = float(d.get("unrest_impulse_pct", 0.0))
 	s.unrest_opinion_load = float(d.get("unrest_opinion_load", 0.0))
 	s.settlement_stance = float(d.get("settlement_stance", 0.0))
+	s.press_freedom = float(d.get("press_freedom", 0.0))
+	s.framing_gain = d.get("framing_gain", {})
 
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))

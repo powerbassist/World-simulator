@@ -272,6 +272,17 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
 		# time rather than rediscovered a sixth time.
 		Unrest.tick_month(sim)
+		# V1.5d is the first session since V1.3b whose tick does NOT belong here, and
+		# the omission is deliberate rather than forgotten. Media.tick_month() writes
+		# `framing_gain`, which has exactly one reader -- opinion.gd's bloc loop -- and
+		# this projection does not run Opinion at all. Every other addition above
+		# reaches a projected FIGURE: the bloc charges a penalty into the deficit, a
+		# subsidy costs money, the quality stock decays, a strike shrinks output.
+		# Framing reaches a figure only through approval, and approval reaches the
+		# budget only through an election this loop does not hold. Adding the call
+		# would be a tick whose result nothing reads, which is the failure this project
+		# has named four times -- so the seventh instance of V1.3b's repair is refused
+		# on the evidence rather than performed by symmetry.
 		out.append(snapshot(sim))
 	return out
 

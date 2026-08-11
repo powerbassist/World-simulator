@@ -21,6 +21,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
@@ -533,6 +534,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# BEFORE Opinion, because the `europe` issue reads the burden, and wired the
 	# other way round every bloc reaction would carry a spurious extra month of lag.
 	Bloc.tick_month(_state, _loader)
+	# V1.5d, and BEFORE Opinion rather than after it, which is the opposite of where
+	# Society and Unrest sit. Those two write a load Opinion consumes next month on
+	# purpose, to break a loop that runs through approval. This one reads
+	# coalition_position, which Elections and Government rewrite AFTER Opinion in this
+	# same sequence -- so it is already reading last month's government and the loop
+	# approval -> censure -> re-formation -> framing -> approval is broken structurally,
+	# for free.
+	Media.tick_month(_state, _loader)
 	Opinion.tick_month(_state)
 
 	var entry := Budget.snapshot(_state)

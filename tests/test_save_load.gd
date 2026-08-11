@@ -20,6 +20,7 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const Media = preload("res://src/sim/media.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -1739,5 +1740,49 @@ func _check_unrest_fields(loader) -> void:
 		if fresh.nations[id].unrest_pct != 0.0:
 			_fail("%s starts at unrest %s rather than exactly 0.0" % [id, str(fresh.nations[id].unrest_pct)])
 
+	# (7) V1.5d. press_freedom earns NOTHING -- absent it reads 0.0, no standing press law,
+	# which is the truth about every version-18 save because those games had none to pass.
+	# settlement_stance's case one session earlier, and serialised for its reason: a law
+	# writes it once and no tick recomputes it, so a save that dropped it would silently
+	# repeal the act.
+	state.player().press_freedom = -0.4
+	var with_press: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if not is_equal_approx(float(GameState.from_dict(with_press).player().press_freedom), -0.4):
+		_fail("press_freedom did not round-trip -- a law writes it once and no tick recomputes it")
+
+	var no_press: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_press["nations"]["FRA"] as Dictionary).erase("press_freedom")
+	if not is_zero_approx(GameState.from_dict(no_press).player().press_freedom):
+		_fail("an absent press_freedom did not read as 0.0 -- the premise of NOT bumping for it is wrong")
+	state.player().press_freedom = 0.0
+
+	# (8) THE ASSERTION WORTH HAVING, and it is an ABSENCE. V1.5d's framing deviation is
+	# measured against the size-weighted national MEAN rather than against a captured
+	# baseline, so unlike service_quality, start_young_share and start_gini_index there is
+	# no reference field at all -- which is exactly why SAVE_VERSION does not move.
+	#
+	# The design pass predicted a bump to 19 on a `start_press_stance`, and it was RIGHT
+	# ABOUT THE DESIGN IT WAS GIVEN: no start_coalition_position is serialised, so an
+	# absent baseline would be recomputed against the CURRENT government and a save
+	# reloaded after the press turned would score the hostility as new -- start_bloc_burden
+	# at V1.3d, word for word. The mean anchor deleted the field and the bump with it.
+	#
+	# Pinned here so a later session that stores a baseline turns this red and has to come
+	# and say why, which is the device V1.3c introduced and the fifth session to use it.
+	var fra_press: Dictionary = (JSON.parse_string(JSON.stringify(state.to_dict()))["nations"]["FRA"] as Dictionary)
+	for key in fra_press.keys():
+		var pname := String(key)
+		if pname.begins_with("start_press") or pname == "start_framing_gain":
+			_fail("a save carries %s -- the framing deviation is anchored on the live national mean and needs no baseline, so storing one is a model change that has to be argued" % pname)
+
+	# framing_gain is serialised and earns nothing: Media.tick_month() rewrites it in full
+	# on the next tick, so it fails soft for exactly one month -- unrest_opinion_load's case.
+	var no_gain: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_gain["nations"]["FRA"] as Dictionary).erase("framing_gain")
+	var regained = GameState.from_dict(no_gain)
+	Media.tick_month(regained, loader)
+	if regained.player().framing_gain.is_empty():
+		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
+
 	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18 and V1.5d deliberately left it there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

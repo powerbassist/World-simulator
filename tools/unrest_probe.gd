@@ -485,7 +485,7 @@ func _run_with_opinion(scale: float, months: int) -> Dictionary:
 		if K.UNREST_OPINION_SCALE > 0.0:
 			ns.unrest_opinion_load = float(ns.unrest_opinion_load) * scale / K.UNREST_OPINION_SCALE
 		var sat: Dictionary = Opinion.issue_satisfaction(ns)
-		var weights: Dictionary = Opinion.salience_weights(OK.BLOC_SALIENCE_BASE["workers"], sat)
+		var weights: Dictionary = Opinion.salience_weights(OK.BLOC_SALIENCE_BASE["workers"], sat, OK.SALIENCE_GAIN)
 		var score := 0.0
 		for issue in weights:
 			score += float(weights[issue]) * float(sat.get(issue, 0.0))

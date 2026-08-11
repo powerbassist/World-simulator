@@ -171,6 +171,59 @@ const SETTLEMENT_BETA := 12.0
 ## the law list does nothing.
 const SETTLEMENT_STANCE_MAX := 1.00
 
+## V1.5d. How much a censored press adds to the grievance target, per point of
+## ns.press_freedom. The register and its clamp belong to media_constants.gd; this
+## coefficient lives here, beside the two it has to be compared against and inside the
+## file whose target reads all three.
+##
+## THIS IS V1.5d'S ANSWER TO "PRESS FREEDOM AS A DIAL WITH LEGITIMACY COSTS", and the
+## row handed that session the choice of inventing a legitimacy quantity or dropping the
+## clause. Neither was taken, because the quantity already exists and this file owns it:
+## legitimacy is willingness to accept your rule OUTSIDE the ballot box, and section 2 of
+## docs/unrest-model.md says of this very stock that "a country can be angry for reasons
+## its approval figure does not contain". Censorship is such a reason, and UNREST_BLOCS
+## is ["workers", "students"] -- exactly who marches over it. Twenty-sixth instance of
+## the stale-row failure, and the second in one session.
+##
+## Band:
+##   (i)  a saturated censorship must move the date of the first act -- INEQUALITY_BETA's
+##        band, reused unchanged because it is the same question about a different term;
+##   (ii) it must NOT on its own push `hands_off` over UNREST_THRESHOLD_PCT. Band (i) is
+##        a one-sided minimum and table (b) above is what happens when such a band has no
+##        ceiling: a country with nothing else wrong must not strike merely because the
+##        press was restricted.
+## BOTH CLAUSES FAILED TO SELECT, AND THE CONSTANT IS SET BY ARGUMENT. Band (i) passes
+## at EVERY candidate from 1.0 to 40.0 -- the grievance stock is continuous, so any
+## positive term shifts the crossing month and "moves the date" orders nothing. That is
+## UNREST_COOLDOWN_MONTHS' failure a fourth session running. Band (ii) is a real ceiling
+## and would have killed any value past about 41.7, but selecting on it would mean
+## "`hands_off`'s measured peak, minus a rounding error", which is table (b)'s failure
+## above, verbatim. A sweep that cannot order is not made to order by picking an edge.
+##
+## THE ARGUMENT, and it is a ratio against the constant this one sits beside. A saturated
+## settlement closes 12.0 points of grievance; a saturated censorship must open FEWER,
+## because a pay settlement addresses the material hardship the stock is built out of
+## while press restriction is a political provocation reaching two blocs of six. That is
+## society_constants.QUALITY_SCALE_PP's ratio rule -- the indirect half is worth less
+## than the direct half -- and a ratio against a fixed constant is stable under both
+## widening and refinement, which is what neither band was.
+##
+## 8.0, two thirds of SETTLEMENT_BETA. THE SWEEP STILL EARNED ITS KEEP: it could have
+## falsified this value through band (ii) and did not, it produced the legibility figure
+## (under `managed>austerity` a saturated censorship moves the first act from month 57 to
+## month 41, sixteen months earlier), and it left a calm country peaking at 11.28 against
+## a threshold of 45.0. Full table: docs/media-model.md.
+##
+## SIGNED, so a freer-than-baseline press calms very slightly. Not for symmetry: without
+## it a press-liberalisation law is inert on a nation that has never censored, which is
+## the objection SETTLEMENT_STANCE_MAX answers one constant up and CORRUPTION_MAX answers
+## a session before that.
+##
+## THERE IS NO FOURTH ANTI-DOUBLE-COUNT because of this term, and the one that WOULD have
+## been warranted is refused in a signature instead. See law.gd's block and
+## Opinion.salience_weights().
+const PRESS_UNREST_BETA := 8.0
+
 
 # --- The act ------------------------------------------------------------------
 

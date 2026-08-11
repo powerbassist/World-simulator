@@ -38,6 +38,7 @@ const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -331,6 +332,13 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
+		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
+		# Added to the harness in the same commit as the model, because the balance re-run
+		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
+		# harness was running the pre-session model and its agreement meant nothing. That
+		# is U6a's day-loop finding: a system this loop never calls is a system whose
+		# bit-identity proves nothing about it.
+		Media.tick_month(state, _loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))

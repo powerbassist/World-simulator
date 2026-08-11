@@ -154,8 +154,9 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.4b) `--regulate`,
 (V1.4c) `--nationalise`,
 (V1.5a) `--corrupt`,
-(V1.5b) `--migrate` and
-(V1.5c) `--unrest`,
+(V1.5b) `--migrate`,
+(V1.5c) `--unrest` and
+(V1.5d) `--press`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1088,7 +1089,96 @@ places** and the session had added one. Three test fixtures predated
 `imported.inequality`, which is V1.5b's own fixture failure repeating. Model:
 [docs/unrest-model.md](docs/unrest-model.md).
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a–c, U1–U5 and U6 (a and b) are done. V1.1e (upper house and
+**V1.5d shipped media and information, and the V1.5 block is complete.** The row asked for
+outlets that frame the player's actions, and **the framing machine already existed**:
+`opinion.gd`'s `salience_weights()` has amplified bad news at a global `SALIENCE_GAIN = 5.0`
+since S10 -- amplification with no source, and "bad news travels" is a claim about the press
+this project had been making for six blocks with no outlet behind it. So V1.5d builds no
+machine; it makes one scalar into **six** and the six average back to the one.
+**Twenty-fifth stale-row instance**, plus a twenty-sixth the same day:
+`public_broadcasting_reform` had priced itself as `other_revenue_pct_gdp` since the MVP,
+which is V1.5a's `anti_corruption_agency` verbatim and the block's **fourth booked
+retro-fit**.
+
+**An outlet is five fields, and what it does NOT carry is the design.** `data/outlets/`
+takes `data/companies/`'s per-nation shape; an absent file means no press and the model all
+ten ran before. It names one **audience bloc**, so `BLOC_SALIENCE_BASE` already says who
+cares about what and the session adds **zero new weight tables**. It carries **no authored
+alignment, hostility, bias or stance** -- alignment is derived from its position against the
+government's own `coalition_position`, so **the press turns on you when your government
+re-forms**, and `outlet.gd`'s unrecognised-key error says so out loud rather than leaving an
+absence a later reader repairs.
+
+**The mean anchor is the session's one model correction, and a measurement taken before a
+line of `src/` forced it.** The design was start-anchored, which is `start_service_quality`'s
+idiom and the one this project reaches for by reflex. Step 0's travel table refuted it:
+France's `coalition_position` travels **0.044** over 168 months where Germany's travels 0.600
+and Britain's 0.870, because France holds a majority through every election -- putting the
+constant near 16 for Britain and near **250 for France**, the nation the game is about.
+**The pre-committed fallback was REFUSED** (it leaves the register inert until a player
+command, which is the decay V1.3a's rule prevents). Anchoring on the size-weighted national
+mean makes `sum_b BLOC_SIZE[b] * dev[b]` **exactly 0**, so the mean gain is exactly
+`SALIENCE_GAIN` and every opinion constant measured since S10 keeps its calibration -- and it
+gives a **friendly** press a channel, which a start anchor structurally could not, since
+`severity` is `clampf(-sat, 0, 1)`. Without that, censorship was strictly dominated on the
+framing axis.
+
+**Press freedom's "legitimacy cost" named a quantity that already existed.** The row handed
+(d) the choice of inventing one or dropping the clause; neither was taken. Legitimacy is
+willingness to accept your rule outside the ballot box, which is V1.5c's grievance, whose own
+doc says a country can be angry for reasons its approval figure does not contain --
+and `UNREST_BLOCS` is `["workers", "students"]`, exactly who marches over censorship. It is
+the **fourth `effects.society` term** with **two prices**, and `_extract_society()` needed no
+change at all: it is generic over `SOCIETY_TERMS`, so all four error strings updated
+themselves.
+
+**`law.gd`'s warning worked, and the refusal that was warranted lives in a SIGNATURE.** That
+file records that the next session would reach for a fourth anti-double-count by symmetry.
+V1.5d reached, checked four candidate pairs against *same act, same landing site AND same
+units*, and every one failed. What is genuinely the first kind -- press freedom reaching the
+grievance target through both `PRESS_UNREST_BETA` and `Unrest.hardship()` -- is one register
+reaching one number twice through **code**, not two keys on one law, so
+`Opinion.salience_weights()` takes its gain as a **required third argument** and `unrest.gd`
+states the unframed one out loud. Defaulted, silence would mean "unframed".
+
+**Scandals left the block for §8** -- a third outcome §8's warning box did not enumerate, and
+required by that box's own argument: "requiring a response" is a choice list, so a
+non-generic scandal has no response and is then a framing shock; and the event schema is the
+union of the channels §3-7 create, one of which V1.5d creates. **Government messaging was
+cut** as press freedom's positive direction with a different label. Both in both rows.
+
+**The probe corrected the session four times, and the sharpest is about the guard-rail rule.**
+`FRAMING_BETA` pre-committed to V1.5c's rule (e) and it failed twice: band (ii) was a
+**bound, not a selector**, so the real upper edge is the clamp -- a guard rail -- and (e) then
+prescribes smallest-passing, which is wrong because **rule (e) assumes the model edge is a
+PLATEAU**. V1.5c's table was lumpy; this response is linear, so smallest-passing is just
+"wherever the band crosses" and every refinement moves it. **Rule extended: when the model
+edge is a smooth crossing, neither edge selects and the interior governs.** 4.50, the
+midpoint of `[3.02, 6.00]`. `PRESS_UNREST_BETA` failed in the older way and is **set by
+argument** as a ratio against `SETTLEMENT_BETA`.
+
+**The balance re-run was predicted NOT to be bit-identical, came back with a diff of exactly
+ZERO lines, and the wrong prediction is what caught the bug** -- neither `balance_probe.gd`
+nor `tests/test_balance.gd` called `Media.tick_month()`, so both harnesses were running the
+pre-session model and their agreement was about nothing. **A bit-identical re-run is the
+reassuring outcome, so nothing about it invites suspicion, which is exactly why the
+prediction must be written down first.** With both fixed: all 28 shared regimes bit-identical
+in GDP, growth, trend, unemployment, debt and deficit, approval moving by at most **3.00
+points**, and **zero outcome changes**. The 29th regime is the cheap kind and is the
+legibility evidence -- one `broadcasting_oversight_act` at month 24 moves the worst bloc from
+**rural 45 to students 40**.
+
+**`SAVE_VERSION` stays at 18**, and the design pass predicted 19. It was correct about the
+design it was given -- no `start_coalition_position` is serialised, so a `start_press_stance`
+would have been `start_bloc_burden`'s case at V1.3d -- and the mean anchor deleted the field
+and the bump with it. `tests/test_save_load.gd` pins the **absence**. The readout is one line
+on the overview's GOVERNMENT column, silent at zero, printing the **stance** and not the
+spread: the spread is non-zero from month 1 in all three authored nations, so a line on it
+would be permanent furniture. The effect reaches the polling panel's agenda and
+`elections.gd`'s attribution **for free** through `ns.issue_salience`. Model:
+[docs/media-model.md](docs/media-model.md).
+
+MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a–d, U1–U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

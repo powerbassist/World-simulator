@@ -155,6 +155,7 @@ var _migrate := false
 ## is SILENT below a grievance of 0.05, so an unflagged capture proves the caption
 ## compiles and nothing else, and the message card only exists in a month an act fires.
 var _unrest := false
+var _press := false
 var _main
 
 
@@ -191,6 +192,8 @@ func _init() -> void:
 			_migrate = true
 		elif args[i] == "--unrest":
 			_unrest = true
+		elif args[i] == "--press":
+			_press = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -262,6 +265,8 @@ func _apply_view() -> void:
 		_tighten_migration()
 	if _unrest:
 		_provoke_the_unions()
+	if _press:
+		_muzzle_the_press()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -473,6 +478,50 @@ func _provoke_the_unions() -> void:
 	})
 
 	_tick_months(48)
+
+
+## Put the press under state oversight and run the clock far enough for the framing to
+## reach a bloc row. V1.5d.
+##
+## Through Legislature.apply() rather than by writing ns.press_freedom, because that
+## field has exactly ONE writer and a tool that poked it directly would capture a state
+## the game cannot produce -- the same reason _corrupt_the_state() passes a law.
+##
+## Provokes first and only then censors, which is what makes the frame worth looking at:
+## `emergency_broadcasting_powers` is gated on unrest_pct >= 35, so a calm France cannot
+## reach it at all, and a screenshot of a law nobody can pass proves nothing about the
+## panel. The regime is balance_probe.gd's `managed_then_austerity`, the one V1.5c
+## established is REACHABLE -- govern well, win, then provoke.
+func _muzzle_the_press() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	Budget.commit(state, {
+		"spending_pct_gdp": {"defence": maxf(float(ns.start_spending_pct_gdp.get("defence", 0.0)) - 1.4, 0.0)},
+		"tax_rates_pct": {"vat": float(ns.start_tax_rates_pct["vat"]) + 3.0},
+	})
+	_tick_months(20)
+
+	var lines := {}
+	for pair in [["health", -2.5], ["education", -2.0], ["defence", -1.0], ["pensions", -3.5], ["infrastructure", -2.0]]:
+		lines[pair[0]] = maxf(float(ns.start_spending_pct_gdp.get(pair[0], 0.0)) + float(pair[1]), 0.0)
+	Budget.commit(state, {
+		"spending_pct_gdp": lines,
+		"tax_rates_pct": {
+			"income": float(ns.start_tax_rates_pct["income"]) + 6.0,
+			"corporate": float(ns.start_tax_rates_pct["corporate"]) + 5.0,
+			"vat": float(ns.start_tax_rates_pct["vat"]) + 4.0,
+		},
+	})
+	_tick_months(40)
+
+	for law in _main._loader.laws:
+		if law.id == "broadcasting_oversight_act":
+			Legislature.apply(_main._state, ns, law, _main._loader)
+			break
+	_tick_months(12)
 
 
 func _regulate_a_sector() -> void:

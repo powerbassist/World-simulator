@@ -979,6 +979,63 @@ regime, and it gained a **mid-run budget switch** — the first regime shape in 
 that changes policy part-way through a run — because the reachable case is *govern well,
 win, and then provoke*, and no month-1 regime could express it.
 
+## V1.5d — the guard-rail rule assumes the model edge is a PLATEAU
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] extended
+it to widening; [[unrest-model|V1.5c]] added four more, the last of which reads: *when the
+passing interval is bounded by two model criteria take the midpoint, and when one edge is a
+guard rail the guard rail does not select and the model edge governs.*
+
+`FRAMING_BETA` pre-committed to that rule and it failed, **twice over**, in ways that
+happened to cancel.
+
+**(1) One of its two declared model criteria never fired.** Band (i) asked for a readable
+bloc row; band (ii) asked that a well-governed run's headline not move past ±3.0. Band (ii)
+measures **0.44 at beta 7.0 and 1.02 at beta 20.0**. It orders nothing, so it is a bound and
+not a selector — V1.5a's failure (2), in the session that inherited the warning. The
+interval's real upper edge is the `FRAMING_GAIN_MIN` clamp, which is a **guard rail**.
+
+**(2) So V1.5c's rule applies and prescribes the smallest passing value — and that is wrong
+here for a reason the rule did not contemplate.** V1.5c's own table (d2), which the rule was
+written against, reads −2.11, −2.95, −3.16, −9.01: a **lumpy** response, so its floor sat on
+a shelf and refining the grid could not move it. `FRAMING_BETA`'s response is **linear** —
+2.98, 3.01, 3.12, 4.52, 5.45, 6.53, 9.27 — so *smallest passing* means nothing more than
+*wherever the band crosses*. 3.02 clears a 3.0 floor by 0.3 %, and every refinement of the
+grid moves the answer. That is V1.5b's widening diagnostic and V1.5c's refinement
+diagnostic arriving through the one rule that was supposed to be immune to both.
+
+**The rule, extended:** the guard-rail clause assumes the model edge is a **plateau**. When
+it is a smooth **crossing**, the model edge does not select either — and with neither edge
+selecting, the only value stable under widening *and* refinement is the interior. Both edges
+of `[3.02, 6.00]` are structural rather than grid artefacts (a band crossing and a clamp), so
+the midpoint is structural too and is the value furthest from both failure modes.
+
+**A cheap diagnostic falls out, and it costs one glance at the table:** before applying any
+edge-selecting rule, ask whether the response near that edge is **lumpy or smooth**. Smallest
+and largest passing are only meaningful on a shelf.
+
+`PRESS_UNREST_BETA` failed in the older way — every candidate passed band (i) — and is **set
+by argument**, as a ratio against `SETTLEMENT_BETA`. A ratio against a fixed constant is
+stable under both widening and refinement, which is what neither band was, and that is the
+general lesson rather than a fact about press freedom.
+
+## V1.5d — a harness that never calls a system proves nothing by agreeing
+
+The balance re-run was predicted **not** to be bit-identical, and came back with a diff of
+**exactly zero lines**. The prediction being wrong is what caught the bug:
+`tools/balance_probe.gd` and `tests/test_balance.gd` never called `Media.tick_month()`, so
+both harnesses were running the pre-session model and their agreement was about nothing.
+
+[[calendar-model|U6a]] found this for the day loop and V1.5c found it for reachability; this
+is the same failure at its simplest, and the new part is the **detection method**. A
+bit-identical re-run is normally the reassuring outcome, so nothing about it invites
+suspicion — which is exactly why the prediction has to be written down **before** the run.
+An unexplained agreement is as much a finding as an unexplained difference.
+
+With both harnesses fixed, all 28 shared regimes are bit-identical in GDP, growth, trend,
+unemployment, debt and deficit; approval moves in all 28 by at most 3.00 points; and there
+are **zero outcome changes**.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

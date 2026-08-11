@@ -139,6 +139,23 @@ const BLOC_LABEL := {
 ## What names corruption to the player is the same surface ownership uses: the authored
 ## `bloc_offset` on the two `society` laws, plus the `health` issue moving on the
 ## polling panel. Sixth time that finding has been pointed at.
+##
+## V1.5d ANSWERS IT NO FOR THE FIFTH TIME, and the reason is new -- which is why it is
+## written out rather than folded into the four above, since a reader would otherwise
+## assume they are the same reason four times.
+##
+## Framing does not have a satisfaction to key. It modifies the WEIGHTS in
+## salience_weights(), so a thirteenth entry would be an issue whose satisfaction is a
+## weight -- a category error rather than a close call, and the question never reaches
+## V1.3d's test 1. The three earlier noes are all about a term that DOES have a
+## satisfaction and should not get its own key: ownership (V1.4c) because the mechanic
+## and the cost are the same number, corruption (V1.5a) because it is collinear with
+## `health`, and unrest (V1.5c) because its price is an offset at the bloc_offset site.
+##
+## What names the press to the player is the polling panel's agenda list REORDERING and
+## elections.gd's attribution naming a different issue -- both of which framing reaches
+## for free through ns.issue_salience, with no edit near either file. See
+## docs/media-model.md section 11.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat",

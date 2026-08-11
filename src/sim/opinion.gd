@@ -101,7 +101,13 @@ static func _tick_nation(ns) -> void:
 		national[issue] = 0.0
 
 	for bloc in K.BLOC_KEYS:
-		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat)
+		# V1.5d. The per-bloc gain Media.tick_month() wrote, read off NationState rather
+		# than by calling Media -- `deployment_opinion_load`'s and `unrest_opinion_load`'s
+		# arrangement, and here it also spares this file a DataLoader it has never had.
+		# Falls back to the global constant, which is what the seven nations with no
+		# data/outlets/ file and every pre-V1.5d save both read.
+		var gain: float = float(ns.framing_gain.get(bloc, K.SALIENCE_GAIN))
+		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain)
 
 		var score := 0.0
 		for issue in weights:
@@ -250,12 +256,29 @@ static func issue_satisfaction(ns) -> Dictionary:
 ## Base weights amplified by bad news, then renormalised. The renormalisation is
 ## the whole stability argument: the result is a point on the simplex, so no
 ## amount of bad news makes the weights grow.
-static func salience_weights(base: Dictionary, sat: Dictionary) -> Dictionary:
+##
+## V1.5d. `gain` is REQUIRED and deliberately not defaulted to K.SALIENCE_GAIN, which
+## would have cost four fewer edits at the call sites. This is where V1.5d's genuine
+## anti-double-count lives, and it lives in the signature rather than in a load-time
+## check because it is not two keys on one law -- it is one register reaching one number
+## twice through code. Unrest.hardship() calls this function too, and if framing entered
+## there, press_freedom would reach the grievance target through the hardship term AND
+## through media_constants.PRESS_UNREST_BETA: the same act, the same landing site and
+## the same units, which is the first-kind double count law.gd's three refusals are all
+## examples of.
+##
+## Defaulted, silence would mean "unframed" and the next session to add a caller would
+## get the wrong gain BY OMISSION with nothing going red. That is exactly the failure
+## law.gd states when it turns a documented convention into a load error: a convention
+## only the docs enforce is one an author breaks by not reading them. Every caller now
+## states which gain it wants out loud, and tests/test_unrest.gd reads unrest.gd to
+## check it still says SALIENCE_GAIN.
+static func salience_weights(base: Dictionary, sat: Dictionary, gain: float) -> Dictionary:
 	var weights := {}
 	var total := 0.0
 	for issue in base:
 		var severity: float = clampf(-float(sat.get(issue, 0.0)), 0.0, 1.0)
-		var w: float = float(base[issue]) * (1.0 + K.SALIENCE_GAIN * severity)
+		var w: float = float(base[issue]) * (1.0 + gain * severity)
 		weights[issue] = w
 		total += w
 

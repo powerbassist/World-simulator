@@ -18,6 +18,7 @@ const CK = preload("res://src/sim/companies_constants.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const DK = preload("res://src/sim/demography_constants.gd")
 const UK = preload("res://src/sim/unrest_constants.gd")
+const MK = preload("res://src/sim/media_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -342,6 +343,38 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	# Recorded here rather than in the model doc because the next session to add a term
 	# on this channel will reach for a fourth refusal by symmetry, and symmetry is not
 	# the test.
+	#
+	# V1.5d IS THAT SESSION, IT REACHED FOR ONE, AND THE PARAGRAPH ABOVE STOPPED IT.
+	# `press_freedom` was checked against all four things it could plausibly collide with,
+	# and every one fails the criterion:
+	#
+	#   + structural_unemployment_pct  units differ (stance vs points) and sites differ
+	#                                  (the unrest target vs _update_unemployment()).
+	#                                  V1.5c's deleted refusal, identically.
+	#   + bloc_offset                  the site coincides -- both reach a bloc's approval
+	#                                  target -- but a stance scaling a SALIENCE
+	#                                  amplification and a flat additive on the target are
+	#                                  not the same units, and refusing this would forbid
+	#                                  bloc_offset beside anything, which is the sentence
+	#                                  above. data/laws/institutional.json's own press
+	#                                  laws carry one, so the rule would fail the content
+	#                                  it was written for.
+	#   + society.settlement           both are terms of unrest_target(), so the site
+	#                                  coincides -- and they are two mechanisms landing on
+	#                                  one number, not one priced twice. "Censorship breeds
+	#                                  grievance" and "a pay settlement buys industrial
+	#                                  peace" are two true sentences.
+	#   + society.corruption           different sites (the quality stock vs the salience
+	#                                  gain) and different units. A transparency act naming
+	#                                  both is a legitimate law.
+	#
+	# The refusal that IS warranted has no shape a law schema can express, because it is
+	# not two keys on one law: press_freedom must not reach the grievance target through
+	# BOTH media_constants.PRESS_UNREST_BETA and Unrest.hardship(), which would be the
+	# same act, the same landing site and the same units -- the first kind. It is one
+	# register reaching one number twice through CODE, so it is refused in a signature
+	# instead: Opinion.salience_weights() takes its gain as a REQUIRED argument and
+	# unrest.gd states the unframed one out loud. See both.
 
 	for key in raw.keys():
 		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
@@ -382,10 +415,16 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 ## CLOSABLE -- without it the only lever pointed at a strike is a spending increase, and
 ## society_probe.gd table (c) established that raising a line necessarily widens the
 ## deficit, so the player could buy industrial peace only by opening `public_finances`.
+## V1.5d adds `press_freedom` and takes the claim one step further again: a channel that
+## carries a second register might be lucky, a third is schema, and a FOURTH written by
+## a fourth session is the thing V1.5a bet on when it opened the channel with one term.
+## Nothing below this line changed to accept it -- _extract_society() is generic over
+## this dictionary, so all four of its error strings updated themselves.
 const SOCIETY_TERMS := {
 	"corruption": SK.CORRUPTION_MAX,
 	"migration": DK.MIGRATION_STANCE_MAX,
 	"settlement": UK.SETTLEMENT_STANCE_MAX,
+	"press_freedom": MK.PRESS_FREEDOM_MAX,
 }
 
 

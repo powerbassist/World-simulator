@@ -40,6 +40,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
@@ -347,6 +348,16 @@ const DEMOGRAPHY_REGIMES := {
 ## it. Without the measurement the reachability would have been assumed, and if it had
 ## been wrong every shared regime would have come back bit-identical and their
 ## bit-identity would have meant nothing -- U6a's day-loop finding in a new place.
+## V1.5d, and it is the CHEAP kind of new regime -- a law applied at a month, which is a
+## shape this harness has known since AMENDMENT_REGIMES, so only the content is new.
+## V1.3c, V1.3g, U6a and V1.4a each had to teach it a verb; this one teaches it nothing.
+##
+## The point of it is the legibility comparison: identical budget, identical everything,
+## one censorship law the only difference.
+const MEDIA_REGIMES := {
+	"managed_censors": {"budget": REGIMES["managed"], "censor_month": 24},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -427,6 +438,12 @@ func _init() -> void:
 		for name in DEMOGRAPHY_REGIMES.keys():
 			var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
+		for name in MEDIA_REGIMES.keys():
+			var regime: Dictionary = MEDIA_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {},
+				int(regime["censor_month"])
+			)
 		for name in UNREST_REGIMES.keys():
 			var regime: Dictionary = UNREST_REGIMES[name]
 			_run(
@@ -458,7 +475,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -496,6 +513,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, loader)
+		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
+		# Added to the harness in the same commit as the model, because the balance re-run
+		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
+		# harness was running the pre-session model and its agreement meant nothing. That
+		# is U6a's day-loop finding: a system this loop never calls is a system whose
+		# bit-identity proves nothing about it.
+		Media.tick_month(state, loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
@@ -569,6 +593,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_switch_budget(state, ns, switch_delta, regime_name, year, month)
 		if i + 1 == settle_month:
 			_settle(state, loader, ns, regime_name, year, month)
+		if i + 1 == censor_month:
+			_censor(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -965,6 +991,23 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 ## get. `emergency_procurement_powers` carries a 48-month cooldown, so applying it
 ## directly here rather than through the cooldown gate is what makes "worst case" mean
 ## the clamp rather than one pass of one law.
+## V1.5d. Put the press under state oversight, once, and let the run carry it.
+##
+## ONE PASS RATHER THAN THE CLAMP, unlike _corrupt() directly below: corruption's worst
+## case is what its probe needed, where this regime exists to show what ONE ordinary law
+## does to an ordinary run. Saturating it would answer a question media_probe.gd already
+## answers and would make the comparison against `managed` unreadable.
+func _censor(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("press_freedom", 0.0)) < 0.0:
+			Legislature.apply(state, ns, law, loader)
+			print("  %d-%02d %s: '%s' applied -- press_freedom now %+.2f" % [
+				year, month, regime_name, law.id, ns.press_freedom,
+			])
+			return
+	printerr("  no press-restricting society law is authored")
+
+
 func _corrupt(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var applied := 0
 	var laws: Array = []

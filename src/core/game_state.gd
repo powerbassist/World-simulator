@@ -27,6 +27,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -656,6 +657,16 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# because that is the tick order, and a reader should be able to read the two in the
 	# same sequence.
 	Unrest.init_nation(ns)
+
+	# V1.5d, and it is the ONE call in this function whose position is load-bearing in
+	# both directions. It must come after Government.init_nation() above, because an
+	# outlet's hostility is its distance from `coalition_position` and that field is
+	# NEUTRAL_POSITION until Government.form() has run -- seeded any earlier, every
+	# nation's press would measure its distance to the origin instead of to its
+	# government. And it seeds the gain at the unframed baseline rather than deriving
+	# it, because the derived value belongs to Media.tick_month() and computing it in
+	# two places would be the two-writers failure this project has named five times.
+	Media.init_nation(ns)
 
 	return ns
 
