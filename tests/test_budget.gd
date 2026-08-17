@@ -301,6 +301,16 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Budget.commit(state, pending)
 	var out: Array[Dictionary] = []
 	for _i in range(months):
+		# V1.6a. This runner froze the clock, and so did Budget.project() -- which is
+		# why the two agreed to 1e-9 for eleven sessions while BOTH were wrong. Nothing
+		# in either loop computed a figure from the date until the business cycle did:
+		# bloc.gd, defence.gd and cabinet.gd read state.year only to stamp a record.
+		# The projection now advances its copy, so this runner has to advance too, and
+		# the agreement means something it did not mean before.
+		state.month += 1
+		if state.month > 12:
+			state.month = 1
+			state.year += 1
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)

@@ -32,6 +32,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 
 const OUT_DEFAULT := "user://screenshot.png"
@@ -156,6 +157,7 @@ var _migrate := false
 ## compiles and nothing else, and the message card only exists in a month an act fires.
 var _unrest := false
 var _press := false
+var _cycle := false
 var _main
 
 
@@ -194,6 +196,8 @@ func _init() -> void:
 			_unrest = true
 		elif args[i] == "--press":
 			_press = true
+		elif args[i] == "--cycle":
+			_cycle = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -267,6 +271,8 @@ func _apply_view() -> void:
 		_provoke_the_unions()
 	if _press:
 		_muzzle_the_press()
+	if _cycle:
+		_run_into_a_recession()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -478,6 +484,34 @@ func _provoke_the_unions() -> void:
 	})
 
 	_tick_months(48)
+
+
+## V1.6a. Ticks forward to the month France is deepest in a SLUMP, so a frame of the
+## economy panel or the budget panel shows the cycle doing something.
+##
+## Exists for --coerce's reason: a frame of a channel sitting at its epoch zero proves
+## nothing about it. And unlike every other setup flag on this list it commits NO BUDGET
+## AT ALL -- the row it captures is *recessions arriving whether or not deserved*, so a
+## flag that provoked one with a budget would be photographing the wrong mechanic.
+##
+## The trough is FOUND rather than guessed: src/sim/cycle.gd is a pure function of the
+## clock, so the worst month can be read off it before the run starts. That is the same
+## property the forecast band on src/ui/budget_panel.gd rests on, exercised from the
+## other end.
+func _run_into_a_recession() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var worst_month := 24
+	var worst := 0.0
+	for m in range(6, 120):
+		var v: float = Cycle.impulse_pct(ns, state.year + int(m / 12), (m % 12) + 1)
+		if v < worst:
+			worst = v
+			worst_month = m
+	_tick_months(worst_month)
 
 
 ## Put the press under state oversight and run the clock far enough for the framing to

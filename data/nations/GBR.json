@@ -110,6 +110,13 @@
       "gini_index_per_yr": -0.15,
       "_year": 2021,
       "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.008,
+      "growth_sd_pct": 1.848,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
     }
   }
 }

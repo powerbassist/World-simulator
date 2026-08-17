@@ -1036,6 +1036,124 @@ With both harnesses fixed, all 28 shared regimes are bit-identical in GDP, growt
 unemployment, debt and deficit; approval moves in all 28 by at most 3.00 points; and there
 are **zero outcome changes**.
 
+## V1.6a - a legibility floor that cannot be met, and where a fit beats a band
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] added
+widening; [[unrest-model|V1.5c]] added four more; [[media-model|V1.5d]] added the
+lumpy-or-smooth check. V1.6a pre-committed against all five, printed the check in its
+own probe header, and **both of its bands still failed** - in the two ways that header
+named. The new part is what happens next.
+
+**(1) The failures were the known ones, and predicting them did not prevent them.**
+Band (i) - *the cycle moves approval past the +-3.0 poll floor* - read the national
+headline and passed at **every** candidate from 0.25 to 4.00, returning 6.271 where the
+cycle is nearly switched off. A committed budget moves approval six points on its own,
+so the band was measuring the budget: V1.5a's failure (2), in the session that wrote the
+warning at the top of its own file. Band (ii) - a growth-clamp guard - was flat at 7.346
+for seventeen candidates of nineteen, `ruinous` setting it rather than the cycle.
+
+**The fix is to DIFFERENCE two runs alike in everything but the channel.** That is what
+makes a band measure its own constant instead of the loudest thing in the same
+observable, and it generalises past cycles: any band on a quantity the player can also
+move needs a control.
+
+**(2) Moving to a bloc row did not help, and that is worth recording because three
+sessions said it would.** `society_probe.gd` table (c), `demography_probe.gd` and
+`unrest_probe.gd`'s P3 all establish that a single issue cannot carry a national
+headline. The workers row - 0.42 of growth-plus-jobs salience against business's 0.26 -
+bought **8 %**. The cycle reaches every bloc through the same two issues, so bloc
+selection cannot rescue a band this channel genuinely cannot clear.
+
+**(3) The surviving bands had NO OVERLAP, and that is neither of V1.5c's two failure
+modes.** *The band failed* and *the constant cannot clear its floor* look identical in a
+table and have opposite remedies. Here both response columns are alive and smooth and
+the two criteria simply disagree:
+
+> Readable needs an amplitude of about 1.9. A France no more volatile than the real
+> France allows at most about 1.7.
+
+That is a fact about the model, and the remedy is neither widen-and-re-select nor
+delete. It is to **record the bound and choose by something else** -
+[[defence-model]]'s deployment that could not clear its own floor.
+
+**(4) The rule this session adds: WHEN A BAND CANNOT CHOOSE, A FIT CAN - and a fit is
+strictly better than a band edge under both existing diagnostics.**
+`CYCLE_AMPLITUDE_PCT` is set to the candidate whose realised annual-growth standard
+deviation is nearest France's own measured 1.262. At 1.70 the model returns 1.260.
+
+> A band edge MOVES when the grid is widened or refined; a fit CONVERGES. Widening adds
+> candidates further from the target and changes nothing; refining adds candidates
+> nearer it and improves the answer toward a fixed point. V1.5b's and V1.5c's
+> diagnostics are both really asking for stability under grid changes, and a fit has it
+> by construction where an edge has it only by luck.
+
+The precondition is that something outside the game measures the same quantity the model
+produces. When it does - and for an economy simulator it often does - a fit should be
+preferred to a band, not used as a fallback after one fails.
+
+**(5) A sweep was DELETED because the data already answered it.** `CYCLE_COMMON_SHARE`
+was pre-committed as the session's second swept constant. The World Bank series that
+supplies the per-nation amplitude also says what the common share is: var(common
+factor) / mean var(nation) = **0.619**, cross-checked against a mean pairwise
+correlation of **0.633**. Two statistics of one dataset agreeing to 0.014 is V1.5c's
+two-harness rule applied to a measurement rather than to a probe, and it is a stronger
+result than any band would have produced. Its two bands survive as a **verification**,
+and one of them then failed in a sixth way:
+
+**(6) A band's NUMBER can fail to match its own stated REASON.** Band (ii) was written
+as *the imported cycle must not BEAT the domestic one* and the number beside it was
+0.25 - four times tighter, and never derived from the sentence. Measured 0.467, which
+satisfies the reason and fails the number. Correcting it moved **no constant in either
+direction**, which is what made the correction legitimate rather than a fit to a result;
+had the constant been swept rather than measured, it would not have been. **Read the
+number back against the sentence before the sweep runs.**
+
+## V1.6a - the decomposition's own call, refuted by the session it booked work to
+
+Separate from the tiebreaker list, and the sharper finding of the two.
+
+V1.6's decomposition split V1.4c's inherited obligation - *inflation and the business
+cycle own the risk a state-owned firm carries* - into a half V1.6a would discharge for
+free and a half V1.6c owes. The free half was a one-line argument: a dividend is
+`state_share x share x sector_output x yield`, `sector_output` already moves with the
+cycle through `SECTOR_CYCLE_BETA`, therefore the dividend becomes procyclical the moment
+a cycle exists.
+
+It measured **1.07x** the flat-cycle variation, against a floor of 1.5x fixed before the
+run. The mechanism is one line: `Companies.dividend_revenue_pct_gdp()` returns
+`100.0 * paid / ns.gdp_eur_bn`, and the cycle moves the numerator and the denominator
+together.
+
+> **A quantity expressed as a share of GDP is not procyclical by construction.**
+
+Two things generalise. First, **the decomposition is not exempt from the probe**: this
+project has recorded fourteen instances of a *row* being wrong by counting, and this is
+the first where the thing found wrong was written the same week by the same argument.
+Second, **"X already moves, so anything built on X moves" is a claim about units**. It
+holds for a level and fails for a ratio, and every fiscal line in this game is a ratio.
+
+## V1.6a - a harness can be wrong in a way no test can see, for eleven sessions
+
+[[media-model|V1.5d]] found that neither balance harness ever called
+`Media.tick_month()`. This is the same failure one layer down and much older.
+
+`Budget.project()` has **never advanced the clock on its copy**. It ran twelve ticks at
+one date, and `tests/test_budget.gd`'s own comparison runner froze the clock too - so
+the two agreed to 1e-9 while both were wrong, for eleven sessions. Nothing noticed
+because nothing in either loop computed a figure from the date: `bloc.gd`, `defence.gd`
+and `cabinet.gd` read `state.year` only to stamp a record, and `calendar.gd`, which
+genuinely reads it, is not run there.
+
+**The bug was invisible until a reader existed, and then it was caught on the first
+run.** `tests/test_cycle.gd` asserts the projected cycle path equals the delivered one:
+month 1 projected -0.903 and delivered -0.690.
+
+The response that generalises is the structural one rather than the fix.
+`src/sim/cycle.gd` has **no `tick_month()` at all** - `Economy.tick_month()` writes the
+impulse from a pure read - so every harness in the project reaches it through a call
+they all already make. **A system that cannot be forgotten is worth more than one that
+is remembered**, and the claim was falsified before it was trusted rather than after.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

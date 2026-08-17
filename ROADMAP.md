@@ -91,11 +91,35 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.5 is decomposed into four sessions, V1.5a–d, before any code.** The argument,
-the four calls it made and the eight rows it caught are under *V1.5 — the
-decomposition* below. Order: (a) the delivery layer, (b) demographics and
-migration, (c) unrest, (d) media and information — and **(d) is recorded in advance
-as the row most likely to split**, the device this page used for V1.3e.
+**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a) is built.**
+The argument, the four calls it made and the two rows it caught are under *V1.6 - the
+decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond yields and
+the credit rating, (d) five taxes and brackets, (e) sectoral investment and
+infrastructure projects - and **(e) is recorded in advance as the row most likely to
+split**, the device this page used for V1.3e and V1.5d.
+
+**Its own finding is the one worth carrying forward, and it is about measurement rather
+than about cycles.** V1.6a's two pre-committed bands have **no overlap at any
+candidate**: at France's own measured growth volatility a recession moves approval by
+about 2.8 points, under the +-3.0 poll-noise floor, and cannot be lifted over it without
+making France more volatile than France is. Neither of V1.5c's two failure modes -
+*the band failed* and *the constant cannot clear its floor* - and the remedy is neither
+widen-and-re-select nor delete. The constant is **fitted** to the measured series
+instead, and the rule that falls out generalises: **a band edge MOVES when the grid is
+widened or refined; a fit CONVERGES.** Where something outside the game measures the
+same quantity the model produces, a fit should be preferred to a band rather than used
+as a fallback after one fails.
+
+**Its second finding is that the decomposition is not exempt from the probe.** V1.6's
+own call 3 booked half of V1.4c's inherited obligation to (a) as free, on the argument
+that a dividend built on `sector_output` becomes procyclical the moment a cycle exists.
+It measured 1.07x against a floor of 1.5x, because
+`Companies.dividend_revenue_pct_gdp()` divides by GDP and the cycle moves numerator and
+denominator together. **A quantity expressed as a share of GDP is not procyclical by
+construction**, every fiscal line in this game is such a share, and the obligation
+passes to (c) whole.
+
+**V1.5 is decomposed into four sessions, V1.5a-d, and all four are built.**
 
 **V1.5c is built, and it is the session where the inverted rule and the rule it
 replaced finally agree.** The statistic is the grievance and **the verb is the
@@ -728,6 +752,195 @@ row up on the top bar and fixed only that. And **the budget panel has never had 
 deployments row**: V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
 entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
 "beside the deployment line" about a line that was not there.
+
+### V1.6 - the decomposition, and why these five
+
+Written before any code, which is where a block-shaped row belongs: V1.6 was five
+bullets plus an obligation inherited from V1.4c, and one line is not a session.
+
+| | Session | Content | Reads |
+|---|---|---|---|
+| **V1.6a** | ~~The business cycle~~ **shipped** | A **stateless** deterministic shock over all ten nations, into `economy.gd`'s growth sum. Amplitude **fitted** to France's measured growth volatility, per-nation spread **imported**, common share **measured twice**. `SAVE_VERSION` **19**. Re-baselined V1.5c's two constants and found them unchanged | - |
+| **V1.6b** | Inflation | A price pressure from the gap, the impulse and (a)'s shock. No nominal layer: a constant-price model has nothing to deflate, so it ships as a statistic with a price. The `ISSUE_KEYS` question every session since V1.3d has deferred, answered on the strongest candidate the project has had | a |
+| **V1.6c** | Bond yields and the credit rating | `DEBT_REAL_RATE_PCT` becomes an anchor, not the rate. Reads debt, deficit, `unrest_pct` and (b)'s inflation; the rating is that machine read at a second point. **Inherits V1.4c's obligation WHOLE**, not halved -- see below | a, b |
+| **V1.6d** | Five taxes and brackets | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income. Discharges V1.5c's declared Gini stopgap by turning `tests/test_unrest.gd` red on purpose, through a **second field** rather than a second writer | - |
+| **V1.6e** | Sectoral investment and infrastructure projects | The block's one genuine new player verb, on `sector_output` itself, with no employment term | a, d |
+
+**Machine count is five, which is what splits it** -- the cycle, inflation, the bond
+market, the distribution, and the sector lever. [[foreign-policy-model|V1.3e]]'s
+trigger. Two things the row reads as machines and that are not: the **credit rating**
+(one extra read of the yield, `Defence.allies()`'s shape) and the **procyclical
+dividend** (booked as free, and refuted -- see below).
+
+**(e) is the row most likely to split**, recorded here in advance the way this page
+recorded V1.3e (which split) and V1.5d (which did not). The cut is **infrastructure
+projects -> (f)**, and the reason is architectural rather than a fourth feature: a
+*rate at a sector* and a *discrete dated commitment* are different shapes, and the
+second is a scheduler.
+
+Four calls, each of which could have gone the other way:
+
+1. **(a) is the cycle, and the deciding property is that everything else is measured
+   against it.** Every V1.5 constant was measured on a flat cycle and owes a
+   re-baseline; measuring section 6's own constants flat and adding the cycle at (c)
+   or (d) is that mistake repeated inside the block that inherits it. It is also
+   policy-independent, which is [[society-model|V1.5a]]'s own deciding property, and
+   it is the only section 6 item that re-baselines *another block's* constants.
+2. **Section 6 runs under BOTH block rules, and the decomposition says which per
+   session.** V1.3a's rule was *state ships with a verb or it decays*; V1.5 inverted
+   it to *every session ships a statistic and the price it charges*. Section 6 is
+   genuinely half each. (a), (b) and (c) ship **no verb at all** --
+   [[mechanics-economy]] tiers the central bank and interest rates **Someday** and
+   [[out-of-scope-mvp]] records that France does not set its own rate, so inflation
+   and the cycle are pressures with no dedicated lever -- while (d) and (e) ship
+   verbs. Neither is a compromise.
+3. **The V1.4c obligation splits, and the row files it under the wrong owner.**
+   Section 6 files "the risk a state-owned firm carries" under *inflation and the
+   business cycle*. `companies_constants.gd`'s own comment shows why that is half
+   right: the yield equals `DEBT_REAL_RATE_PCT` because there is "no risk and no
+   business cycle for an equity premium to be compensation FOR" -- two clauses, and
+   only the second needs a borrowing rate that moves. **(a)'s probe then refuted the
+   first half as well**, so the whole obligation went to (c). See below.
+4. **The stopgap discharge needs a SECOND FIELD, not a second writer.** `gini_index`'s
+   single writer is `Demography.tick_month()`, and `tests/test_unrest.gd` *and*
+   `tests/test_demography.gd` both read the source and fail if a second appears --
+   `share`/`state_share`/`regulation_burden`'s discipline. So (d) writes a policy
+   offset and the effective index is a derived read, recorded here so (d) does not
+   discover it as a test failure.
+
+**The row was wrong twice, and both were found by counting.** Instances **twenty-seven
+and twenty-eight**.
+
+- **"Infrastructure projects" names a machine that has existed since S4, and the row
+  merges two mechanics into one bullet.** `economy.gd`'s `_update_potential_shift()`
+  has been a first-order lag on sustained infrastructure spending at `INFRA_BETA` for
+  six blocks -- and V1.5's own decomposition named `potential_shift_pct` as
+  "education's *and* infrastructure's, since S4" while catching only the education
+  half. [[mechanics-economy]] tiers them as **two** mechanics with different sketches,
+  and the row drops that page's *"visible on the map"* clause entirely -- a surface
+  U5b and U5c built and that no section 6 bullet mentions. That is what makes (e) the
+  split candidate.
+- **"Arriving whether or not deserved" collides with the model's hardest rule, and the
+  resolution was already in the repo.** [[economy-model]] forbids randomness outright,
+  because determinism is what makes `Budget.project()` exactly equal to what follows --
+  a done-when condition. `poll_noise.gd` solved the same problem from the other side
+  with a pure function of (id, key). And the property the row actually asks for is
+  **attribution, not surprise**: a downturn you did not cause and are judged on anyway.
+  That survives a cycle the player can see coming, and (a) found it survives it
+  *because* of the poll floor rather than despite it.
+
+**The orphan check came back CLEAN, which is itself the finding.** Every V1-tiered
+mechanic in [[mechanics-economy]] is named by a section 6 bullet or already built --
+tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
+eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
+gap.
+
+### V1.6a - the business cycle, and a legibility floor that cannot be met
+
+**The row asked for randomness and the model forbids it, so the cycle is a pure
+function of (nation id, absolute month).** `Cycle.impulse_pct()` sums three sines whose
+periods and signs come from a splitmix32 hash of the nation id -- `poll_noise.gd`'s
+device moved into `src/sim/`, deliberately duplicated rather than shared because that
+file's header states as an architectural claim that nothing in `src/sim/` references
+it. There is **no `tick_month()` and no accumulator**: `Economy.tick_month()` writes
+`cycle_impulse_pct` from a pure read in the same pre-pass that writes
+`coercion_impulse_pct`.
+
+**That is the session's structural call, and it is aimed squarely at V1.5d's bug.**
+Neither balance harness had ever called `Media.tick_month()`, so both ran the
+pre-session model and their agreement was about nothing. Every harness in this project
+already calls `Economy.tick_month()`, so a system reached from inside it **cannot be
+forgotten by one and remembered by another** -- and the claim was falsified before it
+was trusted: a 1434-line diff on the first run, with no wiring edits at all.
+`tests/test_cycle.gd` reads the file and fails if a `tick_month()` or a member `var`
+appears.
+
+**Both constants are measured or fitted, and the sweep planned for one of them was
+deleted.** `CYCLE_COMMON_SHARE` was to be the second swept constant; the series that
+supplies the per-nation amplitude also says what the common share **is** -- var(common
+factor) / mean var(nation) = **0.619** over 33 years, cross-checked against a mean
+pairwise correlation of **0.633**, two statistics of one dataset agreeing to 0.014.
+That is V1.5c's two-harness rule applied to a measurement rather than to a probe.
+
+**The dataset exists for the third session running, and it cost more than the last
+two.** V1.5b's ageing slope was "one extra read of a series already on disk"; this
+needs a **different window**, 1990-2024, because measuring volatility takes several
+cycles and 2015-2024 contains one. **The exclusion is the block's one editorial act
+and it is load-bearing**: on the existing window France's growth standard deviation is
+**3.333**, and **0.579** with 2020-21 removed -- a factor of 5.8. A session that reused
+that window would have shipped a business cycle whose entire amplitude was one
+pandemic, and it would have looked measured. 2008-09 is not excluded, because a
+financial crisis *is* a business cycle. The result spans 0.689 (France) to 1.475
+(Luxembourg) and its ordering holds across five windows.
+
+**The session's sharpest finding is a floor that cannot be met, and it is recorded
+rather than traded against.** The two pre-committed bands -- readable past the +-3.0
+poll-noise floor, and no more volatile than France measurably is -- **have no overlap
+at any candidate** on a grid refined to 0.05 and widened to 4.00. Readable needs ~1.9;
+honest needs at most ~1.7.
+
+> At France's own measured growth volatility, a business cycle moves approval by about
+> **2.8 points**, under the +-3.0 floor, and it cannot be lifted over it without making
+> France more volatile than France is.
+
+That is [[defence-model]]'s deployment-below-the-floor treatment, and it is the right
+way round twice over: `poll_noise.gd` fuzzes *approval* because a poll is published,
+while growth and unemployment are printed exactly -- so the cycle's primary readout
+carries no noise and only its secondary one does; and **that is the mechanic**, because
+a slump unmistakable in the figures and ambiguous in the polls is precisely a president
+who cannot prove it was not their fault. The constant is **fitted** instead: at 1.70 the
+model's realised growth sd is **1.260** against France's measured **1.262**, interior to
+the grid with candidates failing on both sides, and a fit *converges* under refinement
+where a band edge merely moves.
+
+**Both pre-committed bands failed first, in the two ways the probe's own header named,
+and the header keeps the pre-commitment rather than being rewritten.** Band (i) read the
+national headline and passed at *every* candidate -- 6.271 at an amplitude of 0.25 --
+because a committed budget moves approval six points on its own and the band was
+measuring the budget. Moving it to the **workers** row bought only 8 %, and three
+sessions of the previous block had already established that a single issue cannot carry
+a headline. Band (ii) was flat at 7.346 for seventeen candidates of nineteen, `ruinous`
+setting it rather than the cycle. An interim replacement ceiling was a bound at 23.208.
+
+**The decomposition's own call 3 was refuted by this session's probe.** The procyclical
+half of V1.4c's obligation was booked to (a) as free, because sector output already
+moves with the cycle. It does not work:
+`Companies.dividend_revenue_pct_gdp()` returns `100.0 * paid / gdp_eur_bn`, so the cycle
+moves numerator and denominator together and they cancel -- 1.07x against a
+pre-committed 1.5x floor. **A dividend expressed as a share of GDP is not procyclical by
+construction**, and the obligation passes to V1.6c whole.
+
+**The re-baseline came back unchanged, on two harnesses, and that is a measurement.**
+Section 6's own bullet says a cycle arriving there re-baselines `UNREST_THRESHOLD_PCT`
+and `UNREST_CONVERGENCE` together. Every grievance peak rises -- balance_probe's
+`hands_off` 3.29 -> 7.57, `managed` 5.31 -> 9.17 -- and **the act count is identical in
+all 29 regimes**. The convergence rate holds for a structural reason: its band is
+bracketed by two other constants' half-lives, neither of which a cycle moves.
+
+**Three bugs, all harnesses rather than the model.** `Budget.project()` **never advanced
+the clock** -- it ran twelve ticks at one date for eleven sessions, invisible because
+nothing in it computed a figure from the date until now; `tests/test_budget.gd`'s own
+runner froze it too, which is why the two agreed to 1e-9 while both were wrong; and
+`tests/test_trade.gd` measured a partner recession **against zero**, which returned
+**+0.039** once eight other partners were moving. All three are V1.5d's finding at
+different depths.
+
+**The re-run was predicted NOT bit-identical and was not: all 29 regimes differ, and
+there are ZERO outcome changes.** Largest movements are 3.32 % of GDP, 2.74 points of
+growth, 1.26 of unemployment and 7.60 of approval -- against **0.07 points of
+deficit**, because every budget line is a share of GDP and the books scale with the
+economy, which is [[economy-model]]'s own reason for that choice becoming visible for
+the first time. **No thirtieth regime was needed**, a first for a session that changes
+the economy: the cycle is not a verb, so there is nothing for a regime to issue.
+
+**`SAVE_VERSION` is 19, and the plan predicted no bump.** Its reason was true about the
+wrong thing -- `src/sim/cycle.gd` is genuinely stateless, but `NationState.from_dict()`
+rebuilds from the dictionary alone and never sees the loader, so every content-derived
+static fact on that class is already serialised. **Statelessness is a property of the
+module, not of the save file.** `cycle_amplitude_rel` earns the bump (absent, every
+nation runs the roster-average cycle and the reload is a different model --
+`military_capability`'s case); `cycle_impulse_pct` earns nothing. Model, every constant
+and the measured tables: [docs/cycle-model.md](docs/cycle-model.md).
 
 ### V1.5 — the decomposition, and why these four
 
@@ -1705,7 +1918,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
 | **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality — **decomposed into four sessions, V1.5a–d**, before any code. Rule of law left the block for §1's judiciary (V1.1e), and inequality's *instruments* are §6's. The table and the argument are under *Next* above |
-| **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition |
+| **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–e**, before any code, and **(a) is shipped**. The table and the argument are under *Next* above |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
 

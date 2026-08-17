@@ -127,6 +127,53 @@ var trade_baseline_by_partner := {}
 ## See docs/coercion-model.md.
 var coercion_impulse_pct: float = 0.0
 
+## V1.6a. The business cycle's contribution to this month's annualised growth, in
+## points. Signed; a slump is negative.
+##
+## SUSTAINED, not decayed, and it sits with coercion_impulse_pct and firm_impulse_pct
+## on that side of economy.gd's distinction rather than with demand_impulse_pct and
+## unrest_impulse_pct on the other: a recession is a condition the economy is IN, not
+## a shock it absorbed. It is also the only addend in that sum whose value this month
+## says nothing about whether the player did anything, which is the row's whole point.
+##
+## ONE WRITER, Economy.tick_month(), from the pure read Cycle.impulse_pct(). There is
+## no Cycle.tick_month() to forget -- see the header of src/sim/cycle.gd for why that
+## is the session's structural call rather than a shortcut.
+##
+## EXACTLY 0.0 in the game's first month for all ten nations, because every term of
+## the wave is a sine with no phase offset measured from cycle_constants'
+## CYCLE_EPOCH. Not for a bit-identical re-run -- this session's is predicted not to
+## be -- but because `imported.unemployment_pct` and SECTOR_TREND describe a nation at
+## potential, and a cycle that started mid-slump would contradict the content on the
+## opening month.
+var cycle_impulse_pct: float = 0.0
+
+## V1.6a. This nation's real-GDP-growth volatility as a multiple of the roster mean.
+## Measured, per nation, off `imported.cycle.amplitude_rel`; the roster spans France's
+## 0.689 to Luxembourg's 1.475.
+##
+## Static content, never recomputed, which is `eu_member`'s and `neighbours`' standing
+## and NOT `start_gini_index`'s: this is not a baseline a deviation is taken against,
+## it is a fact about the country.
+##
+## SERIALISED, AND IT IS WHAT BUMPS SAVE_VERSION TO 19 -- which is not what this
+## session's plan predicted, and the reason the prediction was wrong is worth more
+## than the field. The plan reasoned that a stateless generator has nothing to save.
+## True of src/sim/cycle.gd, which stores nothing and has no tick. False of the save,
+## because NationState.from_dict() rebuilds from the dictionary ALONE and never sees
+## the loader -- so every content-derived static fact on this class is serialised
+## already: eu_member, neighbours, pop_growth_pct, gini_index_per_yr. STATELESSNESS IS
+## A PROPERTY OF THE MODULE, NOT OF THE SAVE FILE.
+##
+## Absent, it reads the default 1.0 and every nation runs the roster-average cycle
+## instead of its own -- France 45 % louder than its content says, Luxembourg 32 %
+## quieter. That is a reloaded game running a DIFFERENT MODEL from the one that saved
+## it, which is `eu_member` at V1.3b and `military_capability` at V1.3g in its
+## strongest form. `cycle_impulse_pct` above earns nothing by the same rule and is
+## serialised anyway; tests/test_save_load.gd asserts both halves, and the split is
+## the assertion worth having. See docs/cycle-model.md section 9.
+var cycle_amplitude_rel: float = 1.0
+
 # --- The bloc ------------------------------------------------------------------
 
 ## This nation's standing net contribution to the bloc, percent of its own GDP.
@@ -834,6 +881,8 @@ func duplicate_state():
 	s.external_impulse_pct = external_impulse_pct
 	s.trade_baseline_by_partner = trade_baseline_by_partner.duplicate(true)
 	s.coercion_impulse_pct = coercion_impulse_pct
+	s.cycle_impulse_pct = cycle_impulse_pct
+	s.cycle_amplitude_rel = cycle_amplitude_rel
 
 	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
 	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
@@ -996,6 +1045,8 @@ func to_dict() -> Dictionary:
 		"external_impulse_pct": external_impulse_pct,
 		"trade_baseline_by_partner": trade_baseline_by_partner,
 		"coercion_impulse_pct": coercion_impulse_pct,
+		"cycle_impulse_pct": cycle_impulse_pct,
+		"cycle_amplitude_rel": cycle_amplitude_rel,
 
 		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
 		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
@@ -1165,6 +1216,22 @@ static func from_dict(d: Dictionary):
 	# force, so nothing was being damaged. Recomputed from GameState.measures on the
 	# first tick after loading in any case -- see the field's own declaration.
 	s.coercion_impulse_pct = float(d.get("coercion_impulse_pct", 0.0))
+
+	# V1.6a, and the two halves fall on OPPOSITE sides of this file's rule, which is
+	# why they are read here together and asserted separately.
+	#
+	# `cycle_impulse_pct` earns nothing: absent it reads 0.0, and Economy.tick_month()
+	# overwrites it from the clock on the first tick after loading, so the value is
+	# wrong for zero months rather than one -- coercion_impulse_pct's case above,
+	# exactly.
+	#
+	# `cycle_amplitude_rel` IS the bump to 19. Absent it reads the default 1.0 and
+	# every nation runs the roster-average cycle rather than its own, so the reloaded
+	# game runs a different model from the one that saved it -- eu_member at V1.3b,
+	# military_capability at V1.3g. It is content, and content on this class is
+	# serialised because from_dict() never sees the loader.
+	s.cycle_impulse_pct = float(d.get("cycle_impulse_pct", 0.0))
+	s.cycle_amplitude_rel = float(d.get("cycle_amplitude_rel", 1.0))
 
 	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
 	# the one game_state.gd's own comment states rather than a new one. An absent

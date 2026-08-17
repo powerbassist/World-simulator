@@ -13,6 +13,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const TradeK = preload("res://src/sim/trade_constants.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 
 
 static func tick_month(state) -> void:
@@ -64,6 +65,20 @@ static func tick_month(state) -> void:
 		if impulses.has(ns.id):
 			ns.external_impulse_pct = float(impulses[ns.id])
 		ns.coercion_impulse_pct = float(damage.get(ns.id, 0.0))
+		# V1.6a. Written HERE, from a pure read, and src/sim/cycle.gd has no
+		# tick_month() to call from anywhere else. That is the session's structural
+		# call rather than a convenience: docs/decision-log.md's V1.5d entry records
+		# that neither balance harness ever called Media.tick_month(), so both ran the
+		# pre-session model and their agreement was about nothing. Every harness in
+		# this project already calls Economy.tick_month(), so a system reached from
+		# inside it cannot be forgotten by one and remembered by another.
+		#
+		# Inside the tick loop rather than in a pre-pass above, unlike the trade
+		# impulse and the coercion damage: those two read every OTHER nation's
+		# figures, so they must be snapshotted before any nation moves. This reads
+		# nothing but the clock and the nation's own authored volatility, so tick
+		# order cannot reach it.
+		ns.cycle_impulse_pct = Cycle.impulse_pct(ns, state.year, state.month)
 		_tick_nation(state, ns)
 
 
@@ -97,10 +112,27 @@ static func _tick_nation(state, ns) -> void:
 	# is applied by Unrest.tick_month() rather than beside demand_impulse_pct below, so
 	# the field keeps one writer. It reads exactly 0.0 in every month of every game in
 	# which no union has ever acted.
+	# cycle_impulse_pct is the seventh addend, V1.6a, and it is on the SUSTAINED side
+	# of the distinction above rather than the decaying one: a recession is a
+	# condition the economy is in, not a shock it absorbed. It is the only term here
+	# that is non-zero without the player or any AI having done anything, which is
+	# what docs/tiers/v1.md section 6 means by *arriving whether or not deserved*.
+	#
+	# It needs no clamp of its own, and that is the one exception to the rule the
+	# three comments above state. Coercion, companies and unrest each carry a tuned
+	# maximum because each is an unbounded product of live quantities; this is a sum
+	# of three sines normalised to unit standard deviation, so it is bounded by
+	# construction at cycle_constants.max_impulse_pct() -- a number derived from the
+	# term count rather than chosen, and therefore one nobody can set wrong.
+	#
+	# It moves GDP and never potential_gdp_eur_bn. A business cycle is by definition
+	# output around potential, so a term that moved both would be describing
+	# something else -- and potential_shift_pct is already the only feedback into
+	# trend, which is the whole of docs/economy-model.md's divergence argument.
 	var growth: float = (
 		trend + C.GAP_CLOSE * (-gap)
 		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
-		+ ns.firm_impulse_pct + ns.unrest_impulse_pct
+		+ ns.firm_impulse_pct + ns.unrest_impulse_pct + ns.cycle_impulse_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth

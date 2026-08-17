@@ -214,7 +214,24 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     `start_gini_index`, `gini_index_per_yr`, `settlement_stance`,
 ##     `unrest_impulse_pct` and `unrest_acts` all earn nothing, for four reasons already
 ##     on this list.
-const SAVE_VERSION := 18
+##
+##   V1.6a bumps to 19 on ONE field of two, and the interesting half is that the
+##     session's own plan predicted no bump at all and gave a reason that was true
+##     about the wrong thing. It reasoned that a STATELESS system has nothing to
+##     serialise -- and src/sim/cycle.gd genuinely stores nothing, has no accumulator
+##     and no tick_month(). But NationState.from_dict() rebuilds from the dictionary
+##     ALONE and never sees the loader, so every content-derived static fact on that
+##     class is already serialised: `eu_member`, `neighbours`, `pop_growth_pct`,
+##     `gini_index_per_yr`. STATELESSNESS IS A PROPERTY OF THE MODULE, NOT OF THE SAVE.
+##     `cycle_amplitude_rel` is the bump: absent it reads the default 1.0, every nation
+##     runs the roster-average cycle instead of its own -- France 45 % louder than its
+##     content says -- and the reloaded game runs a different MODEL from the one that
+##     saved it, which is `eu_member` at V1.3b and `military_capability` at V1.3g.
+##     `cycle_impulse_pct` earns nothing: absent it reads 0.0 and Economy.tick_month()
+##     overwrites it from the clock on the first tick, `coercion_impulse_pct`'s case.
+##     tests/test_save_load.gd asserts both halves, and the SPLIT is the assertion
+##     worth having rather than the bump.
+const SAVE_VERSION := 19
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -522,6 +539,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# refuses, and the refusal reads as "not duplicated" rather than as a type error.
 	ns.neighbours = []
 	ns.neighbours.assign(n.neighbours)
+
+	# V1.6a, in this block rather than behind a Cycle.init_nation(), and the placement
+	# is the argument: Demography, Society, Unrest and Defence each have an init
+	# because each seeds a live STOCK, and this seeds none. It is a static fact about
+	# the country, exactly like the two above it, and src/sim/cycle.gd has no state to
+	# initialise at all. Validated and bounded at load by Nation._validate_cycle(), so
+	# the default below is reached only by a fixture that has no `imported` block.
+	ns.cycle_amplitude_rel = float(n.cycle.get("amplitude_rel", 1.0))
 
 	# Sector shares sum to 1.0 only within the validator's tolerance, so GDP is
 	# defined as the sum of sector output rather than the other way round. That

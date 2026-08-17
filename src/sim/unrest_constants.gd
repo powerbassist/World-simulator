@@ -90,6 +90,16 @@ const UNREST_MAX := 100.0
 ## Interior to any grid that brackets the interval, so it is stable under widening.
 ##
 ## Full table: docs/unrest-model.md (a).
+##
+## RE-BASELINED AT V1.6a AND UNCHANGED, and unlike the threshold below the reason is
+## structural rather than measured. This band is bounded by two OTHER constants'
+## half-lives -- faster than society_constants.QUALITY_CONVERGENCE's ~34 months, slower
+## than opinion_constants.INERTIA_RATE's ~2.4 -- and a business cycle moves neither, so
+## the interval it was chosen from is the same interval. What the cycle could have
+## broken is the stock's ability to TRACK a target that now oscillates: at 0.07 a month
+## the half-life is 9.6 months, against a shortest cycle band of 29-47 months
+## (cycle_constants.CYCLE_PERIOD_BANDS), so grievance follows the cycle with roughly a
+## quarter-period lag rather than averaging it away. Checked, not assumed.
 const UNREST_CONVERGENCE := 0.07
 
 
@@ -242,6 +252,17 @@ const PRESS_UNREST_BETA := 8.0
 ## fires. Interior to the interval, so stable under widening.
 ##
 ## Full table: docs/unrest-model.md (b).
+##
+## RE-BASELINED AT V1.6a AND UNCHANGED, which is a measurement rather than an omission.
+## Every value in this file was set against a FLAT cycle, and docs/tiers/v1.md section 6
+## says a cycle arriving there re-baselines this threshold and the convergence rate
+## together. Band (ii) -- *fires exactly zero times under `hands_off` and under
+## `managed`* -- is the half at risk, because a recession raises the hardship term
+## through `jobs` and `growth`. Re-measured on BOTH harnesses at
+## CYCLE_AMPLITUDE_PCT = 1.70: every peak rises (balance_probe's `hands_off` 3.29 -> 7.57,
+## `managed` 5.31 -> 9.17) and the ACT COUNT IS UNCHANGED IN ALL 29 REGIMES -- zero
+## everywhere except the two `managed_then_austerity` runs, which keep 2 and 1.
+## tools/cycle_probe.gd table (f).
 const UNREST_THRESHOLD_PCT := 45.0
 
 ## Months before the next act can fire.

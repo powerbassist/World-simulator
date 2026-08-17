@@ -15,6 +15,7 @@ extends PanelContainer
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const CycleK = preload("res://src/sim/cycle_constants.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -89,6 +90,7 @@ const FIGURE_ROWS := [
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	["", ""],
+	# V1.6a: the three projection rows now read as a RANGE. See _forecast_text().
 	["proj_growth", "GDP growth, in 24 months"],
 	["proj_unemployment", "Unemployment, in 24 months"],
 	["proj_debt", "Debt ratio, in 24 months"],
@@ -339,9 +341,69 @@ func _refresh() -> void:
 
 	var last_now: Dictionary = now_path[-1]
 	var last_proposed: Dictionary = proposed_path[-1]
-	_set_figure("proj_growth", "%.2f%%" % last_now["growth_annual_pct"], "%.2f%%" % last_proposed["growth_annual_pct"])
-	_set_figure("proj_unemployment", "%.2f%%" % last_now["unemployment_pct"], "%.2f%%" % last_proposed["unemployment_pct"])
-	_set_figure("proj_debt", "%.1f%%" % last_now["debt_to_gdp_pct"], "%.1f%%" % last_proposed["debt_to_gdp_pct"])
+	var band := _forecast_half_width()
+	_set_figure("proj_growth",
+		_forecast_text(float(last_now["growth_annual_pct"]), band, 2),
+		_forecast_text(float(last_proposed["growth_annual_pct"]), band, 2))
+	_set_figure("proj_unemployment",
+		_forecast_text(float(last_now["unemployment_pct"]), band * C.OKUN, 2),
+		_forecast_text(float(last_proposed["unemployment_pct"]), band * C.OKUN, 2))
+	# The debt ratio gets a band too, and the screenshot pass is what asked for it: one
+	# point figure between two ranges read as a row somebody forgot rather than as a
+	# stock behaving differently. The half-width is the same uncertainty carried through
+	# the DENOMINATOR -- `band` points of growth a year for two years moves GDP by about
+	# that much twice over, and the ratio with it -- so it is derived from the same
+	# number rather than being a second guess.
+	var years: float = float(PROJECTION_MONTHS) / 12.0
+	_set_figure("proj_debt",
+		_forecast_text(float(last_now["debt_to_gdp_pct"]), band * years * float(last_now["debt_to_gdp_pct"]) / 100.0, 1),
+		_forecast_text(float(last_proposed["debt_to_gdp_pct"]), band * years * float(last_proposed["debt_to_gdp_pct"]) / 100.0, 1))
+
+
+## V1.6a. A PROJECTION IS EXACT AND A FORECAST IS NOT, and these three rows print the
+## second while the model computes the first.
+##
+## Budget.project() runs the real model on a copy, so the number it returns is what will
+## happen to the last digit -- tests/test_budget.gd asserts it to 1e-9, and V1.6a's
+## business cycle reproduces there exactly because it is a pure function of the clock.
+## Printing that to two decimals would hand the player a perfect two-year forecast of a
+## recession they are supposed to be judged on not having prevented, which is
+## docs/tiers/v1.md section 6's mechanic thrown away at the last surface.
+##
+## src/ui/poll_noise.gd already solved this problem from the other side and its
+## reasoning transfers word for word: an approval figure is a PUBLISHED POLL and must
+## not be readable exactly, so the model never stores a fuzzed number and the panel
+## fuzzes it the moment it renders one. A government growth forecast is a published
+## figure in exactly the same sense.
+##
+## It is a RANGE rather than a nudged point, and that is the one place this departs from
+## poll_noise. A nudge invents an error with a sign the model has no basis for; a band
+## states the uncertainty and contains the truth. It also costs no hash at all -- the
+## half-width is derived, so there is nothing to keep stable across repaints and nothing
+## to serialise, which are the two properties poll_noise.gd needed its hash for.
+##
+## THE SAME HALF-WIDTH IS APPLIED TO BOTH COLUMNS, and that is what keeps this panel
+## usable. Its whole job is now-against-proposed, so an independent error on each side
+## would fuzz the comparison the player is actually making. One band means the
+## DIFFERENCE between the two columns stays exact while the LEVEL is honest about being
+## a forecast -- which is also true of real forecasters, whose bias moves both scenarios
+## together.
+func _forecast_half_width() -> float:
+	var ns = _state.player()
+	if ns == null:
+		return 0.0
+	# One standard deviation of the cycle's own contribution to growth. Derived from
+	# the constant and the nation's measured volatility rather than chosen, so a
+	# quieter country gets a tighter band without a second number to tune.
+	return CycleK.CYCLE_AMPLITUDE_PCT * float(ns.cycle_amplitude_rel)
+
+
+## "1.05 to 1.62%". An en dash would read as a minus sign against a negative growth
+## figure, which is exactly the forecast the player most needs to read correctly.
+func _forecast_text(value: float, half_width: float, places: int) -> String:
+	if half_width <= 0.0:
+		return "%.*f%%" % [places, value]
+	return "%.*f to %.*f%%" % [places, value - half_width, places, value + half_width]
 
 
 ## An em dash rather than "0.00%" while nothing is imposed. The two say different

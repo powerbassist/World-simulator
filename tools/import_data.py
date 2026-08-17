@@ -97,6 +97,31 @@ SPARSE_INDICATORS = {
     "gini": "SI.POV.GINI",
 }
 
+# V1.6a. The business cycle's per-nation amplitude, and the FIRST indicator in this
+# file read over a different window from everything above it -- which is the honest
+# cost of the block and is recorded rather than absorbed.
+#
+# V1.5b's ageing slope cost "one extra read of a series already on disk and no extra
+# download". This one cannot: measuring how volatile a country's growth is needs
+# several cycles, and 2015-2024 contains one. The download line in docs/data-sources.md
+# fetches this code alone over date=1990:2024.
+#
+# THE EXCLUSION IS THE BLOCK'S ONE EDITORIAL ACT AND IT IS LOAD-BEARING. On the window
+# the rest of the file already uses, France's real-growth standard deviation is 3.333
+# -- and 0.579 with 2020 and 2021 removed, a factor of 5.8. Every nation collapses the
+# same way. A session that had reused the existing window would have shipped a
+# "business cycle" whose entire amplitude was one pandemic, and it would have looked
+# measured. A pandemic is an exogenous disaster, which docs/tiers/v1.md section 8 owns;
+# a business cycle is "booms and recessions that arrive whether or not the player
+# deserves them", which is section 6's. 2008-09 is NOT excluded, because a financial
+# crisis IS a business cycle.
+#
+# The result is measured and it does not cluster: 1.262 (France) to 2.704
+# (Luxembourg), a 2.14x spread whose ordering holds across five different windows.
+CYCLE_INDICATOR = "NY.GDP.MKTP.KD.ZG"
+CYCLE_FROM_YEAR = 1990
+CYCLE_EXCLUDE_YEARS = [2020, 2021]
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -204,6 +229,112 @@ def build_inequality_block(nid, now, base):
     }
 
 
+def load_wb_indicator_series(code, lo, hi, exclude):
+    """V1.6a. The whole series per nation over [lo, hi], with `exclude` years dropped.
+
+    A third loader rather than a third use of one of the two above, and the reason is
+    the same one that kept load_wb_indicator_nearest_year() separate: those two answer
+    "what was the value at a year", which is what every block but this one needs. This
+    answers "what did the series DO", and folding it in would give the other callers a
+    silent way to read a window when they meant to read a year.
+    """
+    path = SOURCES / "wb" / f"{code}.json"
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    out = {}
+    for row in (data[1] or []):
+        if row["value"] is None:
+            continue
+        y = int(row["date"])
+        if y < lo or y > hi or y in exclude:
+            continue
+        out.setdefault(row["countryiso3code"], {})[y] = row["value"]
+    return out
+
+
+def build_cycle_blocks(series):
+    """V1.6a. Per-nation growth volatility, and each nation's ratio to the roster mean.
+
+    THE ONLY BLOCK IN THIS FILE THAT NEEDS THE WHOLE ROSTER AT ONCE, which is why it is
+    a function over all ten and returns a dict, where build_cohorts_block() and
+    build_inequality_block() each take one nation. The denominator is the mean of the
+    ten standard deviations, so `amplitude_rel` says "how volatile is this country
+    compared with a European average" and src/sim/cycle_constants.gd's
+    CYCLE_AMPLITUDE_PCT is then the amplitude OF that average.
+
+    Anchored on the roster mean rather than on France, and that is
+    docs/media-model.md's correction inherited rather than rediscovered: V1.5d
+    anchored a deviation on the player's own nation and needed a constant near 250 for
+    it. A mean anchor makes the swept constant mean the same thing for all ten.
+
+    Population-weighting the mean was considered and dropped. It would put the anchor
+    within a rounding error of Germany-plus-France and make Luxembourg's ratio a
+    statement about Germany, where the unweighted mean makes it a statement about
+    "a European economy" -- which is what the constant it scales claims to be.
+    """
+    sd = {}
+    for nid in NATIONS:
+        values = list(series.get(nid, {}).values())
+        # Five is the fewest a standard deviation says anything about, and the roster
+        # has 33 each. A window this short is a broken download, not a quiet country.
+        if len(values) < 5:
+            sys.exit(
+                f"{nid}: only {len(values)} usable years of {CYCLE_INDICATOR} in "
+                f"[{CYCLE_FROM_YEAR}, {YEAR}] excluding {CYCLE_EXCLUDE_YEARS} -- "
+                f"a growth volatility cannot be measured from that"
+            )
+        mean = sum(values) / len(values)
+        sd[nid] = (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
+
+    roster_mean = sum(sd.values()) / len(sd)
+    if roster_mean <= 0.0:
+        sys.exit("every nation's growth volatility is zero -- the series is empty")
+
+    # V1.6a. src/sim/cycle_constants.gd's CYCLE_COMMON_SHARE, printed rather than
+    # written into a nation file, because it is ONE number for the whole roster and a
+    # per-nation copy of it would be one quantity written ten times.
+    #
+    # It is why that constant is measured rather than swept. Two different statistics
+    # of the same series are printed and they agree: the variance share of the common
+    # factor, and the mean pairwise correlation. Two methods agreeing is what makes
+    # this a measurement instead of a plausible number -- V1.5c's two-harness rule,
+    # applied to data rather than to a probe.
+    years = sorted(set.intersection(*[set(series[nid]) for nid in NATIONS]))
+    dev = {
+        nid: [series[nid][y] - sum(series[nid][z] for z in years) / len(years) for y in years]
+        for nid in NATIONS
+    }
+    common = [sum(dev[nid][i] for nid in NATIONS) / len(NATIONS) for i in range(len(years))]
+
+    def pvar(xs):
+        m = sum(xs) / len(xs)
+        return sum((x - m) ** 2 for x in xs) / len(xs)
+
+    var_share = pvar(common) / (sum(pvar(dev[nid]) for nid in NATIONS) / len(NATIONS))
+    cors = []
+    for i, a in enumerate(NATIONS):
+        for b in NATIONS[i + 1:]:
+            cov = sum(dev[a][k] * dev[b][k] for k in range(len(years))) / len(years)
+            cors.append(cov / (pvar(dev[a]) * pvar(dev[b])) ** 0.5)
+    print(
+        f"cycle: common variance share {var_share:.4f} over {len(years)} years "
+        f"(mean pairwise correlation {sum(cors) / len(cors):.4f}) "
+        f"-- src/sim/cycle_constants.gd CYCLE_COMMON_SHARE"
+    )
+
+    return {
+        nid: {
+            "amplitude_rel": round(sd[nid] / roster_mean, 3),
+            "growth_sd_pct": round(sd[nid], 3),
+            "_from_year": CYCLE_FROM_YEAR,
+            "_to_year": YEAR,
+            "_excludes": list(CYCLE_EXCLUDE_YEARS),
+        }
+        for nid in NATIONS
+    }
+
+
 def build_imported_block(year):
     every = dict(INDICATORS)
     every.update(COHORT_INDICATORS)
@@ -229,6 +360,15 @@ def build_imported_block(year):
         name: load_wb_indicator_nearest_year(code, TREND_FROM_YEAR)
         for name, code in SPARSE_INDICATORS.items()
     }
+
+    # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a
+    # ratio against the roster mean and so cannot be built one nation at a time --
+    # the only block here with that shape. See build_cycle_blocks().
+    cycle_blocks = build_cycle_blocks(
+        load_wb_indicator_series(
+            CYCLE_INDICATOR, CYCLE_FROM_YEAR, year, CYCLE_EXCLUDE_YEARS
+        )
+    )
 
     imported = {}
     for nid in NATIONS:
@@ -283,6 +423,7 @@ def build_imported_block(year):
             "inequality": build_inequality_block(
                 nid, sparse["gini"][nid], sparse_base["gini"][nid]
             ),
+            "cycle": cycle_blocks[nid],
         }
     return imported
 

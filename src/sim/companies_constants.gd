@@ -301,6 +301,28 @@ const PRICE_TO_OUTPUT := 1.00
 ## again after the correction. PRICE_TO_OUTPUT sets the SIZE of the act and this
 ## sets its fiscal SIGN; they are two decisions, and a session that wanted state
 ## ownership to be a slow fiscal gain or a slow drain would move this one alone.
+##
+## V1.6a ARRIVED WITH THE CYCLE AND DISCHARGED NOTHING, WHICH IS NOT WHAT V1.6's
+## DECOMPOSITION PREDICTED. That decomposition read the sentence above -- "no risk and
+## no business cycle for an equity premium to be compensation FOR" -- as two clauses
+## with two owners, and booked the procyclical half to V1.6a as free: sector_output
+## already moves with the cycle through SECTOR_CYCLE_BETA, so a claim on it should have
+## become procyclical with no code at all.
+##
+## tools/cycle_probe.gd table (e) refuted it, and the mechanism is one line of
+## Companies.dividend_revenue_pct_gdp(): the line is a SHARE OF GDP, `100.0 * paid /
+## ns.gdp_eur_bn`, and the cycle moves the numerator and the denominator together. They
+## cancel. What survives is the sector-COMPOSITION effect alone -- industry swings at
+## SECTOR_CYCLE_BETA 1.8 against services' 0.8 -- and it measures 1.07x the flat-cycle
+## variation against a pre-committed floor of 1.5x.
+##
+##     A DIVIDEND EXPRESSED AS A SHARE OF GDP IS NOT PROCYCLICAL BY CONSTRUCTION.
+##
+## So the obligation passes to V1.6c WHOLE rather than halved, and it arrives with one
+## extra thing to answer: pricing the dividend on a GDP share is what makes the equity
+## premium unreachable, so V1.6c either prices it on something else or says out loud
+## that there is no channel for one. Recorded here rather than only in the roadmap,
+## because this is the constant that would be moved.
 const DIVIDEND_YIELD := 0.02
 
 ## Hard clamp on the whole dividend line, points of GDP. SUBSIDY_BILL_MAX_PCT_GDP's

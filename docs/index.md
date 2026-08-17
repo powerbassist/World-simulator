@@ -22,6 +22,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[engine-decision]] — Godot 4 + GDScript, and why not Unity or Unreal
 - [[data-architecture]] — static content vs live state, and why there is no database
 - [[economy-model]] — the economy and budget formulas, and why nothing diverges
+- [[cycle-model]] — the business cycle: a deterministic shock, measured off thirty-four years of growth
 - [[opinion-model]] — voter blocs, salience, approval inertia, and polling noise
 - [[election-model]] — vote share, turnout weighting, attribution, and no election-day noise
 - [[electoral-systems]] — the ten real electoral systems, every date's source, and what each reduction throws away

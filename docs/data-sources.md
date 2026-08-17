@@ -110,7 +110,27 @@ for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS
   curl -L -o "sources/wb/$I.json" \
     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
+
+# V1.6a. One indicator, on its own line, over a DIFFERENT WINDOW -- and the split is
+# the honest cost of the business cycle rather than an untidiness. Measuring how
+# volatile a country's growth is takes several cycles, and 2015-2024 contains one.
+curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=1000"
 ```
+
+> [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing
+> `tools/import_data.py`'s `CYCLE_EXCLUDE_YEARS` drops **2020 and 2021** from
+> `NY.GDP.MKTP.KD.ZG` and from nothing else. On the 2015-2024 window every other
+> indicator uses, France's real-growth standard deviation is **3.333** -- and **0.579**
+> with those two years removed, a factor of **5.8**. Every nation collapses the same
+> way. A session that reused the existing window would have shipped a "business cycle"
+> whose entire amplitude was one pandemic, and it would have looked measured. A
+> pandemic is an exogenous disaster, which [[v1]] section 8 owns; a business cycle is
+> section 6's. **2008-09 is not excluded**, because a financial crisis *is* a business
+> cycle. The years actually dropped are written into each nation file as
+> `imported.cycle._excludes` rather than implied, for the reason `inequality._year` is:
+> a provenance record that hides its own editorial act is worse than none. See
+> [[cycle-model]] section 3.
 
 > [!warning] `SI.POV.GINI` is the one series with gaps, and it needs the fallback
 > [[ROADMAP|V1.5c]] added it for section 5's inequality statistic, and it is the only

@@ -95,6 +95,37 @@ func _init() -> void:
 	if playable_count < 3:
 		failures.append("expected at least 3 playable nations (V1.2d), found %d" % playable_count)
 
+	# V1.6a. EVERY nation fixture must carry EVERY required `imported` block, and this
+	# check exists because three of them did not and would have passed anyway.
+	#
+	# The fixtures above are each written to produce ONE named error, and they assert
+	# it by searching the error list for a substring. A fixture that predates a block
+	# added since it was written therefore keeps passing while quietly also reporting
+	# the missing block -- it still names its own defect, so nothing goes red, and it
+	# is now testing two things one of which nobody chose. `_trend_from_year` at V1.5b,
+	# `cohorts` at V1.5b and `inequality` at V1.5c were each retro-fitted by hand, and
+	# the out-of-order key in every one of these files is the fingerprint.
+	#
+	# Required is derived from Nation.KNOWN_IMPORTED_KEYS rather than listed, so the
+	# next session that adds a block is TOLD rather than expected to remember: the
+	# leading-underscore keys are provenance and optional, everything else is a block
+	# _extract_dict() will error on. That makes this check maintain itself.
+	for fixture in ["nation_bad_cohorts", "nation_bad_formation_method", "nation_bad_unemployment"]:
+		var path := "res://tests/fixtures/%s.json" % fixture
+		var raw := FileAccess.get_file_as_string(path)
+		var parsed = JSON.parse_string(raw)
+		if typeof(parsed) != TYPE_DICTIONARY or not (parsed as Dictionary).has("imported"):
+			failures.append("%s: fixture has no `imported` block at all" % fixture)
+			continue
+		var block: Dictionary = (parsed as Dictionary)["imported"]
+		for key in Nation.KNOWN_IMPORTED_KEYS:
+			if key.begins_with("_"):
+				continue
+			if not block.has(key):
+				failures.append(
+					"%s: fixture is missing imported.%s -- it predates a block added since it was written, so it still passes and is now also reporting an error nobody chose" % [fixture, key]
+				)
+
 	# No nation's per-nation starting policy is calibrated below what its
 	# modelled taxes yield -- the negative-residual guard game_state.gd's
 	# _build_nation() reports as an error, checked here across every nation

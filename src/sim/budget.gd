@@ -233,6 +233,22 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 
 	var out: Array[Dictionary] = []
 	for _i in range(months):
+		# V1.6a, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This loop has never
+		# advanced the clock on its copy: it ran twelve ticks at one date, and until now
+		# nothing it called computed anything from the date -- bloc.gd, defence.gd and
+		# cabinet.gd read state.year only to STAMP a record, and calendar.gd, which
+		# genuinely reads it, is not run here. The cycle is the first thing in the
+		# projection that is a function of the month, so a frozen clock made every
+		# projected month repeat the current month's impulse. tests/test_cycle.gd caught
+		# it on the first run: month 1 projected -0.903 and delivered -0.690.
+		#
+		# This is docs/decision-log.md's V1.5d finding one layer down -- a harness that
+		# silently does not do the thing it appears to do -- and it was invisible for
+		# eleven sessions because no reader existed to notice.
+		sim.month += 1
+		if sim.month > 12:
+			sim.month = 1
+			sim.year += 1
 		Economy.tick_month(sim)
 		tick_month(sim)
 		# In the same position main.gd runs it -- after Budget, before the snapshot
@@ -328,6 +344,17 @@ static func snapshot(state) -> Dictionary:
 		"dividend_revenue_pct_gdp": ns.dividend_revenue_pct_gdp,
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
+		# V1.6a, and this session added NO tick call to project() at all -- the first
+		# since V1.3b not to. The cycle is written inside Economy.tick_month(), which
+		# this loop already runs, so the projection reproduces it exactly and
+		# tests/test_budget.gd's 1e-9 equality holds untouched with the cycle live.
+		# That is the same structural call src/sim/cycle.gd's header makes about the
+		# balance harnesses, paying off at a third site nobody had to remember.
+		#
+		# It is on the snapshot because the budget panel's forecast band needs the
+		# projected path and a projection has no NationState the panel can reach --
+		# deployment_bill_pct_gdp's reason at V1.3g.
+		"cycle_impulse_pct": ns.cycle_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,
 		"sectors": ns.sector_output.duplicate(true),
 	}

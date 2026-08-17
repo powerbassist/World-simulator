@@ -7,9 +7,11 @@ extends RefCounted
 
 const C = preload("res://src/sim/economy_constants.gd")
 
+const CycleK = preload("res://src/sim/cycle_constants.gd")
+
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
-	"unemployment_pct", "sectors", "cohorts", "inequality",
+	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -27,6 +29,17 @@ const KNOWN_COHORT_KEYS: Array[String] = [
 ## claims a 2024 Gini it does not have.
 const KNOWN_INEQUALITY_KEYS: Array[String] = [
 	"gini_index", "gini_index_per_yr", "_year", "_from_year",
+]
+
+## V1.6a. imported.cycle, KNOWN_INEQUALITY_KEYS' treatment. The provenance keys are
+## required for that block's reason and one harder: this is the only series in
+## `imported` read over a DIFFERENT WINDOW from the rest of the file (1990-2024
+## against 2015-2024) and with two years DELETED from it, so a file that omits them
+## claims a figure measured the way everything above it was measured. `_excludes`
+## names the deleted years explicitly rather than implying them, because the deletion
+## is the block's one editorial act -- see tools/import_data.py.
+const KNOWN_CYCLE_KEYS: Array[String] = [
+	"amplitude_rel", "growth_sd_pct", "_from_year", "_to_year", "_excludes",
 ]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
@@ -278,6 +291,17 @@ var cohorts: Dictionary = {}
 ## no field, no accumulator and no save entry.
 var inequality: Dictionary = {}
 
+## V1.6a. imported.cycle -- the nation's real-GDP-growth volatility relative to the
+## roster mean, and the raw standard deviation it came from. Script-written, the same
+## standing as `cohorts` and `inequality` above.
+##
+## `amplitude_rel` is the whole content contribution of the business cycle: the LEVEL
+## is cycle_constants.CYCLE_AMPLITUDE_PCT, a pacing decision this game makes, and this
+## is the SPREAD, which is measured. Ten values from 0.689 to 1.475 rather than ten
+## copies of 1.0, which is what keeps the cycle off docs/foreign-policy-model.md's
+## clustered `coalition_position` failure. See docs/cycle-model.md section 3.
+var cycle: Dictionary = {}
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -452,6 +476,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.inequality = _extract_dict(imported, "inequality", filename, errors)
 	_validate_inequality(n.inequality, filename, errors)
 
+	n.cycle = _extract_dict(imported, "cycle", filename, errors)
+	_validate_cycle(n.cycle, filename, errors)
+
 	return n
 
 
@@ -584,6 +611,50 @@ static func _validate_inequality(inequality: Dictionary, filename: String, error
 	if int(inequality["_year"]) <= int(inequality["_from_year"]):
 		errors.append("%s: imported.inequality._year (%s) must be after _from_year (%s) -- the slope is measured over their span" % [
 			filename, str(inequality["_year"]), str(inequality["_from_year"])
+		])
+
+
+## V1.6a. _validate_inequality()'s shape, with two checks that are specific to this
+## block and are not decoration.
+##
+##   (1) `amplitude_rel` is bounded by cycle_constants.AMPLITUDE_REL_MIN/MAX, which is
+##       a guard rail and not a lever -- MIN_WORKING_PCT's standing. A value of zero
+##       would switch the cycle off for one nation silently, and Cycle.impulse_pct()
+##       returns 0.0 on a non-positive relative amplitude rather than dividing by it,
+##       so without this check a broken import produces a flat country and no error.
+##   (2) `_excludes` must be an array, and it may be EMPTY. Empty is a legitimate
+##       statement -- *this window needed no deletion* -- where a missing key is a file
+##       that never considered the question. The roster's is [2020, 2021] for all ten.
+static func _validate_cycle(cycle_block: Dictionary, filename: String, errors: Array[String]) -> void:
+	var keys := cycle_block.keys()
+	keys.sort()
+	var expected := KNOWN_CYCLE_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.cycle must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	for key in ["amplitude_rel", "growth_sd_pct", "_from_year", "_to_year"]:
+		var raw = cycle_block[key]
+		if not (typeof(raw) == TYPE_FLOAT or typeof(raw) == TYPE_INT):
+			errors.append("%s: imported.cycle.%s is not numeric" % [filename, key])
+			return
+
+	if typeof(cycle_block["_excludes"]) != TYPE_ARRAY:
+		errors.append("%s: imported.cycle._excludes must be an array of years" % filename)
+		return
+
+	_check_range_float(
+		cycle_block["amplitude_rel"], CycleK.AMPLITUDE_REL_MIN, CycleK.AMPLITUDE_REL_MAX,
+		"imported.cycle.amplitude_rel", filename, errors
+	)
+	# A standard deviation cannot be negative, and a European economy whose real growth
+	# varies by more than 25 points a year is a broken series rather than a country.
+	_check_range_float(cycle_block["growth_sd_pct"], 0.0, 25.0, "imported.cycle.growth_sd_pct", filename, errors)
+
+	if int(cycle_block["_to_year"]) <= int(cycle_block["_from_year"]):
+		errors.append("%s: imported.cycle._to_year (%s) must be after _from_year (%s)" % [
+			filename, str(cycle_block["_to_year"]), str(cycle_block["_from_year"])
 		])
 
 

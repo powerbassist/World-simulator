@@ -1178,13 +1178,83 @@ would be permanent furniture. The effect reaches the polling panel's agenda and
 `elections.gd`'s attribution **for free** through `ns.issue_salience`. Model:
 [docs/media-model.md](docs/media-model.md).
 
-MVP, V1.1a–d, V1.2a–e, V1.3a–g, V1.4a–c, V1.5a–d, U1–U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE.** V1.1e (upper house and
+**V1.6 is decomposed into five sessions, V1.6a-e, and (a) is built.** The row was five
+bullets plus an obligation inherited from V1.4c: (a) the business cycle, (b) inflation,
+(c) bond yields and the credit rating, (d) five taxes and brackets, (e) sectoral
+investment and infrastructure projects. The split is on **machine count** - five - and
+**(e) is recorded in advance as the row most likely to split**, with infrastructure
+*projects* as the cut. **Section 6 runs under BOTH block rules and the decomposition
+says which per session**: (a), (b) and (c) ship no verb at all, because there is no
+monetary policy in this game, so they run under V1.5's inverted rule; (d) and (e) ship
+verbs and run under V1.3a's. The row was wrong twice, instances **twenty-seven and
+twenty-eight** - "infrastructure projects" names `_update_potential_shift()`'s
+`INFRA_BETA` machine from S4 and *merges two mechanics* `mechanics-economy.md` tiers
+separately, dropping its "visible on the map" clause; and "arriving whether or not
+deserved" collides head-on with `economy-model.md`'s no-randomness rule. The orphan
+check came back **clean**, which is itself the finding.
+
+**V1.6a shipped the business cycle, and it has no `tick_month()`.** `Cycle.impulse_pct()`
+is a pure function of (nation id, absolute month) - three sines whose periods and signs
+come from a splitmix32 hash, `poll_noise.gd`'s device moved into `src/sim/` and
+deliberately duplicated rather than shared. `Economy.tick_month()` writes
+`cycle_impulse_pct` from it in the same pre-pass that writes `coercion_impulse_pct`, so
+**every harness reaches it through a call they all already make** - V1.5d's bug made
+structurally impossible rather than remembered, and falsified before it was trusted with
+a 1434-line diff and no wiring edits. The impulse is **bounded by construction** at
+`K/sqrt(K/2)`, which is a stronger guarantee than a clamp because there is no value to
+set wrong, and it is **exactly 0.0 at the epoch** for all ten - not for a re-run, but
+because the content describes a nation at potential.
+
+**The session's sharpest finding is a legibility floor that cannot be met.** The two
+pre-committed bands - readable past the +-3.0 poll-noise floor, and no more volatile
+than France measurably is - **have no overlap at any candidate** on a grid refined to
+0.05 and widened to 4.00. At France's real volatility a recession moves approval ~2.8
+points, under the floor, and cannot be lifted over it without making France more
+volatile than France is. Recorded rather than traded against, and it is the right way
+round twice: `poll_noise.gd` fuzzes *approval* because a poll is published while growth
+and unemployment print exactly, so the cycle's primary readout carries no noise; and
+**that is the mechanic**, because a slump unmistakable in the figures and ambiguous in
+the polls is a president who cannot prove it was not their fault. The constant is
+**fitted** instead - realised growth sd **1.260** against France's measured **1.262** -
+and the rule that falls out generalises: **a band edge MOVES under widening or
+refinement; a fit CONVERGES.**
+
+**Both constants are measured or fitted and one planned sweep was DELETED.**
+`CYCLE_COMMON_SHARE` is 0.619 by variance share, cross-checked at 0.633 by mean pairwise
+correlation - two statistics of one dataset agreeing to 0.014, which is V1.5c's
+two-harness rule applied to a measurement. The per-nation `amplitude_rel` is imported,
+0.689 (FRA) to 1.475 (LUX), and **the dataset needed a different window from every other
+series in `imported`**: on 2015-2024 France's growth sd is 3.333 and 0.579 with 2020-21
+removed, a factor of **5.8**, so a session reusing the existing window would have shipped
+a cycle whose whole amplitude was one pandemic. 2008-09 is *not* excluded - a financial
+crisis is a business cycle.
+
+**The decomposition's own call 3 was refuted by its own probe**, which is a first: the
+procyclical half of V1.4c's obligation was booked to (a) as free and measured **1.07x**
+against a 1.5x floor, because `dividend_revenue_pct_gdp()` divides by GDP and the cycle
+moves numerator and denominator together. **A quantity expressed as a share of GDP is not
+procyclical by construction**, and every fiscal line here is such a share. The obligation
+passes to V1.6c whole. **V1.5c's two constants were re-baselined and came back
+UNCHANGED** on both harnesses - every grievance peak rises, the act count is identical in
+all 29 regimes.
+
+**Three bugs, all harnesses.** `Budget.project()` had **never advanced the clock** on its
+copy - twelve ticks at one date for eleven sessions, invisible because nothing in it read
+the date until now - and `tests/test_budget.gd`'s own runner froze it too, so the two
+agreed to 1e-9 while both were wrong. `tests/test_trade.gd` measured a partner recession
+against **zero** and got **+0.039** once eight other partners were moving. The re-run was
+predicted NOT bit-identical and was not: **all 29 regimes differ, ZERO outcome changes**,
+and the deficit moves 0.07 points against approval's 7.60 because every budget line is a
+share of GDP. **No thirtieth regime was needed** - the cycle is not a verb. Model:
+[docs/cycle-model.md](docs/cycle-model.md).
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 18**. There has never been a migration: a superseded
+Save format is at **version 19**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -1319,6 +1389,8 @@ time on `young_share`'s reasoning and is folded into the same bump. `start_gini_
 read has no serialised field at all, because it is a subtraction over content and a drift
 Demography already carries -- so a later session storing an index turns it red and has to
 come and say why.
+
+**V1.6a bumps to 19 on one field of two, and the session's plan predicted no bump at all.** Its reason was true about the wrong thing: `src/sim/cycle.gd` is genuinely stateless -- no accumulator, no `tick_month()`, nothing to save -- but `NationState.from_dict()` rebuilds from the dictionary ALONE and never sees the loader, so every content-derived static fact on that class is already serialised (`eu_member`, `neighbours`, `pop_growth_pct`, `gini_index_per_yr`). **Statelessness is a property of the module, not of the save file.** `cycle_amplitude_rel` is the bump: absent it reads the default 1.0, every nation runs the roster-average cycle instead of its own -- France 45 % louder than its content says -- and the reloaded game runs a *different model* from the one that saved it, which is `eu_member` at V1.3b and `military_capability` at V1.3g. `cycle_impulse_pct` earns nothing: absent it reads 0.0 and `Economy.tick_month()` overwrites it from the clock on the next tick, `coercion_impulse_pct`'s case. The test asserts both halves and then pins what was NOT added -- no stored phase, no month counter, no accumulated wave -- so a later session making the module stateful turns it red and has to come and say why.
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or

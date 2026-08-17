@@ -112,6 +112,7 @@ func _init() -> void:
 	_check_society_fields(loader)
 	_check_demography_fields(loader)
 	_check_unrest_fields(loader)
+	_check_cycle_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -697,8 +698,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 19:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -893,6 +894,89 @@ func _run_atomic_write(state, clock) -> void:
 		_fail("save_game failed when a stranded temp file was present: %s" % save_error)
 	if FileAccess.file_exists(temp_path):
 		_fail("save_game left '%s' behind on the retry" % temp_path)
+
+
+## V1.6a. Two fields, and the SPLIT is the assertion worth having rather than the bump
+## -- V1.3g's `deployments` and V1.4a's register, a third time.
+##
+## The session's own plan predicted NO bump at all, and the reason it gave was true
+## about the wrong thing: src/sim/cycle.gd is genuinely stateless, has no accumulator
+## and no tick_month(). But NationState.from_dict() rebuilds from the dictionary alone
+## and never sees the loader, so a content-derived static fact that is not serialised
+## is simply lost. STATELESSNESS IS A PROPERTY OF THE MODULE, NOT OF THE SAVE.
+##
+##   `cycle_impulse_pct` earns NOTHING. Absent it reads 0.0 and Economy.tick_month()
+##   overwrites it from the clock on the very next tick -- coercion_impulse_pct's case,
+##   and checked here the same reference-and-tick way rather than asserted.
+##
+##   `cycle_amplitude_rel` IS the bump. Absent it reads the default 1.0, so France runs
+##   a cycle 45 % louder than its content says and Luxembourg one 32 % quieter: the
+##   reloaded game runs a DIFFERENT MODEL from the one that saved it, which is
+##   `eu_member` at V1.3b and `military_capability` at V1.3g. The premise is checked --
+##   drop it and the impulse moves -- rather than argued.
+##
+## And the last block pins what was NOT added: there is no stored phase, no month
+## counter and no accumulated wave anywhere in the save. The whole design rests on the
+## generator being a pure function of the clock, so a later session that stores any of
+## them turns this red and has to come and say why -- V1.3c's device, and the one thing
+## on this list that would turn the module stateful without anybody noticing.
+func _check_cycle_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.year = 2026
+	state.month = 1
+	for _i in range(30):
+		state.month += 1
+		if state.month > 12:
+			state.month = 1
+			state.year += 1
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+
+	var ns = state.player()
+	if is_zero_approx(ns.cycle_impulse_pct):
+		_fail("thirty months in and the cycle impulse is still 0.0 -- this check proves nothing")
+	if is_equal_approx(ns.cycle_amplitude_rel, 1.0):
+		_fail("FRA's cycle_amplitude_rel is 1.0, the default -- the content is not being read, so the drop test below cannot distinguish anything")
+
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var loaded = GameState.from_dict(dict)
+	if not is_equal_approx(loaded.player().cycle_amplitude_rel, ns.cycle_amplitude_rel):
+		_fail("cycle_amplitude_rel did not survive the round trip")
+
+	# The bump's premise: drop the content field and the model changes.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("cycle_amplitude_rel")
+	var lost = GameState.from_dict(without)
+	if not is_equal_approx(lost.player().cycle_amplitude_rel, 1.0):
+		_fail("an absent cycle_amplitude_rel did not read as the 1.0 default")
+	lost.year = state.year
+	lost.month = state.month
+	Economy.tick_month(lost)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	reference.year = state.year
+	reference.month = state.month
+	Economy.tick_month(reference)
+	if is_equal_approx(lost.player().cycle_impulse_pct, reference.player().cycle_impulse_pct):
+		_fail("dropping cycle_amplitude_rel left the impulse unchanged -- the premise of the bump is wrong")
+
+	# ...and the other half earns nothing, because one tick brings it back exactly.
+	var no_impulse: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_impulse["nations"]["FRA"] as Dictionary).erase("cycle_impulse_pct")
+	var derived = GameState.from_dict(no_impulse)
+	if not is_zero_approx(derived.player().cycle_impulse_pct):
+		_fail("an absent cycle_impulse_pct did not read as 0.0")
+	derived.year = state.year
+	derived.month = state.month
+	Economy.tick_month(derived)
+	if not is_equal_approx(derived.player().cycle_impulse_pct, reference.player().cycle_impulse_pct):
+		_fail("the cycle impulse did not come back on one tick, so it is not derived and would have earned the bump itself")
+
+	# Nothing stateful was added, and this is what pins it.
+	var fra: Dictionary = (JSON.parse_string(JSON.stringify(state.to_dict()))["nations"]["FRA"] as Dictionary)
+	for key in fra.keys():
+		var name := String(key)
+		if name.begins_with("cycle_") and name != "cycle_impulse_pct" and name != "cycle_amplitude_rel":
+			_fail("a save carries %s -- the cycle is a pure function of the clock and stores no phase, counter or accumulated wave, so a third field is a model change that has to be argued" % name)
 
 
 func _run_unknown_version() -> void:
@@ -1216,8 +1300,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 19:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1382,8 +1466,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 19:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1466,8 +1550,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 19:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1784,5 +1868,5 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18 and V1.5d deliberately left it there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 19:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there and V1.6a raised it to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

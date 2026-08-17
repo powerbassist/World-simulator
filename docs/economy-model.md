@@ -109,6 +109,7 @@ gap = 100 × (gdp − potential_gdp) / potential_gdp
 
 ```
 growth = trend + GAP_CLOSE × (−gap) + demand_impulse + external_impulse
+         + coercion_impulse + firm_impulse + unrest_impulse + cycle_impulse
 growth = clampf(growth, GROWTH_MIN, GROWTH_MAX)
 ```
 
@@ -116,6 +117,14 @@ growth = clampf(growth, GROWTH_MIN, GROWTH_MAX)
 |---|---|---|
 | `GAP_CLOSE` | 0.30 | Gap half-life ≈ 28 months. A shock is visible for most of a five-year term and mostly spent by the end of it — the pacing the game needs. |
 | `GROWTH_MIN` / `GROWTH_MAX` | −12 / +12 %/yr | Hard bound. Not a modelling claim; a guard rail so an absurd budget produces an absurd-but-finite economy. |
+
+`cycle_impulse` is the seventh addend, added at [[cycle-model|V1.6a]], and it is the
+only one that is non-zero without the player or any AI having done anything — which
+is what [[v1]] §6 means by *booms and recessions arriving whether or not deserved*.
+It is a **pure function of (nation id, absolute month)**, so the no-randomness rule
+above survives intact and `Budget.project()` reproduces a recession exactly rather
+than approximately; and it moves GDP and never `potential_gdp`, because a business
+cycle is by definition output *around* potential. Full argument: [[cycle-model]].
 
 The half-life follows from the gap's own equation of motion: each month the gap
 changes by `(growth − trend)/12 = −GAP_CLOSE × gap / 12`, a decay rate of
@@ -451,6 +460,7 @@ Every dynamic quantity in the model is exactly one of:
 | Clamped outright | growth, unemployment, erosion multiplier | Bounded by construction. |
 | Bounded by its inputs | sector output, GDP, potential, population | Grow at a clamped rate. |
 | **Bounded by content, at load** | **trade openness index, external impulse** | **`MAX_AGREEMENT_WEIGHT_MULTIPLIER` bounds the openness index before `SHIFT_MAX` ever sees it; the trade weight is normalised so it sums to 1 by construction.** |
+| **Bounded by construction** | **the cycle impulse** | **A sum of three sines normalised to unit standard deviation, so its extreme is `K / sqrt(K/2)` × amplitude — derived from the term count rather than chosen, and therefore a bound nobody can set wrong. [[cycle-model]] §10.** |
 
 The only unbounded quantity is **debt**, and at a flat 2 %/yr it grows at most
 close to linearly. The default budget takes France from 116 % to roughly 148 %
