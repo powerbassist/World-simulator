@@ -78,9 +78,21 @@ const BLOC_OFFSET_MAX := 1.0
 ## The only NationState-derived fields a law's preconditions may test. Unknown
 ## field is a startup error, not a silently-false predicate -- the same failure
 ## discipline data_loader.gd already applies to an unpositioned ideology_slot.
+##
+## V1.5c adds `unrest_pct`, and it is the first entry here that names something the
+## player did not do. That is the whole of *"protests forcing a response"*: a settlement
+## law is unavailable until the country is actually angry, so the response is forced by
+## the situation rather than offered from a menu.
+##
+## IT MAY ONLY EVER BE TESTED WITH `>=`, and tests/test_unrest.gd asserts that over the
+## whole law list. available() only ever OPENS laws, so a `>=` precondition is a lever
+## unrest hands the player -- while a `<=` one would take a lever away, making unrest an
+## uncontestable gate on player action. ROADMAP.md's call 4 says two of those is one
+## machine claimed twice, and the other one is docs/tiers/v1.md section 1's judiciary.
 const PRECONDITION_FIELDS := [
 	"debt_to_gdp_pct", "unemployment_pct", "deficit_pct_gdp",
 	"overall_approval_pct", "growth_annual_pct", "terms_served",
+	"unrest_pct",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

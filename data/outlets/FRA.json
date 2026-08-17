@@ -1,0 +1,13 @@
+{
+  "_source": "invented",
+  "_note": "Fictional newspapers per docs/fictionalization.md -- that document names a specific newspaper as invented content explicitly. `reach` is of the outlet's OWN audience bloc, not of the nation, and one bloc's named reaches sum to less than 1.0: the remainder is the unaffiliated part of that bloc, which reads nothing and is therefore never amplified. `position` is the two-axis ideology space data/parties and src/sim/election_constants.gd already use, and it is the ONLY thing authored about an outlet's politics -- how hostile it is to the government is derived from this position against the government's own live coalition_position, never written here. The positions below span economic -0.70..+0.70 and social -0.80..+0.70 against a French party field of -0.80..+0.50 and -0.80..+0.80, which is the spread check docs/foreign-policy-model.md's clustered-coalition_position finding demands of any authored two-axis table. See docs/media-model.md.",
+  "outlets": [
+    { "id": "FRA_echo_populaire", "name": "L'Echo Populaire", "audience": "workers", "reach": 0.42, "position": { "economic": -0.60, "social": -0.10 } },
+    { "id": "FRA_journal_du_soir", "name": "Journal du Soir", "audience": "workers", "reach": 0.24, "position": { "economic": 0.20, "social": 0.30 } },
+    { "id": "FRA_le_meridien", "name": "Le Meridien", "audience": "pensioners", "reach": 0.55, "position": { "economic": 0.30, "social": 0.60 } },
+    { "id": "FRA_capitale_matin", "name": "Capitale Matin", "audience": "urban", "reach": 0.48, "position": { "economic": 0.10, "social": -0.50 } },
+    { "id": "FRA_terroir_hebdo", "name": "Terroir Hebdo", "audience": "rural", "reach": 0.51, "position": { "economic": 0.20, "social": 0.70 } },
+    { "id": "FRA_courrier_des_marches", "name": "Le Courrier des Marches", "audience": "business", "reach": 0.62, "position": { "economic": 0.70, "social": 0.10 } },
+    { "id": "FRA_lumiere", "name": "Lumiere", "audience": "students", "reach": 0.38, "position": { "economic": -0.70, "social": -0.80 } }
+  ]
+}

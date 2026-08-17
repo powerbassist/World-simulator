@@ -20,7 +20,10 @@
       "term_years": 5,
       "election": {
         "system": "two_round",
-        "next": { "year": 2029, "month": 6 },
+        "next": {
+          "year": 2029,
+          "month": 6
+        },
         "threshold_pct": 0.0
       },
       "dissolution": {
@@ -36,11 +39,17 @@
       "person": "FRA_moucron"
     },
     "term_limit": 2,
-    "amendment": { "rule": "three_fifths", "permits_system_change": false },
+    "amendment": {
+      "rule": "three_fifths",
+      "permits_system_change": false
+    },
     "executive": {
       "title": "President of the Republic",
       "term_years": 5,
-      "next": { "year": 2027, "month": 5 }
+      "next": {
+        "year": 2027,
+        "month": 5
+      }
     },
     "formation": {
       "method": "coalition_negotiation",
@@ -49,20 +58,52 @@
       "head_of_government_person": "FRA_aumont"
     },
     "pretender_person": "FRA_charles_xi",
-    "eu": { "member": true, "ep_seats": 81 },
+    "eu": {
+      "member": true,
+      "ep_seats": 81
+    },
     "neighbours": ["BEL", "CHE", "DEU", "ESP", "ITA", "LUX"]
   },
   "fiscal": {
     "debt_to_gdp_pct": 116.0,
     "tax_revenue_pct_gdp": 46.1,
-    "tax_rates_pct": { "income": 20.0, "corporate": 25.0, "vat": 20.0 },
-    "spending_pct_gdp": { "health": 11.0, "education": 5.5, "defence": 2.0, "pensions": 14.5, "infrastructure": 3.5 },
+    "tax_rates_pct": {
+      "income": 20.0,
+      "corporate": 25.0,
+      "vat": 20.0
+    },
+    "spending_pct_gdp": {
+      "health": 11.0,
+      "education": 5.5,
+      "defence": 2.0,
+      "pensions": 14.5,
+      "infrastructure": 3.5
+    },
     "other_spending_pct_gdp": 12.0
   },
   "imported": {
     "population": 68600000,
     "gdp_eur_bn": 2910.0,
     "unemployment_pct": 7.4,
-    "sectors": { "agriculture": 0.015, "industry": 0.192, "services": 0.793 }
+    "sectors": {
+      "agriculture": 0.015,
+      "industry": 0.192,
+      "services": 0.793
+    },
+    "_trend_from_year": 2015,
+    "cohorts": {
+      "young_pct": 16.51,
+      "old_pct": 22.15,
+      "young_pct_per_yr": -0.193,
+      "old_pct_per_yr": 0.366,
+      "participation_pct": 74.07,
+      "pop_growth_pct": 0.33
+    },
+    "inequality": {
+      "gini_index": 31.8,
+      "gini_index_per_yr": -0.113,
+      "_year": 2023,
+      "_from_year": 2015
+    }
   }
 }

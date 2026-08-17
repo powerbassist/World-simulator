@@ -511,7 +511,7 @@ func _national_agenda(with_europe: bool, sat: Dictionary) -> Dictionary:
 		var base: Dictionary = (OK.BLOC_SALIENCE_BASE[bloc] as Dictionary).duplicate()
 		if with_europe:
 			base["europe"] = float(EUROPE_CANDIDATE[bloc])
-		var weights := Opinion.salience_weights(base, sat)
+		var weights := Opinion.salience_weights(base, sat, OK.SALIENCE_GAIN)
 		var size: float = float(OK.BLOC_SIZE[bloc])
 		for issue in weights:
 			national[issue] = float(national.get(issue, 0.0)) + size * float(weights[issue])

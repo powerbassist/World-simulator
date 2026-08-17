@@ -18,6 +18,11 @@ extends RefCounted
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## V1.5a. Read-only, and one-way: society.gd does not preload this file, so the
+## quality stock cannot see the opinion it moves. That is what keeps the double count
+## resolvable in one place -- the block above.
+const Society = preload("res://src/sim/society.gd")
+const SK = preload("res://src/sim/society_constants.gd")
 ## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes bloc_offset for a
 ## start scenario, and must respect the same bounds a law is held to.
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -96,7 +101,13 @@ static func _tick_nation(ns) -> void:
 		national[issue] = 0.0
 
 	for bloc in K.BLOC_KEYS:
-		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat)
+		# V1.5d. The per-bloc gain Media.tick_month() wrote, read off NationState rather
+		# than by calling Media -- `deployment_opinion_load`'s and `unrest_opinion_load`'s
+		# arrangement, and here it also spares this file a DataLoader it has never had.
+		# Falls back to the global constant, which is what the seven nations with no
+		# data/outlets/ file and every pre-V1.5d save both read.
+		var gain: float = float(ns.framing_gain.get(bloc, K.SALIENCE_GAIN))
+		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain)
 
 		var score := 0.0
 		for issue in weights:
@@ -107,7 +118,23 @@ static func _tick_nation(ns) -> void:
 		# and clamped before scaling, so the target stays inside the same
 		# [10, 90] bound a pure satisfaction score would produce on its own.
 		var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
-		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(score + law_offset, -1.0, 1.0)
+		# V1.5c. Grievance, charged at the same site and clamped with it for the same
+		# reason. UNIFORM across the six blocs: a general strike inconveniences
+		# everybody, and an authored per-bloc row would be a table with no measurement
+		# behind it. Which blocs GENERATE the grievance is a different question, and
+		# unrest_constants.UNREST_BLOCS answers it out of BLOC_SALIENCE_BASE.
+		#
+		# Here rather than inside issue_satisfaction(), and that placement is the one
+		# thing about this term worth being careful about. Subtracted from `jobs` --
+		# deployment_opinion_load's shape, and the obvious move -- it would land inside
+		# the dictionary Unrest.hardship() reads, closing a same-quantity loop through
+		# the salience simplex that nothing bounds. This site is outside that read by
+		# construction. See unrest_constants.UNREST_OPINION_SCALE for why the term
+		# exists at all: an output-only price was designed, measured, and found unable
+		# to reach a voter in a model that prices rates.
+		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(
+			score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
+		)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE
 		ns.bloc_approval[bloc] = clampf(approval, K.APPROVAL_MIN, K.APPROVAL_MAX)
@@ -160,6 +187,42 @@ static func issue_satisfaction(ns) -> Dictionary:
 	# Re-clamped because _scaled() clamps its own argument and this arrives after it.
 	sat["defence"] = clampf(sat["defence"] - ns.deployment_opinion_load, -1.0, 1.0)
 
+	# V1.5a. The delivery half of a spending line, ADDED to the delta half above
+	# rather than replacing or multiplying it — the row asks for "quality as an
+	# outcome of spending, feeding back into opinion" and `health` was already an
+	# opinion issue, so the double count had to be resolved rather than avoided.
+	# Three of the four resolutions were rejected on this project's own record:
+	#
+	#   REPLACE  — this file's own APPROVAL_NEUTRAL comment commits to no lag and
+	#              warns against "two lags in series", and a stock at
+	#              QUALITY_CONVERGENCE has a ~34-month half-life. Replacing builds
+	#              precisely the thing that comment exists to forbid.
+	#   MULTIPLY — that is Cabinet.effectiveness() a second time on one expression,
+	#              and two multipliers on one delta are unattributable: the player
+	#              cannot tell an incompetent minister from a decayed service, and
+	#              elections.gd's attribution has one slot per issue.
+	#   A 13th   — `spending.health` writes both keys, so they are collinear and the
+	#   ISSUE_KEY  salience simplex merely re-splits one issue's weight. That is the
+	#              case V1.4c answered NO for, on the same test.
+	#
+	# So: additive and post-effectiveness, which is deployment_opinion_load's shape
+	# directly above, and the argument transfers verbatim — the delta is a claim about
+	# how well a CHANGE OF POLICY is delivered, quality is a FACT ON THE GROUND, and
+	# running it through effectiveness would let a competent minister cancel it.
+	#
+	# The two then price DIFFERENT TIMES rather than the same thing twice: the delta
+	# prices the announcement, the stock prices the delivery. Fast in, slow out.
+	#
+	# Exactly 0.0 at new game for all ten nations, because Society.init_nation()
+	# captures the reference at the equilibrium — so this term is silent in every game
+	# until the player moves a spending line or passes a `society` law.
+	#
+	# Loops QUALITY_KEYS rather than SPENDING_KEYS, so a line without a stock costs
+	# nothing here and V1.5b adds `pensions` without touching this file.
+	for key in SK.QUALITY_KEYS:
+		var q: float = _scaled(Society.quality_deviation(ns, key), K.QUALITY_SCALE_PP)
+		sat[key] = clampf(float(sat.get(key, 0.0)) + q, -1.0, 1.0)
+
 	# Measured on the deficit, not the debt ratio. Debt walks upward every month
 	# by construction (r > g), so a debt-level term would make every bloc slowly
 	# unhappy no matter what the player did. The deficit answers to the player.
@@ -193,12 +256,29 @@ static func issue_satisfaction(ns) -> Dictionary:
 ## Base weights amplified by bad news, then renormalised. The renormalisation is
 ## the whole stability argument: the result is a point on the simplex, so no
 ## amount of bad news makes the weights grow.
-static func salience_weights(base: Dictionary, sat: Dictionary) -> Dictionary:
+##
+## V1.5d. `gain` is REQUIRED and deliberately not defaulted to K.SALIENCE_GAIN, which
+## would have cost four fewer edits at the call sites. This is where V1.5d's genuine
+## anti-double-count lives, and it lives in the signature rather than in a load-time
+## check because it is not two keys on one law -- it is one register reaching one number
+## twice through code. Unrest.hardship() calls this function too, and if framing entered
+## there, press_freedom would reach the grievance target through the hardship term AND
+## through media_constants.PRESS_UNREST_BETA: the same act, the same landing site and
+## the same units, which is the first-kind double count law.gd's three refusals are all
+## examples of.
+##
+## Defaulted, silence would mean "unframed" and the next session to add a caller would
+## get the wrong gain BY OMISSION with nothing going red. That is exactly the failure
+## law.gd states when it turns a documented convention into a load error: a convention
+## only the docs enforce is one an author breaks by not reading them. Every caller now
+## states which gain it wants out loud, and tests/test_unrest.gd reads unrest.gd to
+## check it still says SALIENCE_GAIN.
+static func salience_weights(base: Dictionary, sat: Dictionary, gain: float) -> Dictionary:
 	var weights := {}
 	var total := 0.0
 	for issue in base:
 		var severity: float = clampf(-float(sat.get(issue, 0.0)), 0.0, 1.0)
-		var w: float = float(base[issue]) * (1.0 + K.SALIENCE_GAIN * severity)
+		var w: float = float(base[issue]) * (1.0 + gain * severity)
 		weights[issue] = w
 		total += w
 

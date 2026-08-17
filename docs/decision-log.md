@@ -788,6 +788,254 @@ block in all ten nation files, a field on `Nation`, and a validator. It earns no
 `SAVE_VERSION` bump, since a flag is static content read at startup and never
 written to a save.
 
+## V1.5a — a pre-committed tiebreaker is not enough, and two ways it fails
+
+[[companies-model|V1.4c]] added a rule to this project's measurement discipline: fix
+the **tiebreaker** before the sweep as well as the band, because a band can pass three
+rows and choose nothing. V1.5a is the first session to follow that rule, and it found
+the rule incomplete in **two distinct ways** — recorded here rather than in the model
+doc, because it is about how this project measures rather than about services.
+
+**(1) A tiebreaker can be a test that cannot fail.** `QUALITY_SCALE_PP`'s said: if the
+two satisfaction terms summed exceed what `SPEND_SCALE_PP` produced alone, re-measure
+`SPEND_SCALE_PP` downward. Any positive stock term adds to a total, so the condition
+fires for every candidate — it is not a discriminator, it is a tautology wearing one.
+That is exactly [[foreign-policy-model|V1.3e]]'s criticism of its own split trigger
+(*a plan-time count above V1.3a's ~25*, which had already fired on three sessions that
+did not split), arrived at independently in a different part of the process.
+
+**(2) A tiebreaker can be a bound rather than a selector.**
+`CORRUPTION_DELIVERY_BETA`'s was a ratio against `VACANT_EFFECTIVENESS` — and every
+candidate satisfied it, because it constrains the *range* without ordering the
+candidates inside it. The kill-switch band then cleared at all four values too, so
+band and tiebreaker together chose nothing. **This is V1.4c's failure repeating inside
+the session written to prevent it**, which is the strongest available evidence that the
+rule as V1.4c stated it was under-specified.
+
+**The rule, restated:** a pre-committed tiebreaker must be a **strict ordering over
+the candidates that survive the band**. "Nearest to constant X" is one
+(`QUALITY_CONVERGENCE`'s, the only pair in this session that worked as designed —
+band passed two rows, tiebreaker chose one). "Below constant X" is not. Check that the
+tiebreaker discriminates *before* running the sweep, by asking what it would say if
+every row passed the band.
+
+**A third failure, and it is the older one.** `QUALITY_SCALE_PP`'s *band* was measured
+through a path that could not observe the thing being banded: it asked whether the
+quality channel **alone** moved the headline, via a spending increase — and raising a
+spending line necessarily widens the deficit, so the channel was never isolated. The
+headline came back **negative for a spending increase**. That is
+[[foreign-policy-model|V1.3f]]'s measuring-the-wrong-state error for the third session
+running, and the pattern across all three is the same: **the measurement was designed
+before it was asked what state it would be taken in.**
+
+**What the corrections cost and bought.** Nothing was tuned to a number already
+picked, and there is checkable evidence: the replacement rule for `QUALITY_SCALE_PP`
+chose **4.5** where the constant had been provisionally set to **6.0**. A rule that
+moves the author's own guess is a rule that was not written backwards from it.
+
+**One unplanned model widening, kept on the evidence.** The balance re-run's second
+cause of divergence was not predicted: `quality_target()` multiplies by
+`Cabinet.effectiveness()`, so a reshuffle or a resignation moves the quality stock with
+every spending line untouched. [[cabinet-model|V1.1d]] had deliberately made
+effectiveness multiply the *delta only*, so that a player who never moves a line is
+untouched by the cabinet system; V1.5a un-chooses that through a different channel.
+Kept rather than gated, because the alternative is a model in which a **corrupt** state
+delivers less but an **incompetently run** one delivers the same — and the evidence for
+keeping it is that zero outcomes moved across 182 outcome lines. Recorded because it
+was not planned, not because it was wrong.
+
+**And a check that silently covered less than it appeared to.**
+`tools/run_tests.sh` never contained `tests/test_companies.gd`. It was authored at
+V1.4a and omitted from the list, so V1.4a, V1.4b and V1.4c each shipped with their own
+test file running only when invoked by hand — three sessions of green suites that were
+not testing the thing those sessions built. Found by noticing that a *new* test file
+was absent from a passing run and then reading the list. This is
+[[people-model|U6b]]'s `check_names.sh` finding in a new place (that check iterates
+`git ls-files`, so an untracked directory passes with zero files scanned), and the
+generalisation is worth more than either instance: **a green check is evidence only
+about what it enumerated.** Any session adding a test file must confirm the runner
+names it.
+
+## V1.5b — a tiebreaker can be a strict ordering and STILL let the range choose
+
+[[society-model|V1.5a]] restated the rule above as: *a pre-committed tiebreaker must be a
+strict ordering over the candidates that survive the band*, checked by asking what it
+would say if every row passed. `MIGRATION_SHARE_BETA`'s tiebreaker **satisfied that rule
+and still failed**, which is the third distinct failure mode in two sessions.
+
+It said: strictly less legible on the pensions bloc row than a saturated corruption
+register is on health's — their common landing site, and a genuinely measured quantity —
+then take the **largest** passing candidate. That is a strict ordering by size. It orders
+every row. It is not a tautology and not a bound.
+
+**The defect is that both of its bands are one-sided minimums.** Band (i) asks the lever
+to be *readable*, band (ii) asks it to be *closable*, and a bigger constant satisfies both
+more easily. So every candidate above the threshold passes, "largest" returns the top row
+of the grid, and the answer moves when the grid moves: the first sweep stopped at 0.010
+and chose 0.010; widening it to 0.016 chose 0.016. **The candidate range was choosing the
+constant, and no amount of ordering fixes that.**
+
+**The rule, extended:** a pre-committed tiebreaker must strictly order the survivors
+**and its answer must not move when the candidate range is widened.** The second clause
+is the one with teeth, because it is checkable *before* trusting the result — widen the
+grid and re-read — where "is this a strict ordering?" is answerable in the affirmative by
+a tiebreaker that is nonetheless useless.
+
+**The corrected selector was forced rather than chosen**, which is the useful part: when
+every band is a minimum, the **smallest** passing candidate is the least-invasive value
+that clears them, and it is stable under widening by construction. It chose **0.0090**,
+which is *interior* to the widened grid — two candidates fail below it, three pass above
+— and interiority is the observable that distinguishes a chosen number from a ceiling.
+
+**A cheap diagnostic falls out of this.** If the selected value sits at an endpoint of
+the swept range, the range is a suspect, not a result. That is true regardless of how the
+tiebreaker is phrased, and it costs one glance at the table.
+
+**And the kill switch fired in the same session, which is the counter-example worth
+keeping beside it.** `DEPENDENCY_ELASTICITY["health"]` failed its band at *every*
+candidate including the largest defensible one, so the entry was **deleted** rather than
+shipped. A constant whose range cannot be trusted and a constant that cannot clear its
+floor are different failures with different remedies — widen and re-select, versus
+delete — and a session that meets both should not treat them alike.
+
+## V1.5c — four more ways a pre-committed measurement fails, and the harness that could not see the thing it was measuring
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] extended
+it with the widening clause and the endpoint diagnostic. V1.5c ran six pre-committed
+sweeps and **four of them failed in ways neither clause catches**. They are collected
+here because they are about how this project measures rather than about strikes, and each
+is checkable *before* the sweep.
+
+**(1) A nearest-to-X tiebreaker is only as good as the grid's RESOLUTION.**
+`UNREST_CONVERGENCE`'s band is two-sided by construction and its tiebreaker — nearest the
+geometric mean of the two bracketing half-lives — is a genuine strict ordering with an
+interior answer. It still gave the wrong number: on a doubling ladder it chose **0.08**,
+0.78 months from the target, and refining the grid to 0.01 put **0.07** at 0.46. V1.5b's
+diagnostic is about *widening* the range; this is the same failure under **refinement**,
+and it is checkable the same way. **Refine as well as widen, and re-read.**
+
+**(2) A band whose ceiling is one regime's measured peak makes "largest passing" mean
+"that peak".** `UNREST_THRESHOLD_PCT`'s band was *fires under `austerity`, never under
+`hands_off` or `managed`* — two-sided, so V1.5b's failure was avoided by design. The
+tiebreaker chose **52.0** against `austerity`'s own peak of 52.82. It passes V1.5a's
+ordering check and V1.5b's widening check and is still wrong twice over: the margin is
+0.8 points on a 100-point range, and at 52.0 a budget that **zeroes every spending line**
+produces no industrial action at all. The band's ceiling was a *measurement*, not a
+criterion, so the selector had nothing to choose between. The fix is a criterion the band
+should have contained — V1.3f's `AGENDA_ACT_MIN` again.
+
+**(3) When the interval becomes two-sided, V1.5b's own correction INVERTS.** V1.5b forced
+*smallest passing* because both bands were one-sided minimums and *largest* returned the
+top of the grid. `UNREST_SETTLEMENT_BETA` pre-committed to that rule; then band (i) was
+corrected and the interval became genuinely two-sided — at which point *smallest passing*
+**lands back on an edge** and is grid-dependent all over again (7.0 left the stock at
+45.24 against a threshold of 45.0, a 0.5 % margin).
+
+> **The rule, extended:** when the passing interval is bounded by **two model criteria**,
+> take the value nearest its **midpoint** — interior by construction, and it moves only if
+> the interval moves. When one edge is a **guard rail** rather than a model criterion, the
+> guard rail does not select and the model edge governs.
+
+Both halves fired in the same session: `UNREST_SETTLEMENT_BETA` took the midpoint of
+`[7.3, 16.3]`, and `UNREST_OPINION_SCALE` kept smallest-passing because its upper edge is
+`opinion.gd`'s own ±1.0 clamp.
+
+**(4) A band can be applied to an observable the channel does not reach.** V1.5a's
+`QUALITY_SCALE_PP` was measured on a *path* that could not observe the channel. This is
+the neighbouring error: `UNREST_IMPULSE_SCALE`'s band asked an **output** channel to move
+an **approval** figure, and it failed at every candidate while the same channel moved GDP
+by 4.94 %. The constant was right and the band was measuring something else. Distinguish
+before deleting: *the band failed* and *the constant cannot clear its floor* look
+identical in a table and have opposite remedies.
+
+**And a fifth failure, the oldest one, a third time.** `UNREST_COOLDOWN_MONTHS`: every
+candidate from 3 to 36 passed both clauses, so the band was a bound and not a selector —
+V1.4c's failure and V1.5a's `CORRUPTION_DELIVERY_BETA`. Set by argument instead, and the
+constants file says so rather than dressing the argument as a measurement. **A constant
+set by argument is not a failure; a constant set by argument that claims to have been
+swept is.**
+
+## V1.5c — a probe can inherit the blind spot it was written to catch
+
+Separate from the tiebreaker list, and the sharper finding of the two.
+
+`tools/unrest_probe.gd`'s reachability table reported twelve strikes under `austerity`
+over fourteen years. `tools/balance_probe.gd` then reported **zero acts in all
+twenty-five shared regimes**. Both were right about their own harness: the balance harness
+runs elections and stops on the lose condition, so a budget provocative enough to anger
+the country loses the 2027 presidential election at month 16 and the run ends long before
+a stock converging at 0.07 matures. The unrest probe's loop has no elections, so it ran a
+government that had already been thrown out for fourteen more years.
+
+**That is V1.3f's measuring-the-wrong-state error, in the probe written to avoid it, for
+the third time in three sessions** — and the new part is that the *cross-check* is what
+caught it, not either probe. Two harnesses disagreeing is information; one harness
+agreeing with itself is not.
+
+The consequence generalises past unrest: **a channel whose trigger no regime reaches makes
+every bit-identical regime meaningless**, which is [[calendar-model|U6a]]'s day-loop
+finding at a larger scale. `balance_probe.gd` now prints a reachability column for every
+regime, and it gained a **mid-run budget switch** — the first regime shape in this project
+that changes policy part-way through a run — because the reachable case is *govern well,
+win, and then provoke*, and no month-1 regime could express it.
+
+## V1.5d — the guard-rail rule assumes the model edge is a PLATEAU
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] extended
+it to widening; [[unrest-model|V1.5c]] added four more, the last of which reads: *when the
+passing interval is bounded by two model criteria take the midpoint, and when one edge is a
+guard rail the guard rail does not select and the model edge governs.*
+
+`FRAMING_BETA` pre-committed to that rule and it failed, **twice over**, in ways that
+happened to cancel.
+
+**(1) One of its two declared model criteria never fired.** Band (i) asked for a readable
+bloc row; band (ii) asked that a well-governed run's headline not move past ±3.0. Band (ii)
+measures **0.44 at beta 7.0 and 1.02 at beta 20.0**. It orders nothing, so it is a bound and
+not a selector — V1.5a's failure (2), in the session that inherited the warning. The
+interval's real upper edge is the `FRAMING_GAIN_MIN` clamp, which is a **guard rail**.
+
+**(2) So V1.5c's rule applies and prescribes the smallest passing value — and that is wrong
+here for a reason the rule did not contemplate.** V1.5c's own table (d2), which the rule was
+written against, reads −2.11, −2.95, −3.16, −9.01: a **lumpy** response, so its floor sat on
+a shelf and refining the grid could not move it. `FRAMING_BETA`'s response is **linear** —
+2.98, 3.01, 3.12, 4.52, 5.45, 6.53, 9.27 — so *smallest passing* means nothing more than
+*wherever the band crosses*. 3.02 clears a 3.0 floor by 0.3 %, and every refinement of the
+grid moves the answer. That is V1.5b's widening diagnostic and V1.5c's refinement
+diagnostic arriving through the one rule that was supposed to be immune to both.
+
+**The rule, extended:** the guard-rail clause assumes the model edge is a **plateau**. When
+it is a smooth **crossing**, the model edge does not select either — and with neither edge
+selecting, the only value stable under widening *and* refinement is the interior. Both edges
+of `[3.02, 6.00]` are structural rather than grid artefacts (a band crossing and a clamp), so
+the midpoint is structural too and is the value furthest from both failure modes.
+
+**A cheap diagnostic falls out, and it costs one glance at the table:** before applying any
+edge-selecting rule, ask whether the response near that edge is **lumpy or smooth**. Smallest
+and largest passing are only meaningful on a shelf.
+
+`PRESS_UNREST_BETA` failed in the older way — every candidate passed band (i) — and is **set
+by argument**, as a ratio against `SETTLEMENT_BETA`. A ratio against a fixed constant is
+stable under both widening and refinement, which is what neither band was, and that is the
+general lesson rather than a fact about press freedom.
+
+## V1.5d — a harness that never calls a system proves nothing by agreeing
+
+The balance re-run was predicted **not** to be bit-identical, and came back with a diff of
+**exactly zero lines**. The prediction being wrong is what caught the bug:
+`tools/balance_probe.gd` and `tests/test_balance.gd` never called `Media.tick_month()`, so
+both harnesses were running the pre-session model and their agreement was about nothing.
+
+[[calendar-model|U6a]] found this for the day loop and V1.5c found it for reachability; this
+is the same failure at its simplest, and the new part is the **detection method**. A
+bit-identical re-run is normally the reassuring outcome, so nothing about it invites
+suspicion — which is exactly why the prediction has to be written down **before** the run.
+An unexplained agreement is as much a finding as an unexplained difference.
+
+With both harnesses fixed, all 28 shared regimes are bit-identical in GDP, growth, trend,
+unemployment, debt and deficit; approval moves in all 28 by at most 3.00 points; and there
+are **zero outcome changes**.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

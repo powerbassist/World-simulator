@@ -12,6 +12,7 @@
       "preconditions": [],
       "effects": {
         "structural_unemployment_pct": 0.1,
+        "society": { "settlement": 0.25 },
         "bloc_offset": { "workers": 0.2, "business": -0.15 }
       }
     },
@@ -30,6 +31,7 @@
       "effects": {
         "spending_pct_gdp": { "pensions": -1.2 },
         "structural_unemployment_pct": -0.2,
+        "society": { "settlement": -0.4 },
         "bloc_offset": { "pensioners": -0.35, "business": 0.15 }
       }
     },
@@ -45,6 +47,7 @@
       "preconditions": [],
       "effects": {
         "structural_unemployment_pct": 0.3,
+        "society": { "settlement": 0.3 },
         "bloc_offset": { "workers": 0.25, "business": -0.2 }
       }
     },
@@ -60,6 +63,7 @@
       "preconditions": [],
       "effects": {
         "structural_unemployment_pct": -0.3,
+        "society": { "settlement": -0.3 },
         "bloc_offset": { "business": 0.2, "workers": -0.2 }
       }
     }

@@ -88,6 +88,7 @@
   "imported": {
     "_source": "worldbank",
     "_year": 2024,
+    "_trend_from_year": 2015,
     "_usd_eur": 0.92,
     "population": 11900000,
     "gdp_eur_bn": 617.0,
@@ -96,6 +97,20 @@
       "agriculture": 0.009,
       "industry": 0.207,
       "services": 0.784
+    },
+    "cohorts": {
+      "young_pct": 16.0,
+      "old_pct": 20.56,
+      "young_pct_per_yr": -0.111,
+      "old_pct_per_yr": 0.266,
+      "participation_pct": 71.01,
+      "pop_growth_pct": 0.563
+    },
+    "inequality": {
+      "gini_index": 26.8,
+      "gini_index_per_yr": -0.112,
+      "_year": 2023,
+      "_from_year": 2015
     }
   }
 }

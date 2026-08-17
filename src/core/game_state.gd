@@ -24,6 +24,10 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -168,7 +172,49 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     deviation is measured against round-trips through data/companies/ rather
 ##     than through the save. A saved baseline would be the same fact in two
 ##     places, and the first version of it to drift would be the one in the save.
-const SAVE_VERSION := 15
+##     V1.5a bumps to 16, on ONE field of three, and the split is again the
+##     assertion worth having. `service_quality` earns it: absent it reads 0.0
+##     against a France that has spent 11.0 % of GDP on health for decades, so every
+##     reader sees a country whose hospitals have ceased to exist and the
+##     satisfaction term reads a collapse the player did not cause —
+##     `military_capability`'s case at V1.3g, in its strongest form yet, because
+##     equilibrium-init does NOT rescue it: re-deriving on load would erase an
+##     accumulated decline the player spent a term earning. `corruption` earns
+##     nothing (absent it reads 0.0, and a version-15 save is a game that had no
+##     `society` law to pass — `regulation_burden`'s case at V1.4b), and
+##     `start_service_quality` earns nothing either, being recomputed at init from
+##     the `spending_pct_gdp` every nation file already authors. Both are serialised
+##     regardless, and for two different reasons the test states separately.
+##
+##   V1.5b bumps to 17, and it is earned TWICE over — by a new field and, for the
+##     first time on this list, by a KEY ADDED TO A DICTIONARY THAT WAS ALREADY
+##     SERIALISED. `young_share`/`old_share` are the ordinary half: absent they read
+##     0.0, which is not a neutral default but a different model — working share 1.0,
+##     dependency ratio 0.0, and the labour force the whole population. The sharp half
+##     is `service_quality["pensions"]`, which adds no field at all, so the naive
+##     reading is that it cannot bump anything. A version-16 save carries
+##     `{"health": …}` and no `pensions` key; `_tick_nation()` reads `.get(key, 0.0)`
+##     so the stock starts at zero and climbs, while `quality_deviation()` measures it
+##     against a `start_service_quality` that is also 0.0 — so the deviation reads as a
+##     large and growing POSITIVE, a France whose pension system has just been invented
+##     and is improving fast. A windfall the player did not earn, mis-signed for the
+##     rest of the run. The five content fields and `migration_stance` earn nothing;
+##     the test asserts the halves separately, because the split is what pins that
+##     adding a registry key can earn a bump at all.
+##
+##   V1.5c bumps to 18 on two fields of seven, and the two earn it by DIFFERENT
+##     failures, which is why tests/test_save_load.gd asserts them separately rather
+##     than together. `unrest_pct` is `service_quality`'s case: absent it reads 0.0, a
+##     perfectly calm France, so a save reloaded mid-crisis silently ends the crisis,
+##     and re-deriving on load cannot rescue it because the accumulation IS the state.
+##     `unrest_cooldown_months` is U6a's `diplo_months_to_act` case: absent it reads 0,
+##     0 means ACT NOW, and a reloaded save therefore fires a strike in its first month
+##     whatever the player was doing. `gini_index` would have earned it a third time on
+##     `young_share`'s reasoning and is folded into the same bump.
+##     `start_gini_index`, `gini_index_per_yr`, `settlement_stance`,
+##     `unrest_impulse_pct` and `unrest_acts` all earn nothing, for four reasons already
+##     on this list.
+const SAVE_VERSION := 18
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -357,6 +403,25 @@ var recent_effects: Array[Dictionary] = []
 ## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
 ## preloads diplomacy.gd, so the dependency only runs one way.
 var foreign_acts: Array[Dictionary] = []
+
+## What the unions did — V1.5c. Newest last, each {nation_id, year, month, label,
+## unrest_pct}, appended by src/sim/unrest.gd's _tick_nation() and capped at
+## unrest_constants.ACTS_KEPT by the writer, for the reason `foreign_acts` above states:
+## src/core/ cannot hold the cap because the dependency only runs one way.
+##
+## > [!important] A DISPLAY RECORD, and here the point is sharper than at V1.3f.
+## > This is the one session in the project that could have been tempted to build a
+## > literal grievance ledger, and did not: the unrest number IS the memory, exactly as
+## > the relations number is. The moment a decision consults this list, the model has
+## > two memories that can disagree and the stock stops being the one place anger lives.
+## > tests/test_unrest.gd asserts no reader in src/sim/ rather than trusting this
+## > comment, which is the assertion tests/test_foreign_policy.gd already makes.
+##
+## EARNS NO SAVE_VERSION BUMP and is not carried by duplicate_state() —
+## tests/test_state_copy.gd's NOT_COPIED list says why: a projection has no past, and
+## the SCHEDULE that produces acts (`unrest_cooldown_months`) is on NationState and IS
+## copied. `foreign_acts`' split exactly.
+var unrest_acts: Array[Dictionary] = []
 
 ## Problems found while building the state. Surfaced the same way the loader's
 ## are — loudly, naming the nation and the field.
@@ -566,6 +631,43 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	Cabinet.seat(ns, party_list)
 	Dissolution.init_nation(ns, n)
 
+	# V1.5a, and it MUST come after Cabinet.seat() rather than beside the other
+	# init_nation() calls above -- an ordering constraint rather than a preference,
+	# and the one thing in this session that a comment is cheaper than a test for.
+	# Society.quality_target() reads Cabinet.effectiveness(), which returns
+	# VACANT_EFFECTIVENESS until a cabinet is seated. Initialised any earlier,
+	# start_service_quality captures the equilibrium of a country with no ministers,
+	# the real equilibrium is then higher, and every nation's quality climbs for a
+	# decade of every game with no player action -- which is exactly the authored
+	# transient defence.gd's own equilibrium-not-zero comment exists to prevent,
+	# arriving through the back door.
+	# V1.5b, and it must come BEFORE Society.init_nation() for a second, independent
+	# ordering constraint of the same kind: Society.quality_target() divides by
+	# Demography.dependency_factor(), which reads start_old_share and start_young_share.
+	# Initialised after Society, those references are 0.0 when the quality equilibrium
+	# is captured, the factor is not 1.0 on the first tick, and every nation's quality
+	# steps on frame one of every game with no player action.
+	Demography.init_nation(ns, n)
+
+	Society.init_nation(ns)
+
+	# V1.5c, last, and unlike the two above it this is NOT an ordering constraint: every
+	# term of the grievance target is a deviation against a reference the calls above have
+	# already captured, so the target is exactly 0.0 whenever this runs. It sits here
+	# because that is the tick order, and a reader should be able to read the two in the
+	# same sequence.
+	Unrest.init_nation(ns)
+
+	# V1.5d, and it is the ONE call in this function whose position is load-bearing in
+	# both directions. It must come after Government.init_nation() above, because an
+	# outlet's hostility is its distance from `coalition_position` and that field is
+	# NEUTRAL_POSITION until Government.form() has run -- seeded any earlier, every
+	# nation's press would measure its distance to the origin instead of to its
+	# government. And it seeds the gain at the unframed baseline rather than deriving
+	# it, because the derived value belongs to Media.tick_month() and computing it in
+	# two places would be the two-writers failure this project has named five times.
+	Media.init_nation(ns)
+
 	return ns
 
 
@@ -651,6 +753,7 @@ func to_dict() -> Dictionary:
 		"history": history,
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
+		"unrest_acts": unrest_acts,
 	}
 
 
@@ -801,6 +904,15 @@ static func from_dict(d: Dictionary):
 	for entry in acts:
 		typed_acts.append(entry as Dictionary)
 	gs.foreign_acts = typed_acts
+
+	# Absent, this reads as an empty list, which is CORRECT rather than silently wrong --
+	# a version-17 save's unions could not act. `foreign_acts`' case directly above, and
+	# like it this is not what earned SAVE_VERSION 18; unrest_pct and the cooldown are.
+	var strikes: Array = d.get("unrest_acts", [])
+	var typed_strikes: Array[Dictionary] = []
+	for entry in strikes:
+		typed_strikes.append(entry as Dictionary)
+	gs.unrest_acts = typed_strikes
 
 	# Absent, this reads as "nothing booked" -- correct for every version-13 save,
 	# because those games had no diary to book into. `measures`' case at V1.3c,

@@ -35,6 +35,10 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
+const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -328,6 +332,13 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
+		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
+		# Added to the harness in the same commit as the model, because the balance re-run
+		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
+		# harness was running the pre-session model and its agreement meant nothing. That
+		# is U6a's day-loop finding: a system this loop never calls is a system whose
+		# bit-identity proves nothing about it.
+		Media.tick_month(state, _loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
@@ -339,6 +350,14 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# nobody -- the share shift is exactly zero with no subsidy standing and all
 		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
 		Companies.tick_month(state, _loader)
+		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
+		# quality stock reads the live spending line, so any regime that moves one moves
+		# the `health` satisfaction term with it.
+		# V1.5b, immediately before Society: the quality stock divides by this layer's
+		# dependency factor, so demography must have settled before quality reads it.
+		Demography.tick_month(state)
+		Society.tick_month(state)
+		Unrest.tick_month(state)
 		Cabinet.tick_month(state, _loader)
 
 		if i + 1 == dissolve_at_month:

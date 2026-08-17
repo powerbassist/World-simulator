@@ -21,6 +21,7 @@ extends SceneTree
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Society = preload("res://src/sim/society.gd")
 
 const DAYS_PER_MONTH := 31
 
@@ -49,9 +50,43 @@ func _process(_delta: float) -> bool:
 	_check_fresh_game_has_no_trends()
 	_check_trends_appear_after_a_run()
 	_check_approval_is_polled()
+	_check_services_are_silent_then_spoken()
 
 	_finish()
 	return false
+
+
+## V1.5a. Both halves, because both can fail silently and one of them is the failure
+## this project has now hit four times -- a figure computed, stored, and displayed
+## nowhere (V1.3b's `refused_by_partner`, V1.3f's `act_reason()`).
+##
+## The silent half matters as much as the spoken one: a permanent "delivery 100 %" row
+## would say nothing in every game that never passes a `society` law, which is the
+## line-that-says-nothing failure the alliance row beside it already avoids.
+func _check_services_are_silent_then_spoken() -> void:
+	var ns = _main._state.player()
+
+	ns.corruption = 0.0
+	for key in ns.service_quality.keys():
+		ns.service_quality[key] = ns.start_service_quality[key]
+	_main._overview_panel.mark_dirty()
+	_main._overview_panel._process(0.0)
+	if _column_text("government").to_lower().contains("delivers"):
+		_fail("the delivery line is printed with no corruption -- a row that says nothing in most games")
+
+	# Now move it, and the panel must say so. Driven through the real writer rather
+	# than by poking the stock, so a broken dispatch fails here too.
+	ns.corruption = 0.6
+	for _m in range(24):
+		Society.tick_month(_main._state)
+	_main._overview_panel.mark_dirty()
+	_main._overview_panel._process(0.0)
+
+	var text := _column_text("government").to_lower()
+	if not text.contains("delivers"):
+		_fail("corruption moved and the overview never mentioned delivery -- computed and displayed nowhere")
+	if not text.contains("baseline"):
+		_fail("service quality moved off its baseline and the overview never said so")
 
 
 ## Nothing has been simulated yet, so all five watched figures are unknown.

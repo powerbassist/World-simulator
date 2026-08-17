@@ -23,6 +23,10 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 ## V1.4b, for REGULATION_BURDEN_MAX alone. Not companies.gd: this file writes the
 ## burden and never reads what it costs, so the dependency stops at the clamp.
 const CK = preload("res://src/sim/companies_constants.gd")
+const SK = preload("res://src/sim/society_constants.gd")
+const DemoK = preload("res://src/sim/demography_constants.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const MediaK = preload("res://src/sim/media_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -109,6 +113,13 @@ static func _read_field(ns, field: String) -> float:
 		"overall_approval_pct": return ns.overall_approval_pct
 		"growth_annual_pct": return ns.growth_annual_pct
 		"terms_served": return float(ns.terms_served)
+		"unrest_pct": return ns.unrest_pct
+		# V1.5c added the entry above and legislature_constants.PRECONDITION_FIELDS in
+		# two separate edits, and the suite caught the gap between them: the whitelist
+		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE
+		# and a session can add half of it. Not merged here -- src/core/law.gd validates
+		# against the constant at LOAD time and this runs per frame, so the constant has
+		# to be a plain array -- but recorded, because the next field added will hit it.
 		_:
 			push_error("legislature: unknown precondition field '%s'" % field)
 			return 0.0
@@ -308,6 +319,49 @@ static func apply(state, ns, law, loader) -> void:
 			float(ns.regulation_burden.get(sector, 0.0)) + burden,
 			-CK.REGULATION_BURDEN_MAX, CK.REGULATION_BURDEN_MAX
 		)
+
+	# V1.5a's sixth channel, and the ONLY writer of ns.corruption in the project.
+	# Accumulates and is SIGNED for the two reasons src/core/law.gd's
+	# _extract_society() gives -- the second of which V1.4b did not need: a
+	# one-directional level would make an anti-corruption law inert on a clean state.
+	#
+	# One clamp, on the accumulated value, exactly as the burden above. The factor
+	# society.gd reads it through carries its own bounds, so a second clamp here
+	# would be a guard rail guarding a guard rail.
+	#
+	# V1.5b adds `migration` as a SIBLING accumulator on the same channel, and the two
+	# are independent: a law may name either or both, law.gd's _extract_society()
+	# requires at least one, and each clamps against its own maximum. This is the only
+	# writer of ns.migration_stance in the project, as it is of ns.corruption.
+	if effects.has("society"):
+		var society: Dictionary = effects["society"]
+		if society.has("corruption"):
+			ns.corruption = clampf(
+				ns.corruption + float(society["corruption"]),
+				-SK.CORRUPTION_MAX, SK.CORRUPTION_MAX
+			)
+		if society.has("migration"):
+			ns.migration_stance = clampf(
+				ns.migration_stance + float(society["migration"]),
+				-DemoK.MIGRATION_STANCE_MAX, DemoK.MIGRATION_STANCE_MAX
+			)
+		# V1.5c adds `settlement` as a THIRD sibling on the same terms, and this is the
+		# only writer of ns.settlement_stance in the project. A third register on one
+		# channel with no new shape is what turns V1.5a's declaration into a fact.
+		if society.has("settlement"):
+			ns.settlement_stance = clampf(
+				ns.settlement_stance + float(society["settlement"]),
+				-UnrestK.SETTLEMENT_STANCE_MAX, UnrestK.SETTLEMENT_STANCE_MAX
+			)
+		# V1.5d adds `press_freedom` as a FOURTH sibling, and this is the only writer of
+		# ns.press_freedom in the project. Four registers on one channel written by four
+		# consecutive sessions, each needing exactly this many lines, is the strongest
+		# form of the claim society-model.md section 3 made with one term.
+		if society.has("press_freedom"):
+			ns.press_freedom = clampf(
+				ns.press_freedom + float(society["press_freedom"]),
+				-MediaK.PRESS_FREEDOM_MAX, MediaK.PRESS_FREEDOM_MAX
+			)
 
 	# An institution is SET, not nudged -- every key here is an absolute value
 	# written straight onto NationState, unlike every channel above. Whether

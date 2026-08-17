@@ -13,6 +13,10 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const Society = preload("res://src/sim/society.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
@@ -35,6 +39,7 @@ func _init() -> void:
 	_check_debt_accumulates()
 	_check_projection_matches()
 	_check_projection_matches_after_diplomacy()
+	_check_projection_matches_under_unrest()
 
 	_finish()
 
@@ -242,6 +247,38 @@ func _check_projection_matches_after_diplomacy() -> void:
 			_close("displaced month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
 
 
+## V1.5c, and the THIRD displaced check on this list. The other two exist because a
+## projection that froze relations or the council would disagree with the real game;
+## this one exists because a projection that froze UNREST would be silent about an act
+## nobody chose.
+##
+## Displaced above the threshold rather than run into it, which is the whole reason
+## there is a third check: from an undisplaced state the grievance is exactly 0.0, the
+## agent never fires inside a 24-month window, and the projection agrees with reality
+## for the boring reason. That is _check_projection_matches()'s blind spot, stated as a
+## test rather than as a comment -- and it is the same blind spot at a larger scale that
+## made all twenty-five balance regimes report zero acts.
+func _check_projection_matches_under_unrest() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	state.player().unrest_pct = UnrestK.UNREST_MAX
+	if not Unrest.would_act(state.player()):
+		_fail("the displaced state does not want to act, so this check proves nothing")
+		return
+
+	var pending := {"tax_rates_pct": {"vat": 23.0}}
+	var projected := Budget.project(state, pending, 24, _loader)
+	var actual := _run(state, pending, 24)
+
+	if projected.size() != actual.size():
+		_fail("unrest projection has %d months, actual has %d" % [projected.size(), actual.size()])
+		return
+	for i in range(projected.size()):
+		for key in projected[i].keys():
+			if key == "sectors":
+				continue
+			_close("unrest month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
+
+
 ## main.gd's chain, which is also project()'s. Every system project() advances on
 ## its copy has to be advanced here, or the test compares a projection that ran
 ## the model against a reality that did not.
@@ -268,6 +305,13 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
 		Diplomacy.tick_month(state, _loader)
+		# V1.5c. Three more, and only the last one can move a fiscal figure: an unrest
+		# act writes a growth impulse, and growth reaches GDP, revenue and the deficit.
+		# The two above it are its inputs, so leaving them out would make the runner and
+		# the projection disagree about the grievance rather than about the budget.
+		Demography.tick_month(state)
+		Society.tick_month(state)
+		Unrest.tick_month(state)
 		out.append(Budget.snapshot(state))
 	return out
 

@@ -15,6 +15,10 @@ const Nation = preload("res://src/core/nation.gd")
 ## property of the companies model, and a second number for it here would be one
 ## strength written twice.
 const CK = preload("res://src/sim/companies_constants.gd")
+const SK = preload("res://src/sim/society_constants.gd")
+const DK = preload("res://src/sim/demography_constants.gd")
+const UK = preload("res://src/sim/unrest_constants.gd")
+const MK = preload("res://src/sim/media_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -262,6 +266,9 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("company"):
 		out["company"] = _extract_company(raw["company"], law_id, filename, errors, sector_keys)
 
+	if raw.has("society"):
+		out["society"] = _extract_society(raw["society"], law_id, filename, errors)
+
 	# THE ANTI-DOUBLE-COUNT, MADE MECHANICAL. A regulation's burden reaches
 	# structural unemployment through Companies.headcount(), which is the same act
 	# (a law passing), the same landing site (Economy._update_unemployment()) and
@@ -277,9 +284,183 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	if raw.has("company") and raw.has("structural_unemployment_pct"):
 		errors.append("%s: %s carries both effects.company and effects.structural_unemployment_pct -- a sector burden already reaches structural unemployment through the firm register, so the two are one story told twice. Pick one." % [filename, law_id])
 
+	# THE SAME ANTI-DOUBLE-COUNT, at the second place it can happen. Corruption
+	# reaches the `health` opinion issue through Society.quality_target(), which is
+	# the same act, the same landing site and the same units as a law moving
+	# `spending_pct_gdp.health` directly. A law carrying both would be two answers to
+	# one question -- and the more insidious half is that they can be given OPPOSITE
+	# signs, so a law could buy approval on a service while quietly degrading it and
+	# the ledger would net them to nothing.
+	#
+	# V1.5c NARROWED THIS FROM THE CHANNEL TO THE PAIR, and the narrowing is argued
+	# rather than slipped in because it turns an existing refusal green. The reason
+	# written above is about CORRUPTION reaching the spending issues through the quality
+	# stock -- it was never true of the channel, only of that one term, and V1.5a scoped
+	# it to the channel because `corruption` was the only term there was. A settlement
+	# law is naturally a spending law (public-sector pay, a pension restoration), and
+	# under the wide scope every one of those was a load error. That is exactly what
+	# V1.5b did to its own refusal below for data/laws/labour.json's sake, one session
+	# earlier, and for the same reason: a blanket rule that catches working content to
+	# stop one bad case is the wrong shape.
+	if raw.has("society") and raw.has("spending_pct_gdp") and typeof(raw["society"]) == TYPE_DICTIONARY and raw["society"].has("corruption"):
+		errors.append("%s: %s carries both effects.society.corruption and effects.spending_pct_gdp -- corruption already reaches the spending issues through the quality stock, so the two are one story told twice. Pick one." % [filename, law_id])
+
+	# THE SAME ANTI-DOUBLE-COUNT, at the third place it can happen, and V1.5b's own.
+	# A migration stance reaches structural unemployment through the labour force:
+	# Demography.labour_force() is firm_jobs_offset_pct()'s denominator and
+	# Economy._update_unemployment() reads that beside `law_structural_offset_pct`.
+	# Same act, same landing site, same units -- and data/laws/social.json's
+	# `immigration_tightening` was the law that had it BOTH ways until this session
+	# re-authored it, pricing a migration flow as a structural unemployment offset
+	# because there was no flow to price it on.
+	#
+	# Scoped to the PAIR and not to the channel, deliberately: data/laws/labour.json's
+	# four laws keep `structural_unemployment_pct` and are right to, because a labour
+	# reform genuinely is a claim about the matching rate rather than about who is in
+	# the country. A blanket refusal of the scalar would have cost four working laws
+	# to catch one.
+	if raw.has("society") and raw.has("structural_unemployment_pct") and typeof(raw["society"]) == TYPE_DICTIONARY and raw["society"].has("migration"):
+		errors.append("%s: %s carries both effects.society.migration and effects.structural_unemployment_pct -- a migration stance already reaches structural unemployment through the labour force, so the two are one story told twice. Pick one." % [filename, law_id])
+
+	# THERE IS NO FOURTH, AND REFUSING TO ADD ONE IS V1.5c's CONTRIBUTION TO THIS RULE.
+	# `society.settlement` + `structural_unemployment_pct` was written, and then deleted
+	# once it was checked against the criterion the three above actually use rather than
+	# against the pattern they make. The first refusal states it in full: "the same act,
+	# the same landing site AND THE SAME UNITS". A settlement is in units of stance and
+	# lands on the unrest target directly; structural unemployment is in points and
+	# lands on Economy._update_unemployment(), reaching unrest only afterwards through
+	# the `jobs` satisfaction. Two of the three criteria fail.
+	#
+	# The difference is one MECHANISM priced twice against two mechanisms landing on one
+	# number, and the three refusals above are all the first kind: a regulation's burden
+	# IS headcount, corruption's degradation IS the spending issue, and
+	# `immigration_tightening`'s structural offset was literally a stand-in for the
+	# migration flow because there was no flow to price it on. But "a minimum wage rise
+	# makes hiring harder" and "a minimum wage rise buys industrial peace" are two true
+	# sentences about two mechanisms, and a rule that forbade them would forbid
+	# `bloc_offset` beside anything.
+	#
+	# Recorded here rather than in the model doc because the next session to add a term
+	# on this channel will reach for a fourth refusal by symmetry, and symmetry is not
+	# the test.
+	#
+	# V1.5d IS THAT SESSION, IT REACHED FOR ONE, AND THE PARAGRAPH ABOVE STOPPED IT.
+	# `press_freedom` was checked against all four things it could plausibly collide with,
+	# and every one fails the criterion:
+	#
+	#   + structural_unemployment_pct  units differ (stance vs points) and sites differ
+	#                                  (the unrest target vs _update_unemployment()).
+	#                                  V1.5c's deleted refusal, identically.
+	#   + bloc_offset                  the site coincides -- both reach a bloc's approval
+	#                                  target -- but a stance scaling a SALIENCE
+	#                                  amplification and a flat additive on the target are
+	#                                  not the same units, and refusing this would forbid
+	#                                  bloc_offset beside anything, which is the sentence
+	#                                  above. data/laws/institutional.json's own press
+	#                                  laws carry one, so the rule would fail the content
+	#                                  it was written for.
+	#   + society.settlement           both are terms of unrest_target(), so the site
+	#                                  coincides -- and they are two mechanisms landing on
+	#                                  one number, not one priced twice. "Censorship breeds
+	#                                  grievance" and "a pay settlement buys industrial
+	#                                  peace" are two true sentences.
+	#   + society.corruption           different sites (the quality stock vs the salience
+	#                                  gain) and different units. A transparency act naming
+	#                                  both is a legitimate law.
+	#
+	# The refusal that IS warranted has no shape a law schema can express, because it is
+	# not two keys on one law: press_freedom must not reach the grievance target through
+	# BOTH media_constants.PRESS_UNREST_BETA and Unrest.hardship(), which would be the
+	# same act, the same landing site and the same units -- the first kind. It is one
+	# register reaching one number twice through CODE, so it is refused in a signature
+	# instead: Opinion.salience_weights() takes its gain as a REQUIRED argument and
+	# unrest.gd states the unframed one out loud. See both.
+
 	for key in raw.keys():
-		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and not SCALAR_EFFECT_KEYS.has(key):
+		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
 			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
+
+	return out
+
+
+## V1.5a. The SIXTH effect channel, and V1.5 owns it the way V1.4 owns
+## `effects.company` -- (c)'s unrest and (d)'s press freedom reach it through here,
+## so this is schema two later sessions read rather than one session's private field.
+##
+## A law names terms from a CLOSED LIST -- `corruption` at V1.5a, `migration` at
+## V1.5b -- and at least one of them. Anything else is refused, for
+## `_extract_company()`'s reason stated about a different register: `service_quality`
+## has exactly one writer and it is Society.tick_month(), and the age shares have one
+## and it is Demography.tick_month(). A law that could set a quality level or an age
+## share directly would be a second writer of it -- two answers to the question of how
+## good the hospitals are, or how old the country is -- and it would bypass the stock
+## and the drift, which are the things that make the consequence lag the decision.
+##
+## V1.5b WIDENED THE LIST BY EXACTLY ONE KEY AND NOTHING ELSE, which is what V1.5a
+## meant by declaring this "schema two later sessions read rather than one session's
+## private field". The channel needed no new shape to carry a second register.
+##
+## Both values are SIGNED. Anti-corruption is the negative direction on one
+## accumulator and a migration tightening the negative direction on the other, not
+## repeal verbs: V1.4b's argument for deregulation transferred whole, plus one V1.4b
+## did not need -- a one-directional level would make an anti-corruption law INERT on
+## a clean state, and V1.3f's own property is that nothing on the law list does
+## nothing. For migration the sign carries a second load: ageing is a charge no verb
+## in this game can otherwise close, so an opening direction is what makes the
+## dependency ratio admissible at all rather than a permanent monotone ratchet.
+##
+## V1.5c WIDENED IT BY ONE KEY AGAIN, which is the second piece of evidence for V1.5a's
+## claim and a better one than the first: a channel that carries a second register might
+## be lucky, and one that carries a third is schema. `settlement` is what makes unrest
+## CLOSABLE -- without it the only lever pointed at a strike is a spending increase, and
+## society_probe.gd table (c) established that raising a line necessarily widens the
+## deficit, so the player could buy industrial peace only by opening `public_finances`.
+## V1.5d adds `press_freedom` and takes the claim one step further again: a channel that
+## carries a second register might be lucky, a third is schema, and a FOURTH written by
+## a fourth session is the thing V1.5a bet on when it opened the channel with one term.
+## Nothing below this line changed to accept it -- _extract_society() is generic over
+## this dictionary, so all four of its error strings updated themselves.
+const SOCIETY_TERMS := {
+	"corruption": SK.CORRUPTION_MAX,
+	"migration": DK.MIGRATION_STANCE_MAX,
+	"settlement": UK.SETTLEMENT_STANCE_MAX,
+	"press_freedom": MK.PRESS_FREEDOM_MAX,
+}
+
+
+static func _extract_society(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s effects.society must be an object" % [filename, law_id])
+		return {}
+
+	var out := {}
+	for term in SOCIETY_TERMS:
+		if not raw.has(term):
+			continue
+		if not (typeof(raw[term]) == TYPE_INT or typeof(raw[term]) == TYPE_FLOAT):
+			errors.append("%s: %s effects.society.%s is not numeric" % [filename, law_id, term])
+			continue
+		var value := float(raw[term])
+		var limit: float = float(SOCIETY_TERMS[term])
+		if value == 0.0:
+			errors.append("%s: %s effects.society.%s is 0.0 -- a reform that changes nothing is not a reform" % [filename, law_id, term])
+		elif absf(value) > limit:
+			errors.append("%s: %s effects.society.%s = %s exceeds its maximum (%s)" % [
+				filename, law_id, term, str(value), str(limit)
+			])
+		out[term] = value
+
+	if out.is_empty():
+		errors.append("%s: %s effects.society names none of %s" % [
+			filename, law_id, SOCIETY_TERMS.keys()
+		])
+		return {}
+
+	for key in raw.keys():
+		if not SOCIETY_TERMS.has(key):
+			errors.append("%s: %s effects.society.%s is not a recognised term -- a law names %s and nothing else, and a quality figure or an age share beside them would make a law the second writer of a register that has one" % [
+				filename, law_id, key, SOCIETY_TERMS.keys()
+			])
 
 	return out
 

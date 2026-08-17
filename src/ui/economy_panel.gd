@@ -15,6 +15,8 @@ extends PanelContainer
 ## Economy's own model is built around (docs/economy-model.md).
 
 const Economy = preload("res://src/sim/economy.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -140,6 +142,43 @@ func _refresh() -> void:
 	_trend(_labour, "unemployment_pct")
 	_caption(_labour, "Population %.1fM." % (ns.population / 1_000_000.0))
 
+	# V1.5b. Here rather than under GOVERNMENT on the overview beside the delivery
+	# lines, and the split is deliberate: a delivery figure is a fact about the
+	# GOVERNMENT -- how much of what it spends arrives -- and an age structure is a
+	# fact about the COUNTRY, which is what this column already reports. It sits under
+	# the population caption it is a decomposition of.
+	#
+	# Leads with the ratio and states the drift beside it, which is _fill_society()'s
+	# lesson one panel over: a level alone is a number with no units the player can
+	# act on. Unlike the two lines there this one is NEVER silent -- every nation has
+	# an age structure from the first frame, where a delivery factor of exactly 1.0 is
+	# a game in which nothing has happened yet.
+	_caption(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
+		100.0 * Demography.dependency_ratio(ns),
+		100.0 * (Demography.dependency_ratio(ns) - Demography.start_dependency_ratio(ns)),
+	])
+
+	# V1.5c, beside the dependency ratio for the reason the comment above gives: a
+	# grievance is a fact about the COUNTRY, so it belongs in the column that reports
+	# the country rather than under GOVERNMENT with the delivery lines.
+	#
+	# SILENT WHEN THERE IS NOTHING TO SAY, which is the delivery lines' rule rather than
+	# the dependency ratio's -- the stock reads exactly 0.0 in every game where nobody
+	# is angry, and a permanent "unrest 0" row says nothing in most runs. Once it speaks
+	# it names the threshold too, because a grievance figure with no bar beside it is a
+	# number with no units the player can act on: _fill_defence()'s finding, third time.
+	if ns.unrest_pct > 0.05:
+		var striking: bool = ns.unrest_pct >= UnrestK.UNREST_THRESHOLD_PCT
+		_caption(_labour, "Unrest %.0f of 100. %s" % [
+			ns.unrest_pct,
+			# Deliberately does not name the act. The label is the message card's --
+			# `protest` at this intensity, `strike` higher up -- and the screenshot pass
+			# caught the panel saying "the unions are out" beside a card reading
+			# DEMONSTRATIONS. This line owns the LEVEL; the card owns the event.
+			"Organised action at %.0f." % UnrestK.UNREST_THRESHOLD_PCT if not striking
+				else "Past the point where the unions organise.",
+		], UiTheme.BAD_TEXT if striking else "")
+
 	_figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
 	_trend(_finances, "deficit_pct_gdp")
 	_caption(_finances, "Debt %.1f%% of GDP." % ns.debt_to_gdp_pct())
@@ -218,10 +257,14 @@ func _figure(body: VBoxContainer, value: String, caption: String) -> void:
 	body.add_child(sub)
 
 
-func _caption(body: VBoxContainer, text: String) -> void:
+## V1.5c added the optional variation, for the one caption on this panel that carries a
+## state the player is losing to. Defaults to CAPTION, so every existing call is
+## unchanged; the colour comes from ui_theme.gd through theme_type_variation, never from
+## an override, which is what tests/test_ui_theme.gd enforces.
+func _caption(body: VBoxContainer, text: String, variation: String = "") -> void:
 	var label := Label.new()
 	label.text = text
-	label.theme_type_variation = UiTheme.CAPTION
+	label.theme_type_variation = UiTheme.CAPTION if variation == "" else variation
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	body.add_child(label)
 

@@ -91,6 +91,38 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
+**V1.5 is decomposed into four sessions, V1.5a–d, before any code.** The argument,
+the four calls it made and the eight rows it caught are under *V1.5 — the
+decomposition* below. Order: (a) the delivery layer, (b) demographics and
+migration, (c) unrest, (d) media and information — and **(d) is recorded in advance
+as the row most likely to split**, the device this page used for V1.3e.
+
+**V1.5c is built, and it is the session where the inverted rule and the rule it
+replaced finally agree.** The statistic is the grievance and **the verb is the
+union's** — a rule about live state needing something to act on it never said the
+actor had to be the player. Its own finding is that **the price it was designed with
+does not reach a voter**: an output-only channel costs 4.94 % of GDP over fourteen
+years and moves the workers approval row 0.42 points, because this opinion model
+prices rates and a permanent level loss is invisible to it. Full write-up below;
+model in [docs/unrest-model.md](docs/unrest-model.md).
+
+**The decomposition's own finding is that this block breaks the rule every previous
+block was built on.** V1.3 and V1.4 each shipped a player command per session, and
+V1.3a's rule was that state ships *with* a verb or it decays to nothing. §5 has at
+most two verbs across nine bullets, and both are levers on machines that must exist
+first. So the rule inverts: **every session ships a statistic and the price it
+charges.** The failure mode is the same one V1.3a was guarding — a number nothing
+reads — and only the remedy changes.
+
+**Its second finding is that §5's bullet 9 asks for a machine this project has
+already built three times under three names.** `military_capability` is defence's
+outcome stock; `potential_shift_pct` is education's *and* infrastructure's, since
+S4. Of the five spending lines, **only health and pensions have none** — and
+pensions needs a dependent count, so it waits for (b). V1.5a therefore *completes
+and names* a pattern rather than inventing one, which is why it reuses
+`defence.gd`'s `capability_target()` / `capability_step()` shape outright, including
+its call that a starting stock is its **equilibrium and not zero**.
+
 **V1.4 was decomposed into three sessions, V1.4a–c, and the block is COMPLETE.**
 The argument, the three calls it made, and the per-session table are under *V1.4 —
 the decomposition* below. Order: (a) the firm register and subsidies, (b) sector
@@ -697,6 +729,497 @@ deployments row**: V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE
 entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
 "beside the deployment line" about a line that was not there.
 
+### V1.5 — the decomposition, and why these four
+
+Written before any code, which is where a block-shaped row belongs: V1.5 was one
+line — media, scandals, unions, strikes, protests, corruption, demographics,
+migration, inequality — and one line is not a session.
+
+| | Session | Content | Reads |
+|---|---|---|---|
+| **V1.5a** | The delivery layer | `service_quality` as a stock converging on sustained spending, corruption as the factor that degrades **delivery**, and `effects.society` — the sixth channel, which V1.5 then owns the way V1.4 owns `effects.company`. No new content directory, no new window, no new per-nation data | — |
+| **V1.5b** | ~~Demographics and migration~~ **shipped** | Two live age shares on a **measured** drift, the dependency ratio derived from them, that ratio as a **denominator** under (a)'s stock -- which is what let `pensions` join `QUALITY_KEYS` -- and migration as the second `effects.society` term. `POP_GROWTH_PCT` and `LABOUR_FORCE_SHARE` both **deleted**. `SAVE_VERSION` 17. The block's "one unmade content decision" was not one: the dataset exists | a |
+| **V1.5c** | ~~Unrest: unions, strikes and protests~~ **shipped** | The grievance stock and the acting agent — a decaying output impulse, a settlement law gated on `unrest_pct`. The output-only price was **refuted by its own probe** (4.94 % of GDP, 0.42 points of approval) so a direct term was added; inequality ships as a **measured** stopgap off `SI.POV.GINI`, the dataset the row said could not exist. `SAVE_VERSION` 18 | a, b |
+| **V1.5d** | ~~Media and information~~ **shipped** | The outlet register and a **per-bloc salience gain** -- the row asked for the SOURCE of a machine `salience_weights()` has run since S10, not for a machine. Press freedom as the fourth `effects.society` term with two prices. **Scandals moved to §8** and government messaging cut, both argued. The deviation is **mean-anchored**, which a measurement taken before any code forced. `SAVE_VERSION` stays **18** | a, c |
+
+**Machine count is five, which is what splits it**: the outcome stock, the cohort
+structure, the unrest agent, framing, and the scandal scheduler. Two things the
+row reads as machines and that are not — **inequality is a derived read** with no
+scheduler, no decision and no accumulator (`Defence.allies()`'s shape), and
+**corruption is one factor at one existing site**, V1.4c's jobs-shield shape.
+
+**(d) is the row most likely to split**, recorded here in advance the way this
+page recorded V1.3e (which did split). The cut, if it fires, is **scandals → (e)**,
+and the reason is architectural rather than a fourth media feature: scandals are
+where §8's event schema either gets written or gets explicitly deferred.
+
+**IT DID NOT SPLIT, AND THE CUT WENT FURTHER THAN (e).** Counted at plan time on machine
+count -- V1.3e's trigger -- (d) is **one machine**, because the framing machine already
+existed in `opinion.gd` and the session supplies its source rather than building it, and
+press freedom is one factor at two existing sites (V1.4c's jobs-shield shape). ~28
+surfaces, level with V1.5a and V1.3e. So the trigger does not fire at the session level
+and there is no (e): **scandals left the block for §8 entirely**, which is a third outcome
+§8's own warning box did not enumerate and which that box's own argument requires. Written
+into both rows. See [docs/media-model.md](docs/media-model.md) §2.
+
+Four calls, each of which could have gone the other way:
+
+1. **Nothing in §5 is a verb, and that inverts V1.3a's rule.** Every V1.3 and V1.4
+   session shipped a player command — a diplomatic action, a subsidy, a law, an
+   ownership op. §5's nine bullets contain at most two (press freedom, government
+   messaging) and both are levers on a machine that must exist first. So the rule
+   for this block is not *ship a verb with the state*; it is **every session ships
+   a statistic and the price it charges**, or the statistic is decorative, which is
+   what V1.3a's rule was protecting against in the first place.
+2. **(a) is first, and the deciding property is that it is population-independent.**
+   (a)'s outputs are read by (c) and (d); (b)'s are read by nobody. (b)
+   re-baselines the balance harness through `bloc.gd`'s per-capita transfer
+   weighting and `companies.gd`'s labour force, and by U5b → U5c's rule the half
+   carrying the unmade content decision is the half to defer — here, ten authored
+   age structures with **no dataset behind them**: `tools/import_data.py` imports
+   GDP, population and unemployment, and there is no age structure, fertility, life
+   expectancy or Gini anywhere. Ten identical pyramids would be
+   [[foreign-policy-model|the clustered `coalition_position` finding]] a block
+   later, caught at design time rather than by a probe.
+3. **Corruption goes to (a) rather than to (d), and the boundary is architectural.**
+   "Degrading policy effectiveness" is literally `Cabinet.effectiveness()`, read by
+   `opinion.gd`, so corruption belongs in the session that already touches that
+   site. Grouping it with media would be a **thematic** boundary — the two share a
+   table heading in [[mechanics-society]], which is a document layout — and V1.4's
+   a/b line held precisely because the approval path differed and not the subject.
+4. **Rule of law is §1's judiciary and leaves this block.** [docs/tiers/v1.md](docs/tiers/v1.md)
+   §1 already schedules "courts that can strike down laws, a check the player
+   cannot outvote", re-parked as V1.1e. Two uncontestable gates on player action is
+   one machine claimed twice. Cross-referenced into **both** rows.
+
+**The row missed eight, and all eight were found by counting.** That is instances
+**fifteen through twenty-two**, and the count is now the record rather than the
+exception.
+
+*Collisions, each cross-referenced into both rows:*
+
+- **Rule of law ↔ §1's judiciary** — call 4 above, and the fifteenth.
+- **Education quality already exists.** `economy.gd`'s `_update_potential_shift()`
+  has been a first-order lag on sustained education spending since S4, shared with
+  infrastructure and trade openness. §5's bullet names a stock the model has had
+  for six blocks, so **§5 must not build a second one** — V1.4b's collision in a
+  new place, and the reason (a) ships one new stock rather than two.
+- **Scandals ↔ §8.** §8's own text says the event schema is the union of the
+  channels §3–7 create and that "written before them, it gets written twice" — and
+  a revelation with preconditions, choices and consequences *is* §8's definition.
+  Cannot be left silent, because the whole *why events are last* argument rests on
+  it.
+- **Inequality ↔ §6.** §6 owns brackets, wealth and capital gains — the only real
+  distributional levers in the game. §5 owns the *statistic* and its political
+  price; §6 owns the *instruments*. Without that split §5's index has no writer of
+  its own, which is why (c) ships it as a declared stopgap read.
+- **Government messaging ↔ §7's campaign phase.** The same machine in two blocks.
+
+*Orphans — tiered V1 in [[mechanics-society]] and in no bullet of any row:*
+
+- **Government messaging.**
+- **Honeymoon and fatigue**, deferred *in code* at `opinion_constants.gd`'s
+  `APPROVAL_NEUTRAL` — "time in office as its own drag is V1" — and in no row at
+  all. The narrowest miss on this list and the oldest.
+- **Birth rate and life expectancy**, for which no data exists.
+
+*Three things the nine bullets assume the model does not have:*
+
+- **"Ageing driving pension and health costs."** `spending_pct_gdp` is a
+  player-set **rate**. There is no cost side, no beneficiary count and no
+  per-capita benefit anywhere, so ageing cannot raise a number the player sets.
+  (b)'s answer is a **required rate the set rate is measured against**, so ageing
+  raises a *shortfall* — which also hands service quality its denominator.
+- **"Corruption degrading policy effectiveness."** `effectiveness` multiplies
+  **deltas only**, deliberately, so at that site corruption costs a do-nothing
+  player exactly zero. (a) resolves it by degrading the *stock* instead.
+- **"Press freedom with legitimacy costs."** There is no legitimacy quantity, and
+  `bloc_offset` — the nearest — never enters `issue_salience`, so V1.3d's own
+  argument says a price on it could never be named by the polling panel or by
+  `elections.gd`'s attribution. (d) owns that.
+
+**Existing content already pre-prices two of the bullets through channels that
+become wrong the day the statistic exists.** `data/laws/institutional.json` prices
+corruption as `other_revenue_pct_gdp: 0.1`, and `data/laws/social.json` prices
+immigration as `structural_unemployment_pct: -0.05`. Re-authoring both is a cost
+booked to this block rather than a surprise inside it: (a) pays the first, (b) the
+second. That is V1.4b's retro-fit, found in advance this time.
+
+### V1.5b -- demographics and migration, and the dataset the row said did not exist
+
+**The decomposition's own reason for deferring (b) was wrong, and that is the session's
+headline.** Call 2 defers it partly because ten authored age structures with *no dataset
+behind them* would be [docs/foreign-policy-model.md](docs/foreign-policy-model.md)'s
+clustered `coalition_position` finding a block later. But the World Bank publishes age
+structure (`SP.POP.0014.TO.ZS`, `SP.POP.65UP.TO.ZS`) and 15-64 participation
+(`SL.TLF.ACTI.ZS`) for all ten, on the same licence through the same loop -- and
+[docs/data-sources.md](docs/data-sources.md)'s loop has always fetched `date=2015:2024`,
+so a per-nation ageing **slope** cost one extra read of a series already on disk and **no
+extra download**. Old-age dependency spans **LUX 0.225 to ITA 0.388**; the slopes span
+**2.58x**, wider than the levels. **Twenty-third** stale-row instance.
+
+**A cohort machine was designed and then CUT, and Luxembourg is the proof.** Nothing in
+the model reads a head *count* -- `population` enters no equation in `economy.gd`, and
+`firm_jobs_offset_pct()` returns before its denominator unless a firm has moved. A
+uniform 15-64 bucket also predicts **Luxembourg ages fastest of the ten**; measured, it
+ages **slowest**, because its working cohort is bulged young by migration and a uniform
+outflow over-ages it. And fertility and life expectancy are *inputs* to a projection
+whose *output* the dataset already publishes. So the drift is linear at its measured
+rate, `demography_constants.gd` carries **exactly one tuned constant**, and this is
+deliberately *not* `capability_target()`/`capability_step()`'s shape: those converge on a
+target the player sets, and a population converges on nothing a president decides.
+
+**The shortfall is a DENOMINATOR at one existing site.** `spending_pct_gdp` is a
+player-set rate, so ageing cannot drive it; what ageing does is make the same rate buy
+less. `Society.quality_target()` divides by the dependency factor, which is **exactly
+1.0** at new game for all ten nations. That discharged `society_constants.QUALITY_KEYS`'s
+own promise word for word -- *"It joins by becoming an entry"* -- for **one entry and
+zero lines in `opinion.gd`**.
+
+**A pre-committed tiebreaker failed for a THIRD distinct reason, and the rule is
+extended.** `MIGRATION_SHARE_BETA`'s was *"strictly less legible than a saturated
+corruption register, then take the largest passing candidate"* -- a genuine strict
+ordering, which is exactly what V1.5a's restated rule demands. It still failed, because
+**both bands are one-sided minimums**: every candidate above the threshold passes, so
+"largest" returns the top row of whatever grid was swept, and widening the grid moved the
+answer from 0.010 to 0.016. **The range was choosing the constant.** The rule now reads:
+a tiebreaker must strictly order the survivors **and its answer must not move when the
+candidate range is widened** -- which is checkable in advance by widening the grid, where
+*is it a strict ordering?* is not. The corrected selector (smallest passing, since both
+bands are minimums) chooses **0.0090**, *interior* to the grid, which is the evidence the
+correction did something.
+
+**The kill switch fired on `DEPENDENCY_ELASTICITY["health"]` and the entry was DELETED.**
+The row asks for ageing to drive pension **and health** costs; health's widest bloc row
+moves -0.07 at an elasticity of 0.15 and only **-0.51 at 1.00**, against a +-3.0 floor.
+The dependency factor reaches only ~1.10 over a term, so even the largest defensible
+elasticity moves a fraction of a point of GDP -- V1.4b's finding that this layer's
+channels sit below the opinion model's resolution. Ageing is a health cost in the world;
+it is not one this model can make a voter notice inside a term.
+
+**Two constants were deleted and nothing replaced them but content.** `POP_GROWTH_PCT`
+(one flat 0.15 for all ten, against measured ITA **-0.238** and LUX **+1.938** -- the
+constant had every nation in Europe growing and one of them shrinks) and
+`LABOUR_FORCE_SHARE` (0.45, whose own comment called it "measured, not a dial" -- true
+for France to three digits at 0.4543, and wrong for Germany at 0.5027, with the roster
+spanning ITA 0.423 to NLD 0.551).
+
+**`SAVE_VERSION` is 17, earned twice, and the second half adds NO FIELD AT ALL.** The two
+live shares are the ordinary half: absent they read 0.0, which is a different model
+rather than a neutral default. The sharp half is `service_quality["pensions"]` -- a
+version-16 save carries `{"health": ...}` and no `pensions` key, `.get(key, 0.0)` starts
+the stock at zero against a reference that is also zero, so the deviation reads as a large
+and growing **positive**: a pension system that has just been invented and is improving
+fast, a windfall the player did not earn. `tests/test_save_load.gd` asserts both halves
+separately, which pins that **growing a registry dictionary can earn a bump**.
+
+**The re-run held the prediction where it counts.** 23 of 24 shared regimes are
+bit-identical in GDP, growth, trend, unemployment, debt and deficit; the one exception is
+`managed_subsidises`, exactly the regime the labour-force denominator was predicted to
+reach. **Zero outcome changes.** The bloc transfer moved nothing, and the handoff's
+assumption that cohorts re-baseline it was wrong: `Bloc.net_positions()` reads the
+loader's Nation objects and is called once at new-game, never re-ticked. The nineteenth
+regime is the cheap kind, and the legibility evidence is sharper than the headline --
+under `managed_corrupts` the result screen now attributes `pensions` at salience 0.17,
+where before V1.5b it could not appear at all. Model:
+[docs/demography-model.md](docs/demography-model.md).
+
+**`BLOC_SIZE.pensioners` stays authored, and the refusal is recorded beside it.** It is
+0.24 against a measured 65+ share of 0.2215 drifting to about 0.27 -- one quantity, two
+writers, the failure this project names most often. It stays because it is an
+*electorate* share and excludes under-18s, because `BLOC_TURNOUT` already models the age
+effect a second time, and above all because the table is read by `elections.gd` twice
+plus `cabinet.gd`, `opinion.gd` and `polling_panel.gd`: a live share would move election
+**results**, not just approval, and re-baseline every constant measured at S5, S10,
+V1.3d, V1.4c and V1.5a inside the session that also re-baselines demographics.
+`tests/test_demography.gd` pins the refusal so a later session has to come and say why.
+
+**`tools/import_data.py` was silently deleting fields, and the diff is how it was
+found.** `write_nation_file()` rebuilt each nation file from an *enumerated* key list, so
+every top-level field a later session added was dropped the next time anyone ran the
+import -- U6b's `leader` block and the `flag` block both already had been. Found by
+diffing the ten files after an import and asking why the change was larger than the block
+it claimed to add. It now rebuilds from the file's own key order, and short scalar arrays
+are written back on one line so the output already matches what is committed -- which is
+what makes *the diff shows only what you meant to change* a usable check at all.
+
+### V1.5c -- unrest, and the price the probe refused to let the session ship
+
+**The block's one true acting agent, and the session where the inverted rule and the
+rule it replaced agree.** V1.3a's rule was that state ships *with a verb*; this block
+inverted it into *every session ships a statistic and the price it charges*. Here the
+statistic is `unrest_pct` and the verb is the union's -- a rule about live state needing
+something to act on it never said the actor had to be the player.
+
+**Its headline is that the price it was designed with does not reach a voter.** The
+session committed to an OUTPUT-ONLY price: a strike writes a decaying impulse into
+`economy.gd`'s growth sum, approval falls through `growth` and `jobs`, and no thirteenth
+`ISSUE_KEYS` entry has to be argued. Measured on an isolated path -- grievance held at
+the ceiling, every other issue identical between the runs -- fourteen years of maximum
+grievance costs
+
+```
+    -4.94 % of GDP        and        -0.42 points of workers approval
+```
+
+and no candidate clears the +-3.0 floor at any scale. The reason is structural: the whole
+opinion model is written in **rates and ratios**, `growth` reads `growth_annual_pct -
+trend` and returns to zero once a shock is steady, unemployment mean-reverts to a
+structural level a strike never writes, and every fiscal figure is a share of GDP -- so a
+GDP five per cent smaller changes almost none of them. **A permanent level loss is
+invisible to a model that prices changes**, which is `opinion.gd`'s own deficit-not-debt
+argument read from the other side. Raising the scale would be tuning against an
+arithmetic impossibility, which is exactly what V1.5b refused to do for
+`DEPENDENCY_ELASTICITY["health"]` -- but V1.5b's answer there was to DELETE the term, and
+that answer is not available to the session's only price. `UNREST_OPINION_SCALE` exists
+because a pre-committed band said the design was wrong.
+
+**The row's own warning is the design constraint, and it is defeated mechanically.**
+*"Unrest driven by nothing the average voter does not already feel is a second approval
+number with a different label"* -- so the hardship term reads **two rows of the electorate
+and not six**, because `Discipline.unpopularity()` is already the six-row version and is
+already consumed by `discipline.gd`, `government.gd` and `cabinet.gd`. A second one would
+be `military_capability` / `potential_shift_pct` a fifth time. And two rows are still a
+re-weighting, so the target carries two terms **no opinion issue reads**: the Gini drift
+and the settlement stance. The row's inequality bullet is what supplies that
+independence, so §5's two bullets turn out to need each other.
+
+**Zero new weights and zero new saturation scales.** `BLOC_SALIENCE_BASE`,
+`salience_weights()` and `BLOC_SIZE` already exist, so who strikes falls out of a table
+written at S5 for unrelated reasons -- V1.3d's finding a second time. Workers weight
+`defence` at **0.00** and `tax_vat` at **0.08**, which is exactly what `managed` moves, so
+a well-governed France is structurally quiet and nothing authored that.
+
+**The row said the inequality index "cannot be derived" and was right; it does not have
+to be.** The World Bank publishes `SI.POV.GINI` for all ten on the same provider, the
+same licence and the same download loop as every other figure in `imported`. Levels span
+**NLD 25.7 to ITA 34.3** and **the signs differ** -- six nations growing more equal, four
+less -- so the clustered `coalition_position` risk a stopgap would otherwise run does not
+arise. **Twenty-fourth stale-row instance**, and V1.5b's headline one session later. The
+cost is booked rather than discovered: coverage stops at 2021, 2022 or 2023 per nation,
+so `import_data.py` gained a nearest-year fallback **scoped to that one series** -- a
+silent fallback on GDP would turn a broken download into a quietly stale figure -- and
+the year it used is written into the block. What keeps it a stopgap is that **nothing the
+player does moves it**, asserted by mutating the corporate rate, every `state_share` and
+every `regulation_burden` and requiring the index to be bit-identical. §6 discharges it by
+turning that test red.
+
+**The stateless version was designed and cut, and the harness decided it.**
+`inequality_deviation()` was to be a pure read of the slope times elapsed months -- no
+field, no save entry, `Defence.allies()`'s shape. There is no elapsed-time source that
+survives: `balance_probe.gd` and `tests/test_balance.gd` both set `state.year` **after**
+`GameState.new_game()`, so a reference captured at init reads year 0. The drift went to
+`Demography.tick_month()` instead, which is V1.5b's own split made again -- that layer
+owns measured facts about the population, and the session that prices a fact owns the
+price rather than the fact.
+
+**`settlement` is the third `effects.society` term, and a channel carrying a third
+register is schema rather than luck.** Without it the only lever pointed at a strike is a
+spending increase, and `society_probe.gd` table (c) established that raising a line
+necessarily widens the deficit -- so the player could buy industrial peace only by opening
+`public_finances`. V1.5a's `society` + `spending_pct_gdp` refusal was **narrowed from the
+channel to the pair**, because its stated reason is about corruption reaching the spending
+issues through the quality stock and was never true of the channel; a settlement law is
+naturally a spending law, so under the wide scope every one was a load error. That is
+V1.5b's own narrowing one session on, and it turns an existing red green.
+
+**And there is NO fourth anti-double-count, which is the more interesting half.**
+`society.settlement` + `structural_unemployment_pct` was written and deleted, once it was
+checked against the criterion the three existing refusals use rather than against the
+pattern they make: *the same act, the same landing site **and the same units***. A
+settlement is in units of stance and lands on the unrest target; structural unemployment
+is in points and lands on `Economy._update_unemployment()`. Two of three criteria fail.
+The distinction is **one mechanism priced twice** against **two mechanisms landing on one
+number**, and a rule that forbade the second would forbid `bloc_offset` beside anything.
+Recorded in `law.gd` itself, because the next session to add a term will reach for a fifth
+refusal by symmetry and **symmetry is not the test**.
+
+**The probe corrected the session six times, fourteen sessions running, and four of the
+six are about the measurement discipline itself.** Each is written beside the constant
+that found it:
+
+- **`UNREST_CONVERGENCE` -- a nearest-to-X tiebreaker is only as good as the grid's
+  RESOLUTION.** The first grid was a doubling ladder and chose 0.08; refining to 0.01
+  moved the answer to **0.07**. V1.5b's diagnostic is about widening, and this is the same
+  failure under refinement.
+- **`UNREST_THRESHOLD_PCT` -- a band whose ceiling is ONE regime's measured peak.**
+  Against `austerity` alone the tiebreaker chose 52.0, which passes V1.5a's ordering check
+  and V1.5b's widening check and is still wrong: *largest passing* means *that peak, minus
+  0.8*, and at 52.0 a budget that zeroes every spending line produces no industrial action
+  at all. Band (i) gained `spend_zero`; the selector is unchanged; **45.0**.
+- **`UNREST_SETTLEMENT_BETA` -- V1.5b's own correction, INVERTED.** Band (i) was lifted
+  verbatim from `demography_probe.gd` (*at or below where it started*) and did not
+  transfer: a dependency ratio rises forever, where unrest converges on a bounded target,
+  so the borrowed wording made the interval EMPTY. For a bounded stock closable means
+  *stops the strikes*. Once (i) was corrected the interval became genuinely two-sided, at
+  which point *smallest passing* -- V1.5b's forced answer -- **lands back on an edge**.
+  The rule is extended: **two model criteria, take the midpoint; one guard rail, the guard
+  rail does not select**. **12.0**.
+- **`UNREST_IMPULSE_SCALE` -- a band applied to an observable the channel does not reach.**
+  It failed at every candidate and the constant was right.
+- **`UNREST_COOLDOWN_MONTHS`** was the oldest failure a fifth time: every candidate
+  passed, so the band was a bound and not a selector. Set by argument, and it says so.
+- **`INEQUALITY_BETA`'s kill switch CLEARED** at 0.40, and the surviving term is small --
+  one month in thirty-six on the roster's widest riser. Recorded rather than tuned away.
+
+**`general_strike` was cut by measurement.** Peak reachable grievance is 53.3 under
+austerity, 49.6 under `spend_zero` and 80.6 under `tax_max`; a three-way split of
+`[45, 100]` puts the third tier at 81.7, which no budget reaches. A label the model cannot
+produce is `refused_by_partner` a fifth time, so it is deleted rather than left in a list
+looking alive.
+
+**The reachability measurement had to be redone on a harness that could survive an
+election, and the probe written to catch that error had the same blind spot.** All
+twenty-five shared regimes reported **zero acts**: every provocative budget commits at
+month 1, meets the 2027 presidential election with its full damage and loses, and the run
+stops around month 16 -- long before a stock converging at 0.07 matures. `unrest_probe.gd`
+missed it because its own loop has no elections, so it ran a losing government for
+fourteen years and reported twelve acts. That is V1.3f's measuring-the-wrong-state error a
+**third** time in one session, and the twenty-second regime is what answers it:
+`balance_probe.gd` gained a **mid-run budget switch**, which this harness has never had.
+`managed_then_austerity` holds 2027 at 26.1 %, switches, reaches grievance **48.74**,
+fires **two acts**, and is destroyed in 2032 at **9.7 %**. The mechanic is reachable in
+play, and the threshold needed no retuning.
+
+**The re-run is the cleanest split this block has produced.** All **25 shared regimes are
+bit-identical in GDP, growth, trend, unemployment, debt and deficit**; approval moves in
+all 25, worst 2.60 points, under the noise floor; **zero outcome changes**. The economics
+are untouched because no shared regime ever fires an act -- the approval movement is the
+grievance *stock* alone, which is what "read off the stock and not off the act" buys and
+costs. **Three new regimes, the twentieth to twenty-second**, and the legibility evidence
+is exact: same budget, one settlement law at month 60, and `managed_then_austerity_settles`
+turns the grievance over (46.21 to 40.04), the second strike **does not happen** (2 acts to
+1) and the incumbent's vote is 1.9 points higher. It still loses -- a settlement cannot
+rescue a five-year austerity -- and that is the model saying the right thing.
+
+**`SAVE_VERSION` is 18, and it is the first bump on this project's list resting on TWO
+fields.** `unrest_pct` is `service_quality`'s case (absent it reads 0.0, silently ending a
+crisis the player was living through) and `unrest_cooldown_months` is U6a's
+`diplo_months_to_act` (absent it reads 0, 0 means act now, so a reload fires a strike in
+its first month). They fail the rule by different failures, so `tests/test_save_load.gd`
+asserts them separately. The test also pins the **absence** of any stored inequality index.
+
+**`PRECONDITION_FIELDS` gained its first entry naming something the player did not do**,
+and the suite caught the half-edit immediately: the whitelist and `_read_field()` are the
+same list in two places, and V1.5c added one of them. Recorded in `legislature.gd` rather
+than merged, because the constant is read at load time by `law.gd` and the match runs per
+frame. `unrest_pct` may only ever be tested with `>=`, asserted over the whole law list --
+`available()` only OPENS laws, and a `<=` precondition would make unrest an uncontestable
+gate, which is call 4's "one machine claimed twice" and §1's judiciary.
+
+### V1.5d -- media, and the source of a machine that had been running since S10
+
+**The row asked for outlets that "frame the player's actions", and the framing machine
+already existed.** `opinion.gd`'s `salience_weights()` has amplified bad news at a global
+`SALIENCE_GAIN = 5.0` since S10 -- amplification with no source -- and *"bad news travels"*
+is a claim about the press this project has been making for six blocks with no outlet
+behind it. So V1.5d builds no machine: it makes one scalar into **six**, and the six
+average back to the one. **Twenty-fifth stale-row instance**, and a **twenty-sixth** the
+same day: `public_broadcasting_reform` had sat in `institutional.json` since the MVP
+pricing itself as `other_revenue_pct_gdp`, which is V1.5a's `anti_corruption_agency`
+verbatim -- a law describing its side effect and calling it the mechanism. The block's
+**fourth booked retro-fit**.
+
+**An outlet is five fields and the refusal is the design.** `data/outlets/<NATION>.json`,
+per-nation lookup on `data/companies/`'s shape, absent file = no press = the model all ten
+ran before. It names one **audience bloc**, so `BLOC_SALIENCE_BASE` already says who cares
+about what and the session adds **zero new weight tables** -- V1.5c's "who strikes falls
+out of a table written at S5" one session on. It carries **no authored alignment,
+hostility, bias or stance**, and `outlet.gd`'s unrecognised-key error says so out loud:
+alignment is derived from its position against the government's own `coalition_position`,
+so **the press turns on you when your government re-forms**, and an authored one would be
+a second writer of that.
+
+**The mean anchor is the session's one model correction, and a measurement taken before
+any code forced it.** The design was start-anchored -- `start_service_quality`'s idiom, the
+one this project reaches for by reflex. Step 0's travel table refuted it: over 168 months
+France's `coalition_position` travels **0.044** where Germany's travels 0.600 and Britain's
+0.870, because France holds a majority through every election. That put the constant near
+16 for Britain and near **250 for France**, which is the nation the game is about --
+V1.3e's globally-anchored amity in a new place. **The pre-committed fallback was REFUSED**
+(delete the alignment term, let press_freedom drive it alone) because it leaves the outlet
+register inert until the player passes a law, which is the decay V1.3a's rule exists to
+prevent. Anchoring on the size-weighted national mean instead makes
+`sum_b BLOC_SIZE[b] * dev[b]` **exactly 0**, so the mean gain is exactly `SALIENCE_GAIN`
+and every opinion constant measured since S10 keeps its calibration -- and it gives a
+FRIENDLY press a channel, which a start anchor structurally could not, since `severity` is
+`clampf(-sat, 0, 1)` and good news is already at zero. Without that, censorship would have
+been **strictly dominated** on the framing axis, the shape this project has killed five
+times.
+
+**"Press freedom as a dial with legitimacy costs" -- the quantity was neither invented nor
+dropped, because it already existed.** Legitimacy is willingness to accept your rule
+outside the ballot box, which is V1.5c's grievance; its own model doc says a country can be
+angry for reasons its approval figure does not contain, and `UNREST_BLOCS` is
+`["workers", "students"]`. So press freedom is the **fourth `effects.society` term** with
+**two prices** on V1.3c's shape. A channel carrying four registers written by four
+consecutive sessions is schema rather than luck, and `_extract_society()` needed **no
+change at all** -- it is generic over `SOCIETY_TERMS`, so all four of its error strings
+updated themselves.
+
+**`law.gd`'s warning worked.** That file records that the next session to add a term would
+reach for a fourth refusal by symmetry. V1.5d reached, checked all four candidate pairs
+against *same act, same landing site AND same units*, and every one failed. **The refusal
+that IS warranted has no shape a law schema can express**: press freedom must not reach the
+grievance target through both `PRESS_UNREST_BETA` and `Unrest.hardship()`, which is one
+register reaching one number twice through CODE. So `Opinion.salience_weights()` takes its
+gain as a **required third argument** and `unrest.gd` states the unframed one out loud --
+defaulted, silence would mean "unframed" and the next caller would get it wrong by
+omission with nothing going red.
+
+**Scandals left the block for section 8, which is a THIRD outcome that section's warning
+box did not enumerate.** Neither legal outcome survived inspection: "requiring a response"
+is a choice list, so a non-generic scandal has no response and is then a negative framing
+shock -- V1.5d's own machine with a second label; and section 8's argument for being last
+is that the event schema is the union of the channels sections 3-7 create, so a schema
+written at V1.5d is written before 6 and 7 create theirs. **Government messaging was cut**
+as press freedom's positive direction with a different label. Both written into both rows.
+
+**The probe corrected the session four times, fifteen sessions running, and the sharpest is
+about the guard-rail rule itself.** `FRAMING_BETA` pre-committed to V1.5c's rule (e) and it
+failed twice over: band (ii) turned out to be a **bound and not a selector** (0.44 at beta
+7.0 against a +-3.0 ceiling), so the interval's real upper edge is the clamp -- a guard rail
+-- and rule (e) then prescribes smallest-passing, which is wrong here because **rule (e)
+assumes the model edge is a PLATEAU**. V1.5c's own table was lumpy; this response is linear,
+so smallest-passing means *wherever the band crosses* and every refinement moves it. Rule
+extended: when the model edge is a smooth crossing, neither edge selects and the interior
+governs. **4.50**, midpoint of `[3.02, 6.00]`. `PRESS_UNREST_BETA` failed in the older way --
+every candidate passed -- and is **set by argument** as a ratio against `SETTLEMENT_BETA`,
+because a saturated censorship must open less grievance than a saturated settlement closes.
+
+**Two reachability traps, and the second was in the control.** Band (i) was first measured
+on `tax_max` from month 1, under which France loses in 2027 and the run stops at month 16 --
+and it showed a discontinuity there that vanished entirely on `managed>tax_max`, the
+govern-well-win-then-provoke case. The press sweep's control was worse: measured from month
+1 it fired **no act at all**, so "moves the date" degenerated into "an act happens". On
+`managed>austerity` at `balance_probe.gd`'s own switch month of 20 the control reproduces
+that file's `managed_then_austerity` peak of **48.74 to the digit** -- two harnesses
+agreeing, which is what V1.5c spent a session on.
+
+**The balance re-run was predicted NOT to be bit-identical, came back with a diff of exactly
+ZERO lines, and the wrong prediction is what caught the bug.** `balance_probe.gd` and
+`tests/test_balance.gd` never called `Media.tick_month()`, so both harnesses were running
+the pre-session model and their agreement was about nothing -- U6a's day-loop finding at its
+simplest, and the new part is the detection method: a bit-identical re-run is the
+reassuring outcome, so nothing about it invites suspicion, which is exactly why the
+prediction has to be written down first. With both fixed: **all 28 shared regimes
+bit-identical in GDP, growth, trend, unemployment, debt and deficit, approval moving in all
+28 by at most 3.00 points, and ZERO outcome changes.** The **29th regime is the cheap kind**
+(a law at a month) and is the legibility evidence -- same budget, one
+`broadcasting_oversight_act` at month 24, and the worst bloc moves from **rural 45 to
+students 40**: the bloc reading the paper furthest from a centrist government, and one of
+the two that marches.
+
+**`SAVE_VERSION` stays at 18**, which is not what the design pass predicted. It predicted 19
+on a `start_press_stance` and was **correct about the design it was given** -- no
+`start_coalition_position` is serialised, so an absent baseline recomputes against the
+current government and a save reloaded after the press turned scores the hostility as new,
+which is `start_bloc_burden`'s case at V1.3d. The mean anchor deleted the field and the bump
+with it. Both are recorded rather than the second quietly replacing the first, and the test
+pins the **absence**. Model, every constant and the measured tables:
+[docs/media-model.md](docs/media-model.md).
+
+
 ### V1.4 — the decomposition, and why these three
 
 Written before any code, which is where a block-shaped row belongs: V1.4 was one
@@ -1084,6 +1607,7 @@ is already made, which is most sessions once the docs are written.
 | V1.3f AI foreign policy: the acting agent | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **Seventh instance of the missing-row failure V1.3b recorded**, and this session's own plan found it by counting rather than by being told — the tier table stopped at V1.3e and the decomposition row was the only cell to read. **The decomposition row was challenged and held**, unlike V1.3e's, which was wrong three ways: the four nouns it names — an agenda, a target, a cadence, a surface for reading what was done to you — are exactly the four pieces built. The cold count came in at **~33 surfaces** — **no new files at all**, ~33 edits — level with V1.3b's ~33, against V1.3d's ~39, V1.3c's ~30, V1.3e's ~28 and V1.3a's ~25. **The surface trigger would have fired and the machine count is what mattered, exactly as V1.3e's correction said**: one machine, the agent, of which the scheduler and the target selector and the readout are parts rather than peers. No split. High on reversibility: a scheduler is the block's last new serialised state and V1.3g's alliance obligations inherit the pattern. Held. Three cuts were declared in advance and **all three taken** — no AI-to-player agreement inbox (the second machine that would have forced a split), no new content type, no map layer. **What the count did not anticipate is that the probe would correct the *model* four times rather than set constants**, which is now six sessions running and the highest count yet: interest-as-an-addend as a goodwill ratchet, unpriced friendly concessions, an unbounded and sign-inverted `third_party_effects()` that only an agent could expose, and a sweep that measured new-game when the binding state is month 24. The named escalation triggers were three; **trigger 1 (GBR, the fifth time) fired twice and was resolved by a model change both times**, trigger 2 fired once, trigger 3 never. What the count missed was found by looking at a frame, for the fourth session running: `act_reason()` computed, stored and read by nothing. Eighteenth correction on this table's own record, and the sixth to be an *addition* to it |
 | U6a The president's diary | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **NINTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the third session running — the tier table stopped at V1.3g and the U5a decomposition's one-line U6 cell was the only thing to read. **That cell was challenged and did not hold, three ways.** Its two promises contradict each other: "no new effect channel" and "politicians, celebrities, journalists, business, foreign leaders" cannot both be true, because a foreign leader is the face of a nation `data/nations/` already ships and a **journalist has no target that exists**, so meeting one *is* a new channel — U6b authors political faces only and the rest went back to [[v1]] §4 and §5, which already say they inherit the roster. Its framing was also wrong about which half is hard: "S-track, not U — the surface is the easy half" reads the roster as the cost, and the surface is where both this session's real problems were. The cold count came in at **~40 surfaces and FOUR machines** — a content roster, a scheduler at a new tick resolution, a scarce-time model and a calendar grid — the **largest on this table**, above V1.3d's ~39, V1.3b's and V1.3f's ~33, V1.3g's ~34, V1.3c's ~30, V1.3e's ~28 and U5c's ~13. **Split, on machine count, which is V1.3e's trigger and the third session to use it**; the cut is U5b → U5c's, deferring the half carrying the unmade content decision. U6a alone: ~26 surfaces, three machines. **High on reversibility, the test the preamble names, and it fires for a reason none of V1.3's rows had**: this is the first thing in the project to read a resolution finer than a month, and the whole balance harness is a month loop with no clock — so a wrong tick placement is not caught by any existing regime and is rewritten with every session that ever books anything. Held. **The session's one tuned constant was DELETED by its own probe**, which no session on this table has done before: the band was fixed before the sweep, the sweep found it structurally unreachable rather than mis-tuned (the median month offers 27 legal acts asking 124 days, so every budget bound in 100 % of months), and the constant went the way of `AGREEMENT_ACCEPT_MIN` rather than being tuned until it looked alive. **The probe corrected itself twice — both times V1.3f's measuring-the-wrong-state error, in the file written to avoid it** — and a panel test found the third and sharpest: 31 % density over fourteen years hides that a **new game's next twelve months are completely empty**, which is the one page every player sees. Two things the plan got wrong and the build found: booking cannot go on `nation_panel.gd` (a second button narrows an autowrapping label and grows the row, at the panel that has paid for that fold twice), and `upcoming()` filtered to unfired entries so the strip's own resolved-entry styling was dead code — caught by looking at a frame, for the **sixth session running**. A third came from a test that had never run: `test_state_copy.gd`'s array probe pushes a float sentinel, every copied Array on either state object had been untyped until now, and the three existing `Array[Dictionary]` fields were all excluded for unrelated reasons — so the branch reported "shared with the copy" for a field that is duplicated correctly. Twentieth correction on this table's own record, and the eighth to be an *addition* to it |
 | U6b The people | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **TENTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the fourth session running. **The decomposition cell was challenged and did NOT hold** — it says the session "authors the roster", and the roster half already existed: ~70 named people were live as loose strings across `data/nations/`, `data/parties/`, `data/laws/amendments.json` and three serialised `NationState` fields, with **every nation file writing one person's name twice** and `party.gd` documenting that duplication as a *convention*. The real job was making a person first-class the way a party already is. Cold count **~46 surfaces** — the largest on this table, above U6a's pre-split ~40 and V1.3d's ~39 — of which ~25 are ONE mechanical re-key, V1.3a's own reading of its `bloc_offset` rename. **ONE machine**, so V1.3e's split trigger does not fire: the register is the machine, the window is its surface, and the derivation had no scheduler, no decision and no new serialised state. High on reversibility, the test the preamble names: a person-id vocabulary is read by [[v1]] §4 and §5 forever and it re-keys three save fields. Held. **The probe corrected the model once and itself twice, which is nine sessions running.** A flat ordered bench picked by rank made adding one portfolio renumber every minister a party already had — 22 department changes in one run for reasons about nobody; replaced by a **shadow cabinet** keyed by portfolio, which makes churn structurally impossible rather than damped and is the more legible model besides. Then the probe's own election counter reported **zero elections for every nation over fourteen years**, which is impossible, and churn was gated on it; and the first cast-size table had no vacancy column, so a collapsed government read the same as a thin roster. **The kill switch FIRED and was honoured**: 6 distinct people against a pre-committed floor of 12, and a perfectly healthy single-party GBR at 7 with zero vacancy across three elections — so the minister bench was **cut before it was authored**, U6a's currency deletion one session on, and `cabinet-model.md`'s deferral is recorded as still correct rather than reversed. Three cuts declared in advance and all three taken: no attribute on a person, no bench for the seven non-playable nations, no re-namespacing of party ids. A fourth was taken mid-session and not planned: **`src/core/people.gd` was deleted before it was written**, because with the bench cut a name lookup is a dictionary read and every panel already holds the loader. What the count did not anticipate was found by running a check rather than by looking at a frame: **`tools/check_names.sh` iterates `git ls-files`, so the first run over the new register passed with zero hits and zero files scanned** — the largest exposure that check has ever had was, for one run, not being checked at all. **The re-run is bit-identical across all fourteen regimes with no fifteenth needed**, which the plan predicted on checkable grounds and which is a first for this run of sessions: U6a and V1.3g each needed a new regime because each added a verb, and a name is not a decision. Twenty-first correction on this table's own record, and the ninth to be an *addition* to it |
+| V1.5a The delivery layer | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **ELEVENTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the fifth session running — the tier table stopped at U6b and V1.5 had no decomposition to inherit a content cell from either, so this is the first row since V1.3b with *nothing* to read. **What was challengeable was the §5 row itself, and it was wrong eight ways** — five collisions and three orphans, listed under *V1.5 — the decomposition*, of which the sharpest is that **bullet 9 asks for a machine the project has built three times under three names**: `military_capability`, and `potential_shift_pct` twice. The cold count came in at **~28 surfaces** — five new files, ~23 edits — level with V1.3e's and U5a's ~28, against U6b's ~46, U6a's ~40, V1.3d's ~39, V1.3g's ~34, V1.3b's and V1.3f's ~33, V1.3c's ~30 and U5c's ~13. **ONE machine**, so V1.3e's split trigger does not fire at the session level: the stock is the machine, corruption is one factor at an existing site, and there is no scheduler, no decision and no new accumulator. High on **reversibility**, the test the preamble names, and both halves fire: `effects.society` is schema (c) and (d) read, so a wrong channel is rewritten with two sessions; and this is the first session since V1.3d to put an **already-measured opinion constant** at risk, because `QUALITY_SCALE_PP` and `SPEND_SCALE_PP` land on the same issue and their ratio *is* the double-count answer. **The re-run was predicted NOT to be bit-identical, and predicted before it ran** — every session since V1.3d has been, because each channel read exactly 0.0 until a player *command* fired, where this one's trigger is the budget slider, which the regimes move |
 | V1.3g Defence as domestic politics | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **EIGHTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the second session running — the tier table stopped at V1.3f and the decomposition row was again the only cell to read. **The decomposition row was challenged and held**: capability, deployments, defensive alliances and obligations are exactly the four things built, and its "reads a, d" was right in a way it could not have known — **d is what makes g fire at all**. The cold count came in at **~34 surfaces** — six new files, ~28 edits — level with V1.3b's and V1.3f's ~33, against V1.3d's ~39, V1.3c's ~30, V1.3e's ~28 and V1.3a's ~25. **The surface trigger would have fired again and the machine count again decided it**: ONE machine, the commitment, of which the pact is the cause and the capability stock the price — and V1.3e's test (*is there a second thing with a scheduler, a decision, new serialised state and a surface?*) answers no **precisely because** the accept/refuse obligation surface was cut, which is the second machine V1.3f cut once already. No split. **Four cuts declared in advance and all four taken**: no obligation inbox, no Military window, no `has_budget` lift, no economy reader for capability. **The probe corrected the model three times, which is seven sessions running**: the nine never coerce each other, so the obligation is unreachable without the COUNCIL and the first run reported zero for the wrong reason; the headline approval figure cannot move on a `defence` price at all, because five blocs of six weight that issue at zero, so the test moved to the rural row rather than the constant moving; and the first opinion table measured **half the price**, having set the load and not the bill that widens the deficit every bloc does weight. Of five named escalation triggers, **one fired** — GBR unable to ally, for the sixth time in the block, resolved by a sweep that put `PACT_ACCEPT_MIN` at 1.00, *below* the trade-agreement bar and inverting the argument that set it. **The clamp was measured and found SLACK**, which is a first for this block: the worst reachable obliged bill is 0.586 against a guard rail of 2.00. What the count did not anticipate was found by looking at a frame for the **fifth session running**, and this time the bug was in the tool: `--defence --open budget` showed an em dash against a live 0.498 bill, because hiding a window frame does not clear the child panel's own `visible`, so every panel spends its one refresh on frame 1 and never rebuilds — every state-mutating screenshot flag since V1.3c had been capturing pre-mutation figures and getting away with it. The nation panel's fold reappeared at the same panel one session after V1.3e paid for it, and **height alone could not fix it**. **The re-run is bit-identical across every shared regime**, which the plan did not predict and table (h) explains: four new verbs entered `data/diplomatic-actions/` and changed no AI choice, because `state_visit` wins 90 pairs of 90 on being the only verb priced at exactly zero. Nineteenth correction on this table's own record, and the seventh to be an *addition* to it |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
 
@@ -1180,7 +1704,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 | **V1.2 Political systems** | ~~Additional playable nations **first**, then system templates as data, constitutional amendment, monarchy ↔ republic transitions, start scenarios~~ — **all shipped, block closed at V1.2e** |
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
 | **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
-| **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality |
+| **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality — **decomposed into four sessions, V1.5a–d**, before any code. Rule of law left the block for §1's judiciary (V1.1e), and inequality's *instruments* are §6's. The table and the argument are under *Next* above |
 | **V1.6 Economic depth** | Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
@@ -1200,7 +1724,7 @@ here so the omission is a decision rather than an oversight.
 | Tab | Blocked on | Today |
 |---|---|---|
 | **Military** | **V1.3f** specifically, now that V1.3 is decomposed — capability, deployments, alliance obligations. No longer an open-ended "no model exists", and no longer a whole block away: it is one named session, and the tab is that session's own UI call | One `defence` spending line under Budget, its opinion issue, and a Defence portfolio |
-| **Demographics** | V1.5 — ageing, migration, inequality | One field, `population`, under Economy |
+| **Demographics** | **V1.5b** specifically, now that V1.5 is decomposed — cohorts, the dependency ratio, migration. No longer a whole block away, and inequality is not part of it: that statistic is V1.5c's and its instruments are §6's | One field, `population`, under Economy |
 
 Both are cheaper than they were: U5a replaced the tab rail with four themed
 clusters and a sub-row, so neither needs a bar redesign. A new surface is one

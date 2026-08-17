@@ -196,17 +196,19 @@ const GDP_SHARE_REFERENCE := 0.020
 const FIRM_IMPULSE_MAX_PCT := 2.00
 
 # --- What a subsidy does to jobs ----------------------------------------------
-
-## Share of the population in the labour force.
-##
-## NOT A TUNED CONSTANT and deliberately not named like one. Unemployment is a
-## percent of the labour force and this file's only population figure is a head
-## count, so something has to convert between them; 0.45 is the measured
-## participation-times-working-age figure for the roster, not a dial. The jobs
-## channel therefore has NO tuned constant in it at all -- only this conversion
-## and the clamp below -- which is what lets docs/companies-model.md report the
-## channel's size as a finding rather than defend it as a choice.
-const LABOUR_FORCE_SHARE := 0.45
+#
+# LABOUR_FORCE_SHARE was here at 0.45, and its own comment defended it as "NOT A TUNED
+# CONSTANT ... the measured participation-times-working-age figure for the roster, not
+# a dial". V1.5b took that claim at its word and checked it: France is 0.7407
+# participation x 0.6134 of working age = 0.4543, so the constant was right to three
+# digits -- for France. Germany is 0.7994 x 0.6289 = 0.5027, and the roster spans Italy
+# 0.423 to the Netherlands 0.551.
+#
+# So it was DELETED rather than re-derived, and Demography.labour_force() reads the two
+# measured facts instead. One number right for one nation became two facts for all ten,
+# and this file has one fewer constant than it did. The jobs channel's "no tuned
+# constant at all" property survives the change intact -- it now has no constant of its
+# own beyond the clamp below.
 
 ## Hard clamp on the firm layer's contribution to structural unemployment, points.
 ## Same per-quantity bound as FIRM_IMPULSE_MAX_PCT above, on the other channel.

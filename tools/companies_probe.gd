@@ -44,6 +44,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Demography = preload("res://src/sim/demography.gd")
 const K = preload("res://src/sim/companies_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
@@ -310,7 +311,7 @@ func _table_d_jobs() -> void:
 				best_row = "%s %s" % [nation_id, company.id]
 			print("%-4s %-22s %12.0f %12.4f %12.0f" % [
 				nation_id, company.id.substr(4), net_jobs, -ns.firm_jobs_offset_pct,
-				ns.population * K.LABOUR_FORCE_SHARE,
+				Demography.labour_force(ns),
 			])
 
 	print("     best: %s at %.4f pts -- %s" % [
@@ -468,7 +469,7 @@ func _table_g_regulation_jobs() -> void:
 				# scaled -- sweeping a const would mean editing the file per row.
 				var payroll: float = _named_payroll(nation_id, String(sector))
 				var shed: float = payroll * beta * K.REGULATION_BURDEN_MAX
-				var points: float = 100.0 * shed / (ns.population * K.LABOUR_FORCE_SHARE)
+				var points: float = 100.0 * shed / Demography.labour_force(ns)
 				if points > best:
 					best = points
 				if is_equal_approx(beta, K.REGULATION_JOBS_BETA):

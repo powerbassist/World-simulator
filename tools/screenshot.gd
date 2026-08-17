@@ -122,6 +122,40 @@ var _regulate := false
 ## prove. So this nationalises a firm in a sector it then regulates, and the frame
 ## carries the holding, the dividend, the burden and the jobs figure at once.
 var _nationalise := false
+
+## V1.5a, and the eighth time. A new game's quality stock sits EXACTLY on its own
+## reference for all ten nations -- that is the property the whole session rests on --
+## so the overview's two service lines are deliberately silent on frame 1 and a capture
+## with no flag proves only that they stay quiet. This is the flag that makes them speak.
+##
+## It passes the corruption law rather than poking `ns.corruption`, so the frame proves
+## the sixth effect channel dispatches as well as that the readout draws. And it ticks
+## far enough for the STOCK to have moved off its reference: at QUALITY_CONVERGENCE the
+## first month's move is ~2 % of the gap, which rounds to the same two decimals the
+## panel prints -- a frame captured at month 1 would show a live corruption level
+## against an unchanged quality figure and look like the readout was broken.
+var _corrupt := false
+
+## V1.5b, and the ninth flag. The economy panel's dependency line is never silent -- a
+## country has an age structure on frame 1 -- but the figure it leads with is a
+## DEVIATION, and on frame 1 that deviation is exactly 0.0 for all ten nations. So an
+## unflagged capture proves the caption renders and proves nothing about whether the
+## drift reaches it, which is the same argument --corrupt made one session ago and
+## --coerce three blocks before that.
+##
+## Passes the migration law rather than poking `ns.migration_stance`, so the frame is
+## evidence that the widened effects.society channel dispatches and not only that the
+## label draws. Ticks far enough for the SHARES to have travelled: the drift is a
+## fraction of a point a year, so a frame at month 1 would show a live stance against
+## an unchanged ratio and look like the readout was broken.
+var _migrate := false
+
+## V1.5c: run a budget bad enough that the unions walk out, and hold the clock until
+## they have. Both halves of the session need it -- the economy panel's unrest caption
+## is SILENT below a grievance of 0.05, so an unflagged capture proves the caption
+## compiles and nothing else, and the message card only exists in a month an act fires.
+var _unrest := false
+var _press := false
 var _main
 
 
@@ -152,6 +186,14 @@ func _init() -> void:
 			_regulate = true
 		elif args[i] == "--nationalise":
 			_nationalise = true
+		elif args[i] == "--corrupt":
+			_corrupt = true
+		elif args[i] == "--migrate":
+			_migrate = true
+		elif args[i] == "--unrest":
+			_unrest = true
+		elif args[i] == "--press":
+			_press = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -217,6 +259,14 @@ func _apply_view() -> void:
 		_regulate_a_sector()
 	if _nationalise:
 		_nationalise_a_firm()
+	if _corrupt:
+		_corrupt_the_state()
+	if _migrate:
+		_tighten_migration()
+	if _unrest:
+		_provoke_the_unions()
+	if _press:
+		_muzzle_the_press()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -356,6 +406,124 @@ func _subsidise_a_firm() -> void:
 ## harness gives: whether the chamber agrees is a different question from whether
 ## the panel draws the burden, and a capture flag that silently produced nothing on
 ## the months it did not is exactly the class of bug this tool exists to find.
+## V1.5a. Passes the corruption-raising law twice, so the level is well clear of the
+## rounding the panel prints, then ticks two years for the stock to travel. Through
+## Legislature.apply() rather than by writing ns.corruption, so the frame is evidence
+## about the channel and not only about the label.
+func _corrupt_the_state() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("corruption", 0.0)) > 0.0:
+			Legislature.apply(state, ns, law, loader)
+			Legislature.apply(state, ns, law, loader)
+
+	_tick_months(24)
+
+
+## V1.5b. Passes every migration-tightening law twice, then ticks four years -- longer
+## than --corrupt's two, and for a reason worth stating: corruption moves the delivery
+## factor the month it passes, where a migration stance moves a SHARE that then has to
+## move the ratio that then has to move the stock. Three lags in series need a horizon,
+## and a flag that captured a frame before the last of them had moved would be the
+## measuring-the-wrong-state error this tool has now found twice.
+func _tighten_migration() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("migration", 0.0)) < 0.0:
+			Legislature.apply(state, ns, law, loader)
+			Legislature.apply(state, ns, law, loader)
+
+	_tick_months(48)
+
+
+## V1.5c. Cut every service the mobilised blocs care about, then run the clock until the
+## unions have actually walked out.
+##
+## The horizon is the longest of any flag here and it has to be, for --migrate's reason
+## one step further along: a grievance is a STOCK converging at UNREST_CONVERGENCE on a
+## target that is itself built out of satisfactions that have to move first, so the
+## chain is budget -> issue -> hardship -> stock -> threshold -> act -> card. The probe
+## measures the first act under this budget at around month 36, so a flag that captured
+## a frame at 24 would show a live grievance and an empty message column and prove
+## nothing about the half of this session that is an agent.
+func _provoke_the_unions() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	# balance_probe.gd's `austerity` deltas, which is the regime the probe's own bands
+	# are measured against -- so the frame shows a state the measurement describes
+	# rather than one invented for the screenshot.
+	var lines := {}
+	for pair in [["health", -2.5], ["education", -2.0], ["defence", -1.0], ["pensions", -3.5], ["infrastructure", -2.0]]:
+		lines[pair[0]] = maxf(float(ns.start_spending_pct_gdp.get(pair[0], 0.0)) + float(pair[1]), 0.0)
+	Budget.commit(state, {
+		"spending_pct_gdp": lines,
+		"tax_rates_pct": {
+			"income": float(ns.start_tax_rates_pct["income"]) + 6.0,
+			"corporate": float(ns.start_tax_rates_pct["corporate"]) + 5.0,
+			"vat": float(ns.start_tax_rates_pct["vat"]) + 4.0,
+		},
+	})
+
+	_tick_months(48)
+
+
+## Put the press under state oversight and run the clock far enough for the framing to
+## reach a bloc row. V1.5d.
+##
+## Through Legislature.apply() rather than by writing ns.press_freedom, because that
+## field has exactly ONE writer and a tool that poked it directly would capture a state
+## the game cannot produce -- the same reason _corrupt_the_state() passes a law.
+##
+## Provokes first and only then censors, which is what makes the frame worth looking at:
+## `emergency_broadcasting_powers` is gated on unrest_pct >= 35, so a calm France cannot
+## reach it at all, and a screenshot of a law nobody can pass proves nothing about the
+## panel. The regime is balance_probe.gd's `managed_then_austerity`, the one V1.5c
+## established is REACHABLE -- govern well, win, then provoke.
+func _muzzle_the_press() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	Budget.commit(state, {
+		"spending_pct_gdp": {"defence": maxf(float(ns.start_spending_pct_gdp.get("defence", 0.0)) - 1.4, 0.0)},
+		"tax_rates_pct": {"vat": float(ns.start_tax_rates_pct["vat"]) + 3.0},
+	})
+	_tick_months(20)
+
+	var lines := {}
+	for pair in [["health", -2.5], ["education", -2.0], ["defence", -1.0], ["pensions", -3.5], ["infrastructure", -2.0]]:
+		lines[pair[0]] = maxf(float(ns.start_spending_pct_gdp.get(pair[0], 0.0)) + float(pair[1]), 0.0)
+	Budget.commit(state, {
+		"spending_pct_gdp": lines,
+		"tax_rates_pct": {
+			"income": float(ns.start_tax_rates_pct["income"]) + 6.0,
+			"corporate": float(ns.start_tax_rates_pct["corporate"]) + 5.0,
+			"vat": float(ns.start_tax_rates_pct["vat"]) + 4.0,
+		},
+	})
+	_tick_months(40)
+
+	for law in _main._loader.laws:
+		if law.id == "broadcasting_oversight_act":
+			Legislature.apply(_main._state, ns, law, _main._loader)
+			break
+	_tick_months(12)
+
+
 func _regulate_a_sector() -> void:
 	var state = _main._state
 	var loader = _main._loader

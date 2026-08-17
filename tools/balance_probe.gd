@@ -37,6 +37,13 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Society = preload("res://src/sim/society.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
+const Media = preload("res://src/sim/media.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const DemographyK = preload("res://src/sim/demography_constants.gd")
+const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 
@@ -284,6 +291,90 @@ const OWNERSHIP_REGIMES := {
 }
 
 
+## V1.5a's regime, and it is the CHEAP kind for V1.4b's reason: corruption reaches the
+## quality stock through a LAW, and applying a law at a month is a shape this harness
+## has known since AMENDMENT_REGIMES. Only the content is new.
+##
+## Applies every corruption-RAISING law and never repeals it, which is the reachable
+## worst case the delivery clamp is measured against -- the treatment the subsidy, the
+## burden and the nationalisation all get.
+##
+## THE SEVENTEEN REGIMES ABOVE ARE NOT BIT-IDENTICAL AFTER V1.5a, and this file is
+## where that shows. Every session since V1.3d has had a channel reading exactly 0.0
+## until a player COMMAND fired; this one's second trigger is the budget slider, which
+## `managed` and `austerity` both move, so the quality stock diverges from its own
+## reference in every regime that touches a spending line. Predicted in the plan before
+## the run rather than discovered in the diff.
+const SOCIETY_REGIMES := {
+	"managed_corrupts": {"budget": REGIMES["managed"], "corrupt_month": 6},
+}
+
+## V1.5b's regime, the NINETEENTH, and it is the CHEAP kind for the same reason V1.5a's
+## was: a migration stance reaches the dependency ratio through a LAW, and applying a
+## law at a month is a shape this harness has known since AMENDMENT_REGIMES. Only the
+## content is new.
+##
+## Applies every migration-TIGHTENING law and never repeals it -- the direction that
+## makes the country age faster, which is the reachable worst case the dependency
+## clamp is measured against, and the treatment the subsidy, the burden, the
+## nationalisation and the corruption register all get.
+##
+## THE EIGHTEEN REGIMES ABOVE ARE NOT BIT-IDENTICAL AFTER V1.5b EITHER, and the cause
+## is narrower than V1.5a's: `pensions` joined QUALITY_KEYS with a denominator that
+## begins drifting in month one, so every regime moves through the pensions issue with
+## no player command at all. What does NOT move any regime is the labour-force change,
+## because firm_jobs_offset_pct() returns before its denominator unless a firm has
+## moved, and the bloc transfer, because Bloc.net_positions() is loader-side and called
+## once. Predicted in the plan before the run rather than read off the diff.
+const DEMOGRAPHY_REGIMES := {
+	"managed_tightens_migration": {"budget": REGIMES["managed"], "migrate_month": 6},
+}
+
+## V1.5c's regimes, the TWENTIETH and TWENTY-FIRST, and they are two DIFFERENT kinds --
+## the first time this list has needed both in one session.
+##
+## `managed_settles` is the cheap kind, V1.5a's and V1.5b's: a settlement reaches the
+## grievance through a LAW, and applying a law at a month is a shape this harness has
+## known since AMENDMENT_REGIMES. It is also the legibility evidence, in `managed`
+## vs `managed_corrupts` form -- same budget, one law, and the grievance path differs.
+##
+## `austerity_provokes` is the honest kind, and it exists because the probe MEASURED
+## that it had to. tools/unrest_probe.gd table (a) reports the unforced grievance peak
+## per existing regime: `hands_off` 6.7, `managed` 5.3, `spendthrift` 33.0, `ruinous`
+## 23.5 -- all under a threshold of 45 -- against `austerity` 53.9, `spend_zero` 49.3
+## and `tax_max` 79.7. So the channel IS reachable by three existing regimes and this
+## one adds the settlement verb on top of the budget that provokes, which is the
+## combination no other regime produces: a player who causes a strike and then answers
+## it. Without the measurement the reachability would have been assumed, and if it had
+## been wrong every shared regime would have come back bit-identical and their
+## bit-identity would have meant nothing -- U6a's day-loop finding in a new place.
+## V1.5d, and it is the CHEAP kind of new regime -- a law applied at a month, which is a
+## shape this harness has known since AMENDMENT_REGIMES, so only the content is new.
+## V1.3c, V1.3g, U6a and V1.4a each had to teach it a verb; this one teaches it nothing.
+##
+## The point of it is the legibility comparison: identical budget, identical everything,
+## one censorship law the only difference.
+const MEDIA_REGIMES := {
+	"managed_censors": {"budget": REGIMES["managed"], "censor_month": 24},
+}
+
+const UNREST_REGIMES := {
+	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
+	"managed_then_austerity": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": REGIMES["austerity"],
+		"settle_month": -1,
+	},
+	"managed_then_austerity_settles": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": REGIMES["austerity"],
+		"settle_month": 60,
+	},
+}
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
@@ -341,6 +432,25 @@ func _init() -> void:
 		for name in OWNERSHIP_REGIMES.keys():
 			var regime: Dictionary = OWNERSHIP_REGIMES[name]
 			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
+		for name in SOCIETY_REGIMES.keys():
+			var regime: Dictionary = SOCIETY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, int(regime["corrupt_month"]))
+		for name in DEMOGRAPHY_REGIMES.keys():
+			var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
+			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
+		for name in MEDIA_REGIMES.keys():
+			var regime: Dictionary = MEDIA_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {},
+				int(regime["censor_month"])
+			)
+		for name in UNREST_REGIMES.keys():
+			var regime: Dictionary = UNREST_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime["settle_month"]),
+				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+			)
 
 	quit(0)
 
@@ -365,7 +475,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -388,6 +498,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 	var elections: Array[String] = []
 	var problems: Array[String] = []
+	var peak_unrest := 0.0
 
 	var year := START_YEAR
 	var month := 1
@@ -402,6 +513,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, loader)
+		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
+		# Added to the harness in the same commit as the model, because the balance re-run
+		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
+		# harness was running the pre-session model and its agreement meant nothing. That
+		# is U6a's day-loop finding: a system this loop never calls is a system whose
+		# bit-identity proves nothing about it.
+		Media.tick_month(state, loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
@@ -429,6 +547,18 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
+		# additions above it, and that is the difference this row exists to record: the
+		# quality stock reads the live spending line, so it diverges from its own
+		# reference in every regime that moves one -- `managed` and `austerity` both do.
+		# The seventeen regimes above are therefore NOT bit-identical after this session,
+		# which the plan predicted before the run.
+		# V1.5b, immediately before Society: the quality stock divides by this layer's
+		# dependency factor, so demography must have settled before quality reads it.
+		Demography.tick_month(state)
+		Society.tick_month(state)
+		Unrest.tick_month(state)
+		peak_unrest = maxf(peak_unrest, float(ns.unrest_pct))
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -454,6 +584,17 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if i + 1 == nationalise_month:
 			_nationalise(state, loader, ns, regime_name, year, month)
+
+		if i + 1 == corrupt_month:
+			_corrupt(state, loader, ns, regime_name, year, month)
+		if i + 1 == migrate_month:
+			_tighten_migration(state, loader, ns, regime_name, year, month)
+		if i + 1 == switch_month:
+			_switch_budget(state, ns, switch_delta, regime_name, year, month)
+		if i + 1 == settle_month:
+			_settle(state, loader, ns, regime_name, year, month)
+		if i + 1 == censor_month:
+			_censor(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -547,6 +688,15 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 	for line in elections:
 		print("  " + line)
+
+	# V1.5c. The reachability column, printed for EVERY regime rather than only the two
+	# that settle. A channel whose act never fires makes twenty-five bit-identical
+	# regimes prove nothing about it -- U6a's day-loop finding, and it is measured here
+	# rather than assumed because tools/unrest_probe.gd's own harness has no elections
+	# and so cannot see a run that ENDS before the grievance matures.
+	print("  unrest: peak %.2f, ended at %.2f, acts %d (threshold %.1f)" % [
+		peak_unrest, ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
+	])
 	if cabinet_shortfall_month > 0:
 		print("  resignations over the run: %d (last: %s)" % [ns.resignations_count, ns.last_resignation])
 	if problems.is_empty():
@@ -836,6 +986,125 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 ## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
 ## the assembly division belongs to tests/test_legislature.gd, and a balance row
 ## whose numbers depend on a chamber agreeing is a row that measures two things.
+## V1.5a. Every corruption-raising law at once, never repealed -- the reachable worst
+## case for the delivery factor, and the treatment _regulate() and _nationalise() both
+## get. `emergency_procurement_powers` carries a 48-month cooldown, so applying it
+## directly here rather than through the cooldown gate is what makes "worst case" mean
+## the clamp rather than one pass of one law.
+## V1.5d. Put the press under state oversight, once, and let the run carry it.
+##
+## ONE PASS RATHER THAN THE CLAMP, unlike _corrupt() directly below: corruption's worst
+## case is what its probe needed, where this regime exists to show what ONE ordinary law
+## does to an ordinary run. Saturating it would answer a question media_probe.gd already
+## answers and would make the comparison against `managed` unreadable.
+func _censor(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("press_freedom", 0.0)) < 0.0:
+			Legislature.apply(state, ns, law, loader)
+			print("  %d-%02d %s: '%s' applied -- press_freedom now %+.2f" % [
+				year, month, regime_name, law.id, ns.press_freedom,
+			])
+			return
+	printerr("  no press-restricting society law is authored")
+
+
+func _corrupt(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("corruption", 0.0)) > 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no corruption-raising society law is authored")
+		return
+
+	# Repeated until the register saturates, so the regime measures the clamp rather
+	# than the content's own magnitude.
+	while ns.corruption < SocietyK.CORRUPTION_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d corruption %.2f, delivery %.3f after %d rounds" % [
+		regime_name, year, month, ns.corruption, Society.delivery_factor(ns), applied,
+	])
+
+
+## V1.5b. Every migration-tightening law at once, never repealed -- the reachable worst
+## case for the dependency ratio, and _corrupt()'s treatment one register over. Both
+## migration laws carry a 24-month cooldown, so applying them directly here rather than
+## through the cooldown gate is what makes "worst case" mean the clamp rather than one
+## pass of one law.
+func _tighten_migration(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("migration", 0.0)) < 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no migration-tightening society law is authored")
+		return
+
+	while ns.migration_stance > -DemographyK.MIGRATION_STANCE_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d migration stance %.2f, dependency ratio %.4f after %d rounds" % [
+		regime_name, year, month, ns.migration_stance,
+		Demography.dependency_ratio(ns), applied,
+	])
+
+
+## Applies every settlement law that CALMS, and never the ones that impose. Same call
+## the subsidy, the burden, the nationalisation, the corruption register and the
+## migration stance all get: the harness drives the direction the session's own bands
+## are measured against, so the regime and the probe describe the same world.
+## V1.5c. A budget change PART-WAY THROUGH A RUN, which this harness has never had.
+##
+## Every regime above commits at month 1 and never moves again, so every provocative
+## budget meets the 2027 presidential election with its full damage already done and
+## loses -- the run stops around month 16 and the grievance, which converges at
+## UNREST_CONVERGENCE on a target it takes two years to approach, never matures. All
+## twenty-five shared regimes therefore reported ZERO acts, and their bit-identity said
+## nothing whatever about the channel this session added: U6a's day-loop finding, third
+## instance, and this time the probe that was supposed to catch it had the same blind
+## spot (tools/unrest_probe.gd's own loop has no elections, so it happily ran a losing
+## government for fourteen years and reported twelve acts).
+##
+## What a player can actually do and no regime could express: govern well, WIN, and then
+## spend the second term on a budget that provokes. That is the reachability question,
+## and it needs a mid-run switch to ask.
+func _switch_budget(state, ns, delta: Dictionary, regime_name: String, year: int, month: int) -> void:
+	if delta.is_empty():
+		return
+	var pending := _resolve_pending(ns, delta)
+	if pending.is_empty():
+		return
+	Budget.commit(state, pending)
+	print("  %d-%02d %s: budget switched mid-run" % [year, month, regime_name])
+
+
+func _settle(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var applied := 0
+	var laws: Array = []
+	for law in loader.laws:
+		if float(law.effects.get("society", {}).get("settlement", 0.0)) > 0.0:
+			laws.append(law)
+	if laws.is_empty():
+		printerr("  no calming settlement law is authored")
+		return
+
+	while ns.settlement_stance < UnrestK.SETTLEMENT_STANCE_MAX and applied < 20:
+		for law in laws:
+			Legislature.apply(state, ns, law, loader)
+		applied += 1
+
+	print("  [%s] %04d-%02d settlement stance %.2f, unrest %.2f after %d rounds" % [
+		regime_name, year, month, ns.settlement_stance, ns.unrest_pct, applied,
+	])
+
+
 func _regulate(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var heaviest := {}
 	for law in loader.laws:

@@ -190,7 +190,7 @@ func _opinion_tick_with_effectiveness(ns, effectiveness: float) -> void:
 		national[issue] = 0.0
 
 	for bloc in K.BLOC_KEYS:
-		var weights := Opinion.salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat)
+		var weights := Opinion.salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, K.SALIENCE_GAIN)
 		var score := 0.0
 		for issue in weights:
 			score += float(weights[issue]) * float(sat.get(issue, 0.0))

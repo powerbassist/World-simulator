@@ -24,6 +24,33 @@ const BLOC_KEYS := ["workers", "pensioners", "urban", "rural", "business", "stud
 
 ## Share of the electorate. A partition by dominant identity, summing to 1.0 —
 ## which is what makes the weighted roll-up defensible rather than arbitrary.
+## V1.5b ASKED WHETHER `pensioners` SHOULD BECOME COHORT-DERIVED AND THE ANSWER IS NO,
+## recorded here rather than in a doc for V1.4c's reason -- so a later session finds the
+## reasons instead of the silence.
+##
+## The question is real and it is this project's most-named failure: `pensioners` is
+## 0.24 and src/sim/demography.gd now carries France's measured 65+ share at 0.2215,
+## drifting to about 0.27 over fourteen years. One quantity, two writers.
+##
+## Three reasons it stays authored, and the third is the one that decides:
+##
+##   1. It is an ELECTORATE share, not a population share. It excludes everyone under
+##      18, so it is not the same quantity even before the drift -- and 0.24 against a
+##      voting-age 65+ share is much closer than 0.24 against 0.2215 looks.
+##   2. election_constants.BLOC_TURNOUT ALREADY models the age effect a second time.
+##      Making this live would be the third writer of one story, not the second.
+##   3. THE BLAST RADIUS IS ELECTIONS AND NOT APPROVAL. This table is read by
+##      elections.gd twice (turnout and seats), cabinet.gd, opinion.gd and
+##      polling_panel.gd -- so a live share moves election RESULTS, and would
+##      re-baseline every constant measured at S5, S10, V1.3d, V1.4c and V1.5a at once,
+##      inside the session that also re-baselines demographics. No measurement could
+##      then attribute anything to either.
+##
+## THE STANDING CONSEQUENCE IS RECORDED RATHER THAN HIDDEN: over a fourteen-year run the
+## model carries a growing disagreement between how many pensioners the budget serves
+## and how many of them vote. V1.5c's unrest agent and docs/tiers/v1.md section 7 will
+## both reach for a live electorate share, and this is the note that tells them the
+## disagreement is known and priced rather than overlooked.
 const BLOC_SIZE := {
 	"workers": 0.30,
 	"pensioners": 0.24,
@@ -91,6 +118,44 @@ const BLOC_LABEL := {
 ## What names ownership to the player instead is the authored `bloc_offset` on
 ## data/company-actions/ownership.json, read on the polling panel's bloc rows -- the
 ## surface docs/diplomacy-model.md's finding has pointed at five times.
+##
+## V1.5a ASKED THE SAME QUESTION ABOUT `corruption` AND THE ANSWER IS ALSO NO, on one
+## of V1.3d's four tests rather than on the S10 ratio, and without a sweep. Tests 1 and
+## 3 pass easily -- corruption reaches the `health` issue, which the polling panel
+## already lists and elections.gd already attributes, and a negative satisfaction is
+## what SALIENCE_GAIN amplifies, so it can become more salient. Test 2 passes too: the
+## isolated channel moves the headline -8.32 at a saturated register.
+##
+## TEST 4 FAILS OUTRIGHT AND STRUCTURALLY, which is V1.4c's deciding test reached by a
+## different route. `spending.health` and `corruption` both write the SAME issue, so a
+## thirteenth key would be COLLINEAR with a key that already exists: the salience
+## simplex would merely re-split one issue's weight between two names for one quantity,
+## and no value of a new BLOC_SALIENCE_BASE row turns two names into two quantities.
+## The S10 ratio was NOT swept, deliberately -- V1.3d and V1.4c each swept it because
+## tests 1-4 were genuinely in tension and the drift decided; here the answer is settled
+## before the drift is relevant, and sweeping to choose between a yes and a no already
+## decided would be a measurement nothing reads.
+##
+## What names corruption to the player is the same surface ownership uses: the authored
+## `bloc_offset` on the two `society` laws, plus the `health` issue moving on the
+## polling panel. Sixth time that finding has been pointed at.
+##
+## V1.5d ANSWERS IT NO FOR THE FIFTH TIME, and the reason is new -- which is why it is
+## written out rather than folded into the four above, since a reader would otherwise
+## assume they are the same reason four times.
+##
+## Framing does not have a satisfaction to key. It modifies the WEIGHTS in
+## salience_weights(), so a thirteenth entry would be an issue whose satisfaction is a
+## weight -- a category error rather than a close call, and the question never reaches
+## V1.3d's test 1. The three earlier noes are all about a term that DOES have a
+## satisfaction and should not get its own key: ownership (V1.4c) because the mechanic
+## and the cost are the same number, corruption (V1.5a) because it is collinear with
+## `health`, and unrest (V1.5c) because its price is an offset at the bloc_offset site.
+##
+## What names the press to the player is the polling panel's agenda list REORDERING and
+## elections.gd's attribution naming a different issue -- both of which framing reaches
+## for free through ns.issue_salience, with no edit near either file. See
+## docs/media-model.md section 11.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat",
@@ -152,6 +217,48 @@ const DEFICIT_SCALE_PP := 6.0
 ## one bloc rule and being embargoed by Germany should cost about the same, and at
 ## 0.80 they do.
 const EUROPE_SCALE := 0.80
+
+## V1.5a. Points of GDP of service-quality DEVIATION that saturate the satisfaction
+## term, in the same units as SPEND_SCALE_PP above and deliberately so: quality and
+## the spending delta land on the same issue, so the RATIO of these two constants IS
+## the double-count answer, and expressing them in different units would hide it.
+##
+## BAND, fixed before the sweep: the quality channel must move the headline approval
+## figure past the ±3.0 noise floor at a reachable sustained spending change.
+##
+## TIEBREAKER, also fixed before the sweep: the ratio against SPEND_SCALE_PP = 3.0,
+## with the pre-committed rule that if the two terms SUMMED under a sustained change
+## exceed what SPEND_SCALE_PP produced on its own, SPEND_SCALE_PP is re-measured
+## DOWNWARD rather than this constant being shaved. That direction is the point --
+## the delta term was measured at S10 against a world where delivery was instant, and
+## it is the older number that was wrong about the total, not the new one.
+##
+## THE BAND FAILED AND THE TIEBREAKER TURNED OUT TO BE A TEST THAT COULD NOT FAIL.
+## Both are recorded rather than tidied, because both are the session's findings.
+##
+## The band was measured on the wrong path: it asked whether "the quality channel
+## alone" moves the headline, through a +1.0 pt spending increase -- and raising a
+## line necessarily widens the deficit, so the quality channel alone was never
+## observable there. On the isolated path (the stock moved with every spending line
+## untouched, so every other issue is bit-identical between the runs) it passes at
+## 3.0, 4.5 and 6.0 and fails at 9.0 and 12.0.
+##
+## The tiebreaker said: if the two terms summed exceed what SPEND_SCALE_PP produced
+## alone, re-measure SPEND_SCALE_PP down. Any positive stock term adds to the total, so
+## it fires for every candidate -- V1.3e's own criticism of its split trigger, in a new
+## place. What replaced it: the delivery half must be worth LESS than the announcement
+## half, because an announcement is certain and immediate where delivery is contingent
+## and lagged, which is ratio > 1.0 against SPEND_SCALE_PP; and the smallest passing
+## value satisfying that is what ships. That rule chose 4.5 where this constant had
+## been provisionally set to 6.0, which is the evidence it was not written backwards
+## from a number already picked.
+##
+## SPEND_SCALE_PP is deliberately NOT re-measured. Doing so would re-baseline all five
+## spending issues to correct a change that reaches one, and S10's own measurement of
+## it stays valid for the four lines that have no stock.
+##
+## Full tables: docs/society-model.md (c).
+const QUALITY_SCALE_PP := 4.5
 
 # --- Salience ----------------------------------------------------------------
 

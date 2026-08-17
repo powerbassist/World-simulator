@@ -34,6 +34,7 @@ const NOT_COPIED := {
 	"errors": "new-game diagnostics, meaningless on a copy",
 	"recent_effects": "a projection has no past, same reasoning as history",
 	"foreign_acts": "a projection has no past; the SCHEDULE that produces acts is on NationState and IS copied",
+	"unrest_acts": "a projection has no past; the SCHEDULE that produces acts (unrest_cooldown_months) is on NationState and IS copied -- foreign_acts' split exactly",
 }
 
 var _failures: Array[String] = []

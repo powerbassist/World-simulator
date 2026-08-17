@@ -79,7 +79,7 @@ static func _tick_nation(state, ns) -> void:
 	if ns.potential_gdp_eur_bn > 0.0:
 		gap = 100.0 * (ns.gdp_eur_bn - ns.potential_gdp_eur_bn) / ns.potential_gdp_eur_bn
 
-	# Five terms since V1.4a. coercion_impulse_pct is sustained rather than decayed
+	# Six terms since V1.5c. coercion_impulse_pct is sustained rather than decayed
 	# -- a measure in force is a standing condition, not a shock -- and carries its
 	# own clamp in coercion_constants.gd, because docs/economy-model.md's
 	# divergence argument is per-quantity and a new quantity owes it a bound.
@@ -89,10 +89,18 @@ static func _tick_nation(state, ns) -> void:
 	# condition. It reads EXACTLY 0.0 in every month of every game in which no
 	# subsidy has ever been paid, which is what lets the whole firm register go live
 	# with the balance harness bit-identical across all fourteen existing regimes.
+	#
+	# unrest_impulse_pct is the first addend on the DECAYING side of that distinction
+	# since demand_impulse_pct itself, and it is there because a strike is a shock and
+	# not a standing condition -- the same sentence the two above are excluded by, read
+	# the other way. Its clamp is unrest_constants.UNREST_IMPULSE_MAX_PCT and the DECAY
+	# is applied by Unrest.tick_month() rather than beside demand_impulse_pct below, so
+	# the field keeps one writer. It reads exactly 0.0 in every month of every game in
+	# which no union has ever acted.
 	var growth: float = (
 		trend + C.GAP_CLOSE * (-gap)
 		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
-		+ ns.firm_impulse_pct
+		+ ns.firm_impulse_pct + ns.unrest_impulse_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth
@@ -100,7 +108,10 @@ static func _tick_nation(state, ns) -> void:
 	_apply_growth_to_sectors(state, ns, growth)
 	_update_unemployment(ns, trend, growth)
 
-	ns.population *= C.monthly_factor(C.POP_GROWTH_PCT)
+	# V1.5b: per-nation and measured, where this was one flat constant for all ten.
+	# Compound rather than linear, because a population does compound -- unlike the
+	# age SHARES demography.gd drifts, which cannot.
+	ns.population *= C.monthly_factor(ns.pop_growth_pct)
 
 	ns.demand_impulse_pct = clampf(
 		ns.demand_impulse_pct * C.IMPULSE_DECAY, -C.IMPULSE_MAX_PCT, C.IMPULSE_MAX_PCT

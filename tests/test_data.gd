@@ -66,6 +66,21 @@ func _init() -> void:
 	if not names_field:
 		failures.append("corrupt fixture did not produce an error naming unemployment_pct: %s" % [fixture_errors])
 
+	# V1.5b. The cohort check worth a fixture is the RESIDUAL one, because it is the
+	# only one that cannot be read off the field it guards: young and old are each in
+	# range on their own, and it is their sum that leaves Demography.working_share()
+	# -- a denominator in dependency_ratio() AND in labour_force() -- near zero.
+	var cohort_text := FileAccess.get_file_as_string("res://tests/fixtures/nation_bad_cohorts.json")
+	var cohort_dict = JSON.parse_string(cohort_text)
+	var cohort_errors: Array[String] = []
+	Nation.from_dict(cohort_dict, "nation_bad_cohorts.json", cohort_errors)
+	var names_working := false
+	for e in cohort_errors:
+		if e.find("working age") != -1:
+			names_working = true
+	if not names_working:
+		failures.append("corrupt cohort fixture did not produce an error naming the working-age floor: %s" % [cohort_errors])
+
 	if loader.nations.has("FRA"):
 		var fra: Nation = loader.nations["FRA"]
 		var expected_gdp := 2900.0
