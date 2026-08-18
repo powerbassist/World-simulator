@@ -122,6 +122,36 @@ CYCLE_INDICATOR = "NY.GDP.MKTP.KD.ZG"
 CYCLE_FROM_YEAR = 1990
 CYCLE_EXCLUDE_YEARS = [2020, 2021]
 
+# V1.6b. Inflation: the per-nation anchor, and the two roster-wide constants
+# src/sim/inflation_constants.gd needs. Reuses V1.6a's WINDOW but is still its own
+# DOWNLOAD -- load_wb_indicator_series() reads sources/wb/{code}.json, one file per
+# indicator code, so V1.5b's "one extra read of a series already on disk" does not
+# transfer and docs/data-sources.md gains a second date=1990:2024 line.
+#
+# THE EXCLUSION LIST IS EMPTY AND THAT IS AN EDITORIAL ACT, not an omission. V1.6a
+# drops 2020-21 from the growth series because a pandemic is an exogenous OUTPUT
+# shock in a series measuring output, which docs/tiers/v1.md section 8 owns. The
+# 2022-23 energy spike is a PRICE shock in a series measuring prices -- it is the
+# thing this indicator exists to record, and dropping it would leave an inflation
+# model calibrated on the thirty years in which nothing happened. So `_excludes` is
+# written into every nation file as [] rather than left out, for the reason
+# `inequality._year` is written: a provenance record that hides its own editorial
+# act is worse than none.
+#
+# Keeping it costs what it should. Spain's mean over 1990-2024 is 2.90 against 2.62
+# with 2022-23 removed, and Germany's 2.09 against 1.83.
+PRICES_INDICATOR = "FP.CPI.TOTL.ZG"
+PRICES_FROM_YEAR = 1990
+PRICES_EXCLUDE_YEARS = []
+
+# V1.6b. The Phillips regression needs unemployment over the SAME window as prices,
+# not over the 2015-2024 one everything else reads it at. The wide download is a
+# strict superset -- verified row by row, 100 overlapping rows, zero differing values
+# -- and every other caller reaches this series through load_wb_indicator_for_year(),
+# which matches an exact year. So the download was widened rather than duplicated,
+# and this constant records that the widening is deliberate.
+PRICES_UNEMPLOYMENT_INDICATOR = "SL.UEM.TOTL.ZS"
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -335,6 +365,121 @@ def build_cycle_blocks(series):
     }
 
 
+def _ols(xs, ys):
+    """Slope and Pearson r of a simple regression. Returns (slope, r, n)."""
+    n = len(xs)
+    mx = sum(xs) / n
+    my = sum(ys) / n
+    sxy = sum((a - mx) * (b - my) for a, b in zip(xs, ys))
+    sxx = sum((a - mx) ** 2 for a in xs)
+    syy = sum((b - my) ** 2 for b in ys)
+    if sxx <= 0.0 or syy <= 0.0:
+        sys.exit("prices: a regression input has zero variance -- the series is flat")
+    return sxy / sxx, sxy / (sxx * syy) ** 0.5, n
+
+
+def build_prices_blocks(series, unemployment):
+    """V1.6b. The per-nation inflation anchor, and the two constants measured off it.
+
+    The second block in this file that needs the whole roster at once, and for a
+    different reason from build_cycle_blocks(): that one needs the roster to form a
+    RATIO, this one needs it to pool a REGRESSION. The anchor itself is per nation and
+    could have been built one at a time; the two printed constants could not.
+
+    WHAT IS MEASURED HERE IS NOT WHAT docs/tiers/v1.md section 6 ASKED FOR, and the
+    refutation is the session's finding rather than an inconvenience. The ROADMAP row
+    specifies "a price pressure from the gap, the impulse and (a)'s shock". Regressed
+    against an output gap built the way src/sim/economy.gd builds one -- the running
+    sum of (growth - own-mean growth), per nation, demeaned -- the output gap carries
+    NO SIGNAL and its sign FLIPS between sub-samples: +0.204 pre-euro, +0.098 in the
+    euro era, -0.140 pooled. The UNEMPLOYMENT gap carries a stable, correctly-signed
+    Phillips relation in both disjoint halves. So the model reads unemployment, which
+    is docs/economy-model.md's own treatment of Okun -- the honest textbook
+    relationship rather than a bespoke one -- and it dissolves the row's other defect
+    for free, because the gap and the impulses that fill it were one quantity written
+    three times.
+
+    Both sub-sample slopes are printed, not just the pooled one. Two disjoint windows
+    agreeing on sign is V1.6a's cross-check discipline, and the pooled figure is
+    attenuated by pooling two regimes with different means -- so it is the WEAKEST of
+    the three and would be the wrong one to ship.
+    """
+    anchors = {}
+    for nid in NATIONS:
+        values = list(series.get(nid, {}).values())
+        if len(values) < 5:
+            sys.exit(
+                f"{nid}: only {len(values)} usable years of {PRICES_INDICATOR} in "
+                f"[{PRICES_FROM_YEAR}, {YEAR}] -- an anchor cannot be measured "
+                f"from that"
+            )
+        anchors[nid] = sum(values) / len(values)
+
+    # Persistence, as an AR(1) on each nation's own deviation from its own anchor.
+    # Demeaned per nation so the pooled fit measures how sticky inflation IS, not how
+    # different the ten countries are from each other.
+    lag_x, lag_y = [], []
+    for nid in NATIONS:
+        years = sorted(series[nid])
+        for i, y in enumerate(years):
+            dev = series[nid][y] - anchors[nid]
+            if i > 0 and years[i - 1] == y - 1:
+                lag_x.append(series[nid][years[i - 1]] - anchors[nid])
+                lag_y.append(dev)
+
+    rho, rho_r, rho_n = _ols(lag_x, lag_y)
+
+    # The Phillips slope, on three windows. `u_mean` is the nation's own average
+    # unemployment over the same window -- a stand-in for the structural rate, which
+    # is exactly what src/sim/economy.gd's `structural_unemployment_pct` is.
+    def slope(lo, hi):
+        xs, ys = [], []
+        for nid in NATIONS:
+            years = [
+                y for y in sorted(series[nid])
+                if lo <= y <= hi and y in unemployment.get(nid, {})
+            ]
+            if len(years) < 5:
+                continue
+            us = [unemployment[nid][y] for y in years]
+            ps = [series[nid][y] for y in years]
+            um = sum(us) / len(us)
+            pm = sum(ps) / len(ps)
+            for i in range(len(years)):
+                xs.append(us[i] - um)
+                ys.append(ps[i] - pm)
+        return _ols(xs, ys)
+
+    pre = slope(PRICES_FROM_YEAR, 1998)
+    euro = slope(1999, YEAR)
+    pooled = slope(PRICES_FROM_YEAR, YEAR)
+
+    print(
+        f"prices: persistence rho {rho:.4f} (r {rho_r:.3f}, n {rho_n}) "
+        f"-- src/sim/inflation_constants.gd INFLATION_PERSISTENCE"
+    )
+    # Sign flip is deliberate. The regression is pi on (u - u_mean) and so comes back
+    # negative; the model writes target = anchor + BETA * (structural - u), so BETA is
+    # the same slope with the argument the other way round and is POSITIVE.
+    print(
+        f"prices: Phillips slope on the unemployment gap -- "
+        f"pre-euro {-pre[0]:.4f} (r {pre[1]:.3f}, n {pre[2]}), "
+        f"euro era {-euro[0]:.4f} (r {euro[1]:.3f}, n {euro[2]}), "
+        f"pooled {-pooled[0]:.4f} (r {pooled[1]:.3f}, n {pooled[2]}) "
+        f"-- src/sim/inflation_constants.gd INFLATION_UNEMP_BETA"
+    )
+
+    return {
+        nid: {
+            "inflation_pct": round(anchors[nid], 3),
+            "_from_year": PRICES_FROM_YEAR,
+            "_to_year": YEAR,
+            "_excludes": list(PRICES_EXCLUDE_YEARS),
+        }
+        for nid in NATIONS
+    }
+
+
 def build_imported_block(year):
     every = dict(INDICATORS)
     every.update(COHORT_INDICATORS)
@@ -368,6 +513,18 @@ def build_imported_block(year):
         load_wb_indicator_series(
             CYCLE_INDICATOR, CYCLE_FROM_YEAR, year, CYCLE_EXCLUDE_YEARS
         )
+    )
+
+    # V1.6b. Same shape and the same reason as the line above, one session on. See
+    # build_prices_blocks() for why the regression it prints reads unemployment
+    # rather than the output gap docs/tiers/v1.md section 6 names.
+    prices_blocks = build_prices_blocks(
+        load_wb_indicator_series(
+            PRICES_INDICATOR, PRICES_FROM_YEAR, year, PRICES_EXCLUDE_YEARS
+        ),
+        load_wb_indicator_series(
+            PRICES_UNEMPLOYMENT_INDICATOR, PRICES_FROM_YEAR, year, []
+        ),
     )
 
     imported = {}
@@ -424,6 +581,7 @@ def build_imported_block(year):
                 nid, sparse["gini"][nid], sparse_base["gini"][nid]
             ),
             "cycle": cycle_blocks[nid],
+            "prices": prices_blocks[nid],
         }
     return imported
 

@@ -9,9 +9,11 @@ const C = preload("res://src/sim/economy_constants.gd")
 
 const CycleK = preload("res://src/sim/cycle_constants.gd")
 
+const InflationK = preload("res://src/sim/inflation_constants.gd")
+
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
-	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle",
+	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -40,6 +42,21 @@ const KNOWN_INEQUALITY_KEYS: Array[String] = [
 ## is the block's one editorial act -- see tools/import_data.py.
 const KNOWN_CYCLE_KEYS: Array[String] = [
 	"amplitude_rel", "growth_sd_pct", "_from_year", "_to_year", "_excludes",
+]
+
+## V1.6b. imported.prices, KNOWN_CYCLE_KEYS' treatment for its exact reason: this
+## series shares the cycle's 1990-2024 window rather than the 2015-2024 one the rest of
+## the block uses, so a file that omits the provenance keys claims a figure measured
+## the way everything above it was measured.
+##
+## `_excludes` is required even though it is always EMPTY, and that is the point rather
+## than an oversight. The cycle drops 2020-21 because a pandemic is an exogenous OUTPUT
+## shock in a series measuring output; the 2022-23 energy spike is a PRICE shock in a
+## series measuring prices, which is the thing this indicator exists to record. An
+## empty list states that the question was asked and answered -- see
+## tools/import_data.py's PRICES_EXCLUDE_YEARS.
+const KNOWN_PRICES_KEYS: Array[String] = [
+	"inflation_pct", "_from_year", "_to_year", "_excludes",
 ]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
@@ -302,6 +319,17 @@ var inequality: Dictionary = {}
 ## clustered `coalition_position` failure. See docs/cycle-model.md section 3.
 var cycle: Dictionary = {}
 
+## V1.6b. imported.prices -- the nation's own long-run inflation anchor, on the same
+## standing as `cycle` above and measured the same way.
+##
+## `inflation_pct` is the whole content contribution of the inflation model, and the
+## split matches the cycle's exactly: the RESPONSE is
+## inflation_constants.INFLATION_UNEMP_BETA and INFLATION_CONVERGENCE, roster-wide and
+## measured once, and this is the LEVEL each nation returns to, which differs. Ten
+## values from 1.117 (Switzerland) to 2.903 (Spain), a 2.6x spread that does not
+## cluster. See docs/inflation-model.md section 3.
+var prices: Dictionary = {}
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -479,6 +507,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.cycle = _extract_dict(imported, "cycle", filename, errors)
 	_validate_cycle(n.cycle, filename, errors)
 
+	n.prices = _extract_dict(imported, "prices", filename, errors)
+	_validate_prices(n.prices, filename, errors)
+
 	return n
 
 
@@ -655,6 +686,37 @@ static func _validate_cycle(cycle_block: Dictionary, filename: String, errors: A
 	if int(cycle_block["_to_year"]) <= int(cycle_block["_from_year"]):
 		errors.append("%s: imported.cycle._to_year (%s) must be after _from_year (%s)" % [
 			filename, str(cycle_block["_to_year"]), str(cycle_block["_from_year"])
+		])
+
+
+## V1.6b. _validate_cycle()'s shape, one session on.
+static func _validate_prices(prices_block: Dictionary, filename: String, errors: Array[String]) -> void:
+	var keys := prices_block.keys()
+	keys.sort()
+	var expected := KNOWN_PRICES_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.prices must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	for key in ["inflation_pct", "_from_year", "_to_year"]:
+		var raw = prices_block[key]
+		if not (typeof(raw) == TYPE_FLOAT or typeof(raw) == TYPE_INT):
+			errors.append("%s: imported.prices.%s is not numeric" % [filename, key])
+			return
+
+	if typeof(prices_block["_excludes"]) != TYPE_ARRAY:
+		errors.append("%s: imported.prices._excludes must be an array of years" % filename)
+		return
+
+	_check_range_float(
+		prices_block["inflation_pct"], InflationK.ANCHOR_MIN, InflationK.ANCHOR_MAX,
+		"imported.prices.inflation_pct", filename, errors
+	)
+
+	if int(prices_block["_to_year"]) <= int(prices_block["_from_year"]):
+		errors.append("%s: imported.prices._to_year (%s) must be after _from_year (%s)" % [
+			filename, str(prices_block["_to_year"]), str(prices_block["_from_year"])
 		])
 
 

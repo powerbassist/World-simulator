@@ -28,6 +28,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -338,6 +339,8 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# harness was running the pre-session model and its agreement meant nothing. That
 		# is U6a's day-loop finding: a system this loop never calls is a system whose
 		# bit-identity proves nothing about it.
+		# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
+		Inflation.tick_month(state)
 		Media.tick_month(state, _loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)

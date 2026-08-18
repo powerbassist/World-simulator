@@ -156,11 +156,52 @@ const BLOC_LABEL := {
 ## elections.gd's attribution naming a different issue -- both of which framing reaches
 ## for free through ns.issue_salience, with no edit near either file. See
 ## docs/media-model.md section 11.
+## V1.6b ANSWERS IT YES FOR THE FIRST TIME, and the entry is longer than the five noes
+## above it because a yes has to survive tests a no never reaches. `inflation` is the
+## thirteenth key. V1.3d's four tests plus the fifth V1.4b forced, in the order they
+## were settled:
+##
+##   1. The price is not nameable otherwise -- HOLDS, and MORE STRONGLY than europe's.
+##      Every no above had an authored `bloc_offset` to fall back on: ownership.json,
+##      the two `society` laws, the unrest offset. Inflation ships NO VERB AND NO
+##      CONTENT OBJECT -- docs/tiers/v1.md section 6 runs (a), (b) and (c) under V1.5's
+##      inverted rule because there is no monetary policy in this game -- so there is
+##      no authored row anywhere it could hang on. Its only alternative was an
+##      `inflation_opinion_load` on unrest_opinion_load's shape.
+##   3. A flat offset cannot become more salient -- HOLDS, AND IT IS THE DISCRIMINATOR
+##      that separates this from the load. SALIENCE_GAIN's entire justification is that
+##      bad news crowds out the rest of the agenda, and inflation is the canonical case
+##      of an issue that becomes the ONLY issue. A load never enters salience_weights()
+##      at all, so the load would have made that structurally impossible.
+##   5. Does a prior refusal have 1 and 3 identically? NO. Unrest's price is a load
+##      precisely because a grievance number is already its own salience; ownership and
+##      corruption both had a bloc_offset. Nothing already refused shares this footing.
+##   4. NOT COLLINEAR, and this is the test the session was most exposed to, because
+##      `jobs` and `inflation` are driven by ONE quantity -- unemployment. It was
+##      measured with a FIT-STYLE criterion rather than a band, which is V1.6a's lesson:
+##      a band edge moves under widening, a comparison against the model's own accepted
+##      standard does not. |corr(sat.inflation, sat.growth)| must not exceed
+##      |corr(sat.jobs, sat.growth)| ON THE SAME RUN -- the entanglement the model
+##      already accepts between two keys Okun's law links mechanically. Two things save
+##      it: the LAG (INFLATION_CONVERGENCE's half-life is 12.8 months, so this prices
+##      where unemployment was a year ago) and the OPPOSITE SIGN (a boom is a plus on
+##      `growth` and a minus here). That is not a re-split of one weight, which is what
+##      killed `corruption`; it is the first genuine TRADE-OFF in this model, and it is
+##      what makes a boom cost the president something.
+##   2. The satisfaction clears the model's resolution -- see tools/inflation_probe.gd.
+##
+## THE S10 RATIO DRIFT IS +0.766 %, IN THE SAFE DIRECTION, against V1.3d's accepted
+## +0.39 % and V1.4c's refused -1.46 %. The prediction was written before the table was
+## computed and it held for the reason it named: ownership leaned on `business`, which
+## carries public_finances at 0.34, where inflation's row is heaviest on `pensioners`
+## and `workers` and LIGHTEST on business. A control confirms the mechanism rather than
+## leaving it asserted -- the same key added at a FLAT 0.11 to all six blocs drifts
+## -0.059 %, so the drift is the profile and not the thirteenth key as such.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat",
 	"health", "education", "defence", "pensions", "infrastructure",
-	"public_finances", "europe",
+	"public_finances", "europe", "inflation",
 ]
 
 const ISSUE_LABEL := {
@@ -176,6 +217,7 @@ const ISSUE_LABEL := {
 	"infrastructure": "Infrastructure",
 	"public_finances": "Public finances",
 	"europe": "Europe",
+	"inflation": "Inflation",
 }
 
 ## Deltas that saturate an issue's satisfaction at full strength.
@@ -217,6 +259,45 @@ const DEFICIT_SCALE_PP := 6.0
 ## one bloc rule and being embargoed by Germany should cost about the same, and at
 ## 0.80 they do.
 const EUROPE_SCALE := 0.80
+
+## V1.6b. Points of inflation ABOVE the nation's own starting rate that saturate the
+## thirteenth issue. Here rather than in inflation_constants.gd for EUROPE_SCALE's own
+## reason: that file describes what inflation IS and this converts it into what a voter
+## feels, and collapsing the two would make the model's bounds unmovable without also
+## moving the electorate's reaction to them.
+##
+## SWEPT, and the band, the tiebreaker and the measured table are pre-committed in
+## tools/inflation_probe.gd's header. Table (b), on the isolated path at the 0.145
+## points table (a) measured as reachable: band (i) (readable past the +-3.0 poll-noise
+## floor) passes at 0.40 and fails at 0.45, and band (ii) (not prematurely saturated)
+## passes above the reachable 0.145 -- so the interval is two-sided on two model
+## criteria and V1.5c's midpoint rule applies. Stable under refinement: 0.45, 0.50 and
+## 0.55 were added between the edges and all fail (i). [0.15, 0.40] -> 0.275.
+##
+## THE TABLE THAT CHOSE THIS IS INVARIANT TO IT, which had to be fixed before the
+## answer meant anything. The probe cannot change a const at runtime, so a candidate
+## scale is emulated by displacing the stock to whatever produces the SAME
+## satisfaction -- exact, saturation included. The first version rescaled the measured
+## headline linearly from the shipped value instead, and the passing interval MOVED
+## when the shipped constant moved: V1.5b's "the range was choosing the constant" in a
+## new costume. Caught only by setting the constant once and re-running.
+##
+## BAND (ii) WAS DECLARED TOO WEAK AND THE CORRECTION IS RECORDED RATHER THAN TIDIED.
+## It asked that the issue not saturate at HALF the reachable deviation, which 0.10
+## passes while saturating at the FULL one -- so as declared it would have admitted the
+## exact DEFICIT_SCALE_PP failure it was written to prevent. The binding form is
+## saturation at the peak, which is what the interval above uses. V1.4c's rule, fix the
+## band as well as the tiebreaker, applied to a band that was merely loose rather than
+## measuring the wrong thing.
+const INFLATION_SCALE_PP := 0.275
+##
+## Small compared with every other scale in this table, and that is the model rather
+## than a thumb on it. INFLATION_UNEMP_BETA is 0.25 and the reachable unemployment gap
+## is a couple of points, so the whole reachable range of this quantity is under a
+## point -- where DEFICIT_SCALE_PP spans six points of GDP because that is the range a
+## player actually moves a deficit over. A scale is the range the number MOVES over,
+## not a statement about how much the issue matters; how much it matters is
+## BLOC_SALIENCE_BASE, where inflation is the fourth-heaviest row for pensioners.
 
 ## V1.5a. Points of GDP of service-quality DEVIATION that saturate the satisfaction
 ## term, in the same units as SPEND_SCALE_PP above and deliberately so: quality and
@@ -307,6 +388,7 @@ const BLOC_SALIENCE_BASE := {
 		"jobs": 0.34,
 		"public_finances": 0.18,
 		"tax_income": 0.15,
+		"inflation": 0.13,
 		"health": 0.10,
 		"europe": 0.10,
 		"tax_vat": 0.08,
@@ -317,6 +399,7 @@ const BLOC_SALIENCE_BASE := {
 		"pensions": 0.38,
 		"health": 0.21,
 		"public_finances": 0.20,
+		"inflation": 0.16,
 		"jobs": 0.13,
 		"europe": 0.10,
 		"tax_vat": 0.08,
@@ -328,6 +411,7 @@ const BLOC_SALIENCE_BASE := {
 		"education": 0.14,
 		"infrastructure": 0.11,
 		"tax_income": 0.11,
+		"inflation": 0.10,
 		"growth": 0.10,
 		"europe": 0.06,
 	},
@@ -339,6 +423,7 @@ const BLOC_SALIENCE_BASE := {
 		"health": 0.13,
 		"defence": 0.12,
 		"tax_vat": 0.11,
+		"inflation": 0.11,
 		"pensions": 0.10,
 	},
 	"business": {
@@ -348,6 +433,7 @@ const BLOC_SALIENCE_BASE := {
 		"infrastructure": 0.09,
 		"jobs": 0.07,
 		"europe": 0.06,
+		"inflation": 0.06,
 		"education": 0.06,
 	},
 	"students": {
@@ -355,6 +441,7 @@ const BLOC_SALIENCE_BASE := {
 		"jobs": 0.22,
 		"public_finances": 0.14,
 		"tax_vat": 0.10,
+		"inflation": 0.09,
 		"growth": 0.08,
 		"health": 0.08,
 		"europe": 0.05,

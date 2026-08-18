@@ -22,6 +22,7 @@ const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
@@ -541,6 +542,19 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# same sequence -- so it is already reading last month's government and the loop
 	# approval -> censure -> re-formation -> framing -> approval is broken structurally,
 	# for free.
+	# V1.6b. AFTER Economy, which settled the unemployment it reads, and BEFORE Opinion,
+	# which prices it in the SAME month -- unlike Society and Unrest below, which sit
+	# after Opinion and are read on the following one. Said here because a reader
+	# comparing the two will otherwise assume symmetry.
+	#
+	# Every harness that ticks a system must make this call, and there are seven:
+	# here, tests/test_balance.gd, tools/balance_probe.gd, src/sim/budget.gd's
+	# project(), tests/test_budget.gd's mirror of it, and four probes.
+	# tests/test_inflation.gd reads the source of the first four and fails if the call
+	# is missing, because V1.5d cost a session to two harnesses that never called
+	# Media.tick_month() and therefore agreed about nothing.
+	Inflation.tick_month(_state)
+
 	Media.tick_month(_state, _loader)
 	Opinion.tick_month(_state)
 

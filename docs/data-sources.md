@@ -116,6 +116,16 @@ done
 # volatile a country's growth is takes several cycles, and 2015-2024 contains one.
 curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
   "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=1000"
+
+# V1.6b. Two more on the SAME window, and this is where "one extra read of a series
+# already on disk" stops being true: load_wb_indicator_series() reads one file per
+# indicator CODE, so sharing V1.6a's window buys nothing on the download. Unemployment
+# is re-fetched wide rather than duplicated -- the 1990-2024 pull is a strict superset
+# of the 2015-2024 one (verified row by row, zero differing values) and every other
+# caller reaches it through an exact-year match.
+for I in FP.CPI.TOTL.ZG SL.UEM.TOTL.ZS; do
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=1990%3A2024&per_page=1000"
+done
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing

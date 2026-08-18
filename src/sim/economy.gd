@@ -129,10 +129,27 @@ static func _tick_nation(state, ns) -> void:
 	# output around potential, so a term that moved both would be describing
 	# something else -- and potential_shift_pct is already the only feedback into
 	# trend, which is the whole of docs/economy-model.md's divergence argument.
+	# inflation_impulse_pct is the eighth addend, V1.6b, and it is on the SUSTAINED
+	# side with the cycle: high prices are a condition the economy is in. It is written
+	# by Inflation.tick_month(), which runs AFTER this function, so the figure read here
+	# is last month's -- unrest_impulse_pct's existing pattern, and what keeps the
+	# feedback loop this term closes from being an intra-month circular dependency.
+	#
+	# It is the only addend here that is a function of another addend's consequences,
+	# so it is the only one that could feed itself. It cannot, and the reason is
+	# arithmetic rather than a clamp: the term is one-sided above the anchor, and above
+	# the anchor the loop is NEGATIVE feedback -- a negative impulse raises
+	# unemployment, which lowers inflation, which shrinks the impulse. The gain is
+	# INFLATION_UNEMP_BETA * OKUN / UNEMP_REVERT * INFLATION_OUTPUT_BETA, an order of
+	# magnitude below 1.0 at the shipped values. See Inflation.output_cost_pct() for
+	# why the lower branch is not modelled and inflation_constants.gd for the bound.
+	#
+	# Like the cycle it moves GDP and never potential_gdp_eur_bn.
 	var growth: float = (
 		trend + C.GAP_CLOSE * (-gap)
 		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
 		+ ns.firm_impulse_pct + ns.unrest_impulse_pct + ns.cycle_impulse_pct
+		+ ns.inflation_impulse_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth

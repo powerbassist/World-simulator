@@ -117,6 +117,12 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.793,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": []
     }
   }
 }

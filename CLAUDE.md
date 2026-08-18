@@ -156,7 +156,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.5a) `--corrupt`,
 (V1.5b) `--migrate`,
 (V1.5c) `--unrest` and
-(V1.5d) `--press`,
+(V1.5d) `--press` and
+(V1.6b) `--inflate`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1248,13 +1249,75 @@ and the deficit moves 0.07 points against approval's 7.60 because every budget l
 share of GDP. **No thirtieth regime was needed** - the cycle is not a verb. Model:
 [docs/cycle-model.md](docs/cycle-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way.** V1.1e (upper house and
+**V1.6b shipped inflation, and the row's own input was refuted by the data.** The
+constant-price boundary was decided before any code and holds: **no nominal layer**, four
+candidate nominal channels named and cut, and `tests/test_inflation.gd` walks `src/sim/`
+and fails if any file outside `inflation.gd` reads the raw stock -- so the boundary is a
+check rather than a paragraph. What did not hold is the row's *"price pressure from the
+gap, the impulse and (a)'s shock"*: the three are **one quantity written three times**
+(the output gap IS the accumulated integral of the growth addends), and regressed on
+`FP.CPI.TOTL.ZG` the **output gap carries no signal and its sign FLIPS between
+sub-samples** -- +0.204 pre-euro, +0.098 euro era, -0.140 pooled -- while the
+**unemployment gap** is stable and correctly signed in both disjoint halves. The model
+reads unemployment, which is `economy-model.md`'s own treatment of Okun and dissolves the
+double count rather than patching it. **Instances twenty-nine and thirty.**
+
+**Three of five constants are MEASURED, and the selection rule for the slope is the
+model's own premise.** Two disjoint sub-samples bracket it at [0.252, 0.376] and the
+**euro-era** figure ships, because `out-of-scope-mvp.md` records that France does not set
+its own interest rate and that is exactly what 1999-2024 measures; the pooled figure is
+the weakest of the three and would have been the wrong one to ship on the use-all-the-data
+instinct. Persistence is converted **exactly** -- the twelfth root of the annual AR(1),
+where a linear `rho/12` would have made the model 20 % stickier than the data. The anchors
+are per-nation content, CHE 1.117 to ESP 2.903, and `_excludes` is `[]` **explicitly**: the
+2022-23 energy spike is a price shock in a series measuring prices, where V1.6a's excluded
+pandemic was an output shock in a series measuring output.
+
+**The `ISSUE_KEYS` question is answered YES for the first time**, after V1.3d's yes for
+`europe` and five noes recorded in `opinion_constants.gd`. Two tests separate it: it ships
+**no verb and no content object**, so unlike every previous candidate there is no authored
+`bloc_offset` to price it on instead; and **a flat load structurally cannot become more
+salient**, which is the one thing inflation must do. Test 4 was measured as a **fit**
+against the model's own standard rather than a band -- `|corr(inflation, growth)|` 0.2276
+against `|corr(jobs, growth)|` 0.3185 -- and the S10 drift is **+0.75 %** in the safe
+direction, with a flat-weight control at **-0.059 %** isolating the cause as the bloc
+profile rather than the thirteenth key as such. It is also the first pair of issues one
+event moves in **opposite directions**.
+
+**V1.6a's legibility floor appears in a second place, and the rule about deletion gains a
+stated exception.** Probe table (a) runs first and puts the reachable deviation at **0.145
+points** -- enough for the opinion price, not for the growth one, whose visibility band
+needs one point of inflation to cost two points of annual growth. Neither raised (tuning a
+measured slope until it is visible is what V1.5b and V1.6a each refused) nor deleted: **a
+term that is STRUCTURAL rather than decorative survives a failed visibility band**, and
+this one is the only thing making the loop negative feedback. On the GDP axis the channel
+is honestly below the readable floor and says so.
+
+**The probe corrected itself twice, and the second is the sharper: its table was not
+independent of the constant it chose.** A probe cannot change a `const` at runtime, so the
+first version rescaled the measured headline from the shipped value -- and the passing
+interval MOVED when the shipped constant moved. V1.5b's *the range was choosing the
+constant* in a new costume, caught only by setting the constant once and re-running. The
+fix emulates a candidate exactly, by displacing the stock to whatever produces the same
+satisfaction.
+
+**The re-run: 0 of 29 regimes bit-identical, ONE outcome change of 47, no thirtieth
+regime.** The six approval-only movers are **exactly the contractionary regimes**, which
+is the one-sided growth cost visible in the harness rather than a coincidence. `SAVE_VERSION`
+is **20 on three fields of four**, a first, and the three fail the rule by three DIFFERENT
+failures, so the test asserts them separately. The screenshot pass earned its keep for the
+**eleventh** session running and both bugs were the readout's: a format **copied from the
+neighbouring row** (`%+.1f` against a quantity whose whole reachable range is 0.145 points,
+printing "+0.0" against a live figure) and a flag that ticked 48 months and so ran **past**
+the thing it exists to photograph. Model: [docs/inflation-model.md](docs/inflation-model.md).
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a) and (b) are shipped.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 19**. There has never been a migration: a superseded
+Save format is at **version 20**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

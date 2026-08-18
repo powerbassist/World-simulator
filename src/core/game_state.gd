@@ -28,6 +28,7 @@ const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
@@ -231,7 +232,20 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     overwrites it from the clock on the first tick, `coercion_impulse_pct`'s case.
 ##     tests/test_save_load.gd asserts both halves, and the SPLIT is the assertion
 ##     worth having rather than the bump.
-const SAVE_VERSION := 19
+##
+## V1.6b bumps to 20, on THREE fields of four, which is a first on this list -- V1.6a
+## earned it on one of two and V1.5c on two of seven. `inflation_pct` is
+## `service_quality`'s case (the accumulation IS the state, so re-deriving on load
+## would erase a term's worth of it); `inflation_anchor_pct` is `cycle_amplitude_rel`'s
+## verbatim (content-derived, and from_dict() never sees the loader, so an absent
+## anchor collapses every nation's target toward zero and the growth channel bills a
+## deflation the nation never had); and `start_inflation_pct` is `start_bloc_burden`'s
+## (absent it reads 0.0 against a live ~1.8, so the thirteenth issue is MIS-SIGNED for
+## the rest of the run rather than merely missing). `inflation_impulse_pct` earns
+## nothing and is serialised anyway. The three are asserted SEPARATELY in
+## tests/test_save_load.gd, because a single combined check would let any one of three
+## different failures be quietly wrong. See docs/inflation-model.md section 9.
+const SAVE_VERSION := 20
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -692,6 +706,18 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# it, because the derived value belongs to Media.tick_month() and computing it in
 	# two places would be the two-writers failure this project has named five times.
 	Media.init_nation(ns)
+
+	# V1.6b, and like Unrest above this is NOT an ordering constraint -- said out loud
+	# because a reader looking at five ordered inits will otherwise invent a sixth.
+	# unemployment_pct, start_unemployment_pct and structural_unemployment_pct are all
+	# set to one figure well above, so the unemployment gap is exactly 0.0 and the
+	# target equals the nation's anchor whenever this runs.
+	#
+	# Takes the Nation where Society and Unrest do not, for the reason the inline
+	# `cycle_amplitude_rel` read above states: inline is for imported content that
+	# seeds no live stock, and the anchor seeds one. Demography.init_nation(ns, n) is
+	# the shape being copied.
+	Inflation.init_nation(ns, n)
 
 	return ns
 

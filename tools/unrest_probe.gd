@@ -95,6 +95,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Society = preload("res://src/sim/society.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -241,6 +242,8 @@ func _step(state, months_in: int) -> void:
 	state.month = month
 	Economy.tick_month(state)
 	Budget.tick_month(state)
+	# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
+	Inflation.tick_month(state)
 	Opinion.tick_month(state)
 	Demography.tick_month(state)
 	Society.tick_month(state)

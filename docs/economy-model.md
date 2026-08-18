@@ -110,6 +110,7 @@ gap = 100 × (gdp − potential_gdp) / potential_gdp
 ```
 growth = trend + GAP_CLOSE × (−gap) + demand_impulse + external_impulse
          + coercion_impulse + firm_impulse + unrest_impulse + cycle_impulse
+         + inflation_impulse
 growth = clampf(growth, GROWTH_MIN, GROWTH_MAX)
 ```
 
@@ -460,6 +461,7 @@ Every dynamic quantity in the model is exactly one of:
 | Clamped outright | growth, unemployment, erosion multiplier | Bounded by construction. |
 | Bounded by its inputs | sector output, GDP, potential, population | Grow at a clamped rate. |
 | **Bounded by content, at load** | **trade openness index, external impulse** | **`MAX_AGREEMENT_WEIGHT_MULTIPLIER` bounds the openness index before `SHIFT_MAX` ever sees it; the trade weight is normalised so it sums to 1 by construction.** |
+| **Mean-reverting, through a negative loop** | **the inflation impulse** | **One-sided above the anchor, where the loop is self-correcting: a negative impulse raises unemployment, which lowers inflation. Gain `INFLATION_UNEMP_BETA × OKUN / UNEMP_REVERT × beta` = 0.086 against 1.0. The lower branch would be self-amplifying and is not modelled — a deflation trap needs a nominal rate and there are none here. [[inflation-model]] §4.** |
 | **Bounded by construction** | **the cycle impulse** | **A sum of three sines normalised to unit standard deviation, so its extreme is `K / sqrt(K/2)` × amplitude — derived from the term count rather than chosen, and therefore a bound nobody can set wrong. [[cycle-model]] §10.** |
 
 The only unbounded quantity is **debt**, and at a flat 2 %/yr it grows at most

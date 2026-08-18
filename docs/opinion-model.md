@@ -407,3 +407,29 @@ not know polls exist.
 ---
 
 Related: [[index]] · [[economy-model]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[ROADMAP]] · [[mechanics-society]]
+
+## The thirteenth issue
+
+`inflation` joined `ISSUE_KEYS` at [[ROADMAP|V1.6b]], and it is the **first yes** to a
+question five sessions answered no — V1.3d (`europe`, yes), then V1.4c (`ownership`),
+V1.5a (`corruption`), V1.5c (`unrest`) and V1.5d (`framing`), all no.
+`src/sim/opinion_constants.gd` carries all six answers together, which is the point:
+a reader finds the reasons rather than the silence.
+
+What made this one different, in one line each:
+
+- It ships **no verb and no content object**, so unlike every previous candidate there
+  is no authored `bloc_offset` anywhere it could be priced on instead.
+- It **must be able to become more salient**, and a flat bloc-level load structurally
+  cannot — `SALIENCE_GAIN`'s whole justification is that bad news crowds out the
+  agenda, and inflation is the canonical issue that becomes the only issue.
+- It is **not collinear**, measured against the model's own accepted standard rather
+  than a band: `|corr(inflation, growth)|` is 0.2276 against `|corr(jobs, growth)|`'s
+  0.3185. The lag and the opposite sign are what save it.
+
+It is also the first pair of issues here that **one event moves in opposite
+directions** — a boom is a plus on `growth` and a minus on `inflation`. That does not
+break the one-signed property this document describes: inflation still reaches all six
+blocs with the same sign. It is a second issue with the other sign.
+
+Full argument and every measurement: [[inflation-model]] §6.

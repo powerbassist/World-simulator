@@ -174,6 +174,55 @@ var cycle_impulse_pct: float = 0.0
 ## the assertion worth having. See docs/cycle-model.md section 9.
 var cycle_amplitude_rel: float = 1.0
 
+# --- Inflation -----------------------------------------------------------------
+
+## V1.6b. The price level's rate of change, percent per year, as a STOCK. Written by
+## Inflation.tick_month() and by nothing else; tests/test_inflation.gd walks src/sim/
+## and fails if a second writer appears.
+##
+## Seeded at this nation's own anchor rather than at 0.0, so `inflation_pct -
+## start_inflation_pct` is EXACTLY 0.0 at new game for all ten. A country whose prices
+## have risen ~1.8 %/yr for thirty-five years is not at zero on the opening month.
+##
+## EARNS THE SAVE_VERSION BUMP. Absent it reads 0.0 -- a nation of permanently stable
+## prices -- and re-deriving it on load cannot rescue it, because the accumulation IS
+## the state: a save reloaded mid-inflation would silently end the inflation the player
+## spent a term earning. `service_quality` at V1.5a and `unrest_pct` at V1.5c.
+var inflation_pct: float = 0.0
+
+## V1.6b. Where inflation stood on the opening month, and the reference every political
+## price is measured against -- start_deficit_pct_gdp's, start_bloc_burden's and
+## start_service_quality's treatment.
+##
+## EARNS THE BUMP TOO, and by a different failure from the field above, which is why
+## tests/test_save_load.gd asserts them separately. Absent it reads 0.0 while
+## inflation_pct reads ~1.8, so the issue satisfaction reads -(1.8 - 0.0)/SCALE: a
+## large negative from the first month, MIS-SIGNED for the rest of the run rather than
+## merely missing. `start_bloc_burden` at V1.3d exactly.
+var start_inflation_pct: float = 0.0
+
+## V1.6b. The long-run rate this nation's inflation returns to when unemployment sits
+## at its structural rate. Imported content, from imported.prices.inflation_pct --
+## Switzerland 1.117 to Spain 2.903.
+##
+## EARNS THE BUMP FOR THE THIRD TIME, which is a first on this list, and it is
+## `cycle_amplitude_rel`'s case verbatim: from_dict() rebuilds from the dictionary
+## ALONE and never sees the loader, so a content-derived static that is not serialised
+## is simply lost. Absent it reads 0.0, every nation's target collapses toward zero,
+## and the real channel bills a deflation that nation never had -- a reloaded game
+## running a DIFFERENT MODEL from the one that saved it.
+var inflation_anchor_pct: float = 0.0
+
+## V1.6b. Points of annual growth lost to inflation above the anchor, the eighth addend
+## in economy.gd's growth sum. Signed negative or exactly zero, never positive: see
+## Inflation.output_cost_pct() for why the cost is one-sided.
+##
+## EARNS NOTHING. Absent it reads 0.0 and Inflation.tick_month() rewrites it in full on
+## the next tick -- `coercion_impulse_pct`'s and `cycle_impulse_pct`'s case. Serialised
+## anyway, so one month of a reloaded save is not quietly cheaper than the month before
+## it.
+var inflation_impulse_pct: float = 0.0
+
 # --- The bloc ------------------------------------------------------------------
 
 ## This nation's standing net contribution to the bloc, percent of its own GDP.
@@ -884,6 +933,11 @@ func duplicate_state():
 	s.cycle_impulse_pct = cycle_impulse_pct
 	s.cycle_amplitude_rel = cycle_amplitude_rel
 
+	s.inflation_pct = inflation_pct
+	s.start_inflation_pct = start_inflation_pct
+	s.inflation_anchor_pct = inflation_anchor_pct
+	s.inflation_impulse_pct = inflation_impulse_pct
+
 	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
 	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
 	s.bloc_burden = bloc_burden
@@ -1047,6 +1101,11 @@ func to_dict() -> Dictionary:
 		"coercion_impulse_pct": coercion_impulse_pct,
 		"cycle_impulse_pct": cycle_impulse_pct,
 		"cycle_amplitude_rel": cycle_amplitude_rel,
+
+		"inflation_pct": inflation_pct,
+		"start_inflation_pct": start_inflation_pct,
+		"inflation_anchor_pct": inflation_anchor_pct,
+		"inflation_impulse_pct": inflation_impulse_pct,
 
 		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
 		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
@@ -1232,6 +1291,15 @@ static func from_dict(d: Dictionary):
 	# serialised because from_dict() never sees the loader.
 	s.cycle_impulse_pct = float(d.get("cycle_impulse_pct", 0.0))
 	s.cycle_amplitude_rel = float(d.get("cycle_amplitude_rel", 1.0))
+
+	# V1.6b. Three of these four earn the bump to 20 and the fourth earns nothing; the
+	# declarations above say which and why, and tests/test_save_load.gd asserts the
+	# three separately rather than together. Every default here is 0.0 on purpose --
+	# including the anchor, where 0.0 is not a neutral reading but a different country.
+	s.inflation_pct = float(d.get("inflation_pct", 0.0))
+	s.start_inflation_pct = float(d.get("start_inflation_pct", 0.0))
+	s.inflation_anchor_pct = float(d.get("inflation_anchor_pct", 0.0))
+	s.inflation_impulse_pct = float(d.get("inflation_impulse_pct", 0.0))
 
 	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
 	# the one game_state.gd's own comment states rather than a new one. An absent

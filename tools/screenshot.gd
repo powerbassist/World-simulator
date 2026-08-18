@@ -158,6 +158,7 @@ var _migrate := false
 var _unrest := false
 var _press := false
 var _cycle := false
+var _inflate := false
 var _main
 
 
@@ -198,6 +199,8 @@ func _init() -> void:
 			_press = true
 		elif args[i] == "--cycle":
 			_cycle = true
+		elif args[i] == "--inflate":
+			_inflate = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -273,6 +276,8 @@ func _apply_view() -> void:
 		_muzzle_the_press()
 	if _cycle:
 		_run_into_a_recession()
+	if _inflate:
+		_overheat_the_economy()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -498,6 +503,43 @@ func _provoke_the_unions() -> void:
 ## clock, so the worst month can be read off it before the run starts. That is the same
 ## property the forecast band on src/ui/budget_panel.gd rests on, exercised from the
 ## other end.
+## Run the economy hot until the price level has moved, and capture THAT. V1.6b.
+##
+## The flag exists for the reason --bloc and --unrest do: the readout is a DEVIATION
+## against the nation's own start, so it reads exactly +0.0 on a new game and a frame
+## of that proves nothing about the line, the sign or the thirteenth issue's place on
+## the polling agenda.
+##
+## Through Budget.commit() rather than by writing ns.inflation_pct, because that field
+## has exactly ONE writer and tests/test_inflation.gd fails if a second appears -- a
+## tool that poked it directly would capture a state the model cannot reach. Which also
+## means the frame is honest about how SMALL the reachable movement is: the probe
+## measures 0.145 points, so the caption moves by a tenth and the panel has to be
+## legible at that size or the line is not doing its job.
+func _overheat_the_economy() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	Budget.commit(state, {
+		"spending_pct_gdp": {
+			"health": float(ns.start_spending_pct_gdp["health"]) + 2.0,
+			"infrastructure": float(ns.start_spending_pct_gdp["infrastructure"]) + 1.5,
+			"education": float(ns.start_spending_pct_gdp["education"]) + 1.0,
+		},
+		"tax_rates_pct": {
+			"income": maxf(0.0, float(ns.start_tax_rates_pct["income"]) - 3.0),
+			"vat": maxf(0.0, float(ns.start_tax_rates_pct["vat"]) - 2.0),
+		},
+	})
+	# 18 months, not 48, and that is the second half of the same finding. The demand
+	# impulse has a 6.6-month half-life and is spent after three years, so by month 48
+	# unemployment is back at its structural rate, inflation has converged back to the
+	# anchor and the frame captures a deviation of zero -- a flag that ticks PAST the
+	# thing it exists to photograph. The peak is around a year and a half in.
+	_tick_months(18)
+
+
 func _run_into_a_recession() -> void:
 	var state = _main._state
 	if state == null:

@@ -1154,6 +1154,71 @@ impulse from a pure read - so every harness in the project reaches it through a 
 they all already make. **A system that cannot be forgotten is worth more than one that
 is remembered**, and the claim was falsified before it was trusted rather than after.
 
+## V1.6b — the row named an input the data does not support
+
+**The plan said** the row's own words: inflation is *"a price pressure from the gap,
+the impulse and (a)'s shock."*
+
+**What was built** reads the **unemployment gap** and none of the three.
+
+Two corrections, and only the first was available without measuring. The three named
+inputs are **one quantity written three times** — the output gap is the accumulated
+integral of the growth addends, so a target reading the gap *and* the impulses that
+fill it double-counts, which is V1.3c's `tariff_rate_pct` error. Then the data refuted
+the survivor: regressed on `FP.CPI.TOTL.ZG` over 1990–2024, the output gap's
+correlation never leaves the noise **and its sign flips between sub-samples** (+0.204
+pre-euro, +0.098 euro era, −0.140 pooled), while the unemployment gap is stable and
+correctly signed in both disjoint halves.
+
+The direction of the error is the useful part, and it is one this log has recorded
+before in another form: **the row named the quantity the model computes rather than
+the quantity the world relates.** `output_gap_pct()` is a public function and reads
+like the obvious input; unemployment is a *result* two steps downstream and reads like
+a symptom. The relationship runs the other way.
+
+Full argument: [[inflation-model]] §2.
+
+## V1.6b — the probe's table was not independent of the constant it chose
+
+**The plan said** sweep `INFLATION_SCALE_PP` against a pre-committed band.
+
+**What happened** is that the first table moved when the answer moved. A probe cannot
+change a `const` at runtime, so the first version measured the headline response at
+the *shipped* scale and rescaled linearly to each candidate — which is wrong twice:
+approval is not linear in satisfaction (`SALIENCE_GAIN` amplifies bad news), and the
+rescale was anchored on the shipped value, so **the passing interval changed when the
+shipped constant changed**.
+
+This is V1.5b's *the range was choosing the constant* in a new costume, and it was
+caught only because the constant was set once and the probe re-run — a step that is
+not obviously necessary and now is. The fix emulates a candidate **exactly** rather
+than extrapolating: displace the stock to whatever produces the same satisfaction the
+candidate would. Verified by re-running after the change, which now moves the table by
+less than 0.003.
+
+Full argument: [[inflation-model]] §8.
+
+## V1.6b — a band that failed, and was neither raised nor deleted
+
+**The plan said** a constant neither a band nor a fit can justify is deleted.
+
+**What was built** keeps `INFLATION_OUTPUT_BETA` at an honest 0.30 with its visibility
+band failing, and records the bound.
+
+The reachable inflation deviation is **0.145 points**, so clearing a 0.25 %-of-GDP
+visibility bar needs one point of inflation to cost two points of annual growth — more
+per point than the whole business cycle. Raising it would be tuning a measured slope's
+consequence until it is visible, which V1.5b refused for `DEPENDENCY_ELASTICITY` and
+V1.6a refused for `CYCLE_AMPLITUDE_PCT`. Deleting it would remove the only term making
+the inflation loop negative feedback.
+
+**So the rule "delete what a band cannot justify" gains an exception, and the
+exception is stated rather than left implicit: a term that is STRUCTURAL rather than
+decorative survives a failed visibility band.** U6a's day budget and V1.3e's
+`AGREEMENT_ACCEPT_MIN` were deleted because nothing read them. This one closes a loop.
+
+Full argument: [[inflation-model]] §7.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

@@ -16,6 +16,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Society = preload("res://src/sim/society.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -322,6 +323,13 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Demography.tick_month(state)
 		Society.tick_month(state)
 		Unrest.tick_month(state)
+		# V1.6b. Added to BOTH lists in one commit. This runner is a hand-written mirror
+		# of Budget.project()'s tick list, so a system added to one and not the other
+		# makes the two disagree -- and the 1e-9 check below would then be measuring the
+		# omission rather than the model. Inflation belongs here for the reason the
+		# others do and one sharper: it writes a growth addend, so it reaches every
+		# fiscal figure this test compares.
+		Inflation.tick_month(state)
 		out.append(Budget.snapshot(state))
 	return out
 

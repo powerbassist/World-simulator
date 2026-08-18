@@ -21,6 +21,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 
 
 static func tick_month(state) -> void:
@@ -288,6 +289,18 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
 		# time rather than rediscovered a sixth time.
 		Unrest.tick_month(sim)
+		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
+		# below asks about Media gets the OPPOSITE answer -- so the two sit together
+		# deliberately, as the pair that shows what the test actually is.
+		#
+		# Media is refused because `framing_gain` reaches a figure only through approval
+		# and this loop holds no election. Inflation is required because it writes
+		# inflation_impulse_pct, the eighth addend in economy.gd's growth sum, so it
+		# reaches GDP, revenue and the deficit on the very next iteration of this loop.
+		# A projection that held it frozen would report a player heading into an
+		# inflationary boom as growing normally for twelve months, and the 1e-9 equality
+		# tests/test_budget.gd asserts is a done-when condition rather than a nicety.
+		Inflation.tick_month(sim)
 		# V1.5d is the first session since V1.3b whose tick does NOT belong here, and
 		# the omission is deliberate rather than forgotten. Media.tick_month() writes
 		# `framing_gain`, which has exactly one reader -- opinion.gd's bloc loop -- and

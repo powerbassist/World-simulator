@@ -70,6 +70,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 
@@ -122,6 +123,8 @@ func _new_state(nation_id: String):
 func _step(state) -> void:
 	Economy.tick_month(state)
 	Budget.tick_month(state)
+	# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
+	Inflation.tick_month(state)
 	Opinion.tick_month(state)
 	# V1.5b, immediately before Society: the quality stock divides by this layer's
 	# dependency factor, so demography must have settled before quality reads it.

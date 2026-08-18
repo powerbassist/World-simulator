@@ -761,7 +761,7 @@ bullets plus an obligation inherited from V1.4c, and one line is not a session.
 | | Session | Content | Reads |
 |---|---|---|---|
 | **V1.6a** | ~~The business cycle~~ **shipped** | A **stateless** deterministic shock over all ten nations, into `economy.gd`'s growth sum. Amplitude **fitted** to France's measured growth volatility, per-nation spread **imported**, common share **measured twice**. `SAVE_VERSION` **19**. Re-baselined V1.5c's two constants and found them unchanged | - |
-| **V1.6b** | Inflation | A price pressure from the gap, the impulse and (a)'s shock. No nominal layer: a constant-price model has nothing to deflate, so it ships as a statistic with a price. The `ISSUE_KEYS` question every session since V1.3d has deferred, answered on the strongest candidate the project has had | a |
+| **V1.6b** | ~~Inflation~~ **shipped** | A stock on the **unemployment gap**, not the output gap -- the row's three named inputs are one quantity written three times AND the measurement refuted the survivor. No nominal layer. Two prices: a growth addend and the **thirteenth `ISSUE_KEYS` entry**, the first YES after five noes. Three constants measured, two swept. `SAVE_VERSION` **20** on three fields of four | a |
 | **V1.6c** | Bond yields and the credit rating | `DEBT_REAL_RATE_PCT` becomes an anchor, not the rate. Reads debt, deficit, `unrest_pct` and (b)'s inflation; the rating is that machine read at a second point. **Inherits V1.4c's obligation WHOLE**, not halved -- see below | a, b |
 | **V1.6d** | Five taxes and brackets | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income. Discharges V1.5c's declared Gini stopgap by turning `tests/test_unrest.gd` red on purpose, through a **second field** rather than a second writer | - |
 | **V1.6e** | Sectoral investment and infrastructure projects | The block's one genuine new player verb, on `sector_output` itself, with no employment term | a, d |
@@ -834,6 +834,76 @@ mechanic in [[mechanics-economy]] is named by a section 6 bullet or already buil
 tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
 eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
 gap.
+
+### V1.6b - inflation, and the row's own input refuted by the data
+
+**The row asked for "a price pressure from the gap, the impulse and (a)'s shock", and
+none of the three survived.** The first defect was visible without measuring: the output
+gap IS the accumulated integral of the growth addends, so a target reading the gap AND
+the impulses that fill it is one quantity written three times -- V1.3c's
+`tariff_rate_pct` error. The second needed the data. Regressed on `FP.CPI.TOTL.ZG`
+against a gap built the way `economy.gd` builds one, the **output gap carries no signal
+and its sign FLIPS between sub-samples** (+0.204 pre-euro, +0.098 euro era, -0.140
+pooled) while the **unemployment gap** carries a stable correctly-signed Phillips
+relation in both disjoint halves. So the model reads unemployment, which is
+[[economy-model]]'s own treatment of Okun -- the honest textbook relationship rather
+than a bespoke one -- and it dissolves the double count rather than patching it, because
+`unemployment_pct - structural_unemployment_pct` is ONE existing quantity that already
+carries the cycle, the demand impulse and every other shock. **Instances twenty-nine and
+thirty**, the second being that the row names a price and never says what it is.
+
+**Three constants are measured and two swept, and the selection rule for the measured
+slope is the model's own premise.** Two disjoint sub-samples bracket it at [0.252,
+0.376]; the **euro-era** figure ships, because [[out-of-scope-mvp]] records that France
+does not set its own interest rate and that is exactly what 1999-2024 measures. The
+pooled figure is the weakest of the three and would have been the wrong one to ship on
+the use-all-the-data instinct. Persistence is converted EXACTLY rather than
+approximately -- the twelfth root of the annual AR(1), where a linear `rho/12` would
+have made the model 20 % stickier than the data.
+
+**The `ISSUE_KEYS` question is answered YES for the first time**, after V1.3d's yes for
+`europe` and five noes. What separates it: it ships no verb and no content object, so
+unlike every previous candidate there is **no authored `bloc_offset` it could be priced
+on instead**; and a flat load structurally cannot become more salient, which is the one
+thing inflation must do. Test 4 was measured as a FIT rather than a band --
+`|corr(inflation, growth)|` 0.2276 against `|corr(jobs, growth)|` 0.3185, the
+entanglement the model already accepts. The **S10 drift is +0.75 %, in the safe
+direction**, and a flat-weight control drifts -0.059 %, which isolates the cause as the
+bloc profile rather than the thirteenth key as such.
+
+**The legibility floor appears in a second place and is recorded rather than traded
+against.** Table (a) runs first and puts the reachable deviation at **0.145 points**.
+That is enough for the opinion price and not for the growth one: the visibility band
+needs beta >= 2.0, one point of inflation costing two points of annual growth -- more
+per point than V1.6a's whole business cycle. **The band's own prescription, ship it
+visible or delete it, is refused in both halves**: not raised, because that is tuning a
+measured slope's consequence until it is visible (V1.5b's and V1.6a's refusals); not
+deleted, because the term is STRUCTURAL rather than decorative, being the only thing
+that makes the loop negative feedback. On the GDP axis the channel is honestly below the
+readable floor.
+
+**The probe corrected itself twice, sixteen sessions running, and the second is the
+sharper.** The table that chose `INFLATION_SCALE_PP` was **not independent of it**: the
+probe cannot change a const at runtime, so the first version rescaled the measured
+headline from the shipped value -- and the passing interval MOVED when the shipped
+constant moved. V1.5b's *the range was choosing the constant* in a new costume, caught
+only by setting the constant once and re-running. The fix emulates a candidate exactly,
+by displacing the stock to whatever produces the same satisfaction.
+
+**The re-run: 0 of 29 regimes bit-identical, ONE outcome change of 47, no thirtieth
+regime.** The six approval-only movers are exactly the contractionary regimes, which is
+the one-sided growth cost visible in the harness rather than a coincidence -- they push
+unemployment up, inflation falls below the anchor, and the channel never fires. The one
+flip is the same mechanism read politically: a ruinous budget wrecks the economy, prices
+fall, and the voter rewards the disinflation. `ruinous` still loses in 2032 at 21.9 %.
+
+**`SAVE_VERSION` is 20, on three fields of four -- a first on this list** -- and they
+fail the rule by three DIFFERENT failures, so the test asserts them separately. The
+screenshot pass earned its keep for the **eleventh** session running and both bugs were
+the readout's: a format **copied from the neighbouring row** (`%+.1f` against a quantity
+whose whole reachable range is 0.145 points, printing "+0.0" against a live figure), and
+a flag that ticked 48 months and so ran **past** the thing it exists to photograph.
+Model: [[inflation-model]].
 
 ### V1.6a - the business cycle, and a legibility floor that cannot be met
 

@@ -21,6 +21,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -113,6 +114,7 @@ func _init() -> void:
 	_check_demography_fields(loader)
 	_check_unrest_fields(loader)
 	_check_cycle_fields(loader)
+	_check_inflation_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -698,8 +700,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 19:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1300,8 +1302,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 19:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1466,8 +1468,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 19:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1550,8 +1552,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 19:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18 and V1.6a to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1868,5 +1870,96 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 19:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there and V1.6a raised it to 19, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
+## because each fails the rule by a DIFFERENT failure and a single combined check would
+## let any one of the three be quietly wrong. That split is the assertion worth having
+## rather than the bump, which is V1.5c's device and V1.3g's before it.
+func _check_inflation_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# The register goes live moving nothing: at new game the unemployment gap is
+	# exactly 0.0, so inflation sits at its own anchor, the deviation is exactly 0.0
+	# and the growth addend is exactly 0.0. Exact equality rather than
+	# is_zero_approx(), which is V1.4a's precedent for a channel that must be inert.
+	if ns.inflation_pct != ns.start_inflation_pct:
+		_fail("inflation does not start at its own baseline -- the thirteenth issue is non-zero before anything has happened")
+	if ns.inflation_pct != ns.inflation_anchor_pct:
+		_fail("inflation does not start at its anchor -- init seeds a transient nobody authored")
+	if ns.inflation_impulse_pct != 0.0:
+		_fail("the inflation growth addend is %s at new game, not exactly 0.0" % ns.inflation_impulse_pct)
+
+	# Displace it, so the round-trip is testing a live figure rather than a default --
+	# and by LESS than INFLATION_SCALE_PP, or check (3) below compares two saturated
+	# clamps and reports them equal. The first version of this used +4.0 and did
+	# exactly that: both sides pinned at -1.0 and the check failed for a reason that
+	# had nothing to do with the field it was about.
+	ns.inflation_pct = ns.inflation_anchor_pct + 0.2
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+
+	# (1) inflation_pct EARNS IT, and re-deriving on load cannot rescue it because the
+	# accumulation IS the state -- service_quality's case at V1.5a and unrest_pct's at
+	# V1.5c. The assertion that separates it from a derived price is that it does NOT
+	# come back on one tick.
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(dropped["nations"]["FRA"] as Dictionary).erase("inflation_pct")
+	var calm = GameState.from_dict(dropped)
+	if not is_zero_approx(calm.player().inflation_pct):
+		_fail("an absent inflation_pct did not read as 0.0 -- the premise of the bump is wrong")
+	Inflation.tick_month(calm)
+	if calm.player().inflation_pct >= ns.inflation_anchor_pct:
+		_fail("inflation_pct recovered to its anchor on one tick, so it is derivable and the bump is unearned")
+
+	# (2) inflation_anchor_pct EARNS IT for a DIFFERENT failure: it is content-derived
+	# and from_dict() rebuilds from the dictionary ALONE, never seeing the loader --
+	# cycle_amplitude_rel's case at V1.6a verbatim. Absent, the nation runs a different
+	# MODEL, so the check is that the model moved and not merely that a field is 0.0.
+	var no_anchor: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_anchor["nations"]["FRA"] as Dictionary).erase("inflation_anchor_pct")
+	var adrift = GameState.from_dict(no_anchor)
+	if not is_zero_approx(adrift.player().inflation_anchor_pct):
+		_fail("an absent inflation_anchor_pct did not read as 0.0 -- the premise of the bump is wrong")
+	if is_equal_approx(
+		Inflation.inflation_target(adrift.player()), Inflation.inflation_target(state.player())
+	):
+		_fail("dropping inflation_anchor_pct left the target unchanged -- that half of the bump's premise is wrong")
+
+	# (3) start_inflation_pct EARNS IT for a THIRD failure, and it is the sharpest:
+	# absent it reads 0.0 against a live figure, so the issue is not missing but
+	# MIS-SIGNED for the rest of the run. start_bloc_burden's case at V1.3d.
+	var no_start: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_start["nations"]["FRA"] as Dictionary).erase("start_inflation_pct")
+	var mis_signed = GameState.from_dict(no_start)
+	var kept_sat: float = float(Opinion.issue_satisfaction(GameState.from_dict(full).player())["inflation"])
+	var lost_sat: float = float(Opinion.issue_satisfaction(mis_signed.player())["inflation"])
+	if is_equal_approx(kept_sat, lost_sat):
+		_fail("dropping start_inflation_pct left the inflation issue unchanged -- that half of the bump's premise is wrong")
+	# The strongest form of the claim: absent, the issue is not merely wrong but pinned
+	# at the FLOOR from the first month, because the deviation it reads is the whole
+	# anchor rather than the player's own movement.
+	if lost_sat > -1.0 or kept_sat <= -1.0:
+		_fail("an absent start_inflation_pct read %s against a kept %s -- the failure this bump names is that the issue saturates negative, and that is not what happened" % [lost_sat, kept_sat])
+
+	# (4) inflation_impulse_pct EARNS NOTHING and is serialised anyway --
+	# coercion_impulse_pct's and cycle_impulse_pct's case. It comes back in full on one
+	# tick, which is exactly what separates it from (1) above.
+	var no_impulse: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_impulse["nations"]["FRA"] as Dictionary).erase("inflation_impulse_pct")
+	var restored = GameState.from_dict(no_impulse)
+	Inflation.tick_month(restored)
+	if is_zero_approx(restored.player().inflation_impulse_pct):
+		_fail("inflation_impulse_pct did not come back on one tick from a displaced state -- then it would earn a bump")
+
+	# And what was NOT added. There is no stored expectation series, no month counter
+	# and no accumulated wave: the model is an anchor, a slope and a one-line lag, so a
+	# later session making it stateful turns this red and has to come and say why.
+	for pname in ["inflation_expectation_pct", "inflation_months", "inflation_history"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
+
+	if GameState.SAVE_VERSION != 20:
+		_fail("SAVE_VERSION is %d -- V1.6a raised it to 19 and V1.6b to 20 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

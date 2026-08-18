@@ -17,6 +17,7 @@ extends PanelContainer
 const Economy = preload("res://src/sim/economy.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -156,6 +157,31 @@ func _refresh() -> void:
 	_caption(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
 		100.0 * Demography.dependency_ratio(ns),
 		100.0 * (Demography.dependency_ratio(ns) - Demography.start_dependency_ratio(ns)),
+	])
+
+	# V1.6b, beside the dependency ratio and for its reason rather than the unrest
+	# line's: prices are a fact about the COUNTRY, and this is the column that reports
+	# the country. It sits under the labour rows deliberately, because the unemployment
+	# gap two lines above is what drives it -- the panel reads in the order the model
+	# computes in, which is the one thing that makes a Phillips curve legible without a
+	# sentence of explanation.
+	#
+	# NEVER SILENT, which is the dependency ratio's rule and not the delivery lines'.
+	# Every nation has an inflation rate from the first frame -- France's anchor is
+	# 1.75 -- so a line that appeared only once it moved would be hiding the level the
+	# deviation is measured against. Leads with the level and states the drift beside
+	# it, _fill_society()'s lesson: a level alone is a number with no units the player
+	# can act on.
+	#
+	# TWO DECIMALS ON THE DEVIATION AND ONE ON THE LEVEL, and the asymmetry is the
+	# screenshot pass's finding rather than a preference. The first version used the
+	# dependency ratio's %+.1f by symmetry and printed "+0.0 since the start" against a
+	# live, correct, moved figure -- because tools/inflation_probe.gd table (a) puts the
+	# whole REACHABLE deviation at 0.145 points, so one decimal can express exactly two
+	# values of it. A format copied from a neighbouring row is a format chosen for a
+	# quantity an order of magnitude larger.
+	_caption(_labour, "Inflation %.1f%%, %+.2f since the start." % [
+		ns.inflation_pct, Inflation.inflation_deviation(ns),
 	])
 
 	# V1.5c, beside the dependency ratio for the reason the comment above gives: a
