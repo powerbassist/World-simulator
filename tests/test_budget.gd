@@ -13,11 +13,14 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Defence = preload("res://src/sim/defence.gd")
+const Companies = preload("res://src/sim/companies.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Society = preload("res://src/sim/society.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
@@ -41,6 +44,7 @@ func _init() -> void:
 	_check_projection_matches()
 	_check_projection_matches_after_diplomacy()
 	_check_projection_matches_under_unrest()
+	_check_projection_matches_under_defence_and_companies()
 
 	_finish()
 
@@ -280,6 +284,65 @@ func _check_projection_matches_under_unrest() -> void:
 			_close("unrest month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
 
 
+## The FOURTH displaced check, and it exists because the mirror below was INCOMPLETE
+## for two whole blocks. Budget.project() has called Defence.tick_month() since V1.3g
+## and Companies.tick_month() since V1.4a; _run() called neither, and the 1e-9
+## agreement held anyway because both are inert from an undisplaced start -- no pact,
+## no deployment, no subsidy, no state holding. That is exactly the accident V1.3f
+## found in Diplomacy, surviving two sessions longer because nothing displaced these
+## two before projecting.
+##
+## Displacing four registers at once rather than writing two thin checks: the point is
+## not which system diverges but that the mirror is COMPLETE, and one check that would
+## fail if either line were removed says that more directly than two that each say half
+## of it. Capability is set off its equilibrium deliberately -- a deployment whose cost
+## is constant makes the bill a fixed offset both loops would carry identically, where
+## a converging capability moves the bill every month of the window.
+func _check_projection_matches_under_defence_and_companies() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var fra = state.player()
+
+	# Written straight into the registers, the idiom the three checks above use. The
+	# pact is what stops _close_orphans() erasing the deployment on the first tick.
+	state.pacts[Relations.key("FRA", "DEU")] = {
+		"action_id": "test_pact",
+		"action_name": "Test pact",
+		"since_year": state.year,
+		"since_month": state.month,
+	}
+	Defence.open_deployment(state, "FRA", "DEU", DefenceK.DEPLOYMENT_CHOSEN, null)
+	fra.military_capability = 0.5 * Defence.capability_target(fra)
+
+	var firms: Array = Companies.firms_of(_loader, "FRA")
+	if firms.size() < 2:
+		_fail("FRA has %d firms, so this check cannot displace the register" % firms.size())
+		return
+	fra.companies[firms[0].id]["subsidy"] = 1.0
+	fra.companies[firms[1].id]["state_share"] = 0.6
+
+	# Guards, for the reason the unrest check has one: an inert displacement would let
+	# this check pass by agreeing about nothing.
+	if Defence.deployment_bill_pct_gdp(state, fra) <= 0.0:
+		_fail("the displaced state carries no deployment bill, so this check proves nothing")
+		return
+	if Companies.subsidised_count(fra) == 0 or Companies.state_owned_count(fra) == 0:
+		_fail("the displaced firm register is empty, so this check proves nothing")
+		return
+
+	var pending := {"tax_rates_pct": {"vat": 23.0}}
+	var projected := Budget.project(state, pending, 24, _loader)
+	var actual := _run(state, pending, 24)
+
+	if projected.size() != actual.size():
+		_fail("defence/companies projection has %d months, actual has %d" % [projected.size(), actual.size()])
+		return
+	for i in range(projected.size()):
+		for key in projected[i].keys():
+			if key == "sectors":
+				continue
+			_close("defence/companies month %d %s" % [i + 1, key], projected[i][key], actual[i][key])
+
+
 ## main.gd's chain, which is also project()'s. Every system project() advances on
 ## its copy has to be advanced here, or the test compares a projection that ran
 ## the model against a reality that did not.
@@ -316,6 +379,14 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
 		Diplomacy.tick_month(state, _loader)
+		# Added after the fact: project() has called both since V1.3g and V1.4a and this
+		# mirror never did. The omission was invisible because both are inert from an
+		# undisplaced start -- no pact, no deployment, no subsidy, no state holding -- so
+		# the 1e-9 agreement below held by accident, exactly the way Diplomacy's did
+		# before V1.3f. _check_projection_matches_under_defence_and_companies() displaces
+		# both so the mirror's completeness is exercised rather than assumed.
+		Defence.tick_month(state)
+		Companies.tick_month(state, _loader)
 		# V1.5c. Three more, and only the last one can move a fiscal figure: an unrest
 		# act writes a growth impulse, and growth reaches GDP, revenue and the deficit.
 		# The two above it are its inputs, so leaving them out would make the runner and
