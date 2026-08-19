@@ -74,25 +74,105 @@ const STRUCT_MAX_PCT := 25.0
 # --- Revenue -----------------------------------------------------------------
 
 ## Share of GDP each tax nominally falls on: labour and household income,
-## corporate profits, consumption.
+## corporate profits, consumption, realised capital gains, and net household
+## wealth.
+##
+## V1.6d ADDS TWO, AND `wealth` IS THE ONLY ENTRY HERE THAT IS NOT A FLOW. Every
+## share above it is income earned or money spent within the year; net household
+## wealth is a STOCK of roughly four times annual output, which is why 4.00 sits
+## beside numbers under 1.0 without being a mistake. That difference is not
+## cosmetic -- it is what forces WEALTH_RATE_MAX_PCT and a per-key
+## opinion_constants.TAX_SCALE_PP, because a rate on a stock four times the size
+## of the base beneath it does the same fiscal work at a twentieth of the number.
+## The alternative -- a tiny base share on the same 0-70 scale as the other four --
+## keeps every shared table untouched and makes the figure the player sets not a
+## wealth-tax rate in any real sense, which is docs/scenario-model.md's
+## decorative-axis failure. See docs/tax-model.md section 2.
+##
+## AUTHORED, all five, and V1.6d checked before assuming so. tools/import_data.py's
+## World Bank loop covers GC.TAX.* for 10 of 10 nations over 1990-2024 -- coverage
+## is NOT the problem, which is the opposite of what docs/credit-model.md section 2
+## found for the bond series. What rules it out is universe and granularity:
+## `GC.*` is CENTRAL government (France reads 22.8 % of GDP against the 46.1 the
+## nation files carry, Switzerland 9.5), which docs/data-sources.md already rejected
+## at S1; `GC.TAX.YPKG.*` puts income, profits AND capital gains in ONE bucket, which
+## is precisely the split this session exists to create; and there is no property or
+## wealth series at all. See docs/tax-model.md section 1.
 const TAX_BASE_SHARE := {
 	"income": 0.50,
 	"corporate": 0.18,
 	"vat": 0.53,
+	"capital_gains": 0.02,
+	"wealth": 4.00,
 }
 
 ## Base erosion per unit of relative rate increase. Higher where the base is more
 ## mobile — corporate profits move, consumption does not.
+##
+## V1.6d: `capital_gains` is the MOST MOBILE ENTRY IN THIS TABLE and is authored
+## above corporate's 0.55, because realisation is a timing choice the holder makes
+## and a rate rise is answered by not selling this year. `wealth` sits with it: a
+## net-wealth base is the most portable thing a tax can point at, and every roster
+## nation that has tried one has watched the base leave.
 const TAX_EROSION := {
 	"income": 0.35,
 	"corporate": 0.55,
 	"vat": 0.25,
+	"capital_gains": 0.75,
+	"wealth": 0.80,
 }
 
 const EROSION_MIN := 0.35
 const EROSION_MAX := 1.25
 
-const TAX_KEYS := ["income", "corporate", "vat"]
+## V1.6d. The reference rate the erosion curve falls back to when a nation's own
+## STARTING rate for a tax is zero, in points.
+##
+## Budget._erosion() divides by the nation's own start, so a rate of zero left the
+## curve with nothing to be relative to and the function returned a flat 1.0 -- no
+## diminishing returns at all, linear revenue forever. That is correct for a tax
+## nobody has and WRONG the moment a player invents one, and it is reachable
+## content rather than a hypothetical: Switzerland taxes no private capital gain,
+## Belgium and Luxembourg broadly neither, and eight of the ten start with no
+## wealth tax at all. A live exploit in code older than this session, exposed by
+## this session's content -- docs/diplomacy-model.md's exploit caught before the
+## content shipped.
+##
+## PER KEY, AND THE FIRST DRAFT WAS ONE SHARED NUMBER. That version is recorded
+## because it was wrong in an instructive way: it read "two points, whatever the
+## tax, because the reference is relative to the rate being set". It is not. A
+## capital-gains tax invented from nothing is normally levied around twenty-five
+## points and a wealth tax below one, so a shared reference of two put the invented
+## capital-gains tax's revenue peak at about three points -- an order of magnitude
+## under every rate any of the ten actually charges -- while leaving the wealth tax
+## barely curved at all. ONE CONSTANT CANNOT SERVE TWO RATE SCALES, which is
+## WEALTH_RATE_MAX_PCT's finding at a second site inside the same session.
+##
+## So each entry is the rate that tax is NORMALLY levied at, which is the only thing
+## the curve can mean when the nation's own start is zero. The first three are
+## unreachable in shipped content -- all ten nations author income, corporate and VAT
+## above zero -- and are here anyway, because a scenario may zero one and a table with
+## three holes in it is a table a later session reasons from wrongly.
+const EROSION_ZERO_REF_PCT := {
+	"income": 20.0,
+	"corporate": 25.0,
+	"vat": 20.0,
+	"capital_gains": 25.0,
+	"wealth": 0.50,
+}
+
+## V1.6d. Ceiling on the wealth rate, in points, and the reason it is not 70 like
+## the four beside it. TAX_BASE_SHARE["wealth"] is 4.00 against income's 0.50, so a
+## point of wealth rate is eight points of income tax in revenue -- three points is
+## already 12 % of GDP, more than every other tax in this model put together at its
+## authored rate. A slider running to 70 would not be a wider choice, it would be a
+## slider whose top four fifths are a joke; and every historical net-wealth tax that
+## has existed sat between 0.2 and 3.0. Read by src/ui/budget_panel.gd's LEVER_MAX
+## and asserted against it by tests/test_tax.gd, so the model bound and the control
+## cannot drift apart.
+const WEALTH_RATE_MAX_PCT := 3.0
+
+const TAX_KEYS := ["income", "corporate", "vat", "capital_gains", "wealth"]
 const SPENDING_KEYS := ["health", "education", "defence", "pensions", "infrastructure"]
 
 # --- Debt --------------------------------------------------------------------
@@ -117,10 +197,17 @@ const IMPULSE_MAX_PCT := 6.0
 
 ## Fiscal multipliers, applied to the change in each line as a % of GDP.
 const MULT_SPENDING := 0.90
+## V1.6d adds two, and both are LOW for the same reason: a fiscal multiplier is
+## about whose spending changes when the tax does, and both of these fall on
+## holders rather than on earners or shoppers. Capital gains sits at corporate's
+## level; wealth below it, because a levy on a stock is met out of the stock far
+## more often than out of the month's consumption.
 const MULT_TAX := {
 	"income": 0.60,
 	"corporate": 0.40,
 	"vat": 0.70,
+	"capital_gains": 0.35,
+	"wealth": 0.25,
 }
 
 # --- Potential shift (long run) ----------------------------------------------

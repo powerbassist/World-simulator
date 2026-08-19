@@ -43,6 +43,7 @@ const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -359,6 +360,38 @@ const MEDIA_REGIMES := {
 	"managed_censors": {"budget": REGIMES["managed"], "censor_month": 24},
 }
 
+## V1.6d. *** THREE NEW REGIMES, AND THEY ARE NEEDED FOR THE REASON V1.5c's BLIND SPOT
+## WAS: the twenty-nine regimes above set three tax keys and no schedule, so the whole of
+## this session is STRUCTURALLY UNREACHABLE BY EVERY ONE OF THEM. *** (a), (b) and (c)
+## each needed none because a statistic is not a verb; a tax is, which is V1.3a's rule
+## coming back for the first time in this block.
+##
+## The third takes docs/unrest-model.md's own mid-run switch shape, because a
+## distributional lever is slow and the reachable case is *govern well, win, then
+## redistribute* rather than *provoke in month 1 and lose in 2027*.
+const TAX_REGIMES := {
+	"redistributive": {
+		"budget": {
+			"tax_rates_pct": {"capital_gains": 10.0, "wealth": 0.5},
+			"tax_progressivity": 0.5,
+		},
+	},
+	"flat_tax": {
+		"budget": {
+			"tax_rates_pct": {"capital_gains": -15.0},
+			"tax_progressivity": -0.7,
+		},
+	},
+	"managed_then_redistributive": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": {
+			"tax_rates_pct": {"capital_gains": 10.0, "wealth": 0.5},
+			"tax_progressivity": 0.5,
+		},
+	},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -452,6 +485,12 @@ func _init() -> void:
 				int(regime["settle_month"]),
 				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
 			)
+		for name in TAX_REGIMES.keys():
+			var regime: Dictionary = TAX_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+			)
 
 	quit(0)
 
@@ -473,6 +512,14 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 			var start: float = float(ns.start_spending_pct_gdp.get(key, 0.0))
 			spending[key] = clampf(start + float(delta["spending_pct_gdp"][key]), 0.0, 100.0)
 		pending["spending_pct_gdp"] = spending
+	# V1.6d. A DELTA like the two above it, against the nation's own start, which is what
+	# keeps a regime nation-relative. Clamped to the model's band rather than to [0, 100],
+	# because the schedule is an index and not a rate.
+	if delta.has("tax_progressivity"):
+		pending["tax_progressivity"] = clampf(
+			float(ns.start_tax_progressivity) + float(delta["tax_progressivity"]),
+			TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
+		)
 	return pending
 
 

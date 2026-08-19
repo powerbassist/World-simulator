@@ -30,6 +30,7 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
 ## lose_condition, term_limit) added to NationState, none of which a version-5
@@ -266,7 +267,36 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     module stateful -- a downgrade record, a rating with memory -- turns it red and
 ##     has to come and say why. That is the V1.6 decomposition's own split trigger,
 ##     pinned in the save format rather than only in the docs.
-const SAVE_VERSION := 21
+##
+## V1.6d bumps to 22 on THREE fields, and two of them add no key to this file at all --
+## they GROW a dictionary that has been serialised since S4, which is V1.5b's
+## `service_quality["pensions"]` case and the second time on this list.
+##   `tax_rates_pct["capital_gains"]` and `["wealth"]`: a version-21 save carries three
+##     keys, `revenue_lines()` reads `.get(key, 0.0)`, so both new taxes come back at a
+##     rate of ZERO -- a save that silently ABOLISHES two taxes, hands the player back
+##     whatever they were collecting, and widens the deficit by exactly it. The matching
+##     `start_tax_rates_pct` keys are absent too, so `_erosion()` falls to its
+##     zero-reference branch and every later rate rise is priced as a tax invented from
+##     nothing. A reloaded game running a DIFFERENT MODEL: `eu_member` at V1.3b.
+##   `tax_progressivity` and `start_tax_progressivity` earn it TOGETHER and by ONE
+##     failure rather than two, which is why the test asserts them as a pair and not
+##     separately the way V1.6b's three are. Absent, both read 0.0 -- which is not a
+##     neutral default but PROGRESSIVITY_MIN, the flattest schedule the model has --
+##     and because the START reads 0.0 as well the deviation is still exactly zero, so
+##     the reloaded game does not merely forget the player's bracket structure, it
+##     agrees that a flat tax was always normal. Neither field alone fails in a way the
+##     other does not cover, and a check that split them would be checking one failure
+##     twice.
+##   WHAT V1.6d DID NOT ADD is the half worth pinning, and it is V1.6c's shape one
+##     session on: there is NO stored Gini offset, no stored effective index and no
+##     stored erosion factor, because src/sim/tax.gd is stateless -- each is a pure read
+##     over `tax_progressivity` and two rates this save already carries.
+##     tests/test_save_load.gd asserts those absences, so the day a session gives the
+##     distribution an accumulator it turns red and has to come and say why. And
+##     `gini_index` keeps its single writer, Demography.tick_month(), which is what the
+##     V1.6 decomposition's "a second field, not a second writer" asked for -- one step
+##     further, because there is no second field either.
+const SAVE_VERSION := 22
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -619,6 +649,17 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 
 	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
+	# V1.6d. From a model constant rather than from the nation file, and that is a
+	# deliberate refusal rather than a shortcut: nothing on tools/import_data.py's
+	# licence-clean loop measures how progressive a bracket structure is, and ten
+	# identical authored values in ten nation files would be the clustered
+	# `coalition_position` failure with extra steps -- a content field that looks
+	# per-nation and carries no information. See tax_constants.PROGRESSIVITY_BASE.
+	#
+	# Start captured from the live value on the line below, which is what makes every
+	# term in src/sim/tax.gd read EXACTLY 0.0 at new game for all ten.
+	ns.tax_progressivity = TaxK.PROGRESSIVITY_BASE
+	ns.start_tax_progressivity = ns.tax_progressivity
 	ns.spending_pct_gdp = n.spending_pct_gdp.duplicate(true)
 	ns.start_spending_pct_gdp = ns.spending_pct_gdp.duplicate(true)
 	ns.other_spending_pct_gdp = n.other_spending_pct_gdp

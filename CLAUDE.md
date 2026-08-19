@@ -157,8 +157,9 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.5b) `--migrate`,
 (V1.5c) `--unrest` and
 (V1.5d) `--press` and
-(V1.6b) `--inflate` and
-(V1.6c) `--downgrade`,
+(V1.6b) `--inflate`,
+(V1.6c) `--downgrade` and
+(V1.6d) `--redistribute`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1377,13 +1378,106 @@ the rating and red once the letter falls out of the band the anchor sits in;
 first, reported as such rather than dressed up. Model:
 [docs/credit-model.md](docs/credit-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b) and (c) are shipped.** V1.1e (upper house and
+**V1.6d shipped five taxes and brackets, and the tripwire meant to fire did not.**
+`TAX_KEYS` is five; `capital_gains` and `wealth` extend the three tables
+`economy_constants.gd` already had, because a fourth and fifth tax is the **same machine
+with more entries**. `src/sim/tax.gd` holds only what the session genuinely invented:
+progressivity, and what the player's tax policy does to the Gini. It is **stateless** --
+no `tick_month()`, nothing written on `NationState`, nothing in the save -- pinned by
+`tests/test_tax.gd` reading the file and by `tests/test_save_load.gd` asserting three
+absences.
+
+**Step 0 inverted its own prediction.** V1.6c found the World Bank government-finance
+branch too thin, so this session was told to check `GC.TAX.*` before planning a measured
+base share. It covers **10 of 10** nations, 30-35 rows each -- coverage was never the
+problem. What rules it out is that `GC.*` is **central government** (France 22.78 % of
+GDP against the 46.1 its file carries, Switzerland 9.45 against 27.8), which
+`docs/data-sources.md` rejected at S1, and that `GC.TAX.YPKG.*` puts income, profits
+**and capital gains** in one bucket -- precisely the split the session exists to create.
+No property series at all. Both base shares are authored, like the three already there,
+and the fetch **confirmed a standing rejection rather than discovering one**.
+
+**Instance thirty-two: the wealth tax is not on the other four's rate scale.** Its base is
+a **stock** at 4.00x GDP against income's 0.50 flow, so one point of wealth rate is eight
+points of income tax in revenue. `TAX_SCALE_PP` was shared by every key in points of rate
+and became **per-key**; `Budget._erosion()` returned a flat 1.0 when a nation's own start
+was zero, so revenue was **linear in the rate forever** -- correct for a tax nobody has
+and a live exploit the moment a player invents one, which this content makes reachable on
+frame 1 (Switzerland taxes no private capital gain, eight of ten have no wealth tax). The
+zero reference had to be **per key** as well: one shared value put an invented
+capital-gains tax's revenue peak at three points against real rates of twenty-five. One
+constant cannot serve two rate scales, found twice in one session.
+
+**Instance thirty-three: the row asks the `ISSUE_KEYS` question without noticing** -- its
+"visibly different bloc-weight profile" criterion IS V1.3d's collinearity test restated.
+Answered **YES twice at once**, a first, at **-0.739 %** on the S10 ratio, the *unsafe*
+direction, against V1.3d's accepted +0.39 % and V1.4c's refused -1.46 %. Paid because the
+alternative is **no price at all**: `opinion.gd` writes a satisfaction for every
+`TAX_KEYS` entry, so a tax with no key is a number nothing weighs and the wealth lever
+collects 4.2 points of GDP free. The first rows drifted **-1.640 %** and **the fix was
+content** -- the flat-weight control drifts only -0.106 %, so the cause is the profile,
+and the first rows gave two taxes eight of ten barely levy twice `tax_corporate`'s share
+of the agenda.
+
+**Instance thirty-four: V1.5c's tripwire did not fire and could never have.** It mutates
+the corporate rate, every `state_share` and every `regulation_burden` and demands the Gini
+be bit-identical -- but **those three are the three section 6 does not own**, whose
+instruments are brackets, capital gains and wealth. It was armed against the instruments
+the model already had rather than the ones that were coming. The old assertion is kept and
+the real tripwire added beside it.
+
+**Brackets are a factor on the income LINE, and the first version failed as zero rather
+than as a wrong number.** Putting it on the erosion coefficient multiplies `(rate - ref)`,
+which is exactly zero for a player who steepens the schedule and leaves the headline rate
+alone -- the whole price vanishing for the budget the lever exists to express. The sign
+was then also backwards. Both caught by `tests/test_tax.gd`, not by reading. The Gini
+discharge needs **no second field** where the decomposition asked for one:
+`Tax.gini_policy_offset()` is a pure read over the schedule and two rates the save already
+carries, so `Demography.tick_month()` stays the single writer.
+
+**Two constants banded, three fitted, and one band found unable to select.**
+`PROGRESSIVITY_BASE_BETA` = 0.15, the midpoint of a **closed-form** interval no grid can
+move. The three Gini betas are fitted to the widest measured roster drift over a term
+(NLD, 2.085 points) and land on a **fixed point**. `TAX_SCALE_PP_BY_KEY`'s band could not
+discriminate -- clause (i) passed at every candidate with the identical approval move
+because the reachable move saturates the satisfaction at every scale, so it measured the
+clamp, and clause (ii) reduces to a rearranged inequality -- and was replaced by a fit
+against `TAX_SCALE_PP`'s own fraction of income's span. **The kill switch cleared** after
+being isolated: the version that committed real budgets showed a *flatter* schedule making
+the country calmer, because flattening narrows the deficit. **`GINI_POLICY_MAX_PT`'s first
+value bound** at half the roster's Gini span and is the whole span instead. The escalation
+trigger is **recorded rather than retuned**: the two new taxes alone move **77 %** of
+`DEFICIT_SCALE_PP`'s span.
+
+**The re-run is not bit-identical, the prediction said so, and the reason given was
+wrong** -- recorded rather than corrected quietly. Not float ordering: the **salience
+simplex**, renormalised by two new issue keys, reaching approval, then `hardship()`, then
+the grievance, then V1.6c's yield. **Trend bit-identical in all 217 year-rows**, GDP,
+growth and unemployment in 216, approval's worst move **0.90**, **one outcome change of
+51**. **Three new regimes** (29 -> 32), needed because every existing regime sets three tax
+keys and no schedule, so the session was structurally unreachable by all of them --
+V1.3a's rule returning for the first time in this block. `SAVE_VERSION` is **22** on three
+fields, two of which **grow a dictionary** rather than adding a key.
+
+**The thirteenth screenshot pass found two bugs after V1.6c's clean sheet.** The sharper
+is a defensive default: `Budget.snapshot()` never carried `gini_effective` at all, the
+panel read it with `.get(key, 0.0)`, and the row printed a confident **0.00** against a
+live 31.80 -- a default that hides a missing key is worse than a crash, and the row now
+prints an em dash. The second is **a live bug recorded rather than fixed**:
+`budget_panel.gd` refreshes from a `_pending` captured in `setup()`, so a budget committed
+by anything but its own sliders leaves the panel stale and offering to undo it -- and
+`Legislature.apply()` commits tax changes exactly that way. It needs a design call about a
+player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
+[docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
+[docs/tax-model.md](docs/tax-model.md).
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b), (c) and (d) are shipped.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 21**. There has never been a migration: a superseded
+Save format is at **version 22**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

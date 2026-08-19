@@ -36,6 +36,8 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -58,6 +60,28 @@ const IGNORED := {}
 
 ## Cut the one line a single bloc weights, fund it with the tax that carries no
 ## labour-market cost, leave health/education/pensions alone.
+## V1.6d's regime, and the reason it is needed is the reason V1.5c's blind spot was:
+## every regime above sets three tax keys and no schedule, so the two new taxes and the
+## bracket lever are STRUCTURALLY UNREACHABLE by all of them. A statistic needs no
+## regime -- (a), (b) and (c) each added none -- and a verb does, which is V1.3a's rule
+## coming back for the first time in this block.
+##
+## Both new taxes at a rate a player would plausibly choose, plus a steeper schedule, on
+## top of the managed budget rather than instead of it: the reachable case is *govern
+## well, then redistribute*, not *provoke in month 1 and lose the next election*, which
+## is what docs/unrest-model.md's own probe got wrong about itself.
+const REDISTRIBUTIVE := {
+	"spending_pct_gdp": {
+		"health": 11.0, "education": 5.5, "defence": 0.6,
+		"pensions": 14.5, "infrastructure": 3.5,
+	},
+	"tax_rates_pct": {
+		"income": 21.0, "corporate": 25.0, "vat": 23.0,
+		"capital_gains": 40.0, "wealth": 0.5,
+	},
+	"tax_progressivity": 1.5,
+}
+
 const MANAGED := {
 	"spending_pct_gdp": {
 		"health": 11.0, "education": 5.5, "defence": 0.6,
@@ -98,6 +122,7 @@ func _init() -> void:
 	_check_a_subsidised_run_stays_off_every_clamp()
 	_check_a_regulated_run_stays_off_every_clamp()
 	_check_a_nationalised_run_stays_off_every_clamp()
+	_check_a_redistributive_run_stays_off_every_clamp()
 	_finish()
 
 
@@ -646,3 +671,43 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## V1.6d. Fourteen years under a budget that uses all three distributional instruments,
+## checked against the clamps they introduce and the ones they can reach through.
+##
+## The Gini clamp is the session's own; the rest are inherited, and they are checked
+## because this is the first budget in the harness that moves revenue through a base
+## FACTOR rather than through a rate -- so the erosion clamps are reached by a path no
+## previous regime could take.
+func _check_a_redistributive_run_stays_off_every_clamp() -> void:
+	var run := _play(REDISTRIBUTIVE, MONTHS)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("redistributive run: %s" % p)
+
+	# It must actually redistribute, or the check above is true for the boring reason --
+	# tools/unrest_probe.gd's own blind spot, named rather than repeated.
+	var offset := Tax.gini_policy_offset(ns)
+	if is_zero_approx(offset):
+		_fail("the redistributive run moved the inequality index by nothing, so it asserts nothing about the clamps")
+	if absf(offset) >= TaxK.GINI_POLICY_MAX_PT - 0.000001:
+		_fail("the Gini policy offset sits ON its clamp at %.3f -- the clamp is setting the number, not the model" % offset)
+
+	# The bracket lever's own guard rail. The base factor is floored at zero because a
+	# negative one makes the income tax collect negative revenue, and no clamp downstream
+	# catches that; it must be nowhere near the floor on a reachable budget.
+	var factor := Tax.progressivity_base_factor(ns)
+	if factor <= 0.000001:
+		_fail("the progressivity base factor is on its floor at %.4f, so the income line is collecting nothing" % factor)
+	if float(ns.revenue_pct_gdp["income"]) <= 0.0:
+		_fail("the income tax collected nothing under a steeper schedule")
+
+	# And the two new taxes are actually being collected, on a nation that authors both
+	# above zero for one and at zero for the other -- which is what exercises BOTH
+	# branches of the erosion curve inside one run.
+	for key in ["capital_gains", "wealth"]:
+		if float(ns.revenue_pct_gdp[key]) <= 0.0:
+			_fail("the %s line collected nothing over fourteen years under a budget that levies it" % key)

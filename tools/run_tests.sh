@@ -46,6 +46,7 @@ tests=(
   tests/test_cycle.gd
   tests/test_inflation.gd
   tests/test_credit.gd
+  tests/test_tax.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

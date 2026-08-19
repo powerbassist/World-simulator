@@ -43,10 +43,31 @@ var population: float = 0.0
 ## unchanged from their starting values so one code path serves both.
 var has_budget: bool = false
 
-var tax_rates_pct := {}          # income, corporate, vat
+var tax_rates_pct := {}          # income, corporate, vat, capital_gains, wealth
 var spending_pct_gdp := {}       # health, education, defence, pensions, infrastructure
 var start_tax_rates_pct := {}
 var start_spending_pct_gdp := {}
+
+## V1.6d. How steep the income-tax schedule is, as a dimensionless index bounded by
+## tax_constants.PROGRESSIVITY_MIN/MAX, initialised for all ten from
+## tax_constants.PROGRESSIVITY_BASE.
+##
+## `spending_pct_gdp` AND `tax_rates_pct`'s SHAPE AND NOT A SIXTH TAX KEY, which is
+## what docs/tiers/v1.md section 6 asks for by name: brackets WITHIN income rather
+## than as further keys, so the distributional lever exists without a fourth revenue
+## channel. It is not a rate, it has no base share and it collects nothing; what it
+## does is move the income tax's erosion and the inequality index, which is
+## src/sim/tax.gd's whole surface.
+##
+## BOTH FIELDS EARN THE SAVE BUMP AND FOR THE SAME REASON, unlike most pairs on this
+## file's list: an absent `tax_progressivity` reads 0.0, which is not a neutral default
+## but PROGRESSIVITY_MIN -- a flat tax, the most regressive schedule the model has --
+## and an absent `start_tax_progressivity` reads 0.0 too, so the deviation is 0.0 and
+## the reloaded game agrees that a flat tax is normal. A save reloaded after a
+## redistributive term silently abolishes the bracket structure AND forgets it ever
+## had one. See tests/test_save_load.gd, which asserts the two halves separately.
+var tax_progressivity: float = 0.0
+var start_tax_progressivity: float = 0.0
 var other_spending_pct_gdp: float = 0.0
 
 ## Calibration residual, fixed at new-game so starting revenue equals the
@@ -926,6 +947,8 @@ func duplicate_state():
 	s.population = population
 
 	s.has_budget = has_budget
+	s.tax_progressivity = tax_progressivity
+	s.start_tax_progressivity = start_tax_progressivity
 	s.tax_rates_pct = tax_rates_pct.duplicate(true)
 	s.spending_pct_gdp = spending_pct_gdp.duplicate(true)
 	s.start_tax_rates_pct = start_tax_rates_pct.duplicate(true)
@@ -1096,6 +1119,8 @@ func to_dict() -> Dictionary:
 		"population": population,
 
 		"has_budget": has_budget,
+		"tax_progressivity": tax_progressivity,
+		"start_tax_progressivity": start_tax_progressivity,
 		"tax_rates_pct": tax_rates_pct,
 		"spending_pct_gdp": spending_pct_gdp,
 		"start_tax_rates_pct": start_tax_rates_pct,
@@ -1264,6 +1289,8 @@ static func from_dict(d: Dictionary):
 	s.population = d.get("population", 0.0)
 
 	s.has_budget = d.get("has_budget", false)
+	s.tax_progressivity = float(d.get("tax_progressivity", 0.0))
+	s.start_tax_progressivity = float(d.get("start_tax_progressivity", 0.0))
 	s.tax_rates_pct = d.get("tax_rates_pct", {})
 	s.spending_pct_gdp = d.get("spending_pct_gdp", {})
 	s.start_tax_rates_pct = d.get("start_tax_rates_pct", {})

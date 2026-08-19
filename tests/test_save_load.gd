@@ -24,6 +24,9 @@ const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const CreditK = preload("res://src/sim/credit_constants.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
+const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -118,6 +121,7 @@ func _init() -> void:
 	_check_cycle_fields(loader)
 	_check_inflation_fields(loader)
 	_check_credit_fields(loader)
+	_check_tax_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -703,8 +707,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 and V1.6d to 22, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1305,8 +1309,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 and V1.6d to 22, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1471,8 +1475,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 and V1.6d to 22, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1555,8 +1559,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 and V1.6d to 22, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1873,8 +1877,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 and V1.6d to 22, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -1964,8 +1968,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 21:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four and V1.6c to 21 on one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one and V1.6d to 22 on three, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2034,3 +2038,93 @@ func _check_credit_fields(loader) -> void:
 			"start_bond_yield_pct", "credit_rating_months"]:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- src/sim/credit.gd is a pure read over the debt stock and the grievance, so storing one is the second machine the V1.6 decomposition says would have split this session" % pname)
+
+
+## V1.6d. THREE fields earn the bump to 22, and two of them add no key to the save at
+## all -- they GROW `tax_rates_pct`, a dictionary serialised since S4, which is V1.5b's
+## `service_quality["pensions"]` case and the second time on this list. The three are
+## asserted in TWO groups rather than three, and the grouping is the claim: the two rates
+## fail by one failure each, and the bracket pair fails by ONE failure BETWEEN THEM.
+func _check_tax_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+
+	# (1) THE TWO NEW RATES. A version-21 save carries three keys in `tax_rates_pct`, and
+	# revenue_lines() reads `.get(key, 0.0)` -- so both new taxes come back at a rate of
+	# zero and the save has silently ABOLISHED them. France collects 0.6 points of GDP of
+	# capital-gains tax at its own authored rate; that is what a reloaded game loses, and
+	# the deficit widens by it with nothing anywhere to say so.
+	var no_rates: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var rates: Dictionary = (no_rates["nations"]["FRA"] as Dictionary)["tax_rates_pct"]
+	rates.erase("capital_gains")
+	rates.erase("wealth")
+	var stripped = GameState.from_dict(no_rates)
+	Budget.recompute(stripped, stripped.player())
+	if not is_zero_approx(float(stripped.player().revenue_pct_gdp.get("capital_gains", 0.0))):
+		_fail("dropping the capital_gains rate left the line collecting something -- that half of the premise is wrong")
+	if is_equal_approx(stripped.player().deficit_pct_gdp, state.player().deficit_pct_gdp):
+		_fail("a save with both new tax rates dropped runs the same deficit as one with them, so the two keys would not earn the bump")
+
+	# The matching start keys go too, which is the sharper half: `_erosion()` divides by
+	# the nation's own start, so an absent one falls to the ZERO-REFERENCE branch and
+	# every later rate rise is priced as a tax invented from nothing rather than as a
+	# rise in one the country already levies. A reloaded game running a DIFFERENT MODEL,
+	# which is `eu_member` at V1.3b.
+	var no_start: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	((no_start["nations"]["FRA"] as Dictionary)["start_tax_rates_pct"] as Dictionary).erase("capital_gains")
+	var restarted = GameState.from_dict(no_start)
+	restarted.player().tax_rates_pct["capital_gains"] = 40.0
+	Budget.recompute(restarted, restarted.player())
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	kept.player().tax_rates_pct["capital_gains"] = 40.0
+	Budget.recompute(kept, kept.player())
+	if is_equal_approx(
+		float(restarted.player().revenue_pct_gdp["capital_gains"]),
+		float(kept.player().revenue_pct_gdp["capital_gains"])
+	):
+		_fail("dropping start_tax_rates_pct.capital_gains priced a later rise identically -- then the start keys would not earn the bump")
+
+	# (2) THE BRACKET PAIR, asserted TOGETHER and deliberately not separately. Absent,
+	# both read 0.0 -- which is PROGRESSIVITY_MIN, the flattest schedule the model has,
+	# and NOT a neutral default. But because the START reads 0.0 as well, the DEVIATION is
+	# still exactly zero, so the reloaded game does not merely forget the player's bracket
+	# structure: it agrees a flat tax was always normal, and every price keyed to the
+	# deviation reads as though nothing had ever been done. Neither field alone fails in a
+	# way the other does not cover, so splitting the check would be checking one failure
+	# twice -- which is the opposite of V1.6b's three, and the reason is written here
+	# rather than left for a reader to infer.
+	var committed = GameState.new_game(loader, "FRA")
+	Budget.commit(committed, {"tax_progressivity": TaxK.PROGRESSIVITY_BASE + 0.6})
+	var moved := Tax.gini_policy_offset(committed.player())
+	if is_zero_approx(moved):
+		_fail("a committed bracket change moved nothing, so this check is not measuring what it says")
+
+	var no_brackets: Dictionary = JSON.parse_string(JSON.stringify(committed.to_dict()))
+	(no_brackets["nations"]["FRA"] as Dictionary).erase("tax_progressivity")
+	(no_brackets["nations"]["FRA"] as Dictionary).erase("start_tax_progressivity")
+	var flattened = GameState.from_dict(no_brackets)
+	if not is_zero_approx(Tax.gini_policy_offset(flattened.player())):
+		_fail("a save with both bracket fields dropped still carried the player's schedule -- then neither would earn the bump")
+	if not is_zero_approx(Tax.progressivity_deviation(flattened.player())):
+		_fail("with both fields absent the DEVIATION is not zero, so the pair does not fail the way this check claims and they should be asserted separately")
+
+	# (3) WHAT WAS NOT ADDED, and it is the half worth pinning -- V1.6c's shape one
+	# session on. src/sim/tax.gd is stateless, so there is no stored offset, no stored
+	# effective index and no stored base factor: each is a pure read over one float and
+	# two rates this save already carries. A later session giving the distribution an
+	# accumulator turns this red and has to come and say why.
+	for pname in ["gini_policy_offset", "gini_effective", "start_tax_rates_progressivity",
+			"progressivity_base_factor", "tax_progressivity_months"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the distribution is a derived read over fields the save already has, so storing one is a model change that has to be argued" % pname)
+
+	# And `gini_index` keeps its single writer. The effective index is a SUM of that
+	# drift and a derived offset, which is what the V1.6 decomposition's "a second field,
+	# not a second writer" asked for -- one step further, because there is no second
+	# field either.
+	var demog_src := FileAccess.get_file_as_string("res://src/sim/tax.gd")
+	if demog_src.contains("gini_index ="):
+		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
+
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21 and V1.6d to 22 on three fields, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

@@ -16,23 +16,42 @@ const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const CycleK = preload("res://src/sim/cycle_constants.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 
 const PROJECTION_MONTHS := 24
+
+## V1.6d. The brackets lever, keyed apart from the ten rate-and-spending keys because
+## it is not one of them: it sets no rate, has no base share and collects nothing.
+## Budget.commit() takes it as a third top-level key on `pending` for the same reason.
+const PROGRESSIVITY_KEY := "tax_progressivity"
 
 const LEVER_LABELS := {
 	"income": "Income tax",
 	"corporate": "Corporate tax",
 	"vat": "VAT",
+	"capital_gains": "Capital gains tax",
+	"wealth": "Wealth tax",
+	PROGRESSIVITY_KEY: "Income brackets",
 	"health": "Health",
 	"education": "Education",
 	"defence": "Defence",
 	"pensions": "Pensions",
 	"infrastructure": "Infrastructure",
 }
+## V1.6d: `wealth` is 3.0 and not 70, and the number is not authored here -- it reads
+## economy_constants.WEALTH_RATE_MAX_PCT, so the model bound and the control cannot
+## drift apart, and tests/test_tax.gd asserts the identity. A point of wealth rate is
+## eight points of income tax in revenue, because that base is a stock; a slider running
+## to 70 would be a slider whose top four fifths is a joke.
 const LEVER_MAX := {
 	"income": 70.0,
 	"corporate": 70.0,
 	"vat": 40.0,
+	"capital_gains": 60.0,
+	"wealth": C.WEALTH_RATE_MAX_PCT,
+	PROGRESSIVITY_KEY: TaxK.PROGRESSIVITY_MAX,
 	"health": 30.0,
 	"education": 30.0,
 	"defence": 30.0,
@@ -89,6 +108,17 @@ const FIGURE_ROWS := [
 	["subsidies", "  of which subsidies"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
+	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
+	# the three instruments that move it live -- brackets, the capital-gains rate and
+	# the wealth rate. It is the one consequence of a distributional budget no other
+	# line here can show: docs/unrest-model.md's grievance reads it, and until V1.6d
+	# nothing the player did moved it at all.
+	#
+	# NEVER SILENT, which is the dependency ratio's and the credit rating's rule
+	# rather than the delivery lines': every game has an inequality index from the
+	# first frame, so a line that appeared only once it moved would hide the level the
+	# offset is measured against.
+	["gini", "Inequality (Gini)"],
 	["", ""],
 	# V1.6a: the three projection rows now read as a RANGE. See _forecast_text().
 	["proj_growth", "GDP growth, in 24 months"],
@@ -165,7 +195,10 @@ func _build_levers() -> Control:
 		var slider := HSlider.new()
 		slider.min_value = 0.0
 		slider.max_value = float(LEVER_MAX[key])
-		slider.step = 0.1
+		# A tenth of a point is the right grain for a lever running to seventy and much
+		# too coarse for one running to three: at 0.1 the wealth slider offers thirty
+		# positions in total and Switzerland's real rate lands between two of them.
+		slider.step = 0.01 if key == "wealth" or key == PROGRESSIVITY_KEY else 0.1
 		slider.custom_minimum_size.x = 220
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.value_changed.connect(_on_lever_changed.bind(key))
@@ -248,6 +281,11 @@ func hide_close_button() -> void:
 func _lever_keys() -> Array:
 	var keys: Array = []
 	keys.append_array(C.TAX_KEYS)
+	# Directly after the five rates and before the spending lines, because it is a
+	# property OF the income tax rather than a sixth tax -- the panel reads in the order
+	# docs/tiers/v1.md section 6 states the target in, "five taxes, plus brackets within
+	# income".
+	keys.append(PROGRESSIVITY_KEY)
 	keys.append_array(C.SPENDING_KEYS)
 	return keys
 
@@ -267,6 +305,7 @@ func _on_revert() -> void:
 	_pending = {
 		"tax_rates_pct": ns.tax_rates_pct.duplicate(true),
 		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
+		PROGRESSIVITY_KEY: ns.tax_progressivity,
 	}
 	for key in _lever_keys():
 		var slider: HSlider = _sliders[key]
@@ -284,7 +323,9 @@ func _on_commit() -> void:
 
 
 func _on_lever_changed(value: float, key: String) -> void:
-	if C.TAX_KEYS.has(key):
+	if key == PROGRESSIVITY_KEY:
+		_pending[PROGRESSIVITY_KEY] = value
+	elif C.TAX_KEYS.has(key):
 		_pending["tax_rates_pct"][key] = value
 	else:
 		_pending["spending_pct_gdp"][key] = value
@@ -292,6 +333,8 @@ func _on_lever_changed(value: float, key: String) -> void:
 
 
 func _pending_value(key: String) -> float:
+	if key == PROGRESSIVITY_KEY:
+		return float(_pending.get(PROGRESSIVITY_KEY, TaxK.PROGRESSIVITY_BASE))
 	if C.TAX_KEYS.has(key):
 		return float(_pending["tax_rates_pct"].get(key, 0.0))
 	return float(_pending["spending_pct_gdp"].get(key, 0.0))
@@ -312,9 +355,34 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## One decimal and a percent sign is right for a rate running to seventy and wrong for
+## both levers V1.6d added: the wealth lever's whole span is three points, so one
+## decimal prints thirty distinct values across it and the second decimal is where the
+## choice lives, and the bracket index is not a percentage of anything at all. V1.6b's
+## own screenshot bug -- a format copied from the neighbouring row -- one session on,
+## avoided rather than repeated.
+## Two decimals, chosen against the reachable range rather than copied from the row
+## above: tax_constants.GINI_POLICY_MAX_PT bounds the whole policy offset at 8.60 points,
+## but the grain a player moves it in is a bracket notch, which is hundredths. One
+## decimal would print the same figure for two different budgets.
+func _gini_text(snap: Dictionary) -> String:
+	if not snap.has("gini_effective"):
+		return "—"
+	return "%.2f" % float(snap["gini_effective"])
+
+
+func _lever_text(key: String) -> String:
+	var value := _pending_value(key)
+	if key == PROGRESSIVITY_KEY:
+		return "%.2f" % value
+	if key == "wealth":
+		return "%.2f%%" % value
+	return "%.1f%%" % value
+
+
 func _refresh() -> void:
 	for key in _lever_keys():
-		_lever_values[key].text = "%.1f%%" % _pending_value(key)
+		_lever_values[key].text = _lever_text(key)
 
 	# preview() with nothing pending rather than snapshot(), and V1.3c is why.
 	# snapshot() reads ns.revenue_pct_gdp as Budget.tick_month() last left it, so a
@@ -338,6 +406,13 @@ func _refresh() -> void:
 	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
+	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
+	# the key was missing from Budget.snapshot() entirely, and the row printed a confident
+	# "0.00" against a live index of about 31 -- a defensive default reading as a
+	# plausible figure, which is _set_figure()'s own silent-return failure at V1.4c in a
+	# new place. An em dash is what a missing figure looks like everywhere else on this
+	# panel, and it is what a missing figure should look like here.
+	_set_figure("gini", _gini_text(now), _gini_text(proposed))
 
 	var last_now: Dictionary = now_path[-1]
 	var last_proposed: Dictionary = proposed_path[-1]

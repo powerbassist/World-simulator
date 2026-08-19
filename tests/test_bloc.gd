@@ -339,12 +339,16 @@ func _check_the_europe_issue_is_the_only_new_one() -> void:
 	if not OK.ISSUE_KEYS.has("europe"):
 		_fail("europe is not in ISSUE_KEYS")
 		return
-	# 12 at V1.3d, 13 at V1.6b. The count is pinned rather than left open so a session
-	# adding a key has to come here and say so -- five sessions answered the
+	# 12 at V1.3d, 13 at V1.6b, 15 at V1.6d. The count is pinned rather than left open so
+	# a session adding a key has to come here and say so -- five sessions answered the
 	# thirteenth-key question NO and the sixth answered it YES, which is exactly the
-	# decision this assertion exists to make visible.
-	if OK.ISSUE_KEYS.size() != 13:
-		_fail("ISSUE_KEYS has %d entries; V1.3d added europe and V1.6b added inflation" % OK.ISSUE_KEYS.size())
+	# decision this assertion exists to make visible. V1.6d is the first to answer it
+	# TWICE AT ONCE, and the first to answer YES at a measured cost in the UNSAFE
+	# direction: the S10 ratio drifts -0.739 % for the pair, paid because a tax has no
+	# content object anywhere else to hang a price on and a tax with no price is free
+	# money. The full argument is beside ISSUE_KEYS in opinion_constants.gd.
+	if OK.ISSUE_KEYS.size() != 15:
+		_fail("ISSUE_KEYS has %d entries; V1.3d added europe, V1.6b inflation, and V1.6d capital gains and wealth" % OK.ISSUE_KEYS.size())
 	if not OK.ISSUE_LABEL.has("europe"):
 		_fail("europe has no ISSUE_LABEL, so the polling panel would print a raw key")
 

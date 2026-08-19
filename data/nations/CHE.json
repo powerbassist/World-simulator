@@ -74,7 +74,9 @@
     "tax_rates_pct": {
       "income": 17.0,
       "corporate": 19.7,
-      "vat": 8.1
+      "vat": 8.1,
+      "capital_gains": 0.0,
+      "wealth": 0.3
     },
     "spending_pct_gdp": {
       "health": 6.0,

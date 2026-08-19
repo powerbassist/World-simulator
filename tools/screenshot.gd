@@ -27,6 +27,7 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
@@ -160,6 +161,7 @@ var _press := false
 var _cycle := false
 var _inflate := false
 var _downgrade := false
+var _redistribute := false
 var _main
 
 
@@ -204,6 +206,8 @@ func _init() -> void:
 			_inflate = true
 		elif args[i] == "--downgrade":
 			_downgrade = true
+		elif args[i] == "--redistribute":
+			_redistribute = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -283,6 +287,8 @@ func _apply_view() -> void:
 		_overheat_the_economy()
 	if _downgrade:
 		_lose_the_markets()
+	if _redistribute:
+		_soak_the_rich()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -552,6 +558,45 @@ func _lose_the_markets() -> void:
 		},
 	})
 	_tick_months(40)
+
+
+## V1.6d. Both new taxes and a steeper income schedule, then eighteen months.
+##
+## THE MONTH COUNT IS THE THING TO GET RIGHT AND BOTH FAILURE DIRECTIONS ARE ON THIS
+## PROJECT'S RECORD. V1.4c found every flag ticking without advancing the clock, so the
+## date read 01 JAN 2026 beside figures that had moved; V1.6b found `--inflate` ticking
+## PAST the thing it exists to photograph. Here the readout is the budget panel's
+## inequality row, which responds to the commit IMMEDIATELY through the policy offset --
+## the offset is a pure read, not a stock -- so a long run is not needed and would only
+## let Demography's own drift muddy the figure the flag exists to show. Eighteen months
+## is enough for the clock to be visibly elsewhere and short of the 2028 election.
+func _soak_the_rich() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	Budget.commit(state, {
+		"tax_rates_pct": {
+			"capital_gains": float(ns.start_tax_rates_pct["capital_gains"]) + 12.0,
+			"wealth": float(ns.start_tax_rates_pct["wealth"]) + 0.8,
+		},
+		"tax_progressivity": TaxK.PROGRESSIVITY_BASE + 0.6,
+	})
+	_tick_months(18)
+	# *** AND THE PANEL HAS TO BE RE-SYNCED, WHICH IS THE THIRTEENTH SCREENSHOT PASS'S
+	# FIND. *** budget_panel.gd captures `_pending` in setup() and refreshes FROM it, so a
+	# budget committed by anything other than its own sliders leaves the panel showing the
+	# pre-commit position in the lever column AND offering it back as the "proposed"
+	# column -- the first frame of this flag showed capital gains at 30.0 against a live
+	# 42.0, and a proposal that would have UNDONE the budget the flag had just committed.
+	#
+	# This is a live bug and not only a tool one: Legislature.apply() commits tax changes
+	# the same way, so a law passing while the budget window is open does exactly this.
+	# Fixing it properly is a design call this session is not the place for -- what
+	# happens to a player's half-finished edits when a law lands underneath them? -- so
+	# the tool re-syncs and the bug is written down. See docs/tax-model.md section 11.
+	if _main._budget_panel != null:
+		_main._budget_panel.setup(_main._state, _main._loader)
 
 
 func _overheat_the_economy() -> void:

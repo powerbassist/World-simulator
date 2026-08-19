@@ -23,6 +23,8 @@ const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 
 static func tick_month(state) -> void:
@@ -42,7 +44,9 @@ static func tick_month(state) -> void:
 ## month whose revenue only appeared next month would be a lie on exactly that
 ## surface. Three call sites, all of which already had the state in hand.
 static func recompute(state, ns) -> void:
-	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
+	ns.revenue_pct_gdp = revenue_lines(
+		ns.tax_rates_pct, ns.start_tax_rates_pct, Tax.progressivity_base_factor(ns)
+	)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
 	# V1.4c's line, and the second computed REVENUE line after the tariff one above.
@@ -126,11 +130,37 @@ static func recompute(state, ns) -> void:
 ## model already uses. Passed explicitly rather than read off a shared
 ## constant since V1.2a made starting rates per-nation: a table shared by all
 ## ten would put every nation but one off its own reference.
-static func revenue_lines(rates: Dictionary, ref_rates: Dictionary) -> Dictionary:
+## `progressivity_factor` is V1.6d's, and it is passed rather than read off a
+## NationState for the reason `ref_rates` is: this function is called twice inside
+## commit(), once at the OLD schedule and once at the PENDING one, and a version that
+## reached for live state could not express the difference. Defaulted to 1.0 -- the
+## no-brackets model every caller before V1.6d ran -- so the two call sites that
+## genuinely have no schedule to hand (modelled_revenue_total() at new-game
+## calibration, where the deviation is zero by construction) read the same numbers
+## they always did.
+static func revenue_lines(
+	rates: Dictionary, ref_rates: Dictionary, progressivity_factor: float = 1.0
+) -> Dictionary:
 	var out := {}
 	for key in C.TAX_KEYS:
 		var rate := float(rates.get(key, 0.0))
-		out[key] = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
+		var yield_pct: float = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
+		# V1.6d. A factor on the INCOME LINE ONLY, and the first draft put it inside
+		# _erosion() instead -- which was wrong in a way that measured as zero rather
+		# than as a wrong number, so only tests/test_tax.gd's own check caught it. The
+		# erosion coefficient multiplies `(rate - ref)`, and a player who steepens the
+		# brackets WITHOUT touching the headline rate leaves that difference at exactly
+		# zero, so a coefficient there is multiplied by nothing and the whole price
+		# vanishes precisely for the budget the lever exists to express.
+		#
+		# It belongs on the base rather than on the curve on the merits too: a steeper
+		# schedule does not change how fast the base responds to a rate change, it
+		# SHRINKS THE BASE -- top incomes are the mobile part, and progressivity is what
+		# points the rate at them. Still one coefficient inside the one income line, so
+		# section 6's "without a fourth revenue channel" holds exactly as before.
+		if key == "income":
+			yield_pct *= progressivity_factor
+		out[key] = yield_pct
 	return out
 
 
@@ -153,6 +183,10 @@ static func _tariff_revenue(state, ns) -> float:
 	return Coercion.tariff_revenue_pct_gdp(state, ns.id, Trade.weights(state, ns.id))
 
 
+## No progressivity argument, and the omission is correct rather than an oversight:
+## its one caller is GameState's new-game calibration, where the live schedule IS the
+## starting schedule and the deviation is exactly zero. Passing 1.0 explicitly would
+## claim this function works at any schedule, which it does not.
 static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> float:
 	var total := 0.0
 	for v in revenue_lines(rates, ref_rates).values():
@@ -165,14 +199,30 @@ static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> 
 ## a finite, correctly signed number.
 static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary) -> float:
 	var ref := float(ref_rates.get(key, 0.0))
-	if ref <= 0.0:
-		return 1.0
-	var raw: float = 1.0 - float(C.TAX_EROSION[key]) * (rate_pct - ref) / ref
+	# V1.6d, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This branch returned a flat
+	# 1.0 -- no diminishing returns at all, revenue linear in the rate forever -- which
+	# is correct for a tax nobody has and wrong the moment a player invents one. It was
+	# unreachable while every nation authored all three of income, corporate and VAT
+	# above zero, and V1.6d's content makes it reachable on the first frame:
+	# Switzerland taxes no private capital gain, Belgium and Luxembourg broadly neither,
+	# and eight of the ten start with no wealth tax at all. Left alone, the player's
+	# best move would have been to invent a tax from nothing and take it to the ceiling.
+	#
+	# The curve is taken against an absolute reference instead of a relative one, which
+	# is the only thing available when the relative one is zero. Same shape, same
+	# clamps, and it meets the old branch continuously nowhere -- a nation starting at
+	# zero and one starting at its EROSION_ZERO_REF_PCT are different nations, not the
+	# same nation approached from two directions. That table is PER KEY, and it has to
+	# be: an invented capital-gains tax is normally levied around twenty-five points
+	# and an invented wealth tax below one.
+	var effective_ref := ref if ref > 0.0 else float(C.EROSION_ZERO_REF_PCT[key])
+	var raw: float = 1.0 - float(C.TAX_EROSION[key]) * (rate_pct - effective_ref) / effective_ref
 	return clampf(raw, C.EROSION_MIN, C.EROSION_MAX)
 
 
 ## Apply a pending budget. `pending` is {"tax_rates_pct": {...},
-## "spending_pct_gdp": {...}}; either key may be omitted to leave it unchanged.
+## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
+## leave it unchanged.
 ##
 ## The demand impulse is raised here and nowhere else: a budget *change* is a
 ## shock, a budget left alone is not. The revenue delta is computed by running
@@ -195,8 +245,25 @@ static func commit(state, pending: Dictionary) -> void:
 			if pending["spending_pct_gdp"].has(key):
 				new_spending[key] = float(pending["spending_pct_gdp"][key])
 
-	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
-	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct)
+	# V1.6d. A THIRD KEY ON `pending`, beside the two dictionaries, and a scalar rather
+	# than a fourth entry in tax_rates_pct -- because it is not a rate. Optional like
+	# the other two, so every existing caller that sends two keys keeps the schedule it
+	# had.
+	var new_progressivity: float = float(pending.get(
+		"tax_progressivity", ns.tax_progressivity
+	))
+
+	# Both read at their OWN schedule, which is what makes a bracket change on its own
+	# raise the demand impulse below. This is the whole of progressivity's revenue
+	# price: the same headline rate collects less at a steeper schedule, so the delta
+	# falls out of the erosion curve rather than out of a term of its own. See
+	# tax_constants.PROGRESSIVITY_BASE_BETA.
+	var old_factor: float = Tax.progressivity_base_factor(ns)
+	var new_factor: float = Tax.base_factor_at(
+		new_progressivity, float(ns.start_tax_progressivity)
+	)
+	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct, old_factor)
+	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct, new_factor)
 
 	var old_spend: float = ns.player_spending_pct_gdp()
 	var new_spend := 0.0
@@ -215,6 +282,9 @@ static func commit(state, pending: Dictionary) -> void:
 
 	ns.tax_rates_pct = new_rates
 	ns.spending_pct_gdp = new_spending
+	ns.tax_progressivity = clampf(
+		new_progressivity, TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
+	)
 	recompute(state, ns)
 
 
@@ -369,6 +439,13 @@ static func snapshot(state) -> Dictionary:
 		# V1.4c, here for the same reason: the dividend line lags a month, so the
 		# projection is the surface that shows it arriving.
 		"dividend_revenue_pct_gdp": ns.dividend_revenue_pct_gdp,
+		# V1.6d, and on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the
+		# budget panel compares a PROPOSED position against the current one, and a
+		# preview has no NationState the panel can reach. It is the EFFECTIVE index --
+		# Demography's measured drift plus the player's own policy offset -- because the
+		# drift alone is the half the player cannot move and the readout exists for the
+		# half they can.
+		"gini_effective": float(ns.gini_index) + Tax.gini_policy_offset(ns),
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
 		# V1.6a, and this session added NO tick call to project() at all -- the first

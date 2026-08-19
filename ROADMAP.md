@@ -91,8 +91,8 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a), (b) and
-(c) are built.**
+**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a), (b), (c) and
+(d) are built.**
 The argument, the four calls it made and the two rows it caught are under *V1.6 - the
 decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond yields and
 the credit rating, (d) five taxes and brackets, (e) sectoral investment and
@@ -764,7 +764,7 @@ bullets plus an obligation inherited from V1.4c, and one line is not a session.
 | **V1.6a** | ~~The business cycle~~ **shipped** | A **stateless** deterministic shock over all ten nations, into `economy.gd`'s growth sum. Amplitude **fitted** to France's measured growth volatility, per-nation spread **imported**, common share **measured twice**. `SAVE_VERSION` **19**. Re-baselined V1.5c's two constants and found them unchanged | - |
 | **V1.6b** | ~~Inflation~~ **shipped** | A stock on the **unemployment gap**, not the output gap -- the row's three named inputs are one quantity written three times AND the measurement refuted the survivor. No nominal layer. Two prices: a growth addend and the **thirteenth `ISSUE_KEYS` entry**, the first YES after five noes. Three constants measured, two swept. `SAVE_VERSION` **20** on three fields of four | a |
 | **V1.6c** | ~~Bond yields and the credit rating~~ **shipped** | `DEBT_REAL_RATE_PCT` is the **anchor** and the spread reads exactly 0.0 at new game. **TWO of the four named inputs do not exist**: the deficit is the debt's derivative (`corr` 0.9948) and inflation cannot reach a real rate. The rating is stateless, pinned in the save format. V1.4c's obligation discharged **on a rate**. `SAVE_VERSION` **21** | a, b |
-| **V1.6d** | Five taxes and brackets | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income. Discharges V1.5c's declared Gini stopgap by turning `tests/test_unrest.gd` red on purpose, through a **second field** rather than a second writer | - |
+| **V1.6d** | ~~Five taxes and brackets~~ **shipped** | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income as a base factor. The Gini stopgap is discharged by a **derived read** -- not the second field this table asked for, because none is needed. `GC.TAX.*` covers 10 of 10 and is still unusable (central government, and capital gains bucketed WITH income). `ISSUE_KEYS` answered YES **twice at once** at -0.739 %. `SAVE_VERSION` **22**. Three new regimes | - |
 | **V1.6e** | Sectoral investment and infrastructure projects | The block's one genuine new player verb, on `sector_output` itself, with no employment term | a, d |
 
 *(V1.6c's own numbers, and the two rows it deleted, are under* **V1.6c - the bond
@@ -838,6 +838,106 @@ mechanic in [[mechanics-economy]] is named by a section 6 bullet or already buil
 tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
 eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
 gap.
+
+### V1.6d - five taxes, and the tripwire that could not fire
+
+**Step 0 inverted its own prediction, and that is the row's first finding.** The session
+was told to expect the World Bank government-finance branch to be as thin as (c) found
+it. It is not: `GC.TAX.TOTL.GD.ZS`, `GC.TAX.YPKG.*` and `GC.TAX.GSRV.RV.ZS` all cover
+**10 of 10** nations with 30-35 rows each. **Coverage was never the problem.** What rules
+them out is universe and granularity -- `GC.*` is CENTRAL government, so France reads
+22.78 % of GDP against the 46.1 its own file carries and Switzerland 9.45 against 27.8,
+which [[data-sources]] rejected at S1 in almost these words; and `GC.TAX.YPKG.*` puts
+income, profits **and capital gains** in one bucket, which is precisely the split the
+session exists to create. There is no property series at all. So both base shares are
+authored, exactly like the three already there, and the check **confirmed a standing
+rejection rather than discovering one**.
+
+**Instance thirty-two: the wealth tax is not on the other four's rate scale, and three
+shared tables assumed it was.** Its base is a **stock** at 4.00x GDP against income's
+0.50 flow, so one point of wealth rate is eight points of income tax in revenue.
+`opinion_constants.TAX_SCALE_PP` was shared by every key in POINTS OF RATE and had to
+become per-key; and `Budget._erosion()` returned a flat **1.0** when a nation's own
+starting rate was zero, so revenue was linear in the rate forever -- correct for a tax
+nobody has, and a live exploit the moment a player invents one, which this session's
+content makes reachable on the first frame (Switzerland taxes no private capital gain,
+eight of the ten have no wealth tax). **The zero reference had to be per key too**: one
+shared value put an invented capital-gains tax's revenue peak at three points against
+real rates of twenty-five. One constant cannot serve two rate scales, found twice inside
+one session.
+
+**Instance thirty-three: the row asks the `ISSUE_KEYS` question without noticing.** Its
+own criterion -- *each new tax earns its row by having a visibly different bloc-weight
+profile* -- **is V1.3d's collinearity test restated in content terms**. Answered **YES
+twice at once**, a first, and at a measured cost in the **unsafe** direction: the S10
+ratio drifts **-0.739 %** against V1.3d's accepted +0.39 % and V1.4c's refused -1.46 %.
+It is paid because **the alternative is not a cheaper price but no price at all** --
+`opinion.gd` writes a satisfaction for every `TAX_KEYS` entry, so a tax with no key is a
+number nothing weighs, and the wealth lever would then collect **4.2 points of GDP for
+free**. Where V1.4c differs is that `ownership` had an authored `bloc_offset` to be
+priced on instead; a tax has no content object anywhere. **The first rows drifted
+-1.640 % and the fix was CONTENT rather than a constant** -- V1.3d's own move -- because
+the flat-weight control drifts only **-0.106 %**, so the cause is the profile: the first
+rows gave two taxes eight of the ten barely levy **twice** `tax_corporate`'s share of the
+national agenda.
+
+**Instance thirty-four is that V1.5c's tripwire did not fire, and could never have.**
+That test mutates the corporate rate, every `state_share` and every `regulation_burden`
+and requires the Gini to be bit-identical; it was written to go red the day section 6
+landed. Section 6 landed and it still passes -- because **those three are the three
+section 6 does not own**. Its instruments are brackets, capital gains and wealth. The
+tripwire was armed against the instruments the model ALREADY HAD rather than the ones
+that were coming. The old assertion is kept, being still true and still worth pinning,
+and the real tripwire is added beside it.
+
+**The discharge needs no second field, where the decomposition's call 4 asked for one.**
+`Tax.gini_policy_offset()` is a pure function of the schedule and two rates the save
+already carries, so `Demography.tick_month()` stays the single writer, nothing is stored,
+and both read-the-file checks pass untouched -- `Defence.allies()`' shape and
+`Credit.rating()`'s one session on.
+
+**Two constants are banded, three are FITTED, and one band was found unable to select.**
+`PROGRESSIVITY_BASE_BETA` ships at the midpoint of a **closed-form** interval, so no grid
+can move it. The three Gini betas are fitted to the widest measured roster drift over one
+term (NLD, 2.085 points) and land on a **fixed point**. `TAX_SCALE_PP_BY_KEY`'s
+pre-committed band **could not discriminate**: clause (i) passed at every candidate with
+the identical approval move, because the whole reachable move saturates the satisfaction
+at every scale -- so it was measuring the clamp -- and clause (ii) reduces to a
+rearranged inequality. V1.5a's two failures at once in one row, replaced by a fit against
+`TAX_SCALE_PP`'s own fraction of income's reachable span. **The kill switch cleared** and
+had to be isolated first: the version that committed real budgets showed a *flatter*
+schedule making the country CALMER, because flattening narrows the deficit. Isolated, the
+offset moves the first strike **27 -> 26 / 29 / 32** months. **`GINI_POLICY_MAX_PT`'s
+first value bound** at half the roster's Gini span, and it is the whole span instead.
+
+**The escalation trigger is recorded rather than retuned**: the two new taxes alone move
+**77 %** of `DEFICIT_SCALE_PP`'s six-point span, which is under it, so the pre-committed
+response applies -- retuning that constant re-baselines every opinion constant measured
+since S5.
+
+**The re-run is not bit-identical, the prediction said so, and the REASON given was
+wrong** -- recorded rather than quietly corrected. The plan expected float ordering from
+five revenue keys plus a smaller residual; what actually moves is the **salience
+simplex**, which two new issue keys renormalise, reaching approval, then `hardship()`,
+then the grievance, then V1.6c's yield. **Trend is bit-identical in all 217 printed
+year-rows**, GDP, growth and unemployment in 216, approval's worst move is **0.90** under
+the +-3.0 floor, and there is **one outcome change of 51** -- `tinkering` 2032, the
+regime V1.6c's own re-run flipped, flipping back. **Three new regimes**, needed because
+every existing one sets three tax keys and no schedule, so the whole session was
+structurally unreachable by all 29: V1.3a's rule returning for the first time in this
+block.
+
+**The thirteenth screenshot pass found two bugs after V1.6c's clean sheet**, and the
+sharper is about a defensive default: `Budget.snapshot()` never carried the new figure at
+all, the panel read it with `.get(key, 0.0)`, and the row printed a confident **0.00**
+against a live 31.80. A default that hides a missing key is worse than a crash. The
+second is **a live bug recorded rather than fixed**: `budget_panel.gd` refreshes from a
+`_pending` captured in `setup()`, so a budget committed by anything but its own sliders
+leaves the panel stale and offering to undo it -- and `Legislature.apply()` commits tax
+changes in exactly that way. Fixing it needs a design call about a player's half-finished
+edits, so the tool re-syncs and [[tax-model]] section 11 carries the bug.
+
+Full argument: [[tax-model]].
 
 ### V1.6c - the bond market, and two of four inputs that were not there
 

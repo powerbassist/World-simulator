@@ -162,12 +162,20 @@ static func issue_satisfaction(ns) -> Dictionary:
 	sat["jobs"] = _scaled(ns.start_unemployment_pct - ns.unemployment_pct, K.JOBS_SCALE_PP)
 	sat["growth"] = _scaled(ns.growth_annual_pct - ns.trend_annual_pct, K.GROWTH_SCALE_PP)
 
+	# V1.6d: the scale is per key, and sparse. A tax with no TAX_SCALE_PP_BY_KEY entry
+	# reads the shared 8.0 S5 measured, so income, corporate and VAT are bit-identical
+	# through this loop; `wealth` and `capital_gains` are not on income's rate scale and
+	# the table says why. This loop is also why a TAX_KEYS entry cannot quietly skip
+	# ISSUE_KEYS -- it would write a satisfaction with no salience row anywhere to read
+	# it, which is the number-nothing-reads failure docs/diplomacy-model.md names.
 	for key in C.TAX_KEYS:
 		var d_rate: float = (
 			float(ns.tax_rates_pct.get(key, 0.0))
 			- float(ns.start_tax_rates_pct.get(key, 0.0))
 		)
-		sat["tax_%s" % key] = _scaled(-d_rate, K.TAX_SCALE_PP)
+		sat["tax_%s" % key] = _scaled(
+			-d_rate, float(K.TAX_SCALE_PP_BY_KEY.get(key, K.TAX_SCALE_PP))
+		)
 
 	for key in C.SPENDING_KEYS:
 		var d_spend: float = (

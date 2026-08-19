@@ -197,9 +197,62 @@ const BLOC_LABEL := {
 ## and `workers` and LIGHTEST on business. A control confirms the mechanism rather than
 ## leaving it asserted -- the same key added at a FLAT 0.11 to all six blocs drifts
 ## -0.059 %, so the drift is the profile and not the thirteenth key as such.
+## V1.6d ANSWERS IT TWICE AT ONCE, WHICH IS A FIRST -- every previous session asked
+## about ONE key -- AND THE ANSWER IS YES FOR BOTH, at a measured cost in the UNSAFE
+## direction. That combination has not happened before either, so the reasoning is
+## written out rather than folded into the yeses above it.
+##
+## `tax_capital_gains` and `tax_wealth` are the fourteenth and fifteenth keys.
+## V1.3d's four tests plus the fifth V1.4b forced:
+##
+##   1. The price is not nameable otherwise -- HOLDS, and MORE STRONGLY THAN ANY
+##      PREVIOUS CANDIDATE, including inflation's. Every no on this list had an authored
+##      `bloc_offset` to fall back on. A TAX HAS NO CONTENT OBJECT AT ALL: there is no
+##      data/taxes/, no action, no law required, just a slider on the budget panel. There
+##      is nowhere else for the price to live.
+##   3. A flat offset cannot become more salient -- HOLDS. A tax rise is exactly the kind
+##      of thing SALIENCE_GAIN exists to push up the agenda.
+##   5. Does a prior refusal have 1 and 3 identically? NO, and this is the test that
+##      separates these two from `ownership`, which they otherwise resemble. Ownership had
+##      ownership.json's authored offset; these have nothing.
+##   4. NOT COLLINEAR. Both are keyed to their own rate, which no other issue reads, and
+##      docs/tiers/v1.md section 6 asks in its own words for each new tax to have "a
+##      visibly different bloc-weight profile from the three that exist" -- which IS this
+##      test restated in content terms, a thing the row does not notice it is doing.
+##   2. The satisfaction clears the model's resolution -- see tools/tax_probe.gd table (a),
+##      where the reachable wealth lever alone moves 4.2 points of GDP of revenue.
+##
+## THE S10 RATIO DRIFT IS -0.739 % FOR THE PAIR, IN THE UNSAFE DIRECTION, against V1.3d's
+## accepted +0.39 %, V1.6b's accepted +0.766 % and V1.4c's REFUSED -1.46 %. Taken alone
+## the keys drift -0.270 % (capital gains) and -0.508 % (wealth). It is paid rather than
+## avoided, and the reason is that THE ALTERNATIVE IS NOT A CHEAPER PRICE, IT IS NO PRICE.
+## opinion.gd writes sat["tax_%s"] for every TAX_KEYS entry, so a tax without a key is a
+## satisfaction no bloc weights -- and a player could then take the wealth lever to its
+## ceiling for 4.2 points of GDP that cost nothing at all. That is the strictly-dominated
+## free-money shape this project has caught five times, and it is worse than the drift.
+##
+## Where V1.4c genuinely differs: ownership had somewhere else to be priced, so its
+## -1.46 % bought nothing. This drift buys the only price these two taxes can have.
+##
+## THE FIRST AUTHORED ROWS DRIFTED -1.640 %, PAST V1.4c's REFUSAL LINE, AND THE FIX WAS
+## CONTENT RATHER THAN A CONSTANT -- V1.3d's own move when its council turned out to be a
+## legislature the player controlled. tools/tax_probe.gd's control is what said so: the
+## same two keys at a FLAT 0.06 across all six blocs drift only -0.106 %, so the cause is
+## the PROFILE and not the two extra keys as such, exactly as V1.6b's control found for
+## inflation. The first rows gave the two new taxes 0.0419 and 0.0397 of the national
+## agenda against `tax_corporate`'s 0.0223 -- two taxes eight of the ten nations barely
+## levy, each outweighing corporation tax by two to one. Re-authored at the anchor
+## `bloc_probe.gd` used for `europe` (above `defence`, below the tax every nation
+## charges), they take 0.0162 and 0.0142 against defence's 0.0122 and corporate's 0.0203,
+## and the drift halves.
+##
+## `students` carries NO `tax_wealth` entry at all rather than a small one, which is this
+## table's sparsity used on purpose: students hold no wealth, and an entry saying they
+## barely care is a different claim from the model's own "an issue a bloc has no entry
+## for carries no weight for that bloc".
 const ISSUE_KEYS := [
 	"jobs", "growth",
-	"tax_income", "tax_corporate", "tax_vat",
+	"tax_income", "tax_corporate", "tax_vat", "tax_capital_gains", "tax_wealth",
 	"health", "education", "defence", "pensions", "infrastructure",
 	"public_finances", "europe", "inflation",
 ]
@@ -210,6 +263,8 @@ const ISSUE_LABEL := {
 	"tax_income": "Income tax",
 	"tax_corporate": "Corporate tax",
 	"tax_vat": "VAT",
+	"tax_capital_gains": "Capital gains tax",
+	"tax_wealth": "Wealth tax",
 	"health": "Health",
 	"education": "Education",
 	"defence": "Defence",
@@ -223,8 +278,37 @@ const ISSUE_LABEL := {
 ## Deltas that saturate an issue's satisfaction at full strength.
 const JOBS_SCALE_PP := 3.0        # points of unemployment
 const GROWTH_SCALE_PP := 4.0      # points of growth away from trend
-const TAX_SCALE_PP := 8.0         # points of a tax rate
+const TAX_SCALE_PP := 8.0         # points of a tax rate — the default, see below
 const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
+
+## V1.6d. PER-KEY OVERRIDES on TAX_SCALE_PP, for the taxes whose rate is not on the
+## same scale as income's.
+##
+## Sparse on purpose, exactly like BLOC_SALIENCE_BASE below: a tax with no entry here
+## reads the 8.0 above, so the three taxes S5 measured are untouched by this table's
+## existence and the constant they were measured against still says 8.0.
+##
+## THE SESSION WOULD RATHER NOT HAVE ADDED THIS, and what forced it is arithmetic
+## rather than taste. opinion.gd prices every tax by `for key in C.TAX_KEYS`, in POINTS
+## OF RATE, and economy_constants.TAX_BASE_SHARE puts the wealth base at 4.00 against
+## income's 0.50 -- so one point of wealth rate is eight points of income tax in
+## revenue and the whole reachable wealth lever is three points wide. Shared, an 8.0
+## scale makes the largest wealth tax in Europe read as three eighths of a satisfaction
+## and the issue is politically almost invisible; the alternative was to express the
+## wealth rate on the 0-70 scale with a tiny base share, which makes the number the
+## player sets not a wealth-tax rate in any real sense. The units are honest and the
+## table pays for it. See docs/tax-model.md section 2.
+##
+## `capital_gains` is here for a much weaker reason and is a genuine judgement rather
+## than a forced move: headline capital-gains rates swing further than income rates do
+## -- the roster spans 0.0 to 31.0 where income spans 15.0 to 24.0 -- so a rate change
+## that would be a revolution in income tax is an ordinary budget in this one.
+##
+## SWEPT, and the band and tiebreaker are pre-committed in tools/tax_probe.gd's header.
+const TAX_SCALE_PP_BY_KEY := {
+	"capital_gains": 4.80,
+	"wealth": 0.48,
+}
 
 ## Points of GDP of deficit. Widened from S5's 3.0 during the S10 balance pass:
 ## at 3.0 the issue saturated at ±1 on a three-point move, so a deficit two
@@ -394,6 +478,8 @@ const BLOC_SALIENCE_BASE := {
 		"tax_vat": 0.08,
 		"growth": 0.08,
 		"pensions": 0.07,
+		"tax_capital_gains": 0.01,
+		"tax_wealth": 0.01,
 	},
 	"pensioners": {
 		"pensions": 0.38,
@@ -403,6 +489,8 @@ const BLOC_SALIENCE_BASE := {
 		"jobs": 0.13,
 		"europe": 0.10,
 		"tax_vat": 0.08,
+		"tax_capital_gains": 0.03,
+		"tax_wealth": 0.02,
 	},
 	"urban": {
 		"health": 0.19,
@@ -414,6 +502,8 @@ const BLOC_SALIENCE_BASE := {
 		"inflation": 0.10,
 		"growth": 0.10,
 		"europe": 0.06,
+		"tax_capital_gains": 0.02,
+		"tax_wealth": 0.01,
 	},
 	"rural": {
 		"infrastructure": 0.20,
@@ -425,6 +515,8 @@ const BLOC_SALIENCE_BASE := {
 		"tax_vat": 0.11,
 		"inflation": 0.11,
 		"pensions": 0.10,
+		"tax_wealth": 0.02,
+		"tax_capital_gains": 0.01,
 	},
 	"business": {
 		"public_finances": 0.34,
@@ -435,6 +527,8 @@ const BLOC_SALIENCE_BASE := {
 		"europe": 0.06,
 		"inflation": 0.06,
 		"education": 0.06,
+		"tax_wealth": 0.06,
+		"tax_capital_gains": 0.05,
 	},
 	"students": {
 		"education": 0.38,
@@ -445,6 +539,7 @@ const BLOC_SALIENCE_BASE := {
 		"growth": 0.08,
 		"health": 0.08,
 		"europe": 0.05,
+		"tax_capital_gains": 0.01,
 	},
 }
 
