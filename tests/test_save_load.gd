@@ -22,6 +22,8 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
+const Credit = preload("res://src/sim/credit.gd")
+const CreditK = preload("res://src/sim/credit_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -115,6 +117,7 @@ func _init() -> void:
 	_check_unrest_fields(loader)
 	_check_cycle_fields(loader)
 	_check_inflation_fields(loader)
+	_check_credit_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -700,8 +703,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1302,8 +1305,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1468,8 +1471,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1552,8 +1555,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1870,8 +1873,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19 and V1.6b to 20, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20 and V1.6c to 21, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -1961,5 +1964,73 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 20:
-		_fail("SAVE_VERSION is %d -- V1.6a raised it to 19 and V1.6b to 20 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 21:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four and V1.6c to 21 on one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
+## ever to earn one -- a single float with no register behind it. The half worth pinning
+## is the other one: THREE ABSENCES, because src/sim/credit.gd is stateless and staying
+## stateless is the V1.6 decomposition's own split trigger.
+func _check_credit_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# The register goes live moving nothing, exactly: the spread reads 0.0 and the yield
+	# reads the anchor, so every balance figure this project has quoted against a flat
+	# DEBT_REAL_RATE_PCT keeps its meaning. Exact equality rather than is_zero_approx(),
+	# V1.4a's precedent for a channel that must be inert.
+	if Credit.spread_pct(ns) != 0.0:
+		_fail("the bond spread is %s at new game, not exactly 0.0" % Credit.spread_pct(ns))
+	if ns.start_debt_to_gdp_pct != ns.debt_to_gdp_pct():
+		_fail("start_debt_to_gdp_pct is %s against a live %s at new game" % [
+			ns.start_debt_to_gdp_pct, ns.debt_to_gdp_pct()
+		])
+
+	# Displace the stock, so the round trip tests a live figure rather than a default.
+	ns.debt_eur_bn += 0.25 * ns.gdp_eur_bn
+	Budget.recompute(state, ns)
+	var full: Dictionary = state.to_dict()
+
+	var kept = GameState.from_dict(full)
+	if absf(Credit.yield_pct(kept.player()) - Credit.yield_pct(ns)) > 1e-9:
+		_fail("the yield does not survive a round trip: %s against %s" % [
+			Credit.yield_pct(kept.player()), Credit.yield_pct(ns)
+		])
+
+	# THE BUMP. Absent, start_debt_to_gdp_pct reads 0.0 against a live ~135, so the debt
+	# gap reads the whole stock as newly borrowed and the yield goes to the clamp -- a
+	# reloaded game running a different MODEL from the one that saved it, which is
+	# `cycle_amplitude_rel` at V1.6a and `military_capability` at V1.3g.
+	var dropped: Dictionary = state.to_dict()
+	(dropped["nations"]["FRA"] as Dictionary).erase("start_debt_to_gdp_pct")
+	var adrift = GameState.from_dict(dropped)
+	if not is_zero_approx(adrift.player().start_debt_to_gdp_pct):
+		_fail("an absent start_debt_to_gdp_pct did not read as 0.0 -- the premise of the bump is wrong")
+	# NOT the clamp, and the first version of this check said the clamp. Measured: the
+	# yield comes back at 4.1 against a kept 2.4, which is a France paying seventy per
+	# cent more interest for the rest of the run because it saved. Large, permanent and
+	# silent is the failure the rule is about; "on the clamp" was a guess and the check
+	# is written against the number instead.
+	var adrift_yield: float = Credit.yield_pct(adrift.player())
+	var kept_yield: float = Credit.yield_pct(kept.player())
+	if adrift_yield <= kept_yield * 1.5:
+		_fail("dropping start_debt_to_gdp_pct moved the yield from %s to %s -- less than the standing overcharge this bump names" % [kept_yield, adrift_yield])
+
+	# And re-deriving on load does not rescue it, which is what separates this field from
+	# every derived price on this list: one tick does not bring it back, and re-anchoring
+	# on the live ratio would silently forgive every point of debt the player has added.
+	Economy.tick_month(adrift)
+	Budget.tick_month(adrift)
+	if not is_zero_approx(adrift.player().start_debt_to_gdp_pct):
+		_fail("start_debt_to_gdp_pct came back on one tick, so it is derivable and the bump is unearned")
+
+	# WHAT WAS NOT ADDED, and this is the assertion worth having. The yield, the spread
+	# and the rating are pure reads over a debt stock serialised since the MVP and a
+	# grievance serialised at V1.5c. A later session storing any of them has made
+	# src/sim/credit.gd stateful, which is the V1.6 decomposition's stated split trigger
+	# for this session -- so it turns this red and has to come and say why.
+	for pname in ["bond_yield_pct", "credit_spread_pct", "credit_rating",
+			"start_bond_yield_pct", "credit_rating_months"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- src/sim/credit.gd is a pure read over the debt stock and the grievance, so storing one is the second machine the V1.6 decomposition says would have split this session" % pname)

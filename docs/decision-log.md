@@ -1219,6 +1219,68 @@ decorative survives a failed visibility band.** U6a's day budget and V1.3e's
 
 Full argument: [[inflation-model]] §7.
 
+## V1.6c — a band can pass a term the model's own boundary forbids
+
+**The plan said** `YIELD_INFLATION_BETA` would fail its visibility band and be deleted,
+and recorded in advance that V1.6b's structural exception must not be reached for to
+keep it.
+
+**What happened** is that the band **passed** it — 2 of 7 candidates — and it was
+deleted anyway, on a ground the band could not see. `DEBT_REAL_RATE_PCT` is a **real**
+rate and inflation raises a **nominal** one, so a term there is the Fisher effect:
+precisely the nominal layer [[inflation-model]] §1 cut, smuggled back in through the
+yield. What survives in real terms is an inflation *risk* premium, which is about
+volatility rather than level — and this model's realised inflation sd is 0.040 against
+a measured 1.14.
+
+Every previous deletion on this list was a band failing. This is the first where the
+band was the weaker instrument, and the rule it adds is short: **a band is a test of
+size, not of legitimacy. Check the term against the model's own boundary first.**
+
+Full argument: [[credit-model]] §3.
+
+## V1.6c — three sets of bands for one constant, and the probe caught each
+
+**The plan said** table (a) runs first and nothing is swept until it has been read.
+It did, and it earned its place twice over.
+
+The **first** band set measured a debt-widening regime and passed at every candidate
+down to 0.005 — because a spendthrift budget does not widen the debt, it *spirals* to
+the clamp and a ratio past 1400 % of GDP. **A band measured on a saturated run measures
+the clamp.**
+
+The **second** measured `hands_off` and passed at **0.0005**, because a debt ratio
+walking 110 → 200 moves the service line by 1.8 points at the *anchor* rate with no
+channel at all. **A band on a raw move measures the model that was already there.** The
+fix is a control with the term zeroed — the control `tests/test_trade.gd` needed at
+V1.6a, one session later.
+
+The **third** ships, and the interval it found is interior, stable under refinement,
+and iterated to a **fixed point**: the shipped value equals the midpoint measured at
+it. That is stronger than V1.6b's check that the table moves by less than 0.003 when
+the constant does, and it is the answer to a probe measuring a path its own constant
+is on.
+
+Full argument: [[credit-model]] §4.
+
+## V1.6c — the row named two inputs and they were one
+
+**The plan said** debt and deficit look like one quantity written twice, and that they
+stay distinguishable only if the level and the trajectory are read at different lags.
+
+**The sweep refused the term.** Three clauses, mutually inconsistent: isolated against
+a control, the deficit term moves debt service 0.30 points of GDP over a term only
+above a slope of 0.20, and by 0.145 it already outweighs twelve months of the debt term
+it exists to lead. Everywhere it is legible it dominates the level; everywhere it does
+not dominate it is under the floor. `corr(debt gap, deficit gap)` then measured
+**0.9948** against an accepted standard of 0.3185.
+
+Deleting it removed the session's **only** positive feedback loop with it, because
+`debt_service_pct_gdp` is inside `deficit_pct_gdp`. What was going to be an argument
+about a one-month lag is now a fact about the call order.
+
+Full argument: [[credit-model]] §3.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

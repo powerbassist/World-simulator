@@ -157,7 +157,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.5b) `--migrate`,
 (V1.5c) `--unrest` and
 (V1.5d) `--press` and
-(V1.6b) `--inflate`,
+(V1.6b) `--inflate` and
+(V1.6c) `--downgrade`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1311,13 +1312,78 @@ neighbouring row** (`%+.1f` against a quantity whose whole reachable range is 0.
 printing "+0.0" against a live figure) and a flag that ticked 48 months and so ran **past**
 the thing it exists to photograph. Model: [docs/inflation-model.md](docs/inflation-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a) and (b) are shipped.** V1.1e (upper house and
+**V1.6c shipped the bond market, and two of the four inputs the row names do not exist.**
+`economy_constants.DEBT_REAL_RATE_PCT` stays the **anchor** and `Budget.recompute()` reads
+`Credit.yield_pct(ns)` where it read the constant since the MVP: the yield is that constant
+plus a spread whose every input is a deviation against the nation's **own start**, so the
+spread reads **exactly 0.0** at new game and every balance figure this project has quoted
+against a flat 2.0 keeps its meaning. That call is the whole of what kept the re-baseline
+bounded, and it is `trade_baseline_by_partner`'s idiom in the place with the most to lose by
+it. `src/sim/credit.gd` is **stateless** -- no `tick_month()`, no accumulator, nothing it
+writes on `NationState` -- so the rating is one extra read of the yield,
+`Defence.allies()`'s shape and the thing the decomposition names as this session's split
+trigger. **The absence of a stored rating is pinned in the save format**, not only in prose.
+
+**Step 0 looked for a sovereign-rate series before a band was written, and there is not
+one.** `FR.INR.RINR` covers 4 of 10 on disjoint windows with **France carrying zero rows**;
+`GC.DOD.TOTL.GD.ZS` covers 7 of 10 with four under five years. So the slopes are swept, and
+that is a checked result rather than the reach for a band the last three sessions kept
+warning about. **The cross-check then nearly agreed** -- an empirical 0.02-0.05 against a
+swept **0.0150**, a factor of 1.3 rather than an order of magnitude -- and what excludes an
+honest 0.02 is the **opinion model's resolution** and not the bond market: at 0.02 a
+do-nothing president's debt service uses half of `DEFICIT_SCALE_PP`'s whole span on its own.
+
+**Instance thirty-one is that the deficit is the DERIVATIVE of the debt, and the sweep is
+what turned that from a suspicion into a result.** Three clauses, mutually inconsistent:
+isolated against a control the deficit term is legible only above a slope of 0.20, and by
+0.145 it already outweighs twelve months of the level it exists to lead. `corr(debt gap,
+deficit gap)` measured **0.9948** against V1.6b's accepted 0.3185. Deleting it removed the
+session's **only positive feedback loop** with it, since `debt_service_pct_gdp` is *inside*
+`deficit_pct_gdp` -- what was going to be an argument about a one-month lag is now a fact
+about the call order. **And the inflation term was deleted DESPITE PASSING ITS BAND**, which
+is new: `DEBT_REAL_RATE_PCT` is a *real* rate and inflation raises a *nominal* one, so a term
+there is the Fisher effect, the nominal layer V1.6b cut smuggled back in through the yield.
+**A band is a test of size, not of legitimacy.**
+
+**The debt slope needed THREE sets of bands and the probe caught each, seventeen sessions
+running.** The first measured a spendthrift regime, which does not widen the debt but
+*spirals* to the clamp -- a band on a saturated run measures the clamp. The second measured
+`hands_off` and passed at 0.0005, because a debt ratio walking 110 to 200 moves the service
+line 1.8 points **at the anchor rate with no channel at all** -- a band on a raw move
+measures the model that was already there, and the fix is the control `tests/test_trade.gd`
+needed at V1.6a. The third ships, interior, stable under refinement and **iterated to a fixed
+point**: the shipped value equals the midpoint measured at it, stronger than V1.6b's 0.003
+check. `YIELD_MIN` moved from -1.0 to **0.0** on a sign bug the probe found -- a player who
+runs surpluses drives `debt_eur_bn` negative, and two negatives multiply, so a treasury
+holding net assets would have **paid interest on them**.
+
+**V1.4c's obligation is discharged on a RATE**, the one quantity in this model that is not a
+share of GDP and exactly what V1.6a's refutation asked for. The dividend is held
+`EQUITY_PREMIUM_PCT` = **1.12** above the anchor while the borrowing rate floats past it, so
+a nationalisation is a flow gain while the player's credit is good and a flow loss once the
+spread exceeds the premium; the crossing is exact and needs no simulation. The kill switch
+did **not** fire, and clause (i) was tightened on the record from *some reachable regime* --
+a bound rather than a selector, V1.5a's failure -- to `hands_off`: **doing nothing for long
+enough turns a nationalisation into a loss.**
+
+**The re-baseline is the cleanest split this block has produced**: 0 of 29 regimes
+bit-identical as predicted, **one outcome change of 48**, and growth, trend and unemployment
+**bit-identical in all 217 printed year-rows** because the yield reaches the **budget** and
+never the economy -- `debt_service_pct_gdp` is not a player-set line, so it never enters
+`demand_impulse_pct`. No thirtieth regime. The readout is one caption on the economy panel's
+PUBLIC FINANCES column under the debt-service line it explains, never silent, leading with
+the rating and red once the letter falls out of the band the anchor sits in;
+`screenshot.gd` gained `--downgrade`, and **the twelfth screenshot pass found no bug**, a
+first, reported as such rather than dressed up. Model:
+[docs/credit-model.md](docs/credit-model.md).
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b) and (c) are shipped.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 20**. There has never been a migration: a superseded
+Save format is at **version 21**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -1452,6 +1518,8 @@ time on `young_share`'s reasoning and is folded into the same bump. `start_gini_
 read has no serialised field at all, because it is a subtraction over content and a drift
 Demography already carries -- so a later session storing an index turns it red and has to
 come and say why.
+
+**V1.6c bumps to 21 on ONE field, and it is the smallest addition on this list ever to earn one** -- `start_debt_to_gdp_pct`, a single float with no register behind it. Absent it reads 0.0 against a live ~140, so `src/sim/credit.gd`'s debt gap reads the whole stock as newly borrowed: the yield comes back at **4.1 against a kept 2.4**, a France paying seventy per cent more interest for the rest of the run because it saved. `cycle_amplitude_rel` at V1.6a and `military_capability` at V1.3g. Re-deriving on load does not rescue it, which is what separates it from every derived price on this list: the live ratio has moved, so re-anchoring on it would silently forgive every point of debt the player added. **What was NOT added is the half worth pinning** -- no stored yield, no stored spread, no stored rating, because the module is a pure read over a debt stock serialised since the MVP and a grievance serialised at V1.5c. `tests/test_save_load.gd` asserts those three absences, so a later session making the module stateful turns it red and has to come and say why -- **the decomposition's split trigger, pinned in the save format rather than only in the docs**. The first draft of that check said an absent field puts the yield *on the clamp*; it does not, it puts it at 4.1, and the check is written against the measured number instead.
 
 **V1.6a bumps to 19 on one field of two, and the session's plan predicted no bump at all.** Its reason was true about the wrong thing: `src/sim/cycle.gd` is genuinely stateless -- no accumulator, no `tick_month()`, nothing to save -- but `NationState.from_dict()` rebuilds from the dictionary ALONE and never sees the loader, so every content-derived static fact on that class is already serialised (`eu_member`, `neighbours`, `pop_growth_pct`, `gini_index_per_yr`). **Statelessness is a property of the module, not of the save file.** `cycle_amplitude_rel` is the bump: absent it reads the default 1.0, every nation runs the roster-average cycle instead of its own -- France 45 % louder than its content says -- and the reloaded game runs a *different model* from the one that saved it, which is `eu_member` at V1.3b and `military_capability` at V1.3g. `cycle_impulse_pct` earns nothing: absent it reads 0.0 and `Economy.tick_month()` overwrites it from the clock on the next tick, `coercion_impulse_pct`'s case. The test asserts both halves and then pins what was NOT added -- no stored phase, no month counter, no accumulated wave -- so a later session making the module stateful turns it red and has to come and say why.
 

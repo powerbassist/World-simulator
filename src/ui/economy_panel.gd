@@ -18,6 +18,8 @@ const Economy = preload("res://src/sim/economy.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
+const Credit = preload("res://src/sim/credit.gd")
+const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -211,7 +213,43 @@ func _refresh() -> void:
 	_trend(_finances, "debt_to_gdp_pct")
 	_caption(_finances, "Debt service costs %.1f%% of GDP." % ns.debt_service_pct_gdp)
 
+	# V1.6c, directly under the debt-service line because that is the line it explains.
+	# The panel reads in the order the model computes in, which is the discipline the
+	# inflation caption above established one session ago.
+	#
+	# NEVER SILENT, which is the dependency ratio's and inflation's rule rather than the
+	# delivery lines'. Every game has a borrowing rate from the first frame -- it is
+	# exactly economy_constants.DEBT_REAL_RATE_PCT -- so a line that appeared only once
+	# it moved would hide the level the spread is measured against, which is the whole
+	# claim the number makes.
+	#
+	# LEADS WITH THE RATING, and that is what the rating is FOR. The yield moves in
+	# fractions of a point and the spread smaller still, so a letter changing is the
+	# event a player can actually see: docs/society-model.md's *a level alone is a number
+	# with no units the player can act on*, read a fifth time.
+	#
+	# TWO DECIMALS ON THE SPREAD AND ON THE YIELD, chosen against the reachable range in
+	# tools/credit_probe.gd table (a) rather than copied from the neighbouring row --
+	# which is V1.6b's own screenshot bug, one session old. `managed` runs at a spread of
+	# +0.33 over fourteen years, so one decimal would print two distinct values of the
+	# figure a well-governed run ever shows.
+	#
+	# Red once the rating has fallen out of the band the anchor sits in, which is the
+	# unrest caption's rule: the threshold is named by the model rather than by a number
+	# invented for the panel.
+	var rating: String = Credit.rating(ns)
+	_caption(_finances, "Rated %s. Borrowing at %.2f%%, %+.2f on the anchor." % [
+		rating, Credit.yield_pct(ns), Credit.spread_pct(ns),
+	], UiTheme.BAD_TEXT if rating != _anchor_rating() else "")
+
 	_fill_sectors(ns)
+
+
+## The letter every game opens on, because every game opens at the anchor. Computed
+## rather than written down, so a content edit to RATING_BANDS cannot leave this panel
+## calling a normal rating a downgrade.
+func _anchor_rating() -> String:
+	return Credit.rating_for(EconomyK.DEBT_REAL_RATE_PCT)
 
 
 ## A gap under a tenth of a point is not "above potential by 0.0%" -- rounding a

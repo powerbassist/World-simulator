@@ -245,7 +245,28 @@ const C = preload("res://src/sim/economy_constants.gd")
 ## nothing and is serialised anyway. The three are asserted SEPARATELY in
 ## tests/test_save_load.gd, because a single combined check would let any one of three
 ## different failures be quietly wrong. See docs/inflation-model.md section 9.
-const SAVE_VERSION := 20
+##
+## V1.6c bumps to 21 on ONE field, and it is the SMALLEST addition on this list to earn
+## one: `start_debt_to_gdp_pct`, a single float with no register behind it. Absent it
+## reads 0.0 against a live ~140, so src/sim/credit.gd's debt gap reads the WHOLE stock
+## as newly borrowed: the yield comes back at 4.1 against a kept 2.4 and the debt service
+## with it -- a France paying seventy per cent more interest for the rest of the run
+## because it saved. Measured rather than asserted, and the first draft of this comment
+## said "straight to the clamp", which was a guess and was wrong. `cycle_amplitude_rel` at V1.6a, `military_capability` at V1.3g and
+## `eu_member` at V1.3b, in the same family: the reloaded game runs a DIFFERENT MODEL
+## from the one that saved it, with nothing anywhere to say so. Re-deriving on load does
+## not rescue it either, and that is what separates it from every derived price on this
+## list -- the live ratio has moved, so re-anchoring on it would silently forgive every
+## point of debt the player has added.
+##     WHAT V1.6c DID NOT ADD IS THE HALF WORTH PINNING. There is no stored yield, no
+##     stored spread and no stored rating, because src/sim/credit.gd is stateless: the
+##     yield is a pure read over the debt stock and the grievance, both of which this
+##     save has carried since the MVP and V1.5c respectively. tests/test_save_load.gd
+##     asserts those three ABSENCES as well as the field, so a later session making the
+##     module stateful -- a downgrade record, a rating with memory -- turns it red and
+##     has to come and say why. That is the V1.6 decomposition's own split trigger,
+##     pinned in the save format rather than only in the docs.
+const SAVE_VERSION := 21
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -582,6 +603,19 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	if scenario != null and scenario.has_debt_to_gdp_pct:
 		debt_to_gdp_pct = scenario.debt_to_gdp_pct
 	ns.debt_eur_bn = debt_to_gdp_pct / 100.0 * ns.gdp_eur_bn
+	# V1.6c, from the scenario-OVERRIDDEN figure above rather than from n.debt_to_gdp_pct,
+	# and the distinction is the whole point of setting it here: src/sim/credit.gd
+	# measures the bond spread against this, so a scenario that hands the player 140 % of
+	# GDP is a France that has always carried it and must borrow at the anchor rather
+	# than at a penalty for a debt it did not run up. Same argument the two comments
+	# around it make for the deficit the electorate measures against.
+	# Read back through ns.debt_to_gdp_pct() rather than assigned from the local above,
+	# and the round trip is the point rather than a redundancy: the live read is
+	# `debt_eur_bn / gdp_eur_bn * 100` and the local is what that was computed FROM, so
+	# taking the local leaves a 1e-14 residue and the spread is "almost" zero at new game.
+	# Almost is not the claim -- tests/test_credit.gd asserts EXACT equality, because
+	# every balance figure this project has quoted against a flat 2.0 depends on it.
+	ns.start_debt_to_gdp_pct = ns.debt_to_gdp_pct()
 
 	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)

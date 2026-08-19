@@ -286,11 +286,18 @@ debt_service_pct_gdp = DEBT_REAL_RATE_PCT × debt_eur_bn / gdp_eur_bn
 The rate is already in percent and `debt / gdp` is a bare ratio, so the product
 is a percent of GDP with no scaling factor — 2.0 × 1.16 = 2.32 % for France.
 
-`DEBT_REAL_RATE = 2.0 %/yr`. Flat — bond yields and credit ratings are
-[[v1|V1]]. The number that matters is that **2.0 > 1.31**: r exceeds trend
-growth, so a zero primary balance still walks the debt ratio upward, and
-stabilising it requires a small primary surplus. That is the entire fiscal
+`DEBT_REAL_RATE = 2.0 %/yr`. The number that matters is that **2.0 > 1.31**: r
+exceeds trend growth, so a zero primary balance still walks the debt ratio upward,
+and stabilising it requires a small primary surplus. That is the entire fiscal
 pressure of the MVP, and it comes from one constant being larger than another.
+
+> [!note] Since [[ROADMAP|V1.6c]] it is the ANCHOR rather than the rate
+> The rate `Budget.recompute()` reads is `Credit.yield_pct(ns)`, and the constant is
+> what that is a spread *over*. It keeps every word of its job above: the spread is
+> a deviation against the nation's own start, so it reads **exactly 0.0** at new game
+> and every balance figure this page quotes against a flat 2.0 keeps its meaning.
+> What moves it is the debt ratio the player has run up and the grievance they have
+> earned. Full argument: [[credit-model]].
 
 Defaults total **50.8 %** of GDP against 46.1 % revenue — France opens on a
 4.7 %-of-GDP deficit, close to the real figure, and hands the player a problem

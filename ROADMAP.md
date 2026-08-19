@@ -91,7 +91,8 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a) is built.**
+**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a), (b) and
+(c) are built.**
 The argument, the four calls it made and the two rows it caught are under *V1.6 - the
 decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond yields and
 the credit rating, (d) five taxes and brackets, (e) sectoral investment and
@@ -762,9 +763,12 @@ bullets plus an obligation inherited from V1.4c, and one line is not a session.
 |---|---|---|---|
 | **V1.6a** | ~~The business cycle~~ **shipped** | A **stateless** deterministic shock over all ten nations, into `economy.gd`'s growth sum. Amplitude **fitted** to France's measured growth volatility, per-nation spread **imported**, common share **measured twice**. `SAVE_VERSION` **19**. Re-baselined V1.5c's two constants and found them unchanged | - |
 | **V1.6b** | ~~Inflation~~ **shipped** | A stock on the **unemployment gap**, not the output gap -- the row's three named inputs are one quantity written three times AND the measurement refuted the survivor. No nominal layer. Two prices: a growth addend and the **thirteenth `ISSUE_KEYS` entry**, the first YES after five noes. Three constants measured, two swept. `SAVE_VERSION` **20** on three fields of four | a |
-| **V1.6c** | Bond yields and the credit rating | `DEBT_REAL_RATE_PCT` becomes an anchor, not the rate. Reads debt, deficit, `unrest_pct` and (b)'s inflation; the rating is that machine read at a second point. **Inherits V1.4c's obligation WHOLE**, not halved -- see below | a, b |
+| **V1.6c** | ~~Bond yields and the credit rating~~ **shipped** | `DEBT_REAL_RATE_PCT` is the **anchor** and the spread reads exactly 0.0 at new game. **TWO of the four named inputs do not exist**: the deficit is the debt's derivative (`corr` 0.9948) and inflation cannot reach a real rate. The rating is stateless, pinned in the save format. V1.4c's obligation discharged **on a rate**. `SAVE_VERSION` **21** | a, b |
 | **V1.6d** | Five taxes and brackets | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income. Discharges V1.5c's declared Gini stopgap by turning `tests/test_unrest.gd` red on purpose, through a **second field** rather than a second writer | - |
 | **V1.6e** | Sectoral investment and infrastructure projects | The block's one genuine new player verb, on `sector_output` itself, with no employment term | a, d |
+
+*(V1.6c's own numbers, and the two rows it deleted, are under* **V1.6c - the bond
+market, and two of four inputs that were not there** *below.)*
 
 **Machine count is five, which is what splits it** -- the cycle, inflation, the bond
 market, the distribution, and the sector lever. [[foreign-policy-model|V1.3e]]'s
@@ -834,6 +838,85 @@ mechanic in [[mechanics-economy]] is named by a section 6 bullet or already buil
 tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
 eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
 gap.
+
+### V1.6c - the bond market, and two of four inputs that were not there
+
+**The row asks the yield to read debt, deficit, `unrest_pct` and inflation. Two of the
+four do not survive, and both were killed by measurement rather than by argument.**
+
+**`DEBT_REAL_RATE_PCT` stays the ANCHOR, which is the call that kept the re-baseline
+bounded.** It is flat at 2.0, it is the entire fiscal pressure of the MVP, and every
+balance number this project has ever measured is quoted against it. The yield is that
+constant plus a spread whose every input is a deviation against the nation's **own
+start**, so the spread reads **exactly 0.0** at new game -- `trade_baseline_by_partner`'s
+and inflation's idiom, and V1.5d's six framing gains averaging back to the one. The
+alternative, a yield on the absolute debt level, gives the ten different opening ratings
+and changes France's debt service on frame 1; it is also mostly decorative, since only
+the player has a budget.
+
+**Step 0 looked for a sovereign-rate series before writing a band, and there is not one.**
+`FR.INR.RINR` covers **4 of 10** on disjoint windows with France carrying zero rows;
+`GC.DOD.TOTL.GD.ZS` covers 7 of 10 with four of them under five years. OECD `IRLTLT01`
+carries it and [[data-sources]] already rejected the IMF WEO on redistribution terms. So
+the slopes are swept, and that is a checked result rather than the reach for a band this
+page keeps warning about. **The cross-check then nearly agreed**: the empirical range is
+0.02-0.05 and the swept answer is **0.0150**, a factor of 1.3 rather than an order of
+magnitude. What excludes an honest 0.02 is the **opinion model's resolution**, not the
+bond market -- at 0.02 a do-nothing president's debt service uses half of
+`DEFICIT_SCALE_PP`'s whole span on its own.
+
+**Instance thirty-one: the deficit is the DERIVATIVE of the debt.** That was a suspicion
+and not a result -- a level and a trajectory really are different information -- and the
+sweep is what settled it. Three clauses, mutually inconsistent: isolated against a
+control the deficit term is legible only above a slope of 0.20, and by 0.145 it already
+outweighs twelve months of the level it exists to lead. `corr(debt gap, deficit gap)`
+measured **0.9948** against the standard V1.6b used, 0.3185. Deleting it removed the
+session's **only positive feedback loop** with it, because `debt_service_pct_gdp` is
+*inside* `deficit_pct_gdp`.
+
+**The inflation term was deleted DESPITE PASSING ITS BAND, and that is the sharper
+finding.** 2 of 7 candidates cleared it, so the band alone would have kept it.
+`DEBT_REAL_RATE_PCT` is a **real** rate and inflation raises a **nominal** one, so a term
+there is the Fisher effect -- the nominal layer V1.6b cut, smuggled back in through the
+yield. What survives in real terms is a *risk* premium about volatility, against which
+this model's realised inflation sd is 0.040 where the series is 1.14. Every previous
+deletion on the decision log was a band failing; this is the first where the band was the
+weaker instrument. **A band is a test of size, not of legitimacy.**
+
+**The probe corrected the session three times, seventeen sessions running, and the debt
+slope needed THREE sets of bands.** The first measured a spendthrift regime, which does
+not widen the debt but *spirals* to the clamp -- a band on a saturated run measures the
+clamp. The second measured `hands_off` and passed at 0.0005, because a debt ratio walking
+110 to 200 moves the service line 1.8 points at the *anchor* rate with no channel at all
+-- a band on a raw move measures the model that was already there, and the fix is the
+control `tests/test_trade.gd` needed at V1.6a. The third ships, interior and stable under
+refinement, and **iterated to a fixed point**: the shipped value equals the midpoint
+measured at it, which is stronger than V1.6b's 0.003 check. The third correction was
+`YIELD_MIN`, set to -1.0 on `INFLATION_MIN`'s argument and moved to **0.0** once the
+probe found the sign bug behind it -- a player who runs surpluses drives `debt_eur_bn`
+negative, and two negatives multiply, so **a treasury holding net assets would have paid
+interest on them**.
+
+**V1.4c's obligation is discharged on a RATE**, which is the one quantity in this model
+that is not a share of GDP and therefore exactly what V1.6a's refutation asked for. The
+dividend is held `EQUITY_PREMIUM_PCT` = **1.12** above the anchor while the borrowing
+rate floats past it; the crossing is exact and needs no simulation. The kill switch did
+**not** fire, and its clause (i) was tightened on the record from *some reachable regime*
+-- satisfied only by one that survives a single term, so a bound rather than a selector,
+V1.5a's `CORRUPTION_DELIVERY_BETA` failure -- to `hands_off`, which makes the better
+claim: **doing nothing for long enough turns a nationalisation into a loss.**
+
+**The re-baseline is the cleanest split this block has produced.** 0 of 29 regimes
+bit-identical, as predicted, and **one outcome change of 48** -- `tinkering` 2032, the
+regime whose whole point is that churning every line produces a worse deficit than doing
+nothing. Growth, trend and unemployment are **bit-identical in all 217 printed
+year-rows**, and GDP in 216, because the yield reaches the **budget** and never the
+economy: `debt_service_pct_gdp` is not a player-set line, so it never enters
+`demand_impulse_pct`. What moves is debt, the deficit that services it, and the approval
+that prices the deficit. **No thirtieth regime** -- a yield is not a verb.
+
+The **twelfth screenshot pass found no bug**, a first, and that is reported rather than
+dressed up. Full argument: [[credit-model]].
 
 ### V1.6b - inflation, and the row's own input refuted by the data
 
@@ -1988,7 +2071,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
 | **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality — **decomposed into four sessions, V1.5a–d**, before any code. Rule of law left the block for §1's judiciary (V1.1e), and inequality's *instruments* are §6's. The table and the argument are under *Next* above |
-| **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–e**, before any code, and **(a) is shipped**. The table and the argument are under *Next* above |
+| **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–e**, before any code, and **(a), (b) and (c) are shipped**. The table and the argument are under *Next* above |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
 

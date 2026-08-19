@@ -159,6 +159,7 @@ var _unrest := false
 var _press := false
 var _cycle := false
 var _inflate := false
+var _downgrade := false
 var _main
 
 
@@ -201,6 +202,8 @@ func _init() -> void:
 			_cycle = true
 		elif args[i] == "--inflate":
 			_inflate = true
+		elif args[i] == "--downgrade":
+			_downgrade = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
@@ -278,6 +281,8 @@ func _apply_view() -> void:
 		_run_into_a_recession()
 	if _inflate:
 		_overheat_the_economy()
+	if _downgrade:
+		_lose_the_markets()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -516,6 +521,39 @@ func _provoke_the_unions() -> void:
 ## means the frame is honest about how SMALL the reachable movement is: the probe
 ## measures 0.145 points, so the caption moves by a tenth and the panel has to be
 ## legible at that size or the line is not doing its job.
+## V1.6c. Run the debt up until the bond market notices, so the economy panel's new
+## caption is photographed saying something.
+##
+## THE MONTH COUNT IS THE WHOLE FLAG, and both directions of getting it wrong are already
+## on this project's record. V1.4c's flags ticked without advancing the real clock, so
+## the date read 01 JAN 2026 beside figures that had moved; V1.6b's --inflate ticked 48
+## months and ran PAST the thing it exists to photograph, because the demand impulse was
+## spent. Here the failure would be a frame in which the rating still reads the letter
+## every game opens on, which proves the caption compiles and nothing else.
+##
+## 40 months is measured rather than guessed: tools/credit_probe.gd table (i) puts
+## `hands_off` into BB+ at month 64 and a spendthrift budget gets there sooner, so this
+## clears the opening band with room and stops well short of the spiral that would put
+## the panel on a figure no player reaches.
+func _lose_the_markets() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	Budget.commit(state, {
+		"spending_pct_gdp": {
+			"health": float(ns.start_spending_pct_gdp["health"]) + 3.0,
+			"pensions": float(ns.start_spending_pct_gdp["pensions"]) + 3.5,
+			"infrastructure": float(ns.start_spending_pct_gdp["infrastructure"]) + 2.5,
+		},
+		"tax_rates_pct": {
+			"income": maxf(0.0, float(ns.start_tax_rates_pct["income"]) - 6.0),
+			"corporate": maxf(0.0, float(ns.start_tax_rates_pct["corporate"]) - 7.0),
+		},
+	})
+	_tick_months(40)
+
+
 func _overheat_the_economy() -> void:
 	var state = _main._state
 	if state == null:

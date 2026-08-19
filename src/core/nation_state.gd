@@ -67,6 +67,26 @@ var debt_eur_bn: float = 0.0
 ## against this, so a fresh game starts on exactly neutral.
 var start_deficit_pct_gdp: float = 0.0
 
+## V1.6c. The debt ratio at new-game, and the reference src/sim/credit.gd measures the
+## bond spread against, so a fresh game borrows at exactly economy_constants.
+## DEBT_REAL_RATE_PCT and every balance figure ever quoted against that flat 2.0 keeps
+## its meaning. start_deficit_pct_gdp's job one line up, for the other half of the same
+## pair.
+##
+## SET FROM THE SCENARIO-OVERRIDDEN FIGURE rather than from the nation file, in
+## src/core/game_state.gd beside debt_eur_bn -- a scenario authoring 140 % of GDP is a
+## France that has ALWAYS carried that debt, so it must start at a zero spread rather
+## than in immediate breach of a market that never lent it anything.
+##
+## EARNS THE SAVE_VERSION BUMP TO 21, on its own. Absent it reads 0.0 against a live
+## ~110, so the debt gap reads +110 points from the first month, the yield goes to
+## credit_constants.YIELD_MAX and the debt service with it -- a reloaded game running a
+## DIFFERENT MODEL from the one that saved it, which is `cycle_amplitude_rel` at V1.6a,
+## `military_capability` at V1.3g and `eu_member` at V1.3b. Re-deriving on load cannot
+## rescue it either: the live ratio has moved, and re-anchoring on it would silently
+## forgive every point of debt the player added.
+var start_debt_to_gdp_pct: float = 0.0
+
 # --- Opinion -----------------------------------------------------------------
 
 ## String bloc id -> approval, 0-100. Keys come from opinion_constants.BLOC_KEYS
@@ -920,6 +940,7 @@ func duplicate_state():
 	s.deficit_pct_gdp = deficit_pct_gdp
 	s.debt_eur_bn = debt_eur_bn
 	s.start_deficit_pct_gdp = start_deficit_pct_gdp
+	s.start_debt_to_gdp_pct = start_debt_to_gdp_pct
 
 	s.bloc_approval = bloc_approval.duplicate(true)
 	s.overall_approval_pct = overall_approval_pct
@@ -1089,6 +1110,7 @@ func to_dict() -> Dictionary:
 		"deficit_pct_gdp": deficit_pct_gdp,
 		"debt_eur_bn": debt_eur_bn,
 		"start_deficit_pct_gdp": start_deficit_pct_gdp,
+		"start_debt_to_gdp_pct": start_debt_to_gdp_pct,
 
 		"bloc_approval": bloc_approval,
 		"overall_approval_pct": overall_approval_pct,
@@ -1256,6 +1278,7 @@ static func from_dict(d: Dictionary):
 	s.deficit_pct_gdp = d.get("deficit_pct_gdp", 0.0)
 	s.debt_eur_bn = d.get("debt_eur_bn", 0.0)
 	s.start_deficit_pct_gdp = d.get("start_deficit_pct_gdp", 0.0)
+	s.start_debt_to_gdp_pct = d.get("start_debt_to_gdp_pct", 0.0)
 
 	s.bloc_approval = d.get("bloc_approval", {})
 	s.overall_approval_pct = d.get("overall_approval_pct", 0.0)

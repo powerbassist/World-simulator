@@ -22,6 +22,7 @@ const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
+const Credit = preload("res://src/sim/credit.gd")
 
 
 static func tick_month(state) -> void:
@@ -64,9 +65,22 @@ static func recompute(state, ns) -> void:
 		revenue += float(v)
 	ns.total_revenue_pct_gdp = revenue
 
+	# V1.6c. The rate is Credit.yield_pct(ns) where it was a flat
+	# C.DEBT_REAL_RATE_PCT from the MVP until now, and that constant is still the
+	# ANCHOR: the yield is it plus a spread whose every input is measured against the
+	# nation's own start, so this line is bit-identical at new game and every balance
+	# figure ever quoted against a flat 2.0 keeps its meaning. See src/sim/credit.gd.
+	#
+	# ABOVE ns.deficit_pct_gdp's assignment at the bottom of this function, and that
+	# ordering is load-bearing rather than incidental. The spread reads the deficit, and
+	# debt service is INSIDE the deficit, so a yield reading the figure this function is
+	# about to write would feed itself -- the positive feedback docs/economy-model.md
+	# forbids. Reading it here means it is last month's, which is the same one-month lag
+	# the bloc transfer, the deployment bill and the subsidy bill all take a few lines
+	# below, and for the same reason. The loop is broken by a lag that already existed.
 	ns.debt_service_pct_gdp = 0.0
 	if ns.gdp_eur_bn > 0.0:
-		ns.debt_service_pct_gdp = C.DEBT_REAL_RATE_PCT * ns.debt_eur_bn / ns.gdp_eur_bn
+		ns.debt_service_pct_gdp = Credit.yield_pct(ns) * ns.debt_eur_bn / ns.gdp_eur_bn
 
 	# V1.3d's line. SIGNED and on the spending side, not a sixth SPENDING_KEYS
 	# entry: docs/tiers/v1.md section 6 keys the five player-set spending lines 1:1

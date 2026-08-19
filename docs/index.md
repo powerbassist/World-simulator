@@ -24,6 +24,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[economy-model]] — the economy and budget formulas, and why nothing diverges
 - [[cycle-model]] — the business cycle: a deterministic shock, measured off thirty-four years of growth
 - [[inflation-model]] — inflation as a stock on the unemployment gap, and the thirteenth issue
+- [[credit-model]] — the bond yield as a spread over a constant that has been flat since the MVP, and the rating that reads it
 - [[opinion-model]] — voter blocs, salience, approval inertia, and polling noise
 - [[election-model]] — vote share, turnout weighting, attribution, and no election-day noise
 - [[electoral-systems]] — the ten real electoral systems, every date's source, and what each reduction throws away
