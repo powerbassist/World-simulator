@@ -47,6 +47,18 @@ extends RefCounted
 ## Recorded rather than smoothed, and tests/test_sectors.gd asserts this file
 ## writes nothing on the employment path.
 ##
+## IT REACHES THE WHOLE SECTOR, INCLUDING THE UNNAMED RESIDUAL, and that is the line
+## docs/tiers/v1.md section 6 says this bullet must not cross. V1.4b's regulation reads
+## only the NAMED firms, so a sector a quarter named is a quarter as regulable --
+## docs/companies-model.md records that as a structural bound rather than a rounding
+## error, and it is one of the two things that keep a sector burden from being this
+## lever with a minus sign. sector_trend_shift() reads `ns.sector_output` and nothing
+## else, so a nation with no data/companies/ file can still be invested in, and
+## tests/test_sectors.gd measures it by emptying the register outright.
+##
+## The other of the two is the jobs price, and this file does not have one -- see above.
+## Both differences hold, which is what the row asked for.
+##
 ## TAKES NO LOADER for the tick, where companies.gd does. A firm's baseline is
 ## authored content, so that register needs the loader to read it; a sector's
 ## register is keyed by the three sector names economy_constants.SECTOR_TREND

@@ -116,6 +116,21 @@ this module ever reaches the employment path. The balance re-run shows the same 
 the other end: `managed` and `industrial_policy` print **identical unemployment in every
 year** while GDP diverges by 4.9 %.
 
+## 4b. The line §6 says this bullet must not cross
+
+[[v1]] §6 names **two** structural differences that keep a sector burden from being this
+lever with a minus sign, and requires both. §4 is one of them. The other:
+
+> a regulation reaches **only the named partition** (a sector 24 % named is a quarter as
+> regulable; the unnamed residual is unregulated, and that is the line this bullet must
+> not cross)
+
+`Investment.sector_trend_shift()` reads `ns.sector_output` and nothing else, so it reaches
+the whole sector, named or not — a nation with no `data/companies/` file can still be
+invested in, and the `companies_panel.gd` note that used to stop at "no register" now says
+so. `tests/test_sectors.gd` measures it rather than claiming it: with the entire firm
+register emptied, the trend shift is **identical to the bit**.
+
 ## 5. Boundary check before the band: it is not a second `INFRA_BETA`
 
 [[credit-model|V1.6c]]'s rule — *a band is a test of size, not of legitimacy* — so this was

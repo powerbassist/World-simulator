@@ -67,6 +67,7 @@ func _init() -> void:
 	_test_no_law_ever_moves_the_register()
 	_test_investment_never_moves_a_share_or_a_burden()
 	_test_the_module_is_a_leaf()
+	_test_it_reaches_the_WHOLE_sector()
 	_finish()
 
 
@@ -507,3 +508,33 @@ func _test_the_module_is_a_leaf() -> void:
 		var path := line.get_slice("\"", 1)
 		if not allowed.has(path):
 			_fail("investment.gd preloads '%s', which would stop it being a leaf" % path)
+
+
+## THE LINE docs/tiers/v1.md SECTION 6 SAYS THIS BULLET MUST NOT CROSS, asserted rather
+## than left to prose. V1.4b's regulation reaches only the NAMED partition -- a sector a
+## quarter named is a quarter as regulable, because companies.gd walks the register --
+## and that bound is one of the two things separating a sector burden from this lever.
+##
+## This one reads `ns.sector_output` and nothing else, so it reaches the unnamed residual
+## too and a nation with no data/companies/ file can still be invested in. Measured by
+## emptying the firm register outright: the trend shift must not move by a bit.
+func _test_it_reaches_the_WHOLE_sector() -> void:
+	var named = _new_state()
+	var unnamed = _new_state()
+	for state in [named, unnamed]:
+		var n = state.nations[PLAYER]
+		Investment.execute(state, n, _loader.investment_actions, _action("reindustrialisation"))
+	# The whole firm register removed, which is what seven of the ten nations already look
+	# like and what V1.4b's burden would be a quarter as strong against.
+	unnamed.nations[PLAYER].companies = {}
+
+	for _m in range(60):
+		_tick(named)
+		_tick(unnamed)
+
+	var a: float = Investment.national_trend_shift_pct(named.nations[PLAYER])
+	var b: float = Investment.national_trend_shift_pct(unnamed.nations[PLAYER])
+	if a != b:
+		_fail("the trend shift reads the firm register: %.9f named against %.9f unnamed" % [a, b])
+	if is_zero_approx(a):
+		_fail("both runs moved nothing, so this check is not measuring what it says")
