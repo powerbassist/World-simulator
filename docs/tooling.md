@@ -70,6 +70,42 @@ Register the bridge in a project-root `.mcp.json` — either from the plugin's o
 
 `.mcp.json` is **gitignored** — it names an absolute path to a global npm install, and the addon it talks to is gitignored too.
 
+### The autoload is a LOCAL step, and it is not committed
+
+Enabling the plugin makes Godot write an autoload into `project.godot`:
+
+```
+[autoload]
+
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
+```
+
+**That line must not be committed**, and this is the one step of the install that a
+clone cannot inherit. `addons/` is gitignored except `at-icons/`, so on any other
+machine the path does not exist and Godot logs three errors *per startup* — including
+every `tools/run_tests.sh` run, which still exits 0, which is exactly why it went
+unnoticed for a year. That was **V5** in [[playability-audit]], the one finding a new
+contributor meets before they have played anything.
+
+It is also two of CLAUDE.md's own rules at once: *no autoloads in the game code*, and
+*`src/` may reference an addon file only if that file is committed*.
+
+So:
+
+- **The committed `project.godot` has no `[autoload]` section at all.**
+- **Your working copy will keep re-growing one**, because the plugin rewrites the file
+  whenever it is enabled. Leave it there — it is what publishes the runtime port the
+  bridge dials into. Just never stage it.
+- `bash tools/check_mcp.sh` checks exactly this, against **the staged file when
+  something is staged** and against `HEAD` otherwise, so it catches the mistake at the
+  moment it would be made rather than after the push.
+
+The same argument applies to the `[editor_plugins]` `enabled=` line, and it is **left
+committed on purpose**: a missing editor plugin is inert under `--headless --script`, so
+it costs a clone nothing on the path that matters, and the line is what tells a new
+machine which addon this project expects. An autoload is loaded by every process; an
+editor plugin is not.
+
 ### Preflight
 
 ```bash

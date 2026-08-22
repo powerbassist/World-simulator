@@ -29,8 +29,10 @@ It worked. On the repair pass all eight checks went red in one run, each naming
 its own fix by number, and `tests/test_playability.gd` is now rewritten as
 ordinary regressions guarding the repairs.
 
-**Nine of the ten are fixed. V5 is not, and it is deliberately not** — see its
-row. The repair pass also turned up V10, which only became visible once V3's
+**All ten are fixed.** Nine were fixed on the repair pass; **V5 was left open on
+purpose**, because it was a decision about how this repo carries dev tooling rather than
+a repair, and it was made afterwards — drop the autoload from what is committed, keep it
+locally, and document the local step. See its row. The repair pass also turned up V10, which only became visible once V3's
 stray Close button stopped covering for it.
 
 ## Severity
@@ -51,7 +53,7 @@ stray Close button stopped covering for it.
 | V2 | **P1** | The defeat plate was permanent, and play continued behind it | `test_playability.gd` | **fixed** |
 | V3 | **P1** | Three windows were destroyed by their own Close button | `test_playability.gd` | **fixed** |
 | V4 | **P1** | A failed load from the main menu started a new game with no message | — | **fixed** |
-| V5 | **P1** | A fresh clone declares three autoload scripts that are not in the repo | — | **open — needs your call** |
+| V5 | **P1** | A fresh clone declares an autoload script that is not in the repo | `check_mcp.sh` | **fixed — the call was made** |
 | V6 | P2 | Companies' and People's Close buttons did nothing at all | `test_playability.gd` | **fixed** |
 | V7 | P2 | `tests/test_cabinet.gd` had never run in the suite | it now runs | **fixed** |
 | V8 | P3 | `Bloc.cast_vote` was the only command with no effect delta | `test_playability.gd` | **fixed** |
@@ -212,7 +214,7 @@ holds.
 **Fixed.** `_on_load_requested` now **shows** the save/load panel on failure and
 pauses the clock, instead of painting a message onto a hidden panel.
 
-### V5 · A fresh clone declares three autoload scripts that are not in the repo · P1
+### V5 · A fresh clone declares an autoload script that is not in the repo · P1 · fixed
 
 `project.godot` `[autoload]` commits three entries pointing into
 `res://addons/godot_mcp/services/`. `.gitignore:9` ignores `addons/*` and
@@ -237,14 +239,22 @@ finding here that a new contributor meets before they have played anything.
 *Right behaviour:* the MCP bridges are a local dev concern and do not belong in
 a committed `project.godot`.
 
-**Deliberately NOT fixed — this one is yours to call.** Deleting the three
-entries fixes every clone and breaks the MCP tooling on this machine, which is
-the tooling the audit was asked to use. The options are: commit the three bridge
-scripts (they are small, but `.gitignore` says addons are reinstalled per
-machine); drop the autoloads and have `docs/tooling.md` tell each machine to add
-them locally; or keep them and accept nine error lines per startup on every
-clone. That is a decision about how this repo wants to carry dev tooling, not a
-repair.
+**Left open on the repair pass, and settled afterwards: the second option.** The
+committed `project.godot` has **no `[autoload]` section at all**, the working copy keeps
+one because the plugin rewrites the file whenever it is enabled, and
+[[tooling]] carries the local step. Committing the bridge scripts was rejected for the
+reason `.gitignore` already gives — addons are reinstalled per machine — and accepting
+the errors was rejected because they are on `tools/run_tests.sh`'s own path.
+
+**The count in the heading above was three and is now one, which is worth recording
+rather than silently correcting.** The audit was written against the old `godot_mcp`
+stack, which committed three bridges; the `godot_mcp_toolkit` migration landing in the
+same commit replaced them with a single `MCPRuntimeServer`. The defect was identical in
+kind and a third the size by the time it was fixed.
+
+`tools/check_mcp.sh` pins it: it reads **the staged file when anything is staged** and
+`HEAD` otherwise, so the mistake is caught at the moment it would be made. That check was
+written during the audit and had been warning ever since.
 
 ### V6 · Companies' and People's Close buttons do nothing at all · P2
 
