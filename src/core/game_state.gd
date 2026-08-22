@@ -24,6 +24,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -717,6 +718,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# month after it until a player acts. An empty list is the normal case for the
 	# seven nations that are not yet playable.
 	Companies.init_nation(ns, company_list)
+
+	# V1.6e. Every sector with no programme and no capital, so the trend shift reads
+	# EXACTLY 0.0 in the first month and every month after it until a player acts --
+	# which is what lets the whole layer go live with the balance harness
+	# bit-identical across every existing regime. Takes no content list where
+	# Companies does: the three sectors are model constants, so there is no file that
+	# could be absent and nothing a roster could differ over.
+	Investment.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

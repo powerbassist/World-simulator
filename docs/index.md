@@ -49,6 +49,8 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[society-model]] — service quality as a stock the project had already built three times under other names, corruption as the factor that decides what a spending line buys, and the double count that had to be resolved rather than avoided
 - [[unrest-model]] — the grievance stock and the unions that act on it, an inequality statistic nothing the player can move, and the output-only price its own probe refuted
 - [[media-model]] — outlets with leanings, framing as a per-bloc salience gain on a machine `opinion.gd` had been running since S10, and press freedom priced in a legitimacy quantity that turned out to already exist
+- [[tax-model]] — five taxes and brackets, the wealth tax that is not on the other four's rate scale, and the tripwire that could not fire
+- [[sector-model]] — sectoral investment: a capital stock on the sector's own trend rate, why `sector_output` had no room for a second writer, and why the lever buys output and no jobs
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

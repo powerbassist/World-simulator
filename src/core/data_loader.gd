@@ -15,6 +15,7 @@ const Person = preload("res://src/core/person.gd")
 const Company = preload("res://src/core/company.gd")
 const Outlet = preload("res://src/core/outlet.gd")
 const CompanyAction = preload("res://src/core/company_action.gd")
+const InvestmentAction = preload("res://src/core/investment_action.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -60,6 +61,13 @@ var outlets: Dictionary = {}
 ## one up by id at runtime.
 var company_actions: Array[CompanyAction] = []
 
+## V1.6e's verbs. Ordered, not keyed by id, for company_actions' reason -- the
+## companies panel offers them as a list in authored order and nothing looks one up
+## by id at runtime. UNLIKE `companies` this is not per nation: an investment action
+## names one of the three sectors economy_constants.SECTOR_TREND fixes for every
+## nation, so there is nothing here a roster could differ over.
+var investment_actions: Array[InvestmentAction] = []
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -97,7 +105,7 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -105,6 +113,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	companies.clear()
 	outlets.clear()
 	company_actions.clear()
+	investment_actions.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
@@ -158,6 +167,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		_load_outlets(id, outlets_dir)
 
 	_load_company_actions(company_actions_dir)
+	_load_investment_actions(investment_actions_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
@@ -541,6 +551,56 @@ func _load_company_actions(actions_dir: String) -> void:
 					errors.append("%s: duplicate company action id '%s'" % [fname, action.id])
 				seen_ids[action.id] = true
 			company_actions.append(action)
+
+
+## V1.6e. _load_company_actions()'s shape, and deliberately a separate directory
+## rather than a fourth op on the company channel: a subsidy is pointed at a firm
+## inside a sector and this is pointed at the sector, which is exactly the
+## distinction docs/companies-model.md section 12 says no validator can enforce
+## from inside one content type.
+func _load_investment_actions(actions_dir: String) -> void:
+	var da := DirAccess.open(actions_dir)
+	if da == null:
+		errors.append("%s: directory not found" % actions_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := actions_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("actions")) != TYPE_ARRAY:
+			errors.append("%s: invalid investment-action file, expected {\"actions\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["actions"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: actions[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = InvestmentAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate investment action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+			investment_actions.append(action)
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:

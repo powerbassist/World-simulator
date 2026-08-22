@@ -35,6 +35,7 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -378,6 +379,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# nobody -- the share shift is exactly zero with no subsidy standing and all
 		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
 		Companies.tick_month(state, _loader)
+		# V1.6e, in main.gd's slot beside Companies, and inert for every regime here:
+		# the trend shift and the bill both read EXACTLY 0.0 with no programme standing.
+		# Present in this harness for V1.5d's reason -- a system a harness never calls is
+		# a system whose bit-identity proves nothing about it -- rather than because any
+		# check below needs it.
+		Investment.tick_month(state)
 		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
 		# quality stock reads the live spending line, so any regime that moves one moves
 		# the `health` satisfaction term with it.

@@ -18,6 +18,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -282,7 +283,11 @@ func _ready() -> void:
 	# lands on the budget panel beside the deployment bill and not anywhere near
 	# Diplomacy.
 	_companies_panel = CompaniesPanel.new()
-	_windows.register("companies", "Companies", _companies_panel)
+	# V1.6e renames the WINDOW and not the id: the panel now carries the state's own
+	# sector programmes beside the firm register, so "Companies" had stopped being
+	# what the surface is about. The id stays "companies" because it is what
+	# _build_action_bar() and tools/screenshot.gd --open both address.
+	_windows.register("companies", "Industry", _companies_panel)
 	_companies_panel.setup(_state, _loader)
 	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
@@ -659,6 +664,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+
+	# V1.6e: the capital each sector's standing programme has bought converges toward
+	# the programme's intensity, and the bill is recomputed. In Companies' slot for
+	# Companies' reason, and the loop it breaks is the identical one: bill -> deficit
+	# -> a PRECONDITION_FIELDS entry -> which investment actions are available -> a
+	# new programme -> bill. Sixth time this argument has been made.
+	Investment.tick_month(_state)
 
 	# V1.5a: services converge on what the country actually spends on them, delivered.
 	# In Companies' slot for Companies' reason and not for the general tick-order one:

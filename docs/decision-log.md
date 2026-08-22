@@ -1281,6 +1281,73 @@ about a one-month lag is now a fact about the call order.
 
 Full argument: [[credit-model]] §3.
 
+## V1.6e — the row named a quantity that has no room for a second writer
+
+**The plan said** the lever acts on `sector_output`, which is what [[v1]] §6 asks for in
+those words.
+
+**The measurement refused the site.** `Economy._apply_growth_to_sectors()` grows each
+sector at its own rate, distributes the residual `target_gdp − after_trend` by cyclical
+beta, and ends with `ns.gdp_eur_bn = total` — so the sector sum **is** the month's GDP
+target by construction. 27.9 bn injected into French industry before a tick leaves GDP
+**+0.024 bn** against a control and moves the industry share +0.006.
+
+> A write to `sector_output` survives as **composition** and never as level.
+
+The honest landing site is the per-sector trend **rate**, which is `Trade.sector_shift()`'s
+slot — and the two are not the same kind of thing at all: **a trade shift must sum to zero
+and an investment shift must not**. So the shift is read at *both* of `economy.gd`'s sites,
+and adding it at `trend_pct()` share-weighted is precisely what stops the residual taking
+the level effect back.
+
+The general rule this leaves: **before banding a term, check that the quantity it writes
+has room for another writer.** V1.6c's *a band is a test of size, not of legitimacy*, one
+step earlier in the pipeline — there the term was legitimate and mis-sized, here the site
+itself was unavailable.
+
+Full argument: [[sector-model]] §2.
+
+## V1.6e — the strictly-dominated shape appeared in a PRICE
+
+This project has caught it six times and every one was in an **effect**: V1.3c's tariff
+severities, V1.3d's rule burdens, V1.4a's rival floor, V1.4c's dividend yield, V1.6d's
+Gini clamp.
+
+Here the effect was proportionate and the **bill** was flat. Table (e), isolated: backing
+French services moves growth **0.4865** points, backing French agriculture **0.0077** — a
+spread of sixty-three to one against an identical price, plus a political price either way.
+
+The fix moves the model rather than the number and adds **no constant**: the bill scales
+with the sector's own share of GDP, so the return per euro is the same wherever it is spent
+and *which sector* goes back to being a question about composition and politics.
+`RIVAL_FLOOR_FRACTION`'s correction in a new place — there too the endpoint became content
+and the rate went back to setting speed.
+
+**It also deleted a constant.** The three shares sum to exactly 1.0 by the same
+reconciliation the entry above is about, so the whole bill is bounded above by
+`INVESTMENT_COST_PCT_GDP` itself. `INVESTMENT_BILL_MAX_PCT_GDP` was a guard rail guarding
+arithmetic, and it went the way U6a's day budget went.
+
+Full argument: [[sector-model]] §8.
+
+## V1.6e — a closed-form band, reported off the grid
+
+Two of this session's three constants are closed form, and the first run still printed the
+interval as the **widest passing grid row**: 0.40 where the exact edge is 0.46, and t90
+38.3–77.8 months where the band says 36–84.
+
+That is [[demography-model|V1.5b]]'s *the range was choosing the constant* — in the one
+place it should have been structurally impossible, since the whole claim of a closed-form
+band is that no grid can move it. The edges are solved arithmetically now and the grid is
+kept only as a legibility column.
+
+A second correction in the same table set: the beta band's clause (ii) was **measuring the
+clamp**, because the national shift is scaled down to `SECTOR_TREND_MAX_PCT` the moment it
+would exceed `SHIFT_MAX_PCT`, so a grid wide enough to reach the clamp reports an interval
+bounded by a guard rail. [[tax-model|V1.6d]]'s finding, in the session immediately after it.
+
+Full argument: [[sector-model]] §7–8.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

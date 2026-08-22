@@ -223,8 +223,16 @@ const CORP_TAX_BETA := 0.02
 ## time constant — deliberately longer than a term.
 const SHIFT_ADJUST := 0.20
 
-## The single most important clamp in the model: potential_shift is the only term
-## that feeds back into trend growth, so it is the only one that could compound.
+## The single most important clamp in the model: potential_shift feeds back into
+## trend growth, so it could compound.
+##
+## V1.6e AMENDS THE CLAUSE THAT USED TO SAY "the only term that feeds back into
+## trend growth". Investment.sector_trend_shift() reaches trend as well now,
+## through Economy.trend_pct(), and it carries its own bound --
+## investment_constants.SECTOR_TREND_MAX_PCT -- because this model's divergence
+## argument is PER QUANTITY rather than per file. The sentence is corrected instead
+## of deleted, so a later reader can see that the property was real and when it
+## stopped being exclusive.
 const SHIFT_MAX_PCT := 1.0
 
 # --- Trade -------------------------------------------------------------------

@@ -162,8 +162,9 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.5c) `--unrest` and
 (V1.5d) `--press` and
 (V1.6b) `--inflate`,
-(V1.6c) `--downgrade` and
-(V1.6d) `--redistribute`,
+(V1.6c) `--downgrade`,
+(V1.6d) `--redistribute` and
+(V1.6e) `--invest`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1185,6 +1186,61 @@ would be permanent furniture. The effect reaches the polling panel's agenda and
 `elections.gd`'s attribution **for free** through `ns.issue_salience`. Model:
 [docs/media-model.md](docs/media-model.md).
 
+**V1.6e shipped sectoral investment, and the row asked for a write the model refuses.**
+[[docs/tiers/v1.md]] section 6 says the lever acts "on `sector_output` itself";
+`Economy._apply_growth_to_sectors()` reconciles the three sectors against the month's GDP
+target **exactly**, so an absolute injection is cancelled by the cyclical residual inside
+the same tick -- 27.9 bn into French industry leaves GDP **+0.024 bn** and moves only the
+composition. Instance **thirty-five**. The honest landing site is the per-sector **trend
+rate**, `Trade.sector_shift()`'s slot, and the difference between them is the session's
+sharpest sentence: **a trade shift must sum to zero and an investment shift must not**. So
+`Investment.sector_trend_shift()` is read at BOTH of `economy.gd`'s sites, and adding it at
+`trend_pct()` share-weighted is what stops the residual taking the level effect back. It
+moves **potential**, where V1.6a's cycle deliberately does not.
+
+**Instance thirty-six: "carries no employment term" is a CONSEQUENCE rather than a
+prohibition.** Okun reads `growth - trend` and structural unemployment reads only the tax
+wedge, the law offset and the firm layer, so a trend-side lever has **no permanent
+employment channel available to it at all** -- *sectoral investment buys output and, in the
+long run, no jobs*. Pinned bit-identically in `tests/test_sectors.gd` and visible in the
+harness: same budget, `industrial_policy` prints the **identical unemployment as `managed`
+in every year** while GDP diverges 4.9 % and the rural row falls 43 to 38.
+
+**The probe corrected the model twice, sixteen sessions running, and the first is the
+strictly-dominated shape appearing in a PRICE.** Six previous instances were all in
+effects; here the effect was proportionate and the BILL was flat, so services moved growth
+0.4865 and agriculture 0.0077 for identical money. The bill scales with the sector's own
+share of GDP now: no constant added, and one **deleted** -- three shares summing to exactly
+1.0 bound the whole bill by construction, so `INVESTMENT_BILL_MAX_PCT_GDP` was a guard rail
+guarding arithmetic. The second correction is V1.6d's own finding one session on: the beta
+band's clause (ii) was **measuring the clamp**. A third the grid nearly caused: two of three
+constants are closed form and the first run still reported the widest passing GRID ROW as
+the interval.
+
+**All three constants are closed form or fitted to a fixed point**, the strongest
+first-pass position on this project's record. `INVESTMENT_COST_PCT_GDP` = 0.8161, banded
+against **what V1.6d left of `DEFICIT_SCALE_PP`** -- 1.38 points of six, the one thing this
+session was told to measure first. `CAPITAL_CONVERGENCE` = 0.4518, midpoint taken in
+**months** not in the rate; t90 = 60.0 exactly, landing on `SHIFT_ADJUST`'s five-year
+constant by accident. `SECTOR_TREND_BETA` = 0.7124, exact emulation, fixed point in one
+pass. The kill switch cleared at 0.5760 and **two of three sectors sit below the floor** --
+recorded as a structural bound, because French agriculture is 1.4 % of GDP and nothing a
+president does to it moves France.
+
+**The sixteenth `ISSUE_KEYS` question is answered NO on test 1 alone**: every YES was paid
+because the price was not nameable otherwise, and this ships `data/investment-actions/` with
+an authored `bloc_offset`. The S10 ratio was deliberately not swept. `effects.investment` is
+the **seventh** channel and `data/investment-actions/` the third directory on
+`data/diplomatic-actions/`'s shape; the **sector is authored rather than passed as a
+target**, so which sector to back is a political decision as well as an arithmetic one.
+The verb does **not** go through `Budget.commit()`, which is deliberate: that is how it
+avoids [[docs/tax-model.md]] section 11's live `_pending` bug. `SAVE_VERSION` stays **22**
+and the re-run is **bit-identical in all 32 shared regimes**, with two new regimes of the
+expensive kind. **The fourteenth screenshot pass found one bug and it was the tool's** -- a
+frame of a scrolling panel photographed at the top, showing three sector rows saying "No
+state programme" while the ledger read a live 0.654 % of GDP. Model:
+[docs/sector-model.md](docs/sector-model.md).
+
 **V1.6 is decomposed into five sessions, V1.6a-e, and (a) is built.** The row was five
 bullets plus an obligation inherited from V1.4c: (a) the business cycle, (b) inflation,
 (c) bond yields and the credit rating, (d) five taxes and brackets, (e) sectoral
@@ -1475,7 +1531,7 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b), (c) and (d) are shipped.** V1.1e (upper house and
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b), (c), (d) and (e) are shipped, and (e) SPLIT -- V1.6f is infrastructure projects and is the block's last session.** V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

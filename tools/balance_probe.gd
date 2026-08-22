@@ -38,6 +38,7 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -392,6 +393,28 @@ const TAX_REGIMES := {
 	},
 }
 
+## V1.6e. *** TWO NEW REGIMES, AND THEY ARE THE EXPENSIVE KIND. *** An investment
+## programme is a verb no budget regime issues, so the harness had to learn it exactly
+## as V1.3c, V1.3g, U6a, V1.4a and V1.4c each did; V1.4b's and V1.5a's were the cheap
+## kind only because a law at a month was already a shape this file knew. Every one of
+## the thirty-two regimes above is structurally unreachable by this session.
+##
+## `industrial_policy` backs the largest sector at the harshest authored intensity from
+## month 6 and never withdraws -- the reachable worst case for the bill, the trend
+## channel and the guard rail at once, which is the shape the subsidy and the burden
+## regimes both take.
+##
+## `managed_then_invest` takes docs/unrest-model.md's mid-run switch shape for
+## docs/tax-model.md's reason: this lever's t90 is sixty months, so the reachable case
+## is *govern well, win the first election, then commit* rather than *commit in month 1
+## and be thrown out in 2027 before a single point of capital has been built*. That is
+## V1.5c's blind spot named in advance rather than discovered by a probe that ran a
+## government already out of office.
+const INVESTMENT_REGIMES := {
+	"industrial_policy": {"budget": REGIMES["managed"], "invest_month": 6},
+	"managed_then_invest": {"budget": REGIMES["managed"], "invest_month": 30},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -491,6 +514,12 @@ func _init() -> void:
 				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
 			)
+		for name in INVESTMENT_REGIMES.keys():
+			var regime: Dictionary = INVESTMENT_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				int(regime["invest_month"])
+			)
 
 	quit(0)
 
@@ -523,7 +552,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -597,6 +626,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# V1.6e, in main.gd's slot beside Companies. Inert for every regime that invests
+		# in nothing -- the trend shift is EXACTLY 0.0 with no programme standing and the
+		# bill is exactly 0.0 -- so the thirty-two regimes above are provably unchanged by
+		# it. Added to the harness in the same commit as the model, which is V1.5d's
+		# finding applied rather than rediscovered: a system this loop never calls is a
+		# system whose bit-identity proves nothing about it.
+		Investment.tick_month(state)
 		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
 		# additions above it, and that is the difference this row exists to record: the
 		# quality stock reads the live spending line, so it diverges from its own
@@ -645,6 +681,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_settle(state, loader, ns, regime_name, year, month)
 		if i + 1 == censor_month:
 			_censor(state, loader, ns, regime_name, year, month)
+		if i + 1 == invest_month:
+			_invest(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -1454,3 +1492,38 @@ func _days_in_month(m: int, y: int) -> int:
 	if m == 2 and (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)):
 		return 29
 	return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
+
+
+## V1.6e. Backs the LARGEST sector by output at the harshest authored intensity and
+## leaves the programme standing for the rest of the run -- _subsidise()'s shape and
+## for its reason: a regime that backs a sector too small to move anything measures
+## the content rather than the channel.
+##
+## Largest by output rather than by name, so this stays nation-relative the way every
+## other regime in this file is.
+func _invest(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var best := ""
+	var best_output := -1.0
+	for sector in ns.sector_investment.keys():
+		var out: float = float(ns.sector_output.get(sector, 0.0))
+		if out > best_output:
+			best_output = out
+			best = String(sector)
+
+	var action = null
+	for a in loader.investment_actions:
+		var terms: Dictionary = a.effects.get("investment", {})
+		if String(terms.get("op", "")) != "invest" or String(terms.get("sector", "")) != best:
+			continue
+		if action == null or float(terms["intensity"]) > float(action.effects["investment"]["intensity"]):
+			action = a
+	if action == null:
+		printerr("  no 'invest' action is authored for sector '%s'" % best)
+		return
+
+	var result := Investment.execute(state, ns, loader.investment_actions, action)
+	print("  %d-%02d %s: investment '%s' in %s — %s (intensity %.2f)" % [
+		year, month, regime_name, action.id, best,
+		"APPLIED" if result.get("applied", false) else "REFUSED",
+		float(result.get("intensity_after", 0.0)),
+	])

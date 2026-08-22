@@ -18,6 +18,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -117,6 +118,14 @@ static func recompute(state, ns) -> void:
 		# bill both take, and for the same reason, since `deficit_pct_gdp` is a
 		# company action's own precondition field.
 		+ ns.subsidy_bill_pct_gdp
+		# V1.6e's line, and the fourth to take this route. The same argument a fourth
+		# time: not a sixth SPENDING_KEYS entry, because that list is keyed 1:1 to
+		# cabinet portfolios and the player sets this one with a verb rather than a
+		# slider. Read straight off NationState and NOT recomputed here, because
+		# Investment.tick_month() runs after this and a programme committed this month
+		# must bill next month -- `deficit_pct_gdp` is one of that verb's own
+		# precondition fields.
+		+ ns.investment_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -355,6 +364,14 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
 		Companies.tick_month(sim, loader)
+		# In main.gd's slot, and required for the reason the five above it are: a
+		# projection that held the investment register frozen would report a
+		# programme committed this month as costing nothing AND would hold the
+		# capital stock still, so the one surface in the game that promises "this
+		# is what will happen" would be silent about both halves of what the player
+		# just signed. V1.3b's repair, made a seventh time rather than rediscovered
+		# a seventh time.
+		Investment.tick_month(sim)
 		# In main.gd's slot a fifth time, and required for the same reason the four
 		# above it are: a projection that held the quality stock frozen would report a
 		# spending cut as costing nothing beyond its own delta, when the whole point of
@@ -460,5 +477,13 @@ static func snapshot(state) -> Dictionary:
 		# deployment_bill_pct_gdp's reason at V1.3g.
 		"cycle_impulse_pct": ns.cycle_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,
+		# V1.6e, on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the
+		# budget panel compares a PROJECTED month against the current one and a
+		# projection has no NationState the panel can reach. BOTH HALVES are here --
+		# the bill the treasury pays now and the trend the capital has bought -- because
+		# the whole point of this lever is that the two arrive years apart, and the
+		# projection is the only surface that can show the second one coming.
+		"investment_bill_pct_gdp": ns.investment_bill_pct_gdp,
+		"investment_trend_shift_pct": Investment.national_trend_shift_pct(ns),
 		"sectors": ns.sector_output.duplicate(true),
 	}

@@ -91,13 +91,34 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.6 is decomposed into five sessions, V1.6a-e, before any code, and (a), (b), (c) and
-(d) are built.**
+**V1.6 was decomposed into five sessions, BECAME SIX, and (a) through (e) are built.**
 The argument, the four calls it made and the two rows it caught are under *V1.6 - the
 decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond yields and
-the credit rating, (d) five taxes and brackets, (e) sectoral investment and
-infrastructure projects - and **(e) is recorded in advance as the row most likely to
-split**, the device this page used for V1.3e and V1.5d.
+the credit rating, (d) five taxes and brackets, (e) sectoral investment - and **(e) was
+recorded in advance as the row most likely to split, and split**, the device this page
+used for V1.3e (which split) and V1.5d (which did not). **V1.6f is infrastructure
+projects** and is the block's last session.
+
+**V1.6e's own finding is the one worth carrying forward, and it is about where a lever
+may land rather than about sectors.** The row asked for a lever "on `sector_output`
+itself", and that quantity has an exact identity around it:
+`Economy._apply_growth_to_sectors()` reconciles the three sectors against the month's GDP
+target to the last bit, so an absolute injection is **cancelled by the cyclical residual
+inside the same tick** -- 27.9 bn put into French industry leaves GDP +0.024 bn and moves
+only the composition. The honest landing site is the per-sector trend RATE, the slot
+`Trade.sector_shift()` occupies, and what separates the two is the sharpest sentence the
+session produced: **a trade shift must sum to zero and an investment shift must not**. The
+general rule: before banding a term, check that the quantity it writes has room for
+another writer at all.
+
+**Its second finding is that the strictly-dominated shape can appear in a PRICE.** This
+project has caught it six times in effects -- tariff severities, bloc rules, a share
+floor, a dividend yield, a Gini clamp. Here the effect was fine and the **bill** was flat:
+backing French services moved growth 0.4865 points and backing French agriculture 0.0077,
+for identical money. The fix scales the bill with the sector's own share of GDP, adds no
+constant, and **deleted one** -- the three shares sum to exactly 1.0, so the whole bill is
+bounded above by the cost constant itself and a clamp on top of it was a guard rail
+guarding arithmetic.
 
 **Its own finding is the one worth carrying forward, and it is about measurement rather
 than about cycles.** V1.6a's two pre-committed bands have **no overlap at any
@@ -765,7 +786,8 @@ bullets plus an obligation inherited from V1.4c, and one line is not a session.
 | **V1.6b** | ~~Inflation~~ **shipped** | A stock on the **unemployment gap**, not the output gap -- the row's three named inputs are one quantity written three times AND the measurement refuted the survivor. No nominal layer. Two prices: a growth addend and the **thirteenth `ISSUE_KEYS` entry**, the first YES after five noes. Three constants measured, two swept. `SAVE_VERSION` **20** on three fields of four | a |
 | **V1.6c** | ~~Bond yields and the credit rating~~ **shipped** | `DEBT_REAL_RATE_PCT` is the **anchor** and the spread reads exactly 0.0 at new game. **TWO of the four named inputs do not exist**: the deficit is the debt's derivative (`corr` 0.9948) and inflation cannot reach a real rate. The rating is stateless, pinned in the save format. V1.4c's obligation discharged **on a rate**. `SAVE_VERSION` **21** | a, b |
 | **V1.6d** | ~~Five taxes and brackets~~ **shipped** | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income as a base factor. The Gini stopgap is discharged by a **derived read** -- not the second field this table asked for, because none is needed. `GC.TAX.*` covers 10 of 10 and is still unusable (central government, and capital gains bucketed WITH income). `ISSUE_KEYS` answered YES **twice at once** at -0.739 %. `SAVE_VERSION` **22**. Three new regimes | - |
-| **V1.6e** | Sectoral investment and infrastructure projects | The block's one genuine new player verb, on `sector_output` itself, with no employment term | a, d |
+| **V1.6e** | ~~Sectoral investment and infrastructure projects~~ **shipped, and it SPLIT** | A capital stock per sector on the sector's own **trend rate** -- `sector_output` has no room for a second writer, measured. No employment term, and that is a CONSEQUENCE rather than a prohibition. The bill scales with the sector's share, which DELETED a constant. `SAVE_VERSION` **stays 22**; re-run bit-identical in all 32 | a, d |
+| **V1.6f** | Infrastructure projects | Discrete dated commitments, a construction scheduler, and the *"visible on the map"* clause the row dropped. **Split off (e) on TRACK rather than on shape** | e |
 
 *(V1.6c's own numbers, and the two rows it deleted, are under* **V1.6c - the bond
 market, and two of four inputs that were not there** *below.)*
@@ -781,6 +803,13 @@ recorded V1.3e (which split) and V1.5d (which did not). The cut is **infrastruct
 projects -> (f)**, and the reason is architectural rather than a fourth feature: a
 *rate at a sector* and a *discrete dated commitment* are different shapes, and the
 second is a scheduler.
+
+**IT SPLIT, AND THE PREDICTED REASON WAS TRUE WITHOUT BEING THE BINDING ONE.** Counting
+put projects at three machines of five, and the third is the one this row drops: *visible
+on the map* is a marker on `map_view` with per-project geography as content, which is a
+**U-track surface**. This project runs one track per session. "A scheduler" is an argument
+about shape; the two-track rule is a rule, and it is what actually decides. Recorded
+because the next row predicting a split should predict the reason as well as the fact.
 
 Four calls, each of which could have gone the other way:
 
@@ -838,6 +867,102 @@ mechanic in [[mechanics-economy]] is named by a section 6 bullet or already buil
 tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
 eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
 gap.
+
+### V1.6e - sectoral investment, and the write the model refuses
+
+**The row asks for a lever "on `sector_output` itself", and that quantity cannot have a
+second writer.** `Economy._apply_growth_to_sectors()` grows each sector at its own rate,
+distributes the residual by cyclical beta and ends with `ns.gdp_eur_bn = total` -- the
+sector sum IS the month's GDP target by construction. The probe measures rather than
+asserts it: 27.9 bn injected into French industry before a tick leaves GDP **+0.024 bn**
+against the control and moves the industry share +0.006. **A write to `sector_output`
+survives as composition and never as level.** Instance **thirty-five**.
+
+What has room is the per-sector TREND RATE, the slot `Trade.sector_shift()` already
+occupies -- and the difference between the two is the whole of why one is a lever and the
+other a reallocation: **a trade shift must sum to zero, an investment shift must not**.
+So the shift is read at BOTH of `economy.gd`'s sites, and adding it at `trend_pct()` as
+well as inside the sector loop is what stops the residual taking the level effect straight
+back. **The probe found the same leak in code that was already there**: the trade shift
+sums to zero as raw points but `trend_pct()` share-weights, so `industrial_compact` at
+France is **-0.1538** share-weighted and the residual absorbs it. Recorded rather than
+repaired -- a composition-only term losing its level to the residual is correct behaviour,
+and only `_apply_growth_to_sectors()`'s comment is stale.
+
+**Instance thirty-six: "carries no employment term" is a CONSEQUENCE, not a prohibition.**
+V1.4b earned its jobs price because jobs-per-share is firm content -- but Okun reads
+`growth - trend` and structural unemployment reads only the tax wedge, the law offset and
+the firm layer, so **a term that raises trend has no permanent employment channel available
+to it at all**. *Sectoral investment buys output and, in the long run, no jobs.* Pinned
+bit-identically in `tests/test_sectors.gd`, and visible in the harness rather than only in a
+test: same budget, `industrial_policy` prints the **identical unemployment as `managed` in
+every printed year** while GDP diverges 4.9 % and the rural row falls 43 -> 38.
+
+**The probe corrected the model twice, sixteen sessions running, and the first is the
+strictly-dominated shape appearing in a PRICE.** Six previous instances were all in
+effects; here the effect was proportionate and the BILL was flat, so backing French
+services moved growth 0.4865 points and backing French agriculture 0.0077 for identical
+money -- sixty-three to one. The fix scales the bill with the sector's own share of GDP: the
+return per euro is then the same wherever it is spent, *which sector* goes back to being a
+question about composition and politics, and it adds **no constant**. It also **deleted**
+one -- the three shares sum to exactly 1.0, so the whole bill is bounded above by
+`INVESTMENT_COST_PCT_GDP` itself and `INVESTMENT_BILL_MAX_PCT_GDP` was a guard rail
+guarding arithmetic. U6a's treatment of the day budget, one block on.
+
+**The second correction is V1.6d's own finding arriving in the session after it.** The
+beta band's clause (ii) -- *stays under `SHIFT_MAX_PCT`* -- is true at every candidate above
+the clamp point BY THE CLAMP, so a grid wide enough to reach it reports an interval whose
+upper edge is a guard rail. Clause (ii) reads the unclamped shift now and both columns are
+printed. **And a third the grid nearly caused**: two of the three constants are closed form
+and the first run still reported the widest PASSING GRID ROW as the interval -- 0.40 where
+the exact edge is 0.46. That is V1.5b's *the range was choosing the constant* in the one
+place it should have been impossible.
+
+**All three constants are closed form or fitted to a fixed point**, which is the strongest
+first-pass position this project has reached. `INVESTMENT_COST_PCT_GDP` = **0.8161**, the
+midpoint of an interval whose lower edge is `0.20 / 0.7930` (France's services share) and
+whose upper edge is what [[tax-model|V1.6d]] left of `DEFICIT_SCALE_PP` -- **the one thing
+this session was told to measure before assuming there was room**, 1.38 points of a
+six-point span. `CAPITAL_CONVERGENCE` = **0.4518**, the midpoint taken in MONTHS rather than
+in the rate because the band is written in months and the map is convex; t90 = 60.0 exactly,
+which lands on `SHIFT_ADJUST`'s own five-year constant and nothing arranged that.
+`SECTOR_TREND_BETA` = **0.7124**, measured by exact emulation and **iterated to a fixed
+point** in one pass.
+
+**The kill switch cleared at 0.5760 and two of three sectors are below the floor.** That is
+a structural bound recorded rather than tuned around: the lever's power is proportional to
+the sector's share, French agriculture is 1.4 % of GDP, and nothing a president does to it
+moves France -- V1.4b's own agriculture prediction from the other direction. The
+share-scaled price is what stops it being a trap. **Escalation trigger 1 did not fire**: a
+year after withdrawal 63 % of the capital is still standing, so a withdrawal is not a
+demolition and no asymmetric second rate was added. The guard rail is **slack** at 0.7053
+against 1.00.
+
+**The sixteenth `ISSUE_KEYS` question is answered NO, on test 1 alone.** Every YES on that
+list was paid because the price was not nameable otherwise -- inflation ships no content
+object and a tax has no `data/taxes/`. This ships `data/investment-actions/` WITH an
+authored `bloc_offset`, which is exactly what `ownership` had at V1.4c. The S10 ratio was
+deliberately not swept, on V1.5a's ground. What was measured instead is that the authored
+price is legible: the three largest packages move their worst bloc **+5.80, +5.27 and
+-6.14** against a +-3.0 floor while moving the headline +0.31, +1.31 and -1.08 -- clearing
+on the per-bloc rows and on none of the headlines, which is V1.3a's finding used as designed.
+
+`SAVE_VERSION` stays **22** and the test says why: an absent register reads as no programme
+and nothing built, which is the truth about every version-22 save. Serialised anyway,
+because no tick re-derives the capital from content, and the test **checks that premise**
+rather than asserting it. **The re-run is bit-identical across all 32 shared regimes**, as
+predicted, with **two new regimes** of the expensive kind -- an investment programme is a
+verb no budget regime issues, and both new ones survive both presidential elections.
+
+**The fourteenth screenshot pass found one bug and it was the tool's.** The first frame of
+`--invest` showed the ledger reading a live 0.654 % of GDP and +0.513 %/yr against three
+sector rows all saying *"No state programme"*, because the sector the flag had backed is the
+last of the three and sits below the fold of a panel that scrolls by design. **The figures
+were right and the frame was still evidence for the wrong claim.** The flag pins the panel
+to the bottom now. The window's title also changed, "Companies" -> "Industry", because the
+panel is no longer only about firms; the id is untouched.
+
+Full argument: [[sector-model]].
 
 ### V1.6d - five taxes, and the tripwire that could not fire
 

@@ -250,6 +250,27 @@ const BLOC_LABEL := {
 ## table's sparsity used on purpose: students hold no wealth, and an entry saying they
 ## barely care is a different claim from the model's own "an issue a bloc has no entry
 ## for carries no weight for that bloc".
+## V1.6e ASKS IT FOR THE SIXTEENTH KEY AND THE ANSWER IS NO, on ONE of V1.3d's four
+## tests rather than on the S10 ratio -- V1.5a's shape, and for V1.5a's reason.
+##
+## TEST 1 FAILS IMMEDIATELY AND THAT SETTLES IT. Every YES on this list was paid because
+## the price was NOT NAMEABLE OTHERWISE: `inflation` ships no verb and no content object,
+## and a tax has no data/taxes/ anywhere, so neither had an authored `bloc_offset` to hang
+## on. Sectoral investment ships data/investment-actions/ WITH one, which is exactly what
+## `ownership` had at V1.4c and exactly why its -1.46 % on the ratio bought nothing.
+##
+## Tests 2, 3 and 5 are not reached, because 1 decides. The S10 ratio was NOT swept,
+## deliberately: sweeping to choose between a yes and a no already settled is a
+## measurement nothing reads -- V1.5a's own refusal, recorded there and applied here.
+##
+## WHAT HAD TO BE MEASURED INSTEAD is that the authored price is LEGIBLE, since an
+## authored price nothing can read would put the question straight back.
+## tools/investment_probe.gd table (i), twelve months after the act: the three largest
+## packages move their worst bloc by +5.80 (rural), +5.27 (workers) and -6.14 (rural)
+## against a +-3.0 poll-noise floor, and move the HEADLINE by +0.31, +1.31 and -1.08 --
+## clearing on the per-bloc rows and on none of the headlines, which is
+## docs/diplomacy-model.md's V1.3a finding used as designed rather than rediscovered.
+## A policy that divides the country should not move the average.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat", "tax_capital_gains", "tax_wealth",

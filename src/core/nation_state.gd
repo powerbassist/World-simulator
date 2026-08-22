@@ -686,6 +686,52 @@ var regulation_burden := {}
 ## Empty until the first one resolves. `last_diplomatic_result`'s shape.
 var last_company_result := {}
 
+# --- Sectoral investment (V1.6e) -------------------------------------------------
+
+## sector id -> {"intensity": float, "capital": float}. The standing programme the
+## player has committed to, and the capital it has accumulated. Written by
+## Investment.execute() (the intensity) and Investment.tick_month() (the capital),
+## one writer apiece, which is `share`/`state_share`/`regulation_burden`'s
+## discipline one block on.
+##
+## KEYED BY SECTOR AND NOT BY A CONTENT ID, which is what makes it a register with
+## no baseline anywhere else: the three sectors are economy_constants.SECTOR_TREND's
+## keys, fixed for every nation, so unlike `companies` there is no authored half of
+## this that DataLoader carries. What is here is the whole of it.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: a version-22 save
+## is a game that had no investment verb, so an absent register reads as no
+## programme running and nothing built, which is the truth about that save.
+## `measures` at V1.3c, `pacts` at V1.3g and `regulation_burden` at V1.4b.
+##
+## SERIALISED ALL THE SAME, and that half is not free. The capital stock is written
+## by a tick and NO TICK RE-DERIVES IT FROM CONTENT -- unlike V1.4a's four prices,
+## which come back on the next tick -- so a save that dropped it would silently
+## demolish everything the player spent a term building. `regulation_burden`'s exact
+## argument, on a stock rather than on an accumulator.
+var sector_investment := {}
+
+## V1.6e's computed spending line, recomputed once a month by
+## Investment.tick_month() and read from here rather than called for -- the fourth
+## to take this route after the bloc transfer, the deployment bill and the subsidy
+## bill, and cached for the same reason: budget.gd's recompute() reads it a month
+## late on purpose, because `deficit_pct_gdp` is one of this verb's own precondition
+## fields and a bill that widened the deficit inside the month would close a loop.
+##
+## Earns nothing on the rule -- recomputed from `sector_investment` on the first
+## tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `subsidy_bill_pct_gdp`'s case.
+##
+## THE TREND SHIFT IS NOT CACHED BESIDE IT, and the asymmetry is deliberate:
+## Investment.sector_trend_shift() takes no loader, so economy.gd can simply call it
+## at the two sites that need it. The four fields above are cached because
+## companies.gd takes a loader and economy.gd's call sites do not have one.
+var investment_bill_pct_gdp: float = 0.0
+
+## The most recent investment action, for the companies panel to read after acting.
+## `last_company_result`'s shape.
+var last_investment_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1071,6 +1117,8 @@ func duplicate_state():
 	s.firm_jobs_offset_pct = firm_jobs_offset_pct
 	s.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp
 	s.regulation_burden = regulation_burden.duplicate(true)
+	s.sector_investment = sector_investment.duplicate(true)
+	s.investment_bill_pct_gdp = investment_bill_pct_gdp
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1243,6 +1291,8 @@ func to_dict() -> Dictionary:
 		"firm_jobs_offset_pct": firm_jobs_offset_pct,
 		"dividend_revenue_pct_gdp": dividend_revenue_pct_gdp,
 		"regulation_burden": regulation_burden,
+		"sector_investment": sector_investment,
+		"investment_bill_pct_gdp": investment_bill_pct_gdp,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1447,6 +1497,12 @@ static func from_dict(d: Dictionary):
 	# version-15 save comes from a game with no `business` laws in it, so every
 	# burden really was 0.0. That is why this field earns no bump of its own.
 	s.regulation_burden = d.get("regulation_burden", {})
+	# V1.6e, and the 0.0/{} fallbacks here earn NO bump: a version-22 save is a game
+	# with no investment verb in it, so "no programme running and nothing built" is
+	# the truth about it rather than a soft failure. tests/test_save_load.gd pins that
+	# the version is STILL 22, so V1.6f has to come and say why it moves.
+	s.sector_investment = d.get("sector_investment", {})
+	s.investment_bill_pct_gdp = float(d.get("investment_bill_pct_gdp", 0.0))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})

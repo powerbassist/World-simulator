@@ -14,6 +14,7 @@ const Trade = preload("res://src/sim/trade.gd")
 const TradeK = preload("res://src/sim/trade_constants.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const Investment = preload("res://src/sim/investment.gd")
 
 
 static func tick_month(state) -> void:
@@ -169,6 +170,19 @@ static func _tick_nation(state, ns) -> void:
 
 ## Share-weighted sector trend, plus the budget's long-run shift. Ten nations get
 ## ten different trends out of one constant table, with no per-nation branch.
+##
+## V1.6e adds the SECOND term ever to reach this function from outside
+## potential_shift_pct, and adding it HERE is half of what makes the sector lever a
+## lever. _apply_growth_to_sectors() below reconciles the three sectors against the
+## month's GDP target exactly, so a per-sector rate added only down there moves the
+## MIX and nothing else -- the residual takes the level effect straight back out
+## inside the same tick. Added here as well, share-weighted, the two paths agree
+## and the level effect survives.
+##
+## That is also the whole difference between this term and Trade.sector_shift(),
+## which is required to sum to zero at load precisely because an agreement must
+## move composition and not the nation's own trend. An investment shift must NOT
+## sum to zero; if it did, nothing would have been bought.
 static func trend_pct(ns) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
@@ -176,7 +190,7 @@ static func trend_pct(ns) -> float:
 	for key in C.SECTOR_TREND.keys():
 		var share: float = float(ns.sector_output.get(key, 0.0)) / ns.gdp_eur_bn
 		trend += share * float(C.SECTOR_TREND[key])
-	return trend + ns.potential_shift_pct
+	return trend + ns.potential_shift_pct + Investment.national_trend_shift_pct(ns)
 
 
 ## Trend part by each sector's own rate, cyclical part by cyclical beta. Doing it
@@ -193,6 +207,12 @@ static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 	# target exactly, and a shift applied outside would break that identity.
 	var trade_shift := Trade.sector_shift(state, ns.id)
 
+	# V1.6e, beside the trade shift because it lands in the same slot, and REQUIRED
+	# TO BE READ AT trend_pct() AS WELL -- see that function for why. Reads exactly
+	# 0.0 for every sector until an investment programme has run, so `after_trend` is
+	# unchanged to the last bit in every game in which nobody has invested.
+	var investment_shift := Investment.sector_trend_shift(ns)
+
 	# Trend part: each sector at its own rate, plus the uniform potential shift.
 	# Summed, this is exactly the nation's trend, so the two paths agree.
 	var after_trend := 0.0
@@ -200,6 +220,7 @@ static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 		var rate: float = (
 			float(C.SECTOR_TREND[key]) + ns.potential_shift_pct
 			+ float(trade_shift.get(key, 0.0))
+			+ float(investment_shift.get(key, 0.0))
 		)
 		ns.sector_output[key] = float(ns.sector_output[key]) * C.monthly_factor(rate)
 		after_trend += float(ns.sector_output[key])
@@ -260,8 +281,16 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 
 
 ## First-order lag toward the shift implied by current infrastructure, education
-## and corporate tax. Clamped hard: this is the only term that feeds back into
-## trend growth, so it is the only one that could compound.
+## and corporate tax. Clamped hard, because this term feeds back into trend growth.
+##
+## IT WAS THE ONLY SUCH TERM UNTIL V1.6e, and that clause is amended here rather
+## than left to quietly become false. Investment.sector_trend_shift() now reaches
+## trend as well, through trend_pct() above, and it carries its own per-quantity
+## bound (investment_constants.SECTOR_TREND_MAX_PCT) exactly as
+## docs/economy-model.md's divergence argument requires of a new quantity. The two
+## are not one channel measured twice: this one reads a player-set SPENDING LINE and
+## produces a UNIFORM shift, that one reads a register written by a verb and
+## produces a PER-SECTOR one.
 static func _update_potential_shift(state, ns) -> void:
 	var d_infra: float = (
 		float(ns.spending_pct_gdp.get("infrastructure", 0.0))

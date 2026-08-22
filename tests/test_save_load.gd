@@ -25,6 +25,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const CreditK = preload("res://src/sim/credit_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
@@ -122,6 +123,7 @@ func _init() -> void:
 	_check_inflation_fields(loader)
 	_check_credit_fields(loader)
 	_check_tax_fields(loader)
+	_check_investment_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -2128,3 +2130,83 @@ func _check_tax_fields(loader) -> void:
 
 	if GameState.SAVE_VERSION != 22:
 		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21 and V1.6d to 22 on three fields, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
+## checked separately because they are two different claims.
+##
+## The rule game_state.gd states is "would a missing field read as something WRONG",
+## and for a version-22 save the answer is no: those games had no investment verb, so
+## "no programme running and nothing built" is the truth about them rather than a soft
+## failure. `measures` at V1.3c, `pacts` at V1.3g and `regulation_burden` at V1.4b.
+##
+## What is not free is the other half. The capital stock is written by a tick and NO
+## TICK RE-DERIVES IT FROM CONTENT -- unlike V1.4a's four prices, which come back on
+## the next tick, and unlike `start_service_quality`, which round-trips through
+## data/nations/. A save that dropped it would silently demolish everything the player
+## spent a term building, so the premise is CHECKED rather than asserted: dropping the
+## register must move the trend shift.
+func _check_investment_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# (1) A NEW GAME CARRIES THE REGISTER AND IT IS INERT. Exact equality, because that
+	# is the property the balance re-run's bit-identity rests on.
+	var fresh: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var fresh_entry = (fresh["nations"]["FRA"] as Dictionary).get("sector_investment")
+	if fresh_entry == null:
+		_fail("a save does not carry sector_investment at all")
+	elif not (fresh_entry as Dictionary).has("industry"):
+		_fail("the serialised register has no industry entry")
+	if Investment.national_trend_shift_pct(GameState.from_dict(fresh).player()) != 0.0:
+		_fail("a reloaded new game has a non-zero trend shift")
+
+	# (2) THE PREMISE, CHECKED. A programme run for five years, then the register
+	# dropped: the trend shift must fall to zero, or serialising it buys nothing.
+	for a in loader.investment_actions:
+		if a.id == "reindustrialisation":
+			Investment.execute(state, ns, loader.investment_actions, a)
+	for _m in range(60):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Investment.tick_month(state)
+
+	var built: float = Investment.national_trend_shift_pct(ns)
+	if is_zero_approx(built):
+		_fail("five years of investment moved nothing, so this check is not measuring what it says")
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(dropped["nations"]["FRA"] as Dictionary).erase("sector_investment")
+	var demolished = GameState.from_dict(dropped)
+	if not is_zero_approx(Investment.national_trend_shift_pct(demolished.player())):
+		_fail("a save with sector_investment dropped still carried the capital -- then serialising it buys nothing")
+	if Investment.intensity_of(demolished.player(), "industry") != 0.0:
+		_fail("a dropped register still reports a standing programme")
+
+	# And the round trip keeps both halves of every entry.
+	var kept = GameState.from_dict(full)
+	if not is_equal_approx(Investment.capital_of(kept.player(), "industry"), Investment.capital_of(ns, "industry")):
+		_fail("the capital stock did not survive the round trip")
+	if not is_equal_approx(Investment.intensity_of(kept.player(), "industry"), Investment.intensity_of(ns, "industry")):
+		_fail("the standing intensity did not survive the round trip")
+
+	# (3) THE ENTRY CARRIES EXACTLY TWO KEYS, which is V1.4a's own device pointed at a
+	# new register: a later session storing a per-sector baseline, a cached shift or a
+	# months counter turns this red and has to come and say why. The shift is a DERIVED
+	# read over the capital and the sector shares, both of which the save already has.
+	var entry: Dictionary = (full["nations"]["FRA"] as Dictionary)["sector_investment"]["industry"]
+	for key in entry.keys():
+		if key != "intensity" and key != "capital":
+			_fail("a serialised investment entry carries '%s' -- two keys is the whole register" % key)
+	if entry.size() != 2:
+		_fail("a serialised investment entry has %d keys, expected exactly 2" % entry.size())
+
+	# (4) WHAT WAS NOT ADDED. src/sim/investment.gd caches only the bill, so there is no
+	# stored shift and no stored national figure.
+	for pname in ["sector_trend_shift", "investment_trend_shift_pct", "investment_capital"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
+
+	if GameState.SAVE_VERSION != 22:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22 and V1.6e argued it should STAY there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

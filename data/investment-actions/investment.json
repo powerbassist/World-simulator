@@ -1,0 +1,114 @@
+{
+  "_note": "V1.6e's verbs, on the effects.investment channel. THE SECTOR IS AUTHORED RATHER THAN PASSED AS A TARGET, which is the session's one content call: with the sector as a parameter all three would share one bloc_offset, so which sector to back would be an economic decision and a politically identical one. Nine actions -- two intensities and a withdrawal per sector -- so the dial is visibly a dial, which is data/company-actions/subsidy.json's own reason. The withdrawal hands back exactly the SMALLER package's offsets, so stepping down from the larger one is a net political loss: the ground the big programme bought is not fully refundable.",
+  "_price_note": "These offsets are the ONLY authored price, and that is why docs/sector-model.md answers the sixteenth ISSUE_KEYS question NO where V1.6b and V1.6d had to answer YES -- a tax has no content object anywhere and this verb does. The fiscal price is not here and is not authored: the bill widens the deficit, which reaches `public_finances` through machinery S5 built. The three sectors' rows are deliberately NOT mirror images of each other; agriculture is small and rural, industry is the workers' sector, services is where the cities and the firms are, and the roster's own sector shares are what make backing one of them a different act from backing another.",
+  "actions": [
+    {
+      "id": "farm_modernisation",
+      "name": "Farm Modernisation Programme",
+      "summary": "Public money into mechanisation, irrigation and cold chain. The countryside notices within the month; the return on the land takes most of a term to arrive.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "agriculture", "intensity": 0.55 },
+        "bloc_offset": { "rural": 0.11, "workers": 0.03, "urban": -0.04, "students": -0.03 }
+      }
+    },
+    {
+      "id": "agricultural_transformation",
+      "name": "Agricultural Transformation Plan",
+      "summary": "A generational rebuild of the rural economy, on a scale the cities can read in the budget. The land will be worth more in ten years and the argument starts today.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "agriculture", "intensity": 1.00 },
+        "bloc_offset": { "rural": 0.15, "workers": 0.04, "urban": -0.09, "students": -0.07, "business": -0.04 }
+      }
+    },
+    {
+      "id": "end_farm_programme",
+      "name": "End the Farm Programme",
+      "summary": "The money stops. What has been built stays built and depreciates from here, which is slower than the countryside's memory.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 1 }
+      ],
+      "effects": {
+        "investment": { "op": "withdraw", "sector": "agriculture" },
+        "bloc_offset": { "rural": -0.11, "workers": -0.03, "urban": 0.04, "students": 0.03 }
+      }
+    },
+    {
+      "id": "industrial_renewal",
+      "name": "Industrial Renewal Fund",
+      "summary": "Plant, tooling and process, aimed at the sector that employs the most people per unit of output. Organised labour reads it as jobs; nobody has told them what Okun's law says.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "industry", "intensity": 0.55 },
+        "bloc_offset": { "workers": 0.10, "business": 0.06, "rural": 0.02, "students": -0.05 }
+      }
+    },
+    {
+      "id": "reindustrialisation",
+      "name": "Reindustrialisation Programme",
+      "summary": "The state puts its weight behind manufacturing for a decade. The most visible economic commitment a government of this country can make, and the one the next generation is loudest about.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "industry", "intensity": 1.00 },
+        "bloc_offset": { "workers": 0.14, "business": 0.09, "rural": 0.03, "students": -0.11, "urban": -0.05 }
+      }
+    },
+    {
+      "id": "end_industrial_programme",
+      "name": "End the Industrial Programme",
+      "summary": "The fund closes. The capacity remains and ages, and the shop floor remembers who signed the closure.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 1 }
+      ],
+      "effects": {
+        "investment": { "op": "withdraw", "sector": "industry" },
+        "bloc_offset": { "workers": -0.10, "business": -0.06, "rural": -0.02, "students": 0.05 }
+      }
+    },
+    {
+      "id": "digital_services_push",
+      "name": "Digital and Services Push",
+      "summary": "Networks, skills and the regulatory plumbing the service economy runs on. The cities and the firms want it; the places it will not reach can see that too.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "services", "intensity": 0.55 },
+        "bloc_offset": { "urban": 0.09, "business": 0.07, "students": 0.06, "rural": -0.07, "pensioners": -0.03 }
+      }
+    },
+    {
+      "id": "knowledge_economy_plan",
+      "name": "Knowledge Economy Plan",
+      "summary": "A decade of public capital aimed squarely at the largest sector in the country. It is where the growth is, and saying so out loud is what the rest of the country hears.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "investment": { "op": "invest", "sector": "services", "intensity": 1.00 },
+        "bloc_offset": { "urban": 0.13, "business": 0.11, "students": 0.09, "rural": -0.13, "pensioners": -0.05, "workers": -0.04 }
+      }
+    },
+    {
+      "id": "end_services_programme",
+      "name": "End the Services Programme",
+      "summary": "The push ends. The networks stay, the skills stay, and the argument about who the last decade was for does not.",
+      "preconditions": [
+        { "field": "investment_active", "op": "==", "value": 1 }
+      ],
+      "effects": {
+        "investment": { "op": "withdraw", "sector": "services" },
+        "bloc_offset": { "urban": -0.09, "business": -0.07, "students": -0.06, "rural": 0.07, "pensioners": 0.03 }
+      }
+    }
+  ]
+}

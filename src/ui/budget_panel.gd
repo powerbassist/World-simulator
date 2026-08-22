@@ -106,6 +106,15 @@ const FIGURE_ROWS := [
 	# Reads "—" while nothing is subsidised, which is every game that has not used
 	# the verb.
 	["subsidies", "  of which subsidies"],
+	# V1.6e, beside the subsidy line and on the same argument a FIFTH time: money
+	# leaving the budget that the player set with no slider on this panel. It differs
+	# from the subsidy line in the one way that matters to a player reading this
+	# screen -- a subsidy's effect arrives inside a year and a sector programme's
+	# takes most of a term, so this is a line that will sit here costing money for
+	# several years before the growth it bought is visible in the rows below.
+	# Reads "—" while no programme stands, which is every game that has not used
+	# the verb.
+	["investment", "  of which investment"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
@@ -404,6 +413,7 @@ func _refresh() -> void:
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
 	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
 	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
+	_set_figure("investment", _investment_text(now), _investment_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
@@ -514,7 +524,24 @@ func _subsidy_text(snap: Dictionary) -> String:
 	return _pct_and_eur(snap, "subsidy_bill_pct_gdp")
 
 
-## The same em dash a fifth time, on the revenue side. Unsigned: a holding pays or
+## The same em dash a fifth time. Unsigned like the two lines above it: an
+## investment programme only ever costs, and what it buys is trend growth rather
+## than money.
+##
+## THE MISSING-KEY BRANCH IS SEPARATE FROM THE ZERO BRANCH, and V1.6d is why. That
+## session's row read a missing snapshot key with `.get(key, 0.0)` and printed a
+## confident "0.00" against a live figure. Both branches print an em dash here, so
+## the display is the same either way -- what is not the same is that a key vanishing
+## from Budget.snapshot() cannot be quietly absorbed into "nothing is running".
+func _investment_text(snap: Dictionary) -> String:
+	if not snap.has("investment_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["investment_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "investment_bill_pct_gdp")
+
+
+## The same em dash a sixth time, on the revenue side. Unsigned: a holding pays or
 ## the state does not have one, and a firm that loses money still hands over nothing
 ## rather than billing the treasury -- there is no margin quantity here for it to
 ## lose, which is docs/companies-model.md section 13's call showing up on a panel.

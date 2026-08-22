@@ -27,6 +27,7 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -176,6 +177,7 @@ var _cycle := false
 var _inflate := false
 var _downgrade := false
 var _redistribute := false
+var _invest := false
 
 ## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
 ## than a feature. Both are cited from docs/playability-audit.md, because a claim
@@ -246,6 +248,8 @@ func _init() -> void:
 			_downgrade = true
 		elif args[i] == "--redistribute":
 			_redistribute = true
+		elif args[i] == "--invest":
+			_invest = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -333,6 +337,8 @@ func _apply_view() -> void:
 		_lose_the_markets()
 	if _redistribute:
 		_soak_the_rich()
+	if _invest:
+		_back_the_biggest_sector()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1177,3 +1183,57 @@ func _serve_out_the_last_term() -> void:
 	_main._clock.paused = true
 	_main._election_panel.show_results(results)
 	_main._election_panel.show()
+
+
+## V1.6e. Backs the largest sector at full intensity and runs sixty months -- the
+## capital's own t90 -- so the frame shows a programme that has ARRIVED rather than one
+## that has just been signed.
+##
+## Sixty and not twenty-four, which is this flag's whole argument: every figure this
+## session adds is a lag, and V1.6b's screenshot pass already found the opposite error
+## (a flag that ticked 48 months and ran PAST the thing it existed to photograph). Here
+## the risk is the other way round, so the horizon is the model's own time constant
+## rather than a round number.
+##
+## No panel re-sync, unlike --redistribute, and the difference is worth stating: this
+## verb does not go through Budget.commit() at all. It writes its own register and the
+## cost arrives as a computed line, so budget_panel.gd's stale `_pending` -- the live bug
+## docs/tax-model.md section 11 records -- cannot be reached from here.
+func _back_the_biggest_sector() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var best := ""
+	var best_output := -1.0
+	for sector in ns.sector_investment.keys():
+		var out: float = float(ns.sector_output.get(sector, 0.0))
+		if out > best_output:
+			best_output = out
+			best = String(sector)
+
+	var action = null
+	for a in _main._loader.investment_actions:
+		var terms: Dictionary = a.effects.get("investment", {})
+		if String(terms.get("op", "")) != "invest" or String(terms.get("sector", "")) != best:
+			continue
+		if action == null or float(terms["intensity"]) > float(action.effects["investment"]["intensity"]):
+			action = a
+	if action != null:
+		Investment.execute(state, ns, _main._loader.investment_actions, action)
+	_tick_months(60)
+
+	# *** AND THE PANEL HAS TO BE SCROLLED, WHICH IS THE FOURTEENTH SCREENSHOT PASS'S
+	# FIND. *** The first frame of this flag showed the ledger reading a live 0.654 % of
+	# GDP and +0.513 %/yr -- and every visible sector row saying "No state programme",
+	# because the sector the flag had just backed is the LAST of the three and sits below
+	# the fold of a panel whose whole body scrolls. The figures were right and the frame
+	# was still evidence for the wrong claim. Scrolled to the bottom, the services row and
+	# its withdrawal button are on screen.
+	#
+	# This is the tool's own bug rather than the panel's: companies_panel.gd scrolls by
+	# design, which is its stated answer to the fold nation_panel.gd has paid for three
+	# times, and a player reaches the row by dragging.
+	if _main._companies_panel != null:
+		_main._companies_panel.scroll_to_bottom()
