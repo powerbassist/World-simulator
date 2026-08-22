@@ -35,6 +35,20 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Elections = preload("res://src/sim/elections.gd")
+
+## Window id -> main.gd member, for --blank. main.gd registers panels by id and
+## keeps them in underscore-private fields, and window_manager holds the frame
+## rather than the content -- so there is no lookup from one to the other and this
+## table is it. Only the five panels that build their own Close button are listed;
+## the other six have it hidden, which is the fix the audit points at.
+const PANEL_BY_WINDOW_ID := {
+	"diplomacy": "_nation_panel",
+	"bloc": "_bloc_panel",
+	"calendar": "_calendar_panel",
+	"companies": "_companies_panel",
+	"people": "_people_panel",
+}
 
 const OUT_DEFAULT := "user://screenshot.png"
 
@@ -162,6 +176,30 @@ var _cycle := false
 var _inflate := false
 var _downgrade := false
 var _redistribute := false
+
+## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
+## than a feature. Both are cited from docs/playability-audit.md, because a claim
+## about what the player sees needs a frame behind it and neither of these is
+## reachable from any existing flag.
+##
+## --defeated forces the executive verdict the player loses on. The whole point is
+## the FOOTER: election_panel builds Continue only in the not-defeated branch, so
+## the frame should show a plate with nothing to press. Forced rather than played
+## into, because losing honestly takes eleven years and the bug is in the branch,
+## not in the road to it.
+var _defeated := false
+
+## --blank <window id> opens a window, presses the panel's OWN Close, and opens it
+## again. Three of the eleven panels hide their content on that button while
+## window_manager.open() only ever shows the FRAME, so the second open is the
+## capture that matters: an empty frame the player cannot get back.
+var _blank := ""
+
+## V1.6 audit, V1. Stands the player on the last month of their last permitted
+## term and lets Elections.tick_month() produce the notice itself, rather than
+## building the plate by hand -- the whole finding was that this path rendered
+## nothing, so a frame is only evidence if the sim is what produced it.
+var _termlimit := false
 var _main
 
 
@@ -210,6 +248,12 @@ func _init() -> void:
 			_redistribute = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
+		elif args[i] == "--defeated":
+			_defeated = true
+		elif args[i] == "--termlimit":
+			_termlimit = true
+		elif args[i] == "--blank" and i + 1 < args.size():
+			_blank = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
 			_nation = args[i + 1].to_upper()
 
@@ -312,6 +356,12 @@ func _apply_view() -> void:
 		_main._hud.map_legend.show_hover(
 			_hover, _main._state, _main._map_view.viewer_id()
 		)
+	if _blank != "":
+		_blank_a_window()
+	if _termlimit:
+		_serve_out_the_last_term()
+	if _defeated:
+		_lose_the_office()
 
 
 ## Tick the world forward until the nine have acted enough to fill the message
@@ -1040,3 +1090,90 @@ func _fill_the_diary() -> void:
 	)
 	state.appointments.append(kept)
 	Calendar.resolve(state, Calendar.verb_key(kept), true)
+
+
+## Force the executive verdict the player loses on, and show the result screen the
+## way main.gd shows it. V1.6 playability audit, finding V2.
+##
+## resolve_executive() is called for real and only `incumbent_largest` is flipped:
+## the panel's `defeated` test reads that field and `ns.in_government`, so forcing
+## those two is the whole of the difference between winning and losing. Every other
+## figure on the plate is the one the real election produced.
+##
+## The clock is paused here rather than left running because main.gd pauses on any
+## result -- and the frame is evidence about a screen the player cannot dismiss, so
+## capturing it beside a running clock would misrepresent the state they are in.
+func _lose_the_office() -> void:
+	if _main == null or _main._election_panel == null:
+		return
+	var state = _main._state
+	var ns = state.player()
+	var party_list: Array = _main._loader.parties.get(ns.id, [])
+
+	var result := Elections.resolve_executive(ns, party_list, state.year, state.month)
+	result["incumbent_largest"] = false
+	ns.in_government = false
+
+	_main._clock.paused = true
+	_main._election_panel.show_results([result])
+	_main._election_panel.show()
+
+
+## Press a panel's own Close button, then reopen its window. V1.6 playability
+## audit, finding V3.
+##
+## Drives the real Button rather than calling hide() directly, because the claim
+## being photographed is about what a click does -- calling hide() would prove only
+## that a hidden Control is hidden. The second open() is the capture: it is the
+## action a player takes to undo the mistake, and it does not work.
+func _blank_a_window() -> void:
+	if _main == null or _main._windows == null:
+		return
+	var panel = _main.get(PANEL_BY_WINDOW_ID.get(_blank, ""))
+	if panel == null:
+		printerr("--blank: no panel for window id %s" % _blank)
+		return
+
+	_main._windows.open(_blank)
+	for node in _descendants(panel):
+		if node is Button and node.text == "Close" and node.visible:
+			node.pressed.emit()
+			break
+	_main._windows.open(_blank)
+
+
+func _descendants(node) -> Array:
+	var out: Array = [node]
+	for child in node.get_children():
+		out.append_array(_descendants(child))
+	return out
+
+
+## Reach the term limit and let the simulation report it. V1.6 audit, V1.
+##
+## The dates are moved rather than the fourteen years played, because the bug was
+## never about the road there: tick_month() appended nothing on this branch, so
+## the plate this captures is the difference between a screen and no screen at all.
+func _serve_out_the_last_term() -> void:
+	if _main == null or _main._state == null:
+		return
+	var state = _main._state
+	var ns = state.player()
+	if ns.term_limit <= 0:
+		printerr("--termlimit: %s has no term limit" % ns.id)
+		return
+
+	ns.terms_served = ns.term_limit
+	ns.next_executive_year = state.year
+	ns.next_executive_month = state.month
+	# Out of the way, so only the executive branch fires and the frame shows one
+	# thing rather than a legislative result stacked above it.
+	ns.next_election_year = state.year + 50
+
+	var results := Elections.tick_month(state, _main._loader)
+	if results.is_empty():
+		printerr("--termlimit: the term limit reported nothing -- that IS finding V1")
+		return
+	_main._clock.paused = true
+	_main._election_panel.show_results(results)
+	_main._election_panel.show()

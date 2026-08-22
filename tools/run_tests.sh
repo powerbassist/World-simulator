@@ -33,6 +33,12 @@ tests=(
   tests/test_defence.gd
   tests/test_calendar.gd
   tests/test_people.gd
+  # ...and test_cabinet.gd was the THIRD instance, found by the V1.6 playability
+  # audit: 55 test files on disk against 54 here. It covers can_assign, assign,
+  # effectiveness and resignations -- a player verb (Politics -> Reassign) and one
+  # of the three bookable diary verbs. It passes, so nothing was hidden by it; what
+  # was hidden is that nobody would have known if it stopped passing.
+  tests/test_cabinet.gd
   # test_companies.gd was authored at V1.4a and NEVER ADDED HERE, so V1.4a, V1.4b and
   # V1.4c all shipped with their own test file running only when invoked by hand. Found
   # at V1.5a by noticing test_society.gd was absent from a green suite and looking at
@@ -63,11 +69,25 @@ tests=(
   tests/test_overview_panel.gd
   tests/test_save_load.gd
   tests/test_balance.gd
+  # Every check in this one pins a KNOWN BUG rather than a feature -- it is the
+  # playability audit's register, and it turns red when somebody FIXES one.
+  # See docs/playability-audit.md.
+  tests/test_playability.gd
 )
+
+# The MCP toolkit plugin registers an MCPRuntimeServer autoload, and its export
+# gate is OS.has_feature("editor") -- true for `--headless --script`, so every
+# test process binds a runtime port and announces it. Three lines per test, 55
+# tests, none of them about the simulation. Filtered here rather than fixed in
+# the addon (addons/ is gitignored and reinstalled per machine, so a patch there
+# is lost) and rather than left in (a green suite nobody reads is a suite nobody
+# reads). Exit status comes from godot via PIPESTATUS, never from grep.
+mcp_noise='^\[MCP(RuntimeServer|Registry)\]'
 
 failed=0
 for t in "${tests[@]}"; do
-  if ! godot --headless --script "res://$t"; then
+  godot --headless --script "res://$t" 2>&1 | grep -Ev "$mcp_noise"
+  if [ "${PIPESTATUS[0]}" -ne 0 ]; then
     echo "FAIL $t" >&2
     failed=1
   fi

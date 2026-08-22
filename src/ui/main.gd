@@ -230,6 +230,7 @@ func _ready() -> void:
 	_nation_panel = NationPanel.new()
 	_windows.register("diplomacy", "Diplomacy", _nation_panel)
 	_nation_panel.setup(_state, _loader)
+	_nation_panel.hide_close_button()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
@@ -248,6 +249,14 @@ func _ready() -> void:
 	_bloc_panel = BlocPanel.new()
 	_windows.register("bloc", "The Union", _bloc_panel)
 	_bloc_panel.setup(_state, _loader)
+	_bloc_panel.hide_close_button()
+	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
+	# is a command like any other and earns the same U4 delta as a law or an act.
+	# It was the only one of the seven player commands with no signal at all.
+	_bloc_panel.voted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
 
 	# U6a. The one surface that reads dated state the game has carried since the
 	# MVP and never showed anywhere -- an election date, the council's next
@@ -255,6 +264,7 @@ func _ready() -> void:
 	_calendar_panel = CalendarPanel.new()
 	_windows.register("calendar", "Diary", _calendar_panel)
 	_calendar_panel.setup(_state, _loader)
+	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
 	# is no baseline to queue. The repaint is all this needs: the diary is the only
 	# panel whose contents just changed.
@@ -265,6 +275,7 @@ func _ready() -> void:
 	_people_panel = PeoplePanel.new()
 	_windows.register("people", "People", _people_panel)
 	_people_panel.setup(_state, _loader)
+	_people_panel.hide_close_button()
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
 	# actor and the verb pointed at it is a spending decision, which is why the bill
@@ -273,6 +284,7 @@ func _ready() -> void:
 	_companies_panel = CompaniesPanel.new()
 	_windows.register("companies", "Companies", _companies_panel)
 	_companies_panel.setup(_state, _loader)
+	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
 	# subsidy is a player command with a domestic price and a budget line, so it
 	# earns a U4 decision delta on exactly the same terms.
@@ -291,7 +303,17 @@ func _ready() -> void:
 	_add_centered(_election_panel)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
-	_election_panel.dismissed.connect(func(): _clock.paused = false)
+	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
+	# leaves office, because there is nothing behind that plate to go back to --
+	# Elections.tick_month() skips a nation out of government, so the clock would
+	# run on forever with no election able to resolve and nothing saying why.
+	_election_panel.dismissed.connect(func():
+		var ns = _state.player()
+		if ns != null and not ns.in_government:
+			get_tree().change_scene_to_file(MENU_SCENE)
+			return
+		_clock.paused = false
+	)
 
 	_save_load_panel = SaveLoadPanel.new()
 	_add_centered(_save_load_panel)
@@ -964,6 +986,11 @@ func _on_load_requested(slot: String) -> void:
 	if not result["ok"]:
 		_save_load_panel.report("Load failed: %s" % result["error"])
 		_save_load_panel.mark_dirty()
+		# Shown, not merely written to. report() paints a HIDDEN panel on the menu
+		# path -- _ready() has already built a new game by then, so without this a
+		# failed Continue starts a fresh France and says nothing at all.
+		_save_load_panel.show()
+		_clock.paused = true
 		return
 
 	_state = result["state"]

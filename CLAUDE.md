@@ -28,6 +28,10 @@ bash tools/check_names.sh
 ```
 
 ```bash
+bash tools/check_mcp.sh
+```
+
+```bash
 godot --path "<repo>"
 ```
 

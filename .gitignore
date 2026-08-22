@@ -26,6 +26,13 @@ road_demos/
 demo/
 @icons picker.html
 
+# The Godot MCP bridge registration. Per-machine by construction -- it names an
+# absolute path to a globally-installed npm package, and the addon it talks to is
+# itself gitignored above. Regenerate it from Project -> Tools -> MCP Toolkit ->
+# Write .mcp.json, or copy the form in docs/tooling.md. tools/check_mcp.sh says
+# so out loud when it is missing.
+.mcp.json
+
 export.cfg
 export_presets.cfg
 *.translation

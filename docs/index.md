@@ -53,6 +53,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
+- [[playability-audit]] — the first pass that tried to PLAY the game: nine defects, five that break a playthrough, and the register kept as assertions that turn red when fixed
 
 ## Scope tiers
 

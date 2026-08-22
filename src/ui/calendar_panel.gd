@@ -73,6 +73,7 @@ var _day_spin: SpinBox
 var _book_button: Button
 var _status: Label
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -119,13 +120,13 @@ func _ready() -> void:
 	root.add_child(HSeparator.new())
 	_build_form(root)
 
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(func():
+	_close_button = Button.new()
+	_close_button.text = "Close"
+	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
 	)
-	root.add_child(close)
+	root.add_child(_close_button)
 
 
 ## Four fixed rows whatever the kind is. The subject and act pickers are
@@ -193,6 +194,15 @@ func _build_form(root: VBoxContainer) -> void:
 	_status.theme_type_variation = UiTheme.CAPTION
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_status)
+
+
+
+## Docked in a WindowFrame, whose X is the real close control. Without this the
+## panel's own Close hides the CONTENT while window_manager.open() only ever shows
+## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
+## V3. The four panels that already had this method never had the bug.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func setup(state, loader) -> void:
