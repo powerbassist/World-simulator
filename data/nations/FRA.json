@@ -13,6 +13,13 @@
     "layout": "vertical",
     "bands": ["#0055A4", "#FFFFFF", "#EF4135"]
   },
+  "project_sites": {
+    "high_speed_rail": [3.0, 47.4],
+    "national_grid": [4.6, 45.3],
+    "freight_corridor": [0.6, 49.3],
+    "national_fibre": [1.8, 44.6],
+    "flood_defence": [-0.9, 45.2]
+  },
   "government": {
     "legislative": {
       "chamber": "Assemblée nationale",

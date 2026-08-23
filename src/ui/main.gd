@@ -162,6 +162,13 @@ func _ready() -> void:
 	add_child(_map_view)
 	_map_view.setup(_loader, _state)
 	_map_view.nation_clicked.connect(_on_nation_clicked)
+	# U6c. A marker opens Public Works rather than saying anything itself: the map
+	# says *where* a project is, and the panel already says everything else about
+	# it. Registered further down, so this connects to a window that exists by the
+	# time a click can happen.
+	_map_view.project_clicked.connect(func(_project_id: String):
+		_windows.open("projects")
+	)
 
 	_windows = WindowManager.new()
 	add_child(_windows)

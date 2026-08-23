@@ -13,6 +13,13 @@
     "layout": "union",
     "bands": ["#012169", "#FFFFFF", "#C8102E"]
   },
+  "project_sites": {
+    "high_speed_rail": [-1.5, 52.9],
+    "national_grid": [-1.1, 53.8],
+    "freight_corridor": [0.4, 51.9],
+    "national_fibre": [-2.2, 52.3],
+    "flood_defence": [-0.4, 52.6]
+  },
   "government": {
     "legislative": {
       "chamber": "House of Commons",

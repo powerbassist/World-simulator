@@ -21,17 +21,16 @@ design.
 projects at three machines of five and named the third — *"visible on the map"* — a
 **U-track surface**. Counted here the split holds and sharpens.
 
-## 1. The count, and the map is not in this session
+## 1. The count, and the map came one session later
 
-| | machine | track |
-|---|---|---|
-| 1 | the project content type and the in-flight register, counted in **months remaining** | S |
-| 2 | the completion payoff and the bill | S |
-| 3 | per-project geography, a marker draw pass on `map_view.gd`, hit-testing and hover | **U** |
+| | machine | track | built |
+|---|---|---|---|
+| 1 | the project content type and the in-flight register, counted in **months remaining** | S | V1.6f |
+| 2 | the completion payoff and the bill | S | V1.6f |
+| 3 | ~~per-project~~ **per-nation** geography, a marker draw pass on `map_view.gd`, hit-testing and hover | **U** | **U6c** |
 
-V1.6f is machines 1–2. Machine 3 is **U6c** and is not built here — U5b→U5c, V1.6e→V1.6f,
-a third time. *A difference in architectural shape is an argument; the two-track rule is a
-rule.*
+V1.6f is machines 1–2. Machine 3 was **U6c** — U5b→U5c, V1.6e→V1.6f, a third time.
+*A difference in architectural shape is an argument; the two-track rule is a rule.*
 
 The sim half counts **~24 surfaces**, between [[transition-model|V1.2d]]'s ~21 and
 [[trade-model|V1.3b]]'s ~33, and the same band V1.6e counted at ~22.
@@ -41,6 +40,62 @@ The sim half counts **~24 surfaces**, between [[transition-model|V1.2d]]'s ~21 a
 > [[tax-model]] §3's refusal for the bracket index. The five are named generically and
 > are true of any of the ten; the session that draws them owns naming them, the way U5a
 > authored the `flag` block in the session that drew it.
+
+### U6c: instance thirty-nine, and it is in the row's own wording
+
+**Geography is not per-project, and the phrase above is what would have made it so.**
+Every statement of machine 3 — this table, [[sector-model]] §5 and [[ROADMAP]]'s V1.6f
+paragraph — called it *"per-project geography as content"*. Read literally that puts a
+lon/lat inside `effects.project`, and `data/project-actions/` is a **global flat list**:
+one `high_speed_rail` shared by all ten, so every nation's rail spine would stand at one
+point on the planet. Fixing that means moving the directory per-nation, which reopens the
+global-list call V1.6f made freely and which nothing else has asked to reopen.
+
+**The site belongs to the nation.** `data/nations/*.json` grew an optional `project_sites`
+block, `project id -> [lon, lat]`, parsed into `Nation.project_sites`. That is
+[[people-model|U6b]]'s rule unchanged — *a law names an office; the nation's own
+`government.pretender_person` names the person* — and it settles three things at once:
+
+- `data/project-actions/` stays **global and unedited**. A rail spine is still true of any
+  of the ten; only the ground it stands on is national.
+- `src/core/project_action.gd` is **not touched at all**, so `PROJECT_OP_TERMS` keeps its
+  three quantities and `project_name`'s exception is not widened. U6c was offered that
+  exception as precedent — *a coordinate is not a strength, the way a name is not* — and
+  did not need it, because no coordinate ever reaches `effects.project`.
+- The consequence V1.6f left unrecorded is **avoided rather than paid**.
+
+Coverage is FRA, DEU and GBR, exactly `data/companies/`'s and `data/outlets/`'s: an absent
+block is legal and means no markers. `tests/test_map_markers.gd` holds the two claims no
+loader could — every site names a project the content defines, and every site is inside
+its own nation's polygon, which is what a mistyped digit fails.
+
+### The marker is an OVERLAY, not a fifth map layer
+
+`map_layers.gd` is a registry rather than a mode flag, which invites a fifth `LAYERS`
+entry, and U5c's per-layer alpha argument does not settle it either way. What settles it
+was already written, in `map_view.gd`'s own header: *"no map layer adds, removes or
+reorders a draw layer"*. A `LAYERS` entry chooses a roster **fill**, one at a time, from a
+per-nation scalar; a marker is a point, is additive, and is orthogonal to whatever fill is
+up. As a layer it would also be **structurally dead content**: the nine never build, so its
+value would read exactly 0.0 for nine of the ten forever — V1.6f's own *a frame of an
+all-zero data layer proves nothing*, arriving as a design instead of as a frame. So markers
+are the **fifth draw pass**, frontmost, and `tests/test_map_markers.gd` pins `LAYERS` at
+four so a later session moving them has to come and say why.
+
+### The hit test does not go through the roster, and the test reads the file to say so
+
+U5b's *unclickable structurally* rests on one sentence: `_nation_at_lonlat()` iterates
+`_polygons` alone, and `_world_polygons` is drawn by nothing. A marker hit test routed
+through that function would make it answer for two things, and the property would die the
+day someone widened it to answer markers over Poland. `_project_at_screen_point()` is
+therefore a **radius test in screen space** over the marker list, reaching neither name;
+screen space rather than lon/lat because the glyph is a fixed number of pixels at every
+zoom, so a degree-radius target would shrink as the player zoomed out to find it. The test
+extracts that function's body from the source and fails on either name —
+`tests/test_projects.gd`'s idiom for *`calendar.gd` is still a leaf*.
+
+A click on a marker opens **Public Works** and does not fall through to the nation
+underneath, or one press would open two windows.
 
 ## 2. (B1) `GameState.appointments` is NOT this scheduler, and what IS reused is the surface
 
@@ -322,8 +377,9 @@ absence.
 
 ## 14. The readout
 
-Three surfaces for one register, and each says a different thing — which is the only way
-three surfaces for one register works.
+**Four** surfaces for one register as of U6c, and each says a different thing — which is
+the only way four surfaces for one register works. The map says **where**, and says nothing
+else: the marker is a way *into* Public Works rather than a second readout of it.
 
 - **Public Works** (`src/ui/projects_panel.gd`), its own window. Three sections, because a
   project is in one of three states and each is a different question: what is being
@@ -334,6 +390,12 @@ three surfaces for one register works.
   Its missing-key branch is separate from its zero branch, [[tax-model]] §11's
   `.get(key, 0.0)` failure guarded against rather than repeated.
 - **The diary**, which needed no code beyond one row in `fixed_dates()` — see §2.
+- **The map** (`src/ui/map_markers.gd`, U6c), a hollow ring while a project builds and a
+  filled one once it is finished, at the nation's authored site. An **unstarted** project
+  draws nothing, which is why Public Works' third section has no counterpart here: the map
+  says where, and a road nobody has begun is nowhere. The name and the months are drawn on
+  **hover alone** — the dots are the layer and stay at every zoom, and it is the names that
+  would collide on a France sixty pixels wide at the world view.
 
 ### The fifteenth screenshot pass found two bugs and both were the readout's
 
@@ -365,7 +427,7 @@ grid **finished** at +0.170 %/yr, and three unstarted projects with their terms.
 
 ## 15. What is deliberately not built
 
-- **No map marker.** U6c — §1.
+- ~~**No map marker.**~~ **Built at U6c** — §1.
 - **No employment term.** Structural, not a policy — §5.
 - **No second scheduler.** `appointments` is not it, and neither is a date register — §2.
 - **No third trend quantity.** §3.
@@ -377,8 +439,8 @@ grid **finished** at +0.170 %/yr, and three unstarted projects with their terms.
 - **No AI use of the verb.** The nine have no agenda term for it, which is what keeps the
   re-run bit-identical and is the same honest limitation [[defence-model|V1.3g]] and V1.6e
   each recorded. `tests/test_projects.gd` pins it.
-- **No per-nation project list.** Geography is U6c's, and without it a project is true of
-  any of the ten — see §1.
+- **No per-nation project list, and U6c did not create one.** The action list is still
+  global; what became per-nation is the **site**, on the nation file. See §1.
 
 ---
 

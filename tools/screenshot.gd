@@ -13,6 +13,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -76,6 +77,7 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+var _hover_project := ""  ## U6c, a project marker rather than a nation
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
 ## none and a frame of an all-zero layer proves nothing about its ramp -- which is
@@ -220,6 +222,12 @@ func _init() -> void:
 			_layer = args[i + 1]
 		elif args[i] == "--hover" and i + 1 < args.size():
 			_hover = args[i + 1].to_upper()
+		elif args[i] == "--hover-project" and i + 1 < args.size():
+			# Its own flag rather than a second meaning for --hover, which
+			# uppercases its argument for nation ids while a project id is
+			# lowercase -- one flag with two case rules is a flag that fails
+			# silently on whichever half you did not think of.
+			_hover_project = args[i + 1]
 		elif args[i] == "--coerce":
 			_coerce = true
 		elif args[i] == "--bloc":
@@ -370,6 +378,12 @@ func _apply_view() -> void:
 		_main._hud.map_legend.show_hover(
 			_hover, _main._state, _main._map_view.viewer_id()
 		)
+	if _hover_project != "":
+		# Set on the control the way --hover does, because a marker layer is the
+		# one thing a headless suite structurally cannot check and a hover state
+		# no flag can reach is a frame nobody ever looks at.
+		_main._map_view._hovered_project = _hover_project
+		_main._map_view.queue_redraw()
 	if _blank != "":
 		_blank_a_window()
 	if _termlimit:
