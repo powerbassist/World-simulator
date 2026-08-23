@@ -74,7 +74,9 @@
     "tax_rates_pct": {
       "income": 19.0,
       "corporate": 25.8,
-      "vat": 21.0
+      "vat": 21.0,
+      "capital_gains": 31.0,
+      "wealth": 0.1
     },
     "spending_pct_gdp": {
       "health": 8.5,
@@ -111,6 +113,19 @@
       "gini_index_per_yr": -0.417,
       "_year": 2021,
       "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.002,
+      "growth_sd_pct": 1.837,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.372,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": []
     }
   }
 }

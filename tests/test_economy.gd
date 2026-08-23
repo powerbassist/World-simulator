@@ -13,6 +13,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const CycleK = preload("res://src/sim/cycle_constants.gd")
 
 const MONTHS := 120
 
@@ -36,6 +37,7 @@ func _init() -> void:
 
 	_check_gap_closes()
 	_check_sector_drift()
+	_check_the_cycle_does_not_diverge()
 
 	_finish()
 
@@ -121,6 +123,18 @@ func _check_gap_closes() -> void:
 	var state = GameState.new_game(_loader, "FRA")
 	# Defence only: it has no potential-growth channel, so the gap is the sole
 	# thing being tested rather than a permanent shift to trend.
+	#
+	# V1.6a switches the business cycle OFF for all ten, and that is an extension of
+	# the sentence above rather than a concession to it. This check's premise is
+	# *shock it once and STOP TOUCHING IT*; a permanent cycle touches it every month
+	# for ever, so with the cycle live the property is false by construction and the
+	# test would be asserting nothing about the channel it names. All ten rather than
+	# France alone, because the nine reach the player through external_impulse_pct and
+	# a cycling partner is still something touching it.
+	#
+	# What the cycle owes instead is its own divergence evidence, and it pays it in
+	# _check_the_cycle_does_not_diverge() below rather than by weakening this one.
+	_silence_the_cycle(state)
 	Budget.commit(state, {"spending_pct_gdp": {"defence": 12.0}})
 
 	var gaps: Array[float] = []
@@ -163,6 +177,84 @@ func _check_sector_drift() -> void:
 	var services_after: float = float(ns.sector_output["services"]) / ns.gdp_eur_bn
 	if services_after <= services_before:
 		_fail("sector drift: services share went %.4f -> %.4f, expected it to rise" % [services_before, services_after])
+
+
+## V1.6a. The divergence evidence the cycle owes, and the reason _check_gap_closes()
+## above is allowed to switch it off.
+##
+## docs/economy-model.md's stability argument is PER QUANTITY: every dynamic term is
+## mean-reverting, decaying, clamped, or bounded by its inputs. cycle_impulse_pct is
+## the first addend in the growth sum that is none of those in the usual sense -- it
+## never decays and it is never clamped, because it is bounded by CONSTRUCTION as a
+## sum of three sines. That is a stronger guarantee than a clamp and a less familiar
+## one, so it gets measured rather than asserted.
+##
+## Three properties, all with NO budget commit at all, which is what makes this a
+## statement about the cycle and not about a shock:
+##
+##   (1) the impulse stays inside the analytic bound for every nation every month;
+##   (2) the output gap oscillates rather than drifting -- its last-quarter mean is no
+##       further from zero than its first-quarter mean, so ten years of a permanent
+##       oscillator does not walk the level away;
+##   (3) growth never touches GROWTH_MIN/MAX_PCT, which is the guard rail
+##       docs/economy-model.md's IMPULSE_MAX note says must stay unreachable.
+func _check_the_cycle_does_not_diverge() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var impulse_bound: float = CycleK.max_impulse_pct()
+
+	var gaps: Array[float] = []
+	for _month in range(MONTHS):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		for ns in state.nations.values():
+			var limit: float = impulse_bound * float(ns.cycle_amplitude_rel) + 1.0e-9
+			if absf(ns.cycle_impulse_pct) > limit:
+				_fail("cycle: %s impulse %.4f exceeded its analytic bound %.4f" % [
+					ns.id, ns.cycle_impulse_pct, limit
+				])
+			if absf(ns.growth_annual_pct) >= C.GROWTH_MAX_PCT - 0.01:
+				_fail("cycle: %s growth reached the guard clamp at %.3f with no budget committed" % [
+					ns.id, ns.growth_annual_pct
+				])
+		gaps.append(Economy.output_gap_pct(state.player()))
+
+	# THE FIRST VERSION OF THIS CHECK COMPARED QUARTER-WINDOW MEANS AND WAS WRONG, and
+	# the reason is worth keeping: a quarter of this run is 30 months against a longest
+	# period band of 97-131, so the two windows sit at arbitrary and unrelated PHASES of
+	# the same oscillation. It was comparing where the wave happened to be, not whether
+	# it was going anywhere, and it failed at an amplitude that diverges nowhere.
+	#
+	# What is actually owed is BOUNDEDNESS, which is what docs/economy-model.md's table
+	# claims for every other term, and it can be stated analytically. A standing impulse
+	# `c` drives the gap to a steady state of c/GAP_CLOSE, and the impulse is bounded by
+	# cycle_constants.max_impulse_pct(); the trade term adds at most IMPULSE_MAX_PCT on
+	# top. Anything inside that is an oscillator doing its job, and anything outside it
+	# is a term feeding its own growth rate -- which is the one thing that model forbids.
+	var ns_player = state.player()
+	var gap_bound: float = (
+		impulse_bound * float(ns_player.cycle_amplitude_rel) + C.IMPULSE_MAX_PCT
+	) / C.GAP_CLOSE
+	var worst := 0.0
+	var mean_gap := 0.0
+	for g in gaps:
+		worst = maxf(worst, absf(g))
+		mean_gap += g
+	mean_gap /= float(gaps.size())
+	if worst > gap_bound:
+		_fail("cycle: output gap reached %.3f%%, past the analytic bound %.3f%%" % [worst, gap_bound])
+	# ...and the wave has zero mean by construction, so the gap must not sit
+	# systematically to one side of potential over ten years. That IS the drift the
+	# first version was reaching for, measured over a window long enough to mean it.
+	if absf(mean_gap) > gap_bound * 0.5:
+		_fail("cycle: output gap averaged %.3f%% over ten years -- it is drifting, not oscillating" % mean_gap)
+
+
+## Sets every nation's cycle amplitude to zero, which Cycle.impulse_pct() answers with
+## an exact 0.0 rather than a small number. For a check whose subject is a different
+## channel; see _check_gap_closes().
+func _silence_the_cycle(state) -> void:
+	for ns in state.nations.values():
+		ns.cycle_amplitude_rel = 0.0
 
 
 func _finite(where: String, field: String, value: float) -> void:

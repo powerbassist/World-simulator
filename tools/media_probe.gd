@@ -77,6 +77,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -770,6 +771,8 @@ func _tick_to_media(state, loader) -> void:
 	Economy.tick_month(state)
 	Budget.tick_month(state)
 	Bloc.tick_month(state, loader)
+	# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
+	Inflation.tick_month(state)
 	Media.tick_month(state, loader)
 
 

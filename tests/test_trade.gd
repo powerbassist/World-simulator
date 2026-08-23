@@ -155,16 +155,31 @@ func _check_impulse_zero_under_reweighting() -> void:
 		)
 
 
+## V1.6a MEASURED THIS AGAINST A CONTROL, where it used to compare against zero, and
+## the change is forced rather than cosmetic. Until the business cycle existed, every
+## partner sat at its own baseline forever, so any non-zero impulse WAS the injected
+## recession and its sign could be read directly. Now all nine are moving all the time,
+## and eight partners in a mild upswing outweigh one in a 3-point slump: the raw figure
+## came back +0.039 and the property under test was never about the raw figure.
+##
+## The control idiom is already in this file, four functions down -- V1.3b wrote it for
+## the order-independence check because the quiet-state residual was "the channel's
+## honest magnitude rather than an error to assert away". The cycle turns that residual
+## into a real signal and the same answer applies, one session and one order of
+## magnitude later.
 func _check_impulse_responds_to_a_partner() -> void:
+	var control = GameState.new_game(_loader, PLAYER)
 	var state = GameState.new_game(_loader, PLAYER)
+	Economy.tick_month(control)
 	Economy.tick_month(state)
 	state.nations["DEU"].growth_annual_pct -= 3.0
+	Economy.tick_month(control)
 	Economy.tick_month(state)
-	if state.player().external_impulse_pct >= 0.0:
+
+	var delta: float = state.player().external_impulse_pct - control.player().external_impulse_pct
+	if delta >= 0.0:
 		_failures.append(
-			"a partner recession did not produce a negative impulse (got %f)" % (
-				state.player().external_impulse_pct
-			)
+			"a partner recession did not move the impulse down against a control (delta %f)" % delta
 		)
 	if absf(state.player().external_impulse_pct) >= EK.IMPULSE_MAX_PCT:
 		_failures.append("one partner's recession alone reached IMPULSE_MAX")
@@ -193,12 +208,22 @@ func _check_impulse_is_order_independent() -> void:
 	# rather than an error to assert away.
 	forward.nations["BEL"].growth_annual_pct -= 2.0
 	backward.nations["ITA"].growth_annual_pct -= 2.0
+
+	# V1.6a: the weights are read BEFORE the tick, not after it, and that is a
+	# correctness fix rather than a tidy-up. Economy.tick_month() snapshots the weight
+	# table at the top and computes the impulse from it, so the weight this arithmetic
+	# needs is the one that existed going IN. Reading it afterwards was off by one
+	# month of partner-GDP drift -- about 4 parts in ten thousand while every partner
+	# sat at its own baseline, which is inside is_equal_approx(), and about ten times
+	# that once the business cycle moves all nine every month. The check was right and
+	# it was reading the wrong table.
+	var w_bel: float = float(Trade.weights(forward, PLAYER).get("BEL", 0.0))
+	var w_ita: float = float(Trade.weights(backward, PLAYER).get("ITA", 0.0))
+
 	for state in [control, forward, backward]:
 		Economy.tick_month(state)
 
 	var base: float = control.player().external_impulse_pct
-	var w_bel: float = float(Trade.weights(forward, PLAYER).get("BEL", 0.0))
-	var w_ita: float = float(Trade.weights(backward, PLAYER).get("ITA", 0.0))
 
 	if not is_equal_approx(forward.player().external_impulse_pct - base, TK.TRADE_BETA * w_bel * -2.0):
 		_failures.append("impulse for a partner sorted BEFORE the player is %f over control, expected %f" % [

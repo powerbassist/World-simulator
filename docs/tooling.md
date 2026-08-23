@@ -24,159 +24,141 @@ Binary lands at `%LOCALAPPDATA%\Microsoft\WinGet\Links\godot.exe` and is on `PAT
 `project.godot` pins `config/features` to `4.7`. Bump that line deliberately when the engine moves, and re-run the tests before committing the bump.
 
 > [!note] Why 4.7 and not the 4.3 S0 started on
-> [[ROADMAP|Session S0]] scaffolded against 4.3. The Godot MCP server below requires 4.4+, which forced the upgrade. S1's tests passed unchanged on 4.7.1 against a fresh `.godot` cache, so nothing was owed for the jump.
+> [[ROADMAP|Session S0]] scaffolded against 4.3. The MCP editor bridge of the day (mkdevkit/godot-mcp, since replaced) required 4.4+, which forced the upgrade. S1's tests passed unchanged on 4.7.1 against a fresh `.godot` cache, so nothing was owed for the jump.
 
 ## Godot MCP
 
-[mkdevkit/godot-mcp](https://github.com/mkdevkit/godot-mcp) — 173 tools that let an AI assistant drive the Godot editor: read the scene tree, create and attach scripts, run scenes, take screenshots, simulate input, inspect live game state.
+[NPGameDev/godot-mcp-toolkit](https://github.com/NPGameDev/godot-mcp-toolkit) — a Godot editor plugin plus an npm bridge that let an AI assistant read the scene tree, edit scripts, launch a playtest, screenshot the running game, inspect live nodes and inject input.
 
-Architecture is three pieces: a Node.js MCP server speaking stdio to the AI client, a WebSocket link on port 6505, and a Godot editor plugin that executes the commands.
+Architecture is three pieces, and the direction of the arrows is the whole point:
+
+```
+Claude Code  <--stdio-->  npm bridge (client)  --WS-->  Godot editor  :6550-6560
+                                               --WS-->  running game :6570-6585
+```
+
+**Each Godot process owns its listener; the bridge dials in.** That is the opposite of what this project ran before, and it is why the setup is no longer fragile — see the box at the end of this section.
 
 ### Install
 
-The server is cloned **outside the project**, at `~/.mcp/godot-mcp`, and registered at user scope so it is available in every project:
+Bridge, installed globally once so no call ever waits on the npm registry:
 
 ```bash
-git clone --depth 1 https://github.com/mkdevkit/godot-mcp.git ~/.mcp/godot-mcp
-cd ~/.mcp/godot-mcp/server && npm install && npm run build
-claude mcp add --scope user godot-mcp --env GODOT_MCP_PORT=6505 \
-  -- node "C:/Users/<you>/.mcp/godot-mcp/server/build/index.js"
+npm install -g @npgamedev/godot-mcp-server
 ```
 
-The editor plugin has to live inside the project, because that is how Godot loads addons:
+The editor plugin has to live inside the project, because that is how Godot loads addons. It goes in `addons/godot_mcp_toolkit/` and is enabled in Project Settings → Plugins.
+
+Register the bridge in a project-root `.mcp.json` — either from the plugin's own **Project → Tools → MCP Toolkit → Write .mcp.json**, or by hand:
+
+```json
+{
+  "mcpServers": {
+    "godot-mcp-toolkit": {
+      "command": "node",
+      "args": ["C:/Users/<you>/AppData/Roaming/npm/node_modules/@npgamedev/godot-mcp-server/dist/index.js"],
+      "env": {
+        "GODOT_MCP_CONFIG_VERSION": "1",
+        "GODOT_MCP_EDITOR_PORT": "6550"
+      }
+    }
+  }
+}
+```
+
+`node <absolute path>` rather than the `cmd /c npx -y @npgamedev/godot-mcp-server` the plugin writes by default: `npx` resolves the package at every launch, which is a network dependency, and it measured ~11 s of startup against instant. The plugin's health check reads the entry's `env` and never compares `command`/`args`, so the dock stays green on either form.
+
+`.mcp.json` is **gitignored** — it names an absolute path to a global npm install, and the addon it talks to is gitignored too.
+
+### The autoload is a LOCAL step, and it is not committed
+
+Enabling the plugin makes Godot write an autoload into `project.godot`:
+
+```
+[autoload]
+
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
+```
+
+**That line must not be committed**, and this is the one step of the install that a
+clone cannot inherit. `addons/` is gitignored except `at-icons/`, so on any other
+machine the path does not exist and Godot logs three errors *per startup* — including
+every `tools/run_tests.sh` run, which still exits 0, which is exactly why it went
+unnoticed for a year. That was **V5** in [[playability-audit]], the one finding a new
+contributor meets before they have played anything.
+
+It is also two of CLAUDE.md's own rules at once: *no autoloads in the game code*, and
+*`src/` may reference an addon file only if that file is committed*.
+
+So:
+
+- **The committed `project.godot` has no `[autoload]` section at all.**
+- **Your working copy will keep re-growing one**, because the plugin rewrites the file
+  whenever it is enabled. Leave it there — it is what publishes the runtime port the
+  bridge dials into. Just never stage it.
+- `bash tools/check_mcp.sh` checks exactly this, against **the staged file when
+  something is staged** and against `HEAD` otherwise, so it catches the mistake at the
+  moment it would be made rather than after the push.
+
+The same argument applies to the `[editor_plugins]` `enabled=` line, and it is **left
+committed on purpose**: a missing editor plugin is inert under `--headless --script`, so
+it costs a clone nothing on the path that matters, and the line is what tells a new
+machine which addon this project expects. An autoload is loaded by every process; an
+editor plugin is not.
+
+### Preflight
 
 ```bash
-cp -r ~/.mcp/godot-mcp/addons/godot_mcp "<repo>/addons/"
+bash tools/check_mcp.sh
 ```
 
-### Why `addons/` is gitignored
+One line per check, no log dumps, exit 1 only when the bridge genuinely cannot run. It validates the node version, the registration and its entry point, the addon and the enable line, the machine registry (including a **stale entry naming a dead pid**, which a force-killed game leaves behind), the auth token, the port pin against the port the editor actually bound, and what is really listening in both bands.
 
-The addon is third-party tooling, not game code. Vendoring 35 files of an actively-moving repository into the game repo means owning its updates and reading its diffs forever, in exchange for saving one `cp` on a machine that will only ever be set up once.
-
-`project.godot` **does** keep the `[editor_plugins]` enable line. If the addon is missing, Godot logs a warning and skips it — non-fatal, unlike a missing autoload would be.
+Godot being closed is reported, never failed — that is a normal state, not a broken one.
 
 ### Using it
 
-The MCP server only does anything while **the Godot editor is open on this project**. With the editor closed, every tool call fails on the WebSocket connection. Open the editor first, then ask.
+**The editor must be open.** Runtime tools reach the game through the editor channel, so a game launched standalone with `godot --path` publishes a runtime port the bridge cannot route to on its own.
 
-Runtime tools — `get_game_scene_tree`, `click_button_by_text`, `capture_frames` — additionally need the scene to be playing, and depend on three autoloads the plugin injects on enable.
+The loop for looking at the running game:
 
-The three autoloads are **transient**, and that is the whole mechanism worth understanding. `addons/godot_mcp/plugin.gd` injects them in `_enter_tree()` and removes them in `_exit_tree()`, so they exist for exactly as long as an editor session does:
-
-```gdscript
-const AUTOLOADS: Array[Array] = [
-	["autoload/MCPRuntimeBridge", "res://addons/godot_mcp/services/mcp_runtime_bridge.gd"],
-	...
-]
+```
+game_start           scene_path:"main", if_running:"return"
+discover_tools       request:"runtime"        # activates runtime_get_node_state etc.
+runtime_screenshot   image_response_mode:"disk", image_detail:"mid"
+input_simulate       events:[...]
 ```
 
-> [!warning] Gotcha — `--headless --editor --quit` strips the autoloads
-> Running the editor headless to force a reimport enables the plugin, then immediately stops it, and the cleanup removes the injected autoloads from `project.godot`. Harmless for import and test runs, but do not expect runtime MCP tools to work in that state. A normal editor session restores them.
+> [!important] Always screenshot to disk
+> `image_response_mode:"disk"` returns a **path**; the default `"inline"` returns a base64 PNG that overflows the token limit on a 1920x1080 frame. `image_detail` (`full`/`mid`/`low`) caps the *inline* image's long edge at —/1024/512 and is echoed back, so a size reduction is never silent. The file on disk is always full resolution — `Read` it.
 
-> [!warning] Gotcha, the inverse — a killed editor leaves them behind, and they must not be committed
-> `_exit_tree()` only runs on a **clean** close. Kill the editor, or let a
-> background launch die, and the `[autoload]` block stays in `project.godot`.
-> Committing it is the thing to avoid: those paths point into gitignored
-> `addons/`, so a fresh clone gets three autoloads whose scripts do not exist —
-> which is exactly the failure mode the `[editor_plugins]` line above is
-> deliberately kept *instead of*.
+> [!warning] Gotcha — input arguments are strict, and a wrong shape reports success
+> `input_simulate` returns `dispatched: true` for an event it built out of nothing, so **assert on the effect, not on the response**. Two shapes bite:
 >
-> There is nothing to preserve, since the plugin re-injects on the next open. If
-> the block is in a diff, either close the editor cleanly and let the plugin
-> remove it, or delete it by hand while the editor is shut. Check
-> `git diff project.godot` after any editor session.
-
-> [!warning] Gotcha — `simulate_key` and friends are broken, and fail *silently*
-> Every input tool (`simulate_key`, `simulate_mouse_click`, `simulate_action`,
-> `simulate_sequence`) is a no-op against the running game, and each returns
-> `{"queued": true}` regardless. The chain, in the addon:
+> - `keycode` is an **integer** Godot `KEY_*` value, not a name. `"Down"` parses to `0` and the key event goes nowhere. `KEY_DOWN` is `4194320`, `KEY_ENTER` is `4194309`.
+> - `position` is a **dict**, not an array. `[960, 501]` falls through `_parse_mouse_position` to `Vector2.ZERO` and the click lands in the top-left corner. Use `{"x": 960, "y": 501}`.
 >
-> ```
-> input_commands.gd:_simulate_key    -> returns _ok({"queued": true}) unconditionally
-> base_commands.gd:_queue_input      -> `if bridge:` ... silently no-ops when null
-> base_commands.gd:_get_input_bridge -> get_node_or_null("/root/MCPInputBridge")
-> ```
+> Both were measured here, and both looked exactly like the tool being broken. With the right shapes a click activates a real Button and a key press moves focus.
+
+> [!warning] Gotcha — the plugin writes an autoload into `project.godot`, and it must not be committed
+> Enabling the plugin registers `MCPRuntimeServer` under `[autoload]`, pointing into gitignored `addons/`. On a fresh clone that path does not exist. Measured: three `ERROR:` lines per process and the test still passes — noise rather than breakage, but 55 tests' worth of it. `tools/check_mcp.sh` warns when the autoload is in **what the next commit would contain** — the index if `project.godot` is staged, HEAD otherwise — so the working tree can legitimately carry it while the plugin is on. Still worth a glance at `git diff project.godot` after any editor session.
 >
-> That lookup runs in the **editor** process, and `mcp_input_bridge.gd` carries
-> no `@tool` annotation — so the autoload's script never runs there and the node
-> is never available. The guard is therefore always false.
+> Godot also **strips comments** from `project.godot` when it saves. The `[display]` block's note about the 1920x1080 base has been lost that way once; if the diff shows a comment disappearing, put it back.
+
+> [!note] Why this replaced mkdevkit/godot-mcp and mcp-compressor
+> The old stack was never usable, for four compounding reasons measured together:
 >
-> Screenshots and `get_scene_tree` work because they do **not** go through that
-> node lookup: `_request_screenshot` and `_send_runtime_request` write a request
-> *file* and let the game-side autoload pick it up. Input is the one path that
-> reaches for a node instead of a file. That asymmetry is the whole diagnosis —
-> "screenshots work, so the bridge is up" is the wrong inference.
+> 1. **The port squat was self-perpetuating.** The Node server *hosted* the WebSocket on a fixed 6505 and the plugin dialled in, so only one Claude session could ever bind. On collision the server did not degrade — an unhandled `EADDRINUSE` killed it — and with no stdin-close handler the Node child outlived its parent and held the port forever. Every later session then died the same way.
+> 2. **`mcp-compressor -c medium` collapsed all 173 tools into 3 meta-tools**, so no tool was reachable by name and `ToolSearch` found nothing. Measured 36.6 % of the raw list at `medium` against 36.7 % at `low` — the level was never the point.
+> 3. **Three autoloads pointing at a gitignored addon were committed** in `project.godot`.
+> 4. **Every input tool was a silent no-op** — the bridge node was looked up in the editor process, where its script has no `@tool` annotation and never runs, and each call returned `{"queued": true}` anyway. `tools/send_input.py` existed to work around exactly this and is deleted: `input_simulate` does the job, verified by effect.
 >
-> **Use `tools/send_input.py` instead**, which writes the queue file directly:
+> The toolkit inverts the ownership, which removes (1) structurally: a live process owns its port, an orphan cannot squat one, and any number of sessions can dial the same editor. A clean exit deregisters from the machine registry; a force-kill leaves a stale entry, which is what the preflight looks for.
+
+> [!warning] Known bridge bug — why the editor port is pinned
+> With the game running and the editor closed, the registry publishes the editor port as `-1`. Bridge 1.0.0 interpolates a discovered port straight into a URL, so `ws://127.0.0.1:-1` throws `ERR_INVALID_URL` and takes the **whole server** down at startup — which looks precisely like the server never being registered.
 >
-> ```bash
-> python tools/send_input.py key ENTER
-> ```
->
-> It lives in `tools/` rather than as a patch to `addons/godot_mcp/` because
-> `addons/*` is gitignored and reinstalled per machine — a patch there is lost
-> on the next reinstall and invisible to the repo. Prefer `key` over `click`:
-> the bridge's "mouse_click" branch reuses one event object for press and
-> release, so a click lands as hover without activating. Full argument in the
-> script's own docstring.
-
-### Known state
-
-`npm audit` reports 2 moderate advisories, both in the MCP SDK's HTTP transport dependency chain (`hono`). This server runs over **stdio**, so that code path is not reachable. Non-blocking; re-check after an SDK bump.
-
-## mcp-compressor
-
-[atlassian-labs/mcp-compressor](https://github.com/atlassian-labs/mcp-compressor) — a stdio proxy that sits in front of an MCP server and collapses its tool list into two: `get_tool_schema` and `invoke_tool`. The client sees a small surface up front and fetches a tool's full schema only when it is about to call it.
-
-Installed once, applied to **godot-mcp only**:
-
-```bash
-pip install mcp-compressor
-```
-
-The wheel installs to `%APPDATA%\Python\Python313\Scripts\`, off `PATH`. Referenced by full path in the MCP registration below rather than adding it to `PATH` — one fewer thing to keep track of on a machine with several Python install locations.
-
-### Why godot-mcp and not godot-docs
-
-godot-mcp lists **173 tools**; its `tools/list` payload measured **52,634 bytes** raw versus **14,267 bytes** through the compressor at `medium` — and more importantly, 173 individually-declared tool schemas collapse to 2. That is the actual cost this tool removes: a client loads every connected server's full tool list up front, and 173 schemas is real weight before a single tool has been called.
-
-godot-docs already exposes 2 tools. Wrapping it saves nothing on the list, and its real cost — `get_documentation_file` returning uncompressed files past 200 KB — is a per-call payload problem the compressor's tool-list collapsing does not touch. Left direct.
-
-### Registration
-
-```bash
-claude mcp add --scope user godot-mcp --env GODOT_MCP_PORT=6505 \
-  -- "C:/Users/<you>/AppData/Roaming/Python/Python313/Scripts/mcp-compressor.exe" \
-  -c medium -- node "C:/Users/<you>/.mcp/godot-mcp/server/build/index.js"
-```
-
-Same effect as calling `godot-mcp`'s tools directly — `invoke_tool` forwards to the real tool name and arguments — just discovered in two steps instead of one.
-
-> [!warning] Consequence — tool names are no longer searchable
-> Since the compressor collapses 173 tools to `get_tool_schema` / `invoke_tool`, a
-> session (or a subagent) that does `ToolSearch("add_node")` finds nothing. Call
-> `get_tool_schema` first to see what exists, then `invoke_tool` by name. This is
-> permanent behaviour, not a bug — flagged here because it looks exactly like the
-> server being unavailable.
-
-> [!warning] Gotcha — one session at a time, and the compressor turns a partial
-> failure into total silence
-> The Node.js server behind the plugin binds a **fixed port (6505)**. Only one
-> instance can hold it. Two Claude Code windows both connecting to `godot-mcp`
-> race for it; the loser's backend dies on `EADDRINUSE`.
->
-> Without the compressor that would surface as individual tool calls failing.
-> **With it, the compressor's own `initialize` depends on that backend coming up
-> first** — so on collision the whole server, not just a tool call, fails to
-> appear. From inside the session it looks exactly like godot-mcp was never
-> registered, which is the confusing part.
->
-> Practical rule: **one window using `godot-mcp` at a time.** Between roadmap
-> sessions, `/clear` inside the same window rather than opening a new one — it
-> resets context without dropping the MCP connection or re-fighting for the port.
-> If a connection does go stale, `tasklist | grep node` / `grep mcp-compressor`
-> and kill orphans, then `netstat -ano | grep 6505` to confirm the port is free
-> before reconnecting.
+> `GODOT_MCP_EDITOR_PORT` in `.mcp.json` sidesteps it: with a pin the bridge never reads that field, and an unreachable editor becomes a retry loop with a named error instead of a crash. The cost is that the pin and the editor must agree — the editor scans `6550-6560` and takes the first free port, so it lands on 6550 unless something else holds it. `tools/check_mcp.sh` compares the two and says so.
 
 ## Godot docs MCP
 
@@ -214,7 +196,7 @@ Pandoc conversion leaves RST artefacts in the output — `{.interpreted-text rol
 
 `addons/` is gitignored, so this is the only record of what is installed. All of these came from the Godot Asset Library and are reinstalled per machine.
 
-Only `godot_mcp` is **enabled** — `project.godot`'s `[editor_plugins]` lists it alone. The rest are installed and dormant, which costs nothing until one is switched on.
+Only `godot_mcp_toolkit` is **enabled** — `project.godot`'s `[editor_plugins]` lists it alone. The rest are installed and dormant, which costs nothing until one is switched on.
 
 | Addon | What it is | Where it could land |
 |---|---|---|
@@ -223,7 +205,7 @@ Only `godot_mcp` is **enabled** — `project.godot`'s `[editor_plugins]` lists i
 | `limboai` | Behaviour trees and hierarchical state machines | Would be V1.3 nation AI — but see the collision below |
 | `materialLayers` | Layered PBR material authoring, 3D | Nowhere, unless [[scope]]'s "no 3D" constraint changes |
 | `road-generator` | Procedural 3D road meshes along curves | Same |
-| `godot_mcp`, `godot_mcp_toolkit` | The editor bridge above | In use |
+| `godot_mcp_toolkit` | The editor bridge above | In use |
 
 One more is **not** in `addons/` at all, because it is not an addon: `MapCamera2D` is a single 255-line `Camera2D` subclass adding zoom, pan and drag. No `plugin.cfg`, no autoload, no GDExtension, and the UI layer is allowed to be scene-tree bound — so it is vendored and committed at `src/ui/vendor/MapCamera2D.gd` rather than ignored, with its MIT licence beside it.
 

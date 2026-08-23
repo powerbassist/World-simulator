@@ -15,23 +15,43 @@ extends PanelContainer
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const CycleK = preload("res://src/sim/cycle_constants.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
+const Unrest = preload("res://src/sim/unrest.gd")
 
 const PROJECTION_MONTHS := 24
+
+## V1.6d. The brackets lever, keyed apart from the ten rate-and-spending keys because
+## it is not one of them: it sets no rate, has no base share and collects nothing.
+## Budget.commit() takes it as a third top-level key on `pending` for the same reason.
+const PROGRESSIVITY_KEY := "tax_progressivity"
 
 const LEVER_LABELS := {
 	"income": "Income tax",
 	"corporate": "Corporate tax",
 	"vat": "VAT",
+	"capital_gains": "Capital gains tax",
+	"wealth": "Wealth tax",
+	PROGRESSIVITY_KEY: "Income brackets",
 	"health": "Health",
 	"education": "Education",
 	"defence": "Defence",
 	"pensions": "Pensions",
 	"infrastructure": "Infrastructure",
 }
+## V1.6d: `wealth` is 3.0 and not 70, and the number is not authored here -- it reads
+## economy_constants.WEALTH_RATE_MAX_PCT, so the model bound and the control cannot
+## drift apart, and tests/test_tax.gd asserts the identity. A point of wealth rate is
+## eight points of income tax in revenue, because that base is a stock; a slider running
+## to 70 would be a slider whose top four fifths is a joke.
 const LEVER_MAX := {
 	"income": 70.0,
 	"corporate": 70.0,
 	"vat": 40.0,
+	"capital_gains": 60.0,
+	"wealth": C.WEALTH_RATE_MAX_PCT,
+	PROGRESSIVITY_KEY: TaxK.PROGRESSIVITY_MAX,
 	"health": 30.0,
 	"education": 30.0,
 	"defence": 30.0,
@@ -86,9 +106,38 @@ const FIGURE_ROWS := [
 	# Reads "—" while nothing is subsidised, which is every game that has not used
 	# the verb.
 	["subsidies", "  of which subsidies"],
+	# V1.6e, beside the subsidy line and on the same argument a FIFTH time: money
+	# leaving the budget that the player set with no slider on this panel. It differs
+	# from the subsidy line in the one way that matters to a player reading this
+	# screen -- a subsidy's effect arrives inside a year and a sector programme's
+	# takes most of a term, so this is a line that will sit here costing money for
+	# several years before the growth it bought is visible in the rows below.
+	# Reads "—" while no programme stands, which is every game that has not used
+	# the verb.
+	["investment", "  of which investment"],
+	# V1.6f, beside the investment line and on the same argument a SIXTH time -- and
+	# with the one difference this panel exists to show: every line above it is a
+	# STANDING rate the player can lower, and this one runs for a fixed term and then
+	# STOPS. A president reading this screen is looking at a bulge in the deficit with
+	# a known end date, which is the whole of what makes a project a commitment rather
+	# than a policy. Reads "—" while nothing is under construction, which is every
+	# game that has not used the verb.
+	["projects", "  of which public works"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
+	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
+	# the three instruments that move it live -- brackets, the capital-gains rate and
+	# the wealth rate. It is the one consequence of a distributional budget no other
+	# line here can show: docs/unrest-model.md's grievance reads it, and until V1.6d
+	# nothing the player did moved it at all.
+	#
+	# NEVER SILENT, which is the dependency ratio's and the credit rating's rule
+	# rather than the delivery lines': every game has an inequality index from the
+	# first frame, so a line that appeared only once it moved would hide the level the
+	# offset is measured against.
+	["gini", "Inequality (Gini)"],
 	["", ""],
+	# V1.6a: the three projection rows now read as a RANGE. See _forecast_text().
 	["proj_growth", "GDP growth, in 24 months"],
 	["proj_unemployment", "Unemployment, in 24 months"],
 	["proj_debt", "Debt ratio, in 24 months"],
@@ -163,7 +212,10 @@ func _build_levers() -> Control:
 		var slider := HSlider.new()
 		slider.min_value = 0.0
 		slider.max_value = float(LEVER_MAX[key])
-		slider.step = 0.1
+		# A tenth of a point is the right grain for a lever running to seventy and much
+		# too coarse for one running to three: at 0.1 the wealth slider offers thirty
+		# positions in total and Switzerland's real rate lands between two of them.
+		slider.step = 0.01 if key == "wealth" or key == PROGRESSIVITY_KEY else 0.1
 		slider.custom_minimum_size.x = 220
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.value_changed.connect(_on_lever_changed.bind(key))
@@ -246,6 +298,11 @@ func hide_close_button() -> void:
 func _lever_keys() -> Array:
 	var keys: Array = []
 	keys.append_array(C.TAX_KEYS)
+	# Directly after the five rates and before the spending lines, because it is a
+	# property OF the income tax rather than a sixth tax -- the panel reads in the order
+	# docs/tiers/v1.md section 6 states the target in, "five taxes, plus brackets within
+	# income".
+	keys.append(PROGRESSIVITY_KEY)
 	keys.append_array(C.SPENDING_KEYS)
 	return keys
 
@@ -265,6 +322,7 @@ func _on_revert() -> void:
 	_pending = {
 		"tax_rates_pct": ns.tax_rates_pct.duplicate(true),
 		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
+		PROGRESSIVITY_KEY: ns.tax_progressivity,
 	}
 	for key in _lever_keys():
 		var slider: HSlider = _sliders[key]
@@ -282,7 +340,9 @@ func _on_commit() -> void:
 
 
 func _on_lever_changed(value: float, key: String) -> void:
-	if C.TAX_KEYS.has(key):
+	if key == PROGRESSIVITY_KEY:
+		_pending[PROGRESSIVITY_KEY] = value
+	elif C.TAX_KEYS.has(key):
 		_pending["tax_rates_pct"][key] = value
 	else:
 		_pending["spending_pct_gdp"][key] = value
@@ -290,6 +350,8 @@ func _on_lever_changed(value: float, key: String) -> void:
 
 
 func _pending_value(key: String) -> float:
+	if key == PROGRESSIVITY_KEY:
+		return float(_pending.get(PROGRESSIVITY_KEY, TaxK.PROGRESSIVITY_BASE))
 	if C.TAX_KEYS.has(key):
 		return float(_pending["tax_rates_pct"].get(key, 0.0))
 	return float(_pending["spending_pct_gdp"].get(key, 0.0))
@@ -310,9 +372,34 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## One decimal and a percent sign is right for a rate running to seventy and wrong for
+## both levers V1.6d added: the wealth lever's whole span is three points, so one
+## decimal prints thirty distinct values across it and the second decimal is where the
+## choice lives, and the bracket index is not a percentage of anything at all. V1.6b's
+## own screenshot bug -- a format copied from the neighbouring row -- one session on,
+## avoided rather than repeated.
+## Two decimals, chosen against the reachable range rather than copied from the row
+## above: tax_constants.GINI_POLICY_MAX_PT bounds the whole policy offset at 8.60 points,
+## but the grain a player moves it in is a bracket notch, which is hundredths. One
+## decimal would print the same figure for two different budgets.
+func _gini_text(snap: Dictionary) -> String:
+	if not snap.has("gini_effective"):
+		return "—"
+	return "%.2f" % float(snap["gini_effective"])
+
+
+func _lever_text(key: String) -> String:
+	var value := _pending_value(key)
+	if key == PROGRESSIVITY_KEY:
+		return "%.2f" % value
+	if key == "wealth":
+		return "%.2f%%" % value
+	return "%.1f%%" % value
+
+
 func _refresh() -> void:
 	for key in _lever_keys():
-		_lever_values[key].text = "%.1f%%" % _pending_value(key)
+		_lever_values[key].text = _lever_text(key)
 
 	# preview() with nothing pending rather than snapshot(), and V1.3c is why.
 	# snapshot() reads ns.revenue_pct_gdp as Budget.tick_month() last left it, so a
@@ -334,14 +421,83 @@ func _refresh() -> void:
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
 	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
 	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
+	_set_figure("investment", _investment_text(now), _investment_text(proposed))
+	_set_figure("projects", _projects_text(now), _projects_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
+	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
+	# the key was missing from Budget.snapshot() entirely, and the row printed a confident
+	# "0.00" against a live index of about 31 -- a defensive default reading as a
+	# plausible figure, which is _set_figure()'s own silent-return failure at V1.4c in a
+	# new place. An em dash is what a missing figure looks like everywhere else on this
+	# panel, and it is what a missing figure should look like here.
+	_set_figure("gini", _gini_text(now), _gini_text(proposed))
 
 	var last_now: Dictionary = now_path[-1]
 	var last_proposed: Dictionary = proposed_path[-1]
-	_set_figure("proj_growth", "%.2f%%" % last_now["growth_annual_pct"], "%.2f%%" % last_proposed["growth_annual_pct"])
-	_set_figure("proj_unemployment", "%.2f%%" % last_now["unemployment_pct"], "%.2f%%" % last_proposed["unemployment_pct"])
-	_set_figure("proj_debt", "%.1f%%" % last_now["debt_to_gdp_pct"], "%.1f%%" % last_proposed["debt_to_gdp_pct"])
+	var band := _forecast_half_width()
+	_set_figure("proj_growth",
+		_forecast_text(float(last_now["growth_annual_pct"]), band, 2),
+		_forecast_text(float(last_proposed["growth_annual_pct"]), band, 2))
+	_set_figure("proj_unemployment",
+		_forecast_text(float(last_now["unemployment_pct"]), band * C.OKUN, 2),
+		_forecast_text(float(last_proposed["unemployment_pct"]), band * C.OKUN, 2))
+	# The debt ratio gets a band too, and the screenshot pass is what asked for it: one
+	# point figure between two ranges read as a row somebody forgot rather than as a
+	# stock behaving differently. The half-width is the same uncertainty carried through
+	# the DENOMINATOR -- `band` points of growth a year for two years moves GDP by about
+	# that much twice over, and the ratio with it -- so it is derived from the same
+	# number rather than being a second guess.
+	var years: float = float(PROJECTION_MONTHS) / 12.0
+	_set_figure("proj_debt",
+		_forecast_text(float(last_now["debt_to_gdp_pct"]), band * years * float(last_now["debt_to_gdp_pct"]) / 100.0, 1),
+		_forecast_text(float(last_proposed["debt_to_gdp_pct"]), band * years * float(last_proposed["debt_to_gdp_pct"]) / 100.0, 1))
+
+
+## V1.6a. A PROJECTION IS EXACT AND A FORECAST IS NOT, and these three rows print the
+## second while the model computes the first.
+##
+## Budget.project() runs the real model on a copy, so the number it returns is what will
+## happen to the last digit -- tests/test_budget.gd asserts it to 1e-9, and V1.6a's
+## business cycle reproduces there exactly because it is a pure function of the clock.
+## Printing that to two decimals would hand the player a perfect two-year forecast of a
+## recession they are supposed to be judged on not having prevented, which is
+## docs/tiers/v1.md section 6's mechanic thrown away at the last surface.
+##
+## src/ui/poll_noise.gd already solved this problem from the other side and its
+## reasoning transfers word for word: an approval figure is a PUBLISHED POLL and must
+## not be readable exactly, so the model never stores a fuzzed number and the panel
+## fuzzes it the moment it renders one. A government growth forecast is a published
+## figure in exactly the same sense.
+##
+## It is a RANGE rather than a nudged point, and that is the one place this departs from
+## poll_noise. A nudge invents an error with a sign the model has no basis for; a band
+## states the uncertainty and contains the truth. It also costs no hash at all -- the
+## half-width is derived, so there is nothing to keep stable across repaints and nothing
+## to serialise, which are the two properties poll_noise.gd needed its hash for.
+##
+## THE SAME HALF-WIDTH IS APPLIED TO BOTH COLUMNS, and that is what keeps this panel
+## usable. Its whole job is now-against-proposed, so an independent error on each side
+## would fuzz the comparison the player is actually making. One band means the
+## DIFFERENCE between the two columns stays exact while the LEVEL is honest about being
+## a forecast -- which is also true of real forecasters, whose bias moves both scenarios
+## together.
+func _forecast_half_width() -> float:
+	var ns = _state.player()
+	if ns == null:
+		return 0.0
+	# One standard deviation of the cycle's own contribution to growth. Derived from
+	# the constant and the nation's measured volatility rather than chosen, so a
+	# quieter country gets a tighter band without a second number to tune.
+	return CycleK.CYCLE_AMPLITUDE_PCT * float(ns.cycle_amplitude_rel)
+
+
+## "1.05 to 1.62%". An en dash would read as a minus sign against a negative growth
+## figure, which is exactly the forecast the player most needs to read correctly.
+func _forecast_text(value: float, half_width: float, places: int) -> String:
+	if half_width <= 0.0:
+		return "%.*f%%" % [places, value]
+	return "%.*f to %.*f%%" % [places, value - half_width, places, value + half_width]
 
 
 ## An em dash rather than "0.00%" while nothing is imposed. The two say different
@@ -377,7 +533,49 @@ func _subsidy_text(snap: Dictionary) -> String:
 	return _pct_and_eur(snap, "subsidy_bill_pct_gdp")
 
 
-## The same em dash a fifth time, on the revenue side. Unsigned: a holding pays or
+## The same em dash a fifth time. Unsigned like the two lines above it: an
+## investment programme only ever costs, and what it buys is trend growth rather
+## than money.
+##
+## THE MISSING-KEY BRANCH IS SEPARATE FROM THE ZERO BRANCH, and V1.6d is why. That
+## session's row read a missing snapshot key with `.get(key, 0.0)` and printed a
+## confident "0.00" against a live figure. Both branches print an em dash here, so
+## the display is the same either way -- what is not the same is that a key vanishing
+## from Budget.snapshot() cannot be quietly absorbed into "nothing is running".
+func _investment_text(snap: Dictionary) -> String:
+	if not snap.has("investment_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["investment_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "investment_bill_pct_gdp")
+
+
+## *** THE COUNT OF LIVE BUILDS WAS HERE AND THE FIFTEENTH SCREENSHOT PASS TOOK IT OUT,
+## WHICH IS THIS SESSION'S ONE UI BUG AND IT WAS THIS FILE'S. *** The first version
+## printed "0.19% (6 bn) (1 building)", and that cell is WIDER THAN ANY OTHER ON THE
+## PANEL -- twenty-four characters against "46.10% (1473 bn)"'s sixteen. Both value
+## columns size to their widest row, so one extra clause on one row pushed the whole
+## `proposed` column past the window edge and put the panel on a horizontal scroll bar
+## it had never needed. Nothing was wrong with the number; the frame simply showed a
+## budget the player could not read without dragging.
+##
+## The count belongs on Public Works, which is where it now is, and that is this row's
+## own comment used as a rule rather than as a decoration: three surfaces for one
+## register only works if each says a DIFFERENT thing. The budget says what is being
+## paid, the diary says when it lands, and Public Works says what and how many.
+##
+## The same em dash a sixth time, and the missing-key branch is separate for V1.6d's
+## reason exactly as the line above it. Unsigned like the three lines above: building
+## something only ever costs, and what it buys is trend growth rather than money.
+func _projects_text(snap: Dictionary) -> String:
+	if not snap.has("project_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["project_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "project_bill_pct_gdp")
+
+
+## The same em dash a seventh time, on the revenue side. Unsigned: a holding pays or
 ## the state does not have one, and a firm that loses money still hands over nothing
 ## rather than billing the treasury -- there is no margin quantity here for it to
 ## lose, which is docs/companies-model.md section 13's call showing up on a panel.

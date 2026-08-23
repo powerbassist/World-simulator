@@ -24,11 +24,15 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 ## 6 as of V1.2b: political-system fields (system_id, head-of-state,
 ## lose_condition, term_limit) added to NationState, none of which a version-5
@@ -214,7 +218,107 @@ const C = preload("res://src/sim/economy_constants.gd")
 ##     `start_gini_index`, `gini_index_per_yr`, `settlement_stance`,
 ##     `unrest_impulse_pct` and `unrest_acts` all earn nothing, for four reasons already
 ##     on this list.
-const SAVE_VERSION := 18
+##
+##   V1.6a bumps to 19 on ONE field of two, and the interesting half is that the
+##     session's own plan predicted no bump at all and gave a reason that was true
+##     about the wrong thing. It reasoned that a STATELESS system has nothing to
+##     serialise -- and src/sim/cycle.gd genuinely stores nothing, has no accumulator
+##     and no tick_month(). But NationState.from_dict() rebuilds from the dictionary
+##     ALONE and never sees the loader, so every content-derived static fact on that
+##     class is already serialised: `eu_member`, `neighbours`, `pop_growth_pct`,
+##     `gini_index_per_yr`. STATELESSNESS IS A PROPERTY OF THE MODULE, NOT OF THE SAVE.
+##     `cycle_amplitude_rel` is the bump: absent it reads the default 1.0, every nation
+##     runs the roster-average cycle instead of its own -- France 45 % louder than its
+##     content says -- and the reloaded game runs a different MODEL from the one that
+##     saved it, which is `eu_member` at V1.3b and `military_capability` at V1.3g.
+##     `cycle_impulse_pct` earns nothing: absent it reads 0.0 and Economy.tick_month()
+##     overwrites it from the clock on the first tick, `coercion_impulse_pct`'s case.
+##     tests/test_save_load.gd asserts both halves, and the SPLIT is the assertion
+##     worth having rather than the bump.
+##
+## V1.6b bumps to 20, on THREE fields of four, which is a first on this list -- V1.6a
+## earned it on one of two and V1.5c on two of seven. `inflation_pct` is
+## `service_quality`'s case (the accumulation IS the state, so re-deriving on load
+## would erase a term's worth of it); `inflation_anchor_pct` is `cycle_amplitude_rel`'s
+## verbatim (content-derived, and from_dict() never sees the loader, so an absent
+## anchor collapses every nation's target toward zero and the growth channel bills a
+## deflation the nation never had); and `start_inflation_pct` is `start_bloc_burden`'s
+## (absent it reads 0.0 against a live ~1.8, so the thirteenth issue is MIS-SIGNED for
+## the rest of the run rather than merely missing). `inflation_impulse_pct` earns
+## nothing and is serialised anyway. The three are asserted SEPARATELY in
+## tests/test_save_load.gd, because a single combined check would let any one of three
+## different failures be quietly wrong. See docs/inflation-model.md section 9.
+##
+## V1.6c bumps to 21 on ONE field, and it is the SMALLEST addition on this list to earn
+## one: `start_debt_to_gdp_pct`, a single float with no register behind it. Absent it
+## reads 0.0 against a live ~140, so src/sim/credit.gd's debt gap reads the WHOLE stock
+## as newly borrowed: the yield comes back at 4.1 against a kept 2.4 and the debt service
+## with it -- a France paying seventy per cent more interest for the rest of the run
+## because it saved. Measured rather than asserted, and the first draft of this comment
+## said "straight to the clamp", which was a guess and was wrong. `cycle_amplitude_rel` at V1.6a, `military_capability` at V1.3g and
+## `eu_member` at V1.3b, in the same family: the reloaded game runs a DIFFERENT MODEL
+## from the one that saved it, with nothing anywhere to say so. Re-deriving on load does
+## not rescue it either, and that is what separates it from every derived price on this
+## list -- the live ratio has moved, so re-anchoring on it would silently forgive every
+## point of debt the player has added.
+##     WHAT V1.6c DID NOT ADD IS THE HALF WORTH PINNING. There is no stored yield, no
+##     stored spread and no stored rating, because src/sim/credit.gd is stateless: the
+##     yield is a pure read over the debt stock and the grievance, both of which this
+##     save has carried since the MVP and V1.5c respectively. tests/test_save_load.gd
+##     asserts those three ABSENCES as well as the field, so a later session making the
+##     module stateful -- a downgrade record, a rating with memory -- turns it red and
+##     has to come and say why. That is the V1.6 decomposition's own split trigger,
+##     pinned in the save format rather than only in the docs.
+##
+## V1.6d bumps to 22 on THREE fields, and two of them add no key to this file at all --
+## they GROW a dictionary that has been serialised since S4, which is V1.5b's
+## `service_quality["pensions"]` case and the second time on this list.
+##   `tax_rates_pct["capital_gains"]` and `["wealth"]`: a version-21 save carries three
+##     keys, `revenue_lines()` reads `.get(key, 0.0)`, so both new taxes come back at a
+##     rate of ZERO -- a save that silently ABOLISHES two taxes, hands the player back
+##     whatever they were collecting, and widens the deficit by exactly it. The matching
+##     `start_tax_rates_pct` keys are absent too, so `_erosion()` falls to its
+##     zero-reference branch and every later rate rise is priced as a tax invented from
+##     nothing. A reloaded game running a DIFFERENT MODEL: `eu_member` at V1.3b.
+##   `tax_progressivity` and `start_tax_progressivity` earn it TOGETHER and by ONE
+##     failure rather than two, which is why the test asserts them as a pair and not
+##     separately the way V1.6b's three are. Absent, both read 0.0 -- which is not a
+##     neutral default but PROGRESSIVITY_MIN, the flattest schedule the model has --
+##     and because the START reads 0.0 as well the deviation is still exactly zero, so
+##     the reloaded game does not merely forget the player's bracket structure, it
+##     agrees that a flat tax was always normal. Neither field alone fails in a way the
+##     other does not cover, and a check that split them would be checking one failure
+##     twice.
+##   WHAT V1.6d DID NOT ADD is the half worth pinning, and it is V1.6c's shape one
+##     session on: there is NO stored Gini offset, no stored effective index and no
+##     stored erosion factor, because src/sim/tax.gd is stateless -- each is a pure read
+##     over `tax_progressivity` and two rates this save already carries.
+##     tests/test_save_load.gd asserts those absences, so the day a session gives the
+##     distribution an accumulator it turns red and has to come and say why. And
+##     `gini_index` keeps its single writer, Demography.tick_month(), which is what the
+##     V1.6 decomposition's "a second field, not a second writer" asked for -- one step
+##     further, because there is no second field either.
+##   V1.6f bumps to 23, on the HALF OF ONE FIELD, which is V1.3g's `deployments` split
+##     in a new place and the assertion worth more than the bump. `NationState.projects`
+##     is one dictionary carrying two things: projects under construction and projects
+##     finished. Absent, the BUILDING half fails soft -- "nothing under construction" is
+##     the truth about every version-22 save, because those games had no project verb,
+##     which is `measures` at V1.3c and `sector_investment` at V1.6e. The DONE half does
+##     not: a France that finished the rail spine and the grid has bought a permanent
+##     claim on its own trend, and an absent register erases the record of it. Nothing
+##     re-derives it, because the only other trace is the accumulator and that is not
+##     content. So tests/test_save_load.gd asserts the two halves SEPARATELY, and pins
+##     that a saved entry carries exactly the two keys Projects.ENTRY_KEYS names -- a
+##     later session caching a cost, a payoff or a start date there turns it red.
+##     `project_potential_target_pct` earns nothing on its own (it is derivable from
+##     `projects` and data/project-actions/, exactly as `law_potential_target_pct` is
+##     derivable from the passed-law list and data/laws/) and is serialised for that
+##     field's reason: Economy._update_potential_shift() takes no loader.
+##     `project_bill_pct_gdp` earns nothing either, recomputed on the first tick --
+##     `investment_bill_pct_gdp`'s case. And `last_project_result` is not serialised at
+##     all, `last_investment_result`'s case: a display record of something that has
+##     already happened to the register.
+const SAVE_VERSION := 23
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -523,6 +627,14 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	ns.neighbours = []
 	ns.neighbours.assign(n.neighbours)
 
+	# V1.6a, in this block rather than behind a Cycle.init_nation(), and the placement
+	# is the argument: Demography, Society, Unrest and Defence each have an init
+	# because each seeds a live STOCK, and this seeds none. It is a static fact about
+	# the country, exactly like the two above it, and src/sim/cycle.gd has no state to
+	# initialise at all. Validated and bounded at load by Nation._validate_cycle(), so
+	# the default below is reached only by a fixture that has no `imported` block.
+	ns.cycle_amplitude_rel = float(n.cycle.get("amplitude_rel", 1.0))
+
 	# Sector shares sum to 1.0 only within the validator's tolerance, so GDP is
 	# defined as the sum of sector output rather than the other way round. That
 	# invariant then holds exactly, forever, and the economy tick preserves it.
@@ -543,9 +655,33 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	if scenario != null and scenario.has_debt_to_gdp_pct:
 		debt_to_gdp_pct = scenario.debt_to_gdp_pct
 	ns.debt_eur_bn = debt_to_gdp_pct / 100.0 * ns.gdp_eur_bn
+	# V1.6c, from the scenario-OVERRIDDEN figure above rather than from n.debt_to_gdp_pct,
+	# and the distinction is the whole point of setting it here: src/sim/credit.gd
+	# measures the bond spread against this, so a scenario that hands the player 140 % of
+	# GDP is a France that has always carried it and must borrow at the anchor rather
+	# than at a penalty for a debt it did not run up. Same argument the two comments
+	# around it make for the deficit the electorate measures against.
+	# Read back through ns.debt_to_gdp_pct() rather than assigned from the local above,
+	# and the round trip is the point rather than a redundancy: the live read is
+	# `debt_eur_bn / gdp_eur_bn * 100` and the local is what that was computed FROM, so
+	# taking the local leaves a 1e-14 residue and the spread is "almost" zero at new game.
+	# Almost is not the claim -- tests/test_credit.gd asserts EXACT equality, because
+	# every balance figure this project has quoted against a flat 2.0 depends on it.
+	ns.start_debt_to_gdp_pct = ns.debt_to_gdp_pct()
 
 	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
+	# V1.6d. From a model constant rather than from the nation file, and that is a
+	# deliberate refusal rather than a shortcut: nothing on tools/import_data.py's
+	# licence-clean loop measures how progressive a bracket structure is, and ten
+	# identical authored values in ten nation files would be the clustered
+	# `coalition_position` failure with extra steps -- a content field that looks
+	# per-nation and carries no information. See tax_constants.PROGRESSIVITY_BASE.
+	#
+	# Start captured from the live value on the line below, which is what makes every
+	# term in src/sim/tax.gd read EXACTLY 0.0 at new game for all ten.
+	ns.tax_progressivity = TaxK.PROGRESSIVITY_BASE
+	ns.start_tax_progressivity = ns.tax_progressivity
 	ns.spending_pct_gdp = n.spending_pct_gdp.duplicate(true)
 	ns.start_spending_pct_gdp = ns.spending_pct_gdp.duplicate(true)
 	ns.other_spending_pct_gdp = n.other_spending_pct_gdp
@@ -603,6 +739,15 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# month after it until a player acts. An empty list is the normal case for the
 	# seven nations that are not yet playable.
 	Companies.init_nation(ns, company_list)
+
+	# V1.6e. Every sector with no programme and no capital, so the trend shift reads
+	# EXACTLY 0.0 in the first month and every month after it until a player acts --
+	# which is what lets the whole layer go live with the balance harness
+	# bit-identical across every existing regime. Takes no content list where
+	# Companies does: the three sectors are model constants, so there is no file that
+	# could be absent and nothing a roster could differ over.
+	Investment.init_nation(ns)
+	Projects.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
@@ -667,6 +812,18 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# it, because the derived value belongs to Media.tick_month() and computing it in
 	# two places would be the two-writers failure this project has named five times.
 	Media.init_nation(ns)
+
+	# V1.6b, and like Unrest above this is NOT an ordering constraint -- said out loud
+	# because a reader looking at five ordered inits will otherwise invent a sixth.
+	# unemployment_pct, start_unemployment_pct and structural_unemployment_pct are all
+	# set to one figure well above, so the unemployment gap is exactly 0.0 and the
+	# target equals the nation's anchor whenever this runs.
+	#
+	# Takes the Nation where Society and Unrest do not, for the reason the inline
+	# `cycle_amplitude_rel` read above states: inline is for imported content that
+	# seeds no live stock, and the anchor seeds one. Demography.init_nation(ns, n) is
+	# the shape being copied.
+	Inflation.init_nation(ns, n)
 
 	return ns
 

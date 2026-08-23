@@ -23,6 +23,12 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 ## resolvable in one place -- the block above.
 const Society = preload("res://src/sim/society.gd")
 const SK = preload("res://src/sim/society_constants.gd")
+
+## V1.6b. Read-only and one-way, for the reason stated above Society: inflation.gd does
+## not preload this file, so the price level cannot see the opinion it moves. Reached
+## for inflation_deviation() alone, so the measured-against-its-own-start anchoring
+## lives in one place.
+const Inflation = preload("res://src/sim/inflation.gd")
 ## For BLOC_OFFSET_MIN/MAX only -- init_nation() writes bloc_offset for a
 ## start scenario, and must respect the same bounds a law is held to.
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -156,12 +162,20 @@ static func issue_satisfaction(ns) -> Dictionary:
 	sat["jobs"] = _scaled(ns.start_unemployment_pct - ns.unemployment_pct, K.JOBS_SCALE_PP)
 	sat["growth"] = _scaled(ns.growth_annual_pct - ns.trend_annual_pct, K.GROWTH_SCALE_PP)
 
+	# V1.6d: the scale is per key, and sparse. A tax with no TAX_SCALE_PP_BY_KEY entry
+	# reads the shared 8.0 S5 measured, so income, corporate and VAT are bit-identical
+	# through this loop; `wealth` and `capital_gains` are not on income's rate scale and
+	# the table says why. This loop is also why a TAX_KEYS entry cannot quietly skip
+	# ISSUE_KEYS -- it would write a satisfaction with no salience row anywhere to read
+	# it, which is the number-nothing-reads failure docs/diplomacy-model.md names.
 	for key in C.TAX_KEYS:
 		var d_rate: float = (
 			float(ns.tax_rates_pct.get(key, 0.0))
 			- float(ns.start_tax_rates_pct.get(key, 0.0))
 		)
-		sat["tax_%s" % key] = _scaled(-d_rate, K.TAX_SCALE_PP)
+		sat["tax_%s" % key] = _scaled(
+			-d_rate, float(K.TAX_SCALE_PP_BY_KEY.get(key, K.TAX_SCALE_PP))
+		)
 
 	for key in C.SPENDING_KEYS:
 		var d_spend: float = (
@@ -248,6 +262,32 @@ static func issue_satisfaction(ns) -> Dictionary:
 	# same surgical property the public_finances row above is praised for.
 	sat["europe"] = _scaled(
 		-(ns.bloc_burden - ns.start_bloc_burden), K.EUROPE_SCALE
+	)
+
+	# V1.6b, the thirteenth issue, and the first one the ISSUE_KEYS question was
+	# answered YES for -- opinion_constants.gd records the five noes and the reasons
+	# this one is different.
+	#
+	# A delta against the nation's own starting rate, exactly like every term above,
+	# and read through Inflation.inflation_deviation() so the anchoring cannot be
+	# bypassed by subtracting from something else. It gets the politics right for free:
+	# a president who inherits 5 % and delivers 2 % is REWARDED, which is what a delta
+	# against the start means and what an absolute target would have got wrong.
+	#
+	# SIGNED, where the same stock's cost to the ECONOMY is one-sided above the anchor.
+	# Two prices on one statistic with two different shapes, each argued separately --
+	# docs/coercion-model.md's one verb, two prices. A voter punishes prices rising
+	# against what they remember; the economy pays for distance from the anchor. They
+	# are not the same question and a single shape would have had to be wrong about one.
+	#
+	# THIS IS THE FIRST PAIR OF ISSUES IN THE MODEL THAT ONE EVENT MOVES IN OPPOSITE
+	# DIRECTIONS. A boom is a plus on `growth` and a minus here. That does not break the
+	# one-signed property the europe comment above states -- inflation still reaches all
+	# six blocs with the same sign -- it is a second issue with the other sign, which is
+	# what makes it a trade-off rather than the re-split of one weight that refused
+	# `corruption` at V1.5a.
+	sat["inflation"] = _scaled(
+		-Inflation.inflation_deviation(ns), K.INFLATION_SCALE_PP
 	)
 
 	return sat

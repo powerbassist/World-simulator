@@ -1,0 +1,173 @@
+{
+  "_note": "V1.6f's verbs, on the effects.project channel -- the eighth. Ten actions: five named projects, each with a start and an abandon. THE THREE NUMBERS ARE AUTHORED AND NONE OF THEM IS DERIVED, which is the whole difference from data/investment-actions/: V1.6e had one dial (`intensity`) and three constants turning it into a bill, a build rate and a trend coefficient, so a second authored term there would have been one strength written twice. src/sim/projects_constants.gd ships no such constant, so duration, price and payoff are three independent facts about a named object and a cheap fast small project is a genuinely different thing from an expensive slow large one.",
+  "_ladder_note": "THE LADDER IS THE LEVER AND tools/projects_probe.gd IS WHAT SET IT. Cost per unit of payoff FALLS as a project gets larger (the rail spine is the cheapest trend in the file and the flood programme the dearest) and the price of that is TIME: the largest cannot deliver anything at all inside one presidential term, and the smallest delivers about two fifths of its payoff inside one. That is the trade, and it is the only reason a big project is not strictly dominated by running three small ones -- economies of scale bought with a wait longer than the office. Nobody who starts the rail spine in their first year will be in the building when it opens.",
+  "_geography_note": "NO PROJECT NAMES A PLACE, AND THAT IS A DEFERRAL RATHER THAN A GAP. docs/brainstorm/mechanics-economy.md's sketch for this mechanic ends 'visible on the map', which is a marker layer on src/ui/map_view.gd with per-project lon/lat as content -- a U-track surface, and this project runs one track per session, which is why V1.6e split V1.6f off in the first place. Authoring a lon/lat here that nothing reads would be a content field carrying no information, which docs/tax-model.md section 3 refuses. So the five are named generically and are true of any of the ten; the session that draws them owns naming them, the way U5a authored the flag block in the session that drew it.",
+  "_price_note": "These offsets are the ONLY authored price, which is why docs/projects-model.md answers the seventeenth ISSUE_KEYS question NO on test 1 alone -- every YES on that list (V1.6b's inflation, V1.6d's two taxes) was paid because the price was not nameable otherwise, and this ships a content object with a bloc_offset exactly as V1.4c's ownership and V1.6e's programmes did. The fiscal price is not here and is not authored: the bill widens the deficit, which reaches `public_finances` through machinery S5 built. AN ABANDONMENT IS A NET POLITICAL LOSS BY CONSTRUCTION -- whoever gained from the announcement loses more than they gained, and whoever paid for it gets back less than they paid. There is no partial credit for a half-built thing, because there is no half-built thing in this model.",
+  "actions": [
+    {
+      "id": "start_high_speed_rail",
+      "name": "Build the High-Speed Rail Spine",
+      "summary": "A new north-south passenger line, eight years of work and the largest single commitment a government of this country can sign. The cities it connects will be transformed. Whoever signs this will not be in office when the first train runs.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 0 },
+        { "field": "project_count", "op": "<=", "value": 1 }
+      ],
+      "effects": {
+        "project": {
+          "op": "start",
+          "project_id": "high_speed_rail",
+          "project_name": "The High-Speed Rail Spine",
+          "build_months": 96,
+          "cost_pct_gdp": 0.19,
+          "potential_growth_pct": 0.30
+        },
+        "bloc_offset": { "urban": 0.12, "business": 0.09, "workers": 0.05, "rural": -0.10, "pensioners": -0.04 }
+      }
+    },
+    {
+      "id": "abandon_high_speed_rail",
+      "name": "Cancel the Rail Spine",
+      "summary": "The contracts are torn up and the earthworks are left where they are. Nothing is recovered and nothing is finished; the only thing anyone remembers is the number on the invoice.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 1 },
+        { "field": "project_done", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "project": { "op": "abandon", "project_id": "high_speed_rail" },
+        "bloc_offset": { "urban": -0.14, "business": -0.11, "workers": -0.07, "rural": 0.08, "pensioners": 0.03 }
+      }
+    },
+    {
+      "id": "start_national_grid",
+      "name": "Modernise the National Grid",
+      "summary": "Six years of transmission, interconnection and storage, so the power reaches where the work is. Industry has been asking for a decade. The bills arrive before the capacity does.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 0 },
+        { "field": "project_count", "op": "<=", "value": 1 }
+      ],
+      "effects": {
+        "project": {
+          "op": "start",
+          "project_id": "national_grid",
+          "project_name": "The National Grid Programme",
+          "build_months": 72,
+          "cost_pct_gdp": 0.17,
+          "potential_growth_pct": 0.17
+        },
+        "bloc_offset": { "business": 0.11, "workers": 0.07, "students": 0.06, "pensioners": -0.07, "rural": -0.04 }
+      }
+    },
+    {
+      "id": "abandon_national_grid",
+      "name": "Cancel the Grid Programme",
+      "summary": "The pylons stop at the county line. The money is gone, the constraint is not, and the industries that planned around it have already made other arrangements.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 1 },
+        { "field": "project_done", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "project": { "op": "abandon", "project_id": "national_grid" },
+        "bloc_offset": { "business": -0.13, "workers": -0.09, "students": -0.08, "pensioners": 0.05, "rural": 0.03 }
+      }
+    },
+    {
+      "id": "start_freight_corridor",
+      "name": "Open the Port and Freight Corridor",
+      "summary": "Deep-water berths, a rail head and the road that joins them. Four and a half years, and the goods move faster the day it opens. The towns on the route will hear it at four in the morning.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 0 },
+        { "field": "project_count", "op": "<=", "value": 1 }
+      ],
+      "effects": {
+        "project": {
+          "op": "start",
+          "project_id": "freight_corridor",
+          "project_name": "The Port and Freight Corridor",
+          "build_months": 54,
+          "cost_pct_gdp": 0.14,
+          "potential_growth_pct": 0.10
+        },
+        "bloc_offset": { "business": 0.10, "workers": 0.08, "rural": 0.03, "urban": -0.09 }
+      }
+    },
+    {
+      "id": "abandon_freight_corridor",
+      "name": "Cancel the Freight Corridor",
+      "summary": "The dredgers go home and the rail head ends in a field. The lorries keep coming through the town centre, and now they have been paid for twice.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 1 },
+        { "field": "project_done", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "project": { "op": "abandon", "project_id": "freight_corridor" },
+        "bloc_offset": { "business": -0.12, "workers": -0.10, "rural": -0.05, "urban": 0.07 }
+      }
+    },
+    {
+      "id": "start_national_fibre",
+      "name": "Run Fibre to Every Home",
+      "summary": "Three and a half years to put the last village on the same connection as the capital. Cheap by the standards of this list, and the one that hands back most of what it promises inside a single term.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 0 },
+        { "field": "project_count", "op": "<=", "value": 1 }
+      ],
+      "effects": {
+        "project": {
+          "op": "start",
+          "project_id": "national_fibre",
+          "project_name": "The National Fibre Rollout",
+          "build_months": 42,
+          "cost_pct_gdp": 0.12,
+          "potential_growth_pct": 0.055
+        },
+        "bloc_offset": { "rural": 0.10, "students": 0.08, "urban": 0.04, "business": 0.04, "pensioners": -0.03 }
+      }
+    },
+    {
+      "id": "abandon_national_fibre",
+      "name": "Cancel the Fibre Rollout",
+      "summary": "The cabinets are installed and unconnected. Everyone who was promised it knows exactly which government promised it.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 1 },
+        { "field": "project_done", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "project": { "op": "abandon", "project_id": "national_fibre" },
+        "bloc_offset": { "rural": -0.12, "students": -0.10, "urban": -0.06, "business": -0.05, "pensioners": 0.02 }
+      }
+    },
+    {
+      "id": "start_flood_defence",
+      "name": "Build the Coastal and Flood Defences",
+      "summary": "Two and a half years of walls, sluices and managed retreat. The smallest thing on this list and the fastest, and the one whose absence is noticed in a single bad winter.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 0 },
+        { "field": "project_count", "op": "<=", "value": 1 }
+      ],
+      "effects": {
+        "project": {
+          "op": "start",
+          "project_id": "flood_defence",
+          "project_name": "The Coastal and Flood Defences",
+          "build_months": 30,
+          "cost_pct_gdp": 0.11,
+          "potential_growth_pct": 0.027
+        },
+        "bloc_offset": { "rural": 0.11, "pensioners": 0.06, "workers": 0.03, "business": -0.05, "students": -0.02 }
+      }
+    },
+    {
+      "id": "abandon_flood_defence",
+      "name": "Cancel the Flood Defences",
+      "summary": "The scheme is shelved at the halfway point. The estuary does not care whose term it was, and the photographs will be taken in February.",
+      "preconditions": [
+        { "field": "project_started", "op": "==", "value": 1 },
+        { "field": "project_done", "op": "==", "value": 0 }
+      ],
+      "effects": {
+        "project": { "op": "abandon", "project_id": "flood_defence" },
+        "bloc_offset": { "rural": -0.13, "pensioners": -0.08, "workers": -0.05, "business": 0.03, "students": 0.02 }
+      }
+    }
+  ]
+}

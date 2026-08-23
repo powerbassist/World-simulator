@@ -21,6 +21,14 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
+const Credit = preload("res://src/sim/credit.gd")
+const CreditK = preload("res://src/sim/credit_constants.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
+const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -112,6 +120,12 @@ func _init() -> void:
 	_check_society_fields(loader)
 	_check_demography_fields(loader)
 	_check_unrest_fields(loader)
+	_check_cycle_fields(loader)
+	_check_inflation_fields(loader)
+	_check_credit_fields(loader)
+	_check_tax_fields(loader)
+	_check_investment_fields(loader)
+	_check_project_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -697,8 +711,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -893,6 +907,89 @@ func _run_atomic_write(state, clock) -> void:
 		_fail("save_game failed when a stranded temp file was present: %s" % save_error)
 	if FileAccess.file_exists(temp_path):
 		_fail("save_game left '%s' behind on the retry" % temp_path)
+
+
+## V1.6a. Two fields, and the SPLIT is the assertion worth having rather than the bump
+## -- V1.3g's `deployments` and V1.4a's register, a third time.
+##
+## The session's own plan predicted NO bump at all, and the reason it gave was true
+## about the wrong thing: src/sim/cycle.gd is genuinely stateless, has no accumulator
+## and no tick_month(). But NationState.from_dict() rebuilds from the dictionary alone
+## and never sees the loader, so a content-derived static fact that is not serialised
+## is simply lost. STATELESSNESS IS A PROPERTY OF THE MODULE, NOT OF THE SAVE.
+##
+##   `cycle_impulse_pct` earns NOTHING. Absent it reads 0.0 and Economy.tick_month()
+##   overwrites it from the clock on the very next tick -- coercion_impulse_pct's case,
+##   and checked here the same reference-and-tick way rather than asserted.
+##
+##   `cycle_amplitude_rel` IS the bump. Absent it reads the default 1.0, so France runs
+##   a cycle 45 % louder than its content says and Luxembourg one 32 % quieter: the
+##   reloaded game runs a DIFFERENT MODEL from the one that saved it, which is
+##   `eu_member` at V1.3b and `military_capability` at V1.3g. The premise is checked --
+##   drop it and the impulse moves -- rather than argued.
+##
+## And the last block pins what was NOT added: there is no stored phase, no month
+## counter and no accumulated wave anywhere in the save. The whole design rests on the
+## generator being a pure function of the clock, so a later session that stores any of
+## them turns this red and has to come and say why -- V1.3c's device, and the one thing
+## on this list that would turn the module stateful without anybody noticing.
+func _check_cycle_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.year = 2026
+	state.month = 1
+	for _i in range(30):
+		state.month += 1
+		if state.month > 12:
+			state.month = 1
+			state.year += 1
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+
+	var ns = state.player()
+	if is_zero_approx(ns.cycle_impulse_pct):
+		_fail("thirty months in and the cycle impulse is still 0.0 -- this check proves nothing")
+	if is_equal_approx(ns.cycle_amplitude_rel, 1.0):
+		_fail("FRA's cycle_amplitude_rel is 1.0, the default -- the content is not being read, so the drop test below cannot distinguish anything")
+
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var loaded = GameState.from_dict(dict)
+	if not is_equal_approx(loaded.player().cycle_amplitude_rel, ns.cycle_amplitude_rel):
+		_fail("cycle_amplitude_rel did not survive the round trip")
+
+	# The bump's premise: drop the content field and the model changes.
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("cycle_amplitude_rel")
+	var lost = GameState.from_dict(without)
+	if not is_equal_approx(lost.player().cycle_amplitude_rel, 1.0):
+		_fail("an absent cycle_amplitude_rel did not read as the 1.0 default")
+	lost.year = state.year
+	lost.month = state.month
+	Economy.tick_month(lost)
+	var reference = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	reference.year = state.year
+	reference.month = state.month
+	Economy.tick_month(reference)
+	if is_equal_approx(lost.player().cycle_impulse_pct, reference.player().cycle_impulse_pct):
+		_fail("dropping cycle_amplitude_rel left the impulse unchanged -- the premise of the bump is wrong")
+
+	# ...and the other half earns nothing, because one tick brings it back exactly.
+	var no_impulse: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_impulse["nations"]["FRA"] as Dictionary).erase("cycle_impulse_pct")
+	var derived = GameState.from_dict(no_impulse)
+	if not is_zero_approx(derived.player().cycle_impulse_pct):
+		_fail("an absent cycle_impulse_pct did not read as 0.0")
+	derived.year = state.year
+	derived.month = state.month
+	Economy.tick_month(derived)
+	if not is_equal_approx(derived.player().cycle_impulse_pct, reference.player().cycle_impulse_pct):
+		_fail("the cycle impulse did not come back on one tick, so it is not derived and would have earned the bump itself")
+
+	# Nothing stateful was added, and this is what pins it.
+	var fra: Dictionary = (JSON.parse_string(JSON.stringify(state.to_dict()))["nations"]["FRA"] as Dictionary)
+	for key in fra.keys():
+		var name := String(key)
+		if name.begins_with("cycle_") and name != "cycle_impulse_pct" and name != "cycle_amplitude_rel":
+			_fail("a save carries %s -- the cycle is a pure function of the clock and stores no phase, counter or accumulated wave, so a third field is a model change that has to be argued" % name)
 
 
 func _run_unknown_version() -> void:
@@ -1216,8 +1313,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1382,8 +1479,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1466,8 +1563,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17 and V1.5c to 18, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1784,5 +1881,440 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 18:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18 and V1.5d deliberately left it there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
+## because each fails the rule by a DIFFERENT failure and a single combined check would
+## let any one of the three be quietly wrong. That split is the assertion worth having
+## rather than the bump, which is V1.5c's device and V1.3g's before it.
+func _check_inflation_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# The register goes live moving nothing: at new game the unemployment gap is
+	# exactly 0.0, so inflation sits at its own anchor, the deviation is exactly 0.0
+	# and the growth addend is exactly 0.0. Exact equality rather than
+	# is_zero_approx(), which is V1.4a's precedent for a channel that must be inert.
+	if ns.inflation_pct != ns.start_inflation_pct:
+		_fail("inflation does not start at its own baseline -- the thirteenth issue is non-zero before anything has happened")
+	if ns.inflation_pct != ns.inflation_anchor_pct:
+		_fail("inflation does not start at its anchor -- init seeds a transient nobody authored")
+	if ns.inflation_impulse_pct != 0.0:
+		_fail("the inflation growth addend is %s at new game, not exactly 0.0" % ns.inflation_impulse_pct)
+
+	# Displace it, so the round-trip is testing a live figure rather than a default --
+	# and by LESS than INFLATION_SCALE_PP, or check (3) below compares two saturated
+	# clamps and reports them equal. The first version of this used +4.0 and did
+	# exactly that: both sides pinned at -1.0 and the check failed for a reason that
+	# had nothing to do with the field it was about.
+	ns.inflation_pct = ns.inflation_anchor_pct + 0.2
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+
+	# (1) inflation_pct EARNS IT, and re-deriving on load cannot rescue it because the
+	# accumulation IS the state -- service_quality's case at V1.5a and unrest_pct's at
+	# V1.5c. The assertion that separates it from a derived price is that it does NOT
+	# come back on one tick.
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(dropped["nations"]["FRA"] as Dictionary).erase("inflation_pct")
+	var calm = GameState.from_dict(dropped)
+	if not is_zero_approx(calm.player().inflation_pct):
+		_fail("an absent inflation_pct did not read as 0.0 -- the premise of the bump is wrong")
+	Inflation.tick_month(calm)
+	if calm.player().inflation_pct >= ns.inflation_anchor_pct:
+		_fail("inflation_pct recovered to its anchor on one tick, so it is derivable and the bump is unearned")
+
+	# (2) inflation_anchor_pct EARNS IT for a DIFFERENT failure: it is content-derived
+	# and from_dict() rebuilds from the dictionary ALONE, never seeing the loader --
+	# cycle_amplitude_rel's case at V1.6a verbatim. Absent, the nation runs a different
+	# MODEL, so the check is that the model moved and not merely that a field is 0.0.
+	var no_anchor: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_anchor["nations"]["FRA"] as Dictionary).erase("inflation_anchor_pct")
+	var adrift = GameState.from_dict(no_anchor)
+	if not is_zero_approx(adrift.player().inflation_anchor_pct):
+		_fail("an absent inflation_anchor_pct did not read as 0.0 -- the premise of the bump is wrong")
+	if is_equal_approx(
+		Inflation.inflation_target(adrift.player()), Inflation.inflation_target(state.player())
+	):
+		_fail("dropping inflation_anchor_pct left the target unchanged -- that half of the bump's premise is wrong")
+
+	# (3) start_inflation_pct EARNS IT for a THIRD failure, and it is the sharpest:
+	# absent it reads 0.0 against a live figure, so the issue is not missing but
+	# MIS-SIGNED for the rest of the run. start_bloc_burden's case at V1.3d.
+	var no_start: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_start["nations"]["FRA"] as Dictionary).erase("start_inflation_pct")
+	var mis_signed = GameState.from_dict(no_start)
+	var kept_sat: float = float(Opinion.issue_satisfaction(GameState.from_dict(full).player())["inflation"])
+	var lost_sat: float = float(Opinion.issue_satisfaction(mis_signed.player())["inflation"])
+	if is_equal_approx(kept_sat, lost_sat):
+		_fail("dropping start_inflation_pct left the inflation issue unchanged -- that half of the bump's premise is wrong")
+	# The strongest form of the claim: absent, the issue is not merely wrong but pinned
+	# at the FLOOR from the first month, because the deviation it reads is the whole
+	# anchor rather than the player's own movement.
+	if lost_sat > -1.0 or kept_sat <= -1.0:
+		_fail("an absent start_inflation_pct read %s against a kept %s -- the failure this bump names is that the issue saturates negative, and that is not what happened" % [lost_sat, kept_sat])
+
+	# (4) inflation_impulse_pct EARNS NOTHING and is serialised anyway --
+	# coercion_impulse_pct's and cycle_impulse_pct's case. It comes back in full on one
+	# tick, which is exactly what separates it from (1) above.
+	var no_impulse: Dictionary = JSON.parse_string(JSON.stringify(full))
+	(no_impulse["nations"]["FRA"] as Dictionary).erase("inflation_impulse_pct")
+	var restored = GameState.from_dict(no_impulse)
+	Inflation.tick_month(restored)
+	if is_zero_approx(restored.player().inflation_impulse_pct):
+		_fail("inflation_impulse_pct did not come back on one tick from a displaced state -- then it would earn a bump")
+
+	# And what was NOT added. There is no stored expectation series, no month counter
+	# and no accumulated wave: the model is an anchor, a slope and a one-line lag, so a
+	# later session making it stateful turns this red and has to come and say why.
+	for pname in ["inflation_expectation_pct", "inflation_months", "inflation_history"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
+
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
+## ever to earn one -- a single float with no register behind it. The half worth pinning
+## is the other one: THREE ABSENCES, because src/sim/credit.gd is stateless and staying
+## stateless is the V1.6 decomposition's own split trigger.
+func _check_credit_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# The register goes live moving nothing, exactly: the spread reads 0.0 and the yield
+	# reads the anchor, so every balance figure this project has quoted against a flat
+	# DEBT_REAL_RATE_PCT keeps its meaning. Exact equality rather than is_zero_approx(),
+	# V1.4a's precedent for a channel that must be inert.
+	if Credit.spread_pct(ns) != 0.0:
+		_fail("the bond spread is %s at new game, not exactly 0.0" % Credit.spread_pct(ns))
+	if ns.start_debt_to_gdp_pct != ns.debt_to_gdp_pct():
+		_fail("start_debt_to_gdp_pct is %s against a live %s at new game" % [
+			ns.start_debt_to_gdp_pct, ns.debt_to_gdp_pct()
+		])
+
+	# Displace the stock, so the round trip tests a live figure rather than a default.
+	ns.debt_eur_bn += 0.25 * ns.gdp_eur_bn
+	Budget.recompute(state, ns)
+	var full: Dictionary = state.to_dict()
+
+	var kept = GameState.from_dict(full)
+	if absf(Credit.yield_pct(kept.player()) - Credit.yield_pct(ns)) > 1e-9:
+		_fail("the yield does not survive a round trip: %s against %s" % [
+			Credit.yield_pct(kept.player()), Credit.yield_pct(ns)
+		])
+
+	# THE BUMP. Absent, start_debt_to_gdp_pct reads 0.0 against a live ~135, so the debt
+	# gap reads the whole stock as newly borrowed and the yield goes to the clamp -- a
+	# reloaded game running a different MODEL from the one that saved it, which is
+	# `cycle_amplitude_rel` at V1.6a and `military_capability` at V1.3g.
+	var dropped: Dictionary = state.to_dict()
+	(dropped["nations"]["FRA"] as Dictionary).erase("start_debt_to_gdp_pct")
+	var adrift = GameState.from_dict(dropped)
+	if not is_zero_approx(adrift.player().start_debt_to_gdp_pct):
+		_fail("an absent start_debt_to_gdp_pct did not read as 0.0 -- the premise of the bump is wrong")
+	# NOT the clamp, and the first version of this check said the clamp. Measured: the
+	# yield comes back at 4.1 against a kept 2.4, which is a France paying seventy per
+	# cent more interest for the rest of the run because it saved. Large, permanent and
+	# silent is the failure the rule is about; "on the clamp" was a guess and the check
+	# is written against the number instead.
+	var adrift_yield: float = Credit.yield_pct(adrift.player())
+	var kept_yield: float = Credit.yield_pct(kept.player())
+	if adrift_yield <= kept_yield * 1.5:
+		_fail("dropping start_debt_to_gdp_pct moved the yield from %s to %s -- less than the standing overcharge this bump names" % [kept_yield, adrift_yield])
+
+	# And re-deriving on load does not rescue it, which is what separates this field from
+	# every derived price on this list: one tick does not bring it back, and re-anchoring
+	# on the live ratio would silently forgive every point of debt the player has added.
+	Economy.tick_month(adrift)
+	Budget.tick_month(adrift)
+	if not is_zero_approx(adrift.player().start_debt_to_gdp_pct):
+		_fail("start_debt_to_gdp_pct came back on one tick, so it is derivable and the bump is unearned")
+
+	# WHAT WAS NOT ADDED, and this is the assertion worth having. The yield, the spread
+	# and the rating are pure reads over a debt stock serialised since the MVP and a
+	# grievance serialised at V1.5c. A later session storing any of them has made
+	# src/sim/credit.gd stateful, which is the V1.6 decomposition's stated split trigger
+	# for this session -- so it turns this red and has to come and say why.
+	for pname in ["bond_yield_pct", "credit_spread_pct", "credit_rating",
+			"start_bond_yield_pct", "credit_rating_months"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- src/sim/credit.gd is a pure read over the debt stock and the grievance, so storing one is the second machine the V1.6 decomposition says would have split this session" % pname)
+
+
+## V1.6d. THREE fields earn the bump to 22, and two of them add no key to the save at
+## all -- they GROW `tax_rates_pct`, a dictionary serialised since S4, which is V1.5b's
+## `service_quality["pensions"]` case and the second time on this list. The three are
+## asserted in TWO groups rather than three, and the grouping is the claim: the two rates
+## fail by one failure each, and the bracket pair fails by ONE failure BETWEEN THEM.
+func _check_tax_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+
+	# (1) THE TWO NEW RATES. A version-21 save carries three keys in `tax_rates_pct`, and
+	# revenue_lines() reads `.get(key, 0.0)` -- so both new taxes come back at a rate of
+	# zero and the save has silently ABOLISHED them. France collects 0.6 points of GDP of
+	# capital-gains tax at its own authored rate; that is what a reloaded game loses, and
+	# the deficit widens by it with nothing anywhere to say so.
+	var no_rates: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var rates: Dictionary = (no_rates["nations"]["FRA"] as Dictionary)["tax_rates_pct"]
+	rates.erase("capital_gains")
+	rates.erase("wealth")
+	var stripped = GameState.from_dict(no_rates)
+	Budget.recompute(stripped, stripped.player())
+	if not is_zero_approx(float(stripped.player().revenue_pct_gdp.get("capital_gains", 0.0))):
+		_fail("dropping the capital_gains rate left the line collecting something -- that half of the premise is wrong")
+	if is_equal_approx(stripped.player().deficit_pct_gdp, state.player().deficit_pct_gdp):
+		_fail("a save with both new tax rates dropped runs the same deficit as one with them, so the two keys would not earn the bump")
+
+	# The matching start keys go too, which is the sharper half: `_erosion()` divides by
+	# the nation's own start, so an absent one falls to the ZERO-REFERENCE branch and
+	# every later rate rise is priced as a tax invented from nothing rather than as a
+	# rise in one the country already levies. A reloaded game running a DIFFERENT MODEL,
+	# which is `eu_member` at V1.3b.
+	var no_start: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	((no_start["nations"]["FRA"] as Dictionary)["start_tax_rates_pct"] as Dictionary).erase("capital_gains")
+	var restarted = GameState.from_dict(no_start)
+	restarted.player().tax_rates_pct["capital_gains"] = 40.0
+	Budget.recompute(restarted, restarted.player())
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	kept.player().tax_rates_pct["capital_gains"] = 40.0
+	Budget.recompute(kept, kept.player())
+	if is_equal_approx(
+		float(restarted.player().revenue_pct_gdp["capital_gains"]),
+		float(kept.player().revenue_pct_gdp["capital_gains"])
+	):
+		_fail("dropping start_tax_rates_pct.capital_gains priced a later rise identically -- then the start keys would not earn the bump")
+
+	# (2) THE BRACKET PAIR, asserted TOGETHER and deliberately not separately. Absent,
+	# both read 0.0 -- which is PROGRESSIVITY_MIN, the flattest schedule the model has,
+	# and NOT a neutral default. But because the START reads 0.0 as well, the DEVIATION is
+	# still exactly zero, so the reloaded game does not merely forget the player's bracket
+	# structure: it agrees a flat tax was always normal, and every price keyed to the
+	# deviation reads as though nothing had ever been done. Neither field alone fails in a
+	# way the other does not cover, so splitting the check would be checking one failure
+	# twice -- which is the opposite of V1.6b's three, and the reason is written here
+	# rather than left for a reader to infer.
+	var committed = GameState.new_game(loader, "FRA")
+	Budget.commit(committed, {"tax_progressivity": TaxK.PROGRESSIVITY_BASE + 0.6})
+	var moved := Tax.gini_policy_offset(committed.player())
+	if is_zero_approx(moved):
+		_fail("a committed bracket change moved nothing, so this check is not measuring what it says")
+
+	var no_brackets: Dictionary = JSON.parse_string(JSON.stringify(committed.to_dict()))
+	(no_brackets["nations"]["FRA"] as Dictionary).erase("tax_progressivity")
+	(no_brackets["nations"]["FRA"] as Dictionary).erase("start_tax_progressivity")
+	var flattened = GameState.from_dict(no_brackets)
+	if not is_zero_approx(Tax.gini_policy_offset(flattened.player())):
+		_fail("a save with both bracket fields dropped still carried the player's schedule -- then neither would earn the bump")
+	if not is_zero_approx(Tax.progressivity_deviation(flattened.player())):
+		_fail("with both fields absent the DEVIATION is not zero, so the pair does not fail the way this check claims and they should be asserted separately")
+
+	# (3) WHAT WAS NOT ADDED, and it is the half worth pinning -- V1.6c's shape one
+	# session on. src/sim/tax.gd is stateless, so there is no stored offset, no stored
+	# effective index and no stored base factor: each is a pure read over one float and
+	# two rates this save already carries. A later session giving the distribution an
+	# accumulator turns this red and has to come and say why.
+	for pname in ["gini_policy_offset", "gini_effective", "start_tax_rates_progressivity",
+			"progressivity_base_factor", "tax_progressivity_months"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the distribution is a derived read over fields the save already has, so storing one is a model change that has to be argued" % pname)
+
+	# And `gini_index` keeps its single writer. The effective index is a SUM of that
+	# drift and a derived offset, which is what the V1.6 decomposition's "a second field,
+	# not a second writer" asked for -- one step further, because there is no second
+	# field either.
+	var demog_src := FileAccess.get_file_as_string("res://src/sim/tax.gd")
+	if demog_src.contains("gini_index ="):
+		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
+
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
+## checked separately because they are two different claims.
+##
+## The rule game_state.gd states is "would a missing field read as something WRONG",
+## and for a version-22 save the answer is no: those games had no investment verb, so
+## "no programme running and nothing built" is the truth about them rather than a soft
+## failure. `measures` at V1.3c, `pacts` at V1.3g and `regulation_burden` at V1.4b.
+##
+## What is not free is the other half. The capital stock is written by a tick and NO
+## TICK RE-DERIVES IT FROM CONTENT -- unlike V1.4a's four prices, which come back on
+## the next tick, and unlike `start_service_quality`, which round-trips through
+## data/nations/. A save that dropped it would silently demolish everything the player
+## spent a term building, so the premise is CHECKED rather than asserted: dropping the
+## register must move the trend shift.
+func _check_investment_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# (1) A NEW GAME CARRIES THE REGISTER AND IT IS INERT. Exact equality, because that
+	# is the property the balance re-run's bit-identity rests on.
+	var fresh: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var fresh_entry = (fresh["nations"]["FRA"] as Dictionary).get("sector_investment")
+	if fresh_entry == null:
+		_fail("a save does not carry sector_investment at all")
+	elif not (fresh_entry as Dictionary).has("industry"):
+		_fail("the serialised register has no industry entry")
+	if Investment.national_trend_shift_pct(GameState.from_dict(fresh).player()) != 0.0:
+		_fail("a reloaded new game has a non-zero trend shift")
+
+	# (2) THE PREMISE, CHECKED. A programme run for five years, then the register
+	# dropped: the trend shift must fall to zero, or serialising it buys nothing.
+	for a in loader.investment_actions:
+		if a.id == "reindustrialisation":
+			Investment.execute(state, ns, loader.investment_actions, a)
+	for _m in range(60):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Investment.tick_month(state)
+
+	var built: float = Investment.national_trend_shift_pct(ns)
+	if is_zero_approx(built):
+		_fail("five years of investment moved nothing, so this check is not measuring what it says")
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(dropped["nations"]["FRA"] as Dictionary).erase("sector_investment")
+	var demolished = GameState.from_dict(dropped)
+	if not is_zero_approx(Investment.national_trend_shift_pct(demolished.player())):
+		_fail("a save with sector_investment dropped still carried the capital -- then serialising it buys nothing")
+	if Investment.intensity_of(demolished.player(), "industry") != 0.0:
+		_fail("a dropped register still reports a standing programme")
+
+	# And the round trip keeps both halves of every entry.
+	var kept = GameState.from_dict(full)
+	if not is_equal_approx(Investment.capital_of(kept.player(), "industry"), Investment.capital_of(ns, "industry")):
+		_fail("the capital stock did not survive the round trip")
+	if not is_equal_approx(Investment.intensity_of(kept.player(), "industry"), Investment.intensity_of(ns, "industry")):
+		_fail("the standing intensity did not survive the round trip")
+
+	# (3) THE ENTRY CARRIES EXACTLY TWO KEYS, which is V1.4a's own device pointed at a
+	# new register: a later session storing a per-sector baseline, a cached shift or a
+	# months counter turns this red and has to come and say why. The shift is a DERIVED
+	# read over the capital and the sector shares, both of which the save already has.
+	var entry: Dictionary = (full["nations"]["FRA"] as Dictionary)["sector_investment"]["industry"]
+	for key in entry.keys():
+		if key != "intensity" and key != "capital":
+			_fail("a serialised investment entry carries '%s' -- two keys is the whole register" % key)
+	if entry.size() != 2:
+		_fail("a serialised investment entry has %d keys, expected exactly 2" % entry.size())
+
+	# (4) WHAT WAS NOT ADDED. src/sim/investment.gd caches only the bill, so there is no
+	# stored shift and no stored national figure.
+	for pname in ["sector_trend_shift", "investment_trend_shift_pct", "investment_capital"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
+
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
+## `deployments` split in a new place and, as there, the SPLIT is the assertion worth
+## having rather than the bump.
+##
+## `NationState.projects` is one dictionary carrying two things:
+##
+##   the BUILDING half fails soft. An absent register reads as "nothing under
+##   construction", which is the truth about every version-22 save because those games
+##   had no project verb -- `measures` at V1.3c, `sector_investment` at V1.6e.
+##
+##   the DONE half does not. A France that finished the rail spine has bought a
+##   permanent claim on its own trend, and an absent register erases the record of it.
+##   Nothing re-derives it: the accumulator is the only other trace and it is not
+##   content, so there is nothing to re-derive FROM.
+##
+## The two are checked separately, because a single combined assertion would let either
+## half be quietly wrong.
+func _check_project_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# (1) A NEW GAME CARRIES AN EMPTY REGISTER AND A ZERO ACCUMULATOR. Exact equality,
+	# because that is the property the balance re-run's bit-identity rests on.
+	var fresh: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var fresh_nation: Dictionary = fresh["nations"]["FRA"]
+	if not fresh_nation.has("projects"):
+		_fail("a save does not carry `projects` at all")
+	if not (fresh_nation["projects"] as Dictionary).is_empty():
+		_fail("a new game's project register is not empty")
+	if GameState.from_dict(fresh).player().project_potential_target_pct != 0.0:
+		_fail("a reloaded new game has a non-zero project payoff")
+
+	# (2) THE BUILDING HALF FAILS SOFT. A project begun and not finished, register
+	# dropped: nothing is lost that a version-22 save could have had, because a
+	# version-22 save could not have begun one.
+	for a in loader.project_actions:
+		if a.id == "start_flood_defence":
+			Projects.execute(state, ns, loader.project_actions, a)
+	if Projects.building_count(ns) != 1:
+		_fail("the project the check needs did not start")
+	for _m in range(6):
+		Projects.tick_month(state, loader)
+	var mid: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var mid_kept = GameState.from_dict(mid)
+	if Projects.months_left(mid_kept.player(), "flood_defence") != Projects.months_left(ns, "flood_defence"):
+		_fail("months remaining did not survive the round trip")
+	(mid["nations"]["FRA"] as Dictionary).erase("projects")
+	var mid_dropped = GameState.from_dict(mid)
+	if Projects.building_count(mid_dropped.player()) != 0:
+		_fail("a dropped register still reports work under way")
+	if mid_dropped.player().project_potential_target_pct != 0.0:
+		_fail("a half-built project left a payoff behind, which it must not")
+
+	# (3) THE DONE HALF DOES NOT, AND THAT IS THE BUMP. Finish it, drop the register,
+	# and the country has silently un-built a motorway it paid for.
+	for _m2 in range(30):
+		Projects.tick_month(state, loader)
+	if not Projects.is_done(ns, "flood_defence"):
+		_fail("the project did not complete, so this check is not measuring what it says")
+	var built: float = ns.project_potential_target_pct
+	if is_zero_approx(built):
+		_fail("a completed project bought no trend, so this check is not measuring what it says")
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(dropped["nations"]["FRA"] as Dictionary).erase("projects")
+	var amnesiac = GameState.from_dict(dropped)
+	if not (amnesiac.player().projects as Dictionary).is_empty():
+		_fail("a dropped register came back non-empty")
+	if Projects.completed(amnesiac.player()).size() != 0:
+		_fail("a dropped register still remembers what was built -- then the bump buys nothing")
+
+	var kept = GameState.from_dict(full)
+	if Projects.completed(kept.player()).size() != 1:
+		_fail("the completed project did not survive the round trip")
+	if not is_equal_approx(kept.player().project_potential_target_pct, built):
+		_fail("the accumulated payoff did not survive the round trip")
+
+	# (4) THE ENTRY CARRIES EXACTLY THE TWO KEYS Projects.ENTRY_KEYS NAMES, which is
+	# V1.4a's device pointed at a fourth register and V1.6e's pointed at a fifth. The
+	# cost, the duration and the payoff are AUTHORED, so a session caching any of them
+	# here is putting content in the save and has to come and say why.
+	var entry: Dictionary = (full["nations"]["FRA"] as Dictionary)["projects"]["flood_defence"]
+	for key in entry.keys():
+		if not Projects.ENTRY_KEYS.has(key):
+			_fail("a serialised project entry carries '%s' -- %s is the whole register" % [key, str(Projects.ENTRY_KEYS)])
+	if entry.size() != Projects.ENTRY_KEYS.size():
+		_fail("a serialised project entry has %d keys, expected exactly %d" % [entry.size(), Projects.ENTRY_KEYS.size()])
+	for authored in ["cost_pct_gdp", "build_months", "potential_growth_pct", "name"]:
+		if entry.has(authored):
+			_fail("a serialised project entry carries the authored '%s' -- content round-trips through data/project-actions/, not through the save" % authored)
+
+	# (5) WHAT WAS NOT ADDED. The bill is recomputed on the first tick
+	# (`investment_bill_pct_gdp`'s case) and the last result is a display record, so
+	# neither earns anything -- and `last_project_result` is not serialised at all,
+	# which is `last_investment_result`'s case and is pinned rather than assumed.
+	if (full["nations"]["FRA"] as Dictionary).has("last_project_result"):
+		_fail("a save carries last_project_result -- it is a display record of something that has already happened to the register")
+	for pname in ["project_completion_year", "project_start_month", "projects_built"]:
+		if (full["nations"]["FRA"] as Dictionary).has(pname):
+			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
+
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects`, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

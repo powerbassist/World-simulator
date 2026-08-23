@@ -18,9 +18,15 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
+const Credit = preload("res://src/sim/credit.gd")
+const Tax = preload("res://src/sim/tax.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 
 static func tick_month(state) -> void:
@@ -40,7 +46,9 @@ static func tick_month(state) -> void:
 ## month whose revenue only appeared next month would be a lie on exactly that
 ## surface. Three call sites, all of which already had the state in hand.
 static func recompute(state, ns) -> void:
-	ns.revenue_pct_gdp = revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
+	ns.revenue_pct_gdp = revenue_lines(
+		ns.tax_rates_pct, ns.start_tax_rates_pct, Tax.progressivity_base_factor(ns)
+	)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
 	# V1.4c's line, and the second computed REVENUE line after the tariff one above.
@@ -63,9 +71,22 @@ static func recompute(state, ns) -> void:
 		revenue += float(v)
 	ns.total_revenue_pct_gdp = revenue
 
+	# V1.6c. The rate is Credit.yield_pct(ns) where it was a flat
+	# C.DEBT_REAL_RATE_PCT from the MVP until now, and that constant is still the
+	# ANCHOR: the yield is it plus a spread whose every input is measured against the
+	# nation's own start, so this line is bit-identical at new game and every balance
+	# figure ever quoted against a flat 2.0 keeps its meaning. See src/sim/credit.gd.
+	#
+	# ABOVE ns.deficit_pct_gdp's assignment at the bottom of this function, and that
+	# ordering is load-bearing rather than incidental. The spread reads the deficit, and
+	# debt service is INSIDE the deficit, so a yield reading the figure this function is
+	# about to write would feed itself -- the positive feedback docs/economy-model.md
+	# forbids. Reading it here means it is last month's, which is the same one-month lag
+	# the bloc transfer, the deployment bill and the subsidy bill all take a few lines
+	# below, and for the same reason. The loop is broken by a lag that already existed.
 	ns.debt_service_pct_gdp = 0.0
 	if ns.gdp_eur_bn > 0.0:
-		ns.debt_service_pct_gdp = C.DEBT_REAL_RATE_PCT * ns.debt_eur_bn / ns.gdp_eur_bn
+		ns.debt_service_pct_gdp = Credit.yield_pct(ns) * ns.debt_eur_bn / ns.gdp_eur_bn
 
 	# V1.3d's line. SIGNED and on the spending side, not a sixth SPENDING_KEYS
 	# entry: docs/tiers/v1.md section 6 keys the five player-set spending lines 1:1
@@ -98,6 +119,23 @@ static func recompute(state, ns) -> void:
 		# bill both take, and for the same reason, since `deficit_pct_gdp` is a
 		# company action's own precondition field.
 		+ ns.subsidy_bill_pct_gdp
+		# V1.6e's line, and the fourth to take this route. The same argument a fourth
+		# time: not a sixth SPENDING_KEYS entry, because that list is keyed 1:1 to
+		# cabinet portfolios and the player sets this one with a verb rather than a
+		# slider. Read straight off NationState and NOT recomputed here, because
+		# Investment.tick_month() runs after this and a programme committed this month
+		# must bill next month -- `deficit_pct_gdp` is one of that verb's own
+		# precondition fields.
+		+ ns.investment_bill_pct_gdp
+		# V1.6f's line, and the fifth to take this route. The same argument a fifth
+		# time, and the one difference is worth stating: this bill STOPS. Every other
+		# line above it is a standing rate the player can lower; a project's cost runs
+		# for exactly as long as the work does and ends the month it completes, which
+		# is the whole of what makes it a commitment rather than a policy.
+		# Projects.tick_month() runs after this in main.gd's order, so a project begun
+		# this month bills next month -- `deficit_pct_gdp` is one of that verb's own
+		# precondition fields.
+		+ ns.project_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -111,11 +149,37 @@ static func recompute(state, ns) -> void:
 ## model already uses. Passed explicitly rather than read off a shared
 ## constant since V1.2a made starting rates per-nation: a table shared by all
 ## ten would put every nation but one off its own reference.
-static func revenue_lines(rates: Dictionary, ref_rates: Dictionary) -> Dictionary:
+## `progressivity_factor` is V1.6d's, and it is passed rather than read off a
+## NationState for the reason `ref_rates` is: this function is called twice inside
+## commit(), once at the OLD schedule and once at the PENDING one, and a version that
+## reached for live state could not express the difference. Defaulted to 1.0 -- the
+## no-brackets model every caller before V1.6d ran -- so the two call sites that
+## genuinely have no schedule to hand (modelled_revenue_total() at new-game
+## calibration, where the deviation is zero by construction) read the same numbers
+## they always did.
+static func revenue_lines(
+	rates: Dictionary, ref_rates: Dictionary, progressivity_factor: float = 1.0
+) -> Dictionary:
 	var out := {}
 	for key in C.TAX_KEYS:
 		var rate := float(rates.get(key, 0.0))
-		out[key] = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
+		var yield_pct: float = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
+		# V1.6d. A factor on the INCOME LINE ONLY, and the first draft put it inside
+		# _erosion() instead -- which was wrong in a way that measured as zero rather
+		# than as a wrong number, so only tests/test_tax.gd's own check caught it. The
+		# erosion coefficient multiplies `(rate - ref)`, and a player who steepens the
+		# brackets WITHOUT touching the headline rate leaves that difference at exactly
+		# zero, so a coefficient there is multiplied by nothing and the whole price
+		# vanishes precisely for the budget the lever exists to express.
+		#
+		# It belongs on the base rather than on the curve on the merits too: a steeper
+		# schedule does not change how fast the base responds to a rate change, it
+		# SHRINKS THE BASE -- top incomes are the mobile part, and progressivity is what
+		# points the rate at them. Still one coefficient inside the one income line, so
+		# section 6's "without a fourth revenue channel" holds exactly as before.
+		if key == "income":
+			yield_pct *= progressivity_factor
+		out[key] = yield_pct
 	return out
 
 
@@ -138,6 +202,10 @@ static func _tariff_revenue(state, ns) -> float:
 	return Coercion.tariff_revenue_pct_gdp(state, ns.id, Trade.weights(state, ns.id))
 
 
+## No progressivity argument, and the omission is correct rather than an oversight:
+## its one caller is GameState's new-game calibration, where the live schedule IS the
+## starting schedule and the deviation is exactly zero. Passing 1.0 explicitly would
+## claim this function works at any schedule, which it does not.
 static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> float:
 	var total := 0.0
 	for v in revenue_lines(rates, ref_rates).values():
@@ -150,14 +218,30 @@ static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> 
 ## a finite, correctly signed number.
 static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary) -> float:
 	var ref := float(ref_rates.get(key, 0.0))
-	if ref <= 0.0:
-		return 1.0
-	var raw: float = 1.0 - float(C.TAX_EROSION[key]) * (rate_pct - ref) / ref
+	# V1.6d, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This branch returned a flat
+	# 1.0 -- no diminishing returns at all, revenue linear in the rate forever -- which
+	# is correct for a tax nobody has and wrong the moment a player invents one. It was
+	# unreachable while every nation authored all three of income, corporate and VAT
+	# above zero, and V1.6d's content makes it reachable on the first frame:
+	# Switzerland taxes no private capital gain, Belgium and Luxembourg broadly neither,
+	# and eight of the ten start with no wealth tax at all. Left alone, the player's
+	# best move would have been to invent a tax from nothing and take it to the ceiling.
+	#
+	# The curve is taken against an absolute reference instead of a relative one, which
+	# is the only thing available when the relative one is zero. Same shape, same
+	# clamps, and it meets the old branch continuously nowhere -- a nation starting at
+	# zero and one starting at its EROSION_ZERO_REF_PCT are different nations, not the
+	# same nation approached from two directions. That table is PER KEY, and it has to
+	# be: an invented capital-gains tax is normally levied around twenty-five points
+	# and an invented wealth tax below one.
+	var effective_ref := ref if ref > 0.0 else float(C.EROSION_ZERO_REF_PCT[key])
+	var raw: float = 1.0 - float(C.TAX_EROSION[key]) * (rate_pct - effective_ref) / effective_ref
 	return clampf(raw, C.EROSION_MIN, C.EROSION_MAX)
 
 
 ## Apply a pending budget. `pending` is {"tax_rates_pct": {...},
-## "spending_pct_gdp": {...}}; either key may be omitted to leave it unchanged.
+## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
+## leave it unchanged.
 ##
 ## The demand impulse is raised here and nowhere else: a budget *change* is a
 ## shock, a budget left alone is not. The revenue delta is computed by running
@@ -180,8 +264,25 @@ static func commit(state, pending: Dictionary) -> void:
 			if pending["spending_pct_gdp"].has(key):
 				new_spending[key] = float(pending["spending_pct_gdp"][key])
 
-	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct)
-	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct)
+	# V1.6d. A THIRD KEY ON `pending`, beside the two dictionaries, and a scalar rather
+	# than a fourth entry in tax_rates_pct -- because it is not a rate. Optional like
+	# the other two, so every existing caller that sends two keys keeps the schedule it
+	# had.
+	var new_progressivity: float = float(pending.get(
+		"tax_progressivity", ns.tax_progressivity
+	))
+
+	# Both read at their OWN schedule, which is what makes a bracket change on its own
+	# raise the demand impulse below. This is the whole of progressivity's revenue
+	# price: the same headline rate collects less at a steeper schedule, so the delta
+	# falls out of the erosion curve rather than out of a term of its own. See
+	# tax_constants.PROGRESSIVITY_BASE_BETA.
+	var old_factor: float = Tax.progressivity_base_factor(ns)
+	var new_factor: float = Tax.base_factor_at(
+		new_progressivity, float(ns.start_tax_progressivity)
+	)
+	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct, old_factor)
+	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct, new_factor)
 
 	var old_spend: float = ns.player_spending_pct_gdp()
 	var new_spend := 0.0
@@ -200,6 +301,9 @@ static func commit(state, pending: Dictionary) -> void:
 
 	ns.tax_rates_pct = new_rates
 	ns.spending_pct_gdp = new_spending
+	ns.tax_progressivity = clampf(
+		new_progressivity, TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
+	)
 	recompute(state, ns)
 
 
@@ -233,6 +337,22 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 
 	var out: Array[Dictionary] = []
 	for _i in range(months):
+		# V1.6a, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This loop has never
+		# advanced the clock on its copy: it ran twelve ticks at one date, and until now
+		# nothing it called computed anything from the date -- bloc.gd, defence.gd and
+		# cabinet.gd read state.year only to STAMP a record, and calendar.gd, which
+		# genuinely reads it, is not run here. The cycle is the first thing in the
+		# projection that is a function of the month, so a frozen clock made every
+		# projected month repeat the current month's impulse. tests/test_cycle.gd caught
+		# it on the first run: month 1 projected -0.903 and delivered -0.690.
+		#
+		# This is docs/decision-log.md's V1.5d finding one layer down -- a harness that
+		# silently does not do the thing it appears to do -- and it was invisible for
+		# eleven sessions because no reader existed to notice.
+		sim.month += 1
+		if sim.month > 12:
+			sim.month = 1
+			sim.year += 1
 		Economy.tick_month(sim)
 		tick_month(sim)
 		# In the same position main.gd runs it -- after Budget, before the snapshot
@@ -254,6 +374,22 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
 		Companies.tick_month(sim, loader)
+		# In main.gd's slot, and required for the reason the five above it are: a
+		# projection that held the investment register frozen would report a
+		# programme committed this month as costing nothing AND would hold the
+		# capital stock still, so the one surface in the game that promises "this
+		# is what will happen" would be silent about both halves of what the player
+		# just signed. V1.3b's repair, made a seventh time rather than rediscovered
+		# a seventh time.
+		Investment.tick_month(sim)
+		# In main.gd's slot, and required for the reason the six above it are: a
+		# projection that held the project register frozen would report a build begun
+		# this month as costing nothing, and -- worse than any of them -- would never
+		# COMPLETE one inside the projected window, so the one surface that promises
+		# "this is what will happen" would be silent about the only moment this lever
+		# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
+		# time.
+		Projects.tick_month(sim, loader)
 		# In main.gd's slot a fifth time, and required for the same reason the four
 		# above it are: a projection that held the quality stock frozen would report a
 		# spending cut as costing nothing beyond its own delta, when the whole point of
@@ -272,6 +408,18 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
 		# time rather than rediscovered a sixth time.
 		Unrest.tick_month(sim)
+		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
+		# below asks about Media gets the OPPOSITE answer -- so the two sit together
+		# deliberately, as the pair that shows what the test actually is.
+		#
+		# Media is refused because `framing_gain` reaches a figure only through approval
+		# and this loop holds no election. Inflation is required because it writes
+		# inflation_impulse_pct, the eighth addend in economy.gd's growth sum, so it
+		# reaches GDP, revenue and the deficit on the very next iteration of this loop.
+		# A projection that held it frozen would report a player heading into an
+		# inflationary boom as growing normally for twelve months, and the 1e-9 equality
+		# tests/test_budget.gd asserts is a done-when condition rather than a nicety.
+		Inflation.tick_month(sim)
 		# V1.5d is the first session since V1.3b whose tick does NOT belong here, and
 		# the omission is deliberate rather than forgotten. Media.tick_month() writes
 		# `framing_gain`, which has exactly one reader -- opinion.gd's bloc loop -- and
@@ -326,8 +474,46 @@ static func snapshot(state) -> Dictionary:
 		# V1.4c, here for the same reason: the dividend line lags a month, so the
 		# projection is the surface that shows it arriving.
 		"dividend_revenue_pct_gdp": ns.dividend_revenue_pct_gdp,
+		# V1.6d, and on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the
+		# budget panel compares a PROPOSED position against the current one, and a
+		# preview has no NationState the panel can reach. It is the EFFECTIVE index --
+		# Demography's measured drift plus the player's own policy offset -- because the
+		# drift alone is the half the player cannot move and the readout exists for the
+		# half they can.
+		"gini_effective": float(ns.gini_index) + Tax.gini_policy_offset(ns),
 		"deficit_pct_gdp": ns.deficit_pct_gdp,
 		"demand_impulse_pct": ns.demand_impulse_pct,
+		# V1.6a, and this session added NO tick call to project() at all -- the first
+		# since V1.3b not to. The cycle is written inside Economy.tick_month(), which
+		# this loop already runs, so the projection reproduces it exactly and
+		# tests/test_budget.gd's 1e-9 equality holds untouched with the cycle live.
+		# That is the same structural call src/sim/cycle.gd's header makes about the
+		# balance harnesses, paying off at a third site nobody had to remember.
+		#
+		# It is on the snapshot because the budget panel's forecast band needs the
+		# projected path and a projection has no NationState the panel can reach --
+		# deployment_bill_pct_gdp's reason at V1.3g.
+		"cycle_impulse_pct": ns.cycle_impulse_pct,
 		"potential_shift_pct": ns.potential_shift_pct,
+		# V1.6e, on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the
+		# budget panel compares a PROJECTED month against the current one and a
+		# projection has no NationState the panel can reach. BOTH HALVES are here --
+		# the bill the treasury pays now and the trend the capital has bought -- because
+		# the whole point of this lever is that the two arrive years apart, and the
+		# projection is the only surface that can show the second one coming.
+		"investment_bill_pct_gdp": ns.investment_bill_pct_gdp,
+		"investment_trend_shift_pct": Investment.national_trend_shift_pct(ns),
+		# V1.6f, on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the budget
+		# panel compares a PROJECTED month against the current one and a projection has no
+		# NationState the panel can reach.
+		#
+		# ONE KEY AND NOT THREE, which is the fifteenth screenshot pass's correction read
+		# from the model side. The first version also carried the accumulated payoff and a
+		# count of live builds, on V1.6e's "both halves" argument -- and neither is read
+		# by anything, because the payoff belongs on Public Works (which has the
+		# NationState) and the count made this panel's widest cell and pushed a column off
+		# the window. A snapshot key nothing reads is a tuned constant nothing reads:
+		# deleted rather than left, U6a's day budget and V1.3e's AGREEMENT_ACCEPT_MIN.
+		"project_bill_pct_gdp": ns.project_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

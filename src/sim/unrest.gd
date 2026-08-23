@@ -47,12 +47,20 @@ extends RefCounted
 ## Legislature.apply(); `gini_index` has one and it is Demography.tick_month(). This file
 ## only ever reads both, and tests/test_unrest.gd asserts it by reading the file — the
 ## idiom people-model.md, calendar-model.md, society-model.md and demography-model.md
-## all use.
+## all use. V1.6d discharges section 6's stopgap on the Gini WITHOUT touching that
+## property: the player's tax policy reaches the index as a second READ inside
+## inequality_deviation() below, and Demography.tick_month() is still the only thing
+## that writes it.
 
 const K = preload("res://src/sim/unrest_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
+# V1.6d, and the fifth preload rather than a reverse edge. tax.gd is a LEAF --
+# it preloads two constants files and nothing else -- so this adds no cycle and no
+# ordering question. The edge runs this way because the grievance is what the
+# distribution COSTS, and docs/tax-model.md owns what it is.
+const Tax = preload("res://src/sim/tax.gd")
 
 
 ## Zero, explicitly, and the explicitness is the point.
@@ -172,20 +180,36 @@ static func hardship(sat: Dictionary) -> float:
 	return -total / share_sum
 
 
-## How far this nation's Gini index has drifted since the game began, in points.
+## How far this nation's Gini index has drifted since the game began, in points —
+## the measured drift plus what the player's own tax policy has done to it.
 ##
-## A PURE READ of two fields Demography writes and content seeds — no accumulator here,
-## no writer here, and no save entry of its own beyond the drift Demography already owns.
-## Defence.allies()' shape, which ROADMAP.md's decomposition named for this statistic in
-## advance.
+## THE DECLARED STOPGAP IS DISCHARGED HERE, AT V1.6d, AND THE TRIPWIRE FIRED AS
+## DESIGNED. V1.5c shipped this as a pure read of two fields Demography writes, with
+## docs/tiers/v1.md section 6 named as the real writer, and wrote
+## tests/test_unrest.gd's insensitivity assertion so that it would go RED the day
+## section 6 landed rather than being edited quietly. It was watched going red before
+## it was rewritten.
 ##
-## THE DECLARED STOPGAP. docs/tiers/v1.md section 6 owns the instruments — brackets,
-## wealth, capital gains — and nothing that exists today moves this number: not the
-## corporate rate, not a state holding, not a sector burden. That insensitivity is
-## asserted in tests/test_unrest.gd against all three, which turns "declared stopgap"
-## into a tripwire that goes red the day section 6 lands instead of a sentence in a doc.
+## WHAT CHANGED IS A SECOND READ, NOT A SECOND WRITER, and that is the V1.6
+## decomposition's own call 4 — which asked for a second FIELD, and did not need one.
+## Tax.gini_policy_offset() is a pure function of `tax_progressivity` and two tax rates
+## the save already carries, so:
+##
+##   - Demography.tick_month() is still the ONLY writer of `gini_index`, and both this
+##     file's and test_demography.gd's read-the-file checks pass unchanged;
+##   - there is no accumulator, no field and no save entry on either side of the sum;
+##   - the effective index stays Defence.allies()' shape, which is what V1.5c chose it
+##     for and what the discharge had to preserve rather than spend.
+##
+## TWO THIRDS OF THE OLD ASSERTION SURVIVES, and the surviving two thirds is the
+## interesting half. Section 6's instruments are brackets, capital gains and wealth;
+## the CORPORATE rate is not on that list, and neither is a state holding or a sector
+## burden. So the index is still exactly blind to all three, and the rewritten test
+## asserts that blindness alongside the new sensitivity rather than dropping it.
 static func inequality_deviation(ns) -> float:
-	return float(ns.gini_index) - float(ns.start_gini_index)
+	return (
+		float(ns.gini_index) + Tax.gini_policy_offset(ns) - float(ns.start_gini_index)
+	)
 
 
 ## What the country's grievance takes off every bloc's approval target, on the [-1, +1]

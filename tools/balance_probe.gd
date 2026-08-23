@@ -20,6 +20,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -37,11 +38,14 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -358,6 +362,82 @@ const MEDIA_REGIMES := {
 	"managed_censors": {"budget": REGIMES["managed"], "censor_month": 24},
 }
 
+## V1.6d. *** THREE NEW REGIMES, AND THEY ARE NEEDED FOR THE REASON V1.5c's BLIND SPOT
+## WAS: the twenty-nine regimes above set three tax keys and no schedule, so the whole of
+## this session is STRUCTURALLY UNREACHABLE BY EVERY ONE OF THEM. *** (a), (b) and (c)
+## each needed none because a statistic is not a verb; a tax is, which is V1.3a's rule
+## coming back for the first time in this block.
+##
+## The third takes docs/unrest-model.md's own mid-run switch shape, because a
+## distributional lever is slow and the reachable case is *govern well, win, then
+## redistribute* rather than *provoke in month 1 and lose in 2027*.
+const TAX_REGIMES := {
+	"redistributive": {
+		"budget": {
+			"tax_rates_pct": {"capital_gains": 10.0, "wealth": 0.5},
+			"tax_progressivity": 0.5,
+		},
+	},
+	"flat_tax": {
+		"budget": {
+			"tax_rates_pct": {"capital_gains": -15.0},
+			"tax_progressivity": -0.7,
+		},
+	},
+	"managed_then_redistributive": {
+		"budget": REGIMES["managed"],
+		"switch_month": 20,
+		"switch_delta": {
+			"tax_rates_pct": {"capital_gains": 10.0, "wealth": 0.5},
+			"tax_progressivity": 0.5,
+		},
+	},
+}
+
+## V1.6e. *** TWO NEW REGIMES, AND THEY ARE THE EXPENSIVE KIND. *** An investment
+## programme is a verb no budget regime issues, so the harness had to learn it exactly
+## as V1.3c, V1.3g, U6a, V1.4a and V1.4c each did; V1.4b's and V1.5a's were the cheap
+## kind only because a law at a month was already a shape this file knew. Every one of
+## the thirty-two regimes above is structurally unreachable by this session.
+##
+## `industrial_policy` backs the largest sector at the harshest authored intensity from
+## month 6 and never withdraws -- the reachable worst case for the bill, the trend
+## channel and the guard rail at once, which is the shape the subsidy and the burden
+## regimes both take.
+##
+## `managed_then_invest` takes docs/unrest-model.md's mid-run switch shape for
+## docs/tax-model.md's reason: this lever's t90 is sixty months, so the reachable case
+## is *govern well, win the first election, then commit* rather than *commit in month 1
+## and be thrown out in 2027 before a single point of capital has been built*. That is
+## V1.5c's blind spot named in advance rather than discovered by a probe that ran a
+## government already out of office.
+const INVESTMENT_REGIMES := {
+	"industrial_policy": {"budget": REGIMES["managed"], "invest_month": 6},
+	"managed_then_invest": {"budget": REGIMES["managed"], "invest_month": 30},
+}
+
+## V1.6f. *** TWO NEW REGIMES, AND THEY ARE THE EXPENSIVE KIND AGAIN. *** A project is
+## a verb no budget regime issues, so the harness has to learn it exactly as V1.3c,
+## V1.3g, U6a, V1.4a, V1.4c and V1.6e each did. Every one of the thirty-four regimes
+## above is structurally unreachable by this session.
+##
+## `public_works` begins the two projects the content gate permits from month 6 and
+## never abandons either -- the reachable worst case for the bill, the payoff and the
+## accumulator's guard rail at once, which is the shape the subsidy, the burden, the
+## nationalisation and the investment programme all take.
+##
+## `managed_then_build` takes the mid-run switch shape V1.5c invented and V1.6e reused,
+## and it matters more here than in either: the largest project takes ninety-six months
+## to open, so a government that commits in month 1 and loses in 2027 has measured a
+## build nobody ever collected. Month 30 is after the first presidential election and
+## leaves the shorter of the two projects finishing inside the run. V1.5c's blind spot
+## named in advance rather than discovered by a probe that ran a government already out
+## of office.
+const PROJECT_REGIMES := {
+	"public_works": {"budget": REGIMES["managed"], "build_month": 6},
+	"managed_then_build": {"budget": REGIMES["managed"], "build_month": 30},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -451,6 +531,24 @@ func _init() -> void:
 				int(regime["settle_month"]),
 				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
 			)
+		for name in TAX_REGIMES.keys():
+			var regime: Dictionary = TAX_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+			)
+		for name in INVESTMENT_REGIMES.keys():
+			var regime: Dictionary = INVESTMENT_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				int(regime["invest_month"])
+			)
+		for name in PROJECT_REGIMES.keys():
+			var regime: Dictionary = PROJECT_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, int(regime["build_month"])
+			)
 
 	quit(0)
 
@@ -472,10 +570,18 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 			var start: float = float(ns.start_spending_pct_gdp.get(key, 0.0))
 			spending[key] = clampf(start + float(delta["spending_pct_gdp"][key]), 0.0, 100.0)
 		pending["spending_pct_gdp"] = spending
+	# V1.6d. A DELTA like the two above it, against the nation's own start, which is what
+	# keeps a regime nation-relative. Clamped to the model's band rather than to [0, 100],
+	# because the schedule is an index and not a rate.
+	if delta.has("tax_progressivity"):
+		pending["tax_progressivity"] = clampf(
+			float(ns.start_tax_progressivity) + float(delta["tax_progressivity"]),
+			TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
+		)
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -519,6 +625,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# harness was running the pre-session model and its agreement meant nothing. That
 		# is U6a's day-loop finding: a system this loop never calls is a system whose
 		# bit-identity proves nothing about it.
+		# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
+		Inflation.tick_month(state)
 		Media.tick_month(state, loader)
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
@@ -547,6 +655,19 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# V1.6e, in main.gd's slot beside Companies. Inert for every regime that invests
+		# in nothing -- the trend shift is EXACTLY 0.0 with no programme standing and the
+		# bill is exactly 0.0 -- so the thirty-two regimes above are provably unchanged by
+		# it. Added to the harness in the same commit as the model, which is V1.5d's
+		# finding applied rather than rediscovered: a system this loop never calls is a
+		# system whose bit-identity proves nothing about it.
+		Investment.tick_month(state)
+		# V1.6f, in main.gd's slot. Runs for EVERY regime and not only the two that
+		# build, for the reason U6a's day loop does: a tick that only ever executes
+		# under the regime designed to exercise it is a tick nobody has tested, and
+		# V1.5d shipped a whole session whose harness never called its own module.
+		# With an empty register this is one sorted key list over nothing.
+		Projects.tick_month(state, loader)
 		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
 		# additions above it, and that is the difference this row exists to record: the
 		# quality stock reads the live spending line, so it diverges from its own
@@ -595,6 +716,10 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_settle(state, loader, ns, regime_name, year, month)
 		if i + 1 == censor_month:
 			_censor(state, loader, ns, regime_name, year, month)
+		if i + 1 == invest_month:
+			_invest(state, loader, ns, regime_name, year, month)
+		if i + 1 == build_month:
+			_break_ground(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -1404,3 +1529,64 @@ func _days_in_month(m: int, y: int) -> int:
 	if m == 2 and (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)):
 		return 29
 	return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
+
+
+## V1.6e. Backs the LARGEST sector by output at the harshest authored intensity and
+## leaves the programme standing for the rest of the run -- _subsidise()'s shape and
+## for its reason: a regime that backs a sector too small to move anything measures
+## the content rather than the channel.
+##
+## Largest by output rather than by name, so this stays nation-relative the way every
+## other regime in this file is.
+## V1.6f. Begins every project the content's own `project_count` gate permits, longest
+## first, and never abandons one. The gate is read off Projects.available() rather than
+## counted here, so a content change that widens or narrows it moves this regime with
+## it -- the concurrency ceiling is content, which is why projects_constants.gd ships no
+## constant for it.
+func _break_ground(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var starts: Array = []
+	for a in loader.project_actions:
+		if String(a.effects.get("project", {}).get("op", "")) == "start":
+			starts.append(a)
+	starts.sort_custom(func(x, y):
+		return (
+			int(x.effects["project"]["build_months"]) > int(y.effects["project"]["build_months"])
+		)
+	)
+
+	var begun: Array[String] = []
+	for a2 in starts:
+		if Projects.execute(state, ns, loader.project_actions, a2).get("applied", false):
+			begun.append("%s (%d mo)" % [a2.id, int(a2.effects["project"]["build_months"])])
+	if begun.is_empty():
+		printerr("  no project could be begun")
+		return
+	print("  %d-%02d %s: broke ground on %s" % [year, month, regime_name, ", ".join(begun)])
+
+
+func _invest(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var best := ""
+	var best_output := -1.0
+	for sector in ns.sector_investment.keys():
+		var out: float = float(ns.sector_output.get(sector, 0.0))
+		if out > best_output:
+			best_output = out
+			best = String(sector)
+
+	var action = null
+	for a in loader.investment_actions:
+		var terms: Dictionary = a.effects.get("investment", {})
+		if String(terms.get("op", "")) != "invest" or String(terms.get("sector", "")) != best:
+			continue
+		if action == null or float(terms["intensity"]) > float(action.effects["investment"]["intensity"]):
+			action = a
+	if action == null:
+		printerr("  no 'invest' action is authored for sector '%s'" % best)
+		return
+
+	var result := Investment.execute(state, ns, loader.investment_actions, action)
+	print("  %d-%02d %s: investment '%s' in %s — %s (intensity %.2f)" % [
+		year, month, regime_name, action.id, best,
+		"APPLIED" if result.get("applied", false) else "REFUSED",
+		float(result.get("intensity_after", 0.0)),
+	])

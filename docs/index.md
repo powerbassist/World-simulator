@@ -22,6 +22,9 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[engine-decision]] — Godot 4 + GDScript, and why not Unity or Unreal
 - [[data-architecture]] — static content vs live state, and why there is no database
 - [[economy-model]] — the economy and budget formulas, and why nothing diverges
+- [[cycle-model]] — the business cycle: a deterministic shock, measured off thirty-four years of growth
+- [[inflation-model]] — inflation as a stock on the unemployment gap, and the thirteenth issue
+- [[credit-model]] — the bond yield as a spread over a constant that has been flat since the MVP, and the rating that reads it
 - [[opinion-model]] — voter blocs, salience, approval inertia, and polling noise
 - [[election-model]] — vote share, turnout weighting, attribution, and no election-day noise
 - [[electoral-systems]] — the ten real electoral systems, every date's source, and what each reduction throws away
@@ -46,10 +49,14 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[society-model]] — service quality as a stock the project had already built three times under other names, corruption as the factor that decides what a spending line buys, and the double count that had to be resolved rather than avoided
 - [[unrest-model]] — the grievance stock and the unions that act on it, an inequality statistic nothing the player can move, and the output-only price its own probe refuted
 - [[media-model]] — outlets with leanings, framing as a per-bloc salience gain on a machine `opinion.gd` had been running since S10, and press freedom priced in a legitimacy quantity that turned out to already exist
+- [[tax-model]] — five taxes and brackets, the wealth tax that is not on the other four's rate scale, and the tripwire that could not fire
+- [[sector-model]] — sectoral investment: a capital stock on the sector's own trend rate, why `sector_output` had no room for a second writer, and why the lever buys output and no jobs
+- [[projects-model]] — infrastructure projects: a dated commitment that bills while it builds and pays once when it opens, why the diary needed no second scheduler, and why the bill is not the cost
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
+- [[playability-audit]] — the first pass that tried to PLAY the game: nine defects, five that break a playthrough, and the register kept as assertions that turn red when fixed
 
 ## Scope tiers
 

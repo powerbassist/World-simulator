@@ -446,6 +446,12 @@ func _test_unrest_preloads_are_exactly_these() -> void:
 		"res://src/sim/opinion.gd",
 		"res://src/sim/opinion_constants.gd",
 		"res://src/sim/economy_constants.gd",
+		# V1.6d, and it is the first addition to this list since V1.5c wrote it. tax.gd
+		# is what makes the player's own budget reach inequality_deviation(), and it is
+		# admitted rather than routed around because the alternative -- reading the
+		# offset off a field somebody else wrote -- is the second writer the whole
+		# discharge exists to avoid.
+		"res://src/sim/tax.gd",
 	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):
@@ -462,6 +468,23 @@ func _test_unrest_preloads_are_exactly_these() -> void:
 	var opinion_src := FileAccess.get_file_as_string("res://src/sim/opinion.gd")
 	if opinion_src.contains("res://src/sim/unrest.gd"):
 		_fail("opinion.gd preloads unrest.gd, and unrest.gd preloads opinion.gd -- that is the cycle ns.unrest_opinion_load exists to avoid")
+
+	# V1.6d. Admitting tax.gd above is only safe while tax.gd is a LEAF, so that is
+	# checked here rather than assumed: this file's whole preload argument is about
+	# edges, and an edge to a module that itself preloads systems would smuggle the
+	# graph back in one hop further out. tests/test_tax.gd owns the statelessness of
+	# that file; this owns its position in the graph.
+	var tax_src := FileAccess.get_file_as_string("res://src/sim/tax.gd")
+	if tax_src == "":
+		_fail("could not read src/sim/tax.gd")
+		return
+	for line in tax_src.split("
+"):
+		var stripped: String = line.strip_edges()
+		if not stripped.begins_with("const") or not stripped.contains("preload("):
+			continue
+		if not stripped.contains("_constants.gd"):
+			_fail("tax.gd preloads something that is not a constants file, so it is no longer a leaf and unrest.gd's preload set is no longer closed: %s" % stripped)
 
 
 func _test_content_loads() -> void:

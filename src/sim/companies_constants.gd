@@ -301,7 +301,81 @@ const PRICE_TO_OUTPUT := 1.00
 ## again after the correction. PRICE_TO_OUTPUT sets the SIZE of the act and this
 ## sets its fiscal SIGN; they are two decisions, and a session that wanted state
 ## ownership to be a slow fiscal gain or a slow drain would move this one alone.
-const DIVIDEND_YIELD := 0.02
+##
+## V1.6a ARRIVED WITH THE CYCLE AND DISCHARGED NOTHING, WHICH IS NOT WHAT V1.6's
+## DECOMPOSITION PREDICTED. That decomposition read the sentence above -- "no risk and
+## no business cycle for an equity premium to be compensation FOR" -- as two clauses
+## with two owners, and booked the procyclical half to V1.6a as free: sector_output
+## already moves with the cycle through SECTOR_CYCLE_BETA, so a claim on it should have
+## become procyclical with no code at all.
+##
+## tools/cycle_probe.gd table (e) refuted it, and the mechanism is one line of
+## Companies.dividend_revenue_pct_gdp(): the line is a SHARE OF GDP, `100.0 * paid /
+## ns.gdp_eur_bn`, and the cycle moves the numerator and the denominator together. They
+## cancel. What survives is the sector-COMPOSITION effect alone -- industry swings at
+## SECTOR_CYCLE_BETA 1.8 against services' 0.8 -- and it measures 1.07x the flat-cycle
+## variation against a pre-committed floor of 1.5x.
+##
+##     A DIVIDEND EXPRESSED AS A SHARE OF GDP IS NOT PROCYCLICAL BY CONSTRUCTION.
+##
+## *** V1.6c IS WHERE THE OBLIGATION IS DISCHARGED, AND THE ANSWER IS THAT THE PREMIUM
+## IS PRICED ON A RATE. *** V1.6a left this constant one extra thing to answer: pricing
+## the dividend on a GDP share is what makes the equity premium unreachable, so V1.6c
+## either prices it on something that is not a GDP share or says out loud there is no
+## channel. A RATE is the one quantity in this model that is not a share of GDP, and
+## V1.6c is the session that makes one move -- src/sim/credit.gd floats the BORROWING
+## rate around economy_constants.DEBT_REAL_RATE_PCT while this yield stays fixed.
+##
+## So the identity below replaces V1.4c's:
+##
+##     DIVIDEND_YIELD / PRICE_TO_OUTPUT * 100 == DEBT_REAL_RATE_PCT + EQUITY_PREMIUM_PCT
+##     0.0312          / 1.00             * 100 == 2.00 + 1.12 == 3.12
+##
+## tests/test_credit.gd PINS that identity rather than this file asserting it, so a later
+## session moving either side turns a test red and has to come and say why. It is written
+## as a literal with the arithmetic here rather than as a cross-file const expression,
+## which is this project's style for a derived number.
+##
+## WHAT IT BUYS IS THAT NATIONALISATION IS NO LONGER FREE OR COSTLY IN GENERAL -- it is
+## one or the other depending on how the player has governed. While the spread is under
+## the premium the state gains on the flow; once it is above, the debt that bought the
+## firm costs more than the firm returns. The crossing is EXACT and needs no simulation:
+## the two rates meet precisely where `spread == EQUITY_PREMIUM_PCT`. That is why V1.4c's
+## strictly-dominated shape does not come back -- which side you are on is a consequence
+## of your own fiscal record rather than a constant.
+const DIVIDEND_YIELD := 0.0312
+
+## V1.6c. Points of annual yield the state's claim on a firm pays ABOVE what the state
+## borrows at when its credit is unblemished. The equity premium, discharging the
+## obligation docs/tiers/v1.md section 6 handed here through V1.4c and V1.6a.
+##
+## SWEPT, and the kill switch did NOT fire. tools/credit_probe.gd table (g), two clauses
+## closing the interval from opposite sides:
+##   (i)  NOT FREE -- `hands_off` peak spread 1.1761 must EXCEED the premium, so a
+##        president who does nothing for fourteen years ends up losing on the flow;
+##   (ii) NOT POINTLESS -- the extra revenue is >= 0.05 points of GDP at the largest
+##        holding France can actually take (Banque Meridienne at state_share 1.0, 0.0952
+##        points of GDP at the anchor), which is docs/companies-model.md table (m)'s own
+##        readability floor, applied to the increment because the increment is what shows
+##        on the budget panel's dividend row.
+## Exact crossings [1.05086, 1.19130], midpoint 1.12108, and that is a FIXED POINT
+## rather than one reading: the interval is measured on a path this constant is on, so it
+## was iterated until the shipped value equalled the midpoint measured at it. Three passes,
+## residual movement under the second decimal. Stronger than V1.6b's check that the table
+## moves by less than 0.003 when the constant does.
+##
+## CLAUSE (i) WAS TIGHTENED FROM WHAT THE PROBE PRE-COMMITTED, and the change is recorded
+## in tools/credit_probe.gd rather than hidden: it read *some reachable regime*, and the
+## only regime exceeding a high premium is one that survives exactly one term, so the
+## clause was a bound and not a selector -- V1.5a's CORRUPTION_DELIVERY_BETA failure.
+## Naming `hands_off` makes it select, and it makes the better claim: DOING NOTHING FOR
+## LONG ENOUGH TURNS A NATIONALISATION INTO A LOSS.
+##
+## It is well under a real-world equity risk premium of three to five points, and that is
+## the honest place for it: this model still has no equity RISK to compensate for beyond
+## the sovereign's own, so a premium at the empirical level would be the free lunch V1.4c
+## corrected away from.
+const EQUITY_PREMIUM_PCT := 1.12
 
 ## Hard clamp on the whole dividend line, points of GDP. SUBSIDY_BILL_MAX_PCT_GDP's
 ## role on the other side of the budget, and measured the same way: a reachable

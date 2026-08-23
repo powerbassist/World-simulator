@@ -97,6 +97,61 @@ SPARSE_INDICATORS = {
     "gini": "SI.POV.GINI",
 }
 
+# V1.6a. The business cycle's per-nation amplitude, and the FIRST indicator in this
+# file read over a different window from everything above it -- which is the honest
+# cost of the block and is recorded rather than absorbed.
+#
+# V1.5b's ageing slope cost "one extra read of a series already on disk and no extra
+# download". This one cannot: measuring how volatile a country's growth is needs
+# several cycles, and 2015-2024 contains one. The download line in docs/data-sources.md
+# fetches this code alone over date=1990:2024.
+#
+# THE EXCLUSION IS THE BLOCK'S ONE EDITORIAL ACT AND IT IS LOAD-BEARING. On the window
+# the rest of the file already uses, France's real-growth standard deviation is 3.333
+# -- and 0.579 with 2020 and 2021 removed, a factor of 5.8. Every nation collapses the
+# same way. A session that had reused the existing window would have shipped a
+# "business cycle" whose entire amplitude was one pandemic, and it would have looked
+# measured. A pandemic is an exogenous disaster, which docs/tiers/v1.md section 8 owns;
+# a business cycle is "booms and recessions that arrive whether or not the player
+# deserves them", which is section 6's. 2008-09 is NOT excluded, because a financial
+# crisis IS a business cycle.
+#
+# The result is measured and it does not cluster: 1.262 (France) to 2.704
+# (Luxembourg), a 2.14x spread whose ordering holds across five different windows.
+CYCLE_INDICATOR = "NY.GDP.MKTP.KD.ZG"
+CYCLE_FROM_YEAR = 1990
+CYCLE_EXCLUDE_YEARS = [2020, 2021]
+
+# V1.6b. Inflation: the per-nation anchor, and the two roster-wide constants
+# src/sim/inflation_constants.gd needs. Reuses V1.6a's WINDOW but is still its own
+# DOWNLOAD -- load_wb_indicator_series() reads sources/wb/{code}.json, one file per
+# indicator code, so V1.5b's "one extra read of a series already on disk" does not
+# transfer and docs/data-sources.md gains a second date=1990:2024 line.
+#
+# THE EXCLUSION LIST IS EMPTY AND THAT IS AN EDITORIAL ACT, not an omission. V1.6a
+# drops 2020-21 from the growth series because a pandemic is an exogenous OUTPUT
+# shock in a series measuring output, which docs/tiers/v1.md section 8 owns. The
+# 2022-23 energy spike is a PRICE shock in a series measuring prices -- it is the
+# thing this indicator exists to record, and dropping it would leave an inflation
+# model calibrated on the thirty years in which nothing happened. So `_excludes` is
+# written into every nation file as [] rather than left out, for the reason
+# `inequality._year` is written: a provenance record that hides its own editorial
+# act is worse than none.
+#
+# Keeping it costs what it should. Spain's mean over 1990-2024 is 2.90 against 2.62
+# with 2022-23 removed, and Germany's 2.09 against 1.83.
+PRICES_INDICATOR = "FP.CPI.TOTL.ZG"
+PRICES_FROM_YEAR = 1990
+PRICES_EXCLUDE_YEARS = []
+
+# V1.6b. The Phillips regression needs unemployment over the SAME window as prices,
+# not over the 2015-2024 one everything else reads it at. The wide download is a
+# strict superset -- verified row by row, 100 overlapping rows, zero differing values
+# -- and every other caller reaches this series through load_wb_indicator_for_year(),
+# which matches an exact year. So the download was widened rather than duplicated,
+# and this constant records that the widening is deliberate.
+PRICES_UNEMPLOYMENT_INDICATOR = "SL.UEM.TOTL.ZS"
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -204,6 +259,227 @@ def build_inequality_block(nid, now, base):
     }
 
 
+def load_wb_indicator_series(code, lo, hi, exclude):
+    """V1.6a. The whole series per nation over [lo, hi], with `exclude` years dropped.
+
+    A third loader rather than a third use of one of the two above, and the reason is
+    the same one that kept load_wb_indicator_nearest_year() separate: those two answer
+    "what was the value at a year", which is what every block but this one needs. This
+    answers "what did the series DO", and folding it in would give the other callers a
+    silent way to read a window when they meant to read a year.
+    """
+    path = SOURCES / "wb" / f"{code}.json"
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    out = {}
+    for row in (data[1] or []):
+        if row["value"] is None:
+            continue
+        y = int(row["date"])
+        if y < lo or y > hi or y in exclude:
+            continue
+        out.setdefault(row["countryiso3code"], {})[y] = row["value"]
+    return out
+
+
+def build_cycle_blocks(series):
+    """V1.6a. Per-nation growth volatility, and each nation's ratio to the roster mean.
+
+    THE ONLY BLOCK IN THIS FILE THAT NEEDS THE WHOLE ROSTER AT ONCE, which is why it is
+    a function over all ten and returns a dict, where build_cohorts_block() and
+    build_inequality_block() each take one nation. The denominator is the mean of the
+    ten standard deviations, so `amplitude_rel` says "how volatile is this country
+    compared with a European average" and src/sim/cycle_constants.gd's
+    CYCLE_AMPLITUDE_PCT is then the amplitude OF that average.
+
+    Anchored on the roster mean rather than on France, and that is
+    docs/media-model.md's correction inherited rather than rediscovered: V1.5d
+    anchored a deviation on the player's own nation and needed a constant near 250 for
+    it. A mean anchor makes the swept constant mean the same thing for all ten.
+
+    Population-weighting the mean was considered and dropped. It would put the anchor
+    within a rounding error of Germany-plus-France and make Luxembourg's ratio a
+    statement about Germany, where the unweighted mean makes it a statement about
+    "a European economy" -- which is what the constant it scales claims to be.
+    """
+    sd = {}
+    for nid in NATIONS:
+        values = list(series.get(nid, {}).values())
+        # Five is the fewest a standard deviation says anything about, and the roster
+        # has 33 each. A window this short is a broken download, not a quiet country.
+        if len(values) < 5:
+            sys.exit(
+                f"{nid}: only {len(values)} usable years of {CYCLE_INDICATOR} in "
+                f"[{CYCLE_FROM_YEAR}, {YEAR}] excluding {CYCLE_EXCLUDE_YEARS} -- "
+                f"a growth volatility cannot be measured from that"
+            )
+        mean = sum(values) / len(values)
+        sd[nid] = (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
+
+    roster_mean = sum(sd.values()) / len(sd)
+    if roster_mean <= 0.0:
+        sys.exit("every nation's growth volatility is zero -- the series is empty")
+
+    # V1.6a. src/sim/cycle_constants.gd's CYCLE_COMMON_SHARE, printed rather than
+    # written into a nation file, because it is ONE number for the whole roster and a
+    # per-nation copy of it would be one quantity written ten times.
+    #
+    # It is why that constant is measured rather than swept. Two different statistics
+    # of the same series are printed and they agree: the variance share of the common
+    # factor, and the mean pairwise correlation. Two methods agreeing is what makes
+    # this a measurement instead of a plausible number -- V1.5c's two-harness rule,
+    # applied to data rather than to a probe.
+    years = sorted(set.intersection(*[set(series[nid]) for nid in NATIONS]))
+    dev = {
+        nid: [series[nid][y] - sum(series[nid][z] for z in years) / len(years) for y in years]
+        for nid in NATIONS
+    }
+    common = [sum(dev[nid][i] for nid in NATIONS) / len(NATIONS) for i in range(len(years))]
+
+    def pvar(xs):
+        m = sum(xs) / len(xs)
+        return sum((x - m) ** 2 for x in xs) / len(xs)
+
+    var_share = pvar(common) / (sum(pvar(dev[nid]) for nid in NATIONS) / len(NATIONS))
+    cors = []
+    for i, a in enumerate(NATIONS):
+        for b in NATIONS[i + 1:]:
+            cov = sum(dev[a][k] * dev[b][k] for k in range(len(years))) / len(years)
+            cors.append(cov / (pvar(dev[a]) * pvar(dev[b])) ** 0.5)
+    print(
+        f"cycle: common variance share {var_share:.4f} over {len(years)} years "
+        f"(mean pairwise correlation {sum(cors) / len(cors):.4f}) "
+        f"-- src/sim/cycle_constants.gd CYCLE_COMMON_SHARE"
+    )
+
+    return {
+        nid: {
+            "amplitude_rel": round(sd[nid] / roster_mean, 3),
+            "growth_sd_pct": round(sd[nid], 3),
+            "_from_year": CYCLE_FROM_YEAR,
+            "_to_year": YEAR,
+            "_excludes": list(CYCLE_EXCLUDE_YEARS),
+        }
+        for nid in NATIONS
+    }
+
+
+def _ols(xs, ys):
+    """Slope and Pearson r of a simple regression. Returns (slope, r, n)."""
+    n = len(xs)
+    mx = sum(xs) / n
+    my = sum(ys) / n
+    sxy = sum((a - mx) * (b - my) for a, b in zip(xs, ys))
+    sxx = sum((a - mx) ** 2 for a in xs)
+    syy = sum((b - my) ** 2 for b in ys)
+    if sxx <= 0.0 or syy <= 0.0:
+        sys.exit("prices: a regression input has zero variance -- the series is flat")
+    return sxy / sxx, sxy / (sxx * syy) ** 0.5, n
+
+
+def build_prices_blocks(series, unemployment):
+    """V1.6b. The per-nation inflation anchor, and the two constants measured off it.
+
+    The second block in this file that needs the whole roster at once, and for a
+    different reason from build_cycle_blocks(): that one needs the roster to form a
+    RATIO, this one needs it to pool a REGRESSION. The anchor itself is per nation and
+    could have been built one at a time; the two printed constants could not.
+
+    WHAT IS MEASURED HERE IS NOT WHAT docs/tiers/v1.md section 6 ASKED FOR, and the
+    refutation is the session's finding rather than an inconvenience. The ROADMAP row
+    specifies "a price pressure from the gap, the impulse and (a)'s shock". Regressed
+    against an output gap built the way src/sim/economy.gd builds one -- the running
+    sum of (growth - own-mean growth), per nation, demeaned -- the output gap carries
+    NO SIGNAL and its sign FLIPS between sub-samples: +0.204 pre-euro, +0.098 in the
+    euro era, -0.140 pooled. The UNEMPLOYMENT gap carries a stable, correctly-signed
+    Phillips relation in both disjoint halves. So the model reads unemployment, which
+    is docs/economy-model.md's own treatment of Okun -- the honest textbook
+    relationship rather than a bespoke one -- and it dissolves the row's other defect
+    for free, because the gap and the impulses that fill it were one quantity written
+    three times.
+
+    Both sub-sample slopes are printed, not just the pooled one. Two disjoint windows
+    agreeing on sign is V1.6a's cross-check discipline, and the pooled figure is
+    attenuated by pooling two regimes with different means -- so it is the WEAKEST of
+    the three and would be the wrong one to ship.
+    """
+    anchors = {}
+    for nid in NATIONS:
+        values = list(series.get(nid, {}).values())
+        if len(values) < 5:
+            sys.exit(
+                f"{nid}: only {len(values)} usable years of {PRICES_INDICATOR} in "
+                f"[{PRICES_FROM_YEAR}, {YEAR}] -- an anchor cannot be measured "
+                f"from that"
+            )
+        anchors[nid] = sum(values) / len(values)
+
+    # Persistence, as an AR(1) on each nation's own deviation from its own anchor.
+    # Demeaned per nation so the pooled fit measures how sticky inflation IS, not how
+    # different the ten countries are from each other.
+    lag_x, lag_y = [], []
+    for nid in NATIONS:
+        years = sorted(series[nid])
+        for i, y in enumerate(years):
+            dev = series[nid][y] - anchors[nid]
+            if i > 0 and years[i - 1] == y - 1:
+                lag_x.append(series[nid][years[i - 1]] - anchors[nid])
+                lag_y.append(dev)
+
+    rho, rho_r, rho_n = _ols(lag_x, lag_y)
+
+    # The Phillips slope, on three windows. `u_mean` is the nation's own average
+    # unemployment over the same window -- a stand-in for the structural rate, which
+    # is exactly what src/sim/economy.gd's `structural_unemployment_pct` is.
+    def slope(lo, hi):
+        xs, ys = [], []
+        for nid in NATIONS:
+            years = [
+                y for y in sorted(series[nid])
+                if lo <= y <= hi and y in unemployment.get(nid, {})
+            ]
+            if len(years) < 5:
+                continue
+            us = [unemployment[nid][y] for y in years]
+            ps = [series[nid][y] for y in years]
+            um = sum(us) / len(us)
+            pm = sum(ps) / len(ps)
+            for i in range(len(years)):
+                xs.append(us[i] - um)
+                ys.append(ps[i] - pm)
+        return _ols(xs, ys)
+
+    pre = slope(PRICES_FROM_YEAR, 1998)
+    euro = slope(1999, YEAR)
+    pooled = slope(PRICES_FROM_YEAR, YEAR)
+
+    print(
+        f"prices: persistence rho {rho:.4f} (r {rho_r:.3f}, n {rho_n}) "
+        f"-- src/sim/inflation_constants.gd INFLATION_PERSISTENCE"
+    )
+    # Sign flip is deliberate. The regression is pi on (u - u_mean) and so comes back
+    # negative; the model writes target = anchor + BETA * (structural - u), so BETA is
+    # the same slope with the argument the other way round and is POSITIVE.
+    print(
+        f"prices: Phillips slope on the unemployment gap -- "
+        f"pre-euro {-pre[0]:.4f} (r {pre[1]:.3f}, n {pre[2]}), "
+        f"euro era {-euro[0]:.4f} (r {euro[1]:.3f}, n {euro[2]}), "
+        f"pooled {-pooled[0]:.4f} (r {pooled[1]:.3f}, n {pooled[2]}) "
+        f"-- src/sim/inflation_constants.gd INFLATION_UNEMP_BETA"
+    )
+
+    return {
+        nid: {
+            "inflation_pct": round(anchors[nid], 3),
+            "_from_year": PRICES_FROM_YEAR,
+            "_to_year": YEAR,
+            "_excludes": list(PRICES_EXCLUDE_YEARS),
+        }
+        for nid in NATIONS
+    }
+
+
 def build_imported_block(year):
     every = dict(INDICATORS)
     every.update(COHORT_INDICATORS)
@@ -229,6 +505,27 @@ def build_imported_block(year):
         name: load_wb_indicator_nearest_year(code, TREND_FROM_YEAR)
         for name, code in SPARSE_INDICATORS.items()
     }
+
+    # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a
+    # ratio against the roster mean and so cannot be built one nation at a time --
+    # the only block here with that shape. See build_cycle_blocks().
+    cycle_blocks = build_cycle_blocks(
+        load_wb_indicator_series(
+            CYCLE_INDICATOR, CYCLE_FROM_YEAR, year, CYCLE_EXCLUDE_YEARS
+        )
+    )
+
+    # V1.6b. Same shape and the same reason as the line above, one session on. See
+    # build_prices_blocks() for why the regression it prints reads unemployment
+    # rather than the output gap docs/tiers/v1.md section 6 names.
+    prices_blocks = build_prices_blocks(
+        load_wb_indicator_series(
+            PRICES_INDICATOR, PRICES_FROM_YEAR, year, PRICES_EXCLUDE_YEARS
+        ),
+        load_wb_indicator_series(
+            PRICES_UNEMPLOYMENT_INDICATOR, PRICES_FROM_YEAR, year, []
+        ),
+    )
 
     imported = {}
     for nid in NATIONS:
@@ -283,6 +580,8 @@ def build_imported_block(year):
             "inequality": build_inequality_block(
                 nid, sparse["gini"][nid], sparse_base["gini"][nid]
             ),
+            "cycle": cycle_blocks[nid],
+            "prices": prices_blocks[nid],
         }
     return imported
 

@@ -69,3 +69,10 @@ const FIXED_COUNCIL_PROPOSAL := "council_proposal"
 const FIXED_COUNCIL_VOTE := "council_vote"
 const FIXED_DISSOLUTION := "dissolution_lockout"
 const FIXED_COOLDOWN := "cooldown"
+
+## V1.6f. A project under construction is dated state the game already carries, which
+## is exactly the class of thing fixed_dates() exists to surface -- and it is the
+## FIRST such row whose date the player chose. Everything else on this list is a
+## constitutional deadline, an institution's own calendar or the expiry of an act
+## already taken.
+const FIXED_PROJECT := "project_completes"

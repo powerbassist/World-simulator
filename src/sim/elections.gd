@@ -148,6 +148,42 @@ static func _tick_nation(state, ns, loader) -> Array:
 		# their behalf -- the run ends here, the same as any other lost
 		# office. See docs/political-systems.md.
 		if ns.term_limit > 0 and ns.terms_served >= ns.term_limit:
+			# V1.6 audit, V1. This used to set the flag and append NOTHING, and the
+			# result screen is gated on a non-empty Array -- so the one event that
+			# ends a French presidency rendered no screen, no pause and no card, and
+			# tick_month() then skipped the nation for good, leaving a clock running
+			# with no election able to resolve and nothing anywhere saying why. The
+			# comment above already claimed the run ends here "the same as any other
+			# lost office"; now it reports itself like one.
+			#
+			# NOTE what this does NOT do: it resolves no vote. The first attempt
+			# called resolve_executive() so the successor race could be shown, and
+			# test_balance.gd caught it -- "exactly 2 executive elections before the
+			# term limit barred a third" is a stated invariant, and the comment above
+			# is the reason for it. A termed-out incumbent does not stand, so there is
+			# no verdict to compute; the notice carries resolve_executive()'s key set
+			# with the vote emptied, so the panel needs no special case to read it.
+			results.append({
+				# Its OWN kind, not "executive". A termed-out notice is not an
+				# election -- nobody voted -- and test_balance.gd counts results by
+				# kind to assert "exactly 2 executive elections before the term limit
+				# barred a third". Reusing the kind made that invariant read 3 and
+				# turned the check red; the invariant is right and this is not an
+				# election, so the kind is what had to change.
+				"kind": "termed_out",
+				"termed_out": true,
+				"year": state.year,
+				"month": state.month,
+				"vote_share": {},
+				"seats": {},
+				"seats_total": 0,
+				"incumbent_party_id": ns.incumbent_party_id,
+				"incumbent_seats": 0,
+				"incumbent_vote_share": 0.0,
+				"largest_party_id": "",
+				"incumbent_largest": false,
+				"attribution": [],
+			})
 			ns.in_government = false
 		else:
 			var exec_result: Dictionary

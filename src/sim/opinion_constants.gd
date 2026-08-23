@@ -156,11 +156,139 @@ const BLOC_LABEL := {
 ## elections.gd's attribution naming a different issue -- both of which framing reaches
 ## for free through ns.issue_salience, with no edit near either file. See
 ## docs/media-model.md section 11.
+## V1.6b ANSWERS IT YES FOR THE FIRST TIME, and the entry is longer than the five noes
+## above it because a yes has to survive tests a no never reaches. `inflation` is the
+## thirteenth key. V1.3d's four tests plus the fifth V1.4b forced, in the order they
+## were settled:
+##
+##   1. The price is not nameable otherwise -- HOLDS, and MORE STRONGLY than europe's.
+##      Every no above had an authored `bloc_offset` to fall back on: ownership.json,
+##      the two `society` laws, the unrest offset. Inflation ships NO VERB AND NO
+##      CONTENT OBJECT -- docs/tiers/v1.md section 6 runs (a), (b) and (c) under V1.5's
+##      inverted rule because there is no monetary policy in this game -- so there is
+##      no authored row anywhere it could hang on. Its only alternative was an
+##      `inflation_opinion_load` on unrest_opinion_load's shape.
+##   3. A flat offset cannot become more salient -- HOLDS, AND IT IS THE DISCRIMINATOR
+##      that separates this from the load. SALIENCE_GAIN's entire justification is that
+##      bad news crowds out the rest of the agenda, and inflation is the canonical case
+##      of an issue that becomes the ONLY issue. A load never enters salience_weights()
+##      at all, so the load would have made that structurally impossible.
+##   5. Does a prior refusal have 1 and 3 identically? NO. Unrest's price is a load
+##      precisely because a grievance number is already its own salience; ownership and
+##      corruption both had a bloc_offset. Nothing already refused shares this footing.
+##   4. NOT COLLINEAR, and this is the test the session was most exposed to, because
+##      `jobs` and `inflation` are driven by ONE quantity -- unemployment. It was
+##      measured with a FIT-STYLE criterion rather than a band, which is V1.6a's lesson:
+##      a band edge moves under widening, a comparison against the model's own accepted
+##      standard does not. |corr(sat.inflation, sat.growth)| must not exceed
+##      |corr(sat.jobs, sat.growth)| ON THE SAME RUN -- the entanglement the model
+##      already accepts between two keys Okun's law links mechanically. Two things save
+##      it: the LAG (INFLATION_CONVERGENCE's half-life is 12.8 months, so this prices
+##      where unemployment was a year ago) and the OPPOSITE SIGN (a boom is a plus on
+##      `growth` and a minus here). That is not a re-split of one weight, which is what
+##      killed `corruption`; it is the first genuine TRADE-OFF in this model, and it is
+##      what makes a boom cost the president something.
+##   2. The satisfaction clears the model's resolution -- see tools/inflation_probe.gd.
+##
+## THE S10 RATIO DRIFT IS +0.766 %, IN THE SAFE DIRECTION, against V1.3d's accepted
+## +0.39 % and V1.4c's refused -1.46 %. The prediction was written before the table was
+## computed and it held for the reason it named: ownership leaned on `business`, which
+## carries public_finances at 0.34, where inflation's row is heaviest on `pensioners`
+## and `workers` and LIGHTEST on business. A control confirms the mechanism rather than
+## leaving it asserted -- the same key added at a FLAT 0.11 to all six blocs drifts
+## -0.059 %, so the drift is the profile and not the thirteenth key as such.
+## V1.6d ANSWERS IT TWICE AT ONCE, WHICH IS A FIRST -- every previous session asked
+## about ONE key -- AND THE ANSWER IS YES FOR BOTH, at a measured cost in the UNSAFE
+## direction. That combination has not happened before either, so the reasoning is
+## written out rather than folded into the yeses above it.
+##
+## `tax_capital_gains` and `tax_wealth` are the fourteenth and fifteenth keys.
+## V1.3d's four tests plus the fifth V1.4b forced:
+##
+##   1. The price is not nameable otherwise -- HOLDS, and MORE STRONGLY THAN ANY
+##      PREVIOUS CANDIDATE, including inflation's. Every no on this list had an authored
+##      `bloc_offset` to fall back on. A TAX HAS NO CONTENT OBJECT AT ALL: there is no
+##      data/taxes/, no action, no law required, just a slider on the budget panel. There
+##      is nowhere else for the price to live.
+##   3. A flat offset cannot become more salient -- HOLDS. A tax rise is exactly the kind
+##      of thing SALIENCE_GAIN exists to push up the agenda.
+##   5. Does a prior refusal have 1 and 3 identically? NO, and this is the test that
+##      separates these two from `ownership`, which they otherwise resemble. Ownership had
+##      ownership.json's authored offset; these have nothing.
+##   4. NOT COLLINEAR. Both are keyed to their own rate, which no other issue reads, and
+##      docs/tiers/v1.md section 6 asks in its own words for each new tax to have "a
+##      visibly different bloc-weight profile from the three that exist" -- which IS this
+##      test restated in content terms, a thing the row does not notice it is doing.
+##   2. The satisfaction clears the model's resolution -- see tools/tax_probe.gd table (a),
+##      where the reachable wealth lever alone moves 4.2 points of GDP of revenue.
+##
+## THE S10 RATIO DRIFT IS -0.739 % FOR THE PAIR, IN THE UNSAFE DIRECTION, against V1.3d's
+## accepted +0.39 %, V1.6b's accepted +0.766 % and V1.4c's REFUSED -1.46 %. Taken alone
+## the keys drift -0.270 % (capital gains) and -0.508 % (wealth). It is paid rather than
+## avoided, and the reason is that THE ALTERNATIVE IS NOT A CHEAPER PRICE, IT IS NO PRICE.
+## opinion.gd writes sat["tax_%s"] for every TAX_KEYS entry, so a tax without a key is a
+## satisfaction no bloc weights -- and a player could then take the wealth lever to its
+## ceiling for 4.2 points of GDP that cost nothing at all. That is the strictly-dominated
+## free-money shape this project has caught five times, and it is worse than the drift.
+##
+## Where V1.4c genuinely differs: ownership had somewhere else to be priced, so its
+## -1.46 % bought nothing. This drift buys the only price these two taxes can have.
+##
+## THE FIRST AUTHORED ROWS DRIFTED -1.640 %, PAST V1.4c's REFUSAL LINE, AND THE FIX WAS
+## CONTENT RATHER THAN A CONSTANT -- V1.3d's own move when its council turned out to be a
+## legislature the player controlled. tools/tax_probe.gd's control is what said so: the
+## same two keys at a FLAT 0.06 across all six blocs drift only -0.106 %, so the cause is
+## the PROFILE and not the two extra keys as such, exactly as V1.6b's control found for
+## inflation. The first rows gave the two new taxes 0.0419 and 0.0397 of the national
+## agenda against `tax_corporate`'s 0.0223 -- two taxes eight of the ten nations barely
+## levy, each outweighing corporation tax by two to one. Re-authored at the anchor
+## `bloc_probe.gd` used for `europe` (above `defence`, below the tax every nation
+## charges), they take 0.0162 and 0.0142 against defence's 0.0122 and corporate's 0.0203,
+## and the drift halves.
+##
+## `students` carries NO `tax_wealth` entry at all rather than a small one, which is this
+## table's sparsity used on purpose: students hold no wealth, and an entry saying they
+## barely care is a different claim from the model's own "an issue a bloc has no entry
+## for carries no weight for that bloc".
+## V1.6e ASKS IT FOR THE SIXTEENTH KEY AND THE ANSWER IS NO, on ONE of V1.3d's four
+## tests rather than on the S10 ratio -- V1.5a's shape, and for V1.5a's reason.
+##
+## TEST 1 FAILS IMMEDIATELY AND THAT SETTLES IT. Every YES on this list was paid because
+## the price was NOT NAMEABLE OTHERWISE: `inflation` ships no verb and no content object,
+## and a tax has no data/taxes/ anywhere, so neither had an authored `bloc_offset` to hang
+## on. Sectoral investment ships data/investment-actions/ WITH one, which is exactly what
+## `ownership` had at V1.4c and exactly why its -1.46 % on the ratio bought nothing.
+##
+## Tests 2, 3 and 5 are not reached, because 1 decides. The S10 ratio was NOT swept,
+## deliberately: sweeping to choose between a yes and a no already settled is a
+## measurement nothing reads -- V1.5a's own refusal, recorded there and applied here.
+##
+## WHAT HAD TO BE MEASURED INSTEAD is that the authored price is LEGIBLE, since an
+## authored price nothing can read would put the question straight back.
+## tools/investment_probe.gd table (i), twelve months after the act: the three largest
+## packages move their worst bloc by +5.80 (rural), +5.27 (workers) and -6.14 (rural)
+## against a +-3.0 poll-noise floor, and move the HEADLINE by +0.31, +1.31 and -1.08 --
+## clearing on the per-bloc rows and on none of the headlines, which is
+## docs/diplomacy-model.md's V1.3a finding used as designed rather than rediscovered.
+## A policy that divides the country should not move the average.
+##
+## V1.6f ASKS IT FOR THE SEVENTEENTH KEY AND THE ANSWER IS NO, on test 1 again and for
+## the same reason one session later: data/project-actions/ ships an authored
+## `bloc_offset` on every one of its ten entries, so the price is nameable without a key
+## and a key would be `ownership`'s -1.46 % bought twice. The ratio was not swept, on the
+## same ground. What was measured instead is the same thing V1.6e measured: all ten
+## actions clear the +-3.0 floor on their worst bloc row (+4.45 urban to -5.23 urban) and
+## none of them on the headline.
+##
+## The interesting half is that TWO CONSECUTIVE SESSIONS FAILED ON THE SAME TEST FOR THE
+## SAME REASON, which is what the list is for. A session that ships a content object has
+## somewhere to put the price; a session that ships only a statistic does not. That, and
+## not importance, is what has decided every one of the seventeen.
 const ISSUE_KEYS := [
 	"jobs", "growth",
-	"tax_income", "tax_corporate", "tax_vat",
+	"tax_income", "tax_corporate", "tax_vat", "tax_capital_gains", "tax_wealth",
 	"health", "education", "defence", "pensions", "infrastructure",
-	"public_finances", "europe",
+	"public_finances", "europe", "inflation",
 ]
 
 const ISSUE_LABEL := {
@@ -169,6 +297,8 @@ const ISSUE_LABEL := {
 	"tax_income": "Income tax",
 	"tax_corporate": "Corporate tax",
 	"tax_vat": "VAT",
+	"tax_capital_gains": "Capital gains tax",
+	"tax_wealth": "Wealth tax",
 	"health": "Health",
 	"education": "Education",
 	"defence": "Defence",
@@ -176,13 +306,43 @@ const ISSUE_LABEL := {
 	"infrastructure": "Infrastructure",
 	"public_finances": "Public finances",
 	"europe": "Europe",
+	"inflation": "Inflation",
 }
 
 ## Deltas that saturate an issue's satisfaction at full strength.
 const JOBS_SCALE_PP := 3.0        # points of unemployment
 const GROWTH_SCALE_PP := 4.0      # points of growth away from trend
-const TAX_SCALE_PP := 8.0         # points of a tax rate
+const TAX_SCALE_PP := 8.0         # points of a tax rate — the default, see below
 const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
+
+## V1.6d. PER-KEY OVERRIDES on TAX_SCALE_PP, for the taxes whose rate is not on the
+## same scale as income's.
+##
+## Sparse on purpose, exactly like BLOC_SALIENCE_BASE below: a tax with no entry here
+## reads the 8.0 above, so the three taxes S5 measured are untouched by this table's
+## existence and the constant they were measured against still says 8.0.
+##
+## THE SESSION WOULD RATHER NOT HAVE ADDED THIS, and what forced it is arithmetic
+## rather than taste. opinion.gd prices every tax by `for key in C.TAX_KEYS`, in POINTS
+## OF RATE, and economy_constants.TAX_BASE_SHARE puts the wealth base at 4.00 against
+## income's 0.50 -- so one point of wealth rate is eight points of income tax in
+## revenue and the whole reachable wealth lever is three points wide. Shared, an 8.0
+## scale makes the largest wealth tax in Europe read as three eighths of a satisfaction
+## and the issue is politically almost invisible; the alternative was to express the
+## wealth rate on the 0-70 scale with a tiny base share, which makes the number the
+## player sets not a wealth-tax rate in any real sense. The units are honest and the
+## table pays for it. See docs/tax-model.md section 2.
+##
+## `capital_gains` is here for a much weaker reason and is a genuine judgement rather
+## than a forced move: headline capital-gains rates swing further than income rates do
+## -- the roster spans 0.0 to 31.0 where income spans 15.0 to 24.0 -- so a rate change
+## that would be a revolution in income tax is an ordinary budget in this one.
+##
+## SWEPT, and the band and tiebreaker are pre-committed in tools/tax_probe.gd's header.
+const TAX_SCALE_PP_BY_KEY := {
+	"capital_gains": 4.80,
+	"wealth": 0.48,
+}
 
 ## Points of GDP of deficit. Widened from S5's 3.0 during the S10 balance pass:
 ## at 3.0 the issue saturated at ±1 on a three-point move, so a deficit two
@@ -217,6 +377,45 @@ const DEFICIT_SCALE_PP := 6.0
 ## one bloc rule and being embargoed by Germany should cost about the same, and at
 ## 0.80 they do.
 const EUROPE_SCALE := 0.80
+
+## V1.6b. Points of inflation ABOVE the nation's own starting rate that saturate the
+## thirteenth issue. Here rather than in inflation_constants.gd for EUROPE_SCALE's own
+## reason: that file describes what inflation IS and this converts it into what a voter
+## feels, and collapsing the two would make the model's bounds unmovable without also
+## moving the electorate's reaction to them.
+##
+## SWEPT, and the band, the tiebreaker and the measured table are pre-committed in
+## tools/inflation_probe.gd's header. Table (b), on the isolated path at the 0.145
+## points table (a) measured as reachable: band (i) (readable past the +-3.0 poll-noise
+## floor) passes at 0.40 and fails at 0.45, and band (ii) (not prematurely saturated)
+## passes above the reachable 0.145 -- so the interval is two-sided on two model
+## criteria and V1.5c's midpoint rule applies. Stable under refinement: 0.45, 0.50 and
+## 0.55 were added between the edges and all fail (i). [0.15, 0.40] -> 0.275.
+##
+## THE TABLE THAT CHOSE THIS IS INVARIANT TO IT, which had to be fixed before the
+## answer meant anything. The probe cannot change a const at runtime, so a candidate
+## scale is emulated by displacing the stock to whatever produces the SAME
+## satisfaction -- exact, saturation included. The first version rescaled the measured
+## headline linearly from the shipped value instead, and the passing interval MOVED
+## when the shipped constant moved: V1.5b's "the range was choosing the constant" in a
+## new costume. Caught only by setting the constant once and re-running.
+##
+## BAND (ii) WAS DECLARED TOO WEAK AND THE CORRECTION IS RECORDED RATHER THAN TIDIED.
+## It asked that the issue not saturate at HALF the reachable deviation, which 0.10
+## passes while saturating at the FULL one -- so as declared it would have admitted the
+## exact DEFICIT_SCALE_PP failure it was written to prevent. The binding form is
+## saturation at the peak, which is what the interval above uses. V1.4c's rule, fix the
+## band as well as the tiebreaker, applied to a band that was merely loose rather than
+## measuring the wrong thing.
+const INFLATION_SCALE_PP := 0.275
+##
+## Small compared with every other scale in this table, and that is the model rather
+## than a thumb on it. INFLATION_UNEMP_BETA is 0.25 and the reachable unemployment gap
+## is a couple of points, so the whole reachable range of this quantity is under a
+## point -- where DEFICIT_SCALE_PP spans six points of GDP because that is the range a
+## player actually moves a deficit over. A scale is the range the number MOVES over,
+## not a statement about how much the issue matters; how much it matters is
+## BLOC_SALIENCE_BASE, where inflation is the fourth-heaviest row for pensioners.
 
 ## V1.5a. Points of GDP of service-quality DEVIATION that saturate the satisfaction
 ## term, in the same units as SPEND_SCALE_PP above and deliberately so: quality and
@@ -307,19 +506,25 @@ const BLOC_SALIENCE_BASE := {
 		"jobs": 0.34,
 		"public_finances": 0.18,
 		"tax_income": 0.15,
+		"inflation": 0.13,
 		"health": 0.10,
 		"europe": 0.10,
 		"tax_vat": 0.08,
 		"growth": 0.08,
 		"pensions": 0.07,
+		"tax_capital_gains": 0.01,
+		"tax_wealth": 0.01,
 	},
 	"pensioners": {
 		"pensions": 0.38,
 		"health": 0.21,
 		"public_finances": 0.20,
+		"inflation": 0.16,
 		"jobs": 0.13,
 		"europe": 0.10,
 		"tax_vat": 0.08,
+		"tax_capital_gains": 0.03,
+		"tax_wealth": 0.02,
 	},
 	"urban": {
 		"health": 0.19,
@@ -328,8 +533,11 @@ const BLOC_SALIENCE_BASE := {
 		"education": 0.14,
 		"infrastructure": 0.11,
 		"tax_income": 0.11,
+		"inflation": 0.10,
 		"growth": 0.10,
 		"europe": 0.06,
+		"tax_capital_gains": 0.02,
+		"tax_wealth": 0.01,
 	},
 	"rural": {
 		"infrastructure": 0.20,
@@ -339,7 +547,10 @@ const BLOC_SALIENCE_BASE := {
 		"health": 0.13,
 		"defence": 0.12,
 		"tax_vat": 0.11,
+		"inflation": 0.11,
 		"pensions": 0.10,
+		"tax_wealth": 0.02,
+		"tax_capital_gains": 0.01,
 	},
 	"business": {
 		"public_finances": 0.34,
@@ -348,16 +559,21 @@ const BLOC_SALIENCE_BASE := {
 		"infrastructure": 0.09,
 		"jobs": 0.07,
 		"europe": 0.06,
+		"inflation": 0.06,
 		"education": 0.06,
+		"tax_wealth": 0.06,
+		"tax_capital_gains": 0.05,
 	},
 	"students": {
 		"education": 0.38,
 		"jobs": 0.22,
 		"public_finances": 0.14,
 		"tax_vat": 0.10,
+		"inflation": 0.09,
 		"growth": 0.08,
 		"health": 0.08,
 		"europe": 0.05,
+		"tax_capital_gains": 0.01,
 	},
 }
 

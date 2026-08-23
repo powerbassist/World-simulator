@@ -17,6 +17,16 @@ extends PanelContainer
 ## Grouped by SECTOR rather than listed flat, because a subsidy takes share from
 ## the rivals in one sector and nowhere else. A player who cannot see who the
 ## rivals are cannot see what the button does.
+##
+## V1.6e HANGS ITS WHOLE SURFACE ON THAT GROUPING AND ADDS NO WINDOW. The sector
+## lever is pointed at exactly the heading _build_sector() was already printing, so
+## the readout and the two verbs go under it and the action bar does not grow. What
+## did have to change is the lead: this panel is no longer only the private sector,
+## because the state's own programme is now on it.
+##
+## It also stops returning early on an empty firm register. A nation with no
+## data/companies/<ID>.json still has three sectors and can still invest in them --
+## the register is what may be absent, not the economy.
 
 signal closed
 ## (before_snapshot, label) -- the same pair nation_panel.acted and
@@ -28,6 +38,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const SECTOR_LABEL := {
@@ -40,6 +51,13 @@ var _dirty := true
 
 var _title: Label
 var _body: VBoxContainer
+## Kept rather than left local, and the reason is the screenshot pass. This panel's
+## content is guaranteed to overflow -- three sectors, their programmes and up to six
+## firms -- so the sector a flag has just acted on is usually below the fold, and a
+## frame that cannot show it proves nothing about the row it exists to check.
+## tools/screenshot.gd drives this; nothing in the game does.
+var _scroll: ScrollContainer
+var _pin_bottom := false
 var _close_button: Button
 
 
@@ -59,10 +77,10 @@ func _ready() -> void:
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(_scroll)
 
 	# The body sits inside a right margin rather than flush to the scroll, because a
 	# ScrollContainer draws its bar OVER the content: without this the right-aligned
@@ -72,7 +90,7 @@ func _ready() -> void:
 	var gutter := MarginContainer.new()
 	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gutter.add_theme_constant_override("margin_right", 14)
-	scroll.add_child(gutter)
+	_scroll.add_child(gutter)
 
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -89,6 +107,26 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+
+
+## Pins the scroll to the bottom, for tools/screenshot.gd. A panel whose body always
+## overflows cannot be photographed at the top and called evidence for a row that is
+## three sectors down.
+##
+## A STANDING FLAG rather than a one-shot call, and the first version was the one-shot:
+## _refresh() rebuilds every child, so a scroll set before the next rebuild is undone by
+## it, and the rebuild is exactly what a setup flag triggers. Nothing in the game sets
+## this.
+func scroll_to_bottom() -> void:
+	_pin_bottom = true
+	_dirty = true
+
+
+func _apply_bottom() -> void:
+	if _scroll == null:
+		return
+	await get_tree().process_frame
+	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
 
 
 func hide_close_button() -> void:
@@ -111,7 +149,7 @@ func _refresh() -> void:
 	if ns == null:
 		return
 
-	_title.text = "The private sector"
+	_title.text = "Industry"
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -121,13 +159,19 @@ func _refresh() -> void:
 		# sectors, which is a supported state rather than a hole. Said plainly, so
 		# the player of a nation whose register has not been authored yet sees a
 		# reason rather than an empty window.
+		#
+		# V1.6e turned this from a RETURN into a note. The sector programmes below do
+		# not read the firm register at all, so returning here would have hidden a
+		# working lever behind a missing content file.
 		_header("No register")
-		_line("No firms are named for this nation. Its sectors are modelled in aggregate.")
-		return
+		_line("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
 
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
 		_build_sector(ns, String(sector))
+
+	if _pin_bottom:
+		_apply_bottom()
 
 
 ## The three figures the register produces, in one place. Both deviation channels
@@ -152,13 +196,19 @@ func _build_ledger(ns) -> void:
 	# number there is bad news. Flipping it here rather than storing it flipped keeps
 	# economy.gd's sum readable.
 	_row("Jobs effect", "%+.3f pts unemployment" % ns.firm_jobs_offset_pct)
+	# V1.6e, on the same ledger as the subsidy bill because it is the other half of
+	# one question -- what the state is spending on the productive economy -- and it
+	# lags a month for the same reason.
+	_row("Investment bill", "%.3f %% of GDP" % ns.investment_bill_pct_gdp)
+	# The trend the capital has BOUGHT, not the growth it is producing this month.
+	# Those are different quantities and the difference is the whole lever: the bill
+	# lands immediately and this number takes years to arrive, which is why both are
+	# printed rather than one summary of them.
+	_row("Trend bought", "%+.3f %%/yr" % Investment.national_trend_shift_pct(ns))
 
 
 func _build_sector(ns, sector: String) -> void:
 	var firms := Companies.firms_in_sector(_loader, ns.id, sector)
-	if firms.is_empty():
-		return
-
 	var sector_output: float = float(ns.sector_output.get(sector, 0.0))
 	var named := 0.0
 	for company in firms:
@@ -176,8 +226,80 @@ func _build_sector(ns, sector: String) -> void:
 		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
 	])
 
+	_build_investment(ns, sector)
+
 	for company in firms:
 		_build_firm(ns, company)
+
+
+## V1.6e's readout and its two verbs, under the sector heading they are pointed at.
+##
+## THREE FIGURES AND NOT ONE, because they are three different times. The intensity
+## is what the treasury is committed to now, the capital is what that has actually
+## built, and the shift is what the capital is worth -- and the gap between the
+## first and the second IS the lever, since the row asks for money that takes
+## several years to arrive. Collapsing them into one progress figure would hide the
+## only thing a player has to plan around.
+##
+## Never silent, and deliberately so: a sector with no programme prints a zero line
+## rather than nothing, because an absent row reads as "this sector cannot be
+## invested in" and every sector can.
+func _build_investment(ns, sector: String) -> void:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 2)
+
+	var intensity := Investment.intensity_of(ns, sector)
+	var capital := Investment.capital_of(ns, sector)
+	var shift := float(Investment.sector_trend_shift(ns).get(sector, 0.0))
+
+	var state_label := Label.new()
+	if intensity > 0.0:
+		state_label.text = "State programme %.0f %% · capital %.2f · %+.3f %%/yr to this sector" % [
+			100.0 * intensity, capital, shift,
+		]
+		state_label.theme_type_variation = UiTheme.GOOD_TEXT
+	elif capital > 0.0:
+		# The withdrawn case, and it needs its own line rather than falling into the
+		# one below: the money has stopped and the capital has not gone, which is the
+		# half of this model a single "no programme" caption would misreport.
+		state_label.text = "No programme · capital %.2f depreciating · %+.3f %%/yr to this sector" % [
+			capital, shift,
+		]
+		state_label.theme_type_variation = UiTheme.CAPTION
+	else:
+		state_label.text = "No state programme"
+		state_label.theme_type_variation = UiTheme.CAPTION
+	block.add_child(state_label)
+
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 6)
+	for action in Investment.available(_state, ns, _loader.investment_actions):
+		if String(action.effects.get("investment", {}).get("sector", "")) != sector:
+			continue
+		buttons.add_child(_investment_button(ns, action))
+	block.add_child(buttons)
+
+	_body.add_child(block)
+
+
+func _investment_button(ns, action) -> Button:
+	var button := Button.new()
+	button.text = action.action_name
+	button.tooltip_text = action.summary
+	button.pressed.connect(func(): _on_invest(ns, action))
+	return button
+
+
+## U4's contract, `_on_act()`'s shape exactly: the baseline is captured BEFORE the
+## command, so the delta measures the month the programme started against the month
+## before it.
+func _on_invest(ns, action) -> void:
+	var before := Budget.snapshot(_state)
+	var result := Investment.execute(_state, ns, _loader.investment_actions, action)
+	if not result.get("applied", false):
+		return
+	_dirty = true
+	acted.emit(before, action.action_name)
 
 
 func _build_firm(ns, company) -> void:

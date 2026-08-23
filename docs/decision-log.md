@@ -1036,6 +1036,318 @@ With both harnesses fixed, all 28 shared regimes are bit-identical in GDP, growt
 unemployment, debt and deficit; approval moves in all 28 by at most 3.00 points; and there
 are **zero outcome changes**.
 
+## V1.6a - a legibility floor that cannot be met, and where a fit beats a band
+
+[[society-model|V1.5a]] restated the tiebreaker rule; [[demography-model|V1.5b]] added
+widening; [[unrest-model|V1.5c]] added four more; [[media-model|V1.5d]] added the
+lumpy-or-smooth check. V1.6a pre-committed against all five, printed the check in its
+own probe header, and **both of its bands still failed** - in the two ways that header
+named. The new part is what happens next.
+
+**(1) The failures were the known ones, and predicting them did not prevent them.**
+Band (i) - *the cycle moves approval past the +-3.0 poll floor* - read the national
+headline and passed at **every** candidate from 0.25 to 4.00, returning 6.271 where the
+cycle is nearly switched off. A committed budget moves approval six points on its own,
+so the band was measuring the budget: V1.5a's failure (2), in the session that wrote the
+warning at the top of its own file. Band (ii) - a growth-clamp guard - was flat at 7.346
+for seventeen candidates of nineteen, `ruinous` setting it rather than the cycle.
+
+**The fix is to DIFFERENCE two runs alike in everything but the channel.** That is what
+makes a band measure its own constant instead of the loudest thing in the same
+observable, and it generalises past cycles: any band on a quantity the player can also
+move needs a control.
+
+**(2) Moving to a bloc row did not help, and that is worth recording because three
+sessions said it would.** `society_probe.gd` table (c), `demography_probe.gd` and
+`unrest_probe.gd`'s P3 all establish that a single issue cannot carry a national
+headline. The workers row - 0.42 of growth-plus-jobs salience against business's 0.26 -
+bought **8 %**. The cycle reaches every bloc through the same two issues, so bloc
+selection cannot rescue a band this channel genuinely cannot clear.
+
+**(3) The surviving bands had NO OVERLAP, and that is neither of V1.5c's two failure
+modes.** *The band failed* and *the constant cannot clear its floor* look identical in a
+table and have opposite remedies. Here both response columns are alive and smooth and
+the two criteria simply disagree:
+
+> Readable needs an amplitude of about 1.9. A France no more volatile than the real
+> France allows at most about 1.7.
+
+That is a fact about the model, and the remedy is neither widen-and-re-select nor
+delete. It is to **record the bound and choose by something else** -
+[[defence-model]]'s deployment that could not clear its own floor.
+
+**(4) The rule this session adds: WHEN A BAND CANNOT CHOOSE, A FIT CAN - and a fit is
+strictly better than a band edge under both existing diagnostics.**
+`CYCLE_AMPLITUDE_PCT` is set to the candidate whose realised annual-growth standard
+deviation is nearest France's own measured 1.262. At 1.70 the model returns 1.260.
+
+> A band edge MOVES when the grid is widened or refined; a fit CONVERGES. Widening adds
+> candidates further from the target and changes nothing; refining adds candidates
+> nearer it and improves the answer toward a fixed point. V1.5b's and V1.5c's
+> diagnostics are both really asking for stability under grid changes, and a fit has it
+> by construction where an edge has it only by luck.
+
+The precondition is that something outside the game measures the same quantity the model
+produces. When it does - and for an economy simulator it often does - a fit should be
+preferred to a band, not used as a fallback after one fails.
+
+**(5) A sweep was DELETED because the data already answered it.** `CYCLE_COMMON_SHARE`
+was pre-committed as the session's second swept constant. The World Bank series that
+supplies the per-nation amplitude also says what the common share is: var(common
+factor) / mean var(nation) = **0.619**, cross-checked against a mean pairwise
+correlation of **0.633**. Two statistics of one dataset agreeing to 0.014 is V1.5c's
+two-harness rule applied to a measurement rather than to a probe, and it is a stronger
+result than any band would have produced. Its two bands survive as a **verification**,
+and one of them then failed in a sixth way:
+
+**(6) A band's NUMBER can fail to match its own stated REASON.** Band (ii) was written
+as *the imported cycle must not BEAT the domestic one* and the number beside it was
+0.25 - four times tighter, and never derived from the sentence. Measured 0.467, which
+satisfies the reason and fails the number. Correcting it moved **no constant in either
+direction**, which is what made the correction legitimate rather than a fit to a result;
+had the constant been swept rather than measured, it would not have been. **Read the
+number back against the sentence before the sweep runs.**
+
+## V1.6a - the decomposition's own call, refuted by the session it booked work to
+
+Separate from the tiebreaker list, and the sharper finding of the two.
+
+V1.6's decomposition split V1.4c's inherited obligation - *inflation and the business
+cycle own the risk a state-owned firm carries* - into a half V1.6a would discharge for
+free and a half V1.6c owes. The free half was a one-line argument: a dividend is
+`state_share x share x sector_output x yield`, `sector_output` already moves with the
+cycle through `SECTOR_CYCLE_BETA`, therefore the dividend becomes procyclical the moment
+a cycle exists.
+
+It measured **1.07x** the flat-cycle variation, against a floor of 1.5x fixed before the
+run. The mechanism is one line: `Companies.dividend_revenue_pct_gdp()` returns
+`100.0 * paid / ns.gdp_eur_bn`, and the cycle moves the numerator and the denominator
+together.
+
+> **A quantity expressed as a share of GDP is not procyclical by construction.**
+
+Two things generalise. First, **the decomposition is not exempt from the probe**: this
+project has recorded fourteen instances of a *row* being wrong by counting, and this is
+the first where the thing found wrong was written the same week by the same argument.
+Second, **"X already moves, so anything built on X moves" is a claim about units**. It
+holds for a level and fails for a ratio, and every fiscal line in this game is a ratio.
+
+## V1.6a - a harness can be wrong in a way no test can see, for eleven sessions
+
+[[media-model|V1.5d]] found that neither balance harness ever called
+`Media.tick_month()`. This is the same failure one layer down and much older.
+
+`Budget.project()` has **never advanced the clock on its copy**. It ran twelve ticks at
+one date, and `tests/test_budget.gd`'s own comparison runner froze the clock too - so
+the two agreed to 1e-9 while both were wrong, for eleven sessions. Nothing noticed
+because nothing in either loop computed a figure from the date: `bloc.gd`, `defence.gd`
+and `cabinet.gd` read `state.year` only to stamp a record, and `calendar.gd`, which
+genuinely reads it, is not run there.
+
+**The bug was invisible until a reader existed, and then it was caught on the first
+run.** `tests/test_cycle.gd` asserts the projected cycle path equals the delivered one:
+month 1 projected -0.903 and delivered -0.690.
+
+The response that generalises is the structural one rather than the fix.
+`src/sim/cycle.gd` has **no `tick_month()` at all** - `Economy.tick_month()` writes the
+impulse from a pure read - so every harness in the project reaches it through a call
+they all already make. **A system that cannot be forgotten is worth more than one that
+is remembered**, and the claim was falsified before it was trusted rather than after.
+
+## V1.6b — the row named an input the data does not support
+
+**The plan said** the row's own words: inflation is *"a price pressure from the gap,
+the impulse and (a)'s shock."*
+
+**What was built** reads the **unemployment gap** and none of the three.
+
+Two corrections, and only the first was available without measuring. The three named
+inputs are **one quantity written three times** — the output gap is the accumulated
+integral of the growth addends, so a target reading the gap *and* the impulses that
+fill it double-counts, which is V1.3c's `tariff_rate_pct` error. Then the data refuted
+the survivor: regressed on `FP.CPI.TOTL.ZG` over 1990–2024, the output gap's
+correlation never leaves the noise **and its sign flips between sub-samples** (+0.204
+pre-euro, +0.098 euro era, −0.140 pooled), while the unemployment gap is stable and
+correctly signed in both disjoint halves.
+
+The direction of the error is the useful part, and it is one this log has recorded
+before in another form: **the row named the quantity the model computes rather than
+the quantity the world relates.** `output_gap_pct()` is a public function and reads
+like the obvious input; unemployment is a *result* two steps downstream and reads like
+a symptom. The relationship runs the other way.
+
+Full argument: [[inflation-model]] §2.
+
+## V1.6b — the probe's table was not independent of the constant it chose
+
+**The plan said** sweep `INFLATION_SCALE_PP` against a pre-committed band.
+
+**What happened** is that the first table moved when the answer moved. A probe cannot
+change a `const` at runtime, so the first version measured the headline response at
+the *shipped* scale and rescaled linearly to each candidate — which is wrong twice:
+approval is not linear in satisfaction (`SALIENCE_GAIN` amplifies bad news), and the
+rescale was anchored on the shipped value, so **the passing interval changed when the
+shipped constant changed**.
+
+This is V1.5b's *the range was choosing the constant* in a new costume, and it was
+caught only because the constant was set once and the probe re-run — a step that is
+not obviously necessary and now is. The fix emulates a candidate **exactly** rather
+than extrapolating: displace the stock to whatever produces the same satisfaction the
+candidate would. Verified by re-running after the change, which now moves the table by
+less than 0.003.
+
+Full argument: [[inflation-model]] §8.
+
+## V1.6b — a band that failed, and was neither raised nor deleted
+
+**The plan said** a constant neither a band nor a fit can justify is deleted.
+
+**What was built** keeps `INFLATION_OUTPUT_BETA` at an honest 0.30 with its visibility
+band failing, and records the bound.
+
+The reachable inflation deviation is **0.145 points**, so clearing a 0.25 %-of-GDP
+visibility bar needs one point of inflation to cost two points of annual growth — more
+per point than the whole business cycle. Raising it would be tuning a measured slope's
+consequence until it is visible, which V1.5b refused for `DEPENDENCY_ELASTICITY` and
+V1.6a refused for `CYCLE_AMPLITUDE_PCT`. Deleting it would remove the only term making
+the inflation loop negative feedback.
+
+**So the rule "delete what a band cannot justify" gains an exception, and the
+exception is stated rather than left implicit: a term that is STRUCTURAL rather than
+decorative survives a failed visibility band.** U6a's day budget and V1.3e's
+`AGREEMENT_ACCEPT_MIN` were deleted because nothing read them. This one closes a loop.
+
+Full argument: [[inflation-model]] §7.
+
+## V1.6c — a band can pass a term the model's own boundary forbids
+
+**The plan said** `YIELD_INFLATION_BETA` would fail its visibility band and be deleted,
+and recorded in advance that V1.6b's structural exception must not be reached for to
+keep it.
+
+**What happened** is that the band **passed** it — 2 of 7 candidates — and it was
+deleted anyway, on a ground the band could not see. `DEBT_REAL_RATE_PCT` is a **real**
+rate and inflation raises a **nominal** one, so a term there is the Fisher effect:
+precisely the nominal layer [[inflation-model]] §1 cut, smuggled back in through the
+yield. What survives in real terms is an inflation *risk* premium, which is about
+volatility rather than level — and this model's realised inflation sd is 0.040 against
+a measured 1.14.
+
+Every previous deletion on this list was a band failing. This is the first where the
+band was the weaker instrument, and the rule it adds is short: **a band is a test of
+size, not of legitimacy. Check the term against the model's own boundary first.**
+
+Full argument: [[credit-model]] §3.
+
+## V1.6c — three sets of bands for one constant, and the probe caught each
+
+**The plan said** table (a) runs first and nothing is swept until it has been read.
+It did, and it earned its place twice over.
+
+The **first** band set measured a debt-widening regime and passed at every candidate
+down to 0.005 — because a spendthrift budget does not widen the debt, it *spirals* to
+the clamp and a ratio past 1400 % of GDP. **A band measured on a saturated run measures
+the clamp.**
+
+The **second** measured `hands_off` and passed at **0.0005**, because a debt ratio
+walking 110 → 200 moves the service line by 1.8 points at the *anchor* rate with no
+channel at all. **A band on a raw move measures the model that was already there.** The
+fix is a control with the term zeroed — the control `tests/test_trade.gd` needed at
+V1.6a, one session later.
+
+The **third** ships, and the interval it found is interior, stable under refinement,
+and iterated to a **fixed point**: the shipped value equals the midpoint measured at
+it. That is stronger than V1.6b's check that the table moves by less than 0.003 when
+the constant does, and it is the answer to a probe measuring a path its own constant
+is on.
+
+Full argument: [[credit-model]] §4.
+
+## V1.6c — the row named two inputs and they were one
+
+**The plan said** debt and deficit look like one quantity written twice, and that they
+stay distinguishable only if the level and the trajectory are read at different lags.
+
+**The sweep refused the term.** Three clauses, mutually inconsistent: isolated against
+a control, the deficit term moves debt service 0.30 points of GDP over a term only
+above a slope of 0.20, and by 0.145 it already outweighs twelve months of the debt term
+it exists to lead. Everywhere it is legible it dominates the level; everywhere it does
+not dominate it is under the floor. `corr(debt gap, deficit gap)` then measured
+**0.9948** against an accepted standard of 0.3185.
+
+Deleting it removed the session's **only** positive feedback loop with it, because
+`debt_service_pct_gdp` is inside `deficit_pct_gdp`. What was going to be an argument
+about a one-month lag is now a fact about the call order.
+
+Full argument: [[credit-model]] §3.
+
+## V1.6e — the row named a quantity that has no room for a second writer
+
+**The plan said** the lever acts on `sector_output`, which is what [[v1]] §6 asks for in
+those words.
+
+**The measurement refused the site.** `Economy._apply_growth_to_sectors()` grows each
+sector at its own rate, distributes the residual `target_gdp − after_trend` by cyclical
+beta, and ends with `ns.gdp_eur_bn = total` — so the sector sum **is** the month's GDP
+target by construction. 27.9 bn injected into French industry before a tick leaves GDP
+**+0.024 bn** against a control and moves the industry share +0.006.
+
+> A write to `sector_output` survives as **composition** and never as level.
+
+The honest landing site is the per-sector trend **rate**, which is `Trade.sector_shift()`'s
+slot — and the two are not the same kind of thing at all: **a trade shift must sum to zero
+and an investment shift must not**. So the shift is read at *both* of `economy.gd`'s sites,
+and adding it at `trend_pct()` share-weighted is precisely what stops the residual taking
+the level effect back.
+
+The general rule this leaves: **before banding a term, check that the quantity it writes
+has room for another writer.** V1.6c's *a band is a test of size, not of legitimacy*, one
+step earlier in the pipeline — there the term was legitimate and mis-sized, here the site
+itself was unavailable.
+
+Full argument: [[sector-model]] §2.
+
+## V1.6e — the strictly-dominated shape appeared in a PRICE
+
+This project has caught it six times and every one was in an **effect**: V1.3c's tariff
+severities, V1.3d's rule burdens, V1.4a's rival floor, V1.4c's dividend yield, V1.6d's
+Gini clamp.
+
+Here the effect was proportionate and the **bill** was flat. Table (e), isolated: backing
+French services moves growth **0.4865** points, backing French agriculture **0.0077** — a
+spread of sixty-three to one against an identical price, plus a political price either way.
+
+The fix moves the model rather than the number and adds **no constant**: the bill scales
+with the sector's own share of GDP, so the return per euro is the same wherever it is spent
+and *which sector* goes back to being a question about composition and politics.
+`RIVAL_FLOOR_FRACTION`'s correction in a new place — there too the endpoint became content
+and the rate went back to setting speed.
+
+**It also deleted a constant.** The three shares sum to exactly 1.0 by the same
+reconciliation the entry above is about, so the whole bill is bounded above by
+`INVESTMENT_COST_PCT_GDP` itself. `INVESTMENT_BILL_MAX_PCT_GDP` was a guard rail guarding
+arithmetic, and it went the way U6a's day budget went.
+
+Full argument: [[sector-model]] §8.
+
+## V1.6e — a closed-form band, reported off the grid
+
+Two of this session's three constants are closed form, and the first run still printed the
+interval as the **widest passing grid row**: 0.40 where the exact edge is 0.46, and t90
+38.3–77.8 months where the band says 36–84.
+
+That is [[demography-model|V1.5b]]'s *the range was choosing the constant* — in the one
+place it should have been structurally impossible, since the whole claim of a closed-form
+band is that no grid can move it. The edges are solved arithmetically now and the grid is
+kept only as a legibility column.
+
+A second correction in the same table set: the beta band's clause (ii) was **measuring the
+clamp**, because the national shift is scaled down to `SECTOR_TREND_MAX_PCT` the moment it
+would exceed `SHIFT_MAX_PCT`, so a grid wide enough to reach the clamp reports an interval
+bounded by a guard rail. [[tax-model|V1.6d]]'s finding, in the session immediately after it.
+
+Full argument: [[sector-model]] §7–8.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

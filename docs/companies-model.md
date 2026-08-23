@@ -834,6 +834,23 @@ compensation *for* — [[v1]] §6 owns both. What nationalising costs is then a 
 rather than a flow**: the whole purchase lands on `debt_to_gdp_pct` at once, and
 privatising is the only lever in the game that moves a stock back down.
 
+> [!note] [[ROADMAP|V1.6c]] discharged the obligation, and on a RATE
+> [[cycle-model|V1.6a]] arrived with the cycle and discharged nothing: a dividend
+> expressed as a share of GDP is not procyclical by construction, because the cycle
+> moves numerator and denominator together. **A rate is the one quantity in this
+> model that is not a share of GDP**, and V1.6c is the session that makes one move.
+> The identity above becomes `DIVIDEND_YIELD / PRICE_TO_OUTPUT × 100 ==
+> DEBT_REAL_RATE_PCT + EQUITY_PREMIUM_PCT` — 3.12 against 2.00 + 1.12 — with the
+> dividend held fixed and the **borrowing** rate floating past it. While the spread
+> is under the premium the state gains on the flow; above it, the debt that bought
+> the firm costs more than the firm returns, and the crossing is exactly where
+> `spread == EQUITY_PREMIUM_PCT`. The strictly-dominated shape does not come back,
+> because which side you are on is a consequence of the player's own fiscal record.
+> The premium's kill switch did **not** fire; the clause that chose it is *doing
+> nothing for fourteen years turns a nationalisation into a loss*. The three-row
+> table below is therefore the **anchor** case, not every case.
+> Full argument: [[credit-model]] §8.
+
 | | price bn | div bn/yr | interest bn | net | payback |
 |---|---|---|---|---|---|
 | FRA Méridienne | 138.5 | 2.77 | 2.77 | **+0.00** | 50 yr |

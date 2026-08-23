@@ -18,15 +18,19 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Media = preload("res://src/sim/media.gd")
+const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
+const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -96,6 +100,7 @@ var _bloc_panel
 var _calendar_panel
 var _people_panel
 var _companies_panel
+var _projects_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -229,6 +234,7 @@ func _ready() -> void:
 	_nation_panel = NationPanel.new()
 	_windows.register("diplomacy", "Diplomacy", _nation_panel)
 	_nation_panel.setup(_state, _loader)
+	_nation_panel.hide_close_button()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
@@ -247,6 +253,14 @@ func _ready() -> void:
 	_bloc_panel = BlocPanel.new()
 	_windows.register("bloc", "The Union", _bloc_panel)
 	_bloc_panel.setup(_state, _loader)
+	_bloc_panel.hide_close_button()
+	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
+	# is a command like any other and earns the same U4 delta as a law or an act.
+	# It was the only one of the seven player commands with no signal at all.
+	_bloc_panel.voted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
 
 	# U6a. The one surface that reads dated state the game has carried since the
 	# MVP and never showed anywhere -- an election date, the council's next
@@ -254,6 +268,7 @@ func _ready() -> void:
 	_calendar_panel = CalendarPanel.new()
 	_windows.register("calendar", "Diary", _calendar_panel)
 	_calendar_panel.setup(_state, _loader)
+	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
 	# is no baseline to queue. The repaint is all this needs: the diary is the only
 	# panel whose contents just changed.
@@ -264,18 +279,38 @@ func _ready() -> void:
 	_people_panel = PeoplePanel.new()
 	_windows.register("people", "People", _people_panel)
 	_people_panel.setup(_state, _loader)
+	_people_panel.hide_close_button()
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
 	# actor and the verb pointed at it is a spending decision, which is why the bill
 	# lands on the budget panel beside the deployment bill and not anywhere near
 	# Diplomacy.
 	_companies_panel = CompaniesPanel.new()
-	_windows.register("companies", "Companies", _companies_panel)
+	# V1.6e renames the WINDOW and not the id: the panel now carries the state's own
+	# sector programmes beside the firm register, so "Companies" had stopped being
+	# what the surface is about. The id stays "companies" because it is what
+	# _build_action_bar() and tools/screenshot.gd --open both address.
+	_windows.register("companies", "Industry", _companies_panel)
 	_companies_panel.setup(_state, _loader)
+	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
 	# subsidy is a player command with a domestic price and a budget line, so it
 	# earns a U4 decision delta on exactly the same terms.
 	_companies_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
+	# V1.6f. In the Economy cluster beside Industry, and its OWN window rather than
+	# more rows on that one: a project is a dated national commitment and that panel
+	# is grouped by sector, with a body already guaranteed to overflow. Registering a
+	# window is one call plus one line in _build_action_bar(), which is what U5a's
+	# shell was for.
+	_projects_panel = ProjectsPanel.new()
+	_windows.register("projects", "Public Works", _projects_panel)
+	_projects_panel.setup(_state, _loader)
+	_projects_panel.hide_close_button()
+	_projects_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
 	)
@@ -290,7 +325,17 @@ func _ready() -> void:
 	_add_centered(_election_panel)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
-	_election_panel.dismissed.connect(func(): _clock.paused = false)
+	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
+	# leaves office, because there is nothing behind that plate to go back to --
+	# Elections.tick_month() skips a nation out of government, so the clock would
+	# run on forever with no election able to resolve and nothing saying why.
+	_election_panel.dismissed.connect(func():
+		var ns = _state.player()
+		if ns != null and not ns.in_government:
+			get_tree().change_scene_to_file(MENU_SCENE)
+			return
+		_clock.paused = false
+	)
 
 	_save_load_panel = SaveLoadPanel.new()
 	_add_centered(_save_load_panel)
@@ -364,6 +409,9 @@ func _build_action_bar() -> void:
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
 		{"id": "companies", "label": "Companies"},
+		# V1.6f. One line, exactly as this function's own comment has now correctly
+		# predicted for five sessions running.
+		{"id": "projects", "label": "Public Works"},
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		{"id": "society", "label": "Polling"},
@@ -541,6 +589,19 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# same sequence -- so it is already reading last month's government and the loop
 	# approval -> censure -> re-formation -> framing -> approval is broken structurally,
 	# for free.
+	# V1.6b. AFTER Economy, which settled the unemployment it reads, and BEFORE Opinion,
+	# which prices it in the SAME month -- unlike Society and Unrest below, which sit
+	# after Opinion and are read on the following one. Said here because a reader
+	# comparing the two will otherwise assume symmetry.
+	#
+	# Every harness that ticks a system must make this call, and there are seven:
+	# here, tests/test_balance.gd, tools/balance_probe.gd, src/sim/budget.gd's
+	# project(), tests/test_budget.gd's mirror of it, and four probes.
+	# tests/test_inflation.gd reads the source of the first four and fails if the call
+	# is missing, because V1.5d cost a session to two harnesses that never called
+	# Media.tick_month() and therefore agreed about nothing.
+	Inflation.tick_month(_state)
+
 	Media.tick_month(_state, _loader)
 	Opinion.tick_month(_state)
 
@@ -623,6 +684,21 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+
+	# V1.6e: the capital each sector's standing programme has bought converges toward
+	# the programme's intensity, and the bill is recomputed. In Companies' slot for
+	# Companies' reason, and the loop it breaks is the identical one: bill -> deficit
+	# -> a PRECONDITION_FIELDS entry -> which investment actions are available -> a
+	# new programme -> bill. Sixth time this argument has been made.
+	Investment.tick_month(_state)
+
+	# V1.6f: every project under construction loses a month, any that run out COMPLETE
+	# and write their permanent addend, and the bill is recomputed. In Investment's
+	# slot for Investment's reason, and the loop is the identical one a seventh time:
+	# bill -> deficit -> a PRECONDITION_FIELDS entry -> which project actions are
+	# available -> a new build -> bill. Advance, complete, then price, so a project
+	# that finishes this month stops billing this month.
+	Projects.tick_month(_state, _loader)
 
 	# V1.5a: services converge on what the country actually spends on them, delivered.
 	# In Companies' slot for Companies' reason and not for the general tick-order one:
@@ -950,6 +1026,11 @@ func _on_load_requested(slot: String) -> void:
 	if not result["ok"]:
 		_save_load_panel.report("Load failed: %s" % result["error"])
 		_save_load_panel.mark_dirty()
+		# Shown, not merely written to. report() paints a HIDDEN panel on the menu
+		# path -- _ready() has already built a new game by then, so without this a
+		# failed Continue starts a fresh France and says nothing at all.
+		_save_load_panel.show()
+		_clock.paused = true
 		return
 
 	_state = result["state"]
@@ -971,6 +1052,7 @@ func _on_load_requested(slot: String) -> void:
 	_bloc_panel.setup(_state, _loader)
 	_people_panel.setup(_state, _loader)
 	_companies_panel.setup(_state, _loader)
+	_projects_panel.setup(_state, _loader)
 
 	_calendar_panel.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to
@@ -1001,7 +1083,7 @@ func _mark_all_dirty() -> void:
 		# the frame it was built, and then never again: a censure that changed the head
 		# of government, a reshuffle that changed a portfolio and every seat count after
 		# an election were all stale on it until the game was reloaded.
-		_people_panel, _companies_panel,
+		_people_panel, _companies_panel, _projects_panel,
 	]:
 		if panel != null:
 			panel.mark_dirty()

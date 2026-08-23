@@ -39,6 +39,7 @@ var _title: Label
 var _body: VBoxContainer
 var _actions: VBoxContainer
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -85,13 +86,22 @@ func _ready() -> void:
 	_actions.add_theme_constant_override("separation", 4)
 	root.add_child(_actions)
 
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(func():
+	_close_button = Button.new()
+	_close_button.text = "Close"
+	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
 	)
-	root.add_child(close)
+	root.add_child(_close_button)
+
+
+
+## Docked in a WindowFrame, whose X is the real close control. Without this the
+## panel's own Close hides the CONTENT while window_manager.open() only ever shows
+## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
+## V3. The four panels that already had this method never had the bug.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func setup(state, loader) -> void:
@@ -107,10 +117,34 @@ func show_nation(nation_id: String) -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or not visible or _state == null or _nation_id == "":
+	if not _dirty or not visible or _state == null:
 		return
 	_dirty = false
+	# V1.6 audit, V10. `_nation_id == ""` used to be part of this early-out, so
+	# opening Diplomacy from the World cluster -- which main.gd registers precisely
+	# "so the diplomatic verbs are not hidden behind knowing to click the map" --
+	# drew a completely empty window and left it empty. The panel is a card about a
+	# selected nation and has nothing to say before one is picked; it now says that
+	# rather than saying nothing.
+	if _nation_id == "":
+		_show_empty_state()
+		return
 	_refresh()
+
+
+## What the panel looks like before a nation has been chosen. Not a nation picker:
+## the map IS the picker, and a second list of the same ten would be a surface to
+## keep in step with it for no gain.
+func _show_empty_state() -> void:
+	_title.text = "No nation selected"
+	for child in _body.get_children():
+		child.queue_free()
+	for child in _actions.get_children():
+		child.queue_free()
+	var hint := Label.new()
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.text = "Click a country on the map to open its file. The ten the game simulates are the coloured ones."
+	_body.add_child(hint)
 
 
 func mark_dirty() -> void:

@@ -41,7 +41,8 @@ Which open datasets seed the game's content, what each one is licensed under, an
 - **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`). **And, since [[ROADMAP|V1.5b]], age structure** — population aged 0–14 (`SP.POP.0014.TO.ZS`) and 65+ (`SP.POP.65UP.TO.ZS`) — **plus the 15–64 labour-force participation rate (`SL.TLF.ACTI.ZS`)**.
 - **Used for:** Starting statistics for every nation in scope, **rounded**. GDP converted USD → EUR at a fixed rate pinned in the import script (see below), so re-running the import doesn't drift on exchange-rate noise. Sector shares are normalised to sum to 1.0 — the three World Bank value-added indicators sum to roughly 89–95% of GDP on their own (the residual is taxes less subsidies on products), so dividing by their sum is required, not optional polish.
 - **Read at two years, not one, and that is what makes ageing measured rather than modelled.** The download loop below has always fetched `date=2015:2024`, so [[ROADMAP|V1.5b]]'s per-nation ageing slope cost one extra read of a series already on disk and no extra download. `imported._trend_from_year` records the base year in the data, beside `_year`, for the reason `_usd_eur` is echoed there: without it the provenance record claims the block describes one year while the cohort slopes describe two. The slopes genuinely differ — Luxembourg **+0.142** points of 65+ share per year against France's **+0.366** — which is why the ten pyramids are not the clustered `coalition_position` failure the decomposition feared. See [[demography-model]].
-- **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
+- **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **Re-checked at [[ROADMAP|V1.6d]] before that session planned a measured base share for capital gains or wealth, and the rejection stands with two more reasons.** Coverage is not the issue -- `GC.TAX.TOTL.GD.ZS`, `GC.TAX.YPKG.*` and `GC.TAX.GSRV.RV.ZS` all return 10 of 10 nations over 1990-2024 with 30-35 rows each. The scope problem above is confirmed to the digit (FRA 22.78 % of GDP, DEU 10.89, CHE 9.45); `GC.TAX.YPKG.*` bundles income, profits **and capital gains** into one bucket, which is exactly the split V1.6d exists to create; and `GC.TAX.PRPT.*` returns **no rows at all**, so there is no wealth series on this provider. V1.6d's two new `TAX_BASE_SHARE` entries are therefore authored model parameters, like the three that preceded them, and this file gains no download line.
+- **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
 
 ### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
 
@@ -110,7 +111,37 @@ for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS
   curl -L -o "sources/wb/$I.json" \
     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
+
+# V1.6a. One indicator, on its own line, over a DIFFERENT WINDOW -- and the split is
+# the honest cost of the business cycle rather than an untidiness. Measuring how
+# volatile a country's growth is takes several cycles, and 2015-2024 contains one.
+curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=1000"
+
+# V1.6b. Two more on the SAME window, and this is where "one extra read of a series
+# already on disk" stops being true: load_wb_indicator_series() reads one file per
+# indicator CODE, so sharing V1.6a's window buys nothing on the download. Unemployment
+# is re-fetched wide rather than duplicated -- the 1990-2024 pull is a strict superset
+# of the 2015-2024 one (verified row by row, zero differing values) and every other
+# caller reaches it through an exact-year match.
+for I in FP.CPI.TOTL.ZG SL.UEM.TOTL.ZS; do
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=1990%3A2024&per_page=1000"
+done
 ```
+
+> [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing
+> `tools/import_data.py`'s `CYCLE_EXCLUDE_YEARS` drops **2020 and 2021** from
+> `NY.GDP.MKTP.KD.ZG` and from nothing else. On the 2015-2024 window every other
+> indicator uses, France's real-growth standard deviation is **3.333** -- and **0.579**
+> with those two years removed, a factor of **5.8**. Every nation collapses the same
+> way. A session that reused the existing window would have shipped a "business cycle"
+> whose entire amplitude was one pandemic, and it would have looked measured. A
+> pandemic is an exogenous disaster, which [[v1]] section 8 owns; a business cycle is
+> section 6's. **2008-09 is not excluded**, because a financial crisis *is* a business
+> cycle. The years actually dropped are written into each nation file as
+> `imported.cycle._excludes` rather than implied, for the reason `inequality._year` is:
+> a provenance record that hides its own editorial act is worse than none. See
+> [[cycle-model]] section 3.
 
 > [!warning] `SI.POV.GINI` is the one series with gaps, and it needs the fallback
 > [[ROADMAP|V1.5c]] added it for section 5's inequality statistic, and it is the only

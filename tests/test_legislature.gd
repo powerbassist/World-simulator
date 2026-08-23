@@ -7,6 +7,14 @@ extends SceneTree
 ## sequence and reads what actually happened, rather than arguing that a
 ## formula implies an outcome.
 
+## PRELOADED RATHER THAN USED AS A BARE `class_name`, and the shadowing is deliberate --
+## src/core/data_loader.gd:9 does exactly this with the same identifier. CLAUDE.md's
+## gotcha is that a global class name does not resolve before
+## .godot/global_script_class_cache.cfg exists, and `--headless --script` does not
+## generate one -- so `Law.from_dict()` parsed here only because this machine had run
+## the editor. On a fresh clone tools/run_tests.sh failed on this file and on no other,
+## found by running the suite in a clean worktree while checking the V5 autoload fix.
+const Law = preload("res://src/core/law.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")

@@ -78,17 +78,27 @@ func show_results(results: Array) -> void:
 			eu_result = r
 		elif r["kind"] == "executive":
 			executive = r
+		elif r["kind"] == "termed_out":
+			# Read as the executive verdict for every purpose on this screen -- it
+			# ends the term exactly as a lost election does -- while staying a
+			# distinct kind everywhere else. See elections.gd.
+			executive = r
 
 	# Only an executive election can end the player's term. Where the executive
 	# is drawn from the chamber there is no separate executive result and the
 	# national one carries the verdict, exactly as before V1.1a.
 	var verdict_result = executive if executive != null else national
 	var defeated: bool = verdict_result != null and not verdict_result["incumbent_largest"] and not ns.in_government
+	# V1.6 audit, V1. A term limit ends the run whatever the vote said, so the
+	# defeat test above misses it -- the incumbent's PARTY may well have won.
+	var termed_out: bool = verdict_result != null and bool(verdict_result.get("termed_out", false))
+	if termed_out:
+		defeated = true
 
 	var snap: bool = national != null and bool(national.get("snap", false))
 
 	if executive != null:
-		_title.text = "DEFEATED" if defeated else "RE-ELECTED"
+		_title.text = "TERM LIMIT" if termed_out else ("DEFEATED" if defeated else "RE-ELECTED")
 	elif national != null:
 		# A legislative election under a separately elected executive does not
 		# end the term. It decides whether the player still commands a majority.
@@ -104,7 +114,20 @@ func show_results(results: Array) -> void:
 	else:
 		_title.text = "EUROPEAN PARLIAMENT ELECTION"
 
-	if executive != null:
+	# A termed-out notice carries no vote, so there is no table to draw -- see
+	# elections.gd. It still gets a sentence: a plate carrying nothing but a title
+	# and a footer reads like a screen that failed to load, which is too close to
+	# the bug this branch exists to fix.
+	if termed_out:
+		var why := Label.new()
+		why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		why.text = "%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in." % [
+			_loader.person_name(ns.head_of_state_person_id),
+			ns.terms_served,
+			_loader.nations[ns.id].executive_title,
+		]
+		_sections.add_child(why)
+	elif executive != null:
 		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title))
 	if national != null:
 		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name))
@@ -127,15 +150,23 @@ func show_results(results: Array) -> void:
 			]
 		_sections.add_child(gov)
 
+	# V1.6 audit, V2. The footer gets a control in BOTH branches. It used to build
+	# the button only on the winning side, and main.gd unpauses only on `dismissed`
+	# -- so a defeated player was left with a plate carrying nothing to press, over
+	# a HUD that stayed live because the holder is MOUSE_FILTER_IGNORE. Space
+	# unpaused it and the run continued indefinitely behind a "DEFEATED" title.
 	if defeated:
 		var over := Label.new()
-		over.text = "You have lost your office. This term is over."
+		if termed_out:
+			over.text = "You have served the maximum number of terms. You leave office."
+		else:
+			over.text = "You have lost your office. This term is over."
 		_footer.add_child(over)
-	else:
-		var cont := Button.new()
-		cont.text = "Continue"
-		cont.pressed.connect(func(): hide(); dismissed.emit())
-		_footer.add_child(cont)
+
+	var cont := Button.new()
+	cont.text = "Leave office" if defeated else "Continue"
+	cont.pressed.connect(func(): hide(); dismissed.emit())
+	_footer.add_child(cont)
 
 
 func _build_section(result: Dictionary, chamber_label: String) -> Control:

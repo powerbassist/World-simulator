@@ -43,10 +43,31 @@ var population: float = 0.0
 ## unchanged from their starting values so one code path serves both.
 var has_budget: bool = false
 
-var tax_rates_pct := {}          # income, corporate, vat
+var tax_rates_pct := {}          # income, corporate, vat, capital_gains, wealth
 var spending_pct_gdp := {}       # health, education, defence, pensions, infrastructure
 var start_tax_rates_pct := {}
 var start_spending_pct_gdp := {}
+
+## V1.6d. How steep the income-tax schedule is, as a dimensionless index bounded by
+## tax_constants.PROGRESSIVITY_MIN/MAX, initialised for all ten from
+## tax_constants.PROGRESSIVITY_BASE.
+##
+## `spending_pct_gdp` AND `tax_rates_pct`'s SHAPE AND NOT A SIXTH TAX KEY, which is
+## what docs/tiers/v1.md section 6 asks for by name: brackets WITHIN income rather
+## than as further keys, so the distributional lever exists without a fourth revenue
+## channel. It is not a rate, it has no base share and it collects nothing; what it
+## does is move the income tax's erosion and the inequality index, which is
+## src/sim/tax.gd's whole surface.
+##
+## BOTH FIELDS EARN THE SAVE BUMP AND FOR THE SAME REASON, unlike most pairs on this
+## file's list: an absent `tax_progressivity` reads 0.0, which is not a neutral default
+## but PROGRESSIVITY_MIN -- a flat tax, the most regressive schedule the model has --
+## and an absent `start_tax_progressivity` reads 0.0 too, so the deviation is 0.0 and
+## the reloaded game agrees that a flat tax is normal. A save reloaded after a
+## redistributive term silently abolishes the bracket structure AND forgets it ever
+## had one. See tests/test_save_load.gd, which asserts the two halves separately.
+var tax_progressivity: float = 0.0
+var start_tax_progressivity: float = 0.0
 var other_spending_pct_gdp: float = 0.0
 
 ## Calibration residual, fixed at new-game so starting revenue equals the
@@ -66,6 +87,26 @@ var debt_eur_bn: float = 0.0
 ## The deficit at new-game. The opinion model's public_finances issue is measured
 ## against this, so a fresh game starts on exactly neutral.
 var start_deficit_pct_gdp: float = 0.0
+
+## V1.6c. The debt ratio at new-game, and the reference src/sim/credit.gd measures the
+## bond spread against, so a fresh game borrows at exactly economy_constants.
+## DEBT_REAL_RATE_PCT and every balance figure ever quoted against that flat 2.0 keeps
+## its meaning. start_deficit_pct_gdp's job one line up, for the other half of the same
+## pair.
+##
+## SET FROM THE SCENARIO-OVERRIDDEN FIGURE rather than from the nation file, in
+## src/core/game_state.gd beside debt_eur_bn -- a scenario authoring 140 % of GDP is a
+## France that has ALWAYS carried that debt, so it must start at a zero spread rather
+## than in immediate breach of a market that never lent it anything.
+##
+## EARNS THE SAVE_VERSION BUMP TO 21, on its own. Absent it reads 0.0 against a live
+## ~110, so the debt gap reads +110 points from the first month, the yield goes to
+## credit_constants.YIELD_MAX and the debt service with it -- a reloaded game running a
+## DIFFERENT MODEL from the one that saved it, which is `cycle_amplitude_rel` at V1.6a,
+## `military_capability` at V1.3g and `eu_member` at V1.3b. Re-deriving on load cannot
+## rescue it either: the live ratio has moved, and re-anchoring on it would silently
+## forgive every point of debt the player added.
+var start_debt_to_gdp_pct: float = 0.0
 
 # --- Opinion -----------------------------------------------------------------
 
@@ -126,6 +167,102 @@ var trade_baseline_by_partner := {}
 ## w(FRA,DEU). No loop, because DEU has no external impulse to carry it onward.
 ## See docs/coercion-model.md.
 var coercion_impulse_pct: float = 0.0
+
+## V1.6a. The business cycle's contribution to this month's annualised growth, in
+## points. Signed; a slump is negative.
+##
+## SUSTAINED, not decayed, and it sits with coercion_impulse_pct and firm_impulse_pct
+## on that side of economy.gd's distinction rather than with demand_impulse_pct and
+## unrest_impulse_pct on the other: a recession is a condition the economy is IN, not
+## a shock it absorbed. It is also the only addend in that sum whose value this month
+## says nothing about whether the player did anything, which is the row's whole point.
+##
+## ONE WRITER, Economy.tick_month(), from the pure read Cycle.impulse_pct(). There is
+## no Cycle.tick_month() to forget -- see the header of src/sim/cycle.gd for why that
+## is the session's structural call rather than a shortcut.
+##
+## EXACTLY 0.0 in the game's first month for all ten nations, because every term of
+## the wave is a sine with no phase offset measured from cycle_constants'
+## CYCLE_EPOCH. Not for a bit-identical re-run -- this session's is predicted not to
+## be -- but because `imported.unemployment_pct` and SECTOR_TREND describe a nation at
+## potential, and a cycle that started mid-slump would contradict the content on the
+## opening month.
+var cycle_impulse_pct: float = 0.0
+
+## V1.6a. This nation's real-GDP-growth volatility as a multiple of the roster mean.
+## Measured, per nation, off `imported.cycle.amplitude_rel`; the roster spans France's
+## 0.689 to Luxembourg's 1.475.
+##
+## Static content, never recomputed, which is `eu_member`'s and `neighbours`' standing
+## and NOT `start_gini_index`'s: this is not a baseline a deviation is taken against,
+## it is a fact about the country.
+##
+## SERIALISED, AND IT IS WHAT BUMPS SAVE_VERSION TO 19 -- which is not what this
+## session's plan predicted, and the reason the prediction was wrong is worth more
+## than the field. The plan reasoned that a stateless generator has nothing to save.
+## True of src/sim/cycle.gd, which stores nothing and has no tick. False of the save,
+## because NationState.from_dict() rebuilds from the dictionary ALONE and never sees
+## the loader -- so every content-derived static fact on this class is serialised
+## already: eu_member, neighbours, pop_growth_pct, gini_index_per_yr. STATELESSNESS IS
+## A PROPERTY OF THE MODULE, NOT OF THE SAVE FILE.
+##
+## Absent, it reads the default 1.0 and every nation runs the roster-average cycle
+## instead of its own -- France 45 % louder than its content says, Luxembourg 32 %
+## quieter. That is a reloaded game running a DIFFERENT MODEL from the one that saved
+## it, which is `eu_member` at V1.3b and `military_capability` at V1.3g in its
+## strongest form. `cycle_impulse_pct` above earns nothing by the same rule and is
+## serialised anyway; tests/test_save_load.gd asserts both halves, and the split is
+## the assertion worth having. See docs/cycle-model.md section 9.
+var cycle_amplitude_rel: float = 1.0
+
+# --- Inflation -----------------------------------------------------------------
+
+## V1.6b. The price level's rate of change, percent per year, as a STOCK. Written by
+## Inflation.tick_month() and by nothing else; tests/test_inflation.gd walks src/sim/
+## and fails if a second writer appears.
+##
+## Seeded at this nation's own anchor rather than at 0.0, so `inflation_pct -
+## start_inflation_pct` is EXACTLY 0.0 at new game for all ten. A country whose prices
+## have risen ~1.8 %/yr for thirty-five years is not at zero on the opening month.
+##
+## EARNS THE SAVE_VERSION BUMP. Absent it reads 0.0 -- a nation of permanently stable
+## prices -- and re-deriving it on load cannot rescue it, because the accumulation IS
+## the state: a save reloaded mid-inflation would silently end the inflation the player
+## spent a term earning. `service_quality` at V1.5a and `unrest_pct` at V1.5c.
+var inflation_pct: float = 0.0
+
+## V1.6b. Where inflation stood on the opening month, and the reference every political
+## price is measured against -- start_deficit_pct_gdp's, start_bloc_burden's and
+## start_service_quality's treatment.
+##
+## EARNS THE BUMP TOO, and by a different failure from the field above, which is why
+## tests/test_save_load.gd asserts them separately. Absent it reads 0.0 while
+## inflation_pct reads ~1.8, so the issue satisfaction reads -(1.8 - 0.0)/SCALE: a
+## large negative from the first month, MIS-SIGNED for the rest of the run rather than
+## merely missing. `start_bloc_burden` at V1.3d exactly.
+var start_inflation_pct: float = 0.0
+
+## V1.6b. The long-run rate this nation's inflation returns to when unemployment sits
+## at its structural rate. Imported content, from imported.prices.inflation_pct --
+## Switzerland 1.117 to Spain 2.903.
+##
+## EARNS THE BUMP FOR THE THIRD TIME, which is a first on this list, and it is
+## `cycle_amplitude_rel`'s case verbatim: from_dict() rebuilds from the dictionary
+## ALONE and never sees the loader, so a content-derived static that is not serialised
+## is simply lost. Absent it reads 0.0, every nation's target collapses toward zero,
+## and the real channel bills a deflation that nation never had -- a reloaded game
+## running a DIFFERENT MODEL from the one that saved it.
+var inflation_anchor_pct: float = 0.0
+
+## V1.6b. Points of annual growth lost to inflation above the anchor, the eighth addend
+## in economy.gd's growth sum. Signed negative or exactly zero, never positive: see
+## Inflation.output_cost_pct() for why the cost is one-sided.
+##
+## EARNS NOTHING. Absent it reads 0.0 and Inflation.tick_month() rewrites it in full on
+## the next tick -- `coercion_impulse_pct`'s and `cycle_impulse_pct`'s case. Serialised
+## anyway, so one month of a reloaded save is not quietly cheaper than the month before
+## it.
+var inflation_impulse_pct: float = 0.0
 
 # --- The bloc ------------------------------------------------------------------
 
@@ -549,6 +686,121 @@ var regulation_burden := {}
 ## Empty until the first one resolves. `last_diplomatic_result`'s shape.
 var last_company_result := {}
 
+# --- Sectoral investment (V1.6e) -------------------------------------------------
+
+## sector id -> {"intensity": float, "capital": float}. The standing programme the
+## player has committed to, and the capital it has accumulated. Written by
+## Investment.execute() (the intensity) and Investment.tick_month() (the capital),
+## one writer apiece, which is `share`/`state_share`/`regulation_burden`'s
+## discipline one block on.
+##
+## KEYED BY SECTOR AND NOT BY A CONTENT ID, which is what makes it a register with
+## no baseline anywhere else: the three sectors are economy_constants.SECTOR_TREND's
+## keys, fixed for every nation, so unlike `companies` there is no authored half of
+## this that DataLoader carries. What is here is the whole of it.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: a version-22 save
+## is a game that had no investment verb, so an absent register reads as no
+## programme running and nothing built, which is the truth about that save.
+## `measures` at V1.3c, `pacts` at V1.3g and `regulation_burden` at V1.4b.
+##
+## SERIALISED ALL THE SAME, and that half is not free. The capital stock is written
+## by a tick and NO TICK RE-DERIVES IT FROM CONTENT -- unlike V1.4a's four prices,
+## which come back on the next tick -- so a save that dropped it would silently
+## demolish everything the player spent a term building. `regulation_burden`'s exact
+## argument, on a stock rather than on an accumulator.
+var sector_investment := {}
+
+## V1.6e's computed spending line, recomputed once a month by
+## Investment.tick_month() and read from here rather than called for -- the fourth
+## to take this route after the bloc transfer, the deployment bill and the subsidy
+## bill, and cached for the same reason: budget.gd's recompute() reads it a month
+## late on purpose, because `deficit_pct_gdp` is one of this verb's own precondition
+## fields and a bill that widened the deficit inside the month would close a loop.
+##
+## Earns nothing on the rule -- recomputed from `sector_investment` on the first
+## tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `subsidy_bill_pct_gdp`'s case.
+##
+## THE TREND SHIFT IS NOT CACHED BESIDE IT, and the asymmetry is deliberate:
+## Investment.sector_trend_shift() takes no loader, so economy.gd can simply call it
+## at the two sites that need it. The four fields above are cached because
+## companies.gd takes a loader and economy.gd's call sites do not have one.
+var investment_bill_pct_gdp: float = 0.0
+
+## The most recent investment action, for the companies panel to read after acting.
+## `last_company_result`'s shape.
+var last_investment_result := {}
+
+# --- Infrastructure projects (V1.6f) --------------------------------------------
+
+## Project id -> {"months_left": int, "done": bool}. The whole of what the game
+## remembers about the state's discrete building commitments. Written by
+## Projects.tick_month() and by Projects.execute(), and by nothing else -- the single
+## writer discipline `share`, `state_share`, `regulation_burden`, `gini_index` and
+## `sector_investment` are each held to.
+##
+## EXACTLY TWO KEYS PER ENTRY, and projects_constants is not where that is pinned --
+## Projects.ENTRY_KEYS is, and tests/test_projects.gd asserts against it. The cost,
+## the duration and the payoff are AUTHORED in data/project-actions/, so caching any
+## of them here would put content in the save file, which is the property V1.4a's own
+## test pins for `companies` and V1.6e's for `sector_investment`.
+##
+## *** THIS FIELD EARNS THE SAVE_VERSION BUMP, AND IT SPLITS -- WHICH IS THE
+## ASSERTION WORTH HAVING RATHER THAN THE BUMP. *** V1.3g's `deployments` exactly:
+##
+##   the BUILDING half fails soft. An absent register reads as "nothing under
+##   construction", which is the truth about every version-22 save, because those
+##   games had no project verb. `measures` at V1.3c, `sector_investment` at V1.6e.
+##
+##   the DONE half does not. A France that finished the rail spine and the grid has a
+##   permanent claim on its own trend, and an absent register erases the record of it.
+##   Re-deriving on load cannot rescue it, because there is nothing left to derive
+##   from: the accumulator below is the only other trace and it is not content.
+##
+## So the bump is earned by the half of one dictionary, and tests/test_save_load.gd
+## asserts the two halves separately -- a single combined check would let either half
+## be quietly wrong.
+var projects := {}
+
+## Points of trend growth per year, accumulated across every COMPLETED project and
+## added to the target Economy._update_potential_shift() converges toward.
+##
+## `law_potential_target_pct`'s exact shape, three fields up, and the match is the
+## argument rather than a resemblance: a passed law and a finished project are the
+## same act -- a one-time decision producing a permanent addend -- so the two are
+## written the same way, bounded alike (projects_constants.PROJECT_POTENTIAL_MAX_PCT
+## against legislature_constants.POTENTIAL_TARGET_MAX_PCT) and read at the same site.
+##
+## *** THIS IS WHY V1.6f ADDS NO THIRD QUANTITY REACHING TREND. *** V1.6e had to add
+## investment_constants.SECTOR_TREND_MAX_PCT because Investment.sector_trend_shift()
+## reaches Economy.trend_pct() directly. This does not: it reaches the TARGET of a lag
+## economy_constants.SHIFT_MAX_PCT already bounds, so the amended clause in that
+## constant's comment stays true as V1.6e left it.
+##
+## Serialised, and derivable in principle from `projects` plus the content -- which is
+## exactly `law_potential_target_pct`'s position, derivable from the passed-law list
+## plus data/laws/. Stored for the same reason: Economy._update_potential_shift()
+## takes no loader, so a derived read there would mean handing one to the economy.
+var project_potential_target_pct: float = 0.0
+
+## V1.6f's computed spending line, recomputed once a month by Projects.tick_month()
+## and read from here rather than called for -- the FIFTH to take this route after the
+## bloc transfer, the deployment bill, the subsidy bill and the investment bill,
+## cached for the same reason: budget.gd's recompute() reads it a month late on
+## purpose, because `deficit_pct_gdp` is one of this verb's own precondition fields
+## and a bill that widened the deficit inside the month would close a loop.
+##
+## Earns nothing on the rule -- recomputed from `projects` and the content on the
+## first tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `investment_bill_pct_gdp`'s case.
+var project_bill_pct_gdp: float = 0.0
+
+## The most recent project action, for the panel to read after acting.
+## `last_investment_result`'s shape, and not serialised for its reason either: it is a
+## display record of something that has already happened to the register.
+var last_project_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -810,6 +1062,8 @@ func duplicate_state():
 	s.population = population
 
 	s.has_budget = has_budget
+	s.tax_progressivity = tax_progressivity
+	s.start_tax_progressivity = start_tax_progressivity
 	s.tax_rates_pct = tax_rates_pct.duplicate(true)
 	s.spending_pct_gdp = spending_pct_gdp.duplicate(true)
 	s.start_tax_rates_pct = start_tax_rates_pct.duplicate(true)
@@ -824,6 +1078,7 @@ func duplicate_state():
 	s.deficit_pct_gdp = deficit_pct_gdp
 	s.debt_eur_bn = debt_eur_bn
 	s.start_deficit_pct_gdp = start_deficit_pct_gdp
+	s.start_debt_to_gdp_pct = start_debt_to_gdp_pct
 
 	s.bloc_approval = bloc_approval.duplicate(true)
 	s.overall_approval_pct = overall_approval_pct
@@ -834,6 +1089,13 @@ func duplicate_state():
 	s.external_impulse_pct = external_impulse_pct
 	s.trade_baseline_by_partner = trade_baseline_by_partner.duplicate(true)
 	s.coercion_impulse_pct = coercion_impulse_pct
+	s.cycle_impulse_pct = cycle_impulse_pct
+	s.cycle_amplitude_rel = cycle_amplitude_rel
+
+	s.inflation_pct = inflation_pct
+	s.start_inflation_pct = start_inflation_pct
+	s.inflation_anchor_pct = inflation_anchor_pct
+	s.inflation_impulse_pct = inflation_impulse_pct
 
 	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
 	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
@@ -924,6 +1186,11 @@ func duplicate_state():
 	s.firm_jobs_offset_pct = firm_jobs_offset_pct
 	s.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp
 	s.regulation_burden = regulation_burden.duplicate(true)
+	s.sector_investment = sector_investment.duplicate(true)
+	s.investment_bill_pct_gdp = investment_bill_pct_gdp
+	s.projects = projects.duplicate(true)
+	s.project_potential_target_pct = project_potential_target_pct
+	s.project_bill_pct_gdp = project_bill_pct_gdp
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -972,6 +1239,8 @@ func to_dict() -> Dictionary:
 		"population": population,
 
 		"has_budget": has_budget,
+		"tax_progressivity": tax_progressivity,
+		"start_tax_progressivity": start_tax_progressivity,
 		"tax_rates_pct": tax_rates_pct,
 		"spending_pct_gdp": spending_pct_gdp,
 		"start_tax_rates_pct": start_tax_rates_pct,
@@ -986,6 +1255,7 @@ func to_dict() -> Dictionary:
 		"deficit_pct_gdp": deficit_pct_gdp,
 		"debt_eur_bn": debt_eur_bn,
 		"start_deficit_pct_gdp": start_deficit_pct_gdp,
+		"start_debt_to_gdp_pct": start_debt_to_gdp_pct,
 
 		"bloc_approval": bloc_approval,
 		"overall_approval_pct": overall_approval_pct,
@@ -996,6 +1266,13 @@ func to_dict() -> Dictionary:
 		"external_impulse_pct": external_impulse_pct,
 		"trade_baseline_by_partner": trade_baseline_by_partner,
 		"coercion_impulse_pct": coercion_impulse_pct,
+		"cycle_impulse_pct": cycle_impulse_pct,
+		"cycle_amplitude_rel": cycle_amplitude_rel,
+
+		"inflation_pct": inflation_pct,
+		"start_inflation_pct": start_inflation_pct,
+		"inflation_anchor_pct": inflation_anchor_pct,
+		"inflation_impulse_pct": inflation_impulse_pct,
 
 		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
 		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
@@ -1086,6 +1363,11 @@ func to_dict() -> Dictionary:
 		"firm_jobs_offset_pct": firm_jobs_offset_pct,
 		"dividend_revenue_pct_gdp": dividend_revenue_pct_gdp,
 		"regulation_burden": regulation_burden,
+		"sector_investment": sector_investment,
+		"investment_bill_pct_gdp": investment_bill_pct_gdp,
+		"projects": projects,
+		"project_potential_target_pct": project_potential_target_pct,
+		"project_bill_pct_gdp": project_bill_pct_gdp,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1132,6 +1414,8 @@ static func from_dict(d: Dictionary):
 	s.population = d.get("population", 0.0)
 
 	s.has_budget = d.get("has_budget", false)
+	s.tax_progressivity = float(d.get("tax_progressivity", 0.0))
+	s.start_tax_progressivity = float(d.get("start_tax_progressivity", 0.0))
 	s.tax_rates_pct = d.get("tax_rates_pct", {})
 	s.spending_pct_gdp = d.get("spending_pct_gdp", {})
 	s.start_tax_rates_pct = d.get("start_tax_rates_pct", {})
@@ -1146,6 +1430,7 @@ static func from_dict(d: Dictionary):
 	s.deficit_pct_gdp = d.get("deficit_pct_gdp", 0.0)
 	s.debt_eur_bn = d.get("debt_eur_bn", 0.0)
 	s.start_deficit_pct_gdp = d.get("start_deficit_pct_gdp", 0.0)
+	s.start_debt_to_gdp_pct = d.get("start_debt_to_gdp_pct", 0.0)
 
 	s.bloc_approval = d.get("bloc_approval", {})
 	s.overall_approval_pct = d.get("overall_approval_pct", 0.0)
@@ -1165,6 +1450,31 @@ static func from_dict(d: Dictionary):
 	# force, so nothing was being damaged. Recomputed from GameState.measures on the
 	# first tick after loading in any case -- see the field's own declaration.
 	s.coercion_impulse_pct = float(d.get("coercion_impulse_pct", 0.0))
+
+	# V1.6a, and the two halves fall on OPPOSITE sides of this file's rule, which is
+	# why they are read here together and asserted separately.
+	#
+	# `cycle_impulse_pct` earns nothing: absent it reads 0.0, and Economy.tick_month()
+	# overwrites it from the clock on the first tick after loading, so the value is
+	# wrong for zero months rather than one -- coercion_impulse_pct's case above,
+	# exactly.
+	#
+	# `cycle_amplitude_rel` IS the bump to 19. Absent it reads the default 1.0 and
+	# every nation runs the roster-average cycle rather than its own, so the reloaded
+	# game runs a different model from the one that saved it -- eu_member at V1.3b,
+	# military_capability at V1.3g. It is content, and content on this class is
+	# serialised because from_dict() never sees the loader.
+	s.cycle_impulse_pct = float(d.get("cycle_impulse_pct", 0.0))
+	s.cycle_amplitude_rel = float(d.get("cycle_amplitude_rel", 1.0))
+
+	# V1.6b. Three of these four earn the bump to 20 and the fourth earns nothing; the
+	# declarations above say which and why, and tests/test_save_load.gd asserts the
+	# three separately rather than together. Every default here is 0.0 on purpose --
+	# including the anchor, where 0.0 is not a neutral reading but a different country.
+	s.inflation_pct = float(d.get("inflation_pct", 0.0))
+	s.start_inflation_pct = float(d.get("start_inflation_pct", 0.0))
+	s.inflation_anchor_pct = float(d.get("inflation_anchor_pct", 0.0))
+	s.inflation_impulse_pct = float(d.get("inflation_impulse_pct", 0.0))
 
 	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
 	# the one game_state.gd's own comment states rather than a new one. An absent
@@ -1262,6 +1572,20 @@ static func from_dict(d: Dictionary):
 	# version-15 save comes from a game with no `business` laws in it, so every
 	# burden really was 0.0. That is why this field earns no bump of its own.
 	s.regulation_burden = d.get("regulation_burden", {})
+	# V1.6e, and the 0.0/{} fallbacks here earn NO bump: a version-22 save is a game
+	# with no investment verb in it, so "no programme running and nothing built" is
+	# the truth about it rather than a soft failure. tests/test_save_load.gd pins that
+	# the version is STILL 22, so V1.6f has to come and say why it moves.
+	s.sector_investment = d.get("sector_investment", {})
+	s.investment_bill_pct_gdp = float(d.get("investment_bill_pct_gdp", 0.0))
+	# V1.6f, and this one is NOT the line above it. `projects` absent reads as nothing
+	# under construction, which is true of a version-22 save -- and as nothing ever
+	# BUILT, which is not, once a version-23 save exists. That is the half that earns
+	# the bump; see the field's own comment, and tests/test_save_load.gd, which asserts
+	# the two halves separately.
+	s.projects = d.get("projects", {})
+	s.project_potential_target_pct = float(d.get("project_potential_target_pct", 0.0))
+	s.project_bill_pct_gdp = float(d.get("project_bill_pct_gdp", 0.0))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})

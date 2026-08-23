@@ -22,14 +22,22 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 signal closed
+
+## V1.6 audit, V8. The council vote was the only player command in the game with
+## no signal, so it was the only one that never reached Overview's RECENT
+## DECISIONS -- a decision binding on the player that the surface built to say
+## what you did could not name. Same shape as nation_panel.acted.
+signal voted(before, label)
 
 var _state
 var _loader
 var _title: Label
 var _body: VBoxContainer
 var _dirty := true
+var _close_button: Button
 
 
 func _ready() -> void:
@@ -63,13 +71,22 @@ func _ready() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_body)
 
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(func():
+	_close_button = Button.new()
+	_close_button.text = "Close"
+	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
 	)
-	root.add_child(close)
+	root.add_child(_close_button)
+
+
+
+## Docked in a WindowFrame, whose X is the real close control. Without this the
+## panel's own Close hides the CONTENT while window_manager.open() only ever shows
+## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
+## V3. The four panels that already had this method never had the bug.
+func hide_close_button() -> void:
+	_close_button.hide()
 
 
 func setup(state, loader) -> void:
@@ -291,7 +308,9 @@ func _refresh_contribution(ns) -> void:
 
 
 func _on_vote(choice: String) -> void:
+	var before := Trends.snapshot_now(_state)
 	Bloc.cast_vote(_state, choice)
+	voted.emit(before, "Council vote: %s" % choice)
 	_dirty = true
 
 
