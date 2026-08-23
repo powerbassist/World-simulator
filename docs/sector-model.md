@@ -44,6 +44,13 @@ the binding one:
 > difference in architectural shape is an argument; a rule the roadmap has followed for
 > twenty sessions is a rule.
 
+**Built at U6c, which corrected the phrase above — instance thirty-nine.** *Per-project*
+geography is the one thing it could not be: `data/project-actions/` is a global flat list,
+so a lon/lat in `effects.project` gives all ten nations one rail spine at one point on the
+planet, and the only repair makes that directory per-nation and reopens the global-list
+call V1.6f made freely. Geography is **per-nation**, on an optional `project_sites` block
+in `data/nations/*.json`. [[projects-model]] §1.
+
 (e) alone counts ~22 surfaces, between [[transition-model|V1.2d]]'s ~21 and
 [[trade-model|V1.3b]]'s ~33.
 

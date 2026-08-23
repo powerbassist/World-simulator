@@ -1250,6 +1250,51 @@ two-track rule, a first. The visible consequence is in the content: **no project
 place**, because a lon/lat nothing reads is a field carrying no information, so the five
 are generic and the session that draws them owns naming them.
 
+**U6c shipped the marker layer, and section 6 is complete to its last clause.**
+**Instance thirty-nine is in the row's own wording**: every statement of this machine --
+this file, `docs/projects-model.md` §1, `docs/sector-model.md` §5, the ROADMAP -- called
+it *"per-project geography as content"*, and `data/project-actions/` is a **global flat
+list**, so a lon/lat inside `effects.project` puts all ten nations' rail spine at one
+point on the planet and the only repair is to make that directory per-nation, reopening
+the global-list call V1.6f made freely. **Geography is per-NATION.** `data/nations/*.json`
+grew an optional `project_sites` block (`project id -> [lon, lat]`), which is U6b's rule
+verbatim -- *a law names an office; the nation's own `government.pretender_person` names
+the person* -- so the action list stays global and **`src/core/project_action.gd` was not
+edited at all**. The `project_name` exception was offered as precedent for a coordinate
+and was not needed. Coverage is FRA/DEU/GBR, `data/companies/`'s and `data/outlets/`'s
+rule; an absent block is legal and `tests/test_map_markers.gd` pins that path, along with
+the two claims no loader could make -- every site names a project the content defines, and
+every site is **inside its own nation's polygon**, which is what a mistyped digit fails.
+
+**A marker is an always-on OVERLAY, not a fifth `LAYERS` entry, and the argument was
+already written.** `map_view.gd`'s header says *"no map layer adds, removes or reorders a
+draw layer"*: a `LAYERS` entry chooses a roster **fill**, one at a time, from a per-nation
+scalar, where a marker is a point and is additive. As a layer it would also be
+**structurally dead content** -- the nine never build, so its value reads exactly 0.0 for
+nine of ten forever, which is V1.6f's own *a frame of an all-zero data layer proves
+nothing* arriving as a design rather than as a frame. Markers are the **fifth draw pass**,
+frontmost, and the test pins `LAYERS` at four.
+
+**The hit test does not go through the roster, and the test reads the file to say so.**
+U5b's *unclickable structurally* rests on `_nation_at_lonlat()` iterating `_polygons`
+alone; a marker test routed through it would make that function answer for two things and
+the property would die the day someone widened it. `_project_at_screen_point()` is a
+**radius test in screen space** -- screen space because the glyph is a fixed number of
+pixels at every zoom, so a degree-radius target would shrink as the player zoomed out to
+find it -- and `tests/test_map_markers.gd` extracts its body from the source and fails on
+either name, `tests/test_projects.gd`'s idiom for *`calendar.gd` is still a leaf*. A click
+opens **Public Works** and does not fall through, or one press opens two windows.
+
+`SAVE_VERSION` stays **23**: a site is content that round-trips through `data/nations/`,
+and the marker list is derived at draw time from a register serialised at V1.6f. **No
+balance re-run and no new regime** -- nothing in `src/sim/` was touched and a marker is not
+a verb -- predicted in the plan rather than discovered. `main.gd`'s existing monthly
+`_map_view.queue_redraw()` (U5c's staleness fix) is the whole refresh path; U6c adds none.
+**The sixteenth screenshot pass found one bug and it was the readout's**: the hover read
+*"12 of 96 months"* against a project with twelve months **left**, which a player reads as
+twelve done, and it is now worded exactly as `projects_panel.gd` words it. Model:
+[docs/projects-model.md](docs/projects-model.md) §1 and §14.
+
 **Instance thirty-seven: the row never says what a project's PAYOFF IS**, which is V1.6b's
 instance thirty in a new place -- and the answer was already in the model.
 `ns.law_potential_target_pct` is a permanent accumulator with its own bound added to
@@ -1607,7 +1652,7 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, U1-U5 and U6 (a and b) are done. **The V1.5 AND V1.6 blocks are both COMPLETE.** (e) split and (f) split again on the same two-track rule, so the one piece of section 6 not built is **U6c, the map marker layer** -- a U-track session. V1.1e (upper house and
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, and so is section 6's last clause.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

@@ -13,11 +13,20 @@ extends Control
 ## _screen_to_lonlat()/_lonlat_to_screen() for the one transform drawing,
 ## hit-testing and the minimap all share.
 ##
-## Four DRAW layers, back to front: the satellite raster, the outlines of every
-## country the game does not simulate, the ten it does, and their labels. The
-## middle one is drawn from `_world_polygons` and hit-tested by nothing --
-## `_nation_at_lonlat` iterates `_polygons` alone, so "you cannot click Poland" is
-## structural rather than a filter somewhere that could be forgotten.
+## Five DRAW layers, back to front: the satellite raster, the outlines of every
+## country the game does not simulate, the ten it does, their labels, and U6c's
+## project markers. The second is drawn from `_world_polygons` and hit-tested by
+## nothing -- `_nation_at_lonlat` iterates `_polygons` alone, so "you cannot click
+## Poland" is structural rather than a filter somewhere that could be forgotten.
+##
+## The marker pass keeps that property by having its OWN hit test:
+## `_project_at_screen_point()` is a radius test in screen space over `_markers`
+## and reaches neither `_polygons` nor `_nation_at_lonlat`. Routing a marker click
+## through the nation test would have made every marker a second reason for that
+## function to exist, and the day someone widened it to answer markers over
+## Poland the roster's structural guarantee would die quietly.
+## tests/test_map_markers.gd reads this file and fails if either name appears
+## inside that function.
 ##
 ## U5c added a second, unrelated sense of the word: a MAP layer is what the ten
 ## are *coloured by* -- political, relations, trade. Those live entirely in
@@ -35,8 +44,15 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
+const MapMarkers = preload("res://src/ui/map_markers.gd")
 
 signal nation_clicked(nation_id: String)
+
+## A project marker was clicked -- U6c. main.gd opens Public Works on it: the
+## marker is a way INTO that panel rather than a second readout of it, because
+## three surfaces for one register only works if each says a different thing, and
+## what the map says is *where*.
+signal project_clicked(project_id: String)
 
 ## The nation under the cursor, "" when there is none. U5c: the legend's readout
 ## needs to name the value the player is looking at, and a colour ramp the player
@@ -79,6 +95,13 @@ var _zoom := 1.0
 var _pan_offset := Vector2.ZERO
 
 var _hovered_id := ""
+
+## U6c. Rebuilt from live state on every draw rather than cached, so a project
+## that finishes this month is drawn finished on the next redraw with no refresh
+## path of its own -- main.gd already redraws the map monthly for U5c's reason.
+var _markers: Array = []
+var _hovered_project := ""
+
 var _dragging := false
 var _drag_moved := 0.0
 var _last_mouse_pos := Vector2.ZERO
@@ -132,6 +155,11 @@ const HOME_WIDTH := 2.5
 ## are ten labels on top of each other; the threshold is set just under the
 ## opening Europe fit, so the roster is named from the moment the game starts and
 ## the names clear off as the player pulls back to the globe.
+## A few pixels of slack around the glyph, so a 6px dot is not a 6px target. Not
+## in map_markers.gd with the other marker constants: that file says what a marker
+## looks like, and this says how forgiving this control is about pointing at one.
+const MARKER_HIT_PAD := 3.0
+
 const LABEL_MIN_ZOOM := 1.4
 const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
 const LABEL_SHADOW := Color(0.0, 0.0, 0.0, 0.65)
@@ -177,6 +205,11 @@ func setup(loader, state) -> void:
 
 	_world_polygons = loader.world_features
 	_texture = MapRaster.texture()
+
+	# Built here as well as in _draw() for the reason _fit_zoom() is hooked in
+	# _notification(): a hit test can happen before the first frame is drawn, and
+	# an empty marker list would answer it with "nothing here".
+	_refresh_markers()
 
 	_fit_bounds()
 	queue_redraw()
@@ -325,6 +358,30 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 	return _nation_at_lonlat(_screen_to_lonlat(screen_pos))
 
 
+func _refresh_markers() -> void:
+	_markers = MapMarkers.markers(_loader, _state)
+
+
+## The project id of the marker under a screen point, or "" if there is none.
+##
+## A radius test in SCREEN space, over the marker list and nothing else. It does
+## not go through the roster's polygons and must not be made to -- see the header.
+## Screen space rather than lon/lat because the glyph is a fixed number of pixels
+## at every zoom, so the region a player can hit has to be too; a degree-radius
+## test would be a target that shrinks as you zoom out to find it.
+##
+## Last match wins, so the marker drawn on top of an overlapping pair is the one
+## a click reaches -- _draw_markers() walks the same list in the same order.
+func _project_at_screen_point(screen_pos: Vector2) -> String:
+	var hit := ""
+	for marker in _markers:
+		var lonlat: Vector2 = marker["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		if at.distance_to(screen_pos) <= MapMarkers.RADIUS + MARKER_HIT_PAD:
+			hit = String(marker["project_id"])
+	return hit
+
+
 ## Whose seat the data layers are read from. The player's, always -- U5c's first
 ## call, argued in ROADMAP's U5c row. It is a method rather than an inlined
 ## `_state.player_nation_id` at four call sites so that a selected-nation viewer,
@@ -378,9 +435,16 @@ func _gui_input(event: InputEvent) -> void:
 				_last_mouse_pos = event.position
 			else:
 				if _dragging and _drag_moved < DRAG_THRESHOLD:
-					var id := nation_at_screen_point(event.position)
-					if id != "":
-						nation_clicked.emit(id)
+					# Markers first, and a hit stops there: a marker sits on top of
+					# the nation that owns it, so falling through would open two
+					# windows on one click.
+					var project := _project_at_screen_point(event.position)
+					if project != "":
+						project_clicked.emit(project)
+					else:
+						var id := nation_at_screen_point(event.position)
+						if id != "":
+							nation_clicked.emit(id)
 				_dragging = false
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			zoom_by(1.15, event.position)
@@ -399,6 +463,14 @@ func _gui_input(event: InputEvent) -> void:
 				_hovered_id = id
 				nation_hovered.emit(id)
 				queue_redraw()
+			# Independent of the nation hover rather than replacing it: the
+			# country under a marker is still legitimately under the cursor,
+			# and the legend's readout should not blank because a dot is in
+			# the way.
+			var project := _project_at_screen_point(event.position)
+			if project != _hovered_project:
+				_hovered_project = project
+				queue_redraw()
 
 
 func _draw() -> void:
@@ -407,6 +479,8 @@ func _draw() -> void:
 	_draw_world_borders()
 	_draw_roster()
 	_draw_labels()
+	_refresh_markers()
+	_draw_markers()
 
 
 func _draw_raster() -> void:
@@ -484,3 +558,42 @@ func _draw_labels() -> void:
 		# shadow holds legibility on both without putting a box on the map.
 		draw_string(font, at + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_SHADOW)
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+
+
+## The fifth and frontmost pass -- U6c. What a marker looks like is
+## map_markers.gd's business, the way a fill is map_layers.gd's; this walks the
+## list and puts the glyph on the screen.
+##
+## No zoom threshold, where a label has one. Five dots on France are five dots at
+## any scale and are the whole point of the layer, so what gets dropped when they
+## crowd is their NAMES -- which is why the text is drawn on hover alone rather
+## than under LABEL_MIN_ZOOM's rule.
+func _draw_markers() -> void:
+	var font := get_theme_default_font()
+	for marker in _markers:
+		var lonlat: Vector2 = marker["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		var color: Color = MapMarkers.color_of(marker)
+		var hovered: bool = String(marker["project_id"]) == _hovered_project
+		var width: float = MapMarkers.HOVER_RING_WIDTH if hovered else MapMarkers.RING_WIDTH
+
+		if MapMarkers.is_filled(marker):
+			draw_circle(at, MapMarkers.RADIUS, color)
+		draw_arc(at, MapMarkers.RADIUS, 0.0, TAU, 24, color, width)
+
+		if not hovered or font == null:
+			continue
+		var text: String = MapMarkers.label_of(marker, _loader)
+		var font_size := UiTheme.SIZE_MICRO
+		var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var text_at := at + MapMarkers.LABEL_OFFSET - Vector2(text_width / 2.0, 0.0)
+		# The label pass's drop shadow, for the same reason: over a satellite
+		# photograph the contrast runs from Alpine snow to the North Sea.
+		draw_string(
+			font, text_at + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			font_size, MapMarkers.LABEL_SHADOW
+		)
+		draw_string(
+			font, text_at, text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			font_size, MapMarkers.LABEL_COLOR
+		)

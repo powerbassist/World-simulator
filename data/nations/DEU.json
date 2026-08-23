@@ -13,6 +13,13 @@
     "layout": "horizontal",
     "bands": ["#000000", "#DD0000", "#FFCE00"]
   },
+  "project_sites": {
+    "high_speed_rail": [9.6, 50.4],
+    "national_grid": [11.2, 52.4],
+    "freight_corridor": [9.2, 53.2],
+    "national_fibre": [12.2, 49.6],
+    "flood_defence": [9.3, 54.2]
+  },
   "government": {
     "legislative": {
       "chamber": "Bundestag",

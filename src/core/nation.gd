@@ -164,6 +164,20 @@ const KNOWN_FLAG_LAYOUTS: Array[String] = ["vertical", "horizontal", "union", "c
 var flag_bands: Array[Color] = []
 var flag_layout: String = ""
 
+## Where this nation's infrastructure projects stand, as project id -> lon/lat.
+## U6c, and the block is OPTIONAL: a nation with none draws no marker and
+## simulates exactly as it did before, the way an absent data/outlets/ file means
+## no press.
+##
+## **The site is on the NATION, not in data/project-actions/, and that is U6c's
+## central call.** The action list is global -- one `high_speed_rail` shared by
+## all ten -- so a coordinate inside `effects.project` would put every nation's
+## rail spine at one point on the planet, and moving that directory per-nation to
+## fix it reopens a call V1.6f made freely. U6b's rule applies unchanged: a law
+## names an office and the nation names the person. A project names a work; the
+## nation names the ground it stands on.
+var project_sites: Dictionary = {}  # String project id -> Vector2(lon, lat)
+
 ## The assembly's own term and size, from government.legislative. Distinct from
 ## the executive's term below: in France those are two different clocks, and
 ## conflating them is what made the player's term read as the Assembly's.
@@ -356,6 +370,8 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	if n.flag_layout != "" and not KNOWN_FLAG_LAYOUTS.has(n.flag_layout):
 		errors.append("%s: flag.layout '%s' is not one of %s" % [filename, n.flag_layout, str(KNOWN_FLAG_LAYOUTS)])
 	n.flag_bands = _extract_colours(flag, "bands", filename, errors)
+
+	n.project_sites = _extract_project_sites(d, filename, errors)
 
 	var government: Dictionary = _extract_dict(d, "government", filename, errors)
 
@@ -773,6 +789,41 @@ static func _extract_dict(d: Dictionary, key: String, filename: String, errors: 
 		errors.append("%s: missing or invalid object field '%s'" % [filename, key])
 		return {}
 	return d[key]
+
+
+## Optional where every other block in this file is required: an absent
+## `project_sites` is a nation with no sites, not an error. What IS an error is a
+## malformed one, because a coordinate dropped silently is a marker that never
+## appears with nothing anywhere to say why.
+##
+## Whether a key names a real project is NOT checked here. This parses one nation
+## file and the loader has no project list at that point; tests/test_map_markers.gd
+## checks the keys against data/project-actions/ instead, which is also where the
+## stronger claim lives -- that the point is inside the nation's own polygon.
+static func _extract_project_sites(d: Dictionary, filename: String, errors: Array[String]) -> Dictionary:
+	var out := {}
+	if not d.has("project_sites"):
+		return out
+	if typeof(d["project_sites"]) != TYPE_DICTIONARY:
+		errors.append("%s: invalid object field 'project_sites'" % filename)
+		return out
+
+	var raw: Dictionary = d["project_sites"]
+	for key in raw.keys():
+		var pair = raw[key]
+		if typeof(pair) != TYPE_ARRAY or pair.size() != 2:
+			errors.append("%s: project_sites.%s must be [lon, lat]" % [filename, str(key)])
+			continue
+		var lon := float(pair[0])
+		var lat := float(pair[1])
+		if lon < -180.0 or lon > 180.0 or lat < -90.0 or lat > 90.0:
+			errors.append(
+				"%s: project_sites.%s = [%s, %s] is not a lon/lat"
+				% [filename, str(key), str(lon), str(lat)]
+			)
+			continue
+		out[String(key)] = Vector2(lon, lat)
+	return out
 
 
 static func _check_range_int(value: int, min_v: int, max_v: int, path: String, filename: String, errors: Array[String]) -> void:
