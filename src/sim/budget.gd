@@ -19,6 +19,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -126,6 +127,15 @@ static func recompute(state, ns) -> void:
 		# must bill next month -- `deficit_pct_gdp` is one of that verb's own
 		# precondition fields.
 		+ ns.investment_bill_pct_gdp
+		# V1.6f's line, and the fifth to take this route. The same argument a fifth
+		# time, and the one difference is worth stating: this bill STOPS. Every other
+		# line above it is a standing rate the player can lower; a project's cost runs
+		# for exactly as long as the work does and ends the month it completes, which
+		# is the whole of what makes it a commitment rather than a policy.
+		# Projects.tick_month() runs after this in main.gd's order, so a project begun
+		# this month bills next month -- `deficit_pct_gdp` is one of that verb's own
+		# precondition fields.
+		+ ns.project_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -372,6 +382,14 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# just signed. V1.3b's repair, made a seventh time rather than rediscovered
 		# a seventh time.
 		Investment.tick_month(sim)
+		# In main.gd's slot, and required for the reason the six above it are: a
+		# projection that held the project register frozen would report a build begun
+		# this month as costing nothing, and -- worse than any of them -- would never
+		# COMPLETE one inside the projected window, so the one surface that promises
+		# "this is what will happen" would be silent about the only moment this lever
+		# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
+		# time.
+		Projects.tick_month(sim, loader)
 		# In main.gd's slot a fifth time, and required for the same reason the four
 		# above it are: a projection that held the quality stock frozen would report a
 		# spending cut as costing nothing beyond its own delta, when the whole point of
@@ -485,5 +503,17 @@ static func snapshot(state) -> Dictionary:
 		# projection is the only surface that can show the second one coming.
 		"investment_bill_pct_gdp": ns.investment_bill_pct_gdp,
 		"investment_trend_shift_pct": Investment.national_trend_shift_pct(ns),
+		# V1.6f, on the snapshot for deployment_bill_pct_gdp's reason at V1.3g: the budget
+		# panel compares a PROJECTED month against the current one and a projection has no
+		# NationState the panel can reach.
+		#
+		# ONE KEY AND NOT THREE, which is the fifteenth screenshot pass's correction read
+		# from the model side. The first version also carried the accumulated payoff and a
+		# count of live builds, on V1.6e's "both halves" argument -- and neither is read
+		# by anything, because the payoff belongs on Public Works (which has the
+		# NationState) and the count made this panel's widest cell and pushed a column off
+		# the window. A snapshot key nothing reads is a tuned constant nothing reads:
+		# deleted rather than left, U6a's day budget and V1.3e's AGREEMENT_ACCEPT_MIN.
+		"project_bill_pct_gdp": ns.project_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

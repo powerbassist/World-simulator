@@ -25,6 +25,7 @@ const Bloc = preload("res://src/sim/bloc.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -297,7 +298,27 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     `gini_index` keeps its single writer, Demography.tick_month(), which is what the
 ##     V1.6 decomposition's "a second field, not a second writer" asked for -- one step
 ##     further, because there is no second field either.
-const SAVE_VERSION := 22
+##   V1.6f bumps to 23, on the HALF OF ONE FIELD, which is V1.3g's `deployments` split
+##     in a new place and the assertion worth more than the bump. `NationState.projects`
+##     is one dictionary carrying two things: projects under construction and projects
+##     finished. Absent, the BUILDING half fails soft -- "nothing under construction" is
+##     the truth about every version-22 save, because those games had no project verb,
+##     which is `measures` at V1.3c and `sector_investment` at V1.6e. The DONE half does
+##     not: a France that finished the rail spine and the grid has bought a permanent
+##     claim on its own trend, and an absent register erases the record of it. Nothing
+##     re-derives it, because the only other trace is the accumulator and that is not
+##     content. So tests/test_save_load.gd asserts the two halves SEPARATELY, and pins
+##     that a saved entry carries exactly the two keys Projects.ENTRY_KEYS names -- a
+##     later session caching a cost, a payoff or a start date there turns it red.
+##     `project_potential_target_pct` earns nothing on its own (it is derivable from
+##     `projects` and data/project-actions/, exactly as `law_potential_target_pct` is
+##     derivable from the passed-law list and data/laws/) and is serialised for that
+##     field's reason: Economy._update_potential_shift() takes no loader.
+##     `project_bill_pct_gdp` earns nothing either, recomputed on the first tick --
+##     `investment_bill_pct_gdp`'s case. And `last_project_result` is not serialised at
+##     all, `last_investment_result`'s case: a display record of something that has
+##     already happened to the register.
+const SAVE_VERSION := 23
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -726,6 +747,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# Companies does: the three sectors are model constants, so there is no file that
 	# could be absent and nothing a roster could differ over.
 	Investment.init_nation(ns)
+	Projects.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

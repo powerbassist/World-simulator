@@ -233,6 +233,15 @@ const SHIFT_ADJUST := 0.20
 ## argument is PER QUANTITY rather than per file. The sentence is corrected instead
 ## of deleted, so a later reader can see that the property was real and when it
 ## stopped being exclusive.
+##
+## V1.6f CHECKED WHETHER IT HAD TO AMEND IT AGAIN AND IT DID NOT, which is worth a line
+## because the obvious reading is that it would. A completed infrastructure project is a
+## permanent addend to _update_potential_shift()'s TARGET -- law_potential_target_pct's
+## shape, bounded on its own accumulator by projects_constants.PROJECT_POTENTIAL_MAX_PCT
+## -- so the quantity that reaches Economy.trend_pct() is still `potential_shift_pct` and
+## still carries exactly one bound. A second amendment here would have meant a third
+## quantity, and the session that would have needed one is the session that did not build
+## it that way.
 const SHIFT_MAX_PCT := 1.0
 
 # --- Trade -------------------------------------------------------------------

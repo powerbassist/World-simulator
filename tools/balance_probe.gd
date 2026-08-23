@@ -39,6 +39,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -415,6 +416,28 @@ const INVESTMENT_REGIMES := {
 	"managed_then_invest": {"budget": REGIMES["managed"], "invest_month": 30},
 }
 
+## V1.6f. *** TWO NEW REGIMES, AND THEY ARE THE EXPENSIVE KIND AGAIN. *** A project is
+## a verb no budget regime issues, so the harness has to learn it exactly as V1.3c,
+## V1.3g, U6a, V1.4a, V1.4c and V1.6e each did. Every one of the thirty-four regimes
+## above is structurally unreachable by this session.
+##
+## `public_works` begins the two projects the content gate permits from month 6 and
+## never abandons either -- the reachable worst case for the bill, the payoff and the
+## accumulator's guard rail at once, which is the shape the subsidy, the burden, the
+## nationalisation and the investment programme all take.
+##
+## `managed_then_build` takes the mid-run switch shape V1.5c invented and V1.6e reused,
+## and it matters more here than in either: the largest project takes ninety-six months
+## to open, so a government that commits in month 1 and loses in 2027 has measured a
+## build nobody ever collected. Month 30 is after the first presidential election and
+## leaves the shorter of the two projects finishing inside the run. V1.5c's blind spot
+## named in advance rather than discovered by a probe that ran a government already out
+## of office.
+const PROJECT_REGIMES := {
+	"public_works": {"budget": REGIMES["managed"], "build_month": 6},
+	"managed_then_build": {"budget": REGIMES["managed"], "build_month": 30},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -520,6 +543,12 @@ func _init() -> void:
 				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
 				int(regime["invest_month"])
 			)
+		for name in PROJECT_REGIMES.keys():
+			var regime: Dictionary = PROJECT_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, int(regime["build_month"])
+			)
 
 	quit(0)
 
@@ -552,7 +581,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -633,6 +662,12 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# finding applied rather than rediscovered: a system this loop never calls is a
 		# system whose bit-identity proves nothing about it.
 		Investment.tick_month(state)
+		# V1.6f, in main.gd's slot. Runs for EVERY regime and not only the two that
+		# build, for the reason U6a's day loop does: a tick that only ever executes
+		# under the regime designed to exercise it is a tick nobody has tested, and
+		# V1.5d shipped a whole session whose harness never called its own module.
+		# With an empty register this is one sorted key list over nothing.
+		Projects.tick_month(state, loader)
 		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
 		# additions above it, and that is the difference this row exists to record: the
 		# quality stock reads the live spending line, so it diverges from its own
@@ -683,6 +718,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_censor(state, loader, ns, regime_name, year, month)
 		if i + 1 == invest_month:
 			_invest(state, loader, ns, regime_name, year, month)
+		if i + 1 == build_month:
+			_break_ground(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -1501,6 +1538,32 @@ func _days_in_month(m: int, y: int) -> int:
 ##
 ## Largest by output rather than by name, so this stays nation-relative the way every
 ## other regime in this file is.
+## V1.6f. Begins every project the content's own `project_count` gate permits, longest
+## first, and never abandons one. The gate is read off Projects.available() rather than
+## counted here, so a content change that widens or narrows it moves this regime with
+## it -- the concurrency ceiling is content, which is why projects_constants.gd ships no
+## constant for it.
+func _break_ground(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var starts: Array = []
+	for a in loader.project_actions:
+		if String(a.effects.get("project", {}).get("op", "")) == "start":
+			starts.append(a)
+	starts.sort_custom(func(x, y):
+		return (
+			int(x.effects["project"]["build_months"]) > int(y.effects["project"]["build_months"])
+		)
+	)
+
+	var begun: Array[String] = []
+	for a2 in starts:
+		if Projects.execute(state, ns, loader.project_actions, a2).get("applied", false):
+			begun.append("%s (%d mo)" % [a2.id, int(a2.effects["project"]["build_months"])])
+	if begun.is_empty():
+		printerr("  no project could be begun")
+		return
+	print("  %d-%02d %s: broke ground on %s" % [year, month, regime_name, ", ".join(begun)])
+
+
 func _invest(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var best := ""
 	var best_output := -1.0

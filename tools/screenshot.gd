@@ -11,6 +11,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -28,6 +30,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -178,6 +181,7 @@ var _inflate := false
 var _downgrade := false
 var _redistribute := false
 var _invest := false
+var _build := false
 
 ## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
 ## than a feature. Both are cited from docs/playability-audit.md, because a claim
@@ -250,6 +254,8 @@ func _init() -> void:
 			_redistribute = true
 		elif args[i] == "--invest":
 			_invest = true
+		elif args[i] == "--build":
+			_build = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -339,6 +345,8 @@ func _apply_view() -> void:
 		_soak_the_rich()
 	if _invest:
 		_back_the_biggest_sector()
+	if _build:
+		_break_ground()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1237,3 +1245,56 @@ func _back_the_biggest_sector() -> void:
 	# times, and a player reaches the row by dragging.
 	if _main._companies_panel != null:
 		_main._companies_panel.scroll_to_bottom()
+
+
+## V1.6f. Begins the two projects the content gate permits, then runs far enough for
+## the SHORTER of them to open and the longer to be visibly still building -- so one
+## frame carries both halves of this lever: a bill being paid for work in progress, and
+## a payoff that has arrived and is still being delivered.
+##
+## THE HORIZON IS READ OFF THE CONTENT RATHER THAN WRITTEN HERE, and that is this
+## flag's whole argument. V1.6b's pass found a flag that ticked 48 months and ran PAST
+## what it existed to photograph; V1.6e's found the opposite, a flag that could have
+## stopped short of the model's own time constant. A project's build length is authored,
+## so a number typed here would be a third copy of it and would go stale the first time
+## the ladder moved. It ticks the shortest build plus a year -- long enough for the
+## payoff to be visible through economy_constants.SHIFT_ADJUST, short enough that the
+## longest project is still under construction.
+##
+## No panel re-sync, for --invest's reason exactly: this verb does not go through
+## Budget.commit() either, so budget_panel.gd's stale `_pending` cannot be reached.
+func _break_ground() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	# Longest first, so the one still building at capture time is the big one. Started
+	# through Projects.execute() rather than by writing the register, so the frame shows
+	# what a click produces -- including the bloc offsets the price is made of.
+	var starts: Array = []
+	for a in _main._loader.project_actions:
+		var terms: Dictionary = a.effects.get("project", {})
+		if String(terms.get("op", "")) == "start":
+			starts.append(a)
+	starts.sort_custom(func(x, y):
+		return (
+			int(x.effects["project"]["build_months"]) > int(y.effects["project"]["build_months"])
+		)
+	)
+
+	var shortest := 0
+	for a2 in starts:
+		if Projects.execute(state, ns, _main._loader.project_actions, a2).get("applied", false):
+			shortest = int(a2.effects["project"]["build_months"])
+	if shortest <= 0:
+		printerr("--build: no project could be started")
+		return
+
+	_tick_months(shortest + 12)
+
+	# Scrolled for --invest's reason, and it applies harder here: Public Works lists
+	# what is building, what is finished and what is left, so the finished section --
+	# the one this flag exists to photograph -- is below both of the others.
+	if _main._projects_panel != null:
+		_main._projects_panel.scroll_to_bottom()

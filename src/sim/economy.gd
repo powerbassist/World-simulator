@@ -318,6 +318,19 @@ static func _update_potential_shift(state, ns) -> void:
 		C.INFRA_BETA * d_infra + C.EDU_BETA * d_edu - C.CORP_TAX_BETA * d_corp
 		+ TradeK.TRADE_OPENNESS_BETA * d_open
 		+ ns.law_potential_target_pct
+		# The SIXTH writer, added at V1.6f, and beside law_potential_target_pct rather
+		# than anywhere else because it is that field's shape exactly: a one-time act
+		# producing a permanent addend, bounded on its own accumulator by
+		# projects_constants.PROJECT_POTENTIAL_MAX_PCT the way a law is bounded by
+		# legislature_constants.POTENTIAL_TARGET_MAX_PCT.
+		#
+		# THIS IS WHY V1.6f ADDS NO THIRD QUANTITY REACHING TREND. V1.6e's shift had to
+		# carry its own bound because it reaches trend_pct() directly; this reaches the
+		# TARGET of the lag below, which SHIFT_MAX_PCT already bounds, so the comment on
+		# that constant stays true as V1.6e amended it. Reads exactly 0.0 until a
+		# project has been COMPLETED -- not merely started -- which is what keeps the
+		# balance harness bit-identical with this whole layer live.
+		+ ns.project_potential_target_pct
 	)
 
 	ns.potential_shift_pct += (target - ns.potential_shift_pct) * C.SHIFT_ADJUST / 12.0

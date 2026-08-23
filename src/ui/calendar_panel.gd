@@ -28,6 +28,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 
@@ -50,6 +51,7 @@ const FIXED_LABEL := {
 	K.FIXED_COUNCIL_VOTE: "Council votes",
 	K.FIXED_DISSOLUTION: "Dissolution available again",
 	K.FIXED_COOLDOWN: "Available again",
+	K.FIXED_PROJECT: "Opens",
 }
 
 const KIND_LABEL := {
@@ -363,6 +365,8 @@ func _fixed_text(entry: Dictionary) -> String:
 		return label
 	if kind == K.FIXED_COOLDOWN:
 		return "%s: %s" % [label, _cooldown_name(ref)]
+	if kind == K.FIXED_PROJECT:
+		return "%s: %s" % [label, Projects.name_of(_loader, ref)]
 	return "%s: %s" % [label, ref]
 
 

@@ -115,6 +115,14 @@ const FIGURE_ROWS := [
 	# Reads "—" while no programme stands, which is every game that has not used
 	# the verb.
 	["investment", "  of which investment"],
+	# V1.6f, beside the investment line and on the same argument a SIXTH time -- and
+	# with the one difference this panel exists to show: every line above it is a
+	# STANDING rate the player can lower, and this one runs for a fixed term and then
+	# STOPS. A president reading this screen is looking at a bulge in the deficit with
+	# a known end date, which is the whole of what makes a project a commitment rather
+	# than a policy. Reads "—" while nothing is under construction, which is every
+	# game that has not used the verb.
+	["projects", "  of which public works"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
@@ -414,6 +422,7 @@ func _refresh() -> void:
 	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
 	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
 	_set_figure("investment", _investment_text(now), _investment_text(proposed))
+	_set_figure("projects", _projects_text(now), _projects_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
@@ -541,7 +550,32 @@ func _investment_text(snap: Dictionary) -> String:
 	return _pct_and_eur(snap, "investment_bill_pct_gdp")
 
 
-## The same em dash a sixth time, on the revenue side. Unsigned: a holding pays or
+## *** THE COUNT OF LIVE BUILDS WAS HERE AND THE FIFTEENTH SCREENSHOT PASS TOOK IT OUT,
+## WHICH IS THIS SESSION'S ONE UI BUG AND IT WAS THIS FILE'S. *** The first version
+## printed "0.19% (6 bn) (1 building)", and that cell is WIDER THAN ANY OTHER ON THE
+## PANEL -- twenty-four characters against "46.10% (1473 bn)"'s sixteen. Both value
+## columns size to their widest row, so one extra clause on one row pushed the whole
+## `proposed` column past the window edge and put the panel on a horizontal scroll bar
+## it had never needed. Nothing was wrong with the number; the frame simply showed a
+## budget the player could not read without dragging.
+##
+## The count belongs on Public Works, which is where it now is, and that is this row's
+## own comment used as a rule rather than as a decoration: three surfaces for one
+## register only works if each says a DIFFERENT thing. The budget says what is being
+## paid, the diary says when it lands, and Public Works says what and how many.
+##
+## The same em dash a sixth time, and the missing-key branch is separate for V1.6d's
+## reason exactly as the line above it. Unsigned like the three lines above: building
+## something only ever costs, and what it buys is trend growth rather than money.
+func _projects_text(snap: Dictionary) -> String:
+	if not snap.has("project_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["project_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "project_bill_pct_gdp")
+
+
+## The same em dash a seventh time, on the revenue side. Unsigned: a holding pays or
 ## the state does not have one, and a firm that loses money still hands over nothing
 ## rather than billing the treasury -- there is no margin quantity here for it to
 ## lose, which is docs/companies-model.md section 13's call showing up on a panel.

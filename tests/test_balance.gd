@@ -36,6 +36,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -385,6 +386,11 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# a system whose bit-identity proves nothing about it -- rather than because any
 		# check below needs it.
 		Investment.tick_month(state)
+		# V1.6f, in main.gd's slot and in balance_probe.gd's. The two harnesses must
+		# tick the same list or their agreement is about nothing -- V1.5d shipped with
+		# neither of them calling its module, and the diff of exactly zero lines was
+		# what gave it away only because the prediction had been written down first.
+		Projects.tick_month(state, _loader)
 		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
 		# quality stock reads the live spending line, so any regime that moves one moves
 		# the `health` satisfaction term with it.

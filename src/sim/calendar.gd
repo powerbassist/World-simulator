@@ -260,6 +260,21 @@ static func fixed_dates(state) -> Array:
 		if months > 0:
 			out.append(_fixed_in(state, K.FIXED_COOLDOWN, months, String(k)))
 
+	# V1.6f, and the reason it fits here rather than needing a scheduler of its own is
+	# the whole of why V1.6f did not write one. A project's register entry counts
+	# MONTHS REMAINING, the idiom every countdown above already uses, so this is one
+	# more plain-field read and this file still preloads nothing -- it does not know
+	# what a project costs, what it will buy or whether it can be abandoned, only when
+	# it lands. GameState.appointments is a register of deferred COMMANDS and a project
+	# is a commitment in flight; the diary shows both and owns neither.
+	for pid in ns.projects.keys():
+		var entry = ns.projects[pid]
+		if typeof(entry) != TYPE_DICTIONARY or bool(entry.get("done", false)):
+			continue
+		var left := int(entry.get("months_left", 0))
+		if left > 0:
+			out.append(_fixed_in(state, K.FIXED_PROJECT, left, String(pid)))
+
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out
 

@@ -163,8 +163,9 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.5d) `--press` and
 (V1.6b) `--inflate`,
 (V1.6c) `--downgrade`,
-(V1.6d) `--redistribute` and
-(V1.6e) `--invest`,
+(V1.6d) `--redistribute`,
+(V1.6e) `--invest` and
+(V1.6f) `--build`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1241,6 +1242,81 @@ frame of a scrolling panel photographed at the top, showing three sector rows sa
 state programme" while the ledger read a live 0.654 % of GDP. Model:
 [docs/sector-model.md](docs/sector-model.md).
 
+**V1.6f shipped infrastructure projects, and the V1.6 block is COMPLETE.** The row
+split **again, on the same rule V1.6e split on** -- recounted, what was left was two
+S-track machines and one U-track one, so the marker layer with per-project geography as
+content is **U6c** and V1.6f built the sim half. Two consecutive sessions cut on the
+two-track rule, a first. The visible consequence is in the content: **no project names a
+place**, because a lon/lat nothing reads is a field carrying no information, so the five
+are generic and the session that draws them owns naming them.
+
+**Instance thirty-seven: the row never says what a project's PAYOFF IS**, which is V1.6b's
+instance thirty in a new place -- and the answer was already in the model.
+`ns.law_potential_target_pct` is a permanent accumulator with its own bound added to
+`Economy._update_potential_shift()`'s target, and **a passed law and a finished project are
+the same act**: a one-time decision producing a permanent addend. So `project_potential_target_pct`
+is the **sixth writer of that target** and V1.6f adds **no third quantity reaching trend** --
+`economy_constants.SHIFT_MAX_PCT`'s comment, which V1.6e had to amend, needed no second
+amendment and now records that it was checked. **Instance thirty-eight: "slow" was already
+half spent.** `SHIFT_ADJUST` is a five-year lag on that target (t50 **41.2** months, t90
+**137.0**), so a build of N months and then that lag are two answers to one word, and the
+band is written on the **delivered fraction from commit** rather than on the build length.
+
+**U6a's `appointments` register was checked before a second scheduler was written and it is
+NOT this machine.** That one holds a **deferred command** -- `due()` fires it once,
+`Calendar.cancel()` is free and leaves no trace, and `calendar.gd` preloads no system by
+design; a project is a **commitment in flight** that bills monthly and can be abandoned
+part-built. What IS reused is the **surface**: `fixed_dates()` gained one row per build and
+**no preload at all**, because the register counts **months remaining**, the idiom every
+other countdown here already uses. `src/sim/projects.gd` does no date arithmetic, and
+`tests/test_projects.gd` asserts the calendar is still a leaf.
+
+**The probe corrected the session three times, seventeen sessions running, and the first is
+the block's closing finding: a BILL is not a COST.** The cost clause was written on the
+arithmetic stack -- 0.5200 against a 0.5639 headroom, inside -- and the measured peak deficit
+came back **0.7615**, because a build that runs for eight years **borrows** for eight years
+and V1.6c's interest rides on top. Every previous computed line is a standing rate against a
+roughly standing debt, so bill and deficit moved together; **a line that runs for a fixed term
+and STOPS is the first one where the distinction bites**. Solved to `peak = 1.4626 x stack`,
+so the stack may reach 0.3875 and the re-authored ladder ships at 0.3600. The second: the
+uniform-scale sweep that found it **declared escalation trigger 2**, and that was a statement
+about the sweep -- clause (i) binds the cheapest project and (ii) the dearest pair, so one
+multiplier cannot satisfy both and the free variable is the ladder's **spread**. The third:
+the abandonment price was measured against a president who never began, so all five rows read
+the net of a start and a cancellation in one month -- **identical across five projects that
+are not alike**, which is what gave it away. A fourth was the probe reading its own prose.
+
+**The model ships no cost, speed or strength constant at all.** V1.6e had one dial and three
+constants turning it into a bill, a build rate and a coefficient, so `investment_action.gd`
+refuses a second authored term as one strength written twice; here there is none, so
+**duration, price and payoff are three independent facts** and the validator requires all
+three. `projects_constants.gd` holds only bounds, and **a concurrency ceiling was considered
+and is not there** -- how many run at once is the `project_count` precondition every action
+carries, which makes it content. **Cost per unit of payoff FALLS with size and what buys the
+discount is time**: the largest project cannot deliver anything inside the term that signs
+it, checked as a standing dominance test (**0 dominated pairs**). Kill switch cleared at
+**+0.2621 %/yr**; four of five sit below the floor, which is that shape rather than a miss.
+**A programme you can stop; a project you can only abandon.**
+
+**`SAVE_VERSION` is 23, earned by the DONE half of one dictionary** -- V1.3g's `deployments`
+split in a new place, and the split is worth more than the bump. The **seventeenth
+`ISSUE_KEYS` question is answered NO on test 1**, as V1.6e's was, and the interesting half is
+that two consecutive sessions failed the same test for the same reason: a session shipping a
+content object has somewhere to put the price. **The re-run is bit-identical across all 34
+shared regimes**, predicted in advance, with two new regimes of the expensive kind, both
+surviving both presidential elections -- same budget, `managed` against `public_works` in
+2037 gives GDP 3340 -> **3354**, trend +1.31 -> **+1.53**, worst bloc rural 43 -> **38** and
+**unemployment 7.67 in both**. **The fifteenth screenshot pass found two bugs and both
+were the readout's**: the budget row's `0.19% (6 bn) (1 building)` is the **widest cell on
+the panel**, and both value columns size to their widest row, so one extra clause pushed
+the whole `proposed` column past the window edge -- the number was right and the frame
+still showed a budget the player could not read without dragging; and the diary read
+*"Opens: Build the High-Speed Rail Spine"*, because the only name in the content was the
+ACTION's, which is an imperative -- right on a button, wrong after a colon -- so
+`effects.project` gained an authored `project_name`, deliberately NOT in the
+three-quantity term list, because a name is not a strength. Model:
+[docs/projects-model.md](docs/projects-model.md).
+
 **V1.6 is decomposed into five sessions, V1.6a-e, and (a) is built.** The row was five
 bullets plus an obligation inherited from V1.4c: (a) the business cycle, (b) inflation,
 (c) bond yields and the credit rating, (d) five taxes and brackets, (e) sectoral
@@ -1531,13 +1607,13 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, U1-U5 and U6 (a and b) are done. **The V1.5 block is COMPLETE and V1.6 is under way; (a), (b), (c), (d) and (e) are shipped, and (e) SPLIT -- V1.6f is infrastructure projects and is the block's last session.** V1.1e (upper house and
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, U1-U5 and U6 (a and b) are done. **The V1.5 AND V1.6 blocks are both COMPLETE.** (e) split and (f) split again on the same two-track rule, so the one piece of section 6 not built is **U6c, the map marker layer** -- a U-track session. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 22**. There has never been a migration: a superseded
+Save format is at **version 23**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

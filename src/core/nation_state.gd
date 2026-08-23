@@ -732,6 +732,75 @@ var investment_bill_pct_gdp: float = 0.0
 ## `last_company_result`'s shape.
 var last_investment_result := {}
 
+# --- Infrastructure projects (V1.6f) --------------------------------------------
+
+## Project id -> {"months_left": int, "done": bool}. The whole of what the game
+## remembers about the state's discrete building commitments. Written by
+## Projects.tick_month() and by Projects.execute(), and by nothing else -- the single
+## writer discipline `share`, `state_share`, `regulation_burden`, `gini_index` and
+## `sector_investment` are each held to.
+##
+## EXACTLY TWO KEYS PER ENTRY, and projects_constants is not where that is pinned --
+## Projects.ENTRY_KEYS is, and tests/test_projects.gd asserts against it. The cost,
+## the duration and the payoff are AUTHORED in data/project-actions/, so caching any
+## of them here would put content in the save file, which is the property V1.4a's own
+## test pins for `companies` and V1.6e's for `sector_investment`.
+##
+## *** THIS FIELD EARNS THE SAVE_VERSION BUMP, AND IT SPLITS -- WHICH IS THE
+## ASSERTION WORTH HAVING RATHER THAN THE BUMP. *** V1.3g's `deployments` exactly:
+##
+##   the BUILDING half fails soft. An absent register reads as "nothing under
+##   construction", which is the truth about every version-22 save, because those
+##   games had no project verb. `measures` at V1.3c, `sector_investment` at V1.6e.
+##
+##   the DONE half does not. A France that finished the rail spine and the grid has a
+##   permanent claim on its own trend, and an absent register erases the record of it.
+##   Re-deriving on load cannot rescue it, because there is nothing left to derive
+##   from: the accumulator below is the only other trace and it is not content.
+##
+## So the bump is earned by the half of one dictionary, and tests/test_save_load.gd
+## asserts the two halves separately -- a single combined check would let either half
+## be quietly wrong.
+var projects := {}
+
+## Points of trend growth per year, accumulated across every COMPLETED project and
+## added to the target Economy._update_potential_shift() converges toward.
+##
+## `law_potential_target_pct`'s exact shape, three fields up, and the match is the
+## argument rather than a resemblance: a passed law and a finished project are the
+## same act -- a one-time decision producing a permanent addend -- so the two are
+## written the same way, bounded alike (projects_constants.PROJECT_POTENTIAL_MAX_PCT
+## against legislature_constants.POTENTIAL_TARGET_MAX_PCT) and read at the same site.
+##
+## *** THIS IS WHY V1.6f ADDS NO THIRD QUANTITY REACHING TREND. *** V1.6e had to add
+## investment_constants.SECTOR_TREND_MAX_PCT because Investment.sector_trend_shift()
+## reaches Economy.trend_pct() directly. This does not: it reaches the TARGET of a lag
+## economy_constants.SHIFT_MAX_PCT already bounds, so the amended clause in that
+## constant's comment stays true as V1.6e left it.
+##
+## Serialised, and derivable in principle from `projects` plus the content -- which is
+## exactly `law_potential_target_pct`'s position, derivable from the passed-law list
+## plus data/laws/. Stored for the same reason: Economy._update_potential_shift()
+## takes no loader, so a derived read there would mean handing one to the economy.
+var project_potential_target_pct: float = 0.0
+
+## V1.6f's computed spending line, recomputed once a month by Projects.tick_month()
+## and read from here rather than called for -- the FIFTH to take this route after the
+## bloc transfer, the deployment bill, the subsidy bill and the investment bill,
+## cached for the same reason: budget.gd's recompute() reads it a month late on
+## purpose, because `deficit_pct_gdp` is one of this verb's own precondition fields
+## and a bill that widened the deficit inside the month would close a loop.
+##
+## Earns nothing on the rule -- recomputed from `projects` and the content on the
+## first tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `investment_bill_pct_gdp`'s case.
+var project_bill_pct_gdp: float = 0.0
+
+## The most recent project action, for the panel to read after acting.
+## `last_investment_result`'s shape, and not serialised for its reason either: it is a
+## display record of something that has already happened to the register.
+var last_project_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1119,6 +1188,9 @@ func duplicate_state():
 	s.regulation_burden = regulation_burden.duplicate(true)
 	s.sector_investment = sector_investment.duplicate(true)
 	s.investment_bill_pct_gdp = investment_bill_pct_gdp
+	s.projects = projects.duplicate(true)
+	s.project_potential_target_pct = project_potential_target_pct
+	s.project_bill_pct_gdp = project_bill_pct_gdp
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1293,6 +1365,9 @@ func to_dict() -> Dictionary:
 		"regulation_burden": regulation_burden,
 		"sector_investment": sector_investment,
 		"investment_bill_pct_gdp": investment_bill_pct_gdp,
+		"projects": projects,
+		"project_potential_target_pct": project_potential_target_pct,
+		"project_bill_pct_gdp": project_bill_pct_gdp,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1503,6 +1578,14 @@ static func from_dict(d: Dictionary):
 	# the version is STILL 22, so V1.6f has to come and say why it moves.
 	s.sector_investment = d.get("sector_investment", {})
 	s.investment_bill_pct_gdp = float(d.get("investment_bill_pct_gdp", 0.0))
+	# V1.6f, and this one is NOT the line above it. `projects` absent reads as nothing
+	# under construction, which is true of a version-22 save -- and as nothing ever
+	# BUILT, which is not, once a version-23 save exists. That is the half that earns
+	# the bump; see the field's own comment, and tests/test_save_load.gd, which asserts
+	# the two halves separately.
+	s.projects = d.get("projects", {})
+	s.project_potential_target_pct = float(d.get("project_potential_target_pct", 0.0))
+	s.project_bill_pct_gdp = float(d.get("project_bill_pct_gdp", 0.0))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})

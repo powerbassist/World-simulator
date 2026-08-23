@@ -91,13 +91,34 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 
 ## Next
 
-**V1.6 was decomposed into five sessions, BECAME SIX, and (a) through (e) are built.**
-The argument, the four calls it made and the two rows it caught are under *V1.6 - the
-decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond yields and
-the credit rating, (d) five taxes and brackets, (e) sectoral investment - and **(e) was
-recorded in advance as the row most likely to split, and split**, the device this page
-used for V1.3e (which split) and V1.5d (which did not). **V1.6f is infrastructure
-projects** and is the block's last session.
+**V1.6 was decomposed into five sessions, BECAME SIX, and ALL SIX ARE BUILT. The block
+is COMPLETE.** The argument, the four calls it made and the two rows it caught are under
+*V1.6 - the decomposition* below. Order: (a) the business cycle, (b) inflation, (c) bond
+yields and the credit rating, (d) five taxes and brackets, (e) sectoral investment,
+(f) infrastructure projects - and **(e) was recorded in advance as the row most likely to
+split, and split**, the device this page used for V1.3e (which split) and V1.5d (which did
+not).
+
+**V1.6f SPLIT AGAIN, on the rule rather than on a count, and that is the block's closing
+finding.** Recounted, what was left of the row was two S-track machines and **one U-track
+machine**: per-project geography as content, a marker draw pass on `map_view.gd`,
+hit-testing and hover. V1.6e had already named that as the reason IT split; the same rule
+applied twice in a row, which is the first time on this page. **V1.6f shipped the sim half
+and the map is U6c** - U5b -> U5c and V1.6e -> V1.6f a third time. The visible consequence
+is in the content rather than in the code: **no project names a place**, because a lon/lat
+nothing reads is a field carrying no information, so the five are generic and the session
+that draws them owns naming them.
+
+**V1.6f's own finding is the one worth carrying forward, and it is about the difference
+between a BILL and a COST.** Its cost clause was written on the arithmetic stack - 0.5200
+against a headroom of 0.5639, comfortably inside - and the measured peak deficit came back
+at **0.7615**. A build that runs for eight years **borrows** for eight years, so what
+reaches `public_finances` is the bill *plus* V1.6c's interest on everything borrowed so
+far. Every previous computed budget line in this game is a standing rate against a roughly
+standing debt, so bill and deficit moved together and the distinction never mattered; **a
+line that runs for a fixed term and then STOPS is the first one where it does**. The
+general rule: a clause about what a lever costs must be measured on the quantity the
+opinion model actually reads, not on the quantity the lever writes.
 
 **V1.6e's own finding is the one worth carrying forward, and it is about where a lever
 may land rather than about sectors.** The row asked for a lever "on `sector_output`
@@ -787,7 +808,7 @@ bullets plus an obligation inherited from V1.4c, and one line is not a session.
 | **V1.6c** | ~~Bond yields and the credit rating~~ **shipped** | `DEBT_REAL_RATE_PCT` is the **anchor** and the spread reads exactly 0.0 at new game. **TWO of the four named inputs do not exist**: the deficit is the debt's derivative (`corr` 0.9948) and inflation cannot reach a real rate. The rating is stateless, pinned in the save format. V1.4c's obligation discharged **on a rate**. `SAVE_VERSION` **21** | a, b |
 | **V1.6d** | ~~Five taxes and brackets~~ **shipped** | Capital gains and wealth as `TAX_KEYS` 4 and 5, brackets *within* income as a base factor. The Gini stopgap is discharged by a **derived read** -- not the second field this table asked for, because none is needed. `GC.TAX.*` covers 10 of 10 and is still unusable (central government, and capital gains bucketed WITH income). `ISSUE_KEYS` answered YES **twice at once** at -0.739 %. `SAVE_VERSION` **22**. Three new regimes | - |
 | **V1.6e** | ~~Sectoral investment and infrastructure projects~~ **shipped, and it SPLIT** | A capital stock per sector on the sector's own **trend rate** -- `sector_output` has no room for a second writer, measured. No employment term, and that is a CONSEQUENCE rather than a prohibition. The bill scales with the sector's share, which DELETED a constant. `SAVE_VERSION` **stays 22**; re-run bit-identical in all 32 | a, d |
-| **V1.6f** | Infrastructure projects | Discrete dated commitments, a construction scheduler, and the *"visible on the map"* clause the row dropped. **Split off (e) on TRACK rather than on shape** | e |
+| **V1.6f** | ~~Infrastructure projects~~ **shipped, and it SPLIT AGAIN** | A discrete dated commitment that bills while it builds and pays **once** when it opens, on `_update_potential_shift()`'s TARGET - `law_potential_target_pct`'s shape, so **no third quantity reaches trend**. No second scheduler: U6a's register is a deferred COMMAND, and what was reused is the diary, for zero preloads. The bill is the first computed line that STOPS. `SAVE_VERSION` **23** on the DONE half of one dictionary; re-run bit-identical in all 34. **The map half is U6c** | a, c, e |
 
 *(V1.6c's own numbers, and the two rows it deleted, are under* **V1.6c - the bond
 market, and two of four inputs that were not there** *below.)*
@@ -810,6 +831,13 @@ on the map* is a marker on `map_view` with per-project geography as content, whi
 **U-track surface**. This project runs one track per session. "A scheduler" is an argument
 about shape; the two-track rule is a rule, and it is what actually decides. Recorded
 because the next row predicting a split should predict the reason as well as the fact.
+
+**AND THEN V1.6f SPLIT ON THE SAME RULE, WHICH NO ROW ON THIS PAGE HAD DONE BEFORE.**
+Recounted at the start of that session, what was left was two S-track machines - the
+in-flight register and the payoff-plus-bill - and the one U-track machine above. Two
+consecutive sessions cut on the same clause; the rule did not need re-arguing the second
+time, which is what a rule is for. **The map is U6c**, and it is the only piece of
+section 6 not built.
 
 Four calls, each of which could have gone the other way:
 
@@ -867,6 +895,99 @@ mechanic in [[mechanics-economy]] is named by a section 6 bullet or already buil
 tariffs at V1.3c, the whole private-companies table at V1.4. Section 5's row missed
 eight; section 6 misses none. What section 6 gets wrong is a merge and an owner, not a
 gap.
+
+### V1.6f - infrastructure projects, and the bill that is not the cost
+
+**The row never says what a project's PAYOFF IS**, which is V1.6b's instance thirty in a
+new place and instance **thirty-seven** on this page's count. The answer was already in the
+model rather than needing inventing: `ns.law_potential_target_pct` is a permanent
+accumulator with its own bound added to `Economy._update_potential_shift()`'s target, and
+**a passed law and a finished project are the same act** - a one-time decision producing a
+permanent addend. So the payoff is the **sixth writer of that target**, V1.6f adds **no
+third quantity reaching trend**, and `economy_constants.SHIFT_MAX_PCT`'s comment - which
+V1.6e had to amend - needed no second amendment and now records that it was checked.
+
+**Instance thirty-eight: "slow" was already half spent.** `SHIFT_ADJUST` is a five-year lag
+on that target - t50 **41.2 months**, t90 **137.0** - so a build of N months *and then* that
+lag are two answers to `mechanics-economy.md`'s one word. A band on the build length alone
+would have measured half the wait, so the band is written on the **delivered fraction from
+commit** instead, and solved: the shortest project must build in <= 38.8 months to hand back
+0.30 inside a presidential term, and the longest must take > 60 so it hands back nothing
+inside one. The escalation trigger - *if no legal build length can clear it, SHIFT_ADJUST's
+own lag is binding and the response is to shorten the BUILD, never SHIFT_ADJUST* - did not
+fire.
+
+**U6a's `appointments` register was checked before a second scheduler was written, and it
+is NOT this machine.** That register holds a **deferred command**: `due()` fires it once,
+`main.gd` runs a verb that already exists, `Calendar.cancel()` is free and leaves no trace,
+and `calendar.gd` preloads no system **by design**. A project is a **commitment in flight** -
+it bills every month, it can be abandoned part-built, and half a motorway is not free. What
+IS reused is the **surface**: `Calendar.fixed_dates()` gained one row per build and **no
+preload at all**, because the register counts **months remaining**, the idiom every other
+countdown in this project already uses. `src/sim/projects.gd` does no date arithmetic, and
+`tests/test_projects.gd` asserts the calendar is still a leaf.
+
+**The probe corrected the session three times, seventeen sessions running, and the first is
+the block's closing finding.** The cost clause was written on the **bill** - the largest
+permitted stack is 0.5200 against a 0.5639 headroom - and the measured peak deficit came
+back at **0.7615**. Banded on the measured peak instead and solved to a fixed relation:
+`peak = 1.4626 x stack`, so **every point of project bill costs 1.46 points of deficit**,
+the stack may reach 0.3875, and the re-authored ladder ships at 0.3600. The second: the
+uniform-scale sweep that found it then **declared escalation trigger 2** - the largest scale
+that fits takes the cheapest project under its legibility floor - and that was a statement
+about the sweep rather than about the model, because clause (i) binds the CHEAPEST project
+and clause (ii) the DEAREST PAIR, so one multiplier cannot satisfy both and the free
+variable is the ladder's SPREAD. V1.5b's *the range was choosing the constant*, with the
+range one dimension short. The third: the abandonment price was measured against a president
+who never began, so all five rows read the net of a start and a cancellation taken in the
+same month - about -0.02 of offset, under the floor, and **identical across five projects
+that are not alike**, which is what gave it away. **And a fourth was the probe reading its
+own prose**: the boundary check for "does this module touch the employment path" matched
+`projects.gd`'s header, which argues about it. A check a COMMENT can fail is a check the
+next comment will quietly break.
+
+**The model ships no cost, speed or strength constant, and that is the session's shape.**
+V1.6e had one dial and three constants turning it into a bill, a build rate and a trend
+coefficient, so `investment_action.gd` refuses a second authored term as one strength
+written twice. Here there is no such constant, so **duration, price and payoff are three
+independent facts** about a named object and the validator requires all three. What is left
+in `projects_constants.gd` is bounds - and **a concurrency ceiling was considered and is not
+there**, because how many may run at once is the `project_count` precondition every action
+carries, which makes it content.
+
+**Cost per unit of payoff FALLS with size and what buys the discount is TIME.** That is the
+only reason a big project is not strictly dominated by three small ones, and the probe checks
+it as a standing test rather than asserting it: **0 dominated pairs**, and the largest project
+cannot deliver anything at all inside the term that signs it. **The kill switch cleared at
++0.2621 %/yr** and four of five sit below the floor, which is that shape rather than a miss.
+**A programme you can stop; a project you can only abandon** - V1.6e's withdrawal leaves 63 %
+of its capital standing a year on and an abandonment leaves nothing.
+
+**The seventeenth `ISSUE_KEYS` question is answered NO on test 1**, as V1.6e's was and for
+the same reason, and the interesting half is that **two consecutive sessions failed the same
+test for the same reason**: a session that ships a content object has somewhere to put the
+price and a session that ships only a statistic does not. That, and not importance, has
+decided all seventeen. `SAVE_VERSION` is **23**, earned by the **DONE half** of one
+dictionary - V1.3g's `deployments` split in a new place, and the split is worth more than the
+bump. **The re-run is bit-identical across all 34 shared regimes**, predicted in advance, with
+**two new regimes of the expensive kind**, both surviving both presidential elections. Same
+budget, `managed` against `public_works` in 2037: GDP 3340 -> **3354**, trend +1.31 ->
+**+1.53**, worst bloc rural 43 -> **38**, and **unemployment 7.67 in both** - V1.6e's own
+no-jobs finding visible in the harness one landing site further out.
+
+**The fifteenth screenshot pass found two bugs and both were the readout's.** The budget
+row shipped as `0.19% (6 bn) (1 building)` and that cell is **wider than any other on the
+panel** -- both value columns size to their widest row, so one extra clause on one row
+pushed the whole `proposed` column past the window edge and put the budget on a horizontal
+scroll bar it had never needed. The number was right and the frame still showed a budget
+the player could not read without dragging; the count moved to Public Works and
+`Budget.snapshot()` lost the two keys nothing then read. And the diary read **"Opens: Build
+the High-Speed Rail Spine"**, because the only name in the content was the ACTION's -- an
+imperative, right on a button and wrong after a colon -- so `effects.project` gained an
+authored `project_name`, deliberately NOT in the three-quantity term list, because a name
+is not a strength.
+
+Full argument: [[projects-model]].
 
 ### V1.6e - sectoral investment, and the write the model refuses
 
@@ -2296,7 +2417,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 | **V1.3 Diplomacy and trade** | ~~Relations, diplomatic actions, trade agreements, tariffs, sanctions, EU-shaped bloc, nation AI foreign policy, **defence as domestic politics**~~ — **decomposed into six sessions, V1.3a–f**, before any code. The table and the argument are under *Next* above |
 | **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality — **decomposed into four sessions, V1.5a–d**, before any code. Rule of law left the block for §1's judiciary (V1.1e), and inequality's *instruments* are §6's. The table and the argument are under *Next* above |
-| **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–e**, before any code, **became six**, and **(a) through (e) are shipped**. (e) split on TRACK rather than on shape — *visible on the map* is a U-track surface — so **V1.6f is infrastructure projects** and is the block's last session. The table and the argument are under *Next* above |
+| **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–f**, before any code, **became six**, and **ALL SIX ARE SHIPPED — the block is COMPLETE**. (e) split on TRACK rather than on shape — *visible on the map* is a U-track surface — and (f) then split **on the same rule**, shipping the sim half and leaving the marker layer to **U6c**, which is the only piece of §6 not built. The table and the argument are under *Next* above |
 | **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
 

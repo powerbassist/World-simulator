@@ -19,6 +19,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -29,6 +30,7 @@ const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
+const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -98,6 +100,7 @@ var _bloc_panel
 var _calendar_panel
 var _people_panel
 var _companies_panel
+var _projects_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -298,6 +301,20 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V1.6f. In the Economy cluster beside Industry, and its OWN window rather than
+	# more rows on that one: a project is a dated national commitment and that panel
+	# is grouped by sector, with a body already guaranteed to overflow. Registering a
+	# window is one call plus one line in _build_action_bar(), which is what U5a's
+	# shell was for.
+	_projects_panel = ProjectsPanel.new()
+	_windows.register("projects", "Public Works", _projects_panel)
+	_projects_panel.setup(_state, _loader)
+	_projects_panel.hide_close_button()
+	_projects_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -392,6 +409,9 @@ func _build_action_bar() -> void:
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
 		{"id": "companies", "label": "Companies"},
+		# V1.6f. One line, exactly as this function's own comment has now correctly
+		# predicted for five sessions running.
+		{"id": "projects", "label": "Public Works"},
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		{"id": "society", "label": "Polling"},
@@ -671,6 +691,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# -> a PRECONDITION_FIELDS entry -> which investment actions are available -> a
 	# new programme -> bill. Sixth time this argument has been made.
 	Investment.tick_month(_state)
+
+	# V1.6f: every project under construction loses a month, any that run out COMPLETE
+	# and write their permanent addend, and the bill is recomputed. In Investment's
+	# slot for Investment's reason, and the loop is the identical one a seventh time:
+	# bill -> deficit -> a PRECONDITION_FIELDS entry -> which project actions are
+	# available -> a new build -> bill. Advance, complete, then price, so a project
+	# that finishes this month stops billing this month.
+	Projects.tick_month(_state, _loader)
 
 	# V1.5a: services converge on what the country actually spends on them, delivered.
 	# In Companies' slot for Companies' reason and not for the general tick-order one:
@@ -1024,6 +1052,7 @@ func _on_load_requested(slot: String) -> void:
 	_bloc_panel.setup(_state, _loader)
 	_people_panel.setup(_state, _loader)
 	_companies_panel.setup(_state, _loader)
+	_projects_panel.setup(_state, _loader)
 
 	_calendar_panel.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to
@@ -1054,7 +1083,7 @@ func _mark_all_dirty() -> void:
 		# the frame it was built, and then never again: a censure that changed the head
 		# of government, a reshuffle that changed a portfolio and every seat count after
 		# an election were all stale on it until the game was reloaded.
-		_people_panel, _companies_panel,
+		_people_panel, _companies_panel, _projects_panel,
 	]:
 		if panel != null:
 			panel.mark_dirty()

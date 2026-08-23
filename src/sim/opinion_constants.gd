@@ -271,6 +271,19 @@ const BLOC_LABEL := {
 ## clearing on the per-bloc rows and on none of the headlines, which is
 ## docs/diplomacy-model.md's V1.3a finding used as designed rather than rediscovered.
 ## A policy that divides the country should not move the average.
+##
+## V1.6f ASKS IT FOR THE SEVENTEENTH KEY AND THE ANSWER IS NO, on test 1 again and for
+## the same reason one session later: data/project-actions/ ships an authored
+## `bloc_offset` on every one of its ten entries, so the price is nameable without a key
+## and a key would be `ownership`'s -1.46 % bought twice. The ratio was not swept, on the
+## same ground. What was measured instead is the same thing V1.6e measured: all ten
+## actions clear the +-3.0 floor on their worst bloc row (+4.45 urban to -5.23 urban) and
+## none of them on the headline.
+##
+## The interesting half is that TWO CONSECUTIVE SESSIONS FAILED ON THE SAME TEST FOR THE
+## SAME REASON, which is what the list is for. A session that ships a content object has
+## somewhere to put the price; a session that ships only a statistic does not. That, and
+## not importance, is what has decided every one of the seventeen.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat", "tax_capital_gains", "tax_wealth",
