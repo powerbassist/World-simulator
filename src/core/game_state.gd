@@ -26,6 +26,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -748,6 +749,11 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# could be absent and nothing a roster could differ over.
 	Investment.init_nation(ns)
 	Projects.init_nation(ns)
+	# V1.7a. Nothing in the field and nobody mobilised, so Campaign.turnout_of() returns
+	# election_constants.BLOC_TURNOUT bit-for-bit until a player acts inside a run-up --
+	# which is what lets the whole layer go live with the balance harness bit-identical
+	# across every existing regime.
+	Campaign.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

@@ -1,0 +1,207 @@
+{
+  "_note": "V1.7a's verbs, on the effects.campaign channel -- the ninth. Ten actions: five named efforts, each with a start and a stop. A GLOBAL FLAT LIST rather than a per-nation directory, on data/project-actions/'s argument: an effort names no place and no institution, so all ten nations could run any of them and none of the five is true of France in a way it is not true of Germany. U6c's correction to that argument does not apply here -- what made per-project geography per-NATION was a coordinate, and there is no coordinate on this channel.",
+  "_ladder_note": "THE LADDER IS THE LEVER AND tools/campaign_probe.gd IS WHAT SET IT. src/sim/campaign_constants.gd ships no strength constant and no price constant, so what one effort costs and who it reaches are two independent authored facts, exactly as data/project-actions/ holds three. The five are deliberately INCOMPARABLE rather than ranked: each names a different part of the electorate, so no pair can be ordered by cost alone and the decision is which voters to spend the run-up on rather than how much to spend. The probe checks that no effort is dominated rather than assuming it.",
+  "_timing_note": "WHY EVERY EFFORT IS A STANDING RATE AND NOT A ONE-OFF PURCHASE. An effort accrues its mobilisation every month it runs and bills every month it runs, so starting in month six of the run-up buys six months of reach at six months of cost and starting in month one buys one of each. The first design billed a one-off, under which acting LATE was strictly better -- same reach, less time paying -- which is the strictly-dominated shape this project has killed six times. Linear on both sides is what makes the timing a real decision.",
+  "_price_note": "THE APPROVAL PRICE IS AUTHORED HERE AND THE FISCAL PRICE IS NOT. bloc_offset is the only authored cost, which is why docs/campaign-model.md answers the eighteenth ISSUE_KEYS question NO on test 1 alone -- every YES on that list (V1.6b's inflation, V1.6d's two taxes) was paid because the price was not nameable otherwise, and this ships a content object that can name it. The money is not here: the bill widens the deficit, which reaches `public_finances` through machinery S5 built, and it does so in the months immediately before the vote, when every bloc is looking. AND THE ASYMMETRY IS THE MODEL: the money and the mobilisation are both spent at the ballot box and the resentment is not, because ns.bloc_offset is a permanent accumulator. A campaign leaves a mark that outlives the campaign.",
+  "_concurrency_note": "`campaign_count <= 1` ON EVERY START IS THE CONCURRENCY CEILING, AND IT IS CONTENT. src/sim/campaign_constants.gd ships no constant for it, for the reason data/project-actions/ gives about `project_count`: a model constant duplicating a content gate is the clamp-guarding-arithmetic failure V1.6e deleted INVESTMENT_BILL_MAX_PCT_GDP for. Two efforts at once is what makes the five a choice rather than a shopping list, and it is also what keeps the worst reachable stack on any one bloc below campaign_constants.MOBILISATION_MAX with room to spare -- a guard rail that binds would be setting the number instead of guarding it.",
+  "actions": [
+    {
+      "id": "start_ground_game",
+      "name": "Put Volunteers on the Doorsteps",
+      "summary": "Church halls, clipboards and a lot of walking. It is the cheapest thing on the list and the slowest, and it reaches the people who are already half persuaded and not quite bothered.",
+      "preconditions": [
+        {
+          "field": "campaign_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "campaign": {
+          "op": "start",
+          "effort_id": "ground_game",
+          "effort_name": "The doorstep operation",
+          "cost_pct_gdp": 0.03,
+          "mobilisation": {
+            "workers": 0.03,
+            "urban": 0.025,
+            "students": 0.03
+          }
+        }
+      }
+    },
+    {
+      "id": "stop_ground_game",
+      "name": "Stand the Volunteers Down",
+      "summary": "The doors stop being knocked. Whoever has already been spoken to has already been spoken to.",
+      "effects": {
+        "campaign": {
+          "op": "stop",
+          "effort_id": "ground_game"
+        }
+      }
+    },
+    {
+      "id": "start_broadcast",
+      "name": "Buy the Evening Broadcasts",
+      "summary": "Prime time, every night until the vote. It is by far the most expensive thing a government can do to an election, and it reaches the two blocs that still watch television at the hour it is on.",
+      "preconditions": [
+        {
+          "field": "campaign_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "campaign": {
+          "op": "start",
+          "effort_id": "broadcast",
+          "effort_name": "The broadcast campaign",
+          "cost_pct_gdp": 0.1,
+          "mobilisation": {
+            "pensioners": 0.05,
+            "rural": 0.035,
+            "workers": 0.02,
+            "students": -0.03
+          }
+        },
+        "bloc_offset": {
+          "students": -0.04,
+          "urban": -0.02
+        }
+      }
+    },
+    {
+      "id": "stop_broadcast",
+      "name": "Cancel the Broadcast Slots",
+      "summary": "The airtime is released. It was costing more per month than everything else on this page put together.",
+      "effects": {
+        "campaign": {
+          "op": "stop",
+          "effort_id": "broadcast"
+        }
+      }
+    },
+    {
+      "id": "start_town_halls",
+      "name": "Tour the Market Towns",
+      "summary": "A hall a day, somewhere that has not had a minister in it for a decade. Slow, unglamorous, and the only thing on this list that works outside the cities.",
+      "preconditions": [
+        {
+          "field": "campaign_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "campaign": {
+          "op": "start",
+          "effort_id": "town_halls",
+          "effort_name": "The town-hall tour",
+          "cost_pct_gdp": 0.055,
+          "mobilisation": {
+            "rural": 0.05,
+            "pensioners": 0.03,
+            "urban": -0.02
+          }
+        },
+        "bloc_offset": {
+          "rural": 0.03
+        }
+      }
+    },
+    {
+      "id": "stop_town_halls",
+      "name": "End the Tour",
+      "summary": "The bus goes back to the depot and the remaining towns are told the schedule changed.",
+      "effects": {
+        "campaign": {
+          "op": "stop",
+          "effort_id": "town_halls"
+        }
+      }
+    },
+    {
+      "id": "start_digital_push",
+      "name": "Flood the Feeds",
+      "summary": "Targeted advertising at the two blocs least likely to vote and most reachable if they do. It works better than anything else here, on the people it works on, and everyone else finds out that it is happening.",
+      "preconditions": [
+        {
+          "field": "campaign_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "campaign": {
+          "op": "start",
+          "effort_id": "digital_push",
+          "effort_name": "The digital push",
+          "cost_pct_gdp": 0.075,
+          "mobilisation": {
+            "students": 0.05,
+            "urban": 0.05,
+            "pensioners": -0.045,
+            "rural": -0.025
+          }
+        },
+        "bloc_offset": {
+          "pensioners": -0.03
+        }
+      }
+    },
+    {
+      "id": "stop_digital_push",
+      "name": "Pull the Advertising",
+      "summary": "The buys are cancelled. The screenshots are not.",
+      "effects": {
+        "campaign": {
+          "op": "stop",
+          "effort_id": "digital_push"
+        }
+      }
+    },
+    {
+      "id": "start_donor_circuit",
+      "name": "Work the Donor Circuit",
+      "summary": "Breakfasts, dinners and a great deal of listening. It is cheap because other people are paying for the room, and that is exactly what everybody outside the room will say about it.",
+      "preconditions": [
+        {
+          "field": "campaign_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "campaign": {
+          "op": "start",
+          "effort_id": "donor_circuit",
+          "effort_name": "The donor circuit",
+          "cost_pct_gdp": 0.045,
+          "mobilisation": {
+            "business": 0.055,
+            "urban": 0.025,
+            "workers": -0.045,
+            "students": -0.03
+          }
+        },
+        "bloc_offset": {
+          "workers": -0.06,
+          "students": -0.05,
+          "rural": -0.02
+        }
+      }
+    },
+    {
+      "id": "stop_donor_circuit",
+      "name": "Cancel the Breakfasts",
+      "summary": "The remaining invitations are declined. The ones already accepted are already photographed.",
+      "effects": {
+        "campaign": {
+          "op": "stop",
+          "effort_id": "donor_circuit"
+        }
+      }
+    }
+  ]
+}

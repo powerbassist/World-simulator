@@ -801,6 +801,68 @@ var project_bill_pct_gdp: float = 0.0
 ## display record of something that has already happened to the register.
 var last_project_result := {}
 
+# --- The campaign phase (V1.7a) --------------------------------------------------
+
+## Effort ids currently in the field. Written by Campaign.execute() and by
+## Campaign.tick_month()'s clear, and by nothing else -- the single-writer discipline
+## `share`, `state_share`, `regulation_burden`, `gini_index`, `sector_investment` and
+## `projects` are each held to.
+##
+## AN ARRAY AND NOT A DICTIONARY, unlike every other register on this page, because
+## there is nothing per-entry to remember. What an effort costs and who it reaches are
+## AUTHORED in data/campaign-actions/, and how long it has run is already in the
+## accumulator below -- so an entry would carry only its own key. `projects` needs a
+## dictionary because months_left and done are live per project; this does not.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: absent it reads as
+## "no effort in the field", which is the truth about every version-23 save, because
+## those games had no campaign verb. `measures` at V1.3c, `pacts` at V1.3g,
+## `appointments` at U6a, `sector_investment` at V1.6e. Serialised anyway, because a
+## verb writes it and no tick can recompute it -- a save that dropped it would silently
+## stand down a campaign in progress and hand the player back its bill.
+var campaign_running: Array = []
+
+## Bloc → accumulated mobilisation, as a shift in the LOG-ODDS of that bloc turning
+## out. Read by Campaign.turnout_of(), which Elections.vote_share() calls in place of
+## election_constants.BLOC_TURNOUT's raw figure.
+##
+## *** THE FIRST WRITER OF TURNOUT THIS PROJECT HAS EVER HAD, and that is why the
+## campaign lands here rather than on approval. *** BLOC_TURNOUT is read in exactly two
+## places, both inside vote_share(), and nothing has ever moved it -- so this register
+## has no double count to resolve, where a campaign term on ns.bloc_approval would have
+## been a second writer of the one quantity the whole game is judged on. See
+## docs/campaign-model.md.
+##
+## An absent bloc reads 0.0 and turnout_of() returns the authored constant BIT-FOR-BIT,
+## which is what keeps the nine non-playing nations and every pre-V1.7a test identical.
+##
+## EARNS NO BUMP, for `campaign_running`'s reason exactly, and it is serialised for a
+## second one the array does not have: it is spent at the ballot box, so a save reloaded
+## in the last month of a run-up would otherwise go to the vote with a campaign the
+## player has already paid for and no longer has.
+var campaign_mobilisation := {}
+
+## V1.7a's computed spending line, recomputed once a month by Campaign.tick_month() and
+## read from here rather than called for -- the SIXTH to take this route after the bloc
+## transfer, the deployment bill, the subsidy bill, the investment bill and the project
+## bill, cached for the same reason: budget.gd's recompute() reads it a month late on
+## purpose, because `deficit_pct_gdp` is one of this verb's own precondition fields and
+## a bill that widened the deficit inside the month would close a loop.
+##
+## THE SECOND BILL IN THIS PROJECT THAT STOPS, and it stops on a date the player cannot
+## move. V1.6f's project bill ends when the work does, which is a length the player
+## chose by choosing the project; this one ends at the vote.
+##
+## Earns nothing on the rule -- recomputed from `campaign_running` and the content on
+## the first tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `project_bill_pct_gdp`'s case.
+var campaign_bill_pct_gdp: float = 0.0
+
+## The most recent campaign action, for the panel to read after acting.
+## `last_project_result`'s shape, and not serialised for its reason either: it is a
+## display record of something that has already happened to the register.
+var last_campaign_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1191,6 +1253,9 @@ func duplicate_state():
 	s.projects = projects.duplicate(true)
 	s.project_potential_target_pct = project_potential_target_pct
 	s.project_bill_pct_gdp = project_bill_pct_gdp
+	s.campaign_running = campaign_running.duplicate()
+	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
+	s.campaign_bill_pct_gdp = campaign_bill_pct_gdp
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1368,6 +1433,9 @@ func to_dict() -> Dictionary:
 		"projects": projects,
 		"project_potential_target_pct": project_potential_target_pct,
 		"project_bill_pct_gdp": project_bill_pct_gdp,
+		"campaign_running": campaign_running,
+		"campaign_mobilisation": campaign_mobilisation,
+		"campaign_bill_pct_gdp": campaign_bill_pct_gdp,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1586,6 +1654,14 @@ static func from_dict(d: Dictionary):
 	s.projects = d.get("projects", {})
 	s.project_potential_target_pct = float(d.get("project_potential_target_pct", 0.0))
 	s.project_bill_pct_gdp = float(d.get("project_bill_pct_gdp", 0.0))
+	# V1.7a, and NONE of these three is the line above them. All three absent read as
+	# "no campaign", which is the truth about every version-23 save because those games
+	# had no campaign verb -- `measures` at V1.3c, `sector_investment` at V1.6e. So the
+	# version is STILL 23, and tests/test_save_load.gd asserts that as well as the
+	# round trip, so V1.7b has to come and say why it moves.
+	s.campaign_running = d.get("campaign_running", [])
+	s.campaign_mobilisation = d.get("campaign_mobilisation", {})
+	s.campaign_bill_pct_gdp = float(d.get("campaign_bill_pct_gdp", 0.0))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})

@@ -164,8 +164,9 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.6b) `--inflate`,
 (V1.6c) `--downgrade`,
 (V1.6d) `--redistribute`,
-(V1.6e) `--invest` and
-(V1.6f) `--build`,
+(V1.6e) `--invest`,
+(V1.6f) `--build` and
+(V1.7a) `--campaign`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1652,7 +1653,105 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, and so is section 6's last clause.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+**V1.7 is decomposed into three sessions, V1.7a-c, and (a) is built.** The row was three
+bullets against a block cell naming four items and neither count was right: (a) the
+campaign phase, (b) campaign promises and the trust price, (c) electoral system choice
+**and referendums**, which are one shape and not two -- an electoral system is a seventh
+`effects.institutional` key and a referendum is the amendment machine's own
+declared-unresolved `referendum_required`, so `electoral_systems.gd`'s five methods and
+`INSTITUTIONAL_EFFECT_KEYS` are the whole machine and V1.6c's credit rating is the
+precedent. **Machine count is two**, which is what makes it three sessions. **(b) is
+recorded in advance as the row most likely to split**, on the trust quantity. No V1.7
+session ships a U-track machine, recorded because two consecutive sessions split on that
+rule.
+
+**V1.7a shipped the campaign phase, and the row was answered by a DELETION.** Of the
+bullet's three nouns -- *time, money, messaging* -- only money survived contact with what
+is built. **Time does not exist**: U6a swept a monthly budget of the player's days and
+deleted it, on a reason that is general rather than about calendars (`available()` returns
+what is **legal** and nothing models what the player **wants**, so any ceiling priced
+against legality always binds). **Instance forty.** And **messaging is V1.5d's**, exactly
+as the bullet itself predicted -- *"if V1.5d builds the peacetime half, this bullet reads
+it rather than rebuilding it"* -- which is the first time a prediction written into a row
+has come true and been collected. `tests/test_campaign.gd` reads `campaign.gd` and fails
+if it so much as names `framing_gain` or `press_freedom`. **Instance forty-one** is in the
+section rather than in a row: §7 has **no bullet for referendums** while §1's list, the
+re-parked V1.1f row and `nation.gd`'s `KNOWN_AMENDMENT_RULES` comment all point here.
+
+**The target had to be found, and two of three candidates were refused.**
+`election_constants.BLOC_TURNOUT` is read in **exactly two places, both inside
+`Elections.vote_share()`**, and nothing in this project had ever written it -- so a
+per-bloc mobilisation register is a **first writer with no double count**. Approval was
+refused because `vote_share()`'s own `pull` term already reads it and approval **is** the
+term's record; framing was refused by V1.5d. And the distinction is the honest one rather
+than a convenience: **a campaign does not change what people think of your record, it
+changes who bothers to vote on it.**
+
+**Mobilisation is a shift in LOG-ODDS, so turnout is bounded strictly inside (0, 1) BY
+CONSTRUCTION** and `campaign_constants.gd` ships no turnout clamp at all -- V1.6a's
+argument that a bound with no number to set wrong beats a clamp. The property nobody
+authored falls out of it: the same effort moves **students +14.9 points** at the cap and
+**pensioners +7.2**, because a low-turnout bloc has more room. **The window is a level
+read and the clear is its other half**, so the register empties itself the month after the
+vote with no hook in `elections.gd` and no flag anywhere. **An effort is a standing rate
+with a deadline** -- it accrues and bills every month it runs, which is what kills the
+strictly-dominated shape a one-off purchase creates (same reach, less time paying) for the
+seventh time. `campaign_bill_pct_gdp` is the **sixth** computed spending line and the
+**second that stops**, and it stops on a date the player cannot move, which is why its
+decision is about **timing** where V1.6f's is about size.
+
+**The probe corrected the session five times, eighteen sessions running, and the first is
+about bands themselves.** Clause (i) was **invented** -- *"at least 0.50 points of vote
+share"*, a number picked because it sounded like a margin -- and every candidate failed
+against it while the table never said whether 0.50 was the right ruler. The only other
+thing that moves `vote_share()` is **approval**, so the band is written in points of it:
+at least what one point is worth (0.3415), at most what the **poll floor** is worth
+(1.0147), because a swing smaller than the published polls can resolve is exactly the
+swing a campaign may own. `_headroom()` was then wrong by a **factor of a hundred**; the
+emulation claim was false above the shipped window; and the **content's targeting** was
+the gap rather than any constant, at **17 %** of what perfect targeting reaches -- the
+first ladder mobilised everybody and depressed nobody, and real campaigns demobilise. The
+correction was to the content, V1.4b's discipline a second time.
+
+**A binding guard rail can INVERT a decision rather than merely set a number**, which is
+new. `MOBILISATION_MAX` at 0.60 was reached -- and once the accumulator saturates a
+**longer** run-up is strictly worse, costing more months of bill for the same reach, so
+the clamp was reversing the timing decision the whole lever exists to pose rather than
+setting it. At 0.90 the worst reachable stack is 0.6800, slack by 0.2200.
+`CAMPAIGN_WINDOW_MONTHS` = **8**, selected by **maximin slack** over the feasible region
+-- this page's tiebreaker rules one step past V1.5d's *the interior governs*, because the
+interior of a passing **list** is a statement about the grid and V1.5b's finding is that a
+grid must never choose.
+
+**And maximising your own vote share is not the same as winning.** The pair that best
+raises France's incumbent's share (+0.4204) **narrows** their lead (-0.4033); the pair
+that best widens the lead (+0.6475) **lowers** their share (-0.2417). `vote_share()`
+renormalises per bloc, so turnout is a rising tide inside a bloc rather than a transfer
+between parties, and the parties nearest you in ideology space are exactly the ones
+sharing your voters. Recorded rather than fixed -- it is a property of the vote-share
+model, not a defect in this one -- and it is why `balance_probe.gd`'s regime ranks efforts
+on the **lead**, by a live score naming no effort and no nation.
+
+**`SAVE_VERSION` stays 23 on three fields**, all reading as "no campaign" when absent,
+which is the truth about every version-23 save; the test pins the absence so V1.7b has to
+say why it moves. **The re-run is bit-identical across all 34 existing regimes, predicted
+in advance** -- the diff is additions only -- with two new regimes of the expensive kind.
+The eighteenth `ISSUE_KEYS` question is answered **NO on test 1**, as V1.6e's and V1.6f's
+were: a session shipping a content object has somewhere to put the price. **The
+seventeenth screenshot pass found two bugs**, one content and one the tool's: a stop action
+authored as *"Clear the Diary"* -- right in English, and the name of a **window this game
+already has** -- and the flag pinning the scroll to the bottom, which put the months-to-
+the-vote and the campaign bill off the frame and opened on a sentence cut in half. V1.6e's
+correction has a **direction** as well as a subject: scroll to where the flag's own claim
+is. Model: [docs/campaign-model.md](docs/campaign-model.md).
+
+There is **no diary row for the campaign**, and the refusal is a property rather than an
+omission: `calendar.gd` may preload only its own constants, `tests/test_calendar.gd`
+enforces it, and a "campaign opens" entry is a fixed offset from a date the strip already
+carries. The window length lives in `campaign_constants.gd`, so the row would have cost
+that property for a derived date.
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, section 6's last clause with them, and V1.7 is decomposed with (a) built.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

@@ -18,6 +18,12 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Government = preload("res://src/sim/government.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+## V1.7a. The ONE edge this file gained, and it is a read: Campaign.turnout_of()
+## replaces the raw election_constants.BLOC_TURNOUT lookup in vote_share() below.
+## Nothing here calls back into it -- the run-up opens and closes on a level read of
+## the clock, so campaign.gd needs no hook at the vote and this file needs no
+## knowledge of the window. See docs/campaign-model.md.
+const Campaign = preload("res://src/sim/campaign.gd")
 
 const TOP_ISSUE_COUNT := 3
 
@@ -228,9 +234,14 @@ static func vote_share(ns, party_list: Array, incumbent_party_id: String) -> Dic
 	for party in party_list:
 		totals[party.id] = 0.0
 
+	# V1.7a: turnout is no longer the authored constant but the constant as the campaign
+	# left it. Campaign.turnout_of() returns K.BLOC_TURNOUT[bloc] BIT-FOR-BIT while the
+	# nation has no mobilisation, which is every nation that has not campaigned and every
+	# month outside a run-up -- so this is not a change to the model for anyone who does
+	# not use the verb, and tests/test_campaign.gd asserts that with exact equality.
 	var turnout_total := 0.0
 	for bloc in OpinionK.BLOC_KEYS:
-		turnout_total += float(OpinionK.BLOC_SIZE[bloc]) * float(K.BLOC_TURNOUT[bloc])
+		turnout_total += float(OpinionK.BLOC_SIZE[bloc]) * Campaign.turnout_of(ns, bloc)
 
 	for bloc in OpinionK.BLOC_KEYS:
 		var ideal: Dictionary = K.BLOC_IDEAL[bloc]
@@ -256,7 +267,7 @@ static func vote_share(ns, party_list: Array, incumbent_party_id: String) -> Dic
 		if weight_total <= 0.0:
 			continue
 
-		var bloc_weight: float = float(OpinionK.BLOC_SIZE[bloc]) * float(K.BLOC_TURNOUT[bloc])
+		var bloc_weight: float = float(OpinionK.BLOC_SIZE[bloc]) * Campaign.turnout_of(ns, bloc)
 		for party in party_list:
 			totals[party.id] = float(totals[party.id]) + bloc_weight * (float(weights[party.id]) / weight_total)
 

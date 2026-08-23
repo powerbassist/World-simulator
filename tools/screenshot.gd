@@ -14,6 +14,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -32,6 +34,8 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -102,6 +106,15 @@ var _agenda := false
 ## it under. Generic rather than a flag per panel: --bloc exists because it has to
 ## SET UP state the panel has nothing to show without, which is a different job
 ## from simply opening a window.
+## V1.7a, and --coerce's argument for the fifteenth time. A campaign register is EMPTY
+## outside the run-up and for every game that has not campaigned, so a frame of the
+## Campaign panel on a new game shows six turnout rows at their authored constants, an
+## em dash on the budget's campaign line and nothing in the field -- which is the
+## absence of the feature rather than the feature. This ticks into the run-up, puts two
+## efforts into the field through Campaign.execute(), and ticks again so the
+## mobilisation has accrued and the bill has been billed.
+var _campaign := false
+
 var _open := ""
 
 ## V1.3e, and --bloc's argument a third time. The nation panel's refusal line only
@@ -264,6 +277,8 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--campaign":
+			_campaign = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -355,6 +370,8 @@ func _apply_view() -> void:
 		_back_the_biggest_sector()
 	if _build:
 		_break_ground()
+	if _campaign:
+		_open_the_campaign()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1277,6 +1294,59 @@ func _back_the_biggest_sector() -> void:
 ##
 ## No panel re-sync, for --invest's reason exactly: this verb does not go through
 ## Budget.commit() either, so budget_panel.gd's stale `_pending` cannot be reached.
+## V1.7a. Ticks to the month the run-up opens, puts the two cheapest efforts into the
+## field, then ticks four more months so there is an accrual to read and a bill to
+## print. Through Campaign.execute() rather than by writing the register, so the frame
+## shows what a click produces -- including the bloc offsets the price is made of.
+##
+## STOPS FOUR MONTHS SHORT OF THE VOTE, and that is deliberate. Campaign.tick_month()
+## CLEARS the whole register the month the window shuts, so a flag that ticked past the
+## election would photograph an empty panel and a zero bill -- V1.6b's flag ticking 48
+## months and running past the thing it existed to capture, in a new place. The one
+## surface where the register is visible is inside the run-up.
+func _open_the_campaign() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var to_open: int = Campaign.months_to_election(state, ns) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	if to_open > 0:
+		_tick_months(to_open)
+	if not Campaign.is_open(state, ns):
+		printerr("--campaign: the run-up did not open (%d months to the vote)" % Campaign.months_to_election(state, ns))
+		return
+
+	# Cheapest first, so the concurrency gate admits two rather than one expensive one.
+	var starts: Array = []
+	for a in _main._loader.campaign_actions:
+		var terms: Dictionary = a.effects.get("campaign", {})
+		if String(terms.get("op", "")) == "start":
+			starts.append(a)
+	starts.sort_custom(func(x, y):
+		return (
+			float(x.effects["campaign"]["cost_pct_gdp"]) < float(y.effects["campaign"]["cost_pct_gdp"])
+		)
+	)
+
+	var begun := 0
+	for a2 in starts:
+		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2).get("applied", false):
+			begun += 1
+	if begun == 0:
+		printerr("--campaign: no effort could be started")
+		return
+
+	_tick_months(4)
+
+	# NOT scrolled, where --build and --invest both are, and the first frame is why. This
+	# panel's TOP is the half a reader has to check -- the months to the vote and the
+	# campaign bill, which is the row the budget panel's own campaign line must agree
+	# with -- and pinning to the bottom put both off the frame and opened on a sentence
+	# cut in half. V1.6e's correction has a direction as well as a subject: scroll to
+	# where the flag's own claim is, and here that is the ledger.
+
+
 func _break_ground() -> void:
 	var state = _main._state
 	if state == null:

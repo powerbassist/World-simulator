@@ -20,6 +20,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -31,6 +32,7 @@ const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
+const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -101,6 +103,7 @@ var _calendar_panel
 var _people_panel
 var _companies_panel
 var _projects_panel
+var _campaign_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -322,6 +325,20 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V1.7a. In the State cluster beside the Diary, and its OWN window rather than rows
+	# on the Polling panel: that panel's contract is that every figure on it has been
+	# through PollNoise, and a mobilisation figure the government is paying for is not a
+	# poll -- docs/society-model.md section 11's argument for moving the delivery readout
+	# off it, one block later.
+	_campaign_panel = CampaignPanel.new()
+	_windows.register("campaign", "Campaign", _campaign_panel)
+	_campaign_panel.setup(_state, _loader)
+	_campaign_panel.hide_close_button()
+	_campaign_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -409,6 +426,9 @@ func _build_action_bar() -> void:
 		{"id": "calendar", "label": "Diary"},
 		# A president's people are state too, by the same argument the diary took.
 		{"id": "people", "label": "People"},
+		# V1.7a. One line, exactly as this function's own comment has now correctly
+		# predicted for six sessions running.
+		{"id": "campaign", "label": "Campaign"},
 	])
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		{"id": "economy", "label": "Economy"},
@@ -706,6 +726,20 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# available -> a new build -> bill. Advance, complete, then price, so a project
 	# that finishes this month stops billing this month.
 	Projects.tick_month(_state, _loader)
+
+	# V1.7a: a month of every campaign effort in the field, onto the mobilisation the
+	# vote reads, and the bill recomputed -- or the whole register cleared, if the
+	# run-up is over. In Projects' slot for Projects' reason, and the loop is the
+	# identical one an eighth time: bill -> deficit -> a PRECONDITION_FIELDS entry ->
+	# which campaign actions are available -> a new effort -> bill.
+	#
+	# BEFORE Elections, which is what makes the month of the vote count: the window is
+	# inclusive of it, so the last month of effort is accrued and read by the vote it
+	# was bought for. Elections then pushes next_executive_* five years out, and NEXT
+	# month this call finds the window closed and clears the register. That is the
+	# whole of the clearing mechanism: a level read, so campaign.gd needs no hook at
+	# the vote and elections.gd needs no knowledge of the window.
+	Campaign.tick_month(_state, _loader)
 
 	# V1.5a: services converge on what the country actually spends on them, delivered.
 	# In Companies' slot for Companies' reason and not for the general tick-order one:
@@ -1060,6 +1094,7 @@ func _on_load_requested(slot: String) -> void:
 	_people_panel.setup(_state, _loader)
 	_companies_panel.setup(_state, _loader)
 	_projects_panel.setup(_state, _loader)
+	_campaign_panel.setup(_state, _loader)
 
 	_calendar_panel.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to
@@ -1090,7 +1125,7 @@ func _mark_all_dirty() -> void:
 		# the frame it was built, and then never again: a censure that changed the head
 		# of government, a reshuffle that changed a portfolio and every seat count after
 		# an election were all stale on it until the game was reloaded.
-		_people_panel, _companies_panel, _projects_panel,
+		_people_panel, _companies_panel, _projects_panel, _campaign_panel,
 	]:
 		if panel != null:
 			panel.mark_dirty()

@@ -27,6 +27,10 @@ const CreditK = preload("res://src/sim/credit_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const ElectionK = preload("res://src/sim/election_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
@@ -126,6 +130,7 @@ func _init() -> void:
 	_check_tax_fields(loader)
 	_check_investment_fields(loader)
 	_check_project_fields(loader)
+	_check_campaign_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -990,6 +995,104 @@ func _check_cycle_fields(loader) -> void:
 		var name := String(key)
 		if name.begins_with("cycle_") and name != "cycle_impulse_pct" and name != "cycle_amplitude_rel":
 			_fail("a save carries %s -- the cycle is a pure function of the clock and stores no phase, counter or accumulated wave, so a third field is a model change that has to be argued" % name)
+
+
+## V1.7a. THREE FIELDS AND NONE OF THEM EARNS A BUMP, which is the answer the plan
+## predicted and this is where it is checked rather than asserted.
+##
+## All three read as "no campaign" when absent, and that is the TRUTH about every
+## version-23 save because those games had no campaign verb -- `measures` at V1.3c,
+## `pacts` at V1.3g, `appointments` at U6a, `sector_investment` at V1.6e. They are
+## serialised regardless, and for three DIFFERENT reasons, so the checks below are
+## separate rather than folded together:
+##
+##   campaign_running       a verb writes it and no tick recomputes it
+##   campaign_mobilisation  it is SPENT at the ballot box, so a reload in the last month
+##                          of a run-up would go to the vote with a campaign already paid
+##                          for and no longer held
+##   campaign_bill_pct_gdp  recomputed on the first tick, serialised so a save read back
+##                          and never ticked reports the budget it was saved with
+##
+## And it ends with V1.3c's device, pointed at the next session for the sixth time: the
+## version is STILL 23, so V1.7b has to come and say why it moves.
+func _check_campaign_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# Into the run-up, then two efforts in the field and two months of accrual.
+	var target: int = (ns.next_executive_year * 12 + ns.next_executive_month) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	state.year = int(target / 12)
+	state.month = target - state.year * 12
+	if state.month <= 0:
+		state.month += 12
+		state.year -= 1
+
+	var started := 0
+	for a in loader.campaign_actions:
+		if String(a.effects.get("campaign", {}).get("op", "")) != "start":
+			continue
+		if Campaign.execute(state, ns, loader.campaign_actions, a).get("applied", false):
+			started += 1
+	if started == 0:
+		_fail("no campaign effort could be started, so this check measures nothing")
+		return
+	Campaign.tick_month(state, loader)
+	Campaign.tick_month(state, loader)
+	if ns.campaign_mobilisation.is_empty() or ns.campaign_bill_pct_gdp == 0.0:
+		_fail("the campaign did not accrue or did not bill, so this check measures nothing")
+		return
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(full)
+	if Campaign.running(kept.player()) != Campaign.running(ns):
+		_fail("the efforts in the field did not survive the round trip")
+	for bloc in ns.campaign_mobilisation:
+		if not is_equal_approx(
+			float(kept.player().campaign_mobilisation.get(bloc, 0.0)),
+			float(ns.campaign_mobilisation[bloc])
+		):
+			_fail("the mobilisation on '%s' did not survive the round trip" % bloc)
+	if not is_equal_approx(kept.player().campaign_bill_pct_gdp, ns.campaign_bill_pct_gdp):
+		_fail("the campaign bill did not survive the round trip")
+
+	# (1) THE RUNNING REGISTER. Absent it reads as nothing in the field, which is correct
+	# for a version-23 save -- so no bump. What it is NOT is free to drop from a
+	# version-24 save: the bill goes with it, and the player is handed back money they
+	# have committed.
+	var no_running: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_running["nations"]["FRA"] as Dictionary).erase("campaign_running")
+	var dropped_running = GameState.from_dict(no_running)
+	if not dropped_running.player().campaign_running.is_empty():
+		_fail("a dropped running register came back non-empty")
+	Campaign.tick_month(state, loader)
+	if Campaign.bill_pct_gdp(dropped_running.player(), loader) != 0.0:
+		_fail("a dropped running register still bills -- then it is not derivable and the version must move")
+
+	# (2) THE MOBILISATION. Absent it reads 0.0 and Campaign.turnout_of() returns the
+	# authored constant BIT-FOR-BIT, which is the whole property this session rests on.
+	var no_mob: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_mob["nations"]["FRA"] as Dictionary).erase("campaign_mobilisation")
+	var dropped_mob = GameState.from_dict(no_mob)
+	for bloc in OpinionK.BLOC_KEYS:
+		if Campaign.turnout_of(dropped_mob.player(), bloc) != float(ElectionK.BLOC_TURNOUT[bloc]):
+			_fail("a dropped mobilisation register does not read as the authored turnout for '%s'" % bloc)
+	# ...and it is NOT recomputed by a tick, which is what separates it from the bill and
+	# is the reason it is serialised at all.
+	Campaign.tick_month(state, loader)
+
+	# (3) WHAT WAS NOT ADDED. No window flag, no "campaign opened" date, no per-effort
+	# entry -- the window is a LEVEL READ of next_executive_*, which the save has carried
+	# since the MVP, and the register holds effort IDS and nothing about them. A later
+	# session storing any of these turns this red and has to come and say why.
+	for absent in ["campaign_open", "campaign_opened_year", "campaign_started_month", "last_campaign_result"]:
+		if (full["nations"]["FRA"] as Dictionary).has(absent):
+			_fail("a save carries %s -- the window is a level read on the clock and the last result is a display record" % absent)
+	for entry in (full["nations"]["FRA"] as Dictionary)["campaign_running"]:
+		if typeof(entry) != TYPE_STRING:
+			_fail("a serialised running entry is not a bare effort id -- the cost and the reach round-trip through data/campaign-actions/, not through the save")
+
+	if GameState.SAVE_VERSION != 23:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23 on the DONE half of `projects` and V1.7a argued it should STAY there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 func _run_unknown_version() -> void:

@@ -85,12 +85,33 @@ a dashboard was the right object.
 | V1.3g | Sim | Defence as domestic politics, and the **last session of the V1.3 block**. Capability as a stock derived from sustained defence spending, defensive pacts, deployments, and the alliance obligation that opens itself. **Two registers and no new SHAPE of live state** — a pact is symmetric pair state on the key builder relations and agreements already use, a deployment is directed pair state on the one measures use, and "the set of your allies" is a derived read. The genuinely multilateral case already exists as the bloc. `SAVE_VERSION` 12 -> **13**, earned by exactly one of three additions, and the third **splits**: an absent `military_capability` reads 0.0 against a France that has spent 2 % of GDP on defence for decades and every reader inverts; an absent `pacts` reads correctly as "nothing signed"; and an absent `deployments` is correct for the OBLIGED half, which the next tick re-derives from pacts x measures, and silently wrong for the CHOSEN half, which is derivable from nothing. The test asserts all four, and the split is the assertion worth having because it **pins** the property that obligations are derived. **The obligation is a LEVEL READ and that was the design pass's correction**: nothing in the project ever lifts a retaliation, so an edge-triggered obligation is a permanent monotone charge and the bill clamp stops being a guard rail — [[economy-model|`IMPULSE_MAX`]] in a fifth place, avoided rather than discovered. **The probe corrected the model three times**, seven sessions running: the nine never coerce each other so the obligation is unreachable without the council; the headline cannot move on a `defence` price because five blocs of six weight it at zero; and the first opinion table measured half the price. **What the obligation actually fires on was authored by nobody** — a pact held OUTSIDE the bloc, because the council's `common_external_tariff` is the only thing that reaches an ally unprompted. **The re-run is bit-identical across every shared regime**, and table (h) is why: `state_visit` wins 90 pairs of 90 on being the only verb priced at zero, so four new verbs changed no AI choice. That same finding is the session's honest limitation — **the four verbs are player content**, and a security term in `_desire_parts()` is a session rather than a constant |
 | U6a | UI | The president's diary — the calendar, split off from U6 on **machine count** the way V1.3e split, and shipped on a headline the row did not name. The row said "a scheduling skin over the verbs that already exist"; counting found ~40 surfaces and **four machines**, above V1.3d's ~39 and the largest ever held. What ships is the half with no unmade content decision, U5b → U5c's own cut. **The headline is legibility rather than scarcity, and that is a measurement rather than a preference**: every observable in this project is piecewise-constant across a month — nothing in `src/sim/` has ever read a day, though `clock.gd` has emitted `day_advanced` since the MVP — so 14 March and 22 March differ only in the label, and booking as a *replacement* for acting is a deferral that buys nothing, which is V1.3c's and V1.3d's strictly-dominated shape a third time. So booking is **optional**, every verb keeps its act-now button, and `tests/test_calendar.gd` asserts a booking moves nothing at the moment it is made. What the diary shows instead is dated state the game has carried for sessions with no surface anywhere: election day, the European election, the presidential term, the council's next proposal and its pending vote, the dissolution lockout, and every diplomatic and legislative cooldown expiry. **The one tuned constant this session was going to add was measured and DELETED.** A monthly budget of the player's days was swept against a band fixed before the sweep ran, and the band is not mis-tuned but **structurally unreachable**: the median month offers 27 legal acts asking 124 days, so every budget from 4 to 24 bound in **100 %** of months over fourteen years. A ceiling that always binds is a cap, not an allocation. Deleted rather than left unused — V1.3e's treatment of `AGREEMENT_ACCEPT_MIN` — so `calendar_constants.gd` carries **no tuned constant at all**, a first in a long run, and the honest reason is carried forward: `available()` returns what is LEGAL and nothing yet models what the player WANTS, so a ceiling priced against legality always binds. **The probe corrected itself twice and the panel corrected it a third time, which is eight sessions running.** The fixed-date density table read a player who never acts, so cooldowns — much the densest source — reported exactly **0**, and it counted after the tick, so an election had already pushed its own date forward and 168 months showed **one**: V1.3f's measuring-the-wrong-state error, in this session's own probe, 19.6 % → **31.0 %**. Then the panel test found the sharp version the average hides: a **new game's next twelve months are completely empty**, because France's nearest dated event is sixteen months out and cooldowns do not exist until the player has acted — so the page every player sees first is the page with nothing on it. The pre-committed response to a thin diary was content or shape rather than a constant, and widening the horizon would have been the constant (it also bounds booking), so the answer is three shape decisions: a **twelve-month strip** rather than a month's page, a `later` footer, and a `Next:` line outside the scroll. `SAVE_VERSION` stays **13** and the assertion is worth more than a bump: `appointments` absent reads as "nothing booked" (`measures`' case), `day` is not serialised at all because `save_manager.gd` already carries `clock.day`, and the field that WOULD have earned one — a spent-days counter, which reads 0 when absent and hands a save-scumming player their month back — was never written because the probe cut the currency first. `src/sim/calendar.gd` **preloads no other system**, asserted by reading the file: `due()` returns entries as data and `main.gd` fires the verb, which is `cabinet-model`'s orchestrator precedent one scale wider, and cost **zero** new preloads because `main.gd` already had all three. The re-run is **bit-identical across all thirteen existing regimes**, and a **fourteenth** was needed for a second reason V1.3g's did not have: `balance_probe.gd` and `test_balance.gd` are month loops with **no clock**, so a day-resolution dispatch was structurally invisible to the whole harness and its bit-identity would have meant nothing. Booking does **not** go on `nation_panel.gd` — every verb row there is an HBox holding an autowrapping label beside one button, so a second button narrows the label and grows the row, at a panel already at 860px against a ~886 ceiling that has paid for that fold twice. Model, every constant and the measured tables: [docs/calendar-model.md](docs/calendar-model.md) |
 | U6c | UI | The project marker layer - the last clause of `docs/tiers/v1.md` section 6, and the piece V1.6f split off. **Instance thirty-nine is in the row's own wording**: every statement of this machine called it *"per-project geography as content"*, and `data/project-actions/` is a global flat list, so a lon/lat inside `effects.project` puts every nation's rail spine at one point on the planet - fixing that means making the directory per-nation and reopening a call V1.6f made freely. **Geography is per-NATION**: `data/nations/*.json` grew an optional `project_sites` block, U6b's *a law names an office and the nation names the person* unchanged, so the action list stays global and `src/core/project_action.gd` was **not edited at all** - the `project_name` exception it offered as precedent was not needed, because no coordinate ever reaches `effects.project`. Coverage is FRA/DEU/GBR, `data/companies/`'s and `data/outlets/`'s rule, and an absent block is legal. **A marker is an always-on overlay, not a fifth `LAYERS` entry**, and what settles that is already in `map_view.gd`'s header - *no map layer adds, removes or reorders a draw layer* - plus the fact that as a layer it would be structurally dead content, reading exactly 0.0 for nine of the ten forever. **The hit test is a radius test in screen space** and reaches neither `_polygons` nor `_nation_at_lonlat`, so U5b's *unclickable structurally* survives; `tests/test_map_markers.gd` extracts that function's body from the source and fails on either name, and pins `LAYERS` at four. A click opens Public Works and does not fall through to the nation underneath. `SAVE_VERSION` stays **23** - a site is content that round-trips through `data/nations/` and a marker is derived at draw time - and no balance re-run was needed, because nothing in `src/sim/` was touched and a marker is not a verb. **The sixteenth screenshot pass found one bug and it was the readout's**: the hover text read *"12 of 96 months"*, which a player reads as twelve months DONE when it is twelve to go, and it is now worded exactly as `projects_panel.gd` words it |
+| V1.7a | Sim | The campaign phase, and the **first session of the V1.7 block**. A per-bloc mobilisation register in LOG-ODDS, read by `Elections.vote_share()` in place of the authored turnout constant, plus the sixth computed spending line. **The row asked for three things and two were already answered, one of them by a DELETION.** Of *time, money, messaging*, only money survived: U6a swept a monthly budget of the player's days and **deleted** it on a reason that is general rather than about calendars (`available()` returns what is LEGAL and nothing models what the player WANTS, so a ceiling priced against legality always binds) - **instance forty** - and messaging is V1.5d's, exactly as this bullet predicted in advance, so `tests/test_campaign.gd` reads `campaign.gd` and fails if it so much as names `framing_gain` or `press_freedom`. **What money buys had to be found, and two of three candidates were refused.** Approval is the term's record and `vote_share()`'s own `pull` already reads it; framing is V1.5d's. What is left is **turnout** - `election_constants.BLOC_TURNOUT` is read in exactly two places, both inside `vote_share()`, and nothing had ever written it - so the register is a FIRST writer with no double count. A campaign does not change what people think of your record; it changes who bothers to vote on it. **Log-odds, so turnout is bounded strictly inside (0, 1) BY CONSTRUCTION** and this session ships no turnout clamp at all - and the property nobody authored falls out of it: the same effort moves students (+14.9 points at the cap) further than pensioners (+7.2), because a low-turnout bloc has more room. **The window is a LEVEL READ and the clear is its other half**, so the register empties itself the month after the vote with no hook in `elections.gd` and no flag anywhere - V1.3g's rule, applied to a thing that opens as well as closes. **An effort is a standing rate with a deadline**: it accrues and bills every month it runs, which is what kills the strictly-dominated shape a one-off purchase creates (same reach, less time paying) for the seventh time. **The probe corrected the session five times, eighteen running.** The band was INVENTED (*0.50 points of vote share*, a number that sounded like a margin) and is now anchored on what a point of approval is worth; `_headroom()` was wrong by a factor of a hundred; the emulation claim was false above the shipped window; the **content's targeting** was the gap rather than any constant, at 17 % of what perfect targeting reaches; and `MOBILISATION_MAX` was binding in a way worse than usual - once the accumulator saturates a longer run-up is strictly WORSE, so the clamp was **inverting** the timing decision rather than merely setting a number. `CAMPAIGN_WINDOW_MONTHS` = 8, selected by **maximin slack** over the feasible region, which is this page's own tiebreaker rules taken one step past V1.5d's *the interior governs*. **And maximising your own vote share is not the same as winning**: the pair that best raises France's incumbent's share NARROWS their lead, and the pair that best widens the lead LOWERS their share, because turnout is a rising tide inside a bloc rather than a transfer between parties. Recorded rather than fixed. The eighteenth `ISSUE_KEYS` question is answered **NO on test 1**, as V1.6e's and V1.6f's were and for the same reason - a session shipping a content object has somewhere to put the price. `SAVE_VERSION` stays **23** on three fields, and the test pins the absence so V1.7b has to say why it moves. **The re-run is bit-identical across all 34 existing regimes, predicted in advance** - the diff is additions only - with two new regimes of the expensive kind. **The seventeenth screenshot pass found two bugs**: a content name that collided with a window this game already has (*"Clear the Diary"* on a campaign button), and the flag pinning the scroll past the ledger it exists to check - V1.6e's correction has a DIRECTION as well as a subject. Model, every constant and the measured tables: [docs/campaign-model.md](docs/campaign-model.md) |
 
 MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticked.
 
 ---
 
 ## Next
+
+**V1.7 is decomposed into three sessions, V1.7a-c, and (a) is BUILT.** The row was three
+bullets in [[docs/tiers/v1.md]] section 7 against FOUR items in the block cell below, and
+neither count was right. The argument and the per-session table are under *V1.7 - the
+decomposition* immediately below. Order: (a) the campaign phase, (b) campaign promises
+and the trust price, (c) electoral system choice **and referendums**, which are one shape
+and not two - and **(b) is recorded in advance as the row most likely to split**, the
+device this page used for V1.3e (which split) and V1.5d (which did not).
+
+**V1.7a's finding is that a row can be answered by a DELETION, and this one was.** Of the
+campaign bullet's three nouns - time, money, messaging - only *money* survived contact
+with what is built. **Time does not exist**, because U6a swept a monthly budget of the
+player's days and deleted it; the reason recorded there is general rather than about
+calendars, and it applies here word for word. **Messaging is V1.5d's**, and that bullet
+said so itself in advance - *"if V1.5d builds the peacetime half, this bullet reads it
+rather than rebuilding it"* - which is the first time on this page a prediction written
+into a row has come true and been collected. What money buys instead had to be found, and
+it is **turnout**: `election_constants.BLOC_TURNOUT` is read in exactly two places, both
+inside `Elections.vote_share()`, and nothing in this project had ever written it.
+Model: [docs/campaign-model.md](docs/campaign-model.md).
 
 **V1.6 was decomposed into five sessions, BECAME SIX, and ALL SIX ARE BUILT. The block
 is COMPLETE - and so is section 6's LAST CLAUSE, built at U6c.** The argument, the four calls it made and the two rows it caught are under
@@ -804,6 +825,122 @@ row up on the top bar and fixed only that. And **the budget panel has never had 
 deployments row**: V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
 entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
 "beside the deployment line" about a line that was not there.
+
+### V1.7 - the decomposition, and why these three
+
+Written before any code, which is where a block-shaped row belongs.
+
+| | Session | Content | Reads |
+|---|---|---|---|
+| **V1.7a** | ~~The campaign phase~~ **shipped** | A per-bloc **mobilisation** register in LOG-ODDS, read by `Elections.vote_share()` in place of the authored turnout constant, plus the **sixth** computed spending line - the second one that STOPS, and the first that stops on a date the player cannot move. `SAVE_VERSION` **stays 23** on three fields; re-run bit-identical in all 34 | - |
+| **V1.7b** | Campaign promises and the trust price | A pledge is a `{field, op, value}` triple - `legislature_constants.PRECONDITION_FIELDS`' own shape, read at the END of the term instead of at proposal. The price is a quantity that does not exist, which is V1.5d's *legitimacy* problem again | a |
+| **V1.7c** | Electoral system choice and referendums | **One shape, not two.** An electoral system is a **seventh `effects.institutional` key** and `election_system` lifted from `Nation` to `NationState` exactly as V1.2b lifted the other six; a referendum is the amendment machine's own **declared-unresolved** `referendum_required`. Both discharge stopgaps on [[amendment-model]] | - |
+
+**Machine count is TWO, which is what makes it three sessions and not four.** The
+campaign and the promise ledger are machines. Electoral-system choice is not:
+`src/sim/electoral_systems.gd` already ships all five methods with a dispatch and
+`INSTITUTIONAL_EFFECT_KEYS` already sets institutions absolutely, so it is V1.6c's credit
+rating - *one extra read of something already built* - and that is why it shares a session
+with the referendum rather than owning one.
+
+**(b) is the row most likely to split**, recorded here in advance. The cut is the **trust
+quantity**: if the price cannot land on an existing register the way V1.5d landed
+legitimacy on the grievance, then the ledger and the price are two sessions.
+
+**No V1.7 session ships a U-track machine**, so nothing here is expected to split on the
+two-track rule that cut V1.6e and V1.6f. Recorded because two consecutive sessions did.
+
+Four calls, each of which could have gone the other way:
+
+1. **(a) is the campaign, and the deciding property is that it is the only one of the
+   three that ships a VERB.** V1.3a's rule - state ships with a verb or it decays - and
+   the block runs under it rather than under V1.5's inversion, because every bullet here
+   is something a president DOES. Promises need the campaign to be made in; the
+   institutional pair needs neither.
+2. **Referendums join (c) rather than owning (d), and the reason is the schema.** A
+   referendum exists precisely because a supermajority is sometimes unreachable, and
+   [[amendment-model]] already carries `referendum_required` as a declared-unresolved
+   amendment rule with *"V1.1f/V1.7"* written beside it. Building it is finishing that
+   dispatch, not adding a machine - and the electoral-system key is the same edit to the
+   same channel. Splitting them would be splitting on theme, and this page's split
+   trigger has been machine count since V1.3e.
+3. **Messaging is a REFERENCE and not a machine, and the row said so before the block
+   started.** Section 7's own bullet handed V1.5d the peacetime half with the condition
+   attached. V1.5d built it and CUT the campaign-time twin, on the ground that damping
+   hostile framing is `press_freedom`'s positive direction with a different label - one
+   accumulator, two writers. So (a) reads it, and `tests/test_campaign.gd` fails if
+   `campaign.gd` so much as names `framing_gain` or `press_freedom`.
+4. **The campaign's target had to be FOUND, and two of the three candidates were
+   refused.** Approval is the term's record and `vote_share()`'s own `pull` term already
+   reads it, so a campaign term there is a second writer of the one quantity the whole
+   game is judged on. Framing is refused by (3). What is left is **turnout**, which had
+   no writer at all - and the distinction is the honest one rather than a convenience: a
+   campaign does not change what people think of your record, it changes who bothers to
+   vote on it.
+
+**The row was wrong twice, and both were found by counting.** Instances **forty and
+forty-one**.
+
+- **"Time" names a currency this project MEASURED AND DELETED.** U6a swept a monthly
+  budget of the player's days against a band fixed before the sweep ran and found it
+  structurally unreachable: the median month offers 27 legal acts asking 124 days, so
+  every budget from 4 to 24 bound in **100 %** of months. A ceiling that always binds is a
+  cap, not an allocation. The reason carried forward there is not about calendars -
+  `available()` returns what is *legal* and nothing models what the player *wants* - and
+  it is exactly why a campaign priced in time would have rebuilt the deleted thing.
+- **The section has no bullet for referendums and three other places point at it.**
+  Section 1's own bullet list, the re-parked V1.1f row, and `nation.gd`'s
+  `KNOWN_AMENDMENT_RULES` comment. The block cell below names four items and the section
+  names three, and the missing one is the one with a declared stopgap in the code waiting
+  on it. Cross-referenced into **both** rows.
+
+**The orphan check came back CLEAN.** Every V1-tiered row in
+[[docs/brainstorm/mechanics-governance.md]] - campaign phase, campaign promises, electoral
+system choice, referendums - is named by section 7 or section 1, and decree / executive
+order is Article 49.3, built at V1.1a.
+
+### V1.7a - the campaign phase, and the row answered by a deletion
+
+**Everything about the model, both bands, all four constants, the five corrections the
+probe made and the two the screenshot pass made** is in
+[docs/campaign-model.md](docs/campaign-model.md). The four findings worth carrying out of
+it:
+
+**A band must be anchored on something the model already measures, and this one was
+invented twice before it was.** The first clause read *"at least 0.50 points of vote
+share"* - a number picked because it sounded like a margin - and every candidate failed
+against it while the table never said whether 0.50 was the right ruler. It was not. The
+only other thing that moves `Elections.vote_share()` at all is **approval**, through the
+`pull` term, so the band is written in points of approval: at least what ONE point is
+worth (below that governing swamps it) and at most what the **poll floor** is worth (above
+that a campaign substitutes for the record). Measured: 0.3415 and 1.0147 points of vote
+share. V1.6a's *prefer a fit to a band* one step further out - prefer an ANCHOR to a
+number.
+
+**Maximin slack, which is this page's own tiebreaker rules taken one step further.**
+V1.5d established that where two model criteria bound a quantity from opposite sides
+neither edge selects and the interior governs. But *the interior of a passing LIST* is a
+statement about the grid, and V1.5b's whole finding was that a grid must never choose. The
+interior of the **feasible region** needs no grid: take the candidate whose WORST relative
+slack is largest. It is stable under refinement, stable under widening, and it degrades
+correctly - where one criterion is far looser than the other it returns the edge of the
+tighter one, which is what a bound should do. `CAMPAIGN_WINDOW_MONTHS` = **8**, at 23.1 %.
+
+**A binding guard rail can INVERT a decision rather than merely set a number.** This
+project has caught `IMPULSE_MAX`'s failure five times, always as *the clamp is setting the
+number*. Here `MOBILISATION_MAX` at 0.60 did worse: once the accumulator saturates a
+LONGER run-up is strictly worse, because it costs more months of bill for exactly the same
+reach - so the clamp was not setting the timing decision the whole lever exists to pose,
+it was reversing it. At 0.90 the worst reachable stack is 0.6800, slack by 0.2200.
+
+**And MAXIMISING YOUR OWN VOTE SHARE IS NOT THE SAME AS WINNING**, which nobody authored.
+`Elections.vote_share()` renormalises per bloc, so turnout is a rising tide inside a bloc
+rather than a transfer between parties - and the parties nearest you in ideology space are
+exactly the ones sharing your voters. The pair that best raises France's incumbent's share
+(+0.4204) NARROWS their lead (-0.4033); the pair that best widens the lead (+0.6475)
+LOWERS their share (-0.2417). Under a plurality verdict the quantity to maximise is the
+lead, so the best play can be a campaign that lowers your own vote. Recorded rather than
+fixed: it is a property of [[election-model]]'s vote-share model, not a defect in this one.
 
 ### V1.6 - the decomposition, and why these five
 
@@ -2313,6 +2450,7 @@ is already made, which is most sessions once the docs are written.
 |---|---|---|---|---|
 | V1.1c Dissolution | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Originally logged **Light / Medium**, flagged in advance as known wrong — "reads the schedule schema [[electoral-systems]] already settled" assumed the dissolution rule was already in that schema; it was not, and adding it was S1 class. The cold count at plan time found thirteen surfaces: a ten-nation schema addition, six state fields plus a save-version bump, a new sim module, a tick change, two panels, five test files, two probe regimes, eight docs. Third correction on this table's own record; see [[decision-log]]. |
 | V1.1d Cabinet | **Yes** *(corrected)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on "ministers are a schema that departments, opinion and events all read — S1 class." The cold count at plan time found ~fourteen surfaces against that reading — V1.1c's own thirteen, plus a new content class (named individuals) and a dashboard tab. **Corrected by cutting scope, not raising effort** — the first correction on this table's record to resolve that way rather than by moving to a higher tier: portfolio → party (not named individuals), loyalty → resignation only (not a second hostility() term), UI → the existing Government panel (not a new tab). Cut to eleven surfaces, Medium held. Fourth correction on this table's own record; see [[decision-log]]. |
+| V1.7a The campaign phase | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **The missing-row failure again, and by now it is the record rather than the exception**: this table stops at V1.5a and carries no row for any V1.5b-d, V1.6a-f or V1.7 session. Authored at plan time rather than read. The cold count came to ~24 surfaces - a new sim module and its constants, a new content class and directory, four NationState fields across four sites, the loader, `vote_share()`, the budget line and its panel row, a new window plus three wiring points in `main.gd`, a test file, a probe, two balance regimes across two harnesses, a screenshot flag and five docs - which is V1.3a's ~22 with two more, so **High**, and it held. The decision that was expensive to reverse was not the code: it was **where the campaign lands**, and two of the three candidates had to be refused before the third was found. |
 | V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 | V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
@@ -2429,7 +2567,7 @@ out to need. Full detail in [docs/tiers/v1.md](docs/tiers/v1.md).
 | **V1.4 Companies** | ~~Named fictional firms, subsidies, regulation, nationalisation, privatisation, bond markets~~ — **decomposed into three sessions, V1.4a–c**, before any code, and **all three are shipped**. Bond markets moved to V1.6, which claimed the same mechanism. The table and the argument are under *Next* above |
 | **V1.5 Society** | Media, scandals, unions, strikes, protests, corruption, demographics, migration, inequality — **decomposed into four sessions, V1.5a–d**, before any code. Rule of law left the block for §1's judiciary (V1.1e), and inequality's *instruments* are §6's. The table and the argument are under *Next* above |
 | **V1.6 Economic depth** | ~~Inflation, business cycle, tax brackets to a target of five taxes, sectoral investment, infrastructure — sector count stays at three — **plus bond yields and the credit rating**, handed over by V1.4's decomposition~~ — **decomposed into five sessions, V1.6a–f**, before any code, **became six**, and **ALL SIX ARE SHIPPED — the block is COMPLETE**. (e) split on TRACK rather than on shape — *visible on the map* is a U-track surface — and (f) then split **on the same rule**, shipping the sim half and leaving the marker layer to **U6c** - **built, so §6 is complete to its last clause**, and the session that found the *per-project geography* wording to be instance thirty-nine. The table and the argument are under *Next* above |
-| **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums |
+| **V1.7 Campaigns** | Campaign phase, binding promises, electoral system choice, referendums - **decomposed into three sessions, V1.7a-c**, before any code, and **(a) is shipped**. The cell named four items where section 7 carried three bullets and neither count was right: **referendums have no bullet in that section at all** (instance forty-one) and they join electoral-system choice in (c), because a referendum is the amendment machine's own declared-unresolved rule and an electoral system is a seventh `effects.institutional` key - one shape, not two. Machine count is **two**. The table and the argument are under *Next* above |
 | **V1.8 Events** | Data-defined events with preconditions, choices, consequences — last, on purpose, and re-argued rather than assumed |
 
 Three of those cells changed in the scope-alignment pass rather than in a build

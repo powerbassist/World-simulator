@@ -17,6 +17,7 @@ const Outlet = preload("res://src/core/outlet.gd")
 const CompanyAction = preload("res://src/core/company_action.gd")
 const InvestmentAction = preload("res://src/core/investment_action.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
+const CampaignAction = preload("res://src/core/campaign_action.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -75,6 +76,12 @@ var investment_actions: Array[InvestmentAction] = []
 ## this session split off, so there is nothing here a roster could differ over yet.
 var project_actions: Array[ProjectAction] = []
 
+## V1.7a's verbs. Ordered, not keyed by id, for project_actions' reason. Global
+## rather than per nation for the reason data/campaign-actions/campaign.json's own
+## note gives: an effort names no place and no institution, so none of the five is
+## true of France in a way it is not true of Germany.
+var campaign_actions: Array[CampaignAction] = []
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -112,7 +119,7 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -122,6 +129,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	company_actions.clear()
 	investment_actions.clear()
 	project_actions.clear()
+	campaign_actions.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
@@ -177,6 +185,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_company_actions(company_actions_dir)
 	_load_investment_actions(investment_actions_dir)
 	_load_projects(project_actions_dir)
+	_load_campaign_actions(campaign_actions_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
@@ -688,6 +697,82 @@ func _load_projects(actions_dir: String) -> void:
 		if not defined.has(pid):
 			errors.append("%s: '%s' abandons project '%s', which no action starts" % [
 				actions_dir, str(referenced[pid]), str(pid)
+			])
+
+
+## V1.7a. _load_projects()'s shape, and deliberately a separate directory rather than
+## a third op on the project channel: a project is a discrete dated commitment pointed
+## at a named thing and a campaign effort is a standing rate pointed at a slice of the
+## electorate, which is the distinction docs/tiers/v1.md section 7 exists for.
+##
+## THE CROSS-FILE CHECK IS THE HALF WORTH HAVING. Per-entry validation lives in
+## src/core/campaign_action.gd; what only this function can see is whether the file is
+## CONSISTENT -- that no two entries define the same effort, and that every stop names
+## an effort some start actually defines. A stop pointing at nothing loads as a button
+## that is never available, which is a content bug that renders as an absence and would
+## be found by a player rather than by a check. _load_projects()'s own split, inherited.
+func _load_campaign_actions(actions_dir: String) -> void:
+	var da := DirAccess.open(actions_dir)
+	if da == null:
+		errors.append("%s: directory not found" % actions_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	var defined := {}     # effort_id -> the filename that defined it
+	var referenced := {}  # effort_id -> the action id that stops it
+	for fname in filenames:
+		var path := actions_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("actions")) != TYPE_ARRAY:
+			errors.append("%s: invalid campaign-action file, expected {\"actions\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["actions"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: actions[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = CampaignAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate campaign action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+
+			var eid := CampaignAction.effort_id(action)
+			if eid != "":
+				match CampaignAction.op_of(action):
+					"start":
+						if defined.has(eid):
+							errors.append("%s: effort '%s' is defined twice (also in %s) -- its price and its reach would depend on which entry loaded last" % [
+								fname, eid, str(defined[eid])
+							])
+						defined[eid] = fname
+					"stop":
+						referenced[eid] = action.id
+			campaign_actions.append(action)
+
+	for eid in referenced.keys():
+		if not defined.has(eid):
+			errors.append("%s: '%s' stops effort '%s', which no action starts" % [
+				actions_dir, str(referenced[eid]), str(eid)
 			])
 
 
