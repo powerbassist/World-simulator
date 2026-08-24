@@ -165,7 +165,7 @@ func _run_effectiveness(effectiveness: float) -> float:
 		Budget.tick_month(state)
 		_opinion_tick_with_effectiveness(ns, effectiveness)
 		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Elections.tick_month(state, loader)
 
@@ -252,7 +252,7 @@ func _run_resignation_signals(regime_name: String, pending: Dictionary) -> Dicti
 		Bloc.tick_month(state, loader)
 		Opinion.tick_month(state)
 		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Elections.tick_month(state, loader)
 

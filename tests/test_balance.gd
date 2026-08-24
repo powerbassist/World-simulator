@@ -376,7 +376,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
 		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 		Dissolution.tick_month(state)
 		# V1.4a, in main.gd's slot. Inert for every regime here that subsidises
 		# nobody -- the share shift is exactly zero with no subsidy standing and all

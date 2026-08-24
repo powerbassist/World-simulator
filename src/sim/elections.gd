@@ -41,6 +41,12 @@ const TOP_ISSUE_COUNT := 3
 ## docs/scenario-model.md.
 static func init_nation(ns, nation, party_list: Array, eu, seat_share_override: Dictionary = {}) -> void:
 	ns.assembly_seats = nation.assembly_seats
+	# V1.7c. Lifted from Nation onto NationState, exactly as V1.2b lifted
+	# formation_method, censure_rule, dissolution_rule and amendment_rule: an
+	# electoral system nobody can change is a constant wearing a data string.
+	# Legislature.apply()'s institutional channel is the only other writer.
+	ns.election_system = nation.election_system
+	ns.election_threshold_pct = nation.election_threshold_pct
 	ns.months_in_term = 0
 
 	ns.next_election_year = nation.election_next_year
@@ -122,7 +128,7 @@ static func _tick_nation(state, ns, loader) -> Array:
 	# of it may exclude the player's own party entirely. That is cohabitation,
 	# not defeat.
 	if state.year == ns.next_election_year and state.month == ns.next_election_month:
-		var result := resolve(ns, party_list, nation.election_system, nation.election_threshold_pct, "national", state.year, state.month)
+		var result := resolve(ns, party_list, ns.election_system, ns.election_threshold_pct, "national", state.year, state.month)
 		ns.seats_by_party = result["seats"]
 		ns.last_election = result
 		ns.next_election_year = state.year + nation.term_years

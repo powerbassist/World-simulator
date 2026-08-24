@@ -62,7 +62,7 @@ the identical bar, which is the thing templates exist to avoid.
 | `three_fifths` | 0.60 | FRA, ESP | Art. 89 Congress vote (FRA); Art. 167's ordinary revision path (ESP) — corrected from a plan-time assumption of `two_thirds`, see below. |
 | `two_thirds` | 2/3 | DEU, ITA, AUT, BEL, NLD | Art. 79(2) GG (DEU); Art. 138's referendum-proof second-vote bar (ITA); Art. 44 (AUT); the entrenching number in BEL/NLD's two-reading procedures, whose intervening dissolution-and-election step is not modelled. |
 | `three_quarters` | 0.75 | LUX | The referendum-waiving second-vote bar, Art. 114 — kept at its real fraction rather than rounded down to an existing tier. |
-| `referendum_required` | *(none)* | CHE | Declared, unresolved — see below. |
+| `referendum_required` | 0.5 (of votes cast) | CHE | The Federal Assembly's own ordinary vote, followed by a **mandatory** popular referendum — Art. 195. Declared unresolved here until [[referendum-model|V1.7c]] built it; see below. |
 
 **A plan-time table error, caught by writing the real citation rather than
 copying a rough cohort.** The plan grouped Spain with Germany/Italy/Austria at
@@ -79,14 +79,27 @@ have been a tuning fudge under a different name — this project's own rule is
 that thresholds are real constitutional numbers, not detuned to fit an
 existing tier — so `three_quarters` was added instead.
 
-`referendum_required` (CHE) is declared and unresolved, the same shape
-`lose_condition: "never"` already uses for Switzerland: every Swiss amendment
-requires a mandatory popular referendum with a double majority of the people
-and the cantons, so no seat fraction applies at all. No amendment in
-`data/laws/amendments.json` names `directorial_republic` in its `systems`, so
-this is never looked up at runtime — reaching the `"amendment"` match arm
-with a rule absent from `AMENDMENT_RULE_FRACTIONS` is a content bug, not a
-reachable game state, and `resolve_vote()` `push_error()`s if it ever happens.
+> [!note] Discharged at V1.7c
+> This paragraph read "declared and unresolved" for five blocks, with
+> *"V1.1f/V1.7"* named beside it in `src/core/nation.gd` as its owner. That
+> session built it, and the discharge turned on a reading of Art. 195 this page
+> had wrong: **the mandatory referendum does not replace the Federal Assembly's
+> vote, it adds a popular one on top of it.** So `referendum_required` carries an
+> ordinary-majority seat fraction like every other rule, and what makes it
+> *mandatory* is the nation's own `government.amendment.referendum` — a seventh
+> dispatch-on-a-data-string field. The same shape turns out to describe France's
+> Art. 89, Italy's Art. 138 and Luxembourg's Art. 114 from the *optional* side.
+> Full argument: [[referendum-model]].
+>
+> Switzerland's real **double majority of the people and the cantons** is still
+> not modelled, because this game has no cantons. That is a named reduction of
+> the same class as [[electoral-systems]]'s per-method caveats.
+
+Before V1.7c, no amendment in `data/laws/amendments.json` named
+`directorial_republic` in its `systems`, so the missing fraction was never looked
+up at runtime — reaching the `"amendment"` match arm with a rule absent from
+`AMENDMENT_RULE_FRACTIONS` was a content bug rather than a reachable game state,
+and `resolve_vote()` still `push_error()`s if it ever happens.
 
 ## The measurement that changed the plan: Germany's real threshold is unreachable
 
@@ -130,6 +143,18 @@ touching a single tuned constant.
 cancelled) or a grand-coalition-shaped start scenario (V1.2, also scheduled)
 could raise Germany's ceiling. Until one of those lands, Germany's
 `two_thirds` is real and correctly unauthored-against, not a placeholder.
+
+**And a referendum is NOT that trigger, which the [[ROADMAP]]'s own V1.7
+decomposition expected it to be.** That page argued referendums belong beside
+electoral-system choice because *"a referendum exists precisely because a
+supermajority is sometimes unreachable, and this block measured exactly that for
+Germany"*. True in the abstract, and it does not resolve for the nation it was
+named about: **Art. 79 provides no referendum at any stage of a Basic Law
+amendment**, and the Basic Law contains no national referendum at all. Germany's
+mode is `none`, its ceiling is unchanged, and `restore_the_monarchy` — which
+targets `parliamentary_republic` — stays unpassable. Recorded rather than fixed:
+inventing a German referendum to rescue a mechanic would be the detuned number
+this page refused for the same nation three blocks earlier.
 
 ## Content: four amendments, none targeting Germany
 
@@ -242,6 +267,6 @@ Refused outright, as always; no migration.
 - `tests/test_amendment.gd` — new; `tests/test_political_systems.gd`, `test_save_load.gd` — edits
 - `tests/fixtures/laws_bad_amendment/` — the load-bearing cross-check fixture
 
-Related: [[political-systems]] · [[transition-model]] · [[government-model]] ·
+Related: [[political-systems]] · [[referendum-model]] · [[transition-model]] · [[government-model]] ·
 [[legislature-model]] · [[data-architecture]] · [docs/tiers/v1.md](tiers/v1.md) ·
 [[declined]]

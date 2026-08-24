@@ -471,6 +471,27 @@ const CAMPAIGN_REGIMES := {
 ## `switch_month` / `switch_delta` rather than adding a mechanism: govern well, win the
 ## vote, then raise the income tax the tax lock forbids. That is the reachable way to
 ## break a promise, and V1.5c built the harness for it a block early.
+## V1.7c: the referendum and the electoral system. TWO regimes, and both are the
+## EXPENSIVE kind -- a referendum and an electoral-reform Act are verbs no budget regime
+## issues, so neither could be reached by any of the thirty-eight already here.
+##
+## `referendum_month` is 6 rather than the first month, because route B needs the
+## assembly to carry the bill by an ordinary majority first and the run has to be past
+## its opening budget shock for that to mean anything. The vote lands
+## REFERENDUM_DELAY_MONTHS later, which is inside the first presidential term by
+## construction -- that is band (ii) in src/sim/referendum_constants.gd, exercised here
+## rather than only measured there.
+##
+## `electoral_month` is 6 for the same reason and is a DIFFERENT verb: an ordinary Act,
+## carried in the chamber, changing how the NEXT legislative election allocates seats.
+## Its effect is invisible until June 2029, which is index 41, so a regime that stopped
+## at the first election would print an identical run -- the reason the horizon here is
+## fourteen years and not one term.
+const REFERENDUM_REGIMES := {
+	"managed_calls_a_referendum": {"budget": REGIMES["managed"], "referendum_month": 6, "electoral_month": -1},
+	"managed_reforms_the_ballot": {"budget": REGIMES["managed"], "referendum_month": -1, "electoral_month": 6},
+}
+
 const PLEDGE_REGIMES := {
 	"managed_keeps_its_word": {
 		"budget": REGIMES["managed"],
@@ -626,6 +647,13 @@ func _init() -> void:
 				-1, -1, -1, int(regime["pledge_month"])
 			)
 
+		for name in REFERENDUM_REGIMES.keys():
+			var regime: Dictionary = REFERENDUM_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
+			)
+
 	quit(0)
 
 
@@ -657,7 +685,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -709,7 +737,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
 		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		# Added at V1.3b, and inert for every regime that does not sign anything:
 		# relations start at their resting value and this drifts them toward it, so
@@ -808,6 +836,10 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_campaign(state, loader, ns, regime_name, year, month)
 		if i + 1 == pledge_month:
 			_promise(state, loader, ns, regime_name, year, month)
+		if i + 1 == referendum_month:
+			_call_referendum(state, loader, ns, regime_name, year, month)
+		if i + 1 == electoral_month:
+			_reform_the_ballot(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -965,6 +997,42 @@ func _short_the_largest_partner(state, ns, party_list: Array, regime_name: Strin
 	print("  %d-%02d %s: reassigned %s from %s to %s (shortfall %.2f)" % [
 		year, month, regime_name, target_portfolio, largest, weakest_fit,
 		Cabinet.shortfall(ns, largest),
+	])
+
+
+## V1.7c. Route B: carry the amendment in the chamber by an ordinary majority, then the
+## country votes REFERENDUM_DELAY_MONTHS later. Nothing is applied at the press --
+## Legislature.tick_month() settles it, which is why this regime needs no second hook.
+func _call_referendum(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var law = _find_law(loader, "single_term_reform")
+	if law == null:
+		print("  %s: single_term_reform is not in the law list" % regime_name)
+		return
+	if not Legislature.can_put_to_referendum(ns, law):
+		print("  %s: no referendum route at %04d-%02d" % [regime_name, year, month])
+		return
+	var result := Legislature.propose(state, loader, law, false, true)
+	print("  %s: %04d-%02d referendum on %s -- chamber %d/%d, called=%s" % [
+		regime_name, year, month, law.id,
+		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
+		result.get("referendum_called", false),
+	])
+
+
+## V1.7c. An ORDINARY Act changing how the assembly is elected. Not an amendment: the
+## bar is the chamber's own absolute majority, which is instance forty-three's
+## correction exercised rather than only argued.
+func _reform_the_ballot(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var law = _find_law(loader, "proportional_representation_act")
+	if law == null:
+		print("  %s: proportional_representation_act is not in the law list" % regime_name)
+		return
+	var before: String = ns.election_system
+	var result := Legislature.propose(state, loader, law, false)
+	print("  %s: %04d-%02d electoral reform -- %d/%d, %s -> %s" % [
+		regime_name, year, month,
+		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
+		before, ns.election_system,
 	])
 
 

@@ -275,6 +275,18 @@ static func fixed_dates(state) -> Array:
 		if left > 0:
 			out.append(_fixed_in(state, K.FIXED_PROJECT, left, String(pid)))
 
+	# V1.7c, and it needed no preload for V1.6f's reason directly above: a pending
+	# referendum counts months_left, which is the idiom every row here already uses.
+	# This file does not know what the question is, what it costs or whether it can be
+	# called off -- only when the country votes.
+	if not ns.referendum_pending.is_empty():
+		var ref_left := int(ns.referendum_pending.get("months_left", 0))
+		if ref_left > 0:
+			out.append(_fixed_in(
+				state, K.FIXED_REFERENDUM, ref_left,
+				String(ns.referendum_pending.get("law_id", ""))
+			))
+
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out
 

@@ -21,6 +21,8 @@ const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Law = preload("res://src/core/law.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -122,6 +124,11 @@ func _refresh() -> void:
 	for child in _list.get_children():
 		child.queue_free()
 
+	# A referendum in flight is the first thing on this page, because while one is
+	# running it is the only thing the assembly's own list cannot tell the player.
+	if Referendum.is_pending(ns):
+		_list.add_child(_build_pending_referendum(ns))
+
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	var available: Array = Legislature.available(ns, _loader.laws)
 	if available.is_empty():
@@ -140,9 +147,22 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var law: Law = _find_law(result["law_id"])
 	var law_label: String = law.law_name if law != null else result["law_id"]
 
+	# A carried division on route B is a THIRD outcome and neither word fits it: the
+	# assembly said yes and the country has not been asked. Reading "FAILED" against a
+	# referendum the player just called is the em-dash-against-a-live-figure bug
+	# docs/defence-model.md's screenshot pass found, one block on.
+	var verdict := "PASSED" if result["passed"] else "FAILED"
+	if result.get("referendum_called", false):
+		verdict = "PUT TO THE COUNTRY"
 	var heading := Label.new()
-	heading.text = "%s — %s" % [law_label, "PASSED" if result["passed"] else "FAILED"]
+	heading.text = "%s — %s" % [law_label, verdict]
 	box.add_child(heading)
+
+	if result.get("referendum_route", false) and result.get("refused", false):
+		var no_route := Label.new()
+		no_route.text = "This constitution has no referendum route for that."
+		box.add_child(no_route)
+		return box
 
 	# A forced bill had no division, so the seat tally would read all zeroes.
 	# What happened instead is the censure motion.
@@ -271,7 +291,7 @@ func _majority_phrase(ns, law) -> String:
 		"three_fifths": return "3/5 majority"
 		"two_thirds": return "2/3 majority"
 		"three_quarters": return "3/4 majority"
-		"referendum_required": return "referendum required"
+		"referendum_required": return "ordinary majority, then a referendum"
 		_: return ns.amendment_rule
 
 
@@ -327,6 +347,68 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		force_btn.pressed.connect(_on_force.bind(law))
 		row.add_child(force_btn)
 
+	# Route B. Offered only where the constitution has one and only for an
+	# entrenched change -- Legislature.can_put_to_referendum() is the single
+	# authority and this asks it rather than re-deriving the rule. A nation whose
+	# route is MANDATORY gets no button, because there is nothing to choose: the
+	# Propose button already goes to the country.
+	if Legislature.can_put_to_referendum(ns, law):
+		var ref_btn := Button.new()
+		ref_btn.text = "Referendum"
+		ref_btn.tooltip_text = (
+			"Pass it by an ordinary majority here, then put it to the country in %d months. "
+			+ "Winning is a mandate and losing is a rebuke, and it cannot be called off for free."
+		) % ReferendumK.REFERENDUM_DELAY_MONTHS
+		ref_btn.pressed.connect(_on_referendum.bind(law))
+		row.add_child(ref_btn)
+
+	box.add_child(row)
+	return box
+
+
+## What the country has been asked, when it answers, and what the polls say it
+## would answer if it answered today.
+##
+## The forecast is NOT blurred the way the assembly's is, and the difference is the
+## quantity rather than the surface: a seat forecast hides a division that has not
+## happened, where this reads Referendum.yes_share() -- the same function the vote
+## itself will call, against state that will have moved by then. What makes it
+## uncertain is the months, not a band.
+func _build_pending_referendum(ns) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+
+	var law: Law = _find_law(Referendum.pending_law_id(ns))
+	var heading := Label.new()
+	heading.text = "REFERENDUM CALLED — %s" % (law.law_name if law != null else Referendum.pending_law_id(ns))
+	box.add_child(heading)
+
+	var months := Referendum.months_left(ns)
+	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
+	var line := Label.new()
+	line.text = "The country votes in %d %s. If it voted today: %.1f%% yes, %.1f%% no." % [
+		months, "month" if months == 1 else "months", share * 100.0, (1.0 - share) * 100.0
+	]
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD
+	box.add_child(line)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	var cost := Label.new()
+	cost.text = "Calling it off costs exactly what losing it costs."
+	cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cost.autowrap_mode = TextServer.AUTOWRAP_WORD
+	row.add_child(cost)
+
+	var withdraw_btn := Button.new()
+	withdraw_btn.text = "Call it off"
+	withdraw_btn.tooltip_text = (
+		"The same %.2f against every bloc a lost vote would charge, and the same cooldown. "
+		+ "What it buys is the slot back now rather than in %d months."
+	) % [ReferendumK.REFERENDUM_RESULT_OFFSET, months]
+	withdraw_btn.pressed.connect(_on_withdraw)
+	row.add_child(withdraw_btn)
+
 	box.add_child(row)
 	return box
 
@@ -379,6 +461,21 @@ func _on_propose(law) -> void:
 	Legislature.propose(_state, _loader, law)
 	proposed.emit(before, law.law_name)
 	_dirty = true
+
+
+func _on_referendum(law) -> void:
+	var before := Trends.snapshot_now(_state)
+	Legislature.propose(_state, _loader, law, false, true)
+	proposed.emit(before, law.law_name)
+
+
+func _on_withdraw() -> void:
+	var ns = _state.player()
+	var law: Law = _find_law(Referendum.pending_law_id(ns))
+	var law_name: String = law.law_name if law != null else Referendum.pending_law_id(ns)
+	var before := Trends.snapshot_now(_state)
+	Referendum.withdraw(ns)
+	proposed.emit(before, law_name)
 
 
 func _on_force(law) -> void:

@@ -673,7 +673,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# Cooldowns count down before the election check, same ordering reasoning as
 	# everything else in this handler: state settles top to bottom, elections
 	# read it last.
-	Legislature.tick_month(_state)
+	Legislature.tick_month(_state, _loader)
 	Dissolution.tick_month(_state)
 
 	# Relations drift and diplomatic cooldowns, alongside the other cooldown

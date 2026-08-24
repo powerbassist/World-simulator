@@ -129,7 +129,7 @@ func _tick(state, loader, i: int) -> void:
 	entry.merge(Opinion.snapshot(state))
 	state.append_history(entry)
 	Discipline.tick_month(state, loader)
-	Legislature.tick_month(state)
+	Legislature.tick_month(state, loader)
 	Dissolution.tick_month(state)
 	Diplomacy.tick_month(state, loader)
 	Defence.tick_month(state)

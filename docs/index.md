@@ -54,6 +54,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[projects-model]] — infrastructure projects: a dated commitment that bills while it builds and pays once when it opens, why the diary needed no second scheduler, and why the bill is not the cost
 - [[campaign-model]] — the campaign phase: money spent on TURNOUT rather than on opinion, why the row's other two nouns were already answered, and why maximising your own vote share is not the same as winning
 - [[pledge-model]] — campaign promises: why the trust price needed no new quantity, why a promise is judged EVERY MONTH rather than at the end of the term, and the difference between a bet on the world and a self-imposed constraint
+- [[referendum-model]] — the referendum as a second ratification stage rather than a bypass, the electoral system as an ORDINARY law, and the kill switch that was sweeping approvals no player can reach
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites

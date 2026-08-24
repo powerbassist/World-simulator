@@ -17,6 +17,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open laws
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open government
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -38,6 +40,8 @@ const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -122,6 +126,14 @@ var _campaign := false
 ## flag has to cross an election and then break something, or the frame proves nothing
 ## about the one thing the panel exists to show.
 var _pledge := false
+
+## V1.7c. Two flags and not one, because the session ships two verbs at two different
+## bars and a frame of either proves nothing about the other. --referendum photographs
+## a vote in flight on the law panel; --electoral photographs an assembly elected under
+## a system the player changed, which is only visible after the NEXT legislative
+## election and is therefore the slower of the two.
+var _referendum := false
+var _electoral := false
 
 var _open := ""
 
@@ -289,6 +301,10 @@ func _init() -> void:
 			_campaign = true
 		elif args[i] == "--pledge":
 			_pledge = true
+		elif args[i] == "--referendum":
+			_referendum = true
+		elif args[i] == "--electoral":
+			_electoral = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -385,6 +401,10 @@ func _apply_view() -> void:
 
 	if _pledge:
 		_make_and_break_a_promise()
+	if _referendum:
+		_call_a_referendum()
+	if _electoral:
+		_reform_the_ballot()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1465,3 +1485,86 @@ func _break_ground() -> void:
 	# the one this flag exists to photograph -- is below both of the others.
 	if _main._projects_panel != null:
 		_main._projects_panel.scroll_to_bottom()
+
+
+## V1.7c. A referendum called and left in flight, so the law panel's pending block is
+## on the frame with a live countdown and a live yes share.
+##
+## NOT TICKED PAST THE VOTE, and that is the flag's whole claim. A resolved referendum
+## renders as an ordinary result summary, which is a frame of the machine V1.2c already
+## shipped; what V1.7c added is the state BETWEEN the division and the answer, and that
+## exists for exactly REFERENDUM_DELAY_MONTHS. Ticked to roughly half of it so the
+## countdown reads a number that is neither its start nor its end -- V1.6f's own bug,
+## where a project hover printed "12 of 96 months" and a reader could not tell which
+## twelve.
+##
+## SCROLLED TO THE TOP, where --pledge is scrolled to the bottom: the pending block is
+## the first thing on the law panel by construction, because while a referendum is
+## running it is the only thing the list of proposable laws cannot say. V1.6e's
+## correction has a direction per flag.
+func _call_a_referendum() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var law = null
+	for candidate in Legislature.available(ns, _main._loader.laws):
+		if Legislature.can_put_to_referendum(ns, candidate):
+			law = candidate
+			break
+	if law == null:
+		printerr("--referendum: no amendment could be put to the country")
+		return
+
+	var result := Legislature.propose(state, _main._loader, law, false, true)
+	if not bool(result.get("referendum_called", false)):
+		printerr("--referendum: the assembly refused %s (%d of %d)" % [
+			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
+		])
+		return
+
+	_tick_months(int(ReferendumK.REFERENDUM_DELAY_MONTHS / 2))
+	if not Referendum.is_pending(ns):
+		printerr("--referendum: the vote resolved before the frame was taken")
+
+
+## V1.7c. The electoral system changed by an ORDINARY Act, and then an assembly actually
+## elected under it -- which is the only thing that shows the change happened, because
+## the register itself is one string.
+##
+## TICKS PAST JUNE 2029, France's next legislative election, because that is when the
+## new method first allocates a seat. A flag that stopped at the vote would photograph
+## an unchanged assembly under a changed rule and prove nothing, which is V1.6f's
+## all-zero-data-layer argument in a new place.
+func _reform_the_ballot() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var law = null
+	for candidate in Legislature.available(ns, _main._loader.laws):
+		if candidate.effects.get("institutional", {}).has("election_system"):
+			law = candidate
+			break
+	if law == null:
+		printerr("--electoral: no electoral-reform Act is proposable")
+		return
+
+	var before: String = ns.election_system
+	var result := Legislature.propose(state, _main._loader, law, false)
+	if not bool(result.get("passed", false)):
+		printerr("--electoral: the assembly refused %s (%d of %d)" % [
+			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
+		])
+		return
+	if ns.election_system == before:
+		printerr("--electoral: the Act passed and the system did not move")
+		return
+
+	# Past the next legislative election, so the assembly on the frame is one this
+	# method elected. France's is June 2029 against a January 2026 start.
+	var to_vote: int = (ns.next_election_year - state.year) * 12 + (ns.next_election_month - state.month) + 1
+	if to_vote > 0:
+		_tick_months(to_vote)

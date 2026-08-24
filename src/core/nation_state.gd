@@ -304,6 +304,27 @@ var start_bloc_burden: float = 0.0
 ## Copied from Nation at new-game; the assembly's size never changes mid-game.
 var assembly_seats: int = 0
 
+## How this nation's votes become seats, and the share a party must clear to get
+## any. LIFTED FROM Nation AT V1.7c, exactly as V1.2b lifted formation_method,
+## censure_rule and the rest: an electoral system nobody can change is a constant
+## wearing a data string, and docs/tiers/v1.md section 7 has asked for the choice
+## since the tier was written.
+##
+## Written by Legislature.apply()'s institutional channel and by
+## Elections.init_nation(), and by nothing else. Read by Elections.resolve() for
+## the NATIONAL vote only -- the European election allocates on `pr_national`
+## whatever the nation does at home, because an EU-wide method is not one member
+## state's to amend.
+##
+## NOT a constitutional amendment, which is the correction V1.7c made to its own
+## row: electoral law is ordinary legislation in essentially all ten (France's
+## code electoral, changed by ordinary law in 1985 and again in 1986; Germany's
+## Bundeswahlgesetz in 2023; Italy's Rosatellum; Britain's ordinary Act), so
+## law.gd puts these two keys on the ORDINARY side of its institutional split and
+## leaves the entrenched six where they were. See docs/electoral-systems.md.
+var election_system: String = ""
+var election_threshold_pct: float = 0.0
+
 ## The PLAYER's term in months: the executive's where one exists (France), the
 ## legislature's otherwise -- see docs/government-model.md's two clocks. Not
 ## simply term_years * 12 from the legislative block; Elections.init_nation()
@@ -381,6 +402,27 @@ var term_limit: int = 0
 ## valid amendment target (entrenchment), which is why it lives here rather
 ## than being read straight off Nation. See docs/amendment-model.md.
 var amendment_rule: String = ""
+
+## Whether this nation's constitution offers a REFERENDUM route to an amendment,
+## and whether it is a choice or the only path. Copied from Nation at new-game and
+## never written again: no content writes it, so unlike amendment_rule directly
+## above, a nation cannot vote itself a referendum. See docs/referendum-model.md.
+var referendum_mode: String = ""
+
+## The referendum in flight: {law_id, months_left, position}, empty when there is
+## none. One at a time, and the register is the whole of that rule -- "the country
+## votes on this question" is not a bound that needed a constant.
+##
+## `position` is COPIED IN at announcement rather than re-read from the loader at
+## resolution, so the question the country answers is the question it was asked.
+## Written by Referendum.announce(), Referendum.resolve_due() and
+## Referendum.withdraw(), and by nothing else.
+var referendum_pending: Dictionary = {}
+
+## What the country last said, for the panel. `last_project_result`'s shape, and
+## not serialised for its reason either: a display record of something that has
+## already happened to the register above.
+var last_referendum_result: Dictionary = {}
 
 ## Whether this nation's own constitution permits changing its political
 ## system at all. Copied from Nation at new-game and never written again --
@@ -1216,6 +1258,8 @@ func duplicate_state():
 	s.start_bloc_burden = start_bloc_burden
 
 	s.assembly_seats = assembly_seats
+	s.election_system = election_system
+	s.election_threshold_pct = election_threshold_pct
 	s.term_months = term_months
 	s.months_in_term = months_in_term
 	s.next_election_year = next_election_year
@@ -1241,6 +1285,12 @@ func duplicate_state():
 	s.lose_condition = lose_condition
 	s.term_limit = term_limit
 	s.amendment_rule = amendment_rule
+	s.referendum_mode = referendum_mode
+	# Deep, because Referendum.resolve_due() writes months_left in place and a shared
+	# reference surviving a Budget.project() would let a projection tick the live
+	# register -- docs/tax-model.md section 11's bug, avoided by shape.
+	s.referendum_pending = referendum_pending.duplicate(true)
+	s.last_referendum_result = last_referendum_result.duplicate(true)
 	s.permits_system_change = permits_system_change
 
 	s.dissolution_rule = dissolution_rule
@@ -1401,6 +1451,8 @@ func to_dict() -> Dictionary:
 		"start_bloc_burden": start_bloc_burden,
 
 		"assembly_seats": assembly_seats,
+		"election_system": election_system,
+		"election_threshold_pct": election_threshold_pct,
 		"term_months": term_months,
 		"months_in_term": months_in_term,
 		"next_election_year": next_election_year,
@@ -1426,6 +1478,8 @@ func to_dict() -> Dictionary:
 		"lose_condition": lose_condition,
 		"term_limit": term_limit,
 		"amendment_rule": amendment_rule,
+		"referendum_mode": referendum_mode,
+		"referendum_pending": referendum_pending,
 		"permits_system_change": permits_system_change,
 
 		"dissolution_rule": dissolution_rule,
@@ -1617,6 +1671,14 @@ static func from_dict(d: Dictionary):
 	# JSON has one numeric type; Godot's parser hands every number back as a
 	# float. Cast the int-typed fields back explicitly.
 	s.assembly_seats = int(d.get("assembly_seats", 0))
+	# V1.7c, and the pair EARNS the bump to 25. Absent they read "" and 0.0;
+	# ElectoralSystems.allocate() falls through its match on an unknown method and
+	# every seat allocation collapses to zero, so a reloaded game runs a DIFFERENT
+	# model from the one that saved it. from_dict() never sees the loader, so a
+	# content-derived static fact cannot be re-derived here -- docs/cycle-model.md's
+	# V1.6a finding, and `military_capability` at V1.3g before it.
+	s.election_system = d.get("election_system", "")
+	s.election_threshold_pct = float(d.get("election_threshold_pct", 0.0))
 	s.term_months = int(d.get("term_months", 0))
 	s.months_in_term = int(d.get("months_in_term", 0))
 	s.next_election_year = int(d.get("next_election_year", 0))
@@ -1642,6 +1704,15 @@ static func from_dict(d: Dictionary):
 	s.lose_condition = d.get("lose_condition", "")
 	s.term_limit = int(d.get("term_limit", 0))
 	s.amendment_rule = d.get("amendment_rule", "")
+	# Both V1.7c fields earn the bump and they fail the rule DIFFERENTLY, which is why
+	# tests/test_save_load.gd asserts them apart. An absent `referendum_mode` reads ""
+	# -- no route -- so a reloaded France silently loses a path its constitution has
+	# (Art. 89), `eu_member` at V1.3b. An absent `referendum_pending` DELETES a vote
+	# the country has already been called to, which is a free withdrawal of the one
+	# thing V1.7c made un-free: `campaign_started` one commit earlier, and
+	# `diplo_months_to_act` at U6a.
+	s.referendum_mode = d.get("referendum_mode", "")
+	s.referendum_pending = d.get("referendum_pending", {})
 	s.permits_system_change = d.get("permits_system_change", false)
 
 	s.dissolution_rule = d.get("dissolution_rule", "")

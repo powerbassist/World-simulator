@@ -47,6 +47,8 @@
       "_source": "authored",
       "_note": "A revision needs two votes three months apart, each by simple majority, then a binding referendum -- unless the second vote itself carries by 3/4 of the Chamber, which waives the referendum. This game models that referendum-waiving bar as the entrenching number, at its real fraction rather than rounded to an existing tier. constituteproject.org, Luxembourg 1868 (rev. 2009) Constitution, Art. 114.",
       "rule": "three_quarters",
+      "referendum": "optional",
+      "_referendum_note": "Art. 114: the second vote is followed by a binding referendum unless it carries by 3/4, which waives it. The rule above models the waiving bar; this field models the path it waives. constituteproject.org, Luxembourg 1868 (rev. 2009) Constitution, Art. 114.",
       "permits_system_change": true,
       "_permits_system_change_note": "The Grand Ducal succession is itself governed by ordinary constitutional revision (Art. 114), not entrenched against it."
     },

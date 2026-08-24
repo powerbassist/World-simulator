@@ -273,7 +273,7 @@ func _check_finite_over_ten_years_with_every_law_applied() -> void:
 		Budget.tick_month(state)
 		Opinion.tick_month(state)
 		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 
 		var ns = state.player()
 		if not is_finite(ns.gdp_eur_bn) or not is_finite(ns.debt_eur_bn) or not is_finite(ns.overall_approval_pct):

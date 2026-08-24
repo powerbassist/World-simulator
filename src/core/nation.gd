@@ -11,6 +11,11 @@ const CycleK = preload("res://src/sim/cycle_constants.gd")
 
 const InflationK = preload("res://src/sim/inflation_constants.gd")
 
+## V1.7c, for KNOWN_MODES alone -- the referendum route a nation's constitution
+## declares is validated here and dispatched in src/sim/referendum.gd, so the list
+## lives with the module that reads it rather than being written out twice.
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
+
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
@@ -106,14 +111,23 @@ const KNOWN_DISSOLUTION_RULES: Array[String] = [
 ## src/sim/legislature.gd's amendment vote path, never on the nation id --
 ## docs/amendment-model.md and docs/engine-decision.md Rule 1.
 ##
-## referendum_required is declared, unresolved -- the same shape
-## PoliticalSystem.KNOWN_LOSE_CONDITIONS' "never" uses for Switzerland: no
-## referendum mechanic exists yet (V1.1f/V1.7), so no amendment is proposable
-## for a nation carrying this rule. two_thirds is genuinely, measurably
-## unreachable for Germany's six-party roster even at full term-start
-## cohesion -- see docs/amendment-model.md's reachability sweep -- so Germany
-## carries the real rule with no amendment content authored against it,
-## rather than a detuned number invented to make the mechanic playable.
+## referendum_required was declared and unresolved for five blocks, with
+## "V1.1f/V1.7" written here as its owner. DISCHARGED AT V1.7c: it now carries
+## a seat fraction like every other rule, because Art. 195's mandatory popular
+## vote is a SECOND STAGE on top of an ordinary majority in the chamber rather
+## than a replacement for one -- see docs/referendum-model.md. What makes it
+## mandatory is not this list but the nation's own referendum_mode below.
+##
+## two_thirds is genuinely, measurably unreachable for Germany's six-party
+## roster even at full term-start cohesion -- see docs/amendment-model.md's
+## reachability sweep -- so Germany carries the real rule with no amendment
+## content authored against it, rather than a detuned number invented to make
+## the mechanic playable. V1.7c did NOT rescue that: the ROADMAP's own
+## decomposition argued a referendum exists precisely because a supermajority
+## is sometimes unreachable, and the nation whose bar is unreachable is
+## precisely the one whose constitution has no referendum route at all
+## (Art. 79). True in the abstract, and it does not resolve for the nation it
+## was named about.
 const KNOWN_AMENDMENT_RULES: Array[String] = [
 	"ordinary_law", "three_fifths", "two_thirds", "three_quarters", "referendum_required",
 ]
@@ -255,6 +269,21 @@ var term_limit: int = 0
 ## src/sim/legislature.gd's resolve_vote() amendment arm -- see
 ## docs/amendment-model.md.
 var amendment_rule: String = ""
+
+## Whether this nation's constitution offers a REFERENDUM route to an amendment,
+## and whether that route is a choice or the only one. Dispatched by
+## src/sim/referendum.gd, never on the nation id -- the SEVENTH instance of the
+## dispatch-on-a-data-string pattern formation_method, censure_rule,
+## dissolution_rule, lose_condition, head_of_state_kind and amendment_rule
+## already use. Values and their citations: referendum_constants.KNOWN_MODES.
+##
+## Per-nation and NOT per-template, for permits_system_change's reason one field
+## down: constitutional_monarchy alone covers GBR and BEL with no route, ESP and
+## LUX with one -- so no template could constrain it and a template field would
+## be a constraint with nothing to say. Immutable at runtime: no content writes
+## it, which is recorded as a named deferral in docs/referendum-model.md rather
+## than left as a silence.
+var referendum_mode: String = ""
 
 ## Whether this nation's own constitution permits changing its political
 ## system at all -- distinct from amendment_rule, which is the bar an
@@ -449,6 +478,18 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.amendment_rule = _extract_string(amendment, "rule", filename, errors)
 	if n.amendment_rule != "" and not KNOWN_AMENDMENT_RULES.has(n.amendment_rule):
 		errors.append("%s: government.amendment.rule '%s' is not a recognised rule" % [filename, n.amendment_rule])
+	n.referendum_mode = _extract_string(amendment, "referendum", filename, errors)
+	if n.referendum_mode != "" and not ReferendumK.KNOWN_MODES.has(n.referendum_mode):
+		errors.append("%s: government.amendment.referendum '%s' is not a recognised mode" % [filename, n.referendum_mode])
+	# A mandatory referendum is what makes referendum_required mandatory; the rule
+	# alone only says the chamber's own bar is an ordinary majority. The two
+	# disagreeing is a content bug rather than a reachable state, so it is refused
+	# at load in both directions -- docs/political-systems.md's own discipline for
+	# a pair of fields that must be read together.
+	if n.amendment_rule == "referendum_required" and n.referendum_mode != ReferendumK.MODE_MANDATORY:
+		errors.append("%s: government.amendment.rule is 'referendum_required' but referendum is '%s', not 'mandatory'" % [filename, n.referendum_mode])
+	if n.referendum_mode == ReferendumK.MODE_MANDATORY and n.amendment_rule != "referendum_required":
+		errors.append("%s: government.amendment.referendum is 'mandatory' but rule is '%s', not 'referendum_required'" % [filename, n.amendment_rule])
 	n.permits_system_change = _extract_bool(amendment, "permits_system_change", filename, errors)
 
 	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)

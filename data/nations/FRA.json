@@ -54,6 +54,8 @@
       "_source": "authored",
       "_note": "Art. 89: a revision bill must pass both chambers in identical terms, then either a popular referendum or -- the President's choice, and the only path this game models -- a joint session of both chambers (Congress) at Versailles requiring a 3/5 majority of votes cast. Legifrance, Constitution of 4 October 1958, Title XVI.",
       "rule": "three_fifths",
+      "referendum": "optional",
+      "_referendum_note": "Art. 89: after both chambers pass a revision bill in identical terms, the President chooses between a popular referendum and a 3/5 Congress at Versailles. The referendum half was declared not-modelled in the rule note above until V1.7c built it. Legifrance, Constitution of 4 October 1958, Title XVI.",
       "permits_system_change": false,
       "_permits_system_change_note": "Art. 89 §5: 'The republican form of government shall not be the object of an amendment.' No amendment may change France's system_id at all, not merely at a higher bar."
     },

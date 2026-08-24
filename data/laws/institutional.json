@@ -2,6 +2,42 @@
   "_note": "V1.5a re-authored anti_corruption_agency onto effects.society, and the reason is booked in ROADMAP.md's V1.5 decomposition rather than discovered here. S7 priced corruption as `other_revenue_pct_gdp: 0.1` -- recovered money -- because there was no corruption quantity for a law to move, so the law described its own SIDE EFFECT and called it the mechanism. The day the quantity exists that channel is wrong twice over: it says fighting corruption is a revenue measure, and it leaves the level untouched, so the agency this law establishes changes nothing about how well the state delivers anything. The recovered revenue is not modelled rather than modelled at zero -- a receipts line for one law would be the corporate-receipts channel V1.4b cut, arriving through a side door. Same treatment `immigration_tightening` in social.json is owed at V1.5b.",
   "laws": [
     {
+      "id": "proportional_representation_act",
+      "name": "Proportional Representation Act",
+      "summary": "Elect the assembly by national proportional list with a 5% threshold, ending the majoritarian system. Every party's seats come to match its vote.",
+      "theme": "institutional",
+      "position": { "economic": -0.1, "social": -0.4 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "election_system": "pr_national",
+          "election_threshold_pct": 5.0
+        },
+        "bloc_offset": { "urban": 0.15, "students": 0.10, "rural": -0.10, "business": -0.05 }
+      }
+    },
+    {
+      "id": "two_round_voting_act",
+      "name": "Two-Round Voting Act",
+      "summary": "Elect the assembly in single-member contests decided over two rounds, so the largest party governs alone rather than by coalition.",
+      "theme": "institutional",
+      "position": { "economic": 0.1, "social": 0.4 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "election_system": "two_round",
+          "election_threshold_pct": 0.0
+        },
+        "bloc_offset": { "rural": 0.12, "business": 0.08, "students": -0.12, "urban": -0.10 }
+      }
+    },
+    {
       "id": "anti_corruption_agency",
       "name": "Anti-Corruption Agency Act",
       "theme": "institutional",

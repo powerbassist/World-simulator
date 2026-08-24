@@ -204,7 +204,7 @@ func _check_cooldown_blocks_a_second_force_and_expires() -> void:
 		_fail("a second forced bill was not refused during the cooldown: %s" % [second])
 
 	for _i in range(GK.FORCE_COOLDOWN_MONTHS):
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 	if ns.force_cooldown_months != 0:
 		_fail("cooldown is %d after %d months" % [ns.force_cooldown_months, GK.FORCE_COOLDOWN_MONTHS])
 	if not Government.can_force(ns):
@@ -316,7 +316,7 @@ func _check_a_legislative_election_clears_the_bar() -> void:
 		Budget.tick_month(state)
 		Opinion.tick_month(state)
 		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 		Elections.tick_month(state, _loader)
 
 	if not ns.censure_barred_party_ids.is_empty():

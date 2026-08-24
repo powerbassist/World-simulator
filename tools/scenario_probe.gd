@@ -275,7 +275,7 @@ func _run(loader, nation_id: String, label: String, scenario) -> void:
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
 		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Cabinet.tick_month(state, loader)
 
