@@ -41,6 +41,12 @@ const EFFORT := "ground_game"
 const EFFORT_START := "start_ground_game"
 const EFFORT_STOP := "stop_ground_game"
 const OTHER_START := "start_digital_push"
+## The one effort in the shipped ladder whose authored bloc_offset is POSITIVE
+## (rural +0.03), which is what made the restart farm below worth anything. Named
+## rather than derived for EFFORT's reason, and the test asserts the sign so a
+## content edit that removed it turns this red rather than making it vacuous.
+const REWARD_START := "start_town_halls"
+const REWARD_STOP := "stop_town_halls"
 
 var _failures: Array[String] = []
 var _loader
@@ -67,6 +73,7 @@ func _init() -> void:
 	_test_the_bill_reaches_the_budget()
 	_test_the_register_clears_when_the_window_closes()
 	_test_stopping_keeps_what_it_bought()
+	_test_an_effort_cannot_be_restarted()
 	_test_mobilisation_moves_the_vote()
 	_test_no_framing_machine()
 	_test_campaign_is_a_leaf()
@@ -317,6 +324,47 @@ func _test_stopping_keeps_what_it_bought() -> void:
 		_fail("stopping an effort took back what it had already bought")
 	if ns.campaign_bill_pct_gdp != 0.0:
 		_fail("a stopped effort is still billing")
+
+
+## AN EFFORT GETS ONE RUN PER WINDOW, and this is the assertion that makes the one
+## above safe. `bloc_offset` is a PERMANENT accumulator paid at the moment of the
+## press, and the bill is charged over the running set once a month -- so before
+## `campaign_started` existed, start/stop/start inside a single month re-paid the
+## offset every cycle for no bill and no elapsed time. On start_town_halls, the only
+## effort whose offset is positive, that farmed rural approval to
+## legislature_constants.BLOC_OFFSET_MAX in about thirty presses.
+##
+## Fixed by making the restart illegal rather than by making the offset accrue: the
+## offset accruing monthly is a different model, and V1.7a's constants were selected
+## against this one. Found by external review, not by this file.
+func _test_an_effort_cannot_be_restarted() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
+
+	var reward: Dictionary = _action(REWARD_START).effects.get("bloc_offset", {})
+	if float(reward.get("rural", 0.0)) <= 0.0:
+		_fail("%s no longer carries a positive bloc_offset, so this check measures nothing" % REWARD_START)
+		return
+
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START))
+	var paid_once: float = float(ns.bloc_offset.get("rural", 0.0))
+
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_STOP))
+	var again: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START))
+
+	if again.get("applied", false):
+		_fail("an effort was restarted inside its own window")
+	if not is_equal_approx(float(ns.bloc_offset.get("rural", 0.0)), paid_once):
+		_fail("restarting an effort paid its bloc_offset a second time")
+	if Campaign.available(state, ns, _loader.campaign_actions).has(_action(REWARD_START)):
+		_fail("a spent effort is still offered as available, so the panel would show a dead button")
+
+	# And the ledger clears with everything else, so the NEXT run-up is a clean slate.
+	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS + 2)
+	Campaign.tick_month(state, _loader)
+	if not ns.campaign_started.is_empty():
+		_fail("the spent-effort register survived the window closing")
 
 
 ## The whole point: the register reaches Elections.vote_share(). Measured against a

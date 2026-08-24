@@ -121,6 +121,30 @@ obligation only the clock can close is a permanent monotone charge — and the w
 close it, but not until the vote, and a president who has run out of money in March
 should not have to lose in June to stop paying.
 
+### 5a. One run per window, and the fix that was not taken
+
+`stop` did **not** originally take the effort off the ladder, and an external review
+found what that bought. `bloc_offset` is a **permanent accumulator charged at the
+press**, while the bill is charged over the *running set* once a month — so
+start/stop/start inside a single month re-paid the offset on every cycle for **no bill
+and no elapsed time**. On `start_town_halls`, the one effort in the ladder whose offset
+is positive (rural +0.03), that farmed rural approval to `BLOC_OFFSET_MAX` in about
+thirty presses. The strictly-dominated shape above, arriving for once as a free
+**reward** rather than as an avoided cost — which is why six previous killings did not
+catch it.
+
+`NationState.campaign_started` closes it: an effort that has been in the field may not
+re-enter it until the window clears. Two fixes were available and the **other one was
+refused** — moving the offset to monthly accrual is the truer model and would have made
+the press inert, but §9's constants were selected against a press-time offset, so it
+re-baselines the balance harness and is a session rather than a fix.
+
+What is given up is pausing an effort to save its bill and resuming it later. That was
+never a decision this window poses: the bill is linear in months and the register is
+not, and a stopped effort already keeps what it bought, so a resumable effort is
+**strictly cheaper** than a continuous one for the same reach — the same dominance, one
+level up.
+
 ## 6. The bill
 
 `campaign_bill_pct_gdp` is the **sixth** computed spending line, after V1.3d's bloc
@@ -299,7 +323,15 @@ content object with an authored `bloc_offset`, so the price is nameable without 
 fourteenth key. Three consecutive sessions have now failed the same test for the same
 reason — **a session shipping a content object has somewhere to put the price.**
 
-## 13. `SAVE_VERSION` stays at 23
+## 13. `SAVE_VERSION` stayed at 23, and the restart fix moved it to 24
+
+> **Superseded in part.** §5a's fix adds a fourth field, `campaign_started`, and that
+> one **does** earn the bump. Absent, it reads as *"no effort has run yet"* while
+> `campaign_running` beside it says one is in the field: the two disagree, and the
+> disagreement is the exploit — a save reloaded inside a run-up hands every spent effort
+> back, so save-scumming becomes an unbounded version of the press loop. U6a's
+> `diplo_months_to_act`, whose absent value read as *"act now"*. The three below are
+> unchanged.
 
 Three fields added and none earns a bump. All three read as *"no campaign"* when absent,
 which is the truth about every version-23 save because those games had no campaign verb —

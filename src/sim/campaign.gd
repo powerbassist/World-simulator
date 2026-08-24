@@ -118,6 +118,7 @@ const ElectionK = preload("res://src/sim/election_constants.gd")
 ## docs/defence-model.md's honest limitation, recorded a fourth time.
 static func init_nation(ns) -> void:
 	ns.campaign_running = []
+	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
 	ns.campaign_bill_pct_gdp = 0.0
 
@@ -173,6 +174,7 @@ static func _accrue(ns, terms: Dictionary) -> void:
 ## the live register -- docs/tax-model.md section 11's live bug, avoided by shape.
 static func _clear(ns) -> void:
 	ns.campaign_running = []
+	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
 	ns.campaign_bill_pct_gdp = 0.0
 
@@ -235,6 +237,13 @@ static func turnout_spread(ns) -> float:
 
 static func is_running(ns, effort_id: String) -> bool:
 	return ns.campaign_running.has(effort_id)
+
+
+## True once this effort has been in the field at any point in the CURRENT run-up,
+## whether or not it still is. Cleared with everything else when the window closes,
+## so the next run-up starts from a clean ladder.
+static func has_started(ns, effort_id: String) -> bool:
+	return ns.campaign_started.has(effort_id)
 
 
 ## Effort ids in the field, sorted, for the panel. Sorted rather than in insertion
@@ -332,11 +341,30 @@ static func available(state, ns, all_actions: Array) -> Array:
 	return out
 
 
+## AN EFFORT GETS ONE RUN PER WINDOW, so `start` reads the SPENT register and not only
+## the running one. Stopping does not hand the effort back.
+##
+## Without that second read, start/stop/start inside a single month re-paid the
+## action's authored `bloc_offset` on every cycle: the offset is a PERMANENT
+## accumulator charged at the press, while the bill is charged over the running set
+## once a month, so the loop cost nothing and elapsed no time. On start_town_halls --
+## the only effort in the ladder whose offset is positive -- that farmed rural
+## approval to legislature_constants.BLOC_OFFSET_MAX in about thirty presses. The
+## strictly-dominated shape this project has killed eight times, arriving for once as
+## a free REWARD rather than an avoided cost.
+##
+## Fixed here rather than by making the offset accrue monthly, which is a different
+## model: docs/campaign-model.md's constants were selected against a press-time
+## offset, so moving it would re-baseline the balance harness. What is given up is
+## pausing an effort to save its bill and resuming it later -- and that was never a
+## decision the window poses, because the bill is linear in months and the register
+## is not: pausing already keeps what it bought, so a resumable effort is strictly
+## cheaper than a continuous one for the same reach.
 static func _op_legal(ns, action) -> bool:
 	var terms: Dictionary = action.effects.get("campaign", {})
 	var eid := String(terms.get("effort_id", ""))
 	match String(terms.get("op", "")):
-		"start": return not is_running(ns, eid)
+		"start": return not is_running(ns, eid) and not has_started(ns, eid)
 		"stop": return is_running(ns, eid)
 		_: return false
 
@@ -409,8 +437,11 @@ static func execute(state, ns, all_actions: Array, action) -> Dictionary:
 		return refused
 
 	match campaign_op:
-		"start": ns.campaign_running.append(eid)
-		"stop": ns.campaign_running.erase(eid)
+		"start":
+			ns.campaign_running.append(eid)
+			ns.campaign_started.append(eid)
+		"stop":
+			ns.campaign_running.erase(eid)
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
 		ns.bloc_offset[bloc_id] = (

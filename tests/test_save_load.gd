@@ -718,8 +718,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1093,8 +1093,46 @@ func _check_campaign_fields(loader) -> void:
 		if typeof(entry) != TYPE_STRING:
 			_fail("a serialised running entry is not a bare effort id -- the cost and the reach round-trip through data/campaign-actions/, not through the save")
 
-	# The version assertion moved to _check_pledge_fields() below, which is V1.7b
-	# coming and saying why it does NOT move -- V1.3c's device answered and re-armed.
+	# (4) THE SPENT REGISTER, and it is the one campaign field that DOES earn the bump.
+	# Absent it reads as "no effort has run yet" while `campaign_running` beside it says
+	# one is in the field -- the two disagree, and the disagreement is the exploit the
+	# register exists to close: every spent effort is handed back, so a reload re-opens
+	# the start/stop/start loop that re-pays a permanent `bloc_offset`. Save-scumming
+	# then farms it without bound. `diplo_months_to_act` at U6a.
+	#
+	# Checked as a PREMISE rather than asserted: drop it, and require that the effort
+	# becomes startable again.
+	var spent := Campaign.running(ns)
+	if spent.is_empty():
+		_fail("nothing was started, so the spent-register check measures nothing")
+		return
+	var spent_action = null
+	for a in loader.campaign_actions:
+		var t: Dictionary = a.effects.get("campaign", {})
+		if String(t.get("op", "")) == "start" and spent.has(String(t.get("effort_id", ""))):
+			spent_action = a
+			break
+	if spent_action == null:
+		_fail("no start action names a running effort, so the spent-register check measures nothing")
+		return
+
+	var no_spent: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_spent["nations"]["FRA"] as Dictionary).erase("campaign_started")
+	(no_spent["nations"]["FRA"] as Dictionary)["campaign_running"] = []
+	var dropped_spent = GameState.from_dict(no_spent)
+	if not Campaign.available(
+		dropped_spent, dropped_spent.player(), loader.campaign_actions
+	).has(spent_action):
+		_fail("dropping campaign_started left a spent effort unstartable -- then it is derivable and the version did not need to move")
+
+	# ...and it is NOT recomputed by a tick, which is what separates it from the bill.
+	Campaign.tick_month(dropped_spent, loader)
+	if not dropped_spent.player().campaign_started.is_empty():
+		_fail("a tick rebuilt the spent register -- then it is derivable and the version did not need to move")
+
+	# The version assertion is in _check_bloc_fields() above and now reads 24, raised by
+	# the V1.7a restart fix. V1.3c's device stays armed there: the next session moving it
+	# has to come and say why.
 
 
 ## V1.7b. ONE FIELD AND IT EARNS NOTHING, and this is where that is CHECKED rather
@@ -1206,8 +1244,8 @@ func _check_pledge_fields(loader) -> void:
 	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
 	# V1.7b would have to come and say why it moves; it does not move, and the reason is
 	# in this function's header. V1.7c now has to come and say why.
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges`, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 func _run_unknown_version() -> void:
@@ -1531,8 +1569,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1697,8 +1735,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1781,8 +1819,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -2099,8 +2137,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -2190,8 +2228,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2348,8 +2386,8 @@ func _check_tax_fields(loader) -> void:
 	if demog_src.contains("gini_index ="):
 		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
@@ -2428,8 +2466,8 @@ func _check_investment_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
@@ -2534,5 +2572,5 @@ func _check_project_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects`, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 24:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` and the V1.7a restart fix to 24, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

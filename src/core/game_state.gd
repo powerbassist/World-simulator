@@ -320,7 +320,20 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     `investment_bill_pct_gdp`'s case. And `last_project_result` is not serialised at
 ##     all, `last_investment_result`'s case: a display record of something that has
 ##     already happened to the register.
-const SAVE_VERSION := 23
+##   A FIX bumps to 24, which nothing on this list has done before -- every previous
+##     entry is a session adding a machine. `NationState.campaign_started` closes a
+##     V1.7a exploit found by external review: start/stop/start inside one month
+##     re-paid a campaign action's authored `bloc_offset`, a permanent accumulator
+##     charged at the press. The register says which efforts are spent, and it fails
+##     the rule in the sharpest way this list records -- absent it reads as "nothing
+##     has run yet" while `campaign_running`, serialised beside it since V1.7a, says
+##     an effort is in the field. The two disagree, and the disagreement IS the
+##     exploit: a save reloaded inside a run-up hands every spent effort back, so
+##     save-scumming becomes an unbounded version of the press loop the register
+##     exists to close. `diplo_months_to_act` at U6a, whose absent value read as "act
+##     now" and fired nine acts in one month, and the spent-days counter U6a's probe
+##     deleted before it could hand a reloading player their month back.
+const SAVE_VERSION := 24
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

@@ -822,6 +822,26 @@ var last_project_result := {}
 ## stand down a campaign in progress and hand the player back its bill.
 var campaign_running: Array = []
 
+## Effort ids that have been in the field at any point in the CURRENT run-up, whether
+## or not they still are. Written by Campaign.execute() and by Campaign.tick_month()'s
+## clear, and by nothing else -- `campaign_running`'s single-writer discipline.
+##
+## AN EFFORT GETS ONE RUN PER WINDOW, and this register is the whole of that rule.
+## Without it, start/stop/start inside one month re-paid the action's authored
+## `bloc_offset` on every cycle -- a permanent accumulator charged at the press against
+## a bill charged over the running set once a month, so the loop cost nothing and
+## elapsed no time. See Campaign._op_legal().
+##
+## EARNS THE BUMP TO 24, where `campaign_running` beside it earned nothing, and the
+## reason is the one this list has used since V1.3a: absent it reads as "no effort has
+## run yet" while the serialised `campaign_running` says one is in the field, so the
+## two disagree and the disagreement is the exploit. A save reloaded inside a run-up
+## hands every spent effort back, which makes save-scumming an unbounded version of the
+## press loop the register exists to close -- `diplo_months_to_act` at U6a, whose
+## absent value read as "act now", and the spent-days counter U6a's probe deleted
+## before it could hand a reloading player their month back.
+var campaign_started: Array = []
+
 ## Bloc → accumulated mobilisation, as a shift in the LOG-ODDS of that bloc turning
 ## out. Read by Campaign.turnout_of(), which Elections.vote_share() calls in place of
 ## election_constants.BLOC_TURNOUT's raw figure.
@@ -1285,6 +1305,7 @@ func duplicate_state():
 	s.project_potential_target_pct = project_potential_target_pct
 	s.project_bill_pct_gdp = project_bill_pct_gdp
 	s.campaign_running = campaign_running.duplicate()
+	s.campaign_started = campaign_started.duplicate()
 	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
 	s.campaign_bill_pct_gdp = campaign_bill_pct_gdp
 	# Deep, because each entry is a Dictionary and Pledges.tick_month() writes
@@ -1469,6 +1490,7 @@ func to_dict() -> Dictionary:
 		"project_potential_target_pct": project_potential_target_pct,
 		"project_bill_pct_gdp": project_bill_pct_gdp,
 		"campaign_running": campaign_running,
+		"campaign_started": campaign_started,
 		"campaign_mobilisation": campaign_mobilisation,
 		"campaign_bill_pct_gdp": campaign_bill_pct_gdp,
 		"pledges": pledges,
@@ -1696,6 +1718,7 @@ static func from_dict(d: Dictionary):
 	# version is STILL 23, and tests/test_save_load.gd asserts that as well as the
 	# round trip, so V1.7b has to come and say why it moves.
 	s.campaign_running = d.get("campaign_running", [])
+	s.campaign_started = d.get("campaign_started", [])
 	s.campaign_mobilisation = d.get("campaign_mobilisation", {})
 	s.campaign_bill_pct_gdp = float(d.get("campaign_bill_pct_gdp", 0.0))
 	# V1.7b, and it is `campaign_running`'s case one session on: absent it reads as
