@@ -863,6 +863,37 @@ var campaign_bill_pct_gdp: float = 0.0
 ## display record of something that has already happened to the register.
 var last_campaign_result := {}
 
+# --- Campaign promises (V1.7b) -----------------------------------------------------
+
+## The promises this nation has on the books. One entry per promise, each carrying the
+## {field, op, value} triple it is judged on, the two dates that bound the term it
+## binds, and how many of that term's months it has stood broken. Written by
+## Pledges.execute() and Pledges.tick_month() and by nothing else.
+##
+## *** IT HOLDS NO CONTENT. *** The breach rates and the promise's own display name
+## live in data/pledges/ and are read through the loader on every tick, so a save
+## round-trips the DECISION and never the ladder -- the property tests/test_pledges.gd
+## pins, and V1.4a's, V1.6e's, V1.6f's and V1.7a's tests before it.
+##
+## *** THE TWO DATES ARE FROZEN RATHER THAN DERIVED, and that is the one place it
+## matters. *** Elections.tick_month() pushes next_executive_* a full term forward the
+## moment the incumbent wins, so a promise deriving its own deadline from that field
+## would move its own goalposts on the night it was won.
+##
+## EARNS NO SAVE BUMP. Absent it reads as "nothing promised", which is the truth about
+## every version-23 save because those games had no pledge verb -- `measures` at
+## V1.3c, `pacts` at V1.3g, `appointments` at U6a, `campaign_running` at V1.7a. It is
+## serialised regardless and that half is not free: a verb writes it, no tick
+## recomputes it, and the reward has ALREADY been paid, so a save that dropped it would
+## hand the player the upside of every promise they had made and delete the liability.
+## `regulation_burden`'s case at V1.4b, and tests/test_save_load.gd checks that premise
+## rather than asserting it.
+var pledges: Array = []
+
+## The most recent pledge action, for the panel to read after acting.
+## `last_campaign_result`'s shape, and not serialised for its reason either.
+var last_pledge_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1256,6 +1287,10 @@ func duplicate_state():
 	s.campaign_running = campaign_running.duplicate()
 	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
 	s.campaign_bill_pct_gdp = campaign_bill_pct_gdp
+	# Deep, because each entry is a Dictionary and Pledges.tick_month() writes
+	# `breach_months` INSIDE one -- a shallow duplicate would let a Budget.project()
+	# copy count breaches onto the live register. tests/test_state_copy.gd's own probe.
+	s.pledges = pledges.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1436,6 +1471,7 @@ func to_dict() -> Dictionary:
 		"campaign_running": campaign_running,
 		"campaign_mobilisation": campaign_mobilisation,
 		"campaign_bill_pct_gdp": campaign_bill_pct_gdp,
+		"pledges": pledges,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1662,6 +1698,12 @@ static func from_dict(d: Dictionary):
 	s.campaign_running = d.get("campaign_running", [])
 	s.campaign_mobilisation = d.get("campaign_mobilisation", {})
 	s.campaign_bill_pct_gdp = float(d.get("campaign_bill_pct_gdp", 0.0))
+	# V1.7b, and it is `campaign_running`'s case one session on: absent it reads as
+	# "nothing promised", true of every version-23 save because those games had no
+	# pledge verb. So the version is STILL 23 -- V1.3c's device, pointed at V1.7c for
+	# the seventh time -- and tests/test_save_load.gd checks the PREMISE that dropping
+	# it changes behaviour rather than asserting it.
+	s.pledges = _pledges_from(d.get("pledges", []))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -1694,6 +1736,35 @@ static func from_dict(d: Dictionary):
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s
+
+
+## The pledge register, with its types restored.
+##
+## JSON has one number type, so every `int` in the register comes back as a float and a
+## save round trip would silently change the shape of the thing it round-tripped.
+## src/sim/pledges.gd casts on every read and so does not care -- but a register that
+## comes back different from how it went out is a trap for whoever reads it next, and
+## tests/test_save_load.gd compares the two element by element rather than trusting it.
+static func _pledges_from(raw) -> Array:
+	if typeof(raw) != TYPE_ARRAY:
+		return []
+	var out: Array = []
+	for entry in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		out.append({
+			"pledge_id": String(entry.get("pledge_id", "")),
+			"field": String(entry.get("field", "")),
+			"op": String(entry.get("op", "")),
+			"value": float(entry.get("value", 0.0)),
+			"from_year": int(entry.get("from_year", 0)),
+			"from_month": int(entry.get("from_month", 1)),
+			"until_year": int(entry.get("until_year", 0)),
+			"until_month": int(entry.get("until_month", 1)),
+			"breach_months": int(entry.get("breach_months", 0)),
+			"months_live": int(entry.get("months_live", 0)),
+		})
+	return out
 
 
 func debt_to_gdp_pct() -> float:

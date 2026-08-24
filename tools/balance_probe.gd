@@ -41,6 +41,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -460,6 +461,44 @@ const CAMPAIGN_REGIMES := {
 	"managed_campaigns_late": {"budget": REGIMES["managed"], "campaign_month": 14},
 }
 
+## V1.7b: does a promise change anything, and does BREAKING it change anything else?
+## Two regimes, the same budget and THE SAME PROMISE, differing only in whether the
+## president keeps it -- which is the only comparison that isolates the price from the
+## reward, because both regimes pay the reward.
+##
+## `pledge_month` is 9 because that is the month France's run-up opens on a 2026 start,
+## and a promise can only be made inside it. The breaking regime reuses V1.5c's
+## `switch_month` / `switch_delta` rather than adding a mechanism: govern well, win the
+## vote, then raise the income tax the tax lock forbids. That is the reachable way to
+## break a promise, and V1.5c built the harness for it a block early.
+const PLEDGE_REGIMES := {
+	"managed_keeps_its_word": {
+		"budget": REGIMES["managed"],
+		"pledge_month": 9,
+		"switch_month": -1,
+		"switch_delta": {},
+	},
+	"managed_breaks_its_word": {
+		"budget": REGIMES["managed"],
+		"pledge_month": 9,
+		"switch_month": 30,
+		"switch_delta": {"tax_rates_pct": {"income": 8.0}, "spending_pct_gdp": {"health": -4.0}},
+	},
+	# THE CONTROL, and the first run without it demonstrated the wrong thing. The
+	# breaking regime raises the income tax and cuts the health line, and BOTH of those
+	# move approval on their own through issues S5 built -- so `breaks_its_word` against
+	# `keeps_its_word` prints the budget and the promise added together and attributes
+	# all of it to the promise. This regime runs the identical switch and promises
+	# NOTHING, so the pair that isolates the price is this one against `breaks_its_word`.
+	# tests/test_trade.gd needed the same control at V1.6a and V1.6c needed it twice.
+	"managed_breaks_nothing": {
+		"budget": REGIMES["managed"],
+		"pledge_month": -1,
+		"switch_month": 30,
+		"switch_delta": {"tax_rates_pct": {"income": 8.0}, "spending_pct_gdp": {"health": -4.0}},
+	},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -579,6 +618,14 @@ func _init() -> void:
 				-1, -1, int(regime["campaign_month"])
 			)
 
+		for name in PLEDGE_REGIMES.keys():
+			var regime: Dictionary = PLEDGE_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime["switch_month"]), regime["switch_delta"], -1,
+				-1, -1, -1, int(regime["pledge_month"])
+			)
+
 	quit(0)
 
 
@@ -610,7 +657,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -704,6 +751,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# doing something under every regime rather than nothing, because the window
 		# opens on the clock alone and the clear is what runs when it shuts.
 		Campaign.tick_month(state, loader)
+		Pledges.tick_month(state, loader)
 		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
 		# additions above it, and that is the difference this row exists to record: the
 		# quality stock reads the live spending line, so it diverges from its own
@@ -758,6 +806,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_break_ground(state, loader, ns, regime_name, year, month)
 		if i + 1 == campaign_month:
 			_campaign(state, loader, ns, regime_name, year, month)
+		if i + 1 == pledge_month:
+			_promise(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -1668,6 +1718,33 @@ func _incumbent_gap(shares: Dictionary, incumbent: String) -> float:
 		if String(pid) != incumbent:
 			best_other = maxf(best_other, float(shares[pid]))
 	return mine - best_other
+## V1.7b. One promise, named rather than chosen: the tax lock is the only entry on the
+## ladder whose field a BUDGET regime can move, so it is the only one where "kept" and
+## "broken" are two runs of the same harness rather than two different worlds.
+##
+## Made through Pledges.execute() rather than by writing the register, so the run
+## exercises the window gate, the concurrency gate and the reward exactly as a click
+## would. It prints its refusal rather than failing silently, because a regime whose
+## verb never fired is a regime that demonstrates nothing -- V1.5c's finding, and the
+## reason balance_probe.gd prints a reachability column at all.
+func _promise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	for action in loader.pledges:
+		if action.id != "pledge_no_new_taxes":
+			continue
+		var result := Pledges.execute(state, ns, loader.pledges, action)
+		if bool(result.get("applied", false)):
+			print("  %d-%02d %s: promised '%s', binds to %s" % [
+				year, month, regime_name,
+				String(result.get("pledge_name", "?")), String(result.get("binds_until", "?")),
+			])
+		else:
+			print("  %d-%02d %s: the promise was REFUSED -- %d months to the vote" % [
+				year, month, regime_name, Campaign.months_to_election(state, ns),
+			])
+		return
+	printerr("  pledge 'pledge_no_new_taxes' not found in data/pledges")
+
+
 
 
 func _invest(state, loader, ns, regime_name: String, year: int, month: int) -> void:

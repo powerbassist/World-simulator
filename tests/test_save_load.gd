@@ -29,6 +29,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -131,6 +132,7 @@ func _init() -> void:
 	_check_investment_fields(loader)
 	_check_project_fields(loader)
 	_check_campaign_fields(loader)
+	_check_pledge_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -1091,8 +1093,121 @@ func _check_campaign_fields(loader) -> void:
 		if typeof(entry) != TYPE_STRING:
 			_fail("a serialised running entry is not a bare effort id -- the cost and the reach round-trip through data/campaign-actions/, not through the save")
 
+	# The version assertion moved to _check_pledge_fields() below, which is V1.7b
+	# coming and saying why it does NOT move -- V1.3c's device answered and re-armed.
+
+
+## V1.7b. ONE FIELD AND IT EARNS NOTHING, and this is where that is CHECKED rather
+## than asserted.
+##
+## `pledges` absent reads as "nothing promised", which is the truth about every
+## version-23 save because those games had no pledge verb -- `measures` at V1.3c,
+## `pacts` at V1.3g, `appointments` at U6a, `campaign_running` at V1.7a.
+##
+## IT IS SERIALISED REGARDLESS AND THAT HALF IS NOT FREE, which is `regulation_burden`'s
+## case at V1.4b rather than the campaign bill's: a verb writes it, no tick recomputes
+## it, and THE REWARD HAS ALREADY BEEN PAID. A save that dropped the register would hand
+## the player the upside of every promise they ever made and delete the liability. The
+## check below drops it and requires the charge to stop, which is that premise measured.
+##
+## AND THE HALF WORTH PINNING IS WHAT IS NOT THERE. No breach rate, no display name, no
+## "is live" flag and no stored judgement: the ladder round-trips through data/pledges/
+## and the two dates are read against the clock. A later session storing any of them
+## turns this red and has to come and say why.
+func _check_pledge_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var target: int = (ns.next_executive_year * 12 + ns.next_executive_month) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	state.year = int(target / 12)
+	state.month = target - state.year * 12
+	if state.month <= 0:
+		state.month += 12
+		state.year -= 1
+
+	var made := 0
+	for a in loader.pledges:
+		if Pledges.execute(state, ns, loader.pledges, a).get("applied", false):
+			made += 1
+	if made == 0:
+		_fail("no promise could be made, so this check measures nothing")
+		return
+
+	# Into the term the promises bind, and break one of them.
+	var entry: Dictionary = ns.pledges[0]
+	state.year = int(entry["from_year"])
+	state.month = int(entry["from_month"])
+	state.month += 1
+	if state.month > 12:
+		state.month = 1
+		state.year += 1
+	var pending := {
+		"tax_rates_pct": ns.tax_rates_pct.duplicate(),
+		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(),
+	}
+	pending["tax_rates_pct"]["income"] = float(pending["tax_rates_pct"]["income"]) + 8.0
+	pending["spending_pct_gdp"]["health"] = float(pending["spending_pct_gdp"]["health"]) - 4.0
+	Budget.commit(state, pending)
+	Pledges.tick_month(state, loader)
+
+	var broken := 0
+	for e in ns.pledges:
+		broken += int(e["breach_months"])
+	if broken == 0:
+		_fail("no promise was broken, so this check measures nothing")
+		return
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(full)
+	if kept.player().pledges.size() != ns.pledges.size():
+		_fail("the promises did not survive the round trip")
+	for i in ns.pledges.size():
+		for key in (ns.pledges[i] as Dictionary).keys():
+			var a = (ns.pledges[i] as Dictionary)[key]
+			var b = (kept.player().pledges[i] as Dictionary).get(key)
+			if typeof(a) == TYPE_FLOAT:
+				if not is_equal_approx(float(a), float(b)):
+					_fail("pledge[%d].%s did not survive the round trip" % [i, key])
+			elif str(a) != str(b):
+				_fail("pledge[%d].%s did not survive the round trip" % [i, key])
+
+	# (1) ABSENT IT READS AS "NOTHING PROMISED" -- correct for a version-23 save, so no
+	# bump. What it is NOT is free to drop from a later save: the charge stops and the
+	# reward, which was paid at the moment of the promise, is already inside bloc_offset.
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(dropped["nations"]["FRA"] as Dictionary).erase("pledges")
+	var no_pledges = GameState.from_dict(dropped)
+	if not no_pledges.player().pledges.is_empty():
+		_fail("a dropped pledge register came back non-empty")
+	var before: Dictionary = no_pledges.player().bloc_offset.duplicate(true)
+	Pledges.tick_month(no_pledges, loader)
+	for bloc in before:
+		if float(no_pledges.player().bloc_offset.get(bloc, 0.0)) != float(before[bloc]):
+			_fail("a dropped pledge register still charged '%s' -- then it is derivable and this reasoning is wrong" % bloc)
+	# ...and the premise: the register is NOT recomputed by a tick, unlike the campaign
+	# bill and V1.4a's three prices. That is what makes serialising it load-bearing.
+	if not no_pledges.player().pledges.is_empty():
+		_fail("a tick rebuilt the pledge register -- then it need not be serialised at all")
+
+	# (2) WHAT WAS NOT ADDED.
+	for absent in ["last_pledge_result", "pledge_live", "pledge_trust", "trust_pct"]:
+		if (full["nations"]["FRA"] as Dictionary).has(absent):
+			_fail("a save carries %s -- there is no trust quantity in this model and the last result is a display record" % absent)
+	var allowed := [
+		"pledge_id", "field", "op", "value",
+		"from_year", "from_month", "until_year", "until_month",
+		"breach_months", "months_live",
+	]
+	for e in (full["nations"]["FRA"] as Dictionary)["pledges"]:
+		for key in (e as Dictionary).keys():
+			if not allowed.has(String(key)):
+				_fail("a serialised promise carries '%s' -- the ladder round-trips through data/pledges/, not through the save" % key)
+
+	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
+	# V1.7b would have to come and say why it moves; it does not move, and the reason is
+	# in this function's header. V1.7c now has to come and say why.
 	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23 on the DONE half of `projects` and V1.7a argued it should STAY there, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges`, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 func _run_unknown_version() -> void:

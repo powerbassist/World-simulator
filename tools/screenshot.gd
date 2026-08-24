@@ -16,6 +16,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -36,6 +37,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -114,6 +116,12 @@ var _agenda := false
 ## efforts into the field through Campaign.execute(), and ticks again so the
 ## mobilisation has accrued and the bill has been billed.
 var _campaign := false
+## V1.7b, and --campaign's argument in its harder form. A pledge register is empty for
+## every game that has not promised anything, AND a promise that has been made but not
+## yet broken renders identically to no promise at all on the row that matters. So the
+## flag has to cross an election and then break something, or the frame proves nothing
+## about the one thing the panel exists to show.
+var _pledge := false
 
 var _open := ""
 
@@ -279,6 +287,8 @@ func _init() -> void:
 			_build = true
 		elif args[i] == "--campaign":
 			_campaign = true
+		elif args[i] == "--pledge":
+			_pledge = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -372,6 +382,9 @@ func _apply_view() -> void:
 		_break_ground()
 	if _campaign:
 		_open_the_campaign()
+
+	if _pledge:
+		_make_and_break_a_promise()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1345,6 +1358,76 @@ func _open_the_campaign() -> void:
 	# with -- and pinning to the bottom put both off the frame and opened on a sentence
 	# cut in half. V1.6e's correction has a direction as well as a subject: scroll to
 	# where the flag's own claim is, and here that is the ledger.
+
+
+## V1.7b. Two promises made in the run-up, an election crossed, and one of them broken
+## for a year -- because the row a reader has to check is "broken N of M months", and
+## every cheaper version of this flag renders identically to no promise at all.
+##
+## COMMITS `managed` FIRST, and that is not decoration. The promises bind the term the
+## run-up wins, so the flag has to survive an executive election to reach a single month
+## the register charges on; tools/balance_probe.gd's `managed` is the budget that does.
+## A flag that lost the vote would photograph a run that had ended.
+##
+## SCROLLED TO THE BOTTOM, where --campaign deliberately is not. The promises section is
+## the last thing on this panel, so the ledger --campaign checks and the promises this
+## flag checks are at opposite ends of one scroll. V1.6e's correction has a DIRECTION as
+## well as a subject, and here the two flags need opposite ones.
+func _make_and_break_a_promise() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	_commit_delta({"defence": -1.4}, {"vat": 3.0})
+
+	var to_open: int = Campaign.months_to_election(state, ns) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	if to_open > 0:
+		_tick_months(to_open)
+
+	var made := 0
+	for a in _main._loader.pledges:
+		if Pledges.execute(state, ns, _main._loader.pledges, a).get("applied", false):
+			made += 1
+	if made == 0:
+		printerr("--pledge: no promise could be made (%d months to the vote)" % Campaign.months_to_election(state, ns))
+		return
+
+	# Past the vote and into the term the promises bind.
+	_tick_months(CampaignK.CAMPAIGN_WINDOW_MONTHS + 2)
+	if not ns.in_government:
+		printerr("--pledge: the incumbent lost the vote, so no promise ever came due")
+		return
+
+	# Break them: the income tax up and the health line down, which is exactly what the
+	# tax lock and the health guarantee forbid.
+	_commit_delta({"health": -4.0}, {"income": 8.0})
+	_tick_months(12)
+
+	var broken := 0
+	for entry in ns.pledges:
+		broken += int(entry["breach_months"])
+	if broken == 0:
+		printerr("--pledge: nothing was broken, so the frame shows a promise being kept")
+
+	if _main._campaign_panel != null:
+		_main._campaign_panel.scroll_to_bottom()
+
+
+## balance_probe.gd's nation-relative deltas, through the real Budget.commit() so the
+## frame shows a budget the player could have set.
+func _commit_delta(spending: Dictionary, taxes: Dictionary) -> void:
+	var state = _main._state
+	var ns = state.player()
+	var pending := {
+		"tax_rates_pct": ns.tax_rates_pct.duplicate(),
+		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(),
+	}
+	for key in taxes:
+		pending["tax_rates_pct"][key] = float(pending["tax_rates_pct"].get(key, 0.0)) + float(taxes[key])
+	for key in spending:
+		pending["spending_pct_gdp"][key] = float(pending["spending_pct_gdp"].get(key, 0.0)) + float(spending[key])
+	Budget.commit(state, pending)
 
 
 func _break_ground() -> void:

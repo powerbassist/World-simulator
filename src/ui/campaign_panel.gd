@@ -33,6 +33,7 @@ signal acted(before, label)
 
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -50,9 +51,36 @@ const BLOC_LABEL := {
 	"students": "Students",
 }
 
+## The promisable fields as a player thinks of them. Beside BLOC_LABEL for its reason:
+## src/sim/pledges_constants.gd keys on the bare field names and carries no display
+## text, because a constants file naming things in English is a constants file the
+## content has to agree with in two places.
+const FIELD_LABEL := {
+	"unemployment_pct": "Unemployment",
+	"deficit_pct_gdp": "The deficit",
+	"debt_to_gdp_pct": "The debt",
+	"growth_annual_pct": "Growth",
+	"unrest_pct": "Unrest",
+	"tax_income_pct": "Income tax",
+	"tax_corporate_pct": "Corporation tax",
+	"tax_vat_pct": "VAT",
+	"tax_capital_gains_pct": "Capital gains tax",
+	"tax_wealth_pct": "The wealth tax",
+	"spending_health_pct_gdp": "Health spending",
+	"spending_education_pct_gdp": "Education spending",
+	"spending_defence_pct_gdp": "Defence spending",
+	"spending_pensions_pct_gdp": "Pension spending",
+	"spending_infrastructure_pct_gdp": "Infrastructure spending",
+}
+
 var _state
 var _loader
 var _dirty := true
+## projects_panel.gd's device, and this panel has BOTH halves for a reason V1.7a
+## recorded: --campaign wants the ledger at the TOP and --pledge wants the promises at
+## the BOTTOM, so the scroll is per-flag rather than per-panel. V1.6e's correction has
+## a direction as well as a subject.
+var _pin_bottom := false
 
 var _title: Label
 var _body: VBoxContainer
@@ -113,6 +141,18 @@ func setup(state, loader) -> void:
 	_dirty = true
 
 
+func scroll_to_bottom() -> void:
+	_pin_bottom = true
+	_dirty = true
+
+
+func _apply_bottom() -> void:
+	if _scroll == null:
+		return
+	await get_tree().process_frame
+	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
+
+
 func hide_close_button() -> void:
 	_close_button.hide()
 
@@ -142,6 +182,15 @@ func _refresh() -> void:
 	_build_turnout(ns)
 	_build_running(ns)
 	_build_available(ns)
+	# V1.7b, BELOW the campaign rather than in a window of its own: a promise is made
+	# in the run-up, so it belongs in the surface that runs the run-up. And below
+	# rather than above, because what a player opens this panel for outside a run-up
+	# is the months-to-the-vote line at the top -- which is the half V1.7a's own
+	# screenshot pass found scrolled off the frame.
+	_build_promises(ns)
+
+	if _pin_bottom:
+		_apply_bottom()
 
 
 ## How long there is, and what the campaign is costing. The first thing on the panel
@@ -308,6 +357,163 @@ func _button(ns, action) -> Button:
 func _on_act(ns, action) -> void:
 	var before := Budget.snapshot(_state)
 	var result := Campaign.execute(_state, ns, _loader.campaign_actions, action)
+	if not result.get("applied", false):
+		return
+	_dirty = true
+	acted.emit(before, action.action_name)
+
+
+# --- Campaign promises (V1.7b) ---------------------------------------------------------
+
+## What is on the books, and what it is costing. Printed whether or not anything is
+## promised, for _build_available()'s reason: a player planning a run-up needs to know
+## what a promise will cost before the window opens.
+##
+## THE HEADLINE FIGURE IS MONTHS BROKEN AND NOT A SCORE, because that is what the model
+## charges on. src/sim/pledges.gd judges a promise every month it is live and the price
+## is the integral, so "broken 14 of 32 months" IS the bill in the units it was rung up
+## in -- docs/projects-model.md's months-remaining rule, which is that a panel must not
+## print a second unit for a fact the model already has one for.
+func _build_promises(ns) -> void:
+	_header("Promises")
+
+	var books: Array = Pledges.on_the_books(ns)
+	if books.is_empty():
+		_line(
+			"Nothing has been promised. A promise is made in the run-up and binds the"
+			+ " whole of the term it wins: the blocs that want to hear it pay you for"
+			+ " saying it now, and every month it stands broken costs you more."
+		)
+	for entry in books:
+		_build_promise_row(ns, entry)
+
+	var offered := Pledges.available(_state, ns, _loader.pledges)
+	for action in _loader.pledges:
+		var terms: Dictionary = action.effects.get("pledge", {})
+		if Pledges.has_pledged(ns, String(terms.get("pledge_id", ""))):
+			continue
+		_build_promise_offer(ns, action, terms, offered.has(action))
+
+
+func _build_promise_row(ns, entry: Dictionary) -> void:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 2)
+
+	var name_label := Label.new()
+	name_label.text = Pledges.name_of(_loader, String(entry["pledge_id"]))
+	block.add_child(name_label)
+
+	var live: bool = Pledges.is_live(_state, entry)
+	var broken: bool = live and Pledges.in_breach(_state, ns, entry)
+
+	var state_label := Label.new()
+	if not live:
+		state_label.text = "%s · binds the term beginning %02d/%04d" % [
+			_promise_text(entry), int(entry["from_month"]), int(entry["from_year"])]
+		state_label.theme_type_variation = UiTheme.CAPTION
+	else:
+		# THE COST SO FAR, and the first captured frame is what added it. Without it the
+		# row read "broken 14 of 14 months" against a player who could see the per-month
+		# price on the OFFERS below and had no way to read what the promise they had
+		# already made was costing -- the one figure this section exists to be a ledger
+		# of. docs/projects-model.md's months-remaining rule from the other side: the
+		# count is the unit the model charges in, and the total is what the count is for.
+		state_label.text = "%s · %s · broken %d of %d months, %.2f approval" % [
+			_promise_text(entry),
+			"BEING BROKEN" if broken else "being kept",
+			int(entry["breach_months"]), int(entry["months_live"]),
+			-_charged_so_far(entry),
+		]
+		state_label.theme_type_variation = UiTheme.BAD_TEXT if broken else UiTheme.GOOD_TEXT
+	block.add_child(state_label)
+
+	_body.add_child(block)
+
+
+func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 2)
+
+	var name_label := Label.new()
+	name_label.text = String(terms.get("pledge_name", ""))
+	block.add_child(name_label)
+
+	var terms_label := Label.new()
+	terms_label.text = "%s · %s" % [
+		_promise_text({"field": terms.get("field", ""), "op": terms.get("op", ""), "value": terms.get("value", 0.0)}),
+		_breach_text(terms),
+	]
+	terms_label.theme_type_variation = UiTheme.CAPTION
+	block.add_child(terms_label)
+
+	if can_act:
+		block.add_child(_pledge_button(ns, action))
+
+	_body.add_child(block)
+
+
+## The promise itself, in the words a president would use rather than in the register's
+## {field, op, value}. Campaign.name_of()'s argument about the noun, one level down: the
+## triple is what the model compares and it is not what anybody says out loud.
+func _promise_text(entry: Dictionary) -> String:
+	var value: float = float(entry.get("value", 0.0))
+	var bound: String = "no more than" if String(entry.get("op", "")) == "<=" else "no less than"
+	return "%s %s %s" % [FIELD_LABEL.get(String(entry.get("field", "")), String(entry.get("field", ""))), bound, _field_value(String(entry.get("field", "")), value)]
+
+
+func _field_value(field: String, value: float) -> String:
+	if field.begins_with("tax_") or field.begins_with("spending_"):
+		return "%.1f %%" % value
+	if field == "debt_to_gdp_pct" or field == "deficit_pct_gdp":
+		return "%.1f %% of GDP" % value
+	return "%.1f %%" % value
+
+
+## What standing broken costs, per month, in the same points of approval every other
+## bloc figure on this shell is printed in.
+func _breach_text(terms: Dictionary) -> String:
+	var offsets: Dictionary = terms.get("breach_offset", {})
+	var parts: Array[String] = []
+	for bloc in OpinionK.BLOC_KEYS:
+		if not offsets.has(bloc):
+			continue
+		parts.append("%s %.2f" % [
+			String(BLOC_LABEL.get(bloc, bloc)),
+			-float(offsets[bloc]) * OpinionK.APPROVAL_SPAN,
+		])
+	if parts.is_empty():
+		return "costs nothing to break"
+	# Signed and with the unit named ONCE at the end. The first captured frame printed
+	# "a month broken: Pensioners 0.14, Rural 0.10" -- four bare numbers in no unit,
+	# against an effort row two lines above printing points of TURNOUT in the same shape.
+	return "each month broken: " + ", ".join(parts) + " approval"
+
+
+## What a promise has taken off the headline so far, in points of approval: the months
+## it has stood broken times what one such month costs, rolled up over the blocs it
+## names by their own BLOC_SIZE shares.
+##
+## Derived rather than stored, which is why the register has no accumulator for it: the
+## breach rates are CONTENT and the count is the state, so a stored total would be one
+## quantity with two writers and would put the ladder in the save file.
+func _charged_so_far(entry: Dictionary) -> float:
+	var offsets: Dictionary = Pledges.terms_of(_loader, String(entry["pledge_id"])).get("breach_offset", {})
+	var per_month := 0.0
+	for bloc in offsets:
+		per_month += float(offsets[bloc]) * OpinionK.APPROVAL_SPAN * float(OpinionK.BLOC_SIZE.get(bloc, 0.0))
+	return per_month * float(entry["breach_months"])
+
+func _pledge_button(ns, action) -> Button:
+	var button := Button.new()
+	button.text = action.action_name
+	button.tooltip_text = action.summary
+	button.pressed.connect(func(): _on_promise(ns, action))
+	return button
+
+
+func _on_promise(ns, action) -> void:
+	var before := Budget.snapshot(_state)
+	var result := Pledges.execute(_state, ns, _loader.pledges, action)
 	if not result.get("applied", false):
 		return
 	_dirty = true

@@ -38,6 +38,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -397,6 +398,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# about nothing. It is NOT inert for a regime that never campaigns -- the window
 		# opens on the clock alone, so what runs under every other regime is the clear.
 		Campaign.tick_month(state, _loader)
+		Pledges.tick_month(state, _loader)
 		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
 		# quality stock reads the live spending line, so any regime that moves one moves
 		# the `health` satisfaction term with it.

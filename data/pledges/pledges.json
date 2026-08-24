@@ -1,0 +1,166 @@
+{
+  "_note": "V1.7b's verb, on the effects.pledge channel -- the tenth. Five promises, each one a {field, op, value} triple plus what standing broken takes off the blocs that believed it. A GLOBAL FLAT LIST rather than a per-nation directory, on data/campaign-actions/'s argument: a promise names no place and no institution, so all ten nations could make any of them and none of the five is true of France in a way it is not true of Germany. U6c's correction to that argument does not apply here -- what made per-project geography per-NATION was a coordinate, and there is no coordinate on this channel.",
+  "_shape_note": "THERE IS NO `op` ON THE CHANNEL AND EVERY OTHER DIRECTORY HAS ONE. Five channels ship a start and a stop, because an obligation only the clock can close is a permanent monotone charge -- docs/defence-model.md's rule, which is why campaign-actions carries a `stop` for every effort. It does not transfer: a pledge charges only while it stands BROKEN, so it stops the month the player comes back into compliance. The off switch already exists and it is called governing. A `renounce` op priced below the accrual would be strictly better than complying, and priced above it would never be used.",
+  "_field_note": "TWO KINDS OF PROMISE ON ONE SCHEMA, and tools/pledge_probe.gd table (c0) is what separates them. An OUTCOME pledge is a bet on the world: growth_annual_pct measures 8.215 of luck against 0.641 of choice over a term, twelve to one, and V1.6a's business cycle is what puts it there. A RATE pledge is a self-imposed constraint: every tax and spending row measures luck EXACTLY 0.000, because nothing but the player moves them, so breaking one is never bad luck. inflation_pct was on the field list and the probe DELETED it -- 0.114 of luck and 0.045 of choice, both under the resolution of the model that produces it, so an authored threshold either side is a constant verdict.",
+  "_ladder_note": "THE PRICE-TO-REWARD RATIO FALLS AS THE FIELD GETS LUCKIER, and that is authored rather than emergent -- growth 2.8x, employment 3.5x, deficit 4.0x, the tax lock 4.5x, the hospitals 5.7x. You are paid more per unit of risk for a promise you cannot control, and punished hardest for breaking one you could have kept by doing nothing. tools/pledge_probe.gd checks the ordering rather than assuming it, and checks that no promise is dominated by another.",
+  "_price_note": "THE REWARD IS PAID NOW AND THE PRICE IS CHARGED LATER, ON ONE CHANNEL, WITH OPPOSITE SIGNS. effects.bloc_offset lands the moment the promise is made, inside the run-up, so it reaches Elections.vote_share()'s `pull` term through eight months of INERTIA_RATE and buys the election you are standing in. effects.pledge.breach_offset lands every month of the term that election wins. YOU BUY THIS ELECTION WITH A PROMISE AND PAY FOR IT AT THE NEXT ONE. That is docs/society-model.md's 'the delta prices the announcement, the stock prices the delivery', literally.",
+  "_concurrency_note": "`pledge_count <= 1` ON EVERY PROMISE IS THE CONCURRENCY CEILING, AND IT IS CONTENT. src/sim/pledges_constants.gd ships no constant for it, for the reason data/campaign-actions/ and data/project-actions/ both give: a model constant duplicating a content gate is the clamp-guarding-arithmetic failure V1.6e deleted INVESTMENT_BILL_MAX_PCT_GDP for. It also binds ACROSS run-ups, because a promise made in 2026 is still being judged when the 2031 run-up opens.",
+  "pledges": [
+    {
+      "id": "pledge_full_employment",
+      "name": "Promise Work for Everyone",
+      "summary": "Unemployment below seven and a half per cent, said out loud, with a number in it. The number is what makes it a promise rather than an aspiration, and it is also what makes it checkable every month for five years.",
+      "preconditions": [
+        {
+          "field": "pledge_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "pledge": {
+          "pledge_id": "full_employment",
+          "pledge_name": "The employment guarantee",
+          "field": "unemployment_pct",
+          "op": "<=",
+          "value": 7.5,
+          "breach_offset": {
+            "workers": 0.0045,
+            "urban": 0.002,
+            "students": 0.0015
+          }
+        },
+        "bloc_offset": {
+          "workers": 0.07,
+          "urban": 0.04,
+          "students": 0.04
+        }
+      }
+    },
+    {
+      "id": "pledge_no_new_taxes",
+      "name": "Rule Out an Income Tax Rise",
+      "summary": "Not one centime on the income tax, for the whole term. It is the easiest promise on this list to keep and the most expensive to have made, because every fiscal emergency for five years has to be solved without the lever everybody reaches for first.",
+      "preconditions": [
+        {
+          "field": "pledge_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "pledge": {
+          "pledge_id": "tax_lock",
+          "pledge_name": "The tax lock",
+          "field": "tax_income_pct",
+          "op": "<=",
+          "value": 20.0,
+          "breach_offset": {
+            "business": 0.005,
+            "rural": 0.004,
+            "workers": 0.003
+          }
+        },
+        "bloc_offset": {
+          "business": 0.09,
+          "rural": 0.06,
+          "workers": 0.03
+        }
+      }
+    },
+    {
+      "id": "pledge_balanced_books",
+      "name": "Promise to Balance the Books",
+      "summary": "A deficit under three per cent of output, which is the figure Brussels uses and therefore the figure the newspapers already know. Nothing forbids the spending; what it forbids is spending it without finding the money.",
+      "preconditions": [
+        {
+          "field": "pledge_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "pledge": {
+          "pledge_id": "deficit_rule",
+          "pledge_name": "The deficit rule",
+          "field": "deficit_pct_gdp",
+          "op": "<=",
+          "value": 3.0,
+          "breach_offset": {
+            "business": 0.0045,
+            "pensioners": 0.0035,
+            "rural": 0.0025
+          }
+        },
+        "bloc_offset": {
+          "business": 0.11,
+          "pensioners": 0.055
+        }
+      }
+    },
+    {
+      "id": "pledge_protect_health",
+      "name": "Guarantee the Hospital Budget",
+      "summary": "The health line does not go down. Not in a good year and not in a bad one, and the people who will check are the people who use it most.",
+      "preconditions": [
+        {
+          "field": "pledge_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "pledge": {
+          "pledge_id": "health_guarantee",
+          "pledge_name": "The health guarantee",
+          "field": "spending_health_pct_gdp",
+          "op": ">=",
+          "value": 11.0,
+          "breach_offset": {
+            "pensioners": 0.005,
+            "workers": 0.0035,
+            "urban": 0.002
+          }
+        },
+        "bloc_offset": {
+          "pensioners": 0.05,
+          "workers": 0.035,
+          "urban": 0.03
+        }
+      }
+    },
+    {
+      "id": "pledge_growth",
+      "name": "Promise Growth Every Year",
+      "summary": "One per cent a year, every year. It is the promise a president has least control over and the one that sounds most like competence, which is exactly why it gets made.",
+      "preconditions": [
+        {
+          "field": "pledge_count",
+          "op": "<=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "pledge": {
+          "pledge_id": "growth_pledge",
+          "pledge_name": "The growth pledge",
+          "field": "growth_annual_pct",
+          "op": ">=",
+          "value": 1.0,
+          "breach_offset": {
+            "business": 0.0042,
+            "urban": 0.0036,
+            "students": 0.003,
+            "rural": 0.0024
+          }
+        },
+        "bloc_offset": {
+          "business": 0.09,
+          "urban": 0.06,
+          "students": 0.05,
+          "rural": 0.04
+        }
+      }
+    }
+  ]
+}

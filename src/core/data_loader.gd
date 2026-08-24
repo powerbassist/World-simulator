@@ -18,6 +18,7 @@ const CompanyAction = preload("res://src/core/company_action.gd")
 const InvestmentAction = preload("res://src/core/investment_action.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
+const PledgeAction = preload("res://src/core/pledge_action.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -82,6 +83,10 @@ var project_actions: Array[ProjectAction] = []
 ## true of France in a way it is not true of Germany.
 var campaign_actions: Array[CampaignAction] = []
 
+## V1.7b. The sixth directory on data/diplomatic-actions/'s shape. A global flat list
+## for data/campaign-actions/'s reason -- a promise names no place and no institution.
+var pledges: Array[PledgeAction] = []
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -119,7 +124,7 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -130,6 +135,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	investment_actions.clear()
 	project_actions.clear()
 	campaign_actions.clear()
+	pledges.clear()
 	laws.clear()
 	political_systems.clear()
 	scenarios.clear()
@@ -186,6 +192,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_investment_actions(investment_actions_dir)
 	_load_projects(project_actions_dir)
 	_load_campaign_actions(campaign_actions_dir)
+	_load_pledges(pledges_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
@@ -774,6 +781,69 @@ func _load_campaign_actions(actions_dir: String) -> void:
 			errors.append("%s: '%s' stops effort '%s', which no action starts" % [
 				actions_dir, str(referenced[eid]), str(eid)
 			])
+
+
+## V1.7b's promises, from data/pledges/. _load_campaign_actions()'s shape.
+##
+## THE CROSS-FILE CHECK IS THE HALF WORTH HAVING, and here it is a different check
+## from that one. A campaign effort needs a stop for every start; a pledge has no
+## second op at all -- see src/sim/pledges_constants.gd's PLEDGE_TERMS -- so what only
+## this function can see is that no two entries define the same `pledge_id`. The
+## register is keyed on it and Pledges.has_pledged() refuses a duplicate, so two
+## entries sharing one id would be two promises the player could only ever make one
+## of, chosen by whichever file loaded last.
+func _load_pledges(pledges_dir: String) -> void:
+	var da := DirAccess.open(pledges_dir)
+	if da == null:
+		errors.append("%s: directory not found" % pledges_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	var defined := {}  # pledge_id -> the filename that defined it
+	for fname in filenames:
+		var path := pledges_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("pledges")) != TYPE_ARRAY:
+			errors.append("%s: invalid pledge file, expected {\"pledges\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["pledges"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: pledges[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = PledgeAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate pledge action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+
+			var pid := PledgeAction.pledge_id(action)
+			if pid != "":
+				if defined.has(pid):
+					errors.append("%s: pledge '%s' is defined twice (also in %s) -- the register is keyed on it, so the player could only ever make one of them" % [
+						fname, pid, str(defined[pid])
+					])
+				defined[pid] = fname
+			pledges.append(action)
 
 
 func _load_parties(nation_id: String, parties_dir: String) -> void:

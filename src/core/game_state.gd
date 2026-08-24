@@ -27,6 +27,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -754,6 +755,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# which is what lets the whole layer go live with the balance harness bit-identical
 	# across every existing regime.
 	Campaign.init_nation(ns)
+	Pledges.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

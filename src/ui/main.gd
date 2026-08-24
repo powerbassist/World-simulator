@@ -21,6 +21,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -740,6 +741,18 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# whole of the clearing mechanism: a level read, so campaign.gd needs no hook at
 	# the vote and elections.gd needs no knowledge of the window.
 	Campaign.tick_month(_state, _loader)
+
+	# V1.7b: every promise on the books judged against the state it named, and charged
+	# for the month if it is being broken. Immediately after Campaign for the same
+	# reason Campaign sits before Elections -- the last month of a term is judged, and
+	# THEN the vote is held.
+	#
+	# There is no loop to break here and so no lag to argue about: a promise writes
+	# ns.bloc_offset, which is not a spending line, not a deficit and not a
+	# PRECONDITION_FIELDS entry of its own. It is also why this call is absent from
+	# Budget.project(): a projection that charged a broken promise would be a budget
+	# preview quietly moving approval.
+	Pledges.tick_month(_state, _loader)
 
 	# V1.5a: services converge on what the country actually spends on them, delivered.
 	# In Companies' slot for Companies' reason and not for the general tick-order one:

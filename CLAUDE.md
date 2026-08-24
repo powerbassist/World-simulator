@@ -166,7 +166,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.6d) `--redistribute`,
 (V1.6e) `--invest`,
 (V1.6f) `--build` and
-(V1.7a) `--campaign`,
+(V1.7a) `--campaign` and
+(V1.7b) `--pledge`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1751,7 +1752,102 @@ enforces it, and a "campaign opens" entry is a fixed offset from a date the stri
 carries. The window length lives in `campaign_constants.gd`, so the row would have cost
 that property for a derived date.
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, section 6's last clause with them, and V1.7 is decomposed with (a) built.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+**V1.7b shipped campaign promises, and the row that was recorded in advance as the one
+most likely to SPLIT did not.** The pre-registered trigger was the trust quantity — *if
+the price cannot land on an existing register the way V1.5d landed legitimacy on the
+grievance, then the ledger and the price are two sessions* — and what discharged it is
+**V1.5d's own criterion applied in the other direction**. Legitimacy went to the grievance
+because it is willingness to accept your rule **outside** the ballot box; trust in a
+promise is squarely **at** it, so the price belongs on the register that reaches the
+ballot box. That is `ns.bloc_offset`, which V1.7a §6 had already made a campaign's own
+lasting mark. A separate trust stock would have been §5's *second approval number with a
+different label*. The landing site was measured **before a line of content existed** —
+one machine, no split, **no new quantity anywhere**.
+
+**Instance forty-two is the row's own "read at the END of the term", and it fails on two
+things that can be COUNTED.** A single read there is strictly dominated by last-minute
+compliance — run unemployment at nine for four years, squeeze it to 6.9 for the final
+month, pay nothing, the shape this project has killed eight times. And it is
+**structurally invisible at the vote it is about**: `main.gd` runs `Opinion.tick_month()`
+long before `Elections.tick_month()`, so a `bloc_offset` written at term end reaches
+approval *next* month, and even moved ahead of Opinion `INERTIA_RATE` delivers a quarter
+of it. So a promise is judged on a **level every month it is live** and the price is the
+integral — V1.7a's *a standing rate with a deadline* applied to the **price** rather than
+to the spend. Graded-by-the-miss was designed and cut (a per-field normaliser is a table
+with no measurement behind it); **breach is binary per month and the count IS the
+memory**, V1.3e's *no grievance ledger* in a new place.
+
+**`PRECONDITION_FIELDS` is the right shape and the wrong list, and the interesting half is
+what a pledge list has that it does not.** Three of its seven entries cannot be promised —
+`overall_approval_pct` is circular, `terms_served` is not a state of the country, and
+`unrest_pct` ships a `>=`-only invariant a `<=`-shaped promise inverts. What is added is
+the taxes and spending lines the **player sets**, and the division is measured rather than
+thematic: table (c0) reads each field's **LUCK** (the widest span within one budget)
+against its **CHOICE** (the span across three at the end). `growth_annual_pct` comes back
+**8.215 against 0.641** where every tax and spending row measures luck **exactly 0.000**.
+An outcome pledge is a **bet on the world** and V1.6a's cycle is what makes it one; a rate
+pledge is a **self-imposed constraint**. `inflation_pct` was on the list and the probe
+**deleted** it — 0.114 and 0.045, both under the resolution of the model that produces
+them, so an authored threshold is a constant verdict.
+
+**`pledges_constants.gd` ships NO TUNED CONSTANT AT ALL**, `projects_constants.gd`'s
+position reached a second time, and `effects.pledge` carries **no `op`** where all five
+channels before it do. Five directories ship a start and a stop because an obligation only
+the clock can close is a permanent monotone charge; it does not transfer, because a pledge
+charges only while it stands **broken** — it stops the month the player comes back into
+compliance, and **the off switch is called governing**. A `renounce` op priced below the
+accrual would be strictly better than complying and priced above it would never be used.
+`PLEDGE_OPS` is two comparators of five, and the three refusals are the design.
+
+**The probe corrected the session five times, nineteen sessions running, and two of the
+five were corrections to the CHECK rather than to the model.** The reachability table
+measured the wrong state — `_tick()` omits `Elections`, so 168 months reported **one**
+run-up and **zero** judgements against a real three and two, which would have read as *the
+verb is unreachable and the row should split*; V1.3f's error a fourth time, inside a file
+whose header warns about it. The growth pledge failed its readability band and the
+**content** moved. **The dominance test itself was the wrong test**: it compared the
+authored (reward, breach) pair and reported five dominated promises, and every one is an
+artefact, because the third quantity — *how often the promise is actually broken* — is
+nowhere in the content and is a property of the budget the player intends to run. That is
+V1.7a's *share is not winning* in a new place. **The ordering statistic was LUCK and had to
+be EXPOSURE** (luck as a share of luck plus choice): the deficit reads 1.284 of luck
+against unemployment's 1.182, eight per cent apart, and 16.445 of choice against 0.656 —
+luck alone says the deficit is the less controllable and exposure says the opposite by a
+factor of nine. And the balance regime pair was **confounded**, needing a third regime
+running the identical budget switch and promising nothing.
+
+**Zero promises are dominated in every column and each column has a different best
+promise** — hold `managed` and the hospitals win, switch to austerity and the deficit rule
+does, switch to spendthrift and the tax lock does. The ladder is not orderable without
+knowing how the player intends to govern, which is what makes it a choice.
+
+`SAVE_VERSION` stays **23**, V1.3c's device **answered and re-armed at V1.7c**: absent,
+`pledges` reads as "nothing promised", true of every version-23 save because those games
+had no pledge verb. It is serialised anyway and that half is not free — a verb writes it,
+no tick recomputes it, and **the reward has already been paid**, so a save that dropped it
+would hand the player the upside of every promise and delete the liability. The nineteenth
+`ISSUE_KEYS` question is **NO on test 1**, a fourth consecutive session for the same
+reason. **The re-run is bit-identical across all 36 existing regimes, predicted in
+advance** — the diff is additions only — with three new regimes, and the legibility
+evidence is exact: same budget, same promise, **26.2 % in 2027 against a control's 25.9**
+and **10.6 % in 2032 against 11.1**, so the promise is worth **+0.3 at the election it is
+made for and −0.5 at the election it is judged at**. Keeping it instead holds the office
+at 27.0. **The eighteenth screenshot pass found two bugs, both the readout's**: a breach
+cost printed in no unit two lines under a turnout figure of the identical shape, and a
+live promise that never said what it had cost — the one figure the section exists to be a
+ledger of. Model: [docs/pledge-model.md](docs/pledge-model.md).
+
+`--pledge` is the twenty-first screenshot flag and it wants the **opposite end of the
+scroll from `--campaign`**, which is the same panel: the ledger is at the top and the
+promises are at the bottom, so V1.6e's correction now has a *direction* per flag rather
+than per panel. And `tests/test_pledges.gd` reads **`tools/balance_probe.gd` and
+`tests/test_balance.gd`** and fails if either does not name `Pledges.tick_month` — V1.5d
+shipped with neither harness calling `Media.tick_month()`, so both ran the pre-session
+model and their agreement about a bit-identical re-run was about nothing. A bit-identical
+re-run is the reassuring outcome, which is exactly why that check is a test and not a
+habit.
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-b, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, section 6's last clause with them, and V1.7 is decomposed with (a) and (b) built; only (c) — electoral system choice and referendums — is left.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

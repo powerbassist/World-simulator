@@ -316,8 +316,10 @@ They are serialised regardless, and the reasons differ:
 - `campaign_bill_pct_gdp` — recomputed on the first tick; serialised so a save read back
   and never ticked reports the budget it was saved with.
 
-`tests/test_save_load.gd` asserts the version is **still 23**, so V1.7b has to come and
+`tests/test_save_load.gd` asserted the version was **still 23**, so V1.7b had to come and
 say why it moves — V1.3c's device, pointed at the next session for the sixth time.
+**[[pledge-model|V1.7b]] came and said it does not**, for `campaign_running`'s reason
+exactly, and re-armed the device at V1.7c.
 
 ## 14. The balance re-run
 
@@ -374,6 +376,11 @@ costs, and who it reaches, with the buttons appearing only once the window opens
 **And no diary row.** A "campaign opens" entry would be a fixed offset from a date the
 strip already carries, and `calendar.gd` may preload only its own constants — a property
 `tests/test_calendar.gd` enforces and this session declined to weaken for a derived date.
+
+**[[pledge-model|V1.7b]] added a second section to this panel rather than a second
+window**, and it wanted the opposite end of this scroll: the promises are last, so
+`--pledge` pins to the bottom where `--campaign` deliberately does not. V1.6e's
+correction has a **direction** as well as a subject, and one panel now needs both.
 
 ## 16. The screenshot pass
 
