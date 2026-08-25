@@ -109,13 +109,27 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
                             "materialLayers", "road-generator")
   ```
 
-  Only `godot_mcp_toolkit` has anything to do with this project — it is what
-  `runtime_screenshot` and `input_simulate` reach a running game through. The other
-  four are installed in the editor and enabled by it; nothing in `src/` reads them,
-  and `DialogueManager` is an autoload for a plugin with no reader, which is exactly
-  what the no-autoloads rule above is about. **The committed file has no `[autoload]`
-  section at all** — the block is an addition in the diff, so a fresh clone is clean
-  and the rule holds where it matters.
+  `godot_mcp_toolkit` is the one this project already uses — it is what
+  `runtime_screenshot` and `input_simulate` reach a running game through.
+  **`dialogue_manager` is PARKED ON PURPOSE, not junk**: it is installed ahead of a
+  planned use, so do not strip it on the reasoning that nothing in `src/` reads it
+  yet. `at-icons`, `materialLayers` and `road-generator` are neither — the editor
+  enabled them because they are installed on the machine. **The committed file has no
+  `[autoload]` section at all** — the block is an addition in the diff, so a fresh
+  clone is clean and the rule holds where it matters.
+
+  **What adopting `dialogue_manager` will cost, recorded now because it is cheaper to
+  read than to rediscover.** Two rules above collide with it and neither is a
+  formality. *No autoloads in the game code*: the plugin installs `DialogueManager` as
+  one, so using it means either reaching it without the autoload or taking the autoload
+  as a stated exception with its reason written down — not letting it arrive because
+  the editor put it there. And *`src/` may reference an addon file only if that file is
+  committed*: `addons/` is gitignored, so the moment anything under `src/` imports it,
+  the addon has to be committed or `tools/run_tests.sh` fails from a fresh clone, which
+  is the same fresh-clone reason the fonts, the icons and the Blue Marble raster are all
+  read as bytes rather than `load()`ed. Section 8's data-defined events with
+  preconditions and choice lists are the obvious candidate — an inference from the
+  tier, not a decision anyone has made.
 
   **The consequence to know when reading a probe diff:** `MCPRuntimeServer` autoloads
   into *every* local run, headless ones included, and prints its port. V1.7c's balance
