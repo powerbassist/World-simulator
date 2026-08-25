@@ -93,6 +93,36 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   "<repo>" --headless --import` once before `git add`, and check that every new
   script has its pair.
 
+- **`project.godot` is ALWAYS dirty in the working copy, and it is never yours.**
+  The Godot editor rewrites it on every open with whatever addons are installed on
+  that machine, so `git status` shows `M project.godot` in every session. Do not
+  stage it — commit `a1bf146` already paid for that once. What it currently adds,
+  written down so no session has to re-derive it:
+
+  ```
+  [autoload]
+  MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
+  DialogueManager="*uid://c3rodes2l3gxb"
+
+  [editor_plugins]
+  enabled=PackedStringArray("at-icons", "dialogue_manager", "godot_mcp_toolkit",
+                            "materialLayers", "road-generator")
+  ```
+
+  Only `godot_mcp_toolkit` has anything to do with this project — it is what
+  `runtime_screenshot` and `input_simulate` reach a running game through. The other
+  four are installed in the editor and enabled by it; nothing in `src/` reads them,
+  and `DialogueManager` is an autoload for a plugin with no reader, which is exactly
+  what the no-autoloads rule above is about. **The committed file has no `[autoload]`
+  section at all** — the block is an addition in the diff, so a fresh clone is clean
+  and the rule holds where it matters.
+
+  **The consequence to know when reading a probe diff:** `MCPRuntimeServer` autoloads
+  into *every* local run, headless ones included, and prints its port. V1.7c's balance
+  re-run diff carried two lines of `listening on 127.0.0.1:657x` noise for that reason
+  and nothing else. Filter it, but do not let it hide a third line — that run had one,
+  and it was real.
+
 ## Current focus
 
 **U5a shipped the ruler's shell, U5b the world map and U5c its layers,
