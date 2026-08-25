@@ -76,3 +76,10 @@ const FIXED_COOLDOWN := "cooldown"
 ## constitutional deadline, an institution's own calendar or the expiry of an act
 ## already taken.
 const FIXED_PROJECT := "project_completes"
+
+## V1.7c. A referendum in flight is dated state the game already carries, and it fits
+## here for FIXED_PROJECT's exact reason: the register counts MONTHS REMAINING, the
+## idiom every countdown above uses, so this is one more plain-field read and this
+## file still preloads nothing. src/sim/calendar.gd does not know what a referendum
+## asks, what it costs or whether it can be called off -- only when the country votes.
+const FIXED_REFERENDUM := "referendum"

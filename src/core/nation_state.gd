@@ -304,6 +304,27 @@ var start_bloc_burden: float = 0.0
 ## Copied from Nation at new-game; the assembly's size never changes mid-game.
 var assembly_seats: int = 0
 
+## How this nation's votes become seats, and the share a party must clear to get
+## any. LIFTED FROM Nation AT V1.7c, exactly as V1.2b lifted formation_method,
+## censure_rule and the rest: an electoral system nobody can change is a constant
+## wearing a data string, and docs/tiers/v1.md section 7 has asked for the choice
+## since the tier was written.
+##
+## Written by Legislature.apply()'s institutional channel and by
+## Elections.init_nation(), and by nothing else. Read by Elections.resolve() for
+## the NATIONAL vote only -- the European election allocates on `pr_national`
+## whatever the nation does at home, because an EU-wide method is not one member
+## state's to amend.
+##
+## NOT a constitutional amendment, which is the correction V1.7c made to its own
+## row: electoral law is ordinary legislation in essentially all ten (France's
+## code electoral, changed by ordinary law in 1985 and again in 1986; Germany's
+## Bundeswahlgesetz in 2023; Italy's Rosatellum; Britain's ordinary Act), so
+## law.gd puts these two keys on the ORDINARY side of its institutional split and
+## leaves the entrenched six where they were. See docs/electoral-systems.md.
+var election_system: String = ""
+var election_threshold_pct: float = 0.0
+
 ## The PLAYER's term in months: the executive's where one exists (France), the
 ## legislature's otherwise -- see docs/government-model.md's two clocks. Not
 ## simply term_years * 12 from the legislative block; Elections.init_nation()
@@ -381,6 +402,27 @@ var term_limit: int = 0
 ## valid amendment target (entrenchment), which is why it lives here rather
 ## than being read straight off Nation. See docs/amendment-model.md.
 var amendment_rule: String = ""
+
+## Whether this nation's constitution offers a REFERENDUM route to an amendment,
+## and whether it is a choice or the only path. Copied from Nation at new-game and
+## never written again: no content writes it, so unlike amendment_rule directly
+## above, a nation cannot vote itself a referendum. See docs/referendum-model.md.
+var referendum_mode: String = ""
+
+## The referendum in flight: {law_id, months_left, position}, empty when there is
+## none. One at a time, and the register is the whole of that rule -- "the country
+## votes on this question" is not a bound that needed a constant.
+##
+## `position` is COPIED IN at announcement rather than re-read from the loader at
+## resolution, so the question the country answers is the question it was asked.
+## Written by Referendum.announce(), Referendum.resolve_due() and
+## Referendum.withdraw(), and by nothing else.
+var referendum_pending: Dictionary = {}
+
+## What the country last said, for the panel. `last_project_result`'s shape, and
+## not serialised for its reason either: a display record of something that has
+## already happened to the register above.
+var last_referendum_result: Dictionary = {}
 
 ## Whether this nation's own constitution permits changing its political
 ## system at all. Copied from Nation at new-game and never written again --
@@ -801,6 +843,119 @@ var project_bill_pct_gdp: float = 0.0
 ## display record of something that has already happened to the register.
 var last_project_result := {}
 
+# --- The campaign phase (V1.7a) --------------------------------------------------
+
+## Effort ids currently in the field. Written by Campaign.execute() and by
+## Campaign.tick_month()'s clear, and by nothing else -- the single-writer discipline
+## `share`, `state_share`, `regulation_burden`, `gini_index`, `sector_investment` and
+## `projects` are each held to.
+##
+## AN ARRAY AND NOT A DICTIONARY, unlike every other register on this page, because
+## there is nothing per-entry to remember. What an effort costs and who it reaches are
+## AUTHORED in data/campaign-actions/, and how long it has run is already in the
+## accumulator below -- so an entry would carry only its own key. `projects` needs a
+## dictionary because months_left and done are live per project; this does not.
+##
+## EARNS NO SAVE_VERSION BUMP, and the rule is applied literally: absent it reads as
+## "no effort in the field", which is the truth about every version-23 save, because
+## those games had no campaign verb. `measures` at V1.3c, `pacts` at V1.3g,
+## `appointments` at U6a, `sector_investment` at V1.6e. Serialised anyway, because a
+## verb writes it and no tick can recompute it -- a save that dropped it would silently
+## stand down a campaign in progress and hand the player back its bill.
+var campaign_running: Array = []
+
+## Effort ids that have been in the field at any point in the CURRENT run-up, whether
+## or not they still are. Written by Campaign.execute() and by Campaign.tick_month()'s
+## clear, and by nothing else -- `campaign_running`'s single-writer discipline.
+##
+## AN EFFORT GETS ONE RUN PER WINDOW, and this register is the whole of that rule.
+## Without it, start/stop/start inside one month re-paid the action's authored
+## `bloc_offset` on every cycle -- a permanent accumulator charged at the press against
+## a bill charged over the running set once a month, so the loop cost nothing and
+## elapsed no time. See Campaign._op_legal().
+##
+## EARNS THE BUMP TO 24, where `campaign_running` beside it earned nothing, and the
+## reason is the one this list has used since V1.3a: absent it reads as "no effort has
+## run yet" while the serialised `campaign_running` says one is in the field, so the
+## two disagree and the disagreement is the exploit. A save reloaded inside a run-up
+## hands every spent effort back, which makes save-scumming an unbounded version of the
+## press loop the register exists to close -- `diplo_months_to_act` at U6a, whose
+## absent value read as "act now", and the spent-days counter U6a's probe deleted
+## before it could hand a reloading player their month back.
+var campaign_started: Array = []
+
+## Bloc → accumulated mobilisation, as a shift in the LOG-ODDS of that bloc turning
+## out. Read by Campaign.turnout_of(), which Elections.vote_share() calls in place of
+## election_constants.BLOC_TURNOUT's raw figure.
+##
+## *** THE FIRST WRITER OF TURNOUT THIS PROJECT HAS EVER HAD, and that is why the
+## campaign lands here rather than on approval. *** BLOC_TURNOUT is read in exactly two
+## places, both inside vote_share(), and nothing has ever moved it -- so this register
+## has no double count to resolve, where a campaign term on ns.bloc_approval would have
+## been a second writer of the one quantity the whole game is judged on. See
+## docs/campaign-model.md.
+##
+## An absent bloc reads 0.0 and turnout_of() returns the authored constant BIT-FOR-BIT,
+## which is what keeps the nine non-playing nations and every pre-V1.7a test identical.
+##
+## EARNS NO BUMP, for `campaign_running`'s reason exactly, and it is serialised for a
+## second one the array does not have: it is spent at the ballot box, so a save reloaded
+## in the last month of a run-up would otherwise go to the vote with a campaign the
+## player has already paid for and no longer has.
+var campaign_mobilisation := {}
+
+## V1.7a's computed spending line, recomputed once a month by Campaign.tick_month() and
+## read from here rather than called for -- the SIXTH to take this route after the bloc
+## transfer, the deployment bill, the subsidy bill, the investment bill and the project
+## bill, cached for the same reason: budget.gd's recompute() reads it a month late on
+## purpose, because `deficit_pct_gdp` is one of this verb's own precondition fields and
+## a bill that widened the deficit inside the month would close a loop.
+##
+## THE SECOND BILL IN THIS PROJECT THAT STOPS, and it stops on a date the player cannot
+## move. V1.6f's project bill ends when the work does, which is a length the player
+## chose by choosing the project; this one ends at the vote.
+##
+## Earns nothing on the rule -- recomputed from `campaign_running` and the content on
+## the first tick after a load -- and is serialised anyway so a save read back and never
+## ticked reports the budget it was saved with. `project_bill_pct_gdp`'s case.
+var campaign_bill_pct_gdp: float = 0.0
+
+## The most recent campaign action, for the panel to read after acting.
+## `last_project_result`'s shape, and not serialised for its reason either: it is a
+## display record of something that has already happened to the register.
+var last_campaign_result := {}
+
+# --- Campaign promises (V1.7b) -----------------------------------------------------
+
+## The promises this nation has on the books. One entry per promise, each carrying the
+## {field, op, value} triple it is judged on, the two dates that bound the term it
+## binds, and how many of that term's months it has stood broken. Written by
+## Pledges.execute() and Pledges.tick_month() and by nothing else.
+##
+## *** IT HOLDS NO CONTENT. *** The breach rates and the promise's own display name
+## live in data/pledges/ and are read through the loader on every tick, so a save
+## round-trips the DECISION and never the ladder -- the property tests/test_pledges.gd
+## pins, and V1.4a's, V1.6e's, V1.6f's and V1.7a's tests before it.
+##
+## *** THE TWO DATES ARE FROZEN RATHER THAN DERIVED, and that is the one place it
+## matters. *** Elections.tick_month() pushes next_executive_* a full term forward the
+## moment the incumbent wins, so a promise deriving its own deadline from that field
+## would move its own goalposts on the night it was won.
+##
+## EARNS NO SAVE BUMP. Absent it reads as "nothing promised", which is the truth about
+## every version-23 save because those games had no pledge verb -- `measures` at
+## V1.3c, `pacts` at V1.3g, `appointments` at U6a, `campaign_running` at V1.7a. It is
+## serialised regardless and that half is not free: a verb writes it, no tick
+## recomputes it, and the reward has ALREADY been paid, so a save that dropped it would
+## hand the player the upside of every promise they had made and delete the liability.
+## `regulation_burden`'s case at V1.4b, and tests/test_save_load.gd checks that premise
+## rather than asserting it.
+var pledges: Array = []
+
+## The most recent pledge action, for the panel to read after acting.
+## `last_campaign_result`'s shape, and not serialised for its reason either.
+var last_pledge_result := {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1103,6 +1258,8 @@ func duplicate_state():
 	s.start_bloc_burden = start_bloc_burden
 
 	s.assembly_seats = assembly_seats
+	s.election_system = election_system
+	s.election_threshold_pct = election_threshold_pct
 	s.term_months = term_months
 	s.months_in_term = months_in_term
 	s.next_election_year = next_election_year
@@ -1128,6 +1285,12 @@ func duplicate_state():
 	s.lose_condition = lose_condition
 	s.term_limit = term_limit
 	s.amendment_rule = amendment_rule
+	s.referendum_mode = referendum_mode
+	# Deep, because Referendum.resolve_due() writes months_left in place and a shared
+	# reference surviving a Budget.project() would let a projection tick the live
+	# register -- docs/tax-model.md section 11's bug, avoided by shape.
+	s.referendum_pending = referendum_pending.duplicate(true)
+	s.last_referendum_result = last_referendum_result.duplicate(true)
 	s.permits_system_change = permits_system_change
 
 	s.dissolution_rule = dissolution_rule
@@ -1191,6 +1354,14 @@ func duplicate_state():
 	s.projects = projects.duplicate(true)
 	s.project_potential_target_pct = project_potential_target_pct
 	s.project_bill_pct_gdp = project_bill_pct_gdp
+	s.campaign_running = campaign_running.duplicate()
+	s.campaign_started = campaign_started.duplicate()
+	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
+	s.campaign_bill_pct_gdp = campaign_bill_pct_gdp
+	# Deep, because each entry is a Dictionary and Pledges.tick_month() writes
+	# `breach_months` INSIDE one -- a shallow duplicate would let a Budget.project()
+	# copy count breaches onto the live register. tests/test_state_copy.gd's own probe.
+	s.pledges = pledges.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1280,6 +1451,8 @@ func to_dict() -> Dictionary:
 		"start_bloc_burden": start_bloc_burden,
 
 		"assembly_seats": assembly_seats,
+		"election_system": election_system,
+		"election_threshold_pct": election_threshold_pct,
 		"term_months": term_months,
 		"months_in_term": months_in_term,
 		"next_election_year": next_election_year,
@@ -1305,6 +1478,8 @@ func to_dict() -> Dictionary:
 		"lose_condition": lose_condition,
 		"term_limit": term_limit,
 		"amendment_rule": amendment_rule,
+		"referendum_mode": referendum_mode,
+		"referendum_pending": referendum_pending,
 		"permits_system_change": permits_system_change,
 
 		"dissolution_rule": dissolution_rule,
@@ -1368,6 +1543,11 @@ func to_dict() -> Dictionary:
 		"projects": projects,
 		"project_potential_target_pct": project_potential_target_pct,
 		"project_bill_pct_gdp": project_bill_pct_gdp,
+		"campaign_running": campaign_running,
+		"campaign_started": campaign_started,
+		"campaign_mobilisation": campaign_mobilisation,
+		"campaign_bill_pct_gdp": campaign_bill_pct_gdp,
+		"pledges": pledges,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -1491,6 +1671,14 @@ static func from_dict(d: Dictionary):
 	# JSON has one numeric type; Godot's parser hands every number back as a
 	# float. Cast the int-typed fields back explicitly.
 	s.assembly_seats = int(d.get("assembly_seats", 0))
+	# V1.7c, and the pair EARNS the bump to 25. Absent they read "" and 0.0;
+	# ElectoralSystems.allocate() falls through its match on an unknown method and
+	# every seat allocation collapses to zero, so a reloaded game runs a DIFFERENT
+	# model from the one that saved it. from_dict() never sees the loader, so a
+	# content-derived static fact cannot be re-derived here -- docs/cycle-model.md's
+	# V1.6a finding, and `military_capability` at V1.3g before it.
+	s.election_system = d.get("election_system", "")
+	s.election_threshold_pct = float(d.get("election_threshold_pct", 0.0))
 	s.term_months = int(d.get("term_months", 0))
 	s.months_in_term = int(d.get("months_in_term", 0))
 	s.next_election_year = int(d.get("next_election_year", 0))
@@ -1516,6 +1704,15 @@ static func from_dict(d: Dictionary):
 	s.lose_condition = d.get("lose_condition", "")
 	s.term_limit = int(d.get("term_limit", 0))
 	s.amendment_rule = d.get("amendment_rule", "")
+	# Both V1.7c fields earn the bump and they fail the rule DIFFERENTLY, which is why
+	# tests/test_save_load.gd asserts them apart. An absent `referendum_mode` reads ""
+	# -- no route -- so a reloaded France silently loses a path its constitution has
+	# (Art. 89), `eu_member` at V1.3b. An absent `referendum_pending` DELETES a vote
+	# the country has already been called to, which is a free withdrawal of the one
+	# thing V1.7c made un-free: `campaign_started` one commit earlier, and
+	# `diplo_months_to_act` at U6a.
+	s.referendum_mode = d.get("referendum_mode", "")
+	s.referendum_pending = d.get("referendum_pending", {})
 	s.permits_system_change = d.get("permits_system_change", false)
 
 	s.dissolution_rule = d.get("dissolution_rule", "")
@@ -1586,6 +1783,21 @@ static func from_dict(d: Dictionary):
 	s.projects = d.get("projects", {})
 	s.project_potential_target_pct = float(d.get("project_potential_target_pct", 0.0))
 	s.project_bill_pct_gdp = float(d.get("project_bill_pct_gdp", 0.0))
+	# V1.7a, and NONE of these three is the line above them. All three absent read as
+	# "no campaign", which is the truth about every version-23 save because those games
+	# had no campaign verb -- `measures` at V1.3c, `sector_investment` at V1.6e. So the
+	# version is STILL 23, and tests/test_save_load.gd asserts that as well as the
+	# round trip, so V1.7b has to come and say why it moves.
+	s.campaign_running = d.get("campaign_running", [])
+	s.campaign_started = d.get("campaign_started", [])
+	s.campaign_mobilisation = d.get("campaign_mobilisation", {})
+	s.campaign_bill_pct_gdp = float(d.get("campaign_bill_pct_gdp", 0.0))
+	# V1.7b, and it is `campaign_running`'s case one session on: absent it reads as
+	# "nothing promised", true of every version-23 save because those games had no
+	# pledge verb. So the version is STILL 23 -- V1.3c's device, pointed at V1.7c for
+	# the seventh time -- and tests/test_save_load.gd checks the PREMISE that dropping
+	# it changes behaviour rather than asserting it.
+	s.pledges = _pledges_from(d.get("pledges", []))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -1618,6 +1830,35 @@ static func from_dict(d: Dictionary):
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s
+
+
+## The pledge register, with its types restored.
+##
+## JSON has one number type, so every `int` in the register comes back as a float and a
+## save round trip would silently change the shape of the thing it round-tripped.
+## src/sim/pledges.gd casts on every read and so does not care -- but a register that
+## comes back different from how it went out is a trap for whoever reads it next, and
+## tests/test_save_load.gd compares the two element by element rather than trusting it.
+static func _pledges_from(raw) -> Array:
+	if typeof(raw) != TYPE_ARRAY:
+		return []
+	var out: Array = []
+	for entry in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		out.append({
+			"pledge_id": String(entry.get("pledge_id", "")),
+			"field": String(entry.get("field", "")),
+			"op": String(entry.get("op", "")),
+			"value": float(entry.get("value", 0.0)),
+			"from_year": int(entry.get("from_year", 0)),
+			"from_month": int(entry.get("from_month", 1)),
+			"until_year": int(entry.get("until_year", 0)),
+			"until_month": int(entry.get("until_month", 1)),
+			"breach_months": int(entry.get("breach_months", 0)),
+			"months_live": int(entry.get("months_live", 0)),
+		})
+	return out
 
 
 func debt_to_gdp_pct() -> float:

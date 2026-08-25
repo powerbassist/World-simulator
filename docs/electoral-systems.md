@@ -107,6 +107,25 @@ Parliament election — exactly as happened in June 2024, and exactly why
 All five live in `src/sim/electoral_systems.gd`, one pure function per method
 plus a dispatch on the `system` string.
 
+> [!note] Since V1.7c the method is LIVE STATE, not a fixed fact
+> `election_system` and `election_threshold_pct` were lifted from `Nation` onto
+> `NationState`, exactly as [[political-systems|V1.2b]] lifted `formation_method`
+> and the rest — an electoral system nobody can change is a constant wearing a
+> data string. The player changes it with an **ordinary Act**, not a
+> constitutional amendment, because electoral law is ordinary legislation in
+> essentially all ten (France's code électoral, changed by ordinary law in 1985
+> and again in 1986; Germany's Bundeswahlgesetz in 2023; Italy's Rosatellum;
+> Britain's ordinary Act). The row that asked for this called it "a seventh
+> `effects.institutional` key", which is right about the channel and wrong about
+> the bar — instance forty-three, and the schema now carries the split. See
+> [[referendum-model]] §1.
+>
+> The **European** election is untouched: it allocates on `pr_national` whatever
+> the nation does at home, because an EU-wide method is not one member state's to
+> amend. And `resolve_executive()` takes no system parameter, so for France an
+> electoral reform reshapes only the Assembly the president must legislate
+> through — never the presidential result itself.
+
 ### The honest caveat
 
 The MVP has **no constituency geography** — the map is [[ROADMAP|S8]], and it
@@ -198,5 +217,5 @@ costs one data file and zero new mechanics, because it reuses every piece of
 
 ---
 
-Related: [[index]] · [[election-model]] · [[data-architecture]] ·
+Related: [[index]] · [[election-model]] · [[referendum-model]] · [[data-architecture]] ·
 [[opinion-model]] · [[ROADMAP]]

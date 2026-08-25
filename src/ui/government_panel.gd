@@ -73,7 +73,33 @@ const AMENDMENT_LABEL := {
 	"three_fifths": "3/5 of the assembly",
 	"two_thirds": "2/3 of the assembly",
 	"three_quarters": "3/4 of the assembly",
-	"referendum_required": "a mandatory referendum; not proposable in this game",
+	"referendum_required": "an ordinary majority of the assembly, and then a referendum",
+}
+
+## V1.7c. Silent under `none`, which is six of the ten: a line saying a country has
+## no referendum is permanent furniture, and docs/society-model.md section 11's rule
+## is that a readout silent at zero beats one that always prints.
+const REFERENDUM_LABEL := {
+	"optional": "The head of state may put an amendment to the country instead, on an ordinary majority here.",
+	"mandatory": "Every amendment goes to the country; there is no path through the assembly alone.",
+}
+
+## V1.7c, and this line exists because the SCREENSHOT PASS found it missing. The
+## session made `election_system` live state and left no surface saying which one is
+## live, so a player who passed the Proportional Representation Act could not read that
+## it had taken effect until the next legislative election three years later -- a lever
+## whose only feedback is a three-year wait is a lever with no readout at all.
+##
+## NEVER SILENT, unlike the referendum line above, and the distinction is the same one
+## docs/credit-model.md drew for the rating: an absent referendum route is a fact about
+## a constitution that most nations simply do not have, where every assembly in the
+## world is elected somehow. What it says is how, not whether.
+const ELECTION_SYSTEM_LABEL := {
+	"pr_dhondt": "proportional representation, D'Hondt",
+	"pr_national": "national proportional representation",
+	"fptp": "single-member seats, one round",
+	"two_round": "single-member seats over two rounds",
+	"parallel": "a parallel mix of list and single-member seats",
 }
 
 var _state
@@ -272,6 +298,15 @@ func _refresh() -> void:
 		ns.coalition_position["economic"], ns.coalition_position["social"]
 	])
 	_add_line("A constitutional amendment needs %s." % AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule))
+	if REFERENDUM_LABEL.has(ns.referendum_mode):
+		_add_line(REFERENDUM_LABEL[ns.referendum_mode])
+	var method: String = String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system))
+	if ns.election_threshold_pct > 0.0:
+		_add_line("The assembly is elected by %s, with a %.1f%% threshold." % [
+			method, ns.election_threshold_pct
+		])
+	else:
+		_add_line("The assembly is elected by %s, with no threshold." % method)
 
 	_add_line("")
 	_add_line("In government")

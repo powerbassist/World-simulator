@@ -14,6 +14,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open laws
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open government
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -32,6 +37,11 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -102,6 +112,29 @@ var _agenda := false
 ## it under. Generic rather than a flag per panel: --bloc exists because it has to
 ## SET UP state the panel has nothing to show without, which is a different job
 ## from simply opening a window.
+## V1.7a, and --coerce's argument for the fifteenth time. A campaign register is EMPTY
+## outside the run-up and for every game that has not campaigned, so a frame of the
+## Campaign panel on a new game shows six turnout rows at their authored constants, an
+## em dash on the budget's campaign line and nothing in the field -- which is the
+## absence of the feature rather than the feature. This ticks into the run-up, puts two
+## efforts into the field through Campaign.execute(), and ticks again so the
+## mobilisation has accrued and the bill has been billed.
+var _campaign := false
+## V1.7b, and --campaign's argument in its harder form. A pledge register is empty for
+## every game that has not promised anything, AND a promise that has been made but not
+## yet broken renders identically to no promise at all on the row that matters. So the
+## flag has to cross an election and then break something, or the frame proves nothing
+## about the one thing the panel exists to show.
+var _pledge := false
+
+## V1.7c. Two flags and not one, because the session ships two verbs at two different
+## bars and a frame of either proves nothing about the other. --referendum photographs
+## a vote in flight on the law panel; --electoral photographs an assembly elected under
+## a system the player changed, which is only visible after the NEXT legislative
+## election and is therefore the slower of the two.
+var _referendum := false
+var _electoral := false
+
 var _open := ""
 
 ## V1.3e, and --bloc's argument a third time. The nation panel's refusal line only
@@ -264,6 +297,14 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--campaign":
+			_campaign = true
+		elif args[i] == "--pledge":
+			_pledge = true
+		elif args[i] == "--referendum":
+			_referendum = true
+		elif args[i] == "--electoral":
+			_electoral = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -355,6 +396,15 @@ func _apply_view() -> void:
 		_back_the_biggest_sector()
 	if _build:
 		_break_ground()
+	if _campaign:
+		_open_the_campaign()
+
+	if _pledge:
+		_make_and_break_a_promise()
+	if _referendum:
+		_call_a_referendum()
+	if _electoral:
+		_reform_the_ballot()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -1277,6 +1327,129 @@ func _back_the_biggest_sector() -> void:
 ##
 ## No panel re-sync, for --invest's reason exactly: this verb does not go through
 ## Budget.commit() either, so budget_panel.gd's stale `_pending` cannot be reached.
+## V1.7a. Ticks to the month the run-up opens, puts the two cheapest efforts into the
+## field, then ticks four more months so there is an accrual to read and a bill to
+## print. Through Campaign.execute() rather than by writing the register, so the frame
+## shows what a click produces -- including the bloc offsets the price is made of.
+##
+## STOPS FOUR MONTHS SHORT OF THE VOTE, and that is deliberate. Campaign.tick_month()
+## CLEARS the whole register the month the window shuts, so a flag that ticked past the
+## election would photograph an empty panel and a zero bill -- V1.6b's flag ticking 48
+## months and running past the thing it existed to capture, in a new place. The one
+## surface where the register is visible is inside the run-up.
+func _open_the_campaign() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var to_open: int = Campaign.months_to_election(state, ns) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	if to_open > 0:
+		_tick_months(to_open)
+	if not Campaign.is_open(state, ns):
+		printerr("--campaign: the run-up did not open (%d months to the vote)" % Campaign.months_to_election(state, ns))
+		return
+
+	# Cheapest first, so the concurrency gate admits two rather than one expensive one.
+	var starts: Array = []
+	for a in _main._loader.campaign_actions:
+		var terms: Dictionary = a.effects.get("campaign", {})
+		if String(terms.get("op", "")) == "start":
+			starts.append(a)
+	starts.sort_custom(func(x, y):
+		return (
+			float(x.effects["campaign"]["cost_pct_gdp"]) < float(y.effects["campaign"]["cost_pct_gdp"])
+		)
+	)
+
+	var begun := 0
+	for a2 in starts:
+		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2).get("applied", false):
+			begun += 1
+	if begun == 0:
+		printerr("--campaign: no effort could be started")
+		return
+
+	_tick_months(4)
+
+	# NOT scrolled, where --build and --invest both are, and the first frame is why. This
+	# panel's TOP is the half a reader has to check -- the months to the vote and the
+	# campaign bill, which is the row the budget panel's own campaign line must agree
+	# with -- and pinning to the bottom put both off the frame and opened on a sentence
+	# cut in half. V1.6e's correction has a direction as well as a subject: scroll to
+	# where the flag's own claim is, and here that is the ledger.
+
+
+## V1.7b. Two promises made in the run-up, an election crossed, and one of them broken
+## for a year -- because the row a reader has to check is "broken N of M months", and
+## every cheaper version of this flag renders identically to no promise at all.
+##
+## COMMITS `managed` FIRST, and that is not decoration. The promises bind the term the
+## run-up wins, so the flag has to survive an executive election to reach a single month
+## the register charges on; tools/balance_probe.gd's `managed` is the budget that does.
+## A flag that lost the vote would photograph a run that had ended.
+##
+## SCROLLED TO THE BOTTOM, where --campaign deliberately is not. The promises section is
+## the last thing on this panel, so the ledger --campaign checks and the promises this
+## flag checks are at opposite ends of one scroll. V1.6e's correction has a DIRECTION as
+## well as a subject, and here the two flags need opposite ones.
+func _make_and_break_a_promise() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	_commit_delta({"defence": -1.4}, {"vat": 3.0})
+
+	var to_open: int = Campaign.months_to_election(state, ns) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	if to_open > 0:
+		_tick_months(to_open)
+
+	var made := 0
+	for a in _main._loader.pledges:
+		if Pledges.execute(state, ns, _main._loader.pledges, a).get("applied", false):
+			made += 1
+	if made == 0:
+		printerr("--pledge: no promise could be made (%d months to the vote)" % Campaign.months_to_election(state, ns))
+		return
+
+	# Past the vote and into the term the promises bind.
+	_tick_months(CampaignK.CAMPAIGN_WINDOW_MONTHS + 2)
+	if not ns.in_government:
+		printerr("--pledge: the incumbent lost the vote, so no promise ever came due")
+		return
+
+	# Break them: the income tax up and the health line down, which is exactly what the
+	# tax lock and the health guarantee forbid.
+	_commit_delta({"health": -4.0}, {"income": 8.0})
+	_tick_months(12)
+
+	var broken := 0
+	for entry in ns.pledges:
+		broken += int(entry["breach_months"])
+	if broken == 0:
+		printerr("--pledge: nothing was broken, so the frame shows a promise being kept")
+
+	if _main._campaign_panel != null:
+		_main._campaign_panel.scroll_to_bottom()
+
+
+## balance_probe.gd's nation-relative deltas, through the real Budget.commit() so the
+## frame shows a budget the player could have set.
+func _commit_delta(spending: Dictionary, taxes: Dictionary) -> void:
+	var state = _main._state
+	var ns = state.player()
+	var pending := {
+		"tax_rates_pct": ns.tax_rates_pct.duplicate(),
+		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(),
+	}
+	for key in taxes:
+		pending["tax_rates_pct"][key] = float(pending["tax_rates_pct"].get(key, 0.0)) + float(taxes[key])
+	for key in spending:
+		pending["spending_pct_gdp"][key] = float(pending["spending_pct_gdp"].get(key, 0.0)) + float(spending[key])
+	Budget.commit(state, pending)
+
+
 func _break_ground() -> void:
 	var state = _main._state
 	if state == null:
@@ -1312,3 +1485,86 @@ func _break_ground() -> void:
 	# the one this flag exists to photograph -- is below both of the others.
 	if _main._projects_panel != null:
 		_main._projects_panel.scroll_to_bottom()
+
+
+## V1.7c. A referendum called and left in flight, so the law panel's pending block is
+## on the frame with a live countdown and a live yes share.
+##
+## NOT TICKED PAST THE VOTE, and that is the flag's whole claim. A resolved referendum
+## renders as an ordinary result summary, which is a frame of the machine V1.2c already
+## shipped; what V1.7c added is the state BETWEEN the division and the answer, and that
+## exists for exactly REFERENDUM_DELAY_MONTHS. Ticked to roughly half of it so the
+## countdown reads a number that is neither its start nor its end -- V1.6f's own bug,
+## where a project hover printed "12 of 96 months" and a reader could not tell which
+## twelve.
+##
+## SCROLLED TO THE TOP, where --pledge is scrolled to the bottom: the pending block is
+## the first thing on the law panel by construction, because while a referendum is
+## running it is the only thing the list of proposable laws cannot say. V1.6e's
+## correction has a direction per flag.
+func _call_a_referendum() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var law = null
+	for candidate in Legislature.available(ns, _main._loader.laws):
+		if Legislature.can_put_to_referendum(ns, candidate):
+			law = candidate
+			break
+	if law == null:
+		printerr("--referendum: no amendment could be put to the country")
+		return
+
+	var result := Legislature.propose(state, _main._loader, law, false, true)
+	if not bool(result.get("referendum_called", false)):
+		printerr("--referendum: the assembly refused %s (%d of %d)" % [
+			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
+		])
+		return
+
+	_tick_months(int(ReferendumK.REFERENDUM_DELAY_MONTHS / 2))
+	if not Referendum.is_pending(ns):
+		printerr("--referendum: the vote resolved before the frame was taken")
+
+
+## V1.7c. The electoral system changed by an ORDINARY Act, and then an assembly actually
+## elected under it -- which is the only thing that shows the change happened, because
+## the register itself is one string.
+##
+## TICKS PAST JUNE 2029, France's next legislative election, because that is when the
+## new method first allocates a seat. A flag that stopped at the vote would photograph
+## an unchanged assembly under a changed rule and prove nothing, which is V1.6f's
+## all-zero-data-layer argument in a new place.
+func _reform_the_ballot() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	var law = null
+	for candidate in Legislature.available(ns, _main._loader.laws):
+		if candidate.effects.get("institutional", {}).has("election_system"):
+			law = candidate
+			break
+	if law == null:
+		printerr("--electoral: no electoral-reform Act is proposable")
+		return
+
+	var before: String = ns.election_system
+	var result := Legislature.propose(state, _main._loader, law, false)
+	if not bool(result.get("passed", false)):
+		printerr("--electoral: the assembly refused %s (%d of %d)" % [
+			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
+		])
+		return
+	if ns.election_system == before:
+		printerr("--electoral: the Act passed and the system did not move")
+		return
+
+	# Past the next legislative election, so the assembly on the frame is one this
+	# method elected. France's is June 2029 against a January 2026 start.
+	var to_vote: int = (ns.next_election_year - state.year) * 12 + (ns.next_election_month - state.month) + 1
+	if to_vote > 0:
+		_tick_months(to_vote)

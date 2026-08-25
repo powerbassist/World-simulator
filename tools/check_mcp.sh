@@ -119,12 +119,19 @@ else
   ok "no stale addons/godot_mcp reference"
 fi
 
-# The toolkit registers MCPRuntimeServer in project.godot on enable, pointing into
-# gitignored addons/. Committing that gives a fresh clone an autoload whose script
-# does not exist -- measured as three ERROR lines per process, once per test, so
-# noise rather than breakage, but noise nobody chose. Checked against HEAD and the
-# index rather than the working tree, because the working tree legitimately carries
-# it while the plugin is enabled.
+# An editor addon that registers an autoload writes it into project.godot on enable,
+# pointing into gitignored addons/. Committing that gives a fresh clone an autoload
+# whose script does not exist -- measured as three ERROR lines per process, once per
+# test, so noise rather than breakage, but noise nobody chose. Checked against HEAD
+# and the index rather than the working tree, because the working tree legitimately
+# carries these while the plugins are enabled.
+#
+# THE WHOLE SECTION IS CHECKED, NOT ONE ADDON'S LINE. The first version grepped
+# `^MCP.*=.*addons/godot_mcp` -- two conditions an entry had to meet to be seen, and
+# an enabled DialogueManager meets neither: it is not named MCP*, and it registers as
+# `uid://c3rodes2l3gxb` rather than as a path. It sat in the working tree unseen until
+# an external review found it. CLAUDE.md's rule is "no autoloads in the game code", so
+# the guard is now that rule rather than a list of the ways one addon writes itself in.
 if git rev-parse --git-dir >/dev/null 2>&1; then
   # What the NEXT commit will contain: the index when project.godot is staged,
   # HEAD otherwise. Checking HEAD first would keep warning about a line the index
@@ -136,10 +143,35 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     autoload_src=":project.godot"
     autoload_where="the STAGED project.godot"
   fi
-  if git show "$autoload_src" 2>/dev/null | grep -q '^MCP.*=.*addons/godot_mcp'; then
-    warn "$autoload_where carries an MCP autoload -- it points into gitignored addons/, so a fresh clone logs it as a missing script. Drop those lines from what you commit"
+  # awk rather than grep: an autoload is defined by the SECTION it sits in, not by
+  # anything about its own line, so the section is what has to be read.
+  autoloads="$(git show "$autoload_src" 2>/dev/null | awk '
+    /^\[autoload\]/ { inside = 1; next }
+    /^\[/           { inside = 0 }
+    inside && /=/    { print $1 }
+  ')"
+  if [ -n "$autoloads" ]; then
+    warn "$autoload_where carries an [autoload] section -- these point into gitignored addons/, so a fresh clone logs each as a missing script. Drop the section from what you commit:"
+    printf '         %s
+' $autoloads
   else
-    ok "no MCP autoload in what the next commit would contain"
+    ok "no autoload in what the next commit would contain"
+  fi
+
+  # The same failure through the other door. `enabled=` names plugin.cfg paths, and
+  # every addon here is gitignored by CLAUDE.md's rule -- including the toolkit's own,
+  # which is why tracked-ness is NOT the test. The toolkit is the one this project
+  # expects (the check above requires it); anything else in that list is whatever this
+  # machine happens to have installed, and a fresh clone gets an editor error per entry.
+  extra_plugins="$(git show "$autoload_src" 2>/dev/null \
+    | sed -n 's/^enabled=PackedStringArray(\(.*\))$/\1/p' \
+    | tr ',' '\n' | tr -d ' "' | sed 's|^res://||' \
+    | grep -v '^$' | grep -v '^addons/godot_mcp_toolkit/plugin.cfg$' || true)"
+  if [ -n "$extra_plugins" ]; then
+    warn "$autoload_where enables addons beyond the toolkit -- a fresh clone errors on each. Drop them from enabled= in what you commit:"
+    printf '         %s\n' $extra_plugins
+  else
+    ok "no stray addon enabled in what the next commit would contain"
   fi
 fi
 

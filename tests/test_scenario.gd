@@ -218,7 +218,7 @@ func _check_scenario_runs_a_full_term_headless() -> void:
 		Opinion.tick_month(state)
 		state.append_history(Budget.snapshot(state))
 		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 		Dissolution.tick_month(state)
 		Cabinet.tick_month(state, _loader)
 		Elections.tick_month(state, _loader)

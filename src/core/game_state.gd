@@ -26,6 +26,9 @@ const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -318,7 +321,35 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     `investment_bill_pct_gdp`'s case. And `last_project_result` is not serialised at
 ##     all, `last_investment_result`'s case: a display record of something that has
 ##     already happened to the register.
-const SAVE_VERSION := 23
+##   A FIX bumps to 24, which nothing on this list has done before -- every previous
+##     entry is a session adding a machine. `NationState.campaign_started` closes a
+##     V1.7a exploit found by external review: start/stop/start inside one month
+##     re-paid a campaign action's authored `bloc_offset`, a permanent accumulator
+##     charged at the press. The register says which efforts are spent, and it fails
+##     the rule in the sharpest way this list records -- absent it reads as "nothing
+##     has run yet" while `campaign_running`, serialised beside it since V1.7a, says
+##     an effort is in the field. The two disagree, and the disagreement IS the
+##     exploit: a save reloaded inside a run-up hands every spent effort back, so
+##     save-scumming becomes an unbounded version of the press loop the register
+##     exists to close. `diplo_months_to_act` at U6a, whose absent value read as "act
+##     now" and fired nine acts in one month, and the spent-days counter U6a's probe
+##     deleted before it could hand a reloading player their month back.
+##   V1.7c bumps to 25 on TWO fields of four, and they fail the rule differently.
+##     `election_system` (with `election_threshold_pct` beside it) is lifted from
+##     Nation for the first time: absent it reads "" and ElectoralSystems.allocate()
+##     falls through its match, so every seat allocation collapses to zero and the
+##     reloaded game runs a different model from the one that saved it -- V1.6a's
+##     finding that statelessness is a property of the MODULE and not of the save
+##     file, since from_dict() never sees the loader. `referendum_pending` is the
+##     second: absent, a referendum the country has already been called to VANISHES,
+##     which is a free withdrawal of the one act V1.7c deliberately made un-free.
+##     `campaign_started` one commit earlier, and `diplo_months_to_act` at U6a.
+##     `referendum_mode` earns nothing on its own -- it is static content, absent it
+##     reads "" and a nation with no route is a legal state for six of the ten -- but
+##     it is serialised anyway for `eu_member`'s reason: reading "" for FRANCE is a
+##     silently different model. And `last_referendum_result` is not serialised at
+##     all, `last_project_result`'s case.
+const SAVE_VERSION := 25
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -748,6 +779,13 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# could be absent and nothing a roster could differ over.
 	Investment.init_nation(ns)
 	Projects.init_nation(ns)
+	# V1.7a. Nothing in the field and nobody mobilised, so Campaign.turnout_of() returns
+	# election_constants.BLOC_TURNOUT bit-for-bit until a player acts inside a run-up --
+	# which is what lets the whole layer go live with the balance harness bit-identical
+	# across every existing regime.
+	Campaign.init_nation(ns)
+	Pledges.init_nation(ns)
+	Referendum.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})

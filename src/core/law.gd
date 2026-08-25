@@ -51,6 +51,37 @@ const INSTITUTIONAL_INT_KEYS := {
 	"term_months": [12, 120],
 }
 
+## ============================================================================
+## THE CHANNEL HAS TWO BARS, AND THAT IS V1.7c'S CORRECTION TO ITS OWN ROW
+## ============================================================================
+## Everything above requires `constitutional: true`, which forces
+## `majority: "amendment"`, which routes the vote to the nation's own
+## amendment_rule. docs/tiers/v1.md section 7 asked for electoral-system choice as
+## "a seventh effects.institutional key" -- right about the CHANNEL and wrong about
+## the BAR, because that phrasing entrenches the electoral system at each nation's
+## amendment threshold and electoral law is ORDINARY LEGISLATION in essentially all
+## ten: France's code electoral (changed by ordinary law in 1985 and again in 1986),
+## Germany's Bundeswahlgesetz (2023), Italy's Rosatellum, Britain's ordinary Act.
+## It happens to be right for GBR, and only because GBR's amendment_rule already IS
+## `ordinary_law`. Wrong for two of the three playable nations. Instance forty-three.
+##
+## So the keys below may be written by ANY law and the six above may not. That is
+## V1.4a/V1.4b's split written into the schema rather than only into the docs -- a
+## subsidy reaches effects.company directly and a regulation reaches it through an
+## assembly division -- one block later and in the other direction.
+##
+## No template constrains either key and none could: constitutional_monarchy alone
+## covers `fptp`, `pr_dhondt` and `pr_national` across GBR, ESP, BEL, NLD and LUX,
+## so an `allowed_election_systems` field would be a constraint with nothing to say.
+## `term_months` is the precedent -- bounded by its own range check and by no
+## template. See docs/electoral-systems.md and docs/referendum-model.md.
+const ORDINARY_INSTITUTIONAL_KEYS := {
+	"election_system": Nation.KNOWN_ELECTION_SYSTEMS,
+}
+const ORDINARY_INSTITUTIONAL_FLOAT_KEYS := {
+	"election_threshold_pct": [0.0, 20.0],
+}
+
 ## Keys a system-transition amendment must ALSO write if it writes
 ## effects.institutional.system_id -- a bare system_id write would leave every
 ## OTHER field at its pre-transition value, which is exactly the
@@ -258,10 +289,12 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 		out["bloc_offset"] = _extract_keyed_deltas(raw["bloc_offset"], bloc_keys, "effects.bloc_offset", law_id, filename, errors)
 
 	if raw.has("institutional"):
-		if not allow_institutional:
-			errors.append("%s: %s effects.institutional is only valid on a constitutional law" % [filename, law_id])
-		else:
-			out["institutional"] = _extract_institutional(raw["institutional"], law_id, filename, errors)
+		# `allow_institutional` is the law's own `constitutional` flag, and since
+		# V1.7c it selects WHICH keys are legal rather than whether the channel is.
+		# See ORDINARY_INSTITUTIONAL_KEYS.
+		out["institutional"] = _extract_institutional(
+			raw["institutional"], law_id, filename, errors, allow_institutional
+		)
 
 	if raw.has("company"):
 		out["company"] = _extract_company(raw["company"], law_id, filename, errors, sector_keys)
@@ -519,7 +552,7 @@ static func _extract_company(raw, law_id: String, filename: String, errors: Arra
 ## recognised member of the right enum at all; whether it is the RIGHT value
 ## for a given nation's declared system is DataLoader's cross-check against
 ## this law's own `systems` list.
-static func _extract_institutional(raw, law_id: String, filename: String, errors: Array[String]) -> Dictionary:
+static func _extract_institutional(raw, law_id: String, filename: String, errors: Array[String], entrenched: bool) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects.institutional must be an object" % [filename, law_id])
 		return {}
@@ -528,7 +561,27 @@ static func _extract_institutional(raw, law_id: String, filename: String, errors
 
 	var out := {}
 	for key in raw.keys():
-		if key == "system_id":
+		if ORDINARY_INSTITUTIONAL_KEYS.has(key):
+			var permitted: Array = ORDINARY_INSTITUTIONAL_KEYS[key]
+			if typeof(raw[key]) != TYPE_STRING or not permitted.has(raw[key]):
+				errors.append("%s: %s effects.institutional.%s must be one of %s" % [filename, law_id, key, permitted])
+			else:
+				out[key] = raw[key]
+		elif ORDINARY_INSTITUTIONAL_FLOAT_KEYS.has(key):
+			var bounds: Array = ORDINARY_INSTITUTIONAL_FLOAT_KEYS[key]
+			if not (typeof(raw[key]) == TYPE_INT or typeof(raw[key]) == TYPE_FLOAT):
+				errors.append("%s: %s effects.institutional.%s must be numeric" % [filename, law_id, key])
+			else:
+				var f := float(raw[key])
+				if f < float(bounds[0]) or f > float(bounds[1]):
+					errors.append("%s: %s effects.institutional.%s = %s out of range [%s, %s]" % [filename, law_id, key, f, bounds[0], bounds[1]])
+				out[key] = f
+		elif not entrenched:
+			# Every key below this line changes an entrenched institution, and an
+			# ordinary Act may not touch one. Named rather than lumped in with an
+			# unrecognised field, so the error says which rule was broken.
+			errors.append("%s: %s effects.institutional.%s requires constitutional: true" % [filename, law_id, key])
+		elif key == "system_id":
 			# A system-transition target. Whether it names a real template, and
 			# whether the rest of `out` is legal under that template, is
 			# DataLoader's target-side cross-check -- this only checks the

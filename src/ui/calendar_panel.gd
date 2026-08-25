@@ -52,6 +52,7 @@ const FIXED_LABEL := {
 	K.FIXED_DISSOLUTION: "Dissolution available again",
 	K.FIXED_COOLDOWN: "Available again",
 	K.FIXED_PROJECT: "Opens",
+	K.FIXED_REFERENDUM: "Referendum",
 }
 
 const KIND_LABEL := {
@@ -367,6 +368,8 @@ func _fixed_text(entry: Dictionary) -> String:
 		return "%s: %s" % [label, _cooldown_name(ref)]
 	if kind == K.FIXED_PROJECT:
 		return "%s: %s" % [label, Projects.name_of(_loader, ref)]
+	if kind == K.FIXED_REFERENDUM:
+		return "%s: %s" % [label, _law_name(ref)]
 	return "%s: %s" % [label, ref]
 
 

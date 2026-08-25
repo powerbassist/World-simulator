@@ -496,7 +496,7 @@ func _tick(state) -> Array:
 	Budget.tick_month(state)
 	Opinion.tick_month(state)
 	Discipline.tick_month(state, _loader)
-	Legislature.tick_month(state)
+	Legislature.tick_month(state, _loader)
 	return Elections.tick_month(state, _loader)
 
 

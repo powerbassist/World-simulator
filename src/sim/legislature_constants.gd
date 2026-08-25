@@ -38,16 +38,27 @@ const TWO_THIRDS_MAJORITY_FRACTION := 2.0 / 3.0
 ## Real constitutional amendment thresholds, per docs/political-systems.md's
 ## amendment_rule. Fraction of the WHOLE assembly, same basis as
 ## ABSOLUTE_MAJORITY_FRACTION and TWO_THIRDS_MAJORITY_FRACTION above --
-## abstentions count against passage. referendum_required has no seat
-## fraction: no amendment names it in `systems` (Switzerland is not
-## playable), so resolve_vote() never looks it up -- see
-## docs/amendment-model.md's reachability sweep for why Germany's real
-## two_thirds is measured, not detuned, even though it is unreachable.
+## abstentions count against passage.
+##
+## referendum_required HAD no seat fraction, declared unresolved at V1.2c with
+## "V1.1f/V1.7" written beside it in src/core/nation.gd. DISCHARGED AT V1.7c, and
+## the entry below is the discharge. Art. 195 does not remove the Federal
+## Assembly's own vote -- it adds a mandatory popular one on top of it -- so the
+## chamber's bar is an ordinary majority and what makes the rule mandatory is the
+## nation's own referendum_mode, not this table. That is the same shape Art. 89
+## (FRA), Art. 138 (ITA) and Art. 114 (LUX) describe from the optional side: a
+## referendum replaces the SUPERMAJORITY, never the division.
+##
+## See docs/referendum-model.md, and docs/amendment-model.md's reachability sweep
+## for why Germany's real two_thirds is measured rather than detuned even though it
+## is unreachable -- which V1.7c did not rescue, because Germany's constitution has
+## no referendum route at all.
 const AMENDMENT_RULE_FRACTIONS := {
 	"ordinary_law": ABSOLUTE_MAJORITY_FRACTION,
 	"three_fifths": 0.6,
 	"two_thirds": TWO_THIRDS_MAJORITY_FRACTION,
 	"three_quarters": 0.75,
+	"referendum_required": ABSOLUTE_MAJORITY_FRACTION,
 }
 
 # --- Effect channel clamps -------------------------------------------------------

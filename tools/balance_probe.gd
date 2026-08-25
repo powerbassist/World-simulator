@@ -40,6 +40,9 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
+const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -438,6 +441,85 @@ const PROJECT_REGIMES := {
 	"managed_then_build": {"budget": REGIMES["managed"], "build_month": 30},
 }
 
+## V1.7a: the campaign phase. TWO regimes and not one, because the whole decision the
+## lever poses is about TIMING and one regime cannot show a decision. `campaigns_early`
+## puts two efforts in the field the month the run-up opens and pays for all eight;
+## `campaigns_late` puts the same two in with two months to go. Same budget, same
+## efforts, different month -- so the pair isolates exactly what the window is for.
+##
+## France's first executive election is May 2027, index 16 of this loop, and
+## campaign_constants.CAMPAIGN_WINDOW_MONTHS is 8, so the run-up is indices 8 to 16.
+## Early takes the whole eight months; late takes two. A month outside the window would
+## report a verb refused, which is a test of the refusal and not of the campaign --
+## tests/test_campaign.gd owns that one.
+##
+## THE FIRST PAIR OF MONTHS WAS 9 AND 16 AND BOTH WERE WRONG, which the run showed
+## rather than the reading: 16 IS the month of the vote, so "late" campaigned for zero
+## months and printed a presidential result identical to "early" to the digit.
+const CAMPAIGN_REGIMES := {
+	"managed_campaigns_early": {"budget": REGIMES["managed"], "campaign_month": 8},
+	"managed_campaigns_late": {"budget": REGIMES["managed"], "campaign_month": 14},
+}
+
+## V1.7b: does a promise change anything, and does BREAKING it change anything else?
+## Two regimes, the same budget and THE SAME PROMISE, differing only in whether the
+## president keeps it -- which is the only comparison that isolates the price from the
+## reward, because both regimes pay the reward.
+##
+## `pledge_month` is 9 because that is the month France's run-up opens on a 2026 start,
+## and a promise can only be made inside it. The breaking regime reuses V1.5c's
+## `switch_month` / `switch_delta` rather than adding a mechanism: govern well, win the
+## vote, then raise the income tax the tax lock forbids. That is the reachable way to
+## break a promise, and V1.5c built the harness for it a block early.
+## V1.7c: the referendum and the electoral system. TWO regimes, and both are the
+## EXPENSIVE kind -- a referendum and an electoral-reform Act are verbs no budget regime
+## issues, so neither could be reached by any of the thirty-eight already here.
+##
+## `referendum_month` is 6 rather than the first month, because route B needs the
+## assembly to carry the bill by an ordinary majority first and the run has to be past
+## its opening budget shock for that to mean anything. The vote lands
+## REFERENDUM_DELAY_MONTHS later, which is inside the first presidential term by
+## construction -- that is band (ii) in src/sim/referendum_constants.gd, exercised here
+## rather than only measured there.
+##
+## `electoral_month` is 6 for the same reason and is a DIFFERENT verb: an ordinary Act,
+## carried in the chamber, changing how the NEXT legislative election allocates seats.
+## Its effect is invisible until June 2029, which is index 41, so a regime that stopped
+## at the first election would print an identical run -- the reason the horizon here is
+## fourteen years and not one term.
+const REFERENDUM_REGIMES := {
+	"managed_calls_a_referendum": {"budget": REGIMES["managed"], "referendum_month": 6, "electoral_month": -1},
+	"managed_reforms_the_ballot": {"budget": REGIMES["managed"], "referendum_month": -1, "electoral_month": 6},
+}
+
+const PLEDGE_REGIMES := {
+	"managed_keeps_its_word": {
+		"budget": REGIMES["managed"],
+		"pledge_month": 9,
+		"switch_month": -1,
+		"switch_delta": {},
+	},
+	"managed_breaks_its_word": {
+		"budget": REGIMES["managed"],
+		"pledge_month": 9,
+		"switch_month": 30,
+		"switch_delta": {"tax_rates_pct": {"income": 8.0}, "spending_pct_gdp": {"health": -4.0}},
+	},
+	# THE CONTROL, and the first run without it demonstrated the wrong thing. The
+	# breaking regime raises the income tax and cuts the health line, and BOTH of those
+	# move approval on their own through issues S5 built -- so `breaks_its_word` against
+	# `keeps_its_word` prints the budget and the promise added together and attributes
+	# all of it to the promise. This regime runs the identical switch and promises
+	# NOTHING, so the pair that isolates the price is this one against `breaks_its_word`.
+	# tests/test_trade.gd needed the same control at V1.6a and V1.6c needed it twice.
+	"managed_breaks_nothing": {
+		"budget": REGIMES["managed"],
+		"pledge_month": -1,
+		"switch_month": 30,
+		"switch_delta": {"tax_rates_pct": {"income": 8.0}, "spending_pct_gdp": {"health": -4.0}},
+	},
+}
+
 const UNREST_REGIMES := {
 	"managed_settles": {"budget": REGIMES["managed"], "settle_month": 6},
 	"managed_then_austerity": {
@@ -550,6 +632,28 @@ func _init() -> void:
 				-1, int(regime["build_month"])
 			)
 
+		for name in CAMPAIGN_REGIMES.keys():
+			var regime: Dictionary = CAMPAIGN_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, int(regime["campaign_month"])
+			)
+
+		for name in PLEDGE_REGIMES.keys():
+			var regime: Dictionary = PLEDGE_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+				int(regime["switch_month"]), regime["switch_delta"], -1,
+				-1, -1, -1, int(regime["pledge_month"])
+			)
+
+		for name in REFERENDUM_REGIMES.keys():
+			var regime: Dictionary = REFERENDUM_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
+			)
+
 	quit(0)
 
 
@@ -581,7 +685,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -633,7 +737,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
 		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		# Added at V1.3b, and inert for every regime that does not sign anything:
 		# relations start at their resting value and this drifts them toward it, so
@@ -668,6 +772,14 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# V1.5d shipped a whole session whose harness never called its own module.
 		# With an empty register this is one sorted key list over nothing.
 		Projects.tick_month(state, loader)
+		# V1.7a, in main.gd's slot and BEFORE Elections for main.gd's reason: the window
+		# is inclusive of the month of the vote, so the last month of effort must be
+		# accrued before the vote reads it. Runs for EVERY regime and not only the two
+		# that campaign, for the reason Projects' line above gives -- and here it is
+		# doing something under every regime rather than nothing, because the window
+		# opens on the clock alone and the clear is what runs when it shuts.
+		Campaign.tick_month(state, loader)
+		Pledges.tick_month(state, loader)
 		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
 		# additions above it, and that is the difference this row exists to record: the
 		# quality stock reads the live spending line, so it diverges from its own
@@ -720,6 +832,14 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_invest(state, loader, ns, regime_name, year, month)
 		if i + 1 == build_month:
 			_break_ground(state, loader, ns, regime_name, year, month)
+		if i + 1 == campaign_month:
+			_campaign(state, loader, ns, regime_name, year, month)
+		if i + 1 == pledge_month:
+			_promise(state, loader, ns, regime_name, year, month)
+		if i + 1 == referendum_month:
+			_call_referendum(state, loader, ns, regime_name, year, month)
+		if i + 1 == electoral_month:
+			_reform_the_ballot(state, loader, ns, regime_name, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -877,6 +997,42 @@ func _short_the_largest_partner(state, ns, party_list: Array, regime_name: Strin
 	print("  %d-%02d %s: reassigned %s from %s to %s (shortfall %.2f)" % [
 		year, month, regime_name, target_portfolio, largest, weakest_fit,
 		Cabinet.shortfall(ns, largest),
+	])
+
+
+## V1.7c. Route B: carry the amendment in the chamber by an ordinary majority, then the
+## country votes REFERENDUM_DELAY_MONTHS later. Nothing is applied at the press --
+## Legislature.tick_month() settles it, which is why this regime needs no second hook.
+func _call_referendum(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var law = _find_law(loader, "single_term_reform")
+	if law == null:
+		print("  %s: single_term_reform is not in the law list" % regime_name)
+		return
+	if not Legislature.can_put_to_referendum(ns, law):
+		print("  %s: no referendum route at %04d-%02d" % [regime_name, year, month])
+		return
+	var result := Legislature.propose(state, loader, law, false, true)
+	print("  %s: %04d-%02d referendum on %s -- chamber %d/%d, called=%s" % [
+		regime_name, year, month, law.id,
+		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
+		result.get("referendum_called", false),
+	])
+
+
+## V1.7c. An ORDINARY Act changing how the assembly is elected. Not an amendment: the
+## bar is the chamber's own absolute majority, which is instance forty-three's
+## correction exercised rather than only argued.
+func _reform_the_ballot(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var law = _find_law(loader, "proportional_representation_act")
+	if law == null:
+		print("  %s: proportional_representation_act is not in the law list" % regime_name)
+		return
+	var before: String = ns.election_system
+	var result := Legislature.propose(state, loader, law, false)
+	print("  %s: %04d-%02d electoral reform -- %d/%d, %s -> %s" % [
+		regime_name, year, month,
+		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
+		before, ns.election_system,
 	])
 
 
@@ -1562,6 +1718,101 @@ func _break_ground(state, loader, ns, regime_name: String, year: int, month: int
 		printerr("  no project could be begun")
 		return
 	print("  %d-%02d %s: broke ground on %s" % [year, month, regime_name, ", ".join(begun)])
+
+
+## Puts every effort the concurrency gate will take into the field, best first.
+##
+## *** ORDERED BY A LIVE SCORE AND NOT BY PRICE, AND THE FIRST VERSION WAS ORDERED BY
+## PRICE. *** That version reasoned that a regime picking the optimal pair would be
+## measuring tools/campaign_probe.gd's answer rather than the model -- and it produced
+## a presidential result identical to `managed` to the digit, because cheapest-first
+## picks the pair that probe's table (h) measures at +0.058 points, the weakest positive
+## of the ten. A demonstration of nothing is not a demonstration. Every other verb in
+## this harness is exercised at something a president would plausibly do, and this is
+## the correction that brings the campaign into line with them.
+##
+## The score is DERIVED at the moment of acting rather than hard-coded: each effort's
+## own mobilisation vector is applied over a full window as a hypothetical, and the
+## efforts are ranked by what it does to the incumbent's LEAD over the runner-up. The
+## lead and not the share, because a plurality verdict turns on the lead -- and probe
+## table (h) found the two objectives disagree, so choosing on the share would have been
+## choosing the wrong one. Nothing about this rule names an effort or a nation.
+func _campaign(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var base_gap: float = _incumbent_gap(Elections.vote_share(ns, party_list, ns.incumbent_party_id), ns.incumbent_party_id)
+
+	var starts: Array = []
+	var score := {}
+	for a in loader.campaign_actions:
+		var terms: Dictionary = a.effects.get("campaign", {})
+		if String(terms.get("op", "")) != "start":
+			continue
+		starts.append(a)
+		var truth: Dictionary = ns.campaign_mobilisation.duplicate()
+		for bloc in terms.get("mobilisation", {}):
+			ns.campaign_mobilisation[bloc] = clampf(
+				float(terms["mobilisation"][bloc]) * float(CampaignK.CAMPAIGN_WINDOW_MONTHS),
+				-CampaignK.MOBILISATION_MAX, CampaignK.MOBILISATION_MAX
+			)
+		score[a.id] = _incumbent_gap(
+			Elections.vote_share(ns, party_list, ns.incumbent_party_id), ns.incumbent_party_id
+		) - base_gap
+		ns.campaign_mobilisation = truth
+
+	starts.sort_custom(func(x, y): return float(score[x.id]) > float(score[y.id]))
+
+	var begun: Array[String] = []
+	for a2 in starts:
+		if Campaign.execute(state, ns, loader.campaign_actions, a2).get("applied", false):
+			# The score is the RANKING score -- what a full window of this effort alone
+			# would do to the lead -- and not a prediction of this run. A regime opening
+			# with two months to go collects a fraction of it, which is the whole point
+			# of the window, so the label says "full window" rather than leaving a reader
+			# to compare it against a result it was never about.
+			begun.append("%s (%.3f%%, %+.3f pts over a full window)" % [
+				a2.id, float(a2.effects["campaign"]["cost_pct_gdp"]), float(score[a2.id]) * 100.0,
+			])
+	if begun.is_empty():
+		printerr("  no campaign effort could be started (%d months to the vote)" % Campaign.months_to_election(state, ns))
+		return
+	print("  %d-%02d %s: campaign opens with %s" % [year, month, regime_name, ", ".join(begun)])
+
+
+## The incumbent's lead over the best other party -- what a plurality verdict turns on.
+func _incumbent_gap(shares: Dictionary, incumbent: String) -> float:
+	var mine: float = float(shares.get(incumbent, 0.0))
+	var best_other := 0.0
+	for pid in shares:
+		if String(pid) != incumbent:
+			best_other = maxf(best_other, float(shares[pid]))
+	return mine - best_other
+## V1.7b. One promise, named rather than chosen: the tax lock is the only entry on the
+## ladder whose field a BUDGET regime can move, so it is the only one where "kept" and
+## "broken" are two runs of the same harness rather than two different worlds.
+##
+## Made through Pledges.execute() rather than by writing the register, so the run
+## exercises the window gate, the concurrency gate and the reward exactly as a click
+## would. It prints its refusal rather than failing silently, because a regime whose
+## verb never fired is a regime that demonstrates nothing -- V1.5c's finding, and the
+## reason balance_probe.gd prints a reachability column at all.
+func _promise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	for action in loader.pledges:
+		if action.id != "pledge_no_new_taxes":
+			continue
+		var result := Pledges.execute(state, ns, loader.pledges, action)
+		if bool(result.get("applied", false)):
+			print("  %d-%02d %s: promised '%s', binds to %s" % [
+				year, month, regime_name,
+				String(result.get("pledge_name", "?")), String(result.get("binds_until", "?")),
+			])
+		else:
+			print("  %d-%02d %s: the promise was REFUSED -- %d months to the vote" % [
+				year, month, regime_name, Campaign.months_to_election(state, ns),
+			])
+		return
+	printerr("  pledge 'pledge_no_new_taxes' not found in data/pledges")
+
+
 
 
 func _invest(state, loader, ns, regime_name: String, year: int, month: int) -> void:

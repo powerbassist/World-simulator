@@ -41,6 +41,7 @@
     "term_limit": 2,
     "amendment": {
       "rule": "three_fifths",
+      "referendum": "optional",
       "permits_system_change": false
     },
     "executive": {

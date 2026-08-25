@@ -35,6 +35,7 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.formation_method = nation.formation_method
 	ns.censure_rule = nation.censure_rule
 	ns.amendment_rule = nation.amendment_rule
+	ns.referendum_mode = nation.referendum_mode
 	ns.permits_system_change = nation.permits_system_change
 	ns.head_of_government_title = nation.head_of_government_title
 	ns.start_head_of_government_person_id = nation.head_of_government_person_id

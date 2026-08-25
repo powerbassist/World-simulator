@@ -20,6 +20,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -136,6 +137,13 @@ static func recompute(state, ns) -> void:
 		# this month bills next month -- `deficit_pct_gdp` is one of that verb's own
 		# precondition fields.
 		+ ns.project_bill_pct_gdp
+		# V1.7a's line, and the sixth to take this route. The same argument a sixth time,
+		# and the one difference is the deadline: V1.6f's bill stops when the work does,
+		# which is a length the player chose, and this one stops at the vote, which is a
+		# date the constitution chose. Campaign.tick_month() runs after this in main.gd's
+		# order, so an effort begun this month bills next month -- `deficit_pct_gdp` is one
+		# of that verb's own precondition fields.
+		+ ns.campaign_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -390,6 +398,13 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
 		# time.
 		Projects.tick_month(sim, loader)
+		# In main.gd's slot, and required for the reason the seven above it are -- with a
+		# sharper case than any of them. A projection that held the campaign register
+		# frozen would report a run-up as costing nothing AND would never CLOSE the window
+		# inside the projected months, so a president looking at a twenty-four-month
+		# forecast in the month before an election would see a campaign bill they will
+		# stop paying in four weeks charged for two years.
+		Campaign.tick_month(sim, loader)
 		# In main.gd's slot a fifth time, and required for the same reason the four
 		# above it are: a projection that held the quality stock frozen would report a
 		# spending cut as costing nothing beyond its own delta, when the whole point of
@@ -515,5 +530,9 @@ static func snapshot(state) -> Dictionary:
 		# the window. A snapshot key nothing reads is a tuned constant nothing reads:
 		# deleted rather than left, U6a's day budget and V1.3e's AGREEMENT_ACCEPT_MIN.
 		"project_bill_pct_gdp": ns.project_bill_pct_gdp,
+		# ONE KEY AND NOT TWO, V1.6f's correction inherited: the mobilisation belongs on
+		# the Campaign panel, which has the NationState, and a second key here would be a
+		# snapshot entry nothing reads.
+		"campaign_bill_pct_gdp": ns.campaign_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

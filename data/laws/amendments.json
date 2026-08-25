@@ -1,6 +1,34 @@
 {
   "laws": [
     {
+      "id": "single_term_reform",
+      "name": "Single-Term Presidency Act",
+      "theme": "institutional",
+      "summary": "Limit the Presidency to one term, putting the office beyond re-election. The president who signs it gives up their own second term.",
+      "constitutional": true,
+      "systems": [
+        "semi_presidential_republic"
+      ],
+      "position": {
+        "economic": -0.3,
+        "social": 0.0
+      },
+      "majority": "amendment",
+      "cooldown_months": 24,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "term_limit": 1
+        },
+        "bloc_offset": {
+          "students": 0.1,
+          "urban": 0.05,
+          "business": -0.05
+        }
+      }
+    },
+    {
       "id": "abolish_term_limits",
       "name": "Term Limits Abolition Amendment",
       "theme": "institutional",

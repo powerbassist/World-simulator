@@ -27,6 +27,12 @@ const SK = preload("res://src/sim/society_constants.gd")
 const DemoK = preload("res://src/sim/demography_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const MediaK = preload("res://src/sim/media_constants.gd")
+## V1.7c. One direction only: this file knows how to call a referendum and how to
+## apply what it decides; referendum.gd knows nothing about a chamber and preloads
+## nothing from here. tests/test_referendum.gd reads that file and fails if the
+## dependency ever runs the other way -- src/sim/calendar.gd's leaf property.
+const Referendum = preload("res://src/sim/referendum.gd")
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -50,12 +56,31 @@ static func init_nation(ns) -> void:
 ## Count down cooldowns. Gated on has_budget, the same flag every other
 ## opinion-reading system uses -- the other nine nations have no assembly vote
 ## to resolve at MVP.
-static func tick_month(state) -> void:
+## `loader` is required rather than defaulted, on the reason apply()'s own header
+## gives one function down: a defaulted loader would let a referendum resolve and
+## then silently fail to apply the law it carried, which is the half-applied state
+## this project refuses throughout.
+##
+## THE REFERENDUM COUNTDOWN LIVES HERE AND ADDS NO NEW CALL ANYWHERE, which is
+## deliberate rather than convenient. src/ui/main.gd, tools/balance_probe.gd,
+## tests/test_balance.gd and eight probes already call this function every month, so
+## a referendum reaches every harness through a call they all already make.
+## docs/media-model.md's V1.5d bug -- neither balance harness called
+## Media.tick_month(), so both ran the pre-session model and their agreement about a
+## bit-identical re-run was about nothing -- made structurally impossible instead of
+## remembered, which is docs/cycle-model.md's V1.6a argument taken deliberately.
+static func tick_month(state, loader) -> void:
 	for ns in state.nations.values():
 		if not ns.has_budget:
 			continue
 		if ns.force_cooldown_months > 0:
 			ns.force_cooldown_months -= 1
+
+		# Before the cooldowns, so a referendum that fails this month sets its law's
+		# cooldown at full length rather than one month short.
+		var verdict := Referendum.resolve_due(ns)
+		if not verdict.is_empty():
+			_settle_referendum(state, ns, loader, verdict)
 		var expired: Array = []
 		for law_id in ns.law_cooldown_months:
 			var remaining: int = int(ns.law_cooldown_months[law_id]) - 1
@@ -65,6 +90,32 @@ static func tick_month(state) -> void:
 				ns.law_cooldown_months[law_id] = remaining
 		for law_id in expired:
 			ns.law_cooldown_months.erase(law_id)
+
+
+## What the country decided, turned into law or into a cooldown.
+##
+## referendum.gd hands this back as DATA and this function acts on it -- U6a's
+## Calendar.due() one block on, and it is what lets that file preload nothing from
+## here. What it costs the government is charged THERE, because the price is the
+## referendum's; what happens to the bill is charged HERE, because a law passing is
+## this file's job and always has been.
+static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
+	var law = _law_by_id(loader, String(verdict.get("law_id", "")))
+	if law == null:
+		return
+	if bool(verdict.get("passed", false)):
+		apply(state, ns, law, loader)
+	elif law.cooldown_months > 0:
+		ns.law_cooldown_months[law.id] = law.cooldown_months
+
+
+static func _law_by_id(loader, law_id: String):
+	if loader == null or law_id == "":
+		return null
+	for law in loader.laws:
+		if law.id == law_id:
+			return law
+	return null
 
 
 ## Every law from `all_laws` currently proposable against `ns`: preconditions
@@ -83,9 +134,35 @@ static func available(ns, all_laws: Array) -> Array:
 			continue
 		if law.changes_system and not ns.permits_system_change:
 			continue
+		if _already_in_force(ns, law):
+			continue
+		# One referendum at a time, and while one is in flight nothing else may be
+		# put to the country. A second live question is not a bound that needed a
+		# constant -- it is what "the country votes on this" means.
+		if Referendum.is_pending(ns) and Referendum.pending_law_id(ns) == law.id:
+			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
 	return out
+
+
+## An electoral-reform Act that names the method the nation already uses changes
+## nothing, and a button that changes nothing is the bug V1.3e's screenshot pass
+## found on the diplomacy panel. Checked in code rather than by asking content to
+## remember it -- src/sim/campaign.gd's _op_legal() and src/sim/projects.gd's
+## available() give the argument -- and it is checked here rather than as a
+## precondition because PRECONDITION_FIELDS is numeric and an electoral system is a
+## string, which is a schema difference and not an oversight.
+static func _already_in_force(ns, law) -> bool:
+	var inst: Dictionary = law.effects.get("institutional", {})
+	if not inst.has("election_system"):
+		return false
+	if String(inst["election_system"]) != ns.election_system:
+		return false
+	# The method matches; the law is still live if it also moves the threshold.
+	if inst.has("election_threshold_pct"):
+		return is_equal_approx(float(inst["election_threshold_pct"]), ns.election_threshold_pct)
+	return true
 
 
 static func _preconditions_met(ns, law) -> bool:
@@ -176,7 +253,12 @@ static func vote_of(s: float) -> String:
 ## the share of seats discipline.gd computes goes with the second. `party_votes`
 ## still names the party's line, and `party_rebels` says how many of its seats
 ## did not follow it.
-static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
+## `referendum` selects ROUTE B: the chamber's bar drops to an ordinary majority and
+## the amendment is ratified by the country instead of by a supermajority. Defaulted
+## to false, unlike apply()'s loader, because false is the behaviour every existing
+## caller already has -- a default that means "the way it has always worked" hides
+## nothing, where a default that means "skip a step" hides everything.
+static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dictionary:
 	var yes_seats := 0
 	var no_seats := 0
 	var abstain_seats := 0
@@ -221,13 +303,32 @@ static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 			passed = float(yes_seats) >= LK.TWO_THIRDS_MAJORITY_FRACTION * float(seats_total)
 		"amendment":
 			# Reads the PROPOSING nation's own threshold, not a fixed fraction --
-			# the whole point of amendment_rule being per-nation data. A rule with
-			# no fraction (referendum_required) means no amendment names it in
-			# `systems`, so reaching this branch with one is a content bug, not a
+			# the whole point of amendment_rule being per-nation data. Every rule has
+			# had a fraction since V1.7c gave referendum_required one; the check
+			# stays because an unrecognised rule is still a content bug rather than a
 			# runtime state a played game can produce.
 			if not LK.AMENDMENT_RULE_FRACTIONS.has(ns.amendment_rule):
 				push_error("legislature: amendment_rule '%s' has no seat fraction" % ns.amendment_rule)
 				passed = false
+			elif referendum:
+				# Route B. The referendum replaces the SUPERMAJORITY, not the
+				# division -- Art. 89 (FRA), Art. 138 (ITA), Art. 114 (LUX) and
+				# Art. 195 (CHE) all put an ordinary chamber majority first. So
+				# "passed" here means "carried in the chamber and now goes to the
+				# country", and propose() is what turns that into a pending vote.
+				#
+				# `simple` and not `absolute`, and the probe is what settled it. Art.
+				# 89's first stage is the ORDINARY legislative procedure, which is a
+				# majority of votes CAST; the absolute reading counts abstentions
+				# against and put route B at 270 of the 289 seats it needed in every
+				# one of 168 months, so the verb was unreachable in a played run --
+				# V1.3f's error, caught by tools/referendum_probe.gd's table R6 rather
+				# than shipped. Luxembourg (Art. 114) and Switzerland (Art. 195) read
+				# the same way; ITALY IS THE OUTLIER, whose Art. 138 second vote is
+				# explicitly absolute, and that divergence is recorded in
+				# docs/referendum-model.md the way docs/electoral-systems.md records a
+				# per-method reduction rather than being modelled per nation.
+				passed = yes_seats > no_seats
 			else:
 				passed = float(yes_seats) >= LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] * float(seats_total)
 		_:
@@ -238,6 +339,7 @@ static func resolve_vote(ns, party_list: Array, law) -> Dictionary:
 		"law_id": law.id,
 		"passed": passed,
 		"majority": law.majority,
+		"referendum_route": referendum,
 		"yes_seats": yes_seats,
 		"no_seats": no_seats,
 		"abstain_seats": abstain_seats,
@@ -389,6 +491,13 @@ static func apply(state, ns, law, loader) -> void:
 			ns.term_limit = int(inst["term_limit"])
 		if inst.has("term_months"):
 			ns.term_months = int(inst["term_months"])
+		# V1.7c, and the only two keys here an ORDINARY Act may write -- see
+		# law.gd's ORDINARY_INSTITUTIONAL_KEYS. Read by Elections.resolve() at the
+		# next national vote; the European one allocates on pr_national regardless.
+		if inst.has("election_system"):
+			ns.election_system = inst["election_system"]
+		if inst.has("election_threshold_pct"):
+			ns.election_threshold_pct = float(inst["election_threshold_pct"])
 		if inst.has("system_id"):
 			# lose_condition lives on the template, not the nation -- see
 			# docs/political-systems.md -- so a transition has to re-read it
@@ -449,9 +558,36 @@ static func _apply_head_of_state(state, ns, loader, hos: Dictionary) -> void:
 ## Article 89 revision procedure is a separate track with no executive
 ## bypass, and this game invents no such bypass for any nation's amendment
 ## rule either. See docs/amendment-model.md.
-static func propose(state, loader, law, force := false) -> Dictionary:
+## Whether this law may be put to the country by the player's own choice. An
+## ordinary Act may not: a referendum in this game ratifies an ENTRENCHED change,
+## and putting an electoral-reform bill to a plebiscite is a different mechanic with
+## a different real basis (the UK's 2011 AV vote was advisory and voluntary). A
+## nation whose constitution has no route may not either, and one whose route is
+## MANDATORY does not need asking -- propose() reads that off the nation instead.
+static func can_put_to_referendum(ns, law) -> bool:
+	if not law.constitutional:
+		return false
+	if Referendum.is_pending(ns):
+		return false
+	return Referendum.may_choose(ns)
+
+
+## `referendum` is ROUTE B, and it is refused for anything but a constitutional
+## amendment under a constitution that offers the route. A carried division does NOT
+## apply the law: it calls the country, and Legislature.tick_month() settles it
+## REFERENDUM_DELAY_MONTHS later. See docs/referendum-model.md.
+static func propose(state, loader, law, force := false, referendum := false) -> Dictionary:
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
+
+	if referendum and not can_put_to_referendum(ns, law):
+		var no_route := {
+			"law_id": law.id, "passed": false, "refused": true, "referendum_route": true,
+			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
+			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
+		}
+		ns.last_law_result = no_route
+		return no_route
 
 	if force and law.constitutional:
 		var refused := {
@@ -465,8 +601,23 @@ static func propose(state, loader, law, force := false) -> Dictionary:
 	if force:
 		return _force(state, ns, party_list, law, loader)
 
-	var result := resolve_vote(ns, party_list, law)
-	if result["passed"]:
+	# A mandatory referendum is not a choice the caller makes -- Art. 195 says there
+	# is no seats-only path -- so it is read off the nation rather than off the
+	# button. An `optional` route is the caller's; a `mandatory` one is the
+	# constitution's, and offering it as an alternative would imply the seats-only
+	# path it says does not exist.
+	var route: bool = referendum or (law.constitutional and Referendum.is_mandatory(ns))
+
+	var result := resolve_vote(ns, party_list, law, route)
+	if result["passed"] and route:
+		# The chamber said yes; the country has not been asked yet. Nothing is
+		# applied, no `once` flag is set and no cooldown is written -- the law is IN
+		# FLIGHT, which is a third outcome this function did not have before.
+		Referendum.announce(ns, law.id, law.position)
+		result["passed"] = false
+		result["referendum_called"] = true
+		result["referendum_months"] = ReferendumK.REFERENDUM_DELAY_MONTHS
+	elif result["passed"]:
 		apply(state, ns, law, loader)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months

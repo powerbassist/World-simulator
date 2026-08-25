@@ -164,8 +164,10 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.6b) `--inflate`,
 (V1.6c) `--downgrade`,
 (V1.6d) `--redistribute`,
-(V1.6e) `--invest` and
-(V1.6f) `--build`,
+(V1.6e) `--invest`,
+(V1.6f) `--build` and
+(V1.7a) `--campaign` and
+(V1.7b) `--pledge`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -1652,13 +1654,352 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, U1-U5 and U6 (a, b and c) are done. **The V1.5 AND V1.6 blocks are both COMPLETE, and so is section 6's last clause.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+**V1.7 is decomposed into three sessions, V1.7a-c, and (a) is built.** The row was three
+bullets against a block cell naming four items and neither count was right: (a) the
+campaign phase, (b) campaign promises and the trust price, (c) electoral system choice
+**and referendums**, which are one shape and not two -- an electoral system is a seventh
+`effects.institutional` key and a referendum is the amendment machine's own
+declared-unresolved `referendum_required`, so `electoral_systems.gd`'s five methods and
+`INSTITUTIONAL_EFFECT_KEYS` are the whole machine and V1.6c's credit rating is the
+precedent. **Machine count is two**, which is what makes it three sessions. **(b) is
+recorded in advance as the row most likely to split**, on the trust quantity. No V1.7
+session ships a U-track machine, recorded because two consecutive sessions split on that
+rule.
+
+**V1.7a shipped the campaign phase, and the row was answered by a DELETION.** Of the
+bullet's three nouns -- *time, money, messaging* -- only money survived contact with what
+is built. **Time does not exist**: U6a swept a monthly budget of the player's days and
+deleted it, on a reason that is general rather than about calendars (`available()` returns
+what is **legal** and nothing models what the player **wants**, so any ceiling priced
+against legality always binds). **Instance forty.** And **messaging is V1.5d's**, exactly
+as the bullet itself predicted -- *"if V1.5d builds the peacetime half, this bullet reads
+it rather than rebuilding it"* -- which is the first time a prediction written into a row
+has come true and been collected. `tests/test_campaign.gd` reads `campaign.gd` and fails
+if it so much as names `framing_gain` or `press_freedom`. **Instance forty-one** is in the
+section rather than in a row: §7 has **no bullet for referendums** while §1's list, the
+re-parked V1.1f row and `nation.gd`'s `KNOWN_AMENDMENT_RULES` comment all point here.
+
+**The target had to be found, and two of three candidates were refused.**
+`election_constants.BLOC_TURNOUT` is read in **exactly two places, both inside
+`Elections.vote_share()`**, and nothing in this project had ever written it -- so a
+per-bloc mobilisation register is a **first writer with no double count**. Approval was
+refused because `vote_share()`'s own `pull` term already reads it and approval **is** the
+term's record; framing was refused by V1.5d. And the distinction is the honest one rather
+than a convenience: **a campaign does not change what people think of your record, it
+changes who bothers to vote on it.**
+
+**Mobilisation is a shift in LOG-ODDS, so turnout is bounded strictly inside (0, 1) BY
+CONSTRUCTION** and `campaign_constants.gd` ships no turnout clamp at all -- V1.6a's
+argument that a bound with no number to set wrong beats a clamp. The property nobody
+authored falls out of it: the same effort moves **students +14.9 points** at the cap and
+**pensioners +7.2**, because a low-turnout bloc has more room. **The window is a level
+read and the clear is its other half**, so the register empties itself the month after the
+vote with no hook in `elections.gd` and no flag anywhere. **An effort is a standing rate
+with a deadline** -- it accrues and bills every month it runs, which is what kills the
+strictly-dominated shape a one-off purchase creates (same reach, less time paying) for the
+seventh time. `campaign_bill_pct_gdp` is the **sixth** computed spending line and the
+**second that stops**, and it stops on a date the player cannot move, which is why its
+decision is about **timing** where V1.6f's is about size.
+
+**The probe corrected the session five times, eighteen sessions running, and the first is
+about bands themselves.** Clause (i) was **invented** -- *"at least 0.50 points of vote
+share"*, a number picked because it sounded like a margin -- and every candidate failed
+against it while the table never said whether 0.50 was the right ruler. The only other
+thing that moves `vote_share()` is **approval**, so the band is written in points of it:
+at least what one point is worth (0.3415), at most what the **poll floor** is worth
+(1.0147), because a swing smaller than the published polls can resolve is exactly the
+swing a campaign may own. `_headroom()` was then wrong by a **factor of a hundred**; the
+emulation claim was false above the shipped window; and the **content's targeting** was
+the gap rather than any constant, at **17 %** of what perfect targeting reaches -- the
+first ladder mobilised everybody and depressed nobody, and real campaigns demobilise. The
+correction was to the content, V1.4b's discipline a second time.
+
+**A binding guard rail can INVERT a decision rather than merely set a number**, which is
+new. `MOBILISATION_MAX` at 0.60 was reached -- and once the accumulator saturates a
+**longer** run-up is strictly worse, costing more months of bill for the same reach, so
+the clamp was reversing the timing decision the whole lever exists to pose rather than
+setting it. At 0.90 the worst reachable stack is 0.6800, slack by 0.2200.
+`CAMPAIGN_WINDOW_MONTHS` = **8**, selected by **maximin slack** over the feasible region
+-- this page's tiebreaker rules one step past V1.5d's *the interior governs*, because the
+interior of a passing **list** is a statement about the grid and V1.5b's finding is that a
+grid must never choose.
+
+**And maximising your own vote share is not the same as winning.** The pair that best
+raises France's incumbent's share (+0.4204) **narrows** their lead (-0.4033); the pair
+that best widens the lead (+0.6475) **lowers** their share (-0.2417). `vote_share()`
+renormalises per bloc, so turnout is a rising tide inside a bloc rather than a transfer
+between parties, and the parties nearest you in ideology space are exactly the ones
+sharing your voters. Recorded rather than fixed -- it is a property of the vote-share
+model, not a defect in this one -- and it is why `balance_probe.gd`'s regime ranks efforts
+on the **lead**, by a live score naming no effort and no nation.
+
+**`SAVE_VERSION` stays 23 on three fields**, all reading as "no campaign" when absent,
+which is the truth about every version-23 save; the test pins the absence so V1.7b has to
+say why it moves. **The re-run is bit-identical across all 34 existing regimes, predicted
+in advance** -- the diff is additions only -- with two new regimes of the expensive kind.
+The eighteenth `ISSUE_KEYS` question is answered **NO on test 1**, as V1.6e's and V1.6f's
+were: a session shipping a content object has somewhere to put the price. **The
+seventeenth screenshot pass found two bugs**, one content and one the tool's: a stop action
+authored as *"Clear the Diary"* -- right in English, and the name of a **window this game
+already has** -- and the flag pinning the scroll to the bottom, which put the months-to-
+the-vote and the campaign bill off the frame and opened on a sentence cut in half. V1.6e's
+correction has a **direction** as well as a subject: scroll to where the flag's own claim
+is. Model: [docs/campaign-model.md](docs/campaign-model.md).
+
+There is **no diary row for the campaign**, and the refusal is a property rather than an
+omission: `calendar.gd` may preload only its own constants, `tests/test_calendar.gd`
+enforces it, and a "campaign opens" entry is a fixed offset from a date the strip already
+carries. The window length lives in `campaign_constants.gd`, so the row would have cost
+that property for a derived date.
+
+**V1.7b shipped campaign promises, and the row that was recorded in advance as the one
+most likely to SPLIT did not.** The pre-registered trigger was the trust quantity — *if
+the price cannot land on an existing register the way V1.5d landed legitimacy on the
+grievance, then the ledger and the price are two sessions* — and what discharged it is
+**V1.5d's own criterion applied in the other direction**. Legitimacy went to the grievance
+because it is willingness to accept your rule **outside** the ballot box; trust in a
+promise is squarely **at** it, so the price belongs on the register that reaches the
+ballot box. That is `ns.bloc_offset`, which V1.7a §6 had already made a campaign's own
+lasting mark. A separate trust stock would have been §5's *second approval number with a
+different label*. The landing site was measured **before a line of content existed** —
+one machine, no split, **no new quantity anywhere**.
+
+**Instance forty-two is the row's own "read at the END of the term", and it fails on two
+things that can be COUNTED.** A single read there is strictly dominated by last-minute
+compliance — run unemployment at nine for four years, squeeze it to 6.9 for the final
+month, pay nothing, the shape this project has killed eight times. And it is
+**structurally invisible at the vote it is about**: `main.gd` runs `Opinion.tick_month()`
+long before `Elections.tick_month()`, so a `bloc_offset` written at term end reaches
+approval *next* month, and even moved ahead of Opinion `INERTIA_RATE` delivers a quarter
+of it. So a promise is judged on a **level every month it is live** and the price is the
+integral — V1.7a's *a standing rate with a deadline* applied to the **price** rather than
+to the spend. Graded-by-the-miss was designed and cut (a per-field normaliser is a table
+with no measurement behind it); **breach is binary per month and the count IS the
+memory**, V1.3e's *no grievance ledger* in a new place.
+
+**`PRECONDITION_FIELDS` is the right shape and the wrong list, and the interesting half is
+what a pledge list has that it does not.** Three of its seven entries cannot be promised —
+`overall_approval_pct` is circular, `terms_served` is not a state of the country, and
+`unrest_pct` ships a `>=`-only invariant a `<=`-shaped promise inverts. What is added is
+the taxes and spending lines the **player sets**, and the division is measured rather than
+thematic: table (c0) reads each field's **LUCK** (the widest span within one budget)
+against its **CHOICE** (the span across three at the end). `growth_annual_pct` comes back
+**8.215 against 0.641** where every tax and spending row measures luck **exactly 0.000**.
+An outcome pledge is a **bet on the world** and V1.6a's cycle is what makes it one; a rate
+pledge is a **self-imposed constraint**. `inflation_pct` was on the list and the probe
+**deleted** it — 0.114 and 0.045, both under the resolution of the model that produces
+them, so an authored threshold is a constant verdict.
+
+**`pledges_constants.gd` ships NO TUNED CONSTANT AT ALL**, `projects_constants.gd`'s
+position reached a second time, and `effects.pledge` carries **no `op`** where all five
+channels before it do. Five directories ship a start and a stop because an obligation only
+the clock can close is a permanent monotone charge; it does not transfer, because a pledge
+charges only while it stands **broken** — it stops the month the player comes back into
+compliance, and **the off switch is called governing**. A `renounce` op priced below the
+accrual would be strictly better than complying and priced above it would never be used.
+`PLEDGE_OPS` is two comparators of five, and the three refusals are the design.
+
+**The probe corrected the session five times, nineteen sessions running, and two of the
+five were corrections to the CHECK rather than to the model.** The reachability table
+measured the wrong state — `_tick()` omits `Elections`, so 168 months reported **one**
+run-up and **zero** judgements against a real three and two, which would have read as *the
+verb is unreachable and the row should split*; V1.3f's error a fourth time, inside a file
+whose header warns about it. The growth pledge failed its readability band and the
+**content** moved. **The dominance test itself was the wrong test**: it compared the
+authored (reward, breach) pair and reported five dominated promises, and every one is an
+artefact, because the third quantity — *how often the promise is actually broken* — is
+nowhere in the content and is a property of the budget the player intends to run. That is
+V1.7a's *share is not winning* in a new place. **The ordering statistic was LUCK and had to
+be EXPOSURE** (luck as a share of luck plus choice): the deficit reads 1.284 of luck
+against unemployment's 1.182, eight per cent apart, and 16.445 of choice against 0.656 —
+luck alone says the deficit is the less controllable and exposure says the opposite by a
+factor of nine. And the balance regime pair was **confounded**, needing a third regime
+running the identical budget switch and promising nothing.
+
+**Zero promises are dominated in every column and each column has a different best
+promise** — hold `managed` and the hospitals win, switch to austerity and the deficit rule
+does, switch to spendthrift and the tax lock does. The ladder is not orderable without
+knowing how the player intends to govern, which is what makes it a choice.
+
+`SAVE_VERSION` stays **23**, V1.3c's device **answered and re-armed at V1.7c**: absent,
+`pledges` reads as "nothing promised", true of every version-23 save because those games
+had no pledge verb. It is serialised anyway and that half is not free — a verb writes it,
+no tick recomputes it, and **the reward has already been paid**, so a save that dropped it
+would hand the player the upside of every promise and delete the liability. The nineteenth
+`ISSUE_KEYS` question is **NO on test 1**, a fourth consecutive session for the same
+reason. **The re-run is bit-identical across all 36 existing regimes, predicted in
+advance** — the diff is additions only — with three new regimes, and the legibility
+evidence is exact: same budget, same promise, **26.2 % in 2027 against a control's 25.9**
+and **10.6 % in 2032 against 11.1**, so the promise is worth **+0.3 at the election it is
+made for and −0.5 at the election it is judged at**. Keeping it instead holds the office
+at 27.0. **The eighteenth screenshot pass found two bugs, both the readout's**: a breach
+cost printed in no unit two lines under a turnout figure of the identical shape, and a
+live promise that never said what it had cost — the one figure the section exists to be a
+ledger of. Model: [docs/pledge-model.md](docs/pledge-model.md).
+
+**V1.7c shipped the referendum and the electoral system, and the V1.7 block is
+COMPLETE.** Two stopgaps discharged, both declared in advance and both pointing here by
+name: `nation.gd`'s `KNOWN_AMENDMENT_RULES` carried `referendum_required` with
+*"V1.1f/V1.7"* beside it, and `legislature_constants.AMENDMENT_RULE_FRACTIONS`
+deliberately had no entry for it.
+
+**Instance forty-three is that `effects.institutional` is legal ONLY on a
+`constitutional` law.** [docs/tiers/v1.md](docs/tiers/v1.md) §7 asked for
+electoral-system choice as "a seventh `effects.institutional` key", and `constitutional`
+forces `majority: "amendment"` — so the row's own wording **entrenches the electoral
+system at each nation's amendment threshold**. Electoral law is ordinary legislation in
+essentially all ten: France's code électoral (changed by ordinary law in 1985 and again
+in 1986), Germany's Bundeswahlgesetz (2023), Italy's Rosatellum, Britain's ordinary Act.
+Right for GBR alone, and only because GBR's `amendment_rule` already **is**
+`ordinary_law`. So `law.gd`'s whitelist **split**: `ORDINARY_INSTITUTIONAL_KEYS` holds
+`election_system` and `election_threshold_pct`, the six entrenched keys still require
+`constitutional: true`, and the error string names which rule was broken. V1.4a/V1.4b's
+split written into the schema rather than only into the docs, one block later and in the
+other direction. No template constrains either key and **none could** —
+`constitutional_monarchy` alone covers `fptp`, `pr_dhondt` and `pr_national` — which is
+`term_months`' precedent exactly.
+
+**A referendum is a SECOND RATIFICATION STAGE, not a bypass, and every citation was
+already in the data.** Art. 89 (FRA), Art. 138 (ITA), Art. 114 (LUX) and Art. 195 (CHE)
+all put an ordinary chamber majority **first**, so the popular vote replaces the
+*supermajority* and never the division — and all four were sitting in the nation files'
+own `government.amendment._note`, authored at V1.2c for a mechanic that did not exist.
+`government.amendment.referendum` (`none` / `optional` / `mandatory`) is the **seventh**
+dispatch-on-a-data-string field, per-nation and not per-template for
+`permits_system_change`'s reason. `referendum_required` gains an ordinary-majority seat
+fraction — what makes it *mandatory* is the nation's own mode, not the table.
+
+**THE POPULAR VOTE SHIPS NO TUNED CONSTANT.** It is `Elections.vote_share()` with two
+options: YES at the law's own authored `position`, NO at the **size-weighted mean of
+`BLOC_IDEAL`**, measured at **(−0.230, +0.084)** — derived from a table written at S5 for
+unrelated reasons, V1.5d's mean anchor one block on. Affinity at the existing
+`AFFINITY_SIGMA`, weights at `BLOC_SIZE × Campaign.turnout_of()`, and YES carrying the
+incumbent's per-bloc pull on the existing `INCUMBENT_SWING`, so de Gaulle 1969 falls out
+of the arithmetic. **Two properties nobody authored**: a referendum held inside V1.7a's
+run-up reads the campaign's mobilisation for free, and one held outside it reads
+`BLOC_TURNOUT` **bit-for-bit** — which is what let the layer go live with the harness
+bit-identical. The plan-time hand-computation predicted 45.8 % yes on
+`abolish_term_limits` and the live measurement came back **0.458**.
+
+**A KILL SWITCH THAT SWEEPS A RANGE THE PLAYER CANNOT REACH IS NOT A KILL SWITCH.** Table
+R1 swept approval 30 to 65 and **cleared** — four of seven amendments winnable
+"somewhere". Table R6 then measured what a French president actually holds under a budget
+they can stay in office on: **40.0 to 50.3** over fourteen years, against a crossover at
+~52. V1.3f's measuring-the-wrong-state error a **fifth** time, inside the probe written
+to avoid it. The probe now measures the reachable range **first** and every approval band
+is written inside it; the escalation declared in advance, `STATUS_QUO_PULL`, **fired and
+was honoured** — 0.90, crossover 46.42, interior to both the passing set and the grid —
+rather than `INCUMBENT_SWING` being raised, which is measured for the election.
+
+**The verb was unreachable TWICE for two different reasons, and one fix was the model and
+one was CONTENT.** Read as an absolute majority, route B's chamber bar put it at 270 of
+the 289 seats it needed in **every one of 168 months**; Art. 89's first stage is the
+ordinary legislative procedure, a majority of votes **cast** (Italy's Art. 138 is the
+outlier, recorded rather than modelled per nation). Then France's only amendment,
+`abolish_term_limits`, is rejected **270–307** by its own assembly. A position sweep over
+the ideology grid found a real window — economic −0.4…−0.2, social −0.1…0.0, yes-seat
+fraction **0.534–0.551**, above an ordinary majority and below 3/5 — and **that window is
+the referendum**. `single_term_reform` is authored into it, the Jospin commission's
+*mandat unique*. V1.4b's discipline: the fix that is also true is the better fix. The
+probe's own player also had to be corrected — the first version called one every legal
+month, lost **24 of 25** and drove its own approval down; a *rational* player calls one
+only when already over the bar.
+
+**Withdrawing costs exactly what losing costs, and that is a PROOF rather than a second
+constant.** Same offset, same cooldown, so holding the vote **weakly dominates**
+withdrawing by construction: identical outcomes except that holding it might carry. Below
+a loss it is the free-hedge shape this project has killed ten times; above it needs a
+number solved against the first, which `investment_action.gd` refuses as one strength
+written twice. What withdrawal buys is the register slot back now.
+
+**No new tick anywhere, and that is deliberate rather than convenient.**
+`Legislature.tick_month()` already existed and is already called by `main.gd`,
+`balance_probe.gd`, `test_balance.gd` and eight probes, so the countdown and the
+settlement go there beside the cooldown tick — `diplomacy.gd`'s `_tick_agenda()`
+precedent, and V1.6a's argument taken deliberately so V1.5d's bug is structurally
+impossible rather than remembered. Its signature widens to `tick_month(state, loader)`,
+**required and not defaulted**, on the reason `legislature.gd` already gives about
+`apply()`'s own loader; `tests/test_referendum.gd` reads **both** harnesses and fails if
+either omits it. `src/sim/referendum.gd` is a **leaf** — `resolve_due()` returns the
+verdict as data and `legislature.gd` applies the law, U6a's `Calendar.due()` one block on
+— and the test reads the source to say so.
+
+**`SAVE_VERSION` is 25, on three fields of four, and they fail the rule by three
+DIFFERENT failures.** `election_system`/`election_threshold_pct` are the sharpest case
+since `military_capability`: absent they read `""` and `0.0`, `ElectoralSystems.allocate()`
+falls through its match and **every seat allocation collapses to zero**, and
+`from_dict()` never sees the loader (V1.6a's finding). `referendum_mode` earns it for
+`eu_member`'s reason — absent it is a legal state for six of the ten and a silently
+different constitution for France. `referendum_pending` earns it because an absent
+register **deletes a vote the country has already been called to**, a free withdrawal of
+the one act this session made un-free — `campaign_started`'s case one commit earlier. And
+`last_referendum_result` is **not serialised at all**, `last_project_result`'s case, with
+the absence pinned.
+
+**Germany gets nothing, and the decomposition expected otherwise.** The ROADMAP argued
+referendums belong here because *"a referendum exists precisely because a supermajority
+is sometimes unreachable, and this block measured exactly that for Germany"* — and
+**Art. 79 provides no referendum at any stage of a Basic Law amendment**. True in the
+abstract, and it does not resolve for the nation it was named about: Germany's mode is
+`none`, its `two_thirds` is unchanged, and `restore_the_monarchy` stays unpassable
+content. Recorded rather than fixed. Model:
+[docs/referendum-model.md](docs/referendum-model.md).
+
+**The re-run is bit-identical in every printed FIGURE across all 38 shared regimes,
+predicted in advance, and the one line that moved names a LAW rather than a number.**
+`managed_books_ahead` books "the first proposable law" and the new amendment sits first
+in `data/laws/amendments.json`, so the diary row reads `Single-Term Presidency Act` where
+it read `Term Limits Abolition Amendment` — a content-ordering artefact, and a latent
+fragility in that regime worth naming rather than fixing here. Two new regimes, both the
+**expensive kind**: a referendum and an electoral-reform Act are verbs no budget regime
+issues.
+
+**The legibility evidence is exact and it costs a term.** Same budget, `managed` against
+`managed_calls_a_referendum`: GDP, growth, trend, unemployment, debt and deficit are
+**identical to the digit** in every year the two share (2032: 3084, +1.27, +1.31, 7.67,
+125.2, −2.86), and approval is **56.7 against 49.3** with the worst bloc at rural 52
+against rural 45. The referendum carried, the mandate is worth **+7.4 points**, and the
+president is **out of office in 2032** — termed out by the very amendment they won,
+where `managed` holds a second term at 26.7 %. The electoral half is visible in the
+assembly rather than in the figures: after June 2029, `managed_reforms_the_ballot`
+governs on **326 of 577** where `managed` has **377**, because the power law's
+amplification of the largest party is gone. "Producing visibly different assemblies" is
+the row's own phrase, measured.
+
+**The nineteenth screenshot pass found one bug and it was the readout's**: the session
+made `election_system` live state and left **no surface saying which one is live**, so a
+player who passed the Proportional Representation Act could not read that it had taken
+effect until the next legislative election three years later. A lever whose only feedback
+is a three-year wait has no readout at all. `government_panel.gd` now names the method
+and its threshold beside the amendment rule, and unlike the referendum line it is
+**never silent** — an absent referendum route is a fact most constitutions simply do not
+have, where every assembly in the world is elected somehow.
+
+**A test fixture predated the new field for the third time on this project's record** —
+`tests/fixtures/nation_bad_formation_method.json` failed `Nation.from_dict()` before
+reaching the template check it exists for, which is V1.5b's and V1.5c's fixture failure
+repeating. `--referendum` and `--electoral` are the twenty-second and twenty-third
+screenshot flags, and they want **opposite treatment**: the pending block is the first
+thing on the law panel, and an electoral reform is invisible until the next legislative
+election, forty-one months out.
+
+`--pledge` is the twenty-first screenshot flag and it wants the **opposite end of the
+scroll from `--campaign`**, which is the same panel: the ledger is at the top and the
+promises are at the bottom, so V1.6e's correction now has a *direction* per flag rather
+than per panel. And `tests/test_pledges.gd` reads **`tools/balance_probe.gd` and
+`tests/test_balance.gd`** and fails if either does not name `Pledges.tick_month` — V1.5d
+shipped with neither harness calling `Media.tick_month()`, so both ran the pre-session
+model and their agreement about a bit-identical re-run was about nothing. A bit-identical
+re-run is the reassuring outcome, which is exactly why that check is a test and not a
+habit.
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, U1-U5 and U6 (a, b and c) are done. **The V1.5, V1.6 AND V1.7 blocks are all COMPLETE, section 6's last clause and section 7's with them. Only §8 (events) and the re-parked V1.1e are left in the V1 tier.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 23**. There has never been a migration: a superseded
+Save format is at **version 25**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

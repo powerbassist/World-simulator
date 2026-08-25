@@ -27,6 +27,13 @@ const CreditK = preload("res://src/sim/credit_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
+const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const ElectionK = preload("res://src/sim/election_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
@@ -126,6 +133,9 @@ func _init() -> void:
 	_check_tax_fields(loader)
 	_check_investment_fields(loader)
 	_check_project_fields(loader)
+	_check_campaign_fields(loader)
+	_check_pledge_fields(loader)
+	_check_referendum_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -711,8 +721,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -990,6 +1000,359 @@ func _check_cycle_fields(loader) -> void:
 		var name := String(key)
 		if name.begins_with("cycle_") and name != "cycle_impulse_pct" and name != "cycle_amplitude_rel":
 			_fail("a save carries %s -- the cycle is a pure function of the clock and stores no phase, counter or accumulated wave, so a third field is a model change that has to be argued" % name)
+
+
+## V1.7a. THREE FIELDS AND NONE OF THEM EARNS A BUMP, which is the answer the plan
+## predicted and this is where it is checked rather than asserted.
+##
+## All three read as "no campaign" when absent, and that is the TRUTH about every
+## version-23 save because those games had no campaign verb -- `measures` at V1.3c,
+## `pacts` at V1.3g, `appointments` at U6a, `sector_investment` at V1.6e. They are
+## serialised regardless, and for three DIFFERENT reasons, so the checks below are
+## separate rather than folded together:
+##
+##   campaign_running       a verb writes it and no tick recomputes it
+##   campaign_mobilisation  it is SPENT at the ballot box, so a reload in the last month
+##                          of a run-up would go to the vote with a campaign already paid
+##                          for and no longer held
+##   campaign_bill_pct_gdp  recomputed on the first tick, serialised so a save read back
+##                          and never ticked reports the budget it was saved with
+##
+## And it ends with V1.3c's device, pointed at the next session for the sixth time: the
+## version is STILL 23, so V1.7b has to come and say why it moves.
+func _check_campaign_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	# Into the run-up, then two efforts in the field and two months of accrual.
+	var target: int = (ns.next_executive_year * 12 + ns.next_executive_month) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	state.year = int(target / 12)
+	state.month = target - state.year * 12
+	if state.month <= 0:
+		state.month += 12
+		state.year -= 1
+
+	var started := 0
+	for a in loader.campaign_actions:
+		if String(a.effects.get("campaign", {}).get("op", "")) != "start":
+			continue
+		if Campaign.execute(state, ns, loader.campaign_actions, a).get("applied", false):
+			started += 1
+	if started == 0:
+		_fail("no campaign effort could be started, so this check measures nothing")
+		return
+	Campaign.tick_month(state, loader)
+	Campaign.tick_month(state, loader)
+	if ns.campaign_mobilisation.is_empty() or ns.campaign_bill_pct_gdp == 0.0:
+		_fail("the campaign did not accrue or did not bill, so this check measures nothing")
+		return
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(full)
+	if Campaign.running(kept.player()) != Campaign.running(ns):
+		_fail("the efforts in the field did not survive the round trip")
+	for bloc in ns.campaign_mobilisation:
+		if not is_equal_approx(
+			float(kept.player().campaign_mobilisation.get(bloc, 0.0)),
+			float(ns.campaign_mobilisation[bloc])
+		):
+			_fail("the mobilisation on '%s' did not survive the round trip" % bloc)
+	if not is_equal_approx(kept.player().campaign_bill_pct_gdp, ns.campaign_bill_pct_gdp):
+		_fail("the campaign bill did not survive the round trip")
+
+	# (1) THE RUNNING REGISTER. Absent it reads as nothing in the field, which is correct
+	# for a version-23 save -- so no bump. What it is NOT is free to drop from a
+	# version-24 save: the bill goes with it, and the player is handed back money they
+	# have committed.
+	var no_running: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_running["nations"]["FRA"] as Dictionary).erase("campaign_running")
+	var dropped_running = GameState.from_dict(no_running)
+	if not dropped_running.player().campaign_running.is_empty():
+		_fail("a dropped running register came back non-empty")
+	Campaign.tick_month(state, loader)
+	if Campaign.bill_pct_gdp(dropped_running.player(), loader) != 0.0:
+		_fail("a dropped running register still bills -- then it is not derivable and the version must move")
+
+	# (2) THE MOBILISATION. Absent it reads 0.0 and Campaign.turnout_of() returns the
+	# authored constant BIT-FOR-BIT, which is the whole property this session rests on.
+	var no_mob: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_mob["nations"]["FRA"] as Dictionary).erase("campaign_mobilisation")
+	var dropped_mob = GameState.from_dict(no_mob)
+	for bloc in OpinionK.BLOC_KEYS:
+		if Campaign.turnout_of(dropped_mob.player(), bloc) != float(ElectionK.BLOC_TURNOUT[bloc]):
+			_fail("a dropped mobilisation register does not read as the authored turnout for '%s'" % bloc)
+	# ...and it is NOT recomputed by a tick, which is what separates it from the bill and
+	# is the reason it is serialised at all.
+	Campaign.tick_month(state, loader)
+
+	# (3) WHAT WAS NOT ADDED. No window flag, no "campaign opened" date, no per-effort
+	# entry -- the window is a LEVEL READ of next_executive_*, which the save has carried
+	# since the MVP, and the register holds effort IDS and nothing about them. A later
+	# session storing any of these turns this red and has to come and say why.
+	for absent in ["campaign_open", "campaign_opened_year", "campaign_started_month", "last_campaign_result"]:
+		if (full["nations"]["FRA"] as Dictionary).has(absent):
+			_fail("a save carries %s -- the window is a level read on the clock and the last result is a display record" % absent)
+	for entry in (full["nations"]["FRA"] as Dictionary)["campaign_running"]:
+		if typeof(entry) != TYPE_STRING:
+			_fail("a serialised running entry is not a bare effort id -- the cost and the reach round-trip through data/campaign-actions/, not through the save")
+
+	# (4) THE SPENT REGISTER, and it is the one campaign field that DOES earn the bump.
+	# Absent it reads as "no effort has run yet" while `campaign_running` beside it says
+	# one is in the field -- the two disagree, and the disagreement is the exploit the
+	# register exists to close: every spent effort is handed back, so a reload re-opens
+	# the start/stop/start loop that re-pays a permanent `bloc_offset`. Save-scumming
+	# then farms it without bound. `diplo_months_to_act` at U6a.
+	#
+	# Checked as a PREMISE rather than asserted: drop it, and require that the effort
+	# becomes startable again.
+	var spent := Campaign.running(ns)
+	if spent.is_empty():
+		_fail("nothing was started, so the spent-register check measures nothing")
+		return
+	var spent_action = null
+	for a in loader.campaign_actions:
+		var t: Dictionary = a.effects.get("campaign", {})
+		if String(t.get("op", "")) == "start" and spent.has(String(t.get("effort_id", ""))):
+			spent_action = a
+			break
+	if spent_action == null:
+		_fail("no start action names a running effort, so the spent-register check measures nothing")
+		return
+
+	var no_spent: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_spent["nations"]["FRA"] as Dictionary).erase("campaign_started")
+	(no_spent["nations"]["FRA"] as Dictionary)["campaign_running"] = []
+	var dropped_spent = GameState.from_dict(no_spent)
+	if not Campaign.available(
+		dropped_spent, dropped_spent.player(), loader.campaign_actions
+	).has(spent_action):
+		_fail("dropping campaign_started left a spent effort unstartable -- then it is derivable and the version did not need to move")
+
+	# ...and it is NOT recomputed by a tick, which is what separates it from the bill.
+	Campaign.tick_month(dropped_spent, loader)
+	if not dropped_spent.player().campaign_started.is_empty():
+		_fail("a tick rebuilt the spent register -- then it is derivable and the version did not need to move")
+
+	# The version assertion is in _check_bloc_fields() above and now reads 24, raised by
+	# the V1.7a restart fix. V1.3c's device stays armed there: the next session moving it
+	# has to come and say why.
+
+
+## V1.7b. ONE FIELD AND IT EARNS NOTHING, and this is where that is CHECKED rather
+## than asserted.
+##
+## `pledges` absent reads as "nothing promised", which is the truth about every
+## version-23 save because those games had no pledge verb -- `measures` at V1.3c,
+## `pacts` at V1.3g, `appointments` at U6a, `campaign_running` at V1.7a.
+##
+## IT IS SERIALISED REGARDLESS AND THAT HALF IS NOT FREE, which is `regulation_burden`'s
+## case at V1.4b rather than the campaign bill's: a verb writes it, no tick recomputes
+## it, and THE REWARD HAS ALREADY BEEN PAID. A save that dropped the register would hand
+## the player the upside of every promise they ever made and delete the liability. The
+## check below drops it and requires the charge to stop, which is that premise measured.
+##
+## AND THE HALF WORTH PINNING IS WHAT IS NOT THERE. No breach rate, no display name, no
+## "is live" flag and no stored judgement: the ladder round-trips through data/pledges/
+## and the two dates are read against the clock. A later session storing any of them
+## turns this red and has to come and say why.
+func _check_pledge_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var target: int = (ns.next_executive_year * 12 + ns.next_executive_month) - CampaignK.CAMPAIGN_WINDOW_MONTHS
+	state.year = int(target / 12)
+	state.month = target - state.year * 12
+	if state.month <= 0:
+		state.month += 12
+		state.year -= 1
+
+	var made := 0
+	for a in loader.pledges:
+		if Pledges.execute(state, ns, loader.pledges, a).get("applied", false):
+			made += 1
+	if made == 0:
+		_fail("no promise could be made, so this check measures nothing")
+		return
+
+	# Into the term the promises bind, and break one of them.
+	var entry: Dictionary = ns.pledges[0]
+	state.year = int(entry["from_year"])
+	state.month = int(entry["from_month"])
+	state.month += 1
+	if state.month > 12:
+		state.month = 1
+		state.year += 1
+	var pending := {
+		"tax_rates_pct": ns.tax_rates_pct.duplicate(),
+		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(),
+	}
+	pending["tax_rates_pct"]["income"] = float(pending["tax_rates_pct"]["income"]) + 8.0
+	pending["spending_pct_gdp"]["health"] = float(pending["spending_pct_gdp"]["health"]) - 4.0
+	Budget.commit(state, pending)
+	Pledges.tick_month(state, loader)
+
+	var broken := 0
+	for e in ns.pledges:
+		broken += int(e["breach_months"])
+	if broken == 0:
+		_fail("no promise was broken, so this check measures nothing")
+		return
+
+	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(full)
+	if kept.player().pledges.size() != ns.pledges.size():
+		_fail("the promises did not survive the round trip")
+	for i in ns.pledges.size():
+		for key in (ns.pledges[i] as Dictionary).keys():
+			var a = (ns.pledges[i] as Dictionary)[key]
+			var b = (kept.player().pledges[i] as Dictionary).get(key)
+			if typeof(a) == TYPE_FLOAT:
+				if not is_equal_approx(float(a), float(b)):
+					_fail("pledge[%d].%s did not survive the round trip" % [i, key])
+			elif str(a) != str(b):
+				_fail("pledge[%d].%s did not survive the round trip" % [i, key])
+
+	# (1) ABSENT IT READS AS "NOTHING PROMISED" -- correct for a version-23 save, so no
+	# bump. What it is NOT is free to drop from a later save: the charge stops and the
+	# reward, which was paid at the moment of the promise, is already inside bloc_offset.
+	var dropped: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(dropped["nations"]["FRA"] as Dictionary).erase("pledges")
+	var no_pledges = GameState.from_dict(dropped)
+	if not no_pledges.player().pledges.is_empty():
+		_fail("a dropped pledge register came back non-empty")
+	var before: Dictionary = no_pledges.player().bloc_offset.duplicate(true)
+	Pledges.tick_month(no_pledges, loader)
+	for bloc in before:
+		if float(no_pledges.player().bloc_offset.get(bloc, 0.0)) != float(before[bloc]):
+			_fail("a dropped pledge register still charged '%s' -- then it is derivable and this reasoning is wrong" % bloc)
+	# ...and the premise: the register is NOT recomputed by a tick, unlike the campaign
+	# bill and V1.4a's three prices. That is what makes serialising it load-bearing.
+	if not no_pledges.player().pledges.is_empty():
+		_fail("a tick rebuilt the pledge register -- then it need not be serialised at all")
+
+	# (2) WHAT WAS NOT ADDED.
+	for absent in ["last_pledge_result", "pledge_live", "pledge_trust", "trust_pct"]:
+		if (full["nations"]["FRA"] as Dictionary).has(absent):
+			_fail("a save carries %s -- there is no trust quantity in this model and the last result is a display record" % absent)
+	var allowed := [
+		"pledge_id", "field", "op", "value",
+		"from_year", "from_month", "until_year", "until_month",
+		"breach_months", "months_live",
+	]
+	for e in (full["nations"]["FRA"] as Dictionary)["pledges"]:
+		for key in (e as Dictionary).keys():
+			if not allowed.has(String(key)):
+				_fail("a serialised promise carries '%s' -- the ladder round-trips through data/pledges/, not through the save" % key)
+
+	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
+	# V1.7b would have to come and say why it moves; it does not move, and the reason is
+	# in this function's header. V1.7c now has to come and say why.
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
+## V1.7c. FOUR added fields, THREE of which earn the bump to 25 and one of which is
+## not serialised at all -- and they fail the rule by three DIFFERENT failures, so they
+## are asserted separately. A single combined check would let any of them be quietly
+## wrong, which is the split V1.5c, V1.4a and V1.3g each found worth having.
+##
+##   election_system / election_threshold_pct  LIFTED from Nation, and the sharpest
+##     case on this list since `military_capability`. Absent they read "" and 0.0;
+##     ElectoralSystems.allocate() falls through its match on an unknown method and
+##     EVERY SEAT ALLOCATION COLLAPSES TO ZERO. NationState.from_dict() never sees the
+##     loader -- V1.6a's finding that statelessness is a property of the MODULE and not
+##     of the save file -- so a content-derived static fact cannot be re-derived here.
+##
+##   referendum_mode  static content, and it earns the bump for `eu_member`'s reason
+##     rather than for its own: absent it reads "", which is a LEGAL state for six of
+##     the ten and a silently different model for France, whose Art. 89 route
+##     disappears. A reloaded game runs a different constitution.
+##
+##   referendum_pending  absent, a referendum the country has already been called to
+##     VANISHES -- a free withdrawal of the one act this session deliberately made
+##     un-free. `campaign_started` one commit earlier, and `diplo_months_to_act` at U6a.
+##
+##   last_referendum_result  NOT SERIALISED AT ALL, `last_project_result`'s case: a
+##     display record of something that has already happened to the register. The
+##     ABSENCE is pinned, so a later session storing it turns this red and has to say
+##     why.
+func _check_referendum_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var law = null
+	for candidate in loader.laws:
+		if candidate.id == "single_term_reform":
+			law = candidate
+	if law == null:
+		_fail("single_term_reform is not in the law list, so the referendum round trip measures nothing")
+		return
+	var called := Legislature.propose(state, loader, law, false, true)
+	if not bool(called.get("referendum_called", false)):
+		_fail("no referendum was called, so the referendum round trip measures nothing")
+		return
+
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var back = GameState.from_dict(dict)
+	var bns = back.player()
+
+	# (1) the round trip itself.
+	if bns.election_system != ns.election_system:
+		_fail("election_system did not survive the round trip")
+	if not is_equal_approx(bns.election_threshold_pct, ns.election_threshold_pct):
+		_fail("election_threshold_pct did not survive the round trip")
+	if bns.referendum_mode != ns.referendum_mode:
+		_fail("referendum_mode did not survive the round trip")
+	if int(bns.referendum_pending.get("months_left", 0)) != int(ns.referendum_pending.get("months_left", -1)):
+		_fail("the pending referendum did not survive the round trip")
+
+	# (2) the electoral pair, checked as a PREMISE rather than asserted: drop it, and
+	# require that the allocation collapses.
+	var no_system: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_system["nations"]["FRA"] as Dictionary).erase("election_system")
+	var dropped_system = GameState.from_dict(no_system)
+	var seats := ElectoralSystems.allocate(
+		dropped_system.player().election_system,
+		{"a": 0.6, "b": 0.4}, 100, 0.0
+	)
+	var total := 0
+	for party_id in seats:
+		total += int(seats[party_id])
+	if total != 0:
+		_fail("dropping election_system still allocated %d seats -- then it did not need the bump" % total)
+
+	# (3) the mode, and it is a DIFFERENT failure: not a collapse but a silently
+	# different constitution.
+	var no_mode: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_mode["nations"]["FRA"] as Dictionary).erase("referendum_mode")
+	var dropped_mode = GameState.from_dict(no_mode)
+	if Legislature.can_put_to_referendum(dropped_mode.player(), law):
+		_fail("dropping referendum_mode left the route open -- then it did not need the bump")
+
+	# (4) the register, and it is a THIRD failure: a free withdrawal.
+	var no_pending: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_pending["nations"]["FRA"] as Dictionary).erase("referendum_pending")
+	var dropped_pending = GameState.from_dict(no_pending)
+	if Referendum.is_pending(dropped_pending.player()):
+		_fail("dropping referendum_pending left a referendum in flight")
+	var before_offset: float = float(dropped_pending.player().bloc_offset.get("workers", 0.0))
+	Legislature.tick_month(dropped_pending, loader)
+	if not is_equal_approx(float(dropped_pending.player().bloc_offset.get("workers", 0.0)), before_offset):
+		_fail("a tick charged for a referendum the save had already deleted")
+	if Referendum.is_pending(dropped_pending.player()):
+		_fail("a tick rebuilt the register -- then it is derivable and the version did not need to move")
+
+	# (5) the ABSENCE. A display record is not state.
+	if (dict["nations"]["FRA"] as Dictionary).has("last_referendum_result"):
+		_fail("a save carries last_referendum_result -- it is a display record, `last_project_result`'s case")
+
+	# (6) and the register carries no CONTENT: a law id, a countdown and the question's
+	# own position, and nothing else. V1.4a's discipline, and the reason the position is
+	# there is that the country must answer the question it was asked.
+	var allowed := ["law_id", "months_left", "position"]
+	for key in (dict["nations"]["FRA"]["referendum_pending"] as Dictionary).keys():
+		if not allowed.has(String(key)):
+			_fail("a serialised referendum carries '%s' -- the law round-trips through data/laws/, not through the save" % key)
 
 
 func _run_unknown_version() -> void:
@@ -1313,8 +1676,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1479,8 +1842,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -1563,8 +1926,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -1881,8 +2244,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -1972,8 +2335,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2130,8 +2493,8 @@ func _check_tax_fields(loader) -> void:
 	if demog_src.contains("gini_index ="):
 		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
@@ -2210,8 +2573,8 @@ func _check_investment_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
@@ -2316,5 +2679,5 @@ func _check_project_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
 
-	if GameState.SAVE_VERSION != 23:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects`, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 25:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 and V1.7c to 25, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

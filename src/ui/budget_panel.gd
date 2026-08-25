@@ -123,6 +123,14 @@ const FIGURE_ROWS := [
 	# than a policy. Reads "—" while nothing is under construction, which is every
 	# game that has not used the verb.
 	["projects", "  of which public works"],
+	# V1.7a, beside the public-works line and on the same argument a SEVENTH time: money
+	# leaving the budget that the player set with no slider on this panel. It differs
+	# from every line above it in WHEN it appears -- it can only exist inside the months
+	# before an election, and it stops on a date the player cannot move. A president
+	# reading this screen in the run-up is looking at the one line here they will not be
+	# paying next year whatever they decide. Reads "-" outside a run-up and while nothing
+	# is in the field, which is most of every game.
+	["campaign", "  of which the campaign"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
@@ -423,6 +431,7 @@ func _refresh() -> void:
 	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
 	_set_figure("investment", _investment_text(now), _investment_text(proposed))
 	_set_figure("projects", _projects_text(now), _projects_text(proposed))
+	_set_figure("campaign", _campaign_text(now), _campaign_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
@@ -575,7 +584,18 @@ func _projects_text(snap: Dictionary) -> String:
 	return _pct_and_eur(snap, "project_bill_pct_gdp")
 
 
-## The same em dash a seventh time, on the revenue side. Unsigned: a holding pays or
+## The same em dash a seventh time, and the missing-key branch is separate for V1.6d's
+## reason exactly as the two above it. Unsigned like them: a campaign only ever costs,
+## and what it buys is turnout rather than money.
+func _campaign_text(snap: Dictionary) -> String:
+	if not snap.has("campaign_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["campaign_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "campaign_bill_pct_gdp")
+
+
+## The same em dash an eighth time, on the revenue side. Unsigned: a holding pays or
 ## the state does not have one, and a firm that loses money still hands over nothing
 ## rather than billing the treasury -- there is no margin quantity here for it to
 ## lose, which is docs/companies-model.md section 13's call showing up on a panel.

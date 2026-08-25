@@ -220,7 +220,7 @@ func _check_discipline_stays_in_bounds_over_a_full_run() -> void:
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
 		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state)
+		Legislature.tick_month(state, _loader)
 		Elections.tick_month(state, _loader)
 
 		for pid in ns.party_discipline:
