@@ -19,6 +19,7 @@ const InvestmentAction = preload("res://src/core/investment_action.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
 const PledgeAction = preload("res://src/core/pledge_action.gd")
+const GameEvent = preload("res://src/core/event.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -87,6 +88,18 @@ var campaign_actions: Array[CampaignAction] = []
 ## for data/campaign-actions/'s reason -- a promise names no place and no institution.
 var pledges: Array[PledgeAction] = []
 
+## V1.8's occasions. The SEVENTH directory on data/diplomatic-actions/'s shape, and the
+## last content type the V1 tier adds. Ordered rather than keyed, and the order is
+## load-bearing here in a way it is not for the six above: Events._next_event() takes
+## the FIRST event whose gate is open this month, so authored order is the tiebreak
+## between two crises drawn in the same month.
+##
+## Global rather than per nation, and unlike data/companies/ and data/outlets/ that is
+## not a coverage decision deferred to a later session: an event names no place, no firm
+## and no institution, and its subject is an OFFICE every one of the ten fills. See
+## src/core/event.gd.
+var events: Array[GameEvent] = []
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -124,7 +137,7 @@ var world_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -135,6 +148,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	investment_actions.clear()
 	project_actions.clear()
 	campaign_actions.clear()
+	events.clear()
 	pledges.clear()
 	laws.clear()
 	political_systems.clear()
@@ -192,6 +206,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_investment_actions(investment_actions_dir)
 	_load_projects(project_actions_dir)
 	_load_campaign_actions(campaign_actions_dir)
+	_load_events(events_dir)
 	_load_pledges(pledges_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
@@ -1393,3 +1408,74 @@ func _outer_ring(polygon_coords: Array) -> PackedVector2Array:
 	for point in polygon_coords[0]:
 		ring.append(Vector2(point[0], point[1]))
 	return ring
+
+
+## V1.8. _load_projects()'s shape, and the seventh directory to take it.
+##
+## THE CROSS-FILE CHECK IS THE HALF WORTH HAVING, and here it is a different half from
+## every previous one. Per-entry validation lives in src/core/event.gd; what only this
+## function can see is whether the SET is coherent -- that no two entries define the
+## same event, and that no two events name the same subject office AND the same
+## precondition field, which is the content-level shape of the same collision
+## _validate_companies() refuses when a sector holds one named firm. Two scandals about
+## the prime minister with identical gates are one event authored twice, and the second
+## can only ever fire in the months the first did not.
+func _load_events(events_dir: String) -> void:
+	var da := DirAccess.open(events_dir)
+	if da == null:
+		errors.append("%s: directory not found" % events_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	var gates := {}   # "office|field,field" -> the event id that already claims it
+	for fname in filenames:
+		var path := events_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("events")) != TYPE_ARRAY:
+			errors.append("%s: invalid event file, expected {\"events\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["events"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: events[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var ev = GameEvent.from_dict(
+				entry, fname, per_file_errors,
+				C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
+			)
+			errors.append_array(per_file_errors)
+			if ev.id == "":
+				continue
+			if seen_ids.has(ev.id):
+				errors.append("%s: duplicate event id '%s'" % [fname, ev.id])
+			seen_ids[ev.id] = true
+
+			var fields: Array[String] = []
+			for cond in ev.preconditions:
+				fields.append("%s%s%s" % [cond["field"], cond["op"], str(cond["value"])])
+			fields.sort()
+			var gate := "%s|%s" % [ev.subject_office, ",".join(fields)]
+			if gates.has(gate):
+				errors.append("%s: '%s' has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice, and the second fires only where the first did not" % [
+					fname, ev.id, str(gates[gate])
+				])
+			gates[gate] = ev.id
+			events.append(ev)

@@ -211,6 +211,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.6f) `--build` and
 (V1.7a) `--campaign` and
 (V1.7b) `--pledge`,
+(V1.7c) `--referendum` and `--electoral`,
+(V1.8) `--event` and `--event-answered`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -2036,13 +2038,153 @@ model and their agreement about a bit-identical re-run was about nothing. A bit-
 re-run is the reassuring outcome, which is exactly why that check is a test and not a
 habit.
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, U1-U5 and U6 (a, b and c) are done. **The V1.5, V1.6 AND V1.7 blocks are all COMPLETE, section 6's last clause and section 7's with them. Only §8 (events) and the re-parked V1.1e are left in the V1 tier.** (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+**V1.8 shipped events, and THE V1 TIER IS COMPLETE.** One session, not decomposed --
+the first block since V1.1 not to split -- because fire → pending → choose → apply is
+**one pipeline**, which is V1.3d's rule, so V1.3e's split trigger answers no. ~36
+surfaces against V1.7c's ~30. `src/sim/events.gd` is a scheduler, a register and a
+verb; every consequence a choice carries lands on a register an earlier session owns and
+is written by the one function that owns it.
+
+**Section 8's own two bullets are tiered NOWHERE, and that is instance forty-four --
+the largest gap between a section and its backing the count has found.** Every other V1
+section's bullets trace to a `docs/brainstorm/mechanics-*.md` row tiered V1; these two
+have no row at all, and every event-shaped mechanic that IS in those four tables is
+**Someday** (Terrorism, Pandemics, Emergency powers, the housing market's "own crisis
+generator"). The only V1-tiered mechanic §8 owns is the **Scandals** row §5 handed it at
+V1.5d. That decided the design rather than decorating it: there is no crisis left to
+author that is not already a machine here -- a strike is V1.5c, a downgrade V1.6c, a
+foreign act V1.3f -- so **an event does not add a consequence the game did not have; it
+adds an occasion on which the player must pick one, a menu, and a deadline.**
+
+**"The event schema is the union of the channels §3-7 create" is right about the TIMING
+and wrong about the SHAPE, which is instance forty-six.** Counted, there are ten
+channels: four are pair state (`relations`, `agreement`, `measure`, `pact`) and four are
+commitments in flight (`investment`, `project`, `campaign`, `pledge`), each with exactly
+one writer that has an **actor or a bill** behind it -- and an event is neither. The
+union is not writable. What is writable is the LAW channel, extracted at this session
+into `Law.extract_shared_effects()` and `Legislature.apply_effects()` so a law and an
+event choice cannot drift apart, and the timing argument survives whole on it:
+`effects.society` grew from one term to four across V1.5a-d and the institutional
+whitelist split at V1.7c, so a schema written at V1.5d would have carried a quarter of
+this one. **`institutional` is refused BY NAME** -- it is "Emergency powers", tiered
+Someday, and a key refused as an unrecognised typo is one a later session re-adds
+(**instance forty-seven**).
+
+**Instance forty-eight is the sharpest and forty-three prior instances missed it.**
+*"Decree / executive order -- bypass the assembly on a narrow set of matters, at a
+legitimacy cost"* is tiered **V1** in `mechanics-governance.md` and appears in **no row
+of any tier doc**. A choice that moves `tax_rates_pct` or `spending_pct_gdp` with no
+assembly division IS that mechanic: the narrow matters are what the content names and
+the legitimacy cost is the choice's own `bloc_offset`. Discharged here and written into
+§1 as well as §8. **Instance forty-nine is NOT this session's** -- the same sweep, the
+last one the tier gets, found **Embassies** and **Foreign aid** tiered V1, in no row and
+absent from `data/diplomatic-actions/`'s fourteen verbs. Recorded, not built.
+
+**No randomness, and section 8's own "semi-random" is instance forty-five.** V1.6a hit
+the identical collision in nearly identical words; the answer transfers whole. The
+hazard is `Cycle.unit()` over (nation id, event id, absolute month) -- **preloaded, not
+copied**, because cycle.gd's duplication of `poll_noise.gd` rests on a BOUNDARY argument
+that does not transfer to a second file inside `src/sim/`, so there is exactly one
+deterministic draw in the simulation and one outside it. A save reloaded on the month a
+crisis arrived receives **the same crisis**.
+
+**E1b IS WHERE THE SESSION TURNED, and it is `a bill is not a cost` one block on.**
+`bloc_offset` is a permanent clamped accumulator whose every previous writer either
+charges once for an act the player chose or charges while a condition holds and stops
+when they fix it. An event is neither -- it recurs and its default charges with no
+decision -- and the first authored ladder passed the per-decision band while **failing
+the career bound by a factor of four**: ten defaults reached `BLOC_OFFSET_MAX`, and a
+saturated clamp makes **every regime converge on the same floor**. `tests/test_balance.gd`
+said so in the sharpest available words -- *managing the budget did not beat ignoring it
+on approval: 38.4 managed vs 38.6 ignored*. The plan's **escalation trigger 4 fired and
+was honoured by the response it named**: magnitudes down, clamp untouched. Worst
+reachable career is now **0.423 of 1.00**, measured and slack.
+
+**Both other bands were corrected by their own first runs.** E1's cadence clause passed
+**every** candidate from 3 to 20 -- the one-sided failure V1.5a and V1.5b each recorded --
+so `EVENT_COOLDOWN_MONTHS` took V1.5a's **two-part selector**, closed at the far end by
+E1b's slack clause: passing [4, 20], failing 3 (saturating) and 24 (cadence), midpoint
+**12**. V1.5b's refinement diagnostic fired on the way, moving the answer from 10 to 12
+once the grid held every integer. And **E2's AXIS was wrong**: written on the headline
+approval figure it failed five events of six and came back *negative* on the fiscal one,
+because refusing to fix a deficit is the most popular thing a president can do. An event
+moves a few blocs hard, so the band is the **widest per-bloc spread** -- V1.3g's rural
+row, V1.5b's deleted term and V1.5c's workers row, a fourth time -- with both edges
+measured (3.0 poll floor, 5.8 what V1.7b measured a full-term breach to cost). All six
+pass at 3.31 to 5.15; **the headline fails for all six and is recorded rather than tuned
+against.**
+
+**E3's kill switch cleared at 0 dominated alternatives and 0 toothless defaults, after
+its own RULE was corrected.** The first run reported five violations of which four are
+the design -- an active choice dominating the **default** is the pressure, not a trap,
+because a default is suffered rather than taken. Dominance counts between **alternatives
+only**; the one real violation was fixed in the **content**. Two further corrections to
+the test: a **tolerance**, because the first run decided a verdict on a ninth-decimal
+difference and therefore stayed silent about two options identical in every readable
+sense; and a **fourth axis, `corruption`**, admitted because it has an unambiguous better
+direction where `press_freedom`, `settlement_stance` and `regulation_burden` have none --
+without it `inquiry` dominated `dismiss` while leaving the state dirtier.
+
+`SAVE_VERSION` is **26**, on three fields of four, and they fail the rule by **three
+different failures** -- `event_pending` is `referendum_pending`'s free escape,
+`event_fired` is `passed_law_ids` letting a settled `once` event charge twice, and
+`event_quiet_months` is U6a's `diplo_months_to_act` reading 0 as *act now*. Asserted
+apart, and `event_history` earns nothing and is serialised anyway. **What was not added
+is pinned**: no stored hazard, no draw, no RNG state.
+
+**The re-run is a re-baseline and E0c named the movers before it ran.** All 43 shared
+regimes differ -- three hazard-only events have no precondition to fail -- but **30 of 43
+keep GDP, growth, trend, unemployment, debt and deficit bit-identical**, and the 13 that
+move are exactly the runs where a choice touched a budget line. Worst approval move
+**5.80**, **one outcome change of 78**. `managed` is the cleanest row: 2032 identical to
+the digit (3084, +1.27, +1.31, 7.67, 125.2, -2.86) against approval **49.3 → 48.6**.
+**Two new regimes**, and the only thing that varies is whether the player opens the
+window: same budget, same events, **same arrival months**, because the hazard is
+deterministic -- V1.7b's confounded pair avoided rather than repeated. They were first
+called `best` and `worst` **and the run refuted the names**: the soft run ends *below*
+the hard one on approval AND the deficit, because the choices that buy the most approval
+on the day are the ones that concede money. V1.7a's *share is not winning* in a new
+place. Both still beat the control, which is the property the deadline needs.
+
+**E0 corrected the plan before a line of content existed**, which is the whole case for
+running it first: **`deficit_pct_gdp` is POSITIVE for a shortfall**
+(`total_spending - total_revenue`), so `austerity` reads -9.41 because it runs a surplus
+and `balance_probe.gd` negates it for display -- an event authored on the plan's sign
+would have fired only on a **surplus**. Every threshold is written inside a measured
+occupancy that **separates the regimes**: `deficit >= 5.5` holds 74 % of `hands_off` and
+**0 %** of `managed`; `unemployment >= 7.5` holds 40 % and 43 %; `unrest >= 10.0` holds
+9 % and **0 %**.
+
+**`message_stack.gd` gets its FIRST EVER consumer of `card_activated`**, emitted since
+U5a and connected to nothing -- so U5a's call 3 held to the letter: V1.8 added calls, not
+a column. **Dispatches** is a non-modal window in the State cluster (a crisis you can
+ignore and pay for is the whole of "time pressure"; a modal removes the choice by
+removing the option of not making it), with the pending block at the top and the
+**ledger** below. One diary row, `FIXED_EVENT`, and `calendar.gd` still preloads nothing.
+**The subject is an OFFICE and never a person** -- U6b's rule verbatim -- and the frame
+reads *"Cécile Aumont — Prime Minister"* with no content saying so.
+
+**The screenshot pass earned its keep for the twentieth session running, with four bugs,
+two of them the tool's.** `--event` announced the register directly and then ticked, so
+`main.gd` -- which cards an event absent before the tick and present after it -- never
+carded anything, and the frame showed an empty column beside a live crisis; it ticks
+until one arrives now, affordable precisely because the hazard is deterministic.
+`_mark_panels_dirty()` was missing **`_projects_panel` and `_campaign_panel`** as well as
+this session's, so `--build` and `--campaign` had each been photographing a panel that
+refreshed once on frame 1 -- V1.4a's failure a fourth time. The readout's two: the
+deadline line rendered in **green**, the colour this interface uses for good news, and
+the ledger named the button and not the consequence -- V1.7b's own *a live promise that
+never said what it had cost*, fixed by deriving the choice's authored sentence from
+content so the save-format assertion survives intact. Model:
+[docs/events-model.md](docs/events-model.md).
+
+MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, **V1.8**, U1-U5 and U6 (a, b and c) are done. **THE V1 TIER IS COMPLETE except for the re-parked V1.1e.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 25**. There has never been a migration: a superseded
+Save format is at **version 26**. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump
@@ -2179,6 +2321,8 @@ Demography already carries -- so a later session storing an index turns it red a
 come and say why.
 
 **V1.6c bumps to 21 on ONE field, and it is the smallest addition on this list ever to earn one** -- `start_debt_to_gdp_pct`, a single float with no register behind it. Absent it reads 0.0 against a live ~140, so `src/sim/credit.gd`'s debt gap reads the whole stock as newly borrowed: the yield comes back at **4.1 against a kept 2.4**, a France paying seventy per cent more interest for the rest of the run because it saved. `cycle_amplitude_rel` at V1.6a and `military_capability` at V1.3g. Re-deriving on load does not rescue it, which is what separates it from every derived price on this list: the live ratio has moved, so re-anchoring on it would silently forgive every point of debt the player added. **What was NOT added is the half worth pinning** -- no stored yield, no stored spread, no stored rating, because the module is a pure read over a debt stock serialised since the MVP and a grievance serialised at V1.5c. `tests/test_save_load.gd` asserts those three absences, so a later session making the module stateful turns it red and has to come and say why -- **the decomposition's split trigger, pinned in the save format rather than only in the docs**. The first draft of that check said an absent field puts the yield *on the clamp*; it does not, it puts it at 4.1, and the check is written against the measured number instead.
+
+**V1.8 bumps to 26 on THREE fields of four, and they fail the rule by THREE DIFFERENT failures**, which is why `tests/test_save_load.gd` asserts them apart -- the pattern V1.5c set and V1.6b extended, because a combined check lets any one of them be quietly wrong while the other two carry it. `event_pending` is `referendum_pending`'s case exactly: absent, a crisis the country is already facing VANISHES, which is a free escape from the one act this session deliberately made un-escapable -- a player cannot decline an event, only answer it or be answered for. `event_fired` is `passed_law_ids`': absent, a resolved `once` event happens a second time and the player pays its price twice for something already settled, which is also why `once` is marked at ANNOUNCEMENT rather than at resolution. `event_quiet_months` is U6a's `diplo_months_to_act`: absent it reads 0, and 0 means *may fire now*. `event_history` earns nothing -- a display record nothing in `src/sim/` reads back, `unrest_acts`' case -- and is serialised anyway, because the ledger is half of what the Dispatches window exists to be and a session-only ledger is one the player loses by saving. **What was NOT added is the half worth pinning**, and it is V1.6c's shape a second time: no stored hazard, no stored draw and no RNG state, because `Events.hazard_passes()` is a pure function of (nation id, event id, absolute month) -- which is what makes a save reloaded on the month a crisis arrived receive the SAME crisis. The test asserts those absences, so the day a session gives an event's arrival an accumulator it turns red and has to come and say why.
 
 **V1.6a bumps to 19 on one field of two, and the session's plan predicted no bump at all.** Its reason was true about the wrong thing: `src/sim/cycle.gd` is genuinely stateless -- no accumulator, no `tick_month()`, nothing to save -- but `NationState.from_dict()` rebuilds from the dictionary ALONE and never sees the loader, so every content-derived static fact on that class is already serialised (`eu_member`, `neighbours`, `pop_growth_pct`, `gini_index_per_yr`). **Statelessness is a property of the module, not of the save file.** `cycle_amplitude_rel` is the bump: absent it reads the default 1.0, every nation runs the roster-average cycle instead of its own -- France 45 % louder than its content says -- and the reloaded game runs a *different model* from the one that saved it, which is `eu_member` at V1.3b and `military_capability` at V1.3g. `cycle_impulse_pct` earns nothing: absent it reads 0.0 and `Economy.tick_month()` overwrites it from the clock on the next tick, `coercion_impulse_pct`'s case. The test asserts both halves and then pins what was NOT added -- no stored phase, no month counter, no accumulated wave -- so a later session making the module stateful turns it red and has to come and say why.
 

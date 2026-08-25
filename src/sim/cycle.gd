@@ -114,8 +114,8 @@ static func _wave(seed_key: String, t: float) -> float:
 		# Period drawn per (seed, term) so two nations sharing one period still differ
 		# in the other two, and separated bands so the three can never collapse into a
 		# near-single frequency for an unlucky draw.
-		var period: float = float(lo) + _unit(seed_key, k * 2) * float(hi - lo)
-		var sign_bit: float = 1.0 if _unit(seed_key, k * 2 + 1) < 0.5 else -1.0
+		var period: float = float(lo) + unit(seed_key, k * 2) * float(hi - lo)
+		var sign_bit: float = 1.0 if unit(seed_key, k * 2 + 1) < 0.5 else -1.0
 		total += sign_bit * sin(TAU * t / period)
 	return total / sqrt(float(K.CYCLE_TERMS) / 2.0)
 
@@ -124,7 +124,15 @@ static func _wave(seed_key: String, t: float) -> float:
 ## splitmix32's finaliser over an FNV-1a of the key, which is src/ui/poll_noise.gd's
 ## `_unit()` with the arguments the other way round -- see this file's header for why
 ## the two are not shared.
-static func _unit(seed_key: String, index: int) -> float:
+##
+## PUBLIC SINCE V1.8, AND THE THIRD COPY IS THE ONE THAT WAS REFUSED. This file's
+## header justifies duplicating poll_noise.gd's hash on a BOUNDARY -- one of the two is
+## a render-time device that must never touch the model -- and that argument does not
+## transfer to a second file inside src/sim/. src/sim/events.gd draws its hazard from
+## here rather than carrying a third copy, so there is exactly one deterministic draw in
+## the simulation and one outside it. tests/test_events.gd reads that file and fails if
+## a splitmix constant appears in it.
+static func unit(seed_key: String, index: int) -> float:
 	var z: int = (_key_seed(seed_key) + index * 0x9E3779B1) & _U32
 	z = (z + 0x9E3779B9) & _U32
 	z = ((z ^ (z >> 16)) * 0x21F0AAAD) & _U32

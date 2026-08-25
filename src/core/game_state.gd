@@ -29,6 +29,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Events = preload("res://src/sim/events.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -349,7 +350,28 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     it is serialised anyway for `eu_member`'s reason: reading "" for FRANCE is a
 ##     silently different model. And `last_referendum_result` is not serialised at
 ##     all, `last_project_result`'s case.
-const SAVE_VERSION := 25
+##   V1.8 bumps to 26 on THREE fields of four, and the three fail the rule three
+##     DIFFERENT ways -- so tests/test_save_load.gd asserts them separately, the pattern
+##     V1.5c set and V1.6b extended, because a combined check lets any one of them be
+##     quietly wrong. `event_pending` is `referendum_pending`'s case exactly: absent, a
+##     crisis the country is already facing VANISHES, which is a free escape from the
+##     one act this session deliberately made un-escapable, and `campaign_started` one
+##     commit before that. `event_fired` is `passed_law_ids`' case: absent, a resolved
+##     `once` event fires a second time and the player pays its price twice for
+##     something already settled. `event_quiet_months` is U6a's `diplo_months_to_act`:
+##     absent it reads 0, and 0 means *may fire now*, so a save reloaded the month after
+##     a crisis hands the player another one immediately. `event_history` earns nothing
+##     -- a display record nothing in src/sim/ reads back, `unrest_acts`' case -- and it
+##     is serialised anyway, because the ledger is half of what the panel exists to be
+##     and a session-only ledger is one the player loses by saving.
+##   WHAT V1.8 DID NOT ADD is worth pinning beside them, and it is the same half V1.6c
+##     pinned: there is NO stored hazard, no stored draw and no RNG state, because
+##     Events.hazard_passes() is a pure function of (nation id, event id, absolute
+##     month). tests/test_save_load.gd asserts those absences, so the day a session
+##     gives the arrival of an event an accumulator it turns red and has to come and say
+##     why. That is also what makes a save reloaded on the month a crisis arrived
+##     receive the same crisis rather than a different one.
+const SAVE_VERSION := 26
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -840,6 +862,11 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# because that is the tick order, and a reader should be able to read the two in the
 	# same sequence.
 	Unrest.init_nation(ns)
+
+	# V1.8. Position-free: nothing this seeds is derived from any other field, and the
+	# register is empty for every nation on frame 1 by construction -- an event has to be
+	# announced before it exists, and nothing announces one at new-game.
+	Events.init_nation(ns)
 
 	# V1.5d, and it is the ONE call in this function whose position is load-bearing in
 	# both directions. It must come after Government.init_nation() above, because an

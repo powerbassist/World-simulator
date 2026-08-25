@@ -287,6 +287,18 @@ static func fixed_dates(state) -> Array:
 				String(ns.referendum_pending.get("law_id", ""))
 			))
 
+	# V1.8, and it needed no preload for V1.6f's and V1.7c's reason a third time. What
+	# this row carries is not an id but the event's own NAME, copied into the register
+	# at announcement -- so unlike the referendum row above, calendar_panel.gd does not
+	# have to look anything up to print it.
+	if not ns.event_pending.is_empty():
+		var event_left := int(ns.event_pending.get("months_left", 0))
+		if event_left > 0:
+			out.append(_fixed_in(
+				state, K.FIXED_EVENT, event_left,
+				String(ns.event_pending.get("event_name", ""))
+			))
+
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out
 

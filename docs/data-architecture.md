@@ -39,6 +39,12 @@ data/
 ├── diplomatic-actions/ the player's foreign-policy verbs ([[ROADMAP|V1.3a]])
 ├── companies/         fictional firms, playable nations only ([[ROADMAP|V1.4a]])
 ├── company-actions/   the player's verbs pointed at a firm ([[ROADMAP|V1.4a]])
+├── outlets/           the press, playable nations only ([[ROADMAP|V1.5d]])
+├── investment-actions/ sector programmes ([[ROADMAP|V1.6e]])
+├── project-actions/   infrastructure projects ([[ROADMAP|V1.6f]])
+├── campaign-actions/  the run-up's efforts ([[ROADMAP|V1.7a]])
+├── pledges/           binding promises ([[ROADMAP|V1.7b]])
+├── events/            occasions, choices and deadlines ([[ROADMAP|V1.8]])
 ├── geo/               europe.geojson — borders from Natural Earth
 └── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
 ```
@@ -278,6 +284,12 @@ at import time. It checks:
 - Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]), every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list ([[ROADMAP|V1.2c]], [[amendment-model]]), and every scenario names a *playable* nation, real parties, and real voter blocs ([[ROADMAP|V1.2e]], [[scenario-model]]).
 - **What a scenario produces, not what it declares.** A scenario's `seat_share` is a partial override merged over the party file's own shares, so the fragment is not required to sum to anything — the check is that the *merged roster* still sums to 1.0, the same invariant `data/parties/*.json` is held to. It is the one check in the loader that passes every per-file test and fails only cross-file, which is why scenario validation is split between `scenario.gd` (range and shape) and `data_loader.gd` (everything needing the nation's roster).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
+- **Coherence of a SET, which no per-entry check can see.** `data/project-actions/`
+  refuses two entries defining one project and an `abandon` naming a project nothing
+  starts; `data/events/` refuses two events with the same subject AND the same gate,
+  because two crises that can only ever fire in the same months are one event authored
+  twice and the second fires only where the first did not ([[ROADMAP|V1.8]],
+  [[events-model]]).
 
 It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
 

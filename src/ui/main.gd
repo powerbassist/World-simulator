@@ -25,6 +25,7 @@ const Pledges = preload("res://src/sim/pledges.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -34,6 +35,7 @@ const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
+const EventsPanel = preload("res://src/ui/events_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -105,6 +107,7 @@ var _people_panel
 var _companies_panel
 var _projects_panel
 var _campaign_panel
+var _events_panel
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -340,6 +343,20 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V1.8. In the State cluster beside the Diary, and its own window rather than rows
+	# on any existing panel. Registering one is one call plus one line in
+	# _build_action_bar(), which is what U5a's shell was for -- and the reason it is a
+	# window rather than a modal is in the panel's own header: a crisis the player can
+	# ignore and pay for is the whole of the deadline.
+	_events_panel = EventsPanel.new()
+	_windows.register("events", "Dispatches", _events_panel)
+	_events_panel.setup(_state, _loader)
+	_events_panel.hide_close_button()
+	_events_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
+
 	_build_action_bar()
 	_wire_hud()
 
@@ -430,6 +447,10 @@ func _build_action_bar() -> void:
 		# V1.7a. One line, exactly as this function's own comment has now correctly
 		# predicted for six sessions running.
 		{"id": "campaign", "label": "Campaign"},
+		# V1.8, and the seventh session running. What arrives on a president's desk
+		# without being asked for is state, by the same argument the diary and the
+		# people took.
+		{"id": "events", "label": "Dispatches"},
 	])
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		{"id": "economy", "label": "Economy"},
@@ -469,6 +490,17 @@ func _wire_hud() -> void:
 	)
 	_hud.top_bar.settings_requested.connect(_open_pause_menu)
 	_hud.portrait_card.setup(_state, _loader)
+
+	# V1.8, and the first thing ever to connect this signal. message_stack.gd has
+	# emitted card_activated since U5a and nothing has listened, because until now every
+	# card was a NOTIFICATION -- a foreign act, an obligation opening, a strike, a kept
+	# appointment -- and there was nowhere for a click to go. An event card is a
+	# QUESTION, so clicking it opens the window where it is answered. Every card routes
+	# here and the window is right for all of them: whatever the player clicked, what
+	# they wanted was the decision on their desk.
+	_hud.message_stack.card_activated.connect(func(_id: String):
+		_windows.open("events")
+	)
 
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
 	# then told what it now shows -- one direction, so the two cannot disagree
@@ -777,6 +809,20 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# reads the list back, which tests/test_unrest.gd asserts over the whole directory.
 	_card_unrest_acts(year, month)
 
+	# V1.8, immediately after Unrest and before Cabinet and Elections. AFTER Unrest
+	# because `unrest_pct` is one of the fields an event may be preconditioned on and it
+	# has only just settled; BEFORE Elections for the reason everything in this handler
+	# sits above it -- state settles top to bottom and the vote reads it last.
+	#
+	# `before` is captured for the U4 decision delta, because a default arriving is a
+	# thing that happened to the player's budget with no button pressed -- the class
+	# _card_appointment() already covers, and the one case where the player did not even
+	# know a decision was being made on their behalf.
+	var event_before := Budget.snapshot(_state)
+	var pending_before: bool = Events.is_pending(_state.player())
+	Events.tick_month(_state, _loader)
+	_card_events(year, month, pending_before, event_before)
+
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
 	# month's numbers, not last month's.
@@ -912,6 +958,55 @@ func _card_unrest_acts(year: int, month: int) -> void:
 		_hud.message_stack.push(
 			_unrest_title(String(act["label"])),
 			"Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
+		)
+
+
+## V1.8. What arrived on the desk this month, and what the clock decided when the
+## player said nothing. The fifth caller of message_stack.push() and the FIRST EVER
+## CONSUMER of its card_activated signal, which U5a emitted and connected to nothing.
+##
+## U5a's call 3 said the column ships as furniture because the thing that fills it is
+## events, and that "V1.8 adds calls rather than a layout". It held: nothing on screen
+## moved to make room, and the one piece of machinery this needed -- a card the player
+## can click through to the decision -- was already there waiting.
+##
+## Two cards and they are opposite in kind. An ARRIVAL is a question, and clicking it
+## opens the window where it is answered. A DEFAULT is a thing that already happened to
+## the player's government with no button pressed -- _card_appointment()'s class exactly,
+## and the sharper case, because with an appointment the player at least booked it.
+func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) -> void:
+	if _hud == null or _hud.message_stack == null or _state == null:
+		return
+	var ns = _state.player()
+	if ns == null:
+		return
+
+	if was_pending and not Events.is_pending(ns) and not ns.event_history.is_empty():
+		var record: Dictionary = ns.event_history[0]
+		if bool(record.get("defaulted", false)) and int(record.get("year", 0)) == year and int(record.get("month", 0)) == month:
+			_hud.message_stack.push(
+				"Decided for you",
+				"%s. Nobody answered, so it went the way it was always going to: %s." % [
+					String(record.get("event_name", "")), String(record.get("choice_label", "")),
+				],
+			)
+			# The delta is queued HERE and not at the choice, because this is the one
+			# case where the player made no decision -- U4's baseline still belongs
+			# against it, or a budget that moved by default moves for no reason the
+			# ledger names.
+			_queue_effect(String(record.get("event_name", "")), before)
+			return
+
+	if not was_pending and Events.is_pending(ns):
+		var ev = Events.pending_event(ns, _loader)
+		if ev == null:
+			return
+		var left := Events.months_left(ns)
+		_hud.message_stack.push(
+			ev.event_name,
+			"%s  You have %d %s to answer." % [
+				ev.summary, left, "month" if left == 1 else "months",
+			],
 		)
 
 
@@ -1139,6 +1234,7 @@ func _mark_all_dirty() -> void:
 		# of government, a reshuffle that changed a portfolio and every seat count after
 		# an election were all stale on it until the game was reloaded.
 		_people_panel, _companies_panel, _projects_panel, _campaign_panel,
+		_events_panel,
 	]:
 		if panel != null:
 			panel.mark_dirty()

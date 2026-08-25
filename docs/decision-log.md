@@ -368,6 +368,20 @@ attached, in the discipline V1.1b arrived at for balance goals — if playtestin
 finds the loop legible but **inert**, that is the signal to move it, and nothing
 weaker is.
 
+**V1.8 BUILT IT AND BOTH HALVES OF THAT ARGUMENT WERE HALF WRONG, while the conclusion
+held.** *"Events add authored consequences on top of systemic ones"* is the first: the
+last sweep of the tier column found section 8's own two bullets tiered in no
+`mechanics-*.md` table at all, and every event-shaped mechanic that IS tiered there is
+Someday — so there was no V1 crisis left to author, and the consequences are systemic
+while what is authored is the **occasion and the menu**. The union claim is the second,
+and it is a sound argument about TIMING and a false one about shape: four of the ten
+channels are pair state and four are commitments in flight, each with one writer that has
+an actor or a bill behind it, so the union is not writable at all. What is writable is the
+law channel — and *that* grew from a quarter of its present size across V1.4b and V1.5a-d,
+which is the conclusion the argument was there to support. The falsifier is **retired
+unfired**; it was the right shape and the block reached its own end first. See
+[[events-model]].
+
 **The three silent omissions, one line each.** Tourism → [[declined]]: a services
 sub-sector with no dataset split and no mechanic that would read it (no visa
 policy, no exchange rate). Leader personal wealth → [[someday]], folded into the

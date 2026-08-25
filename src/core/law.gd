@@ -196,7 +196,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	elif d.has("systems"):
 		errors.append("%s: %s 'systems' is only valid on a constitutional law" % [filename, law.id])
 
-	law.preconditions = _extract_preconditions(d, law.id, filename, errors)
+	law.preconditions = extract_preconditions(d, law.id, filename, errors)
 	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, sector_keys, law.constitutional)
 	law.changes_system = law.effects.get("institutional", {}).has("system_id")
 
@@ -232,7 +232,16 @@ static func _extract_position(d: Dictionary, law_id: String, filename: String, e
 	return {"economic": econ, "social": social}
 
 
-static func _extract_preconditions(d: Dictionary, law_id: String, filename: String, errors: Array[String]) -> Array:
+## Public since V1.8, and it takes a REFUSAL LIST rather than a second whitelist.
+##
+## src/sim/events_constants.gd needs the same triple with one field removed, and the
+## alternative -- a parallel EVENT_PRECONDITION_FIELDS array -- is the failure
+## src/sim/legislature.gd already records about itself: its whitelist and its
+## read_field() match are the same list in two places and V1.5c added half of it. A
+## third copy would be that failure again with the same excuse, so this is a
+## SUBTRACTION from the one list, which is also the shape ORDINARY_INSTITUTIONAL_KEYS
+## took at V1.7c.
+static func extract_preconditions(d: Dictionary, law_id: String, filename: String, errors: Array[String], refused: Array = []) -> Array:
 	var raw = d.get("preconditions", [])
 	if typeof(raw) != TYPE_ARRAY:
 		errors.append("%s: %s preconditions must be an array" % [filename, law_id])
@@ -248,6 +257,9 @@ static func _extract_preconditions(d: Dictionary, law_id: String, filename: Stri
 		var field = entry.get("field", "")
 		if typeof(field) != TYPE_STRING or not LK.PRECONDITION_FIELDS.has(field):
 			errors.append("%s: %s preconditions[%d].field '%s' is not a recognised field" % [filename, law_id, i, str(field)])
+			continue
+		if refused.has(field):
+			errors.append("%s: %s preconditions[%d].field '%s' is refused on this channel -- see src/sim/events_constants.gd EVENT_PRECONDITION_REFUSED" % [filename, law_id, i, str(field)])
 			continue
 
 		var op = entry.get("op", "")
@@ -270,6 +282,46 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 		errors.append("%s: %s effects must be an object" % [filename, law_id])
 		return {}
 
+	var out := extract_shared_effects(
+		raw, law_id, filename, errors, tax_keys, spending_keys, bloc_keys, sector_keys
+	)
+
+	if raw.has("institutional"):
+		# `allow_institutional` is the law's own `constitutional` flag, and since
+		# V1.7c it selects WHICH keys are legal rather than whether the channel is.
+		# See ORDINARY_INSTITUTIONAL_KEYS.
+		out["institutional"] = _extract_institutional(
+			raw["institutional"], law_id, filename, errors, allow_institutional
+		)
+
+	for key in raw.keys():
+		if not SHARED_EFFECT_CHANNELS.has(key) and key != "institutional" and not SCALAR_EFFECT_KEYS.has(key):
+			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
+
+	return out
+
+
+## THE CHANNELS A LAW AND AN EVENT CHOICE SHARE, extracted at V1.8 so the two cannot
+## drift apart. Everything here is reachable by BOTH; `institutional` is reachable by
+## neither an event choice nor an ordinary Act and stays in the caller.
+##
+## The extraction is what makes docs/tiers/v1.md section 8's own argument collectable.
+## That section is last because "the event schema's shape is the union of the effect
+## channels sections 3-7 create, and written before them it gets written twice" -- and
+## the honest form of that claim is this function: `society` grew from one term to four
+## across V1.5a-d, `company` and the sector burden arrived at V1.4b, and a schema
+## written at V1.5d would have carried a quarter of what this carries. What section 8
+## got WRONG is that the union includes pair state and commitments in flight -- relations,
+## agreements, measures, pacts, investment, projects, campaigns, pledges -- each of
+## which has exactly one writer with an ACTOR or a BILL behind it, and an event is
+## neither. Those are not here and cannot be. See docs/events-model.md section 3.
+const SHARED_EFFECT_CHANNELS := [
+	"tax_rates_pct", "spending_pct_gdp", "bloc_offset", "company", "society",
+]
+
+
+static func extract_shared_effects(raw: Dictionary, owner_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, sector_keys: Array) -> Dictionary:
+	var law_id := owner_id
 	var out := {}
 
 	if raw.has("tax_rates_pct"):
@@ -287,14 +339,6 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 
 	if raw.has("bloc_offset"):
 		out["bloc_offset"] = _extract_keyed_deltas(raw["bloc_offset"], bloc_keys, "effects.bloc_offset", law_id, filename, errors)
-
-	if raw.has("institutional"):
-		# `allow_institutional` is the law's own `constitutional` flag, and since
-		# V1.7c it selects WHICH keys are legal rather than whether the channel is.
-		# See ORDINARY_INSTITUTIONAL_KEYS.
-		out["institutional"] = _extract_institutional(
-			raw["institutional"], law_id, filename, errors, allow_institutional
-		)
 
 	if raw.has("company"):
 		out["company"] = _extract_company(raw["company"], law_id, filename, errors, sector_keys)
@@ -408,10 +452,6 @@ static func _extract_effects(d: Dictionary, law_id: String, filename: String, er
 	# register reaching one number twice through CODE, so it is refused in a signature
 	# instead: Opinion.salience_weights() takes its gain as a REQUIRED argument and
 	# unrest.gd states the unframed one out loud. See both.
-
-	for key in raw.keys():
-		if key != "tax_rates_pct" and key != "spending_pct_gdp" and key != "bloc_offset" and key != "institutional" and key != "company" and key != "society" and not SCALAR_EFFECT_KEYS.has(key):
-			errors.append("%s: %s effects.%s is not a recognised effect channel" % [filename, law_id, key])
 
 	return out
 

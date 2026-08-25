@@ -62,6 +62,15 @@ decomposition. §8 does not shrink and gains no early instance; it gains a cross
 Cross-referenced into §5 **and** §8, because leaving it in one row is how the row got
 stale twenty-six times.
 
+**[[ROADMAP|V1.8]] BUILT IT AND THE DEFERRAL WAS VINDICATED ON BOTH HALVES**, which is
+worth recording here rather than only in §8 because this section is what made the call.
+A scandal arrived with the framing channel already built, so a revelation had somewhere to
+land — and the schema it is the first instance of **could not have been written here**:
+`effects.society` carried ONE term at V1.5d and carries four now, and V1.6 and V1.7 added
+the sector burden's readers, the tax keys and the ordinary/entrenched institutional split
+after this session shipped. A schema written at V1.5d would have carried roughly a quarter
+of what V1.8's carries. See [[events-model]] §2.
+
 **Government messaging is cut**, and §7 keeps the campaign half untouched. Two reasons:
 messaging that damps hostile framing **is** press freedom's positive direction with a
 different label, which is one accumulator and two writers; and the "time" half is

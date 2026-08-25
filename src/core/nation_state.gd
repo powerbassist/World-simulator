@@ -424,6 +424,37 @@ var referendum_pending: Dictionary = {}
 ## already happened to the register above.
 var last_referendum_result: Dictionary = {}
 
+## ============================================================================
+## V1.8. THE EVENT REGISTER -- FOUR FIELDS, THREE OF WHICH EARN THE SAVE BUMP
+## ============================================================================
+## The occasion in front of the player: {event_id, event_name, months_left}, empty when
+## there is none. ONE AT A TIME, and the register is the whole of that rule --
+## `referendum_pending`'s call, and it is the right one for a second reason here: the
+## message column holds six cards and an event the player never read is not an occasion.
+##
+## `event_name` is copied in at announcement so src/sim/calendar.gd can draw a diary row
+## off this register while still preloading nothing -- V1.6f's project entry and V1.7c's
+## referendum, a third time.
+##
+## Written by Events.announce(), Events.tick_month() and Events.choose(), and by nothing
+## else.
+var event_pending: Dictionary = {}
+
+## Event ids that have already happened, for the `once` ones. `passed_law_ids`' shape.
+## Marked at ANNOUNCEMENT rather than at resolution, because an event has happened the
+## moment it arrives -- the choice is the response to it, not the event.
+var event_fired: Dictionary = {}
+
+## Months before any further event may fire. The session's one tuned constant counted
+## down: events_constants.EVENT_COOLDOWN_MONTHS.
+var event_quiet_months: int = 0
+
+## What happened and what the player chose, newest first, capped at EVENTS_KEPT. A
+## DISPLAY RECORD: nothing in src/sim/ reads it back, and tests/test_events.gd asserts
+## that by reading every file in the directory -- V1.3f's `foreign_acts` property in the
+## session most likely to be tempted to build the grievance ledger literally.
+var event_history: Array[Dictionary] = []
+
 ## Whether this nation's own constitution permits changing its political
 ## system at all. Copied from Nation at new-game and never written again --
 ## unlike amendment_rule above, no amendment in this game can un-entrench
@@ -1291,6 +1322,13 @@ func duplicate_state():
 	# register -- docs/tax-model.md section 11's bug, avoided by shape.
 	s.referendum_pending = referendum_pending.duplicate(true)
 	s.last_referendum_result = last_referendum_result.duplicate(true)
+	# Deep, for referendum_pending's reason above: Events.tick_month() writes
+	# months_left in place, and a shared reference would let Budget.project() tick the
+	# live register on its copy.
+	s.event_pending = event_pending.duplicate(true)
+	s.event_fired = event_fired.duplicate(true)
+	s.event_quiet_months = event_quiet_months
+	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 
 	s.dissolution_rule = dissolution_rule
@@ -1480,6 +1518,10 @@ func to_dict() -> Dictionary:
 		"amendment_rule": amendment_rule,
 		"referendum_mode": referendum_mode,
 		"referendum_pending": referendum_pending,
+		"event_pending": event_pending,
+		"event_fired": event_fired,
+		"event_quiet_months": event_quiet_months,
+		"event_history": event_history,
 		"permits_system_change": permits_system_change,
 
 		"dissolution_rule": dissolution_rule,
@@ -1713,6 +1755,24 @@ static func from_dict(d: Dictionary):
 	# `diplo_months_to_act` at U6a.
 	s.referendum_mode = d.get("referendum_mode", "")
 	s.referendum_pending = d.get("referendum_pending", {})
+	# V1.8. THREE OF THESE FOUR EARN THE BUMP TO 26 AND THEY FAIL THE RULE THREE
+	# DIFFERENT WAYS, which is why tests/test_save_load.gd asserts them apart rather
+	# than together. An absent `event_pending` DELETES a crisis the country is already
+	# facing -- a free escape from the one thing this session made un-escapable, which
+	# is `referendum_pending` at V1.7c and `campaign_started` one commit before it. An
+	# absent `event_fired` lets a resolved `once` event happen a second time, so the
+	# player pays its price twice for something already settled. And an absent
+	# `event_quiet_months` reads 0, which means *may fire now* -- U6a's
+	# `diplo_months_to_act`, whose absent value fired nine acts in one month. Only
+	# `event_history` earns nothing: it is a display record, and it is serialised anyway
+	# so the ledger the panel is built around survives a reload.
+	s.event_pending = d.get("event_pending", {})
+	s.event_fired = d.get("event_fired", {})
+	s.event_quiet_months = int(d.get("event_quiet_months", 0))
+	s.event_history.clear()
+	for row in d.get("event_history", []):
+		if typeof(row) == TYPE_DICTIONARY:
+			s.event_history.append(row)
 	s.permits_system_change = d.get("permits_system_change", false)
 
 	s.dissolution_rule = d.get("dissolution_rule", "")
