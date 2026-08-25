@@ -93,6 +93,49 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   "<repo>" --headless --import` once before `git add`, and check that every new
   script has its pair.
 
+- **`project.godot` is ALWAYS dirty in the working copy, and it is never yours.**
+  The Godot editor rewrites it on every open with whatever addons are installed on
+  that machine, so `git status` shows `M project.godot` in every session. Do not
+  stage it — commit `a1bf146` already paid for that once. What it currently adds,
+  written down so no session has to re-derive it:
+
+  ```
+  [autoload]
+  MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
+  DialogueManager="*uid://c3rodes2l3gxb"
+
+  [editor_plugins]
+  enabled=PackedStringArray("at-icons", "dialogue_manager", "godot_mcp_toolkit",
+                            "materialLayers", "road-generator")
+  ```
+
+  `godot_mcp_toolkit` is the one this project already uses — it is what
+  `runtime_screenshot` and `input_simulate` reach a running game through. **All five
+  are parked on purpose, not junk** — `dialogue_manager`, `at-icons`, `materialLayers`
+  and `road-generator` are each installed ahead of a planned use, so do not strip any
+  of them on the reasoning that nothing in `src/` reads them yet. **The committed file
+  has no `[autoload]` section at all** — the block is an addition in the diff, so a
+  fresh clone is clean and the rule holds where it matters.
+
+  **What adopting any of them will cost, recorded now because it is cheaper to read
+  than to rediscover.** Two rules above apply the moment one is actually used, and
+  neither is a formality. `dialogue_manager` specifically installs itself as an
+  autoload — *no autoloads in the game code* means reaching it without one, or taking
+  the autoload as a stated exception with its reason written down, not letting it
+  arrive because the editor put it there. And for all four, *`src/` may reference an
+  addon file only if that file is committed*: `addons/` is gitignored, so the moment
+  anything under `src/` imports one, that addon has to be committed or
+  `tools/run_tests.sh` fails from a fresh clone — the same fresh-clone reason the
+  fonts, the icons and the Blue Marble raster are all read as bytes rather than
+  `load()`ed. Which of the four lands where is not decided; `dialogue_manager` against
+  section 8's data-defined events is the one inference obvious enough to name.
+
+  **The consequence to know when reading a probe diff:** `MCPRuntimeServer` autoloads
+  into *every* local run, headless ones included, and prints its port. V1.7c's balance
+  re-run diff carried two lines of `listening on 127.0.0.1:657x` noise for that reason
+  and nothing else. Filter it, but do not let it hide a third line — that run had one,
+  and it was real.
+
 ## Current focus
 
 **U5a shipped the ruler's shell, U5b the world map and U5c its layers,
