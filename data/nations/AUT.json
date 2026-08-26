@@ -36,6 +36,14 @@
         "notice_months": 2
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Bundesrat, 60 seats, delegated by the Land diets in proportion to Land population but with a floor of three, which weights the small Lander. Art. 42: the Bundesrat may object to an ordinary federal law and the Nationalrat overrides by a Beharrungsbeschluss, so an ordinary bill is delayed. The amendment row is also suspensive, which is a REDUCTION and is recorded as one: Art. 44(2) requires the Bundesrat's consent only where a constitutional law restricts Land competence, and this model has no Land competence to test against. Bundes-Verfassungsgesetz, Arts. 34, 42 and 44.",
+      "chamber": "Bundesrat",
+      "seats": 60,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
     "system": "parliamentary_republic",
     "head_of_state": {
       "_source": "authored",
@@ -58,6 +66,11 @@
       "_referendum_note": "Art. 44(3) requires a referendum only for a TOTAL revision of the constitution, and no amendment content in this game rewrites the whole constitution -- the same reason the rule note above gives for not modelling it. parlament.gv.at, 'Legislative process'.",
       "permits_system_change": false,
       "_permits_system_change_note": "The 1919 Habsburg Law and the republic's own constitutional practice treat the republican form as excluded from ordinary revision -- a thinner citation than France's Art. 89 §5 or Germany's Art. 79(3) eternity clause, flagged as such rather than asserted with equal confidence."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Verfassungsgerichtshof. Art. 140 B-VG: pronounces on the unconstitutionality of federal and Land statutes. Bundes-Verfassungsgesetz, Art. 140.",
+      "review": "constitutional"
     },
     "formation": {
       "_source": "authored",
@@ -135,6 +148,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 85.8
     }
   }
 }

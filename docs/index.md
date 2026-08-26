@@ -55,6 +55,9 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[campaign-model]] — the campaign phase: money spent on TURNOUT rather than on opinion, why the row's other two nouns were already answered, and why maximising your own vote share is not the same as winning
 - [[pledge-model]] — campaign promises: why the trust price needed no new quantity, why a promise is judged EVERY MONTH rather than at the end of the term, and the difference between a bet on the world and a self-imposed constraint
 - [[referendum-model]] — the referendum as a second ratification stage rather than a bypass, the electoral system as an ORDINARY law, and the kill switch that was sweeping approvals no player can reach
+- [[upper-house-model]] — the second chamber: the assembly you used to have, voting
+  without your whip
+- [[judiciary-model]] — the court, rule of law, and a lock with a key you can buy
 - [[events-model]] — events as OCCASIONS rather than mechanics, why the schema is the law channel and not the union of ten, the deterministic hazard, and the accumulation bound that a per-decision band could not see
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
@@ -65,7 +68,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 ## Scope tiers
 
 - [[mvp]] — France, one term, one way to lose
-- [[v1]] — what gets built once the MVP works. Complete but for the re-parked V1.1e
+- [[v1]] — what gets built once the MVP works. Complete; nothing left in it
 - [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
 - [[someday]] — the parking lot, not scheduled
 - [[declined]] — considered and decided against, with what would reopen each

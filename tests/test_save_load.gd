@@ -39,6 +39,10 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 const EconomyC = preload("res://src/sim/economy_constants.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -138,6 +142,8 @@ func _init() -> void:
 	_check_pledge_fields(loader)
 	_check_referendum_fields(loader)
 	_check_event_fields(loader)
+	_check_upper_house_fields(loader)
+	_check_judiciary_fields(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -723,8 +729,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1249,8 +1255,8 @@ func _check_pledge_fields(loader) -> void:
 	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
 	# V1.7b would have to come and say why it moves; it does not move, and the reason is
 	# in this function's header. V1.7c now has to come and say why.
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.7c. FOUR added fields, THREE of which earn the bump to 25 and one of which is
@@ -1467,6 +1473,189 @@ func _check_event_fields(loader) -> void:
 		if not allowed.has(String(key)):
 			_fail("a serialised event carries '%s' -- the choices round-trip through data/events/, not through the save" % key)
 
+
+## V1.1e. SAVE_VERSION 26 -> 27, on EIGHT added fields of ten, and they fail the rule
+## by THREE DIFFERENT FAILURES -- so the three groups are asserted APART rather than
+## together, which is docs/unrest-model.md's V1.5c discipline. A single combined check
+## would let any one half be quietly wrong.
+##
+##   THE SIX STATIC ROWS -- has_upper_house, upper_chamber_name, upper_seats,
+##     upper_ordinary, upper_amendment and judicial_review -- are content-derived facts
+##     NationState.from_dict() cannot re-derive, because it never sees the loader.
+##     `cycle_amplitude_rel` at V1.6a and `election_system` at V1.7c, and the failure is
+##     loud: absent, a reloaded France has no Senat and no Conseil constitutionnel, so
+##     it runs a DIFFERENT MODEL from the one that saved it.
+##
+##   `upper_share` and `judicial_independence` are accumulated state nothing recomputes
+##     on the next tick. The chamber renews only at a legislative election, which for
+##     France is up to five years away; and re-deriving rule of law from content on load
+##     would erase the erosion a player spent a term buying, which is
+##     `service_quality`'s case at V1.5a in its strongest form.
+##
+##   `held_bills` is a FREE ESCAPE if it goes missing: a bill the second chamber refused
+##     simply is not there any more, and neither is the override price the release
+##     charges. `referendum_pending` at V1.7c and `event_pending` at V1.8.
+##
+## `start_judicial_independence` earns NOTHING and is serialised anyway, for the reason
+## its own declaration gives. And what is NOT added is pinned too: no stored upper-house
+## SEATS, because Chambers.seats() derives them, and no stored court verdict, because
+## src/sim/judiciary.gd is a pure read over a law's own reach.
+func _check_upper_house_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var party_list: Array = loader.parties.get("FRA", [])
+
+	var law = null
+	for candidate in loader.laws:
+		if candidate.constitutional:
+			continue
+		if not bool(Legislature.resolve_vote(ns, party_list, candidate, false)["passed"]):
+			continue
+		if bool(Legislature.resolve_upper(ns, party_list, candidate)["passed"]):
+			continue
+		law = candidate
+		break
+	if law == null:
+		_fail("no law the Senat refuses, so the held-bill round trip measures nothing")
+		return
+	Legislature.propose(state, loader, law)
+	if not ns.held_bills.has(law.id):
+		_fail("the bill was not held, so the held-bill round trip measures nothing")
+		return
+
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var back = GameState.from_dict(dict)
+	var bns = back.player()
+
+	# (1) the round trip itself.
+	if int(bns.held_bills.get(law.id, 0)) != int(ns.held_bills[law.id]):
+		_fail("the held bill did not survive the round trip")
+	# Key by key: Godot compares Dictionary `==` by REFERENCE, so a round-tripped copy
+	# never equals its original and the first version of this check failed on a value that
+	# had survived perfectly.
+	for party_id in ns.upper_share:
+		if not is_equal_approx(float(bns.upper_share.get(party_id, -1.0)), float(ns.upper_share[party_id])):
+			_fail("upper_share did not survive the round trip for %s" % party_id)
+	if bns.upper_seats != ns.upper_seats or bns.upper_ordinary != ns.upper_ordinary \
+			or bns.upper_amendment != ns.upper_amendment or not bns.has_upper_house:
+		_fail("the second chamber's static rows did not survive the round trip")
+
+	# (2) the STATIC rows earn the bump, and the failure is that the chamber vanishes.
+	var no_chamber: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for key in ["has_upper_house", "upper_chamber_name", "upper_seats", "upper_ordinary",
+			"upper_amendment"]:
+		(no_chamber["nations"]["FRA"] as Dictionary).erase(key)
+	var dropped = GameState.from_dict(no_chamber)
+	if dropped.player().has_upper_house:
+		_fail("dropping the static rows still left a second chamber")
+	if Chambers.power_over(dropped.player(), law) != ChambersK.VERDICT_NONE:
+		_fail("a France with no serialised Senat still claims a power over a bill")
+	if not Chambers.seats(dropped.player()).is_empty():
+		_fail("a France with no serialised Senat still seats one")
+
+	# (3) `upper_share` earns it by a SECOND failure: it is accumulated state, and only a
+	# legislative election rewrites it -- which for France is up to five years away. A tick
+	# must NOT rebuild it, or it is derivable and the version did not need to move.
+	var no_share: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_share["nations"]["FRA"] as Dictionary).erase("upper_share")
+	var shareless = GameState.from_dict(no_share)
+	if not shareless.player().upper_share.is_empty():
+		_fail("dropping upper_share left a composition behind")
+	Legislature.tick_month(shareless, loader)
+	if not shareless.player().upper_share.is_empty():
+		_fail("a tick rebuilt upper_share -- then it is derived and the bump was unearned")
+
+	# (4) `held_bills` earns it by a THIRD: absent, the bill is gone and so is the
+	# override price the release charges. A free escape from the obstacle.
+	var no_held: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_held["nations"]["FRA"] as Dictionary).erase("held_bills")
+	var escaped = GameState.from_dict(no_held)
+	if escaped.player().held_bills.has(law.id):
+		_fail("dropping held_bills still remembered the bill")
+	var before: float = float(escaped.player().bloc_offset.get("workers", 0.0))
+	for i in range(ChambersK.UPPER_HOLD_MONTHS + 1):
+		Legislature.tick_month(escaped, loader)
+	if not is_equal_approx(float(escaped.player().bloc_offset.get("workers", 0.0)), before):
+		_fail("a tick charged an override for a bill the save had already deleted")
+
+	# (5) WHAT IS NOT SERIALISED, pinned so a later session storing it turns this red.
+	var payload: Dictionary = (state.to_dict()["nations"]["FRA"] as Dictionary)
+	for absent in ["upper_seats_by_party", "upper_electorate"]:
+		if payload.has(absent):
+			_fail("'%s' is serialised -- the chamber's seats are DERIVED from the share" % absent)
+
+
+## The court adds ONE serialised stock and one reference, and the interesting half is
+## what it does not add: no stored verdict, no stored tolerance, no stored reach. The
+## module is a pure read, and the ABSENCE is what pins that.
+func _check_judiciary_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+
+	var law = null
+	for candidate in loader.laws:
+		if candidate.id == "judicial_appointments_reform":
+			law = candidate
+	if law == null:
+		_fail("judicial_appointments_reform is not in the law list, so the round trip measures nothing")
+		return
+	Legislature.apply(state, ns, law, loader)
+	if is_equal_approx(ns.judicial_independence, ns.start_judicial_independence):
+		_fail("the ladder did not move rule of law, so the round trip measures nothing")
+		return
+
+	var dict: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var back = GameState.from_dict(dict)
+	var bns = back.player()
+
+	# (1) the round trip.
+	if not is_equal_approx(bns.judicial_independence, ns.judicial_independence):
+		_fail("judicial_independence did not survive the round trip")
+	if not is_equal_approx(bns.start_judicial_independence, ns.start_judicial_independence):
+		_fail("start_judicial_independence did not survive the round trip")
+	if bns.judicial_review != ns.judicial_review:
+		_fail("judicial_review did not survive the round trip")
+
+	# (2) `judicial_independence` earns the bump, and it is `service_quality`'s case at
+	# V1.5a in its strongest form: absent it reads 0.0 against a France the World Bank
+	# scores 73.8, so the tolerance goes to 1.0 and the court stops existing -- AND
+	# re-deriving it from content on load would erase the erosion the player just bought.
+	var no_stock: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_stock["nations"]["FRA"] as Dictionary).erase("judicial_independence")
+	var dropped = GameState.from_dict(no_stock)
+	if not is_equal_approx(dropped.player().judicial_independence, 0.0):
+		_fail("dropping judicial_independence did not read as 0.0")
+	var struck_before := 0
+	var struck_after := 0
+	for candidate in loader.laws:
+		if Judiciary.strikes_down(ns, candidate):
+			struck_before += 1
+		if Judiciary.strikes_down(dropped.player(), candidate):
+			struck_after += 1
+	if struck_after >= struck_before:
+		_fail("a France with no serialised rule of law still has a court -- the bump is unearned")
+	Legislature.tick_month(dropped, loader)
+	if not is_equal_approx(dropped.player().judicial_independence, 0.0):
+		_fail("a tick rebuilt judicial_independence -- then it is derived and the bump was unearned")
+
+	# (3) `judicial_review` earns it for `referendum_mode`'s reason rather than its own:
+	# absent it reads "", which is Britain's, the Netherlands' and Switzerland's real
+	# position and a silently different constitution for the other seven.
+	var no_rule: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_rule["nations"]["FRA"] as Dictionary).erase("judicial_review")
+	var ruleless = GameState.from_dict(no_rule)
+	for candidate in loader.laws:
+		if Judiciary.reviews(ruleless.player(), candidate):
+			_fail("a France with no serialised review rule still reviews a bill")
+			break
+
+	# (4) WHAT IS NOT SERIALISED. The module is a pure read over a law's own reach and a
+	# stock, so a stored verdict would mean it had become stateful.
+	var payload: Dictionary = (state.to_dict()["nations"]["FRA"] as Dictionary)
+	for absent in ["judicial_tolerance", "judicial_verdict", "last_judicial_result",
+			"struck_law_ids"]:
+		if payload.has(absent):
+			_fail("'%s' is serialised -- src/sim/judiciary.gd is a pure read" % absent)
 
 func _run_unknown_version() -> void:
 	SaveManager._ensure_dir()
@@ -1789,8 +1978,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -1955,8 +2144,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -2039,8 +2228,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -2357,8 +2546,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -2448,8 +2637,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2606,8 +2795,8 @@ func _check_tax_fields(loader) -> void:
 	if demog_src.contains("gini_index ="):
 		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
@@ -2686,8 +2875,8 @@ func _check_investment_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 
 
 ## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
@@ -2792,5 +2981,5 @@ func _check_project_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
 
-	if GameState.SAVE_VERSION != 26:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 and V1.8 to 26 on three fields of four, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)

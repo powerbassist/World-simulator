@@ -22,6 +22,9 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Law = preload("res://src/core/law.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
@@ -129,6 +132,11 @@ func _refresh() -> void:
 	if Referendum.is_pending(ns):
 		_list.add_child(_build_pending_referendum(ns))
 
+	# V1.1e. A bill the second chamber is holding, for the same reason: it is in
+	# flight, it is off the list below, and it is the only thing that list cannot say.
+	for law_id in ns.held_bills:
+		_list.add_child(_build_held_bill(ns, String(law_id)))
+
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	var available: Array = Legislature.available(ns, _loader.laws)
 	if available.is_empty():
@@ -154,6 +162,19 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var verdict := "PASSED" if result["passed"] else "FAILED"
 	if result.get("referendum_called", false):
 		verdict = "PUT TO THE COUNTRY"
+	# V1.1e. Three more outcomes that are not `FAILED`, for the same reason route B
+	# is not: a bill the second chamber is holding has not been beaten, a bill it
+	# blocked was beaten somewhere the tally below does not show, and a bill the court
+	# struck was carried by both chambers and stopped afterwards. One word for four
+	# different things is the readout bug this project keeps finding.
+	elif result.get("held_by_upper", false):
+		verdict = "HELD BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+	elif result.get("blocked_by_upper", false):
+		verdict = "BLOCKED BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+	elif result.get("struck_down", false):
+		verdict = "STRUCK DOWN"
+	elif result.get("released", false):
+		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	var heading := Label.new()
 	heading.text = "%s — %s" % [law_label, verdict]
 	box.add_child(heading)
@@ -180,6 +201,38 @@ func _build_result_summary(result: Dictionary) -> Control:
 		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]
 	]
 	box.add_child(tally)
+
+	# V1.1e. What the second chamber did, under the Assembly's own tally rather than
+	# beside it, because the two are the same division read twice.
+	if result.has("upper_passed"):
+		var upper := Label.new()
+		upper.text = "%s: Yes %d · No %d · Abstain %d, of %d seats" % [
+			result.get("upper_chamber", "Second chamber"),
+			result["upper_yes_seats"], result["upper_no_seats"],
+			result["upper_abstain_seats"], result["upper_seats_total"],
+		]
+		box.add_child(upper)
+		if bool(result.get("held_by_upper", false)):
+			var held := Label.new()
+			# WHAT THE CHAMBER DID, not when the bill arrives -- the twenty-first screenshot
+			# pass found this frame reading "comes into force in 12 months" here and "in 9
+			# months" in the held block directly below it, which is two numbers for one fact
+			# on one screen. This box is a record of a division that has already happened and
+			# never counts down; the block below is the live one.
+			held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
+				int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
+			held.autowrap_mode = TextServer.AUTOWRAP_WORD
+			box.add_child(held)
+
+	# V1.1e. The court, and it names the ARITHMETIC as well as the verdict -- a rule the
+	# player cannot read is not a check on their power, it is a trap. See
+	# docs/judiciary-model.md.
+	if bool(result.get("struck_down", false)):
+		var court := Label.new()
+		court.text = "The court struck it down: it reaches %.2f against a tolerance of %.2f." % [
+			float(result.get("reach", 0.0)), float(result.get("tolerance", 0.0))]
+		court.autowrap_mode = TextServer.AUTOWRAP_WORD
+		box.add_child(court)
 
 	var rebellion := _rebellion_text(result.get("party_rebels", {}))
 	if rebellion != "":
@@ -328,6 +381,17 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	forecast.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(forecast)
 
+	# V1.1e. What waits AFTER the division, and the two are shown differently on
+	# purpose. The second chamber's line is a FORECAST like the one above it and is
+	# blurred by the same band, because a chamber is people. The court's line is not
+	# blurred at all, because a court is a RULE -- see docs/judiciary-model.md.
+	var after := _after_the_division(ns, party_list, law)
+	if after != "":
+		var gate := Label.new()
+		gate.text = after
+		gate.autowrap_mode = TextServer.AUTOWRAP_WORD
+		box.add_child(gate)
+
 	var propose_btn := Button.new()
 	propose_btn.text = "Propose"
 	propose_btn.pressed.connect(_on_propose.bind(law))
@@ -454,6 +518,60 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 	if rebels > 0:
 		text += "  (%d expected to break ranks)" % rebels
 	return text
+
+
+## What the second chamber and the court will do to a bill that carries the Assembly.
+## Empty when neither has anything to say, so a bill nobody can stop shows no line at
+## all and the ones that do stand out.
+func _after_the_division(ns, party_list: Array, law) -> String:
+	var parts := PackedStringArray()
+
+	var power: String = Chambers.power_over(ns, law)
+	if power != ChambersK.VERDICT_NONE:
+		var upper := Legislature.resolve_upper(ns, party_list, law)
+		var margin: int = int(upper["yes_seats"]) - int(upper["no_seats"])
+		if absi(margin) <= int(float(upper["seats_total"]) * FORECAST_UNCERTAIN_BAND):
+			parts.append("%s: too close to call." % ns.upper_chamber_name)
+		elif bool(upper["passed"]):
+			parts.append("%s: expected to agree." % ns.upper_chamber_name)
+		elif power == ChambersK.VERDICT_ABSOLUTE:
+			parts.append("%s: expected to refuse, and it cannot be overridden." % ns.upper_chamber_name)
+		else:
+			parts.append("%s: expected to refuse, holding it %d months." % [
+				ns.upper_chamber_name, ChambersK.UPPER_HOLD_MONTHS])
+
+	if Judiciary.reviews(ns, law):
+		var tolerance: float = Judiciary.tolerance(ns)
+		if Judiciary.strikes_down(ns, law):
+			parts.append("The court would strike it down: it reaches %.2f against %.2f." % [
+				law.reach, tolerance])
+		elif law.reach > 0.0:
+			parts.append("The court would let it stand: it reaches %.2f against %.2f." % [
+				law.reach, tolerance])
+
+	return " ".join(parts)
+
+
+## A bill the second chamber is holding. Its own block at the top of the page, the way
+## a pending referendum has one, because the list below cannot show a bill that is not
+## proposable.
+func _build_held_bill(ns, law_id: String) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+
+	var law: Law = _find_law(law_id)
+	var heading := Label.new()
+	heading.text = "%s — held by the %s" % [
+		law.law_name if law != null else law_id, ns.upper_chamber_name]
+	box.add_child(heading)
+
+	var months: int = int(ns.held_bills.get(law_id, 0))
+	var detail := Label.new()
+	detail.text = "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
+		"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET]
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD
+	box.add_child(detail)
+	return box
 
 
 func _on_propose(law) -> void:

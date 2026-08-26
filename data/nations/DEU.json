@@ -43,6 +43,14 @@
         "notice_months": 2
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Bundesrat, 69 votes cast by the Land governments rather than by an electorate, and weighted toward the small Lander -- Bremen casts 3 votes for 0.7m people where North Rhine-Westphalia casts 6 for 18m. Art. 77: an Einspruchsgesetz can be objected to and the Bundestag overrides, so an ordinary bill is delayed; Art. 79(2): a Basic Law amendment needs two thirds of the Bundesrat's votes as well as the Bundestag's, which is an absolute veto. Bundesrat.de, 'Legislation'; bundestag.de, 'Amending the Basic Law'.",
+      "chamber": "Bundesrat",
+      "seats": 69,
+      "ordinary": "suspensive",
+      "amendment": "absolute"
+    },
     "system": "parliamentary_republic",
     "head_of_state": {
       "_source": "authored",
@@ -59,12 +67,17 @@
     "term_limit": 0,
     "amendment": {
       "_source": "authored",
-      "_note": "Art. 79(2) GG: a Basic Law amendment requires a 2/3 majority of BOTH the Bundestag's statutory membership and the Bundesrat's votes. Only the Bundestag half is modelled -- there is no Bundesrat in this game -- so this is the harder of the two real hurdles, not the easier. See docs/amendment-model.md's reachability sweep: measurably unreachable for Germany's authored six-party roster even at full term-start cohesion, and left at the real figure rather than detuned. Bundestag.de, 'Amending the Basic Law'.",
+      "_note": "Art. 79(2) GG: a Basic Law amendment requires a 2/3 majority of BOTH the Bundestag's statutory membership and the Bundesrat's votes. Both halves are modelled since V1.1e: the Bundestag's two thirds is government.amendment.rule and the Bundesrat's is government.upper.amendment = 'absolute'. Until then only the Bundestag half existed and this note said so, which is the declared stopgap V1.1e discharges. See docs/amendment-model.md's reachability sweep: measurably unreachable for Germany's authored six-party roster even at full term-start cohesion, and left at the real figure rather than detuned. Bundestag.de, 'Amending the Basic Law'.",
       "rule": "two_thirds",
       "referendum": "none",
       "_referendum_note": "Art. 79 provides no referendum at any stage of a Basic Law amendment, and the Basic Law contains no national referendum mechanism at all. The unreachable 2/3 recorded in the rule note above is therefore NOT rescued by this session. Bundestag.de, 'Amending the Basic Law'.",
       "permits_system_change": false,
       "_permits_system_change_note": "Art. 79(3) GG, the eternity clause: no amendment may touch the federal structure or the Art. 1/20 principles it entrenches, which as a practical matter puts the form of state beyond amendment at all."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Bundesverfassungsgericht. Art. 93(1) no. 2 GG: abstract review of a federal statute on application by the Federal Government, a Land government or a quarter of the Bundestag's members. bundesverfassungsgericht.de, 'Abstract judicial review'.",
+      "review": "constitutional"
     },
     "formation": {
       "_source": "authored",
@@ -142,6 +155,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 84.9
     }
   }
 }

@@ -84,6 +84,29 @@ register a *negative* support, not a small positive one that then gets
 outweighed. Vote share never needed that distinction because every party
 always gets *some* electoral coalition; a law vote does not work that way.
 
+## Three stages, not one — since V1.1e
+
+```
+propose()  →  the assembly divides        resolve_vote(), unchanged
+           →  the SECOND CHAMBER divides  resolve_upper(), on a composition
+                                          chambers.gd derives and a reduced whip
+           →  (route B: the country)      referendum.gd, V1.7c
+           →  the COURT reviews           judiciary.gd, a gate before apply()
+           →  in force
+```
+
+`resolve_vote()` is **untouched** by either addition — about twenty-five call sites
+read it, and reaching into it would be a second writer of this project's central verb.
+The second chamber reuses `spatial_support()` and `vote_of()`, both already public
+here, plus `Government.coalition_bonus()` at `chambers_constants.UPPER_WHIP`; the
+court reads a `reach` [[judiciary-model|`law.gd` computes at load]].
+
+A refusal is a THIRD and FOURTH outcome rather than a defeat. `absolute` kills the
+bill and writes its cooldown; `suspensive` **holds** it — no cooldown, off the open
+list, and `tick_month()` releases it `UPPER_HOLD_MONTHS` later at a price. That is
+V1.7c's in-flight shape reused rather than a second scheduler, and it is why the hold
+needed **no new tick anywhere**.
+
 ## Vote resolution
 
 A party's **line** is `support(p, law)` read against `ABSTAIN_BAND`. Until
@@ -246,9 +269,12 @@ the same shape `data/parties/*.json` uses. See [[data-architecture]] for the
 full field list and `src/core/law.gd` for validation.
 
 Deliberately **not** in the schema: per-party amendment, sponsors,
-multi-stage passage, upper-house readings, sunset clauses. All are [[v1|V1.1]]
+multi-stage passage, sunset clauses. All are [[v1|V1.1]]
 territory, and the shape is extensible by adding keys — the same lesson
-[[ROADMAP|S1]] leaves for the nation schema.
+[[ROADMAP|S1]] leaves for the nation schema. **Upper-house readings left that list at
+V1.1e** and cost the law schema nothing: a second chamber is `resolve_upper()` over a
+composition `src/sim/chambers.gd` derives, and what it may do to a bill is per-NATION
+data (`government.upper`) rather than per-law — see [[upper-house-model]].
 
 `preconditions` is a whitelisted field vocabulary
 (`debt_to_gdp_pct`, `unemployment_pct`, `deficit_pct_gdp`,

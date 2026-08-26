@@ -234,8 +234,9 @@ its height draws that same hairline along its **bottom** edge -- structure encod
 something true rather than decorating, and pointed straight at the failure class that has
 bitten five screenshot passes.
 
-**V1.8 SHIPPED EVENTS AND THE V1 TIER IS COMPLETE.** Only the re-parked **V1.1e** (upper
-house and judiciary) is left in it. One session, not decomposed -- the first block since
+**V1.8 shipped events.** Only the re-parked **V1.1e** (upper
+house and judiciary) was left in the tier after it, and V1.1e has since been built --
+see *V1.1e* below. One session, not decomposed -- the first block since
 V1.1 not to split -- and the reason is machine count rather than size: fire → pending →
 choose → apply is **one pipeline**, which is V1.3d's rule, so V1.3e's split trigger
 answers no. ~36 surfaces against V1.7c's ~30.
@@ -517,7 +518,50 @@ against what is *legal* binds in 100 % of months, and nothing in this game yet
 models what the player *wants*. **That gap is a session, not a constant**, and it
 sits next to V1.3g's own named limitation rather than inside U6b.
 
-**V1.1e** (upper house and judiciary) stays re-parked rather than cancelled.
+**V1.1e SHIPPED THE UPPER HOUSE AND THE JUDICIARY, AND THE V1 TIER IS COMPLETE.**
+Nothing is left in it. Section 1 closes with the two bullets it had been carrying since
+the tier was written, and with **two more it turned out to have been carrying without
+noticing** -- *Coalition formation* and *Confidence votes* were both built at V1.1a and
+left unstruck for four blocks, which is **instances fifty and fifty-one**, found by
+counting the section this session owns.
+
+**The session discharged a stopgap declared in the DATA rather than in the code**, which
+is new: `data/nations/DEU.json` carried *"Only the Bundestag half is modelled -- there
+is no Bundesrat in this game"* from V1.2c, and three more citations were sitting in the
+nation files for a mechanic that did not exist -- including one in
+`src/sim/referendum.gd`'s own header, written one session earlier.
+
+**NOT ONE of the ten upper houses is elected by the national electorate**, so the design
+that suggests itself is wrong for eight of them and a second chamber is the LOWER
+CHAMBER, LAGGED. An ideological tilt was designed, measured and **deleted twice**, and
+what makes the chamber a check was already there and costs nothing: it votes at a
+reduced whip where the Assembly votes at the full coalition bonus.
+
+**The probe corrected the session three times and a TEST caught the fourth**, which is
+twenty-two sessions running -- and the fourth is the one worth the space.
+`tests/test_save_load.gd` reported *"no referendum was called, so the round trip
+measures nothing"*: with no whip at all the Senat refused **seven of seven** authored
+amendments, and France's `absolute` amendment row made that fatal, so V1.7c's whole
+verb was dead one session after it shipped. **No whip at all is not `unwhipped`, it is
+`no government exists`.** The other three: `bloc_offset` in the court's reach made it
+strike down whatever was unpopular; the linear tolerance form amplified the roster's
+spread until Germany could not legislate; and the whole judicial ladder was
+**unreachable in all three playable nations** until its content moved -- the fix that is
+also true, V1.4b's discipline and V1.7c's remedy.
+
+**The re-run is bit-identical across all 45 shared regimes** -- the diff is additions
+only -- and that is a CONSEQUENCE of where the gates sit rather than a coincidence:
+every law regime in the harness calls `Legislature.apply()`, which by design skips both
+gates, and `tests/test_judiciary.gd` asserts that. Three new regimes, all the expensive
+kind. The legibility evidence is exact: same budget, `managed_captures_the_courts`
+passes the whole ladder in month 6, rule of law falls **73.8 → 64.8** (below Italy's
+67.6, the weakest in Europe), the grievance peaks at **11.87** against a quiet run's
+8.79, and the president **LOSES the 2027 election at 23.5 %** where `managed` holds at
+25.8. **Capturing the courts costs the office.**
+
+`SAVE_VERSION` is **27**, on eight added fields of ten, failing the rule three different
+ways and asserted apart. Model: [docs/upper-house-model.md](docs/upper-house-model.md)
+and [docs/judiciary-model.md](docs/judiciary-model.md).
 
 ### U5a — the ruler's shell (shipped)
 
@@ -2723,7 +2767,7 @@ are [[government-model]], [[discipline-model]], [[dissolution-model]] and
 
 | Block | Where it sits now |
 |---|---|
-| **V1.1e** Upper house and judiciary | Unchanged and unblocked, and **now the only thing left in the V1 tier**. Deferred on a stated preference, not a dependency — pick it up when another France-institutions session is wanted. The judiciary half also owns §5's "rule of law", handed over at V1.5's decomposition. |
+| ~~**V1.1e** Upper house and judiciary~~ | **Built**, and it was the LAST session of the V1 tier. Deferred on a stated preference rather than a dependency, and picked up when another France-institutions session was wanted. The judiciary half carried §5's "rule of law" with it, exactly as the handoff said it would. [[docs/upper-house-model.md]], [[docs/judiciary-model.md]] |
 | **V1.1f** Referendums | ~~Deferred toward V1.7, which brings campaigns.~~ **Built at V1.7c**, and it was `nation.gd`'s own `KNOWN_AMENDMENT_RULES` stopgap rather than a new machine. |
 
 **Two V1-tiered mechanics are orphaned and were found by V1.8's final sweep of the tier
@@ -2776,7 +2820,7 @@ is already made, which is most sessions once the docs are written.
 | V1.7c Referendums and the electoral system | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | This table STILL carries no row for the session being planned - the missing-row failure is the record rather than the exception, and V1.7b's row was the first that could be read rather than authored. Authored at plan time. The cold count came to ~30 surfaces, above V1.7b's ~25: a new sim module and its constants, a schema split in `law.gd`, a widened `Legislature.tick_month` across twelve call sites, four serialised fields and a version bump, two new content classes in existing files, a diary row, two panels, a new probe, a new test, two balance regimes and two screenshot flags. **Machine count is ONE** - the referendum - because `electoral_systems.gd` already ships all five methods with a dispatch, which is why the row did not split. Held. What the count did NOT predict is that both halves of the row would be wrong about the BAR rather than the mechanism, which is instance forty-three. |
 | V1.7b Campaign promises | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | Authored at plan time rather than read, because this table still carries no row for any V1.5b-d, V1.6a-f or V1.7 session but V1.7a's - the missing-row failure is the record rather than the exception. The cold count came to ~25 surfaces: a new sim module and its bounds, a new content class and directory, two `NationState` fields across four sites, the loader, a tick call wired into THREE harnesses, a panel section, a test file plus its `run_tests.sh` entry, a probe, three balance regimes across two files, a screenshot flag and six docs - V1.7a's ~24 with one more, so **High**, and it held. The decision that was expensive to reverse was not the code: it was **where the trust price lands**, which is this page's own pre-registered split trigger, and the plan's named escalation (a reachable breach unable to clear the poll floor without saturating the `bloc_offset` clamp) did **not** fire - the reachable full-term breach lands at 3.4 to 5.8 points against a floor of 3.0 and uses at most 30 % of the clamp. What the count did NOT anticipate is that the *first* dominance test and the *first* balance regime pair would both be measuring the wrong thing; both were caught by the probe, and neither cost a tier. |
 | V1.8 Events | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **The missing-row failure one last time, and by now it is the record rather than the exception**: this table stops at V1.7b and the only thing to read was the V1.2-onward block cell. Authored at plan time. The cold count came to **~36 surfaces** -- eight new files, ~28 edits -- above V1.7c's ~30 and V1.7a's ~24, below U6a's ~40 and U6b's ~46. **ONE MACHINE, so V1.3e's split trigger does not fire**: fire → pending → choose → apply is one pipeline, which is V1.3d's own rule about proposal → vote → rule-in-force → constraint, the applier is an extraction from `Legislature.apply()`, and the notification surface is the column U5a built *for this*. First block since V1.1 not to decompose. **High on reversibility**, the test the preamble names: a `SAVE_VERSION` bump, a content schema a V2 tier inherits, and a full 43-regime re-baseline were all on the line. Held. **What was challengeable was the SECTION, and it did not hold** -- its two bullets are tiered in no `mechanics-*.md` table at all and every event-shaped mechanic that is tiered there is Someday (instance forty-four), which is what turned the session from an authoring exercise into a design one: an event is an **occasion**, not a mechanic. Four cuts declared and all four taken -- no map layer, no AI chooser, no corruption-scaled hazard, no new `PRECONDITION_FIELDS` entry. **The plan's escalation trigger 4 FIRED and was honoured by the response the plan named**: a career of defaults saturated `bloc_offset`, every regime converged on the same floor, and `tests/test_balance.gd` caught it as *managing the budget did not beat ignoring it*; magnitudes came down and the clamp did not move. **The probe corrected the session five times, twenty sessions running, and THREE of the five were corrections to the CHECK rather than to the model** -- E0's own deficit sign was backwards before any content existed, E2's band was written on an axis the channel does not reach in one step, E3's dominance rule counted an active choice beating the DEFAULT as a violation when that is the design, E3 decided a verdict on a ninth-decimal difference and so stayed silent, and E1's cadence clause passed every candidate from 3 to 20. What the count did not anticipate is that a **per-decision band and a career bound are two different constraints** and that the first would drive the content into the second -- V1.6f's *a bill is not a cost* in a new place. The screenshot pass earned its keep for the **twentieth** session running with four bugs, two of them the tool's, one of which had been silently degrading `--build` and `--campaign` since V1.6f and V1.7a. Twenty-third correction on this table's own record, and the eleventh to be an *addition* to it |
-| V1.1e Upper house | **Light** | Sonnet 5 | Medium | A second chamber is the existing vote resolution run twice with different composition. |
+| V1.1e Upper house **and judiciary** | **Yes** *(corrected)* | Opus 5, plan and build in one session | **High** | **The TWENTY-FOURTH correction on this table's own record, and the first to be wrong about SCOPE rather than about size.** The row read *Light / Sonnet 5 / Medium -- a second chamber is the existing vote resolution run twice with different composition*, and it named ONE of the three things the session owns: the block is upper house **and judiciary**, and the judiciary half additionally inherits section 5's rule-of-law statistic, handed to it at V1.5's decomposition. *Run twice with different composition* is right about the resolver and silent about the two decisions that ARE the session -- where the second composition comes from, and what its verdict does. The cold count came to **~40-45 surfaces**: ten new files, ~30 edits, a ten-nation schema addition, a `SAVE_VERSION` bump, a change to the verb at the centre of the game that ~25 call sites reach, and a full re-baseline. High on reversibility, the test the preamble names. **Machine count is arguably TWO and it did not split**, on V1.8's own argument: bill → assembly → second chamber → court is ONE PIPELINE, which is V1.3d's rule, and in France the two are connected -- the Conseil constitutionnel is referred under Art. 61 by sixty senators, so the court is the upper house's remaining weapon once it has been overridden. **What the count did not anticipate is that the probe would delete a constant and a content field, and then a TEST would delete the model's central claim** -- see the session note below. |
 | V1.2a Second nation | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **High → Medium** on a scope-alignment-time count of roughly ten surfaces, with an explicit flag to challenge it cold and to treat the bloc-weight call as the thing that could blow the tier up to an S1-class schema session. The cold count at plan time found **sixteen**, not ten — two of the logged surfaces did not apply (no `SAVE_VERSION` bump; most `FRA` literals in `tests/` were intentional France-specific assertions, not things needing parameterising) against three the log missed (the tax-erosion reference, the loader's playable-count check, the balance probe's absolute-figure regimes). Bloc weights were measured rather than moved into data — see [[declined]] — which kept the tier at Medium rather than raising it. Fifth correction on this table's own record, and the second (after V1.1d) that held its tier once corrected rather than moving up or down; see [[decision-log]]. |
 | V1.2b Political systems | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | High → Medium | Logged **Medium** on a plan-time count of seventeen surfaces — one above V1.2a's sixteen — on the reasoning that no new tuned constant and no new model needed deciding, only a fifth instance of a dispatch-on-a-data-string pattern already built four times. Held: the two open design questions (constraint vs defaults table, four templates vs §2's five) were resolved at plan time, and the one place a mechanical rename could have been a behaviour change — the lose-condition dispatch — was flagged in advance and caught nothing wrong, though a different collision surfaced instead (see below). Sixth correction on this table's own record, and the third that held its tier once corrected. |
 | V1.2c Constitutional amendment | **Yes** *(held)* | Opus 5 to plan, Sonnet 5 to build | Medium | Logged **Medium** on a plan-time count of ~eighteen surfaces — one above V1.2b's seventeen — on the same reasoning: no new model, a sixth instance of the dispatch-on-a-data-string pattern, real constitutional fractions rather than tuned constants. Held, with one condition stated in advance rather than discovered: if the plan's own named reachability measurement came back showing an amendment unreachable for a playable nation, that was a model decision escalating to Opus, not a Sonnet tuning call. The measurement fired — Germany's real two-thirds is unreachable — and the build session's own response (leave the real threshold, author no content against it) matched the plan's stated response closely enough that no escalation was needed; the plan-time rough estimate itself needed a live-state re-measurement to sharpen from "marginal/erodes to unreachable" to "unreachable even at term start", and a table error (Spain grouped at two-thirds instead of its real three-fifths) surfaced during that same pass, before any content was authored against the wrong number. Seventh correction on this table's own record, and the fourth that held its tier once corrected. |

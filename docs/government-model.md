@@ -272,6 +272,23 @@ future work; [[v1|V1.1c]] built dissolution instead. In practice it is close to
 the real distribution anyway: French censure motions are tabled often and almost
 never carry, and the one that carried in December 2024 followed a 49.3.
 
+### The second chamber and the court
+
+[[v1|V1.1e]] adds the two checks this file's own clocks and rules had been citing
+since V1.2c without modelling: `data/nations/DEU.json` carried *"there is no
+Bundesrat in this game"* as a declared stopgap, and `FRA.json` cited Art. 89's "both
+chambers" and Art. 12's "the presidents of both chambers" for a chamber that did not
+exist. Nothing about coalition formation, cohesion or hostility changes: the second
+chamber has no government in it, so `form()` never runs against it and it cannot be
+censured. What it DOES read from this file is `coalition_bonus()`, at a reduced
+strength — a government's own parties are its own parties in both chambers, but it
+cannot fall in the second one. `src/sim/chambers.gd`, `src/sim/judiciary.gd`,
+[[upper-house-model]] and [[judiciary-model]].
+
+`Government.penalise_blocs()` gains a fifth caller: overriding the second chamber
+after a suspensive refusal is charged on the same accumulator Article 49.3, a fallen
+government, a reshuffle, a resignation and a dissolution all already use.
+
 ### Dissolution
 
 [[v1|V1.1c]] adds the player's other lever against a hostile chamber: rather

@@ -58,6 +58,8 @@ tests=(
   tests/test_campaign.gd
   tests/test_pledges.gd
   tests/test_referendum.gd
+  tests/test_upper_house.gd
+  tests/test_judiciary.gd
   tests/test_events.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd

@@ -36,6 +36,14 @@
         "notice_months": 2
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senado, 265 seats, of which 208 are elected four per province regardless of population and 57 designated by the autonomous communities -- the most rurally over-represented chamber on the roster after Switzerland's. Art. 90: the Senate may veto a bill by absolute majority, and the Congress overrides immediately by absolute majority or after two months by a simple one, so an ordinary bill is delayed. Art. 167: a constitutional revision needs three fifths of EACH chamber. Constitucion Espanola, Arts. 69, 90 and 167.",
+      "chamber": "Senado",
+      "seats": 265,
+      "ordinary": "suspensive",
+      "amendment": "absolute"
+    },
     "system": "constitutional_monarchy",
     "head_of_state": {
       "kind": "hereditary_monarch",
@@ -51,6 +59,11 @@
       "_referendum_note": "Art. 167: once the 3/5 revision has passed, a referendum is held if one tenth of the members of either chamber ask for it within fifteen days. Modelled as the head of state's own choice, since this game has no back-bench petition. ICL/servat.unibe.ch, Spanish Constitution text.",
       "permits_system_change": true,
       "_permits_system_change_note": "No amendment content in this game targets Spain's form of state, but nothing in Title X excludes it from Art. 167's ordinary path either -- unlike Art. 168's stricter total-revision path, not modelled here. See docs/transition-model.md's named deferral."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Tribunal Constitucional. Art. 161(1)(a): hears the recurso de inconstitucionalidad against statutes and acts having the force of law. Constitucion Espanola, Art. 161.",
+      "review": "constitutional"
     },
     "formation": {
       "_source": "authored",
@@ -128,6 +141,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 73.0
     }
   }
 }

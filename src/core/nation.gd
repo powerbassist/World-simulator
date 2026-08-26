@@ -16,9 +16,19 @@ const InflationK = preload("res://src/sim/inflation_constants.gd")
 ## lives with the module that reads it rather than being written out twice.
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
+## V1.1e, for KNOWN_VERDICTS and the seat guard rails alone -- ReferendumK's reason
+## one session on: what an upper house may do to a bill is validated here and
+## dispatched in src/sim/legislature.gd, so the list lives with the constants that
+## define it rather than being written out twice.
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+
+## V1.1e, for KNOWN_REVIEWS and the rule-of-law bounds.
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
+
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
+	"institutions",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -63,6 +73,20 @@ const KNOWN_CYCLE_KEYS: Array[String] = [
 const KNOWN_PRICES_KEYS: Array[String] = [
 	"inflation_pct", "_from_year", "_to_year", "_excludes",
 ]
+
+## V1.1e. imported.institutions, KNOWN_PRICES_KEYS' treatment with ONE key and no
+## provenance at all -- which is the point rather than an omission. Every other block
+## on this list carries provenance because it is read at a year or over a window the
+## file's own `_year` does not describe; rule of law is complete for all ten at
+## `_year` on the standard window, so `_year` above already describes it and a second
+## record of the same fact would be the duplication docs/data-architecture.md refuses.
+##
+## The measured SLOPE exists and is deliberately not here: nine of the ten fall over
+## 2015-2024 and only Italy rises, and importing that would make every court weaken
+## every year for reasons nobody chose -- docs/defence-model.md's permanent monotone
+## charge. V1.5c's Gini drift is a stopgap standing in for levers that do not exist;
+## this stock has a lever from day one. See docs/judiciary-model.md.
+const KNOWN_INSTITUTIONS_KEYS: Array[String] = ["rule_of_law_score"]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
 ## Demography.working_share() is 1 - young - old and is a DENOMINATOR twice over, in
@@ -270,6 +294,33 @@ var term_limit: int = 0
 ## docs/amendment-model.md.
 var amendment_rule: String = ""
 
+## V1.1e. The second chamber, and `has_upper_house` false is a legal, authored state:
+## Luxembourg's Chambre des Deputes is unicameral, and the Conseil d'Etat's opposition
+## formelle is an advisory opinion forcing a second vote rather than a chamber that
+## votes. Absent-means-something, the shape `government.executive` already uses for an
+## executive drawn from the chamber -- so src/sim/legislature.gd has one code path and
+## not two.
+var has_upper_house: bool = false
+var upper_chamber_name: String = ""
+var upper_seats: int = 0
+
+## What the chamber's refusal does, per CLASS of bill rather than per chamber --
+## chambers_constants.KNOWN_VERDICTS. Two rows because the real distinction is between
+## an ordinary bill and a constitutional revision and not between second chambers:
+## France's Senat delays the first (Art. 45) and vetoes the second (Art. 89), and
+## Germany's Bundesrat is the same shape at Arts. 77 and 79(2). The EIGHTH instance of
+## the dispatch-on-a-data-string pattern formation_method, censure_rule,
+## dissolution_rule, lose_condition, head_of_state_kind, amendment_rule and
+## referendum_mode already use.
+var upper_ordinary: String = ""
+var upper_amendment: String = ""
+
+## V1.1e. Whether this nation's courts may strike down primary legislation --
+## judiciary_constants.KNOWN_REVIEWS, the NINTH dispatch-on-a-data-string field. Three
+## of the ten are `none` and each for a different doctrine; the citations are in each
+## nation file's own government.judicial._note.
+var judicial_review: String = ""
+
 ## Whether this nation's constitution offers a REFERENDUM route to an amendment,
 ## and whether that route is a choice or the only one. Dispatched by
 ## src/sim/referendum.gd, never on the nation id -- the SEVENTH instance of the
@@ -361,6 +412,12 @@ var inequality: Dictionary = {}
 ## copies of 1.0, which is what keeps the cycle off docs/foreign-policy-model.md's
 ## clustered `coalition_position` failure. See docs/cycle-model.md section 3.
 var cycle: Dictionary = {}
+
+## V1.1e. imported.institutions -- rule of law, docs/tiers/v1.md section 5's own
+## statistic, handed to section 1's judiciary bullet at V1.5's decomposition on the
+## argument that two uncontestable gates on player action would be one machine claimed
+## twice. World Bank Worldwide Governance Indicators, GOV_WGI_RL.SC, 0-100.
+var institutions: Dictionary = {}
 
 ## V1.6b. imported.prices -- the nation's own long-run inflation anchor, on the same
 ## standing as `cycle` above and measured the same way.
@@ -492,6 +549,42 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 		errors.append("%s: government.amendment.referendum is 'mandatory' but rule is '%s', not 'referendum_required'" % [filename, n.amendment_rule])
 	n.permits_system_change = _extract_bool(amendment, "permits_system_change", filename, errors)
 
+	# V1.1e. Present-only-if-there-is-one, complete-if-present -- `executive` and an
+	# elected head of state's clock already read this way, and for the same reason: a
+	# half-authored chamber is the silent-wrong-verdict bug the validation exists to
+	# prevent. Every key inside it is required; the `electorate` key an earlier draft
+	# carried was deleted with the ideological tilt that read it -- see
+	# src/sim/chambers_constants.gd and docs/upper-house-model.md.
+	n.has_upper_house = government.has("upper")
+	if n.has_upper_house:
+		var upper: Dictionary = _extract_dict(government, "upper", filename, errors)
+		n.upper_chamber_name = _extract_string(upper, "chamber", filename, errors)
+		n.upper_seats = _extract_int(upper, "seats", "government.upper.seats", filename, errors)
+		_check_range_int(n.upper_seats, ChambersK.MIN_SEATS, ChambersK.MAX_SEATS, "government.upper.seats", filename, errors)
+		n.upper_ordinary = _extract_string(upper, "ordinary", filename, errors)
+		if n.upper_ordinary != "" and not ChambersK.KNOWN_VERDICTS.has(n.upper_ordinary):
+			errors.append("%s: government.upper.ordinary '%s' is not a recognised verdict" % [filename, n.upper_ordinary])
+		n.upper_amendment = _extract_string(upper, "amendment", filename, errors)
+		if n.upper_amendment != "" and not ChambersK.KNOWN_VERDICTS.has(n.upper_amendment):
+			errors.append("%s: government.upper.amendment '%s' is not a recognised verdict" % [filename, n.upper_amendment])
+		# A chamber that sees nothing is a chamber that is not there, and saying so two
+		# ways lets a later edit make them disagree. Luxembourg omits the block; nobody
+		# writes it and then switches it off.
+		if n.upper_ordinary == ChambersK.VERDICT_NONE and n.upper_amendment == ChambersK.VERDICT_NONE:
+			errors.append("%s: government.upper sees neither class of bill -- omit the block instead" % filename)
+	elif government.has("upper_seats") or government.has("upper_chamber"):
+		errors.append("%s: government has no 'upper' block but carries an upper-house key beside it" % filename)
+
+	# V1.1e. Required for all ten, unlike `upper` above: every state on earth has some
+	# answer to whether its courts may strike a statute down, and three of the ten answer
+	# `none` for three different doctrines. An absent block would make a silence
+	# indistinguishable from Britain's parliamentary sovereignty, which is a position
+	# rather than an omission.
+	var judicial: Dictionary = _extract_dict(government, "judicial", filename, errors)
+	n.judicial_review = _extract_string(judicial, "review", filename, errors)
+	if n.judicial_review != "" and not JudiciaryK.KNOWN_REVIEWS.has(n.judicial_review):
+		errors.append("%s: government.judicial.review '%s' is not a recognised value" % [filename, n.judicial_review])
+
 	var formation: Dictionary = _extract_dict(government, "formation", filename, errors)
 	n.formation_method = _extract_string(formation, "method", filename, errors)
 	if n.formation_method != "" and not KNOWN_FORMATION_METHODS.has(n.formation_method):
@@ -566,6 +659,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 
 	n.prices = _extract_dict(imported, "prices", filename, errors)
 	_validate_prices(n.prices, filename, errors)
+
+	n.institutions = _extract_dict(imported, "institutions", filename, errors)
+	_validate_institutions(n.institutions, filename, errors)
 
 	return n
 
@@ -747,6 +843,21 @@ static func _validate_cycle(cycle_block: Dictionary, filename: String, errors: A
 
 
 ## V1.6b. _validate_cycle()'s shape, one session on.
+## V1.1e. One key, exact-match, KNOWN_PRICES_KEYS' treatment -- this block is
+## script-written like every other block under `imported`, so a misspelled or absent
+## key is a broken import rather than an authoring choice to be tolerated.
+static func _validate_institutions(institutions_block: Dictionary, filename: String, errors: Array[String]) -> void:
+	var keys := institutions_block.keys()
+	keys.sort()
+	var expected := KNOWN_INSTITUTIONS_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.institutions must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+	var score: float = _extract_float(institutions_block, "rule_of_law_score", "imported.institutions.rule_of_law_score", filename, errors)
+	_check_range_float(score, JudiciaryK.INDEPENDENCE_MIN, JudiciaryK.INDEPENDENCE_MAX, "imported.institutions.rule_of_law_score", filename, errors)
+
+
 static func _validate_prices(prices_block: Dictionary, filename: String, errors: Array[String]) -> void:
 	var keys := prices_block.keys()
 	keys.sort()
