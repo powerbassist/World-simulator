@@ -7,7 +7,7 @@ This document is **forward-looking**. What shipped is one line each in the table
 below; the corrections made along the way are in [[decision-log]]; the models are
 in the model notes.
 
-Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
+Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/v2.md](docs/tiers/v2.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
 ## Two tracks
@@ -93,6 +93,146 @@ MVP done-when checklist: [docs/tiers/mvp.md](docs/tiers/mvp.md). All boxes ticke
 ---
 
 ## Next
+
+**V2 IS THE NEXT TIER, AND FOR THE FIRST TIME SINCE THE MVP THERE WAS NO ROW TO READ.**
+Every session since S1 opened by reading a row, challenging it and counting what it named
+-- which is how forty-nine stale-row instances were found. [[docs/tiers/v1.md]]'s rows are
+closed, and `docs/tiers/someday.md` says of itself that it is *"a parking lot, not a
+backlog"*. So deciding what follows V1 was the first half of the work rather than a
+preamble to it, and [[docs/tiers/v2.md]] is the row set that makes the second half
+possible.
+
+**The organising goal is that THE WORLD BECOMES VISIBLE AND LOCATED.** V1 built machines,
+and every one of them is legible only as a number on a panel: a firm is a share, a strike
+is a percentage, a project is a countdown, a trade partner is a weight. **The country the
+player governs has no places in it.** V2 gives the same simulation geography, faces, a
+calendar that costs something, and motion. It opens no new front -- war stays in
+[[docs/tiers/someday.md]] where V1.3g deliberately left it.
+
+**Ten blocks, ordered so the visible payoff lands before the heavy rewrite.**
+
+| # | Block | Track | Depends on |
+|---|---|---|---|
+| **V2.1** | the shell, re-cut | U | — |
+| **V2.2** | the geographic register | S + data | V2.1 |
+| **V2.3** | the face of power | U | V2.1 |
+| **V2.4** | the president's day | S + U | V2.2 |
+| **V2.5** | the economy from below | S | V2.2 |
+| **V2.6** | people move | S | V2.5 |
+| **V2.7** | network and resources | S | V2.5 |
+| **V2.8** | energy, placed | S + U | V2.7 |
+| **V2.9** | environment and climate | S | V2.8 |
+| **V2.10** | the world in motion | U | V2.7 |
+
+Estimated at **30-40 sessions**, comparable to V1. **Blocks 5 and after are rows to
+challenge rather than commitments**, and that is written into the tier doc rather than left
+implicit: a row written this far ahead is a hypothesis, and each block gets a decomposition
+session that re-counts machines and surfaces before it splits.
+
+**Four calls were made before any code, and two of them are the tier's whole shape.**
+
+**A city is to population what a firm is to sector output.** V1.4a authored a firm as a
+`share` of its sector with an unnamed residual, so the partition is exact by construction
+and there is no reconciliation to get wrong. A city holds a share of its region, a region a
+share of the nation, and rural-and-unnamed is the residual. That is why V2.2 can ship the
+register before V2.5 rewrites the economy.
+
+**Bottom-up and bit-identical are not opposites, and this is the claim V2.5 must measure
+rather than assert.** If national = Σ regions *exactly* and every region is initialised on
+the national trajectory, the balance regimes stay bit-identical until the first regional
+divergence and every constant measured since the MVP keeps its calibration. What changes is
+that the **spine becomes regional**, so every later lever may be regional. **The cheaper
+version was offered and declined, and the record says so**: a ninth `economy.gd` addend
+holding a city partition -- V1.4a's idiom, reading exactly 0.0 until something moves --
+delivers the same thing from the player's seat, and the difference is invisible in play.
+
+**The day becomes real for the president and for nothing else**, which discharges a debt
+U6a wrote down by name. `clock.gd` has emitted `day_advanced` since the MVP and nothing in
+`src/sim/` has ever listened, so U6a deleted its day budget on a reason that is general
+rather than about calendars: *"`available()` returns what is **legal** and nothing models
+what the player **wants**, so any ceiling priced against legality binds in 100 % of
+months. That gap is a session, not a constant."* A ceiling priced against **travel and
+ceremony** is not priced against legality. **V2.4 is that session.**
+
+**Placing a power station is the first verb where the player writes a coordinate.** Every
+lon/lat in the game today is authored -- U6c's `project_sites` -- and U6c's rule that *a
+lon/lat nothing reads carries no information* is satisfied in its strongest possible form
+when the player's own click is what reads it. V2.8 also **lifts** *"Energy mix policy with
+emissions and dependency consequences"* out of `someday.md`, and that is recorded as a lift
+rather than left to look as though it was always scheduled.
+
+**One V1.8 call is reversed, and only for a flagged class.** [[docs/events-model.md]]
+argues the Dispatches window is non-modal because *a crisis you can ignore and pay for is
+the whole of "time pressure"; a modal removes the choice by removing the option of not
+making it*. That argument survives for every event without the new authored `interrupt`
+flag, which is most of them. What the flag buys is the case the argument does not cover:
+an event nobody could reasonably choose to ignore.
+
+**The stale-row count came back at three rather than four, and V2's own spine is what freed
+the fourth.** V1.8's last sweep of the `| V1 |` column left **Embassies** and **Foreign
+aid** (instance forty-nine, cheap -- a fifteenth and sixteenth entry in
+`data/diplomatic-actions/` on the existing `effects.relations` channel) and **honeymoon and
+fatigue**, deferred *in code* at `opinion_constants.gd`'s `APPROVAL_NEUTRAL` since S5 and
+the oldest open deferral on the project. **Birth rate and life expectancy is no longer an
+orphan**: [[docs/demography-model.md]] §14 had already recorded that the dataset objection
+was wrong and that what actually blocked it was V1.5b's finding that `population` enters no
+equation in `economy.gd` -- and **V2.5 is precisely the change that makes a head count
+load-bearing**. It is a bullet of V2.6 now, arriving with the mechanism that reads it.
+
+**The first row this tier wrote was wrong within the hour, and it was wrong in the
+direction that matters.** The decomposition booked Eurostat regional data as covering all
+ten with *"UK coverage ends around 2020"*, and the standing remedy — V1.5c's nearest-year
+fallback, scoped to the affected series — was written into the plan before anything was
+fetched. Probed, `nama_10r_2gdp` carries **zero** geo codes beginning `UK` in a dimension
+holding 471 of them: Eurostat dropped UK regions after withdrawal, so the fallback had
+nothing to fall back to. **GISCO's geometry carries all ten** (41 UK NUTS 2 features), so
+the map and the figures disagree about the roster and only the figures are short. Britain
+therefore needs a second source or an authored register, and V2.2 owns that call rather
+than inheriting an answer. Two import gotchas came out of the same probe and are written
+into [[docs/data-sources.md]] beside Natural Earth's: `XXZZ` **Extra-Regio NUTS 2** carries
+GDP and has no geometry, and `FRY1`–`FRY5` are the overseas regions the existing bounding-box
+filter already drops. Both belong in the unnamed residual, which is V1.4a's slot for the
+firms a sector does not name.
+
+### V2.1 — the shell, re-cut, and why it goes first
+
+**U5a's own precedent decides the order.** U5a retuned the theme and moved the whole shell
+*before* U5b, U5c, U6a, U6b and U6c built into it. V2 adds at least five new surfaces --
+city, region, day agenda, energy, climate -- and designing them in the old grammar and
+refactoring after is drawing twice. Unlike U5a, this pass **knows the full list of surfaces
+in advance**, which is what makes a shell session decidable rather than speculative.
+
+**Three failure classes recur across the screenshot record and all three are systemic
+rather than per-panel**, which is the argument for a system instead of another round of
+fixes:
+
+- **The forgotten refresh.** `src/ui/main.gd`'s `_mark_all_dirty()` is a hand-written list
+  under a comment predicting its own failure, and it has been wrong **twice** --
+  `_people_panel` from U6b until V1.4a found it, then `_projects_panel` and
+  `_campaign_panel` until V1.8. `WindowManager.register()` already knows all fifteen.
+  Deriving the sweep from the registry makes the failure **structurally impossible rather
+  than remembered**, which is this project's standing preference.
+- **The fold.** `nation_panel.gd` paid for one at V1.3e and again at V1.3g, and **V1.3g
+  proved height alone does not fix it** -- it took 80px plus two tightenings. No contract
+  anywhere says a panel's primary action must be reachable, and the headless suite
+  structurally cannot see a fold.
+- **Row-building by hand.** Three shipped bugs trace to twenty-five panels each inventing
+  their own rows: a format copied from a neighbouring row (V1.6b), a `.get(key, 0.0)`
+  default printing a confident **0.00** against a live 31.80 (V1.6d), and two value columns
+  each sizing to their widest row until one ran off the window (V1.6f).
+
+| | Session | Ships |
+|---|---|---|
+| **a** | the panel system | section / row / figure / delta / ledger primitives; the derived dirty registry; the fold contract; three panels migrated as proof the primitives fit |
+| **b** | the twenty-five panels | the rest migrated; every fold fixed by the contract rather than by height |
+| **c** | navigation and the resting screen | what is on screen when nothing is open; a cluster grammar that holds V2's five known future surfaces without a sixth cluster |
+
+**The one new visual rule is the fold line, and it is the existing signature reused rather
+than a second one.** U5a's plate carries a 1px brass hairline on its **top** edge only, and
+`tests/test_ui_theme.gd` fails if the other three are drawn. A panel whose content exceeds
+its height draws that same hairline along its **bottom** edge -- structure encoding
+something true rather than decorating, and pointed straight at the failure class that has
+bitten five screenshot passes.
 
 **V1.8 shipped events.** Only the re-parked **V1.1e** (upper
 house and judiciary) was left in the tier after it, and V1.1e has since been built --
@@ -2700,6 +2840,9 @@ is already made, which is most sessions once the docs are written.
 | V1.5a The delivery layer | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **ELEVENTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the fifth session running — the tier table stopped at U6b and V1.5 had no decomposition to inherit a content cell from either, so this is the first row since V1.3b with *nothing* to read. **What was challengeable was the §5 row itself, and it was wrong eight ways** — five collisions and three orphans, listed under *V1.5 — the decomposition*, of which the sharpest is that **bullet 9 asks for a machine the project has built three times under three names**: `military_capability`, and `potential_shift_pct` twice. The cold count came in at **~28 surfaces** — five new files, ~23 edits — level with V1.3e's and U5a's ~28, against U6b's ~46, U6a's ~40, V1.3d's ~39, V1.3g's ~34, V1.3b's and V1.3f's ~33, V1.3c's ~30 and U5c's ~13. **ONE machine**, so V1.3e's split trigger does not fire at the session level: the stock is the machine, corruption is one factor at an existing site, and there is no scheduler, no decision and no new accumulator. High on **reversibility**, the test the preamble names, and both halves fire: `effects.society` is schema (c) and (d) read, so a wrong channel is rewritten with two sessions; and this is the first session since V1.3d to put an **already-measured opinion constant** at risk, because `QUALITY_SCALE_PP` and `SPEND_SCALE_PP` land on the same issue and their ratio *is* the double-count answer. **The re-run was predicted NOT to be bit-identical, and predicted before it ran** — every session since V1.3d has been, because each channel read exactly 0.0 until a player *command* fired, where this one's trigger is the budget slider, which the regimes move |
 | V1.3g Defence as domestic politics | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **EIGHTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the second session running — the tier table stopped at V1.3f and the decomposition row was again the only cell to read. **The decomposition row was challenged and held**: capability, deployments, defensive alliances and obligations are exactly the four things built, and its "reads a, d" was right in a way it could not have known — **d is what makes g fire at all**. The cold count came in at **~34 surfaces** — six new files, ~28 edits — level with V1.3b's and V1.3f's ~33, against V1.3d's ~39, V1.3c's ~30, V1.3e's ~28 and V1.3a's ~25. **The surface trigger would have fired again and the machine count again decided it**: ONE machine, the commitment, of which the pact is the cause and the capability stock the price — and V1.3e's test (*is there a second thing with a scheduler, a decision, new serialised state and a surface?*) answers no **precisely because** the accept/refuse obligation surface was cut, which is the second machine V1.3f cut once already. No split. **Four cuts declared in advance and all four taken**: no obligation inbox, no Military window, no `has_budget` lift, no economy reader for capability. **The probe corrected the model three times, which is seven sessions running**: the nine never coerce each other, so the obligation is unreachable without the COUNCIL and the first run reported zero for the wrong reason; the headline approval figure cannot move on a `defence` price at all, because five blocs of six weight that issue at zero, so the test moved to the rural row rather than the constant moving; and the first opinion table measured **half the price**, having set the load and not the bill that widens the deficit every bloc does weight. Of five named escalation triggers, **one fired** — GBR unable to ally, for the sixth time in the block, resolved by a sweep that put `PACT_ACCEPT_MIN` at 1.00, *below* the trade-agreement bar and inverting the argument that set it. **The clamp was measured and found SLACK**, which is a first for this block: the worst reachable obliged bill is 0.586 against a guard rail of 2.00. What the count did not anticipate was found by looking at a frame for the **fifth session running**, and this time the bug was in the tool: `--defence --open budget` showed an em dash against a live 0.498 bill, because hiding a window frame does not clear the child panel's own `visible`, so every panel spends its one refresh on frame 1 and never rebuilds — every state-mutating screenshot flag since V1.3c had been capturing pre-mutation figures and getting away with it. The nation panel's fold reappeared at the same panel one session after V1.3e paid for it, and **height alone could not fix it**. **The re-run is bit-identical across every shared regime**, which the plan did not predict and table (h) explains: four new verbs entered `data/diplomatic-actions/` and changed no AI choice, because `state_visit` wins 90 pairs of 90 on being the only verb priced at exactly zero. Nineteenth correction on this table's own record, and the seventh to be an *addition* to it |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
+| V2.1a The panel system | **Yes** | Opus 5, plan and build in one session | **High** | **The first row on this table written BEFORE the session rather than authored at its plan time** -- the missing-row failure is recorded here four times in almost identical words, so V2 breaks it by writing the row first and asking the receiving session to challenge it cold. Estimated **~14 surfaces and ONE machine**: two new files (`src/ui/panel_kit.gd` and `tests/test_panel_system.gd`) against ~12 edits -- `main.gd`'s `_mark_all_dirty()` deleted, `window_manager.gd` exposing its registry, `ui_theme.gd` gaining the fold variation, three panels migrated as proof, `tools/run_tests.sh` naming the new test, and the docs. Below U5c's ~13 only if the migration count stays at three. **High on reversibility, which is the test the preamble names and it is the whole argument for the row**: a map renderer that turns out wrong is rewritten alone, and a primitive set that turns out wrong is rewritten along with **twenty-five panels that read it**. That is the schema case, not the renderer case. **What to challenge**: whether the fold contract can be expressed without a layout pass, given that `tests/test_nation_panel.gd` already records that an autowrapped label reports a one-word-per-line height when nothing has laid it out -- if it cannot, the contract is a screenshot-pass assertion rather than a test, and the row should say so before it is built |
+| V2.1b The twenty-five panels | No | Sonnet 5 | **Low** | Mechanical and high-volume: the remaining panels migrated onto (a)'s primitives, every fold fixed by the contract rather than by height. **Plan first is No for the reason the preamble gives** -- the decision is already made by (a), and what is left is executing it twenty-two times. The estimate is deliberately not a surface count but a **file** count, because that is what varies: 22 panels, of which `budget_panel.gd` (625), `map_view.gd` (599) and `calendar_panel.gd` (596) are the three that will not fit one session's context together. **What to challenge**: whether this is one session or two. V1.3g proved height alone does not fix a fold, so a panel that needs re-composition rather than re-plumbing is (c)'s work, not this one's |
+| V2.1c Navigation and the resting screen | **Yes** | Opus 5, plan and build in one session | **Medium** | What is on screen when nothing is open, and what the four bottom clusters mean once V2 has five more surfaces to place -- city, region, day agenda, energy, climate. **Medium rather than High**: the cluster grammar is reversible in a way the primitive set is not, because a cluster is one line in `_build_action_bar()` and U5a built it that way on purpose. **What to challenge, and it is the row's real question**: whether the resting screen should show anything at all. U5a's call was that the map IS the resting screen and the panels are floating windows over it; five new surfaces is exactly the pressure that would push a session into inventing a dashboard again, which is the thing U5a deleted. The row should be read as *prove the map still carries it*, not as *design a home screen* |
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
 > The plan assumed enforcing France's term limit could move the balance

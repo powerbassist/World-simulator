@@ -68,7 +68,8 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 ## Scope tiers
 
 - [[mvp]] — France, one term, one way to lose
-- [[v1]] — what gets built once the MVP works
+- [[v1]] — what gets built once the MVP works. Complete; nothing left in it
+- [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
 - [[someday]] — the parking lot, not scheduled
 - [[declined]] — considered and decided against, with what would reopen each
 - [[out-of-scope-mvp]] — the explicit exclusion list, with reasons

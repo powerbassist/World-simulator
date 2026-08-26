@@ -57,7 +57,29 @@ Which open datasets seed the game's content, what each one is licensed under, an
 
 - **License:** CC BY 4.0. Attribution required.
 - **Provides:** City names, populations, coordinates.
-- **Status:** Not imported at MVP. Listed here so the decision is already made when cities become gameplay rather than decoration.
+- **Status:** Not imported at MVP. Listed here so the decision is already made when cities become gameplay rather than decoration. **That condition is met by [[v2|V2.2]]**, which makes a city a share of its region and domiciles [[companies-model|V1.4a]]'s firms in one — so the pre-registered decision is taken as written rather than re-argued.
+
+### Eurostat and GISCO — regions
+
+- **License:** Eurostat's re-use policy, equivalent to CC BY 4.0. Attribution required, and it goes into `ATTRIBUTION.md` at the same time as the fetch rather than at ship time.
+- **Provides:** Regional GDP (`nama_10r_2gdp`), regional population by age group (`demo_r_pjangrp3`), and NUTS 2 geometry from GISCO.
+- **Used for:** [[v2|V2.2]]'s region register — a region is a main city plus the sum of the smaller cities under it, holding a share of the nation the way [[companies-model|a firm holds a share of its sector]].
+- **Endpoints, probed and returning 200 at the time this section was written:**
+
+```
+https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nama_10r_2gdp?format=JSON&lang=EN&unit=MIO_EUR&time=2022
+https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=2022
+https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_2021_4326_LEVL_2.geojson
+```
+
+**Coverage was measured before this section was written, and the geometry and the figures do not agree about the roster.** GISCO's NUTS 2021 geometry carries all ten nations, the United Kingdom included at 41 NUTS 2 features. `nama_10r_2gdp` carries **nine**: the UK is not thin or stale, it is **entirely absent** — zero geo codes beginning `UK` in a dimension holding 471 of them, because Eurostat dropped UK regions after withdrawal. Measured 2022 NUTS 2 codes carrying a value: FR 28, DE 38, IT 22, ES 20, BE 12, NL 13, LU 1, CH 7, AT 10, **UK 0**.
+
+- **Therefore the UK needs a second source or an authored register**, and the session that imports owns the call. ONS publishes regional GVA on the ITL levels that replaced NUTS for the UK, under the Open Government Licence v3.0 — permissive, attribution required, compatible with what this project already accepts. The standing alternative is authoring, which is what `fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` already do for every nation.
+
+### Two gotchas in the Eurostat regional data, confirmed against the 2022 figures
+
+- **`XXZZ` is "Extra-Regio NUTS 2" and has GDP but no geometry.** Present for FR, IT, ES, BE, NL and AT; absent for DE, LU and CH. It is the output that cannot be assigned to any region — offshore, embassies, ships. Left in, the region shares do not sum against a geometry that has one fewer entry; dropped silently, the nation's GDP no longer equals the sum of its regions. It belongs in the **unnamed residual**, which is the same slot [[companies-model|V1.4a]] gives the firms a sector does not name.
+- **`FRY1`–`FRY5` are the French overseas regions** — Guadeloupe, Martinique, Guyane, La Réunion, Mayotte — and they are exactly what the Natural Earth import filter above already drops by bounding box. The region register inherits that filter for free, and their GDP inherits the residual for the same reason `XXZZ` does. Spain's Canary Islands (`ES70`) and the Dutch Caribbean are the same case.
 
 ## Rejected sources
 
