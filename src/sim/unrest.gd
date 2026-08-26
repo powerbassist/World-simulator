@@ -62,6 +62,10 @@ const EconomyK = preload("res://src/sim/economy_constants.gd")
 # distribution COSTS, and docs/tax-model.md owns what it is.
 const Tax = preload("res://src/sim/tax.gd")
 
+## V1.1e, for unrest_load() alone -- the grievance reads the judiciary the way it
+## reads the press, and judiciary.gd knows nothing about a grievance. One direction.
+const Judiciary = preload("res://src/sim/judiciary.gd")
+
 
 ## Zero, explicitly, and the explicitness is the point.
 ##
@@ -132,7 +136,16 @@ static func unrest_target(ns) -> float:
 		# two independent terms rather than with hardship -- section 5's "second approval
 		# number" warning is answered by a fourth term the approval figure cannot see, on
 		# exactly the argument the third one was added on.
-		- K.PRESS_UNREST_BETA * float(ns.press_freedom),
+		- K.PRESS_UNREST_BETA * float(ns.press_freedom)
+		# V1.1e, and it is the FIFTH term and the fourth the approval figure cannot
+		# see. Legitimacy is willingness to accept your rule outside the ballot box,
+		# which is why docs/media-model.md sent press freedom's legitimacy cost here
+		# rather than inventing a quantity -- and a government that captures its own
+		# courts is doing the same thing to the same two blocs. Judiciary.unrest_load()
+		# carries the sign and reads the DEVIATION from the nation's own start, so a
+		# country whose courts have always been weak is not permanently rioting about
+		# it and this term is exactly 0.0 for all ten at new game.
+		+ Judiciary.unrest_load(ns),
 		K.UNREST_MIN, K.UNREST_MAX
 	)
 

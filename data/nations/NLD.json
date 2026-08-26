@@ -36,6 +36,14 @@
         "notice_months": 3
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Eerste Kamer, 75 seats, elected by the provincial councils rather than directly. It may only accept or reject a bill in full -- it has no power of amendment and there is no override, so its refusal is final on anything it sees. Grondwet, Arts. 55 and 85; eerstekamer.nl, 'The Senate's role in legislation'.",
+      "chamber": "Eerste Kamer",
+      "seats": 75,
+      "ordinary": "absolute",
+      "amendment": "absolute"
+    },
     "system": "constitutional_monarchy",
     "head_of_state": {
       "kind": "hereditary_monarch",
@@ -51,6 +59,11 @@
       "_referendum_note": "The Dutch second reading is by a newly elected Tweede Kamer at 2/3; the intervening election is the popular step, and there is no constitutional referendum. rijksoverheid.nl, 'Herziening van de Grondwet'.",
       "permits_system_change": true,
       "_permits_system_change_note": "The monarchy is a title in the Grondwet, revisable by the same 2/3 procedure as any other article -- no eternity clause excludes it."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "NO judicial review of Acts of Parliament, and the prohibition is EXPRESS rather than doctrinal: Art. 120 of the Grondwet says the constitutionality of Acts of Parliament and treaties shall not be reviewed by the courts. That is a different doctrine from Britain's parliamentary sovereignty and from Switzerland's binding-force clause, and three constitutions reaching one answer by three routes is recorded in docs/judiciary-model.md rather than smoothed over. Grondwet, Art. 120.",
+      "review": "none"
     },
     "formation": {
       "_source": "authored",
@@ -128,6 +141,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 86.3
     }
   }
 }

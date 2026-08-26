@@ -36,6 +36,14 @@
         "notice_months": 2
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senaat / Senat, 60 seats, 50 of them delegated by the community and regional parliaments. The sixth state reform (2014) removed the Senate from the ordinary legislative procedure almost entirely -- an ordinary bill is a matter for the Chamber alone -- while Art. 195 keeps full bicameral competence for constitutional revision. So the ordinary row is 'none' rather than 'suspensive', and Belgium is the one nation on this roster whose second chamber does not see an ordinary bill at all. Belgian Constitution, Arts. 67, 77 and 195; senate.be, 'Competences'.",
+      "chamber": "Senaat",
+      "seats": 60,
+      "ordinary": "none",
+      "amendment": "absolute"
+    },
     "system": "constitutional_monarchy",
     "head_of_state": {
       "kind": "hereditary_monarch",
@@ -51,6 +59,11 @@
       "_referendum_note": "The Belgian revision procedure entrenches through a dissolution and re-election followed by a 2/3 vote, not through a popular vote; Belgium has no binding national referendum. senate.be, 'Revision of the Constitution'.",
       "permits_system_change": true,
       "_permits_system_change_note": "Nothing in the Belgian constitution excludes the monarchy from ordinary revision -- the crown itself is a revisable title, not an entrenched one."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Grondwettelijk Hof / Cour constitutionnelle. Art. 142: rules on actions for annulment of a statute for breach of the rules dividing competence and of the Title II rights. Belgian Constitution, Art. 142.",
+      "review": "constitutional"
     },
     "formation": {
       "_source": "authored",
@@ -128,6 +141,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 79.0
     }
   }
 }

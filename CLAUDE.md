@@ -2038,6 +2038,108 @@ model and their agreement about a bit-identical re-run was about nothing. A bit-
 re-run is the reassuring outcome, which is exactly why that check is a test and not a
 habit.
 
+**V1.1e SHIPPED THE UPPER HOUSE AND THE JUDICIARY, AND THE V1 TIER IS COMPLETE.**
+Nothing is left in it. The row said *Light / Sonnet 5 / Medium -- a second chamber is
+the existing vote resolution run twice with different composition* and named **one of
+the three things the session owns**: the block is upper house *and judiciary*, and the
+judiciary half inherits section 5's rule-of-law statistic. **Twenty-fourth correction on
+that table's record and the first about SCOPE rather than size.** ~40-45 surfaces, and
+it did not split on V1.8's argument -- bill → assembly → second chamber → court is ONE
+PIPELINE, and in France the two are connected, since Art. 61 lets sixty senators refer a
+bill to the Conseil constitutionnel.
+
+**The stopgap this session discharges was declared in the DATA rather than in the code,**
+which is new. `data/nations/DEU.json` carried *"Only the Bundestag half is modelled --
+there is no Bundesrat in this game"* from V1.2c; `FRA.json` cited Art. 89's "both
+chambers" and Art. 12's "the presidents of both chambers"; and **`src/sim/referendum.gd`'s
+own header, written one session earlier**, quotes Art. 89's first stage while modelling
+only the second. Instances **fifty and fifty-one** are in section 1's own bullet list:
+*Coalition formation* and *Confidence votes* were built at V1.1a and left unstruck for
+four blocks, found by counting the section this session owns.
+
+**NOT ONE of the ten upper houses is elected by the national electorate**, so a second
+chamber is the **lower chamber, lagged**, and `Elections.vote_share()` is never called
+with a different weighting. An ideological tilt was designed, measured and **deleted
+twice**: a bloc anchor put the nationalist right at **267 of France's 348 senators**,
+because every socially-traditional ideal in `BLOC_IDEAL` sits nearest
+`nationalist_right`; and anchoring on the chamber's own centre made it refuse **zero** of
+what the Assembly carried, because moderation concentrates a chamber where the laws are.
+`UPPER_TILT` and `government.upper.electorate` were both cut by their own measurement.
+**What makes it a check was already there and costs nothing** -- it votes at a reduced
+whip where the Assembly votes at the full coalition bonus.
+
+**THE FOURTH CORRECTION WAS CAUGHT BY A TEST, AND IT KILLED THE MODEL'S CENTRAL CLAIM.**
+The design was that the second chamber votes on `spatial_support()` ALONE.
+`tests/test_save_load.gd` reported *"no referendum was called, so the round trip measures
+nothing"*: that chamber refuses **seven of seven** authored amendments -- France reads
+`single_term_reform` 63-156 where the Assembly carries it 308-210 -- and under Art. 89's
+`absolute` row every amendment in the game became unpassable, killing V1.7c's verb one
+session after it shipped. **No whip at all is not `unwhipped`, it is `no government
+exists`**: senators belong to the same parties as deputies, and what the second chamber
+lacks is the THREAT. `UPPER_WHIP` = 0.40, passing [0.15, 0.65].
+
+**The court's doctrine is PROPORTIONALITY and every denominator already existed**, so no
+`unconstitutionality` field was authored -- a law's reach is the largest fraction of any
+effect clamp it uses. The probe's first correction cut `bloc_offset` from that reading:
+authored in hundredths against a clamp of 1.0, it dominated every other channel and made
+`reach` numerically EQUAL to the largest bloc_offset, so **the court struck down whatever
+was unpopular**. Budget levers are out on `legislature-model.md`'s own rule, and an
+amendment is never reviewable because it becomes the standard the court applies. The cost
+is measured: **ten of thirty-one ordinary laws reach exactly 0.000** and are structurally
+unreviewable, `regional_devolution` among them.
+
+**Rule of law is section 5's own statistic and the World Bank publishes it** -- the third
+row in three blocks whose "cannot be derived" premise was about the model rather than the
+world, after V1.5b's age structure and V1.5c's Gini. All ten nations, all ten years, no
+gaps; ITA 67.6 to CHE 87.3, mean 80.38. Two things found by fetching rather than assuming:
+the WGI were **re-coded**, so `RL.EST` now answers *"the indicator was not found"* and the
+live code is `GOV_WGI_RL.SC` on `&source=3`, the first line in `data-sources.md` to carry
+one; and the **score** (0-100) ships rather than the estimate, because every stock this
+project keeps on a nation is already on that scale. The measured **slope** exists -- nine
+of ten fall and only Italy rises -- and is deliberately NOT imported, because a court that
+weakens every year on its own is V1.3g's permanent monotone charge.
+
+**Three nations have no judicial review, by three different doctrines, and nothing
+authored that**: Britain by parliamentary sovereignty, the Netherlands by Art. 120
+Grondwet in terms, Switzerland by Art. 190's binding-force clause. **Britain's 78.8 is
+computed and never read**, which IS parliamentary sovereignty. The linear tolerance form
+died in the sweep -- it amplified the roster's spread until Germany could not legislate --
+and the inverse form says something defensible instead: a court twice as independent
+tolerates half as much, anchored on the roster's measured mean. `JUDICIAL_TOLERANCE` =
+0.345, passing [0.323, 0.367] on a 0.001 grid, both edges the model's. The ten split into
+**three tiers** out of a World Bank series and one dial.
+
+**The whole judicial ladder was UNREACHABLE in all three playable nations** until its
+content moved -- France refused every rung 92-370 -- because the first positions put
+court-weakening Acts in the socially-traditional corner and all three start with a
+liberal or centrist coalition. The fix is CONTENT and it is the fix that is also true:
+rollback in Europe is sold on *democratic legitimacy*, which is majoritarian rather than
+traditionalist. **Germany's own court strikes every rung of its own capture** and
+Britain's assembly refuses them, both recorded as bounds. `JUDICIAL_UNREST_BETA` is set
+as a **ratio** against `PRESS_UNREST_BETA` because its band could not select -- the
+one-sided failure V1.5a-d each recorded, a fifth time.
+
+**The hold is pure time and the probe found time is not a cost.** Twelve months moves the
+worst bloc 2.39 points against a 3.0 poll floor, and the first candidate to clear it is
+15 -- one month short of the whole first playable term. **A hold that only registers when
+it consumes the term is a block with a countdown on it.** The escalation declared in
+advance fired and was honoured by the response the plan named: the RELEASE carries a
+price, through `Government.penalise_blocs()`, Article 49.3's own accumulator, so the
+session adds a price and no channel. `UPPER_OVERRIDE_OFFSET` = 0.05, and the **career
+bound** chose it -- V1.8's E1b in a new place, where 0.15 stacked thirteen releases to
+1.95 against a clamp of 1.00. **Article 49.3 is the way PAST the second chamber** and not
+past the court, which is a property nobody authored.
+
+`SAVE_VERSION` is **27**, on eight added fields of ten, failing the rule **three different
+ways** and asserted apart. **The re-run is bit-identical across all 45 shared regimes**
+-- additions only -- and that is a CONSEQUENCE rather than a coincidence: every law regime
+calls `Legislature.apply()`, which by design skips both gates, and `tests/test_judiciary.gd`
+asserts it. Three new regimes, all the expensive kind, and the legibility evidence is
+exact: same budget, the ladder passed in month 6, rule of law **73.8 → 64.8** (below
+Italy's 67.6), grievance **11.87** against a quiet run's 8.79, and the president **LOSES
+2027 at 23.5 %** where `managed` holds at 25.8. **Capturing the courts costs the office.**
+Model: [docs/upper-house-model.md](docs/upper-house-model.md) and
+[docs/judiciary-model.md](docs/judiciary-model.md).
 **V1.8 shipped events, and THE V1 TIER IS COMPLETE.** One session, not decomposed --
 the first block since V1.1 not to split -- because fire → pending → choose → apply is
 **one pipeline**, which is V1.3d's rule, so V1.3e's split trigger answers no. ~36
@@ -2178,7 +2280,7 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, V1.1a-d, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, **V1.8**, U1-U5 and U6 (a, b and c) are done. **THE V1 TIER IS COMPLETE except for the re-parked V1.1e.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5 and U6 (a, b and c) are done. **THE V1 TIER IS COMPLETE. Nothing is left in it.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

@@ -25,6 +25,9 @@ signal reassigned(before: Dictionary)
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const GK = preload("res://src/sim/government_constants.gd")
@@ -79,6 +82,15 @@ const AMENDMENT_LABEL := {
 ## V1.7c. Silent under `none`, which is six of the ten: a line saying a country has
 ## no referendum is permanent furniture, and docs/society-model.md section 11's rule
 ## is that a readout silent at zero beats one that always prints.
+## V1.1e. The wording is the CHAMBER's power over the player, not the chamber's own
+## procedure: `suspensive` reads as a delay because that is what it costs, and
+## `absolute` reads as a veto because that is what it is.
+const VERDICT_LABEL := {
+	ChambersK.VERDICT_NONE: "does not see",
+	ChambersK.VERDICT_SUSPENSIVE: "can delay",
+	ChambersK.VERDICT_ABSOLUTE: "can block",
+}
+
 const REFERENDUM_LABEL := {
 	"optional": "The head of state may put an amendment to the country instead, on an ordinary majority here.",
 	"mandatory": "Every amendment goes to the country; there is no path through the assembly alone.",
@@ -308,6 +320,17 @@ func _refresh() -> void:
 	else:
 		_add_line("The assembly is elected by %s, with no threshold." % method)
 
+	# V1.1e. The second chamber and the court, and both are NEVER SILENT for a nation
+	# that has them -- docs/referendum-model.md's V1.7c finding, that a lever whose only
+	# feedback is a wait has no readout at all. A player who passes a court-weakening Act
+	# must be able to read what it did on the frame it did it, not three years later.
+	if ns.has_upper_house:
+		_add_line("The %s holds %d seats and %s." % [
+			ns.upper_chamber_name, ns.upper_seats, _upper_phrase(ns)])
+	else:
+		_add_line("There is no second chamber.")
+	_add_line(_court_phrase(ns))
+
 	_add_line("")
 	_add_line("In government")
 	_body.add_child(_build_partner_table(ns))
@@ -344,6 +367,31 @@ func _refresh() -> void:
 ## The reliability column is the number legislature.gd reads and the discipline
 ## column is the number that moves; showing both is what makes a partner drifting
 ## away from the line visible before it costs a vote rather than after.
+## What the second chamber can do, per class of bill. Two rows, because the real
+## distinction is between an ordinary bill and a constitutional revision and not
+## between second chambers -- France's Senat delays the first under Art. 45 and cannot
+## be overridden on the second under Art. 89.
+func _upper_phrase(ns) -> String:
+	var ordinary: String = VERDICT_LABEL.get(ns.upper_ordinary, ns.upper_ordinary)
+	var amendment: String = VERDICT_LABEL.get(ns.upper_amendment, ns.upper_amendment)
+	if ns.upper_ordinary == ns.upper_amendment:
+		return "%s any bill" % ordinary
+	return "%s an ordinary bill and %s an amendment" % [ordinary, amendment]
+
+
+## The court, with the ARITHMETIC and not just the label. A rule the player cannot read
+## is not a check on their power, it is a trap -- docs/judiciary-model.md.
+func _court_phrase(ns) -> String:
+	if ns.judicial_review == JudiciaryK.REVIEW_NONE:
+		return "No court may strike down an Act of the legislature."
+	var drift: float = Judiciary.independence_deviation(ns)
+	var text := "Rule of law %.1f; the court strikes a bill reaching past %.2f." % [
+		ns.judicial_independence, Judiciary.tolerance(ns)]
+	if absf(drift) >= 0.05:
+		text += "  %+.1f since the start." % drift
+	return text
+
+
 func _build_partner_table(ns) -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 6

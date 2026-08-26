@@ -36,6 +36,14 @@
         "notice_months": 2
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senato della Repubblica, 200 elected seats, and the only chamber on this roster elected by the SAME national electorate as the lower house on the same day -- which is why it carries no `electorate` anchor and differs from the Camera only by the renewal lag. Art. 70: the legislative function is exercised collectively by the two chambers, so every bill must pass both in identical terms and there is no override on anything. Costituzione della Repubblica Italiana, Arts. 57, 70 and 138.",
+      "chamber": "Senato della Repubblica",
+      "seats": 200,
+      "ordinary": "absolute",
+      "amendment": "absolute"
+    },
     "system": "parliamentary_republic",
     "head_of_state": {
       "_source": "authored",
@@ -58,6 +66,11 @@
       "_referendum_note": "Art. 138: where the second vote carries by an absolute rather than a 2/3 majority, the amendment is open to a confirmatory referendum on petition. Modelled as the head of state's own choice rather than as a petition, since this game has no petition mechanic. senato.it, 'The revision of the Constitution'.",
       "permits_system_change": false,
       "_permits_system_change_note": "Art. 139: 'The republican form of government shall not be subject to constitutional amendment.'"
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Corte costituzionale. Art. 134: rules on the constitutional legitimacy of statutes of the State and of the Regions. Costituzione della Repubblica Italiana, Art. 134.",
+      "review": "constitutional"
     },
     "formation": {
       "_source": "authored",
@@ -135,6 +148,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 67.6
     }
   }
 }

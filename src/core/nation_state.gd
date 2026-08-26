@@ -1229,6 +1229,80 @@ var press_freedom: float = 0.0
 var framing_gain: Dictionary = {}
 
 
+# --- V1.1e: the second chamber ------------------------------------------------
+
+## Whether this nation has one at all. Copied from the nation's own
+## `government.upper` block, which Luxembourg does not carry -- absent-means-
+## unicameral, the shape `has_executive` already uses one field group up.
+##
+## EARNS THE BUMP, and for `election_system`'s reason at V1.7c rather than for a
+## reason of its own: from_dict() never sees the loader, so a content-derived static
+## fact that is not serialised cannot be re-derived on load. Absent it reads false and
+## a reloaded France has no Senate -- a different model from the one that saved it.
+var has_upper_house: bool = false
+var upper_chamber_name: String = ""
+var upper_seats: int = 0
+var upper_ordinary: String = ""
+var upper_amendment: String = ""
+
+## The chamber's composition, as a party-keyed SHARE rather than as seats.
+##
+## ONE RECORD OF ONE FACT. The seats are ElectoralSystems.pr_national() over this,
+## derived by Chambers.seats() at every read the way Defence.allies() derives an
+## alliance -- storing both would be two records of one thing, and the lag has to run
+## on the share anyway, because a partial renewal of integers is a rounding rule
+## pretending to be a model.
+##
+## EARNS THE BUMP. Absent it reads empty, Chambers.seats() returns an empty chamber,
+## and an empty chamber refuses everything or passes everything depending on which way
+## the comparison falls -- `military_capability`'s case at V1.3g. Elections rewrite it,
+## but only at an election, which for France is up to five years away.
+var upper_share: Dictionary = {}
+
+## Bills the second chamber has refused and not killed: law id -> months remaining.
+## Counted down by Legislature.tick_month(), which every harness already calls.
+##
+## EARNS THE BUMP, and it is `referendum_pending`'s case at V1.7c and
+## `event_pending`'s at V1.8: absent, the register reads empty and a bill the Senate
+## refused simply is not there any more -- a FREE ESCAPE from the one obstacle this
+## session adds, available to anyone who saves and loads.
+var held_bills: Dictionary = {}
+
+
+# --- V1.1e: the judiciary -----------------------------------------------------
+
+## Whether this nation's courts may strike down primary legislation --
+## judiciary_constants.KNOWN_REVIEWS. `has_upper_house`'s case exactly: content-
+## derived, static, and unreachable from from_dict() without the loader, so absent it
+## reads "" and the dispatch falls through to no review at all, which is a silently
+## different constitution rather than a neutral default.
+var judicial_review: String = ""
+
+## Rule of law, 0-100, docs/tiers/v1.md section 5's own statistic handed to section
+## 1's judiciary bullet at V1.5's decomposition. Initialised from the nation's own
+## imported.institutions.rule_of_law_score and moved ONLY by Legislature.
+## apply_effects() through the fifth effects.society term -- `regulation_burden`'s
+## single-writer shape, with an authored base where that one starts at zero.
+##
+## EARNS THE BUMP, and it is `service_quality`'s case at V1.5a in its strongest form:
+## absent it reads 0.0 against a France whose courts the World Bank scores 73.8, so
+## every law passes and the session's whole gate is gone -- AND re-deriving it from
+## content on load does not rescue it, because that would erase the erosion a player
+## spent a term buying.
+var judicial_independence: float = 0.0
+
+## What it was at new game, so the grievance price reads a DEVIATION rather than a
+## level -- start_service_quality's and start_bloc_burden's shape. A country whose
+## courts have always been weak is not permanently rioting about it, and Italy is not
+## angrier than Switzerland on frame one.
+##
+## EARNS NOTHING: it round-trips through data/nations/, so it is content rather than
+## state -- a firm's authored share at V1.4a. Serialised anyway, because nothing
+## recomputes it after init and a save that dropped it would price every deviation
+## against zero.
+var start_judicial_independence: float = 0.0
+
+
 ## Deep copy. The budget projection runs the real simulation forward on a copy,
 ## so every mutable field — every Dictionary — must be duplicated, not shared.
 func duplicate_state():
@@ -1424,6 +1498,17 @@ func duplicate_state():
 	s.press_freedom = press_freedom
 	s.framing_gain = framing_gain.duplicate(true)
 
+	s.has_upper_house = has_upper_house
+	s.upper_chamber_name = upper_chamber_name
+	s.upper_seats = upper_seats
+	s.upper_ordinary = upper_ordinary
+	s.upper_amendment = upper_amendment
+	s.upper_share = upper_share.duplicate(true)
+	s.held_bills = held_bills.duplicate(true)
+	s.judicial_review = judicial_review
+	s.judicial_independence = judicial_independence
+	s.start_judicial_independence = start_judicial_independence
+
 	return s
 
 
@@ -1613,6 +1698,17 @@ func to_dict() -> Dictionary:
 		"settlement_stance": settlement_stance,
 		"press_freedom": press_freedom,
 		"framing_gain": framing_gain,
+
+		"has_upper_house": has_upper_house,
+		"upper_chamber_name": upper_chamber_name,
+		"upper_seats": upper_seats,
+		"upper_ordinary": upper_ordinary,
+		"upper_amendment": upper_amendment,
+		"upper_share": upper_share,
+		"held_bills": held_bills,
+		"judicial_review": judicial_review,
+		"judicial_independence": judicial_independence,
+		"start_judicial_independence": start_judicial_independence,
 	}
 
 
@@ -1881,6 +1977,29 @@ static func from_dict(d: Dictionary):
 	s.settlement_stance = float(d.get("settlement_stance", 0.0))
 	s.press_freedom = float(d.get("press_freedom", 0.0))
 	s.framing_gain = d.get("framing_gain", {})
+
+	# V1.1e. SAVE_VERSION 26 -> 27, and the fields fail the rule by THREE DIFFERENT
+	# failures, which is why tests/test_save_load.gd asserts them apart rather than
+	# together. The six static rows and `judicial_review` are content-derived facts
+	# from_dict() cannot re-derive because it never sees the loader (V1.6a's finding);
+	# `upper_share` and `judicial_independence` are accumulated state nothing recomputes;
+	# and `held_bills` is a free escape from an obstacle if it goes missing.
+	# `start_judicial_independence` earns nothing and is here for the reason its own
+	# declaration gives.
+	s.has_upper_house = bool(d.get("has_upper_house", false))
+	s.upper_chamber_name = String(d.get("upper_chamber_name", ""))
+	s.upper_seats = int(d.get("upper_seats", 0))
+	s.upper_ordinary = String(d.get("upper_ordinary", ""))
+	s.upper_amendment = String(d.get("upper_amendment", ""))
+	s.upper_share = {}
+	for party_id in d.get("upper_share", {}):
+		s.upper_share[party_id] = float(d["upper_share"][party_id])
+	s.held_bills = {}
+	for law_id in d.get("held_bills", {}):
+		s.held_bills[law_id] = int(d["held_bills"][law_id])
+	s.judicial_review = String(d.get("judicial_review", ""))
+	s.judicial_independence = float(d.get("judicial_independence", 0.0))
+	s.start_judicial_independence = float(d.get("start_judicial_independence", 0.0))
 
 	s.military_capability = float(d.get("military_capability", 0.0))
 	s.deployment_bill_pct_gdp = float(d.get("deployment_bill_pct_gdp", 0.0))

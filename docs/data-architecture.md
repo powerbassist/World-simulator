@@ -443,4 +443,20 @@ Stated in advance, so the decision can be revisited on evidence rather than on f
 
 ---
 
+> [!note] V1.1e adds two blocks to `government` and one to `imported`
+> `government.upper` is **optional** — Luxembourg's Chambre des Députés is unicameral,
+> and an absent block is the legal authored state, which is `government.executive`'s
+> own shape. It carries `chamber`, `seats`, and the two verdict rows `ordinary` and
+> `amendment`, because the real distinction is between CLASSES OF BILL and not between
+> second chambers. `government.judicial` is **required for all ten**: every state has
+> some answer to whether its courts may strike a statute down, and three of the ten
+> answer `none` for three different doctrines, so an absent block would make a silence
+> indistinguishable from Britain's parliamentary sovereignty.
+>
+> `imported.institutions` holds one key and **no provenance at all**, which is the
+> point rather than an omission: every other block under `imported` carries provenance
+> because it is read at a year or over a window the file's own `_year` does not
+> describe, and rule of law is complete for all ten at `_year` on the standard window.
+> See [[judiciary-model]] §1 and [[upper-house-model]] §7.
+
 Related: [[index]] · [[engine-decision]] · [[data-sources]] · [[fictionalization]] · [[scope]] · [[political-systems]] · [[amendment-model]] · [[scenario-model]]

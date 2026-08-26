@@ -452,6 +452,13 @@ func _test_unrest_preloads_are_exactly_these() -> void:
 		# offset off a field somebody else wrote -- is the second writer the whole
 		# discharge exists to avoid.
 		"res://src/sim/tax.gd",
+		# V1.1e, the SECOND addition, and it is admitted on V1.6d's reason above rather
+		# than on a new one: judiciary.gd is what makes a captured court reach
+		# unrest_target(), and reading the load off a field somebody else wrote would be
+		# the second writer the whole discharge exists to avoid. It is also a LEAF -- it
+		# preloads nothing but its own constants -- so the edge runs one way and adds no
+		# ordering question, which is exactly what tax.gd's note says about tax.gd.
+		"res://src/sim/judiciary.gd",
 	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):

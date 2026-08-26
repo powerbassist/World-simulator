@@ -31,6 +31,10 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -128,6 +132,7 @@ func _init() -> void:
 	_check_a_regulated_run_stays_off_every_clamp()
 	_check_a_nationalised_run_stays_off_every_clamp()
 	_check_a_redistributive_run_stays_off_every_clamp()
+	_check_a_captured_court_stays_off_every_clamp()
 	_finish()
 
 
@@ -333,7 +338,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1) -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1, capture_at_month: int = -1) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -425,6 +430,14 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		if i + 1 == regulate_at_month:
 			_regulate_everything(state, ns)
 
+		# V1.1e. The whole three-Act judicial ladder at one month -- the reachable worst
+		# case, the treatment the subsidy stack and the regulation stack already get.
+		if i + 1 == capture_at_month:
+			for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
+					"judicial_tenure_act"]:
+				for law in _loader.laws:
+					if law.id == law_id:
+						Legislature.apply(state, ns, law, _loader)
 		if i + 1 == nationalise_at_month:
 			_nationalise_the_largest(state, ns)
 
@@ -566,6 +579,57 @@ func _regulate_everything(state, ns) -> void:
 	if applied == 0:
 		_fail("no positive-burden business law is authored, so the regulated regime asserts nothing")
 
+
+## V1.1e's regime, and it is the CHEAP kind: a judicial reform is a law, and applying a
+## law at a month is a shape this harness has known since AMENDMENT_REGIMES. What is new
+## is the stock it moves and the second grievance term it opens.
+##
+## THE WHOLE LADDER AND NOTHING ELSE, which is the reachable worst case rather than a
+## typical game -- the treatment the subsidy stack, the regulation stack and the
+## ownership run all get. It runs the full fourteen years afterwards, because the
+## grievance term is a LEVEL read on a permanent deviation and a term that only ever
+## charged for a month would clear every clamp for the wrong reason.
+##
+## The clamp this session adds is the rule-of-law scale itself, and it is expected to be
+## SLACK: a three-Act ladder against a nine-point per-Act bound cannot reach 0.0 from
+## France's 73.8, so a run sitting on it would mean the content had grown past what the
+## model was measured for.
+func _check_a_captured_court_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS)
+	var state = run["state"]
+	var ns = state.player()
+
+	# Re-run from the start with the ladder applied, so the deviation is live for the
+	# whole fourteen years rather than for whatever is left after them.
+	var captured := _play_with_captured_court()
+	var cns = captured["state"].player()
+
+	if not captured["problems"].is_empty():
+		for p in (captured["problems"] as Array).slice(0, 5):
+			_fail("captured-court run: %s" % p)
+
+	if is_equal_approx(cns.judicial_independence, cns.start_judicial_independence):
+		_fail("the captured-court run did not move rule of law, so it asserts nothing")
+	if cns.judicial_independence <= JudiciaryK.INDEPENDENCE_MIN + 0.000001:
+		_fail("rule of law sits ON its floor at %.3f -- the clamp is setting the number"
+			% cns.judicial_independence)
+	if cns.judicial_independence >= JudiciaryK.INDEPENDENCE_MAX - 0.000001:
+		_fail("rule of law sits ON its ceiling at %.3f" % cns.judicial_independence)
+	if cns.unrest_pct >= UnrestK.UNREST_MAX - 0.000001:
+		_fail("the grievance sits ON its clamp at %.3f under a captured court" % cns.unrest_pct)
+	for bloc in cns.bloc_offset:
+		if absf(float(cns.bloc_offset[bloc])) >= 1.0 - 0.000001:
+			_fail("bloc_offset['%s'] sits ON its clamp under a captured court" % bloc)
+
+	# And the legibility evidence, in the harness rather than only in the model doc: the
+	# same budget with the courts captured must be measurably angrier.
+	if cns.unrest_pct <= ns.unrest_pct:
+		_fail("capturing the courts left the country no angrier: %.3f against %.3f"
+			% [cns.unrest_pct, ns.unrest_pct])
+
+
+func _play_with_captured_court() -> Dictionary:
+	return _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, 6)
 
 ## V1.4c's regime, and the expensive kind again: an ownership op is a verb no budget
 ## regime issues, so this had to be taught the way V1.3c's, V1.3g's, U6a's and

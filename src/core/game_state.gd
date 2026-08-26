@@ -29,6 +29,8 @@ const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Chambers = preload("res://src/sim/chambers.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 const Events = preload("res://src/sim/events.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -371,7 +373,34 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     gives the arrival of an event an accumulator it turns red and has to come and say
 ##     why. That is also what makes a save reloaded on the month a crisis arrived
 ##     receive the same crisis rather than a different one.
-const SAVE_VERSION := 26
+##
+## V1.1e: 26 -> 27, on EIGHT added fields of ten, and they fail the rule by THREE
+## DIFFERENT failures -- which is why tests/test_save_load.gd asserts the three groups
+## apart rather than together.
+##
+##   * The six STATIC rows -- has_upper_house, upper_chamber_name, upper_seats,
+##     upper_ordinary, upper_amendment and judicial_review -- are
+##     content-derived facts that from_dict() cannot re-derive, because it never sees
+##     the loader. `cycle_amplitude_rel` at V1.6a and `election_system` at V1.7c, and
+##     the failure is loud: absent, a reloaded France has no Senate and no
+##     Conseil constitutionnel, which is a DIFFERENT MODEL from the one that saved it.
+##   * `upper_share` and `judicial_independence` are accumulated state nothing
+##     recomputes on the next tick. The chamber renews only at a legislative election,
+##     which for France is up to five years away, and re-deriving rule of law from
+##     content on load would erase the erosion a player spent a term buying --
+##     `service_quality`'s case at V1.5a in its strongest form.
+##   * `held_bills` is a FREE ESCAPE if it goes missing: a bill the second chamber
+##     refused simply is not there any more, available to anyone who saves and loads.
+##     `referendum_pending`'s case at V1.7c and `event_pending`'s at V1.8.
+##
+## `start_judicial_independence` earns nothing -- it round-trips through
+## data/nations/ and is content rather than state, a firm's authored share at V1.4a --
+## and is serialised anyway because nothing recomputes it after init, so a save that
+## dropped it would price every deviation against zero. What is NOT added is pinned
+## too: no stored upper-house SEATS (Chambers.seats() derives them from the share, so
+## a later session storing them turns the assertion red and has to say why) and no
+## stored court verdict, because Judiciary is a pure read over a law's own reach.
+const SAVE_VERSION := 27
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -820,6 +849,19 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# After Elections, which seeds seats_by_party and incumbent_party_id — the
 	# two things a formation search reads.
 	Government.init_nation(ns, n, party_list)
+
+	# V1.1e, and it must come after Elections for a reason of its own rather than
+	# Government's: a second chamber is a TILTED TRANSFORM of the lower one, so
+	# Chambers.target_share() reads seats_by_party. Seated at the tilted share
+	# outright rather than stepped toward it, because the Senate exists on frame one
+	# and has for two centuries -- a renewal lag applied at new game would model a
+	# chamber that had just been invented. See docs/upper-house-model.md.
+	Chambers.init_nation(ns, n, party_list)
+	# Position-free: rule of law is imported content and the review rule is a static
+	# fact, so nothing this seeds is derived from any other field. Said out loud
+	# because a reader looking at the two ordered comments above will otherwise invent
+	# a third. See docs/judiciary-model.md.
+	Judiciary.init_nation(ns, n)
 
 	# The template is a constraint the loader already enforced against this
 	# nation's own flat fields (data_loader.gd's _validate_political_system) --

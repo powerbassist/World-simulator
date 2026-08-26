@@ -23,6 +23,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
@@ -507,6 +508,23 @@ const EVENT_REGIMES := {
 	"managed_answers_hard": {"budget": REGIMES["managed"], "answer": "hard"},
 }
 
+## V1.1e's regimes, and they are the EXPENSIVE kind: a bill is a verb and no budget
+## regime issues one. Three, because the session's three outcomes are three different
+## machines and folding them into one regime would be docs/pledge-model.md's confounded
+## pair repeating -- a run that differs in two things at once cannot say which one moved.
+##
+##   held       the second chamber refuses a bill the Assembly carried, it comes into
+##              force UPPER_HOLD_MONTHS later, and the release charges the override.
+##   struck     both chambers carry a bill and the court stops it, so the player pays
+##              the division and gets nothing.
+##   captured   the whole three-Act ladder, which is the only run in this harness that
+##              moves rule of law at all.
+const CHAMBER_REGIMES := {
+	"managed_bill_is_held": {"budget": REGIMES["managed"], "kind": "held"},
+	"managed_bill_is_struck": {"budget": REGIMES["managed"], "kind": "struck"},
+	"managed_captures_the_courts": {"budget": REGIMES["managed"], "kind": "captured"},
+}
+
 const PLEDGE_REGIMES := {
 	"managed_keeps_its_word": {
 		"budget": REGIMES["managed"],
@@ -669,6 +687,13 @@ func _init() -> void:
 				-1, -1, -1, -1, -1, -1, String(regime["answer"])
 			)
 
+		for name in CHAMBER_REGIMES.keys():
+			var chamber_regime: Dictionary = CHAMBER_REGIMES[name]
+			_run(
+				nation_id, name, chamber_regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, -1, -1, "", String(chamber_regime["kind"])
+			)
+
 		for name in REFERENDUM_REGIMES.keys():
 			var regime: Dictionary = REFERENDUM_REGIMES[name]
 			_run(
@@ -707,7 +732,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "") -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "") -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -876,6 +901,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_call_referendum(state, loader, ns, regime_name, year, month)
 		if i + 1 == electoral_month:
 			_reform_the_ballot(state, loader, ns, regime_name, year, month)
+		# V1.1e. At month 6, the same month every other law regime fires.
+		if i + 1 == 6 and chamber_kind != "":
+			_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month)
 
 		# U6a. The day loop this file has never had, and it runs for EVERY regime
 		# rather than only the one that books -- a dispatch that only ever executes
@@ -1355,6 +1383,56 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 ## case is what its probe needed, where this regime exists to show what ONE ordinary law
 ## does to an ordinary run. Saturating it would answer a question media_probe.gd already
 ## answers and would make the comparison against `managed` unreadable.
+## V1.1e. Proposes through the REAL verb rather than applying a law directly, because
+## the whole point of these three regimes is the pipeline between the division and the
+## effect -- Legislature.apply() skips both gates by design, which is what
+## tests/test_judiciary.gd asserts.
+func _meet_the_second_chamber(state, loader, ns, regime_name: String, kind: String,
+		year: int, month: int) -> void:
+	var party_list: Array = loader.parties.get(ns.id, [])
+
+	if kind == "captured":
+		for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
+				"judicial_tenure_act"]:
+			for law in loader.laws:
+				if law.id != law_id:
+					continue
+				var rung := Legislature.propose(state, loader, law)
+				print("  %d-%02d %s: '%s' %s -- rule of law now %.1f" % [
+					year, month, regime_name, law.id,
+					"passed" if bool(rung["passed"]) else "did not pass",
+					ns.judicial_independence,
+				])
+		return
+
+	for law in loader.laws:
+		if law.constitutional:
+			continue
+		if not bool(Legislature.resolve_vote(ns, party_list, law, false)["passed"]):
+			continue
+		var upper_agrees: bool = bool(Legislature.resolve_upper(ns, party_list, law)["passed"])
+		if kind == "held" and upper_agrees:
+			continue
+		if kind == "struck" and (not upper_agrees or not Judiciary.strikes_down(ns, law)):
+			continue
+		var result := Legislature.propose(state, loader, law)
+		print("  %d-%02d %s: '%s' -- %s" % [
+			year, month, regime_name, law.id, _chamber_verdict(result)])
+		return
+	printerr("  no law in the content reaches the '%s' outcome" % kind)
+
+
+func _chamber_verdict(result: Dictionary) -> String:
+	if bool(result.get("held_by_upper", false)):
+		return "held by the second chamber for %d months" % int(result.get("held_months", 0))
+	if bool(result.get("blocked_by_upper", false)):
+		return "blocked by the second chamber"
+	if bool(result.get("struck_down", false)):
+		return "struck down: reach %.2f against a tolerance of %.2f" % [
+			float(result.get("reach", 0.0)), float(result.get("tolerance", 0.0))]
+	return "passed" if bool(result["passed"]) else "defeated"
+
+
 func _censor(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	for law in loader.laws:
 		if float(law.effects.get("society", {}).get("press_freedom", 0.0)) < 0.0:

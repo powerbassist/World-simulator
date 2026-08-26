@@ -19,6 +19,8 @@ const SK = preload("res://src/sim/society_constants.gd")
 const DK = preload("res://src/sim/demography_constants.gd")
 const UK = preload("res://src/sim/unrest_constants.gd")
 const MK = preload("res://src/sim/media_constants.gd")
+## V1.1e, for INDEPENDENCE_LAW_MAX and for the reach denominators below.
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 
 ## `business` is V1.4b's, and it is named for a DOMAIN like the other four rather
 ## than for a mechanism. A theme called "regulation" is where V1.6's sectoral
@@ -142,6 +144,48 @@ var systems: Array[String] = []
 ## ns.permits_system_change -- see docs/transition-model.md.
 var changes_system: bool = false
 
+## V1.1e. HOW FAR THIS LAW REACHES INTO THE MACHINERY OF THE STATE, in [0, 1]: the
+## largest fraction of any substantive effect clamp it uses. Computed once at load,
+## because it is a property of the law and of the model's own bounds and neither
+## moves -- so the court costs nothing at runtime and the loader can print it.
+##
+## THE DOCTRINE IS PROPORTIONALITY, which is not a decoration on the arithmetic but
+## the reason the arithmetic is this arithmetic. Nine of the ten nations on this
+## roster are civil-law states whose constitutional courts test state action against
+## Verhaeltnismaessigkeit or its local name: not whether a measure is wise, and not
+## whether it is popular, but whether it goes further than the end requires. So what
+## is measured is HOW FAR A LAW GOES, against the furthest this model lets anything go.
+##
+## EVERY DENOMINATOR ALREADY EXISTED and was set by an earlier session for its own
+## reasons -- legislature_constants' three scalar clamps, companies_constants'
+## regulation burden, and the five SOCIETY_TERMS maxima above. An authored
+## `unconstitutionality` score would be one strength written twice, which
+## src/core/investment_action.gd already refuses by name.
+##
+## TWO EXCLUSIONS, AND THE SECOND IS THE PROBE'S FIRST CORRECTION TO THIS SESSION.
+##
+## Budget levers are out, and that is this file's own rule rather than a new claim:
+## docs/legislature-model.md says a law with a genuine budget effect IS a budget
+## change, routed through the same Budget.commit() the budget screen uses, and the
+## size of a tax rate is Parliament's business and nobody else's.
+##
+## `bloc_offset` is out, and the FIRST VERSION OF THIS FUNCTION INCLUDED IT. Measured
+## over all thirty-eight authored laws it dominated every other channel, because it is
+## authored in hundredths against a clamp of 1.0 where the scalar channels are
+## authored in small fractions of 5.0 and 1.0 -- so `reach` came back numerically
+## EQUAL to the largest bloc_offset on the law, and a court built on it would strike
+## down whatever was unpopular. That is the opposite of what a court is for, and it is
+## one quantity read twice: `bloc_offset` is the law's authored DOMESTIC PRICE, which
+## docs/legislature-model.md already says exists precisely for laws with no number the
+## budget produces. A court does not rule on popularity. See docs/judiciary-model.md.
+##
+## The cost of both exclusions is measured rather than waved at: ten of the
+## thirty-one ordinary laws reach exactly 0.000 and are structurally unreviewable,
+## `regional_devolution` among them -- which is the one a real court would most
+## certainly hear. Recorded as a bound rather than patched, because the alternative is
+## an authored score and that is the thing this whole approach exists to avoid.
+var reach: float = 0.0
+
 
 ## `sector_keys` is PASSED rather than preloaded, the way tax_keys, spending_keys
 ## and bloc_keys already are: which sectors exist is the economy model's list, and
@@ -199,8 +243,40 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	law.preconditions = extract_preconditions(d, law.id, filename, errors)
 	law.effects = _extract_effects(d, law.id, filename, errors, tax_keys, spending_keys, bloc_keys, sector_keys, law.constitutional)
 	law.changes_system = law.effects.get("institutional", {}).has("system_id")
+	law.reach = _reach_of(law.effects)
 
 	return law
+
+
+## The largest fraction of any clamp `effects` uses -- see `reach` above for the two
+## channels that are deliberately out and why. `institutional` is a THIRD absence and
+## needs no argument of its own: it sets an absolute value rather than accumulating a
+## delta, so it has no magnitude to take a fraction OF -- and a constitutional
+## amendment is not reviewable anyway, because once it passes it becomes the standard
+## the court applies. Two reasons agreeing, so neither is doing the other's work. See
+## docs/judiciary-model.md.
+static func _reach_of(effects: Dictionary) -> float:
+	var worst := 0.0
+
+	if effects.has("structural_unemployment_pct"):
+		worst = maxf(worst, absf(float(effects["structural_unemployment_pct"])) / LK.STRUCTURAL_OFFSET_MAX_PCT)
+	if effects.has("potential_growth_pct"):
+		worst = maxf(worst, absf(float(effects["potential_growth_pct"])) / LK.POTENTIAL_TARGET_MAX_PCT)
+	if effects.has("other_revenue_pct_gdp"):
+		worst = maxf(worst, absf(float(effects["other_revenue_pct_gdp"])) / LK.OTHER_REVENUE_MAX_PCT)
+
+
+	var company: Dictionary = effects.get("company", {})
+	if company.has("burden"):
+		worst = maxf(worst, absf(float(company["burden"])) / CK.REGULATION_BURDEN_MAX)
+
+	var society: Dictionary = effects.get("society", {})
+	for term in society:
+		var limit: float = float(SOCIETY_TERMS.get(term, 0.0))
+		if limit > 0.0:
+			worst = maxf(worst, absf(float(society[term])) / limit)
+
+	return minf(worst, 1.0)
 
 
 static func _extract_string_array(d: Dictionary, key: String, law_id: String, filename: String, errors: Array[String]) -> Array[String]:
@@ -493,11 +569,19 @@ static func extract_shared_effects(raw: Dictionary, owner_id: String, filename: 
 ## a fourth session is the thing V1.5a bet on when it opened the channel with one term.
 ## Nothing below this line changed to accept it -- _extract_society() is generic over
 ## this dictionary, so all four of its error strings updated themselves.
+## V1.1e adds a FIFTH, by a fifth session, and the bet above is collected rather
+## than merely repeated: nothing below this line changed to accept it either, so all
+## four error strings updated themselves a second time. It is also the first entry
+## whose bound is NOT the stock's own clamp -- `judicial_independence` is a LEVEL
+## imported per nation where the four above are signed stances starting at 0.0 for
+## everybody, so passing the clamp would let one Act abolish the courts outright.
+## See judiciary_constants.INDEPENDENCE_LAW_MAX.
 const SOCIETY_TERMS := {
 	"corruption": SK.CORRUPTION_MAX,
 	"migration": DK.MIGRATION_STANCE_MAX,
 	"settlement": UK.SETTLEMENT_STANCE_MAX,
 	"press_freedom": MK.PRESS_FREEDOM_MAX,
+	"judicial_independence": JudiciaryK.INDEPENDENCE_LAW_MAX,
 }
 
 

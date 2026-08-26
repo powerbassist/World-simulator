@@ -34,6 +34,17 @@ const MediaK = preload("res://src/sim/media_constants.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
+## V1.1e, both one direction only and both LEAVES -- neither knows a law exists.
+## chambers.gd owns the second chamber's composition and this file resolves its
+## division with the same spatial_support() it already owns; judiciary.gd answers
+## whether a bill survives and this file decides what that does to the bill.
+## tests/test_upper_house.gd and tests/test_judiciary.gd read those two files and
+## fail if the dependency ever runs the other way -- src/sim/calendar.gd's property.
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
+
 
 ## Reset every nation's legislature state. Runs for all ten, same as
 ## Opinion.init_nation and Elections.init_nation -- a second playable nation is
@@ -51,6 +62,11 @@ static func init_nation(ns) -> void:
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
 	ns.last_law_result = {}
+	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
+	# `regulation_burden` above give the reason. A held bill is written by propose()
+	# in this file and released by tick_month() in this file, so it is reset here and
+	# not in Chambers.init_nation(), which owns the chamber and not the in-tray.
+	ns.held_bills = {}
 
 
 ## Count down cooldowns. Gated on has_budget, the same flag every other
@@ -81,6 +97,16 @@ static func tick_month(state, loader) -> void:
 		var verdict := Referendum.resolve_due(ns)
 		if not verdict.is_empty():
 			_settle_referendum(state, ns, loader, verdict)
+
+		# V1.1e. The held-bill countdown, HERE and adding no new call anywhere, for
+		# the exact reason the referendum countdown above is here: this function is
+		# already called every month by src/ui/main.gd, tools/balance_probe.gd,
+		# tests/test_balance.gd and eight probes, so a second chamber reaches every
+		# harness through a call they all already make. docs/media-model.md's V1.5d bug
+		# -- neither balance harness called Media.tick_month(), so both ran the
+		# pre-session model and their agreement about a bit-identical re-run was about
+		# nothing -- made structurally impossible rather than remembered.
+		_tick_held_bills(state, ns, loader)
 		var expired: Array = []
 		for law_id in ns.law_cooldown_months:
 			var remaining: int = int(ns.law_cooldown_months[law_id]) - 1
@@ -107,6 +133,135 @@ static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
 		apply(state, ns, law, loader)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
+
+
+## Count every held bill down, and pass the ones whose hold has run out.
+##
+## A SUSPENSIVE REFUSAL IS A DELAY AND NOT A DEFEAT, so the bill passes on expiry
+## with no second division and no command from the player -- which is what a
+## suspensive veto is: the Parliament Acts do not ask the Commons to vote again
+## after a year, they simply stop the Lords stopping it. The bill still faces the
+## COURT on the way out, because the court is a later stage of the same pipeline and
+## a bill that took a year to arrive is not thereby constitutional.
+##
+## OVERRIDING IS NOT FREE, and that is the escalation tools/upper_house_probe.gd's
+## table U3 fired: a hold priced in time alone moves the worst bloc 2.37 points over a
+## year, under the 3.0 poll floor, and only registers at 15 months -- one short of the
+## whole first term. So the release charges UPPER_OVERRIDE_OFFSET through
+## Government.penalise_blocs(), which is Article 49.3's own accumulator. Charged HERE
+## rather than at the refusal because that is when the government has actually
+## insisted.
+static func _tick_held_bills(state, ns, loader) -> void:
+	var due: Array = []
+	for law_id in ns.held_bills:
+		var remaining: int = int(ns.held_bills[law_id]) - 1
+		if remaining <= 0:
+			due.append(law_id)
+		else:
+			ns.held_bills[law_id] = remaining
+	for law_id in due:
+		ns.held_bills.erase(law_id)
+		var law = _law_by_id(loader, String(law_id))
+		if law == null:
+			continue
+		var released := {
+			"law_id": law.id, "passed": true, "released": true,
+			"majority": law.majority, "yes_seats": 0, "no_seats": 0,
+			"abstain_seats": 0, "seats_total": ns.assembly_seats,
+			"party_votes": {}, "party_support": {}, "party_rebels": {},
+		}
+		Government.penalise_blocs(ns, ChambersK.UPPER_OVERRIDE_OFFSET)
+		released["override_offset"] = ChambersK.UPPER_OVERRIDE_OFFSET
+		_review_and_apply(state, ns, law, loader, released)
+		ns.last_law_result = released
+
+
+## THE COURT'S GATE, and it is the LAST stage of the pipeline rather than a second
+## applier. Called from propose(), from _force() and from the release above -- every
+## path on which a bill takes effect without the country having voted on it.
+##
+## DELIBERATELY NOT INSIDE apply_effects(). That function has had two callers since
+## V1.8 and the second is an EVENT CHOICE, which is docs/tiers/v1.md section 1's
+## "Decree / executive order -- bypass the assembly on a narrow set of matters, at a
+## legitimacy cost" discharged at V1.8. A decree annulled by a court is the Conseil
+## d'Etat reviewing an administrative act, which is a different body reviewing a
+## different thing, and "Judicial appointments" and "Emergency powers" are both
+## tiered Someday. Recorded rather than built -- see docs/judiciary-model.md.
+##
+## Deliberately not inside apply() either: tests, probes, tools/screenshot.gd and
+## tools/balance_probe.gd all call apply() directly to SET UP state, and a gate there
+## would silently refuse them.
+##
+## _settle_referendum() does NOT call this, and that is the third refusal. A law the
+## country has ratified is not reviewable -- the Conseil constitutionnel declined
+## jurisdiction over a referendum law in 1962 -- and it agrees with the exclusion
+## Judiciary.reviews() already makes for an amendment, since a referendum in this
+## game only ever ratifies one.
+static func _review_and_apply(state, ns, law, loader, result: Dictionary) -> void:
+	result["reviewable"] = Judiciary.reviews(ns, law)
+	if result["reviewable"]:
+		result["reach"] = law.reach
+		result["tolerance"] = Judiciary.tolerance(ns)
+	if Judiciary.strikes_down(ns, law):
+		result["passed"] = false
+		result["struck_down"] = true
+		if law.cooldown_months > 0:
+			ns.law_cooldown_months[law.id] = law.cooldown_months
+		return
+	apply(state, ns, law, loader)
+
+
+## The second chamber's division. A PURE FUNCTION of state, like resolve_vote()
+## above and for the same reason: src/ui/law_panel.gd shows the player what the
+## second chamber will do before they commit, and a forecast that mutates is a
+## forecast that can only be asked once.
+##
+## READS spatial_support() PLUS A REDUCED WHIP, which is the model's one substantive
+## claim about how a second chamber votes -- and the reduction is the probe's third
+## correction to this session. A government is not formed from the upper house and
+## cannot fall there, so the whip is WEAKER; it is not ABSENT, because senators belong
+## to the same parties as deputies. Written without it, the Senat refused seven of
+## seven authored amendments and killed the referendum verb outright -- see
+## chambers_constants.UPPER_WHIP.
+##
+## Discipline.rebel_seats() still does not apply: a rebellion is a break with a whip
+## that can be enforced, and this chamber's cannot be. So this reuses two functions
+## this file already exports plus one Government already exports, and touches
+## resolve_vote() not at all -- which matters, because about twenty-five call sites
+## read that one.
+##
+## A SIMPLE MAJORITY OF THE VOTES CAST, on every nation and every class of bill.
+## Germany's Art. 79(2) really does need two thirds of the Bundesrat's votes for a
+## Basic Law amendment and this model asks for a majority; that is a RECORDED
+## REDUCTION, the same shape docs/electoral-systems.md uses per method, and it is
+## bounded in practice because Germany's Bundestag bar is already unreachable.
+static func resolve_upper(ns, party_list: Array, law) -> Dictionary:
+	var chamber := Chambers.seats(ns)
+	var yes_seats := 0
+	var no_seats := 0
+	var abstain_seats := 0
+	var seats_total := 0
+	for party in party_list:
+		var seats: int = int(chamber.get(party.id, 0))
+		if seats <= 0:
+			continue
+		seats_total += seats
+		var line: float = clampf(
+			spatial_support(ns, party, law)
+				+ ChambersK.UPPER_WHIP * Government.coalition_bonus(ns, party),
+			-1.0, 1.0
+		)
+		match vote_of(line):
+			"yes": yes_seats += seats
+			"no": no_seats += seats
+			_: abstain_seats += seats
+	return {
+		"passed": yes_seats > no_seats,
+		"yes_seats": yes_seats,
+		"no_seats": no_seats,
+		"abstain_seats": abstain_seats,
+		"seats_total": seats_total,
+	}
 
 
 static func _law_by_id(loader, law_id: String):
@@ -140,6 +295,12 @@ static func available(ns, all_laws: Array) -> Array:
 		# put to the country. A second live question is not a bound that needed a
 		# constant -- it is what "the country votes on this" means.
 		if Referendum.is_pending(ns) and Referendum.pending_law_id(ns) == law.id:
+			continue
+		# V1.1e. A bill the second chamber is holding is IN FLIGHT and cannot be
+		# proposed again while it waits -- the same thing the line above says about a
+		# question already put to the country, and for the same reason: proposing it
+		# twice would let the player restart the clock they are waiting out.
+		if ns.held_bills.has(law.id):
 			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
@@ -495,6 +656,18 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 				ns.press_freedom + float(society["press_freedom"]),
 				-MediaK.PRESS_FREEDOM_MAX, MediaK.PRESS_FREEDOM_MAX
 			)
+		# V1.1e adds `judicial_independence` as a FIFTH sibling, by a fifth session, and
+		# this is the only writer of ns.judicial_independence in the project. It is the
+		# first of the five whose stock is a LEVEL rather than a signed stance -- it is
+		# seeded from the nation's own measured rule-of-law score where the four above
+		# start at 0.0 for everybody -- so its clamp is one-sided in neither direction
+		# but bounded by the score's own scale, and law.gd bounds a single Act
+		# separately at INDEPENDENCE_LAW_MAX.
+		if society.has("judicial_independence"):
+			ns.judicial_independence = clampf(
+				ns.judicial_independence + float(society["judicial_independence"]),
+				JudiciaryK.INDEPENDENCE_MIN, JudiciaryK.INDEPENDENCE_MAX
+			)
 
 	# An institution is SET, not nudged -- every key here is an absolute value
 	# written straight onto NationState, unlike every channel above. Whether
@@ -637,6 +810,38 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	var route: bool = referendum or (law.constitutional and Referendum.is_mandatory(ns))
 
 	var result := resolve_vote(ns, party_list, law, route)
+
+	# V1.1e. THE SECOND CHAMBER, between the division and everything after it, and
+	# that position is Art. 89's rather than a convenience: a French revision bill must
+	# pass BOTH CHAMBERS in identical terms and only then goes to the country or to
+	# Congress. Luxembourg's block is absent and Chambers.power_over() returns
+	# VERDICT_NONE for it, so a unicameral nation needs no branch here.
+	var power: String = Chambers.power_over(ns, law)
+	if result["passed"] and power != ChambersK.VERDICT_NONE:
+		var upper := resolve_upper(ns, party_list, law)
+		result["upper_chamber"] = ns.upper_chamber_name
+		result["upper_power"] = power
+		result["upper_passed"] = upper["passed"]
+		result["upper_yes_seats"] = upper["yes_seats"]
+		result["upper_no_seats"] = upper["no_seats"]
+		result["upper_abstain_seats"] = upper["abstain_seats"]
+		result["upper_seats_total"] = upper["seats_total"]
+		if not upper["passed"]:
+			result["passed"] = false
+			if power == ChambersK.VERDICT_ABSOLUTE:
+				result["blocked_by_upper"] = true
+				if law.cooldown_months > 0:
+					ns.law_cooldown_months[law.id] = law.cooldown_months
+			else:
+				# HELD, not defeated: no cooldown, because the bill has not been beaten
+				# and is still in flight. tick_month() passes it when the hold runs out.
+				result["held_by_upper"] = true
+				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
+				ns.held_bills[law.id] = ChambersK.UPPER_HOLD_MONTHS
+			Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
+			ns.last_law_result = result
+			return result
+
 	if result["passed"] and route:
 		# The chamber said yes; the country has not been asked yet. Nothing is
 		# applied, no `once` flag is set and no cooldown is written -- the law is IN
@@ -646,7 +851,9 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 		result["referendum_called"] = true
 		result["referendum_months"] = ReferendumK.REFERENDUM_DELAY_MONTHS
 	elif result["passed"]:
-		apply(state, ns, law, loader)
+		# V1.1e. THE COURT, the last stage before the bill takes effect. It may set
+		# result["passed"] back to false and write the cooldown itself.
+		_review_and_apply(state, ns, law, loader, result)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 
@@ -691,7 +898,23 @@ static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 		ns.last_law_result = result
 		return result
 
-	apply(state, ns, law, loader)
+	# V1.1e. A forced bill skips the SECOND CHAMBER and does not skip the COURT, and
+	# both halves are real. Art. 49.3 is the Government engaging its responsibility
+	# before the Assembly, and a Government determined enough to do that is a
+	# Government that has already given the Assembly the last word under Art. 45 --
+	# so 49.3 IS the way past the Senate, which is a property nobody authored. It is
+	# not a way past the Conseil constitutionnel: the 2023 pension reform reached it
+	# after a 49.3 and was partly struck, and that citation is in FRA.json's own
+	# government.judicial._note. Only presidential_appointment can force at all, and
+	# no nation with an ABSOLUTE second chamber uses it, so nothing is bypassed here
+	# that could have killed the bill outright.
+	_review_and_apply(state, ns, law, loader, result)
+	#
+	# A struck bill still costs the government everything forcing it cost: the cooldown
+	# below and the censure motion after it are the price of BYPASSING the assembly, not
+	# the price of a bill that worked -- docs/government-model.md says forcing costs
+	# approval whether or not the motion carries, and this is that sentence one gate
+	# later.
 	ns.force_cooldown_months = GK.FORCE_COOLDOWN_MONTHS
 
 	var by_id := _by_id(party_list)

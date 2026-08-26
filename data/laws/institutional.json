@@ -144,6 +144,66 @@
       "effects": {
         "bloc_offset": { "business": -0.2, "urban": 0.15, "students": 0.1 }
       }
+    },
+    {
+      "id": "judicial_appointments_reform",
+      "name": "Judicial Appointments Reform Act",
+      "theme": "institutional",
+      "summary": "Give the executive the deciding voice in naming the constitutional bench.",
+      "position": { "economic": -0.2, "social": -0.2 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "judicial_independence": -3.0 },
+        "bloc_offset": { "rural": 0.1, "pensioners": 0.05, "urban": -0.15, "students": -0.2, "business": -0.1 }
+      }
+    },
+    {
+      "id": "court_jurisdiction_limits",
+      "name": "Judicial Review (Limitation) Act",
+      "theme": "institutional",
+      "summary": "Narrow the classes of statute the constitutional court may hear at all.",
+      "position": { "economic": -0.3, "social": -0.3 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "judicial_independence": -3.0 },
+        "bloc_offset": { "rural": 0.1, "workers": 0.05, "urban": -0.15, "students": -0.25, "business": -0.15 }
+      }
+    },
+    {
+      "id": "judicial_tenure_act",
+      "name": "Judicial Tenure Act",
+      "theme": "institutional",
+      "summary": "Lower the retirement age for sitting judges and reopen every seat on the bench.",
+      "position": { "economic": -0.1, "social": -0.1 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "judicial_independence": -3.0 },
+        "bloc_offset": { "rural": 0.05, "urban": -0.2, "students": -0.25, "business": -0.1, "pensioners": -0.1 }
+      }
+    },
+    {
+      "id": "judicial_independence_act",
+      "name": "Judicial Independence Act",
+      "theme": "institutional",
+      "summary": "Entrench judicial tenure and widen who may refer a bill to the court.",
+      "position": { "economic": -0.1, "social": -0.5 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "judicial_independence": 3.0 },
+        "bloc_offset": { "urban": 0.15, "students": 0.2, "business": 0.1, "rural": -0.1, "workers": -0.05 }
+      }
     }
   ]
 }

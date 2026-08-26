@@ -11,7 +11,11 @@
   },
   "flag": {
     "layout": "vertical",
-    "bands": ["#0055A4", "#FFFFFF", "#EF4135"]
+    "bands": [
+      "#0055A4",
+      "#FFFFFF",
+      "#EF4135"
+    ]
   },
   "government": {
     "legislative": {
@@ -63,7 +67,17 @@
       "member": true,
       "ep_seats": 81
     },
-    "neighbours": ["BEL", "CHE", "DEU", "ESP", "ITA", "LUX"]
+    "neighbours": [
+      "BEL",
+      "CHE",
+      "DEU",
+      "ESP",
+      "ITA",
+      "LUX"
+    ],
+    "judicial": {
+      "review": "constitutional"
+    }
   },
   "fiscal": {
     "debt_to_gdp_pct": 116.0,
@@ -113,13 +127,19 @@
       "growth_sd_pct": 1.262,
       "_from_year": 1990,
       "_to_year": 2024,
-      "_excludes": [2020, 2021]
+      "_excludes": [
+        2020,
+        2021
+      ]
     },
     "prices": {
       "inflation_pct": 1.754,
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 73.8
     }
   }
 }

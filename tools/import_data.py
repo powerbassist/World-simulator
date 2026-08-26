@@ -97,6 +97,28 @@ SPARSE_INDICATORS = {
     "gini": "SI.POV.GINI",
 }
 
+# V1.1e. Rule of law, docs/tiers/v1.md section 5's statistic handed to section 1's
+# judiciary bullet at V1.5's decomposition -- and the third row in a row whose "cannot
+# be derived" premise turned out to be about the model rather than about the world.
+# V1.5b found age structure published, V1.5c found the Gini published, and the World
+# Bank publishes this one too: all ten nations, all ten years of the window every
+# indicator above already uses, no gaps at all, so it needs neither
+# load_wb_indicator_nearest_year() nor a provenance year of its own.
+#
+# TWO THINGS ABOUT THE CODE, BOTH FOUND BY FETCHING IT RATHER THAN BY ASSUMING IT.
+# The Worldwide Governance Indicators were re-coded: the `RL.EST` every citation of
+# this series still names returns *"The indicator was not found. It may have been
+# deleted or archived."* The live code is `GOV_WGI_RL.SC`, and it lives on WGI's own
+# database rather than on the default one -- so this is the FIRST indicator in this
+# file whose download line carries `&source=3`, which is why it sits on its own line in
+# docs/data-sources.md the way V1.6a's different WINDOW does.
+#
+# The SCORE (0-100) rather than the ESTIMATE (-2.5..+2.5), and that is a units decision
+# rather than a preference: every stock this project reads on a nation is already on a
+# 0-100 scale -- approval, service_quality, unrest_pct, gini_index -- so the estimate
+# would be the one quantity in the game needing a conversion nobody could check.
+INSTITUTIONS_INDICATOR = "GOV_WGI_RL.SC"
+
 # V1.6a. The business cycle's per-nation amplitude, and the FIRST indicator in this
 # file read over a different window from everything above it -- which is the honest
 # cost of the block and is recorded rather than absorbed.
@@ -506,6 +528,12 @@ def build_imported_block(year):
         for name, code in SPARSE_INDICATORS.items()
     }
 
+    # V1.1e. Complete at `year` for all ten, so the exact-year loader every complete
+    # series uses -- a missing value here is a broken download and should stop the
+    # import, which is load_wb_indicator_nearest_year()'s own docstring reason for not
+    # being the default.
+    institutions = load_wb_indicator_for_year(INSTITUTIONS_INDICATOR, year)
+
     # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a
     # ratio against the roster mean and so cannot be built one nation at a time --
     # the only block here with that shape. See build_cycle_blocks().
@@ -541,6 +569,13 @@ def build_imported_block(year):
             sys.exit(
                 f"{nid}: missing {TREND_FROM_YEAR} data for indicators {missing_base} "
                 f"-- the demographic slope cannot be measured without both years"
+            )
+
+        if institutions.get(nid) is None:
+            sys.exit(
+                f"{nid}: missing {year} data for {INSTITUTIONS_INDICATOR} -- rule of "
+                f"law is complete for all ten on this window, so an absent value is a "
+                f"broken download rather than a gap to fall back from"
             )
 
         missing_sparse = [name for name in SPARSE_INDICATORS if nid not in sparse[name]]
@@ -582,6 +617,18 @@ def build_imported_block(year):
             ),
             "cycle": cycle_blocks[nid],
             "prices": prices_blocks[nid],
+            # V1.1e. One decimal, `unemployment_pct`'s and `gini_index`'s treatment.
+            # No provenance keys and no slope: the series is read at the block's own
+            # `_year` on the block's own window, so `_year` above already describes it.
+            # The measured slope EXISTS -- nine of the ten fall over 2015-2024 and only
+            # Italy rises -- and it is deliberately not imported, because a court that
+            # weakens every year on its own is the permanent monotone charge
+            # docs/defence-model.md names, and V1.5c's Gini drift is a stopgap standing
+            # in for levers that do not exist where this one has a lever from day one.
+            # See docs/judiciary-model.md.
+            "institutions": {
+                "rule_of_law_score": round(institutions[nid], 1),
+            },
         }
     return imported
 
