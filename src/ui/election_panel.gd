@@ -9,6 +9,7 @@ extends PanelContainer
 ## Built in code, like the other two panels — a generated list of party rows
 ## per result, which a scene file would describe worse.
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
@@ -119,14 +120,11 @@ func show_results(results: Array) -> void:
 	# and a footer reads like a screen that failed to load, which is too close to
 	# the bug this branch exists to fix.
 	if termed_out:
-		var why := Label.new()
-		why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		why.text = "%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in." % [
+		PanelKit.line(_sections, "%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in." % [
 			_loader.person_name(ns.head_of_state_person_id),
 			ns.terms_served,
 			_loader.nations[ns.id].executive_title,
-		]
-		_sections.add_child(why)
+		], PanelKit.Tone.PLAIN)
 	elif executive != null:
 		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title))
 	if national != null:
@@ -135,20 +133,20 @@ func show_results(results: Array) -> void:
 		_sections.add_child(_build_section(eu_result, ""))
 
 	if national != null and ns.has_executive and not defeated:
-		var gov := Label.new()
+		var gov := ""
 		if ns.is_cohabitation:
-			gov.text = "The new Assembly is against you. %s %s leads a government you did not choose." % [
+			gov = "The new Assembly is against you. %s %s leads a government you did not choose." % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 			]
 		elif ns.is_minority:
-			gov.text = "%s %s heads a minority government: %d of %d seats." % [
+			gov = "%s %s heads a minority government: %d of %d seats." % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
 		else:
-			gov.text = "%s %s forms a government with %d of %d seats." % [
+			gov = "%s %s forms a government with %d of %d seats." % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
-		_sections.add_child(gov)
+		PanelKit.line(_sections, gov, PanelKit.Tone.PLAIN)
 
 	# V1.6 audit, V2. The footer gets a control in BOTH branches. It used to build
 	# the button only on the winning side, and main.gd unpauses only on `dismissed`
@@ -156,12 +154,10 @@ func show_results(results: Array) -> void:
 	# a HUD that stayed live because the holder is MOUSE_FILTER_IGNORE. Space
 	# unpaused it and the run continued indefinitely behind a "DEFEATED" title.
 	if defeated:
-		var over := Label.new()
-		if termed_out:
-			over.text = "You have served the maximum number of terms. You leave office."
-		else:
-			over.text = "You have lost your office. This term is over."
-		_footer.add_child(over)
+		PanelKit.line(_footer, (
+			"You have served the maximum number of terms. You leave office." if termed_out
+			else "You have lost your office. This term is over."
+		), PanelKit.Tone.PLAIN)
 
 	var cont := Button.new()
 	cont.text = "Leave office" if defeated else "Continue"
@@ -173,40 +169,26 @@ func _build_section(result: Dictionary, chamber_label: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 
-	var heading := Label.new()
 	var kind_label := "European Parliament election"
 	if result["kind"] == "national":
 		kind_label = "Snap legislative election" if bool(result.get("snap", false)) else "Legislative election"
 	elif result["kind"] == "executive":
 		kind_label = "Presidential election"
-	heading.text = "%s — %s" % [kind_label, chamber_label] if chamber_label != "" else kind_label
-	box.add_child(heading)
+	PanelKit.line(box, "%s — %s" % [kind_label, chamber_label] if chamber_label != "" else kind_label, PanelKit.Tone.PLAIN)
 
 	if result["kind"] == "executive":
-		var won := Label.new()
 		var winner_name := _party_name(result["largest_party_id"])
-		if result["incumbent_largest"]:
-			won.text = "%s holds the office on %.1f%% of the vote." % [
-				winner_name, float(result["incumbent_vote_share"]) * 100.0
-			]
-		else:
-			won.text = "%s takes the office; you polled %.1f%%." % [
-				winner_name, float(result["incumbent_vote_share"]) * 100.0
-			]
-		box.add_child(won)
+		PanelKit.line(box, (
+			"%s holds the office on %.1f%% of the vote." if result["incumbent_largest"]
+			else "%s takes the office; you polled %.1f%%."
+		) % [winner_name, float(result["incumbent_vote_share"]) * 100.0], PanelKit.Tone.PLAIN)
 
 	if result["kind"] == "national":
-		var verdict := Label.new()
 		var incumbent_name := _party_name(result["incumbent_party_id"])
-		if result["incumbent_largest"]:
-			verdict.text = "%s remains the largest party: %d of %d seats." % [
-				incumbent_name, result["incumbent_seats"], result["seats_total"]
-			]
-		else:
-			verdict.text = "%s is no longer the largest party: %d of %d seats." % [
-				incumbent_name, result["incumbent_seats"], result["seats_total"]
-			]
-		box.add_child(verdict)
+		PanelKit.line(box, (
+			"%s remains the largest party: %d of %d seats." if result["incumbent_largest"]
+			else "%s is no longer the largest party: %d of %d seats."
+		) % [incumbent_name, result["incumbent_seats"], result["seats_total"]], PanelKit.Tone.PLAIN)
 
 	box.add_child(_build_party_table(result))
 	box.add_child(_build_attribution(result))
@@ -214,17 +196,6 @@ func _build_section(result: Dictionary, chamber_label: String) -> Control:
 
 
 func _build_party_table(result: Dictionary) -> Control:
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 16)
-
-	for header in ["party", "vote share", "seats"]:
-		var label := Label.new()
-		label.text = header
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if header == "party" else HORIZONTAL_ALIGNMENT_RIGHT
-		label.custom_minimum_size.x = 220 if header == "party" else 90
-		grid.add_child(label)
-
 	var seats: Dictionary = result["seats"]
 	var shares: Dictionary = result["vote_share"]
 
@@ -238,40 +209,34 @@ func _build_party_table(result: Dictionary) -> Control:
 		ordered = seats.keys()
 		ordered.sort_custom(func(a, b): return int(seats[a]) > int(seats[b]))
 
+	var rows: Array = [["party", "vote share", "seats"]]
 	for party_id in ordered:
-		var name_label := Label.new()
-		name_label.text = _party_name(party_id)
+		var name_text := _party_name(party_id)
 		if party_id == result["incumbent_party_id"]:
-			name_label.text += "  (incumbent)"
-		grid.add_child(name_label)
+			name_text += "  (incumbent)"
+		rows.append([
+			name_text,
+			"%.1f%%" % (float(shares.get(party_id, 0.0)) * 100.0),
+			str(seats[party_id]) if seats.has(party_id) else PanelKit.MISSING,
+		])
 
-		var share_label := Label.new()
-		share_label.text = "%.1f%%" % (float(shares.get(party_id, 0.0)) * 100.0)
-		share_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(share_label)
-
-		var seat_label := Label.new()
-		seat_label.text = str(seats[party_id]) if seats.has(party_id) else "—"
-		seat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(seat_label)
-
-	return grid
+	var host := VBoxContainer.new()
+	PanelKit.ledger(host, rows)
+	return host
 
 
 func _build_attribution(result: Dictionary) -> Control:
 	var box := VBoxContainer.new()
 
-	var heading := Label.new()
-	heading.text = "What decided it"
-	box.add_child(heading)
+	PanelKit.line(box, "What decided it", PanelKit.Tone.PLAIN)
 
 	for entry in result["attribution"]:
 		var issue: String = entry["issue"]
 		var satisfaction: float = entry["satisfaction"]
-		var line := Label.new()
 		var mood := "helped" if satisfaction > 0.05 else ("hurt" if satisfaction < -0.05 else "was neutral")
-		line.text = "%s — %s (salience %.0f%%)" % [OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0]
-		box.add_child(line)
+		PanelKit.line(box, "%s — %s (salience %.0f%%)" % [
+			OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0,
+		], PanelKit.Tone.PLAIN)
 
 	return box
 

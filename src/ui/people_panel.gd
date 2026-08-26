@@ -43,7 +43,21 @@ var _close_button: Button
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(460, 520)
+	# 700 rather than 520, and the screenshot pass is why: a new game's register runs
+	# to the executive, five cabinet portfolios, six parties and ten foreign leaders,
+	# and at 520 the window opened with the Abroad list cut through the middle of a
+	# row while three hundred pixels of the usable band sat empty underneath it. This
+	# panel has no verb, so the fold mark cannot say so on its behalf -- the only
+	# affordance is the scrollbar, and a window that is short for no reason is a
+	# window the player has to fix by hand every time they open it. 700 is calendar's
+	# figure and well inside U5a's ~886px band.
+	#
+	# Height is the RIGHT answer here and the wrong one for a fold: a fold is a verb
+	# below the line, which V1.3g proved height does not fix. This is a readout that
+	# was simply smaller than the band it is allowed to occupy. The general version --
+	# a window growing to the band whenever its content wants more -- stays deleted;
+	# see docs/panel-system.md section 7.
+	custom_minimum_size = Vector2(460, 700)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

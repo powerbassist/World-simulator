@@ -138,7 +138,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V2.1a shipped the panel system, and the V2 tier has started.** `src/ui/panel_kit.gd`
+**V2.1a shipped the panel system and V2.1b migrated every panel onto it.** `src/ui/panel_kit.gd`
 holds six static primitives -- `section`, `heading`, `line`, `row`, `figure`, `ledger` --
 plus `figure_text()` and `delta()`, and it is **not a base class**: all nineteen panels
 already `extends PanelContainer` and the dirty sweep is duck-typed, so a hierarchy would
@@ -184,11 +184,40 @@ content margins went on top, so **every window that filled its band overflowed i
 -- and `clamp_into_parent()` constrains only position, so the last row sat under the bottom
 furniture. Fixed with a second pass. A window is also sized from its content **as it was
 before the refresh that fills it**, since `open()` marks dirty and places in the same call.
-**What is NOT fixed is measured and handed to V2.1b**: `get_combined_minimum_size()` is
-wrong in both directions (`economy_panel` claims 928px for ~500px and opens a third empty,
-`people_panel` claims 520px and renders ~550 and clips four rows), and a grow-to-the-band
-heuristic was written and **deleted** because every rect the engine reports agrees the panel
-fits. Model: [docs/panel-system.md](docs/panel-system.md).
+**What was handed to V2.1b as "not fixed in either direction" was a STALE READ**, and
+V2.1a's own step-0 finding is what it missed: a panel that has never been shown has never
+been laid out at the width it will really have. Cold against warm, **4 of 14 differ**
+(politics 4725 -> 945, economy 928 -> 424); warm against **drawn extent, 0 of 14 differ**.
+The grow-to-the-band heuristic was right to be deleted and V2.1b's booked structural fix
+was written, measured and deleted too. Model:
+[docs/panel-system.md](docs/panel-system.md).
+
+**V2.1b MIGRATED THE OTHER SIXTEEN PANELS AND TURNED THE FOLD CONTRACT INTO A TEST.** The
+row said twenty-five and there were nineteen `*_panel.gd`, three already done; one of the
+three files it said would not fit one context together, `map_view.gd`, **is not a panel**.
+**Four panels had no private helper at all** -- `law`, `calendar`, `election`, `polling`,
+sixty-six raw Labels inline -- so V2.1a's *does this file still define `_row`?* check would
+have called them clean forever, which is `check_names.sh`'s U6b failure in a third place
+inside the test written to end it. The second assertion closes it: **every
+`src/ui/*_panel.gd` must name `PanelKit`**, over a directory scan rather than a sixth list.
+
+**Six more panels declare a verb (ten of fourteen), and politics FAILED the contract at 865
+against an 826px band.** That panel holds 945px of content, so no height clears it --
+V1.3g's finding as arithmetic rather than a rule of thumb -- and **the verbs moved above the
+readout**: 73 now, structural rather than 39px of luck. The report is an assertion,
+mutation-checked. `bloc`, `campaign` and `events` report **no verb at month 1** because they
+genuinely have none; `--bloc`, `--campaign` and `--event` reach all three.
+
+**Two kit changes, both forced by a panel.** `Tone.PLAIN` on `line()` now means the panel's
+own **body** text -- every tone resolved to CAPTION, harmless for V2.1a's three callers and
+wrong for the **forty-five plain lines** `government_panel` and `nation_panel` build between
+them -- and a figure's caption wraps, because overview's GOVERNMENT column is ~110px.
+**Two retained tables became ledgers**, and budget's killed a live bug: `_set_figure()`
+returned **silently** on a key with no `FIGURE_ROWS` entry, which is how V1.3g's deployments
+line wrote into nothing for three sessions. **`_right()` and `_add_row()` are deliberately
+NOT banned**: a cell inside somebody else's grid is the panel's own, because `ledger()`
+cannot carry a per-cell tooltip and an autowrapping kit label collapses a fixed column.
+`people_panel` went 520 -> 700px, which is height fixing a **readout** rather than a fold.
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
@@ -198,7 +227,7 @@ deciding what follows V1 was the work rather than a preamble to it. The organisi
 that **the world becomes visible and located**: V1 built machines and every one of them is
 legible only as a number on a panel, so the country the player governs has no places in
 it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
-rewrite. **V2.1 (the shell, re-cut) is next**, on U5a's own precedent -- U5a moved the
+rewrite. **V2.1 (the shell, re-cut) is under way -- (a) and (b) are built and (c) is next**, on U5a's own precedent -- U5a moved the
 shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
 surfaces.
 
@@ -2388,7 +2417,7 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a-b** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

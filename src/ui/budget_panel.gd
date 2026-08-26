@@ -19,6 +19,7 @@ const CycleK = preload("res://src/sim/cycle_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -161,10 +162,20 @@ var _loader
 var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
 var _sliders := {}
 var _lever_values := {}
+## key -> [now text, proposed text] for the CURRENT refresh, cleared and refilled
+## each time. It held a pair of live Labels until V2.1b; the table is a
+## PanelKit.ledger() rebuilt from FIGURE_ROWS now, which is what makes the two
+## value columns one measurement -- and it is what turns _set_figure()'s unknown
+## key from a silent return into an error. See that function.
 var _figures := {}
+var _figures_box: VBoxContainer
 var _title: Label
 var _dirty := true
 var _close_button: Button
+
+## The verb this panel exists for. Built once in _ready() and alive for the
+## session, so it is held rather than re-found. See primary_action().
+var _commit_button: Button
 
 
 func _ready() -> void:
@@ -202,9 +213,7 @@ func _build_levers() -> Control:
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var heading := Label.new()
-	heading.text = "Levers (tax rates %, spending % of GDP)"
-	box.add_child(heading)
+	PanelKit.line(box, "Levers (tax rates %, spending % of GDP)", PanelKit.Tone.PLAIN)
 
 	var grid := GridContainer.new()
 	grid.columns = 3
@@ -240,48 +249,41 @@ func _build_levers() -> Control:
 
 
 func _build_figures() -> Control:
-	var box := VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_figures_box = VBoxContainer.new()
+	_figures_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return _figures_box
 
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 16)
-	box.add_child(grid)
 
-	for header in ["", "now", "proposed"]:
-		var label := Label.new()
-		label.text = header
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if header != "" else HORIZONTAL_ALIGNMENT_LEFT
-		label.custom_minimum_size.x = 200 if header == "" else 110
-		grid.add_child(label)
+## The now/proposed table, rebuilt from FIGURE_ROWS and whatever _refresh() has
+## just written into _figures.
+##
+## V1.6f as a primitive: the three columns were three hand-set
+## custom_minimum_size.x values, and one extra clause on one row ran the proposed
+## column past the window edge with the number right the whole time. A ledger is
+## one grid, so the columns cannot size apart.
+func _fill_figures() -> void:
+	for child in _figures_box.get_children():
+		child.queue_free()
 
+	var rows: Array = [["", "now", "proposed"]]
 	for row in FIGURE_ROWS:
-		var name_label := Label.new()
-		name_label.text = row[1]
-		grid.add_child(name_label)
-
-		var now_label := Label.new()
-		now_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(now_label)
-
-		var pending_label := Label.new()
-		pending_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(pending_label)
-
-		if row[0] != "":
-			_figures[row[0]] = [now_label, pending_label]
-
-	return box
+		var key: String = row[0]
+		if key == "":
+			rows.append([row[1], "", ""])
+			continue
+		var pair: Array = _figures.get(key, [PanelKit.MISSING, PanelKit.MISSING])
+		rows.append([row[1], pair[0], pair[1]])
+	PanelKit.ledger(_figures_box, rows)
 
 
 func _build_buttons() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
 
-	var commit := Button.new()
-	commit.text = "Commit"
-	commit.pressed.connect(_on_commit)
-	row.add_child(commit)
+	_commit_button = Button.new()
+	_commit_button.text = "Commit"
+	_commit_button.pressed.connect(_on_commit)
+	row.add_child(_commit_button)
 
 	var revert := Button.new()
 	revert.text = "Revert"
@@ -406,6 +408,7 @@ func _lever_text(key: String) -> String:
 
 
 func _refresh() -> void:
+	_figures.clear()
 	for key in _lever_keys():
 		_lever_values[key].text = _lever_text(key)
 
@@ -461,6 +464,8 @@ func _refresh() -> void:
 	_set_figure("proj_debt",
 		_forecast_text(float(last_now["debt_to_gdp_pct"]), band * years * float(last_now["debt_to_gdp_pct"]) / 100.0, 1),
 		_forecast_text(float(last_proposed["debt_to_gdp_pct"]), band * years * float(last_proposed["debt_to_gdp_pct"]) / 100.0, 1))
+
+	_fill_figures()
 
 
 ## V1.6a. A PROJECTION IS EXACT AND A FORECAST IS NOT, and these three rows print the
@@ -618,8 +623,34 @@ func _pct_and_eur(snap: Dictionary, key: String) -> String:
 	return "%.2f%%  (%.0f bn)" % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
 
 
+## Writes one row of the now/proposed table for this refresh.
+##
+## AN UNKNOWN KEY IS AN ERROR, and that is V2.1b rather than a tidy-up. This
+## returned silently on a key with no FIGURE_ROWS entry, so V1.3g's
+## `_set_figure("deployments", ...)` wrote into nothing for three sessions and
+## V1.4a then documented a line that was not on the panel. It is V1.6d's rule --
+## a default that hides a missing key is worse than a crash -- pointed at the
+## writer instead of at the reader.
 func _set_figure(key: String, now_text: String, pending_text: String) -> void:
-	if not _figures.has(key):
+	if not _figure_keys().has(key):
+		push_error("budget_panel: '%s' has no FIGURE_ROWS entry, so nothing on the panel says it" % key)
 		return
-	_figures[key][0].text = now_text
-	_figures[key][1].text = pending_text
+	_figures[key] = [now_text, pending_text]
+
+
+func _figure_keys() -> Array:
+	var out: Array = []
+	for row in FIGURE_ROWS:
+		if row[0] != "":
+			out.append(row[0])
+	return out
+
+
+## The control this panel exists to let the player press -- V2.1a's fold contract,
+## declared here at V2.1b.
+##
+## Commit rather than Revert, on the rule that this is the FIRST verb rather than
+## the most important one: they sit in that order in _build_buttons(), and a panel
+## whose first verb has scrolled off is already a panel whose verbs are hidden.
+func primary_action() -> Control:
+	return _commit_button

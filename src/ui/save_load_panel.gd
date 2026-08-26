@@ -19,6 +19,7 @@ signal load_requested(slot: String)
 ## full-rect holder it has to hide too, and cannot see a plain hide().
 signal closed
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 
 var _name_field: LineEdit
@@ -40,9 +41,7 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
-	var title := Label.new()
-	title.text = "SAVE / LOAD"
-	root.add_child(title)
+	PanelKit.line(root, "SAVE / LOAD", PanelKit.Tone.PLAIN)
 
 	_save_row = HBoxContainer.new()
 	_save_row.add_theme_constant_override("separation", 8)
@@ -63,9 +62,7 @@ func _ready() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_status)
 
-	var list_label := Label.new()
-	list_label.text = "Saved games:"
-	root.add_child(list_label)
+	PanelKit.line(root, "Saved games:", PanelKit.Tone.PLAIN)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -125,9 +122,7 @@ func _refresh_slot_list() -> void:
 
 	var slots := SaveManager.list_slots()
 	if slots.is_empty():
-		var none := Label.new()
-		none.text = "No saved games yet."
-		_slot_list.add_child(none)
+		PanelKit.line(_slot_list, "No saved games yet.", PanelKit.Tone.PLAIN)
 		return
 
 	for slot in slots:

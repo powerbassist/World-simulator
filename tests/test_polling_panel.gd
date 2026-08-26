@@ -164,7 +164,7 @@ func _check_panel_shows_noised_values() -> void:
 	var id := PollNoise.poll_id(_state.year, _state.month)
 
 	for bloc in K.BLOC_KEYS:
-		var shown_text: String = _panel._bloc_rows[bloc][0].text
+		var shown_text: String = _bloc_cell(bloc, 2)
 		if shown_text.is_empty():
 			_fail("%s row is blank after refresh" % bloc)
 			return
@@ -174,7 +174,7 @@ func _check_panel_shows_noised_values() -> void:
 		if absf(shown - snappedf(expected, 1.0)) > 1.0e-6:
 			_fail("%s shows %.2f, expected this poll's %.2f (true %.2f)" % [bloc, shown, expected, truth])
 
-	if _panel._issue_rows[0][0].text.is_empty():
+	if _first_issue_text().is_empty():
 		_fail("the top-issues list did not populate")
 
 	# The panel is read-only: rendering must not have touched the simulation.
@@ -187,15 +187,15 @@ func _check_panel_shows_noised_values() -> void:
 func _check_panel_holds_still_within_a_month() -> void:
 	var before := {}
 	for bloc in K.BLOC_KEYS:
-		before[bloc] = _panel._bloc_rows[bloc][0].text
+		before[bloc] = _bloc_cell(bloc, 2)
 
 	_panel._refresh()
 	_panel._refresh()
 
 	for bloc in K.BLOC_KEYS:
-		if _panel._bloc_rows[bloc][0].text != before[bloc]:
+		if _bloc_cell(bloc, 2) != before[bloc]:
 			_fail("%s changed from %s to %s on a repaint within the same month" % [
-				bloc, before[bloc], _panel._bloc_rows[bloc][0].text
+				bloc, before[bloc], _bloc_cell(bloc, 2)
 			])
 			return
 
@@ -222,3 +222,37 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## V2.1b. Both tables are PanelKit.ledger() grids rebuilt on every refresh rather
+## than the retained Label pairs this test used to reach through `_bloc_rows` and
+## `_issue_rows`, so the figures are read back out of the grid by the caption in
+## their own first column. Read by text on purpose: what this file asserts is what
+## the player is shown, and a lookup by index would pass on a table whose rows had
+## silently reordered.
+func _bloc_cell(bloc: String, column: int) -> String:
+	var wanted: String = K.BLOC_LABEL[bloc]
+	for grid in _grids(_panel):
+		var columns: int = grid.columns
+		var cells: Array = grid.get_children()
+		for i in range(0, cells.size(), columns):
+			if cells[i] is Label and cells[i].text == wanted:
+				return (cells[i + column] as Label).text
+	return ""
+
+
+func _first_issue_text() -> String:
+	var grids := _grids(_panel)
+	if grids.size() < 2:
+		return ""
+	var last: GridContainer = grids[grids.size() - 1]
+	return (last.get_child(0) as Label).text if last.get_child_count() > 0 else ""
+
+
+func _grids(node: Node) -> Array:
+	var out: Array = []
+	if node is GridContainer:
+		out.append(node)
+	for child in node.get_children():
+		out.append_array(_grids(child))
+	return out

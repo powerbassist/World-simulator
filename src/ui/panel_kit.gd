@@ -105,11 +105,19 @@ static func heading(parent: Control, text: String) -> Label:
 ## against a width it has not been given yet. A panel that claims to need 2602px
 ## for 928px of prose is a panel the fold contract would read a fold into that is
 ## not there. So the quieter mode is also the honest one.
+##
+## `Tone.PLAIN` means the panel's own BODY text and sets no variation at all,
+## which is `row()`'s existing convention arriving here at V2.1b. It had to: the
+## default is DIM and every V2.1a caller wanted it, but government_panel and
+## nation_panel built forty-five plain body lines between them, and a primitive
+## that could only print small and dim would have silently shrunk and dimmed the
+## two panels this project's record names most often. Prose that really is
+## secondary keeps the default.
 static func line(parent: Control, text: String, tone := Tone.DIM) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.theme_type_variation = _variation(tone, UiTheme.CAPTION)
+	label.theme_type_variation = _variation(tone, "")
 	parent.add_child(label)
 	return label
 
@@ -141,6 +149,11 @@ static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN
 ## A large number with its caption underneath. The caption goes below rather
 ## than above because the eye lands on the figure first and the caption is what
 ## it needs second -- U5a's arrangement, kept.
+##
+## The caption wraps, added at V2.1b and measured rather than tidied: the
+## overview panel's GOVERNMENT column is about 110px wide, and V1.5a already paid
+## for a caption that could not wrap there by having two of them run to eight
+## lines. A caption that cannot wrap does not overflow, it widens its column.
 static func figure(parent: Control, value: String, caption: String, tone := Tone.PLAIN) -> VBoxContainer:
 	var box := VBoxContainer.new()
 
@@ -151,6 +164,7 @@ static func figure(parent: Control, value: String, caption: String, tone := Tone
 
 	var sub := Label.new()
 	sub.text = caption
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
 	sub.theme_type_variation = UiTheme.FIGURE_LABEL
 	box.add_child(sub)
 

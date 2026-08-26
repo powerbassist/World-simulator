@@ -16,6 +16,7 @@ extends PanelContainer
 ## Built in code, like the other panels -- see budget_panel.gd's placement note.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -98,7 +99,6 @@ func _ready() -> void:
 	root.add_child(_close_button)
 
 
-
 ## Docked in a WindowFrame, whose X is the real close control. Without this the
 ## panel's own Close hides the CONTENT while window_manager.open() only ever shows
 ## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
@@ -144,10 +144,7 @@ func _show_empty_state() -> void:
 		child.queue_free()
 	for child in _actions.get_children():
 		child.queue_free()
-	var hint := Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.text = "Click a country on the map to open its file. The ten the game simulates are the coloured ones."
-	_body.add_child(hint)
+	PanelKit.line(_body, "Click a country on the map to open its file. The ten the game simulates are the coloured ones.", PanelKit.Tone.PLAIN)
 
 
 func mark_dirty() -> void:
@@ -168,20 +165,20 @@ func _refresh() -> void:
 	# The two blank spacers this block had are down to one, for the fold reason in
 	# _ready(): a blank line costs the same as a verb row, and there are fourteen
 	# verbs competing for the space now.
-	_add_line("Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title])
-	_add_line("GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct])
-	_add_line("Unemployment: %.1f%%" % ns.unemployment_pct)
-	_add_line("Debt: %.1f%% of GDP" % ns.debt_to_gdp_pct())
+	PanelKit.line(_body, "Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Unemployment: %.1f%%" % ns.unemployment_pct, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Debt: %.1f%% of GDP" % ns.debt_to_gdp_pct(), PanelKit.Tone.PLAIN)
 
 	# The player's own approval is polled elsewhere with noise applied (see
 	# polling_panel.gd) — this panel shows every nation including rivals the
 	# player has no poll for, so it reports the true figure plainly rather
 	# than reusing a noise model built around one nation's published polls.
-	_add_line("Approval: %.0f%%" % ns.overall_approval_pct)
-	_add_line("")
-	_add_line("Term %d of %d months, next election %d/%d" % [
+	PanelKit.line(_body, "Approval: %.0f%%" % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Term %d of %d months, next election %d/%d" % [
 		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
-	])
+	], PanelKit.Tone.PLAIN)
 
 	_refresh_actions()
 
@@ -203,19 +200,14 @@ func _refresh_actions() -> void:
 	_actions.add_child(heading)
 
 	var score := Diplomacy.score(_state, player_id, _nation_id)
-	var score_line := Label.new()
-	score_line.text = "%s–%s: %.0f / 100" % [player_id, _nation_id, score]
-	_actions.add_child(score_line)
+	PanelKit.line(_actions, "%s–%s: %.0f / 100" % [player_id, _nation_id, score], PanelKit.Tone.PLAIN)
 
 	# The player's side of the trade weight, not the partner's. The two differ --
 	# that asymmetry is the whole point of the directed weight — and showing the
 	# viewer's own share is what makes "who matters to me" readable.
-	var weight_line := Label.new()
-	weight_line.text = "Trade: %.0f%% of %s's external demand" % [
+	PanelKit.line(_actions, "Trade: %.0f%% of %s's external demand" % [
 		100.0 * float(Trade.weights(_state, player_id).get(_nation_id, 0.0)), player_id,
-	]
-	weight_line.theme_type_variation = UiTheme.CAPTION
-	_actions.add_child(weight_line)
+	])
 
 	var agreement_line := Label.new()
 	if _state.agreements.has(Relations.key(player_id, _nation_id)):
@@ -417,13 +409,6 @@ func _on_act(action) -> void:
 	)
 	acted.emit(before, "%s: %s" % [action.action_name, _nation_id])
 	_dirty = true
-
-
-func _add_line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_body.add_child(label)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.

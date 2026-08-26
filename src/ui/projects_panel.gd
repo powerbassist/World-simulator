@@ -195,19 +195,14 @@ func _build_live(ns, project_id: String) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var name_label := Label.new()
-	name_label.text = Projects.name_of(_loader, project_id)
-	block.add_child(name_label)
+	PanelKit.line(block, Projects.name_of(_loader, project_id), PanelKit.Tone.PLAIN)
 
 	var left := Projects.months_left(ns, project_id)
 	var total := int(terms.get("build_months", 0))
-	var state_label := Label.new()
-	state_label.text = "%d of %d months remaining · %.3f %% of GDP a year · will buy %+.3f %%/yr" % [
+	PanelKit.line(block, "%d of %d months remaining · %.3f %% of GDP a year · will buy %+.3f %%/yr" % [
 		left, total, float(terms.get("cost_pct_gdp", 0.0)),
 		float(terms.get("potential_growth_pct", 0.0)),
-	]
-	state_label.theme_type_variation = UiTheme.GOOD_TEXT
-	block.add_child(state_label)
+	], PanelKit.Tone.GOOD)
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
@@ -266,13 +261,10 @@ func _build_offer(ns, action, terms: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var terms_label := Label.new()
-	terms_label.text = "%d months · %.3f %% of GDP a year · %+.3f %%/yr when it opens" % [
+	PanelKit.line(block, "%d months · %.3f %% of GDP a year · %+.3f %%/yr when it opens" % [
 		int(terms.get("build_months", 0)), float(terms.get("cost_pct_gdp", 0.0)),
 		float(terms.get("potential_growth_pct", 0.0)),
-	]
-	terms_label.theme_type_variation = UiTheme.CAPTION
-	block.add_child(terms_label)
+	])
 	block.add_child(_button(ns, action))
 
 	_body.add_child(block)

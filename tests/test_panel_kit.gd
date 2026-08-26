@@ -66,6 +66,7 @@ func _process(_delta: float) -> bool:
 	_check_the_kit_uses_variations_and_not_overrides()
 	_check_a_ledger_is_one_measurement()
 	_check_the_fold_is_visible_to_this_harness()
+	_check_a_panel_reports_the_height_it_draws()
 	_report_the_fold_contract()
 	_finish()
 	return false
@@ -143,22 +144,45 @@ func _check_tone_reads_the_convention_and_not_the_sign() -> void:
 
 # -- The migration ---------------------------------------------------------------
 
-## The three panels V2.1a migrated must not have kept a private copy. This is what
-## makes the kit a replacement rather than an addition -- a panel holding both is
-## a panel where the next session picks the wrong one.
+## No panel builds its own rows any more -- V2.1b, where V2.1a named three paths.
+##
+## Derived from the directory rather than from a list, for the reason this session's
+## other checks are: a list of nineteen panel files is a sixth hand-written list, and
+## the one thing this project's record says about such a list is that it drifts.
+##
+## Two claims, and they catch different things. A panel that still DEFINES one of the
+## kit's shapes is a panel where the next session picks the wrong one -- that is the
+## check V2.1a wrote. A panel that never NAMES PanelKit is one that quietly kept
+## building rows inline, which the first check structurally cannot see, and four of
+## the nineteen were exactly that: law, calendar, election and polling had no private
+## helper at all and twenty-seven raw Labels between them.
+##
+## `_right()` and `_add_row()` are deliberately NOT banned. They build a CELL inside
+## somebody else's GridContainer -- government's party table carries per-cell tooltips
+## and colours, which a ledger cannot -- and every kit primitive that draws prose
+## autowraps, so a kit call in a fixed grid column reports a one-word minimum width and
+## lets the column collapse. The kit owns whole rows and whole tables; a cell inside
+## another grid is the panel's own.
 func _check_no_panel_builds_its_own_row_any_more() -> void:
-	for path in ["res://src/ui/economy_panel.gd", "res://src/ui/projects_panel.gd",
-			"res://src/ui/people_panel.gd"]:
+	var banned := ["func _header(", "func _heading(", "func _row(", "func _line(",
+		"func _figure(", "func _caption(", "func _add_line(", "func _note(",
+		"func _build_column("]
+	var checked := 0
+	for path in _gd_files("res://src/ui"):
+		if not path.ends_with("_panel.gd"):
+			continue
+		checked += 1
 		var source := _read(path)
 		if source.is_empty():
 			_fail("could not read %s" % path)
 			continue
-		for banned in ["func _header(", "func _row(", "func _line(", "func _figure(",
-				"func _caption(", "func _build_column("]:
-			if source.contains(banned):
-				_fail("%s still carries its own `%s`" % [path, banned])
+		for name in banned:
+			if source.contains(name):
+				_fail("%s still carries its own `%s`" % [path, name])
 		if not source.contains("PanelKit"):
-			_fail("%s was migrated but never names PanelKit" % path)
+			_fail("%s builds its rows without the kit" % path)
+	if checked < 19:
+		_fail("only %d panel files were scanned, and there are nineteen" % checked)
 
 
 # -- The registry ----------------------------------------------------------------
@@ -351,18 +375,63 @@ func _check_the_fold_is_visible_to_this_harness() -> void:
 	label.queue_free()
 
 
-## The contract itself, MEASURED rather than asserted for now.
+## V2.1b's step 0, pinned so it cannot quietly stop being true.
 ##
-## A panel's primary action ought to be reachable at the shipped window size, and
-## the mark on the frame is what tells the player when it is not. Whether every
-## panel currently satisfies it is a different question from whether the machinery
-## works, and re-composing the panels that fail is V2.1b's job by name -- V1.3g
-## proved height alone does not fix a fold, so a session that turned this red here
-## would be forced into a redesign it is not scoped for.
+## docs/panel-system.md section 7 handed this session two numbers and the claim that
+## `get_combined_minimum_size()` is not the truth in either direction -- economy
+## reporting 928px for roughly 500px of prose, people reporting 520 and rendering
+## about 550. Both were STALE READS: a panel that has never been shown has never been
+## laid out at the width it will really have, so its minimum is the answer for a width
+## nothing draws. That is this file's own step-0 finding (the minimum-size cache lags
+## one invalidation) one level up, applied to the panel instead of to the Label.
 ##
-## So this prints the table and fails only on the machinery: a panel that declares
-## a primary action must get a truthful answer out of the frame, and the frame's
-## variation must agree with that answer.
+## Shown and fitted and a frame later, every panel reports its drawn extent to the
+## pixel -- fourteen of fourteen -- so no correction shipped and the grow-to-the-band
+## heuristic V2.1a deleted was right to be deleted. What is asserted is the property
+## that made that true: the reported minimum is the drawn height.
+func _check_a_panel_reports_the_height_it_draws() -> void:
+	for id in _main._windows.panel_ids():
+		var panel: Control = _main._windows.frame(id)._content
+		var reported := panel.get_combined_minimum_size().y
+		var drawn := _drawn_extent(panel, panel.global_position.y)
+		if absf(reported - drawn) > 1.0:
+			_fail("%s reports %.0fpx and draws %.0fpx -- a window sized from that leaves %.0fpx of the difference somewhere"
+				% [id, reported, drawn, absf(reported - drawn)])
+
+
+## The bottom of the lowest thing the panel draws, NOT descending into a scroll of
+## its own: what is below the fold of an inner ScrollContainer is scrollable rather
+## than clipped, and counting it reported legislature 3070px short of itself.
+func _drawn_extent(node: Node, top: float) -> float:
+	var out := 0.0
+	if node is Control and node.visible:
+		var c: Control = node
+		out = c.global_position.y + c.size.y - top
+	if node is ScrollContainer:
+		return out
+	for child in node.get_children():
+		out = maxf(out, _drawn_extent(child, top))
+	return out
+
+
+## THE CONTRACT, ENFORCED -- V2.1b, where V2.1a measured it and said why it could
+## not yet assert it.
+##
+## V2.1a printed this table and failed only on the machinery, because turning it red
+## with a panel still folded would have forced a redesign that session was not scoped
+## for. Every panel that offers a verb now clears the fold, so it is a failure.
+##
+## The one that did not was politics, at 39px, and the fix is the contract's own:
+## V1.3g proved height alone does not fix a fold -- that panel holds 945px of content
+## against an 826px band, so no height exists that would have done it -- and moving
+## the verbs above the readout fixes it structurally, at any body size. See
+## government_panel._ready().
+##
+## Three panels report no verb at month 1: bloc has no proposal before the council,
+## campaign is outside the run-up and events has nothing pending. That is honest
+## rather than a gap in the check -- the panel really has nothing to press -- and the
+## screenshot pass reaches all three through --bloc, --campaign and --event, which
+## set exactly those states.
 func _report_the_fold_contract() -> void:
 	for id in _main._windows.panel_ids():
 		var frame = _main._windows.frame(id)
@@ -373,6 +442,9 @@ func _report_the_fold_contract() -> void:
 		if action == null:
 			_fold_rows.append("%-12s no verb offered right now" % id)
 			continue
+
+		if frame.primary_action_below_fold():
+			_fail("%s offers a verb below the fold, and height will not fix it -- move it above the readout" % id)
 
 		var below: bool = frame.primary_action_below_fold()
 		_fold_rows.append("%-12s action bottom %5.0f, band %5.0f  %s" % [

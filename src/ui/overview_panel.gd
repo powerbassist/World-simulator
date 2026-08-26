@@ -24,6 +24,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const MONTH_NAMES: Array[String] = [
 	"January", "February", "March", "April", "May", "June",
@@ -106,7 +107,12 @@ func _ready() -> void:
 		["issues", "WHAT THE COUNTRY WANTS"],
 		["moving", "MOVING, LAST %d MONTHS" % Trends.TREND_MONTHS],
 	]:
-		row.add_child(_build_column(spec[0], spec[1]))
+		# PanelKit.section() IS this panel's column: a tracked heading, a body under
+		# it at the kit's own separations, and the body handed back. The four
+		# separations and both variations were already identical -- the only line
+		# _build_column() had that section() does not is size_flags_vertical =
+		# SIZE_FILL, which is a Control's default.
+		_columns[spec[0]] = PanelKit.section(row, spec[1])
 
 	root.add_child(HSeparator.new())
 
@@ -118,25 +124,6 @@ func _ready() -> void:
 	_effects_box = VBoxContainer.new()
 	_effects_box.add_theme_constant_override("separation", 4)
 	root.add_child(_effects_box)
-
-
-func _build_column(id: String, heading: String) -> Control:
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.size_flags_vertical = Control.SIZE_FILL
-	col.add_theme_constant_override("separation", 6)
-
-	var label := Label.new()
-	label.text = heading
-	label.theme_type_variation = UiTheme.HEADING
-	col.add_child(label)
-
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 3)
-	col.add_child(body)
-	_columns[id] = body
-
-	return col
 
 
 ## Takes the loader as well as the state, the same shape government_panel.gd
@@ -259,34 +246,34 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 # --- the four columns -------------------------------------------------------
 
 func _fill_government(ns, censure: Dictionary) -> void:
-	_figure("government", "%d / %d" % [int(ns.coalition_seats), int(ns.assembly_seats)], "seats held")
-	_caption("government", "%s — a majority needs more than %d." % [
+	PanelKit.figure(_columns["government"], "%d / %d" % [int(ns.coalition_seats), int(ns.assembly_seats)], "seats held")
+	PanelKit.line(_columns["government"], "%s — a majority needs more than %d." % [
 		_standing_sentence(ns), Government.majority_seats(ns)
 	])
 
 	if censure.is_empty():
-		_caption("government", "No censure procedure.")
+		PanelKit.line(_columns["government"], "No censure procedure.")
 	elif bool(censure["carried"]):
-		_note("government", "A censure motion would carry: %d of %d." % [
+		PanelKit.line(_columns["government"], "A censure motion would carry: %d of %d." % [
 			int(censure["for_seats"]), int(censure["threshold"])
-		], UiTheme.BAD_TEXT)
+		], PanelKit.Tone.BAD)
 	else:
-		_note("government", "A censure motion would fail: %d of %d." % [
+		PanelKit.line(_columns["government"], "A censure motion would fail: %d of %d." % [
 			int(censure["for_seats"]), int(censure["threshold"])
-		], UiTheme.GOOD_TEXT)
+		], PanelKit.Tone.GOOD)
 
 	# Only meaningful where the constitution has it at all, so nations without
 	# presidential appointment say nothing rather than saying "unavailable".
 	if ns.formation_method == "presidential_appointment":
 		if Government.can_force(ns):
-			_caption("government", "Article 49.3 available.")
+			PanelKit.line(_columns["government"], "Article 49.3 available.")
 		else:
-			_caption("government", "Article 49.3 in %s." % Trends.months_text(int(ns.force_cooldown_months)))
+			PanelKit.line(_columns["government"], "Article 49.3 in %s." % Trends.months_text(int(ns.force_cooldown_months)))
 
 
 func _fill_election(ns, months: int) -> void:
-	_figure("election", Trends.months_text(months), "until the vote")
-	_caption("election", "%s %d." % [
+	PanelKit.figure(_columns["election"], Trends.months_text(months), "until the vote")
+	PanelKit.line(_columns["election"], "%s %d." % [
 		MONTH_NAMES[int(ns.next_election_month) - 1], int(ns.next_election_year)
 	])
 	# No "month N of M in this term" line. ns.term_months is the nation's nominal
@@ -296,18 +283,18 @@ func _fill_election(ns, months: int) -> void:
 	# whose job is to be unambiguous. Which of the two is wrong is a simulation
 	# question; see docs/decision-log.md's U3 entry.
 	var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
-	_caption("election", "Polling %.0f%% (%s)." % [_polled_approval(ns), Trends.change_text(change)])
+	PanelKit.line(_columns["election"], "Polling %.0f%% (%s)." % [_polled_approval(ns), Trends.change_text(change)])
 
 
 func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 	if top.is_empty():
-		_caption("issues", "—")
+		PanelKit.line(_columns["issues"], "—")
 		return
 	for entry in top:
 		var issue: String = entry[0]
 		var sat: float = float(satisfaction.get(issue, 0.0))
-		_figure("issues", K.ISSUE_LABEL.get(issue, issue), "%.0f%% of what people weigh" % (float(entry[1]) * 100.0))
-		_note("issues", _satisfaction_word(sat), _satisfaction_tone(sat))
+		PanelKit.figure(_columns["issues"], K.ISSUE_LABEL.get(issue, issue), "%.0f%% of what people weigh" % (float(entry[1]) * 100.0))
+		PanelKit.line(_columns["issues"], _satisfaction_word(sat), _satisfaction_tone(sat))
 
 
 ## V1.3g. Under GOVERNMENT rather than in a column or a window of its own: the
@@ -318,7 +305,7 @@ func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 ## with no units the player can act on; capability WITH the price it sets is the
 ## loop this session is built around -- spend, and commitments get cheaper.
 func _fill_defence(ns) -> void:
-	_caption("government", "Military capability %.2f — a deployment costs %.2f%% of GDP." % [
+	PanelKit.line(_columns["government"], "Military capability %.2f — a deployment costs %.2f%% of GDP." % [
 		ns.military_capability, Defence.deployment_cost_pct_gdp(ns),
 	])
 
@@ -330,11 +317,11 @@ func _fill_defence(ns) -> void:
 	# nothing in every game that never signs a pact, which is most of them.
 	var deployed := Defence.deployment_count(_state, ns.id)
 	if deployed == 0:
-		_caption("government", "Allied with %s." % ", ".join(allies))
+		PanelKit.line(_columns["government"], "Allied with %s." % ", ".join(allies))
 	else:
-		_note("government", "Allied with %s; %d deployment%s running." % [
+		PanelKit.line(_columns["government"], "Allied with %s; %d deployment%s running." % [
 			", ".join(allies), deployed, "" if deployed == 1 else "s",
-		], UiTheme.BAD_TEXT)
+		], PanelKit.Tone.BAD)
 
 
 ## V1.5a. Under GOVERNMENT beside capability, which is where docs/tiers/v1.md §3 put
@@ -367,9 +354,9 @@ func _fill_services(ns) -> void:
 		var label: String = K.ISSUE_LABEL.get(key, key)
 		var text := "%s delivery %+.2f on baseline." % [label, deviation]
 		if deviation < 0.0:
-			_note("government", text, UiTheme.BAD_TEXT)
+			PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
 		else:
-			_caption("government", text)
+			PanelKit.line(_columns["government"], text)
 
 	# The cause, beside the effect, and only when the player has moved it. Reads the
 	# factor rather than the level, because the level is a signed abstraction and the
@@ -379,9 +366,9 @@ func _fill_services(ns) -> void:
 	var delivery: float = Society.delivery_factor(ns)
 	var text := "Administration delivers %.0f%% of funding." % (delivery * 100.0)
 	if delivery < 1.0:
-		_note("government", text, UiTheme.BAD_TEXT)
+		PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
 	else:
-		_caption("government", text)
+		PanelKit.line(_columns["government"], text)
 
 
 ## V1.5d. The press, in one line, and only when the player has moved it.
@@ -401,9 +388,9 @@ func _fill_press(ns) -> void:
 	if is_zero_approx(ns.press_freedom):
 		return
 	if ns.press_freedom < 0.0:
-		_note("government", "Press under state oversight (%+.2f)." % ns.press_freedom, UiTheme.BAD_TEXT)
+		PanelKit.line(_columns["government"], "Press under state oversight (%+.2f)." % ns.press_freedom, PanelKit.Tone.BAD)
 	else:
-		_caption("government", "Press independence guaranteed (%+.2f)." % ns.press_freedom)
+		PanelKit.line(_columns["government"], "Press independence guaranteed (%+.2f)." % ns.press_freedom)
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:
@@ -413,10 +400,7 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 	_columns["moving"].add_child(grid)
 
 	for row in movements:
-		var name_label := Label.new()
-		name_label.text = String(row["label"])
-		name_label.theme_type_variation = UiTheme.CAPTION
-		grid.add_child(name_label)
+		PanelKit.line(grid, String(row["label"]))
 
 		var change: float = float(row["change"])
 		var value := Label.new()
@@ -428,9 +412,9 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 		grid.add_child(value)
 
 	if worst.is_empty():
-		_caption("moving", "Nothing has moved much.")
+		PanelKit.line(_columns["moving"], "Nothing has moved much.")
 	else:
-		_caption("moving", "%s is the one to watch." % String(worst["label"]))
+		PanelKit.line(_columns["moving"], "%s is the one to watch." % String(worst["label"]))
 
 
 ## U4: the last few committed decisions, each with the figures it moved most --
@@ -439,10 +423,7 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 func _fill_recent_effects() -> void:
 	var entries: Array = _state.recent_effects
 	if entries.is_empty():
-		var none := Label.new()
-		none.text = "Nothing committed yet this game."
-		none.theme_type_variation = UiTheme.CAPTION
-		_effects_box.add_child(none)
+		PanelKit.line(_effects_box, "Nothing committed yet this game.")
 		return
 
 	for i in mini(RECENT_EFFECTS_SHOWN, entries.size()):
@@ -463,10 +444,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	ranked.sort_custom(func(a, b): return float(a["severity"]) > float(b["severity"]))
 
 	if ranked.is_empty():
-		var flat := Label.new()
-		flat.text = "nothing moved"
-		flat.theme_type_variation = UiTheme.CAPTION
-		row.add_child(flat)
+		PanelKit.line(row, "nothing moved")
 		return row
 
 	for i in mini(EFFECT_FIGURES_SHOWN, ranked.size()):
@@ -477,43 +455,6 @@ func _build_effect_row(effect: Dictionary) -> Control:
 		row.add_child(figure)
 
 	return row
-
-
-# --- small builders ---------------------------------------------------------
-
-## A column's one big number, with its caption underneath rather than above:
-## the eye lands on the figure first and then finds out what it is, which is the
-## order that makes a column scannable.
-func _figure(column: String, value: String, caption: String) -> void:
-	var label := Label.new()
-	label.text = value
-	label.theme_type_variation = UiTheme.FIGURE
-	_columns[column].add_child(label)
-
-	var sub := Label.new()
-	sub.text = caption
-	sub.theme_type_variation = UiTheme.FIGURE_LABEL
-	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_columns[column].add_child(sub)
-
-
-func _caption(column: String, text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.theme_type_variation = UiTheme.CAPTION
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_columns[column].add_child(label)
-
-
-## Three tones, not two. An electorate that is neither pleased nor angry is not
-## bad news, and colouring it as if it were makes the tab read as a wall of
-## alarm on a turn where nothing is wrong.
-func _note(column: String, text: String, variation: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.theme_type_variation = variation
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_columns[column].add_child(label)
 
 
 # --- wording ----------------------------------------------------------------
@@ -541,12 +482,17 @@ func _satisfaction_word(sat: float) -> String:
 	return "neither pleased nor angry"
 
 
-func _satisfaction_tone(sat: float) -> String:
+## Three tones, not two. An electorate that is neither pleased nor angry is not
+## bad news, and colouring it as if it were makes the page read as a wall of alarm
+## on a turn where nothing is wrong. PanelKit.tone_for() cannot answer this one:
+## it reads a movement against a convention where this reads a LEVEL against a
+## band, so the panel keeps the judgement and the kit keeps the drawing.
+func _satisfaction_tone(sat: float) -> PanelKit.Tone:
 	if sat > SATISFACTION_BAND:
-		return UiTheme.GOOD_TEXT
+		return PanelKit.Tone.GOOD
 	if sat < -SATISFACTION_BAND:
-		return UiTheme.BAD_TEXT
-	return UiTheme.CAPTION
+		return PanelKit.Tone.BAD
+	return PanelKit.Tone.DIM
 
 
 func _when(months: int) -> String:

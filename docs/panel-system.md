@@ -5,10 +5,15 @@ tags:
   - ui
 ---
 
-# The panel system — V2.1a
+# The panel system — V2.1a and V2.1b
 
 The primitives every panel builds its body out of, the sweep that keeps them
 fresh, and the contract that says a panel's verb has to be on screen.
+
+**V2.1a built the kit and migrated three panels. V2.1b migrated the other
+sixteen, gave six more panels a declared verb, and turned the fold contract from
+a report into a test.** Sections 1–6 are V2.1a's and stand; section 7 is rewritten
+by the measurement that answered it, and sections 8–11 are V2.1b's.
 
 Related: [[ROADMAP]] · [[v2]] · [[engine-decision]]
 
@@ -166,10 +171,18 @@ The rule is **the first enabled verb**, not the most important one: a panel whos
 first verb has scrolled off is already a panel whose verbs are hidden, and
 deciding between two is a judgement this contract does not need to make.
 
-Four panels declare one — `nation_panel` and `government_panel` because they are
-the two the record names, `projects_panel` because it was migrated, and
+Four panels declared one at V2.1a — `nation_panel` and `government_panel` because
+they are the two the record names, `projects_panel` because it was migrated, and
 `companies_panel` because V1.6e photographed it at the top of a body whose rows
-were out of sight.
+were out of sight. **V2.1b added the other six**: `bloc`, `budget`, `calendar`,
+`campaign`, `events` and `law`. Ten of fourteen; the four that declare nothing —
+overview, economy, society and people — are readouts with nothing to press.
+
+Two shapes, and which one a panel uses is decided by whether its verbs survive a
+refresh. `budget` and `calendar` build theirs once in `_ready()` and hold a member;
+`bloc`, `campaign`, `events` and `law` rebuild theirs on every refresh and record
+the first enabled one in build order, which is `projects_panel`'s `_primary` idiom.
+Build order is layout order, so *the first enabled verb* needs no second rule.
 
 ## 5. THE STEP-0 FINDING: a fold IS measurable headless
 
@@ -266,23 +279,64 @@ is. The flag was **deleted** rather than fixed — once `fit_within` was correct
 mark fires on `--open politics` at the shipped size, and a flag that does nothing
 the panel does not already do is noise. U6a's deleted day budget, one tier on.
 
-## 7. What is NOT fixed, and is handed on
+## 7. THE HANDOVER WAS A STALE READ, and V2.1a's own finding is what it missed
 
-**`get_combined_minimum_size()` is not the truth in either direction**, and both
-directions are now measured. `economy_panel` reports **928px for roughly 500px**
-of rendered prose, because its wrapping labels are measured at their own minimum
-width and never at the window's — so its window opens with a third of its band
-empty. `people_panel` reports **520px** and renders about **550**, so its last
-four rows are clipped.
+V2.1a handed this session two numbers and the claim that
+`get_combined_minimum_size()` is **not the truth in either direction**:
+`economy_panel` reporting **928px for roughly 500px** of rendered prose and opening
+with a third of its band empty, `people_panel` reporting **520px** and rendering
+about **550** with its last four rows clipped.
 
-A grow-to-the-band heuristic was written for the second and **deleted**: every
-rect the engine reports agrees that the panel fits, so the correction had nothing
-to key off and would have been a number tuned against a symptom. This is V2.1b's
-work by its own charter — *every fold fixed by the contract rather than by
-height* — and it is recorded here so that session does not have to rediscover
-which panels are wrong or in which direction.
+`tools/panel_extent_probe.gd` asks the question directly — every registered panel's
+reported minimum against the bottom of the lowest thing it actually draws — and the
+answer is that the minimum is exact:
 
-## 8. The row, counted cold
+| panel | cold | warm | drawn | warm − drawn |
+|---|---|---|---|---|
+| overview | 1154 | 436 | 436 | 0 |
+| economy | 928 | 424 | 424 | 0 |
+| politics | **4725** | 945 | 945 | 0 |
+| diplomacy | 1669 | 860 | 860 | 0 |
+| budget | 520 | 520 | 520 | 0 |
+| the other nine | — | — | — | 0 |
+
+**Cold differs from warm in 4 of 14. Warm differs from drawn in 0 of 14.**
+
+A *cold* panel has never been shown, so it has never been laid out at the width it
+will really have, and its minimum is the answer for a width nothing will ever draw.
+That is **§5's own finding one level up** — the minimum-size cache lags one
+invalidation, applied to the panel instead of to the Label — and V2.1a found the
+rule and did not turn it on its own handover. `tools/fold_probe.gd`'s table (a)
+takes exactly that cold read, which is where both numbers came from.
+
+So **no correction shipped, and one was written and deleted to make sure.** The
+plan booked a structural fix in `window_frame.gd`: a `ScrollContainer` allows
+horizontal scrolling by default and therefore gives its child the child's own
+minimum width, so disabling it would force the content to the scroll's width and
+make every autowrapping Label measure honestly. It was written, measured against the
+table above, changed **nothing in any of the fourteen**, and was deleted — U6a's day
+budget and V2.1a's `--fold` flag, a third time. The window already corrects itself:
+`open()` sizes the frame from a cold panel and `_process()` re-fits when the content
+minimum moves, which is V2.1a's own fix doing the work its §7 said was missing.
+
+`tests/test_panel_kit.gd` pins the property rather than the numbers — every panel's
+reported minimum equals its drawn extent, measured with the frames shown and a frame
+passed. Mutation-checked: with `frame.show()` commented out the check reports
+*diplomacy reports 1836px and draws 2236px*.
+
+**One thing on that list WAS real and it is not a measurement error.**
+`people_panel` authored `custom_minimum_size.y = 520` against a register that runs
+to about 700 at a new game, so the window opened with the Abroad list cut through
+the middle of a row and three hundred pixels of the usable band empty underneath.
+Height is the right answer *here* and the wrong one for a fold: a fold is a verb
+below the line and V1.3g proved height does not fix one, where this is a readout that
+was simply smaller than the band it is allowed to occupy. 700 — calendar's figure,
+well inside the ~886px band. **The general version stays deleted**: a window that
+grows to the band whenever its content wants more is a rule about every panel, and
+five panels legitimately author a height shorter than their content and scroll
+inside it.
+
+## 8. V2.1a's row, counted cold
 
 V2.1a's ROADMAP row was written by the previous session rather than authored at
 plan time — a first on this project, done because the missing-row failure is
@@ -300,3 +354,98 @@ Four things it did not name, all found by counting: `screenshot.gd`'s second
 list, `test_shell.gd`'s third and stale one, that the fold lives in
 `window_frame.gd` rather than in `ui_theme.gd`, and that the affordance it wanted
 to invent already existed and had simply never been themed.
+
+## 9. V2.1b — the sixteen, counted cold
+
+| Row claim | Counted |
+|---|---|
+| "the twenty-five panels" / "22 panels" | **19** `*_panel.gd`, three migrated at V2.1a, **sixteen left** |
+| "`budget_panel.gd` (625), `map_view.gd` (599), `calendar_panel.gd` (596) are the three that will not fit one session's context together" | **`map_view.gd` is not a panel** and builds no rows. The three largest remaining are `budget` 625, `law` 610, `government` 610 |
+| "Mechanical and high-volume" | The volume held — about 215 call sites over ~6 100 lines. **Mechanical did not**: see §10 |
+| Effort **Low** | **Medium.** Two kit changes and a re-composition the row does not name |
+| "What to challenge: whether this is one session or two" | **One.** One machine, one grammar, no new state. The split trigger was declared before the work and did not fire: exactly one panel needed re-composition rather than re-plumbing, and ordering fixed it |
+
+**Four panels had no private helper at all and were the ones that most needed
+migrating.** `law` (27 raw Labels), `calendar` (13), `election` (13) and `polling`
+(13) built every row inline, so V2.1a's *does this file still define `_row`?* check
+would have called all four clean forever. That is `check_names.sh`'s U6b failure and
+`EXPECTED_PANELS` at seven of fourteen **in a third place, inside the test written to
+end it** — a check that silently covers less than it appears to. The second assertion
+is what closes it: every `src/ui/*_panel.gd` must name `PanelKit`, and the file list
+is a directory scan rather than a sixth hand-written list of panel names.
+
+**Two shapes are deliberately NOT banned.** `government_panel._right()` and
+`settings_panel._add_row()` build a **cell inside somebody else's GridContainer** —
+the party table carries per-cell tooltips and colours, which `ledger()` cannot, and
+every kit primitive that draws prose autowraps, so a kit call in a fixed two-column
+grid reports a one-word minimum width and lets the column collapse. **The kit owns
+whole rows and whole tables; a cell inside another grid is the panel's own.**
+
+## 10. Two kit changes, both forced by a panel rather than chosen
+
+**`Tone.PLAIN` on `line()` means the panel's own body text.** Every tone resolved
+through `_variation(tone, UiTheme.CAPTION)`, so even PLAIN printed small and dim —
+harmless for V2.1a's three callers, which all wanted the DIM default, and wrong for
+the forty-five plain body lines `government_panel` and `nation_panel` build between
+them. A literal substitution would have silently shrunk and dimmed the two panels
+this project's record names most often. One word: `_variation(tone, "")`, which is
+`row()`'s existing convention arriving at the primitive that did not have it.
+
+**A figure's caption wraps.** `PanelKit.figure()`'s caption had no autowrap and
+`overview_panel._figure()`'s did, and that column is about **110px** wide — V1.5a
+already paid for a caption that could not wrap there by having two of them run to
+eight lines. A caption that cannot wrap does not overflow; it widens its column.
+
+**Two tables were RETAINED and are now rebuilt.** `polling_panel` held two
+dictionaries of live Label references and updated them cell by cell; `budget_panel`
+held a `_figures` dictionary of Label pairs. Both are `ledger()` calls now, and both
+had the V1.6f shape the ledger exists to kill — four and three columns each carrying
+their own `custom_minimum_size.x`. The budget one also kills a bug rather than a
+risk: `_set_figure()` **returned silently on a key with no `FIGURE_ROWS` entry**, so
+V1.3g's `_set_figure("deployments", …)` wrote into nothing for three sessions and
+V1.4a then documented a line that was not on the panel. An unknown key is a
+`push_error` now — V1.6d's rule pointed at the writer instead of at the reader.
+
+## 11. The fold contract is a test, and the panel that failed it could not be fixed by height
+
+V2.1a printed the table and failed only on the machinery, because turning it red
+with a panel still folded would have forced a redesign it was not scoped for. With
+ten panels declaring a verb, one failed:
+
+| panel | verb bottom | band | |
+|---|---|---|---|
+| politics | **865** | 826 | **BELOW THE FOLD** |
+| budget | 503 | 520 | reachable |
+| calendar | 658 | 700 | reachable |
+| diplomacy | 373 | 826 | reachable |
+| companies | 366 | 560 | reachable |
+| projects | 223 | 560 | reachable |
+| legislature | 153 | 560 | reachable |
+| bloc, campaign, events | — | — | no verb offered at month 1 |
+
+**Politics holds 945px of content against an 826px band, so no height exists that
+would have fixed it** — V1.3g's finding, stated as an arithmetic impossibility rather
+than as a rule of thumb. The verbs moved **above** the readout instead: Dissolve and
+Reassign now sit directly under the title, and the verb stays reachable whatever the
+body grows to, where 39px of headroom would have been one added row from failing
+again. Politics reads **73** against 826 now, and the report is an assertion —
+mutation-checked by putting the body back on top, which turns it red.
+
+**Three panels report no verb at month 1 and that is honest rather than a gap.**
+`bloc` has no proposal before the council, `campaign` is outside the run-up and
+`events` has nothing pending — the panel really has nothing to press. The screenshot
+pass reaches all three through `--bloc`, `--campaign` and `--event`, which set exactly
+those states, and all three clear the fold in the captured frame.
+
+## 12. What the twenty-second screenshot pass found
+
+**One bug, and it was the readout's** — `people_panel`'s clipped row, §7's last
+paragraph. No bug in the tool, which is the second clean sheet it has had (V1.6c was
+the first) and is reported as such rather than dressed up.
+
+What the pass confirmed rather than found: prose that was body text is still body
+text on Politics and Diplomacy (§10's first change, visible or it would not be), the
+budget's now/proposed columns are one measurement, the diary's month strip reads as
+tracked brass capitals, and Economy opens at 424px full rather than at 928px a third
+empty — §7's first number, on screen.
+
