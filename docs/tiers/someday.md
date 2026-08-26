@@ -40,10 +40,10 @@ tags:
 - Named austerity and stimulus packages
 - Sovereign wealth funds
 - Sovereign default as a terminal debt-spiral state
-- Energy mix policy with emissions and dependency consequences
+- ~~Energy mix policy with emissions and dependency consequences~~ **Lifted to [[v2|V2.8]] and [[v2|V2.9]]**, and recorded as a lift rather than left to look as though it was always scheduled. Plants are ordered and **placed by click**, which is the first verb in this game where the player writes a coordinate.
 - Housing market as its own crisis generator
 - Automation and productivity versus employment
-- Regional economic divergence
+- ~~Regional economic divergence~~ **Lifted to [[v2|V2.5]] and [[v2|V2.6]]**. It stops being a mechanic to build once national GDP is the sum of regions: divergence is then what the model does rather than a thing added to it.
 - Corporate lobbying shifting policy and party positions
 - Autonomous corporate decision-making — firms investing, relocating, hiring and firing on their own
 - Foreign direct investment
@@ -59,7 +59,7 @@ tags:
 - Cultural and educational exchange as soft power
 - Diaspora politics
 - Export controls
-- Resource dependency and who holds the supply
+- ~~Resource dependency and who holds the supply~~ **Lifted to [[v2|V2.7]] and [[v2|V2.8]]** — import dependency is what an energy mix is *for*, which is why that block reaches [[trade-model]] and not only the budget.
 - Supply chain disruption propagating through trade links
 - Bloc accession and withdrawal as multi-year domestic fights
 - UN-shaped international organisations, vetoes, resolutions

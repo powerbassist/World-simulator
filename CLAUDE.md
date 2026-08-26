@@ -138,6 +138,62 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
+[docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
+For the first time since the MVP a session opened with **no row to read, challenge or
+count** -- `someday.md` says of itself that it is *"a parking lot, not a backlog"* -- so
+deciding what follows V1 was the work rather than a preamble to it. The organising goal is
+that **the world becomes visible and located**: V1 built machines and every one of them is
+legible only as a number on a panel, so the country the player governs has no places in
+it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
+rewrite. **V2.1 (the shell, re-cut) is next**, on U5a's own precedent -- U5a moved the
+shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
+surfaces.
+
+**Two calls decide the tier's shape, and one of them was raised as a concern and
+reaffirmed.** A **city is to population what a firm is to sector output** -- a share with
+an unnamed residual, V1.4a's idiom, exact by construction. And the economy goes
+**bottom-up with regions**: national GDP becomes the sum of regions, a region is a main
+city plus the smaller cities under it. The cheaper version -- a ninth `economy.gd` addend
+holding a city partition, reading exactly 0.0 until something moves -- was offered and
+declined, and the record says so. What makes bottom-up affordable is that **bottom-up and
+bit-identical are not opposites**: exact aggregation plus regions initialised on the
+national trajectory means the re-run can still be bit-identical, and that is a claim V2.5
+must *measure* rather than assert.
+
+**One V1.8 call is reversed and only for a flagged class**: `interrupt: true` events pause
+the clock, and [docs/events-model.md](docs/events-model.md)'s argument for a non-modal
+Dispatches survives for every event without the flag, which is most of them.
+
+**The first row of the new tier was wrong within the hour, which is the discipline working
+rather than failing.** The plan booked Eurostat regional data as *"UK coverage ends around
+2020"* and wrote V1.5c's nearest-year fallback in as the remedy. Probed before any code:
+`nama_10r_2gdp` carries **zero** geo codes beginning `UK` in a dimension of 471 -- Eurostat
+dropped UK regions after withdrawal -- while **GISCO geometry carries all ten**, UK
+included at 41 NUTS 2 features. The map and the figures disagree about the roster and only
+the figures are short. Two import gotchas came out of the same probe and are in
+[docs/data-sources.md](docs/data-sources.md): `XXZZ` **Extra-Regio NUTS 2** carries GDP and
+has no geometry, and `FRY1`-`FRY5` are the overseas regions the existing bounding-box
+filter already drops. Both belong in the unnamed residual.
+
+**The stale-row count closed at three rather than four, and V2's own spine freed the
+fourth.** **Embassies** and **Foreign aid** (instance forty-nine) are a fifteenth and
+sixteenth entry in `data/diplomatic-actions/` on the existing `effects.relations` channel;
+**honeymoon and fatigue** is deferred *in code* at `opinion_constants.gd`'s
+`APPROVAL_NEUTRAL` since S5, the oldest open deferral on the project. **Birth rate and life
+expectancy is no longer an orphan**: `demography-model.md` §14 had already found the
+dataset objection wrong and identified the real blocker as V1.5b's finding that
+`population` enters no equation in `economy.gd` -- and V2.5 is exactly the change that
+makes a head count load-bearing, so it is a bullet of V2.6 arriving with the mechanism that
+reads it. `someday.md` also lost three lines to V2, struck through and marked as lifts so
+the parking lot does not re-propose them.
+
+**The per-session table carries rows for V2.1a-c, written BEFORE the sessions.** That table
+records the missing-row failure four times in almost identical words -- *"this table STILL
+carries no row for the session being planned"* -- so V2 breaks the pattern by writing the
+row first. The effort call still belongs to the receiving session: read the row cold, count
+the surfaces, challenge it.
+
 **U5a shipped the ruler's shell, U5b the world map and U5c its layers,
 interrupting the S-track queue on request.** The map is the background, not a
 tab; `dashboard.gd` and its rail are deleted; the panels are pinnable floating
