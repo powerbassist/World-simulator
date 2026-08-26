@@ -38,6 +38,9 @@ var _nation_id := ""
 var _title: Label
 var _body: VBoxContainer
 var _actions: VBoxContainer
+
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
 var _dirty := true
 var _close_button: Button
 
@@ -188,6 +191,7 @@ func _refresh() -> void:
 func _refresh_actions() -> void:
 	for child in _actions.get_children():
 		child.queue_free()
+	_primary = null
 
 	var player_id: String = _state.player_nation_id
 	if _nation_id == player_id:
@@ -349,6 +353,8 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 			float(action.effects.get("relations", 0.0)), _nation_id,
 		]
 		button.pressed.connect(_on_act.bind(action))
+		if _primary == null:
+			_primary = button
 	row.add_child(button)
 
 	return row
@@ -418,3 +424,13 @@ func _add_line(text: String) -> void:
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_body.add_child(label)
+
+
+## The control this panel exists to let the player press -- V2.1a's fold contract.
+##
+## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## to press simply does not implement this and never draws the fold mark. The
+## FIRST enabled action is the answer rather than the last, because a panel whose
+## first verb has scrolled off is already a panel whose verbs are hidden.
+func primary_action() -> Control:
+	return _primary if is_instance_valid(_primary) else null

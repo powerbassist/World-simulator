@@ -22,6 +22,7 @@ const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## Widest sector bar, in pixels. The bar is a share of GDP drawn to scale; the
 ## figure beside it is the one to read precisely.
@@ -68,8 +69,8 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation", 28)
 	root.add_child(columns)
 
-	_labour = _build_column(columns, "LABOUR")
-	_finances = _build_column(columns, "PUBLIC FINANCES")
+	_labour = PanelKit.section(columns, "LABOUR")
+	_finances = PanelKit.section(columns, "PUBLIC FINANCES")
 
 	root.add_child(HSeparator.new())
 
@@ -85,25 +86,6 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(spacer)
-
-
-func _build_column(parent: Control, heading: String) -> VBoxContainer:
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 6)
-	parent.add_child(col)
-
-	var label := Label.new()
-	label.text = heading
-	label.theme_type_variation = UiTheme.HEADING
-	col.add_child(label)
-
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 3)
-	col.add_child(body)
-	return body
-
-
 ## Takes the loader only for the nation's name -- the state carries an id, and
 ## a tab heading reading "ECONOMY — FRA" is a database row, not a heading.
 func setup(state, loader) -> void:
@@ -140,10 +122,10 @@ func _refresh() -> void:
 		ns.trend_annual_pct, _gap_sentence(Economy.output_gap_pct(ns))
 	]
 
-	_figure(_labour, "%.1f%%" % ns.unemployment_pct, "unemployment")
-	_caption(_labour, "Structural floor %.1f%%." % ns.structural_unemployment_pct)
+	PanelKit.figure(_labour, "%.1f%%" % ns.unemployment_pct, "unemployment")
+	PanelKit.line(_labour, "Structural floor %.1f%%." % ns.structural_unemployment_pct)
 	_trend(_labour, "unemployment_pct")
-	_caption(_labour, "Population %.1fM." % (ns.population / 1_000_000.0))
+	PanelKit.line(_labour, "Population %.1fM." % (ns.population / 1_000_000.0))
 
 	# V1.5b. Here rather than under GOVERNMENT on the overview beside the delivery
 	# lines, and the split is deliberate: a delivery figure is a fact about the
@@ -156,7 +138,7 @@ func _refresh() -> void:
 	# act on. Unlike the two lines there this one is NEVER silent -- every nation has
 	# an age structure from the first frame, where a delivery factor of exactly 1.0 is
 	# a game in which nothing has happened yet.
-	_caption(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
+	PanelKit.line(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
 		100.0 * Demography.dependency_ratio(ns),
 		100.0 * (Demography.dependency_ratio(ns) - Demography.start_dependency_ratio(ns)),
 	])
@@ -182,7 +164,7 @@ func _refresh() -> void:
 	# whole REACHABLE deviation at 0.145 points, so one decimal can express exactly two
 	# values of it. A format copied from a neighbouring row is a format chosen for a
 	# quantity an order of magnitude larger.
-	_caption(_labour, "Inflation %.1f%%, %+.2f since the start." % [
+	PanelKit.line(_labour, "Inflation %.1f%%, %+.2f since the start." % [
 		ns.inflation_pct, Inflation.inflation_deviation(ns),
 	])
 
@@ -197,7 +179,7 @@ func _refresh() -> void:
 	# number with no units the player can act on: _fill_defence()'s finding, third time.
 	if ns.unrest_pct > 0.05:
 		var striking: bool = ns.unrest_pct >= UnrestK.UNREST_THRESHOLD_PCT
-		_caption(_labour, "Unrest %.0f of 100. %s" % [
+		PanelKit.line(_labour, "Unrest %.0f of 100. %s" % [
 			ns.unrest_pct,
 			# Deliberately does not name the act. The label is the message card's --
 			# `protest` at this intensity, `strike` higher up -- and the screenshot pass
@@ -205,13 +187,13 @@ func _refresh() -> void:
 			# DEMONSTRATIONS. This line owns the LEVEL; the card owns the event.
 			"Organised action at %.0f." % UnrestK.UNREST_THRESHOLD_PCT if not striking
 				else "Past the point where the unions organise.",
-		], UiTheme.BAD_TEXT if striking else "")
+		], PanelKit.Tone.BAD if striking else PanelKit.Tone.DIM)
 
-	_figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
+	PanelKit.figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
 	_trend(_finances, "deficit_pct_gdp")
-	_caption(_finances, "Debt %.1f%% of GDP." % ns.debt_to_gdp_pct())
+	PanelKit.line(_finances, "Debt %.1f%% of GDP." % ns.debt_to_gdp_pct())
 	_trend(_finances, "debt_to_gdp_pct")
-	_caption(_finances, "Debt service costs %.1f%% of GDP." % ns.debt_service_pct_gdp)
+	PanelKit.line(_finances, "Debt service costs %.1f%% of GDP." % ns.debt_service_pct_gdp)
 
 	# V1.6c, directly under the debt-service line because that is the line it explains.
 	# The panel reads in the order the model computes in, which is the discipline the
@@ -238,9 +220,9 @@ func _refresh() -> void:
 	# unrest caption's rule: the threshold is named by the model rather than by a number
 	# invented for the panel.
 	var rating: String = Credit.rating(ns)
-	_caption(_finances, "Rated %s. Borrowing at %.2f%%, %+.2f on the anchor." % [
+	PanelKit.line(_finances, "Rated %s. Borrowing at %.2f%%, %+.2f on the anchor." % [
 		rating, Credit.yield_pct(ns), Credit.spread_pct(ns),
-	], UiTheme.BAD_TEXT if rating != _anchor_rating() else "")
+	], PanelKit.Tone.BAD if rating != _anchor_rating() else PanelKit.Tone.DIM)
 
 	_fill_sectors(ns)
 
@@ -308,31 +290,6 @@ func _fill_sectors(ns) -> void:
 
 
 # --- small builders ---------------------------------------------------------
-
-func _figure(body: VBoxContainer, value: String, caption: String) -> void:
-	var label := Label.new()
-	label.text = value
-	label.theme_type_variation = UiTheme.FIGURE
-	body.add_child(label)
-
-	var sub := Label.new()
-	sub.text = caption
-	sub.theme_type_variation = UiTheme.FIGURE_LABEL
-	body.add_child(sub)
-
-
-## V1.5c added the optional variation, for the one caption on this panel that carries a
-## state the player is losing to. Defaults to CAPTION, so every existing call is
-## unchanged; the colour comes from ui_theme.gd through theme_type_variation, never from
-## an override, which is what tests/test_ui_theme.gd enforces.
-func _caption(body: VBoxContainer, text: String, variation: String = "") -> void:
-	var label := Label.new()
-	label.text = text
-	label.theme_type_variation = UiTheme.CAPTION if variation == "" else variation
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	body.add_child(label)
-
-
 ## One watched figure's movement over the standard window, coloured by whether
 ## that direction is good news for this particular figure -- the sign alone does
 ## not say, which is why Trends.movements() carries the convention rather than
@@ -347,8 +304,9 @@ func _trend(body: VBoxContainer, key: String) -> void:
 		# comparison yet" on a first-month screen reads as a broken panel.
 		if is_nan(row["severity"]):
 			return
-		var label := Label.new()
-		label.text = "%s over %d months." % [Trends.change_text(float(row["change"])), Trends.TREND_MONTHS]
-		label.theme_type_variation = UiTheme.BAD_TEXT if float(row["severity"]) > 0.0 else UiTheme.GOOD_TEXT
-		body.add_child(label)
+		PanelKit.line(
+			body,
+			"%s over %d months." % [Trends.change_text(float(row["change"])), Trends.TREND_MONTHS],
+			PanelKit.Tone.BAD if float(row["severity"]) > 0.0 else PanelKit.Tone.GOOD,
+		)
 		return

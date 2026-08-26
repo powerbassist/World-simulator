@@ -136,7 +136,10 @@ func _collect_solid_containers(node: Node, path: String) -> Array:
 	return out
 
 
-const EXPECTED_PANELS: Array[String] = [
+## The seven surfaces U2 shipped as tabs. Kept as a FLOOR rather than as the
+## list -- V2.1a derives the real set from the registry, and this exists so a
+## registry that silently loses a panel still turns something red.
+const FOUNDING_PANELS: Array[String] = [
 	"overview", "economy", "budget", "politics", "society", "legislature", "diplomacy",
 ]
 
@@ -144,15 +147,24 @@ const EXPECTED_PANELS: Array[String] = [
 ## The rail's exclusivity rule, restated for windows: opening one closes the
 ## open unpinned one. test_window_frame.gd proves the manager does this on
 ## synthetic panels; this proves main.gd registered the real ones under it.
+##
+## V2.1a: iterates the REGISTRY rather than a hand-written list. The list this
+## replaced held seven of fourteen, so bloc, calendar, people, companies,
+## projects, campaign and dispatches -- every surface added since U5a -- were
+## never checked for registration, reachability or exclusivity at all. A check
+## that silently covers less than it appears to is `check_names.sh`'s U6b failure
+## and `run_tests.sh`'s `test_companies.gd` failure in a third place.
 func _check_every_panel_registered_and_reachable() -> void:
 	var windows = _main._windows
 	if not windows.open_ids().is_empty():
 		_fail("the game opens with a panel already showing: %s" % str(windows.open_ids()))
 
-	for id in EXPECTED_PANELS:
-		if windows.frame(id) == null:
-			_fail("no '%s' panel is registered" % id)
-			continue
+	var registered: Array = windows.panel_ids()
+	for id in FOUNDING_PANELS:
+		if not registered.has(id):
+			_fail("'%s' is no longer registered at all" % id)
+
+	for id in registered:
 		windows.open(id)
 		if not windows.is_open(id):
 			_fail("opening '%s' did not show it" % id)
@@ -220,7 +232,7 @@ func _check_action_bar_routes_to_windows() -> void:
 		for entry in bar._entries[cluster_id]:
 			listed.append(str(entry["id"]))
 
-	for id in EXPECTED_PANELS:
+	for id in _main._windows.panel_ids():
 		if not listed.has(id):
 			_fail("no cluster on the bottom bar opens '%s'" % id)
 	for id in listed:

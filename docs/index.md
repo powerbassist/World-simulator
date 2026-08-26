@@ -58,6 +58,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[upper-house-model]] — the second chamber: the assembly you used to have, voting
   without your whip
 - [[judiciary-model]] — the court, rule of law, and a lock with a key you can buy
+- [[panel-system]] — the row primitives twenty-five panels stopped writing for themselves, the sweep derived from the window registry, and the fold a headless harness turned out to be able to see
 - [[events-model]] — events as OCCASIONS rather than mechanics, why the schema is the law channel and not the union of ten, the deterministic hazard, and the accumulation bound that a per-decision band could not see
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties

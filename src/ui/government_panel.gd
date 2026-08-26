@@ -591,3 +591,20 @@ func _add_line(text: String) -> void:
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_body.add_child(label)
+
+
+## The control this panel exists to let the player press -- V2.1a's fold contract.
+##
+## Both verbs are built once in _ready() and live for the session, so unlike the
+## action panels there is nothing to re-find on a refresh. Dissolve first because
+## it is first in the layout and the rule is "the first verb", not "the most
+## important one" -- a panel whose FIRST verb has scrolled off is already a panel
+## whose verbs are hidden, and deciding which of two is more important is a
+## judgement this contract does not need to make.
+##
+## Falls through to Reassign where the nation's dissolution rule hides Dissolve
+## outright, which is six of the ten.
+func primary_action() -> Control:
+	if _dissolve_button != null and _dissolve_button.visible:
+		return _dissolve_button
+	return _reassign_button

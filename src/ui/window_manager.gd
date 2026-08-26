@@ -113,6 +113,44 @@ func frame(id: String):
 	return _frames.get(id, null)
 
 
+## Every registered panel id, in registration order. main.gd's call order is the
+## order a president spends a day in, so this is a meaningful order rather than
+## an arbitrary one.
+func panel_ids() -> Array:
+	return _frames.keys()
+
+
+## The panels themselves, unwrapped from their frames.
+func panels() -> Array:
+	var out: Array = []
+	for id in _frames.keys():
+		var content = _frames[id]._content
+		if content != null:
+			out.append(content)
+	return out
+
+
+## One repaint queued on every panel that reads GameState -- V2.1a.
+##
+## This replaces THREE hand-written lists of the same fourteen names:
+## main.gd's `_mark_all_dirty()`, tools/screenshot.gd's `_mark_panels_dirty()`
+## and, for a different job, tests/test_shell.gd's `EXPECTED_PANELS`. Each was
+## written by copying the last one, and the class of bug that produces is the
+## most repeated on this project's record: `_people_panel` was missing from
+## main.gd's from U6b until V1.4a found it, `_projects_panel` and
+## `_campaign_panel` were missing from screenshot.gd's from V1.6f and V1.7a until
+## V1.8 found them, and test_shell.gd's still holds seven of fourteen.
+##
+## register() has known the full set the whole time. Deriving the sweep from it
+## makes the omission STRUCTURALLY IMPOSSIBLE rather than remembered, which is
+## the standing preference the comment above the deleted list was already
+## reaching for when it predicted its own failure.
+func mark_all_dirty() -> void:
+	for panel in panels():
+		if panel.has_method("mark_dirty"):
+			panel.mark_dirty()
+
+
 func close_all() -> void:
 	for id in _frames.keys():
 		close(id)

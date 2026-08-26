@@ -60,6 +60,9 @@ var _scroll: ScrollContainer
 var _pin_bottom := false
 var _close_button: Button
 
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 560)
@@ -148,6 +151,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	_title.text = "Industry"
 
@@ -377,6 +381,8 @@ func _action_button(ns, company, action) -> Button:
 	button.text = action.action_name
 	button.tooltip_text = action.summary
 	button.pressed.connect(func(): _on_act(ns, company, action))
+	if _primary == null and not button.disabled:
+		_primary = button
 	return button
 
 
@@ -432,3 +438,17 @@ func _row(left: String, right: String) -> void:
 	row.add_child(value)
 
 	_body.add_child(row)
+
+## The control this panel exists to let the player press -- V2.1a's fold contract.
+##
+## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## to press simply does not implement this and never draws the fold mark. The
+## FIRST enabled action is the answer rather than the last, because a panel whose
+## first verb has scrolled off is already a panel whose verbs are hidden.
+##
+## The subsidy button rather than the investment one: V1.6e photographed this
+## panel at the top of a body whose three sector rows all read "No state
+## programme" while the ledger above them carried a live 0.654 % of GDP, and the
+## rows that were out of sight were the firm rows underneath.
+func primary_action() -> Control:
+	return _primary if is_instance_valid(_primary) else null

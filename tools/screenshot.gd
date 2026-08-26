@@ -57,19 +57,6 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Elections = preload("res://src/sim/elections.gd")
 
-## Window id -> main.gd member, for --blank. main.gd registers panels by id and
-## keeps them in underscore-private fields, and window_manager holds the frame
-## rather than the content -- so there is no lookup from one to the other and this
-## table is it. Only the five panels that build their own Close button are listed;
-## the other six have it hidden, which is the fix the audit points at.
-const PANEL_BY_WINDOW_ID := {
-	"diplomacy": "_nation_panel",
-	"bloc": "_bloc_panel",
-	"calendar": "_calendar_panel",
-	"companies": "_companies_panel",
-	"people": "_people_panel",
-}
-
 const OUT_DEFAULT := "user://screenshot.png"
 
 ## Enough frames for the theme to build, the raster to decode, and the first
@@ -970,22 +957,16 @@ func _tick_months(months: int) -> void:
 
 ## main.gd marks these on every month elapsed; a screenshot moves state without a
 ## month elapsing, so it has to say so itself.
+##
+## V2.1a deleted the fourteen-name list that used to be here. It was a copy of
+## main.gd's, made by copying it, and it drifted exactly as a copy does: V1.8
+## found `_projects_panel` and `_campaign_panel` absent since V1.6f and V1.7a, so
+## `--build` and `--campaign` had each been photographing a panel that refreshed
+## once on frame 1 -- the same bug V1.3g had already found in this tool and fixed
+## only for the panels that existed then. The registry knew all fourteen the
+## whole time.
 func _mark_panels_dirty() -> void:
-	for name in [
-		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
-		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
-		"_calendar_panel", "_people_panel", "_companies_panel",
-		# V1.8 found three missing from this list, and it is the V1.4a failure again:
-		# `_people_panel` was absent from main.gd's own _mark_all_dirty() from U6b until
-		# V1.4a noticed. `_projects_panel` and `_campaign_panel` have been absent HERE
-		# since V1.6f and V1.7a, so `--build` and `--campaign` were each photographing a
-		# panel that had refreshed once on frame 1 -- the same class of bug V1.3g found
-		# in this tool and fixed only for the panels that existed then.
-		"_projects_panel", "_campaign_panel", "_events_panel",
-	]:
-		var panel = _main.get(name)
-		if panel != null and panel.has_method("mark_dirty"):
-			panel.mark_dirty()
+	_main._windows.mark_all_dirty()
 
 
 func _impose_a_spread() -> void:
@@ -1241,10 +1222,15 @@ func _lose_the_office() -> void:
 func _blank_a_window() -> void:
 	if _main == null or _main._windows == null:
 		return
-	var panel = _main.get(PANEL_BY_WINDOW_ID.get(_blank, ""))
-	if panel == null:
+	# V2.1a deleted the id -> member table that used to sit at the top of this
+	# file. Its own comment said it existed because "there is no lookup from one to
+	# the other", and window_manager.gd grew one this session -- so a fifth
+	# hand-written list of panel names went with it.
+	var frame = _main._windows.frame(_blank)
+	if frame == null or frame._content == null:
 		printerr("--blank: no panel for window id %s" % _blank)
 		return
+	var panel = frame._content
 
 	_main._windows.open(_blank)
 	for node in _descendants(panel):

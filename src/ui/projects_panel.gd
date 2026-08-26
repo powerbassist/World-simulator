@@ -36,6 +36,7 @@ const ProjectsK = preload("res://src/sim/projects_constants.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 var _state
 var _loader
@@ -51,6 +52,9 @@ var _body: VBoxContainer
 var _scroll: ScrollContainer
 var _pin_bottom := false
 var _close_button: Button
+
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
 
 
 func _ready() -> void:
@@ -134,6 +138,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	_title.text = "Public Works"
 
@@ -160,11 +165,11 @@ func _refresh() -> void:
 ## last month has bought its full addend and delivered almost none of it -- printing
 ## the delivered figure alone would tell a player their motorway did nothing.
 func _build_ledger(ns) -> void:
-	_header("The public account")
-	_row("Construction bill", "%.3f %% of GDP" % ns.project_bill_pct_gdp)
-	_row("Trend bought", "%+.3f %%/yr" % ns.project_potential_target_pct)
+	PanelKit.heading(_body, "The public account")
+	PanelKit.row(_body, "Construction bill", "%.3f %% of GDP" % ns.project_bill_pct_gdp)
+	PanelKit.row(_body, "Trend bought", "%+.3f %%/yr" % ns.project_potential_target_pct)
 	if ns.project_potential_target_pct > 0.0:
-		_line(
+		PanelKit.line(_body,
 			"Bought, not yet delivered: completed works raise the trend the economy is"
 			+ " heading for, and it takes about five years to arrive."
 		)
@@ -172,9 +177,9 @@ func _build_ledger(ns) -> void:
 
 func _build_building(ns) -> void:
 	var live := Projects.building(ns)
-	_header("Under construction")
+	PanelKit.heading(_body, "Under construction")
 	if live.is_empty():
-		_line("Nothing is being built.")
+		PanelKit.line(_body, "Nothing is being built.")
 		return
 	for pid in live:
 		_build_live(ns, String(pid))
@@ -223,10 +228,10 @@ func _build_completed(ns) -> void:
 	var done := Projects.completed(ns)
 	if done.is_empty():
 		return
-	_header("Finished")
+	PanelKit.heading(_body, "Finished")
 	for pid in done:
 		var terms := Projects.terms_of(_loader, String(pid))
-		_row(
+		PanelKit.row(_body,
 			Projects.name_of(_loader, String(pid)),
 			"%+.3f %%/yr" % float(terms.get("potential_growth_pct", 0.0)),
 		)
@@ -236,7 +241,7 @@ func _build_completed(ns) -> void:
 ## is not here, because Projects.available() refuses it structurally -- so this list
 ## shrinks over a game and never offers the same motorway twice.
 func _build_available(ns) -> void:
-	_header("Available")
+	PanelKit.heading(_body, "Available")
 	var offered := 0
 	for action in Projects.available(_state, ns, _loader.project_actions):
 		var terms: Dictionary = action.effects.get("project", {})
@@ -249,12 +254,12 @@ func _build_available(ns) -> void:
 		# every project begun, or the `project_count` gate closed by what is already
 		# under way. A player who cannot tell which will think the lever is broken.
 		if Projects.building_count(ns) > 0:
-			_line(
+			PanelKit.line(_body,
 				"Nothing can begin while %d are under construction. Finish or abandon one."
 				% Projects.building_count(ns)
 			)
 		else:
-			_line("Every project has been built.")
+			PanelKit.line(_body, "Every project has been built.")
 
 
 func _build_offer(ns, action, terms: Dictionary) -> void:
@@ -278,6 +283,8 @@ func _button(ns, action) -> Button:
 	button.text = action.action_name
 	button.tooltip_text = action.summary
 	button.pressed.connect(func(): _on_act(ns, action))
+	if _primary == null and not button.disabled:
+		_primary = button
 	return button
 
 
@@ -293,33 +300,11 @@ func _on_act(ns, action) -> void:
 	acted.emit(before, action.action_name)
 
 
-func _header(text: String) -> void:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
-	_body.add_child(label)
-
-
-func _line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.theme_type_variation = UiTheme.CAPTION
-	_body.add_child(label)
-
-
-func _row(left: String, right: String) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var key := Label.new()
-	key.text = left
-	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	key.theme_type_variation = UiTheme.CAPTION
-	row.add_child(key)
-
-	var value := Label.new()
-	value.text = right
-	row.add_child(value)
-
-	_body.add_child(row)
+## The control this panel exists to let the player press -- V2.1a's fold contract.
+##
+## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## to press simply does not implement this and never draws the fold mark. The
+## FIRST enabled action is the answer rather than the last, because a panel whose
+## first verb has scrolled off is already a panel whose verbs are hidden.
+func primary_action() -> Control:
+	return _primary if is_instance_valid(_primary) else null

@@ -138,6 +138,58 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**V2.1a shipped the panel system, and the V2 tier has started.** `src/ui/panel_kit.gd`
+holds six static primitives -- `section`, `heading`, `line`, `row`, `figure`, `ledger` --
+plus `figure_text()` and `delta()`, and it is **not a base class**: all nineteen panels
+already `extends PanelContainer` and the dirty sweep is duck-typed, so a hierarchy would
+buy nothing this file's own "deliberately absent" list does not already refuse. Three
+shipped bugs are killed at the primitive: **a missing key is an em dash and an error,
+never a zero** (V1.6d printed a confident `0.00` against a live 31.80), `delta()` widens
+its own precision until the printed number is not a lie (V1.6b printed `+0.0` against a
+quantity whose whole range is 0.145 points), and `ledger()` is one grid so two value
+columns cannot size apart (V1.6f ran one off the window edge). `line()` uses
+**`AUTOWRAP_WORD`** and the choice was measured: the economy panel reports **928px under
+WORD and 2602px under WORD_SMART** for identical content at an identical width.
+
+**There were FIVE hand-written lists of panel names, not the one the row named**, and
+`WindowManager.register()` had known all fourteen the whole time. All five are deleted for
+`panel_ids()` / `panels()` / `mark_all_dirty()`, and `tests/test_panel_kit.gd` forbids a
+sixth: **no file under `src/ui/` or `tools/` may name three or more panels in one literal**,
+arrays and dictionaries both -- a scanner reading only arrays would have called
+`screenshot.gd` clean while it held the longest list of the five. The one nobody was
+looking for was `tests/test_shell.gd::EXPECTED_PANELS` at **seven of fourteen**: every
+surface added since U5a had never been checked for registration, reachability or cluster
+routing. That is `check_names.sh`'s U6b failure in a third place.
+
+**A FOLD IS MEASURABLE HEADLESS, and `tests/test_nation_panel.gd`'s standing claim that it
+is not describes that file rather than the engine.** The layout runs; what an autowrapping
+Label lacks is not time but a **width**, and its minimum-size cache **lags one
+invalidation** -- so a read in the same call as the write returns the answer for the
+previous width and a read one frame later is exact to the pixel. **Impose a width, let a
+frame pass, then read.** `tools/fold_probe.gd` carries the three tables.
+
+**The fold mark is TWO marks because one rule was doing two jobs.** "There is more below"
+is the scrollbar's, and `ui_theme.gd` had themed `ProgressBar` and never `VScrollBar`, so
+that affordance already existed and had been engine-default grey on navy since U5a. The
+brass hairline along the plate's **bottom** edge (`PLATE_FOLDED`, a separate variation, so
+`test_ui_theme.gd`'s top-edge-only assertion is untouched) fires **only when the panel's
+primary action is below the fold** -- what five screenshot passes actually paid for, and
+something a scrollbar structurally cannot say. A panel declares its verb with an optional
+`primary_action() -> Control`, duck-typed like `mark_dirty()`. **A stylebox's content
+margins ARE the scrollbar's width**: the first version had none and the bar rendered 0px
+wide, disappearing from every panel at once.
+
+**`fit_within()` spent the whole band on the SCROLL** and the title bar, separation and two
+content margins went on top, so **every window that filled its band overflowed it by ~50px**
+-- and `clamp_into_parent()` constrains only position, so the last row sat under the bottom
+furniture. Fixed with a second pass. A window is also sized from its content **as it was
+before the refresh that fills it**, since `open()` marks dirty and places in the same call.
+**What is NOT fixed is measured and handed to V2.1b**: `get_combined_minimum_size()` is
+wrong in both directions (`economy_panel` claims 928px for ~500px and opens a third empty,
+`people_panel` claims 520px and renders ~550 and clips four rows), and a grow-to-the-band
+heuristic was written and **deleted** because every rect the engine reports agrees the panel
+fits. Model: [docs/panel-system.md](docs/panel-system.md).
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
@@ -2336,7 +2388,7 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5 and U6 (a, b and c) are done. **THE V1 TIER IS COMPLETE. Nothing is left in it.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
@@ -2487,7 +2539,11 @@ come and say why.
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set
 per control with `theme_type_variation`. Never `add_theme_stylebox_override()` or
 `add_theme_font_size_override()` in a panel — `tests/test_ui_theme.gd` fails on
-it. Separation and margin constants stay at their call sites; they are layout.
+it. Separation and margin constants stay at their call sites; they are layout —
+**except the panel grammar's own**, which moved into `src/ui/panel_kit.gd` at
+V2.1a, because they are that grammar's layout rather than any one panel's. Since
+V2.1a a panel builds its rows out of `PanelKit` rather than its own helpers, and
+`tests/test_panel_kit.gd` fails if a migrated panel keeps a private copy.
 
 **U5a retuned that theme and moved the shell around it.** The palette is deep
 navy with a single **brass** accent, and the visual signature is one rule: a HUD

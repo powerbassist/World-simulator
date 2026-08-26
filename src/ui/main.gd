@@ -689,7 +689,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# the diary's whole memory, so this is what keeps a save file finite.
 	Calendar.tick_month(_state)
 
-	_mark_all_dirty()
+	_windows.mark_all_dirty()
 
 	# U5c. The map draws only on hover, pan, zoom and resize, which was complete
 	# while its colours came from a hash of the nation id and is not now: relations
@@ -1109,7 +1109,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 			_queue_effect(label, before)
 		_card_appointment(entry, label, ok)
 
-	_mark_all_dirty()
+	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
 	# nation_panel's own `acted` handler redraws.
@@ -1211,33 +1211,11 @@ func _on_load_requested(slot: String) -> void:
 	# unpaused, which is a rule the player cannot see and did not break.
 	_state.day = _clock.day
 
-	_mark_all_dirty()
+	_windows.mark_all_dirty()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
 	_update_top_bar()
-
-
-## Every panel that reads GameState, marked for one repaint. Extracted at U6a
-## from the three places that had grown identical copies of this list -- the
-## monthly tick, the load path, and now an appointment resolving on a day nothing
-## else happens. A fourth copy is how a panel gets forgotten, and tools/screenshot.gd
-## found exactly that class of bug one session ago.
-func _mark_all_dirty() -> void:
-	for panel in [
-		_overview_panel, _economy_panel, _budget_panel, _polling_panel,
-		_law_panel, _nation_panel, _government_panel, _bloc_panel, _calendar_panel,
-		# `_people_panel` was missing from this list from U6b until V1.4a found it,
-		# which is the failure the comment above predicted happening to the panel that
-		# was added in the same session the comment was written. It refreshed once, on
-		# the frame it was built, and then never again: a censure that changed the head
-		# of government, a reshuffle that changed a portfolio and every seat count after
-		# an election were all stale on it until the game was reloaded.
-		_people_panel, _companies_panel, _projects_panel, _campaign_panel,
-		_events_panel,
-	]:
-		if panel != null:
-			panel.mark_dirty()
 
 
 ## Everything on screen that is not inside a window. Kept under U2's name

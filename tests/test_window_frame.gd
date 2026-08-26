@@ -17,6 +17,7 @@ extends SceneTree
 ## so everything it builds is null. See docs/engine-decision.md.
 
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const BOUNDS := Vector2(1920, 1080)
 
@@ -24,6 +25,14 @@ var _failures: Array[String] = []
 var _manager
 var _contents := {}
 var _frame := 0
+
+## The fold checks run after the exclusivity ones and need frames of their own:
+## a Control reports the height it needed at its PREVIOUS width, so imposing a
+## size and reading the result in the same call measures the size before it.
+## V2.1a step 0's finding, and the reason this file has stages now.
+var _stage := 0
+var _tall: Control
+var _verb: Button
 
 
 ## The manager goes inside an explicitly-sized host rather than straight under
@@ -43,6 +52,20 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+
+	if _stage == 1:
+		_open_the_tall_panel()
+		_stage = 2
+		return false
+	if _stage == 2:
+		_check_the_fold_mark_fires()
+		_stage = 3
+		return false
+	if _stage == 3:
+		_check_the_fold_mark_clears()
+		_finish()
+		return false
+
 	if _frame < 2:
 		return false  # let _ready() run on the manager and everything under it
 
@@ -54,8 +77,73 @@ func _process(_delta: float) -> bool:
 	_check_z_order_follows_the_last_opened()
 	_check_drag_clamps_to_bounds()
 	_check_content_survives_close()
-	_finish()
+	_check_a_panel_with_no_verb_never_wears_the_fold_mark()
+	_stage = 1
 	return false
+
+
+## V2.1a's fold contract, on synthetic panels for this file's standing reason:
+## what is being checked is the frame's machinery, and a test that built the whole
+## game to check it would not fail for the right reason when it broke.
+##
+## The rule is that the mark says ONE thing -- the panel's primary action is not
+## on screen -- and not "there is more below", which is the scrollbar's job and is
+## why ui_theme.gd themes VScrollBar as of this session. So a panel that scrolls
+## and has no verb at all must never draw it.
+func _check_a_panel_with_no_verb_never_wears_the_fold_mark() -> void:
+	_close_everything()
+	_manager.open("alpha")
+	var frame = _manager.frame("alpha")
+	if frame.primary_action_below_fold():
+		_fail("a panel that implements no primary_action() reported a fold")
+	frame._process(0.0)
+	if frame.theme_type_variation != UiTheme.PLATE:
+		_fail("a panel with no verb wears '%s'" % frame.theme_type_variation)
+	_close_everything()
+
+
+## A panel taller than its window with its one button at the bottom, which is
+## nation_panel.gd at V1.3e and again at V1.3g, and government_panel.gd today with
+## twenty-one pixels to spare.
+func _open_the_tall_panel() -> void:
+	_tall = VBoxContainer.new()
+	var filler := Control.new()
+	filler.custom_minimum_size = Vector2(300, 1400)
+	_tall.add_child(filler)
+	_verb = Button.new()
+	_verb.text = "Act"
+	_tall.add_child(_verb)
+	_tall.set_script(load("res://tests/fixtures/panel_with_a_verb.gd"))
+	_tall.primary = _verb
+
+	_manager.register("tall", "TALL", _tall)
+	_manager.open("tall")
+	_manager.frame("tall").fit_within(Vector2(600, 400))
+
+
+func _check_the_fold_mark_fires() -> void:
+	var frame = _manager.frame("tall")
+
+	if not frame.primary_action_below_fold():
+		_fail("a verb 1400px down a 400px window did not report as below the fold")
+	frame._process(0.0)
+	if frame.theme_type_variation != UiTheme.PLATE_FOLDED:
+		_fail("the frame did not put on the fold mark, it wears '%s'" % frame.theme_type_variation)
+
+	# Scrolled here and read on the NEXT frame. The mark is about what is on screen
+	# now rather than about how tall the panel is -- which is the difference between
+	# it and a height assertion, and the reason V1.3g's "height alone does not fix a
+	# fold" does not apply to it.
+	frame._scroll.scroll_vertical = 4000
+
+
+func _check_the_fold_mark_clears() -> void:
+	var frame = _manager.frame("tall")
+	if frame.primary_action_below_fold():
+		_fail("scrolling the verb into view did not clear the fold")
+	frame._process(0.0)
+	if frame.theme_type_variation != UiTheme.PLATE:
+		_fail("the fold mark did not come off, the frame wears '%s'" % frame.theme_type_variation)
 
 
 func _register_three() -> void:
