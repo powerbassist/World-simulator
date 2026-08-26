@@ -17,6 +17,11 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Government = preload("res://src/sim/government.gd")
+
+## V1.1e, one direction only: this file tells the second chamber when to renew and
+## chambers.gd knows nothing about an election. Elections already reads
+## electoral_systems.gd, which chambers.gd also reads, so this adds no new leaf.
+const Chambers = preload("res://src/sim/chambers.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 ## V1.7a. The ONE edge this file gained, and it is a read: Campaign.turnout_of()
 ## replaces the raw election_constants.BLOC_TURNOUT lookup in vote_share() below.
@@ -131,6 +136,17 @@ static func _tick_nation(state, ns, loader) -> Array:
 		var result := resolve(ns, party_list, ns.election_system, ns.election_threshold_pct, "national", state.year, state.month)
 		ns.seats_by_party = result["seats"]
 		ns.last_election = result
+		# V1.1e. The second chamber renews PARTLY, and this is the only call site.
+		# After the new seats above and before Government.form() below, because
+		# Chambers.target_share() is a transform of the assembly the voters just
+		# elected -- not one of the ten upper houses is returned by the national
+		# electorate, so there is no second vote_share() to compute.
+		#
+		# THE LAG IS WHAT MAKES IT A CHECK: without it a landslide sweeps both
+		# chambers on one day and the upper house agrees by construction, where
+		# France's Senat is a check precisely because it survived 2012 and 2017.
+		# See docs/upper-house-model.md.
+		Chambers.renew(ns, party_list)
 		ns.next_election_year = state.year + nation.term_years
 		ns.next_election_month = state.month
 		# A new assembly is a clean slate: parties barred for censuring the last

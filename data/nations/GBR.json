@@ -43,6 +43,14 @@
         "notice_months": 1
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "House of Lords, appointed and hereditary rather than elected, with NO fixed statutory size -- 800 is a round figure for the current membership rather than a number the constitution sets, and it is authored as such. The Parliament Acts 1911 and 1949 reduce the Lords to a delaying power of about a year on a public bill and a month on a money bill. Both rows are suspensive because parliamentary sovereignty recognises no entrenched class of legislation for the second row to be absolute about -- the same doctrine that puts government.amendment.rule at 'ordinary_law'. UK Parliament, 'Parliament Acts'; 'Parliamentary sovereignty'.",
+      "chamber": "House of Lords",
+      "seats": 800,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
     "system": "constitutional_monarchy",
     "head_of_state": {
       "kind": "hereditary_monarch",
@@ -58,6 +66,11 @@
       "_referendum_note": "Parliament amends by ordinary Act under parliamentary sovereignty, and UK referendums are ad hoc, statutory and legally advisory rather than a constitutional ratification stage -- the 2011 AV referendum and the 2016 EU referendum were each authorised by their own Act. UK Parliament, 'Parliamentary sovereignty'.",
       "permits_system_change": true,
       "_permits_system_change_note": "The same parliamentary sovereignty that sets the amendment bar at an ordinary Act extends to the form of the state itself -- nothing in the UK's uncodified constitution entrenches the monarchy against Parliament."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "NO judicial review of primary legislation, and it is the same parliamentary sovereignty that puts government.amendment.rule at 'ordinary_law'. Under s.4 of the Human Rights Act 1998 the Supreme Court may declare an Act incompatible with the Convention, and s.4(6) says that declaration does not affect the Act's validity or continuing operation. UK Parliament, 'Parliamentary sovereignty'; Human Rights Act 1998, s.4.",
+      "review": "none"
     },
     "formation": {
       "_source": "authored",
@@ -134,6 +147,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 78.8
     }
   }
 }

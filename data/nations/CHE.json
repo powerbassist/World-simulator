@@ -36,6 +36,14 @@
         "notice_months": 1
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Standerat, 46 seats, two per canton and one per half-canton regardless of population -- Appenzell Innerrhoden's 16 000 people return one seat where Zurich's 1.5m return two, which is the most extreme small-place weighting in Europe. Art. 148: the two chambers are equal in every respect, so every act needs both and neither can be overridden. Bundesverfassung, Arts. 148, 150 and 156.",
+      "chamber": "Standerat",
+      "seats": 46,
+      "ordinary": "absolute",
+      "amendment": "absolute"
+    },
     "system": "directorial_republic",
     "head_of_state": {
       "_note": "The presidency of the Confederation is a one-year rotation among the seven Federal Councillors, held this year by the same Councillor already authored as leader -- one office, one name, no separate clock.",
@@ -52,6 +60,11 @@
       "_referendum_note": "Art. 195: every amendment requires a mandatory popular referendum, so there is no seats-only path at all -- which is why the rule above is referendum_required. The real double majority of the people AND the cantons is reduced to the popular majority alone: this game has no cantons. See docs/referendum-model.md.",
       "permits_system_change": false,
       "_permits_system_change_note": "Moot, the same way amendment_rule itself is moot: no transition content names directorial_republic in its `systems`, so this is never looked up. Set false rather than true because nothing in this game's model resolves what a Swiss system change would even mean without the referendum mechanic V1.1f/V1.7 defers."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "NO judicial review of federal statutes. Art. 190 Cst.: the Federal Supreme Court and the other authorities are required to APPLY federal acts and international law, which is a binding-force clause rather than a grant of review -- cantonal law is reviewable, federal law is not. Bundesverfassung, Art. 190.",
+      "review": "none"
     },
     "formation": {
       "_source": "authored",
@@ -128,6 +141,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 87.3
     }
   }
 }

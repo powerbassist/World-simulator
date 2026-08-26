@@ -43,6 +43,14 @@
         "notice_months": 1
       }
     },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senat, 348 seats, elected indirectly by about 162 000 grands electeurs who are overwhelmingly councillors of small communes -- which is why it has held a right-leaning majority almost continuously since 1958 without the country doing so. Ordinary bills shuttle (navette) and Art. 45 lets the Government give the Assembly the LAST WORD, so the Senate delays; Art. 89 requires a revision bill to pass both chambers in identical terms, so on an amendment it cannot be overridden at all. Legifrance, Constitution of 4 October 1958, Arts. 45 and 89; senat.fr, 'Comment sont elus les senateurs'.",
+      "chamber": "Senat",
+      "seats": 348,
+      "ordinary": "suspensive",
+      "amendment": "absolute"
+    },
     "system": "semi_presidential_republic",
     "head_of_state": {
       "kind": "executive_president",
@@ -58,6 +66,11 @@
       "_referendum_note": "Art. 89: after both chambers pass a revision bill in identical terms, the President chooses between a popular referendum and a 3/5 Congress at Versailles. The referendum half was declared not-modelled in the rule note above until V1.7c built it. Legifrance, Constitution of 4 October 1958, Title XVI.",
       "permits_system_change": false,
       "_permits_system_change_note": "Art. 89 §5: 'The republican form of government shall not be the object of an amendment.' No amendment may change France's system_id at all, not merely at a higher bar."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Conseil constitutionnel. Art. 61: an ordinary act may be referred BEFORE promulgation by the President, the Prime Minister, the president of either chamber, or sixty deputies or sixty senators -- which is what connects this check to the one above it, since the second chamber's remaining weapon once it has been overridden is to refer the bill. The 2023 pension reform reached it after an Art. 49.3 and was partly struck down, which is why src/sim/legislature.gd routes a forced bill through this gate too. Legifrance, Constitution of 4 October 1958, Arts. 61 and 62.",
+      "review": "constitutional"
     },
     "executive": {
       "_source": "authored",
@@ -145,6 +158,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 73.8
     }
   }
 }

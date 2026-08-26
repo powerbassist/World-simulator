@@ -127,6 +127,17 @@ curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
 for I in FP.CPI.TOTL.ZG SL.UEM.TOTL.ZS; do
   curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=1990%3A2024&per_page=1000"
 done
+
+# V1.1e. Rule of law, and the FIRST line here to carry `&source=3`. The Worldwide
+# Governance Indicators live on a database of their own and were re-coded: `RL.EST`,
+# which is what every citation of this series still names, now answers *"The indicator
+# was not found. It may have been deleted or archived."* The live code is
+# `GOV_WGI_RL.SC` -- the 0-100 SCORE rather than the -2.5..+2.5 estimate, because every
+# other stock this game keeps on a nation is already on a 0-100 scale, so the estimate
+# would be the one quantity in the game needing a conversion nobody could check.
+# Complete for all ten over the standard window, so it needs no nearest-year fallback.
+curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=1000&source=3"
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing

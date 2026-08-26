@@ -19,6 +19,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open laws
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open government
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --court --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -48,6 +51,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -135,6 +139,10 @@ var _pledge := false
 ## election and is therefore the slower of the two.
 var _referendum := false
 var _electoral := false
+## V1.1e. Two flags rather than one, because the two gates are two machines and a
+## single frame showing both would prove neither.
+var _senate := false
+var _court := false
 var _event := false
 var _event_answered := false
 
@@ -308,6 +316,10 @@ func _init() -> void:
 			_referendum = true
 		elif args[i] == "--electoral":
 			_electoral = true
+		elif args[i] == "--senate":
+			_senate = true
+		elif args[i] == "--court":
+			_court = true
 		elif args[i] == "--event":
 			_event = true
 		elif args[i] == "--event-answered":
@@ -412,6 +424,10 @@ func _apply_view() -> void:
 		_call_a_referendum()
 	if _electoral:
 		_reform_the_ballot()
+	if _senate:
+		_lose_the_senate()
+	if _court:
+		_lose_the_court()
 	if _event:
 		_put_a_crisis_on_the_desk()
 	if _event_answered:
@@ -1547,6 +1563,63 @@ func _call_a_referendum() -> void:
 		printerr("--referendum: the vote resolved before the frame was taken")
 
 
+
+## V1.1e. A bill the second chamber refuses, so the law panel's held block and the
+## result summary's second tally both have something live on them.
+##
+## Scrolled to the TOP, and the direction is the flag's own rather than the panel's --
+## docs/sector-model.md's V1.6e correction with docs/campaign-model.md's V1.7a addition.
+## A held bill gets its own block above the law list, the way a pending referendum does,
+## so the top is where this flag's claim is. `--court` below wants the same end for a
+## different reason: the result summary is up there too.
+func _lose_the_senate() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	var party_list: Array = _main._loader.parties.get(ns.id, [])
+
+	for law in Legislature.available(ns, _main._loader.laws):
+		if law.constitutional:
+			continue
+		if not bool(Legislature.resolve_vote(ns, party_list, law, false)["passed"]):
+			continue
+		if bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
+			continue
+		var result := Legislature.propose(state, _main._loader, law)
+		if not bool(result.get("held_by_upper", false)) and not bool(result.get("blocked_by_upper", false)):
+			printerr("--senate: %s was not refused: %s" % [law.id, result])
+			return
+		# A few months off the clock, so the held block reads a countdown that has
+		# actually counted rather than the number the content authored.
+		_tick_months(3)
+		return
+	printerr("--senate: no proposable law is carried by the Assembly and refused by the Senat")
+
+
+## V1.1e. A bill both chambers carry and the court strikes down. The one flag in this
+## file whose frame is meant to show the player something they could have READ in
+## advance: the forecast line on the law row says the court would strike it, and the
+## result summary then says it did, with the same two numbers.
+func _lose_the_court() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	var party_list: Array = _main._loader.parties.get(ns.id, [])
+
+	for law in Legislature.available(ns, _main._loader.laws):
+		if law.constitutional or not Judiciary.strikes_down(ns, law):
+			continue
+		if not bool(Legislature.resolve_vote(ns, party_list, law, false)["passed"]):
+			continue
+		if not bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
+			continue
+		var result := Legislature.propose(state, _main._loader, law)
+		if not bool(result.get("struck_down", false)):
+			printerr("--court: %s was not struck down: %s" % [law.id, result])
+		return
+	printerr("--court: no proposable law is carried by both chambers and struck by the court")
 ## V1.7c. The electoral system changed by an ORDINARY Act, and then an assembly actually
 ## elected under it -- which is the only thing that shows the change happened, because
 ## the register itself is one string.

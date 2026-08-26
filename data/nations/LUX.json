@@ -52,6 +52,11 @@
       "permits_system_change": true,
       "_permits_system_change_note": "The Grand Ducal succession is itself governed by ordinary constitutional revision (Art. 114), not entrenched against it."
     },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Cour constitutionnelle, which rules on the conformity of statutes with the Constitution on a reference from an ordinary court. Luxembourg is also the one nation on this roster with NO SECOND CHAMBER at all -- the Chambre des Deputes is unicameral, and the Conseil d'Etat's opposition formelle is an advisory opinion forcing a second vote rather than a chamber that votes. So its government.upper block is absent, which is the same field-exists-or-does-not shape government.executive already uses. Constitution du Grand-Duche de Luxembourg (2023 revision), Arts. 103 and 104; Conseil d'Etat, 'L'opposition formelle'.",
+      "review": "constitutional"
+    },
     "formation": {
       "_source": "authored",
       "_note": "Coalition government appointed by the Grand Duke; requires the confidence of the Chambre des Deputes on a simple majority.",
@@ -128,6 +133,9 @@
       "_from_year": 1990,
       "_to_year": 2024,
       "_excludes": []
+    },
+    "institutions": {
+      "rule_of_law_score": 87.3
     }
   }
 }
