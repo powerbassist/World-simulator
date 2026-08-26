@@ -24,6 +24,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Events = preload("res://src/sim/events.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const Tax = preload("res://src/sim/tax.gd")
@@ -423,6 +424,16 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
 		# time rather than rediscovered a sixth time.
 		Unrest.tick_month(sim)
+		# V1.8, in main.gd's slot immediately after Unrest, and required for the reason
+		# Unrest's own line above gives -- in the one case where it is not about a
+		# standing cost at all. A projection that held the event register frozen would
+		# never count a pending deadline DOWN, so a president looking at a twelve-month
+		# forecast while a crisis sits on their desk would see a future in which the
+		# default never arrives and saying nothing is free. It is also the only line in
+		# this loop that can fire something new: the hazard is a pure function of
+		# (nation, event, month), so the projection sees exactly the events the next
+		# twelve months deliver rather than an average of them.
+		Events.tick_month(sim, loader)
 		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
 		# below asks about Media gets the OPPOSITE answer -- so the two sit together
 		# deliberately, as the pair that shows what the test actually is.

@@ -166,8 +166,16 @@ static func _already_in_force(ns, law) -> bool:
 
 
 static func _preconditions_met(ns, law) -> bool:
-	for cond in law.preconditions:
-		var actual: float = _read_field(ns, cond["field"])
+	return preconditions_met(ns, law.preconditions)
+
+
+## Public since V1.8: an event carries the same {field, op, value} triple against the
+## same whitelist, so it evaluates them through the same function rather than through a
+## copy. The list legislature_constants.gd and read_field() already spell out twice does
+## not need a third reader spelling it out a fourth time.
+static func preconditions_met(ns, conditions: Array) -> bool:
+	for cond in conditions:
+		var actual: float = read_field(ns, cond["field"])
 		var value: float = cond["value"]
 		var ok: bool
 		match cond["op"]:
@@ -182,7 +190,7 @@ static func _preconditions_met(ns, law) -> bool:
 	return true
 
 
-static func _read_field(ns, field: String) -> float:
+static func read_field(ns, field: String) -> float:
 	match field:
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -362,8 +370,31 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 ## defaulted param would let a transition silently half-apply, the failure
 ## mode this project refuses throughout. See docs/transition-model.md.
 static func apply(state, ns, law, loader) -> void:
-	var effects: Dictionary = law.effects
+	apply_effects(state, ns, law.effects, loader)
 
+	if law.once:
+		ns.passed_law_ids[law.id] = true
+
+
+## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.
+##
+## Split out of apply() above and not otherwise changed. What made the split worth
+## taking rather than duplicating is the pair of things it protects: `bloc_offset`,
+## `regulation_burden`, `corruption`, `migration_stance`, `settlement_stance` and
+## `press_freedom` each have exactly ONE writer, and it is this function. A second
+## applier in src/sim/events.gd would have been a second writer of all six -- the
+## divergence the symmetric pair key exists to make impossible, at the width of a whole
+## block -- and the six clamps would then have to agree by inspection rather than by
+## being the same line of code.
+##
+## The APPROVAL PATH is what separates the two callers, and that is V1.4a/V1.4b's a/b
+## line one block later: a regulation reaches effects.company through an assembly
+## division and a subsidy reaches it directly, and here a law reaches these channels
+## through a vote where an event choice reaches them through a decision made under a
+## deadline. Same mechanism, different route, one writer.
+##
+## `loader` stays required for apply()'s own reason -- see its header.
+static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 	var pending := {}
 	if effects.has("tax_rates_pct"):
 		var rates := {}
@@ -507,9 +538,6 @@ static func apply(state, ns, law, loader) -> void:
 			ns.lose_condition = system.lose_condition if system != null else ns.lose_condition
 		if inst.has("head_of_state"):
 			_apply_head_of_state(state, ns, loader, inst["head_of_state"])
-
-	if law.once:
-		ns.passed_law_ids[law.id] = true
 
 
 ## Writes a system transition's new head of state. `hos` is law.gd's already-

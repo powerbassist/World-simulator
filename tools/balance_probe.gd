@@ -46,6 +46,7 @@ const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -492,6 +493,20 @@ const REFERENDUM_REGIMES := {
 	"managed_reforms_the_ballot": {"budget": REGIMES["managed"], "referendum_month": -1, "electoral_month": 6},
 }
 
+## V1.8. THE ONLY THING THAT VARIES ACROSS THESE THREE IS WHETHER THE PLAYER OPENS
+## THE WINDOW, which is what docs/pledge-model.md's own regime pair failed to hold: it
+## differed in two things at once and needed a third regime to separate them. Here the
+## budget is identical, the events are identical, and the arrival month of every one of
+## them is identical -- the hazard is a pure function of (nation, event, absolute month),
+## so an answering run and a defaulting run face the SAME crises on the SAME dates.
+##
+## `managed` itself is the control and needs no entry: a regime that never answers is a
+## regime that takes every default, which is exactly what the base run already does.
+const EVENT_REGIMES := {
+	"managed_answers_softly": {"budget": REGIMES["managed"], "answer": "soft"},
+	"managed_answers_hard": {"budget": REGIMES["managed"], "answer": "hard"},
+}
+
 const PLEDGE_REGIMES := {
 	"managed_keeps_its_word": {
 		"budget": REGIMES["managed"],
@@ -647,6 +662,13 @@ func _init() -> void:
 				-1, -1, -1, int(regime["pledge_month"])
 			)
 
+		for name in EVENT_REGIMES.keys():
+			var regime: Dictionary = EVENT_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, -1, -1, String(regime["answer"])
+			)
+
 		for name in REFERENDUM_REGIMES.keys():
 			var regime: Dictionary = REFERENDUM_REGIMES[name]
 			_run(
@@ -685,7 +707,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "") -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -792,6 +814,20 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		Society.tick_month(state)
 		Unrest.tick_month(state)
 		peak_unrest = maxf(peak_unrest, float(ns.unrest_pct))
+		# V1.8, in main.gd's slot. Runs for EVERY regime rather than only the two that
+		# answer, for the reason Projects' and Campaign's lines above give -- and this is
+		# the first addition since V1.5a that is NOT inert for the rest: an event fires
+		# on the state a budget produces, and its default applies itself whether or not
+		# anybody is listening. The re-run was predicted not to be bit-identical for
+		# exactly that reason, and tools/events_probe.gd table E0c named which regimes
+		# would move before it was run.
+		Events.tick_month(state, loader)
+		# V1.8. Answered ON ARRIVAL rather than at some month before the deadline, and
+		# that is deliberate: tests/test_events.gd pins that answering early and answering
+		# late cost the same, so a regime that waited would differ from this one in
+		# nothing except how long the card sat there.
+		if answer_events != "":
+			_answer_event(state, loader, ns, answer_events, regime_name, year, month)
 		Cabinet.tick_month(state, loader)
 
 		if i + 1 == agreement_month:
@@ -958,6 +994,47 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 ## reassignment available, and the one most likely to short the stripped
 ## party below its d'Hondt entitlement. Prints what it did so the trajectory
 ## printed afterward is traceable to a concrete decision.
+## V1.8. Answer whatever is on the desk, softly or hard, and print what was chosen.
+##
+## `soft` takes the non-default choice with the largest size-weighted `bloc_offset` and
+## `hard` takes the smallest. THE FIRST VERSION OF THIS FUNCTION CALLED THEM `best` AND
+## `worst`, AND THE RUN REFUTED THE NAMES: over fourteen years the SOFT run ends 0.4
+## points of approval BELOW the hard one and 0.33 points of deficit worse, because the
+## choices that buy the most approval on the day are the ones that concede money -- a
+## settlement, an underwriting, a spending line -- and the books are something the
+## electorate weighs too.
+##
+## That is docs/campaign-model.md's own finding in a new place: maximising the thing you
+## can see at the moment of the decision is not the same as being better off a term
+## later. Both still beat the control, which is the property the deadline needs.
+func _answer_event(state, loader, ns, mode: String, regime_name: String, year: int, month: int) -> void:
+	if not Events.is_pending(ns):
+		return
+	var ev = Events.pending_event(ns, loader)
+	if ev == null:
+		return
+	var pick: Dictionary = {}
+	var pick_score := 0.0
+	for c in ev.choices:
+		if bool(c["is_default"]):
+			continue
+		var score := 0.0
+		var terms: Dictionary = (c["effects"] as Dictionary).get("bloc_offset", {})
+		for bloc in terms:
+			score += float(K.BLOC_SIZE.get(bloc, 0.0)) * float(terms[bloc])
+		if pick.is_empty() or (score > pick_score if mode == "soft" else score < pick_score):
+			pick = c
+			pick_score = score
+	if pick.is_empty():
+		return
+	var record := Events.choose(state, loader, String(pick["id"]))
+	if record.is_empty():
+		return
+	print("  %d-%02d %s: '%s' -> %s" % [
+		year, month, regime_name, ev.event_name, String(pick["label"]),
+	])
+
+
 func _short_the_largest_partner(state, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
 	var by_id := {}
 	for p in party_list:

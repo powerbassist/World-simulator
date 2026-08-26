@@ -45,6 +45,7 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
@@ -407,6 +408,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		Demography.tick_month(state)
 		Society.tick_month(state)
 		Unrest.tick_month(state)
+		# V1.8, in main.gd's slot. Runs for EVERY regime rather than only the ones that
+		# answer an event, for the reason Projects' and Campaign's lines give: a tick
+		# that only ever executes under the regime designed to exercise it is a tick
+		# nobody has tested. Unlike those two it is NOT inert for the others -- an event
+		# fires on the state a budget produces, and a default applies itself.
+		Events.tick_month(state, _loader)
 		Cabinet.tick_month(state, _loader)
 
 		if i + 1 == dissolve_at_month:

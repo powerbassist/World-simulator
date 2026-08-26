@@ -177,6 +177,24 @@ A passed law's effects are additive, persistent state on `NationState`,
 clamped in `legislature_constants.gd`. Every channel is one extra term folded
 into a formula that already exists — nothing here is a new equation.
 
+> [!note] Since V1.8 the dispatch is `apply_effects()` and a law is not its only caller
+> `Legislature.apply()` now calls `apply_effects(state, ns, effects, loader)`, split out
+> unchanged so an **event choice** reaches the same channels. What made the split worth
+> taking rather than duplicating is what it protects: `bloc_offset`,
+> `regulation_burden`, `corruption`, `migration_stance`, `settlement_stance` and
+> `press_freedom` each have exactly ONE writer, and it is that function. A second applier
+> in `src/sim/events.gd` would have been a second writer of all six at once, with the six
+> clamps agreeing by inspection rather than by being the same line of code.
+>
+> **The approval path is what separates the two callers**, and that is V1.4a/V1.4b's a/b
+> line one block later: a law reaches these channels through a vote, an event choice
+> through a decision made under a deadline. Same mechanism, different route, one writer.
+> `effects.institutional` stays in `apply()` and is refused on an event choice by name —
+> it is "Emergency powers", tiered Someday. `extract_preconditions()` and `read_field()`
+> went public in the same commit, so an event evaluates the same triple against the same
+> whitelist rather than against a third copy of a list this file already records as
+> existing twice. See [[events-model]] §4.
+
 | Channel | Field | Read by | Why |
 |---|---|---|---|
 | Budget levers | *(none — routed through `Budget.commit()`)* | `budget.gd:commit()` | A law that moves a tax rate or spending line **is** a budget change. Routing it through the same command the budget screen uses gets the demand impulse, the erosion curve and the matching opinion issue for free, and makes double-counting structurally impossible — a law cannot move a lever *and* carry its own separate demand-impulse term, because there is only one path a lever change can take. |

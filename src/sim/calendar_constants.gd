@@ -83,3 +83,14 @@ const FIXED_PROJECT := "project_completes"
 ## file still preloads nothing. src/sim/calendar.gd does not know what a referendum
 ## asks, what it costs or whether it can be called off -- only when the country votes.
 const FIXED_REFERENDUM := "referendum"
+
+## V1.8. The deadline on an event the player has not answered, and it is here for
+## FIXED_PROJECT's and FIXED_REFERENDUM's reason a third time: the register counts
+## MONTHS REMAINING, so this file reads a plain field and still preloads nothing. It is
+## also the only row on this list the player did not cause AND cannot postpone -- a
+## cooldown expires whether or not they look, and a council vote happens to everybody,
+## but this one has a default waiting behind it that answers in their name.
+##
+## The register carries the event's own display NAME rather than only its id, copied in
+## at announcement, which is what lets this row be drawn without a loader.
+const FIXED_EVENT := "event_deadline"

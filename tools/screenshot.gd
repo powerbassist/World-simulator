@@ -41,6 +41,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Events = preload("res://src/sim/events.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
@@ -134,6 +135,8 @@ var _pledge := false
 ## election and is therefore the slower of the two.
 var _referendum := false
 var _electoral := false
+var _event := false
+var _event_answered := false
 
 var _open := ""
 
@@ -305,6 +308,10 @@ func _init() -> void:
 			_referendum = true
 		elif args[i] == "--electoral":
 			_electoral = true
+		elif args[i] == "--event":
+			_event = true
+		elif args[i] == "--event-answered":
+			_event_answered = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--defeated":
@@ -405,6 +412,10 @@ func _apply_view() -> void:
 		_call_a_referendum()
 	if _electoral:
 		_reform_the_ballot()
+	if _event:
+		_put_a_crisis_on_the_desk()
+	if _event_answered:
+		_answer_a_crisis()
 	if _nation != "":
 		# Through main.gd's own click path rather than by poking the panel, so the
 		# frame captures what a click produces.
@@ -948,6 +959,13 @@ func _mark_panels_dirty() -> void:
 		"_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel",
 		"_calendar_panel", "_people_panel", "_companies_panel",
+		# V1.8 found three missing from this list, and it is the V1.4a failure again:
+		# `_people_panel` was absent from main.gd's own _mark_all_dirty() from U6b until
+		# V1.4a noticed. `_projects_panel` and `_campaign_panel` have been absent HERE
+		# since V1.6f and V1.7a, so `--build` and `--campaign` were each photographing a
+		# panel that had refreshed once on frame 1 -- the same class of bug V1.3g found
+		# in this tool and fixed only for the panels that existed then.
+		"_projects_panel", "_campaign_panel", "_events_panel",
 	]:
 		var panel = _main.get(name)
 		if panel != null and panel.has_method("mark_dirty"):
@@ -1568,3 +1586,86 @@ func _reform_the_ballot() -> void:
 	var to_vote: int = (ns.next_election_year - state.year) * 12 + (ns.next_election_month - state.month) + 1
 	if to_vote > 0:
 		_tick_months(to_vote)
+
+## V1.8. Put a crisis on the desk and stop with the deadline still running.
+##
+## ANNOUNCED DIRECTLY rather than waited for, and that is the honest way round: the
+## hazard is a pure function of (nation, event, absolute month), so waiting for one to
+## draw would mean ticking an unknown number of months and photographing whatever the
+## hash happened to pick. Every other state-mutating flag in this file does the same --
+## `--coerce` imposes a measure rather than waiting for the agenda to.
+##
+## The event chosen is the one with a SUBJECT, because the subject line is the half of
+## this panel that nothing else in the game does: `subject_office` is content, the person
+## is resolved from U6b's register at card time, and a frame with no name in it would
+## prove nothing about that path.
+const HORIZON_MONTHS := 48
+
+
+func _put_a_crisis_on_the_desk() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+
+	# TICKED UNTIL ONE ARRIVES RATHER THAN ANNOUNCED DIRECTLY, and the first version of
+	# this flag did announce: it wrote the register and then ticked a month, which put a
+	# correct panel on screen and left THE MESSAGE CARD UNEXERCISED -- main.gd only cards
+	# an event that was absent before the tick and present after it, so a pre-announced
+	# one is already pending when _card_events() looks. The frame showed an empty column
+	# beside a live crisis, which is precisely the half of this surface U5a built the
+	# column for. Waiting is affordable because the hazard is deterministic: the first
+	# event of a new game arrives on a fixed month, so this loop is not a search.
+	for _m in range(HORIZON_MONTHS):
+		_tick_months(1)
+		if Events.is_pending(ns):
+			break
+	if not Events.is_pending(ns):
+		printerr("--event: no event arrived inside %d months" % HORIZON_MONTHS)
+		return
+	var ev = Events.pending_event(ns, _main._loader)
+	if ev != null and not ev.has_subject():
+		# Not a failure -- it is a fact about which event drew first, and the subject
+		# line is the half of this panel nothing else in the game does, so a frame
+		# without one proves less.
+		printerr("--event: '%s' names no subject, so the frame shows no person" % ev.id)
+
+
+## The other end of the same panel, and it wants the opposite scroll.
+##
+## V1.6e's screenshot correction says to scroll to where the flag's own claim is, and
+## V1.7b sharpened it to a direction PER FLAG rather than per panel. This is that a
+## second time on one surface: the pending block is at the top and the ledger is at the
+## bottom, so `--event` opens on the question and `--event-answered` opens on the record.
+##
+## Answers the crisis rather than letting it lapse, and then lets a SECOND one lapse, so
+## the ledger shows both kinds of row -- a decision the player made and a decision the
+## clock made for them. A frame of one kind would leave the "No answer given" styling as
+## dead code, which is exactly what U6a's own pass caught on the diary strip.
+func _answer_a_crisis() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	if _main._loader.events.size() < 2:
+		printerr("--event-answered: fewer than two events in the content")
+		return
+
+	var first = _main._loader.events[0]
+	Events.announce(ns, first)
+	var answered := ""
+	for c in first.choices:
+		if not bool(c["is_default"]):
+			answered = String(c["id"])
+			break
+	Events.choose(state, _main._loader, answered)
+
+	var second = _main._loader.events[1]
+	ns.event_quiet_months = 0
+	Events.announce(ns, second)
+	_tick_months(second.respond_months + 1)
+
+	if ns.event_history.size() < 2:
+		printerr("--event-answered: the ledger holds %d rows, expected two" % ns.event_history.size())
+	if _main._events_panel != null:
+		_main._events_panel.scroll_to_bottom()

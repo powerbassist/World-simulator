@@ -224,6 +224,21 @@ error. Narrowed to the pair, which is exactly what V1.5b did to its own refusal 
 `labour.json`'s sake. **This turns an existing red green and is argued rather than
 slipped in.**
 
+### V1.8 gave the stance a SECOND ROUTE, and it is a split rather than a second writer
+
+`data/events/`'s `union_ultimatum` reaches `society.settlement` **directly**, through an
+event choice made under a deadline, where a settlement law reaches the same register
+through an assembly division. That is V1.4a/V1.4b's a/b line in a third register: the
+approval path differs and the mechanism does not, and there is still exactly one writer —
+`Legislature.apply_effects()`, which both callers go through.
+
+It also closes something this section left open. A settlement law is what makes unrest
+*closable*, but it is only available once the grievance has already crossed
+`PRECONDITION_FIELDS`' bar, and it has to be proposed and carried. The event is the
+grievance asking the question directly, with a **default that makes it worse** — the
+`hold_firm` choice carries a negative stance — so a president who ignores the union's
+deadline is not merely failing to settle, they are hardening. See [[events-model]] §7.
+
 ### And there is no fourth anti-double-count, which is the more interesting half
 
 `society.settlement` + `structural_unemployment_pct` was written and then deleted, once it

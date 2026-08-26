@@ -1,0 +1,187 @@
+{
+  "_note": "V1.8's occasions, on the effects channel src/core/law.gd shares with them -- the SEVENTH directory on data/diplomatic-actions/'s shape and the last content type the V1 tier adds. A GLOBAL FLAT LIST, on data/pledges/' argument: an event names no place, no firm and no institution, and its subject is an OFFICE all ten nations fill, so none of these is true of France in a way it is not true of Germany. U6c's correction does not apply -- what made per-project geography per-NATION was a coordinate, and there is no coordinate on this channel.",
+  "_scandal_note": "THE ONLY V1-TIERED MECHANIC SECTION 8 OWNS IS THIS ONE. Counting docs/brainstorm/mechanics-*.md's tier column found section 8's own two bullets tiered nowhere at all, and every event-shaped mechanic in those four tables tiered Someday -- Terrorism, Pandemics and global crises, Emergency powers, the housing market. Scandals came here from section 5 at V1.5d, on that box's own argument, and they arrive with a framing channel already built: docs/media-model.md's per-bloc salience gain is what decides who hears about it.",
+  "_subject_note": "Each of these names an OFFICE and never a person. U6b's rule verbatim -- a law names an office, the nation's own government block names who holds it -- so nothing in src/sim/ ever touches a person id and src/ui/main.gd resolves the label at card time. It is also why the same scandal reads correctly in a republic and in a monarchy.",
+  "_default_note": "Exactly one choice on each event carries `default: true`, and it is what happens when the player says nothing. That is required rather than inferred from the ordering, because it is the whole of *forces a response under time pressure*: the deadline is only pressure if the silence costs something. Every default here is strictly worse than at least one alternative on at least one axis, measured on a live path by tools/events_probe.gd table E3 rather than asserted from these numbers -- docs/pledge-model.md's own dominance test was the wrong test because the deciding quantity was nowhere in the content.",
+  "events": [
+    {
+      "id": "procurement_scandal",
+      "name": "The procurement files",
+      "summary": "A newspaper has the ministry's contract file. The awards went to two firms, and one of them wrote the specification.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.03,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "dismiss",
+          "label": "Dismiss the minister",
+          "summary": "Decisive, and it disowns your own side. The city reads it as cleaning house; the countryside and business read it as feeding a minister to the press.",
+          "effects": {
+            "society": {
+              "corruption": -0.09
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.039,
+              "workers": 0.008,
+              "business": -0.056,
+              "rural": -0.039
+            }
+          }
+        },
+        {
+          "id": "inquiry",
+          "label": "Order an inquiry",
+          "summary": "Slower, milder and it costs nobody anything today. It also cleans up a good deal less.",
+          "effects": {
+            "society": {
+              "corruption": -0.04
+            },
+            "bloc_offset": {
+              "urban": 0.017,
+              "pensioners": 0.02,
+              "rural": 0.014,
+              "workers": -0.02,
+              "students": -0.011
+            }
+          }
+        },
+        {
+          "id": "stonewall",
+          "label": "Refuse to comment",
+          "summary": "The file does not go away and neither does the story.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.039,
+              "students": -0.036,
+              "workers": -0.008,
+              "business": 0.028,
+              "rural": 0.017
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "honours_scandal",
+      "name": "The honours list",
+      "summary": "Two names on the head of state's honours list gave money to the governing party. Nobody says the two facts are connected, and nobody says they are not.",
+      "subject_office": "head_of_state",
+      "likelihood": 0.02,
+      "respond_months": 2,
+      "once": false,
+      "choices": [
+        {
+          "id": "distance",
+          "label": "Distance the government",
+          "summary": "Let the press have it. It is not your list and you say so.",
+          "effects": {
+            "society": {
+              "press_freedom": 0.05,
+              "corruption": -0.05
+            },
+            "bloc_offset": {
+              "urban": 0.039,
+              "students": 0.034,
+              "rural": -0.042,
+              "pensioners": -0.014,
+              "business": -0.011
+            }
+          }
+        },
+        {
+          "id": "defend",
+          "label": "Defend the office",
+          "summary": "The office is above this. Saying so buys you the people who agree and costs you the people who do not.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.042,
+              "pensioners": 0.028,
+              "business": 0.022,
+              "workers": -0.014,
+              "urban": -0.045,
+              "students": -0.039
+            },
+            "society": {
+              "corruption": 0.04
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Let it pass",
+          "summary": "It does not pass.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.031,
+              "students": -0.028,
+              "rural": -0.017,
+              "pensioners": 0.011,
+              "business": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "broadcast_charter",
+      "name": "The broadcasting charter",
+      "summary": "The state broadcaster's charter is up. Its newsroom has spent the year on your government, and the terms of the renewal are yours to set.",
+      "likelihood": 0.035,
+      "respond_months": 4,
+      "once": true,
+      "choices": [
+        {
+          "id": "tighten",
+          "label": "Tighten the terms",
+          "summary": "A quieter newsroom, and everybody notices that it went quiet.",
+          "effects": {
+            "society": {
+              "press_freedom": -0.12
+            },
+            "bloc_offset": {
+              "rural": 0.039,
+              "pensioners": 0.028,
+              "urban": -0.048,
+              "students": -0.045
+            }
+          }
+        },
+        {
+          "id": "guarantee",
+          "label": "Guarantee its independence",
+          "summary": "You will be covered as badly as before and you will be seen to have allowed it.",
+          "effects": {
+            "society": {
+              "press_freedom": 0.1
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.042,
+              "rural": -0.034,
+              "business": -0.045
+            }
+          }
+        },
+        {
+          "id": "roll_over",
+          "label": "Renew it unchanged",
+          "summary": "Nobody thanks a government for a decision it did not make.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.025,
+              "students": -0.022,
+              "workers": -0.011,
+              "business": 0.008,
+              "rural": 0.014
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

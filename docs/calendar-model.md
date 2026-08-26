@@ -320,6 +320,23 @@ books: a dispatch that only ever executes under the regime designed to exercise 
 is not a dispatch anybody has tested. With an empty register it is one
 `is_empty()` check, which is why the thirteen are unchanged.
 
+## 9b. The fourth row added without a preload, and it is the first the player cannot postpone
+
+V1.6f added a project's completion, V1.7c a referendum's polling day, and V1.8 an event's
+**deadline** — each for the same reason, and by now it is a property rather than a run of
+luck: every one of those registers counts **months remaining**, which is the idiom every
+countdown `fixed_dates()` already reads uses, so the row is one more plain-field read and
+this file still preloads nothing but its own constants. `tests/test_events.gd` re-asserts
+that, as `tests/test_projects.gd` and `tests/test_referendum.gd` do.
+
+The event row is different in one way worth naming. Everything else on the list is a
+constitutional deadline, an institution's own calendar, or the expiry of an act the player
+already took — all of which happen *to* the schedule. An event deadline has a **default
+waiting behind it that answers in the player's name**, so it is the only row here that is
+a decision the clock will make if the diary is not read. The register also carries the
+event's own display NAME, copied in at announcement, which makes it the one row that
+needs no lookup at all. See [[events-model]] §10.
+
 ## 10. Where it sits
 
 ```

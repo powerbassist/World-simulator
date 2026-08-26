@@ -53,6 +53,7 @@ const FIXED_LABEL := {
 	K.FIXED_COOLDOWN: "Available again",
 	K.FIXED_PROJECT: "Opens",
 	K.FIXED_REFERENDUM: "Referendum",
+	K.FIXED_EVENT: "Answer by",
 }
 
 const KIND_LABEL := {
@@ -370,6 +371,10 @@ func _fixed_text(entry: Dictionary) -> String:
 		return "%s: %s" % [label, Projects.name_of(_loader, ref)]
 	if kind == K.FIXED_REFERENDUM:
 		return "%s: %s" % [label, _law_name(ref)]
+	# The event register carries its own name, so this row needs no lookup at all --
+	# the one kind on this list that does not.
+	if kind == K.FIXED_EVENT:
+		return "%s: %s" % [label, ref]
 	return "%s: %s" % [label, ref]
 
 
