@@ -14,12 +14,12 @@ config/name="Nation Simulator"
 run/main_scene="res://src/ui/menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
+
 [display]
 
-; The HUD is designed against a fixed 1920x1080 base and stretched to whatever
-; window it ends up in -- see settings_panel.gd's RESOLUTIONS note. `expand`
-; rather than `keep`, because the map is a background: a wider display should
-; show more world, not letterbox bars.
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
