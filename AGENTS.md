@@ -57,7 +57,7 @@ implementation, plugin architecture.
 
 ```
 data/     static content, read once at startup, never mutated
-          (nations, parties, laws, political-systems, scenarios, geo)
+          (nations, parties, laws, political-systems, scenarios, geo, regions)
 src/core/ game state, clock, save/load, data loader, value types
 src/sim/  one file per system, no UI knowledge
 src/ui/   scenes and panels, read-only over sim state
@@ -138,7 +138,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V2.1a shipped the panel system, and the V2 tier has started.** `src/ui/panel_kit.gd`
+**V2.1a shipped the panel system, V2.1b migrated every panel onto it, and V2.1c settled navigation.** `src/ui/panel_kit.gd`
 holds six static primitives -- `section`, `heading`, `line`, `row`, `figure`, `ledger` --
 plus `figure_text()` and `delta()`, and it is **not a base class**: all nineteen panels
 already `extends PanelContainer` and the dirty sweep is duck-typed, so a hierarchy would
@@ -184,11 +184,280 @@ content margins went on top, so **every window that filled its band overflowed i
 -- and `clamp_into_parent()` constrains only position, so the last row sat under the bottom
 furniture. Fixed with a second pass. A window is also sized from its content **as it was
 before the refresh that fills it**, since `open()` marks dirty and places in the same call.
-**What is NOT fixed is measured and handed to V2.1b**: `get_combined_minimum_size()` is
-wrong in both directions (`economy_panel` claims 928px for ~500px and opens a third empty,
-`people_panel` claims 520px and renders ~550 and clips four rows), and a grow-to-the-band
-heuristic was written and **deleted** because every rect the engine reports agrees the panel
-fits. Model: [docs/panel-system.md](docs/panel-system.md).
+**What was handed to V2.1b as "not fixed in either direction" was a STALE READ**, and
+V2.1a's own step-0 finding is what it missed: a panel that has never been shown has never
+been laid out at the width it will really have. Cold against warm, **4 of 14 differ**
+(politics 4725 -> 945, economy 928 -> 424); warm against **drawn extent, 0 of 14 differ**.
+The grow-to-the-band heuristic was right to be deleted and V2.1b's booked structural fix
+was written, measured and deleted too. Model:
+[docs/panel-system.md](docs/panel-system.md).
+
+**V2.1b MIGRATED THE OTHER SIXTEEN PANELS AND TURNED THE FOLD CONTRACT INTO A TEST.** The
+row said twenty-five and there were nineteen `*_panel.gd`, three already done; one of the
+three files it said would not fit one context together, `map_view.gd`, **is not a panel**.
+**Four panels had no private helper at all** -- `law`, `calendar`, `election`, `polling`,
+sixty-six raw Labels inline -- so V2.1a's *does this file still define `_row`?* check would
+have called them clean forever, which is `check_names.sh`'s U6b failure in a third place
+inside the test written to end it. The second assertion closes it: **every
+`src/ui/*_panel.gd` must name `PanelKit`**, over a directory scan rather than a sixth list.
+
+**Six more panels declare a verb (ten of fourteen), and politics FAILED the contract at 865
+against an 826px band.** That panel holds 945px of content, so no height clears it --
+V1.3g's finding as arithmetic rather than a rule of thumb -- and **the verbs moved above the
+readout**: 73 now, structural rather than 39px of luck. The report is an assertion,
+mutation-checked. `bloc`, `campaign` and `events` report **no verb at month 1** because they
+genuinely have none; `--bloc`, `--campaign` and `--event` reach all three.
+
+**Two kit changes, both forced by a panel.** `Tone.PLAIN` on `line()` now means the panel's
+own **body** text -- every tone resolved to CAPTION, harmless for V2.1a's three callers and
+wrong for the **forty-five plain lines** `government_panel` and `nation_panel` build between
+them -- and a figure's caption wraps, because overview's GOVERNMENT column is ~110px.
+**Two retained tables became ledgers**, and budget's killed a live bug: `_set_figure()`
+returned **silently** on a key with no `FIGURE_ROWS` entry, which is how V1.3g's deployments
+line wrote into nothing for three sessions. **`_right()` and `_add_row()` are deliberately
+NOT banned**: a cell inside somebody else's grid is the panel's own, because `ledger()`
+cannot carry a per-cell tooltip and an autowrapping kit label collapses a fixed column.
+`people_panel` went 520 -> 700px, which is height fixing a **readout** rather than a fold.
+
+**V2.1c SHIPPED NAVIGATION AND THE RESTING SCREEN, AND THE V2.1 BLOCK IS COMPLETE.** The
+row's own question -- *should the resting screen show anything at all* -- was answered by
+measuring rather than by arguing. `tools/nav_probe.gd` ran the real game for fourteen years
+with **nothing ever opened**: of 74 months in which a decision was in front of the player,
+the screen said nothing in **42** (a president who never touches a card) and **64** (one who
+reads a card and closes it). The message column is the only route a pending thing has ever
+had -- `MAX_CARDS` 6, **oldest** dropped, dismissible, never re-pushed -- so an event's whole
+visibility is *one click of an X away from nothing*, and a **council vote and an open
+campaign window are silent in 100 % of their months**, having no card at all. The response is
+**one mark and no plate**: `src/ui/pending.gd` returns window ids, `action_bar.gd` turns them
+into clusters, and the mark is the cluster's own icon in **brass** -- *the state's own
+material marks what matters*, reused rather than joined by a second visual rule. Nothing is
+drawn on the map, `hud.is_over_furniture()` does not move, and **`dashboard.gd` stays
+deleted**. What is *not* in `pending.gd` is the design: the test is that it awaits **the
+player**, so `dissolution_pending` was measured (0 months) and then refused **on the rule
+rather than on the number**.
+
+**THE KEYBOARD WAS A SEVENTH HAND-WRITTEN LIST OF PANEL IDS, and the test written to end that
+class could not see it.** `_unhandled_input()` matched **six** keycodes against six window ids
+-- so the eight windows added since U5a had no key at all -- and `tests/test_shell.gd` held
+**the same six** as a literal dictionary, because a list cannot test a list.
+`test_panel_kit.gd`'s scanner reads `src/ui/` and `tools/` for panel **variable** names, and
+these were ids and keycodes in `tests/`. The map lives at the `register()` call now --
+`register(id, title, content, key)`, `shortcut()`, `id_for_key()`, `push_error` on a key
+already taken -- so adding a surface is still **one `register()` and one line in
+`_build_action_bar()`**, and the drawer's tooltip **reads the letter off the registry** rather
+than restating it. `WindowManager.opened`/`closed` get their **first consumers since U5a**
+(`message_stack.card_activated`'s case at V1.8 in a second place): the bar was the only route
+that marked itself, so a keypress, a map marker and a message card each opened a window while
+the one control that says where you are said nothing.
+
+**The cluster capacity table REFUSED THE QUESTION IT WAS WRITTEN TO ANSWER.** The bar may use
+**1384px of 1920** -- the rest is the left stack and the clock -- and the widest drawer this
+game could plausibly grow uses **half** of it, 0 of 16 measured rows near the edge. So width
+cannot force a fifth cluster and cannot choose one either, and the four hold on **grammar**:
+*a cluster is the domain of the decision rather than the shape of the object*, so region,
+city and energy are Economy, climate is Society, and a fifth "Territory" cluster is refused
+with the count that would reverse it recorded beside it. **Instance fifty-two, the first of
+the V2 tier, is in the row's own wording**: of its five surfaces to place, [docs/tiers/v2.md](docs/tiers/v2.md)
+§4 calls the day agenda *"a ribbon, not a grid"* and §2 reaches a city by **clicking the map**.
+
+**`tools/run_tests.sh` fails a test that exits 0 with a `SCRIPT ERROR` in its output**, and
+the session reproduced the failure it was handed: a parse error in `main.gd` left
+`test_shell.gd` printing *"all checks passed"* over a scene that never loaded, because that
+file read `_main._state` off a bare Control, which raises rather than returning null. Both
+halves fixed; zero script errors are emitted today. **No `SAVE_VERSION` move, no balance
+re-run, no new regime** -- predicted in the plan, since nothing in `src/sim/` was touched and
+this adds no verb. **The twenty-third screenshot pass found no bug in the readout and one in
+the code it was about to ship**: `show_pending()` reached `Icon.load_icon()`, which reads an
+SVG off disk and rasterises it **on every call**, on the path that refreshes with the clock.
+Both tints are rasterised once at `add_cluster()` now, and the frame before and after is
+identical to the pixel -- **a screenshot pass structurally cannot see that class**. Model:
+[docs/panel-system.md](docs/panel-system.md) sections 13-17.
+
+**V2.2 SPLIT, AND V2.2a SHIPPED THE GEOGRAPHIC REGISTER.** The per-session table stopped
+at V2.1c, so **there was no V2.2 row at all** and the tier/model/effort call was authored
+at plan time with nothing to challenge -- the missing-row failure in its purest form, not
+a row that was wrong but a row that was absent. Counted cold: **~36 surfaces, ~14 new
+files and four machines** (import pipeline, register and loader, map draw and hit test,
+two panels) across **two tracks**, so the block cut on the rule that cut V1.6e, V1.6f and
+U6c. **(a) is the import and the register with no UI at all; (b) is the map and the two
+panels -- BUILT, see below.** Model: [docs/geography-model.md](docs/geography-model.md).
+
+**A REGISTER AND NO BEHAVIOUR, and the test says so by reading the files.** Nothing in
+`src/sim/` preloads `region.gd` or `city.gd`; a region carries no GDP, no unemployment
+and no sector mix and a city carries no population of its own. V2.5 makes a region
+load-bearing and V2.6 moves people between cities, and each arrives with the field it
+needs rather than finding it pre-authored and inert. The shape is **V1.4a's partition at
+two levels**, which is the tier's own call rather than an analogy: a region holds a share
+of its nation's population, a city a share of its region, and **neither residual is
+stored** because `1.0 - sum` cannot drift from what it is the remainder of. **112 regions,
+581 cities.** An absent `data/regions/<ID>.json` is an **error**, unlike `companies/` and
+`outlets/` -- those have prior models (unpartitioned sectors, no press) and there is no
+prior model in which a nation has no places.
+
+**THE LEVEL IS PER NATION AND THE ROW SAID NUTS 2.** For the nation this game is about,
+NUTS 2 is the **pre-2016 régions** -- Eurostat's own labels return `FRC1 Bourgogne`,
+`FRE2 Picardie`, units abolished in 2016 -- and `docs/fictionalization.md` names
+**Occitanie** as its example of a real region, which is NUTS **1**. The inverse holds
+elsewhere and is why one level cannot serve the roster: Italy's NUTS 1 is five statistical
+macro-areas and Switzerland's is **one country**. FRA, DEU, GBR and BEL are NUTS 1, the
+other six NUTS 2, and **no level field reaches `src/`** -- `tools/import_data.py`'s
+`REGION_LEVEL` plus each file's `_source` line are the whole record. The test checks that
+in the **data** (a region file's top-level keys are exactly `_source`, `_year`, `_note`,
+`regions`) rather than by grepping `src/` for the word, which was the first version of the
+check and failed on the comments explaining the absence.
+
+**THE ROW'S BRITAIN PROBLEM WAS HALF WRONG, IN THE DIRECTION THAT MATTERED.** The V2
+preamble booked Britain as needing a second source or an authored register. Confirmed and
+worse for **regional GDP**: `nama_10r_2gdp` carries zero `UK` codes at *every* year, 2018
+included, because the codes were removed from the dimension rather than left empty. But
+`demo_r_pjangrp3` carries **41 UK NUTS 2 codes and 12 NUTS 1 codes with values at 2019**,
+summing to the national figure (66 647 112) exactly. **Regional population is measured for
+all ten; only regional GDP is short** -- and that is V2.5's quantity. So the register is a
+partition of **population**, Britain reads 2019 through V1.5c's own per-series nearest-year
+fallback, and the gap passes to V2.5 whole. **ONS was probed before the call was taken**:
+its beta API publishes `gdp-by-local-authority`, 380 LAU rows with **no ITL codes at all**,
+so aggregating it needs a fourth dataset as a lookup -- recorded so V2.5 does not re-derive
+it, and at NUTS 1 the authored fallback is twelve numbers rather than forty-one.
+
+**THE GEOMETRY IS THE AUTHORITY ON THE ROSTER, and one rule settles three problems where
+the plan expected one.** The register is the set of NUTS codes carrying both a figure and a
+GISCO polygon, because a region with no polygon cannot be drawn and this tier exists to
+locate things. `<CC>ZZ` (Extra-Regio) falls into the residual with no filter of its own;
+`FRY` and `ES70` are dropped by the bounding box that has dropped them from the map since
+S8; and the third was in no plan -- **the Eurostat response carries two NUTS vintages at
+once**, `NL35`/`NL36` being the 2024 codes for Utrecht and Zuid-Holland and `NL31`/`NL33`
+the 2021 ones, **equal to the person**, so summing all fourteen Dutch codes overstates the
+Netherlands by **5.1 M**. The partition is exact **in the source itself** -- France's
+68 091 703 is the sum of its own codes to the unit -- so the residual is precisely what
+those rules removed, non-zero for two nations only (FRA 0.0330, ESP 0.0460).
+
+**The city join is a point in a polygon and CANNOT go through GeoNames' `admin1`** -- for
+France that is the 13 modern régions, which is NUTS 1 and therefore *coarser* than the
+level the row asked for, so a code join would be silently wrong for one nation and
+unverifiable for the rest. 4 002 inside, 82 snapped at `CITY_SNAP_DEG = 0.25` (coastal
+communes the 10M coastline cuts -- Birkenhead, Portsmouth, A Coruña, Cádiz, Antibes), 40
+overseas into the residual, **0 failed**.
+
+**THE ONE MEASURED CONSTANT WAS MEASURED THREE TIMES AND THE FIRST ANSWER WAS WRONG BY
+29 %, and all three corrections came from READING THE GENERATED FILE rather than from a
+check.** `CITY_MIN_POP` is swept against two clauses fixed before it ran -- roster mean
+coverage >= 0.30 and at most 600 named cities, the second written from the drawing side
+because V2.2b draws by rank and the roster at the opening fit is ~1000 px wide. The first
+sweep gave `[82 000, 101 000]` and a midpoint of 91 500, and it was measuring GeoNames
+rather than Europe: **607 `PPLX` rows** (sections of a populated place -- Hamburg-Nord,
+Carabanchel, Eixample, Favoriten); then **a London naming twenty of its own boroughs** at
+1.325 of itself with Brussels at 1.285, fixed by taking cities in descending order only
+**while they fit**, which needs no list of exceptions and also settles the city-state case
+where Eurostat and GeoNames disagree by 6 % about Hamburg; then **thirty-six Paris and
+Marseille arrondissements** that neither the feature filter nor the fit rule could see,
+because GeoNames codes some as `PPLX` and others as plain `PPL` and Île-de-France is large
+enough to hold Paris *and* its districts. The discriminator is a **number**: a plain
+name-prefix test also eats `Mansfield Woodhouse`, `Newport Pagnell`, `Amersham on the
+Hill`, `Ischia Porto` and `Kronberg Tal`, five real places, where requiring a digit after
+the parent's name catches all thirty-six and none of the five. Corrected, the clauses cross
+at **[69 000, 73 000]**, both edges are smooth crossings so **the interior governs**
+(V1.5d's rule), and the midpoint is **71 000** -- the same answer at a grid of 2 000 and of
+1 000, which is V1.5b's refinement diagnostic, and interior to the swept range.
+
+**A third clause was written and DELETED**: *"the worst nation names at least 0.20 of its
+population"* fails at every candidate and its two failing nations do not move with the
+threshold at all -- Luxembourg has **one** city and it is 11.9 % of the country, and Swiss
+communes are administratively small. A band an observable cannot reach is a bound and not a
+selector, V1.5a's and V1.5c's finding, so it is recorded rather than met by shipping 4 691
+cities. **Shares are rounded DOWN**, not to nearest: rounding to nearest put Germany's
+sixteen Länder at 1.000003 of Germany -- a residual of minus three parts in a million,
+arithmetically nothing and still a partition that does not hold.
+
+**The firm domicile is the only thing making `Company.city` load-bearing before V2.2b draws
+it**, and the table it produced is one the row did not ask for: **one city holds a third to
+a half of a nation's named payroll** -- Lille 33.1 % of France's, Düsseldorf 34.3 % of
+Germany's, Manchester 44.0 % of Britain's. Nothing authored that, and it is what makes
+V2.6's migration a decision rather than a diffusion. `Companies.headcount_in_city()` lives
+in `companies.gd` and **not** on `src/core/region.gd`, because a core value type preloading
+a sim system would invert `data -> sim -> ui`.
+
+**`tools/check_names.sh` WENT RED ON A REAL CITY, and both halves of the rule that made
+it red are true.** [docs/fictionalization.md](docs/fictionalization.md) says *"Do not
+reuse a real company's actual name"* and, four rows above, *"Cities, regions, rivers |
+Real | Lyon, Occitanie, the Rhone"* -- and **Santander** is a bank on
+`tools/banned_names.txt` and a Spanish city of 173 635 people that GeoNames handed the
+register. Banning it everywhere makes the check permanently red over a real place;
+deleting the entry lets a session name a fictional bank after a real one. The ban that
+matters is the one about **firms**, so `banned_names.txt` grew a `[places]` section
+checked in `data/companies/` alone, and the negative case was run rather than assumed:
+a firm renamed `Santander` still fails. One entry today, and the criterion for adding
+another is written beside it.
+
+**`SAVE_VERSION` stays at 27 and the test pins three ABSENCES rather than three fields** --
+V1.6c's shape and V1.8's, the third session on that list whose serialised contribution is
+nothing at all. The register is content and round-trips through `data/regions/` the way a
+firm's authored share does through `data/companies/`. **No balance re-run and no new
+regime**, predicted in the plan rather than discovered (U6c's precedent): nothing in
+`src/sim/` was touched beyond one pure query, and a region is not a verb. **No screenshot
+pass, for the first time since U5a** -- there is no UI to photograph and a frame of an
+unchanged shell proves nothing; it returns at V2.2b. And **`data/geo/regions.geojson` is
+written and committed while `data_loader.gd` does NOT load it**: nothing draws it until
+V2.2b, so a launch should not pay 180 KB for it, and `tests/test_geography.gd` parses it
+directly to assert every named city lies inside its own region's polygon -- U6c's
+containment check one level down, and the thing that catches a mistyped digit or a geometry
+vintage that has moved under the figures.
+
+**V2.2b SHIPPED THE MAP AND THE TWO PANELS, and the expected red turned red on the day it
+named.** `data_loader.gd` loads `regions.geojson` into `region_features` (NUTS id → outer
+rings, `_load_geo`'s shape) with a **fourth `_validate_regions()` rule** cross-checking the
+register against the geometry at load time, and V2.2a's absence assertion flipped into a
+presence check with both halves of its history recorded beside it -- 112 polygons, key set
+equal to the register's ids. `SAVE_VERSION` **stays 27**, no balance re-run, both predicted:
+nothing under `src/sim/` was touched, and drawing is not a verb (U6c twice running).
+
+**REGIONS ARE THE FILL, at every zoom.** Each nation draws its 1:10m GISCO regions in the
+nation hue under a same-hue 1:50m base and the bright 1:50m national stroke -- the base
+exists because the two vintages disagree at the coast by a few km (a few px at MAX_ZOOM)
+and turns a hole in the country into a seam the eye cannot find; the screenshot pass judged
+the seam and passed it. **The two-pass fill/hairline draw is load-bearing because the roster
+carries an enclave of EACH direction**: with holes dropped, a host's outer ring covers its
+enclave, so enclave visibility is draw-order luck -- except Berlin (3.7 M) outpopulates its
+host Brandenburg (2.6 M) while Bremen (0.7 M) is a third of its host Niedersachsen (8 M),
+so **no fill-and-stroke order renders both** and only every-fill-then-every-line does. A
+fact in the data, found by reading it; the first version of the draw was one pass.
+
+**BRASS CROSSES are the spend the tier reserved, and `CITY_MIN_ZOOM = 2.0` sits JUST UNDER
+the opening Europe fit (~2.1 on 1080p) on `LABEL_MIN_ZOOM`'s own discipline.** The first
+draft sat at 2.2, *above* the fit, and would have shipped 581 cities the default frame
+never shows -- the volume clause was measured FOR the ~1000 px opening fit, so the
+threshold belongs below it; the correction came from computing the fit, not from taste.
+Radius is `sqrt(pop / 8 M)` against `RADIUS_BASE` (London ~9.6 px, the smallest towns clamp
+at 2), the list is **ascending** so the largest draws last and wins an overlap, and **the
+hit test reads the same gate** so a glyph that is not drawn is never a target. One
+formatter, `PanelKit.pop_text()`, serves the hover label and both panels so they cannot
+print two roundings of one figure.
+
+**The hit test takes the marker contract, and the purity check FIRED ON A COMMENT.**
+`_city_at_screen_point()` is a screen-space radius test over the city list, reaching neither
+`_polygons` nor the nation test, policed from source by `tests/test_map_cities.gd` the way
+`test_map_markers.gd` polices the markers'. That test's extraction swallows the *following*
+function's doc comment, and the city doc legitimately named what it must not reach -- the
+test was the authority and the function moved to where both extraction windows are clean.
+Click chain: markers, then cities, then nations, each hit stopping the fall-through.
+
+**Region (T) and City (V) under Economy, the cluster going 4 → 6**; `nav_probe.gd`'s
+`OTHER_ROUTES` carries the city's map cross as its third entry. Region prints the partition
+and a league table in authored order (the importer writes descending by population) whose
+payroll column -- `headcount_in_city()` over each region's cities -- is the one live number
+in it, and **zero is a TRUE zero there for seven of ten nations**, printed as `0` not an em
+dash: V1.6d's bug was an absent figure printed as a confident zero, and this is a present
+figure that is empty. City carries both of §16's routes (the drawer's ranked list;
+`show_city()` for any nation's cross, back button outside the scroll) and every population
+is two shares through the LIVE national figure. The screenshot pass **returned** after
+V2.2a's skip: three frames judged clean, `--region` and `--city` the first flags that stage
+a view rather than a mutation, because the register is static content.
+
+**Two handoff notes were STALE, and both said the same thing: V2.1a already fixed the
+drift.** `screenshot.gd`'s `_mark_panels_dirty()` is no hand-written list to extend -- V2.1a
+deleted it to one line through the registry, so registering the two panels IS the whole job.
+And the month-136 warning on `nav_probe.gd`'s loop was inherited by nothing: no probe this
+session runs a month at all, and `geography_probe.gd` still runs none.
+
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
@@ -198,7 +467,7 @@ deciding what follows V1 was the work rather than a preamble to it. The organisi
 that **the world becomes visible and located**: V1 built machines and every one of them is
 legible only as a number on a panel, so the country the player governs has no places in
 it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
-rewrite. **V2.1 (the shell, re-cut) is next**, on U5a's own precedent -- U5a moved the
+rewrite. **V2.1 (the shell, re-cut) is COMPLETE -- (a), (b) and (c) are built, and V2.2 (the geographic register) is next**, on U5a's own precedent -- U5a moved the
 shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
 surfaces.
 
@@ -2388,13 +2657,24 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c), **V2.1a-c** and **V2.2 (a and b)** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 26**. There has never been a migration: a superseded
+Save format is at **version 27**, and V2.2b is the fourth session on this list whose
+serialised contribution is **nothing at all** -- V1.6c's shape and V1.8's. The geographic
+register is content: a region's share of its nation and a city's share of its region
+round-trip through `data/regions/` the way a firm's authored share and headcount
+round-trip through `data/companies/`, and a firm's `city` is one more authored field in a
+file the save has never carried -- and drawing it changed nothing about that, because both
+panels and both draw passes only read. So `tests/test_save_load.gd` pins three **absences**
+rather than three fields, and each turns red for a different reason: a stored region share
+means the partition can drift from the content defining it, a stored city population means
+a head count exists that `share x population` does not already give, and a `regions` key
+on `NationState` at all means the register has become live state -- which is precisely the
+change V2.5 has to come here and argue for. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

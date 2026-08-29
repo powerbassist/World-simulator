@@ -294,11 +294,21 @@ regional economy is a genuinely different object in those two countries.
   has to come and say why it bumps.
 - **No balance re-run and no new regime.** Nothing in `src/sim/` was touched beyond
   one pure query, and a region is not a verb. Predicted in the plan rather than
-  discovered, on U6c's precedent.
-- **No UI.** `data/geo/regions.geojson` is written and committed and `data_loader.gd`
-  does **not** load it — nothing draws it until V2.2b, so a launch should not pay 180
-  KB for it. `tests/test_geography.gd` parses it directly, which is what keeps it
-  honestly read rather than decorative.
+  discovered, on U6c's precedent. (Unchanged at V2.2b, for the same reason: drawing
+  is not a verb either, and both new panels only read.)
+- **UI arrived at V2.2b.** `data_loader.gd` loads the geojson into
+  `region_features` now — the 180 KB is paid because something draws it — and
+  the loader cross-checks every register region against its geometry, the
+  fourth `_validate_regions()` rule, catching at load time an import that drifts
+  from its own authority. The map fills each nation from its 1:10m regions under
+  the 1:50m national stroke, and what makes that render correctly with holes
+  dropped is a two-pass draw: every region fill first, every hairline after, so
+  an enclave's boundary survives its host's fill regardless of authored order —
+  the roster carries one enclave of EACH direction (Berlin outpopulates
+  Brandenburg; Bremen is a third of Niedersachsen), so no single fill-and-stroke
+  order renders both. The absence assertion V2.2a left in
+  `tests/test_geography.gd` turned red on exactly the day it said it would, and
+  was flipped with the reason recorded beside it.
 - **No regional GDP, unemployment or sector mix.** §5's.
 
 ---

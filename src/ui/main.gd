@@ -34,6 +34,8 @@ const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
+const RegionPanel = preload("res://src/ui/region_panel.gd")
+const CityPanel = preload("res://src/ui/city_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
@@ -107,6 +109,8 @@ var _calendar_panel
 var _people_panel
 var _companies_panel
 var _projects_panel
+var _region_panel
+var _city_panel
 var _campaign_panel
 var _events_panel
 var _government_panel
@@ -176,6 +180,14 @@ func _ready() -> void:
 	# time a click can happen.
 	_map_view.project_clicked.connect(func(_project_id: String):
 		_windows.open("projects")
+	)
+	# V2.2b, the register's own route. The cross names the city; the panel says
+	# everything else about it. show_city() BEFORE open(), _on_nation_clicked's
+	# order, so the content settles before the window sizes itself around it.
+	# Same "registered further down" note as above applies.
+	_map_view.city_clicked.connect(func(city_id: String):
+		_city_panel.show_city(city_id)
+		_windows.open("city")
 	)
 
 	_windows = WindowManager.new()
@@ -330,6 +342,25 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V2.2b. In the Economy cluster beside Public Works, on docs/panel-system.md
+	# §16's rule that a cluster is the domain of the decision: the tier's own claim
+	# is that §5 makes the economy regional, so the surfaces that partition the
+	# country belong where that decision will live. Read-only -- no verb exists on
+	# a region until §5 -- so no acted signal, people_panel's shape rather than
+	# projects_panel's.
+	_region_panel = RegionPanel.new()
+	_windows.register("region", "Regions", _region_panel, KEY_T)
+	_region_panel.setup(_state, _loader)
+	_region_panel.hide_close_button()
+
+	# V2.2b, one level down, and the only V2 surface whose drawer entry is the
+	# SECOND way in: the map's cross is the route, and this entry is for the
+	# player who does not know that -- §16's own wording.
+	_city_panel = CityPanel.new()
+	_windows.register("city", "Cities", _city_panel, KEY_V)
+	_city_panel.setup(_state, _loader)
+	_city_panel.hide_close_button()
+
 	# V1.7a. In the State cluster beside the Diary, and its OWN window rather than rows
 	# on the Polling panel: that panel's contract is that every figure on it has been
 	# through PollNoise, and a mobilisation figure the government is paying for is not a
@@ -462,6 +493,12 @@ func _build_action_bar() -> void:
 		# V1.6f. One line, exactly as this function's own comment has now correctly
 		# predicted for five sessions running.
 		_entry("projects", "Public Works"),
+		# V2.2b, and two lines where the streak said one: the register's two
+		# surfaces land together because they are one partition seen from two
+		# heights, and Economy is their home because §5 is about to make the
+		# economy regional.
+		_entry("region", "Regions"),
+		_entry("city", "Cities"),
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		_entry("society", "Polling"),

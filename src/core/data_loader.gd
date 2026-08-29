@@ -144,12 +144,21 @@ var geo_features: Dictionary = {}
 ## there is no filter anywhere that could be forgotten.
 var world_features: Dictionary = {}
 
+## NUTS id -> Array[PackedVector2Array], the same shape as geo_features, from
+## data/geo/regions.geojson -- V2.2b. Keyed by the region's own NUTS code, which
+## is Region.id, so map_view.gd joins the register to its geometry with a
+## dictionary read and holds no nation-to-region mapping of its own. Holes are
+## not kept, on geo_features' rule; the one place holes were load-bearing --
+## placing each city inside its region -- was settled at import time and is
+## re-checked by a test with its own hole-aware cast, not by the renderer.
+var region_features: Dictionary = {}
+
 ## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
 ## Both files contribute; map_view.gd draws labels for the roster only.
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -241,7 +250,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_people()
 	_validate_companies()
 	_validate_outlets(outlets_dir)
-	_validate_regions(regions_dir)
+	_validate_regions(regions_dir, regions_geo_path)
 
 
 ## Resolve a person id to the name a screen prints. The ONLY reader of
@@ -517,7 +526,16 @@ func _load_regions(nation_id: String, regions_dir: String) -> void:
 ## The orphan file: _validate_outlets()' scan, for its reason. A per-nation lookup
 ## structurally cannot see data/regions/FRE.json, because that file is simply never
 ## opened -- which is tools/check_names.sh's zero-files-scanned burn in a new place.
-func _validate_regions(regions_dir: String) -> void:
+##
+## The geometry: every register region must have a polygon, because the register is
+## the set of NUTS codes carrying BOTH a figure and a GISCO polygon -- that single
+## rule is what resolved extra-regio, the two Dutch vintages and the overseas
+## regions, so a region with figures and no geometry is an import that has drifted
+## from its own authority. V2.2a shipped the file unopened (nothing drew it, so a
+## launch should not pay 180 KB for it); V2.2b draws it, and this is where the
+## load happens -- _validate_cross_file's precedent, the load and the check it
+## exists for arriving together.
+func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 	var city_ids := {}
 	for nation_id in regions.keys():
 		var total := 0.0
@@ -549,6 +567,15 @@ func _validate_regions(regions_dir: String) -> void:
 				errors.append(
 					"companies/%s.json: firm '%s' is domiciled in '%s', which is a city of %s"
 					% [nation_id, company.id, company.city, city_ids[company.city]]
+				)
+
+	_load_geo(regions_geo_path, region_features)
+	for nation_id in regions.keys():
+		for region in regions[nation_id]:
+			if not region_features.has(region.id):
+				errors.append(
+					"regions/%s.json: region '%s' has no polygon in %s -- the geometry is the authority on the roster, and a region that cannot be drawn is one the register cannot hold"
+					% [nation_id, region.id, regions_geo_path]
 				)
 
 	var da := DirAccess.open(regions_dir)

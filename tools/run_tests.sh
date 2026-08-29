@@ -72,6 +72,7 @@ tests=(
   tests/test_map_layers.gd
   tests/test_minimap.gd
   tests/test_map_markers.gd
+  tests/test_map_cities.gd
   tests/test_shell.gd
   tests/test_window_frame.gd
   tests/test_panel_kit.gd

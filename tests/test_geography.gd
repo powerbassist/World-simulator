@@ -30,10 +30,12 @@ extends SceneTree
 ##   - THE NUTS LEVEL IS NOWHERE IN src/. France is imported at NUTS 1 and Italy at
 ##     NUTS 2; the loader never learns a level exists, which is CLAUDE.md's first
 ##     rule.
-##   - data/geo/regions.geojson IS NOT LOADED AT STARTUP. It is written and
-##     committed for V2.2b to draw; until something draws it, paying for 180 KB of
-##     geometry on every launch buys nothing. This test parses it directly, which
-##     is what keeps it honestly read rather than decorative.
+##   - data/geo/regions.geojson WAS NOT LOADED AT STARTUP at V2.2a -- nothing drew
+##     it, so paying for 180 KB of geometry on every launch bought nothing. V2.2b
+##     draws it, so the loader loads it and the absence check this file carried
+##     turned red and was flipped, exactly as its own message said it would. This
+##     test still parses the file DIRECTLY with its own ray cast, which is what
+##     keeps the geometry honestly checked rather than trusted.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -68,7 +70,7 @@ func _init() -> void:
 	_check_headcount_reaches_a_city()
 	_check_no_level_in_src()
 	_check_register_has_no_simulation()
-	_check_geometry_is_not_loaded_at_startup()
+	_check_geometry_loads_at_startup()
 	_check_fixtures_refused()
 	_finish()
 
@@ -222,10 +224,30 @@ func _check_register_has_no_simulation() -> void:
 		_fail("region.gd reaches into src/sim/ -- that inverts data -> sim -> ui")
 
 
-func _check_geometry_is_not_loaded_at_startup() -> void:
-	var loader_src := FileAccess.get_file_as_string("res://src/core/data_loader.gd")
-	if loader_src.contains("regions.geojson"):
-		_fail("data_loader.gd loads regions.geojson -- nothing draws it until V2.2b, so a launch should not pay for it")
+## V2.2a asserted the ABSENCE of this load ("nothing draws it until V2.2b, so a
+## launch should not pay for it") and that check is the one this session came here
+## to flip: the map draws the regions now, so the loader loads them. What the flip
+## must not lose is the second half of the old claim -- that the geometry is read
+## honestly. The containment check above still parses the file with its own ray
+## cast, so the loader's copy is cross-checked against an independent one rather
+## than against itself.
+func _check_geometry_loads_at_startup() -> void:
+	var expected := 0
+	var register_ids := {}
+	for nation_id in NATIONS:
+		for region in _loader.regions.get(nation_id, []):
+			register_ids[region.id] = true
+			expected += 1
+
+	if _loader.region_features.is_empty():
+		_fail("region_features is empty -- data/geo/regions.geojson did not load")
+		return
+	for id in register_ids.keys():
+		if not _loader.region_features.has(id):
+			_fail("region '%s' is in the register but not in the loader's geometry" % id)
+	var loaded: int = _loader.region_features.size()
+	if loaded != expected:
+		_fail("region_features holds %d polygons against %d register regions -- the geometry is the authority on the roster, so the two sets must be equal" % [loaded, expected])
 
 
 func _check_fixtures_refused() -> void:
