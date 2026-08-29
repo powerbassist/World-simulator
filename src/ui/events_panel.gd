@@ -31,6 +31,7 @@ const EventsK = preload("res://src/sim/events_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 var _state
 var _loader
@@ -45,6 +46,9 @@ var _body: VBoxContainer
 var _scroll: ScrollContainer
 var _pin_bottom := false
 var _close_button: Button
+
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
 
 
 func _ready() -> void:
@@ -69,7 +73,7 @@ func _ready() -> void:
 	root.add_child(_scroll)
 
 	# The right gutter is companies_panel.gd's fix inherited: a ScrollContainer draws
-	# its bar OVER the content, and the right-aligned figures in _row() run underneath
+	# its bar OVER the content, and the right-aligned figures in PanelKit.row() run underneath
 	# it without one.
 	var gutter := MarginContainer.new()
 	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -127,6 +131,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	_title.text = "Dispatches"
 
@@ -143,7 +148,7 @@ func _refresh() -> void:
 # --- On the desk -------------------------------------------------------------------
 
 func _build_pending(ns) -> void:
-	_header("On your desk")
+	PanelKit.heading(_body, "On your desk")
 
 	var ev = Events.pending_event(ns, _loader)
 	if ev == null:
@@ -151,17 +156,15 @@ func _build_pending(ns) -> void:
 		# which one -- projects_panel.gd's own correction, where a player who could not
 		# tell an empty list from a closed gate would read the lever as broken.
 		if int(ns.event_quiet_months) > 0:
-			_line("Nothing today. The last matter closed %d %s ago." % [
+			PanelKit.line(_body, "Nothing today. The last matter closed %d %s ago." % [
 				EventsK.EVENT_COOLDOWN_MONTHS - int(ns.event_quiet_months),
 				"month" if EventsK.EVENT_COOLDOWN_MONTHS - int(ns.event_quiet_months) == 1 else "months",
 			])
 		else:
-			_line("Nothing today.")
+			PanelKit.line(_body, "Nothing today.")
 		return
 
-	var name_label := Label.new()
-	name_label.text = ev.event_name
-	_body.add_child(name_label)
+	PanelKit.line(_body, ev.event_name, PanelKit.Tone.PLAIN)
 
 	var who := _subject_label(ns, ev)
 	if who != "":
@@ -170,7 +173,7 @@ func _build_pending(ns) -> void:
 		who_label.theme_type_variation = UiTheme.MICRO
 		_body.add_child(who_label)
 
-	_line(ev.summary)
+	PanelKit.line(_body, ev.summary)
 
 	# The deadline in the same units the register holds and the diary prints. Two
 	# surfaces reporting one fact in two units is how they come to disagree -- U6c's
@@ -201,11 +204,7 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var summary := Label.new()
-	summary.text = String(choice.get("summary", ""))
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.theme_type_variation = UiTheme.CAPTION
-	block.add_child(summary)
+	PanelKit.line(block, String(choice.get("summary", "")))
 
 	var button := Button.new()
 	# The default is named as such on its own button. Without it the one option that
@@ -216,6 +215,8 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 		"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
 	]
 	button.pressed.connect(func(): _on_choose(ev, choice))
+	if _primary == null and not button.disabled:
+		_primary = button
 	block.add_child(button)
 
 	_body.add_child(block)
@@ -269,9 +270,9 @@ func _subject_label(ns, ev) -> String:
 # --- The ledger --------------------------------------------------------------------
 
 func _build_ledger(ns) -> void:
-	_header("What you decided")
+	PanelKit.heading(_body, "What you decided")
 	if ns.event_history.is_empty():
-		_line("Nothing has come up yet.")
+		PanelKit.line(_body, "Nothing has come up yet.")
 		return
 	for record in ns.event_history:
 		_build_record(record)
@@ -281,12 +282,10 @@ func _build_record(record: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var head := Label.new()
-	head.text = "%04d-%02d  %s" % [
+	PanelKit.line(block, "%04d-%02d  %s" % [
 		int(record.get("year", 0)), int(record.get("month", 0)),
 		String(record.get("event_name", "")),
-	]
-	block.add_child(head)
+	], PanelKit.Tone.PLAIN)
 
 	var answer := Label.new()
 	# A DEFAULT IS NOT A CHOICE AND THE LEDGER SAYS SO. Printing "Say nothing" beside a
@@ -333,18 +332,11 @@ func _choice_summary(record: Dictionary) -> String:
 	return String(choice.get("summary", ""))
 
 
-# --- Furniture ---------------------------------------------------------------------
-
-func _header(text: String) -> void:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
-	_body.add_child(label)
-
-
-func _line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.theme_type_variation = UiTheme.CAPTION
-	_body.add_child(label)
+## The control this panel exists to let the player press -- V2.1a's fold contract,
+## declared here at V2.1b.
+##
+## The choices are rebuilt on every refresh, so this is the first one in build
+## order rather than a member held from _ready(). Null when nothing is pending,
+## which is most months -- the panel is then the ledger of what was decided.
+func primary_action() -> Control:
+	return _primary

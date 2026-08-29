@@ -49,6 +49,10 @@ const BAD := Color(0.878, 0.353, 0.353)        ## #E05A5A
 ## test already guards in the other direction.
 const PLATE_ALPHA := 0.94
 
+## A scrollbar's width, which in Godot is its stylebox's own minimum size. Ten is
+## the engine default's order and narrow enough to read as chrome.
+const BAR_WIDTH_PX := 10.0
+
 # -- Type scale ---------------------------------------------------------------
 
 ## Barlow Condensed is narrower than the engine's built-in sans, so the base size
@@ -81,6 +85,7 @@ const BAD_TEXT := "BadText"          ## a delta that is bad news
 
 const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
 const PLATE := "Plate"                    ## HUD furniture: glass over the map
+const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
 const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
@@ -105,6 +110,7 @@ static func build() -> Theme:
 	_labels(theme)
 	_buttons(theme)
 	_progress(theme)
+	_scrollbars(theme)
 	return theme
 
 
@@ -170,6 +176,25 @@ static func _panels(theme: Theme) -> void:
 	plate.content_margin_bottom = 8
 	theme.set_type_variation(PLATE, "PanelContainer")
 	theme.set_stylebox("panel", PLATE, plate)
+
+	# The plate again, with the SAME hairline drawn along its bottom edge -- V2.1a,
+	# and the only new mark this project has added to U5a's signature.
+	#
+	# It says one thing and not two. "There is more content below" is the
+	# scrollbar's job and the scrollbar is styled just below; what this says is
+	# **the thing you came to this panel to press is below the fold**, which is a
+	# claim a scrollbar structurally cannot make. That failure has cost five
+	# screenshot passes -- all eight diplomatic verbs lost at V1.3e and again at
+	# V1.3g, three sector rows reading "No state programme" over a live 0.654 %
+	# bill at V1.6e -- and none of them was a scrolling problem. The player could
+	# always scroll. They had no reason to think there was anything to scroll to.
+	#
+	# Brass keeps one meaning under this: the state's own material marks what
+	# matters. It is not a second word for the scrollbar.
+	var folded := plate.duplicate()
+	folded.border_width_bottom = 1
+	theme.set_type_variation(PLATE_FOLDED, "PanelContainer")
+	theme.set_stylebox("panel", PLATE_FOLDED, folded)
 
 	# A window's grab handle. Lighter than the body it sits on, so the draggable
 	# strip is visibly a different thing from the panel's own content.
@@ -295,6 +320,46 @@ static func _progress(theme: Theme) -> void:
 	fill.bg_color = ACCENT
 	fill.set_corner_radius_all(2)
 	theme.set_stylebox("fill", "ProgressBar", fill)
+
+
+## Every floating panel has sat inside a ScrollContainer since U5a, so nothing has
+## been unreachable since then -- and the scrollbar that says so has been on the
+## engine default the whole time, which is a light grey slab against #0A1020. The
+## one indicator this interface already had for "there is more below" was
+## effectively invisible, which is most of why five screenshot passes found a
+## panel photographed at the top of a body nobody could tell was scrolling.
+##
+## Themed rather than replaced. The grabber is EDGE -- the hairline colour, the
+## quietest thing in the palette that is still visible -- and it brightens on
+## hover the way every other control here does. It does NOT go brass: brass is
+## reserved, and V2.2 has already spent the next of it on cities.
+static func _scrollbars(theme: Theme) -> void:
+	for type in ["VScrollBar", "HScrollBar"]:
+		# The content margins are the BAR'S WIDTH and not decoration, which is the
+		# whole of a bug the screenshot pass found: a StyleBoxFlat with no content
+		# margins has a minimum size of zero, so the first version of this theming
+		# gave the scrollbar a colour and a width of 0px and it vanished from every
+		# panel at once. It had been on the engine default -- a light grey slab,
+		# nearly invisible on navy but at least present -- since U5a.
+		var track := StyleBoxFlat.new()
+		track.bg_color = Color(INK.r, INK.g, INK.b, 0.6)
+		track.set_corner_radius_all(2)
+		track.content_margin_left = BAR_WIDTH_PX / 2.0
+		track.content_margin_right = BAR_WIDTH_PX / 2.0
+		theme.set_stylebox("scroll", type, track)
+
+		theme.set_stylebox("grabber", type, _grabber_box(EDGE))
+		theme.set_stylebox("grabber_highlight", type, _grabber_box(EDGE.lightened(0.25)))
+		theme.set_stylebox("grabber_pressed", type, _grabber_box(TEXT_DIM))
+
+
+static func _grabber_box(bg: Color) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = bg
+	box.set_corner_radius_all(2)
+	box.content_margin_left = BAR_WIDTH_PX / 2.0
+	box.content_margin_right = BAR_WIDTH_PX / 2.0
+	return box
 
 
 static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:

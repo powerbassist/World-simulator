@@ -223,9 +223,9 @@ fixes:
 
 | | Session | Ships |
 |---|---|---|
-| **a** | the panel system | section / row / figure / delta / ledger primitives; the derived dirty registry; the fold contract; three panels migrated as proof the primitives fit |
-| **b** | the twenty-five panels | the rest migrated; every fold fixed by the contract rather than by height |
-| **c** | navigation and the resting screen | what is on screen when nothing is open; a cluster grammar that holds V2's five known future surfaces without a sixth cluster |
+| ~~**a**~~ | ~~the panel system~~ **Built** | six primitives (the row named five), the derived dirty registry, the fold contract, three panels migrated. See below |
+| ~~**b**~~ | ~~the twenty-five panels~~ **Built** | the other sixteen migrated, six more panels declaring a verb, the fold contract turned from a report into a test. See below |
+| ~~**c**~~ | ~~navigation and the resting screen~~ **Built** | the keyboard map off the registry, the open window marked whatever opened it, and the resting screen answered by a measurement -- one mark on the bar, no plate. See below |
 
 **The one new visual rule is the fold line, and it is the existing signature reused rather
 than a second one.** U5a's plate carries a 1px brass hairline on its **top** edge only, and
@@ -562,6 +562,221 @@ passes the whole ladder in month 6, rule of law falls **73.8 → 64.8** (below I
 `SAVE_VERSION` is **27**, on eight added fields of ten, failing the rule three different
 ways and asserted apart. Model: [docs/upper-house-model.md](docs/upper-house-model.md)
 and [docs/judiciary-model.md](docs/judiciary-model.md).
+
+### V2.1a — the panel system, and the fold a headless harness could see after all (shipped)
+
+**The row was written by the previous session rather than authored at plan time --
+a first on this project -- and read cold it was wrong in five places and silent in
+four.** `src/ui/` is **41 files**, not 25; `register()` knows **fourteen** panels,
+not fifteen; the count came to ~18 surfaces against an estimated ~14. It was right
+about the machine count, so the session did not split. What it did not name is
+where the work actually was.
+
+**FIVE hand-written lists of the same panel names, not one.** The row named
+`main.gd::_mark_all_dirty()`. There were also `tools/screenshot.gd`'s
+`_mark_panels_dirty()`, `tools/screenshot.gd`'s `PANEL_BY_WINDOW_ID`, and --
+the one nobody was looking for -- `tests/test_shell.gd::EXPECTED_PANELS`, holding
+**seven of fourteen**, so bloc, calendar, people, companies, projects, campaign and
+dispatches had never been checked for registration, reachability, exclusivity or
+cluster routing since U5a. That is not a refresh bug: it is `check_names.sh`'s U6b
+failure and `run_tests.sh`'s `test_companies.gd` failure in a third place -- **a
+check that silently covers less than it appears to**. All five are deleted, and
+`tests/test_panel_kit.gd` forbids a sixth by refusing any file that names three or
+more panels in one literal, **arrays and dictionaries both** -- a scanner that read
+only arrays would have called `screenshot.gd` clean while it held the longest list
+of the five.
+
+**THE STEP-0 MEASUREMENT REFUTED A STANDING CLAIM, and the plan declared both
+branches before it ran.** `tests/test_nation_panel.gd` has recorded since V1.3e
+that *"a fold is a thing this suite structurally cannot see"*. The observation was
+right and the diagnosis was wrong. The layout **does** run; what an autowrapping
+Label is missing is not time but a **width**, and its minimum-size cache lags one
+invalidation -- so a read in the same call as the write returns the answer for the
+*previous* width, and a read one frame later is exact to the pixel. **Impose a
+width, let a frame pass, then read.** `test_nation_panel.gd`'s note stands as a
+description of itself rather than as a property of the engine, and the fold
+contract is a real headless test.
+
+**The one new visual rule was split in two, because it was doing two jobs.**
+"There is more below" is the **scrollbar's** job, and `ui_theme.gd` had themed
+`ProgressBar` and never `VScrollBar` -- so the affordance the row wanted to invent
+already existed and had been engine-default grey on navy since U5a. The brass
+hairline on the plate's bottom edge fires only when the panel's **primary action**
+is below the fold, which is a thing a scrollbar structurally cannot say and is
+exactly what cost five screenshot passes. Brass keeps one meaning; V2.2 has already
+reserved the next spend of it. A panel declares its verb with an optional
+`primary_action()`, duck-typed the way `mark_dirty()` is, so there is no base class
+and no registry of which panels have verbs.
+
+**The screenshot pass earned its keep for the twenty-first session running, with
+three bugs of which two were live and older than the session.** `fit_within()` spent
+the whole band on the **scroll** and then added the title bar, the separation and
+two content margins on top, so **every window that filled its band overflowed it by
+about fifty pixels** -- Politics ran 945px into an 886px band and, because
+`clamp_into_parent()` constrains only position, its last row sat under the bottom
+furniture. A window is also sized from its content as it was **before** the refresh
+that fills it, because `open()` marks dirty and places in the same call. And the
+session's own new theming **made the scrollbar disappear**: a `StyleBoxFlat` with no
+content margins has a minimum size of zero, so styling `VScrollBar` gave it a colour
+and a width of **0px**.
+
+**A flag was written and deleted, which is U6a's currency one tier on.** `--fold`
+resized the window to 1280x720 to force the mark and did nothing at all:
+`project.godot` sets a 1920x1080 viewport with `stretch/mode="canvas_items"`, so the
+layout is at 1080 whatever the window is. Once `fit_within` was correct the mark
+fires on `--open politics` at the shipped size, and a flag that does nothing the
+panel does not already do is noise.
+
+**What is NOT fixed is measured and handed on**, so V2.1b does not have to
+rediscover it. `get_combined_minimum_size()` is not the truth in either direction:
+`economy_panel` reports **928px for ~500px** of rendered prose and opens with a
+third of its band empty, `people_panel` reports **520px** and renders about **550**
+and clips its last four rows. A grow-to-the-band heuristic was written for the
+second and **deleted** -- every rect the engine reports agrees that the panel fits,
+so the correction had nothing to key off and would have been a number tuned against
+a symptom. Politics clears the fold by **twenty-one pixels**, which is one added
+row from being `nation_panel.gd` at V1.3e.
+
+No balance re-run and no new regime: nothing in `src/sim/` was touched and this adds
+no verb, predicted in the plan rather than discovered. Model:
+[docs/panel-system.md](docs/panel-system.md).
+
+### V2.1b — the sixteen panels, and a handover that was a stale read (shipped)
+
+**The row was wrong about the count twice and about the effort once.** `src/ui/` holds
+**nineteen** `*_panel.gd`, three migrated at V2.1a, **sixteen** left -- not "twenty-five"
+and not the "22 panels" the per-session table names. One of the three files that row
+said would not fit one session's context together is **`map_view.gd`, which is not a
+panel and builds no rows at all**. And *Low* was wrong: the migration is mechanical, and
+two kit changes and one re-composition are not.
+
+**FOUR PANELS HAD NO PRIVATE HELPER AND WERE THE ONES THAT MOST NEEDED MIGRATING.**
+V2.1a's check asks whether a file still defines `_row` / `_line` / `_header`; `law`,
+`calendar`, `election` and `polling` never had one and built **sixty-six raw Labels**
+between them inline, so that check would have called all four clean forever. It is
+`check_names.sh`'s U6b failure and `EXPECTED_PANELS` at seven of fourteen **in a third
+place -- inside the test written to end exactly that.** The second assertion closes it:
+every `src/ui/*_panel.gd` must name `PanelKit`, over a **directory scan** rather than a
+sixth hand-written list of panel names.
+
+**THE HANDOVER WAS A STALE READ, and V2.1a's own step-0 finding is what it missed.**
+[[docs/panel-system.md]] section 7 handed this session two numbers and the claim that
+`get_combined_minimum_size()` is not the truth in either direction -- economy reporting
+**928px for ~500px** of prose, people **520px** against ~550 rendered. Measured against
+each panel's drawn extent: **cold differs from warm in 4 of 14, and warm differs from
+drawn in 0 of 14.** A panel that has never been shown has never been laid out at the
+width it will really have, so its minimum answers for a width nothing draws -- which is
+*the minimum-size cache lags one invalidation* one level up, applied to the panel
+instead of to the Label. V2.1a found the rule and did not turn it on its own handover;
+`fold_probe.gd`'s table (a) takes exactly that cold read. **Politics reads 4725 cold and
+945 warm.**
+
+**So the structural fix this session's plan booked was written, measured and DELETED**
+-- U6a's day budget and V2.1a's own `--fold` flag a third time. It changed nothing in
+any of the fourteen, because `window_frame._process()` already re-fits when the content
+minimum moves, which is V2.1a's own fix doing the work its section 7 said was missing.
+One item on that list was real and is not a measurement error: `people_panel` authored
+520px against a ~700px register, so the window opened with a row cut through the middle
+and three hundred pixels of band empty under it. **Height is the right answer there and
+the wrong one for a fold**, and the general rule -- grow any window to the band -- stays
+deleted, because five panels legitimately author a height shorter than their content and
+scroll inside it.
+
+**THE FOLD CONTRACT IS A TEST NOW, and the one panel that failed it could not have been
+fixed by height.** Six panels gained a declared verb (`bloc`, `budget`, `calendar`,
+`campaign`, `events`, `law`), taking the table from four rows to ten, and **politics
+failed at 865 against an 826px band**. That panel holds 945px of content, so no height
+exists that would have cleared it -- V1.3g's finding as an arithmetic impossibility
+rather than a rule of thumb. The verbs moved **above** the readout: politics reads **73**
+now, and it is structural rather than 39px of luck. Mutation-checked by putting the body
+back on top, which turns the assertion red.
+
+**Two kit changes, both forced by a panel rather than chosen.** `Tone.PLAIN` on `line()`
+now means the panel's own **body** text: every tone resolved through
+`_variation(tone, UiTheme.CAPTION)`, which was harmless for V2.1a's three callers and
+would have silently shrunk and dimmed the **forty-five plain lines** `government_panel`
+and `nation_panel` build between them. And a figure's caption wraps, because overview's
+GOVERNMENT column is ~110px and V1.5a already paid for a caption that could not wrap
+there. **Two retained tables were rebuilt as ledgers** -- polling's two and budget's
+figure table -- and the second killed a live bug rather than a risk: `_set_figure()`
+**returned silently on an unknown key**, which is how V1.3g's deployments line wrote into
+nothing for three sessions while V1.4a documented it.
+
+**The twenty-second screenshot pass found one bug and it was the readout's** (people's
+clipped row), with no bug in the tool -- the second clean sheet the tool has had. No
+balance re-run, no new regime, no `SAVE_VERSION` move: nothing in `src/sim/` was touched
+and this adds no verb, predicted in the plan rather than discovered. Model:
+[docs/panel-system.md](docs/panel-system.md) sections 7 and 9-12.
+
+### V2.1c — navigation, and a resting screen that was silent 57 % of the time (shipped)
+
+**The V2.1 block is complete.** V2.1a settled what a panel is, V2.1b migrated all
+nineteen onto it, and what was left is how the player reaches one and what they are
+looking at when none is open. Model: [docs/panel-system.md](docs/panel-system.md)
+sections 13-17.
+
+**The row's own question -- whether the resting screen should show anything at all --
+was answered by MEASURING rather than by arguing, and the answer is one mark on the
+bar and no plate anywhere.** `tools/nav_probe.gd` ran the real game for fourteen years
+with nothing ever opened and counted the months in which a decision was in front of
+the player against the months in which anything on screen said so: **42 of 74 silent
+for a president who never touches a card, 64 of 74 for one who reads a card and closes
+it.** The message column is the only route a pending thing has ever had -- six cards,
+oldest dropped, dismissible, never re-pushed -- so **a council vote and an open
+campaign window were silent in 100 % of their months, having no card at all**, and an
+event's whole visibility is *one click of an X away from nothing*. `src/ui/pending.gd`
+returns window ids, `action_bar.gd` turns them into clusters, and the mark is the
+cluster's own icon in brass: section 4's rule -- *the state's own material marks what
+matters* -- reused rather than joined by a second visual rule. **U5a deleted
+`dashboard.gd` on purpose and the map is still the resting screen.**
+
+**THE KEYBOARD WAS A HAND-WRITTEN LIST OF PANEL IDS IN A SEVENTH PLACE, and the test
+written to catch that class could not see it.** `main.gd::_unhandled_input()` matched
+**six** keycodes against six window ids, so the eight windows added since U5a had no
+key at all; `tests/test_shell.gd` held **the same six** as a literal dictionary, and a
+list cannot test a list. `test_panel_kit.gd`'s no-hand-written-list check scans
+`src/ui/` and `tools/` for panel **variable** names, and these were ids and keycodes in
+`tests/`. The map now lives at the `register()` call -- `register(id, title, content,
+key)`, `shortcut()`, `id_for_key()`, and a `push_error` on a key already taken -- so
+adding a surface stays *one register() and one line in `_build_action_bar()`*, and the
+drawer's tooltip **reads the letter off the registry** rather than restating it.
+
+**`WindowManager.opened` and `closed` had had no consumer since U5a**, which is
+`message_stack.card_activated`'s case at V1.8 in a second place: the bar was the only
+route that marked itself, so a keypress, a map marker (U6c) and a message card (V1.8)
+each opened a window while the one control that says where you are went on saying
+nothing. Both signals are consumed now, and the marks are the theme's existing pressed
+style plus a brass icon -- **no new theme variation**, so `test_ui_theme.gd` is
+untouched.
+
+**Instance fifty-two, and the first of the V2 tier**, is in the row's own list of five
+surfaces to place: [docs/tiers/v2.md](docs/tiers/v2.md) §4 calls the day agenda **"a
+ribbon, not a grid"** and §2 reaches a city by **clicking the map**, so two of the five
+arrive as something other than a drawer entry. **The cluster capacity table then
+refused the question it was written to answer**: the bar may use **1384px of 1920** and
+the widest drawer this game could plausibly grow uses **half** of it -- 0 of 16 measured
+rows come near the edge -- so width cannot force a fifth cluster and cannot choose one
+either. The four hold on grammar instead: **a cluster is the domain of the decision
+rather than the shape of the object**, so region, city and energy are Economy, climate
+is Society, and a fifth "Territory" cluster is refused with the count that would
+reverse it written beside it.
+
+**`tools/run_tests.sh` now fails a test that exits 0 with a `SCRIPT ERROR` in its
+output, and the session reproduced the failure it was told about.** A parse error in
+`main.gd` left `test_shell.gd` printing *"all checks passed"* over a scene that had
+never loaded -- because that file read `_main._state` off a bare Control, which raises
+rather than returning null. Both halves are fixed and zero script errors are emitted
+today, so the check costs nothing until it saves something.
+
+**No `SAVE_VERSION` move, no balance re-run and no new regime**, predicted in the plan
+rather than discovered: nothing in `src/sim/` was touched and this session adds no verb.
+**The twenty-third screenshot pass found no bug in the readout and one in the code it
+was about to ship** -- `show_pending()` reached `Icon.load_icon()`, which reads an SVG
+off disk and rasterises it on every call, on the path that refreshes with the clock, so
+the bar was re-reading four files a day. Both tints are rasterised once now. The frame
+before and after is identical to the pixel, which is the point worth recording: **a
+screenshot pass structurally cannot see that class**, and this is the first bug on the
+project's record found by reading a change's cost rather than by looking at it.
 
 ### U5a — the ruler's shell (shipped)
 
@@ -2840,9 +3055,9 @@ is already made, which is most sessions once the docs are written.
 | V1.5a The delivery layer | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **ELEVENTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the fifth session running — the tier table stopped at U6b and V1.5 had no decomposition to inherit a content cell from either, so this is the first row since V1.3b with *nothing* to read. **What was challengeable was the §5 row itself, and it was wrong eight ways** — five collisions and three orphans, listed under *V1.5 — the decomposition*, of which the sharpest is that **bullet 9 asks for a machine the project has built three times under three names**: `military_capability`, and `potential_shift_pct` twice. The cold count came in at **~28 surfaces** — five new files, ~23 edits — level with V1.3e's and U5a's ~28, against U6b's ~46, U6a's ~40, V1.3d's ~39, V1.3g's ~34, V1.3b's and V1.3f's ~33, V1.3c's ~30 and U5c's ~13. **ONE machine**, so V1.3e's split trigger does not fire at the session level: the stock is the machine, corruption is one factor at an existing site, and there is no scheduler, no decision and no new accumulator. High on **reversibility**, the test the preamble names, and both halves fire: `effects.society` is schema (c) and (d) read, so a wrong channel is rewritten with two sessions; and this is the first session since V1.3d to put an **already-measured opinion constant** at risk, because `QUALITY_SCALE_PP` and `SPEND_SCALE_PP` land on the same issue and their ratio *is* the double-count answer. **The re-run was predicted NOT to be bit-identical, and predicted before it ran** — every session since V1.3d has been, because each channel read exactly 0.0 until a player *command* fired, where this one's trigger is the budget slider, which the regimes move |
 | V1.3g Defence as domestic politics | **Yes** *(authored)* | Opus 5, plan and build in one session | **High** | **EIGHTH instance of the missing-row failure V1.3b recorded**, and the plan found it by counting rather than by being told, for the second session running — the tier table stopped at V1.3f and the decomposition row was again the only cell to read. **The decomposition row was challenged and held**: capability, deployments, defensive alliances and obligations are exactly the four things built, and its "reads a, d" was right in a way it could not have known — **d is what makes g fire at all**. The cold count came in at **~34 surfaces** — six new files, ~28 edits — level with V1.3b's and V1.3f's ~33, against V1.3d's ~39, V1.3c's ~30, V1.3e's ~28 and V1.3a's ~25. **The surface trigger would have fired again and the machine count again decided it**: ONE machine, the commitment, of which the pact is the cause and the capability stock the price — and V1.3e's test (*is there a second thing with a scheduler, a decision, new serialised state and a surface?*) answers no **precisely because** the accept/refuse obligation surface was cut, which is the second machine V1.3f cut once already. No split. **Four cuts declared in advance and all four taken**: no obligation inbox, no Military window, no `has_budget` lift, no economy reader for capability. **The probe corrected the model three times, which is seven sessions running**: the nine never coerce each other, so the obligation is unreachable without the COUNCIL and the first run reported zero for the wrong reason; the headline approval figure cannot move on a `defence` price at all, because five blocs of six weight that issue at zero, so the test moved to the rural row rather than the constant moving; and the first opinion table measured **half the price**, having set the load and not the bill that widens the deficit every bloc does weight. Of five named escalation triggers, **one fired** — GBR unable to ally, for the sixth time in the block, resolved by a sweep that put `PACT_ACCEPT_MIN` at 1.00, *below* the trade-agreement bar and inverting the argument that set it. **The clamp was measured and found SLACK**, which is a first for this block: the worst reachable obliged bill is 0.586 against a guard rail of 2.00. What the count did not anticipate was found by looking at a frame for the **fifth session running**, and this time the bug was in the tool: `--defence --open budget` showed an em dash against a live 0.498 bill, because hiding a window frame does not clear the child panel's own `visible`, so every panel spends its one refresh on frame 1 and never rebuilds — every state-mutating screenshot flag since V1.3c had been capturing pre-mutation figures and getting away with it. The nation panel's fold reappeared at the same panel one session after V1.3e paid for it, and **height alone could not fix it**. **The re-run is bit-identical across every shared regime**, which the plan did not predict and table (h) explains: four new verbs entered `data/diplomatic-actions/` and changed no AI choice, because `state_visit` wins 90 pairs of 90 on being the only verb priced at exactly zero. Nineteenth correction on this table's own record, and the seventh to be an *addition* to it |
 | V1.3a Relations and diplomatic actions | **Yes** | Opus 5, plan and build in one session | **High** | Logged **High** on a decomposition-time cold count of ~22 surfaces — one above V1.2d's ~21 — but the count is not what moves the tier. V1.2c, V1.2d and V1.2e each held Medium on the same stated reasoning: *no new model, no new tuned constant, an nth instance of a dispatch pattern already built n−1 times.* All three are false here. V1.3a is a new model (`docs/diplomacy-model.md`), new tuned constants (drift rate, action magnitudes), and the first state in the project that is neither per-nation nor global. What sets the tier is **reversibility**, which is the test this table's own preamble names: a pair-key schema that turns out wrong is rewritten along with everything V1.3b–f reads off it. The surfaces counted: `data/relations.json`, `src/core/relations.gd`, `data/diplomatic-actions/*.json`, `src/core/diplomatic_action.gd`, `src/sim/diplomacy.gd`, `src/sim/diplomacy_constants.gd`, `data_loader.gd` load plus cross-file validation, `GameState.relations` across `to_dict`/`from_dict`/`duplicate_state`, `SAVE_VERSION` 8 → 9 and `save_manager.gd`'s refusal path, `NationState` cooldowns and last-result, `main.gd`'s tick insertion, `nation_panel.gd`, `map_view.gd` colouring (the cut candidate), five test files, `tools/diplomacy_probe.gd`, and five docs. Counted by the **decomposition** session rather than by the one about to build — which by this table's own record is the estimate most likely to be wrong. Challenge it cold. **Challenged, and held.** The cold count at plan time came in at **~25**, three above the logged ~22, and High held on the reversibility test rather than on the count. Two of the logged surfaces were wrong in opposite directions: `data/relations.json` does not exist (starting values are derived, so it became ten `neighbours` arrays plus a mutuality check), and the `bloc_offset` rename logged as "nearly free" was ~30 edit sites across five code files, four test files and eight docs. Both cuts were named in advance; **the map-colouring cut was taken and the content cut was not** — four actions shipped, not three. The escalation trigger did not fire. Tenth correction on this table's own record, and the sixth that held its tier once corrected. |
-| V2.1a The panel system | **Yes** | Opus 5, plan and build in one session | **High** | **The first row on this table written BEFORE the session rather than authored at its plan time** -- the missing-row failure is recorded here four times in almost identical words, so V2 breaks it by writing the row first and asking the receiving session to challenge it cold. Estimated **~14 surfaces and ONE machine**: two new files (`src/ui/panel_kit.gd` and `tests/test_panel_system.gd`) against ~12 edits -- `main.gd`'s `_mark_all_dirty()` deleted, `window_manager.gd` exposing its registry, `ui_theme.gd` gaining the fold variation, three panels migrated as proof, `tools/run_tests.sh` naming the new test, and the docs. Below U5c's ~13 only if the migration count stays at three. **High on reversibility, which is the test the preamble names and it is the whole argument for the row**: a map renderer that turns out wrong is rewritten alone, and a primitive set that turns out wrong is rewritten along with **twenty-five panels that read it**. That is the schema case, not the renderer case. **What to challenge**: whether the fold contract can be expressed without a layout pass, given that `tests/test_nation_panel.gd` already records that an autowrapped label reports a one-word-per-line height when nothing has laid it out -- if it cannot, the contract is a screenshot-pass assertion rather than a test, and the row should say so before it is built |
-| V2.1b The twenty-five panels | No | Sonnet 5 | **Low** | Mechanical and high-volume: the remaining panels migrated onto (a)'s primitives, every fold fixed by the contract rather than by height. **Plan first is No for the reason the preamble gives** -- the decision is already made by (a), and what is left is executing it twenty-two times. The estimate is deliberately not a surface count but a **file** count, because that is what varies: 22 panels, of which `budget_panel.gd` (625), `map_view.gd` (599) and `calendar_panel.gd` (596) are the three that will not fit one session's context together. **What to challenge**: whether this is one session or two. V1.3g proved height alone does not fix a fold, so a panel that needs re-composition rather than re-plumbing is (c)'s work, not this one's |
-| V2.1c Navigation and the resting screen | **Yes** | Opus 5, plan and build in one session | **Medium** | What is on screen when nothing is open, and what the four bottom clusters mean once V2 has five more surfaces to place -- city, region, day agenda, energy, climate. **Medium rather than High**: the cluster grammar is reversible in a way the primitive set is not, because a cluster is one line in `_build_action_bar()` and U5a built it that way on purpose. **What to challenge, and it is the row's real question**: whether the resting screen should show anything at all. U5a's call was that the map IS the resting screen and the panels are floating windows over it; five new surfaces is exactly the pressure that would push a session into inventing a dashboard again, which is the thing U5a deleted. The row should be read as *prove the map still carries it*, not as *design a home screen* |
+| ~~V2.1a The panel system~~ | **Yes** | Opus 5, plan and build in one session | **High** | **BUILT. The first row on this table written BEFORE the session, and read cold it was wrong in five places and silent in four.** The estimate said ~14 surfaces, 2 new files and "all fifteen" registered panels; counted, `src/ui/` is **41 files** (not 25), `register()` knows **fourteen**, and the session came to ~18 surfaces and 3 new files. **The machine count held and the session did not split.** **High on reversibility was right and is the whole argument for the row** -- a primitive set that turns out wrong is rewritten along with twenty-five panels that read it -- and what the count missed is where the work was: **five hand-written lists of panel names, not one**, including `tests/test_shell.gd::EXPECTED_PANELS` at **seven of fourteen**, which is not a refresh bug at all but a check that had silently covered half of what it appeared to since U5a. **The row's own "what to challenge" was the session's sharpest result and it went the other way**: the fold contract CAN be expressed without giving up on a test, because `tests/test_nation_panel.gd`'s standing claim that a headless suite cannot see a fold was right in its observation and wrong in its diagnosis -- the layout runs, the minimum-size cache lags one invalidation, and *impose a width, let a frame pass, then read* is exact to the pixel. **The one new visual rule was split in two** because it was doing two jobs and because half of it already existed unthemed: `ui_theme.gd` had styled `ProgressBar` and never `VScrollBar`. The screenshot pass earned its keep for the **twenty-first** session running with three bugs, two of them live and older than the session -- `fit_within()` spent the whole band on the scroll so every full window overflowed by ~50px, and a window is sized from its content as it was before the refresh that fills it. One flag was written and **deleted** as a no-op (the viewport stretch makes a window resize meaningless), U6a's currency one tier on. Twenty-fourth correction on this table's own record, and the twelfth to be an *addition* to it |
+| ~~V2.1b The twenty-five panels~~ | No | Sonnet 5 | **Low → Medium** | **BUILT.** The row was wrong on the count twice and on the effort once, and read cold that is **the twenty-fifth correction on this table's own record**. There are **19** `*_panel.gd` and **sixteen** were left, not twenty-two or twenty-five; **`map_view.gd`, one of the three files it said would not fit one context together, is not a panel and builds no rows.** *Low* assumed pure substitution: what it did not name is two kit changes forced by panels (PLAIN meaning body text, a figure's caption wrapping), two retained tables rebuilt as ledgers, and one panel needing re-composition. **The one-or-two question is answered ONE, and the trigger declared in advance did not fire** -- exactly one panel could not be re-plumbed, and ordering rather than height fixed it. What the row could not have known is where the work was: **four panels had no private helper at all** and built sixty-six raw Labels inline, so V2.1a's own check would have called them clean forever -- `check_names.sh`'s U6b failure in a third place, inside the test written to end it. **The handover was a stale read**: section 7's two numbers are a cold panel's minimum, and the fix booked against them was written, measured, and deleted
+| ~~V2.1c Navigation and the resting screen~~ | **Yes** | Opus 5, plan and build in one session | **Medium** | **BUILT, and the row's real question was answered by a MEASUREMENT rather than by the argument it invited.** *Prove the map still carries it* held: `tools/nav_probe.gd` ran fourteen years with nothing ever opened and found the resting screen silent in **42 of 74 pending-months** for a president who never touches a card and **64 of 74** for one who reads a card and closes it -- a council vote and an open campaign window silent in **100 %**, having no card at all. So the response is one mark on the cluster where the answer is given, **no plate and nothing new on the map**, and `dashboard.gd` stays deleted. **Medium was right and the effort landed somewhere the row did not name**: the cluster grammar cost almost nothing because the capacity table **refused the question it was asked** -- the bar may use 1384px of 1920 and the widest plausible drawer uses half of it, so width cannot force a fifth cluster or choose one, and the four hold on grammar. What the row could not have known is the **seventh hand-written list of panel ids**: `_unhandled_input()` bound six of fourteen windows and `test_shell.gd` held the same six as a literal, invisible to `test_panel_kit.gd`'s scanner because they were ids and keycodes in `tests/`. **Instance fifty-two is in the row's own wording** -- of its five surfaces to place, the day agenda is a ribbon and a city is reached by clicking the map. Twenty-sixth correction on this table's own record
 
 > [!note] V1.2b's plan got a real collision wrong, and the build found it
 > The plan assumed enforcing France's term limit could move the balance

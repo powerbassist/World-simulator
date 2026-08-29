@@ -26,6 +26,7 @@ signal closed
 
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const PORTFOLIO_LABEL := {
 	"health": "Health", "education": "Education", "defence": "Defence",
@@ -42,7 +43,21 @@ var _close_button: Button
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(460, 520)
+	# 700 rather than 520, and the screenshot pass is why: a new game's register runs
+	# to the executive, five cabinet portfolios, six parties and ten foreign leaders,
+	# and at 520 the window opened with the Abroad list cut through the middle of a
+	# row while three hundred pixels of the usable band sat empty underneath it. This
+	# panel has no verb, so the fold mark cannot say so on its behalf -- the only
+	# affordance is the scrollbar, and a window that is short for no reason is a
+	# window the player has to fix by hand every time they open it. 700 is calendar's
+	# figure and well inside U5a's ~886px band.
+	#
+	# Height is the RIGHT answer here and the wrong one for a fold: a fold is a verb
+	# below the line, which V1.3g proved height does not fix. This is a readout that
+	# was simply smaller than the band it is allowed to occupy. The general version --
+	# a window growing to the band whenever its content wants more -- stays deleted;
+	# see docs/panel-system.md section 7.
+	custom_minimum_size = Vector2(460, 700)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -118,9 +133,9 @@ func _refresh() -> void:
 ## content: an amendment can change the head of state, and a censure changes the
 ## head of government, so this reads NationState and not the nation file.
 func _build_executive(ns) -> void:
-	_header("The executive")
-	_row(ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
-	_row(ns.head_of_government_title, _name_of(ns.pm_person_id))
+	PanelKit.heading(_body, "The executive")
+	PanelKit.row(_body, ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
+	PanelKit.row(_body, ns.head_of_government_title, _name_of(ns.pm_person_id))
 
 
 ## Named ministers do not exist, and this is where that shows. U6b's own probe
@@ -129,30 +144,30 @@ func _build_executive(ns) -> void:
 ## cost to author -- so the bench was cut before it was written and a portfolio
 ## still names the PARTY that holds it. docs/people-model.md §3.
 func _build_cabinet(ns) -> void:
-	_header("The cabinet")
+	PanelKit.heading(_body, "The cabinet")
 	var by_id := {}
 	for p in _loader.parties.get(ns.id, []):
 		by_id[p.id] = p
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
 		if pid == "" or not by_id.has(pid):
-			_row(PORTFOLIO_LABEL.get(f, f), "VACANT", true)
+			PanelKit.row(_body, PORTFOLIO_LABEL.get(f, f), "VACANT", PanelKit.Tone.BAD)
 		else:
-			_row(PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
+			PanelKit.row(_body, PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
 
 
 func _build_parties(ns) -> void:
-	_header("The parties")
+	PanelKit.heading(_body, "The parties")
 	for p in _loader.parties.get(ns.id, []):
 		var seats := int(ns.seats_by_party.get(p.id, 0))
-		_row(String(p.party_name), "%s · %d seats" % [_name_of(p.leader_person_id), seats])
+		PanelKit.row(_body, String(p.party_name), "%s · %d seats" % [_name_of(p.leader_person_id), seats])
 
 
 ## Everyone the Diplomacy panel can point at. Their titles are live state too --
 ## another nation's head of state can change while the player is not looking,
 ## which is exactly the sort of thing a roster is for.
 func _build_abroad(ns) -> void:
-	_header("Abroad")
+	PanelKit.heading(_body, "Abroad")
 	var ids: Array = _state.nations.keys()
 	ids.sort()
 	for id in ids:
@@ -161,7 +176,7 @@ func _build_abroad(ns) -> void:
 		var nation = _loader.nations.get(id)
 		if nation == null:
 			continue
-		_row(String(nation.nation_name), "%s %s" % [
+		PanelKit.row(_body, String(nation.nation_name), "%s %s" % [
 			nation.leader_title, _name_of(nation.leader_person_id),
 		])
 
@@ -169,29 +184,3 @@ func _build_abroad(ns) -> void:
 func _name_of(person_id: String) -> String:
 	var who: String = _loader.person_name(person_id)
 	return who if who != "" else "—"
-
-
-func _header(text: String) -> void:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
-	_body.add_child(label)
-
-
-func _row(left: String, right: String, bad := false) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var key := Label.new()
-	key.text = left
-	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	key.theme_type_variation = UiTheme.CAPTION
-	row.add_child(key)
-
-	var value := Label.new()
-	value.text = right
-	if bad:
-		value.theme_type_variation = UiTheme.BAD_TEXT
-	row.add_child(value)
-
-	_body.add_child(row)

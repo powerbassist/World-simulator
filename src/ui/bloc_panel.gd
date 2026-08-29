@@ -18,6 +18,7 @@ extends PanelContainer
 ## Built in code, like the other panels -- see budget_panel.gd's placement note.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
@@ -38,6 +39,9 @@ var _title: Label
 var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
+
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
 
 
 func _ready() -> void:
@@ -80,7 +84,6 @@ func _ready() -> void:
 	root.add_child(_close_button)
 
 
-
 ## Docked in a WindowFrame, whose X is the real close control. Without this the
 ## panel's own Close hides the CONTENT while window_manager.open() only ever shows
 ## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
@@ -109,6 +112,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -132,13 +136,13 @@ func _refresh() -> void:
 ## external tariff lands on them from every member at once, which is a thing no
 ## single nation in this game can do.
 func _refresh_outsider(ns, members: Array) -> void:
-	_heading("OUTSIDE THE UNION")
-	_line("%s is not a member. It has no vote in the council and no rule of the" % ns.id)
-	_line("council binds it.")
-	_caption("Membership is fixed at the start of a game — see docs/bloc-model.md.")
-	_line("")
+	PanelKit.heading(_body, "OUTSIDE THE UNION")
+	PanelKit.line(_body, "%s is not a member. It has no vote in the council and no rule of the" % ns.id, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "council binds it.", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Membership is fixed at the start of a game — see docs/bloc-model.md.")
+	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
-	_heading("MEASURES FROM MEMBERS")
+	PanelKit.heading(_body, "MEASURES FROM MEMBERS")
 	var levied := 0
 	var worst := 0.0
 	for member_id in members:
@@ -147,36 +151,33 @@ func _refresh_outsider(ns, members: Array) -> void:
 			continue
 		levied += 1
 		worst = maxf(worst, float(terms.get("severity", 0.0)))
-		_line("%s: %s, severity %.2f" % [
+		PanelKit.line(_body, "%s: %s, severity %.2f" % [
 			member_id, terms.get("action_name", terms.get("action_id", "")),
 			float(terms.get("severity", 0.0)),
-		])
+		], PanelKit.Tone.PLAIN)
 	if levied == 0:
-		_caption("None. The council has adopted no common external measure.")
+		PanelKit.line(_body, "None. The council has adopted no common external measure.")
 	else:
-		_line("")
-		_line("%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst])
-		_caption("A bloc acting as one is the only thing in this game that imposes from more than one direction at once.")
+		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "A bloc acting as one is the only thing in this game that imposes from more than one direction at once.")
 
 
 ## What is on the table, and the player's own vote. First, because it is the only
 ## part of this panel the player can act on and the window is opened to act.
 func _refresh_vote(ns) -> void:
-	_heading("BEFORE THE COUNCIL")
+	PanelKit.heading(_body, "BEFORE THE COUNCIL")
 
 	var pending: Dictionary = Bloc.pending(_state)
 	if pending.is_empty():
-		_caption("Nothing before the council. The presidency brings the next proposal forward in due course.")
+		PanelKit.line(_body, "Nothing before the council. The presidency brings the next proposal forward in due course.")
 	else:
-		var name_line := Label.new()
-		name_line.text = String(pending.get("name", ""))
-		name_line.autowrap_mode = TextServer.AUTOWRAP_WORD
-		_body.add_child(name_line)
-		_caption(String(pending.get("summary", "")))
-		_line("Divides in %d %s." % [
+		PanelKit.line(_body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, String(pending.get("summary", "")))
+		PanelKit.line(_body, "Divides in %d %s." % [
 			int(pending.get("months_left", 0)),
 			"month" if int(pending.get("months_left", 0)) == 1 else "months",
-		])
+		], PanelKit.Tone.PLAIN)
 
 		var current := String(pending.get("player_vote", Bloc.VOTE_ABSTAIN))
 		var row := HBoxContainer.new()
@@ -192,24 +193,26 @@ func _refresh_vote(ns) -> void:
 			if choice == Bloc.VOTE_ABSTAIN:
 				button.tooltip_text = "Counted against the threshold, for neither side."
 			button.pressed.connect(_on_vote.bind(choice))
+			if _primary == null and not button.disabled:
+				_primary = button
 			row.add_child(button)
 		_body.add_child(row)
-		_caption("Currently: %s. %s holds %d of the council's seats." % [
+		PanelKit.line(_body, "Currently: %s. %s holds %d of the council's seats." % [
 			current, ns.id, _loader.eu.ep_seats(ns.id),
 		])
 
 	var last: Dictionary = Bloc.last_vote(_state)
 	if not last.is_empty():
-		_line("")
-		_line("Last division: %s — %s" % [
+		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "Last division: %s — %s" % [
 			String(last.get("name", "")), "carried" if bool(last.get("passed", false)) else "fell",
-		])
-		_caption("%d for, %d against, of %d seats. %s voted %s." % [
+		], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "%d for, %d against, of %d seats. %s voted %s." % [
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), ns.id, String(last.get("player_vote", "")),
 		])
 		_refresh_why(last)
-	_line("")
+	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
 ## V1.3e. WHY each member voted as it did, not only how.
@@ -245,7 +248,7 @@ func _refresh_why(last: Dictionary) -> void:
 	var keys: Array = camps.keys()
 	keys.sort()
 	for key in keys:
-		_caption("%s: %s" % [_vote_reason_text(String(key)), ", ".join(camps[key])])
+		PanelKit.line(_body, "%s: %s" % [_vote_reason_text(String(key)), ", ".join(camps[key])])
 
 
 ## The model returns a key; the wording lives here, because src/sim/ does not know
@@ -265,46 +268,46 @@ func _vote_reason_text(key: String) -> String:
 ## the constraint is the interesting part, which is nation_panel.gd's own argument
 ## for showing unavailable actions.
 func _refresh_rules(ns) -> void:
-	_heading("RULES IN FORCE")
+	PanelKit.heading(_body, "RULES IN FORCE")
 
 	var rules := Bloc.rules_in_force(_state, ns)
 	if rules.is_empty():
-		_caption("None. Nothing the council has adopted constrains domestic policy.")
+		PanelKit.line(_body, "None. Nothing the council has adopted constrains domestic policy.")
 	for rule in rules:
 		var field: String = String(rule.get("field", ""))
 		if field == "":
-			_line("%s — no policy constraint" % String(rule.get("name", "")))
+			PanelKit.line(_body, "%s — no policy constraint" % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
 			continue
-		_line("%s — %s %s %.1f" % [
+		PanelKit.line(_body, "%s — %s %s %.1f" % [
 			String(rule.get("name", "")),
 			BK.CONSTRAINT_LABEL.get(field, field),
 			BK.CONSTRAINT_OP_LABEL.get(String(rule.get("op", "")), String(rule.get("op", ""))),
 			float(rule.get("value", 0.0)),
-		])
+		], PanelKit.Tone.PLAIN)
 		if float(rule["breach"]) <= 0.0:
-			_caption("    compliant")
+			PanelKit.line(_body, "    compliant")
 		else:
-			_caption("    outside by %.2f — %.0f%% of this rule's weight" % [
+			PanelKit.line(_body, "    outside by %.2f — %.0f%% of this rule's weight" % [
 				float(rule["breach"]),
 				100.0 * float(rule["contribution"]) / maxf(float(rule["severity"]), 0.0001),
 			])
 
-	_line("")
-	_line("Standing: %.2f of a possible %.2f" % [ns.bloc_burden, BK.BURDEN_MAX])
-	_caption("What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this.")
-	_line("")
+	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Standing: %.2f of a possible %.2f" % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this.")
+	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
 func _refresh_contribution(ns) -> void:
-	_heading("THE BUDGET")
+	PanelKit.heading(_body, "THE BUDGET")
 	var parts := Bloc.transfer_breakdown(_state, ns)
-	_line("Net contribution: %+.3f%% of GDP" % float(parts["base"]))
+	PanelKit.line(_body, "Net contribution: %+.3f%% of GDP" % float(parts["base"]), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(parts["rules"])):
-		_line("Adopted programmes: %+.3f%% of GDP" % float(parts["rules"]))
+		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(parts["rules"]), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(parts["fine"])):
-		_line("Penalties: %+.3f%% of GDP" % float(parts["fine"]))
-	_line("Total: %+.3f%% of GDP" % ns.bloc_transfer_pct_gdp)
-	_caption("Charged on the spending side of the budget panel. One point of VAT is worth about 0.53%% of GDP.")
+		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(parts["fine"]), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Total: %+.3f%% of GDP" % ns.bloc_transfer_pct_gdp, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53%% of GDP.")
 
 
 func _on_vote(choice: String) -> void:
@@ -314,23 +317,13 @@ func _on_vote(choice: String) -> void:
 	_dirty = true
 
 
-func _heading(text: String) -> void:
-	var label := Label.new()
-	label.theme_type_variation = UiTheme.HEADING
-	label.text = text
-	_body.add_child(label)
-
-
-func _line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_body.add_child(label)
-
-
-func _caption(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.theme_type_variation = UiTheme.CAPTION
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_body.add_child(label)
+## The control this panel exists to let the player press -- V2.1a's fold contract,
+## declared here at V2.1b.
+##
+## The council's three vote buttons are rebuilt on every refresh and the one the
+## player already holds is disabled, so this is the FIRST ENABLED verb in build
+## order rather than a member held from _ready(). Null while no proposal is
+## pending, which is most months: the panel is then a readout and has no verb to
+## put above the fold.
+func primary_action() -> Control:
+	return _primary

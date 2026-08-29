@@ -23,6 +23,7 @@ extends PanelContainer
 ## you open your diary to schedule something.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
@@ -149,9 +150,7 @@ func _build_form(root: VBoxContainer) -> void:
 	grid.add_theme_constant_override("v_separation", 6)
 	root.add_child(grid)
 
-	var kind_label := Label.new()
-	kind_label.text = "Kind"
-	grid.add_child(kind_label)
+	PanelKit.line(grid, "Kind", PanelKit.Tone.PLAIN)
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for kind in K.KINDS:
@@ -174,9 +173,7 @@ func _build_form(root: VBoxContainer) -> void:
 	_act_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_child(_act_pick)
 
-	var when_label := Label.new()
-	when_label.text = "Date"
-	grid.add_child(when_label)
+	PanelKit.line(grid, "Date", PanelKit.Tone.PLAIN)
 	var when_row := HBoxContainer.new()
 	when_row.add_theme_constant_override("separation", 8)
 	_month_pick = OptionButton.new()
@@ -198,7 +195,6 @@ func _build_form(root: VBoxContainer) -> void:
 	_status.theme_type_variation = UiTheme.CAPTION
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_status)
-
 
 
 ## Docked in a WindowFrame, whose X is the real close control. Without this the
@@ -260,18 +256,12 @@ func _refresh_strip() -> void:
 		var key := "%d-%02d" % [int(when["year"]), int(when["month"])]
 		var entries: Array = by_month.get(key, [])
 
-		var heading := Label.new()
-		heading.theme_type_variation = UiTheme.MICRO
-		heading.text = "%s %d" % [
+		PanelKit.heading(_body, "%s %d" % [
 			ClockCluster.MONTH_NAMES[int(when["month"]) - 1], int(when["year"]),
-		]
-		_body.add_child(heading)
+		])
 
 		if entries.is_empty():
-			var quiet := Label.new()
-			quiet.theme_type_variation = UiTheme.CAPTION
-			quiet.text = "    —"
-			_body.add_child(quiet)
+			PanelKit.line(_body, "    —")
 			continue
 
 		for entry in entries:
@@ -315,20 +305,13 @@ func _refresh_later() -> void:
 	if rows.is_empty():
 		return
 
-	var heading := Label.new()
-	heading.theme_type_variation = UiTheme.MICRO
-	heading.text = "LATER"
-	_body.add_child(heading)
+	PanelKit.heading(_body, "LATER")
 
 	for row in rows:
-		var line := Label.new()
-		line.theme_type_variation = UiTheme.CAPTION
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD
-		line.text = "    %s %d — %s" % [
+		PanelKit.line(_body, "    %s %d — %s" % [
 			ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
 			_fixed_text(row),
-		]
-		_body.add_child(line)
+		])
 
 
 ## A booking carries a cancel button; a fixed date does not, because the game
@@ -594,3 +577,17 @@ func _party_name(id: String) -> String:
 		if String(party.id) == id:
 			return String(party.party_name)
 	return id
+
+
+## The control this panel exists to let the player press -- V2.1a's fold contract,
+## declared here at V2.1b.
+##
+## Book it, and it is the panel's only verb: the per-entry Cancel buttons sit
+## inside the strip's own scroll, which the frame cannot see past. Built once in
+## _build_form() and alive for the session, so it is held rather than re-found --
+## government_panel's shape. Disabled while nothing is bookable, and the contract
+## reads the first ENABLED verb, so that month draws no mark.
+func primary_action() -> Control:
+	if _book_button != null and not _book_button.disabled:
+		return _book_button
+	return null

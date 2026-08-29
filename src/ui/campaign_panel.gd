@@ -38,6 +38,7 @@ const ElectionK = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## The six blocs as a player thinks of them. election_constants.gd and
 ## opinion_constants.gd both key on the bare ids and neither carries a display name;
@@ -93,6 +94,9 @@ var _body: VBoxContainer
 var _scroll: ScrollContainer
 var _close_button: Button
 
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 560)
@@ -117,7 +121,7 @@ func _ready() -> void:
 
 	# The body sits inside a right margin rather than flush to the scroll, because a
 	# ScrollContainer draws its bar OVER the content and the right-aligned figures in
-	# _row() would run underneath it. companies_panel.gd's first captured frame is what
+	# PanelKit.row() would run underneath it. companies_panel.gd's first captured frame is what
 	# found that; inherited rather than rediscovered a third time.
 	var gutter := MarginContainer.new()
 	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -172,6 +176,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	_title.text = "Campaign"
 
@@ -198,22 +203,22 @@ func _refresh() -> void:
 ## lever is a decision about TIMING: start early and buy more at more, start late and
 ## buy less at less.
 func _build_clock(ns) -> void:
-	_header("The vote")
+	PanelKit.heading(_body, "The vote")
 	var months := Campaign.months_to_election(_state, ns)
 	if months < 0:
-		_line("No vote is scheduled.")
+		PanelKit.line(_body, "No vote is scheduled.")
 		return
 
-	_row("Months to the vote", "%d" % months)
+	PanelKit.row(_body, "Months to the vote", "%d" % months)
 	if Campaign.is_open(_state, ns):
-		_row("Campaign bill", "%.3f %% of GDP" % ns.campaign_bill_pct_gdp)
-		_line(
+		PanelKit.row(_body, "Campaign bill", "%.3f %% of GDP" % ns.campaign_bill_pct_gdp)
+		PanelKit.line(_body, 
 			"The run-up is open. Every effort in the field reaches more voters each"
 			+ " month it runs and costs its price each month it runs, and all of it"
 			+ " ends at the vote whatever happens."
 		)
 	else:
-		_line(
+		PanelKit.line(_body, 
 			"The run-up opens %d months from now, %d months before the vote. Nothing"
 			% [months - CampaignK.CAMPAIGN_WINDOW_MONTHS, CampaignK.CAMPAIGN_WINDOW_MONTHS]
 			+ " can be put in the field until then."
@@ -228,7 +233,7 @@ func _build_clock(ns) -> void:
 ## students at 0.45 have very different room, and that asymmetry is the model rather
 ## than a table -- see Campaign.turnout_of().
 func _build_turnout(ns) -> void:
-	_header("Expected turnout")
+	PanelKit.heading(_body, "Expected turnout")
 	var moved := false
 	for bloc in OpinionK.BLOC_KEYS:
 		var base: float = float(ElectionK.BLOC_TURNOUT[bloc])
@@ -236,19 +241,19 @@ func _build_turnout(ns) -> void:
 		var delta: float = now - base
 		if not is_zero_approx(delta):
 			moved = true
-		_row(
+		PanelKit.row(_body, 
 			String(BLOC_LABEL.get(bloc, bloc)),
 			"%.1f %%   %s" % [now * 100.0, "—" if is_zero_approx(delta) else "%+.1f" % (delta * 100.0)],
 		)
 	if not moved:
-		_line("Nobody has been mobilised. These are the figures an ordinary election gets.")
+		PanelKit.line(_body, "Nobody has been mobilised. These are the figures an ordinary election gets.")
 
 
 func _build_running(ns) -> void:
 	var live := Campaign.running(ns)
 	if live.is_empty():
 		return
-	_header("In the field")
+	PanelKit.heading(_body, "In the field")
 	for eid in live:
 		_build_live(ns, String(eid))
 
@@ -258,16 +263,11 @@ func _build_live(ns, effort_id: String) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var name_label := Label.new()
-	name_label.text = Campaign.name_of(_loader, effort_id)
-	block.add_child(name_label)
+	PanelKit.line(block, Campaign.name_of(_loader, effort_id), PanelKit.Tone.PLAIN)
 
-	var state_label := Label.new()
-	state_label.text = "%.3f %% of GDP a year · %s" % [
+	PanelKit.line(block, "%.3f %% of GDP a year · %s" % [
 		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
-	]
-	state_label.theme_type_variation = UiTheme.GOOD_TEXT
-	block.add_child(state_label)
+	], PanelKit.Tone.GOOD)
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
@@ -286,7 +286,7 @@ func _build_live(ns, effort_id: String) -> void:
 ## out needs to know what it will cost, and a panel that showed a blank list until June
 ## would be the decorative axis docs/scenario-model.md records.
 func _build_available(ns) -> void:
-	_header("Efforts")
+	PanelKit.heading(_body, "Efforts")
 	var live: Array = Campaign.running(ns)
 	var offered := Campaign.available(_state, ns, _loader.campaign_actions)
 
@@ -303,16 +303,11 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var name_label := Label.new()
-	name_label.text = String(terms.get("effort_name", ""))
-	block.add_child(name_label)
+	PanelKit.line(block, String(terms.get("effort_name", "")), PanelKit.Tone.PLAIN)
 
-	var terms_label := Label.new()
-	terms_label.text = "%.3f %% of GDP a year · %s" % [
+	PanelKit.line(block, "%.3f %% of GDP a year · %s" % [
 		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
-	]
-	terms_label.theme_type_variation = UiTheme.CAPTION
-	block.add_child(terms_label)
+	])
 
 	if can_act:
 		block.add_child(_button(ns, action))
@@ -348,6 +343,8 @@ func _button(ns, action) -> Button:
 	button.text = action.action_name
 	button.tooltip_text = action.summary
 	button.pressed.connect(func(): _on_act(ns, action))
+	if _primary == null and not button.disabled:
+		_primary = button
 	return button
 
 
@@ -375,11 +372,11 @@ func _on_act(ns, action) -> void:
 ## in -- docs/projects-model.md's months-remaining rule, which is that a panel must not
 ## print a second unit for a fact the model already has one for.
 func _build_promises(ns) -> void:
-	_header("Promises")
+	PanelKit.heading(_body, "Promises")
 
 	var books: Array = Pledges.on_the_books(ns)
 	if books.is_empty():
-		_line(
+		PanelKit.line(_body, 
 			"Nothing has been promised. A promise is made in the run-up and binds the"
 			+ " whole of the term it wins: the blocs that want to hear it pay you for"
 			+ " saying it now, and every month it stands broken costs you more."
@@ -399,9 +396,7 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var name_label := Label.new()
-	name_label.text = Pledges.name_of(_loader, String(entry["pledge_id"]))
-	block.add_child(name_label)
+	PanelKit.line(block, Pledges.name_of(_loader, String(entry["pledge_id"])), PanelKit.Tone.PLAIN)
 
 	var live: bool = Pledges.is_live(_state, entry)
 	var broken: bool = live and Pledges.in_breach(_state, ns, entry)
@@ -434,17 +429,12 @@ func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	var name_label := Label.new()
-	name_label.text = String(terms.get("pledge_name", ""))
-	block.add_child(name_label)
+	PanelKit.line(block, String(terms.get("pledge_name", "")), PanelKit.Tone.PLAIN)
 
-	var terms_label := Label.new()
-	terms_label.text = "%s · %s" % [
+	PanelKit.line(block, "%s · %s" % [
 		_promise_text({"field": terms.get("field", ""), "op": terms.get("op", ""), "value": terms.get("value", 0.0)}),
 		_breach_text(terms),
-	]
-	terms_label.theme_type_variation = UiTheme.CAPTION
-	block.add_child(terms_label)
+	])
 
 	if can_act:
 		block.add_child(_pledge_button(ns, action))
@@ -508,6 +498,8 @@ func _pledge_button(ns, action) -> Button:
 	button.text = action.action_name
 	button.tooltip_text = action.summary
 	button.pressed.connect(func(): _on_promise(ns, action))
+	if _primary == null and not button.disabled:
+		_primary = button
 	return button
 
 
@@ -520,33 +512,12 @@ func _on_promise(ns, action) -> void:
 	acted.emit(before, action.action_name)
 
 
-func _header(text: String) -> void:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
-	_body.add_child(label)
-
-
-func _line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.theme_type_variation = UiTheme.CAPTION
-	_body.add_child(label)
-
-
-func _row(left: String, right: String) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var key := Label.new()
-	key.text = left
-	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	key.theme_type_variation = UiTheme.CAPTION
-	row.add_child(key)
-
-	var value := Label.new()
-	value.text = right
-	row.add_child(value)
-
-	_body.add_child(row)
+## The control this panel exists to let the player press -- V2.1a's fold contract,
+## declared here at V2.1b.
+##
+## An effort and a promise are both verbs and the effort ladder is built first, so
+## the first enabled button in build order is an effort while the window is open
+## and a promise once every effort is running. Null outside the run-up, when the
+## panel is a ledger of what a campaign cost.
+func primary_action() -> Control:
+	return _primary

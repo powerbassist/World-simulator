@@ -40,6 +40,7 @@ const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const SECTOR_LABEL := {
 	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",
@@ -59,6 +60,9 @@ var _body: VBoxContainer
 var _scroll: ScrollContainer
 var _pin_bottom := false
 var _close_button: Button
+
+## The first enabled verb this panel built on its last refresh. See primary_action().
+var _primary: Control = null
 
 
 func _ready() -> void:
@@ -84,7 +88,7 @@ func _ready() -> void:
 
 	# The body sits inside a right margin rather than flush to the scroll, because a
 	# ScrollContainer draws its bar OVER the content: without this the right-aligned
-	# figures in _row() run underneath it, which is what the first captured frame
+	# figures in PanelKit.row() run underneath it, which is what the first captured frame
 	# showed for all three ledger values. A vertical bar is ~10px, and this panel is
 	# the one surface in the game whose content is guaranteed to overflow.
 	var gutter := MarginContainer.new()
@@ -148,6 +152,7 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	_primary = null
 
 	_title.text = "Industry"
 
@@ -163,8 +168,8 @@ func _refresh() -> void:
 		# V1.6e turned this from a RETURN into a note. The sector programmes below do
 		# not read the firm register at all, so returning here would have hidden a
 		# working lever behind a missing content file.
-		_header("No register")
-		_line("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
+		PanelKit.heading(_body, "No register")
+		PanelKit.line(_body, "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
 
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
@@ -184,27 +189,27 @@ func _refresh() -> void:
 ## step by hand; the sector headings below carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
-	_header("The public account")
-	_row("Subsidy bill", "%.3f %% of GDP" % ns.subsidy_bill_pct_gdp)
+	PanelKit.heading(_body, "The public account")
+	PanelKit.row(_body, "Subsidy bill", "%.3f %% of GDP" % ns.subsidy_bill_pct_gdp)
 	# V1.4c. On the same ledger and not on a second one, because it is the same
 	# register read from the other side of the budget -- and it lags a month, like the
 	# bill above it, so a firm nationalised this month shows 0.000 until the next tick.
-	_row("Dividend income", "%.3f %% of GDP" % ns.dividend_revenue_pct_gdp)
-	_row("Growth effect", "%+.3f %%/yr" % ns.firm_impulse_pct)
+	PanelKit.row(_body, "Dividend income", "%.3f %% of GDP" % ns.dividend_revenue_pct_gdp)
+	PanelKit.row(_body, "Growth effect", "%+.3f %%/yr" % ns.firm_impulse_pct)
 	# Signed the way the player reads it -- jobs, not unemployment points -- because
 	# the stored figure is an offset ADDED to structural unemployment and a positive
 	# number there is bad news. Flipping it here rather than storing it flipped keeps
 	# economy.gd's sum readable.
-	_row("Jobs effect", "%+.3f pts unemployment" % ns.firm_jobs_offset_pct)
+	PanelKit.row(_body, "Jobs effect", "%+.3f pts unemployment" % ns.firm_jobs_offset_pct)
 	# V1.6e, on the same ledger as the subsidy bill because it is the other half of
 	# one question -- what the state is spending on the productive economy -- and it
 	# lags a month for the same reason.
-	_row("Investment bill", "%.3f %% of GDP" % ns.investment_bill_pct_gdp)
+	PanelKit.row(_body, "Investment bill", "%.3f %% of GDP" % ns.investment_bill_pct_gdp)
 	# The trend the capital has BOUGHT, not the growth it is producing this month.
 	# Those are different quantities and the difference is the whole lever: the bill
 	# lands immediately and this number takes years to arrive, which is why both are
 	# printed rather than one summary of them.
-	_row("Trend bought", "%+.3f %%/yr" % Investment.national_trend_shift_pct(ns))
+	PanelKit.row(_body, "Trend bought", "%+.3f %%/yr" % Investment.national_trend_shift_pct(ns))
 
 
 func _build_sector(ns, sector: String) -> void:
@@ -222,7 +227,7 @@ func _build_sector(ns, sector: String) -> void:
 		rule = " · regulated %+.2f" % burden
 	elif burden < 0.0:
 		rule = " · deregulated %+.2f" % burden
-	_header("%s · %.0f bn · %.0f %% named%s" % [
+	PanelKit.heading(_body, "%s · %.0f bn · %.0f %% named%s" % [
 		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
 	])
 
@@ -338,14 +343,11 @@ func _build_firm(ns, company) -> void:
 	# One caption line rather than three rows: revenue, workforce and share are the
 	# firm's whole readout and a row each would treble this panel's height for a
 	# register that already has eighteen entries across the roster.
-	var figures := Label.new()
-	figures.text = "%.1f bn · %s jobs · %.1f %% of sector" % [
+	PanelKit.line(block, "%.1f bn · %s jobs · %.1f %% of sector" % [
 		Companies.output_eur_bn(ns, company),
 		_thousands(Companies.headcount(ns, company)),
 		100.0 * Companies.share_of(ns, company.id),
-	]
-	figures.theme_type_variation = UiTheme.CAPTION
-	block.add_child(figures)
+	])
 
 	# V1.4c. The price is DERIVED, so it exists nowhere an author could have written
 	# it down and the panel is the only place the player can read it before deciding.
@@ -377,6 +379,8 @@ func _action_button(ns, company, action) -> Button:
 	button.text = action.action_name
 	button.tooltip_text = action.summary
 	button.pressed.connect(func(): _on_act(ns, company, action))
+	if _primary == null and not button.disabled:
+		_primary = button
 	return button
 
 
@@ -402,33 +406,16 @@ func _thousands(value: float) -> String:
 	return ("-" if whole < 0 else "") + text + out
 
 
-func _header(text: String) -> void:
-	var label := Label.new()
-	label.text = text.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
-	_body.add_child(label)
-
-
-func _line(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.theme_type_variation = UiTheme.CAPTION
-	_body.add_child(label)
-
-
-func _row(left: String, right: String) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var key := Label.new()
-	key.text = left
-	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	key.theme_type_variation = UiTheme.CAPTION
-	row.add_child(key)
-
-	var value := Label.new()
-	value.text = right
-	row.add_child(value)
-
-	_body.add_child(row)
+## The control this panel exists to let the player press -- V2.1a's fold contract.
+##
+## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## to press simply does not implement this and never draws the fold mark. The
+## FIRST enabled action is the answer rather than the last, because a panel whose
+## first verb has scrolled off is already a panel whose verbs are hidden.
+##
+## The subsidy button rather than the investment one: V1.6e photographed this
+## panel at the top of a body whose three sector rows all read "No state
+## programme" while the ledger above them carried a live 0.654 % of GDP, and the
+## rows that were out of sight were the firm rows underneath.
+func primary_action() -> Control:
+	return _primary if is_instance_valid(_primary) else null

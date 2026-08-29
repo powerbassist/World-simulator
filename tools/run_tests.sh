@@ -73,6 +73,7 @@ tests=(
   tests/test_map_markers.gd
   tests/test_shell.gd
   tests/test_window_frame.gd
+  tests/test_panel_kit.gd
   tests/test_hud.gd
   tests/test_ui_theme.gd
   tests/test_overview_panel.gd
@@ -93,11 +94,24 @@ tests=(
 # reads). Exit status comes from godot via PIPESTATUS, never from grep.
 mcp_noise='^\[MCP(RuntimeServer|Registry)\]'
 
+# A test that quits(0) while the engine printed a SCRIPT ERROR is a GREEN RUN OVER
+# BROKEN CODE, and this runner has produced two of them: V2.1b's tests reached
+# panel members that session had deleted, both found by eye rather than here.
+# V2.1c reproduced it on purpose -- a parse error in main.gd left test_shell.gd
+# printing "all checks passed" over a scene that had not loaded. Zero are emitted
+# today, so this costs nothing until it saves something.
+script_error='SCRIPT ERROR|Parse Error'
+
 failed=0
 for t in "${tests[@]}"; do
-  godot --headless --script "res://$t" 2>&1 | grep -Ev "$mcp_noise"
-  if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+  out="$(godot --headless --script "res://$t" 2>&1)"
+  status="$?"
+  echo "$out" | grep -Ev "$mcp_noise"
+  if [ "$status" -ne 0 ]; then
     echo "FAIL $t" >&2
+    failed=1
+  elif echo "$out" | grep -Eq "$script_error"; then
+    echo "FAIL $t -- exited 0 with a script error in its output" >&2
     failed=1
   fi
 done

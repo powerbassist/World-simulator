@@ -63,19 +63,19 @@ func _setup() -> void:
 	_panel.show()
 	_panel._refresh()
 
-	_revenue_before = _panel._figures["revenue"][1].text
+	_revenue_before = _panel._figures["revenue"][1]
 	if _revenue_before.is_empty():
 		_fail("proposed revenue is blank after setup")
-	if _panel._figures["revenue"][0].text != _revenue_before:
+	if _panel._figures["revenue"][0] != _revenue_before:
 		_fail("with nothing pending, the now and proposed columns should agree")
-	if _panel._figures["proj_debt"][0].text.is_empty():
+	if _panel._figures["proj_debt"][0].is_empty():
 		_fail("the 24-month projection did not populate")
 
 	# V1.3c. The tariff line reads an em dash rather than "0.00%" while nothing is
 	# imposed, which is every game that has never used the verb. A zero invites the
 	# player to wonder what they did wrong; a dash says the line is not in play.
-	if _panel._figures["tariffs"][0].text != "—":
-		_fail("the tariff line reads '%s' with nothing imposed, expected an em dash" % _panel._figures["tariffs"][0].text)
+	if _panel._figures["tariffs"][0] != "—":
+		_fail("the tariff line reads '%s' with nothing imposed, expected an em dash" % _panel._figures["tariffs"][0])
 
 	# And it must appear the moment a measure exists -- a revenue source the player
 	# chose and cannot see on the panel is a decorative one.
@@ -85,7 +85,7 @@ func _setup() -> void:
 		"retaliated": true,
 	}
 	_panel._refresh()
-	if _panel._figures["tariffs"][0].text == "—":
+	if _panel._figures["tariffs"][0] == "—":
 		_fail("the tariff line still reads an em dash with a tariff in force")
 	_state.measures.clear()
 	_panel._refresh()
@@ -97,7 +97,7 @@ func _move_a_lever() -> void:
 
 	if float(_panel._pending["tax_rates_pct"]["income"]) != 28.0:
 		_fail("the slider's value_changed did not reach the panel; pending income is %s" % _panel._pending["tax_rates_pct"]["income"])
-	if _panel._figures["revenue"][1].text == _revenue_before:
+	if _panel._figures["revenue"][1] == _revenue_before:
 		_fail("proposed revenue did not change when income tax moved 20 -> 28")
 	if absf(float(_state.player().tax_rates_pct["income"]) - 20.0) > 0.001:
 		_fail("moving a slider mutated live state: income rate is now %s" % _state.player().tax_rates_pct["income"])
@@ -112,9 +112,9 @@ func _commit() -> void:
 		_fail("a tax rise should have left a negative demand impulse, got %s" % _state.player().demand_impulse_pct)
 
 	_panel._refresh()
-	if _panel._figures["revenue"][0].text != _panel._figures["revenue"][1].text:
+	if _panel._figures["revenue"][0] != _panel._figures["revenue"][1]:
 		_fail("after commit the now and proposed columns disagree: %s vs %s" % [
-			_panel._figures["revenue"][0].text, _panel._figures["revenue"][1].text
+			_panel._figures["revenue"][0], _panel._figures["revenue"][1]
 		])
 
 

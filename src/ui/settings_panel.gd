@@ -15,6 +15,7 @@ extends PanelContainer
 
 signal closed
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const CONFIG_PATH := "user://settings.cfg"
 
 ## Windowed sizes offered. Fullscreen ignores these; the size is the display's.
@@ -111,9 +112,7 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
-	var title := Label.new()
-	title.text = "SETTINGS"
-	root.add_child(title)
+	PanelKit.line(root, "SETTINGS", PanelKit.Tone.PLAIN)
 
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -145,6 +144,11 @@ func _ready() -> void:
 
 
 func _add_row(grid: GridContainer, label_text: String, options: Array) -> OptionButton:
+	# A grid CELL rather than a row, so it is built here rather than by PanelKit:
+	# every kit primitive that draws prose autowraps, and an autowrapping label in a
+	# fixed two-column grid reports a minimum width of one word and lets the column
+	# collapse. The kit owns whole rows and whole tables; a cell inside somebody
+	# else's grid is the panel's own.
 	var label := Label.new()
 	label.text = label_text
 	grid.add_child(label)

@@ -26,6 +26,7 @@ signal nation_selected(nation_id: String, scenario_id: String)
 signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 var _title: Label
 var _list: VBoxContainer
@@ -141,9 +142,7 @@ func _show_nations() -> void:
 	_clear()
 
 	if _nations.is_empty():
-		var none := Label.new()
-		none.text = "No playable nation found in data/nations/."
-		_list.add_child(none)
+		PanelKit.line(_list, "No playable nation found in data/nations/.", PanelKit.Tone.PLAIN)
 		return
 
 	for n in _nations:
@@ -201,15 +200,9 @@ func _build_start_row(nation_id: String, scenario_id: String, name: String, desc
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(column)
 
-	var label := Label.new()
-	label.text = name
-	column.add_child(label)
+	PanelKit.line(column, name, PanelKit.Tone.PLAIN)
 
-	var blurb := Label.new()
-	blurb.text = description
-	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	blurb.theme_type_variation = UiTheme.CAPTION
-	column.add_child(blurb)
+	PanelKit.line(column, description)
 
 	var play_btn := Button.new()
 	play_btn.text = "Play"

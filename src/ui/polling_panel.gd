@@ -18,6 +18,7 @@ extends PanelContainer
 const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const TOP_ISSUE_COUNT := 4
 const HEADLINE_KEY := "overall"
@@ -28,8 +29,14 @@ var _state
 var _title: Label
 var _headline: Label
 var _election_countdown: Label
-var _bloc_rows := {}          # bloc id -> [approval Label, change Label]
-var _issue_rows: Array = []   # [name Label, share Label]
+## V2.1b. Both tables were RETAINED -- built once in _ready() and updated cell by
+## cell through two dictionaries of Label references -- and both are now rebuilt
+## from PanelKit.ledger() on each refresh, which is what every other panel in this
+## interface already did. The bookkeeping that went with them went too. The reason
+## is V1.6f rather than tidiness: the four columns each carried their own
+## custom_minimum_size.x, which is two value columns measured apart in the exact
+## shape that ran the budget panel off the window edge.
+var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
 
@@ -62,83 +69,16 @@ func _ready() -> void:
 	_election_countdown = Label.new()
 	root.add_child(_election_countdown)
 
-	root.add_child(_build_blocs())
-	root.add_child(_build_issues())
+	_body = VBoxContainer.new()
+	_body.add_theme_constant_override("separation", 12)
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(_body)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(spacer)
 
 	root.add_child(_build_footer())
-
-
-func _build_blocs() -> Control:
-	var box := VBoxContainer.new()
-
-	var heading := Label.new()
-	heading.text = "Approval by bloc"
-	box.add_child(heading)
-
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 16)
-	box.add_child(grid)
-
-	for header in ["", "share", "approval", "change"]:
-		var label := Label.new()
-		label.text = header
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if header != "" else HORIZONTAL_ALIGNMENT_LEFT
-		label.custom_minimum_size.x = 150 if header == "" else 90
-		grid.add_child(label)
-
-	for bloc in K.BLOC_KEYS:
-		var name_label := Label.new()
-		name_label.text = K.BLOC_LABEL[bloc]
-		grid.add_child(name_label)
-
-		var size_label := Label.new()
-		size_label.text = "%.0f%%" % (float(K.BLOC_SIZE[bloc]) * 100.0)
-		size_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(size_label)
-
-		var approval_label := Label.new()
-		approval_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(approval_label)
-
-		var change_label := Label.new()
-		change_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(change_label)
-
-		_bloc_rows[bloc] = [approval_label, change_label]
-
-	return box
-
-
-func _build_issues() -> Control:
-	var box := VBoxContainer.new()
-
-	var heading := Label.new()
-	heading.text = "What the country is thinking about"
-	box.add_child(heading)
-
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 16)
-	box.add_child(grid)
-
-	for _i in range(TOP_ISSUE_COUNT):
-		var name_label := Label.new()
-		name_label.custom_minimum_size.x = 240
-		grid.add_child(name_label)
-
-		var share_label := Label.new()
-		share_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		share_label.custom_minimum_size.x = 90
-		grid.add_child(share_label)
-
-		_issue_rows.append([name_label, share_label])
-
-	return box
 
 
 func _build_footer() -> Control:
@@ -204,21 +144,23 @@ func _refresh() -> void:
 	_headline.text = "Approval  %.0f%%" % current[HEADLINE_KEY]
 	_election_countdown.text = "Next election: %s" % _months_until_text(ns)
 
-	for bloc in K.BLOC_KEYS:
-		var row: Array = _bloc_rows[bloc]
-		row[0].text = "%.0f%%" % current[bloc]
-		row[1].text = _change_text(bloc, current[bloc])
+	for child in _body.get_children():
+		child.queue_free()
 
-	var top := Opinion.top_issues(ns, TOP_ISSUE_COUNT)
-	for i in _issue_rows.size():
-		var row: Array = _issue_rows[i]
-		if i >= top.size():
-			row[0].text = ""
-			row[1].text = ""
-			continue
-		var issue: String = top[i][0]
-		row[0].text = K.ISSUE_LABEL[issue]
-		row[1].text = "%.0f%%" % (float(top[i][1]) * 100.0)
+	var bloc_rows: Array = [["", "share", "approval", "change"]]
+	for bloc in K.BLOC_KEYS:
+		bloc_rows.append([
+			K.BLOC_LABEL[bloc],
+			"%.0f%%" % (float(K.BLOC_SIZE[bloc]) * 100.0),
+			"%.0f%%" % current[bloc],
+			_change_text(bloc, current[bloc]),
+		])
+	PanelKit.ledger(PanelKit.section(_body, "Approval by bloc"), bloc_rows)
+
+	var issue_rows: Array = []
+	for entry in Opinion.top_issues(ns, TOP_ISSUE_COUNT):
+		issue_rows.append([K.ISSUE_LABEL[entry[0]], "%.0f%%" % (float(entry[1]) * 100.0)])
+	PanelKit.ledger(PanelKit.section(_body, "What the country is thinking about"), issue_rows)
 
 
 func _change_text(key: String, value: float) -> String:
