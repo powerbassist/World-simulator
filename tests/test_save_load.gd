@@ -144,6 +144,7 @@ func _init() -> void:
 	_check_event_fields(loader)
 	_check_upper_house_fields(loader)
 	_check_judiciary_fields(loader)
+	_check_geography_absences(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -2896,6 +2897,51 @@ func _check_investment_fields(loader) -> void:
 ##
 ## The two are checked separately, because a single combined assertion would let either
 ## half be quietly wrong.
+## V2.2a. SAVE_VERSION stays at 27, and WHAT WAS NOT ADDED is the whole of it --
+## which is V1.6c's shape and V1.8's, and the third time this list has had a session
+## whose serialised contribution is nothing at all.
+##
+## The register is CONTENT. A region's share of its nation and a city's share of its
+## region round-trip through data/regions/ the way a firm's authored share and
+## headcount round-trip through data/companies/ (V1.4a), and a firm's `city` is one
+## more authored field in a file the save has never carried. Nothing ticks, nothing
+## accumulates, and there is no reference value to anchor a deviation against --
+## because there is no deviation: docs/tiers/v2.md section 5 is the session that gives
+## a region a quantity that moves, and section 6 the one that moves people between
+## cities.
+##
+## So this pins three ABSENCES rather than three fields, and each one turns red for a
+## different reason. A stored region share means the partition can drift from the
+## content that defines it. A stored city population means a head count exists that
+## `share x population` does not already give. And a `regions` key on NationState at
+## all means the register has become live state, which is precisely the change V2.5
+## has to come here and argue for.
+func _check_geography_absences(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var fresh: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var fresh_nation: Dictionary = fresh["nations"]["FRA"]
+
+	for key in ["regions", "cities", "region_share", "city_share", "region_population"]:
+		if fresh_nation.has(key):
+			_fail("a save carries `%s` -- V2.2a's register is content and round-trips through data/regions/, so a session making it live state has to come and say why" % key)
+	if fresh.has("regions") or fresh.has("cities"):
+		_fail("a save carries a top-level region register -- see above")
+
+	# The domicile is authored too, and it is the one V2.2a field a reader might
+	# expect to find here: it is read every time a panel asks what a city employs.
+	# It is not saved, because Company.city comes back off the loader with the rest of
+	# data/companies/ -- the same reason a firm's authored share is not saved either.
+	var companies_entry = fresh_nation.get("companies", {})
+	if typeof(companies_entry) == TYPE_DICTIONARY:
+		for firm_id in (companies_entry as Dictionary).keys():
+			var entry = companies_entry[firm_id]
+			if typeof(entry) == TYPE_DICTIONARY and (entry as Dictionary).has("city"):
+				_fail("the save carries a firm's city -- a domicile is content, not state")
+
+	if GameState.SAVE_VERSION != 27:
+		_fail("SAVE_VERSION is %d -- V1.8 raised it to 26 and V1.1e to 27, and V2.2a adds no serialised field at all, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+
+
 func _check_project_fields(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var ns = state.player()

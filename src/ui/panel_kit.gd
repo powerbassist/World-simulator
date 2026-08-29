@@ -250,6 +250,17 @@ static func delta(value: float, unit := "", places := 1) -> String:
 	return ("%+." + str(used) + "f%s") % [value, unit]
 
 
+## A population figure at the scale this game prints them: capitals and regions
+## in millions to one decimal, everything else in thousands. V2.2b: two panels
+## and the map's city hover-label print the same register through the same
+## formatter, so they cannot disagree about a rounding no reader could reconcile
+## -- figure_text()'s reason, one quantity smaller.
+static func pop_text(pop: float) -> String:
+	if pop >= 1_000_000.0:
+		return "%.1f M" % (pop / 1_000_000.0)
+	return "%.0f k" % (pop / 1_000.0)
+
+
 ## Which way a movement reads. The convention is the caller's, because the same
 ## sign is good news for approval and bad news for unemployment -- `trends.gd`
 ## carries that per figure and this does not guess.

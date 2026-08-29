@@ -996,7 +996,32 @@ three bugs it found were older than this session.**
   holding stays on the largest firm; the minority stake and a second burden go where
   the frame can reach them.
 
+## 30. A firm gained a fifth field at V2.2a, and it is a place
+
+`Company.city` names a city in `data/regions/<its nation>.json`. [[v2]] section 2 put
+it here rather than in the region register — *"a city's employment is already written
+in `data/companies/` and needs no second authoring"* — and the direction is the point:
+a city holding a list of its firms would be the same relationship written twice, and
+the two would disagree the first time a session added a firm and forgot the other file.
+
+It is **required**, because a firm with no city is one that tier cannot draw, and an
+optional field would be one eighteen entries silently never filled in. Checked at the
+loader rather than in `company.gd`, which sees one entry where the cities live in a
+different file.
+
+What makes it load-bearing rather than decorative — U6c's rule about a coordinate
+nothing reads — is `Companies.headcount_in_city()`, which reads **live** headcount, so
+a subsidy that has moved a firm's share has already moved its city's payroll. It lives
+in `companies.gd` and not on `src/core/region.gd`, because a core value type
+preloading a sim system would invert `data → sim → ui`.
+
+The measured consequence is in [[geography-model]] section 7: **one city holds a third
+to a half of a nation's named payroll** — Lille 33.1 % of France's, Manchester 44.0 %
+of Britain's — which nothing authored, and which is what makes section 6's migration a
+decision rather than a diffusion.
+
 ---
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
-[[coercion-model]] · [[defence-model]] · [[bloc-model]] · [[v1]] · [[ROADMAP]]
+[[coercion-model]] · [[defence-model]] · [[bloc-model]] · [[geography-model]] ·
+[[v1]] · [[ROADMAP]]

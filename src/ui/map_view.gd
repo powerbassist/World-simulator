@@ -13,11 +13,13 @@ extends Control
 ## _screen_to_lonlat()/_lonlat_to_screen() for the one transform drawing,
 ## hit-testing and the minimap all share.
 ##
-## Five DRAW layers, back to front: the satellite raster, the outlines of every
-## country the game does not simulate, the ten it does, their labels, and U6c's
-## project markers. The second is drawn from `_world_polygons` and hit-tested by
-## nothing -- `_nation_at_lonlat` iterates `_polygons` alone, so "you cannot click
-## Poland" is structural rather than a filter somewhere that could be forgotten.
+## Six DRAW layers, back to front: the satellite raster, the outlines of every
+## country the game does not simulate, the ten it does (filled by their REGIONS
+## since V2.2b, on 1:10m GISCO geometry under the 1:50m national outline), their
+## labels, V2.2b's city crosses, and U6c's project markers. The second is drawn
+## from `_world_polygons` and hit-tested by nothing -- `_nation_at_lonlat`
+## iterates `_polygons` alone, so "you cannot click Poland" is structural rather
+## than a filter somewhere that could be forgotten.
 ##
 ## The marker pass keeps that property by having its OWN hit test:
 ## `_project_at_screen_point()` is a radius test in screen space over `_markers`
@@ -26,7 +28,9 @@ extends Control
 ## function to exist, and the day someone widened it to answer markers over
 ## Poland the roster's structural guarantee would die quietly.
 ## tests/test_map_markers.gd reads this file and fails if either name appears
-## inside that function.
+## inside that function. `_city_at_screen_point()` takes exactly that shape for
+## V2.2b's crosses, on the tier doc's own instruction, and
+## tests/test_map_cities.gd polices it the same way.
 ##
 ## U5c added a second, unrelated sense of the word: a MAP layer is what the ten
 ## are *coloured by* -- political, relations, trade. Those live entirely in
@@ -45,6 +49,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
+const MapCities = preload("res://src/ui/map_cities.gd")
 
 signal nation_clicked(nation_id: String)
 
@@ -53,6 +58,13 @@ signal nation_clicked(nation_id: String)
 ## three surfaces for one register only works if each says a different thing, and
 ## what the map says is *where*.
 signal project_clicked(project_id: String)
+
+## A city cross was clicked -- V2.2b, the tier doc's own route: *"section 2's city
+## is reached by clicking the map"*. main.gd opens the City panel on it, and any
+## nation's city answers -- the register is public data and the map colours all
+## ten, so a cross that answered no click would be drawn content the game cannot
+## reach.
+signal city_clicked(city_id: String)
 
 ## The nation under the cursor, "" when there is none. U5c: the legend's readout
 ## needs to name the value the player is looking at, and a colour ramp the player
@@ -101,6 +113,14 @@ var _hovered_id := ""
 ## path of its own -- main.gd already redraws the map monthly for U5c's reason.
 var _markers: Array = []
 var _hovered_project := ""
+
+## V2.2b. Built ONCE in setup() rather than per draw, the deliberate opposite of
+## _markers: the register is static content, and the only live quantity under a
+## glyph is the population its radius ranks on -- a decade of demographic drift
+## moves no city past another, so rebuilding per draw would buy nothing. Ascending
+## population, so the largest draws last and wins an overlap; see MapCities.
+var _cities: Array = []
+var _hovered_city := ""
 
 var _dragging := false
 var _drag_moved := 0.0
@@ -151,16 +171,36 @@ const COAST_WIDTH := 1.5
 const HOVER_WIDTH := 4.0
 const HOME_WIDTH := 2.5
 
+## V2.2b: the hairline between one region and the next, inside the national
+## outline. It sits between WORLD_BORDER and COAST in brightness on purpose:
+## it is structure inside the roster, not context outside it, but it must stay
+## quiet enough that the bright national stroke remains the one line saying
+## which ten answer a click.
+const REGION_BORDER := Color(0.71, 0.78, 0.86, 0.35)
+const REGION_BORDER_WIDTH := 1.0
+
 ## Below this zoom a label is dropped. At the world view ten labels across Europe
 ## are ten labels on top of each other; the threshold is set just under the
 ## opening Europe fit, so the roster is named from the moment the game starts and
 ## the names clear off as the player pulls back to the globe.
-## A few pixels of slack around the glyph, so a 6px dot is not a 6px target. Not
-## in map_markers.gd with the other marker constants: that file says what a marker
-## looks like, and this says how forgiving this control is about pointing at one.
+## A few pixels of slack around the glyph, so a 6px dot is not a 6px target, and
+## a 2px cross is not a 2px target. Not in map_markers.gd with the other marker
+## constants: that file says what a marker looks like, and this says how forgiving
+## this control is about pointing at one.
 const MARKER_HIT_PAD := 3.0
 
 const LABEL_MIN_ZOOM := 1.4
+
+## Below this zoom a city cross is dropped -- V2.2b, on LABEL_MIN_ZOOM's own
+## discipline: set just under the opening Europe fit (which lands near 2.1 on
+## 1080p), so the crosses are there from the moment the game starts and clear
+## off as the player pulls back to the globe. That is the reading the register's
+## volume clause was measured for -- *"V2.2b draws by rank and the roster at the
+## opening fit is ~1000 px wide"* -- so a threshold above the opening fit would
+## ship 581 cities the default frame never shows. Names stay on hover alone,
+## where the labels at least get the opening fit. The HIT test reads the same
+## gate, so a glyph that is not drawn is never a target.
+const CITY_MIN_ZOOM := 2.0
 const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
 const LABEL_SHADOW := Color(0.0, 0.0, 0.0, 0.65)
 
@@ -205,6 +245,11 @@ func setup(loader, state) -> void:
 
 	_world_polygons = loader.world_features
 	_texture = MapRaster.texture()
+
+	# Static content, so once rather than per draw -- see the field. Built here for
+	# _refresh_markers()'s reason: a hit test can happen before the first frame is
+	# drawn, and an empty list would answer it with "nothing here".
+	_cities = MapCities.cities(_loader, _state)
 
 	# Built here as well as in _draw() for the reason _fit_zoom() is hooked in
 	# _notification(): a hit test can happen before the first frame is drawn, and
@@ -409,6 +454,38 @@ func layer() -> String:
 	return _layer
 
 
+## The city id of the cross under a screen point, or "" if there is none --
+## V2.2b, taking the marker hit test's contract exactly. A radius test in SCREEN
+## space over the city list and nothing else, reaching neither the roster's
+## polygons nor its hit test -- the tier doc's own instruction, for markers'
+## reason: routing a cross through the nation test would make every city a
+## second reason for the roster's own hit test to exist. Screen space because
+## the glyph is a fixed number of pixels at every zoom, so the region a player
+## can hit has to be too. The radius is the cross's own -- a bigger city is a
+## bigger target, which is the one thing its radius is for.
+##
+## Gated on CITY_MIN_ZOOM, where markers' test is not: a cross that is not drawn
+## must not be a target, and below the threshold the map answers the nation
+## beneath the invisible cross instead.
+##
+## Last match wins, so the cross drawn on top of an overlapping pair is the one
+## a click reaches -- the list is ascending population and the largest drew last.
+##
+## Sits here rather than beside the marker hit test it copies, because the
+## source-reading test that polices that function swallows whatever comment
+## follows it -- and this doc names the things it must not reach.
+func _city_at_screen_point(screen_pos: Vector2) -> String:
+	if _zoom < CITY_MIN_ZOOM:
+		return ""
+	var hit := ""
+	for city in _cities:
+		var lonlat: Vector2 = city["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		if at.distance_to(screen_pos) <= MapCities.radius_of(city) + MARKER_HIT_PAD:
+			hit = String(city["city_id"])
+	return hit
+
+
 func pan_by(delta: Vector2) -> void:
 	_pan_offset += delta
 	_clamp_pan()
@@ -435,17 +512,21 @@ func _gui_input(event: InputEvent) -> void:
 				_last_mouse_pos = event.position
 			else:
 				if _dragging and _drag_moved < DRAG_THRESHOLD:
-					# Markers first, and a hit stops there: a marker sits on top of
-					# the nation that owns it, so falling through would open two
-					# windows on one click.
+					# Markers first, cities next, and a hit stops there: a marker
+					# or a cross sits on top of the nation that owns it, so falling
+					# through would open two windows on one click.
 					var project := _project_at_screen_point(event.position)
 					if project != "":
 						project_clicked.emit(project)
 					else:
-						var id := nation_at_screen_point(event.position)
-						if id != "":
-							nation_clicked.emit(id)
-				_dragging = false
+						var city := _city_at_screen_point(event.position)
+						if city != "":
+							city_clicked.emit(city)
+						else:
+							var id := nation_at_screen_point(event.position)
+							if id != "":
+								nation_clicked.emit(id)
+					_dragging = false
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			zoom_by(1.15, event.position)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
@@ -465,11 +546,17 @@ func _gui_input(event: InputEvent) -> void:
 				queue_redraw()
 			# Independent of the nation hover rather than replacing it: the
 			# country under a marker is still legitimately under the cursor,
-			# and the legend's readout should not blank because a dot is in
-			# the way.
+			# and the legend's readout should not blank because a dot is in the
+			# way.
 			var project := _project_at_screen_point(event.position)
 			if project != _hovered_project:
 				_hovered_project = project
+				queue_redraw()
+			# And a third independent hover, the cross under the cursor -- same
+			# rule again: the nation under it is still under it.
+			var city := _city_at_screen_point(event.position)
+			if city != _hovered_city:
+				_hovered_city = city
 				queue_redraw()
 
 
@@ -479,6 +566,7 @@ func _draw() -> void:
 	_draw_world_borders()
 	_draw_roster()
 	_draw_labels()
+	_draw_cities()
 	_refresh_markers()
 	_draw_markers()
 
@@ -524,15 +612,54 @@ func _draw_roster() -> void:
 			stroke = UiTheme.ACCENT
 			width = HOME_WIDTH
 
+		# V2.2b, finer map geometry. The nation is still FILLED from the 1:50m
+		# roster outline first, as a same-hue base under the 1:10m region fills:
+		# GISCO and Natural Earth disagree at the coast by a few kilometres, which
+		# is a few pixels at MAX_ZOOM, and the base turns that disagreement from a
+		# hole in the country into a seam the eye cannot find. What the player
+		# sees as the fill is the regions.
 		for ring: PackedVector2Array in _polygons[id]:
 			if ring.size() < 3:
 				continue
-			var screen_points := PackedVector2Array()
+			var base_points := PackedVector2Array()
 			for p in ring:
-				screen_points.append(_lonlat_to_screen(p.x, p.y))
-			draw_colored_polygon(screen_points, color)
-			var closed := screen_points.duplicate()
-			closed.append(screen_points[0])
+				base_points.append(_lonlat_to_screen(p.x, p.y))
+			draw_colored_polygon(base_points, color)
+
+		# Region fills first, ALL of them, then ALL the hairlines. The two-pass
+		# order is structural rather than stylistic: with holes dropped, a host
+		# region's outer ring covers its enclave, and whether the enclave's own
+		# boundary survives depends entirely on draw order -- the roster carries
+		# one enclave of EACH direction (Berlin outpopulates its host Brandenburg,
+		# Bremen is a third of its host Niedersachsen), so no fill-and-stroke
+		# order renders both, and only drawing every line after every fill does.
+		# In the same hue the covered fills are invisible; only the lines show.
+		var region_rings: Array = []
+		for region in _loader.regions.get(id, []):
+			for ring: PackedVector2Array in _loader.region_features.get(region.id, []):
+				if ring.size() < 3:
+					continue
+				var region_points := PackedVector2Array()
+				for p in ring:
+					region_points.append(_lonlat_to_screen(p.x, p.y))
+				draw_colored_polygon(region_points, color)
+				region_rings.append(region_points)
+		for region_points: PackedVector2Array in region_rings:
+			var closed := region_points.duplicate()
+			closed.append(region_points[0])
+			draw_polyline(closed, REGION_BORDER, REGION_BORDER_WIDTH)
+
+		# The national stroke last, from the 1:50m outline it has always used:
+		# the bright line is the one that says which ten answer a click, and it
+		# belongs to the nation rather than to any region of it.
+		for ring: PackedVector2Array in _polygons[id]:
+			if ring.size() < 3:
+				continue
+			var stroke_points := PackedVector2Array()
+			for p in ring:
+				stroke_points.append(_lonlat_to_screen(p.x, p.y))
+			var closed := stroke_points.duplicate()
+			closed.append(stroke_points[0])
 			draw_polyline(closed, stroke, width)
 
 
@@ -560,7 +687,59 @@ func _draw_labels() -> void:
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
 
 
-## The fifth and frontmost pass -- U6c. What a marker looks like is
+## The fifth pass, behind the markers -- V2.2b, and the tier doc's *"brass
+## crosses onto the map for the first time and only for where people are"*.
+## What a cross looks like is map_cities.gd's business, the way a fill is
+## map_layers.gd's and a marker is map_markers.gd's; this walks the list and
+## puts the glyph on the screen. Behind the markers on purpose: a project site
+## is usually IN a city, and the rarer, more specific glyph goes in front.
+##
+## Gated on CITY_MIN_ZOOM, where the marker pass is not: five sites on France are
+## the whole point of that layer at any zoom, while 581 crosses at the Europe fit
+## are noise by the register's own volume clause. The name is drawn on hover
+## alone, for labels' reason -- at this zoom the crosses are dense enough that
+## permanent names would collide, and a cross that needs its name asks for it
+## with the cursor.
+func _draw_cities() -> void:
+	if _zoom < CITY_MIN_ZOOM:
+		return
+	var font := get_theme_default_font()
+	for city in _cities:
+		var lonlat: Vector2 = city["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		var color: Color = MapCities.color_of(city)
+		var radius: float = MapCities.radius_of(city)
+		var hovered: bool = String(city["city_id"]) == _hovered_city
+		var width: float = MapCities.HOVER_WIDTH if hovered else MapCities.WIDTH
+
+		# A cross rather than a dot: the one glyph left that says *people* rather
+		# than *thing*, and it stays legible from 2px to 12px where a ring would
+		# close up. The arms are the radius on the diagonal, so two cities a few
+		# pixels apart read as two marks, the bigger of them the bigger.
+		var arm := Vector2(radius, 0.0).rotated(PI / 4.0)
+		draw_line(at - arm, at + arm, color, width)
+		draw_line(at - Vector2(arm.x, -arm.y), at + Vector2(arm.x, -arm.y), color, width)
+
+		if not hovered or font == null:
+			continue
+		var text: String = MapCities.label_of(city)
+		var font_size := UiTheme.SIZE_MICRO
+		var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var text_at := at + MapCities.label_offset(radius) - Vector2(text_width / 2.0, 0.0)
+		# The label pass's drop shadow, for the same reason: over a satellite
+		# photograph the contrast runs from Alpine snow to the North Sea.
+		draw_string(
+			font, text_at + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			font_size, MapCities.LABEL_SHADOW
+		)
+		draw_string(
+			font, text_at, text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			font_size, MapCities.LABEL_COLOR
+		)
+
+
+## The sixth and frontmost pass -- U6c (fifth until V2.2b's crosses arrived).
+## What a marker looks like is
 ## map_markers.gd's business, the way a fill is map_layers.gd's; this walks the
 ## list and puts the glyph on the screen.
 ##

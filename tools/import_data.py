@@ -8,6 +8,7 @@ import argparse
 import json
 import re
 import sys
+import zipfile
 from math import floor, log10
 from pathlib import Path
 
@@ -801,6 +802,542 @@ def build_world():
     return {"type": "FeatureCollection", "features": features}
 
 
+
+# ---------------------------------------------------------------------------
+# V2.2a. The geographic register: regions from Eurostat + GISCO, cities from
+# GeoNames. See docs/geography-model.md.
+# ---------------------------------------------------------------------------
+
+REGIONS_DIR = ROOT / "data" / "regions"
+REGION_GEO_OUT = ROOT / "data" / "geo" / "regions.geojson"
+
+# THE LEVEL IS PER NATION, AND THAT IS A MEASUREMENT RATHER THAN A TASTE.
+# docs/tiers/v2.md section 2 says "Content from Eurostat NUTS 2", and for the nation
+# this game is about NUTS 2 is the PRE-2016 regions: Eurostat's own labels return
+# `FRC1 Bourgogne`, `FRE1 Nord-Pas de Calais`, `FRE2 Picardie`, units abolished in
+# 2016. A French player reading "Picardie" in a game set in 2026 reads a bug, and
+# docs/fictionalization.md names *Occitanie* as its example of a real region -- which
+# is NUTS 1 (`FRJ`). Germany is the same shape: NUTS 1 is the 16 Laender, NUTS 2 the
+# Regierungsbezirke. And the inverse holds elsewhere, which is why one level cannot
+# serve the roster: Italy's NUTS 1 is 5 statistical macro-areas and Switzerland's is
+# ONE, so neither could use it.
+#
+# The level never reaches src/. data/regions/ holds regions and the loader does not
+# learn that a level exists; this table plus each file's `_source` line is the whole
+# of it, on `imported._year`'s provenance idiom.
+#
+# CHE could be NUTS 3 -- the 26 cantons are the politically real unit where the 7
+# grandes regions are statistical. Not taken: 26 units for 8.7 M people is finer than
+# every other nation on the roster, and a register whose grain varies by an order of
+# magnitude is one V2.5 has to special-case. Recorded rather than left silent.
+REGION_LEVEL = {
+    "FRA": 1,  # 13 regions
+    "DEU": 1,  # 16 Laender
+    "GBR": 1,  # 9 English regions + Wales, Scotland, Northern Ireland
+    "BEL": 1,  # Flanders, Wallonia, Brussels -- Belgium's actual political division
+    "ITA": 2,  # 20 regioni, Trentino split into its two autonomous provinces
+    "ESP": 2,  # 17 comunidades + Ceuta + Melilla
+    "NLD": 2,  # 12 provinces
+    "AUT": 2,  # 9 Bundeslaender
+    "CHE": 2,  # 7 grandes regions
+    "LUX": 2,  # one region at every level
+}
+
+REGION_NUTS_VINTAGE = 2021
+REGION_YEAR = 2022
+
+# ISO3 -> the two-letter code Eurostat and GISCO use. `UK` rather than `GB`, which is
+# the one place the two disagree with GeoNames -- see CITY_COUNTRY below.
+NUTS_COUNTRY = {
+    "FRA": "FR", "DEU": "DE", "ITA": "IT", "ESP": "ES", "BEL": "BE",
+    "NLD": "NL", "LUX": "LU", "CHE": "CH", "GBR": "UK", "AUT": "AT",
+}
+
+# GeoNames uses the ISO 3166 code, so Britain is `GB` where NUTS says `UK`.
+CITY_COUNTRY = dict(NUTS_COUNTRY, GBR="GB")
+
+# Years fetched for demo_r_pjangrp3, newest first. Britain is the reason there is more
+# than one: Eurostat dropped UK regions after withdrawal, so the 2022 response carries
+# 41 UK NUTS 2 codes and 12 NUTS 1 codes with NO values, while 2019 carries all of them
+# and they sum to the UK national figure exactly. That is V1.5c's nearest-year fallback
+# on a second series, and it is scoped the same way -- per nation, with the year it
+# used written into the file, because a provenance record that names a year the number
+# does not come from is worse than none.
+#
+# WHAT IS *NOT* RESCUED THIS WAY IS THE HALF docs/tiers/v2.md GOT WRONG.
+# `nama_10r_2gdp` -- regional GDP -- carries ZERO geo codes beginning `UK` at EVERY
+# year, 2018 included, because the codes were removed from the dimension rather than
+# left empty. So the fallback genuinely has nothing to fall back to there. Regional
+# population is measured for all ten; only regional GDP is short, and regional GDP is
+# what docs/tiers/v2.md section 5 makes load-bearing. It is not imported here.
+REGION_YEARS = [2022, 2019]
+
+# THE POPULATION CUT, and the one measured constant this session ships.
+#
+# Named cities are a partition of their region the way a firm is of its sector, so the
+# question the sweep answers is how much of a nation the named half covers. Two clauses
+# were fixed before it ran:
+#   (ii) the roster's MEAN named share of national population is at least 0.30, so the
+#        register describes the country rather than a rounding error in it;
+#   (iii) at most 600 named cities across the ten, written from the drawing side --
+#        V2.2b draws by rank and the whole roster at the opening fit is about 1000 px
+#        wide, so a bigger register ships content the map can never separate.
+# Swept 15 000 to 200 000 and refined to 1 000, the two cross at [69 000, 73 000]:
+# 69 000 is the first row at or under 600 cities (596) and 73 000 the last at or over
+# 0.30 mean coverage (0.3006). BOTH EDGES ARE SMOOTH CROSSINGS rather than plateaux, so
+# neither selects and the interior governs (V1.5d's rule): the midpoint, 71 000. It is
+# the same answer at a grid of 2 000 and at one of 1 000, which is V1.5b's refinement
+# diagnostic -- a value that moves when the grid does is the grid's answer, not the
+# model's -- and it is interior to the swept range rather than sitting on its edge.
+# The register is identical for any cut in 70 915..71 010, the gap between the two
+# adjacent city populations that bracket it.
+#
+# MEASURED THREE TIMES, AND THE FIRST ANSWER WAS WRONG BY 29 %. The first sweep landed
+# on a feasible [82 000, 101 000] and a midpoint of 91 500, and it was measuring
+# GeoNames rather than Europe: 607 city DISTRICTS counted as cities, a London naming
+# twenty of its own boroughs, and thirty-six Paris and Marseille arrondissements. All
+# three corrections came from READING THE GENERATED FILE, not from a check -- which is
+# why what each of them fixed is now an assertion in tests/test_geography.gd rather
+# than a paragraph here.
+#
+# A THIRD CLAUSE WAS WRITTEN AND DELETED, and the reason is structural rather than a
+# retune. "The WORST nation names at least 0.20 of its population" fails at every
+# candidate on the grid and its two failing nations do not move with the threshold at
+# all: Luxembourg has ONE city and it is 11.9 % of the country, and Swiss communes are
+# administratively small (Zuerich is 341 k of 8.7 M), so both are held at the floor by
+# the top-up rule below rather than by this constant. A band an observable cannot reach
+# is a bound and not a selector -- V1.5a's finding, and V1.5c's -- so it is recorded
+# here instead of being met by shipping 4 691 cities.
+CITY_MIN_POP = 71000
+
+# ...PLUS EACH REGION'S LARGEST, whatever it is. docs/tiers/v2.md section 2 says a
+# region is "a main city plus the sum of the smaller cities under it", and a region
+# with no city is not that object. It costs nothing today -- every one of the 112
+# regions has a GeoNames place above 15 000 -- but it is what stops a future level
+# change or a higher cut producing a region the register cannot name.
+CITY_TOPUP_LARGEST = True
+
+# How far outside its region a city may sit and still be assigned to it. The GISCO
+# 10M coastline cuts coastal communes -- Birkenhead, Portsmouth, A Coruna, Santander,
+# Cadiz, Antibes, Marsala all fall in the sea at this resolution -- so a strict
+# point-in-polygon drops 85 real cities. Anything beyond this is an error rather than a
+# silent drop, and at the shipped value nothing is: 4 606 land inside, 85 snap, 41 are
+# genuinely overseas, 0 fail.
+CITY_SNAP_DEG = 0.25
+
+# GeoNames feature codes that are NOT a city, and leaving them in is the bug this
+# session found by reading its own output rather than by a check.
+#
+# `PPLX` is "section of populated place" -- 607 rows across the ten, 76 of them above
+# the cut -- and every one DOUBLE-COUNTS the city it is part of: Hamburg-Nord,
+# Hamburg-Mitte, Altona and Wandsbek are Hamburg; Carabanchel, Latina and Fuencarral
+# are Madrid; Eixample and Nou Barris are Barcelona; Favoriten and Donaustadt are
+# Vienna; `Paris 13e Arrondissement` is Paris. Left in, a region's named city shares
+# do not partition it -- Madrid's districts plus Madrid is roughly twice Madrid -- and
+# the residual goes NEGATIVE, which is why tests/test_geography.gd asserts a
+# non-negative residual rather than only a sum.
+#
+# `PPLQ` is an abandoned place, which is not a population at all.
+CITY_EXCLUDED_FEATURE_CODES = {"PPLX", "PPLQ"}
+
+
+def load_eurostat_region_population():
+    """{year: {geo code: population}} over REGION_YEARS, newest first.
+
+    JSON-stat keeps the values in a flat dict keyed by the geo dimension's own INDEX,
+    so the index has to be inverted before anything can be read by code.
+    """
+    out = {}
+    for year in REGION_YEARS:
+        path = SOURCES / "eurostat" / f"demo_r_pjangrp3_{year}.json"
+        if not path.exists():
+            sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        index = data["dimension"]["geo"]["category"]["index"]
+        inverse = {v: k for k, v in index.items()}
+        out[year] = {inverse[int(k)]: v for k, v in data["value"].items()}
+    return out
+
+
+def load_gisco_nuts():
+    """{level: {NUTS code: feature}} for the two levels REGION_LEVEL uses."""
+    out = {}
+    for level in sorted(set(REGION_LEVEL.values())):
+        name = f"NUTS_RG_10M_{REGION_NUTS_VINTAGE}_4326_LEVL_{level}.geojson"
+        path = SOURCES / "gisco" / name
+        if not path.exists():
+            sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        out[level] = {f["properties"]["NUTS_ID"]: f for f in data["features"]}
+    return out
+
+
+def _polygons_of(feature):
+    geom = feature["geometry"]
+    if geom["type"] == "MultiPolygon":
+        return geom["coordinates"]
+    return [geom["coordinates"]]
+
+
+def _point_in_ring(lon, lat, ring):
+    inside = False
+    n = len(ring)
+    j = n - 1
+    for i in range(n):
+        xi, yi = ring[i][0], ring[i][1]
+        xj, yj = ring[j][0], ring[j][1]
+        if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _point_in_polygon(lon, lat, polygon):
+    """Outer ring minus its holes. Enclaves matter here in a way they do not for the
+    national outlines: Berlin is a hole in Brandenburg and Vienna one in
+    Niederoesterreich, so ignoring holes would file every Brandenburg city under
+    Berlin and both partitions would still sum to 1.0."""
+    if not _point_in_ring(lon, lat, polygon[0]):
+        return False
+    return not any(_point_in_ring(lon, lat, hole) for hole in polygon[1:])
+
+
+def _distance_to_polygons(lon, lat, polygons):
+    return min(
+        ((px - lon) ** 2 + (py - lat) ** 2) ** 0.5
+        for polygon in polygons
+        for ring in polygon
+        for px, py in ring
+    )
+
+
+def build_region_index(populations, nuts):
+    """Per nation: the regions that survive, the ones dropped, and the year used.
+
+    THE GEOMETRY IS THE AUTHORITY ON THE ROSTER, and that single rule resolves three
+    separate problems rather than one. A region with no polygon cannot be drawn, and
+    this tier exists to locate things, so:
+
+    * `<CC>ZZ` -- Extra-Regio NUTS 2, the output that belongs to no region: offshore,
+      embassies, ships -- carries a figure and has no geometry, so it falls into the
+      residual with no filter of its own.
+    * The Eurostat response holds TWO NUTS VINTAGES AT ONCE. `NL35` and `NL36` are the
+      2024 codes for Utrecht and Zuid-Holland and `NL31`/`NL33` the 2021 ones; the
+      values are equal to the person, so summing all fourteen Dutch codes overstates
+      the Netherlands by 5.1 M. Filtering to the codes the 2021 geometry knows leaves
+      exactly twelve and the sum is the national figure to the digit.
+    * `FRY` and `ES70` are the overseas regions, and the bounding-box filter that has
+      dropped them from the map since S8 drops them here for free.
+    """
+    out = {}
+    for nid in NATIONS:
+        cc = NUTS_COUNTRY[nid]
+        level = REGION_LEVEL[nid]
+
+        year = None
+        for candidate in REGION_YEARS:
+            if any(code.startswith(cc) and len(code) == level + 2
+                   for code in populations[candidate]):
+                year = candidate
+                break
+        if year is None:
+            sys.exit(f"{nid}: no regional population in any of {REGION_YEARS}")
+        values = populations[year]
+
+        national = values.get(cc)
+        if not national:
+            sys.exit(f"{nid}: no national population at {year}")
+
+        kept, dropped = [], []
+        for code in sorted(c for c in nuts[level] if c.startswith(cc)):
+            if code not in values:
+                continue
+            feature = nuts[level][code]
+            polygons = _polygons_of(feature)
+            onshore = [p for p in polygons if not bbox_outside(p[0])]
+            props = feature["properties"]
+            record = {
+                "id": code,
+                "name": props.get("NAME_LATN") or props.get("NUTS_NAME"),
+                "population": values[code],
+                "polygons": onshore,
+                "all_polygons": polygons,
+            }
+            (kept if onshore else dropped).append(record)
+
+        if not kept:
+            sys.exit(f"{nid}: every region was dropped by the bounding-box filter")
+
+        out[nid] = {"year": year, "level": level, "national": national,
+                    "kept": kept, "dropped": dropped}
+    return out
+
+
+def assign_cities(index):
+    """GeoNames places, filed under the region whose polygon contains them.
+
+    THE JOIN CANNOT GO THROUGH GEONAMES' OWN `admin1`, and that is why the geometry is
+    downloaded rather than only a code table: for France `admin1` is the 13 modern
+    regions, which is NUTS 1 and therefore COARSER than the NUTS 2 the row asked for.
+    A code join would be silently wrong for at least one nation and unverifiable for
+    the rest. A point in a polygon is exact, uniform across the ten, needs no lookup
+    table, and checks the geometry against the register while it works.
+
+    Three outcomes and each says something true: inside, snapped (a coastal commune the
+    10M coastline cuts), or overseas -- a place inside a region the bounding box
+    dropped, which belongs in the residual. Anything else stops the import.
+    """
+    path = SOURCES / "geonames" / "cities15000.zip"
+    if not path.exists():
+        sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+    with zipfile.ZipFile(path) as archive:
+        raw = archive.read("cities15000.txt").decode("utf-8")
+
+    by_country = {}
+    for line in raw.splitlines():
+        fields = line.split("\t")
+        if len(fields) < 15:
+            continue
+        if fields[7] in CITY_EXCLUDED_FEATURE_CODES:
+            continue
+        by_country.setdefault(fields[8], []).append({
+            "name": fields[1],
+            "ascii": fields[2],
+            "lat": float(fields[4]),
+            "lon": float(fields[5]),
+            "population": int(fields[14]),
+        })
+
+    counts = {"inside": 0, "snapped": 0, "overseas": 0, "subdivisions": 0}
+    for nid in NATIONS:
+        entry = index[nid]
+        boxes = []
+        for region in entry["kept"]:
+            lons = [p[0] for poly in region["polygons"] for p in poly[0]]
+            lats = [p[1] for poly in region["polygons"] for p in poly[0]]
+            region["cities"] = []
+            boxes.append((region, min(lons), min(lats), max(lons), max(lats)))
+
+        for city in by_country.get(CITY_COUNTRY[nid], []):
+            lon, lat = city["lon"], city["lat"]
+            home = None
+            for region, x0, y0, x1, y1 in boxes:
+                if not (x0 <= lon <= x1 and y0 <= lat <= y1):
+                    continue
+                if any(_point_in_polygon(lon, lat, p) for p in region["polygons"]):
+                    home = region
+                    break
+            if home is not None:
+                counts["inside"] += 1
+                home["cities"].append(city)
+                continue
+
+            if any(any(_point_in_polygon(lon, lat, p) for p in region["all_polygons"])
+                   for region in entry["dropped"]):
+                counts["overseas"] += 1
+                continue
+
+            nearest = min(entry["kept"],
+                          key=lambda r: _distance_to_polygons(lon, lat, r["polygons"]))
+            near_kept = _distance_to_polygons(lon, lat, nearest["polygons"])
+            near_dropped = min(
+                (_distance_to_polygons(lon, lat, r["all_polygons"])
+                 for r in entry["dropped"]),
+                default=float("inf"))
+            # An island off a region the bbox dropped is overseas even when it falls
+            # outside that region's own coarse polygon -- La Palma and Lanzarote are
+            # ten degrees from mainland Spain and would otherwise snap to Andalucia.
+            if near_dropped < near_kept:
+                counts["overseas"] += 1
+            elif near_kept <= CITY_SNAP_DEG:
+                counts["snapped"] += 1
+                nearest["cities"].append(city)
+            else:
+                sys.exit("%s: '%s' at %.4f,%.4f is %.2f deg from any region"
+                         % (nid, city["name"], lon, lat, near_kept))
+
+        counts["subdivisions"] += drop_numbered_subdivisions(entry["kept"])
+    return counts
+
+
+NUMBERED_SUBDIVISION = re.compile(r"^(.+?) \d")
+
+
+def drop_numbered_subdivisions(regions):
+    """`Paris 15 Vaugirard` is not a city and CITY_EXCLUDED_FEATURE_CODES cannot see
+    it, because GeoNames codes some Paris arrondissements `PPLX` and others plain
+    `PPL` -- `Paris 13e Arrondissement` is one, `Paris 15 Vaugirard` at 229 713 is the
+    other. Twenty Paris arrondissements and sixteen Marseille ones come through the
+    feature filter, and select_cities()' fit rule does not stop them either, because
+    Ile-de-France is large enough to hold Paris and its own districts.
+
+    The discriminator is a NUMBER, and that is what makes this a rule rather than a
+    list. A plain name-prefix test also eats `Mansfield Woodhouse`, `Newport Pagnell`,
+    `Amersham on the Hill`, `Ischia Porto` and `Kronberg Tal`, which are five real
+    places; requiring a digit immediately after the parent's name catches all
+    thirty-six subdivisions and none of the five. Scoped to a parent in the SAME
+    region and larger than the child, so a genuine `Frankfurt 1` somewhere else could
+    not remove a city it has nothing to do with.
+    """
+    dropped = 0
+    for region in regions:
+        names = {c["ascii"]: c["population"] for c in region["cities"]}
+        keep = []
+        for city in region["cities"]:
+            match = NUMBERED_SUBDIVISION.match(city["ascii"])
+            parent = match.group(1) if match else None
+            if parent and names.get(parent, 0) > city["population"]:
+                dropped += 1
+                continue
+            keep.append(city)
+        region["cities"] = keep
+    return dropped
+
+
+def floor_share(value, places=6):
+    """Round a share DOWN, so the residual absorbs the rounding rather than losing to
+    it. Rounding to nearest put Germany's sixteen Laender at 1.000003 of Germany and
+    the Netherlands' twelve provinces at 1.000001 -- a residual of minus three parts in
+    a million, which is arithmetically nothing and is still a partition that does not
+    hold. Flooring guarantees the sum is at or under the true sum and therefore at or
+    under 1.0, at a cost bounded by 112 x 1e-6 across the whole roster."""
+    scale = 10 ** places
+    return int(value * scale) / scale
+
+
+def _city_slug(city):
+    ascii_name = city["ascii"] or city["name"]
+    slug = re.sub(r"[^a-z0-9]+", "_", ascii_name.lower()).strip("_")
+    return slug or "city"
+
+
+def select_cities(region):
+    """The named half of a region, in descending order, taken only while it FITS.
+
+    A city's share is of its region, so the named cities cannot add up to more than
+    the region -- and the raw data says they do, for two unrelated reasons the same
+    rule settles:
+
+    * GEONAMES MIXES ADMINISTRATIVE LEVELS, and the feature-code filter above does not
+      catch it because these are not `PPLX`. `UKI London` carries London at 8.96 M and
+      then Islington, Westminster, Bexley, Croydon and fifteen more BOROUGHS OF IT,
+      summing to 1.325 of the region; Brussels carries Anderlecht, Schaerbeek,
+      Molenbeek, Ixelles and Uccle, which are communes of the same region, summing to
+      1.285. Taken in descending order the agglomeration is named first and its own
+      parts no longer fit, which is the right answer and needs no list of exceptions.
+    * THE TWO SOURCES DISAGREE ABOUT CITY-STATES. Eurostat puts Hamburg at 1.854 M and
+      GeoNames at 1.974 M, a 6 % difference of definition and vintage; Ceuta and
+      Melilla are the same case at 1.5 % and 0.1 %. Here the largest city IS the
+      region, so it is admitted at a share of exactly 1.0 and the residual is zero,
+      which is true of a city-state and false of nobody.
+
+    Stopping at the first city that does not fit rather than skipping it: the list is
+    descending, so skipping would admit Uccle while refusing Schaerbeek, and a rule
+    whose output depends on which of two arbitrary neighbours is larger is not a rule.
+    """
+    ordered = sorted(region["cities"], key=lambda c: (-c["population"], c["ascii"]))
+    above = [c for c in ordered if c["population"] >= CITY_MIN_POP]
+    if not above and CITY_TOPUP_LARGEST and ordered:
+        above = ordered[:1]
+
+    named, room = [], region["population"]
+    for city in above:
+        if city["population"] <= room:
+            named.append((city, city["population"] / region["population"]))
+            room -= city["population"]
+        elif not named:
+            named.append((city, 1.0))
+            room = 0
+            break
+        else:
+            break
+    return named
+
+
+def build_regions():
+    """{nation id: the file to write}, plus the index and the join's own counts."""
+    populations = load_eurostat_region_population()
+    nuts = load_gisco_nuts()
+    index = build_region_index(populations, nuts)
+    counts = assign_cities(index)
+
+    files = {}
+    for nid in NATIONS:
+        entry = index[nid]
+        national = entry["national"]
+        regions = []
+        for region in entry["kept"]:
+            cities = []
+            used = set()
+            for city, share in select_cities(region):
+                slug = _city_slug(city)
+                if slug in used:
+                    n = 2
+                    while f"{slug}_{n}" in used:
+                        n += 1
+                    slug = f"{slug}_{n}"
+                used.add(slug)
+                cities.append({
+                    "id": f"{region['id']}_{slug}",
+                    "name": city["name"],
+                    "share": floor_share(share),
+                    "lonlat": [round(city["lon"], 4), round(city["lat"], 4)],
+                })
+            regions.append({
+                "id": region["id"],
+                "name": region["name"],
+                "share": floor_share(region["population"] / national),
+                "cities": cities,
+            })
+
+        files[nid] = {
+            "_source": ("Eurostat demo_r_pjangrp3 NUTS %d (%d); "
+                        "GISCO NUTS_RG_10M_%d; GeoNames cities15000"
+                        % (entry["level"], entry["year"], REGION_NUTS_VINTAGE)),
+            "_year": entry["year"],
+            "_note": ("Generated by tools/import_data.py -- every field here is "
+                      "dataset-derived and a re-import overwrites the file whole. "
+                      "`share` is of the NATION for a region and of its own REGION "
+                      "for a city; both sums are below 1.0 and the remainder is the "
+                      "unnamed residual -- extra-regio and overseas at the national "
+                      "level, rural and small towns at the regional one. See "
+                      "docs/geography-model.md."),
+            "regions": regions,
+        }
+    return files, index, counts
+
+
+def build_region_geo(index):
+    """One feature per region that survived, at the roster's own 4-decimal precision.
+
+    Not merged into europe.geojson: that file is one feature per NATION and map_view.gd
+    hit-tests it, so a second kind of feature in it would make `_nation_at_lonlat()`
+    answer for two things -- which is exactly the property U6c refused to give up for
+    project markers.
+    """
+    features = []
+    for nid in NATIONS:
+        for region in index[nid]["kept"]:
+            kept = [[clean_ring(ring) for ring in polygon]
+                    for polygon in region["polygons"]]
+            features.append({
+                "type": "Feature",
+                "properties": {"id": region["id"], "nation": nid, "name": region["name"]},
+                "geometry": {"type": "MultiPolygon", "coordinates": kept},
+            })
+    features.sort(key=lambda f: f["properties"]["id"])
+    return {"type": "FeatureCollection", "features": features}
+
+
+def write_region_file(nid, payload):
+    REGIONS_DIR.mkdir(parents=True, exist_ok=True)
+    path = REGIONS_DIR / f"{nid}.json"
+    text = json.dumps(payload, ensure_ascii=False, indent=2)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(compact_scalar_arrays(text) + "\n")
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--year", type=int, default=YEAR)
@@ -818,9 +1355,23 @@ def main():
     # that is already the largest thing in data/.
     write_geojson(WORLD_OUT, world, indent=None)
 
+    # V2.2a. The region geometry is written from the SAME index the register is
+    # built from, rather than re-read, so the two cannot describe different rosters.
+    region_files, region_index, join = build_regions()
+    for nid in NATIONS:
+        write_region_file(nid, region_files[nid])
+    region_geo = build_region_geo(region_index)
+    write_geojson(REGION_GEO_OUT, region_geo, indent=None)
+
     print(f"Imported {len(NATIONS)} nations for {args.year}.")
     print(f"Wrote {GEO_OUT.relative_to(ROOT)}")
     print(f"Wrote {WORLD_OUT.relative_to(ROOT)} ({len(world['features'])} features)")
+    regions = sum(len(f["regions"]) for f in region_files.values())
+    cities = sum(len(r["cities"]) for f in region_files.values() for r in f["regions"])
+    print(f"Wrote data/regions/ ({regions} regions, {cities} cities)")
+    print(f"Wrote {REGION_GEO_OUT.relative_to(ROOT)} ({len(region_geo['features'])} features)")
+    print("  city join: %d inside, %d snapped, %d overseas, %d numbered subdivisions dropped"
+          % (join["inside"], join["snapped"], join["overseas"], join["subdivisions"]))
 
 
 def write_geojson(path, collection, indent):

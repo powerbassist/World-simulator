@@ -2,11 +2,11 @@
   "_source": "invented",
   "_note": "Fictional firms per docs/fictionalization.md -- near-miss style, sector legible, no real company's name, logo or trademarked styling. `share` is of the firm's SECTOR, not of GDP, and a sector's named shares sum to less than 1.0: the remainder is the unnamed rest of the sector. `headcount` is jobs at that authored share and is the differentiator -- two firms of equal share employing different numbers of people is what makes moving share between them create or destroy jobs. See docs/companies-model.md.",
   "companies": [
-    { "id": "FRA_verdelis", "name": "Verdelis", "sector": "agriculture", "share": 0.28, "headcount": 24000 },
-    { "id": "FRA_grainval", "name": "Grainval Coopérative", "sector": "agriculture", "share": 0.19, "headcount": 15000 },
-    { "id": "FRA_aurignac", "name": "Aurignac Industries", "sector": "industry", "share": 0.14, "headcount": 112000 },
-    { "id": "FRA_sevrenne", "name": "Sévrenne Automobile", "sector": "industry", "share": 0.10, "headcount": 74000 },
-    { "id": "FRA_meridienne", "name": "Banque Méridienne", "sector": "services", "share": 0.06, "headcount": 68000 },
-    { "id": "FRA_halbert", "name": "Halbert Distribution", "sector": "services", "share": 0.05, "headcount": 145000 }
+    { "id": "FRA_verdelis", "name": "Verdelis", "sector": "agriculture", "share": 0.28, "headcount": 24000, "city": "FRI_bordeaux" },
+    { "id": "FRA_grainval", "name": "Grainval Coopérative", "sector": "agriculture", "share": 0.19, "headcount": 15000, "city": "FRB_orleans" },
+    { "id": "FRA_aurignac", "name": "Aurignac Industries", "sector": "industry", "share": 0.14, "headcount": 112000, "city": "FRJ_toulouse" },
+    { "id": "FRA_sevrenne", "name": "Sévrenne Automobile", "sector": "industry", "share": 0.10, "headcount": 74000, "city": "FRC_besancon" },
+    { "id": "FRA_meridienne", "name": "Banque Méridienne", "sector": "services", "share": 0.06, "headcount": 68000, "city": "FR1_paris" },
+    { "id": "FRA_halbert", "name": "Halbert Distribution", "sector": "services", "share": 0.05, "headcount": 145000, "city": "FRE_lille" }
   ]
 }

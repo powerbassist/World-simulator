@@ -23,6 +23,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --court --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -220,6 +222,16 @@ var _redistribute := false
 var _invest := false
 var _build := false
 
+## V2.2b, and a pair of flags that photograph a VIEW rather than a mutation: the
+## register is static content, so there is no state to stage and the frame is the
+## whole point. --region proves the Region panel builds and its five-column
+## ledger fits. --city drives the map's own route end to end -- centred and
+## zoomed past CITY_MIN_ZOOM on Paris, the cross hovered so the frame carries the
+## hover label, and the City panel opened through show_city() exactly as main.gd's
+## click lambda does it.
+var _region := false
+var _city := false
+
 ## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
 ## than a feature. Both are cited from docs/playability-audit.md, because a claim
 ## about what the player sees needs a frame behind it and neither of these is
@@ -315,6 +327,10 @@ func _init() -> void:
 			_event = true
 		elif args[i] == "--event-answered":
 			_event_answered = true
+		elif args[i] == "--region":
+			_region = true
+		elif args[i] == "--city":
+			_city = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -408,6 +424,10 @@ func _apply_view() -> void:
 		_back_the_biggest_sector()
 	if _build:
 		_break_ground()
+	if _region:
+		_open_the_partition()
+	if _city:
+		_point_at_the_capital()
 	if _campaign:
 		_open_the_campaign()
 
@@ -1515,6 +1535,35 @@ func _break_ground() -> void:
 	# the one this flag exists to photograph -- is below both of the others.
 	if _main._projects_panel != null:
 		_main._projects_panel.scroll_to_bottom()
+
+
+## V2.2b. The register's readout -- no state to stage, so the frame IS the check:
+## the panel builds, the five-column ledger holds its widest region name
+## ("Provence-Alpes-Côte d'Azur"), and the partition rows agree with the table
+## under them.
+func _open_the_partition() -> void:
+	_main._windows.open("region")
+
+
+## V2.2b, the map's own route driven end to end. Paris's coordinate is read from
+## the register rather than hardcoded, because a frame proving the register draws
+## should not assume a number of its own; the zoom doubles past CITY_MIN_ZOOM so
+## the crosses separate; the hover is set on the control the way --hover-project
+## sets its marker, because the label is the one thing the hit-test suites cannot
+## see; and the panel opens through show_city(), main.gd's own click path.
+func _point_at_the_capital() -> void:
+	var lonlat := Vector2(2.3522, 48.8566)  # Paris, if the register somehow lacks it
+	for region in _main._loader.regions.get("FRA", []):
+		for city in region.cities:
+			if city.id == "FR1_paris":
+				lonlat = city.lonlat
+	var view = _main._map_view
+	view.center_on_lonlat(lonlat.x, lonlat.y)
+	view.zoom_by(2.0, view.size / 2.0)
+	view._hovered_city = "FR1_paris"
+	view.queue_redraw()
+	_main._city_panel.show_city("FR1_paris")
+	_main._windows.open("city")
 
 
 ## V1.7c. A referendum called and left in flight, so the law panel's pending block is

@@ -58,6 +58,21 @@ var share: float = 0.0
 ## have its own paragraph.
 var headcount: float = 0.0
 
+## V2.2a. The id of a city in data/regions/<this nation>.json. A FIFTH FIELD, and
+## the one the header above says a firm does not have: it fronts a place.
+##
+## docs/tiers/v2.md section 2 puts it here rather than in the region register --
+## *"a city's employment is already written in `data/companies/` and needs no
+## second authoring"* -- and the direction is the point. A city holding a list of
+## its firms would be the same relationship written twice, and the two would
+## disagree the first time a session added a firm and forgot the other file.
+##
+## Checked against the register at the loader rather than here, because this file
+## sees one entry and the cities live in a different one. Required: a firm with
+## no city is a firm this tier cannot draw, and an optional field would be one
+## eighteen entries silently never filled in.
+var city: String = ""
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var c := new()
@@ -105,8 +120,13 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		if c.headcount <= 0.0:
 			errors.append("%s: %s headcount = %s must be > 0" % [filename, path, str(c.headcount)])
 
+	if not d.has("city") or typeof(d["city"]) != TYPE_STRING or d["city"] == "":
+		errors.append("%s: %s missing or invalid string field 'city'" % [filename, path])
+	else:
+		c.city = d["city"]
+
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "sector" and key != "share" and key != "headcount":
+		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city":
 			errors.append("%s: %s has unrecognised field '%s' -- revenue is share x sector output and is never authored, and a firm carries no owner, margin or productivity term" % [
 				filename, path, key
 			])

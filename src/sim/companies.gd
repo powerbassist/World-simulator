@@ -212,6 +212,25 @@ static func headcount(ns, company) -> float:
 	return reallocated * compliance
 
 
+## Jobs domiciled in one city -- V2.2a, and the only thing making Company.city
+## load-bearing before V2.2b draws it. U6c's rule that a coordinate nothing reads
+## carries no information, applied to a domicile.
+##
+## It lives here rather than on src/core/region.gd because it reads headcount(), and a
+## core value type preloading a sim system would invert data -> sim -> ui. The city
+## register knows nothing about firms; the firm register names its city; and this
+## function is the one place the two meet.
+##
+## Reads LIVE headcount, so a subsidy that has moved a firm's share has already moved
+## its city's payroll -- which is what makes this a query about the running game rather
+## than a second reading of the content.
+static func headcount_in_city(ns, loader, city_id: String) -> float:
+	var total := 0.0
+	for company in firms_of(loader, ns.id):
+		if company.city == city_id:
+			total += headcount(ns, company)
+	return total
+
 # --- The share partition -------------------------------------------------------
 
 ## A subsidised firm takes share from its NAMED RIVALS in the same sector, pro-rata

@@ -5,8 +5,18 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 pattern_file="$(mktemp)"
-trap 'rm -f "$pattern_file"' EXIT
-grep -v '^#' tools/banned_names.txt | grep -v '^[[:space:]]*$' > "$pattern_file"
+places_file="$(mktemp)"
+trap 'rm -f "$pattern_file" "$places_file"' EXIT
+
+# banned_names.txt has two sections. Everything before the `[places]` marker is
+# checked in every tracked file; everything after it is checked in data/companies/
+# ONLY, because those names are real companies that are ALSO real places -- and
+# docs/fictionalization.md says both that a firm may not reuse a real company's name
+# and that cities and regions are real. V2.2a imported Santander, a bank and a city of
+# 173 635 people, and a check that is permanently red over a real place is one nobody
+# reads. The ban that matters there is the one about firms, so it is scoped to the
+# file a firm's name lives in.
+awk '/^\[places\]/{p=1; next} {print > (p ? "'"$places_file"'" : "'"$pattern_file"'")}'   <(grep -v '^#' tools/banned_names.txt | grep -v '^[[:space:]]*$')
 
 hits=0
 while IFS= read -r f; do
@@ -20,6 +30,13 @@ while IFS= read -r f; do
   if grep -InFw -f "$pattern_file" -- "$f" 2>/dev/null; then
     hits=1
   fi
+  case "$f" in
+    data/companies/*)
+      if [ -s "$places_file" ] && grep -InFw -f "$places_file" -- "$f" 2>/dev/null; then
+        hits=1
+      fi
+      ;;
+  esac
 done < <(git ls-files)
 
 if [ "$hits" -ne 0 ]; then

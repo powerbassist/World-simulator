@@ -1,0 +1,101 @@
+{
+  "_note": "V2.2a fixture: FRA_meridienne is domiciled in FR1_paris and this register calls it FR1_lutetia.",
+  "regions": [
+    {
+      "id": "FR1",
+      "name": "Ile-de-France",
+      "share": 0.18,
+      "cities": [
+        {
+          "id": "FR1_lutetia",
+          "name": "Paris",
+          "share": 0.17,
+          "lonlat": [
+            2.3488,
+            48.8534
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FRB",
+      "name": "Centre - Val de Loire",
+      "share": 0.03,
+      "cities": [
+        {
+          "id": "FRB_orleans",
+          "name": "Orleans",
+          "share": 0.04,
+          "lonlat": [
+            1.9039,
+            47.9029
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FRC",
+      "name": "Bourgogne-Franche-Comte",
+      "share": 0.04,
+      "cities": [
+        {
+          "id": "FRC_besancon",
+          "name": "Besancon",
+          "share": 0.04,
+          "lonlat": [
+            6.0181,
+            47.238
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FRE",
+      "name": "Hauts-de-France",
+      "share": 0.09,
+      "cities": [
+        {
+          "id": "FRE_lille",
+          "name": "Lille",
+          "share": 0.04,
+          "lonlat": [
+            3.0635,
+            50.6371
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FRI",
+      "name": "Nouvelle-Aquitaine",
+      "share": 0.09,
+      "cities": [
+        {
+          "id": "FRI_bordeaux",
+          "name": "Bordeaux",
+          "share": 0.04,
+          "lonlat": [
+            -0.5792,
+            44.8378
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FRJ",
+      "name": "Occitanie",
+      "share": 0.09,
+      "cities": [
+        {
+          "id": "FRJ_toulouse",
+          "name": "Toulouse",
+          "share": 0.08,
+          "lonlat": [
+            1.4442,
+            43.6045
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -37,10 +37,13 @@ const MONTHS := 168
 ## because a subrow's width is the sum of its buttons' text widths.
 const SYNTHETIC_LABELS: Array[String] = ["City", "Region", "Energy", "Climate", "Agenda"]
 
-## The two routes that are neither the bar nor the keyboard. A pair, not a list.
+## The routes that are neither the bar nor the keyboard. Three since V2.2b, which
+## gave the city a map cross -- a fourth of the panel's routes rather than its
+## only one, and worth the column saying so.
 const OTHER_ROUTES := {
 	"projects": "map marker",
 	"events": "message card",
+	"city": "map cross",
 }
 
 var _main
