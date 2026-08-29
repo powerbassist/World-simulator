@@ -2848,3 +2848,13 @@ One session, one objective, a fresh chat each time. Commit at every session
 boundary, and end each session by writing the next one's handoff prompt — the
 convention is in [ROADMAP.md](ROADMAP.md). Verify against the session's
 done-when list before claiming done.
+
+**`CLAUDE.md` and `AGENTS.md` are two copies of this one file, and a session
+updates BOTH.** The second exists because a different assistant reads a different
+filename; neither is the source. V2.2b wrote its whole session paragraph into
+`AGENTS.md` alone, so for one commit the file this project's own instructions
+load claimed V2.2b had not happened — including a save-format line still calling
+V2.2a the third session to contribute nothing to it. `diff CLAUDE.md AGENTS.md`
+before committing: it should be empty. Two files holding one fact is exactly the
+duplication these docs keep warning about, and the copy that drifts is the one
+that will be believed.
