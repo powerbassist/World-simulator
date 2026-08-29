@@ -57,7 +57,11 @@ Which open datasets seed the game's content, what each one is licensed under, an
 
 - **License:** CC BY 4.0. Attribution required.
 - **Provides:** City names, populations, coordinates.
-- **Status:** Not imported at MVP. Listed here so the decision is already made when cities become gameplay rather than decoration. **That condition is met by [[v2|V2.2]]**, which makes a city a share of its region and domiciles [[companies-model|V1.4a]]'s firms in one — so the pre-registered decision is taken as written rather than re-argued.
+- **Status:** **Imported at [[ROADMAP|V2.2a]]**, from `cities15000`, which is the pre-registered decision taken as written rather than re-argued. 581 places of the 4 732 the file holds for the ten, filed under the NUTS region whose polygon contains them. See [[geography-model]].
+- **Three gotchas, all of them GeoNames mixing administrative levels, and all three found by reading the generated file rather than by a check:**
+  - **`PPLX` is a section of a populated place, not a place** — 607 rows across the ten, 76 of them above the population cut. Hamburg-Nord, Carabanchel, Eixample, Favoriten, `Paris 13e Arrondissement`. Each double-counts the city it is part of. Excluded by feature code, with `PPLQ` (abandoned) beside it.
+  - **A borough is coded like a city.** `UKI London` carries London *and* twenty of its own boroughs — Islington, Westminster, Bexley, Croydon — summing to **1.325** of the region; Brussels carries its communes and reaches 1.285. The importer takes cities in descending order only **while they fit**, which needs no list of exceptions and also settles the city-state case where Eurostat and GeoNames disagree by 6 % about Hamburg.
+  - **Some Paris arrondissements are coded `PPL`, not `PPLX`.** `Paris 15 Vaugirard` at 229 713 is one, so neither the feature filter nor the fit rule removed thirty-six Paris and Marseille arrondissements. The discriminator is a **number** after the parent's name: a plain name-prefix test also eats `Mansfield Woodhouse`, `Newport Pagnell`, `Amersham on the Hill`, `Ischia Porto` and `Kronberg Tal`, which are five real places.
 
 ### Eurostat and GISCO — regions
 
@@ -74,7 +78,15 @@ https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_202
 
 **Coverage was measured before this section was written, and the geometry and the figures do not agree about the roster.** GISCO's NUTS 2021 geometry carries all ten nations, the United Kingdom included at 41 NUTS 2 features. `nama_10r_2gdp` carries **nine**: the UK is not thin or stale, it is **entirely absent** — zero geo codes beginning `UK` in a dimension holding 471 of them, because Eurostat dropped UK regions after withdrawal. Measured 2022 NUTS 2 codes carrying a value: FR 28, DE 38, IT 22, ES 20, BE 12, NL 13, LU 1, CH 7, AT 10, **UK 0**.
 
-- **Therefore the UK needs a second source or an authored register**, and the session that imports owns the call. ONS publishes regional GVA on the ITL levels that replaced NUTS for the UK, under the Open Government Licence v3.0 — permissive, attribution required, compatible with what this project already accepts. The standing alternative is authoring, which is what `fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` already do for every nation.
+> [!warning] V2.2a took that call, and half of the paragraph above is wrong — in the direction that mattered
+> The UK gap is real for **regional GDP** and confirmed worse than recorded: `nama_10r_2gdp` carries zero `UK` codes at **every** year, 2018 included, because the codes were removed from the dimension rather than left empty. But `demo_r_pjangrp3` carries **41 UK NUTS 2 codes and 12 NUTS 1 codes with values at 2019**, summing to the UK national figure (66 647 112) exactly. **Regional population is measured for all ten; only regional GDP is short.**
+>
+> V2.2a's register is a partition of **population**, so it needs no second source at all: Britain reads 2019 through the same per-series nearest-year fallback [[unrest-model|V1.5c]] wrote for `SI.POV.GINI`, and the year used is written into each file. Regional GDP is what [[v2]] section 5 makes load-bearing, so importing it at section 2 would ship a number nothing reads — and the whole gap passes to that session.
+>
+> **ONS was probed before the call was taken rather than assumed unavailable.** Its beta API publishes `gdp-by-local-authority`, which is 380 LAU rows with **no ITL codes at all**, so aggregating it to ITL2 needs a fourth dataset as a lookup. Recorded so section 5 does not re-derive it. The standing alternative is still authoring, which is what `fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` already do for every nation — and at NUTS 1 that is twelve numbers rather than forty-one.
+
+- **The geometry is the authority on the roster, and one rule settles three problems.** A region with no polygon cannot be drawn and this tier exists to locate things, so the register is the set of codes carrying **both** a figure and a GISCO polygon. `<CC>ZZ` falls into the residual with no filter of its own; `FRY` and `ES70` are dropped by the bounding box that has dropped them from the map since S8; and the third problem is one this section did not know about — **the Eurostat response carries two NUTS vintages at once**. `NL35` and `NL36` are the 2024 codes for Utrecht and Zuid-Holland and `NL31`/`NL33` the 2021 ones, equal to the person, so summing all fourteen Dutch codes overstates the Netherlands by **5.1 M**. Filtering to the codes the 2021 geometry knows leaves exactly twelve and the sum is the national figure to the digit.
+- **The level is per nation**, and that is a measurement rather than a taste: NUTS 2 for France is the régions abolished in 2016 (`Picardie`, `Nord-Pas de Calais`), while NUTS 1 for Italy is five statistical macro-areas and for Switzerland is one country. The table and its reasons are in [[geography-model]] section 2; `tools/import_data.py`'s `REGION_LEVEL` is the record, and no level field reaches `src/`.
 
 ### Two gotchas in the Eurostat regional data, confirmed against the 2022 figures
 
@@ -196,6 +208,24 @@ curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
 > The measured spread is what made the series worth adding: **NLD 25.7 to ITA 34.3** on
 > the level, and the slopes differ in **sign** -- six nations growing more equal, four
 > less. See [[unrest-model]].
+
+```bash
+# V2.2a. The geographic register: three sources, and the only lines here that are
+# not World Bank or Natural Earth. Two Eurostat years rather than one -- the UK is
+# absent from 2022 and complete at 2019, which is V1.5c's nearest-year fallback on a
+# second series. GISCO at TWO LEVELS, because the level is per nation.
+mkdir -p sources/eurostat sources/gisco sources/geonames
+
+for Y in 2022 2019; do
+  curl -L -o "sources/eurostat/demo_r_pjangrp3_$Y.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=$Y"
+done
+
+for L in 1 2; do
+  curl -L -o "sources/gisco/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"     "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"
+done
+
+curl -L -o "sources/geonames/cities15000.zip"   "https://download.geonames.org/export/dump/cities15000.zip"
+```
 
 The Natural Earth URLs are pinned to tag `v5.1.2` rather than `master`, so the
 files don't silently change under a future re-download. Then run

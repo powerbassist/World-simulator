@@ -91,7 +91,6 @@ Podemos
 Repsol
 Telefónica
 Iberdrola
-Santander
 
 # --- Belgium ---
 Bart De Wever
@@ -190,3 +189,15 @@ OMV
 Erste Group
 Raiffeisen
 voestalpine
+
+# --- Real places that are also company names (V2.2a) ---
+# Checked in data/companies/ ONLY, and the reason is that both halves of
+# docs/fictionalization.md are true at once: "Do not reuse a real company's actual
+# name" and "Cities, regions, rivers | Real | Lyon, Occitanie, the Rhone". Santander
+# is a bank and a city of 173 635 people, and the register imported it from GeoNames
+# at V2.2a. Banning it everywhere makes the check permanently red over a real place;
+# dropping it lets a session name a fictional bank after a real one. The ban that
+# matters is the one about FIRMS, so it is scoped to the file a firm's name lives in.
+# Add an entry here only when a name is genuinely both.
+[places]
+Santander

@@ -61,6 +61,7 @@ tests=(
   tests/test_upper_house.gd
   tests/test_judiciary.gd
   tests/test_events.gd
+  tests/test_geography.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

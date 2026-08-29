@@ -25,3 +25,22 @@ Only the icon files the game actually references are committed, so this credit c
 Map camera panning, zooming and dragging from MapCamera2D by Julian Vos, MIT License. Vendored as a single file at `src/ui/vendor/MapCamera2D.gd`; the licence text is beside it.
 
 It arrived from the Asset Library as a loose `MapCamera2D.gd` plus a bare `LICENSE` in the project root. The licence was renamed and moved with the file it covers, because a root `LICENSE` file states the licence of *this* project — which is not MIT and is not Julian Vos's.
+
+## Eurostat and GISCO
+
+Regional population by NUTS region from Eurostat (`demo_r_pjangrp3`,
+https://ec.europa.eu/eurostat) and NUTS 2021 region geometry from GISCO
+(https://ec.europa.eu/eurostat/web/gisco), used under Eurostat's re-use policy —
+equivalent to CC BY 4.0, attribution required.
+
+Generated into `data/regions/*.json` and `data/geo/regions.geojson` at V2.2a, and
+credited here in the same commit as the fetch rather than at ship time.
+
+## GeoNames
+
+City names, populations and coordinates from the GeoNames geographical database
+(https://www.geonames.org/), `cities15000`, licensed CC BY 4.0.
+
+Cities are filed under the NUTS region whose polygon contains them, so the
+attribution covers a derived subset — 581 places of the 4 732 the file holds for the
+ten nations in scope — rather than the database.
