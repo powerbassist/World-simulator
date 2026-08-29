@@ -280,7 +280,7 @@ a row that was wrong but a row that was absent. Counted cold: **~36 surfaces, ~1
 files and four machines** (import pipeline, register and loader, map draw and hit test,
 two panels) across **two tracks**, so the block cut on the rule that cut V1.6e, V1.6f and
 U6c. **(a) is the import and the register with no UI at all; (b) is the map and the two
-panels.** Model: [docs/geography-model.md](docs/geography-model.md).
+panels -- BUILT, see below.** Model: [docs/geography-model.md](docs/geography-model.md).
 
 **A REGISTER AND NO BEHAVIOUR, and the test says so by reading the files.** Nothing in
 `src/sim/` preloads `region.gd` or `city.gd`; a region carries no GDP, no unemployment
@@ -401,6 +401,62 @@ V2.2b, so a launch should not pay 180 KB for it, and `tests/test_geography.gd` p
 directly to assert every named city lies inside its own region's polygon -- U6c's
 containment check one level down, and the thing that catches a mistyped digit or a geometry
 vintage that has moved under the figures.
+
+**V2.2b SHIPPED THE MAP AND THE TWO PANELS, and the expected red turned red on the day it
+named.** `data_loader.gd` loads `regions.geojson` into `region_features` (NUTS id → outer
+rings, `_load_geo`'s shape) with a **fourth `_validate_regions()` rule** cross-checking the
+register against the geometry at load time, and V2.2a's absence assertion flipped into a
+presence check with both halves of its history recorded beside it -- 112 polygons, key set
+equal to the register's ids. `SAVE_VERSION` **stays 27**, no balance re-run, both predicted:
+nothing under `src/sim/` was touched, and drawing is not a verb (U6c twice running).
+
+**REGIONS ARE THE FILL, at every zoom.** Each nation draws its 1:10m GISCO regions in the
+nation hue under a same-hue 1:50m base and the bright 1:50m national stroke -- the base
+exists because the two vintages disagree at the coast by a few km (a few px at MAX_ZOOM)
+and turns a hole in the country into a seam the eye cannot find; the screenshot pass judged
+the seam and passed it. **The two-pass fill/hairline draw is load-bearing because the roster
+carries an enclave of EACH direction**: with holes dropped, a host's outer ring covers its
+enclave, so enclave visibility is draw-order luck -- except Berlin (3.7 M) outpopulates its
+host Brandenburg (2.6 M) while Bremen (0.7 M) is a third of its host Niedersachsen (8 M),
+so **no fill-and-stroke order renders both** and only every-fill-then-every-line does. A
+fact in the data, found by reading it; the first version of the draw was one pass.
+
+**BRASS CROSSES are the spend the tier reserved, and `CITY_MIN_ZOOM = 2.0` sits JUST UNDER
+the opening Europe fit (~2.1 on 1080p) on `LABEL_MIN_ZOOM`'s own discipline.** The first
+draft sat at 2.2, *above* the fit, and would have shipped 581 cities the default frame
+never shows -- the volume clause was measured FOR the ~1000 px opening fit, so the
+threshold belongs below it; the correction came from computing the fit, not from taste.
+Radius is `sqrt(pop / 8 M)` against `RADIUS_BASE` (London ~9.6 px, the smallest towns clamp
+at 2), the list is **ascending** so the largest draws last and wins an overlap, and **the
+hit test reads the same gate** so a glyph that is not drawn is never a target. One
+formatter, `PanelKit.pop_text()`, serves the hover label and both panels so they cannot
+print two roundings of one figure.
+
+**The hit test takes the marker contract, and the purity check FIRED ON A COMMENT.**
+`_city_at_screen_point()` is a screen-space radius test over the city list, reaching neither
+`_polygons` nor the nation test, policed from source by `tests/test_map_cities.gd` the way
+`test_map_markers.gd` polices the markers'. That test's extraction swallows the *following*
+function's doc comment, and the city doc legitimately named what it must not reach -- the
+test was the authority and the function moved to where both extraction windows are clean.
+Click chain: markers, then cities, then nations, each hit stopping the fall-through.
+
+**Region (T) and City (V) under Economy, the cluster going 4 → 6**; `nav_probe.gd`'s
+`OTHER_ROUTES` carries the city's map cross as its third entry. Region prints the partition
+and a league table in authored order (the importer writes descending by population) whose
+payroll column -- `headcount_in_city()` over each region's cities -- is the one live number
+in it, and **zero is a TRUE zero there for seven of ten nations**, printed as `0` not an em
+dash: V1.6d's bug was an absent figure printed as a confident zero, and this is a present
+figure that is empty. City carries both of §16's routes (the drawer's ranked list;
+`show_city()` for any nation's cross, back button outside the scroll) and every population
+is two shares through the LIVE national figure. The screenshot pass **returned** after
+V2.2a's skip: three frames judged clean, `--region` and `--city` the first flags that stage
+a view rather than a mutation, because the register is static content.
+
+**Two handoff notes were STALE, and both said the same thing: V2.1a already fixed the
+drift.** `screenshot.gd`'s `_mark_panels_dirty()` is no hand-written list to extend -- V2.1a
+deleted it to one line through the registry, so registering the two panels IS the whole job.
+And the month-136 warning on `nav_probe.gd`'s loop was inherited by nothing: no probe this
+session runs a month at all, and `geography_probe.gd` still runs none.
 
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
@@ -2601,18 +2657,19 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c), **V2.1a-c** and **V2.2a** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c), **V2.1a-c** and **V2.2 (a and b)** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 27**, and V2.2a is the third session on this list whose
+Save format is at **version 27**, and V2.2b is the fourth session on this list whose
 serialised contribution is **nothing at all** -- V1.6c's shape and V1.8's. The geographic
 register is content: a region's share of its nation and a city's share of its region
 round-trip through `data/regions/` the way a firm's authored share and headcount
 round-trip through `data/companies/`, and a firm's `city` is one more authored field in a
-file the save has never carried. So `tests/test_save_load.gd` pins three **absences**
+file the save has never carried -- and drawing it changed nothing about that, because both
+panels and both draw passes only read. So `tests/test_save_load.gd` pins three **absences**
 rather than three fields, and each turns red for a different reason: a stored region share
 means the partition can drift from the content defining it, a stored city population means
 a head count exists that `share x population` does not already give, and a `regions` key

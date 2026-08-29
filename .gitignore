@@ -56,3 +56,7 @@ Thumbs.db
 
 # Obsidian editor UI state -- churns every session, no design content
 .obsidian/workspace.json
+
+# Per-machine agent state, like .mcp.json above -- plans and scratch belonging to
+# whichever assistant is driving, not to this game.
+.zcode/
