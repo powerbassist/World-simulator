@@ -138,7 +138,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
-**V2.1a shipped the panel system and V2.1b migrated every panel onto it.** `src/ui/panel_kit.gd`
+**V2.1a shipped the panel system, V2.1b migrated every panel onto it, and V2.1c settled navigation.** `src/ui/panel_kit.gd`
 holds six static primitives -- `section`, `heading`, `line`, `row`, `figure`, `ledger` --
 plus `figure_text()` and `delta()`, and it is **not a base class**: all nineteen panels
 already `extends PanelContainer` and the dirty sweep is duck-typed, so a hierarchy would
@@ -219,6 +219,60 @@ NOT banned**: a cell inside somebody else's grid is the panel's own, because `le
 cannot carry a per-cell tooltip and an autowrapping kit label collapses a fixed column.
 `people_panel` went 520 -> 700px, which is height fixing a **readout** rather than a fold.
 
+**V2.1c SHIPPED NAVIGATION AND THE RESTING SCREEN, AND THE V2.1 BLOCK IS COMPLETE.** The
+row's own question -- *should the resting screen show anything at all* -- was answered by
+measuring rather than by arguing. `tools/nav_probe.gd` ran the real game for fourteen years
+with **nothing ever opened**: of 74 months in which a decision was in front of the player,
+the screen said nothing in **42** (a president who never touches a card) and **64** (one who
+reads a card and closes it). The message column is the only route a pending thing has ever
+had -- `MAX_CARDS` 6, **oldest** dropped, dismissible, never re-pushed -- so an event's whole
+visibility is *one click of an X away from nothing*, and a **council vote and an open
+campaign window are silent in 100 % of their months**, having no card at all. The response is
+**one mark and no plate**: `src/ui/pending.gd` returns window ids, `action_bar.gd` turns them
+into clusters, and the mark is the cluster's own icon in **brass** -- *the state's own
+material marks what matters*, reused rather than joined by a second visual rule. Nothing is
+drawn on the map, `hud.is_over_furniture()` does not move, and **`dashboard.gd` stays
+deleted**. What is *not* in `pending.gd` is the design: the test is that it awaits **the
+player**, so `dissolution_pending` was measured (0 months) and then refused **on the rule
+rather than on the number**.
+
+**THE KEYBOARD WAS A SEVENTH HAND-WRITTEN LIST OF PANEL IDS, and the test written to end that
+class could not see it.** `_unhandled_input()` matched **six** keycodes against six window ids
+-- so the eight windows added since U5a had no key at all -- and `tests/test_shell.gd` held
+**the same six** as a literal dictionary, because a list cannot test a list.
+`test_panel_kit.gd`'s scanner reads `src/ui/` and `tools/` for panel **variable** names, and
+these were ids and keycodes in `tests/`. The map lives at the `register()` call now --
+`register(id, title, content, key)`, `shortcut()`, `id_for_key()`, `push_error` on a key
+already taken -- so adding a surface is still **one `register()` and one line in
+`_build_action_bar()`**, and the drawer's tooltip **reads the letter off the registry** rather
+than restating it. `WindowManager.opened`/`closed` get their **first consumers since U5a**
+(`message_stack.card_activated`'s case at V1.8 in a second place): the bar was the only route
+that marked itself, so a keypress, a map marker and a message card each opened a window while
+the one control that says where you are said nothing.
+
+**The cluster capacity table REFUSED THE QUESTION IT WAS WRITTEN TO ANSWER.** The bar may use
+**1384px of 1920** -- the rest is the left stack and the clock -- and the widest drawer this
+game could plausibly grow uses **half** of it, 0 of 16 measured rows near the edge. So width
+cannot force a fifth cluster and cannot choose one either, and the four hold on **grammar**:
+*a cluster is the domain of the decision rather than the shape of the object*, so region,
+city and energy are Economy, climate is Society, and a fifth "Territory" cluster is refused
+with the count that would reverse it recorded beside it. **Instance fifty-two, the first of
+the V2 tier, is in the row's own wording**: of its five surfaces to place, [docs/tiers/v2.md](docs/tiers/v2.md)
+§4 calls the day agenda *"a ribbon, not a grid"* and §2 reaches a city by **clicking the map**.
+
+**`tools/run_tests.sh` fails a test that exits 0 with a `SCRIPT ERROR` in its output**, and
+the session reproduced the failure it was handed: a parse error in `main.gd` left
+`test_shell.gd` printing *"all checks passed"* over a scene that never loaded, because that
+file read `_main._state` off a bare Control, which raises rather than returning null. Both
+halves fixed; zero script errors are emitted today. **No `SAVE_VERSION` move, no balance
+re-run, no new regime** -- predicted in the plan, since nothing in `src/sim/` was touched and
+this adds no verb. **The twenty-third screenshot pass found no bug in the readout and one in
+the code it was about to ship**: `show_pending()` reached `Icon.load_icon()`, which reads an
+SVG off disk and rasterises it **on every call**, on the path that refreshes with the clock.
+Both tints are rasterised once at `add_cluster()` now, and the frame before and after is
+identical to the pixel -- **a screenshot pass structurally cannot see that class**. Model:
+[docs/panel-system.md](docs/panel-system.md) sections 13-17.
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
@@ -227,7 +281,7 @@ deciding what follows V1 was the work rather than a preamble to it. The organisi
 that **the world becomes visible and located**: V1 built machines and every one of them is
 legible only as a number on a panel, so the country the player governs has no places in
 it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
-rewrite. **V2.1 (the shell, re-cut) is under way -- (a) and (b) are built and (c) is next**, on U5a's own precedent -- U5a moved the
+rewrite. **V2.1 (the shell, re-cut) is COMPLETE -- (a), (b) and (c) are built, and V2.2 (the geographic register) is next**, on U5a's own precedent -- U5a moved the
 shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
 surfaces.
 
@@ -2417,7 +2471,7 @@ never said what it had cost*, fixed by deriving the choice's authored sentence f
 content so the save-format assertion survives intact. Model:
 [docs/events-model.md](docs/events-model.md).
 
-MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a-b** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
+MVP, **V1.1a-e**, V1.2a-e, V1.3a-g, V1.4a-c, V1.5a-d, V1.6a-f, V1.7a-c, V1.8, U1-U5, U6 (a, b and c) and **V2.1a-c** are done. **THE V1 TIER IS COMPLETE. Nothing is left in it, and V2 has started.** Sections 5, 6, 7 and 8 all closed, section 6's last clause and section 7's with them. (e) split and (f) split again on the same two-track rule, and **U6c built what they left** -- the map marker layer. V1.1e (upper house and
 judiciary) is re-parked, not cancelled. One piece of V1.2 work is deferred with
 somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and

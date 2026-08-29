@@ -31,6 +31,7 @@ const CASCADE_WRAP := 5
 const SIDE_MARGIN := 40.0
 
 var _frames := {}       # id -> WindowFrame
+var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
 var _cascade_index := 0
 
 
@@ -43,7 +44,27 @@ func _ready() -> void:
 ## The panel is reparented here and lives for the rest of the session -- closing
 ## hides it rather than freeing it, because every one of these holds a
 ## setup(state, loader) and signal connections made once at startup.
-func register(id: String, title: String, content: Control) -> void:
+##
+## `key` is the letter that toggles this window, or KEY_NONE for a window reached
+## only by the bar and the mouse -- V2.1c.
+##
+## It is here rather than in a table in main.gd because a table in main.gd is what
+## it WAS: `_unhandled_input()` matched six keycodes against six window ids and
+## every surface added since U5a -- eight of the fourteen -- had no key at all,
+## while `tests/test_shell.gd` held the same six as a literal dictionary and so
+## could only ever check what was already there. That is `EXPECTED_PANELS` at
+## seven of fourteen in a seventh place, and `test_panel_kit.gd`'s
+## no-hand-written-list check could see neither: it scans src/ui/ and tools/ for
+## panel VARIABLE names, and these were ids and keycodes.
+##
+## Adding a surface stays one register() and one line in _build_action_bar().
+func register(id: String, title: String, content: Control, key: int = KEY_NONE) -> void:
+	if key != KEY_NONE and id_for_key(key) != "":
+		push_error("window '%s' takes key %s, which '%s' already has" % [
+			id, OS.get_keycode_string(key), id_for_key(key),
+		])
+	_keys[id] = key
+
 	var frame := WindowFrame.new()
 	add_child(frame)
 	# setup() after add_child(): _ready() has to have run or everything the frame
@@ -118,6 +139,21 @@ func frame(id: String):
 ## an arbitrary one.
 func panel_ids() -> Array:
 	return _frames.keys()
+
+
+## The letter that toggles a window, or KEY_NONE.
+func shortcut(id: String) -> int:
+	return int(_keys.get(id, KEY_NONE))
+
+
+## The window a keycode toggles, or "" -- the lookup main.gd's match block was.
+func id_for_key(key: int) -> String:
+	if key == KEY_NONE:
+		return ""
+	for id in _keys.keys():
+		if int(_keys[id]) == key:
+			return String(id)
+	return ""
 
 
 ## The panels themselves, unwrapped from their frames.

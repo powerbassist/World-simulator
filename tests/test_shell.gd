@@ -18,6 +18,8 @@ extends SceneTree
 ## Driven a frame at a time because a Control outside the scene tree has not run
 ## _ready() -- see docs/engine-decision.md.
 
+const Pending = preload("res://src/ui/pending.gd")
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -39,7 +41,12 @@ func _process(_delta: float) -> bool:
 
 
 func _run() -> void:
-	if _main._state == null:
+	# `get()` rather than `_main._state`, because a main.gd that fails to PARSE
+	# instantiates as a bare Control -- and reading a property off one raises a
+	# script error that this suite went on to report as "all checks passed".
+	# Found by breaking main.gd while writing V2.1c, which is also why
+	# tools/run_tests.sh now fails the run on a SCRIPT ERROR.
+	if _main.get("_state") == null:
 		_fail("main scene did not build a GameState")
 		return
 	for name in ["_windows", "_hud", "_top_bar", "_map_view"]:
@@ -55,6 +62,8 @@ func _run() -> void:
 	_check_panel_content()
 	_check_action_bar_routes_to_windows()
 	_check_keyboard_still_reaches_every_panel()
+	_check_the_bar_marks_the_open_window()
+	_check_the_bar_marks_what_awaits_the_player()
 	_check_headline_figures_move_with_nothing_open()
 
 
@@ -246,27 +255,123 @@ func _check_action_bar_routes_to_windows() -> void:
 	_main._windows.close_all()
 
 
-## U2's seven letters still work, and now toggle rather than select -- with no
-## rail there is nothing showing which panel is current, so pressing the same
-## key twice must put the player back on the map.
+## U2's letters still work, every window has a route, and the map from key to
+## window is the REGISTRY rather than a list here -- V2.1c.
+##
+## The list this replaced was six ids in a literal dictionary, matching a match
+## block in main.gd that bound the same six. Eight of the fourteen windows had no
+## key at all and this check could not say so, because a list cannot test itself:
+## `EXPECTED_PANELS` at seven of fourteen in a seventh place, and one the
+## `test_panel_kit.gd` scanner structurally could not see, since it looks for
+## panel VARIABLE names in src/ui/ and tools/ and these were ids in tests/.
 func _check_keyboard_still_reaches_every_panel() -> void:
-	var bindings := {
-		KEY_O: "overview", KEY_E: "economy", KEY_B: "budget",
-		KEY_G: "politics", KEY_P: "society", KEY_L: "legislature",
-	}
-	for key in bindings.keys():
+	var windows = _main._windows
+
+	# U2's six letters, which are the only ones a player already knows. Named
+	# here as a FLOOR the way FOUNDING_PANELS is, not as the list of bindings.
+	for pair in [[KEY_O, "overview"], [KEY_B, "budget"], [KEY_L, "legislature"]]:
+		if windows.id_for_key(int(pair[0])) != String(pair[1]):
+			_fail("key %s no longer opens '%s'" % [OS.get_keycode_string(int(pair[0])), pair[1]])
+
+	var seen := {}
+	for id in windows.panel_ids():
+		var key: int = windows.shortcut(id)
+		if key == KEY_NONE:
+			continue
+		if seen.has(key):
+			_fail("key %s is bound to both '%s' and '%s'" % [
+				OS.get_keycode_string(key), seen[key], id,
+			])
+		seen[key] = id
+
 		_press(key)
-		if not _main._windows.is_open(bindings[key]):
-			_fail("key %s did not open '%s'" % [OS.get_keycode_string(key), bindings[key]])
+		if not _main._windows.is_open(id):
+			_fail("key %s did not open '%s'" % [OS.get_keycode_string(key), id])
 		_press(key)
-		if _main._windows.is_open(bindings[key]):
-			_fail("key %s did not close '%s' on a second press" % [OS.get_keycode_string(key), bindings[key]])
+		if _main._windows.is_open(id):
+			_fail("key %s did not close '%s' on a second press" % [OS.get_keycode_string(key), id])
+
+	# Every window has a key now, and if one ever loses it the bar is still the
+	# guarantee -- so this reports the count rather than demanding fourteen.
+	var unbound: Array = []
+	for id in windows.panel_ids():
+		if windows.shortcut(id) == KEY_NONE:
+			unbound.append(id)
+	if not unbound.is_empty():
+		print("test_shell: %d windows have no shortcut: %s" % [unbound.size(), str(unbound)])
 
 	# M was the Europe tab. With the map always underneath, it clears the view.
 	_press(KEY_B)
 	_press(KEY_M)
 	if not _main._windows.open_ids().is_empty():
 		_fail("M left panels open: %s" % str(_main._windows.open_ids()))
+
+
+## The bar marks the window that is open WHATEVER OPENED IT -- V2.1c. Three of the
+## four routes (a keypress, a map marker, a message card) left the bar saying
+## nothing, because `WindowManager.opened` had no consumer from U5a until now.
+func _check_the_bar_marks_the_open_window() -> void:
+	var bar = _main._hud.action_bar
+	var windows = _main._windows
+	windows.close_all()
+
+	if bar._cluster_buttons["economy"].button_pressed:
+		_fail("the Economy cluster is marked with nothing open")
+
+	# By key, not by button: the route that had no mark at all.
+	_press(KEY_B)
+	if bar.cluster_of("budget") != "economy":
+		_fail("the bar does not place 'budget' under the Economy cluster")
+	if not bar._cluster_buttons["economy"].button_pressed:
+		_fail("opening budget by keypress did not mark its cluster")
+
+	# And by the message card's route, which is a plain open() on another cluster.
+	windows.open("events")
+	if not bar._cluster_buttons["state"].button_pressed:
+		_fail("opening dispatches did not mark the State cluster")
+	if bar._cluster_buttons["economy"].button_pressed:
+		_fail("the Economy cluster stayed marked after another window opened")
+
+	windows.close_all()
+	if bar._cluster_buttons["state"].button_pressed:
+		_fail("closing the last window left its cluster marked")
+
+
+## What the resting screen says while nothing is open -- V2.1c.
+##
+## tools/nav_probe.gd measured fourteen years with nothing ever opened: of 74
+## months in which a decision was in front of the player, the screen said nothing
+## in 42 (a president who never touches a card) or 64 (one who reads a card and
+## closes it). A council vote and an open campaign window were silent in 100 % of
+## their months, having no card path at all.
+##
+## The response is a mark on the cluster where the answer is given, and this
+## asserts the machinery both ways round -- an id that is pending marks its
+## cluster, and nothing pending marks nothing. Whether a given month has anything
+## pending is the simulation's business, not this test's.
+func _check_the_bar_marks_what_awaits_the_player() -> void:
+	var bar = _main._hud.action_bar
+
+	bar.show_pending([])
+	if not bar.pending_clusters().is_empty():
+		_fail("the bar reports a pending cluster with nothing pending")
+
+	bar.show_pending(["events", "bloc"])
+	var marked: Array = bar.pending_clusters()
+	if not marked.has("state") or not marked.has("world"):
+		_fail("a pending dispatch and a pending council vote did not mark State and World: %s"
+			% str(marked))
+	if marked.has("economy"):
+		_fail("a cluster with nothing pending was marked: %s" % str(marked))
+
+	# And the reader itself: with nothing pending in the simulation it must return
+	# an empty list rather than everything or nothing-shaped garbage.
+	var ids: Array = Pending.window_ids(_main._state)
+	for id in ids:
+		if _main._windows.frame(String(id)) == null:
+			_fail("pending.gd named '%s', which is not a registered window" % id)
+
+	bar.show_pending(Pending.window_ids(_main._state))
 
 
 func _press(keycode: int) -> void:

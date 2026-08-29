@@ -5,15 +5,17 @@ tags:
   - ui
 ---
 
-# The panel system — V2.1a and V2.1b
+# The panel system — V2.1a, V2.1b and V2.1c
 
 The primitives every panel builds its body out of, the sweep that keeps them
 fresh, and the contract that says a panel's verb has to be on screen.
 
 **V2.1a built the kit and migrated three panels. V2.1b migrated the other
 sixteen, gave six more panels a declared verb, and turned the fold contract from
-a report into a test.** Sections 1–6 are V2.1a's and stand; section 7 is rewritten
-by the measurement that answered it, and sections 8–11 are V2.1b's.
+a report into a test. V2.1c settled navigation and answered the resting screen
+with a measurement.** Sections 1–6 are V2.1a's and stand; section 7 is rewritten
+by the measurement that answered it, sections 8–12 are V2.1b's, and sections
+13–17 are V2.1c's.
 
 Related: [[ROADMAP]] · [[v2]] · [[engine-decision]]
 
@@ -449,3 +451,155 @@ budget's now/proposed columns are one measurement, the diary's month strip reads
 tracked brass capitals, and Economy opens at 424px full rather than at 928px a third
 empty — §7's first number, on screen.
 
+
+---
+
+# Navigation and the resting screen — V2.1c
+
+Sections 13–17 are V2.1c's. V2.1a settled what a panel is and V2.1b migrated all
+nineteen onto it; what was left unsettled is **how the player reaches one, and what
+they are looking at when none is open.**
+
+## 13. V2.1c's row, counted cold
+
+| Row claim | Counted |
+|---|---|
+| "five more surfaces to place — city, region, day agenda, energy, climate" | At most five and at least three. [[v2]] §4 describes the day agenda as **"a ribbon, not a grid"**, and §2 reaches a city by **clicking the map**, `_project_at_screen_point()`'s shape — so two of the five arrive as something other than a drawer entry. **Instance fifty-two, and the first of the V2 tier** |
+| "a cluster is one line in `_build_action_bar()`" | Holds. `action_bar.gd` still never sees a panel |
+| "Medium rather than High — the cluster grammar is reversible" | Holds, and the session spent its risk elsewhere: the two structural edits are the keyboard map and the window-open mark, and both **delete a list** rather than add a rule |
+| "whether the resting screen should show anything at all" | **Measured rather than argued.** It shows nothing new; the *bar* grows one mark. See §15 |
+
+Three things the row does not name, all found by counting:
+
+1. **The keyboard was a hand-written list of panel ids in a seventh place.**
+   `main.gd::_unhandled_input()` matched **six** keycodes against six window ids, so
+   the eight windows added since U5a — diplomacy, bloc, calendar, people, companies,
+   projects, campaign, dispatches — had no key at all, and `tests/test_shell.gd` held
+   **the same six** as a literal dictionary. A list cannot test a list.
+   `test_panel_kit.gd`'s no-hand-written-list check could see neither: it scans
+   `src/ui/` and `tools/` for panel **variable** names, and these were ids and
+   keycodes in `tests/`.
+2. **`WindowManager.opened` and `closed` had no consumer at all**, from U5a until this
+   session — `message_stack.card_activated`'s case at V1.8, in a second place.
+3. **Four routes exist and only one of them marked itself**: the bar 14 of 14, the
+   keyboard 6 of 14, a map marker (U6c) 1, a message card (V1.8) 1.
+
+## 14. The four routes, and what the registry now owns
+
+`register(id, title, content, key := KEY_NONE)`. The manager holds the map,
+`shortcut(id)` and `id_for_key(key)` read it, `_unhandled_input()` is one lookup, and
+`register()` **push_error**s on a key already taken. All fourteen windows have a
+letter; the six U2 bound to tabs still open the six panels they opened. Adding a
+surface stays *one `register()` and one line in `_build_action_bar()`*, which is the
+property U5a and V2.1a each defended.
+
+The tooltip on a drawer entry names the letter — `top_bar.gd`'s SAVE and MENU buttons
+have done that since U5a — and `main.gd::_entry()` **reads it off the registry**, so
+the letter on the tooltip and the letter the key press uses cannot disagree.
+
+`tests/test_shell.gd` iterates `panel_ids()`, asserts no key is bound twice, and keeps
+three of U2's letters as a **floor** in `FOUNDING_PANELS`' idiom rather than as the
+list.
+
+**Where you are is now marked whatever put you there.** `show_active(id)` lights the
+cluster holding the open window and marks its entry inside the drawer;
+`clear_active()` unlights, and on a close the mark moves to whatever is still open,
+because a pinned window is still where the player is. The two marks are the theme's
+existing pressed style and a brass icon — **no new theme variation and no new visual
+rule** — so `tests/test_ui_theme.gd` is untouched.
+
+## 15. THE RESTING SCREEN, MEASURED — and it ships one mark and no plate
+
+`tools/nav_probe.gd` ran the real game for fourteen years with **nothing ever opened**,
+counting months in which a decision was in front of the player against months in which
+anything on screen said so. The message column is the only route a pending thing has
+ever had: `MAX_CARDS` is 6, the **oldest** is dropped, the player can dismiss any of
+them, and nothing is ever re-pushed.
+
+| pending | months | unseen, never touching a card | unseen, dismissing each card once read |
+|---|---|---|---|
+| event | 32 | **0** | 22 |
+| bloc vote | 18 | **18** | 18 |
+| campaign window | 24 | **24** | 24 |
+| referendum, dissolution | 0 | — | — |
+| **total** | **74** | **42 (57 %)** | **64 (86 %)** |
+
+Two readings, and the second is the sharper. V1.8's card does its job **while it is
+there**: an event is spoken for in all 32 of its months for a president who never
+touches a card, and in 10 of 32 for one who reads the card and closes it — *the only
+trace of a crisis with a deadline is one click of an X away from nothing*. And a
+council vote and an open campaign window are silent in **100 %** of their months either
+way, because no caller of `message_stack.push()` has ever pushed one.
+
+**The response is a mark on the cluster and nothing else.** `src/ui/pending.gd` returns
+**window ids**; `action_bar.gd` turns them into clusters, because `_entries` is already
+the only thing that knows where a window lives. The mark is the cluster's own icon in
+brass — §4's rule, *the state's own material marks what matters*, reused rather than
+joined by a second one. No plate is added, `hud.gd::is_over_furniture()` does not move,
+and nothing is drawn on the map: what the mark says is **where the answer is given**,
+which is navigation rather than a second readout. U5a deleted `dashboard.gd` on purpose
+and the map is still the resting screen.
+
+**What is not in `pending.gd` is the design.** The test for an entry is that it awaits
+*the player*, not that it is interesting: a dissolution already called and an election
+already scheduled are consequences in flight with no button behind them, and
+`ns.dissolution_pending` was measured (0 months in the probe's run) and then refused
+**on the rule rather than on the number**. A later block adds a line there rather than
+a branch anywhere else.
+
+## 16. The cluster grammar, and where V2's surfaces land
+
+The row asks what the four clusters mean once V2 adds five surfaces, and the first
+question — *do four still fit?* — is arithmetic. `nav_probe.gd` table (a) opens each
+drawer at its shipped size and at +1, +2 and +3 entries and measures against the width
+the bar may actually use, which is not the viewport: **1384px of 1920**, the rest
+belonging to the left stack and the clock.
+
+| cluster | entries | width | headroom |
+|---|---|---|---|
+| state | 7 → 10 | 546 → 725 | 838 → 659 |
+| economy | 4 → 7 | 345 → 524 | 1039 → 860 |
+| society | 1 → 4 | 87 → 266 | 1297 → 1118 |
+| world | 2 → 5 | 182 → 361 | 1202 → 1023 |
+
+**0 rows of 16 come near the edge.** The widest drawer this game could plausibly grow
+uses **half** the room it has, so width does not force a fifth cluster and cannot
+choose one either — a measurement refusing the question it was asked, and the decision
+reverts to grammar.
+
+**The four hold, and the rule is that a cluster is the domain of the DECISION rather
+than the shape of the object.** So:
+
+| V2 surface | Lands | Why |
+|---|---|---|
+| Region (§2, §5) | Economy | its content is regional GDP, unemployment and sector mix, and §5 makes the spine regional |
+| City (§2) | Economy | the same content one level down. The **route** is a click on the map; the drawer entry is the way in for a player who does not know that |
+| Day agenda (§4) | State, if it is a window at all | §4 calls it a ribbon, and the diary is already State's |
+| Energy (§8) | Economy | a mix, its bill and an import dependency |
+| Climate (§9) | Society | emissions and accords are a price society pays, and Society is the one cluster with a single entry |
+
+**A fifth "Territory" cluster was considered and refused**, with the trigger that would
+reverse it recorded beside the refusal: a place is not a domain of government, so a
+cluster of places would be the only one on the bar answering *what is this about?* with
+a noun rather than a portfolio. Reverse it if V2.2 ships more than two place surfaces,
+or if any drawer passes the measured width — both counts rather than opinions.
+
+## 17. What the twenty-third screenshot pass found
+
+**No bug in the readout, and one in the code it was about to ship** — which is a first
+in the other direction. `show_pending()` reached `Icon.load_icon()`, which opens an SVG
+off disk and rasterises it **on every call**, and it is refreshed on the same path as
+the clock, so the bar was re-reading four files a day. Both tints are rasterised once
+at `add_cluster()` now and the mark is a texture swap. The frame before and after is
+identical to the pixel, which is exactly why this class of bug needs saying: **a
+screenshot pass structurally cannot see it.**
+
+What the pass confirmed, each in its own frame: the State cluster's icon in brass with
+a crisis pending and nothing open; DISPATCHES marked inside the drawer with its window
+open; **State marked for a pending crisis while Economy is marked for the open budget**,
+so the two marks read apart at a glance; The Union marked when the council divides; and
+the mark **gone** the month the crisis is answered (`--event-answered`), which is the
+half a mark is worthless without.
+
+The tool gained `--cluster <id>`, which pulls a drawer open so a frame can show the
+entry mark as well as the cluster mark.

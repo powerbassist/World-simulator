@@ -9,6 +9,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -134,6 +135,9 @@ var _event := false
 var _event_answered := false
 
 var _open := ""
+## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
+## the player is looking at as well as the mark on the cluster it lives in.
+var _cluster := ""
 
 ## V1.3e, and --bloc's argument a third time. The nation panel's refusal line only
 ## renders for a partner who actually refuses, and which partners refuse is the
@@ -313,6 +317,8 @@ func _init() -> void:
 			_event_answered = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
+		elif args[i] == "--cluster" and i + 1 < args.size():
+			_cluster = args[i + 1]
 		elif args[i] == "--defeated":
 			_defeated = true
 		elif args[i] == "--termlimit":
@@ -425,6 +431,10 @@ func _apply_view() -> void:
 		_main._on_nation_clicked(_nation)
 	if _open != "":
 		_main._windows.open(_open)
+	# After --open, because opening a window marks its own entry in whatever
+	# drawer is showing and the drawer has to exist first.
+	if _cluster != "":
+		_main._hud.action_bar.show_cluster(_cluster)
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		_main._hud.map_legend.show_layer(_main._map_view.layer())
