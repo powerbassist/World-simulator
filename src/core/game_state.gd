@@ -540,6 +540,24 @@ var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 ## command, because nobody issues an obligation.
 var deployments := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of deployment terms
 
+## The meeting register — V2.4a, and the sixth piece of pair state. Symmetric key,
+## because a meeting is the one pair fact that is genuinely shared: whichever of
+## the two made the journey, both leaders were in the room, so a visit either
+## direction opens the window for both. That is why it is NOT keyed directed the
+## way measures and deployments are — a tariff and its retaliation are two acts,
+## a handshake is one.
+##
+## The value is a STAMP (year*12 + month, never a countdown): `met_recently` is a
+## level read off `now - stamp <= MEETING_WINDOW_MONTHS`, so nothing ticks, nothing
+## decays and nothing has to remember to close the window — the discipline defence
+## obligations were given at V1.3g, applied to a permission rather than a charge.
+## Written ONLY by Diplomacy.execute() on an action with opens_meeting.
+##
+## Earns NO SAVE_VERSION bump: absent reads as "never met", which is true of every
+## version-27 save, because those games could meet nobody's leader to any effect.
+## `measures`' case at V1.3c and `appointments`' at U6a, a third time.
+var met_months := {}  # symmetric key, e.g. "DEU|FRA" -> int absolute month of last meeting
+
 ## The president's diary — U6a. The player's own bookings, each a deferred call
 ## to a command that already exists: {kind, year, month, day, action_id,
 ## target_id, law_id, portfolio, party_id, person_id, status}. Ids only, never
@@ -972,6 +990,10 @@ func duplicate_state():
 	# mutate the live register -- silently, sixty times per refresh.
 	gs.pacts = pacts.duplicate(true)
 	gs.deployments = deployments.duplicate(true)
+	# Copied as a flat duplicate: Budget.project() never reads the meeting
+	# register today, but the rule the two lines above state is one added tick
+	# away from applying, and duplicate() on a Dictionary of ints is cheap.
+	gs.met_months = met_months.duplicate()
 	# Nothing in Budget.project()'s pipeline ticks Calendar today, so this copy
 	# buys nothing yet -- and it is taken anyway for the reason the two lines
 	# above spell out: a shared reference is one added tick away from a budget
@@ -1013,6 +1035,7 @@ func to_dict() -> Dictionary:
 		"bloc": bloc,
 		"pacts": pacts,
 		"deployments": deployments,
+		"met_months": met_months,
 		"appointments": appointments,
 		"history": history,
 		"recent_effects": recent_effects,
@@ -1189,5 +1212,14 @@ static func from_dict(d: Dictionary):
 	for entry in appts:
 		typed_appts.append(entry as Dictionary)
 	gs.appointments = typed_appts
+
+	# Absent, every pair reads as never having met, which is true of every
+	# version-27 save -- those games could not gate a verb on a meeting. Re-floated
+	# key by key for the same reason relations are: JSON round-trips a whole
+	# number as an int, and the window arithmetic should not depend on how a
+	# value happened to be saved.
+	var met: Dictionary = d.get("met_months", {})
+	for pair_key in met.keys():
+		gs.met_months[pair_key] = int(met[pair_key])
 
 	return gs

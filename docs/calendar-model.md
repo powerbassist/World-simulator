@@ -376,6 +376,120 @@ worth making once the diary has been played with, not before.
 appointments would be a second scheduler answering the same question — the
 divergence this project's registers exist to prevent.
 
+
+## 12. V2.4a -- the day becomes real
+
+The day is real for the AGENDA and for nothing else; every system stays monthly.
+Three machines: travel duration, the meeting window, the ribbon.
+
+### The block, and the scarcity that is occupancy
+
+An `opens_meeting` booking (today the state visit) occupies a BLOCK of days:
+travel out, the meeting, travel back. `Diplomacy.travel_days()` prices it at
+booking time from the V2.2 register's own coordinates -- great-circle, capital
+to capital, at `TRAVEL_KM_PER_DAY = 280`, rail-and-road pace -- and the NUMBER
+rides the entry. `calendar.gd` spans blocks and refuses overlaps without knowing
+where Rome is; the leaf rule survives V2.4a (asserted by a source read that
+fails if the scheduler ever prices a journey).
+
+**The anchor was the tier's own sentence.** "A journey that takes four days
+because Rome is far" fixed Paris-Rome at four days before the sweep ran, and the
+probe (`tools/day_probe.gd`, D1) confirmed 280 is interior to its grid -- two
+rates in the sweep produce the anchor, so the grid did not pick it. The travel
+table: Brussels 1, Bern 2, Berlin 4, Madrid 4, Rome 4, Vienna 4, London 2,
+Amsterdam 2, Luxembourg 2.
+
+**Scarcity is occupancy, the author's call at plan time, and U6a's deleted
+currency stays deleted.** What replaced the ceiling is physical: overlapping
+blocks are REFUSED, both orders of the pair, day-only bookings included. The
+probe's band was fixed before the sweep and the number PASSED it -- but the
+finding is sharper than the pass. Against a greedy packer over 24 months
+(visits, a law, a reshuffle -- the menu the diary actually offers): **35 % of
+wants unplaceable** (band [25, 75]), and **76 % of wants conflict at their
+preferred day** before the scan finds another. The first run of the loop
+measured 0 % -- because it fired each visit the moment it booked, resolving the
+entry out of `booked` and letting this month's own visits erase each other's
+occupancy; V1.3f's measuring-the-wrong-state error, in the file written to avoid
+it, a third time.
+
+### The meeting window
+
+`GameState.met_months` is the project's sixth piece of pair state, keyed
+SYMMETRIC -- a meeting either direction puts both leaders in one room, which is
+why it is not directed the way measures are. The value is a STAMP
+(`year*12+month`), and `met_recently` -- a new `PRECONDITION_FIELDS` entry, read
+through the machinery `agreement_active` and `deployment_chosen` already use --
+is a LEVEL read: `now - stamp <= MEETING_WINDOW_MONTHS`. Nothing ticks, nothing
+decays, nothing has to remember to close the window; V1.3g's obligation
+discipline applied to a permission rather than a charge.
+
+`state_visit` carries the one new action field, `opens_meeting: true`; the
+treaty-class verbs (bilateral treaty, settle the dispute, defence pact) ask
+`{"field": "met_recently", "op": ">=", "value": 1}` as ordinary content. The
+lock and the key are both data.
+
+**The window is 12 because that is the visit's own cooldown, and the clauses
+meet there.** The probe (D3) fixed two structural clauses before the sweep:
+below the cooldown there is a DEAD ZONE -- months where the gate is shut and the
+visit that would reopen it is still on cooldown, V1.3g's monotone charge with
+the sign flipped; at twice the cooldown the gate is PERMANENT -- a second legal
+visit always restamps before the first window closes, so `met_recently` is dead
+content. Both hold only on [12, 24); 12 is the smallest passing, stable on the
+widened grid. Window == cooldown means the gate closes exactly when the next
+visit becomes possible: no dead zone, no permanence, one meeting per treaty
+cycle.
+
+### The ribbon
+
+`src/ui/ribbon.gd` sits under the action bar as the bottom-most plate -- the
+author's placement, and the slot V2.1c reserved when it ruled the surface "a
+ribbon, not a drawer entry". One row of days for the current month: an open
+baseline with a tick per day, **travel hatched**, **the meeting solid brass**,
+today underlined. `Calendar.day_cells()` is the whole rule about what occupies a
+day, so the ribbon and the diary cannot disagree; the tooltip names the act by
+`verb_key` straight from the register. It is in `hud.is_over_furniture()`'s
+list, `main.gd` marks it dirty on every `day_advanced` (the today-mark moves
+with the clock, not only with a booking), and `tests/test_ribbon.gd` asserts the
+wiring a headless suite can see -- the pixels belong to the screenshot pass.
+
+### The re-run, and the prediction it corrected
+
+Predicted bit-identical, on the argument that the nine only ever take
+`state_visit` (the sole zero-priced verb, V1.3g's 90/90 finding) and
+`state_visit` has no preconditions. **One regime moved**:
+`managed_imposes_tariffs`, last digits only, zero outcome changes. The mechanism
+the prediction missed: a pair on state_visit cooldown used to fall THROUGH to
+the treaty verbs -- bilateral_treaty was the best remaining act in those months
+even at its authored price -- and the meeting gate seals that hole until the
+pair has met. A real behavioural change, small and in the intended direction;
+the honest entry on the record is that "the gate is inert for the nine" was true
+month-by-month and false across the cooldown cycle.
+
+### Two live bugs found on the way
+
+- **main.gd and balance_probe.gd both read `result.get("ok")` off
+  `Diplomacy.execute()`, whose contract is `applied`.** A kept state visit fired
+  its effects and was recorded as REFUSED -- since U6a, on every diplomatic
+  arrival. The probe copied the orchestrator faithfully, which is what kept the
+  two in lockstep and the bug invisible: neither harness ever compared the
+  recorded status against the verb's own return. Both fixed; the correct read is
+  `applied` at both sites.
+- **Luxembourg's capital was "Luxembourg City" in `data/nations/LUX.json` and
+  "Luxembourg" in the register**, so `travel_days()` had no target for one of
+  the ten. The register is canonical -- it labels the map. The first the session
+  knew was the probe's own `push_error` firing mid-sweep.
+
+### What is deliberately not built in V2.4a
+
+**Travel on the law and the reshuffle.** A law is proposed to an assembly and a
+reshuffle is a weekend of phone calls; neither books a train, and `travel_days`
+defaults to 0 -- the ribbon's day-only cell and the diary's single date are the
+same choice.
+
+**AI travel.** The nine's `state_visit` stamps `met_months` -- the register is
+live for them -- but they book no blocks and burn no days. Their diary is still
+`_tick_agenda()`'s countdown, section 11's argument unchanged.
+
 ---
 
 Related: [[index]] · [[engine-decision]] · [[cabinet-model]] ·

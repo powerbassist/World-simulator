@@ -1197,10 +1197,15 @@ func _fill_the_diary() -> void:
 			# calendar_panel.gd resolves it at booking time. Without this the frame
 			# proves nothing about the new label -- a capture of a field nobody
 			# filled in is the pre-mutation frame V1.3g found in this same tool.
+			# V2.4a: the booking carries its travel days, priced the way the panel
+			# prices them, so the ribbon shows a hatched block and the diary shows
+			# the span -- a frame of the meeting day alone proves nothing about
+			# either.
 			Calendar.book(state, Calendar.make_entry(
 				CalendarK.KIND_DIPLOMATIC, year, month, int(spec["day"]),
 				String(acts[0].id), String(target_id), "", "", "",
-				String(loader.nations[String(target_id)].leader_person_id)
+				String(loader.nations[String(target_id)].leader_person_id),
+				Diplomacy.travel_days(loader, ns.id, String(target_id))
 			))
 			break
 

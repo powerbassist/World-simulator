@@ -18,6 +18,16 @@ extends RefCounted
 ## probe. The currency that would have bought something (a monthly budget of the
 ## player's days) was measured and CUT; see calendar_constants.gd.
 ##
+## V2.4a makes the day REAL for the agenda and for nothing else: a booking with
+## travel occupies a block of days -- departure, the meeting, the return -- and
+## overlapping blocks are refused, which is scarcity by OCCUPANCY rather than by
+## a ceiling. U6a's deleted currency stays deleted on the author's call; what
+## replaced it is physical rather than legal, the very distinction U6a named when
+## it cut the constant. This file still computes no price: the entry arrives
+## carrying `travel_days` (Diplomacy.travel_days() at booking time), and the
+## leaf rule survives -- the scheduler spans blocks and refuses overlaps without
+## knowing where Rome is or why it is four days away.
+##
 ## THIS FILE PRELOADS NO OTHER SYSTEM, and tests/test_calendar.gd asserts it
 ## rather than leaving it to this comment. due() hands the orchestrator a list of
 ## entries and the orchestrator fires the verb. There is no preload CYCLE here --
@@ -71,7 +81,7 @@ static func entry_ordinal(entry: Dictionary) -> int:
 static func make_entry(
 	kind: String, year: int, month: int, day: int,
 	action_id := "", target_id := "", law_id := "",
-	portfolio := "", party_id := "", person_id := ""
+	portfolio := "", party_id := "", person_id := "", travel_days := 0
 ) -> Dictionary:
 	return {
 		"kind": kind,
@@ -84,6 +94,7 @@ static func make_entry(
 		"portfolio": portfolio,
 		"party_id": party_id,
 		"person_id": person_id,
+		"travel_days": travel_days,
 		"status": K.STATUS_BOOKED,
 	}
 
@@ -118,6 +129,44 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 
 	if state.appointments.size() >= K.MAX_APPOINTMENTS:
 		return "the diary is full"
+
+	# V2.4a. The block checks need real day numbers on BOTH sides. A state with
+	# no date on it (new_game() leaves year/month at 0 -- the clock owns the
+	# date) is a degenerate fixture, not a played game, and the checks are
+	# skipped for it exactly because refusing a booking on a date the fixture
+	# cannot express would be a confident lie. The old checks above already
+	# passed, on the tolerant integer ordinal.
+	var state_date_ok: bool = state.year >= 1 and state.month >= 1 and state.month <= 12
+	if state_date_ok:
+		# Departure is travel_days before the meeting, and a journey cannot be
+		# booked to leave before today -- the meeting may be months out while
+		# the flight is tonight, which is the one date the PLAYER cannot
+		# actually choose. Day numbers rather than raw ordinals, because
+		# subtracting from an ordinal is a decimal lie the day it crosses a
+		# month boundary.
+		var now_dn := _to_day_number(state.year, state.month, int(state.day))
+		var meet_dn := _to_day_number(
+			int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
+		)
+		if meet_dn - int(entry.get("travel_days", 0)) < now_dn:
+			return "the journey would have to leave in the past"
+
+		# One thing at a time. The refusal IS the scarcity: U6a cut the day
+		# budget because a ceiling priced against legality binds in every
+		# month, and an overlap is not priced against legality -- two blocks
+		# cannot share a day for the same reason two presidents cannot share a
+		# train. This, not a constant, is what makes the day a resource.
+		var start_dn := meet_dn - int(entry.get("travel_days", 0))
+		var end_dn := meet_dn + int(entry.get("travel_days", 0))
+		for e in state.appointments:
+			if String(e.get("status", "")) != K.STATUS_BOOKED:
+				continue
+			var other_meet := _to_day_number(
+				int(e.get("year", 0)), int(e.get("month", 0)), int(e.get("day", 1))
+			)
+			var other_travel := int(e.get("travel_days", 0))
+			if start_dn <= other_meet + other_travel and other_meet - other_travel <= end_dn:
+				return "those days are already taken -- %s" % _date_text(e)
 
 	return ""
 
@@ -207,6 +256,97 @@ static func entries_in_month(state, year: int, month: int) -> Array:
 			out.append(e)
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out
+
+
+## --- the day, V2.4a ---------------------------------------------------------
+
+## Days in one month, off the same day-number arithmetic the block spans use —
+## one public read so the booking form's day picker and the tests clamp against
+## the scheduler's own calendar rather than a second copy of a leap-year rule.
+## A degenerate month reads 31: there is no true answer to invent, and 31 is
+## the form's own long-standing upper bound.
+static func days_in_month(year: int, month: int) -> int:
+	if month < 1 or month > 12:
+		return 31
+	return _to_day_number(year, month + 1, 1) - _to_day_number(year, month, 1)
+
+
+## The block a booking occupies, as a real date either side of the meeting.
+## Departure and return cross month boundaries -- Rome is four days out and the
+## 3rd of a month is not always four days after the 30th of the one before --
+## so the answer is a date Dictionary, not an integer ordinal.
+static func departure(entry: Dictionary) -> Dictionary:
+	var dn := _to_day_number(
+		int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
+	) - int(entry.get("travel_days", 0))
+	return _from_day_number(dn)
+
+
+static func arrival_home(entry: Dictionary) -> Dictionary:
+	var dn := _to_day_number(
+		int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
+	) + int(entry.get("travel_days", 0))
+	return _from_day_number(dn)
+
+
+## One row per day of one month, classifying what occupies it: {"day", "travel",
+## "meeting", "key"}. The ribbon's whole read, so the surface owns no rule about
+## spans at all. A day inside a block's legs but not on its meeting day is
+## travel; the meeting day itself is the only solid cell, which is the visual
+## argument docs/tiers/v2.md section 4 makes -- travel is time you spend without
+## choosing it.
+##
+## Every entry in the register counts, resolved ones included: a kept meeting
+## still occupied its day, and the diary's past is a record rather than a blank.
+## With the overlap refusal above at most one block owns any day; an old save
+## from before V2.4a can hold same-day entries, and the honest rendering of
+## those is the AND of both flags rather than a pick.
+static func day_cells(state, year: int, month: int) -> Array:
+	if month < 1 or month > 12:
+		return []
+	var first_dn := _to_day_number(year, month, 1)
+	var last_dn := _to_day_number(year, month + 1, 1) - 1
+
+	var cells: Array = []
+	for d in range(1, last_dn - first_dn + 2):
+		cells.append({"day": d, "travel": false, "meeting": false, "key": ""})
+
+	for e in state.appointments:
+		var meet_dn := _to_day_number(
+			int(e.get("year", 0)), int(e.get("month", 0)), int(e.get("day", 1))
+		)
+		var travel := int(e.get("travel_days", 0))
+		var lo := maxi(meet_dn - travel, first_dn)
+		var hi := mini(meet_dn + travel, last_dn)
+		for dn in range(lo, hi + 1):
+			var idx: int = dn - first_dn
+			if idx < 0 or idx >= cells.size():
+				continue
+			if dn == meet_dn:
+				cells[idx]["meeting"] = true
+			else:
+				cells[idx]["travel"] = true
+			if String(cells[idx]["key"]) == "":
+				cells[idx]["key"] = verb_key(e)
+
+	return cells
+
+
+## Days since 1970-01-01, via Time's own proleptic-Gregorian conversion. A
+## first draft hand-rolled the days-from-civil pair and was off by one at the
+## month boundary -- the whole reason this file buys no clever arithmetic: the
+## engine's conversion is exact, and the scheduler's leaf rule bars SYSTEM
+## preloads, not the engine singleton that owns what a date is.
+static func _to_day_number(year: int, month: int, day: int) -> int:
+	return int(Time.get_unix_time_from_datetime_dict({
+		"year": year, "month": month, "day": day,
+		"hour": 0, "minute": 0, "second": 0,
+	})) / 86400
+
+
+static func _from_day_number(n: int) -> Dictionary:
+	var d := Time.get_datetime_dict_from_unix_time(n * 86400)
+	return {"year": int(d["year"]), "month": int(d["month"]), "day": int(d["day"])}
 
 
 ## Every date the game already knows about, as data. Reads plain fields and calls

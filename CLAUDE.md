@@ -490,6 +490,43 @@ vision path survived the session that built a wall of faces** (model, judge agen
 route all refused image input), so the screenshot frames were captured and the AUTHOR
 holds the verdict on the second wall -- the same authority that rejected the first.
 
+**V2.4a SHIPPED THE DAY, AND THE ROW'S BIT-IDENTITY PREDICTION WAS THE THING THAT
+DID NOT HOLD.** Scarcity is **occupancy only** -- an `opens_meeting` booking occupies
+travel out, the meeting and travel back, overlapping blocks are refused, and U6a's
+deleted currency stays deleted on the author's plan-time call. The price is
+`Diplomacy.travel_days()`, great-circle off the V2.2 register's own coordinates at
+280 km/day (rail-and-road pace; the tier's "four days because Rome is far" was the
+anchor, and `tools/day_probe.gd`'s sweep confirmed the rate interior to its grid, not
+pinned at an edge). **The number rides the entry and `calendar.gd` stays a leaf** --
+it spans blocks and refuses overlaps without knowing where Rome is, asserted by a
+source read. **`GameState.met_months` is the sixth piece of pair state, symmetric
+because a handshake is one act either direction**, and the gate is `met_recently` --
+a new `PRECONDITION_FIELDS` entry read through the machinery the other pair fields
+already use, so the treaty-class verbs ask for a meeting in their own content files.
+The lock and the key are both data. **The window is 12 because that is the visit's own
+cooldown and the clauses meet there**: below it, a dead zone no visit can reopen
+(V1.3g's monotone charge with the sign flipped); at twice it, a gate a punctual player
+never sees close. Both hold only on [12, 24), smallest passing 12, stable on the
+widened grid. **The ribbon is the bottom-most plate** -- travel hatched, the meeting
+solid brass, today underlined, `Calendar.day_cells()` the whole rule about occupancy,
+the tooltip named from the register by `verb_key` -- and `tests/test_ribbon.gd` pins
+the wiring a headless suite can see (day-tick dirty, furniture coverage,
+register-sourced tooltip). **The re-run moved one regime, `managed_imposes_tariffs`,
+last digits only, zero outcome changes**: a pair on state_visit cooldown used to fall
+through to the treaty verbs, and the gate seals that hole until the pair has met --
+"the gate is inert for the nine" was true month-by-month and false across the cooldown
+cycle. **Two live bugs found on the way, both older than the session**: main.gd and
+balance_probe.gd read `result.get("ok")` off execute(), whose contract is `applied` --
+every kept diplomatic arrival since U6a fired its effects and was recorded as refused
+-- and LUX's capital was "Luxembourg City" against the register's "Luxembourg". The
+probe's occupancy band PASSED at 35 % unplaceable, but the first run measured 0 %:
+it fired each visit the moment it booked, letting this month's own visits erase each
+other's occupancy -- V1.3f's measuring-the-wrong-state error, in the file written to
+avoid it, a third time. `SAVE_VERSION` stays 27, both predicted absences pinned; the
+screenshot frames were captured for the author (no vision path, V2.3's honest gap
+standing). Model: [docs/calendar-model.md](docs/calendar-model.md) section 12.
+
+
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
@@ -499,7 +536,7 @@ deciding what followed V1 was the work rather than a preamble to it. The organis
 that **the world becomes visible and located**: V1 built machines and every one of them is
 legible only as a number on a panel, so the country the player governs has no places in
 it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
-rewrite. **V2.1 (the shell, re-cut) is COMPLETE, V2.2 (the geographic register) is COMPLETE, and V2.3 (the face of power) is BUILT -- V2.4 (the president's day) is next**, on U5a's own precedent -- U5a moved the
+rewrite. **V2.1 (the shell, re-cut) is COMPLETE, V2.2 (the geographic register) is COMPLETE, and V2.3 (the face of power) is BUILT -- V2.4 (the president's day) is next, decomposed at plan time into V2.4a (the day becomes real) and V2.4b (the scenes)**, on U5a's own precedent -- U5a moved the
 shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
 surfaces.
 

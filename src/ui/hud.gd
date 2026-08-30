@@ -21,6 +21,7 @@ const ActionBar = preload("res://src/ui/action_bar.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
 const MapLegend = preload("res://src/ui/map_legend.gd")
+const Ribbon = preload("res://src/ui/ribbon.gd")
 
 const EDGE_MARGIN := 14
 
@@ -35,6 +36,7 @@ var action_bar
 var clock_cluster
 var message_stack
 var map_legend
+var ribbon
 
 
 func _ready() -> void:
@@ -104,13 +106,23 @@ func _ready() -> void:
 	clock_cluster.size_flags_vertical = Control.SIZE_SHRINK_END
 	lower.add_child(clock_cluster)
 
+	# V2.4a: the day ribbon, the bottom-most plate and the full width of the
+	# screen. Under the action bar and everything else in the lower band, so it
+	# reads as the line the month sits on rather than as another cluster's plate
+	# -- the author's placement call at plan time, and the one surface V2.1c
+	# reserved this slot for when it ruled the agenda "a ribbon, not a drawer
+	# entry".
+	ribbon = Ribbon.new()
+	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rows.add_child(ribbon)
+
 
 ## True when the point is over a solid piece of furniture. main.gd asks before
 ## treating a click as a click on the map -- the map view sits behind the whole
 ## HUD rect, so without this a drag started on the portrait card would pan
 ## Europe.
 func is_over_furniture(point: Vector2) -> bool:
-	for plate in [top_bar, portrait_card, action_bar, clock_cluster, message_stack, map_legend]:
+	for plate in [top_bar, portrait_card, action_bar, clock_cluster, message_stack, map_legend, ribbon]:
 		if plate == null or not plate.visible:
 			continue
 		if Rect2(plate.global_position, plate.size).has_point(point):

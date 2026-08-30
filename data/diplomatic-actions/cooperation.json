@@ -4,8 +4,9 @@
     {
       "id": "state_visit",
       "name": "State Visit",
-      "summary": "A formal visit, photographed and reciprocated. Costs nothing at home and buys a little goodwill abroad.",
+      "summary": "A formal visit, photographed and reciprocated. Costs nothing at home and buys a little goodwill abroad -- and it is the one act that puts the two leaders in one room, opening the window in which the treaty-class verbs below can be used.",
       "cooldown_months": 12,
+      "opens_meeting": true,
       "preconditions": [],
       "effects": {
         "relations": 5.0
@@ -14,13 +15,18 @@
     {
       "id": "bilateral_treaty",
       "name": "Bilateral Treaty",
-      "summary": "A standing agreement, only negotiable with a partner already well disposed. Business welcomes it; organised labour reads it as an opening to competition.",
+      "summary": "A standing agreement, only negotiable with a partner already well disposed and recently met. Business welcomes it; organised labour reads it as an opening to competition.",
       "cooldown_months": 24,
       "preconditions": [
         {
           "field": "relations",
           "op": ">=",
           "value": 70.0
+        },
+        {
+          "field": "met_recently",
+          "op": ">=",
+          "value": 1
         }
       ],
       "effects": {
@@ -34,9 +40,15 @@
     {
       "id": "settle_dispute",
       "name": "Settle the Dispute",
-      "summary": "Concede the long-running bilateral quarrel outright. The relationship transforms; at home every bloc reads it as a climbdown.",
+      "summary": "Concede the long-running bilateral quarrel outright, in person -- it cannot be done down a telephone line. The relationship transforms; at home every bloc reads it as a climbdown.",
       "cooldown_months": 24,
-      "preconditions": [],
+      "preconditions": [
+        {
+          "field": "met_recently",
+          "op": ">=",
+          "value": 1
+        }
+      ],
       "effects": {
         "relations": 10.0,
         "bloc_offset": {

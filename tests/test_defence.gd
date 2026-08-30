@@ -369,7 +369,13 @@ func _test_agenda_excludes_the_player_from_signing_only() -> void:
 
 	# The sign verb is gated by pact_active == 0 here, so the exclusion is asserted
 	# on a clean pair where it WOULD otherwise be available.
+	#
+	# V2.4a: it is also gated by met_recently now, so the clean pair needs a
+	# meeting on it before the sign verb would reach the agenda at all. Stamped
+	# by hand -- this check is about the AI exclusion, not the meeting gate,
+	# which has its own checks in test_diplomacy.gd.
 	var clean = _new_state()
+	clean.met_months[Relations.key(ALLY, PLAYER)] = clean.year * 12 + clean.month
 	var clean_offers: Array = Diplomacy.available(
 		clean, _loader.diplomatic_actions, ALLY, PLAYER
 	)

@@ -75,6 +75,7 @@ var _act_label: Label
 var _act_pick: OptionButton
 var _month_pick: OptionButton
 var _day_spin: SpinBox
+var _travel_note: Label
 var _book_button: Button
 var _status: Label
 var _dirty := true
@@ -171,6 +172,9 @@ func _build_form(root: VBoxContainer) -> void:
 	grid.add_child(_act_label)
 	_act_pick = OptionButton.new()
 	_act_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A different act is a different journey: the travel note is the state
+	# visit's, and no other act carries one.
+	_act_pick.item_selected.connect(func(_i: int): _refresh_travel_note())
 	grid.add_child(_act_pick)
 
 	PanelKit.line(grid, "Date", PanelKit.Tone.PLAIN)
@@ -178,13 +182,26 @@ func _build_form(root: VBoxContainer) -> void:
 	when_row.add_theme_constant_override("separation", 8)
 	_month_pick = OptionButton.new()
 	_month_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The month choice bounds the day picker, and the connection is what keeps
+	# the SpinBox honest: a 31 in a 30-day month is a booking the scheduler would
+	# silently fire on the 31st of the wrong month. V2.4a closed the gap that had
+	# existed since U6a.
+	_month_pick.item_selected.connect(func(_i: int): _clamp_day_spin())
 	when_row.add_child(_month_pick)
 	_day_spin = SpinBox.new()
 	_day_spin.min_value = 1
 	_day_spin.max_value = 31
 	_day_spin.value = 15
+	_day_spin.value_changed.connect(func(_v: float): _refresh_travel_note())
 	when_row.add_child(_day_spin)
 	grid.add_child(when_row)
+
+	# V2.4a: what the journey costs in days, said BEFORE the booking is made.
+	# The number the ribbon will hatch is the number the player is agreeing to.
+	_travel_note = Label.new()
+	_travel_note.theme_type_variation = UiTheme.CAPTION
+	_travel_note.autowrap_mode = TextServer.AUTOWRAP_WORD
+	root.add_child(_travel_note)
 
 	_book_button = Button.new()
 	_book_button.text = "Book it"
@@ -381,7 +398,21 @@ func _booking_text(entry: Dictionary) -> String:
 				_action_name(String(entry.get("action_id", ""))),
 				_nation_name(String(entry.get("target_id", ""))),
 			]
-			return "%s — %s" % [line, who] if who != "" else line
+			if not who.is_empty():
+				line = "%s — %s" % [line, who]
+			# V2.4a: the block, not just the meeting. The row is anchored on the
+			# meeting day but the act occupies the journey either side, and a
+			# diary that hid the legs would disagree with the ribbon.
+			var travel := int(entry.get("travel_days", 0))
+			if travel > 0:
+				var depart: Dictionary = Calendar.departure(entry)
+				var home: Dictionary = Calendar.arrival_home(entry)
+				line += "  (away %02d–%02d, %s–%s)" % [
+					int(depart["day"]), int(home["day"]),
+					ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
+					ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
+				]
+			return line
 		K.KIND_LAW:
 			return "Propose %s" % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
@@ -468,6 +499,69 @@ func _refresh_acts() -> void:
 	_book_button.disabled = _act_pick.item_count == 0
 	if _act_pick.item_count == 0:
 		_status.text = "Nothing of that kind is available to book today."
+	_refresh_travel_note()
+
+
+## The day picker never offers a day the chosen month does not have. Called on
+## month selection and on refresh, because the horizon list rebuilds the months.
+func _clamp_day_spin() -> void:
+	var when := _month_at(maxi(_month_pick.selected, 0))
+	_day_spin.max_value = Calendar.days_in_month(int(when["year"]), int(when["month"]))
+	_day_spin.value = clampf(_day_spin.value, 1.0, float(_day_spin.max_value))
+	_refresh_travel_note()
+
+
+## V2.4a. Only the go-there verbs occupy travel days — the ones whose action
+## carries opens_meeting, which today is the state visit and is whatever later
+## content says it is. A treaty is signed in the wake of a meeting the window
+## already required, and a condemnation is delivered from Paris: neither books a
+## train. The note states the block before it is made, in the ribbon's own terms,
+## so the player agrees to the days they are about to see hatched.
+func _refresh_travel_note() -> void:
+	if _travel_note == null:
+		return
+	var travel := _selected_travel_days()
+	if travel == 0:
+		_travel_note.text = ""
+		return
+	var meeting := _form_date()
+	var depart: Dictionary = Calendar.departure({
+		"year": int(meeting["year"]), "month": int(meeting["month"]),
+		"day": int(meeting["day"]), "travel_days": travel,
+	})
+	var home: Dictionary = Calendar.arrival_home({
+		"year": int(meeting["year"]), "month": int(meeting["month"]),
+		"day": int(meeting["day"]), "travel_days": travel,
+	})
+	_travel_note.text = "Away %d %s – %d %s (%d days' travel each way)." % [
+		int(depart["day"]), ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
+		int(home["day"]), ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
+		travel,
+	]
+
+
+func _form_date() -> Dictionary:
+	var when := _month_at(maxi(_month_pick.selected, 0))
+	return {
+		"year": int(when["year"]), "month": int(when["month"]),
+		"day": int(_day_spin.value),
+	}
+
+
+func _selected_travel_days() -> int:
+	if _selected_kind() != K.KIND_DIPLOMATIC or _act_pick.selected < 0:
+		return 0
+	var action = _action_by_id(String(_act_pick.get_item_metadata(_act_pick.selected)))
+	if action == null or not action.opens_meeting:
+		return 0
+	return Diplomacy.travel_days(_loader, _state.player_nation_id, _selected_subject())
+
+
+func _action_by_id(id: String):
+	for action in _loader.diplomatic_actions:
+		if String(action.id) == id:
+			return action
+	return null
 
 
 func _on_book() -> void:
@@ -512,9 +606,13 @@ func _entry_from_form() -> Dictionary:
 			# hands a department to a PARTY -- U6b's probe cut the minister bench,
 			# so neither has a person to name, and "" says so rather than guessing
 			# at a party leader who is not taking the job.
+			#
+			# V2.4a: travel_days is priced HERE, at booking, and stored on the
+			# entry -- the scheduler stays a leaf and never re-derives it. Every
+			# opens_meeting act travels; nothing else does.
 			return Calendar.make_entry(
 				kind, int(when["year"]), int(when["month"]), day, act, subject,
-				"", "", "", _leader_person_id(subject)
+				"", "", "", _leader_person_id(subject), _selected_travel_days()
 			)
 		K.KIND_LAW:
 			return Calendar.make_entry(

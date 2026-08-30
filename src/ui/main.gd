@@ -203,6 +203,7 @@ func _ready() -> void:
 	_hud = Hud.new()
 	add_child(_hud)
 	_top_bar = _hud.top_bar
+	_hud.ribbon.setup(_state, _loader)
 
 	# set_minimap() puts it in the tree, so setup() comes after -- the same
 	# register()-before-setup() ordering every window below follows, and for the
@@ -305,8 +306,12 @@ func _ready() -> void:
 	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
 	# is no baseline to queue. The repaint is all this needs: the diary is the only
-	# panel whose contents just changed.
-	_calendar_panel.diary_changed.connect(func(): _calendar_panel.mark_dirty())
+	# panel whose contents just changed -- and the ribbon occupies the same days,
+	# so a booking repaints both halves of the one surface that just moved.
+	_calendar_panel.diary_changed.connect(func():
+		_calendar_panel.mark_dirty()
+		_hud.ribbon.mark_dirty()
+	)
 
 	# U6b. Read-only, and the only surface that shows the whole register rather
 	# than the one person a given screen happens to be about.
@@ -1115,10 +1120,13 @@ func _nation_name(nation_id: String) -> String:
 func _on_day_advanced(year: int, month: int, day: int) -> void:
 	if _state != null:
 		# The mirror. game_state.gd does not serialise this; save_manager.gd
-		# carries clock.day at the payload's top level, and _on_load_requested()
+		# carries clock.day at the payload's top level and _on_load_requested()
 		# re-mirrors it, so there is exactly one record of the date.
 		_state.day = day
 		_resolve_appointments(year, month, day)
+		# V2.4a: the ribbon's today-mark and its past-dimming both move with the
+		# day, which is the one quantity no monthly surface carries.
+		_hud.ribbon.mark_dirty()
 	_update_top_bar()
 
 
@@ -1160,7 +1168,10 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 						_state, _loader.diplomatic_actions, action,
 						_state.player_nation_id, String(entry.get("target_id", "")),
 					)
-					ok = bool(result.get("ok", false))
+					# execute()'s contract is `applied`, not `ok` -- V2.4a found
+					# this read as false on every arrival, so a kept visit fired
+					# its effects and was recorded as refused anyway.
+					ok = bool(result.get("applied", false))
 					label = String(action.action_name)
 			CalendarK.KIND_LAW:
 				var law = _law_by_id(String(entry.get("law_id", "")))

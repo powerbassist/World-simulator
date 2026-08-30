@@ -32,6 +32,11 @@ tests=(
   tests/test_foreign_policy.gd
   tests/test_defence.gd
   tests/test_calendar.gd
+  # V2.4a: the ribbon is the day surface, and its wiring (day-tick dirty,
+  # furniture coverage, register-sourced tooltip) can fail silently -- most U1
+  # bugs this project shipped were silent, and the drawn pixels themselves are
+  # the screenshot pass's job, not a raster change-detector in here.
+  tests/test_ribbon.gd
   tests/test_people.gd
   # ...and test_cabinet.gd was the THIRD instance, found by the V1.6 playability
   # audit: 55 test files on disk against 54 here. It covers can_assign, assign,

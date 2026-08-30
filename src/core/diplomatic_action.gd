@@ -32,6 +32,15 @@ var summary: String = ""
 ## again. Zero is legal and means no cooldown.
 var cooldown_months: int = 0
 
+## V2.4a. True on the one verb that is literally "go and meet the other leader"
+## -- the state visit. execute() stamps GameState.met_months for the pair, which
+## is what the `met_recently` precondition reads, so treaty-class verbs authored
+## with that precondition unlock for a window after a meeting either direction
+## across the pair. A flag rather than a sixth effect channel because it writes
+## no pair quantity anyone negotiates over: it records that two people were in
+## one room, which is neither a relation nor a contract.
+var opens_meeting: bool = false
+
 ## Array of {"field": String, "op": String, "value": float}, each field checked
 ## against diplomacy_constants.PRECONDITION_FIELDS at load time. "relations" is
 ## evaluated against the target of the proposed action; every other field is the
@@ -71,6 +80,13 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], bl
 	a.cooldown_months = int(d.get("cooldown_months", 0))
 	if a.cooldown_months < 0:
 		errors.append("%s: %s cooldown_months must be >= 0" % [filename, a.id])
+
+	# V2.4a. Read leniently rather than type-checked hard, because the content
+	# convention across data/ is booleans written bare -- a non-bool here is a
+	# load error worth naming rather than a silently false flag.
+	a.opens_meeting = bool(d.get("opens_meeting", false))
+	if d.has("opens_meeting") and typeof(d["opens_meeting"]) != TYPE_BOOL:
+		errors.append("%s: %s opens_meeting must be a boolean" % [filename, a.id])
 
 	a.preconditions = _extract_preconditions(d, a.id, filename, errors)
 	a.effects = _extract_effects(d, a.id, filename, errors, bloc_keys)
