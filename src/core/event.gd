@@ -82,6 +82,15 @@ var respond_months: int = 0
 ## Whether this event can ever fire twice.
 var once: bool = false
 
+## V2.4b, and the one boolean that reverses a V1.8 call -- for THIS CLASS ONLY.
+## docs/events-model.md's non-modal argument survives for every event without the
+## flag: a crisis you can ignore and pay for is the whole of "time pressure". What
+## the flag buys is the case that argument does not cover -- an event nobody could
+## reasonably choose to ignore -- and for it the clock PAUSES on announcement and
+## stays paused until the player answers. Default false: absent in a version-27
+## save reads as non-interrupt, which is the truth about that save.
+var interrupt := false
+
 ## Array of {"field", "op", "value"} on legislature_constants.PRECONDITION_FIELDS,
 ## minus events_constants.EVENT_PRECONDITION_REFUSED. Often EMPTY, and that is the
 ## honest split between section 8's two bullets rather than a shortcut: a scandal is
@@ -143,6 +152,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 			])
 
 	ev.once = bool(d.get("once", false))
+	ev.interrupt = bool(d.get("interrupt", false))
 	ev.preconditions = Law.extract_preconditions(
 		d, ev.id, filename, errors, K.EVENT_PRECONDITION_REFUSED
 	)
@@ -161,7 +171,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
-	"once", "preconditions", "choices",
+	"once", "preconditions", "choices", "interrupt",
 ]
 
 const CHOICE_KEYS := ["id", "label", "summary", "effects", "default"]

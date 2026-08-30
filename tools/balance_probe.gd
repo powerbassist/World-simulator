@@ -1805,7 +1805,9 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 					state, loader.diplomatic_actions, action, ns.id,
 					String(entry.get("target_id", ""))
 				)
-				ok = bool(result.get("ok", false))
+				# execute() returns `applied` -- V2.4a, same correction main.gd
+				# needed; the probe copies the orchestrator faithfully.
+				ok = bool(result.get("applied", false))
 				label = String(action.action_name)
 		CalendarK.KIND_LAW:
 			var law = _find_law(loader, String(entry.get("law_id", "")))

@@ -2,7 +2,7 @@
   "id": "LUX",
   "name": "Luxembourg",
   "geo_id": "LUX",
-  "capital": "Luxembourg City",
+  "capital": "Luxembourg",
   "playable": false,
   "leader": {
     "person": "LUX_everling",

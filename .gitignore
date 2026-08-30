@@ -18,6 +18,16 @@ addons/*
 addons/at-icons/*
 !addons/at-icons/LICENSE.txt
 
+# The second exception, V2.4b, and it is a different KIND: dialogue_manager is
+# not an asset reference but the project's FIRST GAME RUNTIME dependency. The
+# summit scenes run through it in shipped builds, so a fresh clone without it is
+# a broken game, not a warning -- which is exactly the at-icons argument with
+# `src/` replaced by `the game itself`. Committed whole (790 KB, 122 files,
+# MIT, upstream re-downloadable), autoload registered in the COMMITTED
+# project.godot, and the no-autoloads exception is stated where CLAUDE.md
+# prices it rather than arrived at because the editor put it there.
+!addons/dialogue_manager/
+
 # Sample content AssetLib downloads unpack into the project root rather than
 # under addons/. Same reasoning as the rule above — large, re-downloadable, and
 # not this game: road_demos/ is road generation, demo/ is a combat sample with
@@ -60,3 +70,4 @@ Thumbs.db
 # Per-machine agent state, like .mcp.json above -- plans and scratch belonging to
 # whichever assistant is driving, not to this game.
 .zcode/
+.mimosa/

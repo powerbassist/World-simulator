@@ -242,6 +242,14 @@ func _check_action_bar_routes_to_windows() -> void:
 			listed.append(str(entry["id"]))
 
 	for id in _main._windows.panel_ids():
+		# A window with NO KEY is a self-opening surface by definition -- it is
+		# not navigated to, it happens (V2.4b's summit is the first: the scene
+		# a meeting lands into, reachable by booking a visit and nothing else).
+		# The drawer guarantee therefore binds exactly the keyed windows, which
+		# keeps the rule structural instead of naming exceptions in a list --
+		# the failure class V2.1a spent a whole block deleting.
+		if _main._windows.shortcut(id) == KEY_NONE:
+			continue
 		if not listed.has(id):
 			_fail("no cluster on the bottom bar opens '%s'" % id)
 	for id in listed:

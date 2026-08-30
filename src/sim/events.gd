@@ -196,10 +196,14 @@ static func _absolute_month(year: int, month: int) -> int:
 ## resolution would also mean a save reloaded mid-crisis could see the same revelation
 ## announced twice.
 static func announce(ns, ev) -> void:
+	# V2.4b: the flag rides the register, because the UI that pauses the clock
+	# reads the pending state and has no access to the content. Absent in an old
+	# save reads false, which is correct.
 	ns.event_pending = {
 		"event_id": ev.id,
 		"event_name": ev.event_name,
 		"months_left": int(ev.respond_months),
+		"interrupt": bool(ev.interrupt),
 	}
 	if ev.once:
 		ns.event_fired[ev.id] = true

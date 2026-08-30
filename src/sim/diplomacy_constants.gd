@@ -90,13 +90,22 @@ const RESTING_EPSILON := 1.0
 ## not about a pair at all -- it is the agenda's brake on signing with everybody,
 ## authored in the content as `pact_count < N` rather than enforced by a constant in
 ## src/sim/, which is the data-not-code rule docs/engine-decision.md states first.
+##
+## `met_recently` is V2.4a's, and it is the reader half of the meeting window: 1.0
+## when a state visit either way across the pair happened within
+## MEETING_WINDOW_MONTHS, 0.0 otherwise. It rides the precondition machinery rather
+## than arriving as a new boolean on the action because that is the whole point --
+## "this treaty needs a meeting first" is content, expressed by the treaty's own
+## file as {"field": "met_recently", "op": ">=", "value": 1}, and the writer half is
+## the action's `opens_meeting` flag. A window of opportunity rather than a
+## permanent permission, which is docs/tiers/v2.md section 4's own wording.
 const PRECONDITION_FIELDS := [
 	"relations", "agreement_active",
 	"measure_active", "tariff_active", "sanction_active",
 	"pact_active", "pact_count",
 	"deployment_active", "deployment_chosen", "deployment_obliged",
 	"overall_approval_pct", "debt_to_gdp_pct", "unemployment_pct",
-	"deficit_pct_gdp", "growth_annual_pct",
+	"deficit_pct_gdp", "growth_annual_pct", "met_recently",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
@@ -130,3 +139,43 @@ const MAX_ACTION_BLOC_OFFSET := 0.15
 # answers that structurally rather than by staying under the cap -- stake is
 # normalised per viewer, so the question became WHO MATTERS TO BRITAIN rather than
 # HOW MUCH BRITAIN CARES, and the second has no good answer.
+
+# --- The president's day, V2.4a ----------------------------------------------------
+#
+# The first tuned constants in this file since V1.3e retired two, and each was set
+# by tools/day_probe.gd against a band fixed BEFORE the sweep ran. The day machine's
+# quantities live here rather than in calendar_constants.gd on purpose: they gate
+# DIPLOMACY (travel_days() prices a booking, met_recently gates a verb), and
+# calendar_constants.gd's U6a headline -- no tuned constant, the currency deleted --
+# stays true about the scheduler itself. The scarcity is OCCUPANCY, the author's
+# call at plan time: a journey occupies its days, overlapping blocks are refused,
+# and no ceiling constant exists here because U6a's probe already measured every
+# ceiling priced against legality binding in 100 % of months.
+
+## Great-circle kilometres per travel day, capital to capital. The anchor is the
+## tier's own example -- "a journey that takes four days because Rome is far" --
+## and the probe holds it there: Paris-Rome is ~1105 km, so the rate that yields
+## four days is ~280, and the sweep confirms it interior to its grid rather than
+## pinned at an edge. Rail-and-road diplomacy pace, not an aeroplane's, because
+## the number's job is to make Rome cost more than Brussels, not to model
+## transport.
+const TRAVEL_KM_PER_DAY := 280.0
+
+## Bounds on one leg's length in days. The floor exists so a neighbour's capital
+## is still a day out -- a state visit to Brussels is not a commute. The ceiling
+## bounds the block a booking can occupy; nobody in this roster is eight days
+## away, so it guards future content rather than any present capital.
+const TRAVEL_DAYS_MIN := 1
+const TRAVEL_DAYS_MAX := 8
+
+## How many months a meeting keeps the pair's treaty-class verbs unlocked. A
+## LEVEL READ off a stamp, never a countdown: nothing ticks, nothing decays, and
+## the window closes by arithmetic when state.year*12+month runs past the stamp
+## plus this -- the same discipline defence obligations were given at V1.3g so
+## that nothing has to remember to lift them. Absent stamp = never met.
+##
+## Twelve matches the state visit's own cooldown: by the time you could visit
+## again, the last visit's introductions have gone stale. The probe swept this
+## against that anchor and took the smallest passing candidate, interior to the
+## grid (V1.5b's extended tiebreaker rule).
+const MEETING_WINDOW_MONTHS := 12

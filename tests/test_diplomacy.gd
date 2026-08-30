@@ -56,11 +56,112 @@ func _init() -> void:
 	_check_agenda_offers_the_player_no_agreement()
 	_check_agenda_acts_at_all()
 	_check_agenda_record_is_bounded()
+	_check_meeting_gate()
+	_check_travel_table()
 	_finish()
 
 
 ## The whole reason src/core/relations.gd exists: the caller's argument order
 ## must not be able to produce two different entries for one pair.
+## V2.4a. The meeting register and the gate it feeds. Four halves: the stamp is
+## written only by an opens_meeting action; the window is a LEVEL read off that
+## stamp, so it expires by arithmetic and nothing ticks it down; the read is
+## SYMMETRIC because a meeting either direction across the pair puts both
+## leaders in one room; and the gate composes with the precondition machinery,
+## which is the whole reason it rides `met_recently` rather than a new verb
+## channel. The content loop at the end is the data-not-code rule applied to
+## itself: every action ASKING for a meeting must be unlockable by the action
+## GRANTING one, or the content is a lock with no key.
+func _check_meeting_gate() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var visit = _action_by_id("state_visit")
+	if visit == null:
+		_failures.append("no state_visit content to test the meeting gate with")
+		return
+	if not visit.opens_meeting:
+		_failures.append("state_visit does not carry opens_meeting -- nothing writes the meeting register")
+
+	if Diplomacy.met(state, PLAYER, "DEU"):
+		_failures.append("a new game reads as met -- the register did not start empty")
+
+	# The stamp, exactly as execute() writes it.
+	state.met_months[Relations.key(PLAYER, "DEU")] = state.year * 12 + state.month
+	if not Diplomacy.met(state, PLAYER, "DEU"):
+		_failures.append("a fresh stamp did not open the window")
+	if not Diplomacy.met(state, "DEU", PLAYER):
+		_failures.append("the meeting read is not symmetric -- a visit either direction must open the window both ways")
+
+	# Expiry by arithmetic: walk just past the window and read again. No tick
+	# touched the stamp; the CALENDAR moved past it.
+	var stamp: int = int(state.met_months[Relations.key(PLAYER, "DEU")])
+	state.year = (stamp - 1 + DK.MEETING_WINDOW_MONTHS + 2) / 12
+	state.month = (stamp - 1 + DK.MEETING_WINDOW_MONTHS + 2) % 12 + 1
+	if Diplomacy.met(state, PLAYER, "DEU"):
+		_failures.append("the window did not close by arithmetic %d months on" % (DK.MEETING_WINDOW_MONTHS + 2))
+
+	# The gate through the machinery the content already speaks: the treaty
+	# verbs must be withheld before the meeting and offered after it.
+	var treaty = _action_by_id("bilateral_treaty")
+	if treaty == null:
+		_failures.append("no bilateral_treaty content to test the gate through")
+		return
+	var has_meeting_precondition := false
+	for cond in treaty.preconditions:
+		if String(cond["field"]) == "met_recently":
+			has_meeting_precondition = true
+	if not has_meeting_precondition:
+		_failures.append("bilateral_treaty does not ask met_recently -- the gate is dead content")
+	state = GameState.new_game(_loader, PLAYER)
+	state.relations[Relations.key(PLAYER, "DEU")] = 90.0
+	state.year = 2026
+	state.month = 3
+	if Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, "DEU").has(treaty):
+		_failures.append("the treaty was offered before any meeting")
+	state.met_months[Relations.key(PLAYER, "DEU")] = state.year * 12 + state.month
+	if not Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, "DEU").has(treaty):
+		_failures.append("the treaty stayed withheld after a meeting -- the gate never opens")
+
+	# Every action asking for a meeting is unlockable by the one granting it.
+	for action in _loader.diplomatic_actions:
+		var asks := false
+		for cond in action.preconditions:
+			if String(cond["field"]) == "met_recently":
+				asks = true
+		if asks and not visit.opens_meeting:
+			_failures.append("%s asks for a meeting but no opens_meeting verb exists" % action.id)
+
+
+## V2.4a. Travel is real duration off the register's own coordinates, so the
+## table is pinned on its SHAPE rather than on every number: the neighbour is
+## the shortest trip, nobody is under a day, nobody is over the ceiling, and
+## Rome -- the tier doc's own example -- is four days out of Paris. The rate
+## itself was swept by tools/day_probe.gd and found interior to its grid; this
+## pins the shipped rate against drift.
+func _check_travel_table() -> void:
+	var rome := Diplomacy.travel_days(_loader, PLAYER, "ITA")
+	if rome != 4:
+		_failures.append("Paris-Rome prices at %d days, not the anchored 4 -- the rate or the register moved" % rome)
+	var belgium := Diplomacy.travel_days(_loader, PLAYER, "BEL")
+	var spain := Diplomacy.travel_days(_loader, PLAYER, "ESP")
+	if belgium >= spain:
+		_failures.append("Brussels (%d) does not price below Madrid (%d) -- distance is not reaching the answer" % [belgium, spain])
+	for id in _loader.nations.keys():
+		if String(id) == PLAYER:
+			continue
+		var d := Diplomacy.travel_days(_loader, PLAYER, String(id))
+		if d < DK.TRAVEL_DAYS_MIN or d > DK.TRAVEL_DAYS_MAX:
+			_failures.append("%s prices at %d days, outside [%d, %d]" % [
+				id, d, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX,
+			])
+
+
+func _action_by_id(id: String):
+	for action in _loader.diplomatic_actions:
+		if String(action.id) == id:
+			return action
+	return null
+
+
 func _check_key_is_canonical() -> void:
 	if Relations.key("FRA", "DEU") != Relations.key("DEU", "FRA"):
 		_failures.append("relations key is not order-independent")
@@ -196,7 +297,14 @@ func _check_preconditions_gate() -> void:
 	# Forced below the gate, it must not be offered; forced above it, it must be.
 	# Asserted against Diplomacy.available() rather than the predicate, so the
 	# thing the panel actually calls is the thing under test.
+	#
+	# V2.4a staged a meeting first: the shipped relations-gated action is the
+	# bilateral treaty, which now ALSO asks met_recently, so a test that set only
+	# the relations figure exercised one gate and tripped the other. The meeting
+	# is stamped by hand rather than executed, because what this check isolates
+	# is the relations threshold -- the meeting gate has its own check below.
 	state.relations[Relations.key(PLAYER, "DEU")] = threshold - 5.0
+	state.met_months[Relations.key(PLAYER, "DEU")] = state.year * 12 + state.month
 	if Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, "DEU").has(action):
 		_failures.append("'%s' was offered below its own relations threshold" % action.id)
 

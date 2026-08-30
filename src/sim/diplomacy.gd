@@ -433,6 +433,82 @@ static func cooldown_key(action_id: String, target_id: String) -> String:
 	return action_id + RK.SEPARATOR + target_id
 
 
+## --- the president's day, V2.4a ----------------------------------------------------
+##
+## Travel duration and the meeting window. Both live here rather than in
+## calendar.gd because they are DIPLOMACY's quantities: travel_days() prices a
+## booking the diary is about to make, and met() gates verbs available() already
+## filters. The scheduler stays a leaf that knows neither — it stores the number
+## an entry arrives carrying and never asks where it came from.
+
+## Days one leg of a journey between two capitals occupies. The distance is
+## great-circle off the V2.2 register's own coordinates — nation.capital names the
+## city, the nation's regions hold its lon/lat — so there is no second geography
+## to author and no way for the diary to disagree with the map about where Rome is.
+##
+## The rate is rail-and-road pace (see TRAVEL_KM_PER_DAY), because the number's
+## job is to make Rome cost more than Brussels, not to model transport. A block
+## spans travel out + the meeting + travel back, so a state visit occupies
+## 2 * travel_days + 1 days of the diary.
+##
+## A capital missing from its own nation's cities is a register gap nothing else
+## has ever hit (all ten capitals are far above CITY_MIN_POP), so it errors loudly
+## and prices the journey at the CEILING — a gap must never make travel free.
+static func travel_days(loader, from_id: String, to_id: String) -> int:
+	var from_lonlat: Variant = _capital_lonlat(loader, from_id)
+	var to_lonlat: Variant = _capital_lonlat(loader, to_id)
+	if from_lonlat == null or to_lonlat == null:
+		return DK.TRAVEL_DAYS_MAX
+	var km := _haversine_km(from_lonlat, to_lonlat)
+	var days := int(ceil(km / DK.TRAVEL_KM_PER_DAY))
+	return clampi(days, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX)
+
+
+## Whether the two leaders have met within the window — the reader half of
+## GameState.met_months, and a LEVEL read: the stamp never ticks down, the window
+## closes by arithmetic when the calendar runs past it. Symmetric by construction,
+## because whichever of the two made the journey, both were in the room.
+static func met(state, a: String, b: String) -> bool:
+	var stamp = state.met_months.get(RK.key(a, b))
+	if stamp == null:
+		return false
+	return (state.year * 12 + state.month) - int(stamp) <= DK.MEETING_WINDOW_MONTHS
+
+
+## A nation's capital as a lon/lat, or null. The register keys cities by region,
+## so this scans the nation's own cities for the one named nation.capital — a
+## per-nation scan over a handful of regions, called once at booking time.
+## Variant rather than Vector2 because null is the not-found answer.
+static func _capital_lonlat(loader, nation_id: String) -> Variant:
+	var nation = loader.nations.get(nation_id)
+	if nation == null:
+		push_error("diplomacy: no nation '%s' to read a capital from" % nation_id)
+		return null
+	var wanted := String(nation.capital)
+	for region in loader.regions.get(nation_id, []):
+		for city in region.cities:
+			if String(city.city_name) == wanted:
+				return city.lonlat
+	push_error("diplomacy: capital '%s' of %s is not in the city register" % [wanted, nation_id])
+	return null
+
+
+## Great-circle distance in kilometres. Half the haversine, on a mean-earth
+## radius; the precision is beside the point when the answer is rounded up to
+## whole days against a 280 km rate.
+static func _haversine_km(a: Vector2, b: Vector2) -> float:
+	const EARTH_RADIUS_KM := 6371.0
+	var lon1 := deg_to_rad(a.x)
+	var lat1 := deg_to_rad(a.y)
+	var lon2 := deg_to_rad(b.x)
+	var lat2 := deg_to_rad(b.y)
+	var dlat := lat2 - lat1
+	var dlon := lon2 - lon1
+	var h := sin(dlat * 0.5) * sin(dlat * 0.5) \
+		+ cos(lat1) * cos(lat2) * sin(dlon * 0.5) * sin(dlon * 0.5)
+	return 2.0 * EARTH_RADIUS_KM * asin(minf(1.0, sqrt(h)))
+
+
 ## Every action in `all_actions` that `actor_id` may currently take against
 ## `target_id`: preconditions met, and not on cooldown against that target.
 ## Mirrors Legislature.available().
@@ -503,6 +579,12 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		"deployment_active": return 1.0 if Defence.deployment_kind(state, ns.id, target_id) != "" else 0.0
 		"deployment_chosen": return 1.0 if Defence.deployment_kind(state, ns.id, target_id) == DFK.DEPLOYMENT_CHOSEN else 0.0
 		"deployment_obliged": return 1.0 if Defence.deployment_kind(state, ns.id, target_id) == DFK.DEPLOYMENT_OBLIGED else 0.0
+		# V2.4a's, over the sixth pair register. A pair state like the four above
+		# it, read through the same machinery so the treaty files gate themselves
+		# with no day knowledge in this module at all: a treaty asks for 1, and
+		# the state visit that grants it is a different verb in the same content
+		# directory.
+		"met_recently": return 1.0 if met(state, ns.id, target_id) else 0.0
 		"overall_approval_pct": return ns.overall_approval_pct
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -664,6 +746,12 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 
 	if action.cooldown_months > 0:
 		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
+
+	# V2.4a, and it is a stamp rather than an effect: the one pair fact this verb
+	# writes that nobody negotiated over. Either direction across the pair opens
+	# the window for both, which is why the key is the symmetric one.
+	if action.opens_meeting:
+		state.met_months[RK.key(actor_id, target_id)] = state.year * 12 + state.month
 
 	var result := {
 		"action_id": action.id,

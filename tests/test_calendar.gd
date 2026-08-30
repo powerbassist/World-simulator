@@ -56,6 +56,10 @@ func _init() -> void:
 	_check_fixed_dates()
 	_check_upcoming_window()
 	_check_person_is_a_label_not_an_identity()
+	_check_travel_block_spans()
+	_check_overlap_refused()
+	_check_past_departure_refused()
+	_check_absent_travel_days_round_trips()
 	_finish()
 
 
@@ -98,6 +102,164 @@ func _check_person_is_a_label_not_an_identity() -> void:
 	Calendar.cancel(state, Calendar.verb_key(plain))
 	if not Calendar.booked(state).is_empty():
 		_fail("cancelling by a key derived without the person left the booking in place")
+
+
+## V2.4a. The block is real dates, not arithmetic on the meeting's fields:
+## departure and arrival cross month boundaries by construction (a 15th with
+## four days of travel either side is fine, a 2nd is not), so the span helpers
+## are pinned against a crossing and a non-crossing month. The scheduler still
+## computes no price -- travel_days arrives ON the entry -- which is the leaf
+## rule, asserted in the negative below.
+func _check_travel_block_spans() -> void:
+	var state = _fresh()
+	var when := _months_ahead(state, 2)
+
+	# A meeting on the 2nd with 3 days of travel departs in the PREVIOUS month
+	# (two days out is not enough to cross; three is) and returns on the 5th.
+	var entry := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 2, "state_visit", PARTNER,
+		"", "", "", "", 3
+	)
+	var depart: Dictionary = Calendar.departure(entry)
+	if int(depart["month"]) != int(when["month"]) - 1 or int(depart["day"]) != Calendar.days_in_month(int(when["year"]), int(when["month"]) - 1) - 1:
+		_fail("departure across a month boundary came back %s (expected the last day of the previous month)" % [str(depart)])
+	var home: Dictionary = Calendar.arrival_home(entry)
+	if int(home["month"]) != int(when["month"]) or int(home["day"]) != 5:
+		_fail("arrival_home came back %s (expected the 5th)" % [str(home)])
+
+	# A meeting on the 15th with 4 days of travel: the day cells classify the
+	# legs and the meeting differently, which is the whole visual argument --
+	# travel is hatched, the meeting is solid.
+	var mid := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 15, "state_visit", "ITA",
+		"", "", "", "", 4
+	)
+	state.appointments.append(mid.duplicate(true))
+	var cells: Array = Calendar.day_cells(state, int(when["year"]), int(when["month"]))
+	if cells.size() != Calendar.days_in_month(int(when["year"]), int(when["month"])):
+		_fail("day_cells returned %d cells for the month" % cells.size())
+	var day15: Dictionary = cells[14]
+	if not bool(day15["meeting"]):
+		_fail("the meeting day did not read as a meeting")
+	if bool(day15["travel"]):
+		_fail("the meeting day also read as travel -- the two marks are exclusive on the day itself")
+	var day12: Dictionary = cells[11]
+	if not bool(day12["travel"]) or bool(day12["meeting"]):
+		_fail("an outbound leg day did not read as travel-only")
+
+	# The leaf rule, read off the source like the preload one: the scheduler
+	# must not derive a price, only store one.
+	var file := FileAccess.open("res://src/sim/calendar.gd", FileAccess.READ)
+	var text := file.get_as_text()
+	file.close()
+	for line in text.split("
+"):
+		if line.strip_edges().begins_with("#"):
+			continue
+		if line.contains("KM_PER_DAY") or line.contains("haversine"):
+			_fail("calendar.gd computes a travel price -- the leaf rule says the entry carries it: %s" % line.strip_edges())
+
+
+## V2.4a. Occupancy IS the scarcity; there is no ceiling to bind instead. So
+## the refusal rule is the machine, and it is asserted on both orders of the
+## pair: a second block inside the first's legs refuses, and the first refuses
+## against a booked second, in a DIFFERENT month if the legs reach that far.
+func _check_overlap_refused() -> void:
+	var state = _fresh()
+	var when := _months_ahead(state, 2)
+
+	var first := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 15, "state_visit", PARTNER,
+		"", "", "", "", 4
+	)
+	var result: Dictionary = Calendar.book(state, first)
+	if not bool(result["ok"]):
+		_fail("the first block was refused: %s" % String(result["error"]))
+
+	# Inside the legs: the 16th, within four days either side of the 15th.
+	var second := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 16, "state_visit", "ITA",
+		"", "", "", "", 2
+	)
+	result = Calendar.book(state, second)
+	if bool(result["ok"]):
+		_fail("a booking inside another's travel legs was accepted")
+	if not String(result["error"]).begins_with("those days are already taken"):
+		_fail("an overlap refusal carried the wrong reason: %s" % String(result["error"]))
+
+	# A day-only booking on the meeting day itself also conflicts.
+	var third := Calendar.make_entry(
+		K.KIND_LAW, int(when["year"]), int(when["month"]), 15, "", "", "income_tax_cut"
+	)
+	result = Calendar.book(state, third)
+	if bool(result["ok"]):
+		_fail("a day-only booking on an occupied day was accepted")
+
+	# But the day after the block ends is free, and a law there books.
+	var fourth := Calendar.make_entry(
+		K.KIND_LAW, int(when["year"]), int(when["month"]), 20, "", "", "income_tax_cut"
+	)
+	result = Calendar.book(state, fourth)
+	if not bool(result["ok"]):
+		_fail("a booking on the day after the block was refused: %s" % String(result["error"]))
+
+
+## V2.4a. The one date the player cannot choose is the departure. A meeting
+## booked too soon for its own travel is refused -- and the meeting WITHOUT
+## travel (a law, a reshuffle) is never refused on today, because there is no
+## journey to have left late.
+func _check_past_departure_refused() -> void:
+	var state = _fresh()
+
+	# Booked on the 1st, a meeting on the 2nd of the SAME month with 3 days of
+	# travel would have to have left on the 30th of the month before.
+	var entry := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(state.year), int(state.month), 2, "state_visit", PARTNER,
+		"", "", "", "", 3
+	)
+	var result: Dictionary = Calendar.book(state, entry)
+	if bool(result["ok"]):
+		_fail("a journey departing before today was accepted (booked on day 1, meeting on the 2nd, 3 days out)")
+	if not String(result["error"]).begins_with("the journey would have to leave in the past"):
+		_fail("a past-departure refusal carried the wrong reason: %s" % String(result["error"]))
+
+	var same_day := Calendar.make_entry(
+		K.KIND_LAW, int(state.year), int(state.month), 1, "", "", "income_tax_cut"
+	)
+	if not Calendar.can_book(state, same_day):
+		_fail("a same-day booking without travel was refused -- there is no journey to leave late")
+
+
+## V2.4a. The back-compat half of the no-bump argument, pinned the way
+## test_save_load.gd pins its absences: an entry from a version-27 save carries
+## no travel_days at all, and it must read as a DAY-ONLY block -- bookable,
+## spanning one day, refusing an overlap on its day and no others.
+func _check_absent_travel_days_round_trips() -> void:
+	var state = _fresh()
+	var when := _months_ahead(state, 2)
+
+	# Written the way from_dict rehydrates a version-27 entry: no travel_days
+	# key in the dictionary at all.
+	var old_entry := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, int(when["year"]), int(when["month"]), 15, "state_visit", PARTNER
+	)
+	old_entry.erase("travel_days")
+	state.appointments.append(old_entry)
+
+	var cells: Array = Calendar.day_cells(state, int(when["year"]), int(when["month"]))
+	if not bool(cells[14]["meeting"]):
+		_fail("a version-27 entry's meeting day did not read as a meeting")
+	if bool(cells[13]["travel"]) or bool(cells[15]["travel"]):
+		_fail("a version-27 entry grew travel legs it never had")
+	if bool(cells[14]["travel"]):
+		_fail("a version-27 entry's meeting day read as travel")
+
+	# And the overlap rule still protects its day against a new day-only block.
+	var law := Calendar.make_entry(
+		K.KIND_LAW, int(when["year"]), int(when["month"]), 15, "", "", "income_tax_cut"
+	)
+	if Calendar.can_book(state, law):
+		_fail("a new booking landed on a version-27 entry's day")
 
 
 ## The property the whole file's shape exists to keep. Read the source, not the
@@ -376,6 +538,10 @@ func _fresh():
 	# One month of real ticking, so the council scheduler and every cooldown are
 	# in the state a played game produces rather than the static new-game table.
 	# V1.3f's own lesson, and U6a's probe made the same mistake once already.
+	# V2.4a sets the YEAR too: new_game() leaves both at 0 (the clock owns the
+	# date), and the day-number arithmetic the block spans use is era-based --
+	# at year 0 every span comes back nonsense instead of failing loudly.
+	state.year = 2026
 	state.month = 2
 	Economy.tick_month(state)
 	Budget.tick_month(state)

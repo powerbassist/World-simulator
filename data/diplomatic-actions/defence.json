@@ -18,6 +18,11 @@
           "field": "pact_count",
           "op": "<",
           "value": 3
+        },
+        {
+          "field": "met_recently",
+          "op": ">=",
+          "value": 1
         }
       ],
       "effects": {
