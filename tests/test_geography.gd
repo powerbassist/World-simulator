@@ -26,7 +26,16 @@ extends SceneTree
 ##
 ##   - NOTHING IN src/sim/ READS THE REGISTER except the firm domicile. A region
 ##     carries no GDP, no unemployment and no sector mix until docs/tiers/v2.md
-##     section 5, and the register ships no behaviour at all.
+##     section 5, and the register ships no behaviour at all. V2.5 IS THAT SESSION,
+##     and the check is inverted and narrowed rather than deleted, V2.2b's
+##     treatment of the geometry assertion one file over: exactly ONE file under
+##     src/sim/ may reach the register, and the marker is the register's own field
+##     contract -- because the one reader takes it as DATA (a duck-typed Array,
+##     Calendar.due()'s shape) and never preloads region.gd at all, so V2.2a's
+##     preload scan was green all along and a narrower check needs a sharper
+##     marker. A second reader is how a region acquires two writers, which is the
+##     failure companies.gd's share/state_share/regulation_burden split exists to
+##     prevent one level down.
 ##   - THE NUTS LEVEL IS NOWHERE IN src/. France is imported at NUTS 1 and Italy at
 ##     NUTS 2; the loader never learns a level exists, which is CLAUDE.md's first
 ##     rule.
@@ -211,13 +220,43 @@ func _check_no_level_in_src() -> void:
 			_fail("%s reads a region level -- src/ must not learn one exists" % path)
 
 
-## A region is content, not a machine. The day a session gives one a tick, a stock or
-## an effect channel, this turns red and it has to come and say why.
+## V2.2a asserted the ABSENCE of any sim reader and named section 5 as the session
+## that would come and argue with it. This is that session, and the check is inverted
+## rather than deleted -- V2.2b's treatment of the geometry-load assertion, one file
+## over.
+##
+## WHAT V2.2a WAS PROTECTING SURVIVES, and it is the narrow half: exactly ONE file
+## under src/sim/ may reach the register. A second reader is how a region acquires
+## two writers, which is the failure companies.gd's share/state_share/regulation_burden
+## split exists to prevent one level down. The marker is the field contract rather
+## than a preload, because the one reader takes the register as data and preloads
+## nothing -- V2.2a's scan was green on the day V2.5 landed and would have stayed
+## green the day a SECOND reader arrived the same duck-typed way, which is the
+## failure this check now exists to catch.
 func _check_register_has_no_simulation() -> void:
+	var readers: Array[String] = []
 	for path in _gd_files("res://src/sim"):
 		var text := FileAccess.get_file_as_string(path)
-		if text.contains("preload(\"res://src/core/region.gd\")") 				or text.contains("preload(\"res://src/core/city.gd\")"):
-			_fail("%s preloads the region register -- V2.2a ships a register and no behaviour" % path)
+		# `.gdp_share` with the dot: a bare "gdp_share" would name companies.gd's
+		# own subsidy-pricing local, which has carried the word since V1.4a and
+		# reaches no region.
+		if text.contains(".gdp_share") or text.contains("unemployment_rel") \
+			or text.contains("sector_mix") or text.contains("region_gdp_eur_bn"):
+			readers.append(path)
+	if readers != ["res://src/sim/regions.gd"]:
+		_fail("the register is read by %s -- V2.5 gives exactly one system a region, and a second reader is a second writer waiting to happen" % [readers])
+
+	# V2.5 did NOT give a city an economy, and city.gd's own doc says section 6 is
+	# what comes here to change that.
+	var regions_src := FileAccess.get_file_as_string("res://src/sim/regions.gd")
+	for city_marker in ["city.gd", "city_share", "city_residual"]:
+		if regions_src.contains(city_marker):
+			_fail("src/sim/regions.gd reaches a city (%s) -- a city still holds a share of its region's population and nothing else" % city_marker)
+
+	# regions.gd is a LEAF: economy_constants and its own constants, nothing else.
+	for forbidden in ["src/sim/economy.gd", "src/sim/trade.gd", "src/sim/demography.gd", "src/core/data_loader.gd"]:
+		if regions_src.contains("preload(\"res://%s\")" % forbidden):
+			_fail("src/sim/regions.gd preloads %s -- it is a leaf, and the caller holds the loader" % forbidden)
 
 	var region_src := FileAccess.get_file_as_string("res://src/core/region.gd")
 	if region_src.contains("preload(\"res://src/sim/"):
