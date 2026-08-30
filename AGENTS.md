@@ -458,16 +458,48 @@ deleted it to one line through the registry, so registering the two panels IS th
 And the month-136 warning on `nav_probe.gd`'s loop was inherited by nothing: no probe this
 session runs a month at all, and `geography_probe.gd` still runs none.
 
+**V2.3 SHIPPED THE FACE OF POWER: 71 duotone portraits, a glyph on every window, and the placeholder silhouette PROMOTED to the shared fallback.** The recipe is two
+committed halves and one machine dependency stated honestly: `tools/portraits_generate.py`
+drives the author's local ComfyUI (updated in-session to 0.34.0 / torch 2.13) through
+`tools/portraits_workflow.json` -- API format, where a stray `_comment` key is a 500 --
+and `tools/portraits.gd` imposes the ONE look: a fixed crop and eyeline, a posterized
+INK-to-SLATE-to-brass ramp on the theme's own three colours, 216x296 out, committed
+`importer="keep"` .imports beside each. **The pass is deterministic (hash-proven on
+re-run) and the committed PNGs are canonical where the machine drifts.** Measured:
+**1.77 MB over 71 files, largest 33.9 KB** -- the largest asset decision by COUNT, nothing
+near the Blue Marble by bytes. **Likeness policy, the author's call: a portrait EVOKES the
+real politician its fictional name plays on and never depicts them** -- prompts are
+described archetypes (age, hair, facial hair, glasses, face shape, expression, one quirk,
+each decorrelated by its own hash of the person id), never a name. **The player rejected
+the first wall on sight -- "too lookalike" -- and the correction is the session's sharpest
+finding: "one crop, one eyeline" constrains the FRAME; the FACE is where variety lives.**
+A prompt that pinned everything but the seed made 71 near-siblings. **A missing portrait
+is SILENT in game**: `portrait_card.gd`'s Bust moved into `src/ui/portrait.gd` and became
+the fallback behind `control_for()`/`framed_for()`, so the register can grow a session
+ahead of the art run; the refused direction is stale art nobody references, held by the
+tool and by `tests/test_portraits.gd` alongside the bytes-not-`load()` check and the
+one-committed-icon-per-registered-window check. The author's "background per situation"
+call: a **nation-hue band** behind every portrait, display-side, the map's own PALETTE --
+one PNG stays canonical. Faces live on the card and the People window (executive, party
+leaders, Abroad); a name in a sentence is not identity content, and later spread is one
+`framed_for()` per surface. **Icons travel on `register()` itself** (drawer entries, title
+bars, the test, all one source -- the keycode lesson applied one session early), sixteen
+new at-icons SVGs committed via `git add -f`. **No sim file touched, `SAVE_VERSION` stays
+27, no balance re-run** -- drawing is not a verb, third time running. **The honest gap: no
+vision path survived the session that built a wall of faces** (model, judge agent and CDN
+route all refused image input), so the screenshot frames were captured and the AUTHOR
+holds the verdict on the second wall -- the same authority that rejected the first.
+
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
 count** -- `someday.md` says of itself that it is *"a parking lot, not a backlog"* -- so
-deciding what follows V1 was the work rather than a preamble to it. The organising goal is
+deciding what followed V1 was the work rather than a preamble to it. The organising goal is
 that **the world becomes visible and located**: V1 built machines and every one of them is
 legible only as a number on a panel, so the country the player governs has no places in
 it. Ten blocks, ~30-40 sessions, ordered so the visible payoff lands before the heavy
-rewrite. **V2.1 (the shell, re-cut) is COMPLETE -- (a), (b) and (c) are built, and V2.2 (the geographic register) is next**, on U5a's own precedent -- U5a moved the
+rewrite. **V2.1 (the shell, re-cut) is COMPLETE, V2.2 (the geographic register) is COMPLETE, and V2.3 (the face of power) is BUILT -- V2.4 (the president's day) is next**, on U5a's own precedent -- U5a moved the
 shell *before* U5b, U5c and all of U6 built into it, and V2 adds at least five new
 surfaces.
 

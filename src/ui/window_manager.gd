@@ -32,6 +32,7 @@ const SIDE_MARGIN := 40.0
 
 var _frames := {}       # id -> WindowFrame
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
+var _icons := {}        # id -> at-icons path, "" for a window with no icon yet
 var _cascade_index := 0
 
 
@@ -46,7 +47,10 @@ func _ready() -> void:
 ## setup(state, loader) and signal connections made once at startup.
 ##
 ## `key` is the letter that toggles this window, or KEY_NONE for a window reached
-## only by the bar and the mouse -- V2.1c.
+## only by the bar and the mouse -- V2.1c. `icon_path` is the at-icons SVG the
+## title bar and the drawer draw beside this window's name -- V2.3, carried here
+## for the same reason `key` is: a second table in main.gd is what the keycode
+## table WAS, and register() is the one place that already knows the full set.
 ##
 ## It is here rather than in a table in main.gd because a table in main.gd is what
 ## it WAS: `_unhandled_input()` matched six keycodes against six window ids and
@@ -58,18 +62,19 @@ func _ready() -> void:
 ## panel VARIABLE names, and these were ids and keycodes.
 ##
 ## Adding a surface stays one register() and one line in _build_action_bar().
-func register(id: String, title: String, content: Control, key: int = KEY_NONE) -> void:
+func register(id: String, title: String, content: Control, key: int = KEY_NONE, icon_path: String = "") -> void:
 	if key != KEY_NONE and id_for_key(key) != "":
 		push_error("window '%s' takes key %s, which '%s' already has" % [
 			id, OS.get_keycode_string(key), id_for_key(key),
 		])
 	_keys[id] = key
+	_icons[id] = icon_path
 
 	var frame := WindowFrame.new()
 	add_child(frame)
 	# setup() after add_child(): _ready() has to have run or everything the frame
 	# builds is null and the content lands under nothing. CLAUDE.md's gotcha.
-	frame.setup(title, content)
+	frame.setup(title, content, icon_path)
 	frame.hide()
 
 	frame.close_requested.connect(func(): close(id))
@@ -144,6 +149,13 @@ func panel_ids() -> Array:
 ## The letter that toggles a window, or KEY_NONE.
 func shortcut(id: String) -> int:
 	return int(_keys.get(id, KEY_NONE))
+
+
+## The at-icons SVG registered for a window's name, or "". `_entry()` reads this
+## rather than restating the path in _build_action_bar() -- the same
+## one-source-of-truth rule the shortcut above is.
+func icon_path(id: String) -> String:
+	return String(_icons.get(id, ""))
 
 
 ## The window a keycode toggles, or "" -- the lookup main.gd's match block was.

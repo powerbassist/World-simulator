@@ -12,12 +12,16 @@ extends PanelContainer
 ## not the model, and three surfaces disagreeing about the number would be worse
 ## than any of them being wrong.
 ##
-## The bust is drawn, not an image. docs/tiers/v1.md schedules no portrait art
-## and the roster is fictional, so a placeholder silhouette is the honest thing
-## to ship: it says "your character goes here" without pretending to be a face.
+## The bust is art where art exists, and the drawn silhouette where it does not
+## -- V2.3's split. The placeholder this card shipped alone at U5a moved into
+## src/ui/portrait.gd and became the FALLBACK every surface shares: a portrait
+## is found by the person's own id, the register is the list, and a person the
+## art run has not reached reads as "your character goes here" rather than as a
+## broken image. docs/tiers/v2.md §3's warning box owns the reasoning.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Flag = preload("res://src/ui/flag.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 
@@ -43,7 +47,9 @@ func _ready() -> void:
 	row.add_theme_constant_override("separation", 10)
 	add_child(row)
 
-	_bust = Bust.new()
+	# The silhouette from the first frame: no leader id exists until setup()
+	# brings the loader, and an empty id is exactly the fallback path.
+	_bust = Portrait.framed_for("", Vector2(54, 74))
 	_bust.custom_minimum_size = Vector2(54, 74)
 	row.add_child(_bust)
 
@@ -89,9 +95,10 @@ func _ready() -> void:
 	nation_row.add_child(_nation_label)
 
 
-## Called once at startup. The name, title and flag are static content -- they
-## are read here rather than in refresh() so the per-day path stays three label
-## writes.
+## Called once at startup. The name, title, flag and portrait are static content
+## -- they are read here rather than in refresh() so the per-day path stays three
+## label writes. The bust slot holds the silhouette from _ready() until this
+## call, because the leader's id is nation content and _ready() has no loader.
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
@@ -102,7 +109,22 @@ func setup(state, loader) -> void:
 	_nation_label.text = nation.nation_name
 	_leader_label.text = "%s, %s" % [loader.person_name(nation.leader_person_id), nation.leader_title]
 	_flag.setup(nation.flag_bands, nation.flag_layout)
+	_set_bust(Portrait.framed_for(nation.leader_person_id, Vector2(54, 74)))
 	refresh()
+
+
+## Swaps the bust slot in place, keeping its position in the row. The one-frame
+## case this avoids is real: setup() runs before the first draw in tests, but in
+## a loaded game both children would size the row for a frame.
+func _set_bust(control: Control) -> void:
+	if control == _bust:
+		return
+	var parent := _bust.get_parent()
+	parent.add_child(control)
+	parent.move_child(control, _bust.get_index())
+	parent.remove_child(_bust)
+	_bust.queue_free()
+	_bust = control
 
 
 func refresh() -> void:
@@ -114,49 +136,6 @@ func refresh() -> void:
 	)
 	_approval_label.text = "%.0f%%" % shown
 	_mood.set_approval(shown)
-
-
-## The placeholder the session shipped instead of portrait art. Shoulders, neck,
-## head, and the suggestion of a collar -- enough to read as a person at 54x74
-## and obviously not a likeness, which is the point until there is a real
-## character to draw.
-class Bust extends Control:
-	const UiTheme = preload("res://src/ui/ui_theme.gd")
-
-	func _draw() -> void:
-		var w := size.x
-		var h := size.y
-		var body := UiTheme.SLATE.lightened(0.06)
-		var skin := UiTheme.TEXT_DIM.darkened(0.10)
-
-		draw_rect(Rect2(Vector2.ZERO, size), UiTheme.INK)
-
-		# Shoulders: a wide, shallow ellipse cropped by the bottom edge. Wider
-		# than the head by a good margin -- at this size a narrow body reads as
-		# a lightbulb rather than as a person.
-		_draw_ellipse(Vector2(w * 0.5, h * 1.30), Vector2(w * 0.62, h * 0.52), body)
-
-		# Neck, then head. Drawn after the shoulders so the neck disappears
-		# behind them instead of ending in a visible stump.
-		draw_rect(Rect2(Vector2(w * 0.43, h * 0.44), Vector2(w * 0.14, h * 0.24)), skin)
-		_draw_ellipse(Vector2(w * 0.5, h * 0.34), Vector2(w * 0.17, h * 0.20), skin)
-
-		# Collar, as two strokes rather than a shape -- it is what makes the
-		# silhouette read as a suit instead of a bust in a museum.
-		draw_line(Vector2(w * 0.34, h * 0.72), Vector2(w * 0.50, h * 0.98), UiTheme.INK, 2.0)
-		draw_line(Vector2(w * 0.66, h * 0.72), Vector2(w * 0.50, h * 0.98), UiTheme.INK, 2.0)
-
-		# The brass hairline the plate carries on its top edge, repeated along
-		# the bottom of the frame so the bust reads as inset rather than as a
-		# hole punched in the card.
-		draw_line(Vector2(0, h - 1), Vector2(w, h - 1), UiTheme.ACCENT, 1.0)
-
-	func _draw_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:
-		var points := PackedVector2Array()
-		for i in range(24):
-			var angle := TAU * i / 24.0
-			points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
-		draw_colored_polygon(points, color)
 
 
 ## A face, not a number. The approval figure is already right beside it, so what

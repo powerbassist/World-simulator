@@ -1,5 +1,12 @@
 extends Control
 
+## The at-icons set every window glyph and cluster glyph comes from -- V2.3
+## lifted this out of _build_action_bar() because register() now names each
+## window's icon too, and the same path constant serves both. Files under it
+## are committed individually (git add -f, .gitignore's exception); every one
+## src/ references must be, or a fresh clone fails headless.
+const ICONS := "res://addons/at-icons/control/"
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -209,11 +216,11 @@ func _ready() -> void:
 	# label setup() writes to is still null -- CLAUDE.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
 	_overview_panel = OverviewPanel.new()
-	_windows.register("overview", "Overview", _overview_panel, KEY_O)
+	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "gauge.svg")
 	_overview_panel.setup(_state, _loader)
 
 	_economy_panel = EconomyPanel.new()
-	_windows.register("economy", "Economy", _economy_panel, KEY_E)
+	_windows.register("economy", "Economy", _economy_panel, KEY_E, ICONS + "pie_chart.svg")
 	_economy_panel.setup(_state, _loader)
 
 	# hide_close_button() still applies: these panels each build their own Close
@@ -221,7 +228,7 @@ func _ready() -> void:
 	# now provides the real one. Two close buttons on one panel is worse than
 	# either.
 	_budget_panel = BudgetPanel.new()
-	_windows.register("budget", "Budget", _budget_panel, KEY_B)
+	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before):
@@ -230,7 +237,7 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_windows.register("politics", "Politics", _government_panel, KEY_G)
+	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "cog.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
@@ -241,12 +248,12 @@ func _ready() -> void:
 	)
 
 	_polling_panel = PollingPanel.new()
-	_windows.register("society", "Society", _polling_panel, KEY_P)
+	_windows.register("society", "Society", _polling_panel, KEY_P, ICONS + "speech_bubble.svg")
 	_polling_panel.setup(_state)
 	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
-	_windows.register("legislature", "Legislature", _law_panel, KEY_L)
+	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
 	_law_panel.proposed.connect(func(before, law_name):
@@ -259,7 +266,7 @@ func _ready() -> void:
 	# _on_nation_clicked(), and reachable from the World cluster as well so the
 	# diplomatic verbs are not hidden behind knowing to click the map.
 	_nation_panel = NationPanel.new()
-	_windows.register("diplomacy", "Diplomacy", _nation_panel, KEY_D)
+	_windows.register("diplomacy", "Diplomacy", _nation_panel, KEY_D, ICONS + "hand.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
@@ -278,7 +285,7 @@ func _ready() -> void:
 	# a section of the nation panel: the council is not a nation and has no pixel
 	# on the map to click, so there is nothing to select it by.
 	_bloc_panel = BlocPanel.new()
-	_windows.register("bloc", "The Union", _bloc_panel, KEY_U)
+	_windows.register("bloc", "The Union", _bloc_panel, KEY_U, ICONS + "book_open.svg")
 	_bloc_panel.setup(_state, _loader)
 	_bloc_panel.hide_close_button()
 	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
@@ -293,7 +300,7 @@ func _ready() -> void:
 	# MVP and never showed anywhere -- an election date, the council's next
 	# proposal, every cooldown expiry -- and the only place a booking is made.
 	_calendar_panel = CalendarPanel.new()
-	_windows.register("calendar", "Diary", _calendar_panel, KEY_C)
+	_windows.register("calendar", "Diary", _calendar_panel, KEY_C, ICONS + "calendar.svg")
 	_calendar_panel.setup(_state, _loader)
 	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
@@ -304,7 +311,7 @@ func _ready() -> void:
 	# U6b. Read-only, and the only surface that shows the whole register rather
 	# than the one person a given screen happens to be about.
 	_people_panel = PeoplePanel.new()
-	_windows.register("people", "People", _people_panel, KEY_R)
+	_windows.register("people", "People", _people_panel, KEY_R, ICONS + "clipboard.svg")
 	_people_panel.setup(_state, _loader)
 	_people_panel.hide_close_button()
 
@@ -317,7 +324,7 @@ func _ready() -> void:
 	# sector programmes beside the firm register, so "Companies" had stopped being
 	# what the surface is about. The id stays "companies" because it is what
 	# _build_action_bar() and tools/screenshot.gd --open both address.
-	_windows.register("companies", "Industry", _companies_panel, KEY_I)
+	_windows.register("companies", "Industry", _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
 	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
@@ -334,7 +341,7 @@ func _ready() -> void:
 	# window is one call plus one line in _build_action_bar(), which is what U5a's
 	# shell was for.
 	_projects_panel = ProjectsPanel.new()
-	_windows.register("projects", "Public Works", _projects_panel, KEY_W)
+	_windows.register("projects", "Public Works", _projects_panel, KEY_W, ICONS + "road.svg")
 	_projects_panel.setup(_state, _loader)
 	_projects_panel.hide_close_button()
 	_projects_panel.acted.connect(func(before, label):
@@ -349,7 +356,7 @@ func _ready() -> void:
 	# a region until §5 -- so no acted signal, people_panel's shape rather than
 	# projects_panel's.
 	_region_panel = RegionPanel.new()
-	_windows.register("region", "Regions", _region_panel, KEY_T)
+	_windows.register("region", "Regions", _region_panel, KEY_T, ICONS + "map.svg")
 	_region_panel.setup(_state, _loader)
 	_region_panel.hide_close_button()
 
@@ -357,7 +364,7 @@ func _ready() -> void:
 	# SECOND way in: the map's cross is the route, and this entry is for the
 	# player who does not know that -- §16's own wording.
 	_city_panel = CityPanel.new()
-	_windows.register("city", "Cities", _city_panel, KEY_V)
+	_windows.register("city", "Cities", _city_panel, KEY_V, ICONS + "building.svg")
 	_city_panel.setup(_state, _loader)
 	_city_panel.hide_close_button()
 
@@ -367,7 +374,7 @@ func _ready() -> void:
 	# poll -- docs/society-model.md section 11's argument for moving the delivery readout
 	# off it, one block later.
 	_campaign_panel = CampaignPanel.new()
-	_windows.register("campaign", "Campaign", _campaign_panel, KEY_A)
+	_windows.register("campaign", "Campaign", _campaign_panel, KEY_A, ICONS + "megaphone.svg")
 	_campaign_panel.setup(_state, _loader)
 	_campaign_panel.hide_close_button()
 	_campaign_panel.acted.connect(func(before, label):
@@ -381,7 +388,7 @@ func _ready() -> void:
 	# window rather than a modal is in the panel's own header: a crisis the player can
 	# ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", "Dispatches", _events_panel, KEY_N)
+	_windows.register("events", "Dispatches", _events_panel, KEY_N, ICONS + "envelope.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.hide_close_button()
 	_events_panel.acted.connect(func(before, label):
@@ -466,7 +473,6 @@ func _ready() -> void:
 ## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
 ## register() and one line in this list.
 func _build_action_bar() -> void:
-	const ICONS := "res://addons/at-icons/control/"
 	_hud.action_bar.add_cluster("state", "State", ICONS + "institutional_building.svg", [
 		_entry("overview", "Overview"),
 		_entry("politics", "Politics"),
@@ -510,16 +516,18 @@ func _build_action_bar() -> void:
 	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
 
 
-## One entry in a cluster's drawer. The shortcut is READ OFF THE REGISTRY rather
-## than written here -- V2.1c -- so the letter on the tooltip and the letter the
-## key press uses cannot disagree, which is the same reason `bloc_offset` is read
-## from the content rather than restated in the agenda.
+## One entry in a cluster's drawer. The shortcut AND the icon are READ OFF THE
+## REGISTRY rather than written here -- V2.1c and V2.3 -- so the letter on the
+## tooltip, the letter the key press uses and the glyph beside the name cannot
+## disagree with the window's own registration, which is the same reason
+## `bloc_offset` is read from the content rather than restated in the agenda.
 func _entry(id: String, label: String) -> Dictionary:
 	var key: int = _windows.shortcut(id)
 	return {
 		"id": id,
 		"label": label,
 		"key": "" if key == KEY_NONE else OS.get_keycode_string(key),
+		"icon": _windows.icon_path(id),
 	}
 
 

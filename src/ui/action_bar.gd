@@ -209,6 +209,17 @@ func _toggle_cluster(cluster_id: String) -> void:
 		button.theme_type_variation = UiTheme.SUBROW_BUTTON
 		button.toggle_mode = true
 		button.text = str(entry["label"]).to_upper()
+		# V2.3: the window's own glyph beside its name in the drawer -- the same
+		# icon the title bar above the open window wears, from the entry's own
+		# "icon" field, which _entry() reads off the window registry. Rasterised
+		# per drawer open rather than cached: the drawer rebuilds its buttons
+		# every time, and caching here would be a second lifetime to keep
+		# correct for a decode the cluster row already proved is cheap.
+		var icon_path := str(entry.get("icon", ""))
+		if not icon_path.is_empty():
+			button.icon = Icon.load_icon(icon_path, UiTheme.TEXT, 16)
+			button.expand_icon = false
+			button.add_theme_constant_override("h_separation", 6)
 		var id := str(entry["id"])
 		button.set_meta("window_id", id)
 		# A shortcut nobody can find is not a shortcut. top_bar.gd's SAVE and MENU

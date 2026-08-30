@@ -27,11 +27,16 @@ signal closed
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 
 const PORTFOLIO_LABEL := {
 	"health": "Health", "education": "Education", "defence": "Defence",
 	"pensions": "Pensions", "infrastructure": "Infrastructure",
 }
+
+## The face a row carries, at the row's own scale: 22px beside 14px captions
+## reads as a face, and 30px of height is under two rows of separation.
+const FACE_SIZE := Vector2(22, 30)
 
 var _state
 var _loader
@@ -134,8 +139,8 @@ func _refresh() -> void:
 ## head of government, so this reads NationState and not the nation file.
 func _build_executive(ns) -> void:
 	PanelKit.heading(_body, "The executive")
-	PanelKit.row(_body, ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
-	PanelKit.row(_body, ns.head_of_government_title, _name_of(ns.pm_person_id))
+	_face_row(ns.head_of_state_person_id, ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
+	_face_row(ns.pm_person_id, ns.head_of_government_title, _name_of(ns.pm_person_id))
 
 
 ## Named ministers do not exist, and this is where that shows. U6b's own probe
@@ -160,7 +165,7 @@ func _build_parties(ns) -> void:
 	PanelKit.heading(_body, "The parties")
 	for p in _loader.parties.get(ns.id, []):
 		var seats := int(ns.seats_by_party.get(p.id, 0))
-		PanelKit.row(_body, String(p.party_name), "%s · %d seats" % [_name_of(p.leader_person_id), seats])
+		_face_row(p.leader_person_id, String(p.party_name), "%s · %d seats" % [_name_of(p.leader_person_id), seats])
 
 
 ## Everyone the Diplomacy panel can point at. Their titles are live state too --
@@ -176,9 +181,25 @@ func _build_abroad(ns) -> void:
 		var nation = _loader.nations.get(id)
 		if nation == null:
 			continue
-		PanelKit.row(_body, String(nation.nation_name), "%s %s" % [
+		_face_row(nation.leader_person_id, String(nation.nation_name), "%s %s" % [
 			nation.leader_title, _name_of(nation.leader_person_id),
 		])
+
+
+## A PanelKit row with the person's face in front of it -- V2.3. The wall this
+## panel became (two executives, every party leader, nine foreign heads of
+## state) is exactly the "wall of generated images" docs/tiers/v2.md §3's
+## duotone rule exists for, which is why this panel is where the faces landed
+## and not every sentence that names a person: a face beside a name is identity
+## content, a face beside every mention is wallpaper. Rows whose person has no
+## art yet get the silhouette through the same call and the register grows
+## without this panel noticing.
+func _face_row(person_id: String, left: String, right: String) -> HBoxContainer:
+	var row := PanelKit.row(_body, left, right)
+	var face := Portrait.framed_for(person_id, FACE_SIZE)
+	row.add_child(face)
+	row.move_child(face, 0)
+	return row
 
 
 func _name_of(person_id: String) -> String:
