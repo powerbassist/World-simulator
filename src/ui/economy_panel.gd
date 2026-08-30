@@ -20,6 +20,7 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -287,6 +288,30 @@ func _fill_sectors(ns) -> void:
 		value_label.theme_type_variation = UiTheme.CAPTION
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row.add_child(value_label)
+
+	# V2.5. Never silent: every nation has regions and a spread, so a line that hid at
+	# zero would be a line that never appeared. It leads with the ratio because that is
+	# the quantity that MOVES -- the levels are on the Region panel.
+	var regions: Array = _loader.regions.get(ns.id, [])
+	if not regions.is_empty():
+		var lo: float = 999.0
+		var hi: float = 0.0
+		var richest: String = ""
+		var poorest: String = ""
+		for region in regions:
+			var v: float = Regions.gdp_per_head_index(ns, regions, region.id)
+			if v <= 0.0:
+				continue
+			if v < lo:
+				lo = v
+				poorest = region.region_name
+			if v > hi:
+				hi = v
+				richest = region.region_name
+		if hi > 0.0:
+			PanelKit.line(_sectors, "Regions: %s produces x%.2f the national output per head, %s x%.2f." % [
+				richest, hi, poorest, lo,
+			])
 
 
 # --- small builders ---------------------------------------------------------
