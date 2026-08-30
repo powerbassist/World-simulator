@@ -12,6 +12,7 @@ extends RefCounted
 
 const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -400,7 +401,18 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## too: no stored upper-house SEATS (Chambers.seats() derives them from the share, so
 ## a later session storing them turns the assertion red and has to say why) and no
 ## stored court verdict, because Judiciary is a pure read over a law's own reach.
-const SAVE_VERSION := 27
+##
+## V2.5 bumps this to 28 on ONE field: `NationState.region_gdp_eur_bn`, the region
+## level. Absent, the dictionary is empty, `Regions.total()` returns 0.0, and the
+## definitional swap in Economy._apply_growth_to_sectors() writes national GDP to
+## zero on the first tick -- the country does not run a different model, it ceases to
+## have an economy (military_capability's case at V1.3g in its strongest form).
+## Re-seeding on load does not rescue it: the authored `gdp_share` is where a region
+## STARTED, and re-seeding would erase the divergence the player watched happen --
+## service_quality's reason at V1.5a. The SHARES stay content and round-trip through
+## data/regions/, and regional unemployment stays a pure read, so the test still pins
+## those two absences.
+const SAVE_VERSION := 28
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -670,6 +682,14 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
 		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
+
+	# AFTER the build loop rather than inside _build_nation(), and the placement is the
+	# argument: that function takes the nation's own content and nothing else, where a
+	# region register is a second file. Demography, Society, Unrest and Defence each
+	# seed a live stock from an init called here for exactly that reason, and this
+	# seeds one too.
+	for ns in gs.nations.values():
+		Regions.init_nation(ns, loader.regions.get(ns.id, []))
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)

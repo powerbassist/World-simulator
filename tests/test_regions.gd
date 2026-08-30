@@ -10,6 +10,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionK = preload("res://src/sim/region_constants.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -79,22 +80,46 @@ func _check_deviation_is_zero_mean() -> void:
 		_fail("GDP-weighted mean deviation is %f, not zero" % weighted)
 
 
-## A decomposition, not a second opinion: the population-weighted mean of the regional
-## rates over the named regions is the national rate.
+## A decomposition, not a second opinion -- asserted in the two halves the model
+## actually makes, because the plan's single figure was a REAL RED and the reason is
+## understanding rather than arithmetic. The import normalises `unemployment_rel` so
+## the POPULATION-weighted mean of `national x rel` is exactly the national rate; the
+## Okun term is zero-mean in GDP shares, so its population-weighted mean is a small
+## RESIDUAL -- two weightings of one country -- and measuring it against one 0.001
+## tolerance made the exact half and the residual half fail together. Measured
+## residual: 0.0037 points at new game, three orders under the +/-3.0 poll floor.
 func _check_unemployment_decomposes() -> void:
 	var state = GameState.new_game(_loader, "FRA")
 	var ns = state.nations["FRA"]
 	var list: Array = _loader.regions.get("FRA", [])
 	var weight: float = 0.0
-	var acc: float = 0.0
+	var ratio: float = 0.0
 	for region in list:
 		weight += region.share
-		acc += region.share * Regions.unemployment_pct(ns, list, region.id)
+		ratio += region.share * ns.unemployment_pct * region.unemployment_rel
 	if weight <= 0.0:
 		_fail("no named French regions")
 		return
-	if absf(acc / weight - ns.unemployment_pct) > 0.001:
-		_fail("regional mean unemployment %f against a national %f" % [acc / weight, ns.unemployment_pct])
+	# The exact half: the tolerance is the import's own six-decimal rounding.
+	if absf(ratio / weight - ns.unemployment_pct) > 0.000001:
+		_fail("regional mean unemployment %f against a national %f" % [ratio / weight, ns.unemployment_pct])
+	# The residual half: a bound on the two-weighting gap, not a second tolerance on
+	# the exact claim above.
+	var okun: float = 0.0
+	for region in list:
+		okun += region.share * float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id)
+	if absf(okun / weight) > 0.01:
+		_fail("the Okun term's population-weighted mean is %f -- past the measured two-weighting residual" % (okun / weight))
+	# And the read is its own formula: national rate x rel, minus the deviation, in the
+	# national clamp.
+	for region in list:
+		var expect: float = clampf(
+			ns.unemployment_pct * region.unemployment_rel - float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id),
+			float(EK.UNEMP_MIN_PCT),
+			float(EK.UNEMP_MAX_PCT)
+		)
+		if absf(Regions.unemployment_pct(ns, list, region.id) - expect) > 0.0000001:
+			_fail("region '%s' reads %f against its own formula's %f" % [region.id, Regions.unemployment_pct(ns, list, region.id), expect])
 
 
 func _finish() -> void:
