@@ -18,6 +18,19 @@ NATIONS_DIR = ROOT / "data" / "nations"
 GEO_OUT = ROOT / "data" / "geo" / "europe.geojson"
 WORLD_OUT = ROOT / "data" / "geo" / "world.geojson"
 
+
+def confined(path, root=ROOT):
+    """Every path this importer writes is proven to resolve inside the repo
+    before it is opened -- ids off the wire (Eurostat NUTS codes, GeoNames
+    names) reach several of them, and a write target is not the place to
+    discover one carries a traversal."""
+    resolved = Path(path).resolve()
+    base = Path(root).resolve()
+    if resolved != base and base not in resolved.parents:
+        raise RuntimeError("write path '%s' escapes '%s'" % (path, root))
+    return resolved
+
+
 NATIONS = ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT"]
 
 YEAR = 2024
@@ -664,8 +677,7 @@ def write_nation_file(nid, imported_block):
     ordered["imported"] = imported_block
 
     text = json.dumps(ordered, ensure_ascii=False, indent=2)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(compact_scalar_arrays(text) + "\n")
+    confined(path).write_text(compact_scalar_arrays(text) + "\n", encoding="utf-8", newline="\n")
 
 
 # A flat array of scalars, exploded by indent=2 over one line per element.
@@ -1335,8 +1347,7 @@ def write_region_file(nid, payload):
     REGIONS_DIR.mkdir(parents=True, exist_ok=True)
     path = REGIONS_DIR / f"{nid}.json"
     text = json.dumps(payload, ensure_ascii=False, indent=2)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(compact_scalar_arrays(text) + "\n")
+    confined(path).write_text(compact_scalar_arrays(text) + "\n", encoding="utf-8", newline="\n")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -1376,9 +1387,8 @@ def main():
 
 def write_geojson(path, collection, indent):
     separators = None if indent else (",", ":")
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(collection, f, ensure_ascii=False, indent=indent, separators=separators)
-        f.write("\n")
+    text = json.dumps(collection, ensure_ascii=False, indent=indent, separators=separators)
+    confined(path).write_text(text + "\n", encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

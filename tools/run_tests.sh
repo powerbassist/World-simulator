@@ -66,6 +66,10 @@ tests=(
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
   tests/test_people_panel.gd
+  # V2.3's pipeline: orphan art refused, the bytes-not-load() path held green
+  # headless, the missing-portrait fallback, one committed icon per registered
+  # window, and the card showing the player's leader's art.
+  tests/test_portraits.gd
   tests/test_game_loop.gd
   tests/test_menu.gd
   tests/test_map_view.gd

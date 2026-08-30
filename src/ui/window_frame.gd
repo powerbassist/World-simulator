@@ -13,6 +13,7 @@ extends PanelContainer
 ## window_manager.gd, which is that parent.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Icon = preload("res://src/ui/icon.gd")
 
 signal close_requested
 signal pin_toggled(pinned: bool)
@@ -40,7 +41,7 @@ var _band := Vector2.ZERO
 var _fitted_from := Vector2.ZERO
 
 
-func setup(title: String, content: Control) -> void:
+func setup(title: String, content: Control, icon_path := "") -> void:
 	theme_type_variation = UiTheme.PLATE
 	# The window sizes to its content, not to the screen: a panel that was 820
 	# wide as a tab should not become 1900 wide as a window.
@@ -51,7 +52,7 @@ func setup(title: String, content: Control) -> void:
 	column.add_theme_constant_override("separation", 6)
 	add_child(column)
 
-	column.add_child(_build_title_bar(title))
+	column.add_child(_build_title_bar(title, icon_path))
 
 	# Scrolled rather than sized to the panel. These panels were laid out for a
 	# 1280x720 dock and several report a combined minimum size taller than the
@@ -83,7 +84,7 @@ func setup(title: String, content: Control) -> void:
 	)
 
 
-func _build_title_bar(title: String) -> Control:
+func _build_title_bar(title: String, icon_path := "") -> Control:
 	var bar := PanelContainer.new()
 	bar.theme_type_variation = UiTheme.TITLE_BAR
 	bar.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -92,6 +93,19 @@ func _build_title_bar(title: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	bar.add_child(row)
+
+	# V2.3: the window's own glyph ahead of its name, from the same at-icons set
+	# the bar's clusters wear and through the same bytes-then-rasterise path
+	# (icon.gd). Rasterised once here at setup -- the title bar is built once per
+	# session, so Icon.load_icon's no-cache cost never repeats.
+	if not icon_path.is_empty():
+		var glyph := TextureRect.new()
+		glyph.texture = Icon.load_icon(icon_path, UiTheme.TEXT, 16)
+		glyph.custom_minimum_size = Vector2(16, 16)
+		glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(glyph)
 
 	_title_label = Label.new()
 	_title_label.text = title.to_upper()
