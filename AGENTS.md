@@ -567,6 +567,69 @@ avoid it, a third time. `SAVE_VERSION` stays 27, both predicted absences pinned;
 screenshot frames were captured for the author (no vision path, V2.3's honest gap
 standing). Model: [docs/calendar-model.md](docs/calendar-model.md) section 12.
 
+**V2.5 MADE NATIONAL GDP THE SUM OF THE REGIONS, and the swap is one line:
+`_apply_growth_to_sectors()` now takes the region sum as its target and its last
+line is `ns.gdp_eur_bn = target_gdp` -- no reconciliation term, no rescale pass, the
+partition IS the model.** The refused alternative is recorded because a later
+session under balance pressure will reach for it: keeping the sector sum as the
+authority and normalising regional weights into it is exact for free and top-down
+wearing the partition's clothes, one step from the ninth-addend version §5's own
+warning box declined. **A region's trend IS its own sector mix read through
+SECTOR_TREND** -- the same expression `Economy.trend_pct()` applies to a nation --
+so the deviation is zero-mean BY CONSTRUCTION and `region_constants.gd` ships a key
+and a bound and NO tuned constant, `projects_constants.gd`'s position a second
+time; the test reads the file and fails on a third `const`. The divergence is
+measured and readable: **FRA's richest-to-poorest output-per-head ratio moves
+0.021 and DEU's 0.034 over fourteen years** against a pre-committed floor of 0.010
+(one digit of the panel's own %.3f); Île-de-France starts at x1.624 and Thüringen
+at x0.712, and NOTHING authored that -- `gdp_share / share` is two partitions of
+one nation divided by each other. `SHARE_DRIFT_MAX` is a bound with **78x slack**
+(0.0019 worst against 0.15), checked and never clamped. Regional unemployment is a
+PURE READ (`national × rel − OKUN × dev`), `credit.gd`'s stateless shape, which is
+why **SAVE_VERSION is 28 on ONE field**: `region_gdp_eur_bn` absent means the sum
+is 0.0 and the country has no economy at all, and re-seeding on load would erase
+fourteen years of divergence the player watched -- the shares stay content and
+round-trip through `data/regions/`, and the no-regional-unemployment-stock absence
+is still pinned. **THE RE-RUN HELD THE PREDICTION AND TOLD THE TRUTH AT THE BIT
+LEVEL**: 143 of 144 runs identical in every printed figure, one run differing by a
+single debt digit on a `%.1f` rounding boundary (tax_zero_DEU, 88.8 -> 88.9), zero
+outcome changes -- the Jensen second-order term reaching a print edge, exactly what
+the prediction wrote down first, measured against a fresh 144-run baseline captured
+on the branch before the spine moved, BOTH SIDES FROM WORKTREES because the
+worktree's missing-addon parse noise is identical on both sides and cancels in the
+diff. No new regime, fifth session running: no verb, and every regime exercises the
+new code through `Economy.tick_month()`. **The plan's own decomposition test was a
+REAL RED, and the reason is two weightings**: the import normalises
+`unemployment_rel` in population weights and the Okun term is zero-mean in GDP
+weights, so its population-weighted mean is a 0.0037-point residual -- the test now
+asserts the two exact halves separately rather than one approximate figure. **And
+`GameState.duplicate_state()` dropping the register collapsed the budget projection
+to the residual alone** -- a France losing 98 % of its output in the budget panel's
+own forecast -- which `tests/test_budget.gd` caught the same day the spine moved.
+Two joins the plan's gate never anticipated, both measured: **the Dutch vintage
+sibling** (the register is 2021 geometry; GDP and GVA answer Utrecht and
+Zuid-Holland only under their 2024 codes, and the population series proves the
+identity -- NL31 = NL35 = 1 369 873, NL33 = NL36 = 3 753 944, equal to the person)
+and **Switzerland's mix-only fallback** (`nama_10r_3gva` carries a TOTAL branch and
+no branches at all for the country, while its GDP and unemployment are fully
+measured, so every Swiss region carries the nation's own World Bank shares and
+Switzerland has no MIX divergence -- a bound, not a defect). **Britain's gate
+failed honestly**: ONS carries ten of twelve ITL1 codes (no UKM, no UKN -- the
+devolved administrations) and an index besides, so the proxy was taken and **BRITAIN
+HAS NO REGIONAL DIVERGENCE AT ALL**, measured at `moved 0.000` and recorded with
+the number beside it; §6's migration inherits it. `test_geography.gd`'s refusal was
+**narrowed without ever going red** -- the one reader takes the register as data
+and preloads nothing, so V2.2a's preload scan was green all along and the narrowed
+check reads the field contract instead (a bare `gdp_share` marker would have named
+companies.gd's own V1.4a subsidy local; the dot form does not). The readout is the
+Region panel (both partitions side by side, and a seven-column league table leading
+with output per head) plus one never-silent line on the economy panel, and
+`--diverge` is the flag that ticks ten years. **The screenshot pass returned for
+the twenty-first session and found NO BUG** -- V1.6c's clean-sheet precedent,
+reported as such; the vision path WORKED this time, so the three frames
+(`--diverge`, `--region`, `--open economy`) are judged, not handed off. Model:
+[docs/region-economy-model.md](docs/region-economy-model.md).
+
 
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
@@ -699,7 +762,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.7a) `--campaign` and
 (V1.7b) `--pledge`,
 (V1.7c) `--referendum` and `--electoral`,
-(V1.8) `--event` and `--event-answered`,
+(V1.8) `--event` and `--event-answered` and
+(V2.5) `--diverge`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -2773,18 +2837,25 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 27**, and V2.2b is the fourth session on this list whose
-serialised contribution is **nothing at all** -- V1.6c's shape and V1.8's. The geographic
-register is content: a region's share of its nation and a city's share of its region
+Save format is at **version 28**, on ONE field -- `NationState.region_gdp_eur_bn`,
+V2.5's region level, and `military_capability`'s case at V1.3g in its strongest
+form: national GDP is the sum of this dictionary now, so an absent register reads
+0.0 and the definitional swap writes the country's GDP to zero on the first tick --
+not a different model, no economy at all -- and re-seeding on load would erase
+divergence the player watched happen, `service_quality`'s reason at V1.5a. V2.2b had
+been the fourth session on this list whose serialised contribution was **nothing at
+all** -- V1.6c's shape and V1.8's -- and V2.5 is the session that came here to argue
+for the change, exactly as the pin below demanded. The geographic SHARES are still
+content: a region's share of its nation and a city's share of its region
 round-trip through `data/regions/` the way a firm's authored share and headcount
 round-trip through `data/companies/`, and a firm's `city` is one more authored field in a
-file the save has never carried -- and drawing it changed nothing about that, because both
-panels and both draw passes only read. So `tests/test_save_load.gd` pins three **absences**
-rather than three fields, and each turns red for a different reason: a stored region share
-means the partition can drift from the content defining it, a stored city population means
-a head count exists that `share x population` does not already give, and a `regions` key
-on `NationState` at all means the register has become live state -- which is precisely the
-change V2.5 has to come here and argue for. There has never been a migration: a superseded
+file the save has never carried. So `tests/test_save_load.gd` FLIPPED ONE ABSENCE AND
+KEPT TWO: `region_gdp_eur_bn` must now be present (a save without it loads a nation
+whose GDP is the sum of nothing), while a stored region share still means the
+partition can drift from the content defining it and a stored city population still
+means a head count exists that `share x population` does not already give -- and
+there is still no regional unemployment stock to store, because `src/sim/regions.gd`
+reads a regional rate as a pure function of the national one. There has never been a migration: a superseded
 save is refused outright, because a half-understood political state is worse than
 a clear refusal. The rule is not "a new field bumps" but "a missing field would
 read as something wrong" — V1.2e added `GameState.scenario_id` **without** a bump

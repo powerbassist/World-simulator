@@ -160,6 +160,17 @@ and the right short-run amplitude in industry. And because the cyclical part is
 computed as a residual against the GDP target, sector output sums to GDP exactly
 by construction — no drift, no reconciliation step.
 
+> [!note] Amended at V2.5, not retracted
+> That exactness was real and exclusive from the MVP to V2.4, and it stopped being
+> exclusive the day national GDP became **the sum of the regions**
+> ([[region-economy-model]] §1). The sectors still reconcile to GDP through the same
+> residual — the arithmetic above is untouched — but the target they reconcile to
+> now comes from `Regions.tick_month()`, and since `gdp_eur_bn` is written from that
+> target rather than from the sector sum, the two agree to **1e-9 relative** rather
+> than to the last bit. `tests/test_regions.gd` asserts it at that precision and
+> says why: `trend_pct()` divides by `gdp_eur_bn`, so a sector split that drifted
+> would move the trend without anything saying so.
+
 ### 6. Unemployment
 
 Okun's law plus reversion to a structural rate:
