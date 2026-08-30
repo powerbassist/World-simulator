@@ -214,6 +214,65 @@
           }
         }
       ]
+    },
+    {
+      "id": "blackout_night",
+      "name": "The grid fails",
+      "summary": "A winter peak has taken three regions dark, hospitals are on generators, and the operator says the interconnects cannot hold another evening like it. This is the one crisis that does not wait a quarter: the clock stops until you have said what kind of state you are governing.",
+      "interrupt": true,
+      "likelihood": 0.04,
+      "respond_months": 1,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 95.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "ration",
+          "label": "Order rolling cuts",
+          "summary": "Share the dark evenly. Industry carries its share, the hospitals keep their light, and everybody remembers the evening the state rationed electricity.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.06,
+              "workers": -0.03,
+              "rural": -0.03,
+              "urban": -0.02,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "emergency_fuel",
+          "label": "Buy fuel on the spot market",
+          "summary": "Whatever the price is, it is cheaper than the dark. The debt takes it, and the markets read the wire as fast as the cities read the light.",
+          "effects": {
+            "spending_pct_gdp": { "infrastructure": 0.35 },
+            "bloc_offset": {
+              "business": 0.045,
+              "workers": 0.02,
+              "urban": 0.02,
+              "pensioners": 0.01
+            }
+          }
+        },
+        {
+          "id": "blame_abroad",
+          "label": "Blame the imports",
+          "summary": "The interconnects failed and they failed from the other side of the border. True enough to say; your neighbours will hear it exactly that way.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.02,
+              "students": 0.015,
+              "business": -0.03
+            }
+          }
+        }
+      ]
     }
   ]
 }

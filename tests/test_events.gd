@@ -97,7 +97,104 @@ func _init() -> void:
 	_test_the_dependency_runs_one_way()
 	_test_every_harness_ticks_it()
 	_test_the_hash_is_not_copied()
+	_test_the_interrupt_flag()
 	_finish()
+
+
+## V2.4b, and the reversal of a V1.8 call for one flagged class. Four halves,
+## each pinned where it lives:
+##
+##   the SCHEMA opens by exactly one boolean -- absent in a version-27 save it
+##   reads false, which is the truth about that save, so no bump and the
+##   unknown-key refusal still guards every OTHER field;
+##   announce COPIES the flag into the pending register, because the thing
+##   that pauses the clock reads the register and has no access to content;
+##   the shipped content exercises it -- blackout_night carries the flag, and
+##   the pause path reads it at the tick AND at load (the reload re-raise);
+##   and the non-modal argument survives: a non-flag event pauses NOTHING,
+##   which is asserted at source because the pause is a line in another file's
+##   handler.
+func _test_the_interrupt_flag() -> void:
+	# Schema: the key is known, absent reads false, and the default is
+	# non-interrupt.
+	var raw := {"id": "x", "name": "X", "summary": "s", "likelihood": 0.05,
+		"respond_months": 2, "choices": [
+			{"id": "a", "label": "A", "summary": "do a", "effects": {"bloc_offset": {"business": 0.01}}, "default": true},
+			{"id": "b", "label": "B", "summary": "do b", "effects": {"bloc_offset": {"workers": 0.01}}},
+		]}
+	var errs: Array[String] = []
+	var ev = GameEvent.from_dict(raw.duplicate(true), "x.json", errs,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	if not errs.is_empty() or ev.interrupt:
+		_fail("an event without the flag did not default to non-interrupt (errs=%s)" % [errs])
+
+	# from_dict READS the key off the content; the load path is the proof.
+	var errs2: Array[String] = []
+	var with_key: Dictionary = raw.duplicate(true)
+	with_key["interrupt"] = true
+	var ev2 = GameEvent.from_dict(with_key, "x.json", errs2,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	if not ev2.interrupt:
+		_fail("from_dict did not read interrupt: true off the content")
+
+	# The register: announce copies the flag.
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	Events.announce(ns, ev2)
+	if ns.event_pending.get("interrupt", "MISSING") != true:
+		_fail("announce did not copy the interrupt flag into the pending register")
+	# and a non-flag event's register reads false, not missing.
+	var ev3 = GameEvent.from_dict(raw.duplicate(true), "x.json", errs2,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	Events.announce(ns, ev3)
+	if bool(ns.event_pending.get("interrupt", false)):
+		_fail("a non-interrupt event's pending register claims the flag")
+
+	# The shipped content: the one crisis that stops the clock.
+	var crisis = null
+	for e in _loader.events:
+		if String(e.id) == "blackout_night":
+			crisis = e
+	if crisis == null:
+		_fail("blackout_night did not load -- the interrupt class ships with no member")
+	elif not crisis.interrupt:
+		_fail("blackout_night does not carry interrupt: true")
+
+	# The pause path, at source: it exists, it is reached from BOTH the month
+	# tick and the load path, and it gates on the flag rather than pausing for
+	# every event -- V1.8's non-modal argument survives everywhere else.
+	var file := FileAccess.open("res://src/ui/main.gd", FileAccess.READ)
+	var text := file.get_as_text()
+	file.close()
+	if not text.contains("func _enforce_interrupt()"):
+		_fail("main.gd has no _enforce_interrupt -- the reversal is not wired")
+	var in_load := false
+	var load_raises := false
+	for line in text.split("
+"):
+		if line.begins_with("func _on_load_requested"):
+			in_load = true
+		elif in_load and line.begins_with("func "):
+			break
+		elif in_load and line.contains("_enforce_interrupt()"):
+			load_raises = true
+	if not load_raises:
+		_fail("the load path does not re-raise an interrupt -- a save mid-crisis reloads past the question")
+	if not text.contains("_enforce_interrupt()"):
+		_fail("_enforce_interrupt is defined but never called")
+	# the gate: the pause happens only behind the flag read
+	var in_fn := false
+	var gated := false
+	for line in text.split("
+"):
+		if line.begins_with("func _enforce_interrupt"):
+			in_fn = true
+		elif in_fn and line.begins_with("func "):
+			break
+		elif in_fn and line.contains("interrupt") and line.contains("get("):
+			gated = true
+	if not gated:
+		_fail("_enforce_interrupt does not gate on the flag -- it would pause for every event, and V1.8's argument would die")
 
 
 func _finish() -> void:

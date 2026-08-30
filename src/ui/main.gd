@@ -36,6 +36,7 @@ const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -45,6 +46,7 @@ const RegionPanel = preload("res://src/ui/region_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
+const SummitPanel = preload("res://src/ui/summit_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -120,6 +122,8 @@ var _region_panel
 var _city_panel
 var _campaign_panel
 var _events_panel
+var _summit_panel
+var _summit_before := {}
 var _government_panel
 var _save_load_panel
 var _pause_menu
@@ -399,6 +403,23 @@ func _ready() -> void:
 	_events_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
+	)
+
+	# V2.4b. The summit scene, chained off V2.4a's meeting arrival. NOT in the
+	# drawer and not in a cluster: a summit is not a surface the player navigates
+	# to, it is what happens when a state visit lands -- the one window that
+	# opens ITSELF, which is why it sits beside the modal four in spirit while
+	# still being closable. The panel returns the choice it played; the effects
+	# apply HERE through the applier the events path already uses, and the U4
+	# baseline is taken before the panel ever opens, because a choice made over
+	# dinner is a command with a delta like any other.
+	_summit_panel = SummitPanel.new()
+	_windows.register("summit", "Summit", _summit_panel, KEY_NONE, ICONS + "institutional_building.svg")
+	_summit_panel.setup(_state, _loader)
+	# No hide_close_button(): the frame's X is a live exit -- a summit walked
+	# out on applies nothing, which is the ephemeris working, not a bug.
+	_summit_panel.concluded.connect(func(_summit_id, choice_label):
+		_resolve_summit(choice_label)
 	)
 
 	_build_action_bar()
@@ -899,6 +920,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	var pending_before: bool = Events.is_pending(_state.player())
 	Events.tick_month(_state, _loader)
 	_card_events(year, month, pending_before, event_before)
+	_enforce_interrupt()
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
 	# already ticked -- a resignation this month is judged against this
@@ -1192,6 +1214,14 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 			_queue_effect(label, before)
 		_card_appointment(entry, label, ok)
 
+		# V2.4b: a meeting that LANDED is the summit's trigger. Only the verb
+		# that opens a meeting brings a scene; a refused arrival is a journey
+		# home, and day-only acts were never journeys.
+		if ok and String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
+			var action2 = _action_by_id(String(entry.get("action_id", "")))
+			if action2 != null and action2.opens_meeting:
+				_open_summit(String(entry.get("target_id", "")), before)
+
 	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
@@ -1232,6 +1262,39 @@ func _action_by_id(id: String):
 		if String(action.id) == id:
 			return action
 	return null
+
+
+## V2.4b. The scene itself. Drawn as data from the leaf sim, handed to the
+## panel, and the U4 baseline is the ARRIVAL's -- taken by the caller before
+## the panel opened -- because the summit's delta is measured from the meeting,
+## not from the last beat of dialogue.
+func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
+	var summit := Summits.draw(_state, _loader, target_id)
+	if summit.is_empty():
+		return
+	_summit_before = arrival_before
+	_summit_panel.show_summit(summit)
+	_windows.open("summit")
+
+
+## The panel's verdict. The effects ride Legislature.apply_effects() -- the
+## same applier the event choice and the law use, which is why a summit is no
+## new effect channel -- and the delta is queued against the arrival's
+## baseline. An empty choice (the player closed through a path with no priced
+## fork) applies nothing and says nothing: a conversation happened, and it
+## changed nothing, which is the honest outcome for one of those.
+func _resolve_summit(choice_label: String) -> void:
+	if choice_label.is_empty():
+		return
+	var ns = _state.player()
+	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
+	if effects.is_empty():
+		return
+	Legislature.apply_effects(_state, ns, effects, _loader)
+	_queue_effect("Summit: %s" % choice_label, _summit_before)
+	_update_top_bar()
+
+
 
 
 func _law_by_id(id: String):
@@ -1296,9 +1359,42 @@ func _on_load_requested(slot: String) -> void:
 
 	_windows.mark_all_dirty()
 
+	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
+	# the clock again and is put back in front of the player -- a save made mid-
+	# crisis and reloaded is still mid-crisis, and the pause is the only thing
+	# that stops the clock from quietly resuming past a question the player never
+	# answered. (A save-scum dodge the other way -- reload to rethink -- still
+	# works; the re-raise kills the silent skip, not the rethink.)
+	_enforce_interrupt()
+
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
 	_update_top_bar()
+
+
+## V2.4b, and the reversal of a V1.8 call for one flagged class. An event with
+## `interrupt: true` PAUSES the clock until answered -- docs/events-model.md's
+## non-modal argument covers every event without the flag, and the flag exists
+## precisely for the one the argument does not cover: an event nobody could
+## reasonably choose to ignore. The pause reads the serialised register, which
+## is what makes the reload re-raise the SAME code path rather than a second
+## one: announce wrote the flag into event_pending, and both the month tick and
+## a fresh load read it here.
+##
+## Every event WITHOUT the flag is untouched -- this function pauses nothing and
+## opens nothing for it, and tests/test_events.gd pins that.
+func _enforce_interrupt() -> void:
+	if _state == null:
+		return
+	var ns = _state.player()
+	if ns == null or not Events.is_pending(ns):
+		return
+	if not bool(ns.event_pending.get("interrupt", false)):
+		return
+	_clock.paused = true
+	if _events_panel != null:
+		_windows.open("events")
+	_hud.clock_cluster.refresh(_clock)
 
 
 ## Everything on screen that is not inside a window. Kept under U2's name

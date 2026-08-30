@@ -110,25 +110,28 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   ```
 
   `godot_mcp_toolkit` is the one this project already uses — it is what
-  `runtime_screenshot` and `input_simulate` reach a running game through. **All five
-  are parked on purpose, not junk** — `dialogue_manager`, `at-icons`, `materialLayers`
-  and `road-generator` are each installed ahead of a planned use, so do not strip any
-  of them on the reasoning that nothing in `src/` reads them yet. **The committed file
-  has no `[autoload]` section at all** — the block is an addition in the diff, so a
-  fresh clone is clean and the rule holds where it matters.
+  `runtime_screenshot` and `input_simulate` reach a running game through. **The other
+  four are parked on purpose, not junk** — `at-icons` is half adopted (V2.3 committed
+  the icons `src/` names) and `materialLayers` and `road-generator` are each installed
+  ahead of a planned use, so do not strip any of them on the reasoning that nothing in
+  `src/` reads them yet. **`dialogue_manager` is no longer parked: V2.4b adopted it**,
+  and it is the project's STATED EXCEPTION to the no-autoloads rule — taken knowingly
+  at plan time, gated on a headless smoke test (it must init under
+  `--headless --script`, which is what `tools/run_tests.sh` is), committed whole into
+  `addons/` (790 KB, MIT), with `DialogueManager` carried in the COMMITTED
+  `project.godot` and the reason recorded in `.gitignore` beside the exception. The
+  committed `[autoload]` names ONLY DialogueManager: the per-machine
+  `MCPRuntimeServer` line had crept into HEAD and was cleaned out at V2.4b — a fresh
+  clone gets the game's autoload, not the dev bridge's. The local file carries both
+  and stays per-machine dirty, exactly as this section documents.
 
-  **What adopting any of them will cost, recorded now because it is cheaper to read
-  than to rediscover.** Two rules above apply the moment one is actually used, and
-  neither is a formality. `dialogue_manager` specifically installs itself as an
-  autoload — *no autoloads in the game code* means reaching it without one, or taking
-  the autoload as a stated exception with its reason written down, not letting it
-  arrive because the editor put it there. And for all four, *`src/` may reference an
-  addon file only if that file is committed*: `addons/` is gitignored, so the moment
+  **The rule the other three still cost, unchanged.** *`src/` may reference an addon
+  file only if that file is committed*: `addons/` is gitignored, so the moment
   anything under `src/` imports one, that addon has to be committed or
   `tools/run_tests.sh` fails from a fresh clone — the same fresh-clone reason the
   fonts, the icons and the Blue Marble raster are all read as bytes rather than
-  `load()`ed. Which of the four lands where is not decided; `dialogue_manager` against
-  section 8's data-defined events is the one inference obvious enough to name.
+  `load()`ed. `dialogue_manager` is the precedent for HOW to adopt one: gate first
+  (headless smoke), commit whole, state the exception, rewrite this paragraph.
 
   **The consequence to know when reading a probe diff:** `MCPRuntimeServer` autoloads
   into *every* local run, headless ones included, and prints its port. V1.7c's balance
@@ -489,6 +492,44 @@ new at-icons SVGs committed via `git add -f`. **No sim file touched, `SAVE_VERSI
 vision path survived the session that built a wall of faces** (model, judge agent and CDN
 route all refused image input), so the screenshot frames were captured and the AUTHOR
 holds the verdict on the second wall -- the same authority that rejected the first.
+
+**V2.4b SHIPPED THE SCENES, AND THE STEP-0 GATE WAS THE SESSION'S FIRST RESULT.**
+`dialogue_manager` had to prove it runs under `--headless --script` -- the regime
+`tools/run_tests.sh` IS -- before any content was authored; it did, and the adoption
+landed whole: 790 KB and 122 files committed into `addons/`, `DialogueManager` in the
+committed `project.godot`, **the project's first stated exception to the no-autoloads
+rule**, the reason written beside the `.gitignore` exception and the Gotchas paragraph
+rewritten for the addon that finally landed. The same commit cleaned the per-machine
+`MCPRuntimeServer` line out of the committed tree, where it had crept into HEAD
+undocumented. **A summit is ephemeral by construction**: `Summits.draw()` picks a
+scene deterministically off the meeting register's own stamp (the event hazard's
+discipline -- a replay produces the same dinner), the panel walks it through the
+autoload's own `get_next_dialogue_line()`, the one choice applies through
+`Legislature.apply_effects()` -- the applier the law and the event choice already
+share, so no new channel -- and NOTHING is serialised: `SAVE_VERSION` stays 27 and
+`tests/test_summits.gd` pins the absence, because a record of dinners is derivable
+from the state the dinners changed. **The sidecar contract is refused loudly at
+load**: every response priced ({} is legal and means lands-nowhere-on-purpose), every
+price behind a real response, channels shared with law and event only -- a summit
+lands where a law lands, and pair state is out for events-model's own reason. The
+shipped content is two scenes (DEU, ITA) plus `blackout_night`, the interrupt crisis
+whose `respond_months: 1` is the flag's meaning compressed. **`interrupt: true` is one
+boolean on the closed key list**: absent reads false (the truth about every version-27
+save), `announce()` copies it into the pending register, and `_enforce_interrupt()` --
+reached from BOTH the month tick and the load path, which is what makes the reload
+re-raise the same code path rather than a second one -- pauses the clock only behind
+the flag read, pinned at source, so V1.8's non-modal argument survives for every
+event without it. **The re-run moved where the prediction said it would not -- but not
+through the summits**: no regime books a visit, so no scene fires; `blackout_night`
+is a HAZARD that draws on debt >= 95 %, most managed regimes hold it, and its default
+applies bloc_offset unanswered -- ~990 output lines wobbled, every one a margin or a
+last digit, ZERO verdict flips, V1.8's re-run reason exactly. Two compile gotchas the
+build paid for: dialogue_manager TITLES reject spaces (the first draft's
+`~ Raise the Rhine shipping tolls` did not compile; snake_case titles, human labels),
+and a new script cannot type its own return -- CLAUDE.md's first gotcha, caught by
+`script_check` at the signature. Model:
+[docs/summits-model.md](docs/summits-model.md).
+
 
 **V2.4a SHIPPED THE DAY, AND THE ROW'S BIT-IDENTITY PREDICTION WAS THE THING THAT
 DID NOT HOLD.** Scarcity is **occupancy only** -- an `opens_meeting` booking occupies

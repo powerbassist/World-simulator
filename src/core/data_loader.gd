@@ -21,6 +21,7 @@ const ProjectAction = preload("res://src/core/project_action.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
 const PledgeAction = preload("res://src/core/pledge_action.gd")
 const GameEvent = preload("res://src/core/event.gd")
+const Summit = preload("res://src/core/summit.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -112,6 +113,12 @@ var pledges: Array[PledgeAction] = []
 ## src/core/event.gd.
 var events: Array[GameEvent] = []
 
+## Summit scenes, V2.4b. Keyed by partner nation id, each value the pool of
+## Summit scenes a meeting there can draw. A nation with no pool draws nothing
+## at its arrivals -- a meeting without a scene is the ordinary state visit,
+## not an error. Loaded from data/summits/ (see _load_summits).
+var summits := {}
+
 var laws: Array[Law] = []
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
@@ -158,7 +165,7 @@ var region_features: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", summits_dir := "res://data/summits") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -171,6 +178,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	project_actions.clear()
 	campaign_actions.clear()
 	events.clear()
+	summits.clear()
 	pledges.clear()
 	laws.clear()
 	political_systems.clear()
@@ -231,6 +239,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_projects(project_actions_dir)
 	_load_campaign_actions(campaign_actions_dir)
 	_load_events(events_dir)
+	_load_summits(summits_dir)
 	_load_pledges(pledges_dir)
 	_load_laws(laws_dir)
 	_load_political_systems(political_systems_dir)
@@ -1638,3 +1647,55 @@ func _load_events(events_dir: String) -> void:
 				])
 			gates[gate] = ev.id
 			events.append(ev)
+
+
+## V2.4b. One summit = two files sharing an id: <ID>.dialogue is the scene in
+## dialogue_manager syntax, <ID>.json the sidecar that names it and prices its
+## responses. The id is NATION_prefixed and self-describing the way a city id
+## is, and the join between the two files is the response LABEL -- validated
+## here, loudly, because a scene that offers a choice nothing prices ships a
+## live button that refuses silently, which this project has paid for twice.
+## The dialogue itself compiles at DRAW time through the addon, so what the
+## loader stores is text and the compiler's errors arrive where they can name
+## the file they came from.
+func _load_summits(summits_dir: String) -> void:
+	var da := DirAccess.open(summits_dir)
+	if da == null:
+		errors.append("%s: directory not found" % summits_dir)
+		return
+
+	var ids: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".dialogue"):
+			ids.append(file_name.trim_suffix(".dialogue"))
+		file_name = da.get_next()
+	da.list_dir_end()
+	ids.sort()
+
+	for sid in ids:
+		var nation_id := sid.split("_")[0] if sid.contains("_") else ""
+		if not nations.has(nation_id):
+			errors.append("%s: id '%s' does not begin with a nation id -- a summit belongs to a partner" % [sid, sid])
+			continue
+
+		var text := FileAccess.get_file_as_string(summits_dir.path_join(sid + ".dialogue"))
+		var sidecar_text := FileAccess.get_file_as_string(summits_dir.path_join(sid + ".json"))
+		if text.is_empty() or sidecar_text.is_empty():
+			errors.append("%s: could not read the .dialogue or its .json sidecar" % sid)
+			continue
+		var parsed = JSON.parse_string(sidecar_text)
+		if typeof(parsed) != TYPE_DICTIONARY:
+			errors.append("%s: invalid sidecar, expected an object" % sid)
+			continue
+
+		var per_file_errors: Array[String] = []
+		var summit = Summit.from_dict(
+			text, nation_id, sid, parsed, sid, per_file_errors,
+			C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
+		)
+		errors.append_array(per_file_errors)
+		if not summits.has(nation_id):
+			summits[nation_id] = []
+		summits[nation_id].append(summit)

@@ -156,6 +156,8 @@ var _defence := false
 ## the strip exists to draw. Books three acts and acts once, so the frame carries
 ## a booking, a kept appointment and a cooldown expiry the player never entered.
 var _book := false
+var _summit := false
+var _interrupt := false
 
 ## V1.4a. A new game's firm register is every firm at its authored share with no
 ## subsidy standing, so a frame of the companies panel shows three zeroes on the
@@ -285,6 +287,10 @@ func _init() -> void:
 			_defence = true
 		elif args[i] == "--book":
 			_book = true
+		elif args[i] == "--summit":
+			_summit = true
+		elif args[i] == "--interrupt":
+			_interrupt = true
 		elif args[i] == "--subsidy":
 			_subsidy = true
 		elif args[i] == "--regulate":
@@ -398,6 +404,10 @@ func _apply_view() -> void:
 		_stand_up_an_alliance()
 	if _book:
 		_fill_the_diary()
+	if _summit:
+		_stage_a_summit()
+	if _interrupt:
+		_stage_an_interrupt()
 	if _subsidy:
 		_subsidise_a_firm()
 	if _regulate:
@@ -1218,6 +1228,49 @@ func _fill_the_diary() -> void:
 	)
 	state.appointments.append(kept)
 	Calendar.resolve(state, Calendar.verb_key(kept), true)
+
+
+## V2.4b. A state visit lands, the scene opens over it: the window the player
+## sees at arrival, with the leader's portrait and the first line on it. The
+## arrival runs the REAL dispatch path (execute, resolve, open) so the frame
+## proves the chain, not a panel fed by hand.
+func _stage_a_summit() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var ns = state.player()
+	var visit = null
+	for action in loader.diplomatic_actions:
+		if String(action.id) == "state_visit":
+			visit = action
+	if visit == null:
+		push_error("--summit: no state_visit content")
+		return
+	# A meeting two months out, kept by the same path the day tick uses --
+	# execute() applies its effects and stamps the meeting register.
+	Diplomacy.execute(state, loader.diplomatic_actions, visit, ns.id, "DEU")
+	_main._open_summit("DEU", Budget.snapshot(state))
+	_main._windows.mark_all_dirty()
+
+
+## V2.4b. The one crisis that stops the clock: announced through the real
+## register, then the same enforce call the load path and the month tick use,
+## so the frame shows the Dispatches window OPEN and the clock PAUSED -- a
+## capture of a pending event with the clock still running would prove the
+## opposite of the flag's name.
+func _stage_an_interrupt() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var ns = state.player()
+	var crisis = null
+	for e in loader.events:
+		if String(e.id) == "blackout_night":
+			crisis = e
+	if crisis == null:
+		push_error("--interrupt: blackout_night did not load")
+		return
+	Events.announce(ns, crisis)
+	_main._enforce_interrupt()
+	_main._windows.mark_all_dirty()
 
 
 ## Force the executive verdict the player loses on, and show the result screen the

@@ -1466,10 +1466,14 @@ func _check_event_fields(loader) -> void:
 		if (dict["nations"]["FRA"] as Dictionary).has(banned):
 			_fail("a save carries '%s' -- the hazard is a pure function and has nothing to store" % banned)
 
-	# (7) and the register carries no CONTENT: an id, a name for the diary and a
-	# countdown, and nothing else. V1.4a's discipline. The name is there for
-	# src/sim/calendar.gd, which preloads nothing and so cannot look one up.
-	var allowed := ["event_id", "event_name", "months_left"]
+	# (7) and the register carries no CONTENT: an id, a name for the diary, a
+	# countdown -- and, since V2.4b, the interrupt flag. V1.4a's discipline, one
+	# justified addition: the flag is not content, it is LIVE STATE -- the load
+	# path reads it to re-pause the clock on a save made mid-crisis, so an
+	# entry that dropped it would reload past a question the player never
+	# answered. Everything else about the event still round-trips through
+	# data/events/.
+	var allowed := ["event_id", "event_name", "months_left", "interrupt"]
 	for key in (dict["nations"]["FRA"]["event_pending"] as Dictionary).keys():
 		if not allowed.has(String(key)):
 			_fail("a serialised event carries '%s' -- the choices round-trip through data/events/, not through the save" % key)
