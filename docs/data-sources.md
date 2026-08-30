@@ -88,6 +88,26 @@ https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_202
 - **The geometry is the authority on the roster, and one rule settles three problems.** A region with no polygon cannot be drawn and this tier exists to locate things, so the register is the set of codes carrying **both** a figure and a GISCO polygon. `<CC>ZZ` falls into the residual with no filter of its own; `FRY` and `ES70` are dropped by the bounding box that has dropped them from the map since S8; and the third problem is one this section did not know about — **the Eurostat response carries two NUTS vintages at once**. `NL35` and `NL36` are the 2024 codes for Utrecht and Zuid-Holland and `NL31`/`NL33` the 2021 ones, equal to the person, so summing all fourteen Dutch codes overstates the Netherlands by **5.1 M**. Filtering to the codes the 2021 geometry knows leaves exactly twelve and the sum is the national figure to the digit.
 - **The level is per nation**, and that is a measurement rather than a taste: NUTS 2 for France is the régions abolished in 2016 (`Picardie`, `Nord-Pas de Calais`), while NUTS 1 for Italy is five statistical macro-areas and for Switzerland is one country. The table and its reasons are in [[geography-model]] section 2; `tools/import_data.py`'s `REGION_LEVEL` is the record, and no level field reaches `src/`.
 
+#### V2.5 — the three regional economic series
+
+- **`nama_10r_2gdp`** — regional GDP, million EUR (`unit=MIO_EUR`), the series V2.2a already probed; now fetched at 2022 for the region's `gdp_share`.
+- **`lfst_r_lfu3rt`** — regional unemployment rate, per cent (`sex=T`, `age=Y15-74`, `isced11=TOTAL`, `unit=PC`), for `unemployment_rel`.
+- **`nama_10r_3gva`** — regional gross value added by branch, current prices (`unit=CP_MEUR`), six `nace_r2` aggregates, for `sector_mix`. The unit filter is load-bearing: without it the response carries four units (`CP_MEUR`, `CP_MNAC`, `PYP_MEUR`, `PYP_MNAC`), and a reader that collapses the unit dimension silently mixes current prices with previous-year prices and national currency.
+
+Coverage, measured at 2022 before any code was written (NUTS codes of this game's ten carrying a value; the GVA row is TOTAL-branch codes and the geo dimension carries several vintages at once, so its counts exceed one code per region):
+
+```
+GDP         {'FR': 44, 'DE': 55, 'IT': 29, 'ES': 29, 'BE': 17, 'NL': 19, 'LU': 3, 'CH': 9, 'AT': 15, 'UK': 0}
+UNEMP       {'FR': 41, 'DE': 52, 'IT': 27, 'ES': 27, 'BE': 15, 'NL': 17, 'LU': 3, 'CH': 9, 'AT': 13, 'UK': 0}
+GVA(TOTAL)  {'FR': 146, 'DE': 455, 'IT': 137, 'ES': 89, 'BE': 62, 'NL': 60, 'LU': 4, 'CH': 35, 'AT': 51, 'UK': 0}
+```
+
+All three carry zero `UK` geo codes at 2022, for the same reason `nama_10r_2gdp` does — the codes were removed from the dimension after withdrawal rather than left empty, so V1.5c's nearest-year fallback has nothing to fall back to.
+
+`docs/geography-model.md` §4 records the authored fallback at NUTS 1 as twelve numbers. Measured: the ONS beta API's `regional-gdp-by-year` publishes ITL1 codes UKC–UKL — ten of twelve — plus England and extra-regio. Scotland and Northern Ireland are published by the devolved administrations and are not in that product.
+
+**Britain's decision: the population proxy.** The gate was all twelve ITL1 GDP figures; ONS offers ten of twelve, and the product is an annual **index** (`aix`, chained volume measure) rather than a monetary level, so even the ten would not have been figures in this game's units. No number was invented: a British region's `gdp_share` is its population share, `unemployment_rel` is exactly 1.0 and `sector_mix` is the national mix, and the `_source` string in `data/regions/GBR.json` says so in words. The consequence — Britain has no regional divergence at all — is recorded as a measured bound in [[region-economy-model]] §10.
+
 ### Two gotchas in the Eurostat regional data, confirmed against the 2022 figures
 
 - **`XXZZ` is "Extra-Regio NUTS 2" and has GDP but no geometry.** Present for FR, IT, ES, BE, NL and AT; absent for DE, LU and CH. It is the output that cannot be assigned to any region — offshore, embassies, ships. Left in, the region shares do not sum against a geometry that has one fewer entry; dropped silently, the nation's GDP no longer equals the sum of its regions. It belongs in the **unnamed residual**, which is the same slot [[companies-model|V1.4a]] gives the firms a sector does not name.
@@ -225,6 +245,19 @@ for L in 1 2; do
 done
 
 curl -L -o "sources/geonames/cities15000.zip"   "https://download.geonames.org/export/dump/cities15000.zip"
+```
+
+```bash
+# V2.5. The three regional ECONOMIC series, all at 2022, all carrying ZERO `UK`
+# codes -- see the "V2.5" subsection under "Eurostat and GISCO -- regions" above.
+# nama_10r_3gva's `unit=CP_MEUR` is load-bearing: without a unit filter the
+# response carries four units and a reader that collapses the unit dimension
+# silently mixes current prices with previous-year prices.
+curl -L -o "sources/eurostat/nama_10r_2gdp_2022.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nama_10r_2gdp?format=JSON&lang=EN&unit=MIO_EUR&time=2022"
+
+curl -L -o "sources/eurostat/lfst_r_lfu3rt_2022.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/lfst_r_lfu3rt?format=JSON&lang=EN&sex=T&age=Y15-74&isced11=TOTAL&unit=PC&time=2022"
+
+curl -L -o "sources/eurostat/nama_10r_3gva_2022.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nama_10r_3gva?format=JSON&lang=EN&unit=CP_MEUR&time=2022&nace_r2=TOTAL&nace_r2=A&nace_r2=B-E&nace_r2=F&nace_r2=G-J&nace_r2=K-N&nace_r2=O-U"
 ```
 
 The Natural Earth URLs are pinned to tag `v5.1.2` rather than `master`, so the
