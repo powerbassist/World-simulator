@@ -27,6 +27,10 @@ func _init() -> void:
 	_check_deviation_is_zero_mean()
 	_check_unemployment_decomposes()
 	_check_sectors_still_reconcile()
+	_check_no_tuned_constant()
+	_check_round_trip_keeps_the_level()
+	_check_unemployment_is_not_a_stock()
+	_check_every_nation_is_complete()
 	_finish()
 
 
@@ -138,6 +142,63 @@ func _check_sectors_still_reconcile() -> void:
 		sectors += float(value)
 	if absf(sectors - ns.gdp_eur_bn) > 0.000000001 * ns.gdp_eur_bn:
 		_fail("sectors sum to %f against a national %f" % [sectors, ns.gdp_eur_bn])
+
+
+## THE SESSION SHIPS NO TUNED CONSTANT, and the file says so by reading itself.
+## src/sim/region_constants.gd holds a key and a bound; the day somebody adds a
+## coefficient in front of a region's own trend, this turns red and has to say why one
+## strength is written twice (investment_action.gd's refusal).
+func _check_no_tuned_constant() -> void:
+	var text := FileAccess.get_file_as_string("res://src/sim/region_constants.gd")
+	var allowed := ["RESIDUAL_KEY", "SHARE_DRIFT_MAX"]
+	for line in text.split("\n"):
+		var trimmed: String = line.strip_edges()
+		if not trimmed.begins_with("const "):
+			continue
+		var name: String = trimmed.substr(6).split(" ")[0].split(":")[0].strip_edges()
+		if not allowed.has(name):
+			_fail("region_constants.gd declares '%s' -- V2.5 ships a key and a bound, and a region's trend IS its own mix" % name)
+
+
+## The register round-trips as CONTENT and the level round-trips as STATE, which is
+## the split SAVE_VERSION 28 is for. Asserted here as well as in test_save_load.gd
+## because this is the file that knows what the register means.
+func _check_round_trip_keeps_the_level() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	for i in 24:
+		Economy.tick_month(state)
+	var before: float = float(state.nations["FRA"].region_gdp_eur_bn.get("FR1", 0.0))
+	var reloaded = GameState.from_dict(state.to_dict())
+	var after: float = float(reloaded.nations["FRA"].region_gdp_eur_bn.get("FR1", 0.0))
+	if before <= 0.0:
+		_fail("FR1 holds no output -- this check is measuring nothing")
+	elif absf(before - after) > 0.000001:
+		_fail("FR1 was %f before the round trip and %f after" % [before, after])
+
+
+## NO REGIONAL UNEMPLOYMENT IS STORED. src/sim/regions.gd reads a regional rate as a
+## pure function of the national one, so a stock here would be a second answer to the
+## Okun term economy.gd already owns -- companies.gd's argument at V1.4a.
+func _check_unemployment_is_not_a_stock() -> void:
+	var text := FileAccess.get_file_as_string("res://src/core/nation_state.gd")
+	for forbidden in ["region_unemployment", "region_structural", "region_trend_pct"]:
+		if text.contains(forbidden):
+			_fail("NationState carries '%s' -- V2.5's regional unemployment is a pure read, and a stock has to come and say why" % forbidden)
+
+
+## Nine nations are measured and Britain may be a proxy. Whichever it is, EVERY nation
+## has all three quantities -- an absent regions file is a load error for the ten, and
+## a region with no mix cannot have a trend.
+func _check_every_nation_is_complete() -> void:
+	for nation_id in ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]:
+		var list: Array = _loader.regions.get(nation_id, [])
+		if list.is_empty():
+			_fail("%s has no regions" % nation_id)
+		var gdp_total: float = 0.0
+		for region in list:
+			gdp_total += region.gdp_share
+		if gdp_total <= 0.0 or gdp_total > 1.0:
+			_fail("%s GDP shares sum to %f" % [nation_id, gdp_total])
 
 
 func _finish() -> void:

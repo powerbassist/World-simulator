@@ -39,10 +39,13 @@ var potential_gdp_eur_bn: float = 0.0
 ## years of divergence the player watched happen, which is service_quality's reason at
 ## V1.5a.
 ##
-## WHAT IS NOT HERE IS THE HALF WORTH PINNING. There is no region_unemployment_pct,
-## no regional stock and no regional accumulator: src/sim/regions.gd reads a regional
-## rate as a pure function of the national one, so tests/test_save_load.gd asserts the
-## ABSENCE and a session that makes it stateful turns that red and has to say why.
+## WHAT IS NOT HERE IS THE HALF WORTH PINNING. There is no stored regional
+## unemployment rate, no regional stock and no regional accumulator:
+## src/sim/regions.gd reads a regional rate as a pure function of the national one,
+## so tests/test_save_load.gd asserts the ABSENCE and a session that makes it
+## stateful turns that red and has to say why. (tests/test_regions.gd reads this
+## file for the literal, so the refusal is written without naming it -- the
+## test_map_cities fired-on-a-comment lesson.)
 var region_gdp_eur_bn := {}
 
 var trend_annual_pct: float = 0.0
