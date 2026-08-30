@@ -548,8 +548,10 @@ func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 	var city_ids := {}
 	for nation_id in regions.keys():
 		var total := 0.0
+		var gdp_total := 0.0
 		for region in regions[nation_id]:
 			total += region.share
+			gdp_total += region.gdp_share
 			for city in region.cities:
 				if city_ids.has(city.id):
 					errors.append(
@@ -561,6 +563,11 @@ func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 			errors.append(
 				"regions/%s.json: region shares sum to %s, above 1.0 -- the named regions would hold more people than the nation does"
 				% [nation_id, str(total)]
+			)
+		if gdp_total > 1.0 + 0.000001:
+			errors.append(
+				"regions/%s.json: region GDP shares sum to %s, above 1.0 -- the named regions would produce more than the nation does"
+				% [nation_id, str(gdp_total)]
 			)
 
 	for nation_id in companies.keys():
