@@ -537,6 +537,17 @@ var bloc := {}
 ## Diplomacy.execute() through the fifth effect channel, and by nothing else.
 var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 
+## The region register, copied off the loader once at new game so src/sim/ can reach
+## it without a loader. NationState.eu_member and .neighbours' own precedent, and for
+## their reason: Economy.tick_month(state) is called by both balance harnesses and
+## eight probes, and widening its signature would break every one of them.
+##
+## NOT SERIALISED. It is content; a save that carried it would let the partition drift
+## from the data/regions/ file that defines it, which is exactly what
+## tests/test_save_load.gd's surviving two absences are about. save_manager.load_game()
+## re-attaches it from its own loader argument.
+var regions := {}  # nation id -> Array of Region
+
 ## Deployments -- V1.3g. DIRECTED pair state on `measures`' separator, because
 ## France committing forces in support of Germany and the reverse are two acts with
 ## two bills, exactly as a tariff and its retaliation are.
@@ -690,6 +701,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	# seeds one too.
 	for ns in gs.nations.values():
 		Regions.init_nation(ns, loader.regions.get(ns.id, []))
+	gs.regions = loader.regions
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -1019,6 +1031,16 @@ func duplicate_state():
 	# above spell out: a shared reference is one added tick away from a budget
 	# panel repaint mutating the player's live diary, sixty times a second.
 	gs.appointments = appointments.duplicate(true)
+	# The register is CONTENT (it never mutates after new_game), so unlike the
+	# pair registers above what matters is not who owns it but that a projection
+	# HAS one: duplicate(true) gives the copy its own dictionaries and arrays
+	# holding the same Region objects, which is as deep as it needs to go --
+	# Region is content and nothing anywhere writes through it. An EMPTY register
+	# on the copy was a live bug: Regions.tick_month() grew the region LEVEL
+	# against an empty region LIST and returned the residual alone, so the budget
+	# panel projected a France that lost 98 % of its output. V2.5 shipped exactly
+	# that and test_budget caught it.
+	gs.regions = regions.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs

@@ -15,6 +15,7 @@ const TradeK = preload("res://src/sim/trade_constants.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Regions = preload("res://src/sim/regions.gd")
 
 
 static func tick_month(state) -> void:
@@ -155,7 +156,17 @@ static func _tick_nation(state, ns) -> void:
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth
 
-	_apply_growth_to_sectors(state, ns, growth)
+	# V2.5. THE MONTH'S GDP TARGET IS THE REGION SUM, not `gdp * monthly_factor(growth)`
+	# -- national GDP is defined as the sum of the regions now, and the three sectors
+	# reconcile to that number rather than to one they never saw. The swap is one
+	# definition: from the MVP to V2.4 the sectors were the authority.
+	#
+	# A nation with an empty register falls back to the old expression inside
+	# Regions.tick_month(), which is what keeps every test fixture loadable -- an
+	# absent data/regions/ file is a load ERROR for the ten, and a fixture is not one
+	# of the ten.
+	var target_gdp: float = Regions.tick_month(ns, state.regions.get(ns.id, []), growth)
+	_apply_growth_to_sectors(state, ns, target_gdp)
 	_update_unemployment(ns, trend, growth)
 
 	# V1.5b: per-nation and measured, where this was one flat constant for all ten.
@@ -197,9 +208,13 @@ static func trend_pct(ns) -> float:
 ## in one step with beta alone would push industry's share *up* over a decade,
 ## the opposite of the secular trend. The cyclical part is a residual against the
 ## GDP target, so sector output sums to GDP exactly with no reconciliation.
-static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
-	var target_gdp: float = ns.gdp_eur_bn * C.monthly_factor(growth)
-
+##
+## V2.5: the third parameter is now the TARGET, not the growth rate -- the region
+## sum `Regions.tick_month()` returned. Before V2.5 this function computed its own
+## target from `gdp * monthly_factor(growth)`; national GDP is the sum of the
+## regions now, so the target arrives from there and the sectors reconcile to a
+## number they never saw.
+static func _apply_growth_to_sectors(state, ns, target_gdp: float) -> void:
 	# An agreement's winners and losers, in points of trend per sector. The three
 	# shifts sum to zero — checked at load — so this moves the SPLIT between
 	# sectors and never the nation's own trend. Inside this loop rather than as a
@@ -225,6 +240,7 @@ static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 		ns.sector_output[key] = float(ns.sector_output[key]) * C.monthly_factor(rate)
 		after_trend += float(ns.sector_output[key])
 	if after_trend <= 0.0:
+		ns.gdp_eur_bn = target_gdp
 		return
 
 	# Cyclical part: the residual needed to reach the month's GDP target, split
@@ -239,7 +255,7 @@ static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 		weights[key] = w
 		weight_sum += w
 	if weight_sum <= 0.0:
-		ns.gdp_eur_bn = after_trend
+		ns.gdp_eur_bn = target_gdp
 		return
 
 	var total := 0.0
@@ -249,7 +265,14 @@ static func _apply_growth_to_sectors(state, ns, growth: float) -> void:
 		ns.sector_output[key] = v
 		total += v
 
-	ns.gdp_eur_bn = total
+	# GDP IS THE REGION SUM, not the sector sum, and that is the definitional swap
+	# V2.5 makes. The sectors still reconcile to it exactly -- the cyclical residual
+	# is distributed by weights that sum to 1.0 -- so `total` and `target_gdp` differ
+	# only by float noise, and taking the target keeps the region partition closing to
+	# the last bit rather than to a tolerance. The sector sum's own agreement with GDP
+	# is now a 1e-9 relative claim rather than an exact one, and
+	# tests/test_regions.gd asserts it at that precision and says why here.
+	ns.gdp_eur_bn = target_gdp
 
 
 static func _update_unemployment(ns, trend: float, growth: float) -> void:

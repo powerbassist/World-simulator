@@ -114,8 +114,8 @@ func _init() -> void:
 	clock.month = state.month
 	clock.day = 17
 
-	_run_roundtrip(state, clock)
-	_run_atomic_write(state, clock)
+	_run_roundtrip(state, clock, loader)
+	_run_atomic_write(state, clock, loader)
 	_run_second_nation_roundtrip(loader)
 	_run_transition_roundtrip(loader)
 	_run_scenario_roundtrip(loader)
@@ -186,7 +186,7 @@ func _run_second_nation_roundtrip(loader) -> void:
 		_fail("save_game(DEU) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(SECOND_NATION_SLOT)
+	var result := SaveManager.load_game(SECOND_NATION_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(DEU) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -239,7 +239,7 @@ func _run_scenario_roundtrip(loader) -> void:
 		_fail("save_game(DEU scenario) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(SCENARIO_SLOT)
+	var result := SaveManager.load_game(SCENARIO_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(DEU scenario) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -296,7 +296,7 @@ func _run_transition_roundtrip(loader) -> void:
 		_fail("save_game(GBR post-transition) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(TRANSITION_SLOT)
+	var result := SaveManager.load_game(TRANSITION_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(GBR post-transition) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -352,7 +352,7 @@ func _run_diplomacy_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with diplomacy: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(DIPLOMACY_SLOT)
+	var loaded_result := SaveManager.load_game(DIPLOMACY_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with diplomacy: %s" % loaded_result["error"])
 		return
@@ -422,7 +422,7 @@ func _run_trade_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with an agreement: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(TRADE_SLOT)
+	var loaded_result := SaveManager.load_game(TRADE_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with an agreement: %s" % loaded_result["error"])
 		return
@@ -536,7 +536,7 @@ func _run_coercion_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with a measure: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(COERCION_SLOT)
+	var loaded_result := SaveManager.load_game(COERCION_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with a measure: %s" % loaded_result["error"])
 		return
@@ -667,7 +667,7 @@ func _run_bloc_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with a bloc rule: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(BLOC_SLOT)
+	var loaded_result := SaveManager.load_game(BLOC_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with a bloc rule: %s" % loaded_result["error"])
 		return
@@ -867,13 +867,13 @@ class _StubPact:
 	var action_name: String = "Test Pact"
 
 
-func _run_roundtrip(state, clock) -> void:
+func _run_roundtrip(state, clock, loader) -> void:
 	var save_error := SaveManager.save_game(state, clock, ROUNDTRIP_SLOT)
 	if not save_error.is_empty():
 		_fail("save_game failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(ROUNDTRIP_SLOT)
+	var result := SaveManager.load_game(ROUNDTRIP_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -901,7 +901,7 @@ func _run_roundtrip(state, clock) -> void:
 ## consequences, both checked here, because the failure this guards against —
 ## a truncated save where a working game used to be — cannot be provoked
 ## directly without killing the process mid-write.
-func _run_atomic_write(state, clock) -> void:
+func _run_atomic_write(state, clock, loader) -> void:
 	var temp_path: String = SaveManager._path_for(ROUNDTRIP_SLOT) + SaveManager.TEMP_SUFFIX
 
 	# 1. A completed save leaves no temp behind.

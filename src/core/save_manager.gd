@@ -75,7 +75,13 @@ static func save_game(state, clock, slot: String) -> String:
 ## On any failure "ok" is false and "error" names why -- an unreadable file, a
 ## corrupt one, or a save_version this build does not know how to read. No
 ## partial GameState is ever handed back.
-static func load_game(slot: String) -> Dictionary:
+##
+## `loader` is optional and defaults to null so the call sites can be migrated
+## one at a time -- but a state loaded WITHOUT it has an empty region register, and
+## Regions.tick_month() then falls back to the pre-V2.5 expression. That is a silently
+## different model, so the parameter is passed everywhere in practice and
+## tests/test_regions.gd asserts a round trip keeps the register.
+static func load_game(slot: String, loader = null) -> Dictionary:
 	var path := _path_for(slot)
 	if not FileAccess.file_exists(path):
 		return {"ok": false, "error": "no save named '%s'" % slot}
@@ -105,6 +111,10 @@ static func load_game(slot: String) -> Dictionary:
 		return {"ok": false, "error": "'%s' is missing its game_state block" % slot}
 
 	var state = GameState.from_dict(parsed["game_state"])
+	if loader != null:
+		# The region register is CONTENT on the loader and is not serialised, so the
+		# load path re-attaches it -- NationState.eu_member's shape, one level up.
+		state.regions = loader.regions
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

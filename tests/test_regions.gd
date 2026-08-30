@@ -26,6 +26,7 @@ func _init() -> void:
 	_check_partition_closes()
 	_check_deviation_is_zero_mean()
 	_check_unemployment_decomposes()
+	_check_sectors_still_reconcile()
 	_finish()
 
 
@@ -120,6 +121,23 @@ func _check_unemployment_decomposes() -> void:
 		)
 		if absf(Regions.unemployment_pct(ns, list, region.id) - expect) > 0.0000001:
 			_fail("region '%s' reads %f against its own formula's %f" % [region.id, Regions.unemployment_pct(ns, list, region.id), expect])
+
+
+## The invariant that CHANGED, pinned at the precision it now holds at. Before V2.5
+## `ns.gdp_eur_bn` was `_sum(ns.sector_output)` and the two agreed exactly; GDP is the
+## region sum now, so the sectors agree to float noise instead. Asserted rather than
+## dropped, because trend_pct() divides by gdp_eur_bn and a sector split that drifted
+## would move the trend without anything saying so.
+func _check_sectors_still_reconcile() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.nations["FRA"]
+	for i in 168:
+		Economy.tick_month(state)
+	var sectors: float = 0.0
+	for value in ns.sector_output.values():
+		sectors += float(value)
+	if absf(sectors - ns.gdp_eur_bn) > 0.000000001 * ns.gdp_eur_bn:
+		_fail("sectors sum to %f against a national %f" % [sectors, ns.gdp_eur_bn])
 
 
 func _finish() -> void:
