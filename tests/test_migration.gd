@@ -27,6 +27,9 @@ func _init() -> void:
 	_check_seed_matches_the_content()
 	_check_pull_is_expected_income()
 	_check_city_pull_matches_named_payroll()
+	_check_both_partitions_close()
+	_check_the_national_figure_is_untouched()
+	_check_no_share_goes_negative()
 	_finish()
 
 
@@ -117,6 +120,73 @@ func _check_city_pull_matches_named_payroll() -> void:
 					_fail("%s city '%s' pull %f against an expected exact 0.0 -- %s names no employers" % [
 						nation_id, city.id, actual, nation_id,
 					])
+
+
+## THE INVARIANT THE WHOLE SESSION RESTS ON, at both levels and over a real fourteen
+## years rather than at new game, because float drift is what a one-month check cannot
+## see. The flow is zero-sum by subtraction, so this is the model rather than a check
+## on it -- and the tolerance is 1e-12 relative rather than V2.5's 1e-9, because
+## nothing here has a Jensen term: no quantity is exponentiated.
+func _check_both_partitions_close() -> void:
+	for nation_id in ["FRA", "DEU", "GBR"]:
+		var state = GameState.new_game(_loader, nation_id)
+		var ns = state.nations[nation_id]
+		var list: Array = _loader.regions.get(nation_id, [])
+		var start_total: float = Migration.named_region_total(ns, list)
+		var start_city_totals: Dictionary = {}
+		for region in list:
+			var region_total: float = 0.0
+			for city in region.cities:
+				region_total += Migration.city_share(ns, city.id)
+			start_city_totals[region.id] = region_total
+
+		for i in 168:
+			Migration.tick_month(state, _loader)
+
+		var end_total: float = Migration.named_region_total(ns, list)
+		if absf(end_total - start_total) > 0.000000000001:
+			_fail("%s: the named regions summed to %.15f and now sum to %.15f -- the national residual is frozen, so this may not move" % [
+				nation_id, start_total, end_total,
+			])
+		for region in list:
+			var region_total: float = 0.0
+			for city in region.cities:
+				region_total += Migration.city_share(ns, city.id)
+			if absf(region_total - float(start_city_totals[region.id])) > 0.000000000001:
+				_fail("%s region '%s': its named cities summed to %.15f and now sum to %.15f -- the rural residual carries the mean, so it neither drains nor fills" % [
+					nation_id, region.id, float(start_city_totals[region.id]), region_total,
+				])
+
+
+## MIGRATION IS INTERNAL, so the head count it partitions may not move. This is what
+## makes the balance re-run's bit-identity prediction a structural claim rather than
+## a hope: ns.population is written by Economy.tick_month() alone and this system
+## never touches it.
+func _check_the_national_figure_is_untouched() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.nations["FRA"]
+	var before: float = ns.population
+	for i in 168:
+		Migration.tick_month(state, _loader)
+	if ns.population != before:
+		_fail("the national population moved from %.15f to %.15f under migration alone" % [before, ns.population])
+
+
+## The proportional form is what bounds a share, so this asserts the property rather
+## than a clamp enforcing it -- src/sim/campaign.gd's argument that a bound with no
+## number to set wrong beats a clamp.
+func _check_no_share_goes_negative() -> void:
+	for nation_id in ["FRA", "DEU", "GBR"]:
+		var state = GameState.new_game(_loader, nation_id)
+		var ns = state.nations[nation_id]
+		for i in 168:
+			Migration.tick_month(state, _loader)
+		for key in ns.region_pop_share.keys():
+			if float(ns.region_pop_share[key]) <= 0.0:
+				_fail("%s region '%s' reached a share of %f" % [nation_id, key, float(ns.region_pop_share[key])])
+		for key in ns.city_pop_share.keys():
+			if float(ns.city_pop_share[key]) <= 0.0:
+				_fail("%s city '%s' reached a share of %f" % [nation_id, key, float(ns.city_pop_share[key])])
 
 
 func _fail(message: String) -> void:

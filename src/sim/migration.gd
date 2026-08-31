@@ -121,3 +121,93 @@ static func city_pull(ns, loader, region, city_id: String) -> float:
 	if heads <= 0.0:
 		return 0.0
 	return Companies.headcount_in_city(ns, loader, city_id) / heads
+
+
+# --- The flow -----------------------------------------------------------------
+
+## The named regions' share of the nation, which the flow may not move. The
+## remainder is extra-regio and the overseas regions the bounding box drops -- a
+## person cannot migrate to somewhere the game does not draw.
+static func named_region_total(ns, region_list: Array) -> float:
+	var total: float = 0.0
+	for region in region_list:
+		total += region_share(ns, region.id)
+	return total
+
+
+## One month, for all ten nations. Runs AFTER Companies.tick_month() in
+## src/ui/main.gd's order, because the city pull reads live headcount and a month in
+## which a subsidy moved a firm's hiring should move people in the same month rather
+## than the next one.
+static func tick_month(state, loader) -> void:
+	if K.MIGRATION_RATE == 0.0:
+		return
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	for id in ids:
+		_tick_nation(state.nations[id], state.regions.get(id, []), loader)
+
+
+## The one expression, applied twice with different denominators -- which is what
+## keeps this one machine rather than two. `ds_i = RATE * s_i * (pull_i - mean) / 12`
+## with the mean taken in the SAME share weights, so the sum telescopes to exactly
+## zero however extreme the spread. Every delta is computed against the shares as
+## they stood at the start of the month and applied afterwards, so the result does
+## not depend on the order the register is walked in -- Companies._tick_shares()'s
+## discipline and Economy.tick_month()'s pre-pass, and it exists here for their
+## reason.
+static func _tick_nation(ns, region_list: Array, loader) -> void:
+	if region_list.is_empty():
+		return
+
+	# Level one: between the named regions of the nation.
+	var pulls: Dictionary = {}
+	var weighted: float = 0.0
+	var total: float = 0.0
+	for region in region_list:
+		var pull: float = region_pull(ns, region_list, region.id)
+		var share: float = region_share(ns, region.id)
+		pulls[region.id] = pull
+		weighted += share * pull
+		total += share
+	if total > 0.0:
+		var mean: float = weighted / total
+		for region in region_list:
+			var share: float = region_share(ns, region.id)
+			ns.region_pop_share[region.id] = share + K.MIGRATION_RATE * share * (float(pulls[region.id]) - mean) / 12.0
+
+	# Level two: between the named cities of each region. The rural residual carries
+	# the region's own mean, so it contributes nothing to the average and the named
+	# cities' sum is invariant too -- src/sim/regions.gd's treatment of its residual,
+	# and the reason this session produces no net urbanisation.
+	for region in region_list:
+		if region.cities.size() < 2:
+			# One city cannot differ from its own mean. Skipped rather than computed,
+			# because `pull - mean` is exactly 0.0 there and doing the arithmetic
+			# anyway would spend float precision on a guaranteed no-op.
+			continue
+		var city_pulls: Dictionary = {}
+		var city_weighted: float = 0.0
+		var city_total: float = 0.0
+		for city in region.cities:
+			var pull: float = city_pull(ns, loader, region, city.id)
+			var share: float = city_share(ns, city.id)
+			city_pulls[city.id] = pull
+			city_weighted += share * pull
+			city_total += share
+		if city_total <= 0.0:
+			continue
+		var city_mean: float = city_weighted / city_total
+		for city in region.cities:
+			var share: float = city_share(ns, city.id)
+			ns.city_pop_share[city.id] = share + K.MIGRATION_RATE * share * (float(city_pulls[city.id]) - city_mean) / 12.0
+
+
+## Has any region drifted past the bound? Read by tools/migration_probe.gd and by
+## tests/test_migration.gd; nothing in the tick calls it, because a bound that
+## silently clamps is a bound nobody measures -- src/sim/regions.gd's own sentence.
+static func worst_share_drift(ns, region_list: Array) -> float:
+	var worst: float = 0.0
+	for region in region_list:
+		worst = maxf(worst, absf(region_share(ns, region.id) - float(region.share)))
+	return worst
