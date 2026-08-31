@@ -31,6 +31,7 @@ func _init() -> void:
 	_check_the_national_figure_is_untouched()
 	_check_no_share_goes_negative()
 	_check_share_delta_direction()
+	_check_both_harnesses_tick()
 	_finish()
 
 
@@ -218,6 +219,18 @@ func _check_share_delta_direction() -> void:
 	var inert: float = Migration.share_delta(share, 1.5, mean, 0.0)
 	if inert != 0.0:
 		_fail("a rate of 0.0 produced a nonzero delta of %f -- this is why the shipped tree, at MIGRATION_RATE 0.0, is inert" % [inert])
+
+
+## V1.5d SHIPPED WITH NEITHER HARNESS CALLING Media.tick_month(), so both ran the
+## pre-session model and their agreement about a bit-identical re-run was about
+## nothing. A bit-identical re-run is the REASSURING outcome, which is exactly why
+## this is a test and not a habit -- tests/test_pledges.gd's idiom, and the reason it
+## reads both files rather than one.
+func _check_both_harnesses_tick() -> void:
+	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd", "res://src/ui/main.gd"]:
+		var text := FileAccess.get_file_as_string(path)
+		if not text.contains("Migration.tick_month"):
+			_fail("%s does not call Migration.tick_month -- a harness running the pre-session model agrees with the other about nothing" % path)
 
 
 func _fail(message: String) -> void:
