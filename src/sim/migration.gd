@@ -148,6 +148,17 @@ static func tick_month(state, loader) -> void:
 		_tick_nation(state.nations[id], state.regions.get(id, []), loader)
 
 
+## One entry's monthly change in share. Extracted so the DIRECTION of the flow is
+## testable at all: MIGRATION_RATE is 0.0 in the shipped tree until it is measured,
+## so an assertion driven through tick_month() passes whatever sign the model has --
+## and a flow that moved people TOWARD the poorer, higher-unemployment place would
+## satisfy every invariant this module asserts, because conservation and direction are
+## orthogonal failures. This is also the one expression both levels share, so having
+## it in one place is what stops them drifting apart.
+static func share_delta(share: float, pull: float, mean: float, rate: float) -> float:
+	return rate * share * (pull - mean) / 12.0
+
+
 ## The one expression, applied twice with different denominators -- which is what
 ## keeps this one machine rather than two. `ds_i = RATE * s_i * (pull_i - mean) / 12`
 ## with the mean taken in the SAME share weights, so the sum telescopes to exactly
@@ -155,31 +166,21 @@ static func tick_month(state, loader) -> void:
 ## they stood at the start of the month and applied afterwards, so the result does
 ## not depend on the order the register is walked in -- Companies._tick_shares()'s
 ## discipline and Economy.tick_month()'s pre-pass, and it exists here for their
-## reason.
+## reason. The share is cached beside the pull for the same reason the pull is: a
+## later term that read a neighbour's share instead of only its own -- a distance
+## weight, a contiguity term -- would make the result walk-order-dependent despite
+## this comment, unless every read in the loop comes from one frozen snapshot.
 static func _tick_nation(ns, region_list: Array, loader) -> void:
 	if region_list.is_empty():
 		return
 
-	# Level one: between the named regions of the nation.
-	var pulls: Dictionary = {}
-	var weighted: float = 0.0
-	var total: float = 0.0
-	for region in region_list:
-		var pull: float = region_pull(ns, region_list, region.id)
-		var share: float = region_share(ns, region.id)
-		pulls[region.id] = pull
-		weighted += share * pull
-		total += share
-	if total > 0.0:
-		var mean: float = weighted / total
-		for region in region_list:
-			var share: float = region_share(ns, region.id)
-			ns.region_pop_share[region.id] = share + K.MIGRATION_RATE * share * (float(pulls[region.id]) - mean) / 12.0
-
-	# Level two: between the named cities of each region. The rural residual carries
-	# the region's own mean, so it contributes nothing to the average and the named
-	# cities' sum is invariant too -- src/sim/regions.gd's treatment of its residual,
-	# and the reason this session produces no net urbanisation.
+	# Level one (run FIRST): the named cities of each region. city_pull() reads its
+	# OWN region's live share through city_population(), while region_pull() reads no
+	# city's share at all -- so cities-then-regions is the order in which both levels
+	# see start-of-month state. Swapping this back would make the city pull divide by
+	# the region's POST-flow share, which is a smaller number for a region people are
+	# leaving and a larger one for a region people are arriving in -- a same-month
+	# look-ahead the region loop below does not get.
 	for region in region_list:
 		if region.cities.size() < 2:
 			# One city cannot differ from its own mean. Skipped rather than computed,
@@ -187,25 +188,46 @@ static func _tick_nation(ns, region_list: Array, loader) -> void:
 			# anyway would spend float precision on a guaranteed no-op.
 			continue
 		var city_pulls: Dictionary = {}
+		var city_shares: Dictionary = {}
 		var city_weighted: float = 0.0
 		var city_total: float = 0.0
 		for city in region.cities:
 			var pull: float = city_pull(ns, loader, region, city.id)
 			var share: float = city_share(ns, city.id)
 			city_pulls[city.id] = pull
+			city_shares[city.id] = share
 			city_weighted += share * pull
 			city_total += share
 		if city_total <= 0.0:
 			continue
 		var city_mean: float = city_weighted / city_total
 		for city in region.cities:
-			var share: float = city_share(ns, city.id)
-			ns.city_pop_share[city.id] = share + K.MIGRATION_RATE * share * (float(city_pulls[city.id]) - city_mean) / 12.0
+			var share: float = float(city_shares[city.id])
+			ns.city_pop_share[city.id] = share + share_delta(share, float(city_pulls[city.id]), city_mean, K.MIGRATION_RATE)
+
+	# Level two: between the named regions of the nation.
+	var pulls: Dictionary = {}
+	var shares: Dictionary = {}
+	var weighted: float = 0.0
+	var total: float = 0.0
+	for region in region_list:
+		var pull: float = region_pull(ns, region_list, region.id)
+		var share: float = region_share(ns, region.id)
+		pulls[region.id] = pull
+		shares[region.id] = share
+		weighted += share * pull
+		total += share
+	if total > 0.0:
+		var mean: float = weighted / total
+		for region in region_list:
+			var share: float = float(shares[region.id])
+			ns.region_pop_share[region.id] = share + share_delta(share, float(pulls[region.id]), mean, K.MIGRATION_RATE)
 
 
-## Has any region drifted past the bound? Read by tools/migration_probe.gd and by
-## tests/test_migration.gd; nothing in the tick calls it, because a bound that
-## silently clamps is a bound nobody measures -- src/sim/regions.gd's own sentence.
+## Has any region drifted past the bound? Will be read by tools/migration_probe.gd
+## and by tests/test_migration.gd once a later task adds the callers; nothing in the
+## tick calls it, because a bound that silently clamps is a bound nobody measures --
+## src/sim/regions.gd's own sentence.
 static func worst_share_drift(ns, region_list: Array) -> float:
 	var worst: float = 0.0
 	for region in region_list:

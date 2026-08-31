@@ -26,7 +26,12 @@ extends RefCounted
 ## `s * (1 + rate * (pull - mean) / 12)` cannot reach zero from a positive share for
 ## any rate small enough that the monthly factor stays positive, so this file ships
 ## no share floor and tests/test_migration.gd asserts positivity instead of a clamp
-## enforcing it.
+## enforcing it. THAT ARGUMENT HOLDS ONLY BECAUSE EVERY PULL IS NON-NEGATIVE: the
+## employment probability stays in [0.6, 1.0] because Regions.unemployment_pct() is
+## clamped by economy_constants.UNEMP_MAX_PCT = 40.0, and a head count and an output
+## share are both non-negative by construction -- three facts that live in other
+## modules, so a session that raises that clamp past 100 or adds a negative term to a
+## pull owes this argument a second look before trusting the no-floor claim.
 ##
 ## BAND, two parts, both fixed before the sweep (docs/migration-model.md section 6):
 ##   (i)  READABLE. Over 60 months -- one presidential term -- the largest mover's

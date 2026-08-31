@@ -30,6 +30,7 @@ func _init() -> void:
 	_check_both_partitions_close()
 	_check_the_national_figure_is_untouched()
 	_check_no_share_goes_negative()
+	_check_share_delta_direction()
 	_finish()
 
 
@@ -187,6 +188,36 @@ func _check_no_share_goes_negative() -> void:
 		for key in ns.city_pop_share.keys():
 			if float(ns.city_pop_share[key]) <= 0.0:
 				_fail("%s city '%s' reached a share of %f" % [nation_id, key, float(ns.city_pop_share[key])])
+
+
+## CONSERVATION AND DIRECTION ARE ORTHOGONAL FAILURES, and the three checks above
+## this one prove it: negate every delta this module ever produces and the sum still
+## telescopes to zero, ns.population is still untouched, and every share still stays
+## positive -- a model that moved people TOWARD the poorer, higher-unemployment place
+## would pass all three unchanged. And it cannot be caught by driving tick_month(),
+## because MIGRATION_RATE is 0.0 in the shipped tree until a later task measures it,
+## so any assertion reached through the tick passes vacuously whatever the sign is.
+## share_delta() is checked directly instead, at a rate this test supplies itself.
+func _check_share_delta_direction() -> void:
+	var rate := 0.02
+	var share := 0.10
+	var mean := 1.0
+
+	var up: float = Migration.share_delta(share, 1.5, mean, rate)
+	if up <= 0.0:
+		_fail("a pull above the mean produced a delta of %f -- migration should move people TOWARD the better place" % [up])
+
+	var down: float = Migration.share_delta(share, 0.5, mean, rate)
+	if down >= 0.0:
+		_fail("a pull below the mean produced a delta of %f -- migration should move people AWAY from the worse place" % [down])
+
+	var flat: float = Migration.share_delta(share, mean, mean, rate)
+	if flat != 0.0:
+		_fail("a pull equal to the mean produced a nonzero delta of %f" % [flat])
+
+	var inert: float = Migration.share_delta(share, 1.5, mean, 0.0)
+	if inert != 0.0:
+		_fail("a rate of 0.0 produced a nonzero delta of %f -- this is why the shipped tree, at MIGRATION_RATE 0.0, is inert" % [inert])
 
 
 func _fail(message: String) -> void:
