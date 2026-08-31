@@ -1317,7 +1317,7 @@ func _on_save_requested(slot: String) -> void:
 ## reference to the old one has to be pointed at the new one -- the same
 ## setup() calls _ready() made the first time, not a special load path.
 func _on_load_requested(slot: String) -> void:
-	var result := SaveManager.load_game(slot)
+	var result := SaveManager.load_game(slot, _loader)
 	if not result["ok"]:
 		_save_load_panel.report("Load failed: %s" % result["error"])
 		_save_load_panel.mark_dirty()

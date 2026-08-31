@@ -11,12 +11,19 @@ What a region is, what a city is, why the level differs by nation, and the one
 constant this session measures. Built at [[ROADMAP|V2.2a]]; [[tiers/v2|V2]] section 2.
 
 > [!important] A register, not a machine
-> Nothing in `src/sim/` reads a region. A region carries no GDP, no unemployment and
-> no sector mix; a city carries no population, no jobs of its own and no growth. §5 is
-> the session that makes a region load-bearing and §6 the one that moves people
-> between cities, and each arrives with the field it needs rather than finding it
-> pre-authored and inert. `tests/test_geography.gd` fails if any file under `src/sim/`
-> preloads `region.gd` or `city.gd`.
+> At V2.2a nothing in `src/sim/` read a region: a region carried no GDP, no
+> unemployment and no sector mix; a city carried no population, no jobs of its own
+> and no growth. §5 is the session that makes a region load-bearing and §6 the one
+> that moves people between cities, and each arrives with the field it needs rather
+> than finding it pre-authored and inert. **V2.5 is that session, and the check was
+> inverted and narrowed rather than deleted** — V2.2b's treatment of the geometry
+> assertion, one file over: exactly ONE file under `src/sim/` may reach the register
+> (`src/sim/regions.gd`, which reads it as a duck-typed Array and preloads neither
+> type, so the old preload scan was green all along and a second reader arriving the
+> same way would never have turned it red — the narrowed check reads the field
+> contract instead). A city still carries no population of its own and no economy;
+> `city.gd`'s own error string now names §6 as the session that comes to change
+> that. See [[region-economy-model]].
 
 ## 1. The shape
 
@@ -131,6 +138,16 @@ ONS was probed before that call was taken rather than assumed unavailable: its b
 API publishes `gdp-by-local-authority`, which is 380 LAU rows with **no ITL codes at
 all**, so aggregating it to ITL2 needs a fourth dataset as a lookup. Recorded so §5
 does not re-derive it.
+
+> [!warning] V2.5 measured the other half, and §4 was half right about it too
+> The authored fallback at NUTS 1 is *not* twelve numbers from one product: ONS's
+> `regional-gdp-by-year` publishes ITL1 `UKC`–`UKL` — ten of twelve — plus England
+> and extra-regio, and Scotland and Northern Ireland come from the devolved
+> administrations. The product is an annual index (cvm) besides, not a monetary
+> level. The gate was all twelve ITL1 figures; it failed; the **population proxy**
+> was taken rather than a number invented, and Britain having no regional
+> divergence at all is a measured bound in [[region-economy-model]] §8, with the
+> unemployment and GVA series carrying the same zero-`UK` hole.
 
 ## 5. The city join is a point in a polygon
 

@@ -12,6 +12,7 @@ extends RefCounted
 
 const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -400,7 +401,18 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## too: no stored upper-house SEATS (Chambers.seats() derives them from the share, so
 ## a later session storing them turns the assertion red and has to say why) and no
 ## stored court verdict, because Judiciary is a pure read over a law's own reach.
-const SAVE_VERSION := 27
+##
+## V2.5 bumps this to 28 on ONE field: `NationState.region_gdp_eur_bn`, the region
+## level. Absent, the dictionary is empty, `Regions.total()` returns 0.0, and the
+## definitional swap in Economy._apply_growth_to_sectors() writes national GDP to
+## zero on the first tick -- the country does not run a different model, it ceases to
+## have an economy (military_capability's case at V1.3g in its strongest form).
+## Re-seeding on load does not rescue it: the authored `gdp_share` is where a region
+## STARTED, and re-seeding would erase the divergence the player watched happen --
+## service_quality's reason at V1.5a. The SHARES stay content and round-trip through
+## data/regions/, and regional unemployment stays a pure read, so the test still pins
+## those two absences.
+const SAVE_VERSION := 28
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -524,6 +536,17 @@ var bloc := {}
 ## {action_id, action_name, since_year, since_month}. Written by
 ## Diplomacy.execute() through the fifth effect channel, and by nothing else.
 var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
+
+## The region register, copied off the loader once at new game so src/sim/ can reach
+## it without a loader. NationState.eu_member and .neighbours' own precedent, and for
+## their reason: Economy.tick_month(state) is called by both balance harnesses and
+## eight probes, and widening its signature would break every one of them.
+##
+## NOT SERIALISED. It is content; a save that carried it would let the partition drift
+## from the data/regions/ file that defines it, which is exactly what
+## tests/test_save_load.gd's surviving two absences are about. save_manager.load_game()
+## re-attaches it from its own loader argument.
+var regions := {}  # nation id -> Array of Region
 
 ## Deployments -- V1.3g. DIRECTED pair state on `measures`' separator, because
 ## France committing forces in support of Germany and the reverse are two acts with
@@ -670,6 +693,15 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
 		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
+
+	# AFTER the build loop rather than inside _build_nation(), and the placement is the
+	# argument: that function takes the nation's own content and nothing else, where a
+	# region register is a second file. Demography, Society, Unrest and Defence each
+	# seed a live stock from an init called here for exactly that reason, and this
+	# seeds one too.
+	for ns in gs.nations.values():
+		Regions.init_nation(ns, loader.regions.get(ns.id, []))
+	gs.regions = loader.regions
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -999,6 +1031,16 @@ func duplicate_state():
 	# above spell out: a shared reference is one added tick away from a budget
 	# panel repaint mutating the player's live diary, sixty times a second.
 	gs.appointments = appointments.duplicate(true)
+	# The register is CONTENT (it never mutates after new_game), so unlike the
+	# pair registers above what matters is not who owns it but that a projection
+	# HAS one: duplicate(true) gives the copy its own dictionaries and arrays
+	# holding the same Region objects, which is as deep as it needs to go --
+	# Region is content and nothing anywhere writes through it. An EMPTY register
+	# on the copy was a live bug: Regions.tick_month() grew the region LEVEL
+	# against an empty region LIST and returned the residual alone, so the budget
+	# panel projected a France that lost 98 % of its output. V2.5 shipped exactly
+	# that and test_budget caught it.
+	gs.regions = regions.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs

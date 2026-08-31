@@ -884,6 +884,24 @@ CITY_COUNTRY = dict(NUTS_COUNTRY, GBR="GB")
 # what docs/tiers/v2.md section 5 makes load-bearing. It is not imported here.
 REGION_YEARS = [2022, 2019]
 
+# V2.5. The three economic series, all at REGION_ECON_YEAR and all carrying ZERO `UK`
+# geo codes -- the same withdrawal that emptied demo_r_pjangrp3's UK rows after 2019
+# emptied these at every year, so V1.5c's nearest-year fallback has nothing to fall
+# back to. Britain's fallback is authored below and is the session's honest gap.
+#
+# nace_r2 -> this game's three sectors. F (construction) joins B-E as industry rather
+# than standing alone, because economy_constants.SECTOR_TREND has three keys and a
+# fourth would be a model change wearing an import's clothes.
+REGION_ECON_YEAR = 2022
+NACE_TO_SECTOR = {
+    "A": "agriculture",
+    "B-E": "industry",
+    "F": "industry",
+    "G-J": "services",
+    "K-N": "services",
+    "O-U": "services",
+}
+
 # THE POPULATION CUT, and the one measured constant this session ships.
 #
 # Named cities are a partition of their region the way a firm is of its sector, so the
@@ -970,6 +988,130 @@ def load_eurostat_region_population():
         inverse = {v: k for k, v in index.items()}
         out[year] = {inverse[int(k)]: v for k, v in data["value"].items()}
     return out
+
+
+def load_jsonstat(filename, keep_dims):
+    """{(value of each dim in keep_dims): number} for one cached Eurostat response.
+
+    JSON-stat keeps the values in a flat dict keyed by the product of the dimension
+    sizes, so the index has to be decoded rather than read. Written once here because
+    V2.5 reads three responses with three different dimension lists, where V2.2a read
+    one and could invert the geo index by hand.
+    """
+    path = SOURCES / "eurostat" / filename
+    if not path.exists():
+        sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    dims = data["id"]
+    sizes = [len(data["dimension"][x]["category"]["index"]) for x in dims]
+    inverse = []
+    for x in dims:
+        idx = data["dimension"][x]["category"]["index"]
+        inverse.append({v: k for k, v in idx.items()})
+    strides = [1] * len(sizes)
+    for i in range(len(sizes) - 2, -1, -1):
+        strides[i] = strides[i + 1] * sizes[i + 1]
+    wanted = [dims.index(d) for d in keep_dims]
+    out = {}
+    for key, value in data["value"].items():
+        rem = int(key)
+        coord = []
+        for s in strides:
+            coord.append(rem // s)
+            rem %= s
+        out[tuple(inverse[i][coord[i]] for i in wanted)] = value
+    return out
+
+
+def load_region_gdp():
+    """{NUTS code: GDP in million EUR}."""
+    raw = load_jsonstat(f"nama_10r_2gdp_{REGION_ECON_YEAR}.json", ["geo"])
+    return {code: value for (code,), value in raw.items()}
+
+
+def load_region_unemployment():
+    """{NUTS code: unemployment rate, per cent}."""
+    raw = load_jsonstat(f"lfst_r_lfu3rt_{REGION_ECON_YEAR}.json", ["geo"])
+    return {code: value for (code,), value in raw.items()}
+
+
+def load_region_sector_mix():
+    """{NUTS code: {sector: GVA in million EUR}} over this game's three sectors."""
+    raw = load_jsonstat(f"nama_10r_3gva_{REGION_ECON_YEAR}.json", ["nace_r2", "geo"])
+    out = {}
+    for (nace, code), value in raw.items():
+        sector = NACE_TO_SECTOR.get(nace)
+        if sector is None:
+            continue
+        out.setdefault(code, {"agriculture": 0.0, "industry": 0.0, "services": 0.0})
+        out[code][sector] += value
+    return out
+
+
+# V2.5, Britain. All three Eurostat regional series carry zero `UK` codes, and
+# docs/geography-model.md section 4's "twelve numbers" is half right: ONS's
+# regional-gdp-by-year publishes ITL1 UKC-UKL -- ten of twelve -- while Scotland
+# (UKM) and Northern Ireland (UKN) come from the devolved administrations.
+#
+# None means the proxy below is taken: a British region's GDP share IS its population
+# share, its unemployment_rel is exactly 1.0 and its mix is the national mix, so
+# BRITAIN HAS NO REGIONAL DIVERGENCE AT ALL. That is a bound this session records
+# rather than a number it invents, and docs/region-economy-model.md carries it.
+GBR_GDP_MIO_EUR = None
+
+
+# The register is the 2021 geometry, and for two Dutch provinces the economic series
+# only answer under their 2024 codes: Utrecht and Zuid-Holland were renumbered NL31 ->
+# NL35 and NL33 -> NL36, and nama_10r_2gdp and nama_10r_3gva carry ONLY the new codes
+# while lfst_r_lfu3rt carries the old ones with no values. That this is the SAME
+# province and not a boundary change is proven by the population series, which answers
+# under both: NL31 and NL35 both carry 1 369 873 and NL33 and NL36 both carry
+# 3 753 944 -- equal to the person, the same evidence V2.2a used to collapse the
+# population file's two vintages. Reading a region's figure from its other vintage's
+# code is a join, not an invention; no figure here is authored.
+VINTAGE_SIBLING = {"NL31": "NL35", "NL33": "NL36"}
+
+
+def econ_figure(table, code, fallback=None):
+    """table[code], or its 2024 sibling's value, or fallback."""
+    if code in table:
+        return table[code]
+    sibling = VINTAGE_SIBLING.get(code)
+    if sibling is not None and sibling in table:
+        return table[sibling]
+    return fallback
+
+
+def normalised_mix(gva):
+    """{sector: share} summing to EXACTLY 1.0.
+
+    Two floored, the third the remainder -- the register's own rule that a residual
+    which is `1.0 - sum` cannot drift from what it is the remainder of. Not
+    floor_share() on all three: rounding three shares down leaves the sum under 1.0,
+    and a sector mix is a partition of one region rather than a partition with an
+    unnamed rest.
+    """
+    total = sum(gva.values())
+    if total <= 0.0:
+        return None
+    agriculture = floor_share(gva["agriculture"] / total)
+    industry = floor_share(gva["industry"] / total)
+    return {
+        "agriculture": agriculture,
+        "industry": industry,
+        "services": round(1.0 - agriculture - industry, 6),
+    }
+
+
+def proxy_mix(nid):
+    """The nation's own authored sector shares, read back out of data/nations/.
+
+    They live under `imported.sectors` -- the World Bank GVA shares -- not at the
+    top level, which is where the V2.5 plan's sketch looked and came up empty.
+    """
+    with open(NATIONS_DIR / f"{nid}.json", encoding="utf-8") as f:
+        return dict(json.load(f)["imported"]["sectors"])
 
 
 def load_gisco_nuts():
@@ -1274,11 +1416,25 @@ def build_regions():
     nuts = load_gisco_nuts()
     index = build_region_index(populations, nuts)
     counts = assign_cities(index)
+    gdp = load_region_gdp()
+    unemployment = load_region_unemployment()
+    mixes = load_region_sector_mix()
 
     files = {}
     for nid in NATIONS:
         entry = index[nid]
         national = entry["national"]
+        cc = NUTS_COUNTRY[nid]
+        national_gdp = gdp.get(cc)
+        national_rate = unemployment.get(cc)
+        national_gva_mix = normalised_mix(mixes[cc]) if cc in mixes else None
+        # The whole-nation proxy triggers on the NATION rather than on the code, so a
+        # series that thins out later takes the same documented path rather than a new
+        # one. Britain is the only nation allowed onto it: everywhere else a missing
+        # national figure is a broken download, not a dataset boundary.
+        proxy = national_gdp is None or national_rate is None
+        if proxy and nid != "GBR":
+            sys.exit(f"{nid}: regional economics missing and no fallback is authored")
         regions = []
         for region in entry["kept"]:
             cities = []
@@ -1297,25 +1453,85 @@ def build_regions():
                     "share": floor_share(share),
                     "lonlat": [round(city["lon"], 4), round(city["lat"], 4)],
                 })
+            share = floor_share(region["population"] / national)
+            code = region["id"]
+
+            if proxy:
+                region_gdp_share = share
+                region_rel = 1.0
+                region_mix = dict(proxy_mix(nid))
+            else:
+                region_gdp = econ_figure(gdp, code)
+                if region_gdp is None:
+                    sys.exit(f"{nid}: region {code} has a polygon and no GDP figure")
+                region_gdp_share = floor_share(region_gdp / national_gdp)
+                region_rel = round(
+                    econ_figure(unemployment, code, national_rate) / national_rate, 6)
+                # The mix degrades one step at a time, measured figure first: the
+                # region's own GVA, then the nation's own GVA, then -- Switzerland's
+                # case, where nama_10r_3gva carries a TOTAL branch and no branches at
+                # all -- the nation's own World Bank sector shares. Those are measured
+                # and already committed in data/nations/, so no number is invented;
+                # what is lost is only LOCATION, and Switzerland having no MIX
+                # divergence is a bound the model doc records, not a defect to patch.
+                region_gva = econ_figure(mixes, code)
+                if region_gva:
+                    region_mix = normalised_mix(region_gva)
+                elif national_gva_mix:
+                    region_mix = dict(national_gva_mix)
+                else:
+                    region_mix = dict(proxy_mix(nid))
+
             regions.append({
-                "id": region["id"],
+                "id": code,
                 "name": region["name"],
-                "share": floor_share(region["population"] / national),
+                "share": share,
+                "gdp_share": region_gdp_share,
+                "unemployment_rel": region_rel,
+                "sector_mix": region_mix,
                 "cities": cities,
             })
 
+        # THE DECOMPOSITION HAS TO BE EXACT, NOT APPROXIMATE. src/sim/regions.gd reads
+        # a regional rate as `national rate x unemployment_rel`, so if the
+        # population-weighted mean of the ratios is not 1.0 the regions say something
+        # about the country that the country's own figure does not. Weighted over the
+        # NAMED regions renormalised to sum 1, because the unnamed residual has no
+        # rate of its own and inventing one would be a number nobody measured.
+        weight_total = sum(r["share"] for r in regions)
+        if weight_total > 0.0:
+            mean = sum(r["share"] * r["unemployment_rel"] for r in regions) / weight_total
+            if mean > 0.0:
+                for r in regions:
+                    r["unemployment_rel"] = round(r["unemployment_rel"] / mean, 6)
+
         files[nid] = {
             "_source": ("Eurostat demo_r_pjangrp3 NUTS %d (%d); "
-                        "GISCO NUTS_RG_10M_%d; GeoNames cities15000"
-                        % (entry["level"], entry["year"], REGION_NUTS_VINTAGE)),
+                        "GISCO NUTS_RG_10M_%d; GeoNames cities15000; "
+                        "%s%s"
+                        % (entry["level"], entry["year"], REGION_NUTS_VINTAGE,
+                           ("population proxy -- no UK regional GDP, unemployment or GVA "
+                            "exists in Eurostat and none was authored, so gdp_share is the "
+                            "population share, unemployment_rel is 1.0 and the mix is the "
+                            "national mix"
+                            if proxy else
+                            "Eurostat nama_10r_2gdp, lfst_r_lfu3rt and nama_10r_3gva (%d)"
+                            % REGION_ECON_YEAR),
+                           ("; branch GVA is absent for the country, so every region "
+                            "carries the nation's own World Bank sector shares"
+                            if national_gva_mix is None and not proxy else ""))),
             "_year": entry["year"],
             "_note": ("Generated by tools/import_data.py -- every field here is "
                       "dataset-derived and a re-import overwrites the file whole. "
                       "`share` is of the NATION for a region and of its own REGION "
                       "for a city; both sums are below 1.0 and the remainder is the "
                       "unnamed residual -- extra-regio and overseas at the national "
-                      "level, rural and small towns at the regional one. See "
-                      "docs/geography-model.md."),
+                      "level, rural and small towns at the regional one. `gdp_share` "
+                      "is of the NATION's GDP and its residual is extra-regio; "
+                      "`unemployment_rel` is the region's rate over the nation's, "
+                      "normalised so the population-weighted mean is exactly 1.0; "
+                      "`sector_mix` sums to exactly 1.0. See "
+                      "docs/geography-model.md and docs/region-economy-model.md."),
             "regions": regions,
         }
     return files, index, counts

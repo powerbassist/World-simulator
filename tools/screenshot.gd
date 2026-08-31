@@ -25,6 +25,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -234,6 +235,11 @@ var _build := false
 var _region := false
 var _city := false
 
+## V2.5. A frame of a register at month 1 shows the import and nothing this session
+## built -- the whole quantity is a DIVERGENCE, and at month 1 it is exactly what
+## data/regions/ says. Ten years is what makes the moved column readable.
+var _diverge := false
+
 ## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
 ## than a feature. Both are cited from docs/playability-audit.md, because a claim
 ## about what the player sees needs a frame behind it and neither of these is
@@ -337,6 +343,8 @@ func _init() -> void:
 			_region = true
 		elif args[i] == "--city":
 			_city = true
+		elif args[i] == "--diverge":
+			_diverge = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -436,6 +444,8 @@ func _apply_view() -> void:
 		_break_ground()
 	if _region:
 		_open_the_partition()
+	if _diverge:
+		_let_the_regions_diverge()
 	if _city:
 		_point_at_the_capital()
 	if _campaign:
@@ -1600,6 +1610,16 @@ func _break_ground() -> void:
 ## ("Provence-Alpes-Côte d'Azur"), and the partition rows agree with the table
 ## under them.
 func _open_the_partition() -> void:
+	_main._windows.open("region")
+
+
+## V2.5. Ten years of divergence, then the Region panel -- which opens at the TOP
+## of its scroll by default, and that is where this flag wants to be: the partition
+## rows are the first thing on the panel and the league table runs off the fold,
+## which is the direction V1.6e's correction is about. No scroll handling, because
+## `_open_the_partition()` has none -- the panel's own default is the frame's claim.
+func _let_the_regions_diverge() -> void:
+	_tick_months(120)
 	_main._windows.open("region")
 
 

@@ -1,19 +1,22 @@
 extends PanelContainer
 
 ## The nation, partitioned -- V2.2b's Region panel, landing under Economy on
-## docs/panel-system.md §16's rule that a cluster is the domain of the decision:
-## the row names its future content "regional GDP, unemployment and sector mix",
-## and §5 is the block that writes those quantities. Until then this is the
-## register's readout -- shares of the population, the cities each region names,
-## and the named payroll, which is the one live number here and the one thing
-## making a region more than a name and a share.
+## docs/panel-system.md §16's rule that a cluster is the domain of the decision.
+## V2.5 wrote the quantities that row named -- regional GDP, unemployment and a
+## sector mix -- so this panel now reads them: output per head against the national
+## average, a live unemployment rate and each region's dominant sector, beside the
+## population shares and the named payroll the panel opened with. The payroll is no
+## longer the one live number here: share of output, output per head and
+## unemployment all move with the clock, because national GDP is the sum of these
+## regions and each grows at its own mix's rate.
 ##
-## Read-only and buttonless, people_panel.gd's design rather than a compromise:
-## there is no verb on a region until §5 gives it one, and a panel with no
-## interactive control cannot repeat the fold nation_panel.gd paid for twice.
-## The map reaches the CITY, not the region -- a cross is a point and a region
-## is an area, and this session shipped no region hover -- so the drawer entry
-## is a region's only way in and it opens on the player's own nation.
+## Still read-only and buttonless, people_panel.gd's design rather than a
+## compromise: §5 shipped a STATISTIC and no verb, so there is still nothing here a
+## button could do, and a panel with no interactive control cannot repeat the fold
+## nation_panel.gd paid for twice. The map reaches the CITY, not the region -- a
+## cross is a point and a region is an area, and this session shipped no region
+## hover -- so the drawer entry is a region's only way in and it opens on the
+## player's own nation.
 ##
 ## Authored order IS the ranking: the importer writes regions descending by
 ## population, so a panel that prints file order prints a league table and
@@ -25,6 +28,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
+const Regions = preload("res://src/sim/regions.gd")
 
 var _state
 var _loader
@@ -112,10 +116,10 @@ func _refresh() -> void:
 	_build_table(ns, regions)
 
 
-## The partition the whole register rests on, in three rows: how much of the
-## country the register names, and what the remainder is. The residual is
-## derived rather than stored, so these two rows cannot disagree with the table
-## below them.
+## The partition the whole register rests on, now in BOTH quantities: how much of
+## the country's people and how much of its output the register names, and what
+## the remainders are. Both residuals are derived rather than stored, so these rows
+## cannot disagree with the table below them.
 func _build_partition(ns, regions: Array) -> void:
 	PanelKit.heading(_body, "The partition")
 	var named := 0.0
@@ -125,6 +129,11 @@ func _build_partition(ns, regions: Array) -> void:
 	PanelKit.row(_body, "Regions", str(regions.size()))
 	PanelKit.row(_body, "Named share of the population", "%.1f%%" % (named * 100.0))
 	PanelKit.row(_body, "Unnamed — extra-regio and overseas", "%.1f%%" % (residual * 100.0))
+	var named_gdp: float = 0.0
+	for region in regions:
+		named_gdp += region.gdp_share
+	PanelKit.row(_body, "Named share of output", "%.1f%%" % (named_gdp * 100.0))
+	PanelKit.row(_body, "Unnamed output — extra-regio", "%.1f%%" % (Region.national_gdp_residual(regions) * 100.0))
 
 
 ## The league table. The payroll column is the register's one live quantity:
@@ -140,12 +149,33 @@ func _build_table(ns, regions: Array) -> void:
 		var jobs := 0.0
 		for city in region.cities:
 			jobs += Companies.headcount_in_city(ns, _loader, city.id)
+		# Output per head against the national average is the column nobody authored:
+		# `gdp_share / share` is two partitions of one nation divided by each other,
+		# and it is why carrying both is worth more than carrying either.
+		var index: float = Regions.gdp_per_head_index(ns, regions, region.id)
 		rows.append([
 			region.region_name,
-			"%.1f%%" % (region.share * 100.0),
+			"%.1f%%" % (Regions.share_of(ns, region.id) * 100.0),
 			PanelKit.pop_text(float(ns.population) * region.share),
-			str(region.cities.size()),
+			"x%.2f" % index,
+			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id),
+			_dominant(region),
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])
 	PanelKit.ledger(_body, rows)
-	PanelKit.line(_body, "Columns: share of the national population · people · named cities · named jobs. A regional economy is not modelled yet.")
+	PanelKit.line(_body, "Columns: share of output · people · output per head against the national average · unemployment · dominant sector · named jobs.")
+	PanelKit.line(_body, "National GDP is the sum of these regions. A region grows at the national rate plus what its own sector mix is worth, and those differences cancel across the country — so a region's mix moves its share and never the level.")
+
+
+## The mix, as one word. The three shares are on the region and the panel has one
+## column, so what is printed is the largest -- and services wins almost everywhere,
+## which is the honest answer rather than a flaw in the label.
+func _dominant(region) -> String:
+	var best: String = ""
+	var best_share: float = -1.0
+	for key in region.sector_mix.keys():
+		var v: float = float(region.sector_mix[key])
+		if v > best_share:
+			best_share = v
+			best = key
+	return "%s %.0f%%" % [best.capitalize(), best_share * 100.0]

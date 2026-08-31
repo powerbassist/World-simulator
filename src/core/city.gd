@@ -83,7 +83,7 @@ static func from_dict(d: Dictionary, region_id: String, index: int, filename: St
 
 	for key in d.keys():
 		if key != "id" and key != "name" and key != "share" and key != "lonlat":
-			errors.append("%s: %s has unrecognised field '%s' -- a city's population is its share read through its region, and it carries no economy of its own until docs/tiers/v2.md section 5" % [
+			errors.append("%s: %s has unrecognised field '%s' -- a city's population is its share read through its region, and it carries no economy of its own: V2.5 gave the REGION output, unemployment and a mix, and left the city a share of population, which is what docs/tiers/v2.md section 6 comes here to change" % [
 				filename, path, key,
 			])
 

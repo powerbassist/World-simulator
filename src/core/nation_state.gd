@@ -28,6 +28,26 @@ var sector_output := {}  # String -> float, EUR bn. Sums to gdp_eur_bn exactly.
 var gdp_eur_bn: float = 0.0
 var potential_gdp_eur_bn: float = 0.0
 
+## Region id -> output in EUR bn, plus one entry under region_constants.RESIDUAL_KEY
+## for the extra-regio remainder. NATIONAL GDP IS THE SUM OF THIS DICTIONARY -- V2.5.
+##
+## EARNS THE SAVE_VERSION BUMP, and it is military_capability's case at V1.3g in the
+## strongest form this list has carried. Absent, every entry reads 0.0, the sum is
+## 0.0, and `ns.gdp_eur_bn` is written to zero on the first tick: the country does not
+## run a different model, it ceases to have an economy. Re-deriving on load does not
+## rescue it either -- re-seeding from the authored `gdp_share` would erase fourteen
+## years of divergence the player watched happen, which is service_quality's reason at
+## V1.5a.
+##
+## WHAT IS NOT HERE IS THE HALF WORTH PINNING. There is no stored regional
+## unemployment rate, no regional stock and no regional accumulator:
+## src/sim/regions.gd reads a regional rate as a pure function of the national one,
+## so tests/test_save_load.gd asserts the ABSENCE and a session that makes it
+## stateful turns that red and has to say why. (tests/test_regions.gd reads this
+## file for the literal, so the refusal is written without naming it -- the
+## test_map_cities fired-on-a-comment lesson.)
+var region_gdp_eur_bn := {}
+
 var trend_annual_pct: float = 0.0
 var growth_annual_pct: float = 0.0
 
@@ -1312,6 +1332,7 @@ func duplicate_state():
 	s.neighbours = neighbours.duplicate()
 
 	s.sector_output = sector_output.duplicate(true)
+	s.region_gdp_eur_bn = region_gdp_eur_bn.duplicate(true)
 	s.gdp_eur_bn = gdp_eur_bn
 	s.potential_gdp_eur_bn = potential_gdp_eur_bn
 	s.trend_annual_pct = trend_annual_pct
@@ -1523,6 +1544,7 @@ func to_dict() -> Dictionary:
 		"neighbours": neighbours,
 
 		"sector_output": sector_output,
+		"region_gdp_eur_bn": region_gdp_eur_bn,
 		"gdp_eur_bn": gdp_eur_bn,
 		"potential_gdp_eur_bn": potential_gdp_eur_bn,
 		"trend_annual_pct": trend_annual_pct,
@@ -1722,6 +1744,7 @@ static func from_dict(d: Dictionary):
 	s.neighbours = d.get("neighbours", [])
 
 	s.sector_output = d.get("sector_output", {})
+	s.region_gdp_eur_bn = d.get("region_gdp_eur_bn", {})
 	s.gdp_eur_bn = d.get("gdp_eur_bn", 0.0)
 	s.potential_gdp_eur_bn = d.get("potential_gdp_eur_bn", 0.0)
 	s.trend_annual_pct = d.get("trend_annual_pct", 0.0)

@@ -42,6 +42,29 @@ var share: float = 0.0
 ## panel that prints them in file order prints a ranking.
 var cities: Array[City] = []
 
+## Share of the NATION's GDP, in (0, 1]. V2.5.
+##
+## A SECOND PARTITION OF THE SAME NATION, not a second reading of the first, and the
+## pair is the whole point: `share` is people and this is output, so `gdp_share /
+## share` is a region's GDP per head against the national average -- a quantity
+## nobody authored and the one the Region panel leads with. The residual is
+## extra-regio output, which is what `<CC>ZZ` holds and why it was never in the
+## roster.
+var gdp_share: float = 0.0
+
+## The region's unemployment rate over its nation's. Normalised at import so the
+## population-weighted mean over the named regions is exactly 1.0, which is what
+## makes src/sim/regions.gd's read a DECOMPOSITION of the national figure rather
+## than a second opinion about it.
+var unemployment_rel: float = 1.0
+
+## agriculture / industry / services, summing to exactly 1.0 -- economy_constants
+## .SECTOR_TREND's own three keys, so a region's trend is computed by the same
+## expression as a nation's and no fourth sector can arrive here without arriving
+## there. Unlike the two shares above this is NOT a partition of the nation: it is a
+## partition of the region, which is why its residual is zero rather than unnamed.
+var sector_mix: Dictionary = {}
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var r := new()
@@ -63,6 +86,40 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		r.share = float(d["share"])
 		if r.share <= 0.0 or r.share > 1.0:
 			errors.append("%s: %s share = %s must be in (0, 1]" % [filename, path, str(r.share)])
+
+	if not d.has("gdp_share") or not (typeof(d["gdp_share"]) == TYPE_INT or typeof(d["gdp_share"]) == TYPE_FLOAT):
+		errors.append("%s: %s missing or non-numeric field 'gdp_share'" % [filename, path])
+	else:
+		r.gdp_share = float(d["gdp_share"])
+		if r.gdp_share <= 0.0 or r.gdp_share > 1.0:
+			errors.append("%s: %s gdp_share = %s must be in (0, 1]" % [filename, path, str(r.gdp_share)])
+
+	if not d.has("unemployment_rel") or not (typeof(d["unemployment_rel"]) == TYPE_INT or typeof(d["unemployment_rel"]) == TYPE_FLOAT):
+		errors.append("%s: %s missing or non-numeric field 'unemployment_rel'" % [filename, path])
+	else:
+		r.unemployment_rel = float(d["unemployment_rel"])
+		if r.unemployment_rel <= 0.0 or r.unemployment_rel > 5.0:
+			errors.append("%s: %s unemployment_rel = %s must be in (0, 5]" % [filename, path, str(r.unemployment_rel)])
+
+	var mix = d.get("sector_mix", null)
+	if typeof(mix) != TYPE_DICTIONARY:
+		errors.append("%s: %s missing or invalid field 'sector_mix'" % [filename, path])
+	else:
+		var mix_total: float = 0.0
+		for key in ["agriculture", "industry", "services"]:
+			if not (mix as Dictionary).has(key) or not (typeof(mix[key]) == TYPE_INT or typeof(mix[key]) == TYPE_FLOAT):
+				errors.append("%s: %s sector_mix missing or non-numeric '%s'" % [filename, path, key])
+				continue
+			mix_total += float(mix[key])
+			r.sector_mix[key] = float(mix[key])
+		for key in (mix as Dictionary).keys():
+			if key != "agriculture" and key != "industry" and key != "services":
+				errors.append("%s: %s sector_mix has unrecognised sector '%s' -- the three are economy_constants.SECTOR_TREND's own keys" % [filename, path, key])
+		# A partition of the region, so it closes exactly rather than leaving a
+		# residual. The tolerance is float noise on three six-decimal numbers, not
+		# a licence for a mix that nearly adds up.
+		if r.sector_mix.size() == 3 and absf(mix_total - 1.0) > 0.000001:
+			errors.append("%s: %s sector_mix sums to %s, not 1.0" % [filename, path, str(mix_total)])
 
 	var raw = d.get("cities", null)
 	if typeof(raw) != TYPE_ARRAY or (raw as Array).is_empty():
@@ -98,8 +155,9 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			])
 
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "share" and key != "cities":
-			errors.append("%s: %s has unrecognised field '%s' -- a region carries no GDP, unemployment or sector mix until docs/tiers/v2.md section 5" % [
+		if key != "id" and key != "name" and key != "share" and key != "cities" \
+			and key != "gdp_share" and key != "unemployment_rel" and key != "sector_mix":
+			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio and a sector mix, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
 				filename, path, key,
 			])
 
@@ -122,6 +180,15 @@ static func national_residual(regions: Array) -> float:
 	var total := 0.0
 	for r in regions:
 		total += r.share
+	return maxf(0.0, 1.0 - total)
+
+
+## What the nation's OUTPUT does not name: extra-regio -- offshore, embassies, ships.
+## Derived rather than stored, for national_residual()'s reason one quantity over.
+static func national_gdp_residual(regions: Array) -> float:
+	var total: float = 0.0
+	for r in regions:
+		total += r.gdp_share
 	return maxf(0.0, 1.0 - total)
 
 

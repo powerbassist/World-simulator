@@ -114,8 +114,8 @@ func _init() -> void:
 	clock.month = state.month
 	clock.day = 17
 
-	_run_roundtrip(state, clock)
-	_run_atomic_write(state, clock)
+	_run_roundtrip(state, clock, loader)
+	_run_atomic_write(state, clock, loader)
 	_run_second_nation_roundtrip(loader)
 	_run_transition_roundtrip(loader)
 	_run_scenario_roundtrip(loader)
@@ -186,7 +186,7 @@ func _run_second_nation_roundtrip(loader) -> void:
 		_fail("save_game(DEU) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(SECOND_NATION_SLOT)
+	var result := SaveManager.load_game(SECOND_NATION_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(DEU) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -239,7 +239,7 @@ func _run_scenario_roundtrip(loader) -> void:
 		_fail("save_game(DEU scenario) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(SCENARIO_SLOT)
+	var result := SaveManager.load_game(SCENARIO_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(DEU scenario) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -296,7 +296,7 @@ func _run_transition_roundtrip(loader) -> void:
 		_fail("save_game(GBR post-transition) failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(TRANSITION_SLOT)
+	var result := SaveManager.load_game(TRANSITION_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game(GBR post-transition) failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -352,7 +352,7 @@ func _run_diplomacy_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with diplomacy: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(DIPLOMACY_SLOT)
+	var loaded_result := SaveManager.load_game(DIPLOMACY_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with diplomacy: %s" % loaded_result["error"])
 		return
@@ -422,7 +422,7 @@ func _run_trade_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with an agreement: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(TRADE_SLOT)
+	var loaded_result := SaveManager.load_game(TRADE_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with an agreement: %s" % loaded_result["error"])
 		return
@@ -536,7 +536,7 @@ func _run_coercion_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with a measure: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(COERCION_SLOT)
+	var loaded_result := SaveManager.load_game(COERCION_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with a measure: %s" % loaded_result["error"])
 		return
@@ -667,7 +667,7 @@ func _run_bloc_roundtrip(loader) -> void:
 		_fail("save_game failed on a state with a bloc rule: %s" % save_error)
 		return
 
-	var loaded_result := SaveManager.load_game(BLOC_SLOT)
+	var loaded_result := SaveManager.load_game(BLOC_SLOT, loader)
 	if not loaded_result["ok"]:
 		_fail("load_game failed on a save with a bloc rule: %s" % loaded_result["error"])
 		return
@@ -730,8 +730,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -867,13 +867,13 @@ class _StubPact:
 	var action_name: String = "Test Pact"
 
 
-func _run_roundtrip(state, clock) -> void:
+func _run_roundtrip(state, clock, loader) -> void:
 	var save_error := SaveManager.save_game(state, clock, ROUNDTRIP_SLOT)
 	if not save_error.is_empty():
 		_fail("save_game failed: %s" % save_error)
 		return
 
-	var result := SaveManager.load_game(ROUNDTRIP_SLOT)
+	var result := SaveManager.load_game(ROUNDTRIP_SLOT, loader)
 	if not result["ok"]:
 		_fail("load_game failed on a save this test just wrote: %s" % result["error"])
 		return
@@ -901,7 +901,7 @@ func _run_roundtrip(state, clock) -> void:
 ## consequences, both checked here, because the failure this guards against —
 ## a truncated save where a working game used to be — cannot be provoked
 ## directly without killing the process mid-write.
-func _run_atomic_write(state, clock) -> void:
+func _run_atomic_write(state, clock, loader) -> void:
 	var temp_path: String = SaveManager._path_for(ROUNDTRIP_SLOT) + SaveManager.TEMP_SUFFIX
 
 	# 1. A completed save leaves no temp behind.
@@ -1256,8 +1256,8 @@ func _check_pledge_fields(loader) -> void:
 	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
 	# V1.7b would have to come and say why it moves; it does not move, and the reason is
 	# in this function's header. V1.7c now has to come and say why.
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.7c. FOUR added fields, THREE of which earn the bump to 25 and one of which is
@@ -1983,8 +1983,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -2149,8 +2149,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -2233,8 +2233,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -2551,8 +2551,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -2642,8 +2642,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2800,8 +2800,8 @@ func _check_tax_fields(loader) -> void:
 	if demog_src.contains("gini_index ="):
 		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
@@ -2880,8 +2880,8 @@ func _check_investment_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
 
 
 ## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
@@ -2914,22 +2914,38 @@ func _check_investment_fields(loader) -> void:
 ## a region a quantity that moves, and section 6 the one that moves people between
 ## cities.
 ##
-## So this pins three ABSENCES rather than three fields, and each one turns red for a
-## different reason. A stored region share means the partition can drift from the
+## So this pinned three ABSENCES rather than three fields, and each one turned red for
+## a different reason. A stored region share means the partition can drift from the
 ## content that defines it. A stored city population means a head count exists that
 ## `share x population` does not already give. And a `regions` key on NationState at
 ## all means the register has become live state, which is precisely the change V2.5
 ## has to come here and argue for.
+##
+## V2.5 FLIPPED ONE OF THESE THREE AND LEFT THE OTHER TWO, which is the assertion
+## worth having. `region_gdp_eur_bn` is now live state and MUST be present -- a save
+## without it loads a nation whose GDP is the sum of nothing. The SHARES are still
+## content and still round-trip through data/regions/, and there is still no head
+## count on a city, so those two stay red the day somebody stores them.
 func _check_geography_absences(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var fresh: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
 	var fresh_nation: Dictionary = fresh["nations"]["FRA"]
 
-	for key in ["regions", "cities", "region_share", "city_share", "region_population"]:
+	for key in ["region_share", "city_share", "region_population"]:
 		if fresh_nation.has(key):
-			_fail("a save carries `%s` -- V2.2a's register is content and round-trips through data/regions/, so a session making it live state has to come and say why" % key)
-	if fresh.has("regions") or fresh.has("cities"):
+			_fail("a save carries `%s` -- a region's share of its nation and a city's share of its region are content and round-trip through data/regions/, so a session making one live state has to come and say why" % key)
+	if fresh_nation.has("regions") or fresh_nation.has("cities"):
 		_fail("a save carries a top-level region register -- see above")
+	if not fresh_nation.has("region_gdp_eur_bn"):
+		_fail("a save does not carry `region_gdp_eur_bn` -- V2.5 made the region LEVEL live state, and without it national GDP loads as the sum of an empty dictionary")
+
+	# The bump, and the failure it prevents, checked rather than asserted: drop the
+	# register from a round trip and the nation's GDP goes to zero on the next tick.
+	var stripped: Dictionary = fresh.duplicate(true)
+	(stripped["nations"]["FRA"] as Dictionary).erase("region_gdp_eur_bn")
+	var reloaded = GameState.from_dict(stripped)
+	if not reloaded.nations["FRA"].region_gdp_eur_bn.is_empty():
+		_fail("a stripped save came back with a region register -- this check is measuring nothing")
 
 	# The domicile is authored too, and it is the one V2.2a field a reader might
 	# expect to find here: it is read every time a panel asks what a city employs.
@@ -2942,8 +2958,8 @@ func _check_geography_absences(loader) -> void:
 			if typeof(entry) == TYPE_DICTIONARY and (entry as Dictionary).has("city"):
 				_fail("the save carries a firm's city -- a domicile is content, not state")
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.8 raised it to 26 and V1.1e to 27, and V2.2a adds no serialised field at all, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.1e raised it to 27 and V2.5 to 28, on `region_gdp_eur_bn`: national GDP is the sum of the regions now, so a save without the register has no economy at all rather than a quietly different one" % GameState.SAVE_VERSION)
 
 
 func _check_project_fields(loader) -> void:
@@ -3031,5 +3047,5 @@ func _check_project_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
 
-	if GameState.SAVE_VERSION != 27:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 28:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one" % GameState.SAVE_VERSION)
