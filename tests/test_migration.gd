@@ -26,6 +26,7 @@ func _init() -> void:
 
 	_check_seed_matches_the_content()
 	_check_pull_is_expected_income()
+	_check_city_pull_matches_named_payroll()
 	_finish()
 
 
@@ -82,6 +83,40 @@ func _check_pull_is_expected_income() -> void:
 	for region in gbr_list:
 		if absf(Migration.region_pull(gbr_ns, gbr_list, region.id) - first) > 0.000000001:
 			_fail("a British region's expected income differs from another's -- section 8's proxy says every one of them is identical, so either the proxy moved or this test is measuring the wrong thing")
+
+
+## THE CITY PULL IS A SECOND SIGNAL AT A SECOND LEVEL, and city_pull() carries no
+## test at all until this one -- so it is recomputed here from the register's own
+## published quantities the same way the region pull is above. A division inverted
+## inside city_pull() (heads over payroll rather than payroll over heads) would
+## still return a float and still run; only an independent recomputation catches it.
+##
+## The seven nations with no data/companies/<ID>.json name no employer anywhere, so
+## every one of their cities' pull must come back EXACT zero -- src/ui/region_panel.gd's
+## own distinction between a present-and-empty figure and an absent one, checked here
+## rather than only drawn there. Which seven those are is read off loader.companies
+## rather than named, so an eleventh companies file changes this test's answer without
+## changing its text.
+func _check_city_pull_matches_named_payroll() -> void:
+	for nation_id in NATIONS:
+		var state = GameState.new_game(_loader, nation_id)
+		var ns = state.nations[nation_id]
+		var list: Array = _loader.regions.get(nation_id, [])
+		var has_employers: bool = not _loader.companies.get(nation_id, []).is_empty()
+		for region in list:
+			for city in region.cities:
+				var heads: float = Migration.city_population(ns, region.id, city.id)
+				var payroll: float = Companies.headcount_in_city(ns, _loader, city.id)
+				var expected: float = payroll / heads if heads > 0.0 else 0.0
+				var actual: float = Migration.city_pull(ns, _loader, region, city.id)
+				if absf(actual - expected) > 0.000000001:
+					_fail("%s city '%s' pull %f against a recomputed %f" % [
+						nation_id, city.id, actual, expected,
+					])
+				if not has_employers and actual != 0.0:
+					_fail("%s city '%s' pull %f against an expected exact 0.0 -- %s names no employers" % [
+						nation_id, city.id, actual, nation_id,
+					])
 
 
 func _fail(message: String) -> void:
