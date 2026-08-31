@@ -70,6 +70,7 @@ tests=(
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
   tests/test_regions.gd
+  tests/test_migration.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

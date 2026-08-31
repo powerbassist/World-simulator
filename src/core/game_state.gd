@@ -13,6 +13,7 @@ extends RefCounted
 const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -701,6 +702,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	# seeds one too.
 	for ns in gs.nations.values():
 		Regions.init_nation(ns, loader.regions.get(ns.id, []))
+		Migration.init_nation(ns, loader.regions.get(ns.id, []))
 	gs.regions = loader.regions
 
 	if not gs.nations.has(player_id):
