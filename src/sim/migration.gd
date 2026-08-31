@@ -36,6 +36,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/migration_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Companies = preload("res://src/sim/companies.gd")
 
 
 ## Seed both levels from the authored shares. Called once from GameState.new_game(),
@@ -72,3 +73,51 @@ static func city_share(ns, city_id: String) -> float:
 ## disagree.
 static func city_population(ns, region_id: String, city_id: String) -> float:
 	return float(ns.population) * region_share(ns, region_id) * city_share(ns, city_id)
+
+
+# --- The pull -----------------------------------------------------------------
+
+## What a region is worth to somebody deciding whether to live in it: output per
+## head times the probability of being employed.
+##
+## THAT IS HARRIS-TODARO, the textbook model of internal migration, and it is chosen
+## because it carries NO FREE WEIGHT -- a product of two ratios the register already
+## publishes, where a weighted sum of "jobs, unemployment and service quality" would
+## have needed three coefficients nothing could measure. A wage nobody can get is
+## worth nothing and a job at half the wage is worth half, which is the whole content
+## of the multiplication.
+##
+## Output per head divides by the LIVE population share rather than the authored one,
+## which is what closes the loop: a region people leave has fewer heads to divide its
+## output between, so its pull rises and the outflow slows. NEGATIVE FEEDBACK BY
+## CONSTRUCTION, which is why migration_constants.SHARE_DRIFT_MAX is a bound with
+## measured slack rather than the thing setting the number.
+static func region_pull(ns, region_list: Array, region_id: String) -> float:
+	var share: float = region_share(ns, region_id)
+	if share <= 0.0:
+		return 0.0
+	var per_head: float = Regions.share_of(ns, region_id) / share
+	var employed: float = 1.0 - Regions.unemployment_pct(ns, region_list, region_id) / 100.0
+	return per_head * employed
+
+
+## What one city is worth against the others in ITS OWN region: named jobs per head.
+##
+## A DIFFERENT SIGNAL AT A DIFFERENT LEVEL, and each is the one its level can see.
+## Every city in a region shares that region's output per head and its unemployment
+## rate -- the register publishes neither below the region -- so expected income
+## cannot separate Lille from a smaller city in the same region and named employers
+## can. That is V2.2a's own measured finding read as a mechanism: one city holds a
+## third to a half of a nation's named payroll (Lille 33.1 %, Duesseldorf 34.3 %,
+## Manchester 44.0 %), and ROADMAP.md's V2.2a paragraph says in terms that this is
+## "what makes V2.6's migration a decision rather than a diffusion".
+##
+## Zero for seven of the ten nations, because data/companies/ names employers in
+## three -- so for those seven nothing moves at this level and the region level moves
+## them instead. A true zero rather than an absent figure, which is the same
+## distinction src/ui/region_panel.gd's payroll column already draws.
+static func city_pull(ns, loader, region, city_id: String) -> float:
+	var heads: float = city_population(ns, region.id, city_id)
+	if heads <= 0.0:
+		return 0.0
+	return Companies.headcount_in_city(ns, loader, city_id) / heads
