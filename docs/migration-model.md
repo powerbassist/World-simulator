@@ -500,7 +500,11 @@ sides the way V2.5's both-sides-from-worktrees run made it cancel. It was
 difference is ONE contiguous block appearing only on the worktree side — the
 fresh worktree lacks the gitignored `godot_mcp_toolkit`, its autoload fails, and
 the failure cascades a `dialogue_manager` parse error — appearing AFTER the last
-`invariants: OK` line, i.e. after all of the probe's actual measurement. Checked
+`invariants: OK` line, i.e. after all of the probe's actual measurement.
+**Both sides carried filterable noise of their own**: 24 lines of that cascade on
+the worktree side, and 3 `MCPRuntimeServer` port prints on head, so the raw
+counts reconcile only net of both — 1606 − 24 = 1585 − 3 = 1582 content lines,
+the figure the byte-identity above is counted on. Checked
 for a third stray line (V1.7c's gotcha, the reason the noise is filtered but
 never trusted): none. The diff over the probe's actual content is empty.
 

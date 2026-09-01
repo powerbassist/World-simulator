@@ -31,6 +31,7 @@ func _init() -> void:
 	_check_the_national_figure_is_untouched()
 	_check_no_share_goes_negative()
 	_check_share_delta_direction()
+	_check_the_tick_moves_toward_the_pull()
 	_check_both_harnesses_tick()
 	_check_the_copy_carries_both()
 	_check_one_tuned_constant()
@@ -204,10 +205,14 @@ func _check_no_share_goes_negative() -> void:
 ## this one prove it: negate every delta this module ever produces and the sum still
 ## telescopes to zero, ns.population is still untouched, and every share still stays
 ## positive -- a model that moved people TOWARD the poorer, higher-unemployment place
-## would pass all three unchanged. And it cannot be caught by driving tick_month(),
-## because MIGRATION_RATE is 0.0 in the shipped tree until a later task measures it,
-## so any assertion reached through the tick passes vacuously whatever the sign is.
-## share_delta() is checked directly instead, at a rate this test supplies itself.
+## would pass all three unchanged, because those invariants are sign-INSENSITIVE:
+## they constrain what the flow conserves, never which way it runs. That is also why
+## the two direction checks are complementary rather than redundant: this one calls
+## share_delta() directly, at a rate this test supplies itself, and
+## _check_the_tick_moves_toward_the_pull() reaches the same claim through the live
+## tick_month(), which is the only way to cover the call sites -- they hand their
+## arguments to share_delta() positionally, and no test of the extracted expression
+## alone can see what order they hand it in.
 func _check_share_delta_direction() -> void:
 	var rate := 0.02
 	var share := 0.10
@@ -228,6 +233,110 @@ func _check_share_delta_direction() -> void:
 	var inert: float = Migration.share_delta(share, 1.5, mean, 0.0)
 	if inert != 0.0:
 		_fail("a rate of 0.0 produced a nonzero delta of %f -- this is why the shipped tree, at MIGRATION_RATE 0.0, is inert" % [inert])
+
+
+## DIRECTION THROUGH THE LIVE TICK, because the call sites are where a sign error
+## would live now. _check_share_delta_direction() proves the extracted expression is
+## signed, but both call sites in migration.gd hand it their arguments positionally,
+## and a refactor that swapped pull and mean at either would reverse the flow while
+## every conservation check in this file stayed green -- those invariants are
+## sign-insensitive (the comment on _check_share_delta_direction says why), and the
+## balance re-run is blind here too because migration touches no national figure.
+## So this drives tick_month() for the same 168 months the partition checks run, at
+## the shipped rate, and asserts the movement the model names at BOTH levels.
+##
+## THE PULLS ARE READ BEFORE THE TICKS, and that is the assertion's substance rather
+## than a convenience. The flow equalises expected income: a region people move into
+## divides its frozen output between more heads, so its pull falls back toward the
+## mean while its share rises -- read the pulls at the END and the ranking has
+## compressed toward the answer, with the run's biggest loser now among the biggest
+## pulls. The initial pull is the cause; the share movement is the effect.
+##
+## Region level: every nation with a regional spread to rank. BRITAIN IS EXCLUDED
+## and that is this file's own bound, not a convenience -- every British region's
+## expected income is identical by construction (_check_pull_is_expected_income's
+## flat assertion), so Britain has no region-level direction at all; a nation with
+## one region (Luxembourg) offers no ranking either, which the spread guard skips.
+##
+## City level, the nations data/companies/ names employers in -- read off the loader
+## rather than named, _check_city_pull_matches_named_payroll's own device. Within
+## each region with two or more named cities, the city with the highest named
+## payroll per head gains share of its region and the lowest loses it. The
+## employerless nations have no city-level flow to assert on (that check's
+## exact-zero bound), a region with one city cannot differ from its own mean --
+## migration.gd skips it, so this does too -- and a region whose cities all carry
+## the same payroll per head has no direction either and is skipped the same way.
+func _check_the_tick_moves_toward_the_pull() -> void:
+	for nation_id in NATIONS:
+		var state = GameState.new_game(_loader, nation_id)
+		var ns = state.nations[nation_id]
+		var list: Array = _loader.regions.get(nation_id, [])
+
+		# The claims, recorded BEFORE any tick: which places the model says should
+		# gain, which should lose, and the share each one started from.
+		var ranked_regions := false
+		var best_id := ""
+		var worst_id := ""
+		var best_start := 0.0
+		var worst_start := 0.0
+		if nation_id != "GBR" and list.size() > 1:
+			var best_pull := -INF
+			var worst_pull := INF
+			for region in list:
+				var pull: float = Migration.region_pull(ns, list, region.id)
+				if pull > best_pull:
+					best_pull = pull
+					best_id = region.id
+				if pull < worst_pull:
+					worst_pull = pull
+					worst_id = region.id
+			if best_pull > worst_pull:
+				ranked_regions = true
+				best_start = Migration.region_share(ns, best_id)
+				worst_start = Migration.region_share(ns, worst_id)
+
+		var city_gainers: Dictionary = {}
+		var city_losers: Dictionary = {}
+		if not _loader.companies.get(nation_id, []).is_empty():
+			for region in list:
+				if region.cities.size() < 2:
+					continue
+				var top_pull := -INF
+				var bottom_pull := INF
+				var top_id := ""
+				var bottom_id := ""
+				for city in region.cities:
+					var pull: float = Migration.city_pull(ns, _loader, region, city.id)
+					if pull > top_pull:
+						top_pull = pull
+						top_id = city.id
+					if pull < bottom_pull:
+						bottom_pull = pull
+						bottom_id = city.id
+				if top_pull <= bottom_pull:
+					continue
+				city_gainers[top_id] = Migration.city_share(ns, top_id)
+				city_losers[bottom_id] = Migration.city_share(ns, bottom_id)
+
+		for i in 168:
+			Migration.tick_month(state, _loader)
+
+		if ranked_regions:
+			var best_moved: float = Migration.region_share(ns, best_id) - best_start
+			var worst_moved: float = Migration.region_share(ns, worst_id) - worst_start
+			if best_moved <= 0.0:
+				_fail("%s: '%s', the region with the highest expected income, moved %+.6f share points under the live tick -- migration must move people TOWARD the better place" % [nation_id, best_id, best_moved])
+			if worst_moved >= 0.0:
+				_fail("%s: '%s', the region with the lowest expected income, moved %+.6f share points under the live tick -- migration must move people AWAY from the worse place" % [nation_id, worst_id, worst_moved])
+
+		for city_id in city_gainers:
+			var moved: float = Migration.city_share(ns, city_id) - float(city_gainers[city_id])
+			if moved <= 0.0:
+				_fail("%s: city '%s' moved %+.8f of its region under the live tick after ranking highest in named payroll per head -- migration must move people TOWARD the better place" % [nation_id, city_id, moved])
+		for city_id in city_losers:
+			var moved: float = Migration.city_share(ns, city_id) - float(city_losers[city_id])
+			if moved >= 0.0:
+				_fail("%s: city '%s' moved %+.8f of its region under the live tick after ranking lowest in named payroll per head -- migration must move people AWAY from the worse place" % [nation_id, city_id, moved])
 
 
 ## V1.5d SHIPPED WITH NEITHER HARNESS CALLING Media.tick_month(), so both ran the
