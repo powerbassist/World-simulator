@@ -102,8 +102,15 @@ extends RefCounted
 ##        visible rather than assumed. 2011-2013 return an EMPTY response for this
 ##        request, which is where the NUTS 2021 back-cast begins.
 ##
-##        HEADROOM IS ABOUT 33 %, AND IT IS THE INTERESTING NUMBER RATHER THAN A
-##        COMFORTABLE ONE. Realised drift is linear in the rate (table below): 0.0081
+##        HEADROOM IS ABOUT A THIRD, ON A DEFINITION STATED RATHER THAN ASSUMED,
+##        AND IT IS THE INTERESTING NUMBER RATHER THAN A COMFORTABLE ONE. THE
+##        DEFINITION: the measured ceiling over the band's upper edge, 0.0164 /
+##        0.0123 - 1 = 0.333 -- the ceiling's figure a third above the edge's. The
+##        two are not the same unit (the edge is a monthly rate, the ceiling a
+##        168-month drift), so the ratio compares magnitudes rather than like
+##        quantities; on the same formula against a LIKE quantity, the ceiling is
+##        ~20 % above the worst realised drift (0.0164 / 0.0137 - 1 = 0.197).
+##        Realised drift is linear in the rate (table below): 0.0081
 ##        -> 0.0110 at 168 months, 0.0102 -> 0.0137, 0.0123 -> 0.0163. Clause (i)
 ##        crosses at 0.0081, so ANY CEILING BELOW ABOUT 0.0110 EMPTIES THE PASSING
 ##        INTERVAL ENTIRELY -- a fired kill switch, not a re-sweep, because there would
