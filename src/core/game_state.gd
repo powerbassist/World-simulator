@@ -413,7 +413,17 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## service_quality's reason at V1.5a. The SHARES stay content and round-trip through
 ## data/regions/, and regional unemployment stays a pure read, so the test still pins
 ## those two absences.
-const SAVE_VERSION := 28
+##
+## V2.6a bumps this to 29 on the two SHARES `region_gdp_eur_bn` left behind:
+## `NationState.region_pop_share` and `.city_pop_share`, now live state that moves
+## every month. Absent, every share reads 0.0, so every city's population is zero --
+## no glyph on the map at any zoom, an empty league table in both panels. Re-seeding
+## from the authored shares does not rescue them either, for the same reason it did
+## not rescue `region_gdp_eur_bn`: the authored share is where a place STARTED, and
+## re-seeding would erase the movement the save exists to remember. A stored city
+## POPULATION still stays out -- `population x share x share` already answers it, and
+## the test keeps that absence red.
+const SAVE_VERSION := 29
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

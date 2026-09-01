@@ -32,6 +32,7 @@ func _init() -> void:
 	_check_no_share_goes_negative()
 	_check_share_delta_direction()
 	_check_both_harnesses_tick()
+	_check_the_copy_carries_both()
 	_finish()
 
 
@@ -248,6 +249,17 @@ func _check_both_harnesses_tick() -> void:
 
 		if migration_idx != -1 and companies_idx != -1 and migration_idx < companies_idx:
 			_fail("%s: Migration.tick_month appears before Companies.tick_month, but it reads settled headcount" % path)
+
+
+## V2.5's own bug, prevented rather than repeated: GameState.duplicate_state()
+## dropping region_gdp_eur_bn collapsed Budget.project() to the residual alone -- a
+## France losing 98 % of its output in the panel's own forecast -- and
+## tests/test_budget.gd caught it only because the spine had already moved.
+func _check_the_copy_carries_both() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var copy = state.nations["FRA"].duplicate_state()
+	if copy.region_pop_share.is_empty() or copy.city_pop_share.is_empty():
+		_fail("duplicate_state() dropped a share register -- Budget.project() runs on the copy")
 
 
 func _fail(message: String) -> void:
