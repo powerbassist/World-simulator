@@ -126,7 +126,12 @@ func _build_partition(ns, regions: Array) -> void:
 	var named := 0.0
 	for region in regions:
 		named += Migration.region_share(ns, region.id)
-	var residual: float = 1.0 - named
+	# maxf, and it is not decoration now that V2.6a's rate is live: the named shares
+	# are a live partition the flow moves every month, so a nation whose register
+	# names all of itself can land a hair the wrong side of 1.0 on float accumulation
+	# and print "-0.0%" at a player. The floor was here before the helper this
+	# replaced was inlined, and it comes back with the rate that made it load-bearing.
+	var residual: float = maxf(0.0, 1.0 - named)
 	PanelKit.row(_body, "Regions", str(regions.size()))
 	PanelKit.row(_body, "Named share of the population", "%.1f%%" % (named * 100.0))
 	PanelKit.row(_body, "Unnamed — extra-regio and overseas", "%.1f%%" % (residual * 100.0))

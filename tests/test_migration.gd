@@ -33,6 +33,7 @@ func _init() -> void:
 	_check_share_delta_direction()
 	_check_both_harnesses_tick()
 	_check_the_copy_carries_both()
+	_check_one_tuned_constant()
 	_finish()
 
 
@@ -260,6 +261,19 @@ func _check_the_copy_carries_both() -> void:
 	var copy = state.nations["FRA"].duplicate_state()
 	if copy.region_pop_share.is_empty() or copy.city_pop_share.is_empty():
 		_fail("duplicate_state() dropped a share register -- Budget.project() runs on the copy")
+
+
+## THE PULL CARRIES NO AUTHORED WEIGHT, and the file is read rather than trusted --
+## tests/test_regions.gd's own check one session on. A second const here is a second
+## strength written twice, which is what src/core/investment_action.gd refuses by name.
+func _check_one_tuned_constant() -> void:
+	var text := FileAccess.get_file_as_string("res://src/sim/migration_constants.gd")
+	var count := 0
+	for line in text.split("\n"):
+		if line.begins_with("const "):
+			count += 1
+	if count != 2:
+		_fail("src/sim/migration_constants.gd declares %d consts -- one rate and one bound, and a third is a weight the pull was designed not to need" % count)
 
 
 func _fail(message: String) -> void:
