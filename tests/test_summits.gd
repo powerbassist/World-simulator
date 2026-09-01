@@ -194,12 +194,19 @@ func _check_sidecar_contract_refuses_bad_content() -> void:
 
 
 ## The ephemeris. A summit is a scene, not a register: nothing new on
-## GameState's dict, version untouched. test_save_load.gd pins the version;
-## THIS file pins the absence, because a session that serialises a summit
-## history has to come here and say why the diary of dinners cannot be
-## derived from the state it already changed.
+## GameState's dict, and summits.gd itself never earns a bump. The number
+## below tracks the CURRENT version rather than freezing at V2.4b's 27,
+## because two sessions since have moved it for reasons that have nothing to
+## do with summits: V2.5 took it to 28 for NationState.region_gdp_eur_bn,
+## since national GDP became the sum of the regions and an absent register
+## means the country has no economy at all; V2.6a took it to 29 for
+## NationState.region_pop_share and city_pop_share, since the two population
+## partitions became live state and absent, every city's population is zero.
+## test_save_load.gd pins the version; THIS file pins the absence, because a
+## session that serialises a summit history has to come here and say why the
+## diary of dinners cannot be derived from the state it already changed.
 func _check_no_new_state() -> void:
-	if GameState.SAVE_VERSION != 27:
+	if GameState.SAVE_VERSION != 29:
 		_fail("SAVE_VERSION moved for an ephemeral surface")
 	var d: Dictionary = _state.to_dict()
 	if d.has("summits") or d.has("summit_history"):
