@@ -240,6 +240,15 @@ for Y in 2022 2019; do
   curl -L -o "sources/eurostat/demo_r_pjangrp3_$Y.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=$Y"
 done
 
+# V2.6a. The SAME series across every published year, for tools/region_drift.py --
+# how far real European regional population shares actually drift, which is what
+# migration_constants.MIGRATION_RATE's clause (ii) is measured against. Only the
+# import needs 2022 and 2019; the drift measurement needs the span. 2011-2013 come
+# back with an EMPTY value dict, which is where the NUTS 2021 back-cast begins.
+for Y in $(seq 2014 2025); do
+  curl -L -o "sources/eurostat/demo_r_pjangrp3_$Y.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=$Y"
+done
+
 for L in 1 2; do
   curl -L -o "sources/gisco/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"     "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"
 done

@@ -31,10 +31,34 @@ const BAND_NATIONS := ["FRA", "DEU", "GBR"]
 const MONTHS := 168
 
 ## Clause (i)'s floor, fixed in src/sim/migration_constants.gd before this ran: one
-## digit of src/ui/region_panel.gd's own "%.1f%%". Clause (ii)'s ceiling is
-## MigrationK.SHARE_DRIFT_MAX, which is read rather than restated -- one quantity,
-## one writer.
+## digit of src/ui/region_panel.gd's own "%.1f%%".
 const READABLE_MIN := 0.001
+
+## CLAUSE (ii)'S CEILING, AND IT IS NOT SHARE_DRIFT_MAX. The first version of this
+## probe read MigrationK.SHARE_DRIFT_MAX here on a one-quantity-one-writer argument,
+## and that was the defect rather than the discipline: the bound is evaluated on
+## exactly the quantity worst_share_drift() returns, so the upper crossing RESTATED
+## THE GUARD RAIL instead of measuring the model. This project names that failure
+## repeatedly -- a band whose ceiling is the clamp measures the clamp.
+##
+## The replacement is MEASURED, from the same data family the register itself came
+## from, and the clause it expresses is about the world rather than about the code:
+## the model's regional population shares may not drift further over 168 months than
+## REAL European regional population shares actually drift over a comparable span. A
+## model whose people move faster than Europe's people move is wrong in a way no
+## internal consistency check can see. V1.6a's precedent exactly -- the business
+## cycle's amplitude was fitted to France's own measured growth volatility rather
+## than to a band, because a band edge moves under widening or refinement while a fit
+## converges.
+##
+## 0.0164, from tools/region_drift.py: Eurostat demo_r_pjangrp3 over the register's
+## own NUTS codes, the widest roster-stable window per nation, share of the NATION at
+## each end. The LARGEST per-region drift across the roster, not a mean -- the model
+## must be able to reproduce Europe's most mobile real region without exceeding the
+## ceiling, and a mean would forbid the interesting case. It is AT13 (Wien) in
+## Austria, 2014-2025: 0.012871 share points over eleven years, 0.001170 a year,
+## 0.016381 scaled to fourteen.
+const DRIFT_CEILING := 0.0164
 
 ## THE NATIONS CLAUSE (i) IS READ ON, and the exclusion is the finding rather than a
 ## convenience. The clause's own sentence is "a movement the panel printing it cannot
@@ -43,7 +67,7 @@ const READABLE_MIN := 0.001
 ## the clause names does not exist there: every British region carries an identical
 ## expected income by construction (V2.5's recorded proxy), so its region column is
 ## exactly 0.0000 at every candidate and its city column would need a rate of ~0.095,
-## against a clause (ii) ceiling of ~0.045. There is no rate that satisfies both FOR
+## against a clause (ii) crossing at ~0.0124. There is no rate that satisfies both FOR
 ## BRITAIN, and the honest response is V1.6e's: record the structural bound with the
 ## number beside it rather than tune against an arithmetic impossibility -- the same
 ## treatment two of that session's three sectors got. The sweep prints Britain's
@@ -57,9 +81,9 @@ const CLAUSE_I_NATIONS := ["FRA", "DEU"]
 ## be checked INTERIOR rather than pinned at an endpoint by the range itself.
 const SWEEPS := [
 	[0.0020, 0.1000, 0.0020],
-	[0.0050, 0.0600, 0.0005],
-	[0.0080, 0.0500, 0.0002],
-	[0.0070, 0.0480, 0.0001],
+	[0.0040, 0.0300, 0.0005],
+	[0.0050, 0.0200, 0.0002],
+	[0.0060, 0.0180, 0.0001],
 ]
 
 
@@ -293,7 +317,10 @@ func _accumulate(out: Dictionary, ns, list: Array, start: Dictionary, i: int) ->
 ## src/sim/migration_constants.gd before this ran:
 ##   (i)  READABLE -- the largest mover's share of its nation moves at least 0.001
 ##        over 60 months, one digit of src/ui/region_panel.gd's own "%.1f%%".
-##   (ii) BOUNDED  -- no region's share drifts more than SHARE_DRIFT_MAX over 168.
+##   (ii) BOUNDED  -- no region's share drifts more than DRIFT_CEILING over 168, the
+##        largest drift a real European region measurably managed over a comparable
+##        span. NOT SHARE_DRIFT_MAX: reading the guard rail here measures the guard
+##        rail, which is the defect this ceiling replaces.
 ##
 ## The region and city columns are printed apart rather than folded together,
 ## because which level carries a nation's movement is the finding: Britain's regions
@@ -305,7 +332,7 @@ func _accumulate(out: Dictionary, ns, list: Array, start: Dictionary, i: int) ->
 func _table_b(loader) -> void:
 	print("\n=== (b) movement against the band, at MIGRATION_RATE %.4f ===" % MigrationK.MIGRATION_RATE)
 	print("      the largest mover's change in its share of the NATION")
-	print("  nation  region@60  region@168  city@60   city@168  | (i) >= %.4f @60   (ii) <= %.4f @168" % [READABLE_MIN, MigrationK.SHARE_DRIFT_MAX])
+	print("  nation  region@60  region@168  city@60   city@168  | (i) >= %.4f @60   (ii) <= %.4f @168" % [READABLE_MIN, DRIFT_CEILING])
 	for nation_id in BAND_NATIONS:
 		var r := _run_shipped(loader, nation_id, MONTHS)
 		var best60: float = maxf(float(r["r60"]), float(r["c60"]))
@@ -315,7 +342,7 @@ func _table_b(loader) -> void:
 		print("  %s     %.4f     %.4f      %.4f    %.4f    | %s   %s     movers: %s / %s" % [
 			nation_id, r["r60"], r["r168"], r["c60"], r["c168"],
 			verdict_i,
-			"PASS" if float(r["r168"]) <= MigrationK.SHARE_DRIFT_MAX else "fail",
+			"PASS" if float(r["r168"]) <= DRIFT_CEILING else "fail",
 			r["r_name"], r["c_name"],
 		])
 
@@ -409,7 +436,7 @@ func _sweep(loader, low: float, high: float, step: float) -> void:
 			worst168 = maxf(worst168, float(r["r168"]))
 			if nation_id in CLAUSE_I_NATIONS and maxf(float(r["r60"]), float(r["c60"])) < READABLE_MIN:
 				ok_i = false
-		var ok_ii: bool = worst168 <= MigrationK.SHARE_DRIFT_MAX
+		var ok_ii: bool = worst168 <= DRIFT_CEILING
 		if ok_i and ok_ii:
 			passing.append(candidate)
 		print("  %.4f   %.4f    %.4f    %.4f    %.4f    %.4f    %.4f   | %.4f      | %s %s" % [

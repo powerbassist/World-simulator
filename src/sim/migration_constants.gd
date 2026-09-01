@@ -38,8 +38,74 @@ extends RefCounted
 ##        share of its nation must move at least 0.1 percentage point, which is one
 ##        digit of src/ui/region_panel.gd's own "%.1f%%". A movement the panel
 ##        printing it cannot resolve is not a movement the player can see.
-##   (ii) BOUNDED. Over 168 months no region's share may drift more than 0.05 -- five
-##        points -- so no reachable run produces a France that is one region.
+##   (ii) BOUNDED, AND THE CEILING IS MEASURED RATHER THAN BORROWED. Over 168 months
+##        no region's share may drift more than 0.0164.
+##
+##        THE FIRST VERSION OF THIS CLAUSE READ SHARE_DRIFT_MAX AND WAS THE DEFECT IT
+##        WAS MEANT TO AVOID. That bound is 0.05, it is evaluated on exactly the
+##        quantity Migration.worst_share_drift() returns, and reading it here made the
+##        clause and the guard rail ONE NUMBER WITH TWO NAMES -- so the upper crossing
+##        restated the guard rail instead of measuring the model. This project names
+##        that failure repeatedly: a band whose ceiling is the clamp measures the
+##        clamp, V1.5c's ceiling was one regime's own peak and V1.6e's beta band was
+##        measuring the clamp one session after V1.6d's was. The sensitivity was
+##        measured rather than argued: at a ceiling of 0.03 the interval becomes
+##        [0.0081, 0.0244] and the midpoint 0.01625, forty per cent below what a 0.05
+##        ceiling shipped. A clause that mobile is not a clause.
+##
+##        The replacement is drawn from a ruler the bound does not own, and it is a
+##        statement about Europe rather than about this file: THE MODEL'S REGIONAL
+##        POPULATION SHARES MAY NOT DRIFT FURTHER OVER FOURTEEN YEARS THAN REAL
+##        EUROPEAN REGIONAL POPULATION SHARES ACTUALLY DRIFT OVER A COMPARABLE SPAN.
+##        A model whose people move faster than Europe's people move is wrong in a way
+##        no internal consistency check can see. V1.6a's precedent exactly: the
+##        business cycle's amplitude was FITTED to France's own measured growth
+##        volatility rather than banded, on the rule that a band edge moves under
+##        widening or refinement while a fit converges.
+##
+##        MEASURED, tools/region_drift.py, from the same data family the register
+##        itself came from -- Eurostat demo_r_pjangrp3, read over exactly the NUTS
+##        codes data/regions/<ID>.json names so the shares compared are shares of the
+##        same partition the model runs, and share OF THE NATION at each end, which is
+##        import_data.py's own `region population / national`. The window is the widest
+##        that keeps each nation's roster stable, and where it stops is a finding:
+##
+##          nation  window     span  worst region        raw     /yr        @168m
+##          AUT     2014-2025    11  AT13 Wien           0.0129  0.001170   0.0164
+##          BEL     2014-2025    11  BE3  Bruxelles      0.0071  0.000645   0.0090
+##          CHE     2014-2025    11  CH02 Espace Mitt.   0.0054  0.000493   0.0069
+##          DEU     2014-2025    11  DE1  Baden-Wuertt.  0.0029  0.000265   0.0037
+##          ESP     2014-2025    11  ES30 Madrid         0.0077  0.000705   0.0099
+##          FRA     2014-2025    11  FRE  Hauts-de-Fr.   0.0040  0.000364   0.0051
+##          GBR     2014-2019     5  UKI  London         0.0030  0.000606   0.0085
+##          ITA     2014-2025    11  ITC4 Lombardia      0.0057  0.000517   0.0072
+##          LUX     2014-2025    11  LU00 Luxembourg     0.0000  0.000000   0.0000
+##          NLD     2014-2023     9  NL31 Utrecht        0.0034  0.000380   0.0053
+##
+##        THE CEILING IS THE LARGEST OF THOSE AND NOT THEIR MEAN -- 0.016381, AT13
+##        (Wien) in Austria over 2014-2025, rounded to 0.0164. The model must be ABLE
+##        to reproduce Europe's most mobile real region without exceeding the ceiling;
+##        a mean would forbid the interesting case, which is the whole reason the
+##        register carries Vienna rather than an average of Austria.
+##
+##        TWO WINDOWS STOP EARLY AND BOTH ARE RECORDED RATHER THAN PATCHED. Britain's
+##        series ends at 2019 -- Eurostat dropped UK regions after withdrawal, the gate
+##        docs/region-economy-model.md section 8 records -- so its span is five years
+##        against everyone else's eleven, and it is a bound rather than a blocker
+##        because its scaled figure is nowhere near the ceiling anyway. The Dutch
+##        window stops at 2023 because NL31/NL33, the 2021 codes the register names,
+##        VANISH at 2024 and are replaced by NL35/NL36, the 2024 codes for the same two
+##        provinces -- equal to the person in every overlapping year, so a window
+##        crossing that boundary measures A RE-CODING RATHER THAN A MIGRATION.
+##        docs/data-sources.md carries the collision; tools/region_drift.py detects it
+##        by name and prints both columns for all twelve years, so the exclusion is
+##        visible rather than assumed. 2011-2013 return an EMPTY response for this
+##        request, which is where the NUTS 2021 back-cast begins.
+##
+##        SHARE_DRIFT_MAX IS UNCHANGED AT 0.05 AND STAYS A GUARD RAIL. It is now more
+##        than three times the ceiling and nothing approaches it -- worst realised
+##        drift 0.0137 (FRA), slack 0.0363 -- which is a bound doing its job rather
+##        than a dial that lost its purpose.
 ##
 ## TIEBREAKER, fixed before the sweep: the response is linear in the rate, so the
 ## band's edges are SMOOTH CROSSINGS rather than plateaux and neither edge selects.
@@ -59,19 +125,18 @@ extends RefCounted
 ##   0.0070   0.0035    0.0009    0.0096              fail (i)
 ##   0.0080   0.0040    0.0010    0.0109              fail (i)
 ##   0.0081   0.0041    0.0010    0.0110              PASS   <- clause (i) crosses
-##   0.0100   0.0050    0.0012    0.0134              PASS
-##   0.0200   0.0097    0.0024    0.0252              PASS
-##   0.0273   0.0131    0.0033    0.0329              PASS   <- SHIPPED, the midpoint
-##   0.0400   0.0186    0.0046    0.0447              PASS
-##   0.0465   0.0213    0.0053    0.0500              PASS   <- clause (ii) crosses
-##   0.0466   0.0214    0.0053    0.0501              fail (ii)
-##   0.0480   0.0220    0.0054    0.0511              fail (ii)
+##   0.0090   0.0045    0.0011    0.0122              PASS
+##   0.0102   0.0051    0.0013    0.0137              PASS   <- SHIPPED, the midpoint
+##   0.0120   0.0060    0.0015    0.0159              PASS
+##   0.0123   0.0061    0.0015    0.0163              PASS   <- clause (ii) crosses
+##   0.0124   0.0061    0.0015    0.0164              fail (ii)
+##   0.0140   0.0069    0.0017    0.0184              fail (ii)
 ##
-## Passing interval [0.0081, 0.0465], midpoint 0.0273, and the value is INTERIOR to
-## every grid swept -- 0.0020-0.1000, 0.0050-0.0600, 0.0080-0.0500 and 0.0070-0.0480,
+## Passing interval [0.0081, 0.0123], midpoint 0.0102, and the value is INTERIOR to
+## every grid swept -- 0.0020-0.1000, 0.0040-0.0300, 0.0050-0.0200 and 0.0060-0.0180,
 ## with candidates failing on BOTH sides in each. STABLE UNDER REFINEMENT, which is
-## the diagnostic rather than the reassurance: the midpoint reads 0.0280 at a step of
-## 0.0020, 0.0275 at 0.0005, 0.0273 at 0.0002 and 0.0273 at 0.0001, so the last two
+## the diagnostic rather than the reassurance: the midpoint reads 0.0110 at a step of
+## 0.0020, 0.0103 at 0.0005 and 0.0102 at both 0.0002 and 0.0001, so the two finest
 ## resolutions agree and the answer has stopped being a statement about the grid.
 ##
 ## BRITAIN IS A STRUCTURAL BOUND AND CLAUSE (i) IS NOT READ ON IT, recorded with the
@@ -81,12 +146,12 @@ extends RefCounted
 ## section 8: ten of twelve ITL1 codes exist, so the index was taken as a proxy), so
 ## its region column is EXACTLY 0.0000 at every candidate and its whole signal is
 ## named employers at the city level. That column reaches 0.0010 only at ~0.095,
-## against a clause (ii) ceiling of 0.0465 -- no rate satisfies both clauses for
+## against a clause (ii) crossing at 0.0123 -- no rate satisfies both clauses for
 ## Britain, at any grid, and raising the rate until it did would break clause (ii)
-## for France. Luxembourg is the second bound and a harder one: ONE region holding
-## ONE city, so `pull - mean` is exactly 0.0 at both levels and it cannot move at any
-## rate whatever. Table (f) reports both.
-const MIGRATION_RATE := 0.0273
+## for France by a factor of eight. Luxembourg is the second bound and a harder one:
+## ONE region holding ONE city, so `pull - mean` is exactly 0.0 at both levels and it
+## cannot move at any rate whatever. Table (f) reports both.
+const MIGRATION_RATE := 0.0102
 
 
 ## How far a region's share of its nation's population may drift from where it
@@ -95,4 +160,13 @@ const MIGRATION_RATE := 0.0273
 ## is a bound rather than a dial: tools/migration_probe.gd reports the slack rather
 ## than tuning against it, which is src/sim/projects_constants.gd's position and
 ## src/sim/region_constants.gd's.
+##
+## IT IS NOT AND MUST NOT BE CLAUSE (ii)'S CEILING. It was, once, and that is the
+## defect MIGRATION_RATE's comment above records: one number with two names, evaluated
+## on the one quantity it guards, so the band's upper crossing restated the guard rail
+## instead of measuring anything. With the ceiling measured independently at 0.0164
+## this bound is more than three times it and NOTHING APPROACHES IT -- worst realised
+## drift 0.0137 (FRA) at month 168, slack 0.0363, probe table (d) -- which is a guard
+## rail doing its job. A later session tempted to read it as a band edge should read
+## this paragraph first.
 const SHARE_DRIFT_MAX := 0.05
