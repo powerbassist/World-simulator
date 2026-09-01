@@ -226,11 +226,28 @@ func _check_share_delta_direction() -> void:
 ## nothing. A bit-identical re-run is the REASSURING outcome, which is exactly why
 ## this is a test and not a habit -- tests/test_pledges.gd's idiom, and the reason it
 ## reads both files rather than one.
+##
+## Presence alone is not enough: a grep for a call cannot see the order it runs in.
+## Migration.tick_month() reads live regional output and unemployment settled by
+## Economy.tick_month(), and live firm headcount settled by Companies.tick_month(),
+## so order matters structurally. A future edit moving the call ahead of either would
+## pass the presence check silently.
 func _check_both_harnesses_tick() -> void:
 	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd", "res://src/ui/main.gd"]:
 		var text := FileAccess.get_file_as_string(path)
 		if not text.contains("Migration.tick_month"):
 			_fail("%s does not call Migration.tick_month -- a harness running the pre-session model agrees with the other about nothing" % path)
+
+		# Check that Migration.tick_month runs AFTER both Economy.tick_month and Companies.tick_month
+		var migration_idx: int = text.find("Migration.tick_month")
+		var economy_idx: int = text.find("Economy.tick_month")
+		var companies_idx: int = text.find("Companies.tick_month")
+
+		if migration_idx != -1 and economy_idx != -1 and migration_idx < economy_idx:
+			_fail("%s: Migration.tick_month appears before Economy.tick_month, but it reads settled output" % path)
+
+		if migration_idx != -1 and companies_idx != -1 and migration_idx < companies_idx:
+			_fail("%s: Migration.tick_month appears before Companies.tick_month, but it reads settled headcount" % path)
 
 
 func _fail(message: String) -> void:
