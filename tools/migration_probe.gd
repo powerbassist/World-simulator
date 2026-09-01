@@ -17,6 +17,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
 
@@ -50,9 +51,7 @@ func _table_a(loader) -> void:
 		var rows: Array = []
 		var jobs_total: float = 0.0
 		for region in list:
-			var per_head: float = 0.0
-			if region.share > 0.0:
-				per_head = Regions.share_of(ns, region.id) / region.share
+			var per_head: float = Regions.gdp_per_head_index(ns, list, region.id, Migration.region_share(ns, region.id))
 			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id) / 100.0
 			rows.append([per_head * employed, region.region_name])
 			for city in region.cities:
