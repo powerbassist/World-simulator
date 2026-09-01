@@ -26,6 +26,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --move
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -240,6 +241,13 @@ var _city := false
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
 
+## V2.6a. `--migrate` is taken (V1.5b's migration LAW) and `--diverge` is taken
+## (V2.5's region divergence), so this is `--move`. Ten years of a live
+## MIGRATION_RATE moves the same quantity `--diverge` measures at a level below
+## it -- the City panel's ranked list is the frame this flag exists to
+## photograph, so it opens the LIST view rather than any one city's detail.
+var _move := false
+
 ## V1.6 playability audit, and the first two flags that photograph a DEFECT rather
 ## than a feature. Both are cited from docs/playability-audit.md, because a claim
 ## about what the player sees needs a frame behind it and neither of these is
@@ -345,6 +353,8 @@ func _init() -> void:
 			_city = true
 		elif args[i] == "--diverge":
 			_diverge = true
+		elif args[i] == "--move":
+			_move = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -446,6 +456,8 @@ func _apply_view() -> void:
 		_open_the_partition()
 	if _diverge:
 		_let_the_regions_diverge()
+	if _move:
+		_let_the_people_move()
 	if _city:
 		_point_at_the_capital()
 	if _campaign:
@@ -1621,6 +1633,20 @@ func _open_the_partition() -> void:
 func _let_the_regions_diverge() -> void:
 	_tick_months(120)
 	_main._windows.open("region")
+
+
+## V2.6a. Ten years through the real clock -- _tick_months() drives
+## advance_one_day(), so the top bar's date agrees with the population figures
+## beside it (V1.4c's fix, and every hand-rolled month loop before it got this
+## wrong). The City panel opens on its LIST view by default -- show_city() is
+## never called, so `_city_id` stays "" and `_build_list()` runs -- and the
+## ranked-by-population rows sit at the TOP of the scroll with no explicit
+## scroll call needed, `_open_the_partition()`'s own precedent: the claim this
+## flag exists to photograph is the ranking itself, so the panel's own default
+## view IS the frame V1.6e's per-flag direction asks for.
+func _let_the_people_move() -> void:
+	_tick_months(120)
+	_main._windows.open("city")
 
 
 ## V2.2b, the map's own route driven end to end. Paris's coordinate is read from
