@@ -661,8 +661,9 @@ Wien, largest not mean), and `MIGRATION_RATE` re-swept **0.0273 -> 0.0102**,
 interval [0.0081, 0.0123], midpoint stable at the two finest steps and interior on
 all four grids. **THE CEILING IS GENEROUS, NOT LIKE-FOR-LIKE**: it measures TOTAL
 population-share change (fertility, mortality, international migration) while the
-model moves only internal migrants with both residuals frozen. Headroom above it
-is **33 %** and the roster's runner-up (ES30 Madrid, 0.009858) sits BELOW the
+model moves only internal migrants with both residuals frozen. Headroom is a
+third -- the measured ceiling over the band's upper edge, 0.0164/0.0123 = 1.333
+-- and the roster's runner-up (ES30 Madrid, 0.009858) sits BELOW the
 0.0110 collapse threshold -- a re-measured ceiling under that is a kill switch to
 honour, recorded in the constant. **THE REALISM WAS BOUGHT AT A PRICE**: the
 shipped rate sits only **1.26x** above the clause-(i) crossing (DEU binds at
@@ -689,14 +690,14 @@ HELD A SHARPER PREDICTION THAN V2.5'S**: bit-identical at the bit level, because
 no national quantity moves and no population share enters any equation outside
 `migration.gd`, so a single moved digit was to be a defect and not a rounding
 boundary -- **1582 of 1582 printed lines identical** between baseline `d8a1baa`
-and `dcbc42d`, zero outcome changes, no new regime (sixth session running). Method
+and `dcbc42d`, zero outcome changes, no new regime (another session with none). Method
 honesty: only the baseline side was a worktree where the plan said both, so the
 per-machine addon parse noise did not cancel -- it was isolated instead: one
 contiguous block on the worktree side only, AFTER the last
 `invariants: OK over 168 months`, checked for a third stray line (V1.7c's gotcha)
 and none found. The readout arrived free -- the city panel, the region panel and
 the map's brass crosses have multiplied the two shares since V2.2b, so cities grow
-and shrink without a UI edit -- and `--move` is the twenty-fifth screenshot flag;
+and shrink without a UI edit -- and `--move` is the block's one new screenshot flag;
 the pass judged four frames and found **NO BUG**, a clean sheet for the third time
 after V1.6c and V2.5. What passes: **no verb, no political price, no net
 urbanisation** (both residuals frozen -- a session that wants some authors a rural

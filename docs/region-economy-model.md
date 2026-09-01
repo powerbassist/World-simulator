@@ -273,8 +273,12 @@ how, so the next reader does not treat them as open:
   section's two-weightings finding a second look.
 - **A city with no economy** — **passed through whole**. V2.6a gave the city a
   head count that moves (two live shares, [[migration-model]]), not output, wages
-  or jobs of its own; `city.gd`'s error string now says the head count is
-  delivered and the economy is the part still owed.
+  or jobs of its own. `city.gd`'s error string is unchanged from V2.5 and still
+  defers the head count to §6 — *left the city a share of population, which is
+  what docs/tiers/v2.md section 6 comes here to change* — a framing V2.6a has
+  made stale in the humbler direction: the head count it defers now exists, and
+  the economy is the part still owed. Updating the string is a `src/` edit no
+  docs pass carries.
 - **Britain's proxy** — **collected as exactly the bound it predicted**: every
   British region's expected income is identical by construction, so Britain's
   region column is 0.0000 at every rate and its people move on named employers

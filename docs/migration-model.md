@@ -25,10 +25,14 @@ changing a line of arithmetic: the map's brass crosses grow and shrink for free,
 and the panels' league tables reorder themselves.
 
 There is no new window, no new keyboard key and **no verb**. The one new surface
-is `--move`, the twenty-fifth screenshot flag, which ticks ten years through the
-real clock and opens the City panel on its ranked list — the ranking is the claim
-the flag exists to photograph. The readout arrived the way V2.5's did: the readers
-were already written, waiting for the quantity to move.
+is `--move`, which ticks ten years through the real clock and opens the City
+panel on its ranked list — the ranking is the claim the flag exists to
+photograph. An early draft called it the twenty-fifth screenshot flag and the
+ordinal is dropped rather than defended: no basis survives a recount —
+AGENTS.md's per-session list names twenty-three flags, `--bloc` and `--open`
+arrived in prose, and V2.2b's two view flags and `tools/screenshot.gd`'s own
+extras sit outside every one of those counts. The readout arrived the way
+V2.5's did: the readers were already written, waiting for the quantity to move.
 
 ## 2. The three refused alternatives
 
@@ -238,8 +242,14 @@ that moves people internally only is headroom the model did not earn, and the
 honesty is that the bound is loose by construction rather than that the model is
 slow.
 
-**Headroom is about 33 %, and it is the interesting number rather than a
-comfortable one.** Realised drift is linear in the rate: 0.0081 → 0.0110 at 168
+**Headroom is about a third, on a definition stated rather than assumed, and it
+is the interesting number rather than a comfortable one.** The definition: the
+measured ceiling over the band's upper edge — 0.0164 / 0.0123 − 1 = 0.333, the
+ceiling's figure a third above the edge's. The two figures are not the same unit
+(the edge is a monthly rate, the ceiling a 168-month drift), so the ratio
+compares magnitudes rather than like quantities; on the same formula against a
+like quantity, the ceiling is ~20 % above the worst realised drift (0.0164 /
+0.0137 − 1 = 0.197). Realised drift is linear in the rate: 0.0081 → 0.0110 at 168
 months, 0.0102 → 0.0137, 0.0123 → 0.0163. Clause (i) crosses at 0.0081, so ANY
 CEILING BELOW ABOUT 0.0110 EMPTIES THE PASSING INTERVAL ENTIRELY — a fired kill
 switch, not a re-sweep, because there would be no rate left that is both readable
@@ -291,9 +301,14 @@ the constant.
 
 One judgment call the review priced: "the largest mover's share of its nation" is
 ambiguous between *anywhere* and *per playable nation*. Under the literal first
-reading the lower crossing lands on 0.0020 — the first row of the coarsest grid,
-an endpoint, which this project's own diagnostic calls a suspect rather than a
-result — and the midpoint would read 0.0243, an 11 % difference. The per-nation
+reading the lower crossing lands on 0.0020 — the binding mover is still FRA, the
+largest mover anywhere (table (f)'s 0.0137 at 168 leads every nation), whose
+month-60 figure 0.0051 at the shipped rate crosses the 0.001 floor at
+0.0102 × (0.001 / 0.0051) = 0.0020 — the first row of the coarsest grid, an
+endpoint, which this project's own diagnostic calls a suspect rather than a
+result. The clause-(ii) upper edge is unchanged at 0.0123, so the literal
+midpoint of [0.0020, 0.0123] would read (0.0020 + 0.0123) / 2 ≈ 0.0072, about
+30 % below the shipped 0.0102 ((0.0102 − 0.0072) / 0.0102 = 0.29). The per-nation
 reading was taken; both the reading and the exclusion are written into
 `migration_constants.gd`.
 
@@ -465,10 +480,12 @@ in `src/sim/` outside `migration.gd`, and every reader of a share is a panel or
 the map. V2.5's swap carried a second-order Jensen term of ~1e-9 relative per
 month; this one carries nothing, so **a single moved digit anywhere is a defect
 and not a rounding boundary**, and the response is to find the reader, not to
-widen a tolerance. No new regime, for the sixth session running (U6c, V2.2b,
-V2.3, V2.4b's summit half, V2.5, now this): no verb, no budget regime can reach
-it, and every existing regime exercises the new code because every one calls the
-tick.
+widen a tolerance. No new regime, another session with none — the first draft
+counted six from U6c and the ordinal is dropped rather than defended: its own
+list omitted V2.2a (whose record says no new regime beside V2.2b's), and V2.4a's
+and V2.4b's re-runs moved figures without adding one, so where the run starts is
+a definition the claim does not need. No verb, no budget regime can reach it, and
+every existing regime exercises the new code because every one calls the tick.
 
 **Measured against the baseline the block branched from** (`d8a1baa`, the tip of
 V2.5, verified an ancestor of HEAD — not `HEAD~4`, which the plan text said and

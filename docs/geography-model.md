@@ -27,8 +27,12 @@ constant this session measures. Built at [[ROADMAP|V2.2a]]; [[tiers/v2|V2]] sect
 > than what it is — the one quantity whose meaning changed, and the reason the
 > re-seed-on-load rescue is refused. A city still carries no population of its own
 > (only a live share of its region) and no economy of its own; `city.gd`'s own
-> error string now names the head count as delivered and the economy as the part
-> still owed. See [[region-economy-model]] and [[migration-model]].
+> error string is unchanged from V2.5 and still defers the head count to §6 —
+> *left the city a share of population, which is what docs/tiers/v2.md section 6
+> comes here to change* — a framing V2.6a has made stale in the humbler direction:
+> the head count it defers now exists, and the economy is the part still owed.
+> Updating the string is a `src/` edit no docs pass carries. See
+> [[region-economy-model]] and [[migration-model]].
 
 ## 1. The shape
 
