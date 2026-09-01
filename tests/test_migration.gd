@@ -129,8 +129,15 @@ func _check_city_pull_matches_named_payroll() -> void:
 ## THE INVARIANT THE WHOLE SESSION RESTS ON, at both levels and over a real fourteen
 ## years rather than at new game, because float drift is what a one-month check cannot
 ## see. The flow is zero-sum by subtraction, so this is the model rather than a check
-## on it -- and the tolerance is 1e-12 relative rather than V2.5's 1e-9, because
+## on it -- and the tolerance is 1e-12 ABSOLUTE rather than V2.5's 1e-9, because
 ## nothing here has a Jensen term: no quantity is exponentiated.
+##
+## THIS DRIVES Migration.tick_month() ALONE, 168 times, with no Economy or Companies
+## call between ticks -- so every pull stays frozen at its new-game value for the
+## whole run and the margin measured below comes from that static-pull trajectory.
+## tools/migration_probe.gd's table (c) asserts the same invariant over the real
+## Economy -> Companies -> Migration order every month, and its margin is measured on
+## a DIFFERENT path: neither number is evidence for the other.
 func _check_both_partitions_close() -> void:
 	for nation_id in ["FRA", "DEU", "GBR"]:
 		var state = GameState.new_game(_loader, nation_id)

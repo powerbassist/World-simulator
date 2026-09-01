@@ -107,6 +107,20 @@ def main():
                  ("%d-%d" % (good[0], good[-1])) if good else "NONE",
                  ", ".join(str(y) for y in gaps) if gaps else "none"))
 
+        # (c) below takes good[0] and good[-1] as the window's two ends and reads
+        # nothing in between -- so a hole INSIDE the window would be silently
+        # spanned, measuring a drift across years the roster was not actually
+        # stable for. This is a measurement tool, so a silent wrong answer is the
+        # failure that matters: check the usable years are actually contiguous
+        # before (c) ever gets to trust them.
+        if good:
+            expected = list(range(good[0], good[-1] + 1))
+            holes = [y for y in expected if y not in good]
+            if holes:
+                print("  *** %s: usable window %d-%d is NOT CONTIGUOUS -- missing %s -- "
+                      "(c) would silently span this hole ***"
+                      % (nid, good[0], good[-1], ", ".join(str(y) for y in holes)))
+
     print()
     print("=== (b) the vintage collision, by name ===")
     for year in years:

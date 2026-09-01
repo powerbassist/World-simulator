@@ -140,6 +140,13 @@ static func named_region_total(ns, region_list: Array) -> float:
 ## which a subsidy moved a firm's hiring should move people in the same month rather
 ## than the next one.
 static func tick_month(state, loader) -> void:
+	# Defensive, not descriptive: MIGRATION_RATE is measured and nonzero in the
+	# shipped tree (migration_constants.gd), so this guard is unreachable today. It
+	# stays because a session that ever sets the rate back to 0.0 -- to isolate a
+	# regression, say -- should skip the pull and share bookkeeping below entirely
+	# rather than run it to compute deltas that share_delta() would multiply by zero
+	# anyway, and a guard that is only added when it is first needed is a guard
+	# nobody tested.
 	if K.MIGRATION_RATE == 0.0:
 		return
 	var ids: Array = state.nations.keys()
@@ -149,12 +156,16 @@ static func tick_month(state, loader) -> void:
 
 
 ## One entry's monthly change in share. Extracted so the DIRECTION of the flow is
-## testable at all: MIGRATION_RATE is 0.0 in the shipped tree until it is measured,
-## so an assertion driven through tick_month() passes whatever sign the model has --
-## and a flow that moved people TOWARD the poorer, higher-unemployment place would
-## satisfy every invariant this module asserts, because conservation and direction are
-## orthogonal failures. This is also the one expression both levels share, so having
-## it in one place is what stops them drifting apart.
+## testable at all: at the time this was written MIGRATION_RATE was 0.0, unmeasured,
+## so an assertion driven only through tick_month() would have passed whatever sign
+## the model had -- a flow that moved people TOWARD the poorer, higher-unemployment
+## place would have satisfied every invariant this module asserts, because
+## conservation and direction are orthogonal failures. MIGRATION_RATE is measured and
+## nonzero now (migration_constants.gd), but the reason for the extraction still
+## holds: tests/test_migration.gd's _check_share_delta_direction() calls this
+## function directly, at a rate it supplies itself, rather than trusting whatever the
+## shipped rate happens to be to expose a sign error. This is also the one expression
+## both levels share, so having it in one place is what stops them drifting apart.
 static func share_delta(share: float, pull: float, mean: float, rate: float) -> float:
 	return rate * share * (pull - mean) / 12.0
 
@@ -224,10 +235,12 @@ static func _tick_nation(ns, region_list: Array, loader) -> void:
 			ns.region_pop_share[region.id] = share + share_delta(share, float(pulls[region.id]), mean, K.MIGRATION_RATE)
 
 
-## Has any region drifted past the bound? Will be read by tools/migration_probe.gd
-## and by tests/test_migration.gd once a later task adds the callers; nothing in the
-## tick calls it, because a bound that silently clamps is a bound nobody measures --
-## src/sim/regions.gd's own sentence.
+## Has any region drifted past the bound? Read by tools/migration_probe.gd's table
+## (d) -- SHARE_DRIFT_MAX's slack -- and by its sweep bookkeeping in table (e).
+## tests/test_migration.gd does NOT call it: that file asserts the partition and the
+## direction, not the guard rail's slack, so this stays a probe-only reader. Nothing
+## in the tick calls it either, because a bound that silently clamps is a bound
+## nobody measures -- src/sim/regions.gd's own sentence.
 static func worst_share_drift(ns, region_list: Array) -> float:
 	var worst: float = 0.0
 	for region in region_list:

@@ -354,6 +354,11 @@ func _table_b(loader) -> void:
 ## accumulated float error scales with the rate, and a margin nobody measured is an
 ## assumption wearing a number.
 ##
+## THIS RUNS THE REAL Economy -> Companies -> Migration ORDER, through _run_shipped(),
+## not tests/test_migration.gd's own frozen-pull loop that drives Migration.tick_month()
+## alone -- the two numbers come from two different trajectories, and neither is
+## evidence for the other's margin.
+##
 ## Absolute AND relative, because the test's own comparison is absolute and a table
 ## printing only the relative figure would not be a margin against the assertion
 ## that exists.
@@ -412,7 +417,7 @@ func _table_e(loader) -> void:
 
 func _sweep(loader, low: float, high: float, step: float) -> void:
 	print("\n=== (e) sweep over MIGRATION_RATE: %.4f to %.4f, step %.4f ===" % [low, high, step])
-	print("  rate     FRA r@60  FRA c@60  DEU r@60  DEU c@60  GBR r@60  GBR c@60 | worst r@168 | (i) (ii)")
+	print("  rate     FRA r@60   FRA c@60   DEU r@60   DEU c@60   GBR r@60   GBR c@60  | worst r@168 | (i) (ii)")
 
 	var candidates: Array = []
 	var steps: int = int(round((high - low) / step))
@@ -439,7 +444,7 @@ func _sweep(loader, low: float, high: float, step: float) -> void:
 		var ok_ii: bool = worst168 <= DRIFT_CEILING
 		if ok_i and ok_ii:
 			passing.append(candidate)
-		print("  %.4f   %.4f    %.4f    %.4f    %.4f    %.4f    %.4f   | %.4f      | %s %s" % [
+		print("  %.4f   %.5f   %.5f   %.5f   %.5f   %.5f   %.5f  | %.5f     | %s %s" % [
 			candidate, cells[0], cells[1], cells[2], cells[3], cells[4], cells[5],
 			worst168,
 			"PASS" if ok_i else "fail",

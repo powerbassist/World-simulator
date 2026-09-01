@@ -102,6 +102,21 @@ extends RefCounted
 ##        visible rather than assumed. 2011-2013 return an EMPTY response for this
 ##        request, which is where the NUTS 2021 back-cast begins.
 ##
+##        HEADROOM IS ABOUT 33 %, AND IT IS THE INTERESTING NUMBER RATHER THAN A
+##        COMFORTABLE ONE. Realised drift is linear in the rate (table below): 0.0081
+##        -> 0.0110 at 168 months, 0.0102 -> 0.0137, 0.0123 -> 0.0163. Clause (i)
+##        crosses at 0.0081, so ANY CEILING BELOW ABOUT 0.0110 EMPTIES THE PASSING
+##        INTERVAL ENTIRELY -- a fired kill switch, not a re-sweep, because there would
+##        be no rate left that is both readable and bounded. The roster's RUNNER-UP
+##        region is ES30 Madrid at 0.009858 (table above, ESP row, @168m column) --
+##        BELOW that collapse threshold. If Austria's roster or this window ever moves
+##        and AT13 Wien drops out of it, the next-largest real region in Europe does
+##        not clear clause (i) at any rate. A later session re-measuring this ceiling
+##        must re-sweep against whatever region is largest THEN rather than inherit
+##        0.0164, and a re-measured ceiling that lands below ~0.0110 is a kill switch
+##        to be HONOURED -- V1.5b's deletion of DEPENDENCY_ELASTICITY["health"] rather
+##        than a number to tune around.
+##
 ##        SHARE_DRIFT_MAX IS UNCHANGED AT 0.05 AND STAYS A GUARD RAIL. It is now more
 ##        than three times the ceiling and nothing approaches it -- worst realised
 ##        drift 0.0137 (FRA), slack 0.0363 -- which is a bound doing its job rather
@@ -121,16 +136,24 @@ extends RefCounted
 ## columns are the largest mover's change in its share of the nation at month 60 and
 ## the worst region drift at month 168, over the three playable nations:
 ##
-##   rate     FRA @60   DEU @60   worst region @168   band
-##   0.0070   0.0035    0.0009    0.0096              fail (i)
-##   0.0080   0.0040    0.0010    0.0109              fail (i)
-##   0.0081   0.0041    0.0010    0.0110              PASS   <- clause (i) crosses
-##   0.0090   0.0045    0.0011    0.0122              PASS
-##   0.0102   0.0051    0.0013    0.0137              PASS   <- SHIPPED, the midpoint
-##   0.0120   0.0060    0.0015    0.0159              PASS
-##   0.0123   0.0061    0.0015    0.0163              PASS   <- clause (ii) crosses
-##   0.0124   0.0061    0.0015    0.0164              fail (ii)
-##   0.0140   0.0069    0.0017    0.0184              fail (ii)
+## PRINTED TO FIVE DECIMALS, not four -- the fourth was not enough to show the row
+## the clause actually turns on. At four decimals 0.0080 and 0.0081 both print DEU's
+## column as 0.0010, so a later session re-deriving this constant from the comment
+## sees a fail and a pass over identical numbers. The fifth decimal is where they
+## part (0.00100 against 0.00101), and it is taken from tools/migration_probe.gd's
+## own table (e) rather than computed by hand, on the same rule this file already
+## follows for the ceiling: measure it, do not invent it.
+##
+##   rate     FRA @60    DEU @60    worst region @168   band
+##   0.0070   0.00351    0.00087    0.00959              fail (i)
+##   0.0080   0.00401    0.00100    0.01089              fail (i)
+##   0.0081   0.00406    0.00101    0.01102              PASS   <- clause (i) crosses
+##   0.0090   0.00450    0.00112    0.01218              PASS
+##   0.0102   0.00508    0.00126    0.01370              PASS   <- SHIPPED, the midpoint
+##   0.0120   0.00596    0.00148    0.01593              PASS
+##   0.0123   0.00610    0.00152    0.01630              PASS   <- clause (ii) crosses
+##   0.0124   0.00615    0.00153    0.01642              fail (ii)
+##   0.0140   0.00692    0.00172    0.01835              fail (ii)
 ##
 ## Passing interval [0.0081, 0.0123], midpoint 0.0102, and the value is INTERIOR to
 ## every grid swept -- 0.0020-0.1000, 0.0040-0.0300, 0.0050-0.0200 and 0.0060-0.0180,

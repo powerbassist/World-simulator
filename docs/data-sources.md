@@ -113,6 +113,10 @@ All three carry zero `UK` geo codes at 2022, for the same reason `nama_10r_2gdp`
 - **`XXZZ` is "Extra-Regio NUTS 2" and has GDP but no geometry.** Present for FR, IT, ES, BE, NL and AT; absent for DE, LU and CH. It is the output that cannot be assigned to any region — offshore, embassies, ships. Left in, the region shares do not sum against a geometry that has one fewer entry; dropped silently, the nation's GDP no longer equals the sum of its regions. It belongs in the **unnamed residual**, which is the same slot [[companies-model|V1.4a]] gives the firms a sector does not name.
 - **`FRY1`–`FRY5` are the French overseas regions** — Guadeloupe, Martinique, Guyane, La Réunion, Mayotte — and they are exactly what the Natural Earth import filter above already drops by bounding box. The region register inherits that filter for free, and their GDP inherits the residual for the same reason `XXZZ` does. Spain's Canary Islands (`ES70`) and the Dutch Caribbean are the same case.
 
+#### V2.6a — the migration drift window
+
+`tools/region_drift.py` reads `demo_r_pjangrp3` over every published year to measure how far real European regional population shares actually drift — [[migration-model|the ceiling `migration_constants.MIGRATION_RATE`'s clause (ii) is checked against]]. The fetch loop above starts at **2014**, and that lower bound is chosen rather than merely convenient: **2011, 2012 and 2013 each return an EMPTY value dict for this exact request** — not a short one, an empty one — which is where the NUTS 2021 back-cast begins. A fresh clone that only runs the recorded loop (2014 onward) cannot see this directly, since the loop never fetches the empty years to observe the emptiness; it is recorded here instead, so the window's lower bound is explained rather than merely chosen.
+
 ## Rejected sources
 
 ### OpenStreetMap
@@ -245,6 +249,15 @@ done
 # migration_constants.MIGRATION_RATE's clause (ii) is measured against. Only the
 # import needs 2022 and 2019; the drift measurement needs the span. 2011-2013 come
 # back with an EMPTY value dict, which is where the NUTS 2021 back-cast begins.
+#
+# WARNING: this range OVERWRITES demo_r_pjangrp3_2019.json and demo_r_pjangrp3_2022.json,
+# the exact two files tools/import_data.py reads the region register from. Fetching
+# both loops today is harmless because both request the identical URL for those two
+# years -- but a session that re-runs THIS loop alone after a Eurostat revision (a
+# late correction to a published year, say) would silently change the import's
+# cached inputs without anyone re-running the import. Re-run tools/import_data.py's
+# own check after touching this loop, or fetch this range into a separate directory
+# if the two must ever disagree.
 for Y in $(seq 2014 2025); do
   curl -L -o "sources/eurostat/demo_r_pjangrp3_$Y.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=$Y"
 done
