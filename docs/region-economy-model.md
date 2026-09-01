@@ -181,7 +181,10 @@ bug. Handing it forward: closing the gap means an authored twelve-number
 table (the devolved administrations' own products), and [[tiers/v2|§6]]'s
 migration reads regional unemployment — which for Britain is the national
 rate everywhere, so British internal migration would need the same authoring
-first.
+first. **V2.6a shipped without it, exactly as this predicted**: the region
+level is dead for Britain and the city level turned out to be a whole signal
+on its own — Britain migrates on named employers alone, and the bound and its
+number now live in [[migration-model]] §5.
 
 ## 9. The balance re-run
 
@@ -259,8 +262,21 @@ as such.
 
 ## 13. What passes to §6 and §7
 
-Regional unemployment is live in its **deviation** and static in its
-**ratio** — nothing moves `unemployment_rel` after import, so §6's migration
-reads a fixed geography of rates. A city still has no economy. And Britain's
-proxy means one of the ten has no internal variation for §6 to move anyone
-with — see §8.
+Three hand-offs were written here at V2.5, and V2.6a collected them — recorded
+how, so the next reader does not treat them as open:
+
+- **A fixed geography of rates** — collected **unchanged**. `Migration.region_pull()`
+  reads regional unemployment through the same pure read, and `unemployment_rel`
+  is STILL static after import: nothing moves it, so migration's employment half
+  differs between regions only where the mix deviation moves the deviation term.
+  A mover of the ratio is still unwritten, and whoever writes one owes this
+  section's two-weightings finding a second look.
+- **A city with no economy** — **passed through whole**. V2.6a gave the city a
+  head count that moves (two live shares, [[migration-model]]), not output, wages
+  or jobs of its own; `city.gd`'s error string now says the head count is
+  delivered and the economy is the part still owed.
+- **Britain's proxy** — **collected as exactly the bound it predicted**: every
+  British region's expected income is identical by construction, so Britain's
+  region column is 0.0000 at every rate and its people move on named employers
+  alone ([[migration-model]] §5). The day the twelve ITL1 figures are authored,
+  `tests/test_migration.gd`'s flat-pull assertion is the tripwire.

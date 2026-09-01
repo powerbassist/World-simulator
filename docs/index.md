@@ -62,6 +62,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[events-model]] — events as OCCASIONS rather than mechanics, why the schema is the law channel and not the union of ten, the deterministic hazard, and the accumulation bound that a per-decision band could not see
 - [[geography-model]] — regions and cities as a two-level partition of population, why the NUTS level is per nation, and the population cut that had to be measured three times because GeoNames files boroughs as cities
 - [[region-economy-model]] — national GDP as the sum of the regions, the zero-mean mix deviation that keeps the aggregate honest, and Britain's recorded absence of any regional divergence
+- [[migration-model]] — the two population partitions made live: a zero-sum flow on expected income and named employers, the rate measured from Europe's own regional drift, and the two nations that structurally cannot move
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
