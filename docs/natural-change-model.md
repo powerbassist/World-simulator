@@ -266,3 +266,30 @@ off the empty dictionary bare `--site` stages, so the bare flag had crashed sinc
 V2.6b2 — its own pass only ever ran `--campaign --site`. Fixed with `.get` and the
 reason recorded at the call site; third session running the screenshot pass's bug
 predates the session that found it.
+
+## 12. The balance re-run, against a prediction written before it
+
+**PREDICTION**: national headline figures (population, GDP, growth, unemployment,
+debt) bit-identical in every regime — no national equation reads the shares;
+movers only where the sim reads them — siting (Germany's +0.4 % Ruhr → Berlin
+margin the named watch-point), campaign reach in the campaign regimes, and the
+unrest price via the site's per-head index in the unrest-firing FRA regimes;
+**zero outcome changes**, a verdict flip being a finding to chase rather than a
+tolerance to widen.
+
+**MEASURED**: both sides from worktrees (a06b3da against 587557a), 1646 content
+lines each, 48 `invariants: OK` lines each, tails identical — V1.7c's
+third-stray-line check clean, the addon parse noise two-sided and cancelled.
+**4 content lines differ, all last-printed digits**: one regime's unrest peak
+48.29 → 48.28; one campaign reach figure +1.641 → +1.642 pts; two opinion digits
+in one regime's 2032 row (+3.28 → +3.29, 19.3 → 19.4). National headlines
+bit-identical in every regime — GDP 3009, growth +1.52/+1.31, unemployment 8.35
+and debt 107.9 print the same on both sides. **Zero outcome changes.** The named
+watch-point held: Germany's siting margin did not flip, and no siting line moved
+at all — the natural differential moved the shares by ~1.5 % relative over
+fourteen years and the site margins are wider than that.
+
+Quieter than the same measurement at V2.6b1 (3 movers) and V2.6b2 (2 regimes +
+one noise block): the migration flow that drove those movers is now 34× weaker,
+and the natural flow's own contribution reaches the sim readers mostly through
+margins that were already wide.
