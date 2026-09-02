@@ -1943,7 +1943,16 @@ func _site_the_demonstration() -> void:
 				lonlat = city.lonlat
 	var view = _main._map_view
 	view.center_on_lonlat(lonlat.x, lonlat.y)
-	view.zoom_by(2.0, view.size / 2.0)
+	# Closer than --city's 2.0. The ring is the radius plus three pixels and the
+	# smallest cities clamp at a radius of two, so at the city flag's zoom the mark
+	# this flag exists to photograph is five pixels wide among several hundred
+	# crosses -- V1.6e's correction, which is about scrolling to where the flag's own
+	# claim is and applies to a map's zoom exactly as it does to a panel's scroll.
+	view.zoom_by(4.0, view.size / 2.0)
+	# Explicit, though the monthly hook in main.gd now rebuilds it too: every
+	# state-mutating flag since --coerce got away with writing behind a view that had
+	# already refreshed, which is the tool's own V1.3g bug.
+	view.refresh_cities()
 	# The hover is set the way --hover-project and --city set theirs: the label is the
 	# one half of this mark a headless suite structurally cannot see.
 	view._hovered_city = String(report["city_id"])

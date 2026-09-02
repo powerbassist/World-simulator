@@ -284,7 +284,84 @@ did not need touching.
 
 ## 9. The balance re-run
 
-*(Filled in from the measured run — see [[ROADMAP]]'s V2.6b1 row.)*
+**Predicted before the build: not bit-identical, and the first session in three where
+that is the honest prediction.** §1's concentration measurement says any priced siting
+moves the aggregate from month one, and §3 says which direction.
+
+**Measured, both sides from git worktrees** (`5089938` against `f0c6ac5`), so the
+per-machine addon parse noise cancels rather than needing isolation — V2.6a's method
+note applied rather than repeated. Both sides came back **1606 raw lines, 1582 content
+lines**, the cut taken at the last `invariants: OK over 168 months`, and the 24-line
+tails are **byte-identical**: V1.7c's third-stray-line check run and clean.
+
+| | |
+|---|---|
+| regimes | **44 of 47 bit-identical** |
+| movers | `managed_then_austerity`, `managed_breaks_its_word`, `managed_breaks_nothing` |
+| changed lines | 18 |
+| **approval column** | **identical in every printed row of every regime** |
+| outcome changes | **zero** |
+
+**The three movers are exactly the FRA regimes in which unrest fires** (two acts, one,
+one). `managed` fires none and held identical — the control the prediction named.
+
+**Every figure moved in the direction §3 measured**: GDP **2992 → 2995** and
+**3007 → 3009**, growth **+1.18 → +1.23** and **+1.41 → +1.52**, unemployment
+**8.14 → 8.11** and **8.38 → 8.35**, the grievance peak **48.38 → 48.29** and
+**46.80 → 46.70**. The output multiplier at France's site is 0.759, so a strike costs
+less output than it did, the country ends richer and slightly calmer, and the act count
+is unchanged because no threshold crossing moved.
+
+**Approval is untouched in every printed row, and that is the deletion showing up in
+the harness.** With the visibility price gone, siting reaches approval only through
+`growth` and `jobs` — the channel V1.5c measured as unable to reach a voter — so a
+price that moves GDP by three billion moves the printed approval integer by nothing.
+The re-run is the same finding as §5, arrived at from the other end.
+
+**No new regime**, and none was needed: siting adds no verb, and every regime that
+reaches unrest reaches the new code through `Unrest.tick_month()`. **No new tick call
+anywhere** — the site is a pure read *inside* that tick, so both harnesses reach it
+through calls they already make, which makes V1.5d's bug (both harnesses running the
+pre-session model and agreeing about nothing) structurally impossible rather than
+remembered.
+
+## 9a. The screenshot pass found ONE bug, and it was older than this session
+
+The twenty-third pass, three frames judged. The readout itself was clean; what the
+frames caught was **V2.6a's own headline claim, untrue on screen since V2.6a shipped**.
+
+`map_view.gd` built its city list **once in `setup()`**, under a comment that called it
+*"static content, so once rather than per draw"*. That was true when V2.2b wrote it and
+stopped being true at V2.6a, which made a city's population two live shares times a
+live head count. So **the crosses never grew or shrank for a whole session** —
+[[migration-model]] §1's *"the map's brass crosses grow and shrink for free"* was
+describing a readout that did not refresh — and V2.6b1's demonstration ring, reading the
+same list, drew nothing at all.
+
+Rebuilt on the **monthly** hook U5c already added for the same class of staleness, not
+per draw: this walks 581 cities and derives a site per nation, where `_refresh_markers()`
+walks a handful of started projects. V2.3 put `Icon.load_icon()` on the path that
+refreshes with the clock and rasterised an SVG on every call, and **a screenshot pass
+structurally cannot see that class** — so the expensive rebuild goes on the clock and the
+draw stays a draw.
+
+**The proof is in two frames of the same flag.** Before the fix the hover label read
+*"Lille — 240 k"*, the population Lille had at new game; after it, **"Lille — 245 k — where
+the unions are out"**. Five thousand people the map had been refusing to admit had moved.
+
+The flag's own correction was V1.6e's, applied to a zoom rather than to a scroll: at
+`--city`'s zoom the ring is five pixels among several hundred crosses, so `--site` zooms
+four times rather than twice — *scroll to where the flag's own claim is* has a direction
+on a map too. One known tool limitation is recorded rather than fixed: a windowed run can
+receive a mouse-motion event during the capture frames and overwrite `_hovered_city`, so
+a hover label is present in some runs and absent in others. It affects `--city` and
+`--hover-project` identically and predates this session.
+
+The economy panel frame needed no fix and carries an unplanned corroboration: it reads
+*"Unrest 46 of 100. Past the point where the unions organise. Concentrated in
+Hauts-de-France (Lille)."* and, two lines below, the V2.5 line *"Hauts-de-France x0.78"*
+— the panel independently reporting the poor-region finding this session's price is built
+on.
 
 ## 10. What V2.6b1 did NOT build, and what passes on
 

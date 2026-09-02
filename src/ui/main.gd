@@ -795,6 +795,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# drift every month and a trade weight moves with every partner's GDP. Without
 	# this the data layers show the colours of whenever the mouse last moved.
 	if _map_view != null:
+		# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
+		# sharper version of the same reason: a city's population is two live shares
+		# times a live head count, and where the unions are out changes with the
+		# grievance. Without this the crosses keep the sizes they had at new game --
+		# which is what V2.6a's "cities grow and shrink for free" actually did on
+		# screen until the V2.6b1 screenshot pass looked at a frame.
+		_map_view.refresh_cities()
 		_map_view.queue_redraw()
 
 	# Discipline reads the approval Opinion has just settled, so it goes after
