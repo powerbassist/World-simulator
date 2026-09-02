@@ -2984,6 +2984,29 @@ func _check_geography_absences(loader) -> void:
 			if typeof(entry) == TYPE_DICTIONARY and (entry as Dictionary).has("city"):
 				_fail("the save carries a firm's city -- a domicile is content, not state")
 
+	# V2.6b1. THE SITE IS DERIVED AND NOTHING STORES IT, which is why this session
+	# moves no version at all. A place is arg-max over two live share registers that
+	# are already here, so a stored site would be a second answer to a question those
+	# shares answer -- `region_population`'s case above, one quantity over -- and a
+	# stored concentration or output index would be a third and a fourth.
+	#
+	# The day a session stores one, this fails and has to come and say why: a site
+	# that is state rather than a read has to survive Budget.project(), which runs the
+	# real model on a DUPLICATE, and V2.6b1's whole no-bump claim rests on the
+	# projection and the tick deriving the same place from the same shares.
+	for key in ["unrest_site", "unrest_site_id", "unrest_site_region", "site_concentration", "unrest_site_impulse"]:
+		if fresh_nation.has(key):
+			_fail("a save carries `%s` -- V2.6b1 derives the site from two live share registers every read, and storing one is a second answer to a question those already answer" % key)
+
+	# The act RECORD carries the place, and that is a different thing from state: it is
+	# written once at the moment of the act because a past act's site cannot be
+	# re-derived after the shares have moved, and it is read by src/ui/main.gd's card
+	# and by nothing in src/sim/. Absent -- every act on a version-29 save -- it reads
+	# as "no place" and the card falls back to the national wording it has always had,
+	# so it earns no bump and the loop above is what pins the distinction.
+	if typeof(fresh.get("unrest_acts", [])) != TYPE_ARRAY:
+		_fail("a save's unrest_acts is not an array")
+
 	if GameState.SAVE_VERSION != 29:
 		_fail("SAVE_VERSION is %d -- V1.1e raised it to 27 and V2.5 to 28, on `region_gdp_eur_bn`: national GDP is the sum of the regions now, so a save without the register has no economy at all rather than a quietly different one; V2.6a raised it to 29, on two live population shares -- national GDP already has no economy without a register, and now every city has no population without one either" % GameState.SAVE_VERSION)
 

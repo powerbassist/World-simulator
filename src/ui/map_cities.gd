@@ -35,6 +35,12 @@ extends RefCounted
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Migration = preload("res://src/sim/migration.gd")
+## V2.6b1, for the demonstration ring. The site is DERIVED here every refresh
+## rather than stored anywhere, which is what lets the ring move if the model ever
+## moves it -- and it is read through Unrest rather than Siting directly, because
+## which signal sites a demonstration is unrest's business and not the map's.
+const Unrest = preload("res://src/sim/unrest.gd")
+const UnrestK = preload("res://src/sim/unrest_constants.gd")
 
 ## The population a cross is measured against: capital-city scale, the top of the
 ## roster's own range (London reads ~9.1 M). RADIUS_BASE is what that city draws;
@@ -51,6 +57,13 @@ const RADIUS_MAX := 12.0
 
 const WIDTH := 2.0
 const HOVER_WIDTH := 3.0
+
+## V2.6b1. The demonstration ring: drawn around the cross rather than replacing it,
+## because the city is still a city and the unrest is a thing happening AT it. Sized
+## off the glyph's own radius so it clears the arms at every population.
+const RING_GAP := 3.0
+const RING_WIDTH := 2.0
+const RING_POINTS := 24
 
 const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.96)
 const LABEL_SHADOW := Color(0.0, 0.0, 0.0, 0.7)
@@ -75,6 +88,17 @@ static func cities(loader, state) -> Array:
 		var ns = state.nations.get(id)
 		if ns == null:
 			continue
+
+		# WHERE THE UNIONS ARE OUT, and only once they are. Gated on the same
+		# threshold src/ui/economy_panel.gd's own line uses, so the map and the panel
+		# cannot disagree about whether anything is happening -- and so a quiet game
+		# draws nothing at all rather than a permanent ring on the region that would
+		# host a demonstration if there were one. The nine never reach it: their
+		# grievance is gated off in Unrest.tick_month() and reads exactly 0.0.
+		var demo_city := ""
+		if float(ns.unrest_pct) >= UnrestK.UNREST_THRESHOLD_PCT:
+			demo_city = String(Unrest.site_report(ns, state.regions.get(id, []))["city_id"])
+
 		for region in loader.regions.get(id, []):
 			for city in region.cities:
 				out.append({
@@ -85,6 +109,7 @@ static func cities(loader, state) -> Array:
 					"region_name": region.region_name,
 					"lonlat": city.lonlat,
 					"population": Migration.city_population(ns, region.id, city.id),
+					"unrest": demo_city != "" and String(city.id) == demo_city,
 				})
 	out.sort_custom(func(a, b): return float(a["population"]) < float(b["population"]))
 	return out
@@ -107,12 +132,32 @@ static func color_of(_city: Dictionary) -> Color:
 	return UiTheme.ACCENT
 
 
+## Is this the city the country's demonstration is in? Duck-typed off the record the
+## way is_filled() reads a marker's, so map_view.gd asks rather than indexing.
+static func is_unrest(city: Dictionary) -> bool:
+	return bool(city.get("unrest", false))
+
+
+## The ring sits outside the cross's arms at every size.
+static func ring_radius(city: Dictionary) -> float:
+	return radius_of(city) + RING_GAP
+
+
 ## What the cross says when the cursor is on it, drawn on hover alone for labels'
 ## own reason: 581 names at the Europe view are 581 names on top of each other.
 ## The population is formatted by PanelKit.pop_text, the one formatter, so the
 ## hover label and the City panel cannot print two roundings of one figure.
 static func label_of(city: Dictionary) -> String:
-	return "%s  --  %s" % [
+	var text := "%s  --  %s" % [
 		String(city.get("name", "")),
 		PanelKit.pop_text(float(city.get("population", 0.0))),
 	]
+	# V2.6b1. The ring says THAT something is happening and the label says WHAT, which
+	# is the split the marker layer already uses for built-against-building. The noun
+	# is deliberately not the act label: unrest_constants.ACT_LABELS picks `protest` or
+	# `strike` off the stock and src/ui/main.gd's card owns that wording, so a second
+	# surface naming it would be two places to disagree -- the exact split
+	# economy_panel.gd's own unrest line already keeps.
+	if is_unrest(city):
+		text += "  --  where the unions are out"
+	return text

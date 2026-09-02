@@ -43,6 +43,10 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+## V2.6b1, for --site: the flag has to ASK where the demonstration is rather than
+## assume, because a nation whose register cannot single a region out has no site and
+## the flag must say so instead of photographing an unringed city.
+const Unrest = preload("res://src/sim/unrest.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -84,6 +88,7 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
@@ -353,6 +358,8 @@ func _init() -> void:
 			_city = true
 		elif args[i] == "--diverge":
 			_diverge = true
+		elif args[i] == "--site":
+			_site = true
 		elif args[i] == "--move":
 			_move = true
 		elif args[i] == "--open" and i + 1 < args.size():
@@ -458,6 +465,8 @@ func _apply_view() -> void:
 		_let_the_regions_diverge()
 	if _move:
 		_let_the_people_move()
+	if _site:
+		_site_the_demonstration()
 	if _city:
 		_point_at_the_capital()
 	if _campaign:
@@ -1891,3 +1900,51 @@ func _answer_a_crisis() -> void:
 		printerr("--event-answered: the ledger holds %d rows, expected two" % ns.event_history.size())
 	if _main._events_panel != null:
 		_main._events_panel.scroll_to_bottom()
+
+
+## V2.6b1. A demonstration that has actually happened, on the map, in the place the
+## model put it.
+##
+## TICKS UNTIL AN ACT FIRES rather than a fixed number of months, which is V1.8's own
+## correction: --event announced the register directly and then ticked, so main.gd
+## never carded anything and the frame showed an empty column beside a live crisis.
+## Affordable for the same reason it was there -- the agent is deterministic, so
+## "until it fires" terminates at a known month rather than gambling.
+##
+## The ring is gated on UNREST_THRESHOLD_PCT, the same bar src/ui/economy_panel.gd's
+## own line uses, so a frame taken before the unions organise would show a city and no
+## ring and prove nothing about the thing this flag exists to photograph.
+func _site_the_demonstration() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	_provoke_the_unions()
+
+	var ns = state.player()
+	var region_list: Array = state.regions.get(ns.id, [])
+	var report: Dictionary = Unrest.site_report(ns, region_list)
+	var guard := 0
+	while (state.unrest_acts.is_empty() or String(report["city_id"]) == "") and guard < 120:
+		_tick_months(1)
+		guard += 1
+		ns = state.player()
+		report = Unrest.site_report(ns, region_list)
+	if state.unrest_acts.is_empty():
+		printerr("--site: no act fired in %d months, so there is nothing to photograph" % guard)
+		return
+	if String(report["city_id"]) == "":
+		printerr("--site: the unions are out and the register names no place -- a nation with a flat signal cannot be sited")
+		return
+
+	var lonlat := Vector2.ZERO
+	for region in region_list:
+		for city in region.cities:
+			if String(city.id) == String(report["city_id"]):
+				lonlat = city.lonlat
+	var view = _main._map_view
+	view.center_on_lonlat(lonlat.x, lonlat.y)
+	view.zoom_by(2.0, view.size / 2.0)
+	# The hover is set the way --hover-project and --city set theirs: the label is the
+	# one half of this mark a headless suite structurally cannot see.
+	view._hovered_city = String(report["city_id"])
+	view.queue_redraw()

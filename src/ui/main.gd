@@ -1061,10 +1061,20 @@ func _card_unrest_acts(year: int, month: int) -> void:
 			continue
 		if String(act["nation_id"]) != _state.player_nation_id:
 			continue
-		_hud.message_stack.push(
-			_unrest_title(String(act["label"])),
-			"Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
-		)
+		# V2.6b1. The card names the PLACE, and it reads it off the act's own record
+		# rather than re-deriving it: a past act's site cannot be recovered once the
+		# shares have moved, which is why unrest.gd writes it down at the moment it
+		# happens. Absent -- every act on a version-29 save, and every nation with no
+		# site -- the sentence falls back to the national wording it has always had,
+		# so an old save reads correctly rather than printing an empty place.
+		var city := String(act.get("city_name", ""))
+		var region := String(act.get("region_name", ""))
+		var body := "Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
+		if city != "" and region != "":
+			body = "%s, %s. Grievance stands at %.0f of 100. Output will carry it for months." % [
+				city, region, float(act["unrest_pct"]),
+			]
+		_hud.message_stack.push(_unrest_title(String(act["label"])), body)
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the

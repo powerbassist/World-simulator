@@ -581,12 +581,49 @@ not angrier than Switzerland on frame one. See [[judiciary-model]] §7.
 
 **A Gini *level* term.** §5.
 
+**A sited OPINION price.** §14 — designed, banded, swept, deleted.
+
 **A grievance ledger.** The stock **is** the memory, which is
 [[foreign-policy-model|V1.3e]]'s property arriving in the one session that could have
 built the ledger literally. `tests/test_unrest.gd` asserts that nothing in `src/sim/`
 reads `GameState.unrest_acts` back.
 
+## 14. The grievance acquired a place, and one of its two prices refused it
+
+[[ROADMAP|V2.6b1]] sited the demonstration. The model is [[siting-model]]; what
+changed *here* is one multiplication and one deletion.
+
+**The output price is sited.** `act_impulse()` is multiplied by the site's output per
+head, normalised so the share-weighted mean multiplier is exactly 1.0 — so
+`UNREST_IMPULSE_SCALE` keeps the calibration §10 (d) measured for it and only the
+per-nation variation is new. Output lost is lost where it happened.
+
+**The measured direction is the opposite of the one the design assumed.** The site is
+where unemployment stands *above* the nation's own mean, which is systematically a
+**poor** region, so the multiplier is **0.759 for France** and 0.644 for Italy. A
+strike sited where the grievance actually is costs the country **less** output than the
+same strike in its capital would.
+
+**The opinion price refused to be sited, and the refusal is §4's finding from a third
+side.** A visibility factor on `unrest_opinion_load` was designed with two clauses
+fixed before the sweep, and the passing interval came back **empty**: the whole unrest
+opinion price is worth **2.9825** points on the worst bloc row, one saturated
+settlement is worth **0.4450**, and a term readable on the panel that prints it needs
+**1.0** — so a readable siting term must be a third of the entire unrest price and
+2.25× what settling the strike is worth. **Inconsistent clauses rather than a badly
+tuned constant.** `SITE_VISIBILITY_BETA` was deleted rather than shipped unused, and
+`tests/test_siting.gd` pins the deletion.
+
+This page's §4 says the opinion model prices **rates and ratios** and that a permanent
+level loss is invisible to it. The same arithmetic bites a *modulation*: the whole
+channel only just clears the poll floor at three points, so a fraction of it is a
+fraction of a fraction. [[cycle-model|V1.6a]]'s legibility floor, fourth place.
+
+**Nothing else moved.** `unrest_target()` is untouched, the five terms are unchanged,
+`UNREST_BLOCS` is unchanged, and `unrest_opinion_load` is exactly the V1.5c figure.
+The act record gained four display keys and `SAVE_VERSION` stayed at 29.
+
 ---
 
-Related: [[index]] · [[society-model]] · [[demography-model]] · [[opinion-model]] ·
+Related: [[index]] · [[siting-model]] · [[society-model]] · [[demography-model]] · [[opinion-model]] ·
 [[economy-model]] · [[legislature-model]] · [[companies-model]] · [[v1]] · [[ROADMAP]]

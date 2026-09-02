@@ -438,7 +438,43 @@ bill 0.075 % of GDP"* with Urban +4.6 and Business +3.9 against a live register,
 `--campaign --open budget` reads *"of which the campaign 0.07 % (2 bn)"* rather than an
 em dash.
 
+## 17. Siting the effort was deferred, and the reason is measured
+
+[[tiers/v2|V2]] §6 books *campaign meetings sited* beside unrest sited and calls the
+two **one shape**. [[ROADMAP|V2.6b1]] built the unrest half and **deferred this one to
+V2.6b2**, on a measurement rather than on scope.
+
+**A campaign effort has no regionally-varying signal that is not a regional opinion
+number in disguise**, and the candidates were checked against the register rather than
+argued: `service_quality` is one figure per nation, so it has zero variance;
+regional approval and regional bloc composition do not exist and are exactly what
+[[unrest-model|V1.5c]] refused by name; **named payroll per head IS
+`Migration.city_pull()`**, one number with two names, and is exactly zero for seven of
+the ten nations; output per head is identically 1.0 for Britain and, pointed at
+turnout, *is* a regional approval figure with a different label. With a flat signal the
+site is always the largest region — a decision with one answer, the strictly-dominated
+shape §5 already records this project killing six times.
+
+**What varies honestly is distance**, and [[calendar-model|V2.4a]] already built the
+currency: `Diplomacy.travel_days()` over the register's own city coordinates at 280
+km/day, on `Calendar.make_entry()`'s existing `travel_days` int. Measured from each
+capital — FRA 35 cities at one day, 17 at two, 13 at three, Ajaccio at four; DEU
+25 / 92 / 5; GBR 103 / 26 / 3.
+
+**But reach-per-day makes the capital strictly dominant** (Paris 0.0314 per day against
+Marseille 0.0129 over three days and Lyon 0.0076 over two), and the only honest breaker
+is the sentence `data/campaign-actions/campaign.json` already writes in prose —
+*whoever has already been spoken to has already been spoken to*. That is a **per-region
+saturation counter**: a memory of the player's own acts rather than an opinion, and it
+turns the tour into an allocation.
+
+That counter is a **new accumulator with its own accrual and decay**, so it bumps
+`SAVE_VERSION`, needs one constant with a band, and **re-baselines this page's own
+harness** — §8's `CAMPAIGN_WINDOW_MONTHS = 8` was chosen by maximin slack over a
+feasible set of [7, 10], and total reach falling moves that set. A machine, and a
+different conservation law from unrest siting's, which is the axis V2.6 split on.
+
 ---
 
-Related: [[index]] · [[election-model]] · [[opinion-model]] · [[media-model]] ·
+Related: [[index]] · [[siting-model]] · [[election-model]] · [[opinion-model]] · [[media-model]] ·
 [[projects-model]] · [[v1]] · [[ROADMAP]]

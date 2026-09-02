@@ -69,6 +69,7 @@ func _init() -> void:
 	_test_precondition_is_open_only()
 	_test_opinion_load_is_silent_when_calm()
 	_test_unrest_preloads_are_exactly_these()
+	_test_the_place_adds_no_reverse_edge()
 	_test_content_loads()
 	_finish()
 
@@ -459,6 +460,23 @@ func _test_unrest_preloads_are_exactly_these() -> void:
 		# preloads nothing but its own constants -- so the edge runs one way and adds no
 		# ordering question, which is exactly what tax.gd's note says about tax.gd.
 		"res://src/sim/judiciary.gd",
+		# V2.6b1, the THIRD, FOURTH and FIFTH additions, and they are admitted as a
+		# group because they are one dependency: the grievance acquires a PLACE, and a
+		# place is a region chosen out of V2.6a's live population shares. siting.gd
+		# preloads NOTHING AT ALL, regions.gd preloads two constants files, and
+		# migration.gd preloads those two plus companies.gd -- so the transitive closure
+		# still cannot reach economy.gd, which is the one edge this whole list exists to
+		# forbid, and _test_the_place_adds_no_reverse_edge() below checks that rather
+		# than leaving it to this comment.
+		#
+		# There is deliberately NO siting_constants.gd on this list. V2.6b1's one
+		# candidate constant was designed, banded, swept and DELETED when the interval
+		# came back empty -- see src/sim/unrest.gd's opinion_load() for the numbers --
+		# so admitting a path for it would reserve a slot for a file that must not come
+		# back without a fresh measurement.
+		"res://src/sim/siting.gd",
+		"res://src/sim/regions.gd",
+		"res://src/sim/migration.gd",
 	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):
@@ -557,3 +575,52 @@ func _finish() -> void:
 	for message in _failures:
 		printerr(message)
 	quit(1)
+
+
+## V2.6b1. Admitting siting.gd, regions.gd and migration.gd above is only safe while
+## none of them can reach economy.gd, so the TRANSITIVE closure is walked here rather
+## than asserted in a comment. This file's whole preload argument is that unrest
+## WRITES an impulse Economy reads next month; a reverse edge arriving three hops away
+## would break it exactly as surely as a direct one, and would be far harder to see.
+##
+## siting.gd is checked separately and strictly: it must preload NOTHING. That is what
+## lets V2.9's sited disasters call it without either session knowing about the other,
+## and it is the contract docs/siting-model.md sells.
+func _test_the_place_adds_no_reverse_edge() -> void:
+	var siting := FileAccess.get_file_as_string("res://src/sim/siting.gd")
+	if siting == "":
+		_fail("could not read src/sim/siting.gd")
+		return
+	for line in siting.split("
+"):
+		if line.strip_edges().begins_with("const") and line.contains("preload("):
+			_fail("siting.gd must preload NOTHING, and it preloads: %s" % line.strip_edges())
+
+	var seen := {}
+	var queue: Array = [
+		"res://src/sim/siting.gd",
+		"res://src/sim/regions.gd",
+		"res://src/sim/migration.gd",
+	]
+	while not queue.is_empty():
+		var path := String(queue.pop_back())
+		if seen.has(path):
+			continue
+		seen[path] = true
+		if path == "res://src/sim/economy.gd":
+			_fail("the place reaches economy.gd transitively -- that is the reverse edge unrest.gd's lag depends on not existing")
+			return
+		var src := FileAccess.get_file_as_string(path)
+		for line in src.split("
+"):
+			if not line.strip_edges().begins_with("const"):
+				continue
+			if not line.contains("preload("):
+				continue
+			var start := line.find("res://")
+			if start < 0:
+				continue
+			var end := line.find(".gd", start)
+			if end < 0:
+				continue
+			queue.append(line.substr(start, end - start + 3))

@@ -236,7 +236,16 @@ func _check_no_level_in_src() -> void:
 func _check_register_has_no_simulation() -> void:
 	var readers: Array[String] = []
 	for path in _gd_files("res://src/sim"):
-		var text := FileAccess.get_file_as_string(path)
+		# V2.6b1: COMMENT LINES ARE STRIPPED BEFORE THE SCAN, and that is this check
+		# repeating the correction its own sibling above already records making. The
+		# level check's first version grepped src/ for a word and "failed on the
+		# comments explaining why the level is absent"; this one grepped src/ for a
+		# field name and failed on the comments explaining why Britain has no site --
+		# src/sim/siting.gd and src/sim/unrest.gd each NAME `unemployment_rel` in a
+		# docstring while neither touches it in code. Stripping comments makes this
+		# STRICTER rather than looser: it measures what a file does rather than what
+		# it says, and a real read still fires.
+		var text := _code_only(FileAccess.get_file_as_string(path))
 		# `.gdp_share` with the dot: a bare "gdp_share" would name companies.gd's
 		# own subsidy-pricing local, which has carried the word since V1.4a and
 		# reaches no region.
@@ -420,3 +429,18 @@ func _finish() -> void:
 		printerr("  FAIL: %s" % f)
 	printerr("test_geography: %d failure(s)" % _failures.size())
 	quit(1)
+
+
+## Source with whole-line comments removed, so a check about what a file READS is not
+## answered by what a file SAYS. Whole lines only: an inline `#` after code cannot be
+## cut safely without parsing strings, and every marker this file scans for has only
+## ever appeared in doc comments.
+func _code_only(text: String) -> String:
+	var out: Array[String] = []
+	for line in text.split("
+"):
+		if line.strip_edges().begins_with("#"):
+			continue
+		out.append(line)
+	return "
+".join(out)

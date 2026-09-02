@@ -720,6 +720,18 @@ func _draw_cities() -> void:
 		draw_line(at - arm, at + arm, color, width)
 		draw_line(at - Vector2(arm.x, -arm.y), at + Vector2(arm.x, -arm.y), color, width)
 
+		# V2.6b1. A ring around the cross where the country's demonstration is. It is
+		# NOT a fifth map layer and NOT a sixth draw pass: a LAYERS entry chooses a
+		# per-nation roster FILL one at a time, and this is a mark on a glyph that is
+		# already here -- so tests/test_map_markers.gd's pin at four stands, and the
+		# hit test is untouched, which keeps _city_at_screen_point() answering for
+		# exactly one thing.
+		if MapCities.is_unrest(city):
+			draw_arc(
+				at, MapCities.ring_radius(city), 0.0, TAU, MapCities.RING_POINTS,
+				color, MapCities.RING_WIDTH
+			)
+
 		if not hovered or font == null:
 			continue
 		var text: String = MapCities.label_of(city)

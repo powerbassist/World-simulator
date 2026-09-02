@@ -77,6 +77,7 @@ tests=(
   # has exactly one reader.
   tests/test_regions.gd
   tests/test_migration.gd
+  tests/test_siting.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
