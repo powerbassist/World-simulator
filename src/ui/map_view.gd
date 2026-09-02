@@ -246,10 +246,9 @@ func setup(loader, state) -> void:
 	_world_polygons = loader.world_features
 	_texture = MapRaster.texture()
 
-	# Static content, so once rather than per draw -- see the field. Built here for
-	# _refresh_markers()'s reason: a hit test can happen before the first frame is
-	# drawn, and an empty list would answer it with "nothing here".
-	_cities = MapCities.cities(_loader, _state)
+	# Built here for _refresh_markers()'s reason: a hit test can happen before the
+	# first frame is drawn, and an empty list would answer it with "nothing here".
+	refresh_cities()
 
 	# Built here as well as in _draw() for the reason _fit_zoom() is hooked in
 	# _notification(): a hit test can happen before the first frame is drawn, and
@@ -401,6 +400,24 @@ func _nation_at_lonlat(pt: Vector2) -> String:
 
 func nation_at_screen_point(screen_pos: Vector2) -> String:
 	return _nation_at_lonlat(_screen_to_lonlat(screen_pos))
+
+
+## V2.6b1. The city list is NOT static, and the comment that used to sit on it said
+## it was -- which is how V2.6a's own headline readout claim went untrue on screen
+## without anything going red. `population` is `Migration.city_population()`, live
+## since V2.6a, and V2.6b1 adds a per-city unrest flag; both were being read once at
+## setup and never again, so the crosses did not grow or shrink for a whole session
+## and a demonstration drew no ring at all. Found by the screenshot pass, which is
+## the only thing that could have found it: the headless suite has no draw.
+##
+## Rebuilt MONTHLY rather than per draw, unlike _refresh_markers(). That is
+## deliberate: this walks 581 cities and derives a site per nation, where the marker
+## list walks a handful of started projects. V2.3 put Icon.load_icon() on the path
+## that refreshes with the clock and rasterised an SVG on every call -- a class of
+## bug a screenshot pass structurally cannot see -- so the expensive rebuild goes on
+## the hook U5c already added for the same staleness, and the draw stays a draw.
+func refresh_cities() -> void:
+	_cities = MapCities.cities(_loader, _state)
 
 
 func _refresh_markers() -> void:
@@ -719,6 +736,21 @@ func _draw_cities() -> void:
 		var arm := Vector2(radius, 0.0).rotated(PI / 4.0)
 		draw_line(at - arm, at + arm, color, width)
 		draw_line(at - Vector2(arm.x, -arm.y), at + Vector2(arm.x, -arm.y), color, width)
+
+		# V2.6b1. A ring around the cross where the country's demonstration is. It is
+		# NOT a fifth map layer and NOT a sixth draw pass: a LAYERS entry chooses a
+		# per-nation roster FILL one at a time, and this is a mark on a glyph that is
+		# already here -- so tests/test_map_markers.gd's pin at four stands, and the
+		# hit test is untouched, which keeps _city_at_screen_point() answering for
+		# exactly one thing.
+		# One ring either way: a demonstration and a campaign meeting landing on the
+		# same city would be two concentric arcs of noise, and the label already says
+		# which one it is (unrest's clause wins it).
+		if MapCities.is_unrest(city) or MapCities.is_campaign(city):
+			draw_arc(
+				at, MapCities.ring_radius(city), 0.0, TAU, MapCities.RING_POINTS,
+				color, MapCities.RING_WIDTH
+			)
 
 		if not hovered or font == null:
 			continue

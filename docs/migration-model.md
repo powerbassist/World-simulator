@@ -528,12 +528,26 @@ never trusted): none. The diff over the probe's actual content is empty.
   wages and jobs below the named employers' headcount do not exist.
   `src/core/city.gd`'s own error string still says so.
 
-**To V2.6b — a place for what happens.** Unrest sited ([[unrest-model|V1.5c]]'s
-grievance is national; a demonstration happens somewhere) and campaign meetings
-sited ([[campaign-model|V1.7a]]'s mobilisation is national and its effort has no
-place). Both are *a national quantity acquires a place*, both decide **where** by
-reading (a)'s live shares, one shape not two — and the political price this
-session declined is the reason they are worth building.
+**To V2.6b — a place for what happens. BUILT AS V2.6b1, AND THE HANDOFF ABOVE WAS
+WRONG IN ITS CENTRAL CLAIM.** *"Both decide **where** by reading (a)'s live
+shares"* is false and [[siting-model]] §2 measures it: the site is arg-max over
+population share times a static signal, and the winner leads the runner-up by
+**73.9 % in France** against a fourteen-year migration budget worth about **9 %
+relative**. The shares are third-order behind static content, and the signal
+changes which region wins for **exactly one nation of ten**. Germany's site does
+move once (Ruhr → Berlin, on a +0.4 % margin), which is the exception that
+measures the rule.
+
+*"One shape not two"* was half right: the two halves share the WHERE and not the
+PRICE. Unrest's place is a derived report whose failure mode is constancy; a
+campaign meeting's place is a verb whose failure mode is dominance, so V2.6b split
+and **V2.6b2** owns the campaign half on V2.4a's travel days plus a per-region
+saturation counter — [[siting-model]] §11 carries the refused signals with numbers.
+
+The political price this session declined was charged **once and not twice**: the
+output channel took it free (V2.5's index is already mean-one), and the opinion
+channel's own band came back with an **empty** passing interval and its constant
+was deleted. [[siting-model]] §5.
 
 **To V2.6c — natural change.** Birth rate and life expectancy, §0's freed row,
 arriving with the mechanism that reads it. Its conservation law is DIFFERENT from
@@ -546,5 +560,5 @@ exactly what [[demography-model|V1.5b]] refused with evidence.
 
 ---
 
-Related: [[tiers/v2]] · [[geography-model]] · [[region-economy-model]] ·
+Related: [[tiers/v2]] · [[siting-model]] · [[geography-model]] · [[region-economy-model]] ·
 [[demography-model]] · [[decision-log]] · [[ROADMAP]]

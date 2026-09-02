@@ -412,8 +412,12 @@ func _table_d_window() -> void:
 		control["incumbent_share"], control["largest"], control["peak_deficit"],
 	])
 	print("  %4s %10s %10s %10s %10s %8s %8s  %s" % [
-		"d", "move", "fitscale", "maxstack", "d-deficit", "bill", "pass", "best pair",
+		"d", "move", "fitscale", "peak", "d-deficit", "bill", "pass", "best pair",
 	])
+	# V2.6b2: the rail clause reads the run's own MEASURED accumulator peak, not the
+	# rate x d formula -- under siting the two disagree in both directions (the formula
+	# misses month 1's full-fresh spike at a x6.63 capital and overstates the faded
+	# tail). _max_stack_rate() stays for its other readers.
 	var stack_rate := _max_stack_rate()
 	var passing: Array = []
 	var slacks: Array = []
@@ -435,10 +439,11 @@ func _table_d_window() -> void:
 		var move: float = float(best["move"])
 		var r := _run(d, pair)
 		var max_stack: float = stack_rate * float(d)
+		var peak: float = float(r["peak_mobilisation"])
 		var d_deficit: float = r["peak_deficit"] - control["peak_deficit"]
 		var ok_low: bool = move >= _move_min
 		var ok_high: bool = move <= _move_max
-		var ok_stack: bool = max_stack <= K.MOBILISATION_MAX
+		var ok_stack: bool = peak <= K.MOBILISATION_MAX
 		var ok_deficit: bool = d_deficit <= _headroom()
 		var ok_prop: bool = d <= WINDOW_MAX_MONTHS
 		var ok: bool = ok_low and ok_high and ok_stack and ok_deficit and ok_prop
@@ -447,10 +452,10 @@ func _table_d_window() -> void:
 			slacks.append({
 				"d": d,
 				"low": (move - _move_min) / _move_min,
-				"stack": (K.MOBILISATION_MAX - max_stack) / K.MOBILISATION_MAX,
+				"stack": (K.MOBILISATION_MAX - peak) / K.MOBILISATION_MAX,
 			})
 		print("  %4d %10.4f %10.4f %10.4f %10.4f %8.4f %8s  %s" % [
-			d, move, _fit_scale(d, pair, control), max_stack, d_deficit, _pair_cost(pair),
+			d, move, _fit_scale(d, pair, control), peak, d_deficit, _pair_cost(pair),
 			("yes" if ok else "no(%s%s%s%s%s)" % [
 				"" if ok_low else "lo", "" if ok_high else "hi", "" if ok_stack else "s",
 				"" if ok_deficit else "d", "" if ok_prop else "p",
@@ -739,6 +744,33 @@ func _table_h_share_is_not_winning() -> void:
 
 # --- the harness ------------------------------------------------------------------------
 
+## The arg-max fresh site. Recomputed per run rather than cached, and priced through
+## Campaign's own factor so the sweep and the game cannot disagree about which region
+## is the peak.
+## The nation's regions, freshest first -- the tour order the player's best play
+## follows. Recomputed per run; priced through Campaign's own factor.
+func _ranked_sites(ns) -> Array:
+	var scored := []
+	for rid in ns.region_pop_share:
+		scored.append({"id": String(rid), "fresh": Campaign.fresh_factor(ns, _loader, String(rid))})
+	scored.sort_custom(func(a, b): return float(a["fresh"]) > float(b["fresh"]))
+	var out := []
+	for entry in scored:
+		out.append(String(entry["id"]))
+	return out
+
+
+func _best_site(ns) -> String:
+	var best := ""
+	var best_factor := -1.0
+	for rid in ns.region_pop_share:
+		var f: float = Campaign.fresh_factor(ns, _loader, String(rid))
+		if f > best_factor or (is_equal_approx(f, best_factor) and best != "" and String(rid) < best):
+			best_factor = f
+			best = String(rid)
+	return best
+
+
 ## effort id -> its authored `start` terms.
 func _starts() -> Dictionary:
 	var out := {}
@@ -761,9 +793,14 @@ func _new_state():
 ## emulated exactly rather than rescaled from the shipped one. The bloc_offset is
 ## applied here too, because it is part of what the effort costs and a table that
 ## dropped it would measure a campaign nobody resents.
-func _force_start(ns, action) -> void:
+func _force_start(ns, action, site := "") -> void:
 	var terms: Dictionary = action.effects.get("campaign", {})
-	ns.campaign_running.append(String(terms.get("effort_id", "")))
+	var eid := String(terms.get("effort_id", ""))
+	ns.campaign_running.append(eid)
+	# V2.6b2: the site rides the start, exactly as Campaign.execute() writes it. An
+	# empty site keeps the pre-V2.6b2 factor-1.0 model, which is the control column.
+	if site != "":
+		ns.campaign_sites[eid] = site
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
 		ns.bloc_offset[bloc_id] = (
 			float(ns.bloc_offset.get(bloc_id, 0.0))
@@ -784,7 +821,7 @@ func _action_for(effort_id: String) -> Variant:
 ## what the treasury paid, and the two registers table (a) checks.
 ## `scale` multiplies every authored mobilisation rate, which is how table (d) fits
 ## the ladder EXACTLY rather than rescaling a measured headline -- V1.6b's correction.
-func _run(d: int, efforts: Array, scale: float = 1.0) -> Dictionary:
+func _run(d: int, efforts: Array, scale: float = 1.0, site := "") -> Dictionary:
 	var state = _new_state()
 	var ns = state.player()
 	var party_list: Array = _loader.parties.get(PLAYER, [])
@@ -811,10 +848,22 @@ func _run(d: int, efforts: Array, scale: float = 1.0) -> Dictionary:
 	while true:
 		var to_go: int = Campaign.months_to_election(state, ns)
 		if not started and to_go <= d:
+			# V2.6b2: the sweep plays the player's BEST tour, not a camp -- each started
+			# effort takes the next-ranked fresh site, because two efforts on one region
+			# double-saturate it and measure a strategy the saturation counter exists to
+			# prevent. An explicit `site` still pins every effort to one region, which is
+			# the camping control column.
+			var sites: Array = _ranked_sites(ns)
+			var next_site := 0
 			for eid in efforts:
 				var action = _action_for(String(eid))
-				if action != null:
-					_force_start(ns, action)
+				if action == null:
+					continue
+				var use_site := site
+				if use_site == "" and next_site < sites.size():
+					use_site = String(sites[next_site])
+					next_site += 1
+				_force_start(ns, action, use_site)
 			started = true
 
 		if to_go <= 0:

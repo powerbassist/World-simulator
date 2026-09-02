@@ -709,6 +709,140 @@ these same shares; **V2.6c** owns natural change, whose conservation law differs
 step-0 gate is whether regional age structure is obtainable from the register's
 own dataset. Model: [docs/migration-model.md](docs/migration-model.md).
 
+**V2.6b1 GAVE THE GRIEVANCE A PLACE, AND THE ROW'S CENTRAL CLAIM WAS FALSE BEFORE ANY
+CODE WAS WRITTEN.** `src/sim/siting.gd` is a leaf that preloads **nothing** -- a caller
+hands it weights and a signal and gets back a region id -- and it is the contract V2.9's
+sited disasters read. **The row said both halves *"decide WHERE by reading V2.6a's live
+shares"*, and the site is chosen by STATIC content**: arg-max over a population share
+times a signal whose winner leads the runner-up by **73.9 % in France**, against a
+fourteen-year migration budget worth about **9 % relative**. For nine nations of ten the
+place is decided at load time and never revisited, and **the signal changes which region
+wins for exactly ONE nation of ten**. Nothing in this project could previously ASK that
+question, which is how a row could assert a live read that is arithmetically static and no
+check contradict it -- so `Siting.margin()` and `signal_moves_site()` are **public
+surface**, and a later session siting anything owes its own margin before claiming a place
+moves. **The exceptions are the interesting half**: Germany's demonstrations move **Ruhr to
+Berlin** on a +0.4 % margin named in advance, and **Britain acquires a site mid-run and
+loses it again** because `Regions.unemployment_pct()`'s trend term is measured against a
+GDP-weighted mean that V2.5's divergence moves -- so `tests/test_siting.gd` asserts Britain
+unsited at month one and deliberately NOT permanently unsited. Luxembourg is the one
+unconditional bound, one region unable to differ from itself.
+
+**THE SCORING FORM FLIPS THE SIGN OF THE PRICE, which no plan anticipated.** Scored on the
+level, the demonstration goes where the most people are and France's is Ile-de-France for
+ever; scored on the **deviation from the nation's own share-weighted mean** --
+`Trade.sector_shift()`'s zero-mean idiom used as a SELECTOR, fourth instance -- it goes to
+**Hauts-de-France**, where France's unemployment actually is. And a high-unemployment
+region is systematically a **poor, small** one, so both multipliers come out **below one**
+(FRA 0.759, ITA 0.644, ESP 0.740; only AUT above at 1.147): **siting makes unrest CHEAPER,
+not dearer.** **The output price needed NO CONSTANT** -- V2.5 already publishes
+`gdp_per_head_index()` normalised to 1.0 at the national average, and `Siting.normalised()`
+only makes the share-weighted mean **exactly** 1.0 (worst error 2.22e-16 against a 1e-12
+tolerance), so the EXPECTED price is unchanged, `UNREST_IMPULSE_SCALE` keeps V1.5c's
+calibration and only the per-nation variation is new.
+
+**THE VISIBILITY PRICE WAS DESIGNED, BANDED, SWEPT AND DELETED, AND THE KILL SWITCH WAS
+DECLARED BEFORE THE SWEEP.** Two clauses, both model criteria, both read in points of the
+worst bloc row because `polling_panel.gd` prints one as `"%.0f%%"`: readable means **1.0
+point**, and siting must not outweigh governing. Measured, the **whole** unrest opinion
+price is worth **2.9825** points, one saturated settlement **0.4450**, and clause (i) first
+crosses at beta ~3.1 while clause (ii) is crossed at ~1.3 -- so a readable siting term must
+be **a third of the entire unrest price and 2.25x what settling the strike is worth**. The
+clauses are **INCONSISTENT rather than badly tuned**, which is V1.5c's own finding from the
+other side (the opinion model prices rates, the whole channel only just clears the poll
+floor at three points, and a modulation of it is a fraction of a fraction) and V1.6a's
+legibility floor in a **fourth** place. `siting_constants.gd` was **deleted rather than left
+at an unused 0.0** -- V1.3e's `AGREEMENT_ACCEPT_MIN` -- so **the session ships NO TUNED
+CONSTANT AT ALL**, `projects_constants.gd`'s position a third time, and
+`tests/test_siting.gd` pins the deletion so a session re-adding it must bring a measurement
+rather than an opinion. An **affine** factor was also written and replaced mid-build:
+`1 + beta(c - 1)` goes negative past `beta = 1/(1 - c)`, **3.47 for Belgium**, which is
+unrest RAISING approval, and a clamp there would have let the clamp set the number;
+`pow(c, beta)` is positive for every beta, V1.6a's a-bound-with-no-number argument again.
+
+**THE RE-RUN HELD THE PREDICTION EXACTLY, and the deletion is visible in it.** Both sides
+from worktrees so the addon noise cancels rather than needing isolation, 1582 content lines
+each, tails **byte-identical** (V1.7c's third-stray-line check run and clean): **44 of 47
+regimes bit-identical**, the three movers exactly the FRA regimes where unrest fires, **zero
+outcome changes**, and **approval identical in every printed row of every regime** --
+because with the visibility price gone, siting reaches a voter only through `growth` and
+`jobs`, the channel V1.5c measured as unable to reach one. Every moved figure went the
+measured direction: GDP 2992 -> 2995, growth +1.18 -> +1.23, unemployment 8.14 -> 8.11,
+grievance peak 48.38 -> 48.29. **No new regime and no new tick call** -- the site is a pure
+read INSIDE `Unrest.tick_month()`, so both harnesses reach it through calls they already
+make, which makes V1.5d's bug structurally impossible rather than remembered.
+**`SAVE_VERSION` stays 29**, five absences pinned, and **`game_state.gd` needed no edit at
+all**: its `typed_strikes` rebuild casts whole dictionaries, so the act record's four new
+display keys ride through. The record carries the place because **a past act's site cannot
+be re-derived once the shares have moved**.
+
+**THE SCREENSHOT PASS FOUND ONE BUG AND IT WAS OLDER THAN THE SESSION.** `map_view.gd`
+built its city list **once in `setup()`**, under a comment calling it *"static content, so
+once rather than per draw"* -- true when V2.2b wrote it, false from V2.6a, which made a
+city's population two live shares times a live head count. So **the crosses never grew or
+shrank for a whole session** and V2.6a's own *"the map's brass crosses grow and shrink for
+free"* was describing a readout that did not refresh; V2.6b1's ring, reading the same list,
+drew nothing. Rebuilt on **U5c's monthly hook rather than per draw** -- this walks 581
+cities and derives a site per nation, and V2.3 already paid for putting a rasterise on the
+clock path, a class a screenshot pass structurally cannot see. **The proof is two frames of
+one flag**: *"Lille -- 240 k"* before, **"Lille -- 245 k -- where the unions are out"**
+after. `--site` zooms four times rather than twice, because at `--city`'s zoom the ring is
+five pixels among several hundred crosses -- V1.6e's correction has a direction on a map as
+well as in a scroll. One tool limitation recorded rather than fixed: a windowed capture can
+receive a mouse-motion event and overwrite `_hovered_city`, so a hover label is present in
+some runs and absent in others, identically for `--city` and `--hover-project`.
+`test_geography.gd`'s register scan now **strips comment lines before matching**, because
+`siting.gd` and `unrest.gd` each NAME `unemployment_rel` in a docstring while neither
+touches it in code -- the correction that check's own sibling already records making, and it
+makes the check stricter rather than looser. **V2.6b SPLIT**: the two halves share the WHERE
+and not the PRICE, unrest's place being a derived report whose failure mode is constancy and
+a campaign meeting's a verb whose failure mode is dominance, so **V2.6b2** owns campaigning
+on V2.4a's travel days plus a per-region saturation counter. Model:
+[docs/siting-model.md](docs/siting-model.md).
+
+**V2.6b2 SITED THE CAMPAIGN, AND THE RE-BASELINE MOVED THE ANCHOR BEFORE IT MOVED THE WINDOW.**
+The site is the PLAYER'S -- `Campaign.execute()` takes `region_id`, refuses a start without one
+and refuses a region outside the acting nation's own live register, and **`Siting.site()` is not
+called anywhere and must never be**: the verb whose place is chosen is the one proof the two sited
+halves were never one shape. The month's accrual runs at the site's reach-per-day factor (the
+principal city's share of the nation over the journey's travel days) times `(1 - spoken)`, where
+`spoken` is the region's saturation -- one meeting month speaks to a region's whole attention,
+clamped at 1.0, decaying on a half-life; the register is NOT cleared when the window closes
+(attention persists) and the nine carry it empty forever. **`tools/tour_probe.gd` ran BEFORE any
+src/ edit and corrected the model twice**: the draft's unbounded accumulator reorders the tour only
+at accruals claiming 91-94 % of a region per meeting (the fraction form is the same claim bounded
+in [0, 1] with one constant), and the recovery clause read on the tour's actual history was a
+DOMINANCE clause in disguise -- incompatible with reorder at any fresh margin above ~2x (FRA's is
+7.3x) -- so it measures the decay's timescale instead. **The dominance fell; the kill switch did
+not fire.** The window re-baseline then came back EMPTY under V2.6b1's population-weighted
+mean-one anchor -- worst move 0.176 against the 0.3415 lower edge at every window <= 12 -- and the
+anchor was the defect, not the lever: **reach is delivered where the PLAYER goes, not where the
+people are**, so the idiom does not transfer from an output price to a reach multiplier. Uniform
+mean-one over the regions (capital x6.70) refits the band at every window; the recorded cost is
+that a touring campaign runs ~1.4x V1.7a's expected price. **WINDOW AND HALF-LIFE ARE ONE
+SELECTION** -- the calibration probe alone picks 5 and window 5 empties the tour band (recovery
+needs `D <= W - 1`, reorder needs `D >= 4.75`) -- so the joint maximin over the lower edge, the
+run's own MEASURED accumulator peak (the `rate x d` formula is retired from the rail clause; the
+sited model's month-1 spike at x6.70 invalidates it), and the tour pair is a stable fixed point:
+**`CAMPAIGN_WINDOW_MONTHS` 8 -> 10, `SATURATION_HALF_LIFE_MONTHS` = 6.5**, worst slack 23.0 %,
+the rail binding the selection while never binding the accrual. **`SAVE_VERSION` is 30 on two
+fields** -- `campaign_sites` (a verb writes it; a dropped site silently reverts a running effort
+to the place-less national reach) and `campaign_saturation` (a dropped spoken-to register hands
+every saturated region back at full reach: `campaign_started`'s exploit one level up, the tour
+un-spoken). **The re-run held the prediction**: 46 of 49 common regimes bit-identical, the only
+content movers the two campaign regimes (the ranking line now names its site; presidential share
+25.6 -> 26.0 and 25.8 -> 26.0, both HELD), zero outcome changes; the third apparent mover was the
+baseline worktree's own autoload noise, three contiguous lines after the last `invariants: OK`,
+isolated per V1.7c. The new `managed_campaigns_tour` regime runs a genuine two-site tour (donor
+circuit at FR1, stood down four months in, digital push at FRL) -- the decision the saturation
+counter exists to make. **The screenshot pass found one bug and it was a label**: the running
+effort's site line printed "x0.00 this month" against a month that had delivered a tenth of fresh
+-- the register reads after the tick, when the meeting has just re-spoken the region to its clamp,
+so `factor_of()` answers a hypothetical extra meeting -- fixed to print the spoken-to percentage;
+`--site` also learned to photograph the ring the staged state actually has ("Marseille -- 867 k --
+where the meetings are") instead of ticking past the run-up to find a demonstration. Model:
+[docs/campaign-model.md](docs/campaign-model.md) section 18.
+
 
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
@@ -842,7 +976,8 @@ windowed, not headless — and takes `--layer`, `--hover`, (U6a) `--book` and (V
 (V1.7b) `--pledge`,
 (V1.7c) `--referendum` and `--electoral`,
 (V1.8) `--event` and `--event-answered` and
-(V2.5) `--diverge`,
+(V2.5) `--diverge` and
+(V2.6b1) `--site`,
 so every map layer can be captured with something actually on it. **V1.4c replaced
 the hand-rolled month loop every tick-forward flag carried with `_tick_months()`,
 which drives the real clock**: without it `clock_cluster.refresh()` had nothing new
@@ -2916,7 +3051,16 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 28**, on ONE field -- `NationState.region_gdp_eur_bn`,
+Save format is at **version 29**, and this line said **28** until V2.6b1 corrected it --
+V2.6a bumped it and wrote the bump into its own session paragraph without touching this
+paragraph, which is precisely the two-files-one-fact drift the Workflow section warns
+about, arriving inside a single file instead of between two. V2.6a's two fields are
+`NationState.region_pop_share` and `.city_pop_share`: absent, every share reads 0.0, so
+every city has a population of zero, no glyph at any zoom and an empty league table in
+both panels. **V2.6b1 adds nothing and pins five absences** -- the site is arg-max over
+those two registers, derived every read, so a stored site, region, concentration, output
+index or per-region impulse would each be a second answer to a question the shares already
+answer. Version 28 was V2.5's, on ONE field -- `NationState.region_gdp_eur_bn`,
 V2.5's region level, and `military_capability`'s case at V1.3g in its strongest
 form: national GDP is the sum of this dictionary now, so an absent register reads
 0.0 and the definitional swap writes the country's GDP to zero on the first tick --

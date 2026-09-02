@@ -66,6 +66,17 @@ const Tax = preload("res://src/sim/tax.gd")
 ## reads the press, and judiciary.gd knows nothing about a grievance. One direction.
 const Judiciary = preload("res://src/sim/judiciary.gd")
 
+## V2.6b1, and the three that give the grievance a PLACE. siting.gd preloads
+## nothing at all, regions.gd preloads two constants files, and migration.gd
+## preloads those two plus companies.gd -- so none of them can reach economy.gd and
+## the one edge this file must never have is still absent. tests/test_unrest.gd's
+## closed-set assertion widens by exactly these THREE names and says why. There is
+## no siting_constants.gd to preload: the one constant this session would have added
+## was measured, failed its own band and was deleted -- see opinion_load() below.
+const Siting = preload("res://src/sim/siting.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
+
 
 ## Zero, explicitly, and the explicitness is the point.
 ##
@@ -236,6 +247,44 @@ static func inequality_deviation(ns) -> float:
 ##
 ## See unrest_constants.UNREST_OPINION_SCALE for why an output-only price was designed,
 ## measured, and found structurally unable to reach a voter.
+##
+## V2.6b1 SITED THIS PRICE, MEASURED IT, AND DELETED THE SITING TERM. Unchanged from
+## V1.5c, and the deletion is the session's result rather than a retreat from it.
+##
+## The design was that a demonstration in a more concentrated place is more visible
+## and costs the president more, through a factor on this load with one tuned
+## constant behind it. Two clauses were fixed before the sweep, both model criteria:
+## the sited load must differ from the unsited one by at least ONE DIGIT OF THE PANEL
+## THAT PRINTS IT (src/ui/polling_panel.gd formats a bloc row as "%.0f%%", so one
+## point), and it must stay below what settling the strike is worth, because a model
+## in which WHERE the strike is matters more than WHETHER YOU SETTLED IT is not one
+## to defend.
+##
+## THE INTERVAL IS EMPTY, AND THE TWO CLAUSES ARE INCONSISTENT RATHER THAN BADLY
+## TUNED. Measured on FRA austerity over sixty months (tools/siting_probe.gd table
+## (d)): the WHOLE unrest opinion price is worth 2.9825 points on the worst bloc row,
+## one settlement law is worth 0.4450, and clause (i) crosses at beta ~3.1 while
+## clause (ii) is crossed at ~1.3. So a readable siting term has to be a THIRD of the
+## entire unrest price and 2.25 TIMES what settling is worth. No candidate on any of
+## three grids passes both.
+##
+## The reason is V1.5c's own finding read from the other side: the opinion model
+## prices rates and ratios, the whole unrest channel only just clears the poll floor
+## at three points, and a MODULATION of a three-point channel is a fraction of a
+## fraction. That is docs/cycle-model.md's legibility floor in a fourth place, and
+## the response is V1.5b's deletion of DEPENDENCY_ELASTICITY["health"] rather than
+## tuning against an arithmetic impossibility -- the kill switch was declared before
+## the sweep and it is honoured.
+##
+## SO src/sim/siting_constants.gd DOES NOT EXIST. It was written, the band was run
+## against it, and it was deleted rather than left at an unused 0.0 -- V1.3e's
+## treatment of AGREEMENT_ACCEPT_MIN and SUPPORT_SIGMA, because a tuned constant
+## nothing reads is a number a later session finds and reasons from. V2.6b1 ships NO
+## TUNED CONSTANT AT ALL, which is projects_constants.gd's and pledges_constants.gd's
+## position a third time.
+##
+## What survives is the OUTPUT price, act_impulse() below, which needed no constant
+## and therefore no band: it is a definitional correction rather than a coefficient.
 static func opinion_load(ns) -> float:
 	return K.UNREST_OPINION_SCALE * clampf(float(ns.unrest_pct) / K.UNREST_MAX, 0.0, 1.0)
 
@@ -248,6 +297,123 @@ static func unrest_step(current: float, target: float) -> float:
 		current + K.UNREST_CONVERGENCE * (target - current),
 		K.UNREST_MIN, K.UNREST_MAX
 	)
+
+
+# --- The place ------------------------------------------------------------------
+
+## Each named region's LIVE share of the nation's population -- V2.6a's register,
+## read through Migration rather than off the field.
+##
+## THE FIRST VERSION OF THIS COMMENT CLAIMED THIS FILE NAMES NO REGISTER FIELD AT
+## ALL, AND THAT WAS FALSE: site_report() below reads `region.id`,
+## `region.region_name`, `region.cities` and a city's own id and name to put a mark
+## on a map. What it does not touch is the ECONOMIC field contract --
+## `.gdp_share`, `unemployment_rel`, `sector_mix`, `region_gdp_eur_bn` -- which is
+## what tests/test_geography.gd guards and why V2.5 can still be the register's one
+## simulating reader. Every regional QUANTITY here comes back through a Regions
+## function; only navigation is read directly. The distinction is the check's, and
+## it is written down because the loose version of the claim was wrong.
+##
+## These are the WEIGHTS. A demonstration is people, so how many are there is the
+## first half of where it happens.
+static func site_weights(ns, region_list: Array) -> Dictionary:
+	var out: Dictionary = {}
+	for region in region_list:
+		out[region.id] = Migration.region_share(ns, region.id)
+	return out
+
+
+## The SIGNAL: how far each region's unemployment stands above its nation's own
+## share-weighted mean, and absent for every region at or below it.
+##
+## Passed to Siting.excess() as the raw rate rather than as a ratio to the national
+## figure, because excess() subtracts its own weighted mean and a uniform rescale
+## changes neither the arg-max nor the margin. One operation fewer and the same
+## answer, which is worth a sentence because the model doc calls it "relative
+## regional unemployment" and a reader would otherwise look for the division.
+##
+## SCORED ON THE DEVIATION AND NOT ON THE LEVEL, and that is the session's sharpest
+## content call rather than a detail. On the level the demonstration goes wherever
+## the most people are, which is a fact about population: France's site would be
+## Ile-de-France for ever. On the deviation it goes to Hauts-de-France, which is
+## where France's unemployment actually is -- and because a high-unemployment region
+## is systematically a poor and small one, the two prices built on it come out BELOW
+## one rather than above. The choice flips the sign of the whole session's price and
+## both tables are in docs/siting-model.md section 3.
+##
+## RETURNS {} FOR BRITAIN, which is a real answer and not a gap: every British
+## region carries unemployment_rel exactly 1.0 (V2.5 section 8's ITL1 index proxy),
+## so nothing is above its own mean. Luxembourg returns {} for a different reason --
+## one region cannot differ from itself. Both nations are then unpriced by
+## arithmetic, because Siting.concentration() reads 1.0 on an empty site.
+static func site_signal(ns, region_list: Array) -> Dictionary:
+	var rates: Dictionary = {}
+	for region in region_list:
+		rates[region.id] = Regions.unemployment_pct(ns, region_list, region.id)
+	return Siting.excess(rates, site_weights(ns, region_list))
+
+
+## Where this month's grievance is, and what it is worth -- one call, because the
+## opinion load and the act impulse must read the SAME site in the same month and
+## computing it twice is two answers to one question waiting to disagree.
+##
+## Keys: region_id, region_name, city_id, city_name, concentration, output_index,
+## margin. A nation with no register or no site comes back with empty strings and
+## BOTH factors at exactly 1.0, so every caller can multiply unconditionally.
+##
+## The city is the site region's largest by LIVE city share -- V2.6a's second
+## register, and the only reason this function touches it: a region has no single
+## point and a city carries a lonlat, so the mark on the map has somewhere to go.
+## It moves with the people, which is the one part of the site that genuinely does
+## (see margin below).
+##
+## `margin` rides the report so the probe and the panel read the same number the
+## price does. It is the degeneracy detector: measured at 0.781 for France, meaning
+## the runner-up would need to gain 78 % to take the place, against a migration
+## budget worth about 9 % over fourteen years. THE REGION DOES NOT MOVE. Recorded
+## here beside the code rather than only in the doc, because V2.6b's own ROADMAP row
+## claimed it did.
+static func site_report(ns, region_list: Array) -> Dictionary:
+	var empty := {
+		"region_id": "", "region_name": "", "city_id": "", "city_name": "",
+		"concentration": 1.0, "output_index": 1.0, "margin": 0.0,
+	}
+	if region_list.is_empty():
+		return empty
+
+	var weights: Dictionary = site_weights(ns, region_list)
+	var signals: Dictionary = site_signal(ns, region_list)
+	var region_id: String = Siting.site(weights, signals)
+	if region_id == "":
+		return empty
+
+	# Normalised over the named regions, so the share-weighted mean multiplier is
+	# EXACTLY 1.0 and this factor cannot silently rescale UNREST_IMPULSE_SCALE.
+	var raw: Dictionary = {}
+	for region in region_list:
+		raw[region.id] = Regions.gdp_per_head_index(
+			ns, region_list, region.id, Migration.region_share(ns, region.id)
+		)
+	var indexed: Dictionary = Siting.normalised(raw, weights)
+
+	var out := empty.duplicate()
+	out["region_id"] = region_id
+	out["concentration"] = Siting.concentration(weights, region_id)
+	out["output_index"] = float(indexed.get(region_id, 1.0))
+	out["margin"] = Siting.margin(weights, signals)
+	for region in region_list:
+		if region.id != region_id:
+			continue
+		out["region_name"] = String(region.region_name)
+		var best_share: float = -1.0
+		for city in region.cities:
+			var share: float = Migration.city_share(ns, city.id)
+			if share > best_share:
+				best_share = share
+				out["city_id"] = String(city.id)
+				out["city_name"] = String(city.city_name)
+		break
+	return out
 
 
 # --- The agent ----------------------------------------------------------------
@@ -290,12 +456,35 @@ static func act_label(unrest: float) -> String:
 ## stock, so a protest at the threshold costs its share of what a general strike at the
 ## ceiling costs and UNREST_IMPULSE_SCALE means one legible thing: the price of the
 ## worst case.
-static func act_impulse(unrest: float) -> float:
-	return -K.UNREST_IMPULSE_SCALE * clampf(unrest / K.UNREST_MAX, 0.0, 1.0)
+##
+## V2.6b1 MULTIPLIES BY THE SITE'S OUTPUT PER HEAD, and this price needed no constant
+## at all: V2.5 already ships Regions.gdp_per_head_index() normalised to 1.0 at the
+## national average, and Siting.normalised() makes the share-weighted mean of the
+## multiplier exactly 1.0 rather than approximately so. So the EXPECTED price is
+## unchanged and only the per-nation variation is new -- UNREST_IMPULSE_SCALE keeps
+## the calibration V1.5c measured for it, which is the whole reason the factor is
+## normalised rather than raw.
+##
+## The same required-argument rule as opinion_load(): 1.0 means an average place or
+## no place, and a caller says so rather than omitting it.
+##
+## Measured, and the sign is the finding: the site is where the EXCESS unemployment
+## is, which is systematically a POOR region, so the index is 0.759 for France and
+## 0.644 for Italy. A strike sited where the grievance is costs the country LESS
+## output than the same strike in its capital would. See docs/siting-model.md
+## section 3 -- the choice of site form flips the sign of this price.
+static func act_impulse(unrest: float, output_index: float) -> float:
+	return -K.UNREST_IMPULSE_SCALE * clampf(unrest / K.UNREST_MAX, 0.0, 1.0) * output_index
 
 
 static func _tick_nation(state, ns) -> void:
 	ns.unrest_pct = unrest_step(float(ns.unrest_pct), unrest_target(ns))
+
+	# ONE site read per nation-month, shared by both prices. The opinion load is a
+	# STOCK read and fires every month; the impulse is an ACT read and fires on a
+	# cooldown -- so computing the site here rather than inside the act branch is
+	# what guarantees the two price the same place in the month they coincide.
+	var report: Dictionary = site_report(ns, state.regions.get(ns.id, []))
 	ns.unrest_opinion_load = opinion_load(ns)
 
 	# Decayed HERE and not in economy.gd, unlike demand_impulse_pct which Economy owns
@@ -316,7 +505,7 @@ static func _tick_nation(state, ns) -> void:
 	# decaying is a country in a rolling dispute, and overwriting would make the second
 	# strike cheaper than the first. The clamp is what bounds it.
 	ns.unrest_impulse_pct = clampf(
-		float(ns.unrest_impulse_pct) + act_impulse(float(ns.unrest_pct)),
+		float(ns.unrest_impulse_pct) + act_impulse(float(ns.unrest_pct), float(report["output_index"])),
 		-K.UNREST_IMPULSE_MAX_PCT, K.UNREST_IMPULSE_MAX_PCT
 	)
 	ns.unrest_cooldown_months = K.UNREST_COOLDOWN_MONTHS
@@ -324,12 +513,25 @@ static func _tick_nation(state, ns) -> void:
 	# A display record and not a memory. src/sim/ never reads this back — the grievance
 	# number IS the memory, which is V1.3e's *no grievance ledger* property arriving in
 	# the one session that could have been tempted to build the ledger literally.
+	#
+	# V2.6b1 adds the place, and it is written onto the RECORD rather than looked up
+	# later because a past act's site cannot be re-derived once the shares have moved.
+	# The three new keys earn no SAVE_VERSION bump: absent, they read as "no place",
+	# which is the truth about every version-29 save because those games could not
+	# site one -- `measures`' case at V1.3c, a seventh time. They stay DISPLAY only,
+	# and tests/test_unrest.gd's read-the-directory assertion is what keeps them so:
+	# GameState.duplicate_state() does not carry this array, so a sim-side reader
+	# would make Budget.project() and the live tick disagree in silence.
 	state.unrest_acts.append({
 		"nation_id": ns.id,
 		"year": int(state.year),
 		"month": int(state.month),
 		"label": act_label(float(ns.unrest_pct)),
 		"unrest_pct": float(ns.unrest_pct),
+		"region_id": String(report["region_id"]),
+		"region_name": String(report["region_name"]),
+		"city_id": String(report["city_id"]),
+		"city_name": String(report["city_name"]),
 	})
 	while state.unrest_acts.size() > K.ACTS_KEPT:
 		state.unrest_acts.remove_at(0)

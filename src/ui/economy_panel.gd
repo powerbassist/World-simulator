@@ -17,6 +17,9 @@ extends PanelContainer
 const Economy = preload("res://src/sim/economy.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+## V2.6b1, for site_report() alone -- the grievance has a place now, and the panel
+## derives it live rather than storing one. Nothing is written back.
+const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
@@ -190,6 +193,19 @@ func _refresh() -> void:
 			"Organised action at %.0f." % UnrestK.UNREST_THRESHOLD_PCT if not striking
 				else "Past the point where the unions organise.",
 		], PanelKit.Tone.BAD if striking else PanelKit.Tone.DIM)
+
+		# V2.6b1. WHERE the grievance is, on its own line and only once there is a
+		# place to name. Derived every refresh from the live shares rather than stored,
+		# so it moves when the model moves it -- and for Britain and Luxembourg, whose
+		# registers cannot single a region out, it is SILENT rather than printing a
+		# confident "nowhere". V1.6d's rule: a missing figure is an em dash or nothing,
+		# never a default dressed as an answer.
+		var site: Dictionary = Unrest.site_report(ns, _state.regions.get(ns.id, []))
+		if String(site["region_name"]) != "":
+			PanelKit.line(_labour, "Concentrated in %s%s." % [
+				String(site["region_name"]),
+				(" (%s)" % String(site["city_name"])) if String(site["city_name"]) != "" else "",
+			], PanelKit.Tone.DIM)
 
 	PanelKit.figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
 	_trend(_finances, "deficit_pct_gdp")

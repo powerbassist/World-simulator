@@ -795,6 +795,13 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# drift every month and a trade weight moves with every partner's GDP. Without
 	# this the data layers show the colours of whenever the mouse last moved.
 	if _map_view != null:
+		# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
+		# sharper version of the same reason: a city's population is two live shares
+		# times a live head count, and where the unions are out changes with the
+		# grievance. Without this the crosses keep the sizes they had at new game --
+		# which is what V2.6a's "cities grow and shrink for free" actually did on
+		# screen until the V2.6b1 screenshot pass looked at a frame.
+		_map_view.refresh_cities()
 		_map_view.queue_redraw()
 
 	# Discipline reads the approval Opinion has just settled, so it goes after
@@ -1061,10 +1068,20 @@ func _card_unrest_acts(year: int, month: int) -> void:
 			continue
 		if String(act["nation_id"]) != _state.player_nation_id:
 			continue
-		_hud.message_stack.push(
-			_unrest_title(String(act["label"])),
-			"Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
-		)
+		# V2.6b1. The card names the PLACE, and it reads it off the act's own record
+		# rather than re-deriving it: a past act's site cannot be recovered once the
+		# shares have moved, which is why unrest.gd writes it down at the moment it
+		# happens. Absent -- every act on a version-29 save, and every nation with no
+		# site -- the sentence falls back to the national wording it has always had,
+		# so an old save reads correctly rather than printing an empty place.
+		var city := String(act.get("city_name", ""))
+		var region := String(act.get("region_name", ""))
+		var body := "Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
+		if city != "" and region != "":
+			body = "%s, %s. Grievance stands at %.0f of 100. Output will carry it for months." % [
+				city, region, float(act["unrest_pct"]),
+			]
+		_hud.message_stack.push(_unrest_title(String(act["label"])), body)
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the

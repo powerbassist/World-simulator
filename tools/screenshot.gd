@@ -43,6 +43,10 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
+## V2.6b1, for --site: the flag has to ASK where the demonstration is rather than
+## assume, because a nation whose register cannot single a region out has no site and
+## the flag must say so instead of photographing an unringed city.
+const Unrest = preload("res://src/sim/unrest.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -84,6 +88,7 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
@@ -353,6 +358,8 @@ func _init() -> void:
 			_city = true
 		elif args[i] == "--diverge":
 			_diverge = true
+		elif args[i] == "--site":
+			_site = true
 		elif args[i] == "--move":
 			_move = true
 		elif args[i] == "--open" and i + 1 < args.size():
@@ -458,10 +465,15 @@ func _apply_view() -> void:
 		_let_the_regions_diverge()
 	if _move:
 		_let_the_people_move()
-	if _city:
-		_point_at_the_capital()
+	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
+	# the ring that is actually on the map -- the meeting city of an effort in the
+	# field -- rather than ticking past the staged run-up to find a demonstration.
 	if _campaign:
 		_open_the_campaign()
+	if _site:
+		_site_the_demonstration()
+	if _city:
+		_point_at_the_capital()
 
 	if _pledge:
 		_make_and_break_a_promise()
@@ -1467,6 +1479,19 @@ func _back_the_biggest_sector() -> void:
 ## election would photograph an empty panel and a zero bill -- V1.6b's flag ticking 48
 ## months and running past the thing it existed to capture, in a new place. The one
 ## surface where the register is visible is inside the run-up.
+## The nation's regions, freshest first. tour_probe.gd's T2 measured the capital as
+## the arg-max fresh factor in eight of ten nations; this is the same read, ranked.
+func _ranked_sites(ns) -> Array:
+	var scored := []
+	for rid in ns.region_pop_share:
+		scored.append({"id": String(rid), "fresh": Campaign.fresh_factor(ns, _main._loader, String(rid))})
+	scored.sort_custom(func(a, b): return float(a["fresh"]) > float(b["fresh"]))
+	var out := []
+	for entry in scored:
+		out.append(String(entry["id"]))
+	return out
+
+
 func _open_the_campaign() -> void:
 	var state = _main._state
 	if state == null:
@@ -1492,9 +1517,17 @@ func _open_the_campaign() -> void:
 		)
 	)
 
+	# V2.6b2: each started effort takes the next-ranked fresh site, so the frame shows
+	# the tour actually spreading rather than two efforts camped on the capital.
+	var sites := _ranked_sites(ns)
+	var next_site := 0
 	var begun := 0
 	for a2 in starts:
-		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2).get("applied", false):
+		var site := ""
+		if next_site < sites.size():
+			site = String(sites[next_site])
+			next_site += 1
+		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2, site).get("applied", false):
 			begun += 1
 	if begun == 0:
 		printerr("--campaign: no effort could be started")
@@ -1891,3 +1924,93 @@ func _answer_a_crisis() -> void:
 		printerr("--event-answered: the ledger holds %d rows, expected two" % ns.event_history.size())
 	if _main._events_panel != null:
 		_main._events_panel.scroll_to_bottom()
+
+
+## V2.6b1. A demonstration that has actually happened, on the map, in the place the
+## model put it.
+##
+## TICKS UNTIL AN ACT FIRES rather than a fixed number of months, which is V1.8's own
+## correction: --event announced the register directly and then ticked, so main.gd
+## never carded anything and the frame showed an empty column beside a live crisis.
+## Affordable for the same reason it was there -- the agent is deterministic, so
+## "until it fires" terminates at a known month rather than gambling.
+##
+## The ring is gated on UNREST_THRESHOLD_PCT, the same bar src/ui/economy_panel.gd's
+## own line uses, so a frame taken before the unions organise would show a city and no
+## ring and prove nothing about the thing this flag exists to photograph.
+## The player's first running effort's meeting city, with its lonlat -- the ring the
+## map draws while a campaign is in the field. Empty when nothing is running.
+func _campaign_meeting_target() -> Dictionary:
+	var state = _main._state
+	if state == null:
+		return {}
+	var ns = state.player()
+	var running: Array = Campaign.running(ns)
+	if running.is_empty():
+		return {}
+	var site := Campaign.site_of(ns, String(running[0]))
+	if site == "":
+		return {}
+	var city = Campaign.principal_city(_main._loader, ns, site)
+	if city == null:
+		return {}
+	return {"city_id": String(city.id), "lonlat": city.lonlat}
+
+
+func _site_the_demonstration() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	# V2.6b2: a campaign effort in the field owns the map's ring when unrest is
+	# quiet -- the flag photographs whatever ring the staged state actually has, and
+	# only provokes the unions when there is no campaign ring to take. The staged
+	# campaign's timeline is kept either way: ticking to a demonstration would
+	# photograph a month the --campaign staging never lived in.
+	var staged := _campaign_meeting_target()
+	if staged["city_id"] != "":
+		var view0 = _main._map_view
+		view0.center_on_lonlat(staged["lonlat"].x, staged["lonlat"].y)
+		view0.zoom_by(4.0, view0.size / 2.0)
+		view0.refresh_cities()
+		view0._hovered_city = String(staged["city_id"])
+		view0.queue_redraw()
+		return
+	_provoke_the_unions()
+
+	var ns = state.player()
+	var region_list: Array = state.regions.get(ns.id, [])
+	var report: Dictionary = Unrest.site_report(ns, region_list)
+	var guard := 0
+	while (state.unrest_acts.is_empty() or String(report["city_id"]) == "") and guard < 120:
+		_tick_months(1)
+		guard += 1
+		ns = state.player()
+		report = Unrest.site_report(ns, region_list)
+	if state.unrest_acts.is_empty():
+		printerr("--site: no act fired in %d months, so there is nothing to photograph" % guard)
+		return
+	if String(report["city_id"]) == "":
+		printerr("--site: the unions are out and the register names no place -- a nation with a flat signal cannot be sited")
+		return
+
+	var lonlat := Vector2.ZERO
+	for region in region_list:
+		for city in region.cities:
+			if String(city.id) == String(report["city_id"]):
+				lonlat = city.lonlat
+	var view = _main._map_view
+	view.center_on_lonlat(lonlat.x, lonlat.y)
+	# Closer than --city's 2.0. The ring is the radius plus three pixels and the
+	# smallest cities clamp at a radius of two, so at the city flag's zoom the mark
+	# this flag exists to photograph is five pixels wide among several hundred
+	# crosses -- V1.6e's correction, which is about scrolling to where the flag's own
+	# claim is and applies to a map's zoom exactly as it does to a panel's scroll.
+	view.zoom_by(4.0, view.size / 2.0)
+	# Explicit, though the monthly hook in main.gd now rebuilds it too: every
+	# state-mutating flag since --coerce got away with writing behind a view that had
+	# already refreshed, which is the tool's own V1.3g bug.
+	view.refresh_cities()
+	# The hover is set the way --hover-project and --city set theirs: the label is the
+	# one half of this mark a headless suite structurally cannot see.
+	view._hovered_city = String(report["city_id"])
+	view.queue_redraw()

@@ -28,58 +28,125 @@ extends RefCounted
 # --- The window ----------------------------------------------------------------
 
 ## How many months before the vote a campaign may run, inclusive of the month of the
-## vote itself. THE ONE TUNED CONSTANT IN THIS FILE.
+## vote itself. THE ONE TUNED CONSTANT V1.7a SHIPPED, re-selected by V2.6b2's
+## re-baseline -- and the re-baseline is the story, because the prediction was that
+## total reach falling would move the feasible set, and the set did not just move, it
+## changed shape.
 ##
-## *** A LEVEL READ, NOT AN EDGE TRIGGER, AND THAT IS WHY THERE IS NO "THE CAMPAIGN
-## HAS OPENED" FLAG ANYWHERE IN THE REGISTER. *** docs/defence-model.md's V1.3g rule:
-## the alliance obligation opens itself by comparison against live state rather than
-## by an event that fires once, because nothing in this project ever lifts a flag it
-## has set. Campaign.is_open() compares the clock against ns.next_executive_year /
-## _month and nothing else, so a save reloaded inside the window is inside it, a
-## dissolution that moves the date moves the window with it, and there is no second
-## record of when the run-up began that could disagree with the first.
+## *** A LEVEL READ, NOT AN EDGE TRIGGER *** (V1.3g's rule, unchanged): is_open()
+## compares the clock against ns.next_executive_year / _month and nothing else, so a
+## save reloaded inside the window is inside it and there is no second record of when
+## the run-up began that could disagree with the first.
 ##
-## *** THE BAND IS ANCHORED ON APPROVAL RATHER THAN INVENTED, AND THE FIRST VERSION OF
-## IT WAS NOT. *** tools/campaign_probe.gd's first pass asked for "at least 0.50 points
-## of vote share" -- a number picked because it sounded like a margin -- and refused
-## every candidate against it without ever saying whether 0.50 was the right ruler. It
-## was not. The honest ruler is the only other thing that moves Elections.vote_share()
-## at all: approval, through the `pull` term. Measured (probe table (c4)):
+## *** THE BAND IS ANCHORED ON APPROVAL RATHER THAN INVENTED (V1.7a, unchanged). ***
+## A full run-up must be worth at least one point of approval (below that, governing
+## swamps it) and at most the poll floor (above that, a campaign substitutes for the
+## record). Measured: 1 point of approval = 0.3415 points of vote share, 3.0 points =
+## 1.0147.
 ##
-##   1 point of approval  = 0.3415 points of vote share, 0.4512 of the winning GAP
-##   3 points (the poll floor) = 1.0147 / 1.3404
+## *** V2.6b2'S RE-BASELINE, AND THE THREE-WAY COUPLING IT EXPOSED. *** Siting the
+## effort changed the lever's total reach, and the re-baseline ran twice:
 ##
-## So a full run-up must be worth at least one point of approval -- below that,
-## governing swamps it and the lever is decorative -- and at most the poll floor, above
-## which a campaign substitutes for the record and a president buys back a term they
-## had lost. The upper edge is POLL_FLOOR_PTS because a swing smaller than the
-## published polls can resolve is exactly the swing a campaign may own: the player has
-## spent the term reading blurred figures, and the campaign decides the race those
-## figures could not call.
+##   Under the FIRST anchor -- the fresh factor mean-one in POPULATION weights, the
+##   idiom V2.6b1's output price used -- the band came back EMPTY at every window the
+##   emulator can express (worst move 0.176 against the 0.3415 edge, table (d)), and
+##   the tour clauses and the calibration were jointly infeasible in every saturation
+##   strength. The anchor was the defect, not the lever: reach is delivered WHERE THE
+##   PLAYER GOES, not where the people are, so the population-weighted idiom does not
+##   transfer. The anchor moved to UNIFORM weights over the regions (the recorded
+##   reason is Campaign.fresh_factor()'s doc), and the band refit fully.
 ##
-## *** SELECTED BY MAXIMIN SLACK, WHICH IS THIS SESSION'S ADDITION TO THE TIEBREAKER
-## RULES. *** The feasible set is [7, 10]: below 7 the authored ladder cannot reach the
-## lower edge, above 10 the reachable stack passes MOBILISATION_MAX. V1.5d says neither
-## edge selects when two model criteria bound from opposite sides and the interior
-## governs -- but "the interior of a passing LIST" is a statement about the grid, and
-## V1.5b's whole finding is that a grid must never choose. The interior of the FEASIBLE
-## REGION needs none: take the candidate whose WORST relative slack is largest.
+##   With the uniform anchor, EVERY window in [1, 12] passes both edges -- and the
+##   window's own criteria alone would maximin-select 5 (39.8 % worst slack). But the
+##   tour's recovery clause rides the window (a region visited once must offer >= 0.5
+##   of its fresh factor by the window's end), and at window 5 the tour band is EMPTY:
+##   the recovery clause needs D <= W - 1 while the reorder clause needs D >= 4.75.
+##   WINDOW AND HALF-LIFE ARE ONE SELECTION, not two -- V2.6b2's own finding, and the
+##   reason neither constant's comment may be read alone.
 ##
-##   d=7   lower-edge slack  5.8 %   guard-rail slack 33.9 %   min  5.8 %
-##   d=8                    23.1 %                    24.4 %       23.1 %   <- ships
-##   d=9                    40.3 %                    15.0 %       15.0 %
-##   d=10                   57.3 %                     5.6 %        5.6 %
+##   The joint maximin over all three criteria (lower edge, measured accumulator peak,
+##   and the tour pair), on the D grid of 0.25 months:
 ##
-## Stable under refinement (both slacks are continuous in d), stable under widening (a
-## candidate outside the region has negative slack), and it degrades correctly: where
-## one criterion is far looser than the other it returns the edge of the tighter one,
-## which is what a bound should do.
+##     W  5   tour band EMPTY                     -- refused
+##     W  9   D 6.00  worst slack 20.2 % (tour (i))
+##     W 10   D 6.50  worst slack 23.0 % (measured peak 0.6927 against 0.90)  <- ships
+##     W 11   D 6.50  worst slack ~16 %  (measured peak, interpolated)
+##     W 12   D 6.50  worst slack  9.4 % (measured peak 0.8155)
+##
+##   The fixed point is stable: at window 10 the tour maximin picks D 6.50, and at
+##   D 6.50 the window maximin picks 10. W 10 is interior (W 11 interpolates below
+##   it), D 6.50 is interior of the tour
+##   band [4.75, 9] and of the rail-bound plateau it sits in. THE RAIL IS THE BINDING
+##   CRITERION AT THE SHIPPED POINT -- 18.5 % of real slack, the clamp never set the
+##   number, and the read is the run's own MEASURED accumulator peak, not the
+##   rate x d formula the pre-siting model could use (tools/campaign_probe.gd table
+##   (d) prints the measured peak; table (f)'s raw formula is the pre-siting read).
 ##
 ## The sweep of record is run with this constant raised to 12, because the probe's own
 ## clearing behaviour is a level read of it and rows above it are not emulable -- the
-## first pass printed them anyway and reported a campaign wiped on the next tick beside
-## a non-zero move. V1.6b's "set the constant once and re-run", applied to an integer.
-const CAMPAIGN_WINDOW_MONTHS := 8
+## first pass printed them anyway and reported a campaign wiped on the next tick
+## beside a non-zero move. V1.6b's "set the constant once and re-run", applied to an
+## integer.
+const CAMPAIGN_WINDOW_MONTHS := 10
+
+# --- The site -------------------------------------------------------------------
+
+## How many months a region's spoken-to attention takes to halve. THE ONE TUNED
+## CONSTANT V2.6b2 ADDS, and it exists because reach-per-day alone makes the capital
+## strictly dominant -- docs/siting-model.md section 11's measurement (Paris x6.70
+## fresh against Marseille x0.92 under the shipped uniform anchor, a 7.3x margin), the shape this project has killed
+## twelve times. The breaker is the sentence data/campaign-actions/campaign.json
+## already wrote in prose: whoever has already been spoken to has already been
+## spoken to. A meeting month speaks to a region's whole attention (spoken is a
+## fraction clamped at 1.0), the month's reach is scaled by (1 - spoken), and the
+## fraction decays on this half-life. tools/tour_probe.gd is what set it.
+##
+## *** THE BAND, FIXED BEFORE THE SWEEP, BOTH CLAUSES IN FACTOR UNITS. ***
+##
+##   (i) REORDER -- the optimal tour must leave the capital: >= 2 distinct regions
+##       and a window total that beats camping. First crosses at D = 4.8 (the
+##       month-2 marginal, +0.7 %).
+##   (ii) RETURN -- a region visited once and never again must offer >= 0.5 of its
+##       fresh factor after the window's remaining months of pure decay. Holds to
+##       D = 7.0 exactly, and its LITERAL draft reading -- measured on the tour's
+##       actual history -- was REPLACED, because it was incompatible with (i) at any
+##       saturation strength: recovery to half of fresh returns Paris an offer that
+##       beats the best other site on its own, so a tour satisfying the literal
+##       clause never left. The literal clause was a dominance clause wearing a
+##       recovery clause's clothes; this one measures the decay's timescale and
+##       cannot be gamed by how the tour is played.
+##
+##   Feasible [4.8, 6.8]. Selected by maximin relative slack, V1.7a's tiebreaker:
+##
+##   The band is measured AT THE SHIPPED WINDOW and the two constants select
+##   TOGETHER (see CAMPAIGN_WINDOW_MONTHS above for the joint table). At window 10
+##   the band is [4.75, 9.0] and the maximin on the 0.25-month grid is
+##
+##     D 6.00   clause (i) +20.2 %   clause (ii) +29.3 %   min +20.2 %
+##     D 6.25                  +23.2 %               +26.3 %       +23.2 %
+##     D 6.50                  +26.0 %               +23.4 %       +23.4 %  <- ships
+##     D 6.75                  +28.6 %               +20.6 %       +20.6 %
+##     D 7.00                  +31.0 %               +18.0 %       +18.0 %
+##
+##   Interior on the grid, and the two slacks cross near D 6.55 -- the probe's own
+##   maximin (tools/tour_probe.gd table T5) is the selection, and the measured
+##   accumulator peak bounds the WINDOW choice beside it, not this one.
+##
+## *** THE UNBOUNDED ACCUMULATOR FORM WAS MEASURED AND REFUSED. *** The draft's
+## sat += A with discount 1/(1+sat) reorders the tour only at A >= 10 -- and A = 10
+## claims one meeting month spoke to 91 % of a region, which is THIS form's
+## spoken-to-1.0 claim stated in unbounded units with a second constant and a
+## register that never saturates. tools/tour_probe.gd's table (T4) carries the
+## corners. The fraction form is the same claim, bounded in [0, 1] by construction
+## -- no clamp to set wrong, docs/cycle-model.md's V1.6a argument.
+##
+## *** THE LEVEL IS THE RE-BASELINE'S INPUT, RECORDED SO IT IS NOT REDISCOVERED. ***
+## The uniform anchor (see Campaign.fresh_factor()) leaves the capital at x6.70 of
+## the authored rate (France) -- a Paris month accrues 6.7x the authored
+## mobilisation, which is why the measured accumulator peak is the criterion the
+## window selection reads, and why it BOUND the joint selection at W 10 rather than
+## the tour clauses. The re-baseline's tables are docs/campaign-model.md section 18.
+const SATURATION_HALF_LIFE_MONTHS := 6.5
 
 # --- Content limits -------------------------------------------------------------
 

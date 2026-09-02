@@ -206,8 +206,11 @@ func _check_sidecar_contract_refuses_bad_content() -> void:
 ## session that serialises a summit history has to come here and say why the
 ## diary of dinners cannot be derived from the state it already changed.
 func _check_no_new_state() -> void:
-	if GameState.SAVE_VERSION != 29:
-		_fail("SAVE_VERSION moved for an ephemeral surface")
+	# 30 is V2.6b2's, on the campaign-sited registers -- not on anything a summit
+	# carries. The pin below that nothing summit-shaped is serialised still stands;
+	# a bump FOR a summit surface is what this check exists to catch.
+	if GameState.SAVE_VERSION != 30:
+		_fail("SAVE_VERSION moved for an ephemeral surface -- the bump is %d; if its recorded reason is a summit field, stop" % GameState.SAVE_VERSION)
 	var d: Dictionary = _state.to_dict()
 	if d.has("summits") or d.has("summit_history"):
 		_fail("GameState serialises summit state -- a summit is ephemeral by construction")
