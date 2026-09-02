@@ -1967,7 +1967,10 @@ func _site_the_demonstration() -> void:
 	# campaign's timeline is kept either way: ticking to a demonstration would
 	# photograph a month the --campaign staging never lived in.
 	var staged := _campaign_meeting_target()
-	if staged["city_id"] != "":
+	# `.get` rather than `[` -- the dictionary is EMPTY when no campaign is in the
+	# field, which is bare `--site`'s whole path: V2.6b2 wrote this check against its
+	# own `--campaign --site` pass and the bare flag crashed here until V2.6c ran it.
+	if String(staged.get("city_id", "")) != "":
 		var view0 = _main._map_view
 		view0.center_on_lonlat(staged["lonlat"].x, staged["lonlat"].y)
 		view0.zoom_by(4.0, view0.size / 2.0)

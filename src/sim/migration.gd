@@ -25,6 +25,14 @@ extends RefCounted
 ## want it: there is NO NET URBANISATION here, and a session that wants some has to
 ## author a rural pull rather than inherit one nobody measured.
 ##
+## V2.6c MADE THIS THE REGISTER'S ONE HOME FOR THREE FLOWS. Natural change --
+## births minus deaths as a measured per-region rate -- composes at the bottom of
+## _tick_nation() through src/sim/natural_change.gd, the same telescoping invariant
+## with the pull replaced by the differential against the live-share-weighted mean.
+## Migration stays the SINGLE WRITER: the leaf computes, this file applies, and the
+## conservation checks below hold over the COMBINED flow because every flow
+## telescopes in the weights it reads. Model: docs/natural-change-model.md.
+##
 ## NOT A LEAF, and the departure is deliberate. src/sim/regions.gd takes its register
 ## as an Array and holds no loader; this file needs Companies.headcount_in_city(),
 ## whose answer is per firm and firms are content, so it takes the loader the way
@@ -37,6 +45,7 @@ extends RefCounted
 const K = preload("res://src/sim/migration_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const NaturalChange = preload("res://src/sim/natural_change.gd")
 
 
 ## Seed both levels from the authored shares. Called once from GameState.new_game(),
@@ -140,15 +149,6 @@ static func named_region_total(ns, region_list: Array) -> float:
 ## which a subsidy moved a firm's hiring should move people in the same month rather
 ## than the next one.
 static func tick_month(state, loader) -> void:
-	# Defensive, not descriptive: MIGRATION_RATE is measured and nonzero in the
-	# shipped tree (migration_constants.gd), so this guard is unreachable today. It
-	# stays because a session that ever sets the rate back to 0.0 -- to isolate a
-	# regression, say -- should skip the pull and share bookkeeping below entirely
-	# rather than run it to compute deltas that share_delta() would multiply by zero
-	# anyway, and a guard that is only added when it is first needed is a guard
-	# nobody tested.
-	if K.MIGRATION_RATE == 0.0:
-		return
 	var ids: Array = state.nations.keys()
 	ids.sort()
 	for id in ids:
@@ -181,10 +181,60 @@ static func share_delta(share: float, pull: float, mean: float, rate: float) -> 
 ## later term that read a neighbour's share instead of only its own -- a distance
 ## weight, a contiguity term -- would make the result walk-order-dependent despite
 ## this comment, unless every read in the loop comes from one frozen snapshot.
+##
+## V2.6c ADDED THE THIRD FLOW and with it this file's final shape: MIGRATION and
+## NATURAL CHANGE are two answers to one question -- who gains share of the nation
+## this month -- and one register with three flows is one machine with three
+## denominators, not three machines. Natural change composes at the bottom of
+## _tick_nation() and is NOT gated by MIGRATION_RATE: zeroing the rate isolates
+## migration, and the natural flow must keep running through that isolation for it
+## to stay an isolation of migration alone.
 static func _tick_nation(ns, region_list: Array, loader) -> void:
 	if region_list.is_empty():
 		return
 
+	# Defensive, not descriptive: MIGRATION_RATE is measured and nonzero in the
+	# shipped tree (migration_constants.gd), so this guard is unreachable today. It
+	# stays because a session that ever sets the rate back to 0.0 -- to isolate a
+	# regression, say -- should skip the pull and share bookkeeping below entirely
+	# rather than run it to compute deltas that share_delta() would multiply by zero
+	# anyway, and a guard that is only added when it is first needed is a guard
+	# nobody tested. It moved here from tick_month() when natural change landed:
+	# the natural flow below answers to the register's rates, not to this constant,
+	# and a guard around the whole nation would have made the isolation silent
+	# about the one flow it does not isolate.
+	if K.MIGRATION_RATE != 0.0:
+		_tick_migration(ns, region_list, loader)
+
+	# V2.6c. Natural change, the third flow on this register -- births and deaths
+	# as a measured per-region rate against the live-share-weighted mean. It runs
+	# LAST and reads its own frozen snapshot at that point, so the ordering between
+	# the flows is fixed but carries no information: unlike cities-then-regions
+	# above, nothing here reads what another flow wrote this month. The anchor is
+	# the LIVE share weights, and that is the lesson's other side recorded where the
+	# next session will look: V2.6b2 took campaign reach OFF population weighting
+	# because reach is delivered where the PLAYER goes -- births happen where the
+	# people are, the V2.6b1 output-price side of the line.
+	#
+	# migration.gd stays the SINGLE WRITER: the deltas come back from the leaf and
+	# the write happens here, so the one-writer-per-register property this file
+	# asserts in tests/test_migration.gd survives the composition.
+	var rates: Dictionary = {}
+	var nat_shares: Dictionary = {}
+	for region in region_list:
+		rates[region.id] = Regions.natural_change(region)
+		nat_shares[region.id] = region_share(ns, region.id)
+	var nat_deltas: Dictionary = NaturalChange.deltas(nat_shares, rates)
+	for region in region_list:
+		ns.region_pop_share[region.id] += float(nat_deltas.get(region.id, 0.0))
+
+
+## The two pull-driven levels exactly as V2.6a shipped them, under the guard the
+## composition moved. Cities first, so both levels see start-of-month state; the
+## comments below are the original ordering argument, kept whole because the
+## natural flow after them is what makes "both levels read start-of-month state"
+## mean "start of the MIGRATION step" rather than start of the month.
+static func _tick_migration(ns, region_list: Array, loader) -> void:
 	# Level one (run FIRST): the named cities of each region. city_pull() reads its
 	# OWN region's live share through city_population(), while region_pull() reads no
 	# city's share at all -- so cities-then-regions is the order in which both levels

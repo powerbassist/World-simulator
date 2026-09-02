@@ -174,6 +174,19 @@ static func gdp_per_head_index(ns, region_list: Array, region_id: String, pop_sh
 	return 0.0
 
 
+## A region's authored natural-change rate, per cent per year, signed. V2.6c. A
+## pass-through rather than a raw read for the same reason unemployment_rel travels
+## behind unemployment_pct(): tests/test_geography.gd's one-reader scan names this
+## field, and the only file allowed to spell it is this one -- which is also why the
+## accessor is named for the QUANTITY rather than restating the field, share_of()'s
+## naming rule. The mean over live shares is NOT taken here -- the flow that moves
+## people owns its snapshot, and regions.gd reaching the population register would
+## be a second register to know about (gdp_per_head_index's own comment, the rule
+## this pass-through exists to keep).
+static func natural_change(region) -> float:
+	return region.natural_change_pct
+
+
 ## Has any region drifted past the bound? Read by tools/regions_probe.gd and by
 ## tests/test_regions.gd; nothing in the tick calls it, because a bound that silently
 ## clamps is a bound nobody measures.

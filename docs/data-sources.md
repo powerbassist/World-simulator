@@ -262,6 +262,20 @@ for Y in $(seq 2014 2025); do
   curl -L -o "sources/eurostat/demo_r_pjangrp3_$Y.json"     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&sex=T&age=TOTAL&time=$Y"
 done
 
+# V2.6c. Natural change -- demo_r_gind3's NATGROWRT, the crude rate of births minus
+# deaths per region, which is what data/regions/'s natural_change_pct is measured
+# from. One series, all published years: the window per nation is the widest
+# contiguous run in which every register code carries a value, and the rates are
+# AVERAGED over it because the 2020-2021 COVID deaths would otherwise date-stamp the
+# field. 2025 is incomplete (published so far for only some codes), so every window
+# ends at 2024. Britain's window is 2012-2018 for ELEVEN of its twelve codes -- UKM
+# (Scotland) publishes no rates at any year, which is why every British region
+# carries 0.0 -- and the Netherlands' NL31/NL33 vanish from THIS series at 2023, one
+# year before pjangrp3's re-coding, so each series gets its own vintage ruling.
+for Y in $(seq 2012 2025); do
+  curl -L -o "sources/eurostat/demo_r_gind3_NATGROWRT_$Y.json" "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_gind3?format=JSON&lang=EN&indic_de=NATGROWRT&time=$Y"
+done
+
 for L in 1 2; do
   curl -L -o "sources/gisco/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"     "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_10M_2021_4326_LEVL_$L.geojson"
 done

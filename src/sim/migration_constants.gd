@@ -181,7 +181,64 @@ extends RefCounted
 ## for France by a factor of eight. Luxembourg is the second bound and a harder one:
 ## ONE region holding ONE city, so `pull - mean` is exactly 0.0 at both levels and it
 ## cannot move at any rate whatever. Table (f) reports both.
-const MIGRATION_RATE := 0.0102
+##
+## EVERYTHING ABOVE THIS LINE IS THE V2.6a MEASUREMENT, MIGRATION ALONE. V2.6c
+## re-swept the same constant against the COMBINED model -- natural change in the
+## register alongside the pull -- and the band did not survive the encounter; the
+## V2.6c measurement follows and is the one that shipped.
+##
+## --------------------------------------------------------------------------
+## V2.6c RE-SWEEP, COMBINED MODEL, both clauses re-stated before it ran:
+##   (0)  the natural flow ALONE must hold clause (ii)'s ceiling -- a content field
+##        whose measured rates breach Europe's measured drift envelope by themselves
+##        is a defect in the anchoring, not a dial to turn. MEASURED on the sweep's
+##        own rate-0.0 row: worst drift 0.01558 (FRA), 95 % of the ceiling. PASSES,
+##        with the margin this thin recorded rather than rounded away.
+##   (i)  readability, unchanged in words, is now satisfied at EVERY candidate by
+##        the natural differential alone -- FRA moves 0.00546 @60 with the rate at
+##        zero. The clause no longer SELECTS: the passing band's lower edge is the
+##        structural floor at 0.0000, not a crossing. Migration's OWN readable
+##        contribution -- V2.6a's DEU 0.00126 @60 -- is no longer deliverable at any
+##        rate the ceiling permits, and that is the session's central finding:
+##        AT THE RATES EUROPE'S MEASURED DRIFT CEILING PERMITS, NATURAL CHANGE
+##        DOMINATES INTERNAL MIGRATION. Not a defect: the two flows point the same
+##        way in the model (Harris-Todaro pulls INTO the region whose births already
+##        outpace the nation, where real Europe's rich regions EXPORT people), so
+##        they compound rather than cancel, and the ceiling -- which measures TOTAL
+##        real drift, natural and migration together -- holds the sum to Wien's
+##        number. The pull form carries no congestion term, and authoring one would
+##        be a weight nobody measured; the bound is the model form's, recorded here
+##        rather than patched.
+##   (ii) unchanged: worst combined drift <= 0.0164 @168, read across ALL TEN
+##        nations now rather than the three band nations -- the natural rates
+##        arrive with their own ranking nobody had measured.
+##
+## MEASURED, tools/migration_probe.gd table (e), the emulation carrying the natural
+## flow ungated so the rate-0.0 row IS clause (0). The upper crossing is the only
+## crossing left:
+##
+##   rate     FRA r@60    worst combined @168   band
+##   0.0000   0.00546     0.01558               PASS  <- clause (0): natural alone
+##   0.0003   0.00561     0.01599               PASS  <- SHIPPED, the midpoint
+##   0.0005   0.00571     0.01627               PASS
+##   0.00055  0.00574     0.01633               PASS
+##   0.0006   0.00576     0.01640               fail (ii)  <- the crossing
+##   0.0010   0.00596     0.01695               fail (ii)
+##   0.0102   0.01038     0.02844               fail (ii)  <- V2.6a's shipped value
+##
+## Passing interval [0.0000, ~0.00057], midpoint 0.0003, STABLE UNDER REFINEMENT:
+## the two full-band grids -- step 0.0001 and step 0.00005, both starting at the
+## structural floor -- both return a midpoint of 0.0003, and the two interior grids
+## (which clip the band at their own lower edges) confirm 0.0003-0.0004 passes.
+## The response is linear in the rate as V2.6a measured, so the crossing is smooth.
+##
+## THE CEILING NOW BINDS THE RATE AT 2.5 % SLACK -- 0.01599 against 0.0164 at the
+## shipped value -- where V2.6a's model ran at 0.0137 with 16 % to spare. That is
+## the price of the compounding direction, and it is why a later session that wants
+## to raise this constant must first name the term that makes real Parisians leave
+## Paris: without a congestion or housing-cost term the ceiling, not a preference,
+## sets the number.
+const MIGRATION_RATE := 0.0003
 
 
 ## How far a region's share of its nation's population may drift from where it
@@ -196,7 +253,7 @@ const MIGRATION_RATE := 0.0102
 ## on the one quantity it guards, so the band's upper crossing restated the guard rail
 ## instead of measuring anything. With the ceiling measured independently at 0.0164
 ## this bound is more than three times it and NOTHING APPROACHES IT -- worst realised
-## drift 0.0137 (FRA) at month 168, slack 0.0363, probe table (d) -- which is a guard
-## rail doing its job. A later session tempted to read it as a band edge should read
-## this paragraph first.
+## COMBINED drift 0.01599 (FRA) at month 168 under the V2.6c shipped rate, slack
+## 0.034, probe table (d) -- which is a guard rail doing its job. A later session
+## tempted to read it as a band edge should read this paragraph first.
 const SHARE_DRIFT_MAX := 0.05
