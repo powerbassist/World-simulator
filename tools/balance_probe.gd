@@ -462,6 +462,13 @@ const PROJECT_REGIMES := {
 const CAMPAIGN_REGIMES := {
 	"managed_campaigns_early": {"budget": REGIMES["managed"], "campaign_month": 8},
 	"managed_campaigns_late": {"budget": REGIMES["managed"], "campaign_month": 14},
+	# V2.6b2: the tour. Opens at the same month as `early`, then four months in STOPS
+	# the effort and starts the next-ranked one at its own best site -- which is the
+	# decision the saturation counter exists to make, and the one the other two
+	# regimes cannot show because they never re-choose a place. `campaign_month` is
+	# what feeds _run's existing hook; `campaign_tour_month` is the new one.
+	"managed_campaigns_tour": {"budget": REGIMES["managed"], "campaign_month": 8,
+		"campaign_tour_month": 12},
 }
 
 ## V1.7b: does a promise change anything, and does BREAKING it change anything else?
@@ -670,7 +677,8 @@ func _init() -> void:
 			var regime: Dictionary = CAMPAIGN_REGIMES[name]
 			_run(
 				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, int(regime["campaign_month"])
+				-1, -1, int(regime["campaign_month"]), -1, -1, -1, "", "",
+				int(regime.get("campaign_tour_month", -1))
 			)
 
 		for name in PLEDGE_REGIMES.keys():
@@ -733,7 +741,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "") -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "", campaign_tour_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -902,6 +910,11 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_break_ground(state, loader, ns, regime_name, year, month)
 		if i + 1 == campaign_month:
 			_campaign(state, loader, ns, regime_name, year, month)
+		# V2.6b2: four months into the field, stand the effort down and start the
+		# next-ranked one at ITS best site -- the tour the saturation counter makes
+		# worth taking.
+		if i + 1 == campaign_tour_month:
+			_campaign_tour(state, loader, ns, regime_name, year, month)
 		if i + 1 == pledge_month:
 			_promise(state, loader, ns, regime_name, year, month)
 		if i + 1 == referendum_month:
@@ -1905,41 +1918,103 @@ func _campaign(state, loader, ns, regime_name: String, year: int, month: int) ->
 	var party_list: Array = loader.parties.get(ns.id, [])
 	var base_gap: float = _incumbent_gap(Elections.vote_share(ns, party_list, ns.incumbent_party_id), ns.incumbent_party_id)
 
+	# V2.6b2: the ranking is over (effort x site) PAIRS now -- the place is half the
+	# decision, and ranking efforts alone would answer a question nobody is asking.
+	# The pre-apply multiplies by the site's AVERAGE factor over a full-window camp
+	# (_camp_window_factor), the same approximation the raw window multiplication made
+	# before siting: honest about being a ranking score and not a prediction.
 	var starts: Array = []
 	var score := {}
+	var site_of_pair := {}
 	for a in loader.campaign_actions:
 		var terms: Dictionary = a.effects.get("campaign", {})
 		if String(terms.get("op", "")) != "start":
 			continue
 		starts.append(a)
-		var truth: Dictionary = ns.campaign_mobilisation.duplicate()
-		for bloc in terms.get("mobilisation", {}):
-			ns.campaign_mobilisation[bloc] = clampf(
-				float(terms["mobilisation"][bloc]) * float(CampaignK.CAMPAIGN_WINDOW_MONTHS),
-				-CampaignK.MOBILISATION_MAX, CampaignK.MOBILISATION_MAX
-			)
-		score[a.id] = _incumbent_gap(
-			Elections.vote_share(ns, party_list, ns.incumbent_party_id), ns.incumbent_party_id
-		) - base_gap
-		ns.campaign_mobilisation = truth
+		for region in loader.regions.get(ns.id, []):
+			var rid := String(region.id)
+			var site_scale: float = _camp_window_factor(ns, loader, rid)
+			var truth: Dictionary = ns.campaign_mobilisation.duplicate()
+			for bloc in terms.get("mobilisation", {}):
+				ns.campaign_mobilisation[bloc] = clampf(
+					float(terms["mobilisation"][bloc]) * float(CampaignK.CAMPAIGN_WINDOW_MONTHS) * site_scale,
+					-CampaignK.MOBILISATION_MAX, CampaignK.MOBILISATION_MAX
+				)
+			var key := "%s|%s" % [a.id, rid]
+			score[key] = _incumbent_gap(
+				Elections.vote_share(ns, party_list, ns.incumbent_party_id), ns.incumbent_party_id
+			) - base_gap
+			site_of_pair[key] = rid
+			ns.campaign_mobilisation = truth
 
-	starts.sort_custom(func(x, y): return float(score[x.id]) > float(score[y.id]))
+	var pairs: Array = []
+	for key in score:
+		pairs.append(key)
+	pairs.sort_custom(func(x, y): return float(score[x]) > float(score[y]))
 
 	var begun: Array[String] = []
-	for a2 in starts:
-		if Campaign.execute(state, ns, loader.campaign_actions, a2).get("applied", false):
+	for key in pairs:
+		var action_id := String(key).split("|")[0]
+		var a2 = null
+		for a3 in starts:
+			if String(a3.id) == action_id:
+				a2 = a3
+				break
+		if a2 == null:
+			continue
+		if Campaign.execute(state, ns, loader.campaign_actions, a2, String(site_of_pair[key])).get("applied", false):
 			# The score is the RANKING score -- what a full window of this effort alone
 			# would do to the lead -- and not a prediction of this run. A regime opening
 			# with two months to go collects a fraction of it, which is the whole point
 			# of the window, so the label says "full window" rather than leaving a reader
 			# to compare it against a result it was never about.
-			begun.append("%s (%.3f%%, %+.3f pts over a full window)" % [
-				a2.id, float(a2.effects["campaign"]["cost_pct_gdp"]), float(score[a2.id]) * 100.0,
+			begun.append("%s @ %s (%.3f%%, %+.3f pts over a full window)" % [
+				a2.id, String(site_of_pair[key]),
+				float(a2.effects["campaign"]["cost_pct_gdp"]), float(score[key]) * 100.0,
 			])
 	if begun.is_empty():
 		printerr("  no campaign effort could be started (%d months to the vote)" % Campaign.months_to_election(state, ns))
 		return
 	print("  %d-%02d %s: campaign opens with %s" % [year, month, regime_name, ", ".join(begun)])
+
+
+## The tour's second leg: stop whatever is running, then let _campaign start the
+## best-ranked remaining (effort x site) pair. `campaign_started` keeps the stood-down
+## effort spent, so the second leg genuinely moves -- effort and place both, which is
+## the saturation counter's whole point.
+func _campaign_tour(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var stopped := ""
+	for eid in Campaign.running(ns):
+		var action = _campaign_stop_action(loader, String(eid))
+		if action != null and Campaign.execute(state, ns, loader.campaign_actions, action).get("applied", false):
+			stopped = String(eid)
+	if stopped == "":
+		printerr("  %d-%02d %s: tour leg found nothing running to stop" % [year, month, regime_name])
+		return
+	print("  %d-%02d %s: tour stands down %s" % [year, month, regime_name, stopped])
+	_campaign(state, loader, ns, regime_name, year, month)
+
+
+func _campaign_stop_action(loader, effort_id: String) -> Variant:
+	for a in loader.campaign_actions:
+		var terms: Dictionary = a.effects.get("campaign", {})
+		if String(terms.get("op", "")) == "stop" and String(terms.get("effort_id", "")) == effort_id:
+			return a
+	return null
+
+
+## The average per-month factor one effort camping at this site delivers over a full
+## window: the fresh factor times the saturation discount as it decays under the
+## meeting it holds every month. The ranking score's scale, not a prediction.
+func _camp_window_factor(ns, loader, site: String) -> float:
+	var fresh: float = Campaign.fresh_factor(ns, loader, site)
+	var spoken := 0.0
+	var total := 0.0
+	for month in CampaignK.CAMPAIGN_WINDOW_MONTHS:
+		total += fresh * (1.0 - spoken)
+		spoken = minf(1.0, spoken + 1.0)
+		spoken *= pow(0.5, 1.0 / CampaignK.SATURATION_HALF_LIFE_MONTHS)
+	return total / float(CampaignK.CAMPAIGN_WINDOW_MONTHS)
 
 
 ## The incumbent's lead over the best other party -- what a plurality verdict turns on.

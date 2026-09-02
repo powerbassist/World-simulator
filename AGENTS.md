@@ -800,6 +800,49 @@ a campaign meeting's a verb whose failure mode is dominance, so **V2.6b2** owns 
 on V2.4a's travel days plus a per-region saturation counter. Model:
 [docs/siting-model.md](docs/siting-model.md).
 
+**V2.6b2 SITED THE CAMPAIGN, AND THE RE-BASELINE MOVED THE ANCHOR BEFORE IT MOVED THE WINDOW.**
+The site is the PLAYER'S -- `Campaign.execute()` takes `region_id`, refuses a start without one
+and refuses a region outside the acting nation's own live register, and **`Siting.site()` is not
+called anywhere and must never be**: the verb whose place is chosen is the one proof the two sited
+halves were never one shape. The month's accrual runs at the site's reach-per-day factor (the
+principal city's share of the nation over the journey's travel days) times `(1 - spoken)`, where
+`spoken` is the region's saturation -- one meeting month speaks to a region's whole attention,
+clamped at 1.0, decaying on a half-life; the register is NOT cleared when the window closes
+(attention persists) and the nine carry it empty forever. **`tools/tour_probe.gd` ran BEFORE any
+src/ edit and corrected the model twice**: the draft's unbounded accumulator reorders the tour only
+at accruals claiming 91-94 % of a region per meeting (the fraction form is the same claim bounded
+in [0, 1] with one constant), and the recovery clause read on the tour's actual history was a
+DOMINANCE clause in disguise -- incompatible with reorder at any fresh margin above ~2x (FRA's is
+7.3x) -- so it measures the decay's timescale instead. **The dominance fell; the kill switch did
+not fire.** The window re-baseline then came back EMPTY under V2.6b1's population-weighted
+mean-one anchor -- worst move 0.176 against the 0.3415 lower edge at every window <= 12 -- and the
+anchor was the defect, not the lever: **reach is delivered where the PLAYER goes, not where the
+people are**, so the idiom does not transfer from an output price to a reach multiplier. Uniform
+mean-one over the regions (capital x6.70) refits the band at every window; the recorded cost is
+that a touring campaign runs ~1.4x V1.7a's expected price. **WINDOW AND HALF-LIFE ARE ONE
+SELECTION** -- the calibration probe alone picks 5 and window 5 empties the tour band (recovery
+needs `D <= W - 1`, reorder needs `D >= 4.75`) -- so the joint maximin over the lower edge, the
+run's own MEASURED accumulator peak (the `rate x d` formula is retired from the rail clause; the
+sited model's month-1 spike at x6.70 invalidates it), and the tour pair is a stable fixed point:
+**`CAMPAIGN_WINDOW_MONTHS` 8 -> 10, `SATURATION_HALF_LIFE_MONTHS` = 6.5**, worst slack 23.0 %,
+the rail binding the selection while never binding the accrual. **`SAVE_VERSION` is 30 on two
+fields** -- `campaign_sites` (a verb writes it; a dropped site silently reverts a running effort
+to the place-less national reach) and `campaign_saturation` (a dropped spoken-to register hands
+every saturated region back at full reach: `campaign_started`'s exploit one level up, the tour
+un-spoken). **The re-run held the prediction**: 46 of 49 common regimes bit-identical, the only
+content movers the two campaign regimes (the ranking line now names its site; presidential share
+25.6 -> 26.0 and 25.8 -> 26.0, both HELD), zero outcome changes; the third apparent mover was the
+baseline worktree's own autoload noise, three contiguous lines after the last `invariants: OK`,
+isolated per V1.7c. The new `managed_campaigns_tour` regime runs a genuine two-site tour (donor
+circuit at FR1, stood down four months in, digital push at FRL) -- the decision the saturation
+counter exists to make. **The screenshot pass found one bug and it was a label**: the running
+effort's site line printed "x0.00 this month" against a month that had delivered a tenth of fresh
+-- the register reads after the tick, when the meeting has just re-spoken the region to its clamp,
+so `factor_of()` answers a hypothetical extra meeting -- fixed to print the spoken-to percentage;
+`--site` also learned to photograph the ring the staged state actually has ("Marseille -- 867 k --
+where the meetings are") instead of ticking past the run-up to find a demonstration. Model:
+[docs/campaign-model.md](docs/campaign-model.md) section 18.
+
 
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read

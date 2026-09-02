@@ -52,6 +52,14 @@ var _failures: Array[String] = []
 var _loader
 
 
+## The region the tests hold their meetings in: the first of the player's own in
+## authored order, which the importer writes descending by population -- so the tests
+## campaign in Ile-de-France, the capital. Taken off the loader rather than hard-coded,
+## because the register is content and a hard-coded NUTS id would outlive it.
+func _site(ns) -> String:
+	return Campaign.region_ids(ns, _loader)[0]
+
+
 func _init() -> void:
 	_loader = DataLoader.new()
 	_loader.load_all()
@@ -77,6 +85,10 @@ func _init() -> void:
 	_test_mobilisation_moves_the_vote()
 	_test_no_framing_machine()
 	_test_campaign_is_a_leaf()
+	_test_the_site_is_required_and_must_be_ones_own()
+	_test_the_fresh_factor_is_mean_one()
+	_test_the_factor_varies_and_saturation_bites()
+	_test_the_tour_leaves_the_capital()
 	_test_the_nine_never_campaign()
 	_test_the_register_carries_no_content()
 	_finish()
@@ -152,6 +164,10 @@ func _test_register_seeds_empty() -> void:
 		_fail("a new game starts with somebody mobilised")
 	if ns.campaign_bill_pct_gdp != 0.0:
 		_fail("a new game starts with a campaign bill of %f" % ns.campaign_bill_pct_gdp)
+	if not ns.campaign_sites.is_empty():
+		_fail("a new game starts with a site already chosen")
+	if not ns.campaign_saturation.is_empty():
+		_fail("a new game starts with somebody already spoken to")
 
 
 ## THE PROPERTY THE WHOLE SESSION RESTS ON. Exact equality, not is_equal_approx: the
@@ -241,15 +257,25 @@ func _test_an_effort_accrues_every_month() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 
+	# V2.6b2: the accrual runs at the site's factor, and the site saturates under the
+	# meeting it holds every month -- so month 1 is the full fresh rate, month 2 runs
+	# at fresh x (1 - the half-life's first month of decay), and months 2 and 3 MATCH
+	# because a camping effort re-speaks its region to the clamp every month. The
+	# formula is the spec, not a re-implementation: the same three numbers
+	# campaign_constants.gd's comment records.
 	var rate: float = float(Campaign.terms_of(_loader, EFFORT)["mobilisation"]["workers"])
+	var fresh: float = Campaign.fresh_factor(ns, _loader, _site(ns))
+	var faded: float = 1.0 - pow(0.5, 1.0 / K.SATURATION_HALF_LIFE_MONTHS)
 	for i in range(3):
 		Campaign.tick_month(state, _loader)
-		var want: float = rate * float(i + 1)
+		var want: float = rate * fresh * (1.0 if i == 0 else 1.0 + faded * float(i))
 		var got: float = float(ns.campaign_mobilisation.get("workers", 0.0))
 		if not is_equal_approx(got, want):
 			_fail("after %d months the accrual is %f, expected %f" % [i + 1, got, want])
+	if float(ns.campaign_saturation.get(_site(ns), 0.0)) <= 0.0:
+		_fail("three meeting months left no saturation behind")
 
 
 func _test_the_accumulator_is_clamped() -> void:
@@ -269,7 +295,7 @@ func _test_the_bill_reaches_the_budget() -> void:
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
 
 	var quiet: float = ns.total_spending_pct_gdp
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 
 	var cost: float = float(Campaign.terms_of(_loader, EFFORT)["cost_pct_gdp"])
@@ -287,7 +313,7 @@ func _test_the_register_clears_when_the_window_closes() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 	if ns.campaign_bill_pct_gdp == 0.0:
 		_fail("the bill is zero inside the window with an effort running")
@@ -303,6 +329,10 @@ func _test_the_register_clears_when_the_window_closes() -> void:
 		_fail("mobilisation survived the window closing")
 	if ns.campaign_bill_pct_gdp != 0.0:
 		_fail("the bill survived the window closing")
+	if not ns.campaign_sites.is_empty():
+		_fail("a site survived the window closing")
+	if ns.campaign_saturation.is_empty():
+		_fail("the saturation register was cleared with the campaign -- attention persists")
 
 
 ## src/sim/investment.gd's `withdraw` rather than src/sim/projects.gd's `abandon`, and
@@ -312,7 +342,7 @@ func _test_stopping_keeps_what_it_bought() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 	Campaign.tick_month(state, _loader)
 	var bought: float = float(ns.campaign_mobilisation.get("workers", 0.0))
@@ -347,7 +377,7 @@ func _test_an_effort_cannot_be_restarted() -> void:
 		_fail("%s no longer carries a positive bloc_offset, so this check measures nothing" % REWARD_START)
 		return
 
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START), _site(ns))
 	var paid_once: float = float(ns.bloc_offset.get("rural", 0.0))
 
 	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_STOP))
@@ -438,6 +468,119 @@ func _test_campaign_is_a_leaf() -> void:
 		_fail("campaign.gd preloads a system: `%s`" % trimmed)
 
 
+## V2.6b2's verb change, asserted at both halves: a start without a region is refused
+## (the panel's disabled button made loud), and a region that is not the acting
+## nation's own is refused -- validated against the live V2.6a register, so no second
+## roster exists to drift.
+func _test_the_site_is_required_and_must_be_ones_own() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
+
+	var result: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	if result.get("applied", false):
+		_fail("a start without a region was applied")
+	if result.get("reason", "") == "":
+		_fail("a place-less start was refused without a reason")
+	if not ns.campaign_running.is_empty():
+		_fail("a refused start still wrote the running register")
+
+	# Any id that is not a key of the acting nation's own register must be refused --
+	# taken from ANOTHER nation's register so the negative case is real and not a typo.
+	var deu_state = GameState.new_game(_loader, "DEU")
+	var foreign: String = Campaign.region_ids(deu_state.player(), _loader)[0]
+	if ns.region_pop_share.has(foreign):
+		_fail("test bug: %s is in FRA's register after all" % foreign)
+	var other: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), foreign)
+	if other.get("applied", false):
+		_fail("a start in another nation's region was applied")
+
+	var ok: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	if not ok.get("applied", false):
+		_fail("a start at the nation's own region was refused: %s" % str(ok))
+	if String(ns.campaign_sites.get(EFFORT, "")) != _site(ns):
+		_fail("the applied start did not record its site")
+
+
+## The fresh factor is mean-one in UNIFORM weights over the nation's regions,
+## EXACTLY, so the average choice delivers the authored rate. 1e-12 is the tolerance
+## docs/siting-model.md section 4 measured V2.6b1's at. The population-weighted form
+## was measured and refused -- it empties V1.7a's calibration band -- and the reason
+## lives in Campaign.fresh_factor()'s doc, so a session re-deriving the idiom finds
+## the measurement before the failure.
+func _test_the_fresh_factor_is_mean_one() -> void:
+	var ns = _new_state().player()
+	var total := 0.0
+	var count := 0.0
+	for region in _loader.regions.get(PLAYER, []):
+		total += Campaign.fresh_factor(ns, _loader, String(region.id))
+		count += 1.0
+	if absf(total / count - 1.0) > 1e-12:
+		_fail("the fresh factor's uniform mean is %.15f, not 1.0" % (total / count))
+
+
+## The choice varies, and the second meeting in the same place is worth less: the
+## factor differs across regions, and factor_of() sits strictly under fresh_factor()
+## once the region has been spoken to. The clamp is asserted rather than assumed.
+func _test_the_factor_varies_and_saturation_bites() -> void:
+	var ns = _new_state().player()
+	var ids: Array = Campaign.region_ids(ns, _loader)
+	var best := -1.0
+	var worst := INF
+	for rid in ids:
+		best = maxf(best, Campaign.fresh_factor(ns, _loader, String(rid)))
+		worst = minf(worst, Campaign.fresh_factor(ns, _loader, String(rid)))
+	if best <= worst:
+		_fail("the fresh factor does not vary across the nation's regions")
+
+	var rid := _site(ns)
+	ns.campaign_saturation[rid] = 1.0
+	if Campaign.factor_of(ns, _loader, rid) != 0.0:
+		_fail("a fully spoken-to region still offers reach")
+	ns.campaign_saturation[rid] = 0.5
+	var half: float = Campaign.factor_of(ns, _loader, rid)
+	if not is_equal_approx(half, Campaign.fresh_factor(ns, _loader, rid) * 0.5):
+		_fail("the discount is not (1 - spoken): %f" % half)
+	if Campaign.factor_of(ns, _loader, rid) >= Campaign.fresh_factor(ns, _loader, rid):
+		_fail("saturation did not discount the site")
+
+
+## THE TOUR, IN THE REAL MODEL. The capital camps, the register saturates, and after
+## two meeting months the best fresh OTHER region out-offers the capital's discounted
+## factor -- the reorder tools/tour_probe.gd measured at the register scale, asserted
+## here so a constant drift turns it red. Travel pricing is asserted alongside: the
+## capital's own journey is one day and the farthest region costs more.
+func _test_the_tour_leaves_the_capital() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
+	var home := _site(ns)
+	if Campaign.travel_days_to(ns, _loader, home) != 1:
+		_fail("the capital's own journey is not one day")
+	var farthest := ""
+	var farthest_days := 0
+	for rid in Campaign.region_ids(ns, _loader):
+		var days := Campaign.travel_days_to(ns, _loader, String(rid))
+		if days > farthest_days:
+			farthest_days = days
+			farthest = String(rid)
+	if farthest_days <= 1:
+		_fail("no region is more than one day from the capital")
+
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), home)
+	Campaign.tick_month(state, _loader)
+	Campaign.tick_month(state, _loader)
+
+	var camped: float = Campaign.factor_of(ns, _loader, home)
+	var best_other := 0.0
+	for rid in Campaign.region_ids(ns, _loader):
+		if String(rid) == home:
+			continue
+		best_other = maxf(best_other, Campaign.factor_of(ns, _loader, String(rid)))
+	if best_other <= camped:
+		_fail("after two meeting months at the capital no other region out-offers it (%f vs %f)" % [best_other, camped])
+
+
 ## The nine never campaign, because nothing ever executes an action for them. V1.3g's,
 ## V1.6e's and V1.6f's honest limitation, pinned rather than described.
 func _test_the_nine_never_campaign() -> void:
@@ -458,6 +601,8 @@ func _test_the_nine_never_campaign() -> void:
 			_fail("%s put an effort in the field with no player command" % id)
 		if ns.campaign_bill_pct_gdp != 0.0:
 			_fail("%s is paying a campaign bill of %f" % [id, ns.campaign_bill_pct_gdp])
+		if not ns.campaign_saturation.is_empty():
+			_fail("%s has spoken-to regions with no campaign verb" % id)
 
 
 ## The cost and the reach are AUTHORED, so caching either on NationState would put
@@ -466,8 +611,8 @@ func _test_the_register_carries_no_content() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(OTHER_START))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader.campaign_actions, _action(OTHER_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 
 	for entry in ns.campaign_running:
@@ -478,3 +623,11 @@ func _test_the_register_carries_no_content() -> void:
 			_fail("the mobilisation register holds '%s', which is not a bloc" % bloc)
 		if typeof(ns.campaign_mobilisation[bloc]) != TYPE_FLOAT:
 			_fail("the mobilisation register holds a non-float for '%s'" % bloc)
+	for eid in ns.campaign_sites:
+		if typeof(ns.campaign_sites[eid]) != TYPE_STRING:
+			_fail("the site register holds a non-string for '%s'" % eid)
+		if not ns.region_pop_share.has(String(ns.campaign_sites[eid])):
+			_fail("the site register names '%s', which is not one of the nation's regions" % ns.campaign_sites[eid])
+	for rid in ns.campaign_saturation:
+		if typeof(ns.campaign_saturation[rid]) != TYPE_FLOAT:
+			_fail("the saturation register holds a non-float for '%s'" % rid)

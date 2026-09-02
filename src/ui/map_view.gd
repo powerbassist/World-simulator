@@ -743,7 +743,10 @@ func _draw_cities() -> void:
 		# already here -- so tests/test_map_markers.gd's pin at four stands, and the
 		# hit test is untouched, which keeps _city_at_screen_point() answering for
 		# exactly one thing.
-		if MapCities.is_unrest(city):
+		# One ring either way: a demonstration and a campaign meeting landing on the
+		# same city would be two concentric arcs of noise, and the label already says
+		# which one it is (unrest's clause wins it).
+		if MapCities.is_unrest(city) or MapCities.is_campaign(city):
 			draw_arc(
 				at, MapCities.ring_radius(city), 0.0, TAU, MapCities.RING_POINTS,
 				color, MapCities.RING_WIDTH

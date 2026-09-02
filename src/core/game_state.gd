@@ -423,7 +423,16 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## re-seeding would erase the movement the save exists to remember. A stored city
 ## POPULATION still stays out -- `population x share x share` already answers it, and
 ## the test keeps that absence red.
-const SAVE_VERSION := 29
+##
+## V2.6b2 bumps this to 30 on TWO registers, both campaign-sited: `campaign_sites`
+## (effort id -> the region its meetings are held in -- a verb writes it and no tick
+## recomputes it, and a dropped site silently reverts a running effort to the old
+## place-less national reach while the panel still names a place) and
+## `campaign_saturation` (region id -> the fraction of the region's attention the
+## player's own meetings hold -- a dropped register hands every spoken-to region back
+## at full reach, `campaign_started`'s exploit one level up: the tour un-spoken).
+## Both absent read as the truth about every version-29 save.
+const SAVE_VERSION := 30
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

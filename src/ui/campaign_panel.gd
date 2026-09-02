@@ -77,6 +77,11 @@ const FIELD_LABEL := {
 var _state
 var _loader
 var _dirty := true
+## The region the next meeting month is held in -- the player's choice, and the whole
+## of V2.6b2's verb: start buttons stay disabled until one is picked, because a
+## place-less start is refused by Campaign.execute() and a UI that let one through
+## would be a button that silently does nothing. Persists across refreshes.
+var _site_region := ""
 ## projects_panel.gd's device, and this panel has BOTH halves for a reason V1.7a
 ## recorded: --campaign wants the ledger at the TOP and --pledge wants the promises at
 ## the BOTTOM, so the scroll is per-flag rather than per-panel. V1.6e's correction has
@@ -186,6 +191,7 @@ func _refresh() -> void:
 	_build_clock(ns)
 	_build_turnout(ns)
 	_build_running(ns)
+	_build_site(ns)
 	_build_available(ns)
 	# V1.7b, BELOW the campaign rather than in a window of its own: a promise is made
 	# in the run-up, so it belongs in the surface that runs the run-up. And below
@@ -269,6 +275,8 @@ func _build_live(ns, effort_id: String) -> void:
 		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
 	], PanelKit.Tone.GOOD)
 
+	PanelKit.line(block, _site_text(ns, effort_id), PanelKit.Tone.PLAIN)
+
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
 	for action in Campaign.available(_state, ns, _loader.campaign_actions):
@@ -278,6 +286,63 @@ func _build_live(ns, effort_id: String) -> void:
 	block.add_child(buttons)
 
 	_body.add_child(block)
+
+
+## Where the next meeting month is held. V2.6b2's, and it sits between the field and
+## the offers because it prices BOTH: the running effort reads its site's factor here
+## and so does every start button below, which is why the buttons stay disabled until
+## a region is picked. No default -- a defaulted site would silently ship the capital's
+## dominance as the model's answer rather than the player's choice.
+func _build_site(ns) -> void:
+	PanelKit.heading(_body, "Meetings in")
+	var picker := OptionButton.new()
+	var region_ids: Array = []
+	for region in _loader.regions.get(ns.id, []):
+		region_ids.append(String(region.id))
+		picker.add_item("%s — %s" % [region.region_name, Campaign.site_city_name(_loader, ns, String(region.id))])
+	var selected := region_ids.find(_site_region)
+	picker.select(selected)
+	picker.item_selected.connect(func(idx: int): _site_region = String(region_ids[idx]); _dirty = true)
+	_body.add_child(picker)
+
+	if _site_region == "":
+		PanelKit.line(_body,
+			"Choose where the meetings are held. Reach falls with the journey's travel" +
+			" days, and a region already spoken to gives less the second time.")
+		return
+	var days := Campaign.travel_days_to(ns, _loader, _site_region)
+	PanelKit.line(_body, "%d day%s' travel · reach ×%.2f a month · %d%% spoken to" % [
+		days, "" if days == 1 else "s",
+		Campaign.factor_of(ns, _loader, _site_region),
+		roundi(Campaign.spoken(ns, _site_region) * 100.0),
+	])
+
+
+## The running effort's site line -- where the president is, and how spoken-out the
+## place is. THE FACTOR IS DELIBERATELY NOT PRINTED HERE: the register reads after the
+## month's tick, when the meeting has just re-spoken the region to its clamp, so
+## factor_of() returns the discount a HYPOTHETICAL extra meeting would get and not
+## what this month delivered -- the first frame printed "×0.00 this month" against a
+## month that had delivered a tenth of fresh, a true number wearing a lying label.
+## The spoken-to percentage is the decision-bearing fact: high means the tour should
+## move, and the picker's own readout prices any move the player is weighing.
+func _site_text(ns, effort_id: String) -> String:
+	var site := Campaign.site_of(ns, effort_id)
+	if site == "":
+		return "no meetings on the schedule -- the effort is reaching nobody"
+	var city := Campaign.site_city_name(_loader, ns, site)
+	var days := Campaign.travel_days_to(ns, _loader, site)
+	return "meeting in %s (%s) · %d day%s · %d%% spoken to" % [
+		_region_name(ns, site), city, days, "" if days == 1 else "s",
+		roundi(Campaign.spoken(ns, site) * 100.0),
+	]
+
+
+func _region_name(ns, region_id: String) -> String:
+	for region in _loader.regions.get(ns.id, []):
+		if String(region.id) == region_id:
+			return String(region.region_name)
+	return region_id
 
 
 ## Everything that could be put in the field now. Outside the run-up
@@ -342,6 +407,9 @@ func _button(ns, action) -> Button:
 	var button := Button.new()
 	button.text = action.action_name
 	button.tooltip_text = action.summary
+	if String(action.effects.get("campaign", {}).get("op", "")) == "start" and _site_region == "":
+		button.disabled = true
+		button.tooltip_text = "choose where the meetings are held first"
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -353,7 +421,7 @@ func _button(ns, action) -> Button:
 ## month before it.
 func _on_act(ns, action) -> void:
 	var before := Budget.snapshot(_state)
-	var result := Campaign.execute(_state, ns, _loader.campaign_actions, action)
+	var result := Campaign.execute(_state, ns, _loader.campaign_actions, action, _site_region)
 	if not result.get("applied", false):
 		return
 	_dirty = true

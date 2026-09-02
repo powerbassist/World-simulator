@@ -476,5 +476,107 @@ different conservation law from unrest siting's, which is the axis V2.6 split on
 
 ---
 
+## 18. V2.6b2 sited the effort, and the re-baseline moved the anchor before it moved the window
+
+[[siting-model]] §11 handed the question over with the dominance measured and the
+breaker proposed. This section records what the measurement did to the model, which
+was more than the row budgeted.
+
+**The verb names a region, and the region is the player's.** `Campaign.execute()`
+takes `region_id`; a start without one is refused loudly (the panel's disabled button
+made loud), a region outside the acting nation's own register is refused, and the
+site rides the start into `ns.campaign_sites`. `Siting.site()` is not called anywhere
+and must never be -- the site is the one proof the two sited halves were never one
+shape. A start records it in the act result; a stop and the window's close erase it.
+
+**The reach form is §11's, exactly.** The month's accrual is the authored rate times
+the site's reach-per-day factor -- the principal city's share of the nation over the
+journey's travel days -- times `(1 - spoken)`, where `spoken` is the region's
+saturation: the fraction of its attention the player's own meetings already hold. One
+meeting month speaks to a region's whole attention (clamped at 1.0); the fraction
+decays on a half-life. tools/tour_probe.gd measured it before any src/ edit.
+
+**The tour reorders, and the two clauses that say so are recorded with their own
+history.** Clause (i), reorder: the optimal tour must leave the capital -- first
+crosses at D 4.75. Clause (ii), return: a region visited once and never again offers
+>= 0.5 of its fresh factor by the window's end. **The literal draft of (ii) was
+measured and replaced**: read on the tour's actual history it is incompatible with
+(i) at ANY saturation strength, because the fresh margin is 7.3x -- recovery to half
+of fresh returns the capital an offer that beats the best other site on its own, so a
+tour satisfying the literal clause never left. The literal clause was a dominance
+clause wearing a recovery clause's clothes; the replacement measures the decay's
+timescale, decoupled from the tour. V1.5c's inconsistent-clauses finding, structural
+rather than numerical.
+
+**The unbounded accumulator form was measured and refused.** The draft's
+`sat += A` with discount `1/(1+sat)` reorders only at A >= 10 -- one meeting month
+claiming 91-94 % of a region spoken. That is the fraction form's own claim in
+unbounded units with a second constant and a register that never saturates; the
+fraction form ships bounded in [0, 1] by construction, one constant, no clamp to set
+wrong.
+
+**THE ANCHOR MOVED, AND THE EMPTY BAND IS WHY.** The fresh factor was first
+normalised mean-one in POPULATION weights, V2.6b1's `Siting.normalised()` idiom -- and
+under it the calibration band came back **EMPTY**: the capital at x2.37 delivered a
+worst full-window move of 0.176 share points against the 0.3415 lower edge, at every
+window the emulator can express, and the tour clauses and the calibration were
+jointly infeasible in every saturation strength. The anchor was the defect, not the
+lever: **reach is delivered where the PLAYER goes, not where the people are**, so the
+population-weighted idiom -- true for an output price lost where the people are --
+does not transfer to a reach multiplier. The anchor moved to UNIFORM weights over the
+regions (the average CHOICE delivers the authored rate; the capital reads x6.70), the
+band refit at every window in [1, 12], and the cost is recorded: the population-
+weighted mean of the factor under uniform sits near 1.4, so a touring campaign runs
+hotter than V1.7a's expected price and the window pays for it by shrinking.
+
+**WINDOW AND HALF-LIFE ARE ONE SELECTION.** The calibration probe alone maximin-
+selects window 5 -- and window 5 empties the tour band, because the recovery clause
+needs `D <= W - 1` while reorder needs `D >= 4.75`. The joint maximin over all three
+criteria (lower edge, the run's own MEASURED accumulator peak -- not the rate x d
+formula, which the sited model's month-1 spike invalidates -- and the tour pair) is a
+stable fixed point:
+
+| window | D | worst slack | bound by |
+|---|---|---|---|
+| 5 | -- | tour band EMPTY | refused |
+| 9 | 6.00 | 20.2 % | tour (i) |
+| **10** | **6.50** | **23.0 %** | **measured peak 0.6927 against 0.90** |
+| 11 | 6.50 | ~16 % | measured peak |
+| 12 | 6.50 | 9.4 % | measured peak |
+
+**`CAMPAIGN_WINDOW_MONTHS` is 10 and `SATURATION_HALF_LIFE_MONTHS` is 6.5** -- W 10
+interior (W 11 interpolates below it), D 6.50 interior of the tour band [4.75, 9.0],
+the two slacks crossing near D 6.55. The rail binds the selection and never the
+accrual: 23 % of real slack, the content is the lever.
+
+**The re-run held the prediction**: 46 of 49 common regimes bit-identical, the only
+content movers the two pre-existing campaign regimes (the ranking line now names its
+site -- `start_donor_circuit @ FR1` -- and the presidential share moves 25.6 -> 26.0
+and 25.8 -> 26.0, both still HELD), **zero outcome changes**. The third apparent
+mover was the baseline worktree's own autoload noise, three contiguous lines after
+the last `invariants: OK`, isolated per V1.7c's check. The new
+`managed_campaigns_tour` regime runs a genuine two-site tour -- donor circuit at
+FR1, stood down four months in, digital push at FRL -- which is the decision the
+saturation counter exists to make and the one the other two regimes cannot show.
+
+**`SAVE_VERSION` is 30 on two fields**: `campaign_sites` (a verb writes it, no tick
+recomputes it, and a dropped site silently reverts a running effort to the place-less
+national reach while the panel still names a place) and `campaign_saturation`
+(a dropped spoken-to register hands every saturated region back at full reach --
+`campaign_started`'s exploit one level up: the tour un-spoken). The saturation
+register is NOT cleared when the window closes; attention persists, and the nine
+carry it empty forever.
+
+**The screenshot pass found one bug and it was a label.** The running effort's site
+line printed "x0.00 this month" against a month that had delivered a tenth of fresh:
+the register reads after the tick, when the meeting has just re-spoken the region to
+its clamp, so `factor_of()` answers a hypothetical extra meeting and not the month.
+A true number wearing a lying label; the line now prints the spoken-to percentage and
+lets the picker price any move. The pass also turned `--site` honest about what it
+photographs: with `--campaign` staged, it zooms at the meeting city the staged state
+actually has -- "Marseille -- 867 k -- where the meetings are" -- instead of ticking
+past the run-up to find a demonstration. Three frames judged clean after the fix.
+
+
 Related: [[index]] · [[siting-model]] · [[election-model]] · [[opinion-model]] · [[media-model]] ·
 [[projects-model]] · [[v1]] · [[ROADMAP]]

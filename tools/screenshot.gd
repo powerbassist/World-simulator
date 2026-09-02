@@ -465,12 +465,15 @@ func _apply_view() -> void:
 		_let_the_regions_diverge()
 	if _move:
 		_let_the_people_move()
+	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
+	# the ring that is actually on the map -- the meeting city of an effort in the
+	# field -- rather than ticking past the staged run-up to find a demonstration.
+	if _campaign:
+		_open_the_campaign()
 	if _site:
 		_site_the_demonstration()
 	if _city:
 		_point_at_the_capital()
-	if _campaign:
-		_open_the_campaign()
 
 	if _pledge:
 		_make_and_break_a_promise()
@@ -1476,6 +1479,19 @@ func _back_the_biggest_sector() -> void:
 ## election would photograph an empty panel and a zero bill -- V1.6b's flag ticking 48
 ## months and running past the thing it existed to capture, in a new place. The one
 ## surface where the register is visible is inside the run-up.
+## The nation's regions, freshest first. tour_probe.gd's T2 measured the capital as
+## the arg-max fresh factor in eight of ten nations; this is the same read, ranked.
+func _ranked_sites(ns) -> Array:
+	var scored := []
+	for rid in ns.region_pop_share:
+		scored.append({"id": String(rid), "fresh": Campaign.fresh_factor(ns, _main._loader, String(rid))})
+	scored.sort_custom(func(a, b): return float(a["fresh"]) > float(b["fresh"]))
+	var out := []
+	for entry in scored:
+		out.append(String(entry["id"]))
+	return out
+
+
 func _open_the_campaign() -> void:
 	var state = _main._state
 	if state == null:
@@ -1501,9 +1517,17 @@ func _open_the_campaign() -> void:
 		)
 	)
 
+	# V2.6b2: each started effort takes the next-ranked fresh site, so the frame shows
+	# the tour actually spreading rather than two efforts camped on the capital.
+	var sites := _ranked_sites(ns)
+	var next_site := 0
 	var begun := 0
 	for a2 in starts:
-		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2).get("applied", false):
+		var site := ""
+		if next_site < sites.size():
+			site = String(sites[next_site])
+			next_site += 1
+		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2, site).get("applied", false):
 			begun += 1
 	if begun == 0:
 		printerr("--campaign: no effort could be started")
@@ -1914,9 +1938,42 @@ func _answer_a_crisis() -> void:
 ## The ring is gated on UNREST_THRESHOLD_PCT, the same bar src/ui/economy_panel.gd's
 ## own line uses, so a frame taken before the unions organise would show a city and no
 ## ring and prove nothing about the thing this flag exists to photograph.
+## The player's first running effort's meeting city, with its lonlat -- the ring the
+## map draws while a campaign is in the field. Empty when nothing is running.
+func _campaign_meeting_target() -> Dictionary:
+	var state = _main._state
+	if state == null:
+		return {}
+	var ns = state.player()
+	var running: Array = Campaign.running(ns)
+	if running.is_empty():
+		return {}
+	var site := Campaign.site_of(ns, String(running[0]))
+	if site == "":
+		return {}
+	var city = Campaign.principal_city(_main._loader, ns, site)
+	if city == null:
+		return {}
+	return {"city_id": String(city.id), "lonlat": city.lonlat}
+
+
 func _site_the_demonstration() -> void:
 	var state = _main._state
 	if state == null:
+		return
+	# V2.6b2: a campaign effort in the field owns the map's ring when unrest is
+	# quiet -- the flag photographs whatever ring the staged state actually has, and
+	# only provokes the unions when there is no campaign ring to take. The staged
+	# campaign's timeline is kept either way: ticking to a demonstration would
+	# photograph a month the --campaign staging never lived in.
+	var staged := _campaign_meeting_target()
+	if staged["city_id"] != "":
+		var view0 = _main._map_view
+		view0.center_on_lonlat(staged["lonlat"].x, staged["lonlat"].y)
+		view0.zoom_by(4.0, view0.size / 2.0)
+		view0.refresh_cities()
+		view0._hovered_city = String(staged["city_id"])
+		view0.queue_redraw()
 		return
 	_provoke_the_unions()
 

@@ -41,6 +41,10 @@ const Migration = preload("res://src/sim/migration.gd")
 ## which signal sites a demonstration is unrest's business and not the map's.
 const Unrest = preload("res://src/sim/unrest.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+## V2.6b2, for the meeting ring. Read through Campaign rather than the raw register
+## for the demonstration ring's reason: whose verb the site belongs to is the sim's
+## business and not the map's.
+const Campaign = preload("res://src/sim/campaign.gd")
 
 ## The population a cross is measured against: capital-city scale, the top of the
 ## roster's own range (London reads ~9.1 M). RADIUS_BASE is what that city draws;
@@ -99,6 +103,21 @@ static func cities(loader, state) -> Array:
 		if float(ns.unrest_pct) >= UnrestK.UNREST_THRESHOLD_PCT:
 			demo_city = String(Unrest.site_report(ns, state.regions.get(id, []))["city_id"])
 
+		# WHERE THE PRESIDENT IS, for the player alone -- the nine never campaign
+		# (tests/test_campaign.gd pins it), and campaign_count <= 1 is content, so
+		# this is at most one ring on the whole map. Derived here every refresh like
+		# the demonstration's, and gated on an effort actually being in the field, so
+		# a quiet game draws nothing at all.
+		var campaign_city := ""
+		if String(id) == String(state.player_nation_id):
+			var running: Array = Campaign.running(ns)
+			if not running.is_empty():
+				var site := Campaign.site_of(ns, String(running[0]))
+				if site != "":
+					var principal = Campaign.principal_city(loader, ns, site)
+					if principal != null:
+						campaign_city = String(principal.id)
+
 		for region in loader.regions.get(id, []):
 			for city in region.cities:
 				out.append({
@@ -110,6 +129,7 @@ static func cities(loader, state) -> Array:
 					"lonlat": city.lonlat,
 					"population": Migration.city_population(ns, region.id, city.id),
 					"unrest": demo_city != "" and String(city.id) == demo_city,
+					"campaign": campaign_city != "" and String(city.id) == campaign_city,
 				})
 	out.sort_custom(func(a, b): return float(a["population"]) < float(b["population"]))
 	return out
@@ -138,6 +158,11 @@ static func is_unrest(city: Dictionary) -> bool:
 	return bool(city.get("unrest", false))
 
 
+## Is this the city the player's campaign meetings are in? is_unrest()'s shape.
+static func is_campaign(city: Dictionary) -> bool:
+	return bool(city.get("campaign", false))
+
+
 ## The ring sits outside the cross's arms at every size.
 static func ring_radius(city: Dictionary) -> float:
 	return radius_of(city) + RING_GAP
@@ -160,4 +185,6 @@ static func label_of(city: Dictionary) -> String:
 	# economy_panel.gd's own unrest line already keeps.
 	if is_unrest(city):
 		text += "  --  where the unions are out"
+	elif is_campaign(city):
+		text += "  --  where the meetings are"
 	return text

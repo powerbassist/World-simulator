@@ -989,6 +989,28 @@ var campaign_mobilisation := {}
 ## ticked reports the budget it was saved with. `project_bill_pct_gdp`'s case.
 var campaign_bill_pct_gdp: float = 0.0
 
+## V2.6b2. Where each running effort's meetings are held: effort id -> region id,
+## written at the press, erased at stop, cleared with the rest of the register when the
+## window closes. Serialised for campaign_running's reason -- a verb writes it and no
+## tick can recompute it -- and EARNING THE BUMP TO 30 beside the register below: a
+## running effort whose site was dropped falls back to the factor-1.0 national reach,
+## so a reloaded save would disagree with its own panel and its own map about where
+## the president is, which is a silent lie rather than a lost figure.
+var campaign_sites := {}
+
+## V2.6b2. Region id -> the fraction of that region's attention the player's own
+## meetings already hold, in [0, 1]. The saturation counter docs/siting-model.md
+## section 11 demanded: a memory of the player's own acts rather than an opinion, and
+## the only honest breaker of the reach-per-day dominance the tour probe measured.
+## Accrued +1.0 (clamped) per meeting month by Campaign._accrue(), decaying on
+## SATURATION_HALF_LIFE_MONTHS by Campaign._decay() every month whether or not a
+## campaign runs, and NOT cleared when the window closes -- attention persists.
+##
+## EARNING THE BUMP TO 30, for `campaign_started`'s reason one level up: absent it
+## reads as "nobody has been spoken to", and a save that dropped it would hand every
+## saturated region back at full reach -- the tour un-spoken, save-scummed.
+var campaign_saturation := {}
+
 ## The most recent campaign action, for the panel to read after acting.
 ## `last_project_result`'s shape, and not serialised for its reason either: it is a
 ## display record of something that has already happened to the register.
@@ -1511,6 +1533,8 @@ func duplicate_state():
 	s.campaign_started = campaign_started.duplicate()
 	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
 	s.campaign_bill_pct_gdp = campaign_bill_pct_gdp
+	s.campaign_sites = campaign_sites.duplicate()
+	s.campaign_saturation = campaign_saturation.duplicate(true)
 	# Deep, because each entry is a Dictionary and Pledges.tick_month() writes
 	# `breach_months` INSIDE one -- a shallow duplicate would let a Budget.project()
 	# copy count breaches onto the live register. tests/test_state_copy.gd's own probe.
@@ -1718,6 +1742,8 @@ func to_dict() -> Dictionary:
 		"campaign_started": campaign_started,
 		"campaign_mobilisation": campaign_mobilisation,
 		"campaign_bill_pct_gdp": campaign_bill_pct_gdp,
+		"campaign_sites": campaign_sites,
+		"campaign_saturation": campaign_saturation,
 		"pledges": pledges,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
@@ -1995,6 +2021,19 @@ static func from_dict(d: Dictionary):
 	s.campaign_started = d.get("campaign_started", [])
 	s.campaign_mobilisation = d.get("campaign_mobilisation", {})
 	s.campaign_bill_pct_gdp = float(d.get("campaign_bill_pct_gdp", 0.0))
+	# V2.6b2, and BOTH earn the bump to 30 -- the first for `campaign_running`'s reason
+	# (a verb writes it, no tick recomputes it, and a dropped site silently reverts a
+	# running effort to the old place-less national reach), the second for
+	# `campaign_started`'s (a dropped saturation hands every spoken-to region back at
+	# full reach: the tour un-spoken, the exploit the counter exists to close). Absent,
+	# both read as the truth about every version-29 save: no sites and nothing spoken.
+	# Cast per key rather than trusted, `upper_share`'s shape.
+	s.campaign_sites = {}
+	for effort_id in d.get("campaign_sites", {}):
+		s.campaign_sites[String(effort_id)] = String(d["campaign_sites"][effort_id])
+	s.campaign_saturation = {}
+	for region_id in d.get("campaign_saturation", {}):
+		s.campaign_saturation[String(region_id)] = float(d["campaign_saturation"][region_id])
 	# V1.7b, and it is `campaign_running`'s case one session on: absent it reads as
 	# "nothing promised", true of every version-23 save because those games had no
 	# pledge verb. So the version is STILL 23 -- V1.3c's device, pointed at V1.7c for
