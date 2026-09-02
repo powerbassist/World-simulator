@@ -29,6 +29,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 var _state
 var _loader
@@ -124,8 +125,13 @@ func _build_partition(ns, regions: Array) -> void:
 	PanelKit.heading(_body, "The partition")
 	var named := 0.0
 	for region in regions:
-		named += region.share
-	var residual: float = Region.national_residual(regions)
+		named += Migration.region_share(ns, region.id)
+	# maxf, and it is not decoration now that V2.6a's rate is live: the named shares
+	# are a live partition the flow moves every month, so a nation whose register
+	# names all of itself can land a hair the wrong side of 1.0 on float accumulation
+	# and print "-0.0%" at a player. The floor was here before the helper this
+	# replaced was inlined, and it comes back with the rate that made it load-bearing.
+	var residual: float = maxf(0.0, 1.0 - named)
 	PanelKit.row(_body, "Regions", str(regions.size()))
 	PanelKit.row(_body, "Named share of the population", "%.1f%%" % (named * 100.0))
 	PanelKit.row(_body, "Unnamed — extra-regio and overseas", "%.1f%%" % (residual * 100.0))
@@ -152,11 +158,11 @@ func _build_table(ns, regions: Array) -> void:
 		# Output per head against the national average is the column nobody authored:
 		# `gdp_share / share` is two partitions of one nation divided by each other,
 		# and it is why carrying both is worth more than carrying either.
-		var index: float = Regions.gdp_per_head_index(ns, regions, region.id)
+		var index: float = Regions.gdp_per_head_index(ns, regions, region.id, Migration.region_share(ns, region.id))
 		rows.append([
 			region.region_name,
 			"%.1f%%" % (Regions.share_of(ns, region.id) * 100.0),
-			PanelKit.pop_text(float(ns.population) * region.share),
+			PanelKit.pop_text(float(ns.population) * Migration.region_share(ns, region.id)),
 			"x%.2f" % index,
 			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id),
 			_dominant(region),

@@ -630,6 +630,85 @@ reported as such; the vision path WORKED this time, so the three frames
 (`--diverge`, `--region`, `--open economy`) are judged, not handed off. Model:
 [docs/region-economy-model.md](docs/region-economy-model.md).
 
+**V2.6a MADE PEOPLE MOVE, and the machine is one expression applied twice with
+different denominators.** V2.2a's two share registers are live state now:
+`Migration.init_nation()` seeds `region_pop_share` and `city_pop_share` from the
+authored shares beside `Regions.init_nation()`, and `Migration.tick_month()` moves
+them every month -- `rate x share x (pull - mean)/12` with the mean in the same
+share weights, so each sum telescopes to exactly zero, `Trade.sector_shift()`'s
+rule and V2.5's zero-mean deviation a third time and the first at two levels at
+once. Realised partition drift **6.66e-16** against a 1e-12 ABSOLUTE tolerance
+(~1500x margin) -- no Jensen term exists to excuse a larger one, nothing here is
+exponentiated -- and this was the FIRST suite run in which the flow executed at
+all: until the rate was measured, a zero-rate early return made every closure
+check vacuous. **THE PULL CARRIES NO FREE WEIGHT**: between regions it is
+Harris-Todaro expected income (output per head on the LIVE share x employment
+probability -- negative feedback by construction, which is why the drift bound has
+slack instead of setting the number), and between a region's cities it is named
+jobs per head, because every city in a region shares its region's output per head
+and unemployment and only named employers can separate Lille from a smaller
+neighbour -- V2.2a's one-city-holds-a-third-to-a-half-of-the-payroll finding read
+as a mechanism, exact zero for seven of the ten. City level runs FIRST so both
+levels read start-of-month state, and direction is pinned by `share_delta()`
+called directly at a rate the test supplies -- a sign-flipped flow passed every
+conservation invariant. **THE RATE WAS MEASURED AND THE MEASUREMENT CAUGHT A
+DEFECT IN ITS OWN BAND**: clause (ii) read `SHARE_DRIFT_MAX` (0.05), so the upper
+crossing restated the guard rail -- the clamp-measuring failure V1.5c, V1.6c and
+V1.6e each named -- and the ceiling was re-measured from Europe:
+`tools/region_drift.py` over Eurostat `demo_r_pjangrp3` 2014-2025 on exactly the
+register's roster gives a worst real population-share drift of **0.0164** (AT13
+Wien, largest not mean), and `MIGRATION_RATE` re-swept **0.0273 -> 0.0102**,
+interval [0.0081, 0.0123], midpoint stable at the two finest steps and interior on
+all four grids. **THE CEILING IS GENEROUS, NOT LIKE-FOR-LIKE**: it measures TOTAL
+population-share change (fertility, mortality, international migration) while the
+model moves only internal migrants with both residuals frozen. Headroom is a
+third -- the measured ceiling over the band's upper edge, 0.0164/0.0123 = 1.333
+-- and the roster's runner-up (ES30 Madrid, 0.009858) sits BELOW the
+0.0110 collapse threshold -- a re-measured ceiling under that is a kill switch to
+honour, recorded in the constant. **THE REALISM WAS BOUGHT AT A PRICE**: the
+shipped rate sits only **1.26x** above the clause-(i) crossing (DEU binds at
+0.00126 against the 0.001 floor), and visible movement fell to under two-fifths of
+what the defect's sweep shipped (FRA's month-60 mover 0.0051 against 0.0131).
+**TWO STRUCTURAL BOUNDS, numbers beside them**: Britain's regions carry an
+identical expected income by construction (V2.5 §8's proxy, `moved 0.000`), so
+Britain migrates on named employers alone (Manchester 0.0026 of its region at
+month 168) and its region column is exactly 0.0000 at every rate; Luxembourg is
+ONE region holding ONE city, `pull - mean` exactly 0.0 at both levels, unable to
+move at any rate whatever. `SHARE_DRIFT_MAX` stays 0.05 and is now honestly a
+guard rail: worst realised drift 0.0137 (FRA), slack 0.0363, ~3x the ceiling.
+**SAVE_VERSION is 29 on TWO fields** -- both share registers; absent, every city
+has a population of zero, no glyph at any zoom, and re-seeding would erase the
+movement the save exists to remember. The constant lives in
+`src/core/game_state.gd:426` (the plan said save_manager.gd), the bump is verified
+load-bearing by stripping either register from a round trip (size 0, no re-seed),
+and **the absence that STAYS red is a stored city POPULATION** -- a head count is
+`population x share x share`, and storing one is a second answer. The review also
+found **`tests/test_summits.gd` authored at V2.4b and NEVER registered in
+`run_tests.sh`**, hard-pinning `SAVE_VERSION` 27 -- silently red for two versions;
+registered, and the audit says all 73 test files are in the runner. **THE RE-RUN
+HELD A SHARPER PREDICTION THAN V2.5'S**: bit-identical at the bit level, because
+no national quantity moves and no population share enters any equation outside
+`migration.gd`, so a single moved digit was to be a defect and not a rounding
+boundary -- **1582 of 1582 printed lines identical** between baseline `d8a1baa`
+and `dcbc42d`, zero outcome changes, no new regime (another session with none). Method
+honesty: only the baseline side was a worktree where the plan said both, so the
+per-machine addon parse noise did not cancel -- it was isolated instead: one
+contiguous block on the worktree side only, AFTER the last
+`invariants: OK over 168 months`, checked for a third stray line (V1.7c's gotcha)
+and none found. The readout arrived free -- the city panel, the region panel and
+the map's brass crosses have multiplied the two shares since V2.2b, so cities grow
+and shrink without a UI edit -- and `--move` is the block's one new screenshot flag;
+the pass judged four frames and found **NO BUG**, a clean sheet for the third time
+after V1.6c and V2.5. What passes: **no verb, no political price, no net
+urbanisation** (both residuals frozen -- a session that wants some authors a rural
+pull), no map layer, no city economy beyond a head count; a regional opinion
+channel was refused as *a second approval number with a different label*, V1.5c's
+reason, and the price is **V2.6b's**, which sites unrest and campaign meetings on
+these same shares; **V2.6c** owns natural change, whose conservation law differs
+(internal migration is zero-sum nationally, birth and death are not) and whose
+step-0 gate is whether regional age structure is obtainable from the register's
+own dataset. Model: [docs/migration-model.md](docs/migration-model.md).
+
 
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read

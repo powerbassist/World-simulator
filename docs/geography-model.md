@@ -21,9 +21,18 @@ constant this session measures. Built at [[ROADMAP|V2.2a]]; [[tiers/v2|V2]] sect
 > (`src/sim/regions.gd`, which reads it as a duck-typed Array and preloads neither
 > type, so the old preload scan was green all along and a second reader arriving the
 > same way would never have turned it red — the narrowed check reads the field
-> contract instead). A city still carries no population of its own and no economy;
-> `city.gd`'s own error string now names §6 as the session that comes to change
-> that. See [[region-economy-model]].
+> contract instead). **V2.6a is the session §6 promised, and the register is STILL
+> content**: the two shares are seeded from these files and then move every month
+> ([[migration-model]]), so the authored share is now WHERE A PLACE STARTED rather
+> than what it is — the one quantity whose meaning changed, and the reason the
+> re-seed-on-load rescue is refused. A city still carries no population of its own
+> (only a live share of its region) and no economy of its own; `city.gd`'s own
+> error string is unchanged from V2.5 and still defers the head count to §6 —
+> *left the city a share of population, which is what docs/tiers/v2.md section 6
+> comes here to change* — a framing V2.6a has made stale in the humbler direction:
+> the head count it defers now exists, and the economy is the part still owed.
+> Updating the string is a `src/` edit no docs pass carries. See
+> [[region-economy-model]] and [[migration-model]].
 
 ## 1. The shape
 

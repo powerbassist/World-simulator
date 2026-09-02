@@ -21,6 +21,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -299,7 +300,7 @@ func _fill_sectors(ns) -> void:
 		var richest: String = ""
 		var poorest: String = ""
 		for region in regions:
-			var v: float = Regions.gdp_per_head_index(ns, regions, region.id)
+			var v: float = Regions.gdp_per_head_index(ns, regions, region.id, Migration.region_share(ns, region.id))
 			if v <= 0.0:
 				continue
 			if v < lo:

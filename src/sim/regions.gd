@@ -159,12 +159,18 @@ static func unemployment_pct(ns, region_list: Array, region_id: String) -> float
 ## Output per head against the national average: 1.0 is exactly average, and nothing
 ## authored the spread. The quantity the Region panel leads with, and the one that
 ## makes two partitions of one nation worth carrying rather than one.
-static func gdp_per_head_index(ns, region_list: Array, region_id: String) -> float:
+##
+## THE POPULATION SHARE IS PASSED IN RATHER THAN READ, and that is what keeps this
+## file a leaf after V2.6a made the share live. Reading ns.region_pop_share here
+## would give regions.gd a second register to know about and would put
+## tests/test_geography.gd's one-reader assertion under pressure for no gain: the
+## caller already holds the share, because the caller is the thing that moved it.
+static func gdp_per_head_index(ns, region_list: Array, region_id: String, pop_share: float) -> float:
 	for region in region_list:
 		if region.id == region_id:
-			if region.share <= 0.0:
+			if pop_share <= 0.0:
 				return 0.0
-			return share_of(ns, region_id) / region.share
+			return share_of(ns, region_id) / pop_share
 	return 0.0
 
 

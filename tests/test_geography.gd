@@ -253,6 +253,16 @@ func _check_register_has_no_simulation() -> void:
 		if regions_src.contains(city_marker):
 			_fail("src/sim/regions.gd reaches a city (%s) -- a city still holds a share of its region's population and nothing else" % city_marker)
 
+	# V2.6a. migration.gd is the second file allowed to reach a city, and it is
+	# allowed because it is the session that gives a city something that moves.
+	# The one-reader assertion above is UNCHANGED and stays green: migration.gd
+	# names no register field at all -- every regional quantity it reads comes back
+	# through a Regions function -- so the marker list did not have to grow.
+	var migration_src := FileAccess.get_file_as_string("res://src/sim/migration.gd")
+	for marker in [".gdp_share", "unemployment_rel", "sector_mix", "region_gdp_eur_bn"]:
+		if migration_src.contains(marker):
+			_fail("src/sim/migration.gd names `%s` -- it reads the register through Regions' own functions, and naming a field here makes it a second reader" % marker)
+
 	# regions.gd is a LEAF: economy_constants and its own constants, nothing else.
 	for forbidden in ["src/sim/economy.gd", "src/sim/trade.gd", "src/sim/demography.gd", "src/core/data_loader.gd"]:
 		if regions_src.contains("preload(\"res://%s\")" % forbidden):

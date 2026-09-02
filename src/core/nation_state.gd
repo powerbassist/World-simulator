@@ -48,6 +48,24 @@ var potential_gdp_eur_bn: float = 0.0
 ## test_map_cities fired-on-a-comment lesson.)
 var region_gdp_eur_bn := {}
 
+## Region id -> that region's live share of the nation's population, and city id ->
+## that city's live share of its region's. V2.6a.
+##
+## THEY EARN THE SAVE_VERSION BUMP TOGETHER AND FOR ONE REASON. Absent, every share
+## reads 0.0: every city's population is zero, src/ui/map_cities.gd draws no glyph at
+## any zoom, and both panels print an empty country -- a reloaded game that has lost
+## its geography rather than one running a slightly different model. Re-seeding from
+## the authored shares does not rescue them: the authored share is where a place
+## STARTED, and re-seeding would erase the movement the save exists to remember
+## (service_quality's reason at V1.5a, region_gdp_eur_bn's at V2.5).
+##
+## WHAT IS NOT HERE IS STILL PINNED. There is no stored city POPULATION -- a head
+## count is `share x share x population` and storing one would be a second answer to
+## a question these two already answer -- and tests/test_save_load.gd keeps that
+## absence red the day somebody stores one.
+var region_pop_share := {}
+var city_pop_share := {}
+
 var trend_annual_pct: float = 0.0
 var growth_annual_pct: float = 0.0
 
@@ -1333,6 +1351,8 @@ func duplicate_state():
 
 	s.sector_output = sector_output.duplicate(true)
 	s.region_gdp_eur_bn = region_gdp_eur_bn.duplicate(true)
+	s.region_pop_share = region_pop_share.duplicate(true)
+	s.city_pop_share = city_pop_share.duplicate(true)
 	s.gdp_eur_bn = gdp_eur_bn
 	s.potential_gdp_eur_bn = potential_gdp_eur_bn
 	s.trend_annual_pct = trend_annual_pct
@@ -1545,6 +1565,8 @@ func to_dict() -> Dictionary:
 
 		"sector_output": sector_output,
 		"region_gdp_eur_bn": region_gdp_eur_bn,
+		"region_pop_share": region_pop_share,
+		"city_pop_share": city_pop_share,
 		"gdp_eur_bn": gdp_eur_bn,
 		"potential_gdp_eur_bn": potential_gdp_eur_bn,
 		"trend_annual_pct": trend_annual_pct,
@@ -1745,6 +1767,8 @@ static func from_dict(d: Dictionary):
 
 	s.sector_output = d.get("sector_output", {})
 	s.region_gdp_eur_bn = d.get("region_gdp_eur_bn", {})
+	s.region_pop_share = d.get("region_pop_share", {})
+	s.city_pop_share = d.get("city_pop_share", {})
 	s.gdp_eur_bn = d.get("gdp_eur_bn", 0.0)
 	s.potential_gdp_eur_bn = d.get("potential_gdp_eur_bn", 0.0)
 	s.trend_annual_pct = d.get("trend_annual_pct", 0.0)

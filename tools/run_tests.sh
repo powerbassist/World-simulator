@@ -37,6 +37,12 @@ tests=(
   # bugs this project shipped were silent, and the drawn pixels themselves are
   # the screenshot pass's job, not a raster change-detector in here.
   tests/test_ribbon.gd
+  # test_summits.gd was authored at V2.4b and never added here, so it ran only
+  # by hand and went unnoticed for two sessions while SAVE_VERSION moved to 28
+  # and then to 29 under its own frozen "!= 27" pin -- test_companies.gd's
+  # failure at V1.5a in a new place: a check that silently covers less than it
+  # appears to.
+  tests/test_summits.gd
   tests/test_people.gd
   # ...and test_cabinet.gd was the THIRD instance, found by the V1.6 playability
   # audit: 55 test files on disk against 54 here. It covers can_assign, assign,
@@ -70,6 +76,7 @@ tests=(
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
   tests/test_regions.gd
+  tests/test_migration.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

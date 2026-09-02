@@ -55,6 +55,7 @@ const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 const START_YEAR := 2026
 
@@ -388,6 +389,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# nobody -- the share shift is exactly zero with no subsidy standing and all
 		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
 		Companies.tick_month(state, _loader)
+		# After Companies, because the city pull reads live headcount: a month in which
+		# a subsidy moved a firm's hiring should move people in the same month rather
+		# than the next one. After Economy for the same reason one level up -- the
+		# region pull reads live regional output and unemployment, both settled in
+		# Economy's own tick.
+		Migration.tick_month(state, _loader)
 		# V1.6e, in main.gd's slot beside Companies, and inert for every regime here:
 		# the trend shift and the bill both read EXACTLY 0.0 with no programme standing.
 		# Present in this harness for V1.5d's reason -- a system a harness never calls is

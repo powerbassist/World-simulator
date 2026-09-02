@@ -38,6 +38,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
@@ -842,6 +843,12 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+
+	# After Companies, because the city pull reads live headcount: a month in which a
+	# subsidy moved a firm's hiring should move people in the same month rather than
+	# the next one. After Economy for the same reason one level up -- the region pull
+	# reads live regional output and unemployment, both settled in Economy's own tick.
+	Migration.tick_month(_state, _loader)
 
 	# V1.6e: the capital each sector's standing programme has bought converges toward
 	# the programme's intensity, and the bill is recomputed. In Companies' slot for

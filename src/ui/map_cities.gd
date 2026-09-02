@@ -34,6 +34,7 @@ extends RefCounted
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 ## The population a cross is measured against: capital-city scale, the top of the
 ## roster's own range (London reads ~9.1 M). RADIUS_BASE is what that city draws;
@@ -83,7 +84,7 @@ static func cities(loader, state) -> Array:
 					"region_id": region.id,
 					"region_name": region.region_name,
 					"lonlat": city.lonlat,
-					"population": float(ns.population) * region.share * city.share,
+					"population": Migration.city_population(ns, region.id, city.id),
 				})
 	out.sort_custom(func(a, b): return float(a["population"]) < float(b["population"]))
 	return out

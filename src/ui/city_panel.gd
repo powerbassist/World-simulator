@@ -24,6 +24,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 var _state
 var _loader
@@ -152,9 +153,9 @@ func _build_list() -> void:
 	var named := 0.0
 	for region in _loader.regions.get(ns.id, []):
 		for city in region.cities:
-			var pop: float = float(ns.population) * region.share * city.share
+			var pop: float = Migration.city_population(ns, region.id, city.id)
 			entries.append({"region": region, "city": city, "population": pop})
-			named += region.share * city.share
+			named += Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id)
 	entries.sort_custom(func(a, b): return float(a["population"]) > float(b["population"]))
 
 	PanelKit.heading(_body, "The named places")
@@ -187,14 +188,14 @@ func _build_detail(found: Dictionary) -> void:
 		return
 
 	_title.text = city.city_name
-	var pop: float = float(ns.population) * region.share * city.share
+	var pop: float = Migration.city_population(ns, region.id, city.id)
 
 	PanelKit.heading(_body, "The place")
 	PanelKit.row(_body, "Region", "%s · %s" % [region.region_name, nation_id])
 	PanelKit.row(_body, "Nation", String(nation.nation_name))
 	PanelKit.row(_body, "Population", PanelKit.pop_text(pop))
-	PanelKit.row(_body, "Share of its region", "%.1f%%" % (city.share * 100.0))
-	PanelKit.row(_body, "Share of the nation", "%.2f%%" % (region.share * city.share * 100.0))
+	PanelKit.row(_body, "Share of its region", "%.1f%%" % (Migration.city_share(ns, city.id) * 100.0))
+	PanelKit.row(_body, "Share of the nation", "%.2f%%" % (Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0))
 
 	PanelKit.heading(_body, "Named employers")
 	var rows: Array = []

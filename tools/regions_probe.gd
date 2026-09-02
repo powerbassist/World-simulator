@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionK = preload("res://src/sim/region_constants.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 const MONTHS := 168
 const NATIONS := ["FRA", "DEU", "GBR"]
@@ -46,7 +47,7 @@ func _table_a(loader) -> void:
 		var list: Array = loader.regions.get(nation_id, [])
 		var rows: Array = []
 		for region in list:
-			rows.append([Regions.gdp_per_head_index(ns, list, region.id), region.region_name])
+			rows.append([Regions.gdp_per_head_index(ns, list, region.id, Migration.region_share(ns, region.id)), region.region_name])
 		rows.sort_custom(func(a, b): return a[0] < b[0])
 		if rows.is_empty():
 			continue
@@ -128,7 +129,7 @@ func _ratio(ns, list: Array) -> float:
 	var lo: float = 999.0
 	var hi: float = 0.0
 	for region in list:
-		var v: float = Regions.gdp_per_head_index(ns, list, region.id)
+		var v: float = Regions.gdp_per_head_index(ns, list, region.id, Migration.region_share(ns, region.id))
 		if v <= 0.0:
 			continue
 		lo = minf(lo, v)

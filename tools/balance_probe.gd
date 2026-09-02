@@ -55,6 +55,7 @@ const DemographyK = preload("res://src/sim/demography_constants.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -806,6 +807,12 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# After Companies, because the city pull reads live headcount: a month in which
+		# a subsidy moved a firm's hiring should move people in the same month rather
+		# than the next one. After Economy for the same reason one level up -- the
+		# region pull reads live regional output and unemployment, both settled in
+		# Economy's own tick.
+		Migration.tick_month(state, loader)
 		# V1.6e, in main.gd's slot beside Companies. Inert for every regime that invests
 		# in nothing -- the trend shift is EXACTLY 0.0 with no programme standing and the
 		# bill is exactly 0.0 -- so the thirty-two regimes above are provably unchanged by
