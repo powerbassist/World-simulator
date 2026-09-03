@@ -169,7 +169,8 @@ static func _tick_nation(state, ns) -> void:
 	# the top of the tick, and the argument is REQUIRED -- a defaulted one would let
 	# a caller forget it and silently run the pre-V2.7 model (V1.5d's own failure).
 	var access: Dictionary = Regions.accessibility_for(ns, state.regions.get(ns.id, []), state.region_graph)
-	var target_gdp: float = Regions.tick_month(ns, state.regions.get(ns.id, []), growth, access)
+	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
+	var target_gdp: float = Regions.tick_month(ns, state.regions.get(ns.id, []), growth, access, sites)
 	_apply_growth_to_sectors(state, ns, target_gdp)
 	_update_unemployment(ns, trend, growth)
 

@@ -202,7 +202,8 @@ func _refresh() -> void:
 		# never a default dressed as an answer.
 		var site_list: Array = _state.regions.get(ns.id, [])
 		var site: Dictionary = Unrest.site_report(ns, site_list,
-			Regions.accessibility_for(ns, site_list, _state.region_graph))
+			Regions.accessibility_for(ns, site_list, _state.region_graph),
+			_state.project_sited_pct.get(ns.id, {}))
 		if String(site["region_name"]) != "":
 			PanelKit.line(_labour, "Concentrated in %s%s." % [
 				String(site["region_name"]),

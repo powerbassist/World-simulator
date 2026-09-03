@@ -104,7 +104,8 @@ static func cities(loader, state) -> Array:
 		if float(ns.unrest_pct) >= UnrestK.UNREST_THRESHOLD_PCT:
 			var demo_list: Array = state.regions.get(id, [])
 			demo_city = String(Unrest.site_report(ns, demo_list,
-				Regions.accessibility_for(ns, demo_list, state.region_graph))["city_id"])
+				Regions.accessibility_for(ns, demo_list, state.region_graph),
+				state.project_sited_pct.get(id, {}))["city_id"])
 
 		# WHERE THE PRESIDENT IS, for the player alone -- the nine never campaign
 		# (tests/test_campaign.gd pins it), and campaign_count <= 1 is content, so

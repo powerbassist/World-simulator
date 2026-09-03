@@ -346,10 +346,10 @@ static func site_weights(ns, region_list: Array) -> Dictionary:
 ## so nothing is above its own mean. Luxembourg returns {} for a different reason --
 ## one region cannot differ from itself. Both nations are then unpriced by
 ## arithmetic, because Siting.concentration() reads 1.0 on an empty site.
-static func site_signal(ns, region_list: Array, access: Dictionary) -> Dictionary:
+static func site_signal(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
 	var rates: Dictionary = {}
 	for region in region_list:
-		rates[region.id] = Regions.unemployment_pct(ns, region_list, region.id, access)
+		rates[region.id] = Regions.unemployment_pct(ns, region_list, region.id, access, sites)
 	return Siting.excess(rates, site_weights(ns, region_list))
 
 
@@ -373,7 +373,7 @@ static func site_signal(ns, region_list: Array, access: Dictionary) -> Dictionar
 ## budget worth about 9 % over fourteen years. THE REGION DOES NOT MOVE. Recorded
 ## here beside the code rather than only in the doc, because V2.6b's own ROADMAP row
 ## claimed it did.
-static func site_report(ns, region_list: Array, access: Dictionary) -> Dictionary:
+static func site_report(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
 	var empty := {
 		"region_id": "", "region_name": "", "city_id": "", "city_name": "",
 		"concentration": 1.0, "output_index": 1.0, "margin": 0.0,
@@ -382,7 +382,7 @@ static func site_report(ns, region_list: Array, access: Dictionary) -> Dictionar
 		return empty
 
 	var weights: Dictionary = site_weights(ns, region_list)
-	var signals: Dictionary = site_signal(ns, region_list, access)
+	var signals: Dictionary = site_signal(ns, region_list, access, sites)
 	var region_id: String = Siting.site(weights, signals)
 	if region_id == "":
 		return empty
@@ -489,7 +489,7 @@ static func _tick_nation(state, ns) -> void:
 	# running the pre-network model.
 	var region_list: Array = state.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, region_list, state.region_graph)
-	var report: Dictionary = site_report(ns, region_list, access)
+	var report: Dictionary = site_report(ns, region_list, access, state.project_sited_pct.get(ns.id, {}))
 	ns.unrest_opinion_load = opinion_load(ns)
 
 	# Decayed HERE and not in economy.gd, unlike demand_impulse_pct which Economy owns

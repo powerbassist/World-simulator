@@ -1984,14 +1984,16 @@ func _site_the_demonstration() -> void:
 	var ns = state.player()
 	var region_list: Array = state.regions.get(ns.id, [])
 	var report: Dictionary = Unrest.site_report(ns, region_list,
-		Regions.accessibility_for(ns, region_list, state.region_graph))
+		Regions.accessibility_for(ns, region_list, state.region_graph),
+		state.project_sited_pct.get(ns.id, {}))
 	var guard := 0
 	while (state.unrest_acts.is_empty() or String(report["city_id"]) == "") and guard < 120:
 		_tick_months(1)
 		guard += 1
 		ns = state.player()
 		report = Unrest.site_report(ns, region_list,
-			Regions.accessibility_for(ns, region_list, state.region_graph))
+			Regions.accessibility_for(ns, region_list, state.region_graph),
+			state.project_sited_pct.get(ns.id, {}))
 	if state.unrest_acts.is_empty():
 		printerr("--site: no act fired in %d months, so there is nothing to photograph" % guard)
 		return

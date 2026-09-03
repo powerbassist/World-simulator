@@ -76,7 +76,28 @@ func _init() -> void:
 	_test_calendar_is_still_a_leaf()
 	_test_the_nine_never_build()
 	_test_the_register_carries_no_content()
+	_check_site_region()
 	_finish()
+
+
+## V2.7. A project names a place now, and the place is the one its authored
+## coordinate falls in -- U6c's project_sites block, read for a second purpose. The
+## site is DERIVED and stored nowhere: Siting.site()'s rule, and it is why
+## SAVE_VERSION does not move for this.
+func _check_site_region() -> void:
+	var site: String = Projects.site_region(_loader, "FRA", "high_speed_rail")
+	if site == "":
+		_fail("FRA's high_speed_rail has an authored site and no region was found for it")
+	var known := false
+	for region in _loader.regions.get("FRA", []):
+		if region.id == site:
+			known = true
+	if not known:
+		_fail("high_speed_rail sites at '%s', which is not a French region" % site)
+	# A nation with no project_sites block reads "" rather than erroring: the block is
+	# optional (data/companies/'s coverage rule) and seven of the ten carry none.
+	if Projects.site_region(_loader, "LUX", "high_speed_rail") != "":
+		_fail("LUX has no project_sites block and returned a site anyway")
 
 
 func _finish() -> void:

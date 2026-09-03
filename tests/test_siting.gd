@@ -181,7 +181,8 @@ func _test_the_two_structural_bounds_on_real_data() -> void:
 		var ns = state.player()
 		var region_list: Array = state.regions.get(id, [])
 		var report: Dictionary = Unrest.site_report(ns, region_list,
-			Regions.accessibility_for(ns, region_list, state.region_graph))
+			Regions.accessibility_for(ns, region_list, state.region_graph),
+			state.project_sited_pct.get(id, {}))
 		if String(report["region_id"]) != "":
 			_fail("%s has a site at month one (%s), and both recorded bounds say it should have none" % [id, report["region_id"]])
 		if float(report["concentration"]) != 1.0:
@@ -238,7 +239,7 @@ func _test_unsited_impulse_is_bit_identical() -> void:
 ## exactly neutral rather than crashing or reading zero.
 func _test_no_register_is_exactly_neutral() -> void:
 	var state = GameState.new_game(_loader, "FRA")
-	var report: Dictionary = Unrest.site_report(state.player(), [], {})
+	var report: Dictionary = Unrest.site_report(state.player(), [], {}, {})
 	if String(report["region_id"]) != "" or String(report["city_id"]) != "":
 		_fail("a nation with no register produced a site")
 	if float(report["concentration"]) != 1.0 or float(report["output_index"]) != 1.0:

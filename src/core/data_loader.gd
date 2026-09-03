@@ -160,6 +160,14 @@ var world_features: Dictionary = {}
 ## re-checked by a test with its own hole-aware cast, not by the renderer.
 var region_features: Dictionary = {}
 
+## region id -> every polygon's EVERY ring, holes included -- V2.7. The renderer
+## wants outer rings only, which is why region_features above stays that shape; the
+## point-in-polygon that files a project's authored coordinate under a region needs
+## the holes, because Berlin's site lives inside Brandenburg's outer ring and only
+## the hole ring says whose it is. Written by the same _load_geo pass over the same
+## file, so the two can never describe different rosters.
+var region_rings: Dictionary = {}
+
 ## data/geo/region_graph.json -- V2.7. The transport graph as content: `edges` is
 ## [a, b, km, kind] with a < b, `endowment` is region id -> motorway density over the
 ## roster mean. Loaded rather than left on disk (V2.2a's own call for the geometry,
@@ -184,6 +192,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	companies.clear()
 	regions.clear()
 	region_graph.clear()
+	region_rings.clear()
 	outlets.clear()
 	company_actions.clear()
 	investment_actions.clear()
@@ -597,7 +606,7 @@ func _validate_regions(regions_dir: String, regions_geo_path: String, regions_gr
 					% [nation_id, company.id, company.city, city_ids[company.city]]
 				)
 
-	_load_geo(regions_geo_path, region_features)
+	_load_geo(regions_geo_path, region_features, true, region_rings)
 	_load_region_graph(regions_graph_path)
 	for nation_id in regions.keys():
 		for region in regions[nation_id]:
@@ -1605,9 +1614,10 @@ func _validate_scenarios() -> void:
 ## and world.geojson go through exactly the same parser and the same error
 ## handling -- a malformed world file is an errors.append(), not a crash, the
 ## same as a malformed roster file has always been.
-func _load_geo(geo_path: String, into: Dictionary) -> Array:
+func _load_geo(geo_path: String, into: Dictionary, keep_rings := false, rings_into: Dictionary = {}) -> Array:
 	var ids: Array = []
 	into.clear()
+	rings_into.clear()
 	var text := FileAccess.get_file_as_string(geo_path)
 	if text.is_empty():
 		errors.append("%s: could not read file" % geo_path)
@@ -1628,15 +1638,22 @@ func _load_geo(geo_path: String, into: Dictionary) -> Array:
 
 		var geometry: Dictionary = feature.get("geometry", {})
 		var polygons: Array = []
+		var full_polygons: Array = []
 		match geometry.get("type", ""):
 			"MultiPolygon":
 				for polygon_coords in geometry.get("coordinates", []):
 					polygons.append(_outer_ring(polygon_coords))
+					if keep_rings:
+						full_polygons.append(_all_rings(polygon_coords))
 			"Polygon":
 				polygons.append(_outer_ring(geometry.get("coordinates", [])))
+				if keep_rings:
+					full_polygons.append(_all_rings(geometry.get("coordinates", [])))
 			_:
 				errors.append("%s: feature '%s' has unsupported geometry type '%s'" % [geo_path, id, geometry.get("type", "")])
 		into[id] = polygons
+		if keep_rings:
+			rings_into[id] = full_polygons
 	return ids
 
 
@@ -1649,6 +1666,20 @@ func _outer_ring(polygon_coords: Array) -> PackedVector2Array:
 	for point in polygon_coords[0]:
 		ring.append(Vector2(point[0], point[1]))
 	return ring
+
+
+## Every ring of one polygon, outer first, holes after -- V2.7. Kept beside
+## _outer_ring() because the pair states the rule twice on purpose: the renderer
+## drops the holes and the siting cast needs them, and only reading this file once
+## keeps the two from ever disagreeing about what the geometry says.
+func _all_rings(polygon_coords: Array) -> Array:
+	var rings: Array = []
+	for ring_coords in polygon_coords:
+		var ring := PackedVector2Array()
+		for point in ring_coords:
+			ring.append(Vector2(point[0], point[1]))
+		rings.append(ring)
+	return rings
 
 
 ## V1.8. _load_projects()'s shape, and the seventh directory to take it.

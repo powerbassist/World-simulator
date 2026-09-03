@@ -87,22 +87,49 @@ static func _mean_trend_pct(ns, region_list: Array) -> float:
 ## THE NAMED REGIONS BY CONSTRUCTION, which is the whole of why the aggregate stays
 ## on the national trajectory -- Trade.sector_shift()'s sum-to-zero rule, one level
 ## up and enforced by subtraction rather than by a load-time check. Since V2.7 it is
-## zero-mean twice over: once for the sector mix and once for the network term.
+## zero-mean three times over: sector mix, network, and sited-project payoffs.
 ##
-## THE FOURTH ARGUMENT IS REQUIRED AND NOT DEFAULTED. A defaulted empty Dictionary
-## would read as "no network" and every harness that forgot to pass one would
-## silently run the pre-V2.7 model and agree with itself about a re-run that measured
-## nothing -- which is precisely what V1.5d shipped when neither harness called
-## Media.tick_month(). tests/test_network.gd reads both harnesses and fails if either
-## omits it.
-static func trend_deviation_pct(ns, region_list: Array, region_id: String, access: Dictionary) -> float:
+## THE FOURTH AND FIFTH ARGUMENTS ARE REQUIRED AND NOT DEFAULTED. A defaulted empty
+## Dictionary would read as "no network" / "nothing built" and every harness that
+## forgot to pass one would silently run the pre-V2.7 model and agree with itself
+## about a re-run that measured nothing -- which is precisely what V1.5d shipped
+## when neither harness called Media.tick_month(). tests/test_network.gd reads both
+## harnesses and fails if either omits them.
+static func trend_deviation_pct(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary) -> float:
 	if region_id == K.RESIDUAL_KEY:
 		return 0.0
 	for region in region_list:
 		if region.id == region_id:
 			var mix: float = trend_pct(region) - _mean_trend_pct(ns, region_list)
-			return mix + _network_pct(ns, region_list, region, access)
+			return mix + _network_pct(ns, region_list, region, access) + _sited_pct(ns, region_list, region_id, sites)
 	return 0.0
+
+
+## What a FINISHED project is worth here, in points of growth per year, measured
+## against the nation's own output-weighted mean of the same payoffs so the
+## national total is untouched: the site gains `p - mean` and every other region
+## loses its weighted share of the mean. V2.7's third term. The map arrives raw
+## ({region id -> points/year}, Projects.sited_pct()); the subtraction happens
+## HERE, because zero-mean is a property of the readers it protects and not of the
+## content -- a project's authored payoff is what it is.
+##
+## A region hosting nothing reads exactly `-mean`, never 0.0: that is the model,
+## not a leak. The nation's total is unchanged, which is the invariant that
+## matters, and V1.6f's national channel still carries the level through
+## project_potential_target_pct -- one act, priced once.
+static func _sited_pct(ns, region_list: Array, region_id: String, sites: Dictionary) -> float:
+	if sites.is_empty():
+		return 0.0
+	var own: float = float(sites.get(region_id, 0.0))
+	var weighted: float = 0.0
+	var total: float = 0.0
+	for other in region_list:
+		var w: float = share_of(ns, other.id)
+		weighted += w * float(sites.get(other.id, 0.0))
+		total += w
+	if total <= 0.0:
+		return 0.0
+	return own - weighted / total
 
 
 ## The accessibility index for one nation, from its live output shares -- the
@@ -177,22 +204,25 @@ static func _national_production_mix(ns, region_list: Array) -> Dictionary:
 ## so a region that grows faster compounds, which is what makes divergence a
 ## trajectory rather than a one-off tilt. SHARE_DRIFT_MAX is checked here rather than
 ## clamped on the rate, because the quantity the bound is about is the SHARE.
-static func tick_month(ns, region_list: Array, growth: float, access: Dictionary) -> float:
+static func tick_month(ns, region_list: Array, growth: float, access: Dictionary, sites: Dictionary) -> float:
 	if ns.region_gdp_eur_bn.is_empty():
 		return ns.gdp_eur_bn * C.monthly_factor(growth)
 
 	# THE MEAN IS TAKEN ONCE, BEFORE THE LOOP MUTATES ANY LEVEL -- not through
 	# trend_deviation_pct(), which recomputes it against live state and would
 	# therefore drift as this loop writes region after region. The deviation
-	# EXPRESSION below is still the one expression: mix term plus network term,
-	# identical to the public function's, and at NETWORK_BETA 0.0 it is bit-equal
-	# to the pre-V2.7 arithmetic because _network_pct() returns exactly 0.0.
+	# EXPRESSION below is still the one expression: mix term, network term, sited
+	# term -- identical to the public function's, and at NETWORK_BETA 0.0 with
+	# nothing built it is bit-equal to the pre-V2.7 arithmetic because both added
+	# terms return exactly 0.0.
 	var mean: float = _mean_trend_pct(ns, region_list)
 	var sum: float = 0.0
 
 	for region in region_list:
 		var current: float = float(ns.region_gdp_eur_bn.get(region.id, 0.0))
-		var deviation: float = (trend_pct(region) - mean) + _network_pct(ns, region_list, region, access)
+		var deviation: float = (trend_pct(region) - mean) \
+			+ _network_pct(ns, region_list, region, access) \
+			+ _sited_pct(ns, region_list, region.id, sites)
 		var value: float = current * C.monthly_factor(growth + deviation)
 		ns.region_gdp_eur_bn[region.id] = value
 		sum += value
@@ -231,11 +261,11 @@ static func share_of(ns, region_id: String) -> float:
 ## `unemployment_rel` is normalised at import so the population-weighted mean over
 ## the named regions is exactly 1.0, and the deviation term is GDP-weighted zero-mean,
 ## so this DECOMPOSES the national figure rather than disagreeing with it.
-static func unemployment_pct(ns, region_list: Array, region_id: String, access: Dictionary) -> float:
+static func unemployment_pct(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary) -> float:
 	for region in region_list:
 		if region.id == region_id:
 			return clampf(
-				ns.unemployment_pct * region.unemployment_rel - C.OKUN * trend_deviation_pct(ns, region_list, region_id, access),
+				ns.unemployment_pct * region.unemployment_rel - C.OKUN * trend_deviation_pct(ns, region_list, region_id, access, sites),
 				C.UNEMP_MIN_PCT,
 				C.UNEMP_MAX_PCT
 			)

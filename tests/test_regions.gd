@@ -82,8 +82,9 @@ func _check_deviation_is_zero_mean() -> void:
 		Economy.tick_month(state)
 	var weighted: float = 0.0
 	var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+	var sites: Dictionary = state.project_sited_pct.get("FRA", {})
 	for region in list:
-		weighted += Regions.share_of(ns, region.id) * Regions.trend_deviation_pct(ns, list, region.id, access)
+		weighted += Regions.share_of(ns, region.id) * Regions.trend_deviation_pct(ns, list, region.id, access, sites)
 	if absf(weighted) > 0.000001:
 		_fail("GDP-weighted mean deviation is %f, not zero" % weighted)
 
@@ -104,7 +105,7 @@ func _check_network_zero_mean() -> void:
 		var access: Dictionary = Network.accessibility(_loader.region_graph, weights)
 		var weighted: float = 0.0
 		for region in list:
-			weighted += float(weights[region.id]) * Regions.trend_deviation_pct(ns, list, region.id, access)
+			weighted += float(weights[region.id]) * Regions.trend_deviation_pct(ns, list, region.id, access, {})
 		if absf(weighted) > 0.000000001:
 			_fail("%s output-weighted mean deviation is %.12f, not 0.0" % [nation_id, weighted])
 
@@ -137,19 +138,19 @@ func _check_unemployment_decomposes() -> void:
 	var okun: float = 0.0
 	var okun_access: Dictionary = Regions.accessibility_for(ns, list, _loader.region_graph)
 	for region in list:
-		okun += region.share * float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access)
+		okun += region.share * float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access, {})
 	if absf(okun / weight) > 0.01:
 		_fail("the Okun term's population-weighted mean is %f -- past the measured two-weighting residual" % (okun / weight))
 	# And the read is its own formula: national rate x rel, minus the deviation, in the
 	# national clamp.
 	for region in list:
 		var expect: float = clampf(
-			ns.unemployment_pct * region.unemployment_rel - float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access),
+			ns.unemployment_pct * region.unemployment_rel - float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access, {}),
 			float(EK.UNEMP_MIN_PCT),
 			float(EK.UNEMP_MAX_PCT)
 		)
-		if absf(Regions.unemployment_pct(ns, list, region.id, okun_access) - expect) > 0.0000001:
-			_fail("region '%s' reads %f against its own formula's %f" % [region.id, Regions.unemployment_pct(ns, list, region.id, okun_access), expect])
+		if absf(Regions.unemployment_pct(ns, list, region.id, okun_access, {}) - expect) > 0.0000001:
+			_fail("region '%s' reads %f against its own formula's %f" % [region.id, Regions.unemployment_pct(ns, list, region.id, okun_access, {}), expect])
 
 
 ## The invariant that CHANGED, pinned at the precision it now holds at. Before V2.5

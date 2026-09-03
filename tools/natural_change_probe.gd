@@ -15,6 +15,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MigrationK = preload("res://src/sim/migration_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -127,10 +128,11 @@ func _table_c(loader) -> void:
 		var rates: Dictionary = {}
 		var pulls: Dictionary = {}
 		var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+		var sites: Dictionary = state.project_sited_pct.get(nation_id, {})
 		for region in list:
 			shares[region.id] = Migration.region_share(ns, region.id)
 			rates[region.id] = Regions.natural_change(region)
-			pulls[region.id] = Migration.region_pull(ns, list, region.id, access)
+			pulls[region.id] = Migration.region_pull(ns, list, region.id, access, sites)
 		var mean: float = NaturalChange.named_mean(shares, rates)
 		var ranked_pulls: Array = pulls.keys()
 		ranked_pulls.sort_custom(func(a, b): return float(pulls[a]) > float(pulls[b]))
@@ -196,6 +198,7 @@ func _tick_combined(ns, list: Array, loader, rate: float) -> void:
 	if list.is_empty():
 		return
 	var access: Dictionary = Regions.accessibility_for(ns, list, loader.region_graph)
+	var sites: Dictionary = Projects.sited_pct(ns, loader)
 	for region in list:
 		if region.cities.size() < 2:
 			continue
@@ -222,7 +225,7 @@ func _tick_combined(ns, list: Array, loader, rate: float) -> void:
 	var weighted: float = 0.0
 	var total: float = 0.0
 	for region in list:
-		var pull: float = Migration.region_pull(ns, list, region.id, access)
+		var pull: float = Migration.region_pull(ns, list, region.id, access, sites)
 		var share: float = Migration.region_share(ns, region.id)
 		pulls[region.id] = pull
 		shares[region.id] = share

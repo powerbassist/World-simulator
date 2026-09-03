@@ -101,12 +101,12 @@ static func city_population(ns, region_id: String, city_id: String) -> float:
 ## output between, so its pull rises and the outflow slows. NEGATIVE FEEDBACK BY
 ## CONSTRUCTION, which is why migration_constants.SHARE_DRIFT_MAX is a bound with
 ## measured slack rather than the thing setting the number.
-static func region_pull(ns, region_list: Array, region_id: String, access: Dictionary) -> float:
+static func region_pull(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary) -> float:
 	var share: float = region_share(ns, region_id)
 	if share <= 0.0:
 		return 0.0
 	var per_head: float = Regions.share_of(ns, region_id) / share
-	var employed: float = 1.0 - Regions.unemployment_pct(ns, region_list, region_id, access) / 100.0
+	var employed: float = 1.0 - Regions.unemployment_pct(ns, region_list, region_id, access, sites) / 100.0
 	return per_head * employed
 
 
@@ -157,7 +157,7 @@ static func tick_month(state, loader) -> void:
 		# of this tick -- the same required-argument rule regions.gd states at the
 		# function it feeds.
 		var access: Dictionary = Regions.accessibility_for(state.nations[id], region_list, state.region_graph)
-		_tick_nation(state.nations[id], region_list, loader, access)
+		_tick_nation(state.nations[id], region_list, loader, access, state.project_sited_pct.get(id, {}))
 
 
 ## One entry's monthly change in share. Extracted so the DIRECTION of the flow is
@@ -194,7 +194,7 @@ static func share_delta(share: float, pull: float, mean: float, rate: float) -> 
 ## _tick_nation() and is NOT gated by MIGRATION_RATE: zeroing the rate isolates
 ## migration, and the natural flow must keep running through that isolation for it
 ## to stay an isolation of migration alone.
-static func _tick_nation(ns, region_list: Array, loader, access: Dictionary) -> void:
+static func _tick_nation(ns, region_list: Array, loader, access: Dictionary, sites: Dictionary) -> void:
 	if region_list.is_empty():
 		return
 
@@ -209,7 +209,7 @@ static func _tick_nation(ns, region_list: Array, loader, access: Dictionary) -> 
 	# and a guard around the whole nation would have made the isolation silent
 	# about the one flow it does not isolate.
 	if K.MIGRATION_RATE != 0.0:
-		_tick_migration(ns, region_list, loader, access)
+		_tick_migration(ns, region_list, loader, access, sites)
 
 	# V2.6c. Natural change, the third flow on this register -- births and deaths
 	# as a measured per-region rate against the live-share-weighted mean. It runs
@@ -239,7 +239,7 @@ static func _tick_nation(ns, region_list: Array, loader, access: Dictionary) -> 
 ## comments below are the original ordering argument, kept whole because the
 ## natural flow after them is what makes "both levels read start-of-month state"
 ## mean "start of the MIGRATION step" rather than start of the month.
-static func _tick_migration(ns, region_list: Array, loader, access: Dictionary) -> void:
+static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, sites: Dictionary) -> void:
 	# Level one (run FIRST): the named cities of each region. city_pull() reads its
 	# OWN region's live share through city_population(), while region_pull() reads no
 	# city's share at all -- so cities-then-regions is the order in which both levels
@@ -277,7 +277,7 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary) 
 	var weighted: float = 0.0
 	var total: float = 0.0
 	for region in region_list:
-		var pull: float = region_pull(ns, region_list, region.id, access)
+		var pull: float = region_pull(ns, region_list, region.id, access, sites)
 		var share: float = region_share(ns, region.id)
 		pulls[region.id] = pull
 		shares[region.id] = share
