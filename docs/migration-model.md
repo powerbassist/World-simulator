@@ -247,6 +247,16 @@ because NL31/NL33 vanish at 2024 into their 2024-vintage twins NL35/NL36 — equ
 to the person — so a window crossing that boundary measures a RE-CODING rather
 than a migration.
 
+**V2.7 re-measured the band with a third mover live.** The transport session's
+network term moves output per head — half the Harris–Todaro pull — so the
+ceiling was re-swept with `NETWORK_BETA` at its shipped value, and the sweep
+came back identical at every printed figure: natural-only 0.01558, the shipped
+rate 0.01599, the interval unchanged. Migration owns 1–3 % of the combined
+movement and the term perturbs the pull by a fraction of a per cent, so the
+third mover's contribution lands below the table's fifth decimal. The ceiling
+still binds `MIGRATION_RATE` at 2.5 % slack, and a fourth mover inherits it
+binding. [[network-model]] §8.
+
 **The ceiling is GENEROUS, not like-for-like, and the model doc must say so
 because the player-facing claim is made on it.** The measured quantity is TOTAL
 population-share change — fertility, mortality and international migration all
