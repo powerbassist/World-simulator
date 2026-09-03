@@ -21,6 +21,11 @@ extends SceneTree
 ##       FR1 -> UKI is UNREACHABLE over land. Routed geometry buys nothing here.
 ##   (b) PASS -- nine components: the continental 94, Britain's 11, and seven
 ##       singletons (UKN FRM ITG1 ITG2 ES53 ES63 ES64). SEA LINKS REQUIRED: 8 <= 12.
+##   (d) FAIL -- Spearman rho 0.9170 against a pre-committed ceiling of 0.90: the
+##       six-branch specialisation ranks the roster almost exactly as the
+##       three-branch one, so production_mix is REFUSED as one quantity written
+##       twice (src/core/region.gd carries the refusal beside sector_mix) and the
+##       network term reads sector_mix.
 ##
 ## ONE DEVIATION FROM THE PLAN'S DRAFT, and it is the plan's own instruction: the
 ## draft read loader.region_features, but _load_geo() keeps only OUTER rings
@@ -30,13 +35,26 @@ extends SceneTree
 ## fix is in THIS file, not in src/: the probe parses data/geo/regions.geojson
 ## directly and joins on every ring of every polygon, holes included.
 
+const DataLoader = preload("res://src/core/data_loader.gd")
+const Network = preload("res://src/sim/network.gd")
+
 const NATIONS := ["FRA", "DEU", "GBR"]
+
+## tools/import_data.py's own collapse, restated so the six-branch ranking and the
+## three-branch one measure the same 112 regions from the same source file.
+const NACE_TO_SECTOR := {
+	"A": "agriculture", "B-E": "industry", "F": "industry",
+	"G-J": "services", "K-N": "services", "O-U": "services",
+}
+const PRODUCTION_BRANCHES := ["A", "B-E", "F", "G-J", "K-N", "O-U"]
+const VINTAGE_SIBLING := {"NL31": "NL35", "NL33": "NL36"}
 
 
 func _init() -> void:
 	var adj: Dictionary = _adjacency()
 	_table_a(adj)
 	_table_b(adj)
+	_table_d()
 	quit(0)
 
 
@@ -148,3 +166,157 @@ func _path(adj: Dictionary, from_id: String, to_id: String) -> Array:
 				seen[other] = true
 				queue.append(route + [other])
 	return ["UNREACHABLE"]
+
+
+## (d) PRODUCTION. Does the six-branch mix rank regions differently from the three?
+##
+## THE CLAUSE IS FIXED BEFORE THE MEASUREMENT: Spearman rank correlation over all 112
+## regions must be <= 0.90. Above that the finer mix is one quantity written twice --
+## V1.6b's output gap, V1.6c's deficit gap -- and `production_mix` is refused with the
+## number recorded rather than shipped because the row asked for it.
+##
+## The six branches are not in the register yet, so this table decodes
+## sources/eurostat/nama_10r_3gva_2022.json itself -- the same decode
+## tools/import_data.py's load_jsonstat() does, duplicated because the probe is the
+## one place an independent reading is the point. Specialisation is
+## Network.specialisation()'s half-L1, each region against its nation's own
+## output(gdp_share)-weighted mean mix, under each keying; regions the source does
+## not answer (Britain's proxy, Switzerland's TOTAL-only file, NL31/NL33 through
+## their 2024 siblings) read exactly as the importer will write them.
+func _table_d() -> void:
+	print("\n=== (d) production: six-branch vs three-branch specialisation ===")
+	var loader = DataLoader.new()
+	loader.load_all()
+	if not loader.errors.is_empty():
+		printerr("data did not load: %s" % [loader.errors])
+		return
+	var branches: Dictionary = _gva_branches()
+
+	var ids: Array = []
+	var six: Dictionary = {}
+	var three: Dictionary = {}
+	for nation_id in loader.regions.keys():
+		var list: Array = loader.regions[nation_id]
+		# Each nation's own output-weighted mean mix, under both keyings.
+		var nat_three: Dictionary = {"agriculture": 0.0, "industry": 0.0, "services": 0.0}
+		var nat_six: Dictionary = {}
+		for b in PRODUCTION_BRANCHES:
+			nat_six[b] = 0.0
+		var w_total: float = 0.0
+		for region in list:
+			var w: float = float(region.gdp_share)
+			w_total += w
+			for key in nat_three.keys():
+				nat_three[key] += w * float(region.sector_mix.get(key, 0.0))
+			var own_six: Dictionary = _six_mix(branches, region.id)
+			for b in PRODUCTION_BRANCHES:
+				nat_six[b] += w * float(own_six[b])
+		if w_total <= 0.0:
+			continue
+		for key in nat_three.keys():
+			nat_three[key] /= w_total
+		for b in PRODUCTION_BRANCHES:
+			nat_six[b] /= w_total
+		for region in list:
+			ids.append(region.id)
+			six[region.id] = Network.specialisation(_six_mix(branches, region.id), nat_six)
+			three[region.id] = Network.specialisation(region.sector_mix, nat_three)
+
+	var rank_six: Dictionary = _ranks(ids, six)
+	var rank_three: Dictionary = _ranks(ids, three)
+	var n: int = ids.size()
+	var sum_d2: float = 0.0
+	var movers: Array = []
+	for id in ids:
+		var d: float = float(rank_six[id]) - float(rank_three[id])
+		sum_d2 += d * d
+		movers.append([id, int(d)])
+	movers.sort_custom(func(a, b): return absi(a[1]) > absi(b[1]))
+	var rho: float = 1.0 - 6.0 * sum_d2 / (float(n) * (float(n) * float(n) - 1.0))
+	print("  regions ranked: %d   Spearman rho: %.4f   (clause (d) ceiling 0.90)" % [n, rho])
+	print("  five largest rank movers (six-branch rank minus three-branch rank):")
+	for i in 5:
+		print("    %-5s %+d" % [movers[i][0], movers[i][1]])
+	if rho <= 0.90:
+		print("  VERDICT (d): PASS -- the finer mix ranks the roster differently")
+	else:
+		print("  VERDICT (d): FAIL -- one quantity written twice, production_mix refused")
+
+
+## {(nace branch, geo code): GVA in million EUR}, from the committed source file.
+func _gva_branches() -> Dictionary:
+	var text := FileAccess.get_file_as_string("res://sources/eurostat/nama_10r_3gva_2022.json")
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		printerr("nama_10r_3gva_2022.json did not parse")
+		return {}
+	var data: Dictionary = parsed
+	var dims: Array = data["id"]
+	var sizes: Array = []
+	var inverse: Array = []
+	for dim in dims:
+		var idx: Dictionary = data["dimension"][dim]["category"]["index"]
+		sizes.append(idx.size())
+		var inv: Dictionary = {}
+		for key in idx.keys():
+			inv[int(idx[key])] = key
+		inverse.append(inv)
+	var strides: Array = []
+	strides.resize(sizes.size())
+	strides[sizes.size() - 1] = 1
+	for i in range(sizes.size() - 2, -1, -1):
+		strides[i] = int(strides[i + 1]) * int(sizes[i + 1])
+	var wanted := [dims.find("nace_r2"), dims.find("geo")]
+	var out: Dictionary = {}
+	var values: Dictionary = data["value"]
+	for key in values.keys():
+		var rem := int(key)
+		var coord: Array = []
+		for s in strides:
+			coord.append(rem / int(s))
+			rem = rem % int(s)
+		out[[inverse[wanted[0]][coord[wanted[0]]], inverse[wanted[1]][coord[wanted[1]]]]] = values[key]
+	return out
+
+
+## A region's six-branch mix, normalised to exactly 1.0 the way normalised_mix()
+## floors its three: five branches floored at 4 decimals, the sixth the remainder.
+## A code the source does not answer takes its nation's mix through the caller's
+## national mean -- which here reads as all-equal, the same no-signal the importer's
+## fallback writes.
+func _six_mix(branches: Dictionary, code: String) -> Dictionary:
+	var looked: String = code
+	if VINTAGE_SIBLING.has(code):
+		looked = VINTAGE_SIBLING[code]
+	var raw: Dictionary = {}
+	var total: float = 0.0
+	for b in PRODUCTION_BRANCHES:
+		var v: float = float(branches.get([b, looked], 0.0))
+		raw[b] = v
+		total += v
+	var out: Dictionary = {}
+	if total <= 0.0:
+		for b in PRODUCTION_BRANCHES:
+			out[b] = 1.0 / PRODUCTION_BRANCHES.size()
+		return out
+	var acc: float = 0.0
+	for i in PRODUCTION_BRANCHES.size() - 1:
+		var b: String = PRODUCTION_BRANCHES[i]
+		out[b] = floor(raw[b] / total * 10000.0) / 10000.0
+		acc += out[b]
+	out[PRODUCTION_BRANCHES[PRODUCTION_BRANCHES.size() - 1]] = snappedf(1.0 - acc, 6)
+	return out
+
+
+## Descending by value, ties broken by id -- a total order, so the rank correlation
+## is reproducible even where 19 regions read exactly 0.0 specialisation.
+func _ranks(ids: Array, values: Dictionary) -> Dictionary:
+	var order: Array = ids.duplicate()
+	order.sort_custom(func(a, b):
+		if not is_equal_approx(float(values[a]), float(values[b])):
+			return float(values[a]) > float(values[b])
+		return String(a) < String(b))
+	var out: Dictionary = {}
+	for i in order.size():
+		out[order[i]] = i + 1
+	return out
