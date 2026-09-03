@@ -80,6 +80,7 @@ func _init() -> void:
 	_check_no_level_in_src()
 	_check_register_has_no_simulation()
 	_check_geometry_loads_at_startup()
+	_check_region_graph()
 	_check_fixtures_refused()
 	_finish()
 
@@ -310,6 +311,60 @@ func _check_geometry_loads_at_startup() -> void:
 	var loaded: int = _loader.region_features.size()
 	if loaded != expected:
 		_fail("region_features holds %d polygons against %d register regions -- the geometry is the authority on the roster, so the two sets must be equal" % [loaded, expected])
+
+
+## V2.7. The graph loads, it is connected, and its ids are the register's own.
+##
+## V2.2a pinned the geojson's ABSENCE from the loader ("nothing draws it, so a
+## launch should not pay for it") and V2.2b flipped that pin to a presence check
+## the day the map drew it. This is the same shape one register over: the graph is
+## loaded because src/sim/network.gd reads it every tick, and a graph whose ids have
+## drifted from the register is an import that has come apart -- which is exactly
+## what _validate_regions()'s fifth rule catches for the graph.
+func _check_region_graph() -> void:
+	var graph: Dictionary = _loader.region_graph
+	if graph.is_empty():
+		_fail("loader.region_graph is empty -- data/geo/region_graph.json did not load")
+		return
+	var edges: Array = graph.get("edges", [])
+	var endowment: Dictionary = graph.get("endowment", {})
+	if edges.is_empty() or endowment.is_empty():
+		_fail("region_graph carries %d edges and %d endowments" % [edges.size(), endowment.size()])
+		return
+
+	var register_ids: Dictionary = {}
+	for nation_id in _loader.regions.keys():
+		for region in _loader.regions[nation_id]:
+			register_ids[region.id] = true
+	if endowment.size() != register_ids.size():
+		_fail("region_graph endowment has %d entries against %d register regions" % [
+			endowment.size(), register_ids.size(),
+		])
+	for region_id in endowment.keys():
+		if not register_ids.has(region_id):
+			_fail("region_graph names '%s', which the register does not carry" % region_id)
+
+	# CONNECTED, and the assertion is the whole reason the eight sea links exist.
+	# Adjacency alone leaves nine components; a graph that has quietly lost a link
+	# leaves Corsica unreachable and every accessibility read there collapses to its
+	# own output, which is a silent wrong answer rather than a crash.
+	var adjacency: Dictionary = {}
+	for region_id in endowment.keys():
+		adjacency[region_id] = []
+	for edge in edges:
+		(adjacency[edge[0]] as Array).append(edge[1])
+		(adjacency[edge[1]] as Array).append(edge[0])
+	var start: String = String(endowment.keys()[0])
+	var seen: Dictionary = {start: true}
+	var stack: Array = [start]
+	while not stack.is_empty():
+		var current: String = String(stack.pop_back())
+		for other in adjacency[current]:
+			if not seen.has(other):
+				seen[other] = true
+				stack.append(other)
+	if seen.size() != endowment.size():
+		_fail("region_graph reaches %d of %d regions -- a link is missing" % [seen.size(), endowment.size()])
 
 
 func _check_fixtures_refused() -> void:

@@ -160,18 +160,30 @@ var world_features: Dictionary = {}
 ## re-checked by a test with its own hole-aware cast, not by the renderer.
 var region_features: Dictionary = {}
 
+## data/geo/region_graph.json -- V2.7. The transport graph as content: `edges` is
+## [a, b, km, kind] with a < b, `endowment` is region id -> motorway density over the
+## roster mean. Loaded rather than left on disk (V2.2a's own call for the geometry,
+## flipped at V2.2b for the same reason): src/sim/network.gd reads it every tick.
+##
+## A DICTIONARY AND NOT A TYPE. There is no src/core/region_graph.gd, for the reason
+## U6b deleted src/core/people.gd before writing it and V2.5 kept the register an
+## Array: the one reader takes it as DATA, U6a's Calendar.due() shape, and a type
+## here would be a second record of a file that already states its own shape.
+var region_graph: Dictionary = {}
+
 ## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
 ## Both files contribute; map_view.gd draws labels for the roster only.
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", summits_dir := "res://data/summits") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
 	person_by_id.clear()
 	companies.clear()
 	regions.clear()
+	region_graph.clear()
 	outlets.clear()
 	company_actions.clear()
 	investment_actions.clear()
@@ -259,7 +271,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_people()
 	_validate_companies()
 	_validate_outlets(outlets_dir)
-	_validate_regions(regions_dir, regions_geo_path)
+	_validate_regions(regions_dir, regions_geo_path, regions_graph_path)
 
 
 ## Resolve a person id to the name a screen prints. The ONLY reader of
@@ -544,7 +556,7 @@ func _load_regions(nation_id: String, regions_dir: String) -> void:
 ## launch should not pay 180 KB for it); V2.2b draws it, and this is where the
 ## load happens -- _validate_cross_file's precedent, the load and the check it
 ## exists for arriving together.
-func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
+func _validate_regions(regions_dir: String, regions_geo_path: String, regions_graph_path: String) -> void:
 	var city_ids := {}
 	for nation_id in regions.keys():
 		var total := 0.0
@@ -586,6 +598,7 @@ func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 				)
 
 	_load_geo(regions_geo_path, region_features)
+	_load_region_graph(regions_graph_path)
 	for nation_id in regions.keys():
 		for region in regions[nation_id]:
 			if not region_features.has(region.id):
@@ -593,6 +606,27 @@ func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 					"regions/%s.json: region '%s' has no polygon in %s -- the geometry is the authority on the roster, and a region that cannot be drawn is one the register cannot hold"
 					% [nation_id, region.id, regions_geo_path]
 				)
+
+	# FIFTH RULE, V2.7. Every graph id is a register id and every register id has an
+	# endowment. V2.2b's fourth rule cross-checks the register against the GEOMETRY at
+	# load time; this is the same check against the GRAPH, and it is what catches an
+	# importer run that wrote one file and not the other -- the two are generated
+	# together and can only disagree by a partial run.
+	if not region_graph.is_empty():
+		var endowment: Dictionary = region_graph.get("endowment", {})
+		for nation_id in regions.keys():
+			for region in regions[nation_id]:
+				if not endowment.has(region.id):
+					errors.append("regions/%s.json: region '%s' has no entry in data/geo/region_graph.json -- re-run tools/import_data.py" % [nation_id, region.id])
+		for region_id in endowment.keys():
+			var known := false
+			for nation_id in regions.keys():
+				for region in regions[nation_id]:
+					if region.id == region_id:
+						known = true
+						break
+			if not known:
+				errors.append("geo/region_graph.json: names region '%s', which no data/regions/ file carries" % region_id)
 
 	var da := DirAccess.open(regions_dir)
 	if da == null:
@@ -610,6 +644,38 @@ func _validate_regions(regions_dir: String, regions_geo_path: String) -> void:
 				)
 		file_name = da.get_next()
 	da.list_dir_end()
+
+
+## The graph, refused loudly rather than defaulted. An absent file is an error and not
+## an empty graph: a nation whose regions cannot reach each other has every
+## accessibility read collapse to its own output, which is a different model running
+## silently -- data/regions/'s own rule ("there is no prior model in which a nation
+## has no places") one file over.
+func _load_region_graph(path: String) -> void:
+	var text := FileAccess.get_file_as_string(path)
+	if text == "":
+		errors.append("geo/region_graph.json: could not read file")
+		return
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		errors.append("geo/region_graph.json: expected an object")
+		return
+	var raw_edges = (parsed as Dictionary).get("edges", null)
+	var raw_endowment = (parsed as Dictionary).get("endowment", null)
+	if typeof(raw_edges) != TYPE_ARRAY or typeof(raw_endowment) != TYPE_DICTIONARY:
+		errors.append("geo/region_graph.json: expected 'edges' array and 'endowment' object")
+		return
+	var edges: Array = []
+	for i in (raw_edges as Array).size():
+		var entry = raw_edges[i]
+		if typeof(entry) != TYPE_ARRAY or (entry as Array).size() != 4:
+			errors.append("geo/region_graph.json: edges[%d] is not [a, b, km, kind]" % i)
+			continue
+		edges.append([String(entry[0]), String(entry[1]), float(entry[2]), String(entry[3])])
+	var endowment: Dictionary = {}
+	for key in (raw_endowment as Dictionary).keys():
+		endowment[String(key)] = float(raw_endowment[key])
+	region_graph = {"edges": edges, "endowment": endowment}
 
 
 ## One data/outlets/<NATION>.json per nation, {"outlets": [...]}, the same shape as
