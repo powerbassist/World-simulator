@@ -151,3 +151,224 @@ static func connection_multiplier(access: Dictionary, region_id: String) -> floa
 ## was empty for a standing charge can be non-empty for a decision.
 static func opposition_points(concentration: float, opposition: float) -> float:
 	return K.OPPOSITION_SCALE * opposition * concentration
+
+
+## What a nation is billed this month: every building plant's build cost times what
+## its region charges to connect, plus every finished plant's run cost.
+##
+## THE CONNECTION MULTIPLIER RIDES THE BUILD AND NOT THE RUN, and that is the model:
+## connecting a station to the grid is a capital job done once, where running it is
+## the same job everywhere. Stored on the entry at commit rather than recomputed, so
+## a region whose accessibility drifts later cannot retroactively re-price a
+## contract the player already signed -- Projects.sited_map()'s opposite call, and
+## the difference is that a payoff is a fact about now and a price is a fact about
+## the day it was agreed.
+static func bill_pct_gdp(ns, loader) -> float:
+	var bill: float = 0.0
+	var ids: Array = ns.plants.keys()
+	ids.sort()
+	for plant_id in ids:
+		var entry: Dictionary = ns.plants[plant_id]
+		var source = loader.energy_sources.get(String(entry.get("source_id", "")))
+		if source == null:
+			continue
+		if bool(entry.get("done", false)):
+			bill += source.run_cost_pct_gdp
+		else:
+			bill += source.build_cost_pct_gdp * float(entry.get("connection", 1.0))
+	return bill
+
+
+## Advance every build and rewrite the two derived readings.
+##
+## `access_by_nation` is nation id -> the accessibility index, built by the caller,
+## because this file never learns that a graph exists. It is REQUIRED and NOT
+## DEFAULTED, for Regions.trend_deviation_pct()'s reason: a defaulted {} would read
+## as "no network" and every harness that forgot to pass one would silently run a
+## different model and agree with itself about a re-run that measured nothing.
+static func tick_month(state, loader, access_by_nation: Dictionary) -> void:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	for nation_id in ids:
+		var ns = state.nations[nation_id]
+		var plant_ids: Array = ns.plants.keys()
+		plant_ids.sort()
+		for plant_id in plant_ids:
+			var entry: Dictionary = ns.plants[plant_id]
+			if bool(entry.get("done", false)):
+				continue
+			var left: int = int(entry.get("months_left", 0)) - 1
+			entry["months_left"] = maxi(left, 0)
+			if left <= 0:
+				entry["done"] = true
+			ns.plants[plant_id] = entry
+		ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
+		ns.import_dependency_pct = import_dependency_pct(ns, loader)
+		ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
+
+
+## The one channel energy has into the economy, in points of annual growth.
+##
+## NEGATIVE IN A RISING DEPENDENCY and exactly 0.0 at the nation's own start, so a
+## country that never builds is charged nothing and a country that builds fossil
+## capacity pays. Clamped by IMPULSE_MAX_PCT, which is a BOUND rather than a
+## selector -- nothing chooses it, it only refuses an absurdity, V1.5a's rule.
+##
+## IT IS A GROWTH ADDEND AND NOT A TREND SHIFT, deliberately: energy prices reach
+## employment, and V1.6e established that a trend-side lever has no permanent
+## employment channel available to it at all. A dependency that could not move
+## unemployment would be a fact about the budget wearing an economy's clothes.
+static func growth_impulse_pct(ns, loader) -> float:
+	if K.DEP_BETA == 0.0:
+		return 0.0
+	var raw: float = -K.DEP_BETA * dependency_deviation_pct(ns, loader)
+	return clampf(raw, -K.IMPULSE_MAX_PCT, K.IMPULSE_MAX_PCT)
+
+
+static func plants_in_region(ns, region_id: String) -> Array:
+	var out: Array = []
+	var ids: Array = ns.plants.keys()
+	ids.sort()
+	for plant_id in ids:
+		if String(ns.plants[plant_id].get("region_id", "")) == region_id:
+			out.append(plant_id)
+	return out
+
+
+static func plant_count(ns) -> int:
+	return ns.plants.size()
+
+
+static func available(state, ns, all_actions: Array) -> Array:
+	var out: Array = []
+	for action in all_actions:
+		if _preconditions_met(state, ns, action):
+			out.append(action)
+	return out
+
+
+static func _preconditions_met(state, ns, action) -> bool:
+	for row in action.preconditions:
+		var field: String = String(row["field"])
+		var value: float = _read_field(state, ns, field)
+		match String(row["op"]):
+			"<=":
+				if value > float(row["value"]):
+					return false
+			">=":
+				if value < float(row["value"]):
+					return false
+			"<":
+				if value >= float(row["value"]):
+					return false
+			">":
+				if value <= float(row["value"]):
+					return false
+			"==":
+				if value != float(row["value"]):
+					return false
+	return true
+
+
+## The whitelist and this match are the SAME LIST IN TWO PLACES, which the suite
+## caught V1.5c adding to only one of. tests/test_energy.gd walks
+## K.PRECONDITION_FIELDS and fails on any key this function does not answer.
+static func _read_field(state, ns, field: String) -> float:
+	match field:
+		"deficit_pct_gdp":
+			return ns.deficit_pct_gdp
+		"debt_to_gdp_pct":
+			return 0.0 if ns.gdp_eur_bn <= 0.0 else 100.0 * ns.debt_eur_bn / ns.gdp_eur_bn
+		"import_dependency_pct":
+			return ns.import_dependency_pct
+		"plant_count":
+			return float(plant_count(ns))
+		"overall_approval_pct":
+			return ns.overall_approval_pct
+	return 0.0
+
+
+## Order a plant into a region the PLAYER names, or close one it names.
+##
+## `site`, `region_id` and `plant_id` are arguments rather than content, V2.6b2's
+## rule: the campaign meeting's region is the PLAYER's and never Siting.site()'s, and
+## that is the one proof the two sited halves were never one shape. `access` and
+## `pop_weights` are plain Dictionaries the caller builds, network.gd's rule.
+##
+## `site` IS A Vector2 OF (lon, lat), matching data/nations/'s own project_sites
+## shape so the two coordinates in this game are the same type. The caller has
+## already resolved it to `region_id` through Region.region_at_lonlat() -- this
+## function does no geometry, which is what keeps it callable from a headless test
+## with no map anywhere.
+static func execute(state, ns, loader, all_actions: Array, action, site: Vector2,
+		region_id: String, plant_id: String, access: Dictionary,
+		pop_weights: Dictionary) -> Dictionary:
+	var terms: Dictionary = action.effects.get("energy", {})
+	var op: String = String(terms.get("op", ""))
+
+	if not available(state, ns, all_actions).has(action):
+		var refused := {"action_id": action.id, "applied": false, "refused": true}
+		ns.last_energy_result = refused
+		return refused
+
+	var opposition: float = 0.0
+	var new_id: String = ""
+
+	match op:
+		"order":
+			var source = loader.energy_sources.get(String(terms.get("source_id", "")))
+			if source == null or region_id == "":
+				var bad := {"action_id": action.id, "applied": false, "refused": true}
+				ns.last_energy_result = bad
+				return bad
+			ns.plant_seq += 1
+			new_id = "%s#%d" % [source.id, ns.plant_seq]
+			ns.plants[new_id] = {
+				"source_id": source.id,
+				"region_id": region_id,
+				# The player's own point, stored. src/ui/map_plants.gd draws the glyph
+				# here and nowhere else -- a marker placed at the region's centroid
+				# would be the game telling the player their click did not matter.
+				"lon": site.x,
+				"lat": site.y,
+				"months_left": source.build_months,
+				"done": false,
+				# The connection multiplier is FROZEN at commit -- see bill_pct_gdp().
+				"connection": connection_multiplier(access, region_id),
+			}
+			opposition = opposition_points(
+				Siting.concentration(pop_weights, region_id), source.opposition)
+		"decommission":
+			if not ns.plants.has(plant_id):
+				var missing := {"action_id": action.id, "applied": false, "refused": true}
+				ns.last_energy_result = missing
+				return missing
+			ns.plants.erase(plant_id)
+
+	for bloc_id in action.effects.get("bloc_offset", {}).keys():
+		ns.bloc_offset[bloc_id] = (
+			float(ns.bloc_offset.get(bloc_id, 0.0))
+			+ float(action.effects["bloc_offset"][bloc_id])
+		)
+
+	# THE LOCAL PRICE LANDS ON THE SAME REGISTER AS THE NATIONAL ONE and is charged
+	# to the blocs the action already names, scaled by the region's concentration.
+	# No new channel, and no second accumulator -- V1.4b's "one verb, two prices"
+	# where the second price is about WHERE rather than WHAT.
+	if opposition != 0.0:
+		for bloc_id in action.effects.get("bloc_offset", {}).keys():
+			ns.bloc_offset[bloc_id] = float(ns.bloc_offset.get(bloc_id, 0.0)) - opposition
+
+	ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
+	var result := {
+		"action_id": action.id,
+		"action_name": action.action_name,
+		"op": op,
+		"plant_id": new_id if op == "order" else plant_id,
+		"region_id": region_id,
+		"opposition_points": opposition,
+		"applied": true,
+		"refused": false,
+	}
+	ns.last_energy_result = result
+	return result

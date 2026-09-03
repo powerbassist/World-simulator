@@ -1,0 +1,76 @@
+{
+  "_note": "V2.8's verbs, on the effects.energy channel -- the ninth. Seven actions: six orders and one decommission. THE REGION IS NOT HERE and cannot be: it is the player's, named at execute time (V2.6b2's rule). The authored bloc_offset is the act's own national politics -- what the country thinks of building a reactor at all -- and it is SEPARATE from the local opposition Energy.opposition_points() charges for where it goes, which is the whole reason the click has a price of its own.",
+  "_decommission_note": "ONE decommission for six sources, where data/project-actions/ authors a start and an abandon per project. A project is built once and its id IS the register key; a nation may hold four gas stations, so the target is a plant id chosen at execute time and there is nothing per-source to author. The off switch matters: a run cost with no way to stop it is V1.3g's permanent monotone charge, and the player must be able to close it.",
+  "actions": [
+    {
+      "id": "order_nuclear_epr",
+      "name": "Order a reactor",
+      "summary": "Ten years and a fifth of a point of GDP a month, and the country stops buying gas.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 6.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "nuclear_epr" },
+        "bloc_offset": { "students": -0.030, "business": 0.020 }
+      }
+    },
+    {
+      "id": "order_gas_ccgt",
+      "name": "Order a gas station",
+      "summary": "Quick, cheap and burns something bought abroad.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 8.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "gas_ccgt" },
+        "bloc_offset": { "students": -0.020, "business": 0.015 }
+      }
+    },
+    {
+      "id": "order_coal_plant",
+      "name": "Order a coal station",
+      "summary": "Cheap power, domestic jobs, and the dirtiest thing on the list.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 8.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "coal_plant" },
+        "bloc_offset": { "students": -0.045, "workers": 0.020 }
+      }
+    },
+    {
+      "id": "order_wind_onshore",
+      "name": "Order a wind farm",
+      "summary": "Eighteen months, no fuel bill, and every hill has a committee.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 9.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "wind_onshore" },
+        "bloc_offset": { "students": 0.030, "rural": -0.025 }
+      }
+    },
+    {
+      "id": "order_solar_park",
+      "name": "Order a solar park",
+      "summary": "The fastest thing on the list and the smallest.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 9.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "solar_park" },
+        "bloc_offset": { "students": 0.025 }
+      }
+    },
+    {
+      "id": "order_hydro_scheme",
+      "name": "Order a hydro scheme",
+      "summary": "Six years, a valley, and power for a century.",
+      "preconditions": [{ "field": "deficit_pct_gdp", "op": "<=", "value": 7.0 }],
+      "effects": {
+        "energy": { "op": "order", "source_id": "hydro_scheme" },
+        "bloc_offset": { "students": 0.015, "rural": -0.020 }
+      }
+    },
+    {
+      "id": "decommission_plant",
+      "name": "Close a station",
+      "summary": "Stop paying to run it. Whatever it was making, the country now buys.",
+      "preconditions": [{ "field": "plant_count", "op": ">=", "value": 1.0 }],
+      "effects": {
+        "energy": { "op": "decommission" },
+        "bloc_offset": { "workers": -0.020 }
+      }
+    }
+  ]
+}

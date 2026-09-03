@@ -21,6 +21,10 @@ func _init() -> void:
 	_check_leaf()
 	_check_partition(loader)
 	_check_inert_at_start(loader)
+	_check_place_prices(loader)
+	_check_partition_after_build(loader)
+	_check_small_nation(loader)
+	_check_precondition_fields(loader)
 	_report()
 
 
@@ -71,6 +75,68 @@ func _check_inert_at_start(loader) -> void:
 
 func _fail(msg: String) -> void:
 	_failures.append(msg)
+
+
+## THE TWO PRICES OF THE PLACE, checked here where there is no map anywhere: both are
+## read from the REGION, so this test can hand execute() a region id directly and the
+## click in Task 11 prices identically. That is also what keeps the verb testable
+## headless at all -- the geometry happens in the caller, never in energy.gd.
+func _check_place_prices(loader) -> void:
+	var access: Dictionary = {"FR10": 1.40, "FR83": 0.55, "FRMEAN": 1.0}
+	# A region at exactly the mean pays exactly 1.0. A STRUCTURAL zero, not a clamp,
+	# and asserted exactly because "reads as one" and "reads one" differ under a re-run.
+	if Energy.connection_multiplier(access, "FRMEAN") != 1.0:
+		_fail("a region at the mean accessibility must pay exactly 1.0")
+	# And the better-connected region must never pay MORE than the worse-connected
+	# one, whatever the elasticity. The sign, checked rather than assumed -- V1.6d
+	# shipped a bracket factor that was backwards and a test caught it, not a reading.
+	if Energy.connection_multiplier(access, "FR10") > Energy.connection_multiplier(access, "FR83"):
+		_fail("the better-connected region costs more to build in -- the sign is backwards")
+
+
+## THE PARTITION SURVIVES A BUILD, which is the claim mix() makes and the one a
+## reconciliation term would break silently.
+func _check_partition_after_build(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.nations["FRA"]
+	ns.plants["p1"] = {"source_id": "nuclear_epr", "region_id": "FR10", "months_left": 0, "done": true}
+	var sum: float = 0.0
+	for share in Energy.mix(ns, loader).values():
+		sum += float(share)
+	if absf(sum - 1.0) > 1.0e-12:
+		_fail("mix sums to %.15f with one reactor built" % sum)
+	# And the dependency must have MOVED, or the whole channel is decoration.
+	if Energy.dependency_deviation_pct(ns, loader) == 0.0:
+		_fail("one reactor moved the dependency by exactly nothing")
+
+
+## LUXEMBOURG IS THE TRANSFORMING CASE and it falls out of the arithmetic rather
+## than out of a branch: one reactor is 13 TWh against a national consumption near
+## 8, so nuclear takes more than half the mix. Recorded as a property because it is
+## the thing that makes the same authored plant a different decision in a small
+## country -- the reason capacity is a physical unit and not a share.
+func _check_small_nation(loader) -> void:
+	var state = GameState.new_game(loader, "LUX")
+	var ns = state.nations["LUX"]
+	ns.plants["p1"] = {"source_id": "nuclear_epr", "region_id": "LU00", "months_left": 0, "done": true}
+	if float(Energy.mix(ns, loader)["nuclear"]) < 0.50:
+		_fail("one reactor is under half of Luxembourg's mix -- check the denominator")
+
+
+## THE WHITELIST AND THE READER ARE THE SAME LIST IN TWO PLACES, and V1.5c shipped
+## a session that added to only one of them. This walks the constant and fails on
+## any key _read_field() answers with its fall-through zero.
+func _check_precondition_fields(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.nations["FRA"]
+	ns.deficit_pct_gdp = 3.0
+	ns.overall_approval_pct = 40.0
+	ns.import_dependency_pct = 47.0
+	ns.plants["p1"] = {"source_id": "gas_ccgt", "region_id": "FR10", "months_left": 1, "done": false}
+	var text := FileAccess.get_file_as_string("res://src/sim/energy.gd")
+	for field in EnergyK.PRECONDITION_FIELDS.keys():
+		if not text.contains("\"%s\":" % field):
+			_fail("_read_field() does not answer for PRECONDITION_FIELDS key '%s'" % field)
 
 
 func _report() -> void:

@@ -19,6 +19,7 @@ const CompanyAction = preload("res://src/core/company_action.gd")
 const InvestmentAction = preload("res://src/core/investment_action.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
 const EnergySource = preload("res://src/core/energy_source.gd")
+const EnergyAction = preload("res://src/core/energy_action.gd")
 const EnergyK = preload("res://src/sim/energy_constants.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
 const PledgeAction = preload("res://src/core/pledge_action.gd")
@@ -90,6 +91,10 @@ var investment_actions: Array[InvestmentAction] = []
 ## V2.8. id -> EnergySource. A global flat catalogue, not per-nation: see
 ## data/energy-sources.json's own note about why U6c's objection does not apply.
 var energy_sources: Dictionary = {}
+
+## V2.8's verbs, on the ninth effect channel. Ordered, not keyed by id, for
+## project_actions' reason.
+var energy_actions: Array[EnergyAction] = []
 
 ## V1.6f's verbs. Ordered, not keyed by id, for investment_actions' reason. Global
 ## rather than per nation for the reason data/project-actions/projects.json's own note
@@ -190,7 +195,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -204,6 +209,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	investment_actions.clear()
 	project_actions.clear()
 	energy_sources.clear()
+	energy_actions.clear()
 	campaign_actions.clear()
 	events.clear()
 	summits.clear()
@@ -266,6 +272,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_investment_actions(investment_actions_dir)
 	_load_projects(project_actions_dir)
 	_load_energy_sources(energy_sources_path)
+	_load_energy_actions(energy_actions_dir)
 	_load_campaign_actions(campaign_actions_dir)
 	_load_events(events_dir)
 	_load_summits(summits_dir)
@@ -1040,6 +1047,54 @@ func _validate_energy_sources() -> void:
 		for branch in n.energy_mix.keys():
 			if not EnergyK.BRANCHES.has(String(branch)):
 				errors.append("%s: imported.energy.mix names branch '%s', which is not in BRANCHES" % [nation_id, branch])
+
+
+## data/energy-actions/*.json, _load_projects()'s shape. Per-entry validation lives
+## in src/core/energy_action.gd; what only this function can see is duplicate ids --
+## two actions with one id would be two buttons the registry cannot tell apart.
+func _load_energy_actions(actions_dir: String) -> void:
+	var da := DirAccess.open(actions_dir)
+	if da == null:
+		errors.append("%s: directory not found" % actions_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	var seen_ids := {}
+	for fname in filenames:
+		var path := actions_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("actions")) != TYPE_ARRAY:
+			errors.append("%s: invalid energy-action file, expected {\"actions\": [...]}" % fname)
+			continue
+
+		var raw_list: Array = parsed["actions"]
+		for i in raw_list.size():
+			var entry = raw_list[i]
+			if typeof(entry) != TYPE_DICTIONARY:
+				errors.append("%s: actions[%d] is not an object" % [fname, i])
+				continue
+			var per_file_errors: Array[String] = []
+			var action = EnergyAction.from_dict(entry, fname, per_file_errors, OpinionK.BLOC_KEYS)
+			errors.append_array(per_file_errors)
+			if action.id != "":
+				if seen_ids.has(action.id):
+					errors.append("%s: duplicate energy action id '%s'" % [fname, action.id])
+				seen_ids[action.id] = true
+				energy_actions.append(action)
 
 
 func _load_campaign_actions(actions_dir: String) -> void:
