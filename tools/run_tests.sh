@@ -76,6 +76,9 @@ tests=(
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
   tests/test_regions.gd
+  # V2.7: the graph is content, the index is mean-one in output weights, and the
+  # leaf takes Dictionaries and preloads nothing but its own constants.
+  tests/test_network.gd
   tests/test_migration.gd
   # V2.6c: the third flow on the population registers -- direction, exact
   # conservation over the COMBINED flow, Luxembourg's one-region bound, and the
