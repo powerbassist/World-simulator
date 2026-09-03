@@ -261,6 +261,11 @@ var _network := false
 ## fleet (V1.6e's per-flag direction).
 var _energy := false
 
+## V2.8, the twenty-eighth flag: plants ON the map and the placement reticle
+## armed, so the frame shows both halves of the click. France fit rather than the
+## Europe fit, because two 5px glyphs at the whole-planet zoom prove nothing.
+var _place := false
+
 ## V2.6a. `--migrate` is taken (V1.5b's migration LAW) and `--diverge` is taken
 ## (V2.5's region divergence), so this is `--move`. Ten years of a live
 ## MIGRATION_RATE moves the same quantity `--diverge` measures at a level below
@@ -377,6 +382,8 @@ func _init() -> void:
 			_network = true
 		elif args[i] == "--energy":
 			_energy = true
+		elif args[i] == "--place":
+			_place = true
 		elif args[i] == "--site":
 			_site = true
 		elif args[i] == "--move":
@@ -486,6 +493,8 @@ func _apply_view() -> void:
 		_show_the_network()
 	if _energy:
 		_show_the_energy()
+	if _place:
+		_place_the_plants()
 	if _move:
 		_let_the_people_move()
 	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
@@ -1744,6 +1753,52 @@ func _show_the_energy() -> void:
 	# building, and the mix ledger carrying both.
 	_tick_months(14)
 	_main._windows.open("energy")
+
+
+## V2.8. Two orders at real register coordinates through the real verb, ticked
+## past solar's build so one glyph is FILLED and one HOLLOW, then placement armed
+## so the reticle is on the frame too.
+func _place_the_plants() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var access: Dictionary = Regions.accessibility_for(
+		ns, state.regions.get(ns.id, []), state.region_graph)
+	var weights: Dictionary = {}
+	for region in loader.regions.get(ns.id, []):
+		weights[region.id] = Migration.region_share(ns, region.id)
+	var solar = null
+	var gas = null
+	for a in loader.energy_actions:
+		if a.id == "order_solar_park":
+			solar = a
+		if a.id == "order_gas_ccgt":
+			gas = a
+	# The two largest regions' own principal cities -- a glyph a reader recognises
+	# rather than an invented lon/lat.
+	var ranked: Array = loader.regions.get(ns.id, []).duplicate()
+	var home = ranked[0] if ranked.size() > 0 else null
+	var away = ranked[1] if ranked.size() > 1 else null
+	var home_pt := Vector2(2.3522, 48.8566)
+	var away_pt := Vector2(4.35, 43.30)
+	if home != null and home.cities.size() > 0:
+		home_pt = home.cities[0].lonlat
+	if away != null and away.cities.size() > 0:
+		away_pt = away.cities[0].lonlat
+	if solar != null and home != null:
+		Energy.execute(state, ns, loader, loader.energy_actions, solar,
+			home_pt, String(home.id), "", access, weights)
+	if gas != null and away != null:
+		Energy.execute(state, ns, loader, loader.energy_actions, gas,
+			away_pt, String(away.id), "", access, weights)
+	_tick_months(14)
+	# France fit: the map's cover fit is the whole planet; this frame's claim is
+	# two glyphs a few hundred pixels apart, not the world.
+	var view = _main._map_view
+	var centre := Vector2((home_pt.x + away_pt.x) * 0.5, (home_pt.y + away_pt.y) * 0.5)
+	view.center_on_lonlat(centre.x, centre.y)
+	view.zoom_by(6.0, view.size / 2.0)
+	view.begin_placement()
 
 
 ## V2.6a. Ten years through the real clock -- _tick_months() drives

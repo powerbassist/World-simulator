@@ -13,6 +13,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Region = preload("res://src/core/region.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -393,6 +394,15 @@ func _ready() -> void:
 	_energy_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 	)
+	# V2.8. The panel says WHICH action is armed; main.gd holds the map and the
+	# loader and does the resolving. The panel never learns that a map exists,
+	# which is the same boundary Budget.commit() draws for player intent.
+	_energy_panel.order_armed.connect(_on_energy_order_armed)
+	_map_view.map_point_picked.connect(_on_map_point_picked)
+	_map_view.plant_clicked.connect(func(plant_id: String):
+		_windows.open("energy")
+		_energy_panel.scroll_to_fleet()
+	)
 
 	# V1.7a. In the State cluster beside the Diary, and its OWN window rather than rows
 	# on the Polling panel: that panel's contract is that every figure on it has been
@@ -685,6 +695,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	match event.keycode:
 		KEY_ESCAPE:
+			# V2.8. An armed placement cancels FIRST and the pause menu never
+			# opens -- Escape ending the thing it was offered for is the mode's
+			# own contract, and a pause menu over a waiting reticle is a second
+			# modal answering for the first.
+			if _armed_energy_action != "":
+				_armed_energy_action = ""
+				_energy_panel.clear_armed()
+				_map_view.end_placement()
+				return
 			if _pause_menu == null:
 				return
 			if _pause_menu.get_parent().visible:
@@ -747,6 +766,53 @@ func _on_nation_clicked(nation_id: String) -> void:
 ## folded into Budget.snapshot(): Budget.project() runs only the economy and
 ## budget ticks on its copy, so a snapshot carrying approval would make the
 ## projection-equals-reality test compare a real month against a stale one.
+## The panel armed a technology; the map is now waiting for the point.
+var _armed_energy_action: String = ""
+
+
+func _on_energy_order_armed(action_id: String) -> void:
+	_armed_energy_action = action_id
+	_map_view.begin_placement()
+
+
+## THE POINT MUST LAND IN THE PLAYER'S OWN COUNTRY, and the refusal is loud rather
+## than silent: a click in Germany while governing France is a mistake, and a verb
+## that quietly does nothing is V1.3e's treaty button that refused silently and
+## rendered as live.
+func _on_map_point_picked(lon: float, lat: float) -> void:
+	if _armed_energy_action == "":
+		return
+	var action_id := _armed_energy_action
+	_armed_energy_action = ""
+	_energy_panel.clear_armed()
+	var region_id := Region.region_at_lonlat(_loader.region_rings, lon, lat)
+	var ns = _state.nations[_state.player_nation_id]
+	var mine := false
+	for region in _state.regions.get(_state.player_nation_id, []):
+		if region.id == region_id:
+			mine = true
+	if not mine:
+		_hud.message_stack.push_card("That is not in %s." % ns.nation_name)
+		return
+
+	var access: Dictionary = Regions.accessibility_for(
+		ns, _state.regions.get(ns.id, []), _state.region_graph)
+	var pop_weights: Dictionary = {}
+	for region in _state.regions.get(ns.id, []):
+		pop_weights[region.id] = Migration.region_share(ns, region.id)
+
+	var action = null
+	for a in _loader.energy_actions:
+		if a.id == action_id:
+			action = a
+	if action == null:
+		return
+	Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
+		Vector2(lon, lat), region_id, "", access, pop_weights)
+	_windows.mark_all_dirty()
+	_map_view.queue_redraw()
+
+
 func _on_month_elapsed(year: int, month: int) -> void:
 	if _state == null:
 		return

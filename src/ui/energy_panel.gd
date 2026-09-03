@@ -41,6 +41,10 @@ var _close_button: Button
 var _status: Label
 var _primary: Control
 
+## The fleet section's own container, kept so a map click on a glyph can bring it
+## above the fold -- the project marker's route into Public Works, one pass over.
+var _fleet_group: Control = null
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(600, 720)
@@ -243,6 +247,7 @@ func _build_dependency(ns) -> void:
 
 func _build_fleet(ns) -> void:
 	var group := PanelKit.section(_body, "The fleet")
+	_fleet_group = group
 	if ns.plants.is_empty():
 		PanelKit.line(group, "Nothing ordered. The mix above is the measured one.")
 		return
@@ -278,6 +283,12 @@ static func plant_label(ns, plant_id: String, loader) -> String:
 	var name: String = source.source_name if source != null else String(plant_id)
 	var seq: int = int(String(plant_id).get_slice("#", 1)) if String(plant_id).contains("#") else 0
 	return "%s #%d" % [name, seq] if seq > 0 else name
+
+
+## The map's route: a clicked glyph brings the fleet section into view.
+func scroll_to_fleet() -> void:
+	if _fleet_group != null and is_instance_valid(_fleet_group):
+		_fleet_group.ensure_control_on_screen(_fleet_group)
 
 
 func region_name(ns, region_id: String) -> String:
