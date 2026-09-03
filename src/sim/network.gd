@@ -25,6 +25,20 @@ extends RefCounted
 
 const K = preload("res://src/sim/network_constants.gd")
 
+## Two caches, both correctness-neutral and both load-bearing for the harness: the
+## graph is CONTENT, so the 112x112 endowment-adjusted distance table is a property
+## of the committed file and never changes during a run -- computing it fresh per
+## call would put a full Dijkstra sweep inside every month of every nation. The
+## index memo catches the other repetition: migration and unrest read the same
+## nation's shares within one month, and the shares move only when the economy
+## ticks. Deep equality (GDScript's == on Dictionaries) is the validity test, so a
+## caller passing a different nation's weights can never read another's index.
+static var _matrix_graph: Dictionary = {}
+static var _matrix_rows: Dictionary = {}
+static var _memo_graph: Dictionary = {}
+static var _memo_weights: Dictionary = {}
+static var _memo_index: Dictionary = {}
+
 
 ## region id -> [[neighbour_id, km], ...], both directions, sorted by neighbour id.
 ##
@@ -104,12 +118,15 @@ static func distances_from(graph: Dictionary, from_id: String) -> Dictionary:
 ## so this file never learns that a NationState exists -- Regions.gdp_per_head_index()'s
 ## own rule one module over.
 static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
+	if weights == _memo_weights and graph == _memo_graph and not _memo_index.is_empty():
+		return _memo_index
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
 	ids.sort()
 	var endowment: Dictionary = graph.get("endowment", {})
+	var rows: Dictionary = _distance_rows(graph)
 	for region_id in ids:
-		var dist: Dictionary = distances_from(graph, String(region_id))
+		var dist: Dictionary = rows.get(String(region_id), {})
 		var potential: float = 0.0
 		for other in endowment.keys():
 			if String(other) == String(region_id):
@@ -139,7 +156,24 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for region_id in ids:
 		out[region_id] = float(raw[region_id]) / mean
+	_memo_graph = graph
+	_memo_weights = weights.duplicate()
+	_memo_index = out
 	return out
+
+
+## The 112 shortest-path rows, built once per distinct graph and reused. See the
+## cache comment above the constants for why this is a cache and not a computation
+## the caller schedules.
+static func _distance_rows(graph: Dictionary) -> Dictionary:
+	if graph == _matrix_graph and not _matrix_rows.is_empty():
+		return _matrix_rows
+	var rows: Dictionary = {}
+	for region_id in graph.get("endowment", {}).keys():
+		rows[String(region_id)] = distances_from(graph, String(region_id))
+	_matrix_graph = graph.duplicate(true)
+	_matrix_rows = rows
+	return rows
 
 
 ## Half the L1 distance between a region's production mix and its nation's: 0.0 for a

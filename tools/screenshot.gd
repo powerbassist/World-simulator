@@ -47,6 +47,7 @@ const Budget = preload("res://src/sim/budget.gd")
 ## assume, because a nation whose register cannot single a region out has no site and
 ## the flag must say so instead of photographing an unringed city.
 const Unrest = preload("res://src/sim/unrest.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -1982,13 +1983,15 @@ func _site_the_demonstration() -> void:
 
 	var ns = state.player()
 	var region_list: Array = state.regions.get(ns.id, [])
-	var report: Dictionary = Unrest.site_report(ns, region_list)
+	var report: Dictionary = Unrest.site_report(ns, region_list,
+		Regions.accessibility_for(ns, region_list, state.region_graph))
 	var guard := 0
 	while (state.unrest_acts.is_empty() or String(report["city_id"]) == "") and guard < 120:
 		_tick_months(1)
 		guard += 1
 		ns = state.player()
-		report = Unrest.site_report(ns, region_list)
+		report = Unrest.site_report(ns, region_list,
+			Regions.accessibility_for(ns, region_list, state.region_graph))
 	if state.unrest_acts.is_empty():
 		printerr("--site: no act fired in %d months, so there is nothing to photograph" % guard)
 		return

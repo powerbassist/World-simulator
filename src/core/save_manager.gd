@@ -115,6 +115,8 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# The region register is CONTENT on the loader and is not serialised, so the
 		# load path re-attaches it -- NationState.eu_member's shape, one level up.
 		state.regions = loader.regions
+		# V2.7: the transport graph, same shape, same reason.
+		state.region_graph = loader.region_graph
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

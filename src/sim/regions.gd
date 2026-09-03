@@ -24,6 +24,13 @@ extends RefCounted
 
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/region_constants.gd")
+# V2.7. Downstream of nothing: network.gd preloads only its own constants, so this
+# is a chain and not a cycle -- and the leaf test that polices this file still
+# holds, because what it forbids is the systems that would make regions.gd reach
+# SIDEWAYS (economy, trade, demography, the loader). The graph itself travels in
+# as a Dictionary from the caller; only the decay length lives behind NK.
+const NK = preload("res://src/sim/network_constants.gd")
+const Net = preload("res://src/sim/network.gd")
 
 
 ## Seed the level from the authored shares. Called once from GameState.new_game(),
@@ -79,14 +86,88 @@ static func _mean_trend_pct(ns, region_list: Array) -> float:
 ## A region's growth deviation from its nation's, in points per year. ZERO-MEAN OVER
 ## THE NAMED REGIONS BY CONSTRUCTION, which is the whole of why the aggregate stays
 ## on the national trajectory -- Trade.sector_shift()'s sum-to-zero rule, one level
-## up and enforced by subtraction rather than by a load-time check.
-static func trend_deviation_pct(ns, region_list: Array, region_id: String) -> float:
+## up and enforced by subtraction rather than by a load-time check. Since V2.7 it is
+## zero-mean twice over: once for the sector mix and once for the network term.
+##
+## THE FOURTH ARGUMENT IS REQUIRED AND NOT DEFAULTED. A defaulted empty Dictionary
+## would read as "no network" and every harness that forgot to pass one would
+## silently run the pre-V2.7 model and agree with itself about a re-run that measured
+## nothing -- which is precisely what V1.5d shipped when neither harness called
+## Media.tick_month(). tests/test_network.gd reads both harnesses and fails if either
+## omits it.
+static func trend_deviation_pct(ns, region_list: Array, region_id: String, access: Dictionary) -> float:
 	if region_id == K.RESIDUAL_KEY:
 		return 0.0
 	for region in region_list:
 		if region.id == region_id:
-			return trend_pct(region) - _mean_trend_pct(ns, region_list)
+			var mix: float = trend_pct(region) - _mean_trend_pct(ns, region_list)
+			return mix + _network_pct(ns, region_list, region, access)
 	return 0.0
+
+
+## The accessibility index for one nation, from its live output shares -- the
+## weights-building expression every caller of trend_deviation_pct() would otherwise
+## repeat, and the one place that decides what a region weighs. network.gd never
+## learns that a NationState exists (its own rule); this file never learns where the
+## graph came from -- the caller passes it, `state.region_graph` today.
+static func accessibility_for(ns, region_list: Array, graph: Dictionary) -> Dictionary:
+	var weights: Dictionary = {}
+	for region in region_list:
+		weights[region.id] = share_of(ns, region.id)
+	return Net.accessibility(graph, weights)
+
+
+## What a region's POSITION is worth, in points of growth per year, measured against
+## the nation's own output-weighted mean so it cannot move the national total.
+##
+## THE PRODUCT IS THE MODEL. `specialisation` says how much a region needs a market
+## it does not contain and `ln(accessibility)` says how much market it can reach;
+## either alone is half an argument. A region making exactly what its country makes
+## reads exactly 0.0 whatever its accessibility, and a region at exactly the mean
+## accessibility reads exactly 0.0 whatever it makes -- two structural zeros, neither
+## of them a clamp. The mix here is `sector_mix`: the six-branch production mix was
+## REFUSED at clause (d) (rho 0.9170 against 0.90 -- one quantity written twice),
+## and the refusal is recorded beside the field it would have extended.
+static func _network_pct(ns, region_list: Array, region, access: Dictionary) -> float:
+	if NK.NETWORK_BETA == 0.0:
+		return 0.0
+	var national: Dictionary = _national_production_mix(ns, region_list)
+	var own: float = Net.specialisation(region.sector_mix, national) \
+		* log(maxf(float(access.get(region.id, 1.0)), 0.0001))
+	var weighted: float = 0.0
+	var total: float = 0.0
+	for other in region_list:
+		var w: float = share_of(ns, other.id)
+		weighted += w * Net.specialisation(other.sector_mix, national) \
+			* log(maxf(float(access.get(other.id, 1.0)), 0.0001))
+		total += w
+	if total <= 0.0:
+		return 0.0
+	return NK.NETWORK_BETA * (own - weighted / total)
+
+
+## The nation's own output-weighted mean production mix -- the national mix a
+## region's specialisation is measured against, not the authored national sector
+## shares, because the comparison has to be like for like: live regions against the
+## live whole of them.
+static func _national_production_mix(ns, region_list: Array) -> Dictionary:
+	var keys: Array = []
+	if not region_list.is_empty():
+		keys = region_list[0].sector_mix.keys()
+	var out: Dictionary = {}
+	for key in keys:
+		out[key] = 0.0
+	var weighted: float = 0.0
+	for region in region_list:
+		var w: float = share_of(ns, region.id)
+		weighted += w
+		for key in keys:
+			out[key] += w * float(region.sector_mix.get(key, 0.0))
+	if weighted <= 0.0:
+		return out
+	for key in keys:
+		out[key] = out[key] / weighted
+	return out
 
 
 ## Grow every region and return the month's national GDP -- which IS the sum.
@@ -96,16 +177,22 @@ static func trend_deviation_pct(ns, region_list: Array, region_id: String) -> fl
 ## so a region that grows faster compounds, which is what makes divergence a
 ## trajectory rather than a one-off tilt. SHARE_DRIFT_MAX is checked here rather than
 ## clamped on the rate, because the quantity the bound is about is the SHARE.
-static func tick_month(ns, region_list: Array, growth: float) -> float:
+static func tick_month(ns, region_list: Array, growth: float, access: Dictionary) -> float:
 	if ns.region_gdp_eur_bn.is_empty():
 		return ns.gdp_eur_bn * C.monthly_factor(growth)
 
+	# THE MEAN IS TAKEN ONCE, BEFORE THE LOOP MUTATES ANY LEVEL -- not through
+	# trend_deviation_pct(), which recomputes it against live state and would
+	# therefore drift as this loop writes region after region. The deviation
+	# EXPRESSION below is still the one expression: mix term plus network term,
+	# identical to the public function's, and at NETWORK_BETA 0.0 it is bit-equal
+	# to the pre-V2.7 arithmetic because _network_pct() returns exactly 0.0.
 	var mean: float = _mean_trend_pct(ns, region_list)
 	var sum: float = 0.0
 
 	for region in region_list:
 		var current: float = float(ns.region_gdp_eur_bn.get(region.id, 0.0))
-		var deviation: float = trend_pct(region) - mean
+		var deviation: float = (trend_pct(region) - mean) + _network_pct(ns, region_list, region, access)
 		var value: float = current * C.monthly_factor(growth + deviation)
 		ns.region_gdp_eur_bn[region.id] = value
 		sum += value
@@ -144,12 +231,11 @@ static func share_of(ns, region_id: String) -> float:
 ## `unemployment_rel` is normalised at import so the population-weighted mean over
 ## the named regions is exactly 1.0, and the deviation term is GDP-weighted zero-mean,
 ## so this DECOMPOSES the national figure rather than disagreeing with it.
-static func unemployment_pct(ns, region_list: Array, region_id: String) -> float:
+static func unemployment_pct(ns, region_list: Array, region_id: String, access: Dictionary) -> float:
 	for region in region_list:
 		if region.id == region_id:
-			var deviation: float = trend_pct(region) - _mean_trend_pct(ns, region_list)
 			return clampf(
-				ns.unemployment_pct * region.unemployment_rel - C.OKUN * deviation,
+				ns.unemployment_pct * region.unemployment_rel - C.OKUN * trend_deviation_pct(ns, region_list, region_id, access),
 				C.UNEMP_MIN_PCT,
 				C.UNEMP_MAX_PCT
 			)

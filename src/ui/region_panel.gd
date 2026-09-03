@@ -150,6 +150,9 @@ func _build_partition(ns, regions: Array) -> void:
 ## means a figure is absent, and this one is present and empty.
 func _build_table(ns, regions: Array) -> void:
 	PanelKit.heading(_body, "By share of the population")
+	# V2.7. One read per refresh; the row loop below passes it to every region's
+	# unemployment figure. The argument is required -- regions.gd's own rule.
+	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
 	var rows: Array = []
 	for region in regions:
 		var jobs := 0.0
@@ -164,7 +167,7 @@ func _build_table(ns, regions: Array) -> void:
 			"%.1f%%" % (Regions.share_of(ns, region.id) * 100.0),
 			PanelKit.pop_text(float(ns.population) * Migration.region_share(ns, region.id)),
 			"x%.2f" % index,
-			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id),
+			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id, access),
 			_dominant(region),
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])

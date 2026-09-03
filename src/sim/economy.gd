@@ -165,7 +165,11 @@ static func _tick_nation(state, ns) -> void:
 	# Regions.tick_month(), which is what keeps every test fixture loadable -- an
 	# absent data/regions/ file is a load ERROR for the ten, and a fixture is not one
 	# of the ten.
-	var target_gdp: float = Regions.tick_month(ns, state.regions.get(ns.id, []), growth)
+	# V2.7. The index is a pure read over the graph and the shares as they stand at
+	# the top of the tick, and the argument is REQUIRED -- a defaulted one would let
+	# a caller forget it and silently run the pre-V2.7 model (V1.5d's own failure).
+	var access: Dictionary = Regions.accessibility_for(ns, state.regions.get(ns.id, []), state.region_graph)
+	var target_gdp: float = Regions.tick_month(ns, state.regions.get(ns.id, []), growth, access)
 	_apply_growth_to_sectors(state, ns, target_gdp)
 	_update_unemployment(ns, trend, growth)
 

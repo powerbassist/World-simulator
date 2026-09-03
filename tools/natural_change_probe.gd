@@ -126,10 +126,11 @@ func _table_c(loader) -> void:
 		var shares: Dictionary = {}
 		var rates: Dictionary = {}
 		var pulls: Dictionary = {}
+		var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
 		for region in list:
 			shares[region.id] = Migration.region_share(ns, region.id)
 			rates[region.id] = Regions.natural_change(region)
-			pulls[region.id] = Migration.region_pull(ns, list, region.id)
+			pulls[region.id] = Migration.region_pull(ns, list, region.id, access)
 		var mean: float = NaturalChange.named_mean(shares, rates)
 		var ranked_pulls: Array = pulls.keys()
 		ranked_pulls.sort_custom(func(a, b): return float(pulls[a]) > float(pulls[b]))
@@ -194,6 +195,7 @@ func _run_mirror(loader, nation_id: String, rate: float) -> Dictionary:
 func _tick_combined(ns, list: Array, loader, rate: float) -> void:
 	if list.is_empty():
 		return
+	var access: Dictionary = Regions.accessibility_for(ns, list, loader.region_graph)
 	for region in list:
 		if region.cities.size() < 2:
 			continue
@@ -220,7 +222,7 @@ func _tick_combined(ns, list: Array, loader, rate: float) -> void:
 	var weighted: float = 0.0
 	var total: float = 0.0
 	for region in list:
-		var pull: float = Migration.region_pull(ns, list, region.id)
+		var pull: float = Migration.region_pull(ns, list, region.id, access)
 		var share: float = Migration.region_share(ns, region.id)
 		pulls[region.id] = pull
 		shares[region.id] = share

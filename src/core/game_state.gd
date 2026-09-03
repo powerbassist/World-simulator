@@ -568,6 +568,13 @@ var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 ## re-attaches it from its own loader argument.
 var regions := {}  # nation id -> Array of Region
 
+## The transport graph, V2.7 -- data/geo/region_graph.json as loaded. CONTENT on the
+## state for the same reason the register is: economy.gd holds `state` and not the
+## loader, and the network term needs the graph every tick. Also not serialised and
+## re-attached on load, regions' own shape one file over; the three V2.7 absences
+## tests/test_save_load.gd pins say it in the save format's own words.
+var region_graph: Dictionary = {}
+
 ## Deployments -- V1.3g. DIRECTED pair state on `measures`' separator, because
 ## France committing forces in support of Germany and the reverse are two acts with
 ## two bills, exactly as a tariff and its retaliation are.
@@ -723,6 +730,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		Regions.init_nation(ns, loader.regions.get(ns.id, []))
 		Migration.init_nation(ns, loader.regions.get(ns.id, []))
 	gs.regions = loader.regions
+	gs.region_graph = loader.region_graph
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -1062,6 +1070,12 @@ func duplicate_state():
 	# panel projected a France that lost 98 % of its output. V2.5 shipped exactly
 	# that and test_budget caught it.
 	gs.regions = regions.duplicate(true)
+	# Content, so shared ownership is fine and only PRESENCE matters: a projection
+	# that lost the graph would run every Regions network read against {} -- the
+	# accessibility index of a country with no places in it. The register above
+	# duplicated for the same "must have one" reason and paid for the empty case
+	# once already.
+	gs.region_graph = region_graph.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs

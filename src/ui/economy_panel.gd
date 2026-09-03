@@ -200,7 +200,9 @@ func _refresh() -> void:
 		# registers cannot single a region out, it is SILENT rather than printing a
 		# confident "nowhere". V1.6d's rule: a missing figure is an em dash or nothing,
 		# never a default dressed as an answer.
-		var site: Dictionary = Unrest.site_report(ns, _state.regions.get(ns.id, []))
+		var site_list: Array = _state.regions.get(ns.id, [])
+		var site: Dictionary = Unrest.site_report(ns, site_list,
+			Regions.accessibility_for(ns, site_list, _state.region_graph))
 		if String(site["region_name"]) != "":
 			PanelKit.line(_labour, "Concentrated in %s%s." % [
 				String(site["region_name"]),

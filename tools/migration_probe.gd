@@ -135,9 +135,10 @@ func _table_a(loader) -> void:
 			continue
 		var rows: Array = []
 		var jobs_total: float = 0.0
+		var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
 		for region in list:
 			var per_head: float = Regions.gdp_per_head_index(ns, list, region.id, Migration.region_share(ns, region.id))
-			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id) / 100.0
+			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id, access) / 100.0
 			rows.append([per_head * employed, region.region_name])
 			for city in region.cities:
 				jobs_total += Companies.headcount_in_city(ns, loader, city.id)
@@ -198,6 +199,10 @@ func _tick_migration(ns, list: Array, loader, rate: float) -> void:
 	if list.is_empty():
 		return
 
+	# V2.7: the pull reads the accessibility index, and the emulation reads the same
+	# graph content the real tick does -- loader.region_graph IS state.region_graph.
+	var access: Dictionary = Regions.accessibility_for(ns, list, loader.region_graph)
+
 	for region in list:
 		if region.cities.size() < 2:
 			continue
@@ -224,7 +229,7 @@ func _tick_migration(ns, list: Array, loader, rate: float) -> void:
 	var weighted: float = 0.0
 	var total: float = 0.0
 	for region in list:
-		var pull: float = Migration.region_pull(ns, list, region.id)
+		var pull: float = Migration.region_pull(ns, list, region.id, access)
 		var share: float = Migration.region_share(ns, region.id)
 		pulls[region.id] = pull
 		shares[region.id] = share
@@ -617,10 +622,11 @@ func _table_f(loader) -> void:
 func _pull_spread(loader, nation_id: String, list: Array) -> float:
 	var state = GameState.new_game(loader, nation_id)
 	var ns = state.nations[nation_id]
+	var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
 	var lo: float = 999.0
 	var hi: float = -999.0
 	for region in list:
-		var p: float = Migration.region_pull(ns, list, region.id)
+		var p: float = Migration.region_pull(ns, list, region.id, access)
 		lo = minf(lo, p)
 		hi = maxf(hi, p)
 	if hi < lo:
