@@ -47,6 +47,7 @@ const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
+const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
@@ -123,6 +124,7 @@ var _companies_panel
 var _projects_panel
 var _region_panel
 var _city_panel
+var _energy_panel
 var _campaign_panel
 var _events_panel
 var _summit_panel
@@ -380,6 +382,18 @@ func _ready() -> void:
 	_city_panel.setup(_state, _loader)
 	_city_panel.hide_close_button()
 
+	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
+	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
+	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
+	# reads the letter off the registry rather than restating it.
+	_energy_panel = EnergyPanel.new()
+	_windows.register("energy", "Energy", _energy_panel, KEY_F, ICONS + "lightning_bolt.svg")
+	_energy_panel.setup(_state, _loader)
+	_energy_panel.hide_close_button()
+	_energy_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+	)
+
 	# V1.7a. In the State cluster beside the Diary, and its OWN window rather than rows
 	# on the Polling panel: that panel's contract is that every figure on it has been
 	# through PollNoise, and a mobilisation figure the government is paying for is not a
@@ -534,6 +548,10 @@ func _build_action_bar() -> void:
 		# economy regional.
 		_entry("region", "Regions"),
 		_entry("city", "Cities"),
+		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
+		# rather than the shape of the object, and CLAUDE.md already carries the
+		# ruling -- region, city and energy are Economy.
+		_entry("energy", "Energy"),
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		_entry("society", "Polling"),
