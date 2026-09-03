@@ -35,6 +35,7 @@ extends RefCounted
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Regions = preload("res://src/sim/regions.gd")
 ## V2.6b1, for the demonstration ring. The site is DERIVED here every refresh
 ## rather than stored anywhere, which is what lets the ring move if the model ever
 ## moves it -- and it is read through Unrest rather than Siting directly, because
@@ -101,7 +102,10 @@ static func cities(loader, state) -> Array:
 		# grievance is gated off in Unrest.tick_month() and reads exactly 0.0.
 		var demo_city := ""
 		if float(ns.unrest_pct) >= UnrestK.UNREST_THRESHOLD_PCT:
-			demo_city = String(Unrest.site_report(ns, state.regions.get(id, []))["city_id"])
+			var demo_list: Array = state.regions.get(id, [])
+			demo_city = String(Unrest.site_report(ns, demo_list,
+				Regions.accessibility_for(ns, demo_list, state.region_graph),
+				state.project_sited_pct.get(id, {}))["city_id"])
 
 		# WHERE THE PRESIDENT IS, for the player alone -- the nine never campaign
 		# (tests/test_campaign.gd pins it), and campaign_count <= 1 is content, so

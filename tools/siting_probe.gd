@@ -144,13 +144,15 @@ func _table_a_the_site() -> void:
 		var ns = state.player()
 		var region_list: Array = _regions_of(state, id)
 		var weights: Dictionary = Unrest.site_weights(ns, region_list)
+		var access: Dictionary = Regions.accessibility_for(ns, region_list, state.region_graph)
+		var sites: Dictionary = state.project_sited_pct.get(id, {})
 
 		var levels: Dictionary = {}
 		for region in region_list:
-			levels[region.id] = Regions.unemployment_pct(ns, region_list, region.id)
+			levels[region.id] = Regions.unemployment_pct(ns, region_list, region.id, access, sites)
 		var level_id: String = Siting.site(weights, levels)
-		var dev: Dictionary = Unrest.site_signal(ns, region_list)
-		var report: Dictionary = Unrest.site_report(ns, region_list)
+		var dev: Dictionary = Unrest.site_signal(ns, region_list, access, sites)
+		var report: Dictionary = Unrest.site_report(ns, region_list, access, sites)
 
 		print("  %-4s %-26s %-9s %-26s %-9s %-6s %-7.3f %-7.3f" % [
 			id,
@@ -211,7 +213,9 @@ func _table_b_does_it_move() -> void:
 		var margin_last := 0.0
 		for i in range(RUN_MONTHS):
 			_step(state, i)
-			var report: Dictionary = Unrest.site_report(state.player(), region_list)
+			var report: Dictionary = Unrest.site_report(state.player(), region_list,
+				Regions.accessibility_for(state.player(), region_list, state.region_graph),
+				state.project_sited_pct.get(state.player_nation_id, {}))
 			var site_id := String(report["region_id"])
 			seen[site_id] = true
 			if i == 0:
@@ -350,7 +354,9 @@ func _run_beta(beta: float) -> float:
 	for i in range(TERM_MONTHS):
 		_step(state, i)
 		var ns = state.player()
-		var report: Dictionary = Unrest.site_report(ns, region_list)
+		var report: Dictionary = Unrest.site_report(ns, region_list,
+			Regions.accessibility_for(ns, region_list, state.region_graph),
+			state.project_sited_pct.get(ns.id, {}))
 		var c: float = float(report["concentration"])
 		if c > 0.0:
 			# The shipped beta is 0.0, so what the tick wrote is the unsited base.

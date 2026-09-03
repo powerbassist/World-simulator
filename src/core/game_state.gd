@@ -568,6 +568,23 @@ var pacts := {}  # symmetric key, e.g. "DEU|FRA" -> Dictionary of pact terms
 ## re-attaches it from its own loader argument.
 var regions := {}  # nation id -> Array of Region
 
+## The transport graph, V2.7 -- data/geo/region_graph.json as loaded. CONTENT on the
+## state for the same reason the register is: economy.gd holds `state` and not the
+## loader, and the network term needs the graph every tick. Also not serialised and
+## re-attached on load, regions' own shape one file over; the three V2.7 absences
+## tests/test_save_load.gd pins say it in the save format's own words.
+var region_graph: Dictionary = {}
+
+## Where finished projects' payoffs sit, V2.7 -- nation id -> {region id ->
+## points of growth per year}. DERIVED, NOT SERIALISED, and that is the whole
+## design: the region a project sits in is computed from the authored coordinate
+## and the committed geometry on every rebuild (Projects.sited_map()), so a save
+## cannot disagree with data/nations/ about where the rail spine is, and
+## tests/test_save_load.gd pins the site's absence outright. One writer:
+## Projects.tick_month() rebuilds the map each tick; the load path and
+## Budget.project()'s copy re-derive it from the same data.
+var project_sited_pct: Dictionary = {}
+
 ## Deployments -- V1.3g. DIRECTED pair state on `measures`' separator, because
 ## France committing forces in support of Germany and the reverse are two acts with
 ## two bills, exactly as a tariff and its retaliation are.
@@ -723,6 +740,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		Regions.init_nation(ns, loader.regions.get(ns.id, []))
 		Migration.init_nation(ns, loader.regions.get(ns.id, []))
 	gs.regions = loader.regions
+	gs.region_graph = loader.region_graph
 
 	if not gs.nations.has(player_id):
 		gs.errors.append("player nation '%s' was not loaded" % player_id)
@@ -1062,6 +1080,17 @@ func duplicate_state():
 	# panel projected a France that lost 98 % of its output. V2.5 shipped exactly
 	# that and test_budget caught it.
 	gs.regions = regions.duplicate(true)
+	# Content, so shared ownership is fine and only PRESENCE matters: a projection
+	# that lost the graph would run every Regions network read against {} -- the
+	# accessibility index of a country with no places in it. The register above
+	# duplicated for the same "must have one" reason and paid for the empty case
+	# once already.
+	gs.region_graph = region_graph.duplicate(true)
+	# The sited-payoff map is derived state, and a projection that lost it would
+	# run every month after its first Projects tick with the sited term silently
+	# zero -- the empty-register bug's shape one level up, so the copy is taken
+	# for the reason that one was: the projection must HAVE one.
+	gs.project_sited_pct = project_sited_pct.duplicate(true)
 	for id in nations.keys():
 		gs.nations[id] = nations[id].duplicate_state()
 	return gs

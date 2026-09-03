@@ -20,6 +20,7 @@ const SAVE_DIR := "user://saves/"
 ## skips a stranded temp file rather than offering it as a loadable slot.
 const TEMP_SUFFIX := ".tmp"
 const GameState = preload("res://src/core/game_state.gd")
+const Projects = preload("res://src/sim/projects.gd")
 
 
 static func _ensure_dir() -> void:
@@ -115,6 +116,13 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# The region register is CONTENT on the loader and is not serialised, so the
 		# load path re-attaches it -- NationState.eu_member's shape, one level up.
 		state.regions = loader.regions
+		# V2.7: the transport graph, same shape, same reason.
+		state.region_graph = loader.region_graph
+		# V2.7: the sited-project payoffs are derived, not serialised, so the load
+		# path rebuilds them from the loaded registers and the geometry -- the same
+		# derivation Projects.tick_month() runs, and it cannot disagree with it
+		# because it IS it.
+		state.project_sited_pct = Projects.sited_map(state, loader)
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

@@ -281,6 +281,19 @@ for L in 1 2; do
 done
 
 curl -L -o "sources/geonames/cities15000.zip"   "https://download.geonames.org/export/dump/cities15000.zip"
+
+# V2.7. The transport endowment -- tran_r_net, one year, one branch. The graph's
+# `endowment` is motorway DENSITY (KM_TKM2, km per thousand km2) over the roster
+# mean, from data/geo/region_graph.json. 2018 is the only year that carries every
+# register code: 2019 onward drops the UK codes -- the WITHDRAWAL gap, in a fourth
+# place after regional GDP, regional unemployment and the natural-change rates --
+# and 2022 additionally drops two Dutch codes. MWAY covers 110 of 112 at 2018
+# (never published: ITG2, ITH2; the gaps take the roster mean). RAIL IS NOT
+# IMPORTED: the RL branch carries 0 of 9 Austrian, 0 of 3 Belgian, 0 of 7 Swiss
+# and 1 of 12 British codes at every year, and a graph mixing measured and absent
+# rail invents connections no measurement supports. docs/network-model.md
+# section 2 carries the full coverage table.
+curl -L -o "sources/eurostat/tran_r_net_2018.json" "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/tran_r_net?format=JSON&lang=EN&time=2018"
 ```
 
 ```bash

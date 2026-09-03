@@ -74,11 +74,13 @@ func _check_pull_is_expected_income() -> void:
 		var state = GameState.new_game(_loader, nation_id)
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
+		var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+		var sites: Dictionary = state.project_sited_pct.get(nation_id, {})
 		for region in list:
 			var per_head: float = Regions.share_of(ns, region.id) / maxf(Migration.region_share(ns, region.id), 0.000001)
-			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id) / 100.0
+			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id, access, sites) / 100.0
 			var expected: float = per_head * employed
-			var actual: float = Migration.region_pull(ns, list, region.id)
+			var actual: float = Migration.region_pull(ns, list, region.id, access, sites)
 			if absf(actual - expected) > 0.000000001:
 				_fail("%s region '%s' pull %f against an expected income of %f" % [
 					nation_id, region.id, actual, expected,
@@ -87,9 +89,11 @@ func _check_pull_is_expected_income() -> void:
 	var gbr = GameState.new_game(_loader, "GBR")
 	var gbr_ns = gbr.nations["GBR"]
 	var gbr_list: Array = _loader.regions.get("GBR", [])
-	var first: float = Migration.region_pull(gbr_ns, gbr_list, gbr_list[0].id)
+	var gbr_access: Dictionary = Regions.accessibility_for(gbr_ns, gbr_list, gbr.region_graph)
+	var gbr_sites: Dictionary = gbr.project_sited_pct.get("GBR", {})
+	var first: float = Migration.region_pull(gbr_ns, gbr_list, gbr_list[0].id, gbr_access, gbr_sites)
 	for region in gbr_list:
-		if absf(Migration.region_pull(gbr_ns, gbr_list, region.id) - first) > 0.000000001:
+		if absf(Migration.region_pull(gbr_ns, gbr_list, region.id, gbr_access, gbr_sites) - first) > 0.000000001:
 			_fail("a British region's expected income differs from another's -- section 8's proxy says every one of them is identical, so either the proxy moved or this test is measuring the wrong thing")
 
 
@@ -292,7 +296,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 			var best_pull := -INF
 			var worst_pull := INF
 			for region in list:
-				var pull: float = Migration.region_pull(ns, list, region.id)
+				var pull: float = Migration.region_pull(ns, list, region.id, Regions.accessibility_for(ns, list, state.region_graph), state.project_sited_pct.get(nation_id, {}))
 				if pull > best_pull:
 					best_pull = pull
 					best_id = region.id

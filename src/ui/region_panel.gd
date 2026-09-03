@@ -34,6 +34,9 @@ const Migration = preload("res://src/sim/migration.gd")
 var _state
 var _loader
 var _dirty := true
+var _scroll: ScrollContainer
+var _pin_pending := false
+var _pin_frames := 0
 
 var _title: Label
 var _body: VBoxContainer
@@ -65,6 +68,7 @@ func _ready() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
+	_scroll = scroll
 
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -89,6 +93,16 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
+	if _pin_pending:
+		_pin_pending = false
+		_pin_frames = 2
+	if _pin_frames > 0 and _scroll != null:
+		# Two frames after the refresh, because the freed-and-rebuilt body's
+		# minimum size lands a frame after the rebuild that a setup flag
+		# triggered -- and a scroll set before that rebuild is undone by it.
+		_pin_frames -= 1
+		if _pin_frames == 0:
+			_scroll.scroll_vertical = int(_body.size.y)
 	if not _dirty or not visible or _state == null:
 		return
 	_dirty = false
@@ -96,6 +110,14 @@ func _process(_delta: float) -> void:
 
 
 func mark_dirty() -> void:
+	_dirty = true
+
+
+## The screenshot tool's route to the league table -- companies_panel.gd's
+## standing-flag shape: the rebuild a setup flag triggers would undo a scroll set
+## before it, so the pin is applied after that rebuild has laid out.
+func scroll_to_bottom() -> void:
+	_pin_pending = true
 	_dirty = true
 
 
@@ -141,6 +163,38 @@ func _build_partition(ns, regions: Array) -> void:
 	PanelKit.row(_body, "Named share of output", "%.1f%%" % (named_gdp * 100.0))
 	PanelKit.row(_body, "Unnamed output — extra-regio", "%.1f%%" % (Region.national_gdp_residual(regions) * 100.0))
 
+	# V2.7. NEVER SILENT, on the rule V1.7c set for the electoral method: every
+	# region has a position on the graph, where an absent route is a fact most
+	# constitutions simply do not have. Read off the edges rather than through
+	# Network.adjacency() because the line also says which links are water.
+	var land := 0
+	var sea := 0
+	var degrees: Dictionary = {}
+	for region in regions:
+		degrees[region.id] = 0
+	for edge in (_state.region_graph.get("edges", []) as Array):
+		var a := String(edge[0])
+		var b := String(edge[1])
+		var touch := degrees.has(a)
+		var touch_b := degrees.has(b)
+		if not touch and not touch_b:
+			continue
+		if String(edge[3]) == "sea":
+			sea += 1
+		else:
+			land += 1
+		if touch:
+			degrees[a] = int(degrees[a]) + 1
+		if touch_b:
+			degrees[b] = int(degrees[b]) + 1
+	var least := ""
+	var least_degree := 1 << 30
+	for region in regions:
+		if int(degrees[region.id]) < least_degree:
+			least_degree = int(degrees[region.id])
+			least = region.region_name
+	PanelKit.line(_body, "On the transport graph: %d land links and %d sea links touch these regions; %s is the least connected, with %d." % [land, sea, least, least_degree])
+
 
 ## The league table. The payroll column is the register's one live quantity:
 ## named jobs read through Companies.headcount_in_city over the region's cities,
@@ -150,6 +204,10 @@ func _build_partition(ns, regions: Array) -> void:
 ## means a figure is absent, and this one is present and empty.
 func _build_table(ns, regions: Array) -> void:
 	PanelKit.heading(_body, "By share of the population")
+	# V2.7. One read per refresh; the row loop below passes it to every region's
+	# unemployment figure. The argument is required -- regions.gd's own rule.
+	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
+	var sites: Dictionary = _state.project_sited_pct.get(ns.id, {})
 	var rows: Array = []
 	for region in regions:
 		var jobs := 0.0
@@ -164,13 +222,15 @@ func _build_table(ns, regions: Array) -> void:
 			"%.1f%%" % (Regions.share_of(ns, region.id) * 100.0),
 			PanelKit.pop_text(float(ns.population) * Migration.region_share(ns, region.id)),
 			"x%.2f" % index,
-			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id),
+			"x%.2f" % float(access.get(region.id, 1.0)),
+			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id, access, sites),
 			_dominant(region),
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])
 	PanelKit.ledger(_body, rows)
-	PanelKit.line(_body, "Columns: share of output · people · output per head against the national average · unemployment · dominant sector · named jobs.")
+	PanelKit.line(_body, "Columns: share of output · people · output per head against the national average · accessibility against the national average · unemployment · dominant sector · named jobs.")
 	PanelKit.line(_body, "National GDP is the sum of these regions. A region grows at the national rate plus what its own sector mix is worth, and those differences cancel across the country — so a region's mix moves its share and never the level.")
+	PanelKit.line(_body, "Position moves output too: what a region makes, times how far its market reaches — also cancelling across the country, also never the level.")
 
 
 ## The mix, as one word. The three shares are on the region and the panel has one

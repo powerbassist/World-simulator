@@ -238,6 +238,21 @@ extends RefCounted
 ## to raise this constant must first name the term that makes real Parisians leave
 ## Paris: without a congestion or housing-cost term the ceiling, not a preference,
 ## sets the number.
+##
+## V2.7 RE-SWEEP, COMBINED MODEL PLUS THE NETWORK TERM. The session about transport
+## owed this ceiling a re-sweep whether or not it names people, because its term
+## moves output per head and output per head is half the Harris-Todaro pull. Run
+## with NETWORK_BETA live at 10.0, the sweep came back IDENTICAL at every printed
+## figure: clause (0)'s natural-only row reads 0.01558 exactly as V2.6c measured it
+## (nothing reached the natural flow), the shipped row reads 0.01599 exactly, and
+## the passing interval is unchanged at [0.0000, ~0.00057]. The reason is
+## arithmetic and worth writing down: the network term moves FRA's output shares
+## ~0.1 pp over five years, the pull by a fraction of a per cent of itself, and
+## migration owns 1-3 % of the combined movement -- so the third mover's
+## contribution lands below the drift table's fifth decimal at the shipped beta.
+## The plan expected the 0.0003 row to move UP; measured, it did not, and the
+## plan's kill switch (interval empty) never came close. MIGRATION_RATE STAYS AT
+## 0.0003, and a further mover inherits a ceiling that was already binding.
 const MIGRATION_RATE := 0.0003
 
 

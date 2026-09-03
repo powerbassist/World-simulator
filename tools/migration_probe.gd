@@ -22,6 +22,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Projects = preload("res://src/sim/projects.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MigrationK = preload("res://src/sim/migration_constants.gd")
@@ -135,9 +136,11 @@ func _table_a(loader) -> void:
 			continue
 		var rows: Array = []
 		var jobs_total: float = 0.0
+		var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+		var sites: Dictionary = state.project_sited_pct.get(nation_id, {})
 		for region in list:
 			var per_head: float = Regions.gdp_per_head_index(ns, list, region.id, Migration.region_share(ns, region.id))
-			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id) / 100.0
+			var employed: float = 1.0 - Regions.unemployment_pct(ns, list, region.id, access, sites) / 100.0
 			rows.append([per_head * employed, region.region_name])
 			for city in region.cities:
 				jobs_total += Companies.headcount_in_city(ns, loader, city.id)
@@ -198,6 +201,11 @@ func _tick_migration(ns, list: Array, loader, rate: float) -> void:
 	if list.is_empty():
 		return
 
+	# V2.7: the pull reads the accessibility index and the sited payoffs, and the
+	# emulation derives both from the loader exactly as the real tick does.
+	var access: Dictionary = Regions.accessibility_for(ns, list, loader.region_graph)
+	var sites: Dictionary = Projects.sited_pct(ns, loader)
+
 	for region in list:
 		if region.cities.size() < 2:
 			continue
@@ -224,7 +232,7 @@ func _tick_migration(ns, list: Array, loader, rate: float) -> void:
 	var weighted: float = 0.0
 	var total: float = 0.0
 	for region in list:
-		var pull: float = Migration.region_pull(ns, list, region.id)
+		var pull: float = Migration.region_pull(ns, list, region.id, access, sites)
 		var share: float = Migration.region_share(ns, region.id)
 		pulls[region.id] = pull
 		shares[region.id] = share
@@ -617,10 +625,12 @@ func _table_f(loader) -> void:
 func _pull_spread(loader, nation_id: String, list: Array) -> float:
 	var state = GameState.new_game(loader, nation_id)
 	var ns = state.nations[nation_id]
+	var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+	var sites: Dictionary = Projects.sited_pct(ns, loader)
 	var lo: float = 999.0
 	var hi: float = -999.0
 	for region in list:
-		var p: float = Migration.region_pull(ns, list, region.id)
+		var p: float = Migration.region_pull(ns, list, region.id, access, sites)
 		lo = minf(lo, p)
 		hi = maxf(hi, p)
 	if hi < lo:

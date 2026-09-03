@@ -47,6 +47,7 @@ const Budget = preload("res://src/sim/budget.gd")
 ## assume, because a nation whose register cannot single a region out has no site and
 ## the flag must say so instead of photographing an unringed city.
 const Unrest = preload("res://src/sim/unrest.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -246,6 +247,11 @@ var _city := false
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
 
+## V2.7, the twenty-sixth flag: ten years so the network term has moved the
+## shares the accessibility column reads, the Region panel open on the league
+## table where the new column lives.
+var _network := false
+
 ## V2.6a. `--migrate` is taken (V1.5b's migration LAW) and `--diverge` is taken
 ## (V2.5's region divergence), so this is `--move`. Ten years of a live
 ## MIGRATION_RATE moves the same quantity `--diverge` measures at a level below
@@ -358,6 +364,8 @@ func _init() -> void:
 			_city = true
 		elif args[i] == "--diverge":
 			_diverge = true
+		elif args[i] == "--network":
+			_network = true
 		elif args[i] == "--site":
 			_site = true
 		elif args[i] == "--move":
@@ -463,6 +471,8 @@ func _apply_view() -> void:
 		_open_the_partition()
 	if _diverge:
 		_let_the_regions_diverge()
+	if _network:
+		_show_the_network()
 	if _move:
 		_let_the_people_move()
 	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
@@ -1668,6 +1678,17 @@ func _let_the_regions_diverge() -> void:
 	_main._windows.open("region")
 
 
+## V2.7, the twenty-sixth flag. Ten years through the real clock so the network
+## term has moved the shares the accessibility index reads, then the Region panel
+## scrolled to the LEAGUE TABLE -- V1.6e's correction has a direction per flag,
+## and the claim this frame exists to check is the eighth column, which is in the
+## table and not in the partition above it.
+func _show_the_network() -> void:
+	_tick_months(120)
+	_main._windows.open("region")
+	_main._region_panel.scroll_to_bottom()
+
+
 ## V2.6a. Ten years through the real clock -- _tick_months() drives
 ## advance_one_day(), so the top bar's date agrees with the population figures
 ## beside it (V1.4c's fix, and every hand-rolled month loop before it got this
@@ -1982,13 +2003,17 @@ func _site_the_demonstration() -> void:
 
 	var ns = state.player()
 	var region_list: Array = state.regions.get(ns.id, [])
-	var report: Dictionary = Unrest.site_report(ns, region_list)
+	var report: Dictionary = Unrest.site_report(ns, region_list,
+		Regions.accessibility_for(ns, region_list, state.region_graph),
+		state.project_sited_pct.get(ns.id, {}))
 	var guard := 0
 	while (state.unrest_acts.is_empty() or String(report["city_id"]) == "") and guard < 120:
 		_tick_months(1)
 		guard += 1
 		ns = state.player()
-		report = Unrest.site_report(ns, region_list)
+		report = Unrest.site_report(ns, region_list,
+			Regions.accessibility_for(ns, region_list, state.region_graph),
+			state.project_sited_pct.get(ns.id, {}))
 	if state.unrest_acts.is_empty():
 		printerr("--site: no act fired in %d months, so there is nothing to photograph" % guard)
 		return

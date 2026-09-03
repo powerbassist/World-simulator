@@ -5,7 +5,9 @@ docs/data-sources.md and docs/data-architecture.md for the pipeline this
 implements.
 """
 import argparse
+import itertools
 import json
+import math
 import re
 import sys
 import zipfile
@@ -1073,6 +1075,34 @@ GBR_GDP_MIO_EUR = None
 VINTAGE_SIBLING = {"NL31": "NL35", "NL33": "NL36"}
 
 
+# V2.7. THE EIGHT SEA LINKS, and the count is a measurement rather than a taste.
+# Shared-vertex adjacency over the committed geometry leaves NINE components: the
+# continental mass of 94, Great Britain's 11, and seven singletons. Connectivity
+# therefore demands exactly eight links, which is what docs/tiers/v2.md section 7's
+# word "port" means once it is counted. Each is a real ferry or fixed link in
+# service, named here so a reader can check it against the world rather than against
+# this file: nothing is invented and nothing is a shortcut the map does not have.
+#
+# THE ROUTED-GEOMETRY ALTERNATIVE WAS REFUSED, and the refusal is licence-shaped as
+# well as measurement-shaped. docs/data-sources.md rejects OpenStreetMap on ODbL's
+# share-alike, which attaches to derived databases -- and data/ would be one -- and
+# no permissively-licensed European road or rail linework is in this project's
+# chosen sources. So routed geometry is not a more expensive option, it is one this
+# repo may not take, and the measurement says it would buy nothing anyway: Berlin
+# reaches Hamburg over adjacency in three hops and Milan in five, transiting a third
+# country, which is the exact case the tier note said adjacency could not express.
+SEA_LINKS = [
+    ("FR1", "UKI", "Channel Tunnel / Dover-Calais"),
+    ("UKN", "UKM", "Cairnryan-Larne"),
+    ("FRL", "FRM", "Marseille-Ajaccio"),
+    ("ITF3", "ITG1", "Villa San Giovanni-Messina"),
+    ("ITI4", "ITG2", "Civitavecchia-Olbia"),
+    ("ES51", "ES53", "Barcelona-Palma"),
+    ("ES61", "ES63", "Algeciras-Ceuta"),
+    ("ES61", "ES64", "Almeria-Melilla"),
+]
+
+
 # V2.6c. Natural change -- the crude rate of births minus deaths per head, per region,
 # which is what makes a head count load-bearing without re-splitting one measured
 # national growth into two (V1.5b's refused shape). demo_r_gind3 publishes NATGROWRT
@@ -1158,6 +1188,14 @@ def econ_figure(table, code, fallback=None):
     if sibling is not None and sibling in table:
         return table[sibling]
     return fallback
+
+
+def _nation_of(code, registers):
+    """The nation id whose region register holds this NUTS code."""
+    for nid, payload in registers.items():
+        if any(r["id"] == code for r in payload["regions"]):
+            return nid
+    sys.exit(f"region graph: '{code}' is carried by no data/regions/ file")
 
 
 def normalised_mix(gva):
@@ -1304,6 +1342,133 @@ def build_region_index(populations, nuts):
         out[nid] = {"year": year, "level": level, "national": national,
                     "kept": kept, "dropped": dropped}
     return out
+
+
+REGION_GRAPH_OUT = ROOT / "data" / "geo" / "region_graph.json"
+
+# The year tran_r_net covers every register code. 2019 onward drops the UK (the
+# withdrawal gap this import has now hit in a fourth place, after regional GDP,
+# regional unemployment and the natural-change rates) and 2022 additionally drops
+# two Dutch codes. 2018 carries all ten nations at MWAY.
+TRANSPORT_YEAR = 2018
+
+# Motorway, in km per thousand square kilometres -- a DENSITY rather than a length,
+# so a large sparse region and a small dense one are comparable and the endowment is
+# not a second reading of area. RAIL IS NOT IMPORTED AND THE REASON IS COVERAGE, not
+# a judgement about railways: at 2018 the RL branch carries 0 of 9 Austrian codes, 0
+# of 3 Belgian, 0 of 7 Swiss and 1 of 12 British, and a graph mixing measured and
+# absent rail invents connections no measurement supports -- V2.6c's rule for
+# Britain's natural-change rates, applied to a network. docs/network-model.md
+# carries the coverage table.
+TRANSPORT_BRANCH = "MWAY"
+TRANSPORT_UNIT = "KM_TKM2"
+
+
+def load_transport_endowment(codes):
+    """{NUTS code: motorway km per thousand km2}, for the register's own codes."""
+    path = SOURCES / "eurostat" / f"tran_r_net_{TRANSPORT_YEAR}.json"
+    if not path.exists():
+        sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+    raw = load_jsonstat(path.name, ["tra_infr", "unit", "geo"])
+    out = {}
+    for (branch, unit, code), value in raw.items():
+        if branch != TRANSPORT_BRANCH or unit != TRANSPORT_UNIT:
+            continue
+        if code in codes:
+            out[code] = value
+    return out
+
+
+def _principal_lonlat(region):
+    """The region's largest city's coordinate. cities[] is written descending by
+    population, so cities[0] is the principal place by construction rather than by a
+    sort here -- one ordering, one writer."""
+    return region["cities"][0]["lonlat"]
+
+
+def _haversine_km(a, b):
+    lon1, lat1, lon2, lat2 = map(math.radians, [a[0], a[1], b[0], b[1]])
+    h = (math.sin((lat2 - lat1) / 2) ** 2
+         + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2)
+    return 2 * 6371.0 * math.asin(math.sqrt(h))
+
+
+def build_region_graph(registers, nuts):
+    """Write data/geo/region_graph.json.
+
+    ADJACENCY IS DERIVED, THE SEA LINKS ARE AUTHORED, AND THE ENDOWMENT IS MEASURED
+    -- three provenances in one file, so `kind` and `_source` say which is which.
+    Shared-vertex over EVERY ring of every polygon, holes included: an enclave's
+    adjacency lives in its host's hole ring, and a reader taking only the outer ring
+    silently isolates Vienna, Brussels and Berlin.
+    """
+    by_region = {}
+    for nid, payload in registers.items():
+        for region in payload["regions"]:
+            by_region[region["id"]] = region
+    codes = set(by_region)
+
+    vertices = {}
+    for code in sorted(codes):
+        feature = nuts[REGION_LEVEL[_nation_of(code, registers)]][code]
+        geometry = feature["geometry"]
+        polygons = ([geometry["coordinates"]]
+                    if geometry["type"] == "Polygon" else geometry["coordinates"])
+        for polygon in polygons:
+            for ring in polygon:
+                for lon, lat in ring:
+                    vertices.setdefault((round(lon, 4), round(lat, 4)), set()).add(code)
+
+    pairs = set()
+    for owners in vertices.values():
+        if len(owners) < 2:
+            continue
+        for a, b in itertools.combinations(sorted(owners), 2):
+            pairs.add((a, b))
+
+    edges = []
+    for a, b in sorted(pairs):
+        km = _haversine_km(_principal_lonlat(by_region[a]), _principal_lonlat(by_region[b]))
+        edges.append([a, b, round(km, 1), "land"])
+
+    for a, b, _label in SEA_LINKS:
+        if a not in codes or b not in codes:
+            sys.exit(f"sea link {a}-{b} names a code the register does not carry")
+        lo, hi = sorted((a, b))
+        km = _haversine_km(_principal_lonlat(by_region[lo]), _principal_lonlat(by_region[hi]))
+        edges.append([lo, hi, round(km, 1), "sea"])
+    edges.sort(key=lambda e: (e[0], e[1]))
+
+    raw = load_transport_endowment(codes)
+    if raw:
+        mean = sum(raw.values()) / len(raw)
+        # The roster mean, not a per-nation one: the graph is international (58 of
+        # its 243 land edges cross a border), so an endowment normalised per nation
+        # would make a Belgian motorway mean the same thing as a Spanish one and the
+        # cross-border edges incomparable.
+        endowment = {code: round(raw.get(code, mean) / mean, 4) for code in sorted(codes)}
+    else:
+        sys.exit("tran_r_net returned no rows for the register's codes")
+
+    payload = {
+        "_source": (f"GISCO NUTS_RG_10M_{REGION_NUTS_VINTAGE} shared-vertex adjacency "
+                    f"(every ring, holes included); great-circle km between principal "
+                    f"cities; Eurostat tran_r_net {TRANSPORT_BRANCH} {TRANSPORT_UNIT} "
+                    f"{TRANSPORT_YEAR}; {len(SEA_LINKS)} sea links authored"),
+        "_note": ("Generated by tools/import_data.py -- a re-import overwrites this file "
+                  "whole. An edge is [a, b, km, kind] with a < b, so the graph is "
+                  "undirected and stated once. `kind` is 'land' where two polygons share "
+                  "a vertex and 'sea' where a ferry or fixed link was authored; the sea "
+                  "count is not a preference but the number of components adjacency "
+                  "leaves, measured at eight. `endowment` is motorway density over the "
+                  "ROSTER mean, dimensionless, so src/ never learns what a kilometre is. "
+                  "See docs/network-model.md."),
+        "edges": edges,
+        "endowment": endowment,
+    }
+    write_geojson(REGION_GRAPH_OUT, payload, indent=2)
+    print(f"region graph: {len(edges)} edges "
+          f"({sum(1 for e in edges if e[3] == 'sea')} sea), {len(endowment)} endowments")
 
 
 def assign_cities(index):
@@ -1682,6 +1847,11 @@ def main():
         write_region_file(nid, region_files[nid])
     region_geo = build_region_geo(region_index)
     write_geojson(REGION_GEO_OUT, region_geo, indent=None)
+
+    # V2.7. The transport graph, built from the same register and the same GISCO
+    # geometry the roster was -- one source, so the graph's ids cannot drift from
+    # the register's.
+    build_region_graph(region_files, load_gisco_nuts())
 
     print(f"Imported {len(NATIONS)} nations for {args.year}.")
     print(f"Wrote {GEO_OUT.relative_to(ROOT)}")

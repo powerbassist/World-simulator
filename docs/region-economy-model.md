@@ -88,6 +88,12 @@ moves its share of the country and never the country's level. The residual
 (entry under `RESIDUAL_KEY`) grows at exactly the national rate and carries
 the named mean, contributing nothing to it.
 
+**V2.7 gave the deviation two more zero-mean halves** — a region's position on
+the transport graph, and the payoff of a finished project landing where it was
+built — both measured against the nation's own output-weighted mean by the
+same subtraction, so everything this section says about the aggregate survives
+a third and fourth term. Model: [[network-model]].
+
 **No tuned constant for the growth channel.** The honest coefficient is 1.0 —
 a region's trend simply *is* its own mix's trend. A `MIX_BETA` in front of it
 would be one strength written twice, `investment_action.gd`'s refusal.

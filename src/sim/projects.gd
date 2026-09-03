@@ -139,6 +139,122 @@ static func tick_month(state, loader) -> void:
 		var ns = state.nations[id]
 		_advance(ns, terms)
 		ns.project_bill_pct_gdp = bill_pct_gdp(ns, loader)
+	# V2.7. WHERE THE PAYOFF SITS, derived rather than stored: the region id is
+	# never serialised (tests/test_save_load.gd pins its absence -- a save that
+	# carried it could disagree with data/nations/ about where the rail spine is),
+	# so the map is rebuilt here from ns.projects, the authored terms and the
+	# geometry, once per tick. Economy and Migration read it NEXT month, which is
+	# the same one-month lag the national channel already has: a project completed
+	# in this function writes project_potential_target_pct now and economy's
+	# potential converges toward it from next month on. Budget.project() and the
+	# load path rebuild the same map from the same data -- Projects.sited_map().
+	state.project_sited_pct = sited_map(state, loader)
+
+
+## nation id -> {region id -> points of growth per year}, the RAW sited payoffs of
+## every completed project. regions.gd does the zero-meaning -- the subtraction
+## that keeps the national total untouched is the same rule the mix and network
+## terms follow, and it lives where the readers it protects are.
+static func sited_map(state, loader) -> Dictionary:
+	var out: Dictionary = {}
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	for id in ids:
+		var pct: Dictionary = sited_pct(state.nations[id], loader)
+		# Nations hosting nothing are ABSENT rather than present-and-empty, so a
+		# fresh state's {} and a re-derived one are structurally equal -- the same
+		# property tests/test_save_load.gd's round-trip walk enforces on every
+		# field, and the reason a serialised register would be worse than none.
+		if not pct.is_empty():
+			out[id] = pct
+	return out
+
+
+static func sited_pct(ns, loader) -> Dictionary:
+	var out: Dictionary = {}
+	for pid in completed(ns):
+		var payoff := float(terms_of(loader, String(pid)).get("potential_growth_pct", 0.0))
+		if payoff == 0.0:
+			continue
+		var region_id := site_region(loader, ns.id, String(pid))
+		if region_id == "":
+			continue
+		out[region_id] = float(out.get(region_id, 0.0)) + payoff
+	return out
+
+
+## The region a project's AUTHORED coordinate falls in, or "". Derived on every
+## read -- Siting.site()'s rule, and the reason SAVE_VERSION does not move for the
+## sited payoff. Hole-aware: a cast over outer rings alone would file Vienna,
+## Brussels and Berlin under their hosts, because an enclave's own polygon sits
+## inside its host's outer ring and only the host's hole ring says whose it is.
+static func site_region(loader, nation_id: String, project_id: String) -> String:
+	var cached: Dictionary = _site_cache.get(nation_id, {})
+	if cached.has(project_id):
+		return String(cached[project_id])
+	var region_id := _site_region_uncached(loader, nation_id, project_id)
+	cached[project_id] = region_id
+	_site_cache[nation_id] = cached
+	return region_id
+
+## Content-derived and immutable: the authored coordinate and the committed
+## geometry cannot change during a run, so one lookup per (nation, project) is a
+## cache and not a second answer.
+static var _site_cache: Dictionary = {}
+
+
+static func _site_region_uncached(loader, nation_id: String, project_id: String) -> String:
+	var n = loader.nations.get(nation_id)
+	if n == null:
+		return ""
+	var site = n.project_sites.get(project_id)
+	if site == null:
+		return ""
+	var lon: float = float((site as Vector2).x)
+	var lat: float = float((site as Vector2).y)
+	var ids: Array = loader.region_rings.keys()
+	ids.sort()
+	for region_id in ids:
+		if _region_contains(loader.region_rings[region_id], lon, lat):
+			return String(region_id)
+	return ""
+
+
+## Inside the outer ring of some polygon and inside NONE of its holes. Odd-even
+## over every ring of a MultiPolygon is the importer's _point_in_polygon(), stated
+## again here because src/ reads it as data and never imports the tool.
+static func _region_contains(polygons: Array, lon: float, lat: float) -> bool:
+	for polygon in polygons:
+		var rings: Array = polygon
+		if rings.is_empty():
+			continue
+		if not _in_ring(rings[0], lon, lat):
+			continue
+		var holed := true
+		for i in range(1, rings.size()):
+			if _in_ring(rings[i], lon, lat):
+				holed = false
+				break
+		if holed:
+			return true
+	return false
+
+
+static func _in_ring(ring: PackedVector2Array, lon: float, lat: float) -> bool:
+	var inside := false
+	var n := ring.size()
+	if n < 3:
+		return false
+	var j := n - 1
+	for i in n:
+		var xi := ring[i].x
+		var yi := ring[i].y
+		var xj := ring[j].x
+		var yj := ring[j].y
+		if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+			inside = not inside
+		j = i
+	return inside
 
 
 ## One month of construction on every project still building, then completion for any

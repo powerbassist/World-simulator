@@ -70,6 +70,7 @@ const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
 const TRANSITION_SLOT := "__test_save_load_roundtrip_gbr_transition__"
 const SCENARIO_SLOT := "__test_save_load_roundtrip_scenario__"
 const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
+const NETWORK_SLOT := "__test_save_load_roundtrip_network__"
 const TRADE_SLOT := "__test_save_load_roundtrip_trade__"
 const COERCION_SLOT := "__test_save_load_roundtrip_coercion__"
 const BLOC_SLOT := "__test_save_load_roundtrip_bloc__"
@@ -145,6 +146,7 @@ func _init() -> void:
 	_check_upper_house_fields(loader)
 	_check_judiciary_fields(loader)
 	_check_geography_absences(loader)
+	_check_network_absences(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -3048,6 +3050,66 @@ func _check_geography_absences(loader) -> void:
 		_fail("SAVE_VERSION is %d -- V1.1e raised it to 27 and V2.5 to 28, on `region_gdp_eur_bn`: national GDP is the sum of the regions now, so a save without the register has no economy at all rather than a quietly different one; V2.6a raised it to 29, on two live population shares -- national GDP already has no economy without a register, and now every city has no population without one either; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
 
 
+
+## V2.7. SAVE_VERSION STAYS 30, AND WHAT WAS NOT ADDED IS THE WHOLE OF IT -- V1.6c's
+## shape and V2.2a's, and the fifth session on this list whose serialised
+## contribution is nothing at all.
+##
+## THREE ABSENCES, PINNED APART because they fail the rule for three different
+## reasons and a combined check would let any one of them be quietly wrong:
+##   (1) the GRAPH is content on disk. A save carrying it would be a second copy of
+##       data/geo/region_graph.json, and the copy is the one that drifts.
+##   (2) the ACCESSIBILITY INDEX is a pure read over a static graph and the output
+##       shares V2.5 already serialises -- src/sim/credit.gd's stateless shape. A
+##       stored index would be a second answer to a question the register answers.
+##   (3) a project's SITE REGION is derived from an authored lon/lat on every read.
+##       Storing it would let a save disagree with data/nations/ about where the rail
+##       spine is.
+##
+## The day a session gives the graph an accumulator -- a road that gets built, an
+## edge whose cost the player moves -- this turns red and has to come and say why.
+## That is the point of pinning an absence rather than writing a paragraph.
+func _check_network_absences(loader) -> void:
+	if GameState.SAVE_VERSION != 30:
+		_fail("SAVE_VERSION is %d -- V2.6b2 raised it to 30 on two campaign-sited registers and V2.7 argues it should STAY there: the graph is content on disk, the accessibility index is a pure read over shares V2.5 already serialises, and a project's site is derived from an authored coordinate. A further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	var state = GameState.new_game(loader, "FRA")
+	var payload: Dictionary = state.to_dict()
+	for absent in ["region_graph", "region_accessibility", "project_site_region", "project_sited_pct"]:
+		if payload.has(absent):
+			_fail("GameState.to_dict() carries '%s' -- V2.7 pins its absence" % absent)
+	var nation: Dictionary = payload["nations"]["FRA"]
+	for absent in ["accessibility", "network_deviation_pct", "site_region"]:
+		if nation.has(absent):
+			_fail("NationState.to_dict() carries '%s' -- V2.7 pins its absence" % absent)
+
+	# And "content, not saved" must not become "content, not loaded either": through
+	# the real SaveManager, a loaded state carries the graph and runs a month on it.
+	var edges_on_disk := 0
+	var text := FileAccess.get_file_as_string("res://data/geo/region_graph.json")
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) == TYPE_DICTIONARY and (parsed as Dictionary).has("edges"):
+		edges_on_disk = (parsed as Dictionary)["edges"].size()
+	if edges_on_disk == 0:
+		_fail("data/geo/region_graph.json did not parse -- the load check below would be measuring nothing")
+	var save_error := SaveManager.save_game(state, Clock.new(), NETWORK_SLOT)
+	if not save_error.is_empty():
+		_fail("save_game(FRA) failed: %s" % save_error)
+		return
+	var result := SaveManager.load_game(NETWORK_SLOT, loader)
+	if not result["ok"]:
+		_fail("load_game(FRA) failed on a save this test just wrote: %s" % result["error"])
+		return
+	var loaded = result["state"]
+	if loaded.region_graph.is_empty():
+		_fail("a loaded state carries no region graph -- content re-attachment was lost on the load path")
+		return
+	var loaded_edges: int = (loaded.region_graph.get("edges", []) as Array).size()
+	if loaded_edges != edges_on_disk:
+		_fail("a loaded state carries %d graph edges against %d on disk" % [loaded_edges, edges_on_disk])
+	# One real month with the network term live: the loaded state runs the same
+	# expression the pre-save state ran, and both move without error.
+	Economy.tick_month(loaded)
+	Economy.tick_month(state)
 func _check_project_fields(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var ns = state.player()

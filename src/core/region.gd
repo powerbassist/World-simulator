@@ -65,6 +65,16 @@ var unemployment_rel: float = 1.0
 ## partition of the region, which is why its residual is zero rather than unnamed.
 var sector_mix: Dictionary = {}
 
+## THERE IS NO production_mix FIELD, AND THAT IS A MEASUREMENT RATHER THAN AN
+## OMISSION. docs/tiers/v2.md section 7 asks for "what a region makes, beyond a
+## sector share", and V2.7 imported nama_10r_3gva's six NACE aggregates, ranked the
+## 112 regions by specialisation under six branches and under three, and measured a
+## Spearman rank correlation of 0.9170 against a clause fixed before the run at
+## 0.90. Above that bar the finer mix is one quantity written twice -- V1.6b's
+## output gap and V1.6c's deficit gap, in a third place -- so Network.specialisation()
+## reads `sector_mix` and the six branches stay in the dataset. docs/network-model.md
+## carries the table.
+
 ## Crude rate of natural change -- births minus deaths per head, per cent per year,
 ## signed. V2.6c. CONTENT, not live state: the mean over the nation's live shares is
 ## taken in src/sim/natural_change.gd each month, so what this field carries is the
