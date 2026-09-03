@@ -241,8 +241,41 @@ one coordinate in the game the player wrote.
 
 ## 9. The re-run
 
-*(prediction, written before the run)*: every shared regime is **bit-identical**,
+**Prediction, written before the run:** every shared regime is **bit-identical**,
 because no budget regime issues an energy verb and every added expression reads
 exactly 0.0 or exactly the baseline with an empty register. The diff should be
 **additions only**. Two new regimes of the **expensive kind** — a plant is a verb
 no budget regime issues, V1.3g's and V1.4c's case.
+
+**Held, at the bit level.** Baseline `v2.7` worktree against the branch: the
+diff is **77 lines, every one an addition inside the two new regimes' own
+blocks** — 48 `invariants: OK` lines on the base side, 50 on the branch, the
++2 exactly the new regimes', zero outcome changes across every shared regime.
+
+**The legibility evidence** — same budget (`managed`), final year 2037, the
+only difference between the three runs is the verb:
+
+| | `managed` | `managed_builds_nuclear` | `managed_builds_gas` |
+|---|---|---|---|
+| GDP (EUR bn) | 3340 | 3340 | 3318 |
+| growth | +0.26 % | +0.26 % | +0.14 % |
+| unemployment | 7.67 | 7.67 | 7.76 |
+| debt (% GDP) | 128.9 | 131.1 | 130.8 |
+| deficit (% GDP) | −2.79 | −3.09 | −3.02 |
+| approval | 42.9 | 40.7 | 41.1 |
+| worst bloc | students 39 | **students 25** | **students 25** |
+
+The deficit and the debt are where the bill lives: the builders' surplus is
+three tenths of a point smaller and their debt two points higher, because every
+month of every build is on the spending line — the same budget buying a fleet.
+The worst bloc is where the politics live: the do-nothing France's harshest
+critics are `students` at 39; both builders drive the same bloc to 25, the
+authored offset per order accumulating with the siting price on the same
+register — and the map price is what pushes them apart, since the nuclear
+orders site into a 1.851-concentration region and pay for it. The growth
+column is the honest reading of `DEP_BETA` at 0.10: gas moves France's
+dependency **+3.81** points over the window (the sweep's own measurement, same
+cadence), costing **0.38** points of growth cumulatively and showing as
+**+0.14 against +0.26** in the final year — a channel a player can see on the
+economy panel and not one that takes the budget's place. The nuclear run moves
+the dependency the other way; `tests/test_balance.gd` asserts both directions.

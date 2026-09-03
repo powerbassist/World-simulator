@@ -56,8 +56,10 @@ const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
-const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const EnergyK = preload("res://src/sim/energy_constants.gd")
+const LegislatureK = preload("res://src/sim/legislature_constants.gd")
+const Regions = preload("res://src/sim/regions.gd")
 
 const START_YEAR := 2026
 
@@ -136,6 +138,8 @@ func _init() -> void:
 	_check_a_nationalised_run_stays_off_every_clamp()
 	_check_a_redistributive_run_stays_off_every_clamp()
 	_check_a_captured_court_stays_off_every_clamp()
+	_check_a_nuclear_run_stays_off_every_clamp()
+	_check_a_gas_run_stays_off_every_clamp()
 	_finish()
 
 
@@ -341,7 +345,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1, capture_at_month: int = -1) -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1, capture_at_month: int = -1, order_action_id: String = "", order_month: int = -1, order_repeat_months: int = 0) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -459,6 +463,32 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 						Legislature.apply(state, ns, law, _loader)
 		if i + 1 == nationalise_at_month:
 			_nationalise_the_largest(state, ns)
+
+		# V2.8's two regimes, on tools/balance_probe.gd's cadence: an order at
+		# `order_month`, repeated at the source's own build length. Through
+		# Energy.execute() and never by writing ns.plants -- a regime that bypasses
+		# the verb tests a model the player cannot reach. Largest region by live
+		# population share, ties broken by the sorted scan: deterministic, which is
+		# what a re-run needs and an opinion is not.
+		if order_action_id != "" and i + 1 >= order_month and (i + 1 - order_month) % order_repeat_months == 0:
+			var e_action = null
+			for a in _loader.energy_actions:
+				if a.id == order_action_id:
+					e_action = a
+			if e_action != null:
+				var e_weights: Dictionary = {}
+				var e_largest := ""
+				var e_best: float = -1.0
+				for region in _loader.regions.get(nation_id, []):
+					var e_share: float = Migration.region_share(ns, region.id)
+					e_weights[region.id] = e_share
+					if e_share > e_best:
+						e_best = e_share
+						e_largest = region.id
+				var e_access: Dictionary = Regions.accessibility_for(
+					ns, state.regions.get(nation_id, []), state.region_graph)
+				Energy.execute(state, ns, _loader, _loader.energy_actions, e_action,
+					Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -646,6 +676,56 @@ func _check_a_captured_court_stays_off_every_clamp() -> void:
 		_fail("capturing the courts left the country no angrier: %.3f against %.3f"
 			% [cns.unrest_pct, ns.unrest_pct])
 
+
+
+
+## V2.8's two, and the expensive kind: a plant is a verb no budget regime issues.
+## The identical managed budget, one order at month 6 repeated at the source's
+## own build length -- nuclear every 120, gas every 30 -- so one run raises the
+## nuclear share and the other the fossil share. Through Energy.execute(), and
+## the assertions are the ones the other verb regimes make: the channels moved,
+## and nothing sits ON its clamp.
+func _check_a_nuclear_run_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_nuclear_epr", 6, 120)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("nuclear run: %s" % p)
+	if ns.plants.is_empty():
+		_fail("the nuclear run never ordered a plant, so it asserts nothing")
+	if ns.energy_bill_pct_gdp <= 0.0:
+		_fail("the nuclear run never billed anything, so it asserts nothing")
+	if absf(ns.energy_impulse_pct) >= EnergyK.IMPULSE_MAX_PCT - 0.000001:
+		_fail("the energy impulse sits ON its clamp at %.3f" % ns.energy_impulse_pct)
+	var worst_offset := 0.0
+	for bloc_id in ns.bloc_offset.keys():
+		worst_offset = maxf(worst_offset, absf(float(ns.bloc_offset[bloc_id])))
+	if worst_offset >= LegislatureK.BLOC_OFFSET_MAX - 0.000001:
+		_fail("a bloc_offset sits ON its clamp at %.3f -- the siting price saturated the accumulator" % worst_offset)
+
+
+## The fossil half of the pair. Gas is cheap enough to sustain a real fleet --
+## five stations by the end of the window -- and its fuel is IMPORTED, so this
+## is the run whose dependency deviation is large and whose growth cost is the
+## channel's readable face. The nuclear run moves the dependency the other way.
+func _check_a_gas_run_stays_off_every_clamp() -> void:
+	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30)
+	var ns = run["state"].player()
+
+	if not run["problems"].is_empty():
+		for p in (run["problems"] as Array).slice(0, 5):
+			_fail("gas run: %s" % p)
+	var done := 0
+	for plant_id in ns.plants.keys():
+		if bool(ns.plants[plant_id].get("done", false)):
+			done += 1
+	if done < 4:
+		_fail("the gas run finished only %d stations in fourteen years -- check the cadence" % done)
+	if ns.import_dependency_pct <= ns.start_import_dependency_pct:
+		_fail("building only gas left the import dependency at %.2f -- the channel is decoration" % ns.import_dependency_pct)
+	if absf(ns.energy_impulse_pct) >= EnergyK.IMPULSE_MAX_PCT - 0.000001:
+		_fail("the energy impulse sits ON its clamp at %.3f" % ns.energy_impulse_pct)
 
 func _play_with_captured_court() -> Dictionary:
 	return _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, 6)
