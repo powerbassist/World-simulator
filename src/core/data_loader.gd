@@ -18,6 +18,8 @@ const Outlet = preload("res://src/core/outlet.gd")
 const CompanyAction = preload("res://src/core/company_action.gd")
 const InvestmentAction = preload("res://src/core/investment_action.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
+const EnergySource = preload("res://src/core/energy_source.gd")
+const EnergyK = preload("res://src/sim/energy_constants.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
 const PledgeAction = preload("res://src/core/pledge_action.gd")
 const GameEvent = preload("res://src/core/event.gd")
@@ -84,6 +86,10 @@ var company_actions: Array[CompanyAction] = []
 ## names one of the three sectors economy_constants.SECTOR_TREND fixes for every
 ## nation, so there is nothing here a roster could differ over.
 var investment_actions: Array[InvestmentAction] = []
+
+## V2.8. id -> EnergySource. A global flat catalogue, not per-nation: see
+## data/energy-sources.json's own note about why U6c's objection does not apply.
+var energy_sources: Dictionary = {}
 
 ## V1.6f's verbs. Ordered, not keyed by id, for investment_actions' reason. Global
 ## rather than per nation for the reason data/project-actions/projects.json's own note
@@ -184,7 +190,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -197,6 +203,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	company_actions.clear()
 	investment_actions.clear()
 	project_actions.clear()
+	energy_sources.clear()
 	campaign_actions.clear()
 	events.clear()
 	summits.clear()
@@ -258,6 +265,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_company_actions(company_actions_dir)
 	_load_investment_actions(investment_actions_dir)
 	_load_projects(project_actions_dir)
+	_load_energy_sources(energy_sources_path)
 	_load_campaign_actions(campaign_actions_dir)
 	_load_events(events_dir)
 	_load_summits(summits_dir)
@@ -281,6 +289,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_companies()
 	_validate_outlets(outlets_dir)
 	_validate_regions(regions_dir, regions_geo_path, regions_graph_path)
+	_validate_energy_sources()
 
 
 ## Resolve a person id to the name a screen prints. The ONLY reader of
@@ -983,6 +992,56 @@ func _load_projects(actions_dir: String) -> void:
 ## an effort some start actually defines. A stop pointing at nothing loads as a button
 ## that is never available, which is a content bug that renders as an absence and would
 ## be found by a player rather than by a check. _load_projects()'s own split, inherited.
+## data/energy-sources.json, ONE file and global. Per-entry validation lives in
+## src/core/energy_source.gd; what only this function can see is that the file
+## parsed at all and that no two entries share an id -- the register is keyed by id,
+## so a duplicate would be one technology silently overwriting another.
+func _load_energy_sources(path: String) -> void:
+	var text := FileAccess.get_file_as_string(path)
+	if text == "":
+		errors.append("data/energy-sources.json: could not read file")
+		return
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof((parsed as Dictionary).get("sources")) != TYPE_ARRAY:
+		errors.append("data/energy-sources.json: expected {\"sources\": [...]}")
+		return
+
+	var raw_list: Array = (parsed as Dictionary)["sources"]
+	for i in raw_list.size():
+		var entry = raw_list[i]
+		if typeof(entry) != TYPE_DICTIONARY:
+			errors.append("data/energy-sources.json: sources[%d] is not an object" % i)
+			continue
+		var per_file_errors: Array[String] = []
+		var source = EnergySource.from_dict(entry, "data/energy-sources.json", per_file_errors)
+		errors.append_array(per_file_errors)
+		if source.id != "":
+			if energy_sources.has(source.id):
+				errors.append("data/energy-sources.json: duplicate source id '%s'" % source.id)
+			energy_sources[source.id] = source
+
+
+## Every branch the import measured must be BUILDABLE, and every branch a source
+## names must have been measured. The first half is what stops a mix key with no
+## verb behind it -- a player who can never build renewables in a country that is
+## 80 % renewable has a readout and not a lever. The second half is the partition.
+func _validate_energy_sources() -> void:
+	if energy_sources.is_empty():
+		errors.append("data/energy-sources.json defines no sources")
+		return
+	var covered: Dictionary = {}
+	for source in energy_sources.values():
+		covered[source.branch] = true
+	for branch in EnergyK.BRANCHES:
+		if not covered.has(branch):
+			errors.append("no energy source builds branch '%s' -- every measured branch needs a verb" % branch)
+	for nation_id in nations.keys():
+		var n = nations[nation_id]
+		for branch in n.energy_mix.keys():
+			if not EnergyK.BRANCHES.has(String(branch)):
+				errors.append("%s: imported.energy.mix names branch '%s', which is not in BRANCHES" % [nation_id, branch])
+
+
 func _load_campaign_actions(actions_dir: String) -> void:
 	var da := DirAccess.open(actions_dir)
 	if da == null:

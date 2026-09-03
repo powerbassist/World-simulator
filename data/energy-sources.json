@@ -1,0 +1,74 @@
+{
+  "_note": "V2.8. THE CATALOGUE IS GLOBAL AND FLAT, unlike data/companies/ and data/regions/, because a pressurised water reactor is the same object in Lyon and in Linz. What differs per nation is the FLEET, and a fleet is state. U6c's objection to a global list does not apply: it was about a lon/lat, and there is no coordinate here -- the place is the player's, named at commit.",
+  "_units_note": "output_twh is a year's generation for ONE plant of this kind, in TWh. It is a physical fact and it is the only physical unit in src/ -- the model divides it by a measured national consumption immediately, so nothing downstream learns what a terawatt-hour is (network.gd's 'src/ never learns what a kilometre is', one module over). The two costs are shares of GDP: build_cost_pct_gdp bills every month of the build, run_cost_pct_gdp every month after it, forever or until decommission.",
+  "_import_note": "import_intensity is the fraction of this source's fuel the country must buy abroad. Fossil is ~1.0 for a Europe that produces almost no oil or gas; nuclear is LOW rather than zero because uranium is imported but is a small share of the cost of running a reactor; wind, solar and hydro are 0.0 because there is no fuel. These are the numbers that make the dependency line move, and they are the model rather than decoration.",
+  "_opposition_note": "opposition is how hard the local politics of hosting one is, before the region's own size is read. Nuclear highest, onshore wind next (real and documented), solar and hydro lowest. tools/energy_probe.gd's table (c) sweeps what this is worth; the ladder is authored and the scale is measured.",
+  "sources": [
+    {
+      "id": "nuclear_epr",
+      "name": "Pressurised water reactor",
+      "branch": "nuclear",
+      "output_twh": 13.0,
+      "build_months": 120,
+      "build_cost_pct_gdp": 0.180,
+      "run_cost_pct_gdp": 0.022,
+      "import_intensity": 0.15,
+      "opposition": 1.00
+    },
+    {
+      "id": "gas_ccgt",
+      "name": "Combined-cycle gas station",
+      "branch": "fossil",
+      "output_twh": 5.0,
+      "build_months": 30,
+      "build_cost_pct_gdp": 0.035,
+      "run_cost_pct_gdp": 0.030,
+      "import_intensity": 1.00,
+      "opposition": 0.35
+    },
+    {
+      "id": "coal_plant",
+      "name": "Coal-fired station",
+      "branch": "fossil",
+      "output_twh": 6.0,
+      "build_months": 42,
+      "build_cost_pct_gdp": 0.055,
+      "run_cost_pct_gdp": 0.038,
+      "import_intensity": 0.85,
+      "opposition": 0.70
+    },
+    {
+      "id": "wind_onshore",
+      "name": "Onshore wind farm",
+      "branch": "renewable",
+      "output_twh": 1.2,
+      "build_months": 18,
+      "build_cost_pct_gdp": 0.014,
+      "run_cost_pct_gdp": 0.004,
+      "import_intensity": 0.00,
+      "opposition": 0.55
+    },
+    {
+      "id": "solar_park",
+      "name": "Solar park",
+      "branch": "renewable",
+      "output_twh": 0.9,
+      "build_months": 12,
+      "build_cost_pct_gdp": 0.009,
+      "run_cost_pct_gdp": 0.003,
+      "import_intensity": 0.00,
+      "opposition": 0.20
+    },
+    {
+      "id": "hydro_scheme",
+      "name": "Hydroelectric scheme",
+      "branch": "renewable",
+      "output_twh": 2.5,
+      "build_months": 72,
+      "build_cost_pct_gdp": 0.048,
+      "run_cost_pct_gdp": 0.005,
+      "import_intensity": 0.00,
+      "opposition": 0.45
+    }
+  ]
+}
