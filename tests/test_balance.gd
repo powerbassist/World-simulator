@@ -56,6 +56,8 @@ const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
 
 const START_YEAR := 2026
 
@@ -366,6 +368,16 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		state.year = year
 		state.month = month
 
+		# V2.8. The accessibility index per nation, built here because energy.gd
+		# never learns that a graph exists, and immediately BEFORE Economy because
+		# economy.gd READS ns.energy_impulse_pct rather than computing it -- a
+		# harness that skipped this tick would read a stale field and the re-run
+		# would catch what a fresh zero would have hidden.
+		var access_by_nation: Dictionary = {}
+		for member_id in state.nations.keys():
+			access_by_nation[member_id] = Regions.accessibility_for(
+				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
+		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)

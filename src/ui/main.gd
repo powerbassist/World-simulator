@@ -11,6 +11,8 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Energy = preload("res://src/sim/energy.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -732,6 +734,18 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		return
 	_state.year = year
 	_state.month = month
+	# V2.8. The accessibility index per nation, built here because energy.gd never
+	# learns that a graph exists. Same index Regions already computes, so the
+	# Dijkstra rows are served from network.gd's own per-graph cache and this
+	# costs a lookup. Immediately BEFORE Economy, because economy.gd READS
+	# ns.energy_impulse_pct rather than computing it -- an energy tick placed after
+	# the economy would price this month's mix against last month's growth, a
+	# one-month lag in a channel with no reason to have one.
+	var access_by_nation: Dictionary = {}
+	for nation_id in _state.nations.keys():
+		access_by_nation[nation_id] = Regions.accessibility_for(
+			_state.nations[nation_id], _state.regions.get(nation_id, []), _state.region_graph)
+	Energy.tick_month(_state, _loader, access_by_nation)
 	Economy.tick_month(_state)
 	Budget.tick_month(_state)
 	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER

@@ -25,6 +25,7 @@ func _init() -> void:
 	_check_partition_after_build(loader)
 	_check_small_nation(loader)
 	_check_precondition_fields(loader)
+	_check_harnesses_tick()
 	_report()
 
 
@@ -137,6 +138,18 @@ func _check_precondition_fields(loader) -> void:
 	for field in EnergyK.PRECONDITION_FIELDS.keys():
 		if not text.contains("\"%s\":" % field):
 			_fail("_read_field() does not answer for PRECONDITION_FIELDS key '%s'" % field)
+
+
+## BOTH HARNESSES MUST CALL Energy.tick_month(), and this is a test rather than a
+## habit because V1.5d shipped with NEITHER calling Media.tick_month() -- so both
+## ran the pre-session model and their agreement about a bit-identical re-run was
+## about nothing. A bit-identical re-run is the reassuring outcome, which is
+## exactly why the check has to exist before the re-run is run.
+func _check_harnesses_tick() -> void:
+	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd"]:
+		var text := FileAccess.get_file_as_string(path)
+		if not text.contains("Energy.tick_month"):
+			_fail("%s does not call Energy.tick_month -- it runs the pre-V2.8 model" % path)
 
 
 func _report() -> void:

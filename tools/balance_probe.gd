@@ -56,6 +56,8 @@ const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -776,6 +778,16 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		state.year = year
 		state.month = month
 
+		# V2.8. The accessibility index per nation, built here because energy.gd
+		# never learns that a graph exists, and immediately BEFORE Economy because
+		# economy.gd READS ns.energy_impulse_pct rather than computing it -- a
+		# harness that skipped this tick would read a stale field and the re-run
+		# would catch what a fresh zero would have hidden.
+		var access_by_nation: Dictionary = {}
+		for member_id in state.nations.keys():
+			access_by_nation[member_id] = Regions.accessibility_for(
+				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
+		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, loader)
