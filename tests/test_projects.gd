@@ -36,6 +36,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Region = preload("res://src/core/region.gd")
 
 const PLAYER := "FRA"
 ## The shortest project in the shipped ladder, so a completion fits comfortably inside
@@ -77,6 +78,7 @@ func _init() -> void:
 	_test_the_nine_never_build()
 	_test_the_register_carries_no_content()
 	_check_site_region()
+	_check_enclaves()
 	_finish()
 
 
@@ -108,6 +110,24 @@ func _finish() -> void:
 		for f in _failures:
 			printerr("FAIL: %s" % f)
 		quit(1)
+
+
+## THE ENCLAVE CASE, and it is the whole reason the cast is hole-aware. Berlin (DE3)
+## sits inside Brandenburg's (DE4) outer ring, so a cast over outer rings alone files
+## it under its host and NOTHING CRASHES -- which is why this is a test and not a
+## comment. Vienna inside Niederösterreich and Brussels inside Vlaams Gewest are the
+## same shape and are checked with it.
+func _check_enclaves() -> void:
+	# Berlin ~13.40E 52.52N, Vienna ~16.37E 48.21N, Brussels ~4.35E 50.85N.
+	for row in [["DE3", 13.40, 52.52], ["AT13", 16.37, 48.21], ["BE1", 4.35, 50.85]]:
+		var got := Region.region_at_lonlat(_loader.region_rings, float(row[1]), float(row[2]))
+		if got != String(row[0]):
+			_fail("point (%.2f, %.2f) resolved to '%s', expected the enclave '%s'"
+				% [float(row[1]), float(row[2]), got, String(row[0])])
+	# A point in the Atlantic belongs to nobody, and "" is a real answer rather than
+	# a missing one -- Siting.site()'s own no-site rule one module over.
+	if Region.region_at_lonlat(_loader.region_rings, -30.0, 45.0) != "":
+		_fail("a point in the Atlantic resolved to a region")
 
 
 func _fail(msg: String) -> void:
@@ -496,7 +516,16 @@ func _test_the_diary_shows_work_in_progress() -> void:
 # --- Structure -----------------------------------------------------------------------
 
 func _test_projects_is_a_leaf() -> void:
-	_assert_preloads("res://src/sim/projects.gd", ["res://src/sim/projects_constants.gd"])
+	# V2.8. `src/core/region.gd` is allowed and is NOT a crack in the leaf: it is a
+	# VALUE TYPE beneath sim in the data -> sim -> ui order, carrying no loader and
+	# no system -- the same standing city.gd has on the panel side. What the leaf
+	# check exists to refuse is sim -> sim coupling, and the cast this preload
+	# reaches is the shared hole-aware predicate V2.8 lifted out of this file
+	# precisely so a second caller would not own a copy of it.
+	_assert_preloads("res://src/sim/projects.gd", [
+		"res://src/sim/projects_constants.gd",
+		"res://src/core/region.gd",
+	])
 
 
 ## B1's other half. src/sim/calendar.gd preloads nothing but its own constants, and

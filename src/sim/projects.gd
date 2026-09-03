@@ -101,6 +101,7 @@ extends RefCounted
 ## Preloads its constants only. A leaf.
 
 const K = preload("res://src/sim/projects_constants.gd")
+const Region = preload("res://src/core/region.gd")
 
 ## The two keys a register entry may carry. Kept as a constant rather than as a
 ## comment because tests/test_projects.gd asserts against it and V1.6e's own test
@@ -212,49 +213,7 @@ static func _site_region_uncached(loader, nation_id: String, project_id: String)
 		return ""
 	var lon: float = float((site as Vector2).x)
 	var lat: float = float((site as Vector2).y)
-	var ids: Array = loader.region_rings.keys()
-	ids.sort()
-	for region_id in ids:
-		if _region_contains(loader.region_rings[region_id], lon, lat):
-			return String(region_id)
-	return ""
-
-
-## Inside the outer ring of some polygon and inside NONE of its holes. Odd-even
-## over every ring of a MultiPolygon is the importer's _point_in_polygon(), stated
-## again here because src/ reads it as data and never imports the tool.
-static func _region_contains(polygons: Array, lon: float, lat: float) -> bool:
-	for polygon in polygons:
-		var rings: Array = polygon
-		if rings.is_empty():
-			continue
-		if not _in_ring(rings[0], lon, lat):
-			continue
-		var holed := true
-		for i in range(1, rings.size()):
-			if _in_ring(rings[i], lon, lat):
-				holed = false
-				break
-		if holed:
-			return true
-	return false
-
-
-static func _in_ring(ring: PackedVector2Array, lon: float, lat: float) -> bool:
-	var inside := false
-	var n := ring.size()
-	if n < 3:
-		return false
-	var j := n - 1
-	for i in n:
-		var xi := ring[i].x
-		var yi := ring[i].y
-		var xj := ring[j].x
-		var yj := ring[j].y
-		if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
-			inside = not inside
-		j = i
-	return inside
+	return Region.region_at_lonlat(loader.region_rings, lon, lat)
 
 
 ## One month of construction on every project still building, then completion for any

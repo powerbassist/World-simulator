@@ -377,6 +377,17 @@ absence.
 
 ## 14. The readout
 
+**The site's cast moved at V2.8.** The hole-aware point-in-polygon this model
+derived its region with lived as two private functions in `src/sim/projects.gd`
+from U6c to V2.7; V2.8 needed the identical predicate for a coordinate the
+PLAYER writes, so the cast moved whole into `src/core/region.gd` as
+`Region.region_at_lonlat()` and this module calls it. Two copies of a geometry
+predicate is how one of them quietly stops agreeing with the other, and this
+one has a trap that would not crash: an enclave's own polygon sits inside its
+host's outer ring, so a cast over outer rings alone files Berlin, Vienna and
+Brussels under their hosts — `tests/test_projects.gd`'s `_check_enclaves()`
+exists because that failure is silent. The derive-every-read rule is unchanged.
+
 **Four** surfaces for one register as of U6c, and each says a different thing — which is
 the only way four surfaces for one register works. The map says **where**, and says nothing
 else: the marker is a way *into* Public Works rather than a second readout of it.
