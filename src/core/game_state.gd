@@ -432,7 +432,7 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## player's own meetings hold -- a dropped register hands every spoken-to region back
 ## at full reach, `campaign_started`'s exploit one level up: the tour un-spoken).
 ## Both absent read as the truth about every version-29 save.
-const SAVE_VERSION := 30
+const SAVE_VERSION := 31
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -842,6 +842,13 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 
 	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
 	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
+
+	# V2.8. The measured energy baseline, captured before anything can move it -- the
+	# same start/start pair every quantity above keeps, and the reason the deviation
+	# reads exactly 0.0 at new game rather than approximately.
+	ns.start_energy_mix = n.energy_mix.duplicate(true)
+	ns.start_import_dependency_pct = n.energy_import_dependency_pct
+	ns.energy_kwh_per_capita = n.energy_kwh_per_capita
 	# V1.6d. From a model constant rather than from the nation file, and that is a
 	# deliberate refusal rather than a shortcut: nothing on tools/import_data.py's
 	# licence-clean loop measures how progressive a bracket structure is, and ten

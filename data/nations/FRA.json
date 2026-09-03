@@ -162,7 +162,7 @@
     "energy": {
       "mix": {
         "fossil": 0.076637,
-        "nuclear": 0.688379,
+        "nuclear": 0.688378,
         "renewable": 0.234985
       },
       "import_dependency_pct": 47.128,

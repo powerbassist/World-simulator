@@ -347,12 +347,22 @@ def build_energy_block(nid, energy):
     total = out["elc_fossil_pct"] + out["elc_nuclear_pct"] + out["elc_renewable_pct"]
     if total <= 0.0:
         sys.exit(f"{nid}: electricity mix sums to {total!r} -- refusing to invent one")
+    shares = {
+        "fossil": round(out["elc_fossil_pct"] / total, 6),
+        "nuclear": round(out["elc_nuclear_pct"] / total, 6),
+        "renewable": round(out["elc_renewable_pct"] / total, 6),
+    }
+    # Rounding to 6dp leaves the sum one or two microshares off 1.0, which the
+    # partition discipline reads as a mix that does not close. The residual goes to
+    # the largest branch, the imported `sectors` block's own treatment, so the
+    # content sums to EXACTLY 1.0 and src/sim/energy.gd's baseline is exact by
+    # construction rather than by tolerance.
+    residue = round(1.0 - sum(shares.values()), 6)
+    if residue != 0:
+        largest = max(shares, key=shares.get)
+        shares[largest] = round(shares[largest] + residue, 6)
     return {
-        "mix": {
-            "fossil": round(out["elc_fossil_pct"] / total, 6),
-            "nuclear": round(out["elc_nuclear_pct"] / total, 6),
-            "renewable": round(out["elc_renewable_pct"] / total, 6),
-        },
+        "mix": shares,
         "import_dependency_pct": round(out["energy_import_dependency_pct"], 3),
         "kwh_per_capita": round(out["energy_kwh_per_capita"], 1),
         "_years": years,
