@@ -28,7 +28,7 @@ const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
-	"institutions",
+	"institutions", "energy",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -87,6 +87,15 @@ const KNOWN_PRICES_KEYS: Array[String] = [
 ## charge. V1.5c's Gini drift is a stopgap standing in for levers that do not exist;
 ## this stock has a lever from day one. See docs/judiciary-model.md.
 const KNOWN_INSTITUTIONS_KEYS: Array[String] = ["rule_of_law_score"]
+
+## V2.8. imported.energy, KNOWN_PRICES_KEYS' treatment: three of the five series are
+## read at a year the file's own `_year` does not describe (the electricity mix is
+## 2021-2024 branch by branch, the dependency 2023), so `_years` is REQUIRED rather
+## than left out -- a provenance record that names a year the number does not come
+## from is worse than none.
+const KNOWN_ENERGY_KEYS: Array[String] = [
+	"mix", "import_dependency_pct", "kwh_per_capita", "_years",
+]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
 ## Demography.working_share() is 1 - young - old and is a DENOMINATOR twice over, in
@@ -430,6 +439,14 @@ var institutions: Dictionary = {}
 ## cluster. See docs/inflation-model.md section 3.
 var prices: Dictionary = {}
 
+## V2.8. The measured baseline the plant register is a deviation against. Three
+## branches, normalised at import to sum to exactly 1.0; the dependency is NOT
+## bounded above at 100 because Luxembourg's is 109.6 and that is a real fact
+## about a country that re-exports fuel.
+var energy_mix: Dictionary = {}
+var energy_import_dependency_pct: float = 0.0
+var energy_kwh_per_capita: float = 0.0
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -663,6 +680,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.institutions = _extract_dict(imported, "institutions", filename, errors)
 	_validate_institutions(n.institutions, filename, errors)
 
+	n.energy_mix = _extract_dict(imported, "energy", filename, errors).get("mix", {})
+	_validate_energy(imported.get("energy", {}), n, filename, errors)
+
 	return n
 
 
@@ -856,6 +876,42 @@ static func _validate_institutions(institutions_block: Dictionary, filename: Str
 		return
 	var score: float = _extract_float(institutions_block, "rule_of_law_score", "imported.institutions.rule_of_law_score", filename, errors)
 	_check_range_float(score, JudiciaryK.INDEPENDENCE_MIN, JudiciaryK.INDEPENDENCE_MAX, "imported.institutions.rule_of_law_score", filename, errors)
+
+
+## V2.8. The mix must be a partition over exactly the three branches, and the
+## per-capita figure must be positive because it is the denominator every plant
+## output is read against. The dependency gets NO range check: it is not bounded
+## above at 100 because Luxembourg's measured 109.6 is the truth about a country
+## that re-exports fuel, and a clamp there is a number no dataset produced.
+static func _validate_energy(energy_block: Dictionary, n: Nation, filename: String, errors: Array[String]) -> void:
+	var keys := energy_block.keys()
+	keys.sort()
+	var expected := KNOWN_ENERGY_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.energy must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	var mix: Dictionary = energy_block["mix"]
+	var mix_keys := mix.keys()
+	mix_keys.sort()
+	var mix_expected := ["fossil", "nuclear", "renewable"]
+	if mix_keys != mix_expected:
+		errors.append("%s: imported.energy.mix must have exactly keys %s, got %s" % [filename, mix_expected, mix_keys])
+		return
+	var sum: float = 0.0
+	for branch in mix_keys:
+		var share: float = float(mix[branch])
+		if share < 0.0:
+			errors.append("%s: imported.energy.mix.%s must be non-negative" % [filename, branch])
+		sum += share
+	if absf(sum - 1.0) > 0.001:
+		errors.append("%s: imported.energy.mix sums to %.6f, expected 1.0" % [filename, sum])
+
+	n.energy_import_dependency_pct = float(energy_block["import_dependency_pct"])
+	n.energy_kwh_per_capita = float(energy_block["kwh_per_capita"])
+	if n.energy_kwh_per_capita <= 0.0:
+		errors.append("%s: imported.energy.kwh_per_capita must be positive" % filename)
 
 
 static func _validate_prices(prices_block: Dictionary, filename: String, errors: Array[String]) -> void:

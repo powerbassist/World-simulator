@@ -190,6 +190,24 @@ PRICES_EXCLUDE_YEARS = []
 # and this constant records that the widening is deliberate.
 PRICES_UNEMPLOYMENT_INDICATOR = "SL.UEM.TOTL.ZS"
 
+# V2.8. Energy. FIVE series on the loop already running, and the reason there is
+# no second source: Eurostat's own nrg_ind_id carries GBR only to 2019 and CHE not
+# at all, so the dataset every regional series since V2.2 came from is short in two
+# nations by two different failures. World Bank covers 10 of 10.
+#
+# EG.ELC.RNEW.ZS INCLUDES HYDRO -- checked, not assumed: CHE reads 67.9 with hydro
+# at 59.1, AUT 79.9 with hydro at 59.9. So the mix is THREE branches and hydro is
+# not a fourth addend. EG.ELC.HYRO.ZS is deliberately not fetched: it would be a
+# sub-share of one we already have, and a fourth key that is not part of the
+# partition is a number a later reader will sum by mistake.
+ENERGY_INDICATORS = {
+    "energy_import_dependency_pct": "EG.IMP.CONS.ZS",
+    "elc_fossil_pct": "EG.ELC.FOSL.ZS",
+    "elc_nuclear_pct": "EG.ELC.NUCL.ZS",
+    "elc_renewable_pct": "EG.ELC.RNEW.ZS",
+    "energy_kwh_per_capita": "EG.USE.ELEC.KH.PC",
+}
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -294,6 +312,50 @@ def build_inequality_block(nid, now, base):
         "gini_index_per_yr": round((value - base_value) / span, 3),
         "_year": year_used,
         "_from_year": base_year,
+    }
+
+
+def build_energy_block(nid, energy):
+    """V2.8. The imported.energy block for one nation.
+
+    `energy` maps field name -> {nid: (value, year_used)} from
+    load_wb_indicator_nearest_year(), called per series -- every one of the five
+    has gaps somewhere in the roster (GBR's dependency stops 2019, RNEW stops
+    2021), so the exact-year loader would refuse an import that is measurably
+    fine.
+
+    THE THREE SHARES ARE NORMALISED, not taken raw, for the same reason
+    docs/data-sources.md already gives about the World Bank value-added
+    indicators: fossil + nuclear + renewable sums to 94-99 % on its own (the
+    residual is statistical difference and years that do not line up), so
+    dividing by the sum is required, not optional polish.
+
+    THE DEPENDENCY IS NOT CLAMPED. LUX reads 109.6 -- it imports more energy than
+    it consumes and re-exports the difference. A clamp to [0, 100] here is a
+    number no dataset measured.
+    """
+    out = {}
+    years = {}
+    for field in ENERGY_INDICATORS:
+        if nid not in energy[field]:
+            sys.exit(
+                f"{nid}: no {ENERGY_INDICATORS[field]} value at ANY year in the "
+                f"downloaded window -- World Bank energy coverage is 10 of 10, so "
+                f"an absent nation is a broken download rather than a gap"
+            )
+        out[field], years[field] = energy[field][nid]
+    total = out["elc_fossil_pct"] + out["elc_nuclear_pct"] + out["elc_renewable_pct"]
+    if total <= 0.0:
+        sys.exit(f"{nid}: electricity mix sums to {total!r} -- refusing to invent one")
+    return {
+        "mix": {
+            "fossil": round(out["elc_fossil_pct"] / total, 6),
+            "nuclear": round(out["elc_nuclear_pct"] / total, 6),
+            "renewable": round(out["elc_renewable_pct"] / total, 6),
+        },
+        "import_dependency_pct": round(out["energy_import_dependency_pct"], 3),
+        "kwh_per_capita": round(out["energy_kwh_per_capita"], 1),
+        "_years": years,
     }
 
 
@@ -550,6 +612,13 @@ def build_imported_block(year):
     # being the default.
     institutions = load_wb_indicator_for_year(INSTITUTIONS_INDICATOR, year)
 
+    # V2.8. Five energy series, every one through the nearest-year loader -- see
+    # build_energy_block() for why none of the five is complete at `year`.
+    energy = {
+        name: load_wb_indicator_nearest_year(code, year)
+        for name, code in ENERGY_INDICATORS.items()
+    }
+
     # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a
     # ratio against the roster mean and so cannot be built one nation at a time --
     # the only block here with that shape. See build_cycle_blocks().
@@ -633,6 +702,7 @@ def build_imported_block(year):
             ),
             "cycle": cycle_blocks[nid],
             "prices": prices_blocks[nid],
+            "energy": build_energy_block(nid, energy),
             # V1.1e. One decimal, `unemployment_pct`'s and `gini_index`'s treatment.
             # No provenance keys and no slope: the series is read at the block's own
             # `_year` on the block's own window, so `_year` above already describes it.
