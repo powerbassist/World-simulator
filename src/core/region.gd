@@ -65,6 +65,15 @@ var unemployment_rel: float = 1.0
 ## partition of the region, which is why its residual is zero rather than unnamed.
 var sector_mix: Dictionary = {}
 
+## Crude rate of natural change -- births minus deaths per head, per cent per year,
+## signed. V2.6c. CONTENT, not live state: the mean over the nation's live shares is
+## taken in src/sim/natural_change.gd each month, so what this field carries is the
+## measured differential and the sim's anchor does the rest. Britain carries 0.0
+## everywhere -- UKM publishes no rates in the dataset family, and a differential
+## mixing measured and invented rates invents flows -- which is a bound the model
+## doc records, not a figure.
+var natural_change_pct: float = 0.0
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var r := new()
@@ -121,6 +130,23 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		if r.sector_mix.size() == 3 and absf(mix_total - 1.0) > 0.000001:
 			errors.append("%s: %s sector_mix sums to %s, not 1.0" % [filename, path, str(mix_total)])
 
+	# REQUIRED, not defaulted: a region without the field is a register imported
+	# before V2.6c or a hand edit, and silence would read as "this region's births
+	# exactly offset its deaths" -- a confident claim nobody measured. The absent
+	# figure is an error, the register's own rule for data/regions/.
+	if not d.has("natural_change_pct") or not (typeof(d["natural_change_pct"]) == TYPE_INT or typeof(d["natural_change_pct"]) == TYPE_FLOAT):
+		errors.append("%s: %s missing or non-numeric field 'natural_change_pct'" % [filename, path])
+	else:
+		r.natural_change_pct = float(d["natural_change_pct"])
+		# Signed and per-head: the roster's measured span is +0.85 (Murcia) to
+		# -0.82 (Campania's interior) and a natural rate outside plus-or-minus two
+		# per cent has no measured precedent, so it is a mistyped digit rather than
+		# demography.
+		if absf(r.natural_change_pct) > 2.0:
+			errors.append("%s: %s natural_change_pct = %s is outside plus-or-minus 2 %%/yr -- no measured rate in the roster approaches this" % [
+				filename, path, str(r.natural_change_pct),
+			])
+
 	var raw = d.get("cities", null)
 	if typeof(raw) != TYPE_ARRAY or (raw as Array).is_empty():
 		# Empty is an error rather than a legal thinner region: docs/tiers/v2.md
@@ -156,8 +182,9 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 
 	for key in d.keys():
 		if key != "id" and key != "name" and key != "share" and key != "cities" \
-			and key != "gdp_share" and key != "unemployment_rel" and key != "sector_mix":
-			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio and a sector mix, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
+			and key != "gdp_share" and key != "unemployment_rel" and key != "sector_mix" \
+			and key != "natural_change_pct":
+			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio, a sector mix and a natural-change rate, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
 				filename, path, key,
 			])
 

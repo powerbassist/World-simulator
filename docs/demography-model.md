@@ -412,6 +412,20 @@ how many vote.
 with no data; there is now data, and there is still no mechanism that would read them
 that §2 did not cut.
 
+> **RESOLVED AT V2.6c, IN THE REGIONAL REGISTER'S FAVOUR AND NOT THIS FILE'S.** The
+> mechanism that reads births and deaths arrived -- per REGION
+> (docs/natural-change-model.md), through the live population shares -- and this
+> file's national machine is untouched by exactly one fact: `ns.population` was
+> already Economy's compound and the natural component was already inside its
+> measured `pop_growth_pct`. The national age structure still drifts at its measured
+> slope with no cohort machine, and the orphan's real content -- *nothing reads a
+> head count* -- died when V2.5 made regions load-bearing and V2.6a made them move.
+> What is STILL deliberately not built: a regional age structure (the register's
+> dataset publishes the crude rate directly, and importing 22 brackets to author an
+> age-mix-to-rate mapping would be the weighted sum §2 refused), and life expectancy
+> as a separate live quantity (the death component of the measured natural rate
+> already carries it; a second answer to the same question).
+
 ---
 
 Related: [[index]] · [[society-model]] · [[companies-model]] · [[economy-model]] ·

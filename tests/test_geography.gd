@@ -248,9 +248,13 @@ func _check_register_has_no_simulation() -> void:
 		var text := _code_only(FileAccess.get_file_as_string(path))
 		# `.gdp_share` with the dot: a bare "gdp_share" would name companies.gd's
 		# own subsidy-pricing local, which has carried the word since V1.4a and
-		# reaches no region.
+		# reaches no region. `natural_change_pct` is V2.6c's addition to the same
+		# contract: the rate reaches the flow through Regions.natural_change(), an
+		# accessor named for the quantity rather than the field, so a file that
+		# spells the field is a second reader by definition.
 		if text.contains(".gdp_share") or text.contains("unemployment_rel") \
-			or text.contains("sector_mix") or text.contains("region_gdp_eur_bn"):
+			or text.contains("sector_mix") or text.contains("region_gdp_eur_bn") \
+			or text.contains("natural_change_pct"):
 			readers.append(path)
 	if readers != ["res://src/sim/regions.gd"]:
 		_fail("the register is read by %s -- V2.5 gives exactly one system a region, and a second reader is a second writer waiting to happen" % [readers])
@@ -268,7 +272,7 @@ func _check_register_has_no_simulation() -> void:
 	# names no register field at all -- every regional quantity it reads comes back
 	# through a Regions function -- so the marker list did not have to grow.
 	var migration_src := FileAccess.get_file_as_string("res://src/sim/migration.gd")
-	for marker in [".gdp_share", "unemployment_rel", "sector_mix", "region_gdp_eur_bn"]:
+	for marker in [".gdp_share", "unemployment_rel", "sector_mix", "region_gdp_eur_bn", "natural_change_pct"]:
 		if migration_src.contains(marker):
 			_fail("src/sim/migration.gd names `%s` -- it reads the register through Regions' own functions, and naming a field here makes it a second reader" % marker)
 

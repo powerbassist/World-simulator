@@ -266,6 +266,15 @@ func _check_share_delta_direction() -> void:
 ## exact-zero bound), a region with one city cannot differ from its own mean --
 ## migration.gd skips it, so this does too -- and a region whose cities all carry
 ## the same payroll per head has no direction either and is skipped the same way.
+##
+## V2.6c: THE REGION-LEVEL ASSERTIONS ARE MIGRATION'S OWN, so the natural rates are
+## zeroed for the tick and restored after -- the isolation the sweep uses, held by a
+## test. In the combined model a worst-pull region can carry an ABOVE-mean natural
+## rate (DEU's DEE and ITA's ITC3 both do: the east and the south are where the
+## deaths are, but they are also where the pull is lowest), and natural change would
+## then move its share the other way from migration -- the combined direction is a
+## real quantity and it is test_natural_change.gd's, not this check's. City shares
+## are untouched by natural change, so the city half needs no isolation.
 func _check_the_tick_moves_toward_the_pull() -> void:
 	for nation_id in NATIONS:
 		var state = GameState.new_game(_loader, nation_id)
@@ -294,6 +303,15 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 				ranked_regions = true
 				best_start = Migration.region_share(ns, best_id)
 				worst_start = Migration.region_share(ns, worst_id)
+
+		# The isolation, spanning the ticks and both assertion halves below. _fail()
+		# records and continues, so the restore runs on every path -- and the saved
+		# rates go back whether or not the assertions passed, because the loader's
+		# region objects are shared with every check after this one.
+		var saved_rates: Dictionary = {}
+		for region in list:
+			saved_rates[region.id] = region.natural_change_pct
+			region.natural_change_pct = 0.0
 
 		var city_gainers: Dictionary = {}
 		var city_losers: Dictionary = {}
@@ -337,6 +355,9 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 			var moved: float = Migration.city_share(ns, city_id) - float(city_losers[city_id])
 			if moved >= 0.0:
 				_fail("%s: city '%s' moved %+.8f of its region under the live tick after ranking lowest in named payroll per head -- migration must move people AWAY from the worse place" % [nation_id, city_id, moved])
+
+		for region in list:
+			region.natural_change_pct = float(saved_rates[region.id])
 
 
 ## V1.5d SHIPPED WITH NEITHER HARNESS CALLING Media.tick_month(), so both ran the

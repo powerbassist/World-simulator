@@ -77,6 +77,10 @@ tests=(
   # has exactly one reader.
   tests/test_regions.gd
   tests/test_migration.gd
+  # V2.6c: the third flow on the population registers -- direction, exact
+  # conservation over the COMBINED flow, Luxembourg's one-region bound, and the
+  # field's own import contract.
+  tests/test_natural_change.gd
   tests/test_siting.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd

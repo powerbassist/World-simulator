@@ -2,10 +2,16 @@ extends SceneTree
 
 ## Migration probe: godot --headless --script res://tools/migration_probe.gd
 ##
-## V2.6a's evidence generator. Not a test: tests/test_migration.gd asserts the
-## invariants this probe is used to FIND. Kept in tools/ and excluded from
-## run_tests.sh for that reason -- which also means a green suite says nothing about
-## whether this file still parses, so run it before trusting the suite (V1.3e).
+## V2.6a's evidence generator, V2.6c's instrument for the combined band. Not a test:
+## tests/test_migration.gd asserts the invariants this probe is used to FIND. Kept in
+## tools/ and excluded from run_tests.sh for that reason -- which also means a green
+## suite says nothing about whether this file still parses, so run it before trusting
+## the suite (V1.3e).
+##
+## V2.6c: the emulation, the sweep and clause (ii) all run on the COMBINED model now
+## -- natural change rides the mirror ungated, clause (ii) reads all ten nations, and
+## the rate-0.0 sweep row is clause (0), the natural-only drift. The natural side's
+## own tables live in tools/natural_change_probe.gd.
 ##
 ## TABLE (a) RUNS BEFORE ANY src/ CODE EXISTS, which is the point: the whole block
 ## rests on there being a signal to migrate on, and the honest order is to measure
@@ -20,6 +26,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MigrationK = preload("res://src/sim/migration_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const NaturalChange = preload("res://src/sim/natural_change.gd")
 
 const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
 
@@ -79,11 +86,18 @@ const CLAUSE_I_NATIONS := ["FRA", "DEU"]
 ## is part of the evidence rather than a step somebody did once and did not print.
 ## Each brackets both crossings with room on either side, so the passing interval can
 ## be checked INTERIOR rather than pinned at an endpoint by the range itself.
+##
+## V2.6c RE-RANGED THEM, and the first grid now STARTS at 0.0000 on purpose: with
+## natural change in the model, clause (i)'s readability is satisfied by the natural
+## differential alone at every candidate, so the passing band's lower edge is the
+## structural floor rather than a crossing, and the rate-0.0 row IS clause (0) --
+## the natural-only drift, measured on the same lanes the candidates run on. The
+## upper crossing is the only one left, and the grids bracket it.
 const SWEEPS := [
-	[0.0020, 0.1000, 0.0020],
-	[0.0040, 0.0300, 0.0005],
-	[0.0050, 0.0200, 0.0002],
-	[0.0060, 0.0180, 0.0001],
+	[0.0000, 0.0012, 0.0001],
+	[0.0000, 0.0010, 0.00005],
+	[0.0002, 0.0010, 0.0001],
+	[0.0003, 0.0008, 0.00005],
 ]
 
 
@@ -170,6 +184,12 @@ func _run_shipped(loader, nation_id: String, months: int) -> Dictionary:
 ## through Migration.share_delta(), which is public precisely so this is possible, in
 ## the shipped ORDER: cities first, regions second, both reading start-of-month state.
 ##
+## V2.6c: THE EMULATION IS THE COMBINED MODEL now, natural change appended exactly as
+## migration.gd's _tick_nation() appends it -- ungated by the candidate rate, read
+## through Regions.natural_change(), applied from NaturalChange.deltas() on the
+## lane's own shares. At candidate 0.0 the migration levels are no-ops and this
+## function IS the natural-only flow, which is clause (0)'s row.
+##
 ## The duplication is the price of the rule, and it is not left to trust: table (e2)
 ## replays this at the shipped rate against Migration.tick_month() itself and prints
 ## the largest disagreement, so a future edit to _tick_nation() that this copy does
@@ -216,6 +236,17 @@ func _tick_migration(ns, list: Array, loader, rate: float) -> void:
 	for region in list:
 		var share: float = float(shares[region.id])
 		ns.region_pop_share[region.id] = share + Migration.share_delta(share, float(pulls[region.id]), mean, rate)
+
+	# V2.6c. Natural change, appended exactly as the shipped _tick_nation() appends
+	# it: its own frozen snapshot at this point, ungated by the candidate rate.
+	var rates: Dictionary = {}
+	var nat_shares: Dictionary = {}
+	for region in list:
+		rates[region.id] = Regions.natural_change(region)
+		nat_shares[region.id] = Migration.region_share(ns, region.id)
+	var nat_deltas: Dictionary = NaturalChange.deltas(nat_shares, rates)
+	for region in list:
+		ns.region_pop_share[region.id] += float(nat_deltas.get(region.id, 0.0))
 
 
 # --- Bookkeeping shared by both -------------------------------------------------
@@ -424,8 +455,13 @@ func _sweep(loader, low: float, high: float, step: float) -> void:
 	for n in steps + 1:
 		candidates.append(low + step * float(n))
 
+	# V2.6c: clause (ii) is read across ALL TEN now, not the three band nations --
+	# the natural differential is largest in FRA, but that is a measurement this
+	# session had to make rather than inherit: V2.6a could read the ceiling off
+	# three nations because migration's worst mover was known to be France, and
+	# the natural rates arrive with their own ranking that nobody had measured.
 	var results: Dictionary = {}
-	for nation_id in BAND_NATIONS:
+	for nation_id in NATIONS:
 		results[nation_id] = _sweep_nation(loader, nation_id, candidates)
 
 	var passing: Array = []
@@ -434,11 +470,13 @@ func _sweep(loader, low: float, high: float, step: float) -> void:
 		var cells: Array = []
 		var worst168: float = 0.0
 		var ok_i := true
+		for nation_id in NATIONS:
+			var r: Dictionary = results[nation_id][k]
+			worst168 = maxf(worst168, float(r["r168"]))
 		for nation_id in BAND_NATIONS:
 			var r: Dictionary = results[nation_id][k]
 			cells.append(float(r["r60"]))
 			cells.append(float(r["c60"]))
-			worst168 = maxf(worst168, float(r["r168"]))
 			if nation_id in CLAUSE_I_NATIONS and maxf(float(r["r60"]), float(r["c60"])) < READABLE_MIN:
 				ok_i = false
 		var ok_ii: bool = worst168 <= DRIFT_CEILING
@@ -456,10 +494,13 @@ func _sweep(loader, low: float, high: float, step: float) -> void:
 		return
 	var lo: float = float(passing[0])
 	var hi: float = float(passing[passing.size() - 1])
-	var interior: bool = lo > low + step * 0.5 and hi < high - step * 0.5
+	var interior_hi: bool = hi < high - step * 0.5
+	var floor_lo: bool = lo <= low + step * 0.5 and low <= 0.0
 	print("  passing interval [%.4f, %.4f]   midpoint %.4f   %s" % [
 		lo, hi, (lo + hi) / 2.0,
-		"both edges INTERIOR to the swept range" if interior else "*** AN EDGE OF THE SWEPT RANGE PASSES -- WIDEN ***",
+		("upper edge INTERIOR to the swept range; lower edge is the structural floor (rate 0 passes: clause (i) is satisfied by the natural differential alone)"
+			if floor_lo else
+			("both edges INTERIOR to the swept range" if interior_hi else "*** AN EDGE OF THE SWEPT RANGE PASSES -- WIDEN ***")),
 	])
 
 

@@ -184,6 +184,21 @@ red and says so.
 (LU00), so `pull − mean` is exactly 0.0 at both levels and it cannot move at any
 rate whatever. Same class as Britain, recorded beside it in table (f).
 
+> **V2.6c: BRITAIN'S BOUND EXTENDS TO NATURAL CHANGE; LUXEMBOURG'S TRANSFORMS.** The
+> plan-time premise — *demo_r_pjangrp3 carries all 41 UK codes, so Britain can age
+> regionally* — was right about the dataset and wrong about the instrument: the
+> rates came from `demo_r_gind3`, whose NATGROWRT covers **eleven of Britain's
+> twelve** NUTS 1 codes (London +0.79 %/yr down to the North East's −0.07, window
+> 2012–2018) but **UKM — Scotland — publishes none at any year**, and a differential
+> mixing measured and invented rates invents flows toward and away from Scotland no
+> measurement supports. So every British region carries `natural_change_pct` 0.0 and
+> Britain differs by employers only, exactly as this section already recorded — the
+> same call V2.5 §8 made, extended. The measured numbers are in
+> [[natural-change-model]] §5, usable the day Scotland publishes. Luxembourg is the
+> opposite case: one region cannot differ from itself in a SHARE, but the national
+> total was never bound — natural change moves `pop_growth_pct`, which was always
+> live — so its bound narrows to "no differential, ever" rather than "no growth".
+
 Seven of the ten name no employer at all — `data/companies/` covers FRA, DEU and
 GBR — so their city level is inert and the region level is the whole signal. The
 city level is not decorative for the three that have it: France's and Germany's
@@ -549,14 +564,20 @@ output channel took it free (V2.5's index is already mean-one), and the opinion
 channel's own band came back with an **empty** passing interval and its constant
 was deleted. [[siting-model]] §5.
 
-**To V2.6c — natural change.** Birth rate and life expectancy, §0's freed row,
-arriving with the mechanism that reads it. Its conservation law is DIFFERENT from
-this one's: internal migration is zero-sum nationally and natural change is not,
-so the closure properties asserted here do not transfer. Its **step-0 gate** is
-whether regional age structure is obtainable from `demo_r_pjangrp3` — the
-dataset the register itself came from, already fetched at V2.2a. Without it,
-births and deaths only re-split one measured `pop_growth_pct` into two, which is
-exactly what [[demography-model|V1.5b]] refused with evidence.
+**To V2.6c — natural change. BUILT, AND THE GATE'S OWN PREMISE WAS THE STALE ROW.**
+Birth rate and life expectancy arrived with the mechanism that reads them — but the
+gate asked for regional AGE STRUCTURE from `demo_r_pjangrp3`, and the register's
+dataset publishes only the 22 brackets, while the sibling dataset `demo_r_gind3`
+publishes **NATGROWRT, the crude rate of natural change, directly per region** —
+the quantity the gate wanted to *derive* from brackets, already measured. Importing
+brackets to author an age-mix-to-rate mapping would have been the weighted sum
+[[demography-model|V1.5b]] refused. The conservation-law warning above held in the
+interesting direction: the natural flow redistributes a differential around a
+live-share-weighted mean, so it telescopes to zero over the named regions exactly
+like this file's flow, and the NATIONAL non-zero-sum half was already inside
+`pop_growth_pct` — the partition decision, not a new conservation law. The
+re-sweep it forced on `MIGRATION_RATE` — 0.0102 → 0.0003, and the dominance
+finding behind that — is [[natural-change-model]] §6.
 
 ---
 

@@ -1073,6 +1073,83 @@ GBR_GDP_MIO_EUR = None
 VINTAGE_SIBLING = {"NL31": "NL35", "NL33": "NL36"}
 
 
+# V2.6c. Natural change -- the crude rate of births minus deaths per head, per region,
+# which is what makes a head count load-bearing without re-splitting one measured
+# national growth into two (V1.5b's refused shape). demo_r_gind3 publishes NATGROWRT
+# directly; importing pjangrp3's 22 age brackets and authoring an age-mix-to-rate
+# mapping would have been a weighted sum nothing could measure, which is why the row
+# that named the brackets named the wrong instrument.
+#
+# THE WINDOW IS THE WIDEST CONTIGUOUS RUN IN WHICH EVERY CODE OF THE NATION CARRIES A
+# VALUE, region_drift.py's roster-stability rule applied to a rate rather than to a
+# level, and the rates are AVERAGED over it: a crude rate is noisy year to year and the
+# 2020-2021 COVID deaths would otherwise date-stamp the field. 2012 is the first year
+# this exact request returns values everywhere it ever will; 2025 is incomplete
+# (published so far for only some codes), so every nation's window ends at 2024.
+#
+# Two findings the window sweep recorded and the code below encodes. Britain: eleven of
+# its twelve NUTS 1 codes carry rates 2012-2018 (London +0.79 %/yr down to the North
+# East's -0.07), but Scotland -- UKM -- publishes none at ANY year, and a differential
+# mixing measured and invented rates invents flows toward and away from Scotland no
+# measurement supports, so Britain carries 0.0 across ALL its regions. That is the
+# same call V2.5 made for British regional GDP, extended: Britain differs by employers
+# (V2.6a) and not by biology. The Netherlands: NL31/NL33 vanish from THIS series at
+# 2023, one year before pjangrp3's re-coding to NL35/NL36, so the Dutch window stops
+# at 2022 -- each series gets its own vintage ruling rather than inheriting another's.
+NATGROWRT_YEARS = list(range(2012, 2026))
+
+
+def load_natural_change(code_lists):
+    """{nid: {"window": (y0, y1) or None, "rates": {code: pct per year, signed}}}.
+
+    The rate is the window-average of demo_r_gind3's NATGROWRT, converted from the
+    dataset's per-mille to per cent -- the register's `pop_growth_pct` convention.
+    """
+    by_year = {}
+    for year in NATGROWRT_YEARS:
+        path = SOURCES / "eurostat" / f"demo_r_gind3_NATGROWRT_{year}.json"
+        if not path.exists():
+            sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        values = data.get("value") or {}
+        if not values:
+            continue
+        inverse = {v: k for k, v in data["dimension"]["geo"]["category"]["index"].items()}
+        by_year[year] = {inverse[int(k)]: v for k, v in values.items()}
+
+    years = sorted(by_year)
+    out = {}
+    for nid, codes in code_lists.items():
+        good = [y for y in years if all(c in by_year[y] for c in codes)]
+        window, run = None, []
+        for y in good:
+            run = run + [y] if run and y == run[-1] + 1 else [y]
+            if window is None or len(run) > window[1] - window[0] + 1:
+                window = (run[0], run[-1])
+        if window is None:
+            # Britain's dataset boundary, encoded rather than special-cased by nation:
+            # the rule is that NO window means NO field, and Britain is the only nation
+            # it can fire on -- a hole in any other nation is a broken download, so it
+            # exits loudly instead of quietly shipping zeros.
+            if nid == "GBR":
+                out[nid] = {"window": None,
+                            "rates": {c: 0.0 for c in codes}}
+                continue
+            missing = [c for c in codes
+                       if not any(c in by_year[y] for y in years)]
+            sys.exit(f"{nid}: no year carries every register code"
+                     f"{f' (never published: {missing})' if missing else ''}")
+        y0, y1 = window
+        span = list(range(y0, y1 + 1))
+        out[nid] = {
+            "window": window,
+            "rates": {c: round(sum(by_year[y][c] for y in span) / len(span) / 10.0, 3)
+                      for c in codes},
+        }
+    return out
+
+
 def econ_figure(table, code, fallback=None):
     """table[code], or its 2024 sibling's value, or fallback."""
     if code in table:
@@ -1419,6 +1496,8 @@ def build_regions():
     gdp = load_region_gdp()
     unemployment = load_region_unemployment()
     mixes = load_region_sector_mix()
+    natural = load_natural_change(
+        {nid: [r["id"] for r in index[nid]["kept"]] for nid in NATIONS})
 
     files = {}
     for nid in NATIONS:
@@ -1489,6 +1568,7 @@ def build_regions():
                 "gdp_share": region_gdp_share,
                 "unemployment_rel": region_rel,
                 "sector_mix": region_mix,
+                "natural_change_pct": natural[nid]["rates"][code],
                 "cities": cities,
             })
 
@@ -1505,10 +1585,11 @@ def build_regions():
                 for r in regions:
                     r["unemployment_rel"] = round(r["unemployment_rel"] / mean, 6)
 
+        nat_window = natural[nid]["window"]
         files[nid] = {
             "_source": ("Eurostat demo_r_pjangrp3 NUTS %d (%d); "
                         "GISCO NUTS_RG_10M_%d; GeoNames cities15000; "
-                        "%s%s"
+                        "%s%s%s"
                         % (entry["level"], entry["year"], REGION_NUTS_VINTAGE,
                            ("population proxy -- no UK regional GDP, unemployment or GVA "
                             "exists in Eurostat and none was authored, so gdp_share is the "
@@ -1519,7 +1600,15 @@ def build_regions():
                             % REGION_ECON_YEAR),
                            ("; branch GVA is absent for the country, so every region "
                             "carries the nation's own World Bank sector shares"
-                            if national_gva_mix is None and not proxy else ""))),
+                            if national_gva_mix is None and not proxy else ""),
+                           ("; natural change from demo_r_gind3 NATGROWRT, window-averaged "
+                            "%d-%d" % nat_window
+                            if nat_window else
+                            "; natural change is 0.0 for every region -- demo_r_gind3 "
+                            "carries NATGROWRT for eleven of the twelve UK codes "
+                            "(2012-2018) but Scotland (UKM) publishes none at any year, "
+                            "and a differential mixing measured and invented rates "
+                            "invents flows"))),
             "_year": entry["year"],
             "_note": ("Generated by tools/import_data.py -- every field here is "
                       "dataset-derived and a re-import overwrites the file whole. "
@@ -1530,8 +1619,12 @@ def build_regions():
                       "is of the NATION's GDP and its residual is extra-regio; "
                       "`unemployment_rel` is the region's rate over the nation's, "
                       "normalised so the population-weighted mean is exactly 1.0; "
-                      "`sector_mix` sums to exactly 1.0. See "
-                      "docs/geography-model.md and docs/region-economy-model.md."),
+                      "`sector_mix` sums to exactly 1.0; `natural_change_pct` is the "
+                      "region's crude rate of births minus deaths, per cent per year, "
+                      "signed, window-averaged over the years named in _source -- the "
+                      "mean over live shares is taken in the sim, not here. See "
+                      "docs/geography-model.md, docs/region-economy-model.md and "
+                      "docs/natural-change-model.md."),
             "regions": regions,
         }
     return files, index, counts
