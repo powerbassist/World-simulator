@@ -332,6 +332,27 @@ func _fill_sectors(ns) -> void:
 			PanelKit.line(_sectors, "Regions: %s produces x%.2f the national output per head, %s x%.2f." % [
 				richest, hi, poorest, lo,
 			])
+		# V2.7. Position, on the same x-scale as the line above, and never silent
+		# for a different reason than it: the accessibility spread is non-zero from
+		# month 1 in all ten, so this line names the quantity itself rather than a
+		# stance that would hide at zero.
+		var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
+		var a_lo := INF
+		var a_hi := -INF
+		var best_connected := ""
+		var worst_connected := ""
+		for region in regions:
+			var v: float = float(access.get(region.id, 1.0))
+			if v < a_lo:
+				a_lo = v
+				worst_connected = region.region_name
+			if v > a_hi:
+				a_hi = v
+				best_connected = region.region_name
+		if a_hi > 0.0 and best_connected != "":
+			PanelKit.line(_sectors, "Reach: %s sits x%.2f the national market, %s x%.2f." % [
+				best_connected, a_hi, worst_connected, a_lo,
+			])
 
 
 # --- small builders ---------------------------------------------------------

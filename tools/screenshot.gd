@@ -247,6 +247,11 @@ var _city := false
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
 
+## V2.7, the twenty-sixth flag: ten years so the network term has moved the
+## shares the accessibility column reads, the Region panel open on the league
+## table where the new column lives.
+var _network := false
+
 ## V2.6a. `--migrate` is taken (V1.5b's migration LAW) and `--diverge` is taken
 ## (V2.5's region divergence), so this is `--move`. Ten years of a live
 ## MIGRATION_RATE moves the same quantity `--diverge` measures at a level below
@@ -359,6 +364,8 @@ func _init() -> void:
 			_city = true
 		elif args[i] == "--diverge":
 			_diverge = true
+		elif args[i] == "--network":
+			_network = true
 		elif args[i] == "--site":
 			_site = true
 		elif args[i] == "--move":
@@ -464,6 +471,8 @@ func _apply_view() -> void:
 		_open_the_partition()
 	if _diverge:
 		_let_the_regions_diverge()
+	if _network:
+		_show_the_network()
 	if _move:
 		_let_the_people_move()
 	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
@@ -1667,6 +1676,17 @@ func _open_the_partition() -> void:
 func _let_the_regions_diverge() -> void:
 	_tick_months(120)
 	_main._windows.open("region")
+
+
+## V2.7, the twenty-sixth flag. Ten years through the real clock so the network
+## term has moved the shares the accessibility index reads, then the Region panel
+## scrolled to the LEAGUE TABLE -- V1.6e's correction has a direction per flag,
+## and the claim this frame exists to check is the eighth column, which is in the
+## table and not in the partition above it.
+func _show_the_network() -> void:
+	_tick_months(120)
+	_main._windows.open("region")
+	_main._region_panel.scroll_to_bottom()
 
 
 ## V2.6a. Ten years through the real clock -- _tick_months() drives
