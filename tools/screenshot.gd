@@ -1774,17 +1774,20 @@ func _place_the_plants() -> void:
 			solar = a
 		if a.id == "order_gas_ccgt":
 			gas = a
-	# The two largest regions' own principal cities -- a glyph a reader recognises
-	# rather than an invented lon/lat.
+	# Real register coordinates, but deliberately NOT each region's principal
+	# city: at the France fit the first screenshot pass buried the filled glyph
+	# under Paris's own 9.6px city dot, and a frame whose claim is the GLYPH
+	# cannot stage it where a bigger glyph already lives. Each region's LAST
+	# named city is a real place the register vouches for and a clear canvas.
 	var ranked: Array = loader.regions.get(ns.id, []).duplicate()
 	var home = ranked[0] if ranked.size() > 0 else null
 	var away = ranked[1] if ranked.size() > 1 else null
 	var home_pt := Vector2(2.3522, 48.8566)
 	var away_pt := Vector2(4.35, 43.30)
 	if home != null and home.cities.size() > 0:
-		home_pt = home.cities[0].lonlat
+		home_pt = home.cities[home.cities.size() - 1].lonlat
 	if away != null and away.cities.size() > 0:
-		away_pt = away.cities[0].lonlat
+		away_pt = away.cities[away.cities.size() - 1].lonlat
 	if solar != null and home != null:
 		Energy.execute(state, ns, loader, loader.energy_actions, solar,
 			home_pt, String(home.id), "", access, weights)
@@ -1799,6 +1802,10 @@ func _place_the_plants() -> void:
 	view.center_on_lonlat(centre.x, centre.y)
 	view.zoom_by(6.0, view.size / 2.0)
 	view.begin_placement()
+	# The reticle draws at the cursor, and a batch capture cannot control where
+	# the OS left it -- so bring the cursor to the frame's centre and let the
+	# mode's own cue land where the reader is looking.
+	view.warp_mouse(view.size * 0.5)
 
 
 ## V2.6a. Ten years through the real clock -- _tick_months() drives

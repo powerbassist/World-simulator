@@ -568,5 +568,9 @@ static func snapshot(state) -> Dictionary:
 		# the Campaign panel, which has the NationState, and a second key here would be a
 		# snapshot entry nothing reads.
 		"campaign_bill_pct_gdp": ns.campaign_bill_pct_gdp,
+		# V2.8, on the snapshot for campaign_bill_pct_gdp's reason one line up: the
+		# panel compares a PROJECTED month against the current one and a projection
+		# has no NationState to read the bill from.
+		"energy_bill_pct_gdp": ns.energy_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}
