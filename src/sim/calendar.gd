@@ -379,11 +379,15 @@ static func fixed_dates(state) -> Array:
 	if typeof(pending) == TYPE_DICTIONARY and not pending.is_empty():
 		out.append(_fixed_in(
 			state, K.FIXED_COUNCIL_VOTE, int(pending.get("months_left", 0)),
-			# "proposal_id" is the key Bloc._tick_council() actually writes; there is
-			# no "id" on that dictionary, so this read returned "" every month and the
-			# diary said "Council votes" without ever naming the proposal. The
-			# result.get("ok")-vs-applied class again.
-			String(pending.get("proposal_id", ""))
+			# The authored HUMAN label, not "proposal_id". Bloc._tick_council() writes
+			# both, and this read was `.get("id", "")` -- a key that dictionary has
+			# never had -- so the diary said "Council votes" and never which proposal.
+			# Taking `proposal_id` fixed the emptiness and printed "stability_pact" at
+			# a player, because calendar_panel.gd has no lookup branch for a council
+			# vote the way it does for a cooldown, a project, a referendum and an
+			# event. That is V1.6f's `project_name` finding in the same panel, so the
+			# fix is the same one: the reference IS the name.
+			String(pending.get("name", ""))
 		))
 
 	if ns.dissolution_lockout_remaining > 0:

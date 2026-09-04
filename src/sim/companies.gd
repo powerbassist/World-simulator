@@ -263,6 +263,24 @@ static func _tick_shares(ns, loader) -> void:
 		for company in firms:
 			deltas[company.id] = 0.0
 
+		# TWO PASSES, because one pass cannot hold both properties this function needs.
+		#
+		# Every want is measured against `before` alone, which is what keeps the result
+		# independent of the order firms are walked in -- the property the docstring
+		# above states and the reason the snapshot exists at all. Reading a running
+		# position instead (the V2.8 review's first attempt at the floor bug) fixed the
+		# floor and silently bought it with that property: whoever moved first drained
+		# the supply and whoever moved second could find nothing left.
+		#
+		# The floor is held by SCALING instead. A rival C ends below its floor exactly
+		# when sum_i(gain_i / available_i) exceeds 1, because C gives up
+		# supply_C * gain_i / available_i to each gainer i and supply_C is the whole of
+		# what it has above the floor. So the wants are computed, that ratio is taken,
+		# and if it exceeds 1 every want is scaled by its reciprocal. One subsidised
+		# firm is the ratio <= 1 case and is untouched, which is every game so far.
+		var wants := {}
+		var pools := {}
+		var claim := 0.0
 		for company in firms:
 			var intensity := subsidy_of(ns, company.id)
 			if intensity <= 0.0:
@@ -278,42 +296,39 @@ static func _tick_shares(ns, loader) -> void:
 			# a flat floor three different values of SHARE_SHIFT_PER_MONTH produced
 			# the identical five-year outcome, because the floor and not the rate was
 			# setting where the share ended up.
-			# MEASURED ON THE RUNNING POSITION (before + deltas), not on `before`
-			# alone. Two firms in one sector can both carry a subsidy -- nothing in
-			# data/company-actions/subsidy.json forbids it -- and read against the
-			# start-of-month snapshot each of them saw the rivals' full supply, so
-			# one rival could be drawn from twice in a month and end up BELOW the
-			# floor. Conservation held either way; the floor did not, and
-			# companies_constants.gd records that a floor which does not hold is
-			# what made three values of SHARE_SHIFT_PER_MONTH indistinguishable.
 			var available := 0.0
 			for rival in firms:
 				if rival.id == company.id:
 					continue
 				available += maxf(
-					float(before[rival.id]) + float(deltas[rival.id])
-					- K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
+					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
 				)
 			if available <= 0.0:
 				continue
 
-			var gain: float = minf(
+			var want: float = minf(
 				K.SHARE_SHIFT_PER_MONTH * intensity,
-				minf(available, maxf(
-					K.SHARE_MAX - float(before[company.id]) - float(deltas[company.id]),
-					0.0
-				))
+				minf(available, maxf(K.SHARE_MAX - float(before[company.id]), 0.0))
 			)
-			if gain <= 0.0:
+			if want <= 0.0:
 				continue
+			wants[company.id] = want
+			pools[company.id] = available
+			claim += want / available
 
+		var scale: float = 1.0 / claim if claim > 1.0 else 1.0
+
+		for company in firms:
+			if not wants.has(company.id):
+				continue
+			var gain: float = float(wants[company.id]) * scale
+			var available: float = float(pools[company.id])
 			deltas[company.id] = float(deltas[company.id]) + gain
 			for rival in firms:
 				if rival.id == company.id:
 					continue
 				var supply: float = maxf(
-					float(before[rival.id]) + float(deltas[rival.id])
-					- K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
+					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
 				)
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 

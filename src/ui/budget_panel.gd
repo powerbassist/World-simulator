@@ -166,9 +166,13 @@ signal committed(before: Dictionary)
 var _state
 var _loader
 var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
-## True once the player has moved a slider, so mark_dirty() stops re-syncing
-## _pending from live state and their half-finished budget survives a month tick.
-var _edited := false
+## The lever keys the player has actually moved. PER KEY rather than one boolean:
+## a boolean latches -- nudge one slider, close the window without committing, and
+## every OTHER lever stopped tracking live state for the rest of the run, which is
+## docs/tax-model.md section 11's bug surviving in the fix for it. Keyed, an
+## untouched lever re-syncs while the player's own edit is never overwritten.
+## Cleared by _on_revert(), which both the Revert button and a commit go through.
+var _edited_keys := {}
 var _sliders := {}
 var _lever_values := {}
 ## key -> [now text, proposed text] for the CURRENT refresh, cleared and refilled
@@ -338,6 +342,10 @@ func setup(state, loader) -> void:
 
 func _on_revert() -> void:
 	var ns = _state.player()
+	# Guarded because this is on the generic mark_all_dirty() sweep now, not just on
+	# setup() and two button presses -- every other panel guards the same way.
+	if ns == null:
+		return
 	_pending = {
 		"tax_rates_pct": ns.tax_rates_pct.duplicate(true),
 		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
@@ -348,7 +356,7 @@ func _on_revert() -> void:
 		slider.set_block_signals(true)
 		slider.value = _pending_value(key)
 		slider.set_block_signals(false)
-	_edited = false
+	_edited_keys.clear()
 	_dirty = true
 
 
@@ -366,10 +374,8 @@ func _on_lever_changed(value: float, key: String) -> void:
 		_pending["tax_rates_pct"][key] = value
 	else:
 		_pending["spending_pct_gdp"][key] = value
-	# The player has touched a slider, so _pending is now THEIRS and mark_dirty()
-	# must stop re-syncing it from under them. Cleared by _on_revert(), which both
-	# the Revert button and a commit go through.
-	_edited = true
+	# This lever is now the player's; mark_dirty() must stop re-syncing THIS one.
+	_edited_keys[key] = true
 	_dirty = true
 
 
@@ -398,13 +404,42 @@ func _process(_delta: float) -> void:
 ## or a commit, so a rate moved by anything else -- Legislature.apply_effects(), which
 ## is also the applier for event choices and summit choices -- left this panel
 ## advertising the pre-change rates as the player's own proposal, and pressing Commit
-## wrote them back and silently undid the law. The `_edited` gate is what section 11
-## was waiting on: a half-finished edit is the player's and is never overwritten, and
-## an untouched panel simply tracks the state.
+## wrote them back and silently undid the law. The PER-LEVER gate is what section 11
+## was waiting on: a lever the player has moved is theirs and is never overwritten,
+## and every lever they have not simply tracks the state.
 func mark_dirty() -> void:
-	if not _edited and _state != null:
-		_on_revert()
+	_resync_untouched()
 	_dirty = true
+
+
+## Pull every lever the player has NOT moved back into line with live state, and
+## leave the ones they have alone. This is what stops a law, an event choice or a
+## summit choice -- all three go through Legislature.apply_effects() -- from leaving
+## this panel advertising pre-change rates as the player's own proposal, which
+## pressing Commit would then write back and silently undo.
+func _resync_untouched() -> void:
+	if _state == null:
+		return
+	var ns = _state.player()
+	if ns == null or _sliders.is_empty():
+		return
+	for key in _lever_keys():
+		if _edited_keys.has(key):
+			continue
+		var live: float = 0.0
+		if key == PROGRESSIVITY_KEY:
+			live = float(ns.tax_progressivity)
+			_pending[PROGRESSIVITY_KEY] = live
+		elif C.TAX_KEYS.has(key):
+			live = float(ns.tax_rates_pct.get(key, 0.0))
+			_pending["tax_rates_pct"][key] = live
+		else:
+			live = float(ns.spending_pct_gdp.get(key, 0.0))
+			_pending["spending_pct_gdp"][key] = live
+		var slider: HSlider = _sliders[key]
+		slider.set_block_signals(true)
+		slider.value = live
+		slider.set_block_signals(false)
 
 
 ## One decimal and a percent sign is right for a rate running to seventy and wrong for
