@@ -58,6 +58,7 @@ extends RefCounted
 const K = preload("res://src/sim/companies_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 
 ## Seeds the live register from content: every firm starts at its authored share
@@ -277,19 +278,31 @@ static func _tick_shares(ns, loader) -> void:
 			# a flat floor three different values of SHARE_SHIFT_PER_MONTH produced
 			# the identical five-year outcome, because the floor and not the rate was
 			# setting where the share ended up.
+			# MEASURED ON THE RUNNING POSITION (before + deltas), not on `before`
+			# alone. Two firms in one sector can both carry a subsidy -- nothing in
+			# data/company-actions/subsidy.json forbids it -- and read against the
+			# start-of-month snapshot each of them saw the rivals' full supply, so
+			# one rival could be drawn from twice in a month and end up BELOW the
+			# floor. Conservation held either way; the floor did not, and
+			# companies_constants.gd records that a floor which does not hold is
+			# what made three values of SHARE_SHIFT_PER_MONTH indistinguishable.
 			var available := 0.0
 			for rival in firms:
 				if rival.id == company.id:
 					continue
 				available += maxf(
-					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
+					float(before[rival.id]) + float(deltas[rival.id])
+					- K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
 				)
 			if available <= 0.0:
 				continue
 
 			var gain: float = minf(
 				K.SHARE_SHIFT_PER_MONTH * intensity,
-				minf(available, maxf(K.SHARE_MAX - float(before[company.id]), 0.0))
+				minf(available, maxf(
+					K.SHARE_MAX - float(before[company.id]) - float(deltas[company.id]),
+					0.0
+				))
 			)
 			if gain <= 0.0:
 				continue
@@ -299,7 +312,8 @@ static func _tick_shares(ns, loader) -> void:
 				if rival.id == company.id:
 					continue
 				var supply: float = maxf(
-					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
+					float(before[rival.id]) + float(deltas[rival.id])
+					- K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
 				)
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
@@ -573,9 +587,15 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	ns.debt_eur_bn += price
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
-		ns.bloc_offset[bloc_id] = (
+		# CLAMPED, like every other writer of this register (legislature.gd,
+		# diplomacy.gd, government.gd, pledges.gd, referendum.gd). Written bare until
+		# the V2.8 review, so an offset already at the bound could be pushed past it --
+		# and _op_legal()'s own comment reasons about the exploit it fixed in terms of
+		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
+		ns.bloc_offset[bloc_id] = clampf(
 			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id])
+			+ float(action.effects["bloc_offset"][bloc_id]),
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 
 	var result := {

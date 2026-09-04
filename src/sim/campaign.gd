@@ -141,6 +141,7 @@ const ElectionK = preload("res://src/sim/election_constants.gd")
 ## need tests/test_campaign.gd's leaf check widened past `_constants.gd` preloads;
 ## eight lines of haversine is the cheaper contract to keep.)
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 
 ## Seeds the live register: nothing in the field and nobody mobilised.
@@ -669,9 +670,15 @@ static func execute(state, ns, all_actions: Array, action, region_id := "") -> D
 			ns.campaign_sites.erase(eid)
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
-		ns.bloc_offset[bloc_id] = (
+		# CLAMPED, like every other writer of this register (legislature.gd,
+		# diplomacy.gd, government.gd, pledges.gd, referendum.gd). Written bare until
+		# the V2.8 review, so an offset already at the bound could be pushed past it --
+		# and _op_legal()'s own comment reasons about the exploit it fixed in terms of
+		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
+		ns.bloc_offset[bloc_id] = clampf(
 			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id])
+			+ float(action.effects["bloc_offset"][bloc_id]),
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 
 	var result := {

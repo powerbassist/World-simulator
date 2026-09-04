@@ -393,6 +393,7 @@ func _ready() -> void:
 	_energy_panel.hide_close_button()
 	_energy_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
+		_update_top_bar()
 	)
 	# V2.8. The panel says WHICH action is armed; main.gd holds the map and the
 	# loader and does the resolving. The panel never learns that a map exists,
@@ -447,6 +448,11 @@ func _ready() -> void:
 	# out on applies nothing, which is the ephemeris working, not a bug.
 	_summit_panel.concluded.connect(func(_summit_id, choice_label):
 		_resolve_summit(choice_label)
+		# The scene is over, so the window goes with it. Nothing closed "summit"
+		# until the V2.8 review -- the id appeared only at register() and open() --
+		# so a played-out summit left a blank plate on screen as its only signal
+		# that anything had happened.
+		_windows.close("summit")
 	)
 
 	_build_action_bar()
@@ -792,7 +798,14 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		if region.id == region_id:
 			mine = true
 	if not mine:
-		_hud.message_stack.push_card("That is not in %s." % ns.nation_name)
+		# push(title, body) -- MessageStack has never had a push_card(), so until the
+		# V2.8 review this line raised instead of speaking, and the refusal the
+		# comment above calls "loud rather than silent" reached the player as a
+		# console error. The order is already consumed by here (the arm was cleared
+		# above and map_view ended placement), so with nothing on screen the player
+		# had to re-arm without being told why.
+		_hud.message_stack.push(
+			"Not your ground", "That point is not in %s." % ns.nation_name)
 		return
 
 	var access: Dictionary = Regions.accessibility_for(
@@ -807,10 +820,20 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 			action = a
 	if action == null:
 		return
-	Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
+	# The snapshot is taken BEFORE execute(), which is what a decision delta is.
+	# Ordering a station is a player command with a multi-year budget line, so it
+	# earns the same U4 entry a subsidy, a law and a project each get -- it had
+	# neither this nor the top-bar refresh until the V2.8 review, so the one energy
+	# verb the player reaches through the MAP was missing from Overview's recent
+	# decisions while the panel's own decommission route was not.
+	var before := Budget.snapshot(_state)
+	var result := Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
 		Vector2(lon, lat), region_id, "", access, pop_weights)
+	if bool(result.get("applied", false)):
+		_queue_effect(action.action_name, before)
 	_windows.mark_all_dirty()
 	_map_view.queue_redraw()
+	_update_top_bar()
 
 
 func _on_month_elapsed(year: int, month: int) -> void:
@@ -1458,21 +1481,30 @@ func _on_load_requested(slot: String) -> void:
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)
-	_overview_panel.setup(_state, _loader)
-	_economy_panel.setup(_state, _loader)
-	_budget_panel.setup(_state, _loader)
-	_polling_panel.setup(_state)
-	_election_panel.setup(_state, _loader)
-	_law_panel.setup(_state, _loader)
-	_nation_panel.setup(_state, _loader)
-	_government_panel.setup(_state, _loader)
-	_bloc_panel.setup(_state, _loader)
-	_people_panel.setup(_state, _loader)
-	_companies_panel.setup(_state, _loader)
-	_projects_panel.setup(_state, _loader)
-	_campaign_panel.setup(_state, _loader)
 
-	_calendar_panel.setup(_state, _loader)
+	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
+	# A panel stores `state` in its own setup(), so one omitted here keeps a
+	# reference to the throwaway game built at _ready() -- an object nothing ticks
+	# again. Until the V2.8 review this WAS a hand-written list, and it had drifted
+	# by five: city, energy, events, region and summit. The events panel is the one
+	# that made it more than a stale readout -- events_panel.gd calls
+	# Events.choose(_state, ...), so answering a crisis after a load wrote the
+	# decision into the discarded state and the real event defaulted at its
+	# deadline. mark_all_dirty()'s own comment predicted exactly this, about
+	# exactly this kind of list, which is why the fix is the same one: derive it,
+	# so the omission is structurally impossible rather than remembered.
+	for panel in _windows.panels():
+		if panel.has_method("setup"):
+			panel.setup(_state, _loader)
+
+	# Not registered surfaces, so not reached by the loop above: the election
+	# screen is opened directly rather than through a window, and the ribbon and
+	# the portrait card are HUD furniture. Each stores `state` in its own setup()
+	# and so needs the same rebinding -- the portrait card's approval figure and
+	# the ribbon's month title were both frozen at the pre-load game's values.
+	_election_panel.setup(_state, _loader)
+	_hud.ribbon.setup(_state, _loader)
+	_hud.portrait_card.setup(_state, _loader)
 	# The mirror is re-established here rather than waiting for the first day to
 	# elapse, because a loaded game opens PAUSED: without this the diary would
 	# refuse a booking for today as "that date has passed" until the player

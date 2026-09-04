@@ -30,6 +30,7 @@ const Credit = preload("res://src/sim/credit.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const Energy = preload("res://src/sim/energy.gd")
 
 
@@ -406,6 +407,20 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
 		Companies.tick_month(sim, loader)
+		# In main.gd's slot -- between Companies and Investment -- and absent
+		# altogether until the V2.8 review, which is the one system here that had
+		# neither a paragraph justifying its presence nor Media's paragraph
+		# justifying its absence. It is not inert: this is the only writer of
+		# region_pop_share/city_pop_share, and since V2.6c it carries the natural
+		# change flow too. Those shares are read inside this very loop, by
+		# Unrest._tick_nation() through site_report() -> Siting.site() and
+		# Regions.gdp_per_head_index(), which prices act_impulse() -> the sixth
+		# addend of economy.gd's growth sum -> GDP, revenue and deficit_pct_gdp.
+		# Held frozen, a projection could site a strike in the wrong region
+		# entirely -- Germany's demonstration turns on a +0.4 % margin -- so the
+		# one surface that promises "this is what will happen" disagreed with what
+		# happened. V1.3b's repair, made an eighth time.
+		Migration.tick_month(sim, loader)
 		# In main.gd's slot, and required for the reason the five above it are: a
 		# projection that held the investment register frozen would report a
 		# programme committed this month as costing nothing AND would hold the

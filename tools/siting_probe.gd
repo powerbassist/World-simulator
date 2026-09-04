@@ -26,7 +26,6 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Siting = preload("res://src/sim/siting.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const K = preload("res://src/sim/unrest_constants.gd")
-const SitingK = preload("res://src/sim/siting_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
 
 const START_YEAR := 2026

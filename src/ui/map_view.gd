@@ -148,11 +148,14 @@ var _hovered_id := ""
 var _markers: Array = []
 var _hovered_project := ""
 
-## V2.2b. Built ONCE in setup() rather than per draw, the deliberate opposite of
-## _markers: the register is static content, and the only live quantity under a
-## glyph is the population its radius ranks on -- a decade of demographic drift
-## moves no city past another, so rebuilding per draw would buy nothing. Ascending
-## population, so the largest draws last and wins an overlap; see MapCities.
+## V2.2b, CORRECTED at V2.6b1: rebuilt on the MONTHLY hook by refresh_cities(),
+## not once in setup(). This paragraph used to argue the register was static
+## content, which was true when it was written and false from V2.6a, when a city's
+## population became two live shares times a live head count -- so the crosses
+## never grew or shrank for a whole session. Not per draw either: this walks 581
+## cities and derives a site per nation, and V2.3 already paid for putting that
+## kind of work on a draw path. Ascending population, so the largest draws last
+## and wins an overlap; see MapCities and refresh_cities() below.
 var _cities: Array = []
 var _hovered_city := ""
 
@@ -614,7 +617,15 @@ func _gui_input(event: InputEvent) -> void:
 								var id := nation_at_screen_point(event.position)
 								if id != "":
 									nation_clicked.emit(id)
-					_dragging = false
+				# CLEARED UNCONDITIONALLY, outside the click branch above --
+				# window_frame.gd's own release does the same. Nested one tab deeper
+				# until the V2.8 review, it ran only when the press had been short
+				# enough to count as a click, so a real pan left _dragging true on
+				# release and the motion branch below kept calling pan_by() with no
+				# button held. The map followed the free cursor until the next press,
+				# and nation_hovered stopped emitting with it, freezing the legend,
+				# _hovered_project and _hovered_city at their drag-start values.
+				_dragging = false
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			zoom_by(1.15, event.position)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:

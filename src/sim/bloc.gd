@@ -472,7 +472,13 @@ static func _read_field(ns, field: String) -> float:
 		"spending_infrastructure": return float(ns.spending_pct_gdp.get("infrastructure", 0.0))
 		"tax_corporate": return float(ns.tax_rates_pct.get("corporate", 0.0))
 		"tax_vat": return float(ns.tax_rates_pct.get("vat", 0.0))
-		_: return 0.0
+		_:
+			# Loud, like every sibling _read_field(). This was the one that returned
+			# 0.0 in silence while its own comment claimed it behaved like the others
+			# -- a mistyped rule field then read as a nation scoring zero on it, which
+			# for a deficit rule is perfect compliance.
+			push_error("bloc: unknown rule field '%s'" % field)
+			return 0.0
 
 
 # --- queries, for the UI and the tests -------------------------------------------

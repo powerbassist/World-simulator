@@ -480,10 +480,15 @@ static func act_impulse(unrest: float, output_index: float) -> float:
 static func _tick_nation(state, ns) -> void:
 	ns.unrest_pct = unrest_step(float(ns.unrest_pct), unrest_target(ns))
 
-	# ONE site read per nation-month, shared by both prices. The opinion load is a
-	# STOCK read and fires every month; the impulse is an ACT read and fires on a
-	# cooldown -- so computing the site here rather than inside the act branch is
-	# what guarantees the two price the same place in the month they coincide.
+	# ONE site read per nation-month. This used to justify itself as shared by TWO
+	# prices -- a stock read every month and an act read on a cooldown, priced
+	# against one place in the month they coincide -- and that arrangement ended at
+	# V2.6b1, when the siting visibility price was measured, found to need a third
+	# of the whole unrest channel to be readable, and deleted. The opinion load
+	# below no longer reads the report; only the act branch does. Kept here rather
+	# than moved into that branch because the report is also what the readout names,
+	# and one derivation per nation-month is what stops the panel and the price
+	# disagreeing about where the demonstration is.
 	# V2.7. One index per nation-month; the argument it feeds is required, not
 	# defaulted, so a caller that forgets it fails to parse rather than silently
 	# running the pre-network model.

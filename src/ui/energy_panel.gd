@@ -44,6 +44,7 @@ var _primary: Control
 ## The fleet section's own container, kept so a map click on a glyph can bring it
 ## above the fold -- the project marker's route into Public Works, one pass over.
 var _fleet_group: Control = null
+var _scroll: ScrollContainer = null
 
 
 func _ready() -> void:
@@ -62,10 +63,13 @@ func _ready() -> void:
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	# Kept rather than discarded: ensure_control_visible() is a ScrollContainer
+	# method, and scroll_to_fleet() below is the map's own route into this panel.
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(_scroll)
+	var scroll := _scroll
 
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -287,8 +291,15 @@ static func plant_label(ns, plant_id: String, loader) -> String:
 
 ## The map's route: a clicked glyph brings the fleet section into view.
 func scroll_to_fleet() -> void:
+	# ensure_control_visible() belongs to the SCROLL CONTAINER, not to the control
+	# being revealed. Called as _fleet_group.ensure_control_on_screen() until the
+	# V2.8 review -- a method that exists on nothing in Godot 4 -- so every click on
+	# a plant glyph raised, and the window opened at the top with the fleet section,
+	# the entire point of that route, never brought into view.
+	if _scroll == null or not is_instance_valid(_scroll):
+		return
 	if _fleet_group != null and is_instance_valid(_fleet_group):
-		_fleet_group.ensure_control_on_screen(_fleet_group)
+		_scroll.ensure_control_visible(_fleet_group)
 
 
 func region_name(ns, region_id: String) -> String:

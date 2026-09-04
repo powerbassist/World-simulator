@@ -24,6 +24,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/energy_constants.gd")
 const Siting = preload("res://src/sim/siting.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 
 
 ## The nation's electricity consumption in TWh a year: the measured per-capita
@@ -346,9 +347,15 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 			ns.plants.erase(plant_id)
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
-		ns.bloc_offset[bloc_id] = (
+		# CLAMPED, like every other writer of this register (legislature.gd,
+		# diplomacy.gd, government.gd, pledges.gd, referendum.gd). Written bare until
+		# the V2.8 review, so an offset already at the bound could be pushed past it --
+		# and _op_legal()'s own comment reasons about the exploit it fixed in terms of
+		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
+		ns.bloc_offset[bloc_id] = clampf(
 			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id])
+			+ float(action.effects["bloc_offset"][bloc_id]),
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 
 	# THE LOCAL PRICE LANDS ON THE SAME REGISTER AS THE NATIONAL ONE and is charged
@@ -357,9 +364,20 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 	# where the second price is about WHERE rather than WHAT.
 	if opposition != 0.0:
 		for bloc_id in action.effects.get("bloc_offset", {}).keys():
-			ns.bloc_offset[bloc_id] = float(ns.bloc_offset.get(bloc_id, 0.0)) - opposition
+			ns.bloc_offset[bloc_id] = clampf(
+				float(ns.bloc_offset.get(bloc_id, 0.0)) - opposition,
+				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
+			)
 
+	# ALL THREE DERIVED READINGS, not just the bill. Recomputing one and leaving the
+	# other two to the next tick was the inconsistent case: import_dependency_pct is
+	# a live PRECONDITION field, so in the month a done fossil plant was
+	# decommissioned the mix had already changed while the gate still read the
+	# pre-decommission dependency -- enough to chain a second action the new mix no
+	# longer qualifies for. Same three writes tick_month() makes, in the same order.
 	ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
+	ns.import_dependency_pct = import_dependency_pct(ns, loader)
+	ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
 	var result := {
 		"action_id": action.id,
 		"action_name": action.action_name,
