@@ -72,3 +72,6 @@ Thumbs.db
 .zcode/
 .mimosa/
 docs/superpowers/
+# .v2c/plugin_root holds one absolute path into .zcode/ above, so it is the
+# same per-machine fact one directory over.
+.v2c/
