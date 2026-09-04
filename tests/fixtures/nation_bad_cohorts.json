@@ -59,6 +59,22 @@
     },
     "institutions": {
       "rule_of_law_score": 73.8
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.076637,
+        "nuclear": 0.688379,
+        "renewable": 0.234985
+      },
+      "import_dependency_pct": 47.128,
+      "kwh_per_capita": 6447.2,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
     }
   }
 }

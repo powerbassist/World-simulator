@@ -209,7 +209,7 @@ func _check_no_new_state() -> void:
 	# 30 is V2.6b2's, on the campaign-sited registers -- not on anything a summit
 	# carries. The pin below that nothing summit-shaped is serialised still stands;
 	# a bump FOR a summit surface is what this check exists to catch.
-	if GameState.SAVE_VERSION != 30:
+	if GameState.SAVE_VERSION != 31:
 		_fail("SAVE_VERSION moved for an ephemeral surface -- the bump is %d; if its recorded reason is a summit field, stop" % GameState.SAVE_VERSION)
 	var d: Dictionary = _state.to_dict()
 	if d.has("summits") or d.has("summit_history"):

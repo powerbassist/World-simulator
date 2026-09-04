@@ -44,6 +44,35 @@ Which open datasets seed the game's content, what each one is licensed under, an
 - **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **Re-checked at [[ROADMAP|V1.6d]] before that session planned a measured base share for capital gains or wealth, and the rejection stands with two more reasons.** Coverage is not the issue -- `GC.TAX.TOTL.GD.ZS`, `GC.TAX.YPKG.*` and `GC.TAX.GSRV.RV.ZS` all return 10 of 10 nations over 1990-2024 with 30-35 rows each. The scope problem above is confirmed to the digit (FRA 22.78 % of GDP, DEU 10.89, CHE 9.45); `GC.TAX.YPKG.*` bundles income, profits **and capital gains** into one bucket, which is exactly the split V1.6d exists to create; and `GC.TAX.PRPT.*` returns **no rows at all**, so there is no wealth series on this provider. V1.6d's two new `TAX_BASE_SHARE` entries are therefore authored model parameters, like the three that preceded them, and this file gains no download line.
 - **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
 
+#### V2.8 — energy
+
+Five indicators on the loop already running, `EG.IMP.CONS.ZS`, `EG.ELC.FOSL.ZS`,
+`EG.ELC.NUCL.ZS`, `EG.ELC.RNEW.ZS`, `EG.USE.ELEC.KH.PC`, **10 of 10 nations**.
+
+**Eurostat was probed first and is short in two nations by two different
+failures**, which is why this block does not come from the source every regional
+series since V2.2 came from: `nrg_ind_id` carries GBR values only to **2019** and
+**CHE is absent from the geo dimension entirely** (41 codes, no `CH`), and
+`nrg_bal_c` GEP reads `None` for GBR at 2022. Recorded so a later session does not
+re-probe it hoping for a regional energy series.
+
+- **`EG.ELC.RNEW.ZS` includes hydro.** Checked rather than assumed: CHE 67.9 against
+  a hydro share of 59.1, AUT 79.9 against 59.9. So the mix is three branches, and
+  `EG.ELC.HYRO.ZS` is deliberately not fetched — a sub-share of a branch already in
+  the partition is a key a later reader sums by mistake.
+- **`EG.ELC.PROD.KH` is discontinued**, 0 of 10 at every year. The denominator is
+  `EG.USE.ELEC.KH.PC` × live population instead, which reads France at ≈ 439 TWh
+  against a real ≈ 445 TWh of generation.
+- **Luxembourg's import dependency is 109.6 % and is not clamped.** It imports more
+  than it consumes and re-exports the difference.
+- **None of the five is complete at 2024**, so all five go through
+  `load_wb_indicator_nearest_year()` and each nation file records the year every
+  series came from in `imported.energy._years` — the dependency and the fossil
+  share read at 2023, the renewable share at 2021, the nuclear share at 2023–24,
+  per head at 2024. The three mix shares are normalised to sum to exactly 1.0, the
+  same treatment the value-added indicators above get, because raw they sum to
+  94–99 % (statistical difference and years that do not line up).
+
 ### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
 
 - **`ISO_A3` is `-99` for France.** The import script matches on **`ADM0_A3`** instead, which is populated correctly for all ten nations in scope.
@@ -196,6 +225,12 @@ done
 # Complete for all ten over the standard window, so it needs no nearest-year fallback.
 curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
   "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=1000&source=3"
+
+# V2.8. Energy, five series on the standard window -- but every one through
+# load_wb_indicator_nearest_year(), because none of the five is complete at 2024.
+for I in EG.IMP.CONS.ZS EG.ELC.FOSL.ZS EG.ELC.NUCL.ZS EG.ELC.RNEW.ZS EG.USE.ELEC.KH.PC; do
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+done
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing

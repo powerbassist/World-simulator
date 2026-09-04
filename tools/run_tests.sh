@@ -85,6 +85,9 @@ tests=(
   # field's own import contract.
   tests/test_natural_change.gd
   tests/test_siting.gd
+  # V2.8: the mix is a partition that reads exactly its content with no plants,
+  # the dependency deviation is exactly 0.0, and the grid stays national.
+  tests/test_energy.gd
   tests/test_law_panel.gd
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd

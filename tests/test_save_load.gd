@@ -147,6 +147,8 @@ func _init() -> void:
 	_check_judiciary_fields(loader)
 	_check_geography_absences(loader)
 	_check_network_absences(loader)
+	_check_energy_bump(loader)
+	_check_energy_absences(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
@@ -732,8 +734,8 @@ func _run_bloc_roundtrip(loader) -> void:
 	):
 		_fail("dropping start_bloc_burden left the europe issue unchanged -- that half of the bump's premise is wrong")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21, V1.6d to 22, V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.3f adds two things a save carries and only ONE of them earns the bump. The
@@ -1295,8 +1297,8 @@ func _check_pledge_fields(loader) -> void:
 	# V1.3c's device, answered and re-armed. V1.7a left "the version is still 23" so
 	# V1.7b would have to come and say why it moves; it does not move, and the reason is
 	# in this function's header. V1.7c now has to come and say why.
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.6f raised it to 23, V1.7a argued it should STAY and V1.7b argued the same for `pledges` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.7c. FOUR added fields, THREE of which earn the bump to 25 and one of which is
@@ -2022,8 +2024,8 @@ func _run_person_rekey(loader) -> void:
 	if dict.has("people") or (dict["nations"]["FRA"] as Dictionary).has("cabinet_person"):
 		_fail("a save carries per-person state -- U6b's people are pure content, and a stored minister is the escalation its probe declared in advance")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.5b raised it to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.4a adds five serialised fields and ONE of them earns the bump. The other
@@ -2188,8 +2190,8 @@ func _run_regulation_roundtrip(loader) -> void:
 		if not EK.SECTOR_TREND.has(key):
 			_fail("regulation_burden is keyed by '%s', which is not a sector" % key)
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.4b argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.4c adds `state_share` to every register entry and a fourth cached price, and
@@ -2272,8 +2274,8 @@ func _run_ownership_roundtrip(loader) -> void:
 	if not is_equal_approx(derived.player().dividend_revenue_pct_gdp, reference.player().dividend_revenue_pct_gdp):
 		_fail("the dividend line did not come back on one tick, so it is not derived and would have earned the bump itself")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.4c argued it should STAY 15, V1.5a raised it to 16, V1.5b to 17, V1.5c to 18, V1.6a to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.5a. Three added fields and ONE bump, and as at V1.4a and V1.3g the split is
@@ -2590,8 +2592,8 @@ func _check_unrest_fields(loader) -> void:
 	if regained.player().framing_gain.is_empty():
 		_fail("framing_gain did not come back on one tick -- then it would earn a bump")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.5c raised it to 18, V1.5d deliberately left it there, V1.6a raised it to 19, V1.6b to 20, V1.6c to 21 V1.6d to 22 and V1.6f to 23 the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.6b. THREE of four fields earn the bump to 20 and they are asserted SEPARATELY,
@@ -2681,8 +2683,8 @@ func _check_inflation_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the inflation model is a first-order lag on a measured anchor and needs no memory of its own, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.6b raised it to 20 on three fields of four, V1.6c to 21 on one, V1.6d to 22 on three and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.6c. ONE field earns the bump to 21, and it is the smallest addition on this list
@@ -2839,8 +2841,8 @@ func _check_tax_fields(loader) -> void:
 	if demog_src.contains("gini_index ="):
 		_fail("src/sim/tax.gd assigns gini_index -- Demography.tick_month() is its single writer")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.6c raised it to 21, V1.6d to 22 on three fields and V1.6f to 23 on half of one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.6e. THE REGISTER EARNS NOTHING AND IS SERIALISED ANYWAY, and the two halves are
@@ -2919,8 +2921,8 @@ func _check_investment_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the trend shift is a derived read, so storing one is a model change that has to be argued" % pname)
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there and V1.6f is what moved it to 23 -- on its OWN register, not on this one the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 ## V1.6f. THE BUMP TO 23, AND IT IS EARNED BY HALF OF ONE FIELD -- which is V1.3g's
@@ -3046,8 +3048,8 @@ func _check_geography_absences(loader) -> void:
 	if typeof(fresh.get("unrest_acts", [])) != TYPE_ARRAY:
 		_fail("a save's unrest_acts is not an array")
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.1e raised it to 27 and V2.5 to 28, on `region_gdp_eur_bn`: national GDP is the sum of the regions now, so a save without the register has no economy at all rather than a quietly different one; V2.6a raised it to 29, on two live population shares -- national GDP already has no economy without a register, and now every city has no population without one either; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.1e raised it to 27 and V2.5 to 28, on `region_gdp_eur_bn`: national GDP is the sum of the regions now, so a save without the register has no economy at all rather than a quietly different one; V2.6a raised it to 29, on two live population shares -- national GDP already has no economy without a register, and now every city has no population without one either; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)
 
 
 
@@ -3070,8 +3072,8 @@ func _check_geography_absences(loader) -> void:
 ## edge whose cost the player moves -- this turns red and has to come and say why.
 ## That is the point of pinning an absence rather than writing a paragraph.
 func _check_network_absences(loader) -> void:
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V2.6b2 raised it to 30 on two campaign-sited registers and V2.7 argues it should STAY there: the graph is content on disk, the accessibility index is a pure read over shares V2.5 already serialises, and a project's site is derived from an authored coordinate. A further bump needs its own recorded reason" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V2.6b2 raised it to 30 on two campaign-sited registers and V2.7 argues it should STAY there: the graph is content on disk, the accessibility index is a pure read over shares V2.5 already serialises, and a project's site is derived from an authored coordinate. V2.8's reason is recorded and is three content-derived statics, none of them a graph accumulator. A further bump needs its own recorded reason" % GameState.SAVE_VERSION)
 	var state = GameState.new_game(loader, "FRA")
 	var payload: Dictionary = state.to_dict()
 	for absent in ["region_graph", "region_accessibility", "project_site_region", "project_sited_pct"]:
@@ -3110,6 +3112,59 @@ func _check_network_absences(loader) -> void:
 	# expression the pre-save state ran, and both move without error.
 	Economy.tick_month(loaded)
 	Economy.tick_month(state)
+
+
+## V2.8 BUMPS TO 31 ON THREE FIELDS OF EIGHT, AND THEY FAIL THE RULE BY THE SAME
+## FAILURE -- which is why they are asserted TOGETHER here and the ones that earn
+## nothing are asserted apart below. V1.6a's finding is the whole reason: a module
+## being stateless is a property of the module, not of the save file, because
+## NationState.from_dict() rebuilds from the dictionary ALONE and never sees the
+## loader. So every content-derived static that lives on this class is already in
+## the save, and dropping one runs a DIFFERENT MODEL from the one that saved it.
+##
+##   start_energy_mix            absent -> {} -> mix() returns zeros, the partition
+##                               is not there, and every dependency reading is the
+##                               full measured level appearing at once.
+##   start_import_dependency_pct absent -> 0.0 -> the deviation becomes the whole
+##                               dependency, so a France that has imported half its
+##                               energy for fifty years reads as having just started.
+##   energy_kwh_per_capita       absent -> 0.0 -> national_twh() is 0.0, and one
+##                               plant is then the country's whole electricity.
+##
+## start_debt_to_gdp_pct at V1.6c and cycle_amplitude_rel at V1.6a, in their
+## strongest form yet: all three are re-derivable in principle and NONE of them is
+## re-derived, because from_dict() has nothing to re-derive them from.
+func _check_energy_bump(loader) -> void:
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d, expected 31 -- V2.8's three content-derived statics"
+			% GameState.SAVE_VERSION)
+	var payload: Dictionary = GameState.new_game(loader, "FRA").to_dict()
+	for field in ["start_energy_mix", "start_import_dependency_pct", "energy_kwh_per_capita"]:
+		if not payload["nations"]["FRA"].has(field):
+			_fail("a version-31 save must carry %s" % field)
+
+
+## `plants` EARNS NOTHING and is serialised anyway. Absent it reads as {}, which is
+## "nothing built" -- true of every version-30 save, because those games had no
+## energy verb at all. `measures`' case at V1.3c, `pacts`' at V1.3g, `appointments`'
+## at U6a. It is carried regardless because a verb writes it and no tick recomputes
+## it, so a save that dropped it would silently demolish every station the player
+## built while continuing to bill for none of them.
+##
+## `plant_seq` earns nothing for the same reason and is carried for a different
+## one: it is monotone, so dropping it lets a later plant re-use a decommissioned
+## id and make two stations one row.
+##
+## `energy_bill_pct_gdp` and `import_dependency_pct` earn nothing -- both are
+## recomputed from the register on the first tick, project_bill_pct_gdp's case.
+##
+## And `last_energy_result` is NOT serialised at all, last_project_result's case.
+func _check_energy_absences(loader) -> void:
+	var payload: Dictionary = GameState.new_game(loader, "FRA").to_dict()
+	if payload["nations"]["FRA"].has("last_energy_result"):
+		_fail("last_energy_result must not be serialised -- it is a display record")
+
+
 func _check_project_fields(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var ns = state.player()
@@ -3195,5 +3250,5 @@ func _check_project_fields(loader) -> void:
 		if (full["nations"]["FRA"] as Dictionary).has(pname):
 			_fail("a save carries %s -- the register counts MONTHS REMAINING and holds no dates, which is what let the diary read it with no scheduler" % pname)
 
-	if GameState.SAVE_VERSION != 30:
-		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 31:
+		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity" % GameState.SAVE_VERSION)

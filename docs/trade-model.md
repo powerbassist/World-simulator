@@ -303,6 +303,23 @@ Three changes, none of which rewrote anything here.
 - **A scenario cannot author a starting agreement.** [[scenario-model|The three axes]] are unchanged. Stated so it is a decision rather than an assumption.
 - ~~**No new `ISSUE_KEYS` entry**, and no trade colouring on the map. Both are still V1.3d's and both would reopen measurements this session did not touch.~~ Trade colouring shipped at U5c. The `ISSUE_KEYS` entry shipped at V1.3d as `europe`, and it did reopen a measurement — the S10 salience table — which is why V1.3d measured the cost before taking it. See [[bloc-model]].
 
+## What V2.8 did to this model
+
+Nothing on the weight, and the nothing is recorded. V2.8's import dependency
+reaches the economy as a **growth addend** (`energy_constants.DEP_BETA` against
+the mix's intensity-weighted move, [[energy-model]] §7) and not through the
+openness index — a country that buys its gas abroad pays in growth, not in a
+rewritten map of who it trades with, because the trade weight already has one
+job and a second opinion inside it would be one quantity written twice.
+
+**The coercion amplifier was refused, with V1.3g's measurement beside it.**
+Dependency scaling the damage a supplier's measure does would be the truest
+model of what import dependency is *for* — and V1.3g's own probe found the nine
+**never coerce each other**: 168 months with no player, `state.measures` stays
+empty and every recorded act is a state visit. So an amplifier would be inert
+for every AI nation and would reach only a player who has already been
+sanctioned. Recorded in [[energy-model]] §10 rather than built.
+
 ---
 
 Related: [[ROADMAP]] · [[economy-model]] · [[diplomacy-model]] · [[opinion-model]] · [[data-architecture]] · [[data-sources]]

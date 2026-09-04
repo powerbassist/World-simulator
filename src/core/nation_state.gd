@@ -912,6 +912,48 @@ var project_bill_pct_gdp: float = 0.0
 ## display record of something that has already happened to the register.
 var last_project_result := {}
 
+# --- Energy (V2.8) --------------------------------------------------------------
+
+## plant id -> {"source_id": String, "region_id": String, "lon": float,
+## "lat": float, "connection": float, "months_left": int, "done": bool}.
+## Energy.ENTRY_KEYS is the shape and tests/test_save_load.gd asserts against it, as
+## it does for `projects`.
+##
+## THE COORDINATE IS THE PLAYER'S AND IS STORED, which is the opposite of
+## Projects.site_region()'s derive-every-read -- and the two are opposites because
+## the two facts are opposite kinds. A project's site is CONTENT, so a stored copy
+## could disagree with data/nations/ and the content must win. A plant's site is an
+## ACT, so there is nothing for it to disagree with, and what a re-imported geometry
+## must NOT do is re-price a station the player was already quoted for.
+var plants := {}
+
+## Monotone, so a decommission can never free an id a later plant re-uses and make
+## two different stations one row in the ledger. Absent reads 0, correct for every
+## version-30 save because those games had no plants at all.
+var plant_seq: int = 0
+
+## The measured baseline the register is a deviation against. CONTENT-DERIVED and
+## therefore serialised, on V1.6a's finding: NationState.from_dict() rebuilds from
+## the dictionary alone and never sees the loader, so a static fact that lives on
+## this class is already in the save whether or not the module is stateless.
+var start_energy_mix := {}
+var start_import_dependency_pct: float = 0.0
+var energy_kwh_per_capita: float = 0.0
+
+## Recomputed from `plants` and the content on the first tick. Serialised so a save
+## reloaded and not yet ticked reports the budget it was saved with --
+## project_bill_pct_gdp's case exactly.
+var energy_bill_pct_gdp: float = 0.0
+
+## Written every tick from the register, for the readouts. Not read back by
+## src/sim/.
+var import_dependency_pct: float = 0.0
+var energy_impulse_pct: float = 0.0
+
+## Display record of the last order or decommission. Not serialised --
+## last_project_result's case.
+var last_energy_result := {}
+
 # --- The campaign phase (V1.7a) --------------------------------------------------
 
 ## Effort ids currently in the field. Written by Campaign.execute() and by
@@ -1529,6 +1571,18 @@ func duplicate_state():
 	s.projects = projects.duplicate(true)
 	s.project_potential_target_pct = project_potential_target_pct
 	s.project_bill_pct_gdp = project_bill_pct_gdp
+	# V2.5 lost the region register here and collapsed Budget.project()'s forecast to
+	# the residual alone -- a France losing 98 % of its output in its own budget
+	# panel. The same omission here would show a player a projection in which every
+	# station they built has vanished and the bill for it has not.
+	s.plants = plants.duplicate(true)
+	s.plant_seq = plant_seq
+	s.start_energy_mix = start_energy_mix.duplicate(true)
+	s.start_import_dependency_pct = start_import_dependency_pct
+	s.energy_kwh_per_capita = energy_kwh_per_capita
+	s.energy_bill_pct_gdp = energy_bill_pct_gdp
+	s.import_dependency_pct = import_dependency_pct
+	s.energy_impulse_pct = energy_impulse_pct
 	s.campaign_running = campaign_running.duplicate()
 	s.campaign_started = campaign_started.duplicate()
 	s.campaign_mobilisation = campaign_mobilisation.duplicate(true)
@@ -1738,6 +1792,14 @@ func to_dict() -> Dictionary:
 		"projects": projects,
 		"project_potential_target_pct": project_potential_target_pct,
 		"project_bill_pct_gdp": project_bill_pct_gdp,
+		"plants": plants,
+		"plant_seq": plant_seq,
+		"start_energy_mix": start_energy_mix,
+		"start_import_dependency_pct": start_import_dependency_pct,
+		"energy_kwh_per_capita": energy_kwh_per_capita,
+		"energy_bill_pct_gdp": energy_bill_pct_gdp,
+		"import_dependency_pct": import_dependency_pct,
+		"energy_impulse_pct": energy_impulse_pct,
 		"campaign_running": campaign_running,
 		"campaign_started": campaign_started,
 		"campaign_mobilisation": campaign_mobilisation,
@@ -2034,6 +2096,16 @@ static func from_dict(d: Dictionary):
 	s.campaign_saturation = {}
 	for region_id in d.get("campaign_saturation", {}):
 		s.campaign_saturation[String(region_id)] = float(d["campaign_saturation"][region_id])
+	# V2.8. `plants` absent reads as nothing built, correct for every version-30
+	# save; the three below it are NOT, and are what earned SAVE_VERSION 31.
+	s.plants = d.get("plants", {})
+	s.plant_seq = int(d.get("plant_seq", 0))
+	s.start_energy_mix = d.get("start_energy_mix", {})
+	s.start_import_dependency_pct = float(d.get("start_import_dependency_pct", 0.0))
+	s.energy_kwh_per_capita = float(d.get("energy_kwh_per_capita", 0.0))
+	s.energy_bill_pct_gdp = float(d.get("energy_bill_pct_gdp", 0.0))
+	s.import_dependency_pct = float(d.get("import_dependency_pct", 0.0))
+	s.energy_impulse_pct = float(d.get("energy_impulse_pct", 0.0))
 	# V1.7b, and it is `campaign_running`'s case one session on: absent it reads as
 	# "nothing promised", true of every version-23 save because those games had no
 	# pledge verb. So the version is STILL 23 -- V1.3c's device, pointed at V1.7c for

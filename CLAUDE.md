@@ -861,6 +861,94 @@ where the meetings are") instead of ticking past the run-up to find a demonstrat
 
 **A PROJECT NAMES A PLACE NOW, AND THE PLACE IS DERIVED AND STORED NOWHERE.** The authored `project_sites` coordinate answers "which region" through a hole-aware point-in-polygon over full-ring geometry the loader now keeps BESIDE the renderer's outer-ring shape (Berlin's site lives inside Brandenburg's outer ring; only the hole says whose it is) -- all fifteen sites resolve. The payoff lands zero-mean on the site region while V1.6f's national channel still carries the level; the edge-cost cut a rail spine physically is was REFUSED because it needs a payoff-to-kilometre constant nobody could measure. The map lives on GameState as non-serialised derived state (`project_sited_pct`), rebuilt by the one module that owns completions and re-derived on load -- a stored site could disagree with data/nations/ about where the rail spine is. **`SAVE_VERSION` STAYS 30** on three absences pinned apart (graph, accessibility index, site region), and the disk round trip proves "content, not saved" did not become "content, not loaded either". **The re-run held the prediction and then some: 2 moving lines of 1647**, one a hundredth of unemployment and one a hundredth of growth (both the predicted Okun/unrest-siting chain), 48 invariants each, zero outcome changes, no new regime. **The screenshot pass found NO BUG for the first time since V1.6c** -- frames clean, fold probe stable, Corse the least-connected region reading the lowest reach on the new eighth column. Plan-draft bugs fixed in passing: the register payload iteration that would have crashed the graph build, and `write_geojson`'s arity. Model: [docs/network-model.md](docs/network-model.md). **V2.8's siting inheritance is direct** -- adjacency won, a click resolves to a region by `Projects.site_region()`'s own cast, and V2.8 sits on the register rather than on a path set.
 
+**V2.8 MADE ENERGY PLACED, AND THE FIRST VERB WHERE THE PLAYER WRITES A COORDINATE
+SHIPPED WHOLE -- the block was planned without the split the count asked for, and
+the record says so.** The cold count was ~48 surfaces, 10 new files and FOUR
+machines across two tracks, the largest this project has logged, and the a/b cut
+was drawn and DECLINED by the author with the reasoning in the plan's own warning
+box -- the count that would have split it is written beside the refusal. **The
+step-0 probe found the row's likely assumption wrong in the direction that
+mattered, before planning**: Eurostat, the source of every regional series since
+V2.2, is short in two nations by two different failures -- `nrg_ind_id` carries
+GBR only to 2019 and CHE is absent from the geo dimension entirely, `nrg_bal_c`
+reads None for GBR at 2022 -- while the World Bank loop already running carries
+all ten, so V2.8 needed no second source and no authored register. **The mix is a
+PARTITION, not a stock**: World Bank measured shares are the baseline and built
+capacity is the deviation, so with zero plants every derived quantity reads
+EXACTLY its content -- asserted at 0.0, not 1e-9 -- and that is why the
+bit-identity prediction was writable in advance and held exactly: the re-run diff
+is 77 lines, every one an addition inside the two new regimes' own blocks, zero
+outcome changes. **The denominator is measured consumption, not an invented
+unit** -- `EG.USE.ELEC.KH.PC` x live population reads France at ~439 TWh against a
+real ~445 -- and one reactor is **3 % of France and 63 % of Luxembourg**, which is
+why capacity is a physical unit and not a share. **LUX's import dependency reads
+109.6 % and is NOT clamped**: it re-exports fuel, and a clamp there is a number no
+dataset measured. `EG.ELC.RNEW.ZS` includes hydro -- checked against CHE and AUT,
+not assumed -- so the mix is three branches and `EG.ELC.HYRO.ZS` is deliberately
+unfetched.
+
+**THE TWO PRICES OF THE PLACE ARE THE SESSION'S MODEL, and the second one is
+`Siting.concentration()`'s first pricer** -- V2.6b1 built that function, measured
+it, designed a monthly price on it and found the interval EMPTY; a charge at
+COMMIT is why the interval is non-empty here. `ACCESS_ELASTICITY` 0.30 and
+`OPPOSITION_SCALE` 0.08, both bands written into docs/energy-model.md before the
+sweep ran, both shipped at the interior of two smooth crossings -- and **one
+clause refused to select and is recorded as a bound**: on a one-order-a-month
+reading of "aggressive", the bloc_offset accumulator saturates at every scale
+through the AUTHORED offsets alone (137 orders x -0.020, past the clamp with the
+siting price at zero) -- U6a's legality-vs-want finding in a new place, so the
+career clause selects on the sustained cadence and the spam run is a bound with
+its number beside it. `DEP_BETA` 0.10 prices the dependency as a GROWTH ADDEND and
+not a trend shift (V1.6e's employment argument), and the coercion amplifier was
+REFUSED on V1.3g's own measurement that the nine never coerce each other over 168
+months -- inert for every AI nation, recorded in trade-model.md rather than built.
+**The handoff's obligation was measured, not inherited**: fourteen years of
+sustained gas on the full harness stack reads FRA pop-drift **0.01599** against
+V2.7's 0.0160, unchanged to the printed digit, so `MIGRATION_RATE` owes no
+re-sweep; and the graph gains no accumulator, checked rather than inherited.
+
+**THE COORDINATE AND THE REGION ARE BOTH STORED, WHICH INVERTS V2.7'S RULE ON
+PURPOSE, and the two rules are opposites because the two facts are opposite
+kinds.** `Projects.site_region()` derives every read because a stored site could
+disagree with data/nations/ -- content is the authority. A plant's site is an
+ACT, so there is nothing to disagree with and a contract to keep: `lon`, `lat`,
+`region_id` and the frozen `connection` multiplier travel together, and a
+re-imported geometry cannot re-price a station the player was quoted for. The
+hole-aware cast moved whole into `src/core/region.gd` because two copies of a
+geometry predicate is how one of them quietly stops agreeing with the other, and
+the trap is silent -- an enclave's own polygon sits inside its host's outer ring,
+so a cast over outer rings alone files Berlin, Vienna and Brussels under their
+hosts with no error anywhere; the enclave case is a test. **The grid is national
+and the refusal is a CHECK**: `tests/test_energy.gd` reads `src/sim/energy.gd` and
+fails if it ever preloads `regions.gd`, so a later session adding a regional
+energy channel turns red and has to come and say why. `ISSUE_KEYS` answered NO for
+the sixth consecutive session, recorded beside the list. **`SAVE_VERSION` is 31 on
+three fields of eight** -- `start_energy_mix`, `start_import_dependency_pct` and
+`energy_kwh_per_capita` are content-derived statics `from_dict()` cannot
+re-derive, V1.6a's finding at its strongest; the other five earn nothing and are
+serialised anyway, and `last_energy_result` is not serialised at all. Tasks 3+4
+and 11+12 each landed as one commit because the suite's generic walkers and the
+shared click path make the pairs atomic -- said plainly rather than papered over.
+
+**THE TWO NEW REGIMES ARE OF THE EXPENSIVE KIND** -- a plant is a verb no budget
+regime issues, V1.3g's and V1.4c's case -- and `managed_builds_nuclear` against
+`managed_builds_gas` on the identical managed budget is what makes the channel
+legible: the builders' surplus shrinks three tenths of a point and their debt two
+points (the same budget buying a fleet), both drive `students` to 25 (the authored
+offset and the siting price landing on one register), and gas's final-year growth
+reads +0.14 against +0.26 -- DEP_BETA's 0.38 points over the window, visible and
+not dominant. **The screenshot pass found two bugs and both were real**: the
+energy bill sat inside the spending total with NO "of which energy" row -- V1.4a's
+silent-write class, live on a panel, row + snapshot key added -- and `--place`
+buried its own filled glyph under Paris's 9.6px city dot while the reticle drew
+wherever the OS cursor had been left, so the flag now sites at each region's
+smaller named city and warps the cursor to the frame's centre. One tool artifact
+recorded rather than chased: the staged fleet row reads months-left two months
+behind the sim's true figure (date advances 14, energy ticks 12; headless
+arithmetic exact), V1.4c's date/state race in the tool and not the game. The
+frames were judged in-session -- the vision path V2.5 opened held. Model:
+[docs/energy-model.md](docs/energy-model.md).
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or

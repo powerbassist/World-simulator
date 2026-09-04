@@ -246,3 +246,71 @@ static func find_city(regions: Array, city_id: String):
 			if c.id == city_id:
 				return c
 	return null
+
+
+## The region whose geometry contains this point, or "".
+##
+## LIFTED OUT OF projects.gd AT V2.8 because there are two callers now: a project's
+## AUTHORED coordinate and a player's CLICKED one. Two copies of a geometry predicate
+## is how one of them quietly stops agreeing with the other, and this predicate has a
+## trap that would not crash -- see _contains().
+##
+## Ids are SORTED before the scan, so a Dictionary's insertion order can never reach
+## a result. Siting.site()'s tie rule and Network.adjacency()'s, for the same reason:
+## a point on a shared border must resolve to the same region on every run.
+##
+## Takes the ring Dictionary rather than the loader, so this stays a value type that
+## imports nothing -- the whole reason it can live in src/core/ and be called from
+## src/sim/ and src/ui/ alike.
+static func region_at_lonlat(rings: Dictionary, lon: float, lat: float) -> String:
+	var ids: Array = rings.keys()
+	ids.sort()
+	for region_id in ids:
+		if _contains(rings[region_id], lon, lat):
+			return String(region_id)
+	return ""
+
+
+## Inside the outer ring of some polygon and inside NONE of its holes.
+##
+## THE HOLE TEST IS LOAD-BEARING AND ITS FAILURE IS SILENT. An enclave's own polygon
+## sits inside its host's outer ring -- Berlin inside Brandenburg, Vienna inside
+## Niederösterreich, Brussels inside Vlaams Gewest -- so a cast over outer rings
+## alone returns the HOST, with no error anywhere. That is why loader.region_rings
+## exists beside region_features at all: the renderer keeps outer rings and this
+## keeps every ring.
+##
+## Odd-even over every ring of a MultiPolygon is the importer's _point_in_polygon(),
+## stated again here because src/ reads it as data and never imports the tool.
+static func _contains(polygons: Array, lon: float, lat: float) -> bool:
+	for polygon in polygons:
+		var rings: Array = polygon
+		if rings.is_empty():
+			continue
+		if not _in_ring(rings[0], lon, lat):
+			continue
+		var holed := true
+		for i in range(1, rings.size()):
+			if _in_ring(rings[i], lon, lat):
+				holed = false
+				break
+		if holed:
+			return true
+	return false
+
+
+static func _in_ring(ring: PackedVector2Array, lon: float, lat: float) -> bool:
+	var inside := false
+	var n := ring.size()
+	if n < 3:
+		return false
+	var j := n - 1
+	for i in n:
+		var xi := ring[i].x
+		var yi := ring[i].y
+		var xj := ring[j].x
+		var yj := ring[j].y
+		if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+			inside = not inside
+		j = i
+	return inside

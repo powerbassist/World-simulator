@@ -56,6 +56,8 @@ const SocietyK = preload("res://src/sim/society_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -459,6 +461,17 @@ const PROJECT_REGIMES := {
 ## THE FIRST PAIR OF MONTHS WAS 9 AND 16 AND BOTH WERE WRONG, which the run showed
 ## rather than the reading: 16 IS the month of the vote, so "late" campaigned for zero
 ## months and printed a presidential result identical to "early" to the digit.
+## V2.8's two, and the expensive kind again: a plant is a verb no budget regime
+## issues. One order at month 6, repeated at the source's own build length --
+## nuclear every 120 months, gas every 30 -- so the nuclear run raises the
+## nuclear share and the gas run the fossil share, on the identical managed
+## budget. The pair is what makes the dependency channel legible: two runs whose
+## ONLY difference is which branch the verb builds.
+const ENERGY_REGIMES := {
+	"managed_builds_nuclear": {"budget": REGIMES["managed"], "energy_month": 6, "energy_action": "order_nuclear_epr", "energy_repeat": 120},
+	"managed_builds_gas": {"budget": REGIMES["managed"], "energy_month": 6, "energy_action": "order_gas_ccgt", "energy_repeat": 30},
+}
+
 const CAMPAIGN_REGIMES := {
 	"managed_campaigns_early": {"budget": REGIMES["managed"], "campaign_month": 8},
 	"managed_campaigns_late": {"budget": REGIMES["managed"], "campaign_month": 14},
@@ -592,6 +605,18 @@ func _init() -> void:
 
 	var names: Array = REGIMES.keys()
 	if only != "":
+		# V2.8. An energy regime is one of the two new ones, runnable on its own
+		# through the same dispatch the full run uses -- a regime that can only be
+		# exercised in a two-hour batch is a regime nobody exercises while editing.
+		if ENERGY_REGIMES.has(only):
+			var regime: Dictionary = ENERGY_REGIMES[only]
+			_run(
+				nation_id, only, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, -1, -1, "", "", -1,
+				int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
+			)
+			quit()
+			return
 		if not REGIMES.has(only):
 			printerr("unknown regime '%s'; known: %s" % [only, names])
 			quit(1)
@@ -673,6 +698,14 @@ func _init() -> void:
 				-1, int(regime["build_month"])
 			)
 
+		for name in ENERGY_REGIMES.keys():
+			var regime: Dictionary = ENERGY_REGIMES[name]
+			_run(
+				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+				-1, -1, -1, -1, -1, -1, "", "", -1,
+				int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
+			)
+
 		for name in CAMPAIGN_REGIMES.keys():
 			var regime: Dictionary = CAMPAIGN_REGIMES[name]
 			_run(
@@ -741,7 +774,8 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 	return pending
 
 
-func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "", campaign_tour_month: int = -1) -> void:
+func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "", campaign_tour_month: int = -1,
+		energy_month: int = -1, energy_action_id: String = "", energy_repeat_months: int = 0) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -776,6 +810,16 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		state.year = year
 		state.month = month
 
+		# V2.8. The accessibility index per nation, built here because energy.gd
+		# never learns that a graph exists, and immediately BEFORE Economy because
+		# economy.gd READS ns.energy_impulse_pct rather than computing it -- a
+		# harness that skipped this tick would read a stale field and the re-run
+		# would catch what a fresh zero would have hidden.
+		var access_by_nation: Dictionary = {}
+		for member_id in state.nations.keys():
+			access_by_nation[member_id] = Regions.accessibility_for(
+				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
+		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, loader)
@@ -908,6 +952,33 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			_invest(state, loader, ns, regime_name, year, month)
 		if i + 1 == build_month:
 			_break_ground(state, loader, ns, regime_name, year, month)
+
+		# V2.8's two regimes, on the same cadence the plan wrote for them: an order
+		# at `energy_month`, repeated at the source's own build length, so a
+		# fourteen-year run sustains a FLEET rather than a single station. Through
+		# Energy.execute() and never by writing ns.plants -- a regime that bypasses
+		# the verb tests a model the player cannot reach. The siting region is the
+		# nation's largest by live population share, ties broken by the sorted scan,
+		# because a regime needs a deterministic answer and not an opinion.
+		if energy_action_id != "" and i + 1 >= energy_month and (i + 1 - energy_month) % energy_repeat_months == 0:
+			var e_action = null
+			for a in loader.energy_actions:
+				if a.id == energy_action_id:
+					e_action = a
+			if e_action != null:
+				var e_weights: Dictionary = {}
+				var e_largest := ""
+				var e_best: float = -1.0
+				for region in loader.regions.get(nation_id, []):
+					var share: float = Migration.region_share(ns, region.id)
+					e_weights[region.id] = share
+					if share > e_best:
+						e_best = share
+						e_largest = region.id
+				var e_access: Dictionary = Regions.accessibility_for(
+					ns, state.regions.get(nation_id, []), state.region_graph)
+				Energy.execute(state, ns, loader, loader.energy_actions, e_action,
+					Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
 		if i + 1 == campaign_month:
 			_campaign(state, loader, ns, regime_name, year, month)
 		# V2.6b2: four months into the field, stand the effort down and start the

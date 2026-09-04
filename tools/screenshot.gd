@@ -48,6 +48,8 @@ const Budget = preload("res://src/sim/budget.gd")
 ## the flag must say so instead of photographing an unringed city.
 const Unrest = preload("res://src/sim/unrest.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -252,6 +254,18 @@ var _diverge := false
 ## table where the new column lives.
 var _network := false
 
+## V2.8, the twenty-seventh flag: two plants of different branches ordered
+## through Energy.execute(), ticked past the shorter build so the frame shows a
+## running station AND one under construction, then the Energy panel -- which
+## opens at the TOP of its scroll, because this flag is about the mix and the
+## fleet (V1.6e's per-flag direction).
+var _energy := false
+
+## V2.8, the twenty-eighth flag: plants ON the map and the placement reticle
+## armed, so the frame shows both halves of the click. France fit rather than the
+## Europe fit, because two 5px glyphs at the whole-planet zoom prove nothing.
+var _place := false
+
 ## V2.6a. `--migrate` is taken (V1.5b's migration LAW) and `--diverge` is taken
 ## (V2.5's region divergence), so this is `--move`. Ten years of a live
 ## MIGRATION_RATE moves the same quantity `--diverge` measures at a level below
@@ -366,6 +380,10 @@ func _init() -> void:
 			_diverge = true
 		elif args[i] == "--network":
 			_network = true
+		elif args[i] == "--energy":
+			_energy = true
+		elif args[i] == "--place":
+			_place = true
 		elif args[i] == "--site":
 			_site = true
 		elif args[i] == "--move":
@@ -473,6 +491,10 @@ func _apply_view() -> void:
 		_let_the_regions_diverge()
 	if _network:
 		_show_the_network()
+	if _energy:
+		_show_the_energy()
+	if _place:
+		_place_the_plants()
 	if _move:
 		_let_the_people_move()
 	# V2.6b2: the campaign stages BEFORE --site zooms, so --campaign --site photographs
@@ -1687,6 +1709,103 @@ func _show_the_network() -> void:
 	_tick_months(120)
 	_main._windows.open("region")
 	_main._region_panel.scroll_to_bottom()
+
+
+## V2.8. Two orders through the real verb, the real clock past the shorter
+## build, the panel open on the mix. Sites come from the register's own cities
+## -- a frame proving the mix moved should not assume a coordinate of its own.
+func _show_the_energy() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var access: Dictionary = Regions.accessibility_for(
+		ns, state.regions.get(ns.id, []), state.region_graph)
+	var weights: Dictionary = {}
+	for region in loader.regions.get(ns.id, []):
+		weights[region.id] = Migration.region_share(ns, region.id)
+	var solar = null
+	var gas = null
+	for a in loader.energy_actions:
+		if a.id == "order_solar_park":
+			solar = a
+		if a.id == "order_gas_ccgt":
+			gas = a
+	var region_ids: Array = loader.regions.get(ns.id, [])
+	var home := ""
+	var away := ""
+	if region_ids.size() >= 2:
+		home = String(region_ids[0].id)
+		away = String(region_ids[1].id)
+	var home_pt := Vector2(2.3522, 48.8566)
+	var away_pt := Vector2(4.35, 43.30)
+	for region in loader.regions.get(ns.id, []):
+		if String(region.id) == home and region.cities.size() > 0:
+			home_pt = region.cities[0].lonlat
+		if String(region.id) == away and region.cities.size() > 0:
+			away_pt = region.cities[0].lonlat
+	if solar != null and home != "":
+		Energy.execute(state, ns, loader, loader.energy_actions, solar,
+			home_pt, home, "", access, weights)
+	if gas != null and away != "":
+		Energy.execute(state, ns, loader, loader.energy_actions, gas,
+			away_pt, away, "", access, weights)
+	# Past solar's 12-month build and not past gas's 30: one glyph running, one
+	# building, and the mix ledger carrying both.
+	_tick_months(14)
+	_main._windows.open("energy")
+
+
+## V2.8. Two orders at real register coordinates through the real verb, ticked
+## past solar's build so one glyph is FILLED and one HOLLOW, then placement armed
+## so the reticle is on the frame too.
+func _place_the_plants() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var access: Dictionary = Regions.accessibility_for(
+		ns, state.regions.get(ns.id, []), state.region_graph)
+	var weights: Dictionary = {}
+	for region in loader.regions.get(ns.id, []):
+		weights[region.id] = Migration.region_share(ns, region.id)
+	var solar = null
+	var gas = null
+	for a in loader.energy_actions:
+		if a.id == "order_solar_park":
+			solar = a
+		if a.id == "order_gas_ccgt":
+			gas = a
+	# Real register coordinates, but deliberately NOT each region's principal
+	# city: at the France fit the first screenshot pass buried the filled glyph
+	# under Paris's own 9.6px city dot, and a frame whose claim is the GLYPH
+	# cannot stage it where a bigger glyph already lives. Each region's LAST
+	# named city is a real place the register vouches for and a clear canvas.
+	var ranked: Array = loader.regions.get(ns.id, []).duplicate()
+	var home = ranked[0] if ranked.size() > 0 else null
+	var away = ranked[1] if ranked.size() > 1 else null
+	var home_pt := Vector2(2.3522, 48.8566)
+	var away_pt := Vector2(4.35, 43.30)
+	if home != null and home.cities.size() > 0:
+		home_pt = home.cities[home.cities.size() - 1].lonlat
+	if away != null and away.cities.size() > 0:
+		away_pt = away.cities[away.cities.size() - 1].lonlat
+	if solar != null and home != null:
+		Energy.execute(state, ns, loader, loader.energy_actions, solar,
+			home_pt, String(home.id), "", access, weights)
+	if gas != null and away != null:
+		Energy.execute(state, ns, loader, loader.energy_actions, gas,
+			away_pt, String(away.id), "", access, weights)
+	_tick_months(14)
+	# France fit: the map's cover fit is the whole planet; this frame's claim is
+	# two glyphs a few hundred pixels apart, not the world.
+	var view = _main._map_view
+	var centre := Vector2((home_pt.x + away_pt.x) * 0.5, (home_pt.y + away_pt.y) * 0.5)
+	view.center_on_lonlat(centre.x, centre.y)
+	view.zoom_by(6.0, view.size / 2.0)
+	view.begin_placement()
+	# The reticle draws at the cursor, and a batch capture cannot control where
+	# the OS left it -- so bring the cursor to the frame's centre and let the
+	# mode's own cue land where the reader is looking.
+	view.warp_mouse(view.size * 0.5)
 
 
 ## V2.6a. Ten years through the real clock -- _tick_months() drives

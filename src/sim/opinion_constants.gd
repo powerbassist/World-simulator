@@ -284,6 +284,14 @@ const BLOC_LABEL := {
 ## SAME REASON, which is what the list is for. A session that ships a content object has
 ## somewhere to put the price; a session that ships only a statistic does not. That, and
 ## not importance, is what has decided every one of the seventeen.
+##
+## V2.8 ASKS FOR AN EIGHTEENTH AND THE ANSWER IS NO ON TEST 1, the sixth consecutive
+## session for the same reason: data/energy-actions/ authors a `bloc_offset` on all
+## seven of its entries, and the LOCAL price lands on the same register --
+## Energy.opposition_points() charges the blocs the action already names, scaled by
+## the region's concentration, so the siting's politics is nameable without a key
+## too. The ratio was not swept, on the same ground as V1.6e's and V1.6f's. See
+## docs/energy-model.md section 10.
 const ISSUE_KEYS := [
 	"jobs", "growth",
 	"tax_income", "tax_corporate", "tax_vat", "tax_capital_gains", "tax_wealth",

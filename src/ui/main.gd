@@ -11,6 +11,9 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Energy = preload("res://src/sim/energy.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Region = preload("res://src/core/region.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -45,6 +48,7 @@ const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
+const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
@@ -121,6 +125,7 @@ var _companies_panel
 var _projects_panel
 var _region_panel
 var _city_panel
+var _energy_panel
 var _campaign_panel
 var _events_panel
 var _summit_panel
@@ -378,6 +383,27 @@ func _ready() -> void:
 	_city_panel.setup(_state, _loader)
 	_city_panel.hide_close_button()
 
+	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
+	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
+	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
+	# reads the letter off the registry rather than restating it.
+	_energy_panel = EnergyPanel.new()
+	_windows.register("energy", "Energy", _energy_panel, KEY_F, ICONS + "lightning_bolt.svg")
+	_energy_panel.setup(_state, _loader)
+	_energy_panel.hide_close_button()
+	_energy_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+	)
+	# V2.8. The panel says WHICH action is armed; main.gd holds the map and the
+	# loader and does the resolving. The panel never learns that a map exists,
+	# which is the same boundary Budget.commit() draws for player intent.
+	_energy_panel.order_armed.connect(_on_energy_order_armed)
+	_map_view.map_point_picked.connect(_on_map_point_picked)
+	_map_view.plant_clicked.connect(func(plant_id: String):
+		_windows.open("energy")
+		_energy_panel.scroll_to_fleet()
+	)
+
 	# V1.7a. In the State cluster beside the Diary, and its OWN window rather than rows
 	# on the Polling panel: that panel's contract is that every figure on it has been
 	# through PollNoise, and a mobilisation figure the government is paying for is not a
@@ -532,6 +558,10 @@ func _build_action_bar() -> void:
 		# economy regional.
 		_entry("region", "Regions"),
 		_entry("city", "Cities"),
+		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
+		# rather than the shape of the object, and CLAUDE.md already carries the
+		# ruling -- region, city and energy are Economy.
+		_entry("energy", "Energy"),
 	])
 	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
 		_entry("society", "Polling"),
@@ -665,6 +695,15 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	match event.keycode:
 		KEY_ESCAPE:
+			# V2.8. An armed placement cancels FIRST and the pause menu never
+			# opens -- Escape ending the thing it was offered for is the mode's
+			# own contract, and a pause menu over a waiting reticle is a second
+			# modal answering for the first.
+			if _armed_energy_action != "":
+				_armed_energy_action = ""
+				_energy_panel.clear_armed()
+				_map_view.end_placement()
+				return
 			if _pause_menu == null:
 				return
 			if _pause_menu.get_parent().visible:
@@ -727,11 +766,70 @@ func _on_nation_clicked(nation_id: String) -> void:
 ## folded into Budget.snapshot(): Budget.project() runs only the economy and
 ## budget ticks on its copy, so a snapshot carrying approval would make the
 ## projection-equals-reality test compare a real month against a stale one.
+## The panel armed a technology; the map is now waiting for the point.
+var _armed_energy_action: String = ""
+
+
+func _on_energy_order_armed(action_id: String) -> void:
+	_armed_energy_action = action_id
+	_map_view.begin_placement()
+
+
+## THE POINT MUST LAND IN THE PLAYER'S OWN COUNTRY, and the refusal is loud rather
+## than silent: a click in Germany while governing France is a mistake, and a verb
+## that quietly does nothing is V1.3e's treaty button that refused silently and
+## rendered as live.
+func _on_map_point_picked(lon: float, lat: float) -> void:
+	if _armed_energy_action == "":
+		return
+	var action_id := _armed_energy_action
+	_armed_energy_action = ""
+	_energy_panel.clear_armed()
+	var region_id := Region.region_at_lonlat(_loader.region_rings, lon, lat)
+	var ns = _state.nations[_state.player_nation_id]
+	var mine := false
+	for region in _state.regions.get(_state.player_nation_id, []):
+		if region.id == region_id:
+			mine = true
+	if not mine:
+		_hud.message_stack.push_card("That is not in %s." % ns.nation_name)
+		return
+
+	var access: Dictionary = Regions.accessibility_for(
+		ns, _state.regions.get(ns.id, []), _state.region_graph)
+	var pop_weights: Dictionary = {}
+	for region in _state.regions.get(ns.id, []):
+		pop_weights[region.id] = Migration.region_share(ns, region.id)
+
+	var action = null
+	for a in _loader.energy_actions:
+		if a.id == action_id:
+			action = a
+	if action == null:
+		return
+	Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
+		Vector2(lon, lat), region_id, "", access, pop_weights)
+	_windows.mark_all_dirty()
+	_map_view.queue_redraw()
+
+
 func _on_month_elapsed(year: int, month: int) -> void:
 	if _state == null:
 		return
 	_state.year = year
 	_state.month = month
+	# V2.8. The accessibility index per nation, built here because energy.gd never
+	# learns that a graph exists. Same index Regions already computes, so the
+	# Dijkstra rows are served from network.gd's own per-graph cache and this
+	# costs a lookup. Immediately BEFORE Economy, because economy.gd READS
+	# ns.energy_impulse_pct rather than computing it -- an energy tick placed after
+	# the economy would price this month's mix against last month's growth, a
+	# one-month lag in a channel with no reason to have one.
+	var access_by_nation: Dictionary = {}
+	for nation_id in _state.nations.keys():
+		access_by_nation[nation_id] = Regions.accessibility_for(
+			_state.nations[nation_id], _state.regions.get(nation_id, []), _state.region_graph)
+	Energy.tick_month(_state, _loader, access_by_nation)
 	Economy.tick_month(_state)
 	Budget.tick_month(_state)
 	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER

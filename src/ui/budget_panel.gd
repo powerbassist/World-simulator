@@ -132,6 +132,12 @@ const FIGURE_ROWS := [
 	# paying next year whatever they decide. Reads "-" outside a run-up and while nothing
 	# is in the field, which is most of every game.
 	["campaign", "  of which the campaign"],
+	# V2.8, and the argument is the campaign row's one more time: a build in
+	# progress and every running station are on the spending total with no slider
+	# on this panel, so the row is the only place the player can see WHAT the
+	# fleet costs. Unlike the campaign it does not stop on a date -- it stops when
+	# the player closes a station, which is why the off switch is a verb.
+	["energy", "  of which energy"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
 	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
@@ -435,6 +441,7 @@ func _refresh() -> void:
 	_set_figure("investment", _investment_text(now), _investment_text(proposed))
 	_set_figure("projects", _projects_text(now), _projects_text(proposed))
 	_set_figure("campaign", _campaign_text(now), _campaign_text(proposed))
+	_set_figure("energy", _energy_text(now), _energy_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
@@ -592,6 +599,17 @@ func _projects_text(snap: Dictionary) -> String:
 ## The same em dash a seventh time, and the missing-key branch is separate for V1.6d's
 ## reason exactly as the two above it. Unsigned like them: a campaign only ever costs,
 ## and what it buys is turnout rather than money.
+## The fleet's bill, silent at zero like the campaign's: a country that has
+## ordered nothing is not paying anything, and a permanent "energy 0.000" row
+## under a total it does not move would be a number with no consequence attached.
+func _energy_text(snap: Dictionary) -> String:
+	if not snap.has("energy_bill_pct_gdp"):
+		return "—"
+	if is_zero_approx(float(snap["energy_bill_pct_gdp"])):
+		return "—"
+	return _pct_and_eur(snap, "energy_bill_pct_gdp")
+
+
 func _campaign_text(snap: Dictionary) -> String:
 	if not snap.has("campaign_bill_pct_gdp"):
 		return "—"

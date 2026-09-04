@@ -148,6 +148,22 @@
       "_to_year": 2024,
       "_excludes": []
     },
+    "energy": {
+      "mix": {
+        "fossil": 0.405094,
+        "nuclear": 0.155485,
+        "renewable": 0.439421
+      },
+      "import_dependency_pct": 44.044,
+      "kwh_per_capita": 4194.9,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
     "institutions": {
       "rule_of_law_score": 78.8
     }

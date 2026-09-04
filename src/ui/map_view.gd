@@ -50,6 +50,7 @@ const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapCities = preload("res://src/ui/map_cities.gd")
+const MapPlants = preload("res://src/ui/map_plants.gd")
 
 signal nation_clicked(nation_id: String)
 
@@ -70,6 +71,39 @@ signal city_clicked(city_id: String)
 ## needs to name the value the player is looking at, and a colour ramp the player
 ## can only read to the nearest legend stop is a ramp they cannot read.
 signal nation_hovered(nation_id: String)
+
+## V2.8. The point the player picked, in lon/lat. NOT a region id: this file holds no
+## geometry lookup and must not learn one -- src/ui/main.gd resolves it through
+## Region.region_at_lonlat(), which is also what keeps _plant_at_screen_point() free
+## of region_rings and tests/test_map_plants.gd able to say so from the source.
+signal map_point_picked(lon: float, lat: float)
+
+## A plant glyph was clicked -- V2.8. main.gd opens the Energy window on it, the
+## project marker's route one pass over.
+signal plant_clicked(plant_id: String)
+
+## PLACEMENT MODE IS EXCLUSIVE AND SINGLE-SHOT. Exclusive because a click meant to
+## site a station must not also open the nation panel -- one press, one thing.
+## Single-shot because an armed mode that survives its own click is a mode the player
+## has to remember to leave, and the one thing worse than a station in the wrong
+## region is a second station in it.
+var _placing: bool = false
+
+
+func begin_placement() -> void:
+	_placing = true
+	mouse_default_cursor_shape = Control.CURSOR_CROSS
+	queue_redraw()
+
+
+func end_placement() -> void:
+	_placing = false
+	mouse_default_cursor_shape = Control.CURSOR_ARROW
+	queue_redraw()
+
+
+func is_placing() -> bool:
+	return _placing
 
 const BASE_SCALE := 12.0  # screen pixels per degree, before zoom
 
@@ -434,6 +468,29 @@ func _refresh_markers() -> void:
 ##
 ## Last match wins, so the marker drawn on top of an overlapping pair is the one
 ## a click reaches -- _draw_markers() walks the same list in the same order.
+## The plant under the cursor, or "". A radius test in SCREEN space, like
+## _project_at_screen_point() and _city_at_screen_point() beside it: the glyph is a
+## fixed number of pixels at every zoom, so a degree-radius target would shrink as
+## the player zoomed out to look for it.
+func _plant_at_screen_point(screen_pos: Vector2) -> String:
+	var best: String = ""
+	var best_d: float = MapPlants.RADIUS + 3.0
+	var nation_ids: Array = _state.nations.keys()
+	nation_ids.sort()
+	for nation_id in nation_ids:
+		var ns = _state.nations[nation_id]
+		var plant_ids: Array = ns.plants.keys()
+		plant_ids.sort()
+		for plant_id in plant_ids:
+			var entry: Dictionary = ns.plants[plant_id]
+			var at := _lonlat_to_screen(float(entry.get("lon", 0.0)), float(entry.get("lat", 0.0)))
+			var d := at.distance_to(screen_pos)
+			if d <= best_d:
+				best_d = d
+				best = String(plant_id)
+	return best
+
+
 func _project_at_screen_point(screen_pos: Vector2) -> String:
 	var hit := ""
 	for marker in _markers:
@@ -524,6 +581,14 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				# PLACEMENT MODE INTERCEPTS THE PRESS ITSELF, before the drag
+				# bookkeeping: a click that sites a station is not the first half
+				# of a pan, and the test drives exactly this event.
+				if _placing:
+					var pt := _screen_to_lonlat(event.position)
+					end_placement()
+					map_point_picked.emit(pt.x, pt.y)
+					return
 				_dragging = true
 				_drag_moved = 0.0
 				_last_mouse_pos = event.position
@@ -532,17 +597,23 @@ func _gui_input(event: InputEvent) -> void:
 					# Markers first, cities next, and a hit stops there: a marker
 					# or a cross sits on top of the nation that owns it, so falling
 					# through would open two windows on one click.
-					var project := _project_at_screen_point(event.position)
-					if project != "":
-						project_clicked.emit(project)
+					# V2.8. Plants first -- last drawn is topmost -- and a hit
+					# stops the fall-through, the markers-first rule one pass on.
+					var plant := _plant_at_screen_point(event.position)
+					if plant != "":
+						plant_clicked.emit(plant)
 					else:
-						var city := _city_at_screen_point(event.position)
-						if city != "":
-							city_clicked.emit(city)
+						var project := _project_at_screen_point(event.position)
+						if project != "":
+							project_clicked.emit(project)
 						else:
-							var id := nation_at_screen_point(event.position)
-							if id != "":
-								nation_clicked.emit(id)
+							var city := _city_at_screen_point(event.position)
+							if city != "":
+								city_clicked.emit(city)
+							else:
+								var id := nation_at_screen_point(event.position)
+								if id != "":
+									nation_clicked.emit(id)
 					_dragging = false
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			zoom_by(1.15, event.position)
@@ -586,6 +657,16 @@ func _draw() -> void:
 	_draw_cities()
 	_refresh_markers()
 	_draw_markers()
+	MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
+		return _lonlat_to_screen(lon, lat))
+	if _placing:
+		# A brass reticle at the cursor. The state's own material marks what is
+		# waiting on the player -- V2.1c's rule, reused rather than joined by a
+		# second visual language for "we are waiting on you".
+		var at := get_local_mouse_position()
+		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.ACCENT, 1.5)
+		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.ACCENT, 1.0)
+		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.ACCENT, 1.0)
 
 
 func _draw_raster() -> void:

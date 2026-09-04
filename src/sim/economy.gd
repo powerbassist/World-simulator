@@ -147,11 +147,20 @@ static func _tick_nation(state, ns) -> void:
 	# why the lower branch is not modelled and inflation_constants.gd for the bound.
 	#
 	# Like the cycle it moves GDP and never potential_gdp_eur_bn.
+	#
+	# V2.8. THE TENTH ADDEND. READ, not computed here: Energy.tick_month() has
+	# already written it this month, so economy.gd needs no loader and gains no
+	# preload -- the strictest form of V1.6a's answer to V1.5d's forgotten tick,
+	# because a harness that skips the energy tick then reads a STALE field
+	# rather than silently computing a fresh zero, and a stale field shows up in
+	# the re-run where a fresh zero does not. Reads EXACTLY 0.0 for a nation that
+	# has built nothing.
 	var growth: float = (
 		trend + C.GAP_CLOSE * (-gap)
 		+ ns.demand_impulse_pct + ns.external_impulse_pct + ns.coercion_impulse_pct
 		+ ns.firm_impulse_pct + ns.unrest_impulse_pct + ns.cycle_impulse_pct
 		+ ns.inflation_impulse_pct
+		+ ns.energy_impulse_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth

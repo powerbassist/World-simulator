@@ -24,6 +24,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -215,6 +216,17 @@ func _refresh() -> void:
 	PanelKit.line(_finances, "Debt %.1f%% of GDP." % ns.debt_to_gdp_pct())
 	_trend(_finances, "debt_to_gdp_pct")
 	PanelKit.line(_finances, "Debt service costs %.1f%% of GDP." % ns.debt_service_pct_gdp)
+
+	# V2.8, under the debt-service line because both are standing claims on the same
+	# budget. NEVER SILENT, the inflation line's rule rather than the unrest one's:
+	# every country in Europe imports energy -- Luxembourg's measured figure is over
+	# 100 -- so a line that disappeared at zero would only ever appear when something
+	# was wrong, the opposite of a readout. Leads with the level and states the drift
+	# beside it, and the drift gets two decimals because the whole reachable move is
+	# points of a percentage: V1.6b's own format bug, one asymmetry that repeats.
+	PanelKit.line(_finances, "Imports %.1f%% of its energy, %+.2f since the start." % [
+		ns.import_dependency_pct, Energy.dependency_deviation_pct(ns, _loader),
+	])
 
 	# V1.6c, directly under the debt-service line because that is the line it explains.
 	# The panel reads in the order the model computes in, which is the discipline the

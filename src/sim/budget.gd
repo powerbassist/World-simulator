@@ -29,6 +29,8 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Energy = preload("res://src/sim/energy.gd")
 
 
 static func tick_month(state) -> void:
@@ -145,6 +147,15 @@ static func recompute(state, ns) -> void:
 		# order, so an effort begun this month bills next month -- `deficit_pct_gdp` is one
 		# of that verb's own precondition fields.
 		+ ns.campaign_bill_pct_gdp
+		# V2.8. THE EIGHTH COMPUTED SPENDING LINE, and it is the second one that
+		# can STOP -- a project ends when it is built and a campaign when the vote
+		# comes, where a station's run cost lasts until the player closes it. That
+		# is why data/energy-actions/ ships a decommission: a monthly charge with no
+		# off switch is V1.3g's permanent monotone charge, and the off switch here
+		# is a verb rather than a clock. Billed a month behind the order, as every
+		# other computed line is, because deficit_pct_gdp is this verb's own
+		# precondition field and a same-month bill closes a loop.
+		+ ns.energy_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -362,6 +373,18 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		if sim.month > 12:
 			sim.month = 1
 			sim.year += 1
+		# V2.8. The accessibility index per nation, built here because energy.gd never
+		# learns that a graph exists. Same index Regions already computes, so the
+		# Dijkstra rows are served from network.gd's own per-graph cache and this
+		# costs a lookup. Immediately BEFORE Economy, because economy.gd READS
+		# ns.energy_impulse_pct rather than computing it -- an energy tick placed
+		# after the economy would price this month's mix against last month's
+		# growth, a one-month lag in a channel with no reason to have one.
+		var access_by_nation: Dictionary = {}
+		for nation_id in sim.nations.keys():
+			access_by_nation[nation_id] = Regions.accessibility_for(
+				sim.nations[nation_id], sim.regions.get(nation_id, []), sim.region_graph)
+		Energy.tick_month(sim, loader, access_by_nation)
 		Economy.tick_month(sim)
 		tick_month(sim)
 		# In the same position main.gd runs it -- after Budget, before the snapshot
@@ -545,5 +568,9 @@ static func snapshot(state) -> Dictionary:
 		# the Campaign panel, which has the NationState, and a second key here would be a
 		# snapshot entry nothing reads.
 		"campaign_bill_pct_gdp": ns.campaign_bill_pct_gdp,
+		# V2.8, on the snapshot for campaign_bill_pct_gdp's reason one line up: the
+		# panel compares a PROJECTED month against the current one and a projection
+		# has no NationState to read the bill from.
+		"energy_bill_pct_gdp": ns.energy_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}
