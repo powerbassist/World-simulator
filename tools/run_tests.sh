@@ -103,6 +103,7 @@ tests=(
   tests/test_minimap.gd
   tests/test_map_markers.gd
   tests/test_map_cities.gd
+  tests/test_map_plants.gd
   tests/test_shell.gd
   tests/test_window_frame.gd
   tests/test_panel_kit.gd
@@ -133,6 +134,20 @@ mcp_noise='^\[MCP(RuntimeServer|Registry)\]'
 # printing "all checks passed" over a scene that had not loaded. Zero are emitted
 # today, so this costs nothing until it saves something.
 script_error='SCRIPT ERROR|Parse Error'
+
+# A FRESH CLONE HAS NO .godot/, AND WITHOUT ONE THERE IS NO
+# global_script_class_cache.cfg -- so every `class_name` in a committed addon is
+# unresolvable and DialogueManager, the project's one autoload, fails to parse.
+# That is CLAUDE.md's first gotcha reaching the suite itself: V2.4b's adoption gate
+# ("it must init under --headless --script, which is what tools/run_tests.sh is")
+# only ever ran on a machine that already had the cache, so the gate passed warm and
+# the invariant this runner rests on -- green from a fresh clone -- was false.
+# One import pass builds the cache; it is skipped when .godot/ is already there, so
+# this costs a warm run nothing.
+if [ ! -d ".godot" ]; then
+  echo "no .godot/ -- importing once so the script class cache exists" >&2
+  godot --headless --import >/dev/null 2>&1 || true
+fi
 
 failed=0
 for t in "${tests[@]}"; do

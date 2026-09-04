@@ -35,9 +35,16 @@ const K = preload("res://src/sim/network_constants.gd")
 ## caller passing a different nation's weights can never read another's index.
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
-static var _memo_graph: Dictionary = {}
-static var _memo_weights: Dictionary = {}
-static var _memo_index: Dictionary = {}
+## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
+## hit the case the paragraph above describes: accessibility() is called once per
+## nation per system, so between Migration's call for FRA and Unrest's call for FRA
+## the other nine nations' calls had each evicted it, and the full 112-region market
+## potential sweep ran about thirty times a month instead of ten. The roster is ten,
+## so a linear scan of deep-equality comparisons is nothing beside the sweep it
+## saves. Bounded so a caller that somehow varies its weights every call cannot grow
+## this without limit.
+const MEMO_MAX := 16
+static var _memo: Array = []
 
 
 ## region id -> [[neighbour_id, km], ...], both directions, sorted by neighbour id.
@@ -118,8 +125,9 @@ static func distances_from(graph: Dictionary, from_id: String) -> Dictionary:
 ## so this file never learns that a NationState exists -- Regions.gdp_per_head_index()'s
 ## own rule one module over.
 static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
-	if weights == _memo_weights and graph == _memo_graph and not _memo_index.is_empty():
-		return _memo_index
+	for entry in _memo:
+		if entry["weights"] == weights and entry["graph"] == graph:
+			return entry["index"]
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
 	ids.sort()
@@ -156,9 +164,16 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for region_id in ids:
 		out[region_id] = float(raw[region_id]) / mean
-	_memo_graph = graph
-	_memo_weights = weights.duplicate()
-	_memo_index = out
+	# Stored by VALUE on every side. `out` and `graph` went in by reference before,
+	# which is safe only while no caller mutates what it was handed -- the kind of
+	# invariant that holds until it does not.
+	_memo.append({
+		"graph": graph.duplicate(true),
+		"weights": weights.duplicate(true),
+		"index": out.duplicate(true),
+	})
+	while _memo.size() > MEMO_MAX:
+		_memo.pop_front()
 	return out
 
 

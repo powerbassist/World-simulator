@@ -78,6 +78,7 @@ static func from_dict(
 	# each label's object, exactly as an event choice's effects do. Extracted
 	# per label through the shared extractor so the validation cannot drift
 	# from what apply_effects() will actually do with it.
+	var extracted: Dictionary = {}
 	for label in raw.keys():
 		var inner = raw[label]
 		if typeof(inner) != TYPE_DICTIONARY:
@@ -89,7 +90,16 @@ static func from_dict(
 					filename, str(label), str(channel), str(Law.SHARED_EFFECT_CHANNELS)
 				])
 				continue
-		Law.extract_shared_effects(inner, s.id, "%s.effects['%s']" % [filename, str(label)], errors, tax_keys, spending_keys, bloc_keys, sector_keys)
+		# THE RETURN VALUE IS WHAT GETS STORED, which is what Law._extract_effects()
+		# and GameEvent._extract_effects() both do. Called for validation alone until
+		# the V2.8 review, with the raw JSON kept instead -- so a whole-number value in
+		# a sidecar stayed an int where every other content type in this project
+		# guarantees a float, and the canonicalization the extractor exists to perform
+		# never reached the object at all.
+		extracted[label] = Law.extract_shared_effects(
+			inner, s.id, "%s.effects['%s']" % [filename, str(label)],
+			errors, tax_keys, spending_keys, bloc_keys, sector_keys
+		)
 
 	for label in labels:
 		if not raw.has(label):
@@ -98,5 +108,5 @@ static func from_dict(
 		if not labels.has(String(key)):
 			errors.append("%s: effects name '%s' but no response offers it -- a price with no choice behind it is content that can never run" % [filename, str(key)])
 
-	s.effects = raw
+	s.effects = extracted
 	return s

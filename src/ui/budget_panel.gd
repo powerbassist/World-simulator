@@ -166,6 +166,9 @@ signal committed(before: Dictionary)
 var _state
 var _loader
 var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
+## True once the player has moved a slider, so mark_dirty() stops re-syncing
+## _pending from live state and their half-finished budget survives a month tick.
+var _edited := false
 var _sliders := {}
 var _lever_values := {}
 ## key -> [now text, proposed text] for the CURRENT refresh, cleared and refilled
@@ -345,6 +348,7 @@ func _on_revert() -> void:
 		slider.set_block_signals(true)
 		slider.value = _pending_value(key)
 		slider.set_block_signals(false)
+	_edited = false
 	_dirty = true
 
 
@@ -362,6 +366,10 @@ func _on_lever_changed(value: float, key: String) -> void:
 		_pending["tax_rates_pct"][key] = value
 	else:
 		_pending["spending_pct_gdp"][key] = value
+	# The player has touched a slider, so _pending is now THEIRS and mark_dirty()
+	# must stop re-syncing it from under them. Cleared by _on_revert(), which both
+	# the Revert button and a commit go through.
+	_edited = true
 	_dirty = true
 
 
@@ -384,7 +392,18 @@ func _process(_delta: float) -> void:
 
 ## Called by the owner after each simulated month, so an open panel does not show
 ## last month's figures.
+##
+## RE-SYNCS _pending WHEN THE PLAYER HAS NOT EDITED IT, which is docs/tax-model.md
+## section 11's bug. _pending was captured in setup() and refreshed only by a revert
+## or a commit, so a rate moved by anything else -- Legislature.apply_effects(), which
+## is also the applier for event choices and summit choices -- left this panel
+## advertising the pre-change rates as the player's own proposal, and pressing Commit
+## wrote them back and silently undid the law. The `_edited` gate is what section 11
+## was waiting on: a half-finished edit is the player's and is never overwritten, and
+## an untouched panel simply tracks the state.
 func mark_dirty() -> void:
+	if not _edited and _state != null:
+		_on_revert()
 	_dirty = true
 
 

@@ -171,7 +171,13 @@ static func _tick_nation(state, ns, loader) -> Array:
 	# The executive verdict. Where the executive is drawn from the chamber this
 	# fires in the same month as the legislative election above and reads its
 	# result rather than resolving a second vote — one office, one verdict.
-	if state.year == ns.next_executive_year and state.month == ns.next_executive_month:
+	# `<=` in absolute months rather than an exact date match, which is
+	# Calendar.due()'s own rule and for its own reason: an exact match drops the
+	# verdict entirely if the date is ever stepped over, and the V2.8 review found
+	# a dissolution that could do exactly that.
+	var now_months: int = int(state.year) * 12 + int(state.month)
+	var exec_months: int = int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
+	if now_months >= exec_months:
 		# A termed-out incumbent does not stand, so no vote is resolved on
 		# their behalf -- the run ends here, the same as any other lost
 		# office. See docs/political-systems.md.

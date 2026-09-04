@@ -1853,10 +1853,26 @@ static func from_dict(d: Dictionary):
 	s.eu_member = bool(d.get("eu_member", false))
 	s.neighbours = d.get("neighbours", [])
 
-	s.sector_output = d.get("sector_output", {})
-	s.region_gdp_eur_bn = d.get("region_gdp_eur_bn", {})
-	s.region_pop_share = d.get("region_pop_share", {})
-	s.city_pop_share = d.get("city_pop_share", {})
+	# RE-FLOATED KEY BY KEY, like every other float-valued dictionary in this file
+	# (trade_baseline_by_partner, upper_share, campaign_saturation, and
+	# game_state.gd's four pair registers). Godot's JSON round trip hands back an
+	# int Variant for a whole-number float, so a value that happens to land on an
+	# integer came back as an int and the arithmetic downstream stopped matching the
+	# run that saved it. These four were assigned bare until the V2.8 review, which
+	# is the two dictionaries V2.5 and V2.6a made load-bearing plus the sector
+	# partition.
+	s.sector_output = {}
+	for key in d.get("sector_output", {}):
+		s.sector_output[String(key)] = float(d["sector_output"][key])
+	s.region_gdp_eur_bn = {}
+	for key in d.get("region_gdp_eur_bn", {}):
+		s.region_gdp_eur_bn[String(key)] = float(d["region_gdp_eur_bn"][key])
+	s.region_pop_share = {}
+	for key in d.get("region_pop_share", {}):
+		s.region_pop_share[String(key)] = float(d["region_pop_share"][key])
+	s.city_pop_share = {}
+	for key in d.get("city_pop_share", {}):
+		s.city_pop_share[String(key)] = float(d["city_pop_share"][key])
 	s.gdp_eur_bn = d.get("gdp_eur_bn", 0.0)
 	s.potential_gdp_eur_bn = d.get("potential_gdp_eur_bn", 0.0)
 	s.trend_annual_pct = d.get("trend_annual_pct", 0.0)

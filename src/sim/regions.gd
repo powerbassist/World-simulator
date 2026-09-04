@@ -202,8 +202,11 @@ static func _national_production_mix(ns, region_list: Array) -> Dictionary:
 ##
 ## The deviation is applied to the region's own growth rate rather than to its level,
 ## so a region that grows faster compounds, which is what makes divergence a
-## trajectory rather than a one-off tilt. SHARE_DRIFT_MAX is checked here rather than
-## clamped on the rate, because the quantity the bound is about is the SHARE.
+## trajectory rather than a one-off tilt. SHARE_DRIFT_MAX is NOT read here and never
+## was: worst_share_drift() below is its only reader, and its own docstring gives the
+## reason -- a bound that silently clamps is a bound nobody measures. This paragraph
+## claimed the opposite until the V2.8 review, which is the wrong thing to believe
+## when deciding whether a rate can be raised.
 static func tick_month(ns, region_list: Array, growth: float, access: Dictionary, sites: Dictionary) -> float:
 	if ns.region_gdp_eur_bn.is_empty():
 		return ns.gdp_eur_bn * C.monthly_factor(growth)
@@ -216,13 +219,30 @@ static func tick_month(ns, region_list: Array, growth: float, access: Dictionary
 	# nothing built it is bit-equal to the pre-V2.7 arithmetic because both added
 	# terms return exactly 0.0.
 	var mean: float = _mean_trend_pct(ns, region_list)
+
+	# THE OTHER TWO TERMS ARE FROZEN THE SAME WAY, and until the V2.8 review they
+	# were not: both build their own share-weighted mean from share_of(), which
+	# reads total(ns) over the very dictionary the loop below rewrites one entry at
+	# a time -- so at iteration k the first k regions carried this month's levels
+	# and the rest last month's, every region subtracted a DIFFERENT mean, and the
+	# zero-mean property sum(w_i * dev_i) = 0 stopped holding exactly. _network_pct
+	# was the worse of the two, since it also recomputes the national production
+	# mix each region's specialisation is measured against. It also made the result
+	# depend on region_list's order, which is the property Siting.site(),
+	# Network.adjacency(), Projects._advance() and Migration._tick_nation() all
+	# sort to protect and migration.gd states as a rule. Computed here, every read
+	# comes from one frozen snapshot.
+	var extra: Dictionary = {}
+	for region in region_list:
+		extra[region.id] = _network_pct(ns, region_list, region, access) \
+			+ _sited_pct(ns, region_list, region.id, sites)
+
 	var sum: float = 0.0
 
 	for region in region_list:
 		var current: float = float(ns.region_gdp_eur_bn.get(region.id, 0.0))
 		var deviation: float = (trend_pct(region) - mean) \
-			+ _network_pct(ns, region_list, region, access) \
-			+ _sited_pct(ns, region_list, region.id, sites)
+			+ float(extra.get(region.id, 0.0))
 		var value: float = current * C.monthly_factor(growth + deviation)
 		ns.region_gdp_eur_bn[region.id] = value
 		sum += value

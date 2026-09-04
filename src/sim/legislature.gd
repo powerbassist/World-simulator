@@ -92,8 +92,23 @@ static func tick_month(state, loader) -> void:
 		if ns.force_cooldown_months > 0:
 			ns.force_cooldown_months -= 1
 
-		# Before the cooldowns, so a referendum that fails this month sets its law's
-		# cooldown at full length rather than one month short.
+		# The existing cooldowns count down FIRST, so that a referendum settled or a
+		# held bill released below sets its law's cooldown at full length rather than
+		# one month short. Ordered the other way round -- as it was until the V2.8
+		# review -- the write lands in front of this loop and is decremented in the
+		# same tick, so a lost referendum got N-1 where a lost ordinary vote got N
+		# (propose() runs outside the tick), and a law with cooldown_months == 1 got
+		# no cooldown at all.
+		var expired: Array = []
+		for law_id in ns.law_cooldown_months:
+			var remaining: int = int(ns.law_cooldown_months[law_id]) - 1
+			if remaining <= 0:
+				expired.append(law_id)
+			else:
+				ns.law_cooldown_months[law_id] = remaining
+		for law_id in expired:
+			ns.law_cooldown_months.erase(law_id)
+
 		var verdict := Referendum.resolve_due(ns)
 		if not verdict.is_empty():
 			_settle_referendum(state, ns, loader, verdict)
@@ -107,15 +122,6 @@ static func tick_month(state, loader) -> void:
 		# pre-session model and their agreement about a bit-identical re-run was about
 		# nothing -- made structurally impossible rather than remembered.
 		_tick_held_bills(state, ns, loader)
-		var expired: Array = []
-		for law_id in ns.law_cooldown_months:
-			var remaining: int = int(ns.law_cooldown_months[law_id]) - 1
-			if remaining <= 0:
-				expired.append(law_id)
-			else:
-				ns.law_cooldown_months[law_id] = remaining
-		for law_id in expired:
-			ns.law_cooldown_months.erase(law_id)
 
 
 ## What the country decided, turned into law or into a cooldown.
@@ -170,8 +176,16 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			"abstain_seats": 0, "seats_total": ns.assembly_seats,
 			"party_votes": {}, "party_support": {}, "party_rebels": {},
 		}
-		Government.penalise_blocs(ns, ChambersK.UPPER_OVERRIDE_OFFSET)
-		released["override_offset"] = ChambersK.UPPER_OVERRIDE_OFFSET
+		# NEGATED: penalise_blocs() ADDS its argument, and UPPER_OVERRIDE_OFFSET is
+		# authored as a positive magnitude -- the same convention every sibling
+		# constant breaks by carrying its own sign (FALLEN -0.12, FORCE -0.08,
+		# RESHUFFLE -0.04, RESIGNATION -0.06, DISSOLUTION -0.08). Passed unnegated
+		# until the V2.8 review, an override RAISED every bloc's approval, which is
+		# the opposite of the price tools/upper_house_probe.gd table U4 measured --
+		# that sweep ran _run_with_offset(loader, -offset), so the calibration this
+		# constant carries has always been a cost.
+		Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
+		released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
 
@@ -781,6 +795,31 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
 
+	# THE ACTION MUST STILL BE LEGAL, which the other four player verbs -- the
+	# diplomacy, campaign, pledge and project executors -- each check and this one,
+	# the fifth, did not, leaving the UI as the only gate. (Named in prose rather
+	# than in code form because tests/test_pledges.gd scans this directory for the
+	# literal call and a comment would read as one.) The case
+	# that bites is a law already put to the country: available() excludes it, but
+	# propose() would still resolve a division and apply it, after which the pending
+	# referendum settles and applies the same effects a SECOND time, or fails and
+	# writes a cooldown on a law already in force. Checked ahead of the force and
+	# referendum routes below because a cooldown is not something Article 49.3
+	# overrides -- 49.3 bypasses the assembly, not the clock.
+	var legal := false
+	for open_law in available(ns, loader.laws):
+		if open_law.id == law.id:
+			legal = true
+			break
+	if not legal:
+		var unavailable := {
+			"law_id": law.id, "passed": false, "refused": true, "unavailable": true,
+			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
+			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
+		}
+		ns.last_law_result = unavailable
+		return unavailable
+
 	if referendum and not can_put_to_referendum(ns, law):
 		var no_route := {
 			"law_id": law.id, "passed": false, "refused": true, "referendum_route": true,
@@ -808,6 +847,21 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# constitution's, and offering it as an alternative would imply the seats-only
 	# path it says does not exist.
 	var route: bool = referendum or (law.constitutional and Referendum.is_mandatory(ns))
+
+	# ONE REFERENDUM AT A TIME ON THE MANDATORY ROUTE TOO. can_put_to_referendum()
+	# is where is_pending() is checked, and the mandatory branch above never passes
+	# through it -- so with a vote in flight on law A, a constitutional law B took
+	# the route anyway and Referendum.announce() overwrote ns.referendum_pending
+	# wholesale: A's question vanished with no cooldown, no charge and no record.
+	# Latent only because CHE is the sole `mandatory` nation and is not playable.
+	if route and Referendum.is_pending(ns):
+		var in_flight := {
+			"law_id": law.id, "passed": false, "refused": true, "referendum_route": true,
+			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
+			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
+		}
+		ns.last_law_result = in_flight
+		return in_flight
 
 	var result := resolve_vote(ns, party_list, law, route)
 

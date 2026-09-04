@@ -379,7 +379,11 @@ static func fixed_dates(state) -> Array:
 	if typeof(pending) == TYPE_DICTIONARY and not pending.is_empty():
 		out.append(_fixed_in(
 			state, K.FIXED_COUNCIL_VOTE, int(pending.get("months_left", 0)),
-			String(pending.get("id", ""))
+			# "proposal_id" is the key Bloc._tick_council() actually writes; there is
+			# no "id" on that dictionary, so this read returned "" every month and the
+			# diary said "Council votes" without ever naming the proposal. The
+			# result.get("ok")-vs-applied class again.
+			String(pending.get("proposal_id", ""))
 		))
 
 	if ns.dissolution_lockout_remaining > 0:

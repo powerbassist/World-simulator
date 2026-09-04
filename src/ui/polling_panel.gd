@@ -103,7 +103,11 @@ func hide_close_button() -> void:
 	_close_button.hide()
 
 
-func setup(state) -> void:
+## `loader` is accepted and unused so every registered panel takes the same two
+## arguments, which is what lets main.gd's load path re-setup() them off
+## WindowManager.panels() instead of a hand-written list. This panel reads only
+## GameState.
+func setup(state, _loader = null) -> void:
 	_state = state
 	_title.text = "POLLING — %s" % _state.player().id
 	_dirty = true

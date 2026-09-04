@@ -471,6 +471,15 @@ static func execute(state, ns, all_actions: Array, action) -> Dictionary:
 			ns.projects.erase(pid)
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
+		# NOT clamped here, and that is a constraint rather than an oversight: this
+		# file is a LEAF, its test pins the exact set of preloads it may have, and
+		# legislature_constants.gd -- where BLOC_OFFSET_MIN/MAX live -- is not in it.
+		# Clamping locally would mean either breaking that property or writing the
+		# bound down a second time, and a second copy of a bound is how the two stop
+		# agreeing. The V2.8 review clamped the three writers that CAN reach the
+		# constant (campaign.gd, companies.gd, energy.gd); closing these two wants the
+		# bound moved to a home all five can see, which is a change with a blast radius
+		# rather than a line.
 		ns.bloc_offset[bloc_id] = (
 			float(ns.bloc_offset.get(bloc_id, 0.0))
 			+ float(action.effects["bloc_offset"][bloc_id])

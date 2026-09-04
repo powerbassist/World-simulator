@@ -19,6 +19,13 @@ const Demography = preload("res://src/sim/demography.gd")
 const Society = preload("res://src/sim/society.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
+const Energy = preload("res://src/sim/energy.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const Migration = preload("res://src/sim/migration.gd")
+const Investment = preload("res://src/sim/investment.gd")
+const Projects = preload("res://src/sim/projects.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
+const Events = preload("res://src/sim/events.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -375,6 +382,16 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		if state.month > 12:
 			state.month = 1
 			state.year += 1
+		# V2.8 review. Energy leads, in project()'s own slot and for its own stated
+		# reason: economy.gd READS ns.energy_impulse_pct rather than computing it, so
+		# an energy tick after the economy prices this month's mix against last
+		# month's growth.
+		var access_by_nation: Dictionary = {}
+		for nation_id in state.nations.keys():
+			access_by_nation[nation_id] = Regions.accessibility_for(
+				state.nations[nation_id], state.regions.get(nation_id, []),
+				state.region_graph)
+		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
 		Bloc.tick_month(state, _loader)
@@ -387,6 +404,17 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# both so the mirror's completeness is exercised rather than assumed.
 		Defence.tick_month(state)
 		Companies.tick_month(state, _loader)
+		# V2.8 review. Five more that project() has ticked and this mirror never did.
+		# Four are inert from an undisplaced start, which is why the 1e-9 agreement
+		# held by accident yet again -- but Events is NOT structurally inert: its
+		# hazard is a pure function of (nation, event, absolute month) and this loop
+		# advances the clock, so an event whose preconditions hold inside the window
+		# fires on one side only, and the check would then be measuring the omission
+		# rather than the model. Exactly what the comment further down warns about.
+		Migration.tick_month(state, _loader)
+		Investment.tick_month(state)
+		Projects.tick_month(state, _loader)
+		Campaign.tick_month(state, _loader)
 		# V1.5c. Three more, and only the last one can move a fiscal figure: an unrest
 		# act writes a growth impulse, and growth reaches GDP, revenue and the deficit.
 		# The two above it are its inputs, so leaving them out would make the runner and
@@ -394,6 +422,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Demography.tick_month(state)
 		Society.tick_month(state)
 		Unrest.tick_month(state)
+		Events.tick_month(state, _loader)
 		# V1.6b. Added to BOTH lists in one commit. This runner is a hand-written mirror
 		# of Budget.project()'s tick list, so a system added to one and not the other
 		# makes the two disagree -- and the 1e-9 check below would then be measuring the

@@ -195,4 +195,8 @@ func _conclude() -> void:
 	_line_label.text = ""
 	_speaker_label.text = ""
 	_clear_choices()
+	# Hidden with the rest of the scene. Left showing until the V2.8 review, so the
+	# end of a summit was an empty plate with a focused Continue button that did
+	# nothing forever -- _advance() returns immediately once _resource is null.
+	_continue_button.hide()
 	concluded.emit(id, choice)

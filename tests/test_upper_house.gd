@@ -263,17 +263,31 @@ func _test_a_held_bill_arrives_on_its_own() -> void:
 	if law == null:
 		return
 	Legislature.propose(state, _loader, law)
-	var before := float(ns.bloc_offset.get("workers", 0.0))
+
+	# THE LAW'S OWN CHARGE IS SUBTRACTED OUT, which is what isolates the override.
+	# Read on "workers" as a bare before/after until the V2.8 review, and that law
+	# authors bloc_offset.workers = -0.10, so the law's charge plus an override
+	# applied with the WRONG SIGN summed to -0.05 and matched -UPPER_OVERRIDE_OFFSET
+	# by coincidence: the test was green against a release that PAID the player.
+	# Every bloc this law names is scored, so the sign cannot hide in any one of them.
+	var authored: Dictionary = law.effects.get("bloc_offset", {})
+	var before: Dictionary = {}
+	for bloc in ns.bloc_offset.keys():
+		before[bloc] = float(ns.bloc_offset[bloc])
+
 	for i in range(CK.UPPER_HOLD_MONTHS):
 		Legislature.tick_month(state, _loader)
 	if ns.held_bills.has(law.id):
 		_fail("the hold did not expire after %d ticks" % CK.UPPER_HOLD_MONTHS)
 	if law.once and not ns.passed_law_ids.has(law.id):
 		_fail("a released bill did not take effect")
-	var charged := float(ns.bloc_offset.get("workers", 0.0)) - before
-	if absf(charged + CK.UPPER_OVERRIDE_OFFSET) > 1e-9:
-		_fail("overriding the second chamber cost %f, expected %f"
-			% [charged, -CK.UPPER_OVERRIDE_OFFSET])
+
+	for bloc in before.keys():
+		var moved := float(ns.bloc_offset.get(bloc, 0.0)) - float(before[bloc])
+		var charged := moved - float(authored.get(bloc, 0.0))
+		if absf(charged + CK.UPPER_OVERRIDE_OFFSET) > 1e-9:
+			_fail("overriding the second chamber cost %f on %s, expected %f"
+				% [charged, String(bloc), -CK.UPPER_OVERRIDE_OFFSET])
 
 
 ## An `absolute` refusal kills the bill and cools it down. Reached by hand rather than

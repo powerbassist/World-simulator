@@ -11,8 +11,16 @@ extends RefCounted
 ## the rest of src/sim/. Argued in docs/electoral-systems.md.
 
 const K = preload("res://src/sim/election_constants.gd")
+const Nation = preload("res://src/core/nation.gd")
 
-const SYSTEM_KEYS := ["pr_dhondt", "pr_national", "fptp", "two_round", "parallel"]
+## THE SAME LIST Nation.KNOWN_ELECTION_SYSTEMS validates against, referenced rather
+## than retyped. Written out by hand until the V2.8 review, which made three
+## hand-written copies of one list -- this, the validator's, and allocate()'s match
+## arms below -- and the drift that produces is the most repeated class on this
+## project's record. Two copies is the floor here: a `match` cannot be derived from
+## an array, so allocate() stays the place a new method is added and this is the
+## place the roster is stated once.
+const SYSTEM_KEYS := Nation.KNOWN_ELECTION_SYSTEMS
 
 
 ## Route to the method a nation's election.system field names. Called by

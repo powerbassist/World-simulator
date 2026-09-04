@@ -110,6 +110,22 @@ static func dissolve(state, ns) -> void:
 	ns.next_election_year = int(total_months / 12)
 	ns.next_election_month = total_months % 12 + 1
 
+	# WHERE THE EXECUTIVE COMES OUT OF THE CHAMBER, the two clocks are the same
+	# schedule -- elections.gd's own words -- and they stay that way only because
+	# init_nation() pointed them at one date. Moving one and not the other broke
+	# the coincidence the tick relies on: GBR is playable and has no executive
+	# block, so a snap election resolved with new seats, a new government and NO
+	# executive verdict at all (a PM who lost the election they called stayed in
+	# office), and the verdict then fired years later against a stale
+	# ns.last_election, desyncing the two for the rest of the run --
+	# Campaign.is_open() and Pledges both read next_executive_*. Where the
+	# executive IS elected separately, the paragraph above still holds and the
+	# clock is untouched, which is what makes a French dissolution cost the
+	# Assembly and nothing else.
+	if not ns.has_executive:
+		ns.next_executive_year = ns.next_election_year
+		ns.next_executive_month = ns.next_election_month
+
 	ns.dissolution_pending = true
 	ns.dissolutions_called += 1
 	ns.last_dissolution = {"year": state.year, "month": state.month}

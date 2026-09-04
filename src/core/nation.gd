@@ -1022,12 +1022,21 @@ static func _extract_project_sites(d: Dictionary, filename: String, errors: Arra
 		if typeof(pair) != TYPE_ARRAY or pair.size() != 2:
 			errors.append("%s: project_sites.%s must be [lon, lat]" % [filename, str(key)])
 			continue
-		var lon := float(pair[0])
-		var lat := float(pair[1])
-		if lon < -180.0 or lon > 180.0 or lat < -90.0 or lat > 90.0:
+		# TYPE-CHECKED BEFORE THE CAST, which is city.gd's own guard on the same
+		# shape. float() on a non-numeric Variant returns 0.0 without complaint, and
+		# 0.0 is inside both ranges -- so until the V2.8 review a string or a null in
+		# a coordinate loaded silently as a site at (0, 0), and since V2.7 that
+		# coordinate is what a project's payoff is cast to a region by.
+		var lon_raw = pair[0]
+		var lat_raw = pair[1]
+		var numeric := (typeof(lon_raw) == TYPE_INT or typeof(lon_raw) == TYPE_FLOAT) \
+			and (typeof(lat_raw) == TYPE_INT or typeof(lat_raw) == TYPE_FLOAT)
+		var lon := float(lon_raw) if numeric else 0.0
+		var lat := float(lat_raw) if numeric else 0.0
+		if not numeric or lon < -180.0 or lon > 180.0 or lat < -90.0 or lat > 90.0:
 			errors.append(
 				"%s: project_sites.%s = [%s, %s] is not a lon/lat"
-				% [filename, str(key), str(lon), str(lat)]
+				% [filename, str(key), str(lon_raw), str(lat_raw)]
 			)
 			continue
 		out[String(key)] = Vector2(lon, lat)
