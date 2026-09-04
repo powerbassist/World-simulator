@@ -125,6 +125,28 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   clone gets the game's autoload, not the dev bridge's. The local file carries both
   and stays per-machine dirty, exactly as this section documents.
 
+  **IT CREPT BACK, AND THE V2.8 REVIEW PROVED THE COST BY CLONING.** Commit `6818604`
+  ("WIP: epitaxy pre-switch from v2.4") put `MCPRuntimeServer` back into the committed
+  `[autoload]` and narrowed `[editor_plugins]` to `godot_mcp_toolkit` alone — and that
+  addon has ZERO tracked files. A fresh clone therefore autoloaded a script that does
+  not exist and `tools/run_tests.sh` FAILED on it: 604 error lines, ending
+  `FAIL tests/test_map_cities.gd`. The tell was that `git status` came back CLEAN —
+  once the per-machine lines are the committed lines, the "always dirty" signal this
+  section relies on to catch exactly this is gone. **So `git status` being clean here
+  is itself the alarm, not the all-clear.** Both lines are corrected; the editor will
+  re-add them on the next open, which is the dirt this section already describes and
+  which must stay OUT of a commit.
+
+  A second half was found the same way, and it is CLAUDE.md's first gotcha reaching
+  the suite: with no `.godot/`, there is no `global_script_class_cache.cfg`, so
+  dialogue_manager's own `class_name` types (`DMExpressionParser`, `DMCompilation`,
+  `DMWaiter`) are unresolvable and **DialogueManager itself fails to parse on a cold
+  clone**. V2.4b's step-0 adoption gate — *"it must init under `--headless --script`,
+  which is what `tools/run_tests.sh` is"* — only ever ran on a machine that already
+  had the cache, so the gate passed WARM and the invariant it was gating was false.
+  `run_tests.sh` now does one `--headless --import` when `.godot/` is absent, which
+  costs a warm run nothing and is what makes "green from a fresh clone" true.
+
   **The rule the other three still cost, unchanged.** *`src/` may reference an addon
   file only if that file is committed*: `addons/` is gitignored, so the moment
   anything under `src/` imports one, that addon has to be committed or
@@ -3155,10 +3177,16 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 29**, and this line said **28** until V2.6b1 corrected it --
-V2.6a bumped it and wrote the bump into its own session paragraph without touching this
-paragraph, which is precisely the two-files-one-fact drift the Workflow section warns
-about, arriving inside a single file instead of between two. V2.6a's two fields are
+Save format is at **version 31**, and this line has now drifted TWICE. It said **28**
+until V2.6b1 corrected it to 29, and it still said 29 until the V2.8 review found
+`game_state.gd` at 31 -- so it missed V2.6b2's bump to 30 and V2.8's to 31, while both
+of those sessions' own paragraphs below state their numbers correctly. That is precisely
+the two-files-one-fact drift the Workflow section warns about, arriving inside a single
+file instead of between two, and the second offence by the same sentence: a session that
+reads this summary rather than the newest paragraph reasons from a stale save format.
+**V2.8's three fields are `start_energy_mix`, `start_import_dependency_pct` and
+`energy_kwh_per_capita`**, content-derived statics `from_dict()` cannot re-derive;
+**V2.6b2's two are `campaign_sites` and `campaign_saturation`**. V2.6a's two fields are
 `NationState.region_pop_share` and `.city_pop_share`: absent, every share reads 0.0, so
 every city has a population of zero, no glyph at any zoom and an empty league table in
 both panels. **V2.6b1 adds nothing and pins five absences** -- the site is arg-max over
