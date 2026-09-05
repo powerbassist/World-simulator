@@ -60,6 +60,7 @@ func _init() -> void:
 	_check_overlap_refused()
 	_check_past_departure_refused()
 	_check_absent_travel_days_round_trips()
+	_check_december_rollover()
 	_finish()
 
 
@@ -164,6 +165,33 @@ func _check_travel_block_spans() -> void:
 ## the refusal rule is the machine, and it is asserted on both orders of the
 ## pair: a second block inside the first's legs refuses, and the first refuses
 ## against a booked second, in a DIFFERENT month if the legs reach that far.
+## DECEMBER, where the next month is `month + 1` = 13 and Time refuses it outright.
+## Both readers were wrong TOGETHER -- days_in_month() answered -20788 and
+## day_cells() answered an empty array -- which is exactly why
+## _check_travel_block_spans()'s cells-against-days_in_month assertion stayed green
+## through the whole bug: two wrong answers agreeing with each other. So every
+## number here is absolute, and the loop covers all twelve months rather than the
+## one the run happens to be in, which is the property the suite was missing when a
+## five-minute play session found this and fourteen simulated years did not.
+func _check_december_rollover() -> void:
+	var state = _fresh()
+	var lengths := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	for m in range(1, 13):
+		var expected: int = lengths[m - 1]
+		var days: int = Calendar.days_in_month(2026, m)
+		if days != expected:
+			_fail("days_in_month(2026, %d) = %d, expected %d" % [m, days, expected])
+		var cells: Array = Calendar.day_cells(state, 2026, m)
+		if cells.size() != expected:
+			_fail("day_cells(2026, %d) gave %d cells, expected %d" % [m, cells.size(), expected])
+
+	# The rollover must not have been bought by hard-coding twelve lengths: a leap
+	# February is the other thing Time's own conversion is here to get right.
+	if Calendar.days_in_month(2028, 2) != 29:
+		_fail("days_in_month(2028, 2) = %d, expected 29 in a leap year"
+			% Calendar.days_in_month(2028, 2))
+
+
 func _check_overlap_refused() -> void:
 	var state = _fresh()
 	var when := _months_ahead(state, 2)
