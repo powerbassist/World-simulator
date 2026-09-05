@@ -161,7 +161,7 @@ const FIGURE_ROWS := [
 ## Carries the state Trends.snapshot_now() took the instant before Budget.commit()
 ## ran -- U4's decision-effects baseline. Taken here, not in main.gd, because by
 ## the time main.gd hears this signal the commit has already happened.
-signal committed(before: Dictionary)
+signal committed(before: Dictionary, pending: Dictionary)
 
 var _state
 var _loader
@@ -362,9 +362,13 @@ func _on_revert() -> void:
 
 func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
+	# Captured before the commit: _on_revert() clears the levers, and the card
+	# the shell pushes should name what was actually committed, not the
+	# reverted zero.
+	var pending := _pending.duplicate()
 	Budget.commit(_state, _pending)
 	_on_revert()
-	committed.emit(before)
+	committed.emit(before, pending)
 
 
 func _on_lever_changed(value: float, key: String) -> void:

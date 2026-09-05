@@ -20,6 +20,9 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
+## V2.9: a decision card's choice buttons. Index is the action's position in the
+## array push() was given; the consumer owns what answering means.
+signal card_action(id: String, index: int)
 
 const CARD_WIDTH := 232
 
@@ -39,7 +42,7 @@ func _ready() -> void:
 
 ## Returns the card's id, so the caller can dismiss it later without having
 ## tracked it -- a resolved crisis should be able to take its own card away.
-func push(title: String, body: String) -> String:
+func push(title: String, body: String, actions: Array = []) -> String:
 	var id := "card_%d" % _next_id
 	_next_id += 1
 
@@ -76,6 +79,21 @@ func push(title: String, body: String) -> String:
 	body_label.theme_type_variation = UiTheme.CAPTION
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(body_label)
+
+	# V2.9: the answer row. A decision answered where the news is, instead of a
+	# route through Dispatches -- the playtest's F4, with the clock paused behind
+	# it (main.gd's arrival branch). One button per choice, in the order given.
+	if not actions.is_empty():
+		var actions_box := HBoxContainer.new()
+		actions_box.add_theme_constant_override("separation", 4)
+		for i in range(actions.size()):
+			var act_btn := Button.new()
+			act_btn.text = String(actions[i]["label"])
+			act_btn.theme_type_variation = UiTheme.SUBROW_BUTTON
+			var index := i
+			act_btn.pressed.connect(func(): card_action.emit(id, index))
+			actions_box.add_child(act_btn)
+		column.add_child(actions_box)
 
 	add_child(card)
 	_cards[id] = card

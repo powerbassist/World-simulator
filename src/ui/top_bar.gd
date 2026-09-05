@@ -1,6 +1,7 @@
 extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a.
 ##
@@ -10,10 +11,12 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 ## one job a permanent top strip is good at -- the two or three numbers that are
 ## true about the country regardless of what the player is looking at.
 ##
-## Deficit, GDP and unemployment, in that order, matching the reference. Not
-## approval (the portrait carries it, and a president reads their own standing
-## off their own face) and not government standing, which is a Politics-panel
-## question the player checks rather than monitors.
+## Deficit, GDP, unemployment, and next to them the vote that ends the
+## player's term (V2.9, from the playtest: the goal was four clicks deep and
+## two surfaces disagreed about it). Not approval (the portrait carries it, and
+## a president reads their own standing off their own face) and not government
+## standing, which is a Politics-panel question the player checks rather than
+## monitors.
 ##
 ## Reads state, never writes it. The gear and save buttons emit; main.gd decides
 ## what they open, the same shape as every other panel here.
@@ -45,6 +48,7 @@ func _ready() -> void:
 	figures.add_child(_build_figure("deficit", "Budget deficit"))
 	figures.add_child(_build_figure("gdp", "GDP"))
 	figures.add_child(_build_figure("unemployment", "Unemployment"))
+	figures.add_child(_build_figure("election", "Next vote"))
 
 	row.add_child(_spacer())
 
@@ -107,3 +111,9 @@ func refresh(state, _clock: Node) -> void:
 	_figure_values["deficit"].text = "%+.2f%%" % -ns.deficit_pct_gdp
 	_figure_values["gdp"].text = "%.0f Bn" % ns.gdp_eur_bn
 	_figure_values["unemployment"].text = "%.2f%%" % ns.unemployment_pct
+	# Count, not date: the number ticking down is the urgency; the Overview's
+	# date line and the Diary carry the calendar. Same query as theirs, so the
+	# three surfaces cannot disagree again. Tooltip keeps the date for free.
+	var months := Trends.months_to_vote(state, ns)
+	_figure_values["election"].text = "%d mo" % months
+	_figure_values["election"].tooltip_text = "The vote that ends your term -- %s. Win it." % Trends.months_text(months)

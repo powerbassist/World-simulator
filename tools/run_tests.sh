@@ -116,6 +116,7 @@ tests=(
   # playability audit's register, and it turns red when somebody FIXES one.
   # See docs/playability-audit.md.
   tests/test_playability.gd
+  tests/test_acknowledgments.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- there is no CI -- so a test file on disk that is

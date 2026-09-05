@@ -163,15 +163,11 @@ func _refresh() -> void:
 		child.queue_free()
 
 	var censure := _censure_probe(ns)
-	# The vote that ends the PLAYER's term. France elects its assembly on one
-	# clock and its president on another (elections.gd's two-clock init); this
-	# column used to read the assembly's, which is how it said 41 months beside
-	# a Diary saying May 2027. Where there is no separate executive the two
-	# clocks share a schedule, so the pick below is the same figure for the
-	# other nine. Closes decision-log U3.
-	var vote_year := int(ns.next_executive_year) if bool(ns.has_executive) else int(ns.next_election_year)
-	var vote_month := int(ns.next_executive_month) if bool(ns.has_executive) else int(ns.next_election_month)
-	var months_to_election := Trends.months_until(_state, vote_year, vote_month)
+	# One source (Trends.vote_date): the executive clock where the nation has
+	# one, the assembly's otherwise -- the same query the top bar's next-vote
+	# figure counts by. Closes decision-log U3.
+	var vote := Trends.vote_date(ns)
+	var months_to_election := Trends.months_to_vote(_state, ns)
 	var satisfaction := Opinion.issue_satisfaction(ns)
 	var top := Opinion.top_issues(ns, TOP_ISSUE_COUNT)
 	var movements := Trends.movements(_state)
@@ -183,7 +179,7 @@ func _refresh() -> void:
 	_fill_defence(ns)
 	_fill_services(ns)
 	_fill_press(ns)
-	_fill_election(ns, months_to_election, vote_year, vote_month)
+	_fill_election(ns, months_to_election, vote.x, vote.y)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
 	_fill_recent_effects()

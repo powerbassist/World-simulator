@@ -175,6 +175,24 @@ static func movements_between(before: Dictionary, after: Dictionary) -> Array[Di
 static func months_until(state, year: int, month: int) -> int:
 	return (year - int(state.year)) * 12 + (month - int(state.month))
 
+## The vote that ends the PLAYER's term. France elects its assembly and its
+## president on two clocks (elections.gd's init); every countdown surface must
+## count to the same one or the game states two deadlines at once -- the exact
+## playtest finding, Overview saying 41 beside a Diary saying May 2027. Where
+## there is no separate executive the two schedules are the same schedule, so
+## this is the same figure for the other nine nations. U3's lesson, one source
+## or none: Overview, the top bar and any later surface call this.
+static func vote_date(ns) -> Vector2i:
+	if bool(ns.has_executive):
+		return Vector2i(int(ns.next_executive_year), int(ns.next_executive_month))
+	return Vector2i(int(ns.next_election_year), int(ns.next_election_month))
+
+
+static func months_to_vote(state, ns) -> int:
+	var when := vote_date(ns)
+	return months_until(state, when.x, when.y)
+
+
 
 ## "3 months" / "1 month" / "this month", so callers do not each re-derive the
 ## plural and the zero case.

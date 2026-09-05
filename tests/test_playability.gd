@@ -51,10 +51,88 @@ func _run() -> void:
 		_fail("main.tscn did not produce a running game")
 		return
 
+	_check_decision_arrival_stops_the_clock()
+	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
 	_check_no_panel_can_destroy_its_window()
 	_check_council_vote_leaves_a_record()
+
+
+## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen
+## seconds, and both playtest runs produced "Decided for you" records no player
+## answered. A decision ARRIVING must stop the clock -- interrupt or not; the
+## flag's own extra behaviour (opening Dispatches) stays interrupt-only. Staged
+## through the real register (Events.announce) and the real arrival branch
+## (_card_events with was_pending false), so a wiring break fails here.
+func _check_decision_arrival_stops_the_clock() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var clock: Node = _main.get_node("Clock")
+	var ns = _main._state.player()
+	var ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ev = candidate
+			break
+	if ev == null:
+		_fail("no non-interrupt event in the loader to stage the arrival with")
+		return
+	clock.paused = false
+	Events.announce(ns, ev)
+	_main._card_events(_main._state.year, _main._state.month, false, {})
+	if not clock.paused:
+		_fail("a decision arrived and the clock kept running")
+		return
+
+	# Task 6: the card itself answers, and the clock resumes. Pressed through the
+	# real button, so the whole chain is exercised -- card_action, Events.choose,
+	# the unpause rule's single writer.
+	var stack = _main._hud.message_stack
+	var action_buttons: Array = []
+	for card in stack.get_children():
+		for b in card.find_children("*", "Button", true, false):
+			if b.text != "X":
+				action_buttons.append(b)
+	if action_buttons.size() < 2:
+		_fail("the decision card rendered %d choice buttons, expected at least 2" % action_buttons.size())
+		return
+	action_buttons[0].pressed.emit()
+	if Events.is_pending(ns):
+		_fail("answering from the card left the decision pending")
+		return
+	if clock.paused:
+		_fail("the decision was answered and the clock is still stopped")
+
+
+## V2.9 (from the playtest): nothing anywhere said what is being played for. A
+## new game opens on a running clock with nothing pending; the stack's first
+## card must state the office, the deadline and the count, read off the same
+## Trends query the top bar and the Overview count by. The load path cannot
+## reach the push (it sits inside the new-game branch of _ready, one code path
+## to keep correct), so no save-file harness is built to assert its absence.
+func _check_opening_card_states_the_goal() -> void:
+	var Trends := load("res://src/ui/trends.gd")
+	var ns = _main._state.player()
+	var when: Vector2i = Trends.vote_date(ns)
+	var months: int = Trends.months_to_vote(_main._state, ns)
+
+	var stack_text := _collect_labels(_main._hud.message_stack)
+	if not stack_text.contains("YOUR TERM"):
+		_fail("the opening card is missing -- a new game never states its goal (stack: '%s')" % stack_text)
+		return
+	if not stack_text.contains(str(months)) or not stack_text.contains(str(when.x)):
+		_fail("the opening card does not carry the deadline (count %d, year %d): '%s'" % [months, when.x, stack_text])
+
+
+## Every Label text under a node, deepest-first queue_free caveat aside -- the
+## stack is built once per card, so on this fresh boot no stale labels exist.
+func _collect_labels(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += child.text + " "
+		out += _collect_labels(child)
+	return out
 
 
 # V1. The term-limit branch used to set in_government = false and append NOTHING,

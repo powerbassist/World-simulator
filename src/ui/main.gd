@@ -10,6 +10,7 @@ const ICONS := "res://addons/at-icons/control/"
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
@@ -109,6 +110,8 @@ var _loader: DataLoader
 var _hud
 var _windows
 var _top_bar
+var _paused_for_decision := false
+var _decision_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -242,8 +245,11 @@ func _ready() -> void:
 	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
-	_budget_panel.committed.connect(func(before):
+	_budget_panel.committed.connect(func(before, pending):
 		_queue_effect("Budget change", before)
+		# The acknowledgment the playtest found missing: the biggest verb in the
+		# game used to answer with one corner number changing (F3).
+		_hud.message_stack.push("Budget committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
 		_update_top_bar()
 	)
 
@@ -267,8 +273,24 @@ func _ready() -> void:
 	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
-	_law_panel.proposed.connect(func(before, law_name):
-		_queue_effect(law_name, before)
+	_law_panel.proposed.connect(func(before, law_name, result):
+		_queue_effect(String(law_name), before)
+		var body: String
+		if bool(result.get("refused", false)):
+			if bool(result.get("referendum_in_flight", false)):
+				body = "A referendum is already in flight."
+			else:
+				body = "The assembly would not take it."
+		elif bool(result.get("withdrawn", false)):
+			body = "Withdrawn."
+		elif bool(result.get("referendum_route", false)):
+			body = "To the country -- the vote is scheduled."
+		else:
+			body = "%s. Yes %d, No %d." % [
+				"Passed" if bool(result.get("passed", false)) else "Failed",
+				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
+			]
+		_hud.message_stack.push(String(law_name), body)
 		_update_top_bar()
 	)
 
@@ -283,8 +305,15 @@ func _ready() -> void:
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
-	_nation_panel.acted.connect(func(before, label):
-		_queue_effect(label, before)
+	_nation_panel.acted.connect(func(before, label, result):
+		_queue_effect(String(label), before)
+		var body: String
+		if bool(result.get("refused", false)):
+			var reason := String(result.get("reason", ""))
+			body = "Refused." if reason.is_empty() else "Refused. %s" % reason
+		else:
+			body = "Agreed."
+		_hud.message_stack.push(String(label), body)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at
@@ -462,7 +491,7 @@ func _ready() -> void:
 	# the player regardless of which tab is open, and settings/save-load are
 	# reached through the pause menu rather than the rail.
 	_election_panel = ElectionPanel.new()
-	_add_centered(_election_panel)
+	_add_centered(_election_panel, true)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
@@ -517,6 +546,21 @@ func _ready() -> void:
 		_on_load_requested(pending_load_slot)
 
 	_update_top_bar()
+
+	# The one sentence the playtest found missing: a new game opens on a running
+	# clock with nothing pending and no statement of what is being played for,
+	# and the deadline lived four clicks deep -- when it was stated at all. The
+	# opening card carries it in the stack's own voice, counted by the same
+	# Trends query the top bar and the Overview count by. It sits AFTER the load
+	# branch and inside the new-game case, so a loaded save never receives it.
+	if pending_load_slot.is_empty():
+		var ns = _state.player()
+		var when := Trends.vote_date(ns)
+		_hud.message_stack.push("Your term", "You hold %s until %s %d -- %s. Win the vote." % [
+			_nation_name(_state.player_nation_id),
+			ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+			Trends.months_text(Trends.months_to_vote(_state, ns)),
+		])
 
 
 ## Screen-filling CenterContainer per panel, which is the one placement mechanism
@@ -639,6 +683,31 @@ func _wire_hud() -> void:
 		_windows.open("events")
 	)
 
+	# V2.9: a decision card's buttons answer the pending event -- the same
+	# Events.choose chain Dispatches uses, with U4's before-snapshot contract --
+	# and the clock the arrival paused resumes. Only the decision card carries
+	# buttons, so any card_action is a decision answer by construction.
+	_hud.message_stack.card_action.connect(func(_id: String, index: int):
+		var ns = _state.player()
+		var ev = Events.pending_event(ns, _loader)
+		if ev == null or index >= ev.choices.size():
+			return
+		var before := Budget.snapshot(_state)
+		var record := Events.choose(_state, _loader, String(ev.choices[index]["id"]))
+		if record.is_empty():
+			return
+		_queue_effect("%s: %s" % [String(ev.event_name), String(ev.choices[index]["label"])], before)
+		if not _decision_card_id.is_empty():
+			_hud.message_stack.dismiss(_decision_card_id)
+			_decision_card_id = ""
+		if _paused_for_decision:
+			_paused_for_decision = false
+			_clock.paused = false
+			_hud.clock_cluster.refresh(_clock)
+		_update_top_bar()
+		_windows.mark_all_dirty()
+	)
+
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
 	# then told what it now shows -- one direction, so the two cannot disagree
 	# about which layer is up.
@@ -656,6 +725,23 @@ func _add_centered(panel: Control, blocking := false) -> void:
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if not blocking:
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	else:
+		# A term result is the one modal moment: dim the world behind it so the
+		# verdict owns the screen, and eat clicks -- the election already paused
+		# the clock; the backdrop makes the map agree (V2.9). The dim is a
+		# SIBLING of the holder, not a child: a CenterContainer collapses a
+		# full-rect child to its minimum size. Added before the holder so it
+		# draws below the panel and above everything added earlier (the map,
+		# the windows), with the HUD -- added later -- still readable above it.
+		# It follows the panel's visibility, so every existing show()/hide()
+		# call site keeps working unchanged.
+		var dim := ColorRect.new()
+		dim.color = Color(0.02, 0.03, 0.05, 0.55)
+		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_STOP
+		dim.visible = false
+		add_child(dim)
+		panel.visibility_changed.connect(func(): dim.visible = panel.visible)
 	holder.add_child(panel)
 	add_child(holder)
 
@@ -1143,6 +1229,11 @@ func _card_foreign_acts(year: int, month: int) -> void:
 			break
 		fresh.push_front(act)
 
+	# Grouped by action, V2.9: four allies state-visiting in one month is ONE
+	# piece of news, not four cards -- five near-identical cards were pushing
+	# decisions off a six-slot column (playtest 2026-09-05). The filters below
+	# are the original stake-floor gates, unchanged; only the carding is grouped.
+	var by_action: Dictionary = {}
 	for act in fresh:
 		var actor_id := String(act["actor_id"])
 		var target_id := String(act["target_id"])
@@ -1151,22 +1242,46 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		if target_id != player_id and ForeignPolicy.stake(_state, player_id, actor_id) < floor_share:
 			continue
 
-		# An act aimed at the player names the player in the TITLE and not again in
-		# the body: "Austria -> you / State Visit: France" reads as though France
-		# were a third country involved somehow.
-		var aimed_here: bool = target_id == player_id
-		var title: String = (
-			"%s → you" % _nation_name(actor_id) if aimed_here else _nation_name(actor_id)
-		)
-		var body: String = (
-			"%s." % String(act["action_name"]) if aimed_here
-			else "%s: %s." % [String(act["action_name"]), _nation_name(target_id)]
-		)
-		# The model computes a reason and this is the only place it is ever read.
-		# Shipping the key unread would be V1.3b's `refused_by_partner` a third time
-		# -- a field src/sim/ fills in and no surface shows, which this block has now
-		# recorded twice and fixed once.
-		_hud.message_stack.push(title, "%s %s" % [body, _act_reason_text(String(act["reason"]))])
+		var key := String(act["action_name"])
+		if not by_action.has(key):
+			by_action[key] = {"aimed": [], "elsewhere": []}
+		if target_id == player_id:
+			by_action[key]["aimed"].append({
+				"actor": _nation_name(actor_id),
+				"reason": String(act["reason"]),
+			})
+		else:
+			by_action[key]["elsewhere"].append({
+				"actor": _nation_name(actor_id),
+				"body": "%s: %s." % [String(act["action_name"]), _nation_name(target_id)],
+			})
+
+	for action_name in by_action:
+		var slot: Dictionary = by_action[action_name]
+		var aimed: Array = slot["aimed"]
+		if not aimed.is_empty():
+			# An act aimed at the player names the player in the TITLE and not
+			# again in the body: "Austria -> you / State Visit: France" reads as
+			# though France were a third country involved somehow.
+			var title: String = (
+				"%s → you" % String(aimed[0]["actor"]) if aimed.size() == 1
+				else "%d× %s → you" % [aimed.size(), action_name]
+			)
+			var who: String = (
+				"%s." % String(aimed[0]["actor"]) if aimed.size() == 1
+				else "%s." % ", ".join(aimed.map(func(a): return String(a["actor"])))
+			)
+			# The model computes a reason and this is the only place it is ever
+			# read. Shipping the key unread would be V1.3b's `refused_by_partner`
+			# a third time -- a field src/sim/ fills in and no surface shows,
+			# which this block has now recorded twice and fixed once. The first
+			# act's reason stands for the group: same action, same month.
+			_hud.message_stack.push(title, "%s %s %s" % [
+				action_name, who, _act_reason_text(String(aimed[0]["reason"])),
+			])
+		else:
+			for line in slot["elsewhere"]:
+				_hud.message_stack.push(String(line["actor"]), String(line["body"]))
 
 
 ## V1.5c. What the unions did this month, as a card.
@@ -1246,12 +1361,33 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 		if ev == null:
 			return
 		var left := Events.months_left(ns)
-		_hud.message_stack.push(
-			ev.event_name,
-			"%s  You have %d %s to answer." % [
-				ev.summary, left, "month" if left == 1 else "months",
-			],
-		)
+		# A decision the player has not seen must not expire behind their back:
+		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
+		# runs produced "Decided for you" records no player answered (2026-09-05).
+		# Arrival pauses; the interrupt flag (V2.4b) still opens Dispatches on
+		# top -- non-modal, per events-model's argument, but the clock waits.
+		_paused_for_decision = true
+		_clock.paused = true
+		_hud.clock_cluster.refresh(_clock)
+		# And the card itself is the answer surface (the clock is stopped, so the
+		# choices cannot be pressed against a running world). The default-choice
+		# marker is events_panel's own wording.
+		var actions: Array = []
+		for choice in ev.choices:
+			actions.append({"label": "%s%s" % [
+				String(choice.get("label", "")),
+				"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
+			]})
+		_decision_card_id = _hud.message_stack.push(ev.event_name, _decision_body(ev, left), actions)
+
+
+## The decision card's body: the event's summary line, then the deadline -- the
+## same two sentences the arrival card has always carried, now beside buttons
+## that answer it (V2.9).
+func _decision_body(ev, left: int) -> String:
+	return "%s  You have %d %s to answer." % [
+		ev.summary, left, "month" if left == 1 else "months",
+	]
 
 
 func _unrest_title(label: String) -> String:

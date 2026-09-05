@@ -1369,6 +1369,27 @@ bounded by a guard rail. [[tax-model|V1.6d]]'s finding, in the session immediate
 
 Full argument: [[sector-model]] §7–8.
 
+## V2.8.1 + V2.9 — merged under a security gate that cannot see the language
+
+The per-commit Mimosa hook printed four unavailable markers on every commit of
+this block (project_model, python_ast, library_source, callgraph), and the
+pre-merge deep re-run (scan-2026-09-05T16-43-42.485Z-94961976a801, sealed)
+proved the cause structural rather than transient: the scanner has no GDScript
+analyzer, selected **8 of the repo's 562 code files**, and returned
+`runStatus: inconclusive` with zero entry points and no call graph. Zero
+findings over 8 files is vacuous, not clean — recorded so no later session
+reads the sealed 0 as a pass.
+
+The merge proceeded on the evidence that binds: the block's diff touches
+`src/ui/`, `tools/`, `tests/` and docs only (`src/sim/` and `src/core/` are
+EMPTY against main — `SAVE_VERSION` stays 31 by construction); the delta adds
+no network, no file I/O, no dynamic code loading and no secrets, and all input
+arrives through Godot's own UI event path; the five Python files the scanner
+could read (dev-only tools, never shipped) came back clean; and the suite is
+green at 79 with check_names clean. An independent audit of the GDScript
+itself, if one is ever wanted, is a manual review pass in the shape of the
+2026-09-04 whole-codebase review — not this instrument.
+
 ---
 
 Related: [[index]] · [[ROADMAP]]

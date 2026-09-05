@@ -971,6 +971,44 @@ arithmetic exact), V1.4c's date/state race in the tool and not the game. The
 frames were judged in-session -- the vision path V2.5 opened held. Model:
 [docs/energy-model.md](docs/energy-model.md).
 
+**V2.8.1 REPAIRED THE PLAYTEST'S BUGS, AND V2.9 BUILT THE PLAYER'S SEAT — both off
+the 2026-09-05 play report ([[playtest-2026-09-05]], repo root), which played two
+full terms through the real UI and returned "a serious simulation wearing no
+game." Two branches, one block each: `v2.8.1-repair` (five readout fixes: the
+election modal's collapsed table — the one content panel without
+`SCROLL_MODE_DISABLED`, its seats column stacking em dashes where no seats exist,
+now bars under the ledger à l'économy panel; Overview counting the ASSEMBLY's
+clock beside a Diary saying May 2027, closed as decision-log U3 with the finding
+that neither figure was wrong — they were on different clocks, so
+`Trends.vote_date()` is now the ONE source; the nation-select row that already
+reserved its height, whose test-asserted geometry challenged the plan's own
+fix; disabled buttons dropping the live EDGE border, Godot painting brass focus
+over any state; cooldown tooltips saying Cooldown) and `v2.9-player-seat` on top
+(the seat: the top bar's "NEXT VOTE 16 mo"; the opening card "Your term — You
+hold France until May 2027 — 16 months. Win the vote.", new-game only; every
+committed verb answering with a card — budget deficit, law division, act
+refusal-with-reason — by widening three panel signals, one shared by six panels
+and kept intact; foreign-act cards grouped per action per month, four state
+visits one card; a decision's ARRIVAL pausing the clock, interrupt or not, the
+flag keeping only its Dispatches-opening extra; the card itself the answer
+surface, `Events.choose` through the same chain Dispatches uses, unpausing
+through one writer; and the election owning the screen — blocking, dimmed,
+verdict and What-decided-it ABOVE the table, 860x600). **The suite caught the
+session's own regression and the point is general**: the arrival pause gave the
+clock a second pauser and `test_election_panel`'s driver stalled at March 2027
+reading an empty panel — any loop that treats "paused" as "the election
+happened" is now behind the feature, and its driver answers what lands on the
+desk like a player. `SAVE_VERSION` stays 31; `git diff --stat main..HEAD --
+src/sim/ src/core/` is EMPTY — every mechanism is readout, wiring or clock
+policy, so the balance gate held by construction (test_balance green, zero
+outcome changes possible from zero sim diffs). Screenshot pass: `--election` is
+the twenty-ninth flag (its own loop — `_tick_months` DISMISSES the election by
+design), two frames judged clean; two nits recorded, not fixed: the opening
+card wraps "Win / the vote." onto a third line, and the default-choice marker
+truncates at card width. `.gdskills/` is gitignored now. V2.9b (the agency
+probe — idle won 26.2, active lost 23.4, the playtest's F6) is the next row and
+it is a MEASUREMENT session, not a build.
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
