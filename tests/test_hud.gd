@@ -244,6 +244,31 @@ func _check_foreign_acts_reach_the_column() -> void:
 	if stack.card_count() != 0:
 		_fail("the player's own act was carded back at them (%d cards)" % stack.card_count())
 
+	# V2.9 (from the playtest): four allies state-visiting in one month is ONE
+	# piece of news -- five near-identical cards pushed decisions off a six-slot
+	# column. One card per action per month, naming the actors.
+	stack.clear()
+	state.foreign_acts.clear()
+	var visitors: Array[String] = []
+	for id in state.nations.keys():
+		if String(id) != player_id and visitors.size() < 4:
+			visitors.append(String(id))
+	for actor in visitors:
+		state.foreign_acts.push_front({
+			"year": state.year, "month": state.month,
+			"actor_id": actor, "target_id": player_id,
+			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+		})
+	_main._card_foreign_acts(state.year, state.month)
+	if stack.card_count() != 1:
+		_fail("four same-action visits produced %d cards, not 1" % stack.card_count())
+		return
+	var grouped := _collect_text(stack)
+	var name_a: String = _main._nation_name(visitors[0])
+	var name_b: String = _main._nation_name(visitors[1])
+	if not grouped.contains(name_a) or not grouped.contains(name_b):
+		_fail("the grouped visit card does not name its actors (%s, %s): '%s'" % [name_a, name_b, grouped])
+
 	# A stale act -- one from a month already gone -- must not re-card on a later
 	# tick, or every month replays the whole record.
 	stack.clear()

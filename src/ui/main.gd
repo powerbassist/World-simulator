@@ -1185,6 +1185,11 @@ func _card_foreign_acts(year: int, month: int) -> void:
 			break
 		fresh.push_front(act)
 
+	# Grouped by action, V2.9: four allies state-visiting in one month is ONE
+	# piece of news, not four cards -- five near-identical cards were pushing
+	# decisions off a six-slot column (playtest 2026-09-05). The filters below
+	# are the original stake-floor gates, unchanged; only the carding is grouped.
+	var by_action: Dictionary = {}
 	for act in fresh:
 		var actor_id := String(act["actor_id"])
 		var target_id := String(act["target_id"])
@@ -1193,22 +1198,46 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		if target_id != player_id and ForeignPolicy.stake(_state, player_id, actor_id) < floor_share:
 			continue
 
-		# An act aimed at the player names the player in the TITLE and not again in
-		# the body: "Austria -> you / State Visit: France" reads as though France
-		# were a third country involved somehow.
-		var aimed_here: bool = target_id == player_id
-		var title: String = (
-			"%s → you" % _nation_name(actor_id) if aimed_here else _nation_name(actor_id)
-		)
-		var body: String = (
-			"%s." % String(act["action_name"]) if aimed_here
-			else "%s: %s." % [String(act["action_name"]), _nation_name(target_id)]
-		)
-		# The model computes a reason and this is the only place it is ever read.
-		# Shipping the key unread would be V1.3b's `refused_by_partner` a third time
-		# -- a field src/sim/ fills in and no surface shows, which this block has now
-		# recorded twice and fixed once.
-		_hud.message_stack.push(title, "%s %s" % [body, _act_reason_text(String(act["reason"]))])
+		var key := String(act["action_name"])
+		if not by_action.has(key):
+			by_action[key] = {"aimed": [], "elsewhere": []}
+		if target_id == player_id:
+			by_action[key]["aimed"].append({
+				"actor": _nation_name(actor_id),
+				"reason": String(act["reason"]),
+			})
+		else:
+			by_action[key]["elsewhere"].append({
+				"actor": _nation_name(actor_id),
+				"body": "%s: %s." % [String(act["action_name"]), _nation_name(target_id)],
+			})
+
+	for action_name in by_action:
+		var slot: Dictionary = by_action[action_name]
+		var aimed: Array = slot["aimed"]
+		if not aimed.is_empty():
+			# An act aimed at the player names the player in the TITLE and not
+			# again in the body: "Austria -> you / State Visit: France" reads as
+			# though France were a third country involved somehow.
+			var title: String = (
+				"%s → you" % String(aimed[0]["actor"]) if aimed.size() == 1
+				else "%d× %s → you" % [aimed.size(), action_name]
+			)
+			var who: String = (
+				"%s." % String(aimed[0]["actor"]) if aimed.size() == 1
+				else "%s." % ", ".join(aimed.map(func(a): return String(a["actor"])))
+			)
+			# The model computes a reason and this is the only place it is ever
+			# read. Shipping the key unread would be V1.3b's `refused_by_partner`
+			# a third time -- a field src/sim/ fills in and no surface shows,
+			# which this block has now recorded twice and fixed once. The first
+			# act's reason stands for the group: same action, same month.
+			_hud.message_stack.push(title, "%s %s %s" % [
+				action_name, who, _act_reason_text(String(aimed[0]["reason"])),
+			])
+		else:
+			for line in slot["elsewhere"]:
+				_hud.message_stack.push(String(line["actor"]), String(line["body"]))
 
 
 ## V1.5c. What the unions did this month, as a card.
