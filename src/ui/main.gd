@@ -111,6 +111,7 @@ var _hud
 var _windows
 var _top_bar
 var _paused_for_decision := false
+var _decision_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -680,6 +681,31 @@ func _wire_hud() -> void:
 	# they wanted was the decision on their desk.
 	_hud.message_stack.card_activated.connect(func(_id: String):
 		_windows.open("events")
+	)
+
+	# V2.9: a decision card's buttons answer the pending event -- the same
+	# Events.choose chain Dispatches uses, with U4's before-snapshot contract --
+	# and the clock the arrival paused resumes. Only the decision card carries
+	# buttons, so any card_action is a decision answer by construction.
+	_hud.message_stack.card_action.connect(func(_id: String, index: int):
+		var ns = _state.player()
+		var ev = Events.pending_event(ns, _loader)
+		if ev == null or index >= ev.choices.size():
+			return
+		var before := Budget.snapshot(_state)
+		var record := Events.choose(_state, _loader, String(ev.choices[index]["id"]))
+		if record.is_empty():
+			return
+		_queue_effect("%s: %s" % [String(ev.event_name), String(ev.choices[index]["label"])], before)
+		if not _decision_card_id.is_empty():
+			_hud.message_stack.dismiss(_decision_card_id)
+			_decision_card_id = ""
+		if _paused_for_decision:
+			_paused_for_decision = false
+			_clock.paused = false
+			_hud.clock_cluster.refresh(_clock)
+		_update_top_bar()
+		_windows.mark_all_dirty()
 	)
 
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
@@ -1318,12 +1344,6 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 		if ev == null:
 			return
 		var left := Events.months_left(ns)
-		_hud.message_stack.push(
-			ev.event_name,
-			"%s  You have %d %s to answer." % [
-				ev.summary, left, "month" if left == 1 else "months",
-			],
-		)
 		# A decision the player has not seen must not expire behind their back:
 		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
 		# runs produced "Decided for you" records no player answered (2026-09-05).
@@ -1332,6 +1352,25 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 		_paused_for_decision = true
 		_clock.paused = true
 		_hud.clock_cluster.refresh(_clock)
+		# And the card itself is the answer surface (the clock is stopped, so the
+		# choices cannot be pressed against a running world). The default-choice
+		# marker is events_panel's own wording.
+		var actions: Array = []
+		for choice in ev.choices:
+			actions.append({"label": "%s%s" % [
+				String(choice.get("label", "")),
+				"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
+			]})
+		_decision_card_id = _hud.message_stack.push(ev.event_name, _decision_body(ev, left), actions)
+
+
+## The decision card's body: the event's summary line, then the deadline -- the
+## same two sentences the arrival card has always carried, now beside buttons
+## that answer it (V2.9).
+func _decision_body(ev, left: int) -> String:
+	return "%s  You have %d %s to answer." % [
+		ev.summary, left, "month" if left == 1 else "months",
+	]
 
 
 func _unrest_title(label: String) -> String:

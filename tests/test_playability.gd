@@ -83,9 +83,25 @@ func _check_decision_arrival_stops_the_clock() -> void:
 	if not clock.paused:
 		_fail("a decision arrived and the clock kept running")
 		return
-	# The staging must not leak into the next check: unanswered decision cleaned.
-	ns.event_pending = {}
-	clock.paused = false
+
+	# Task 6: the card itself answers, and the clock resumes. Pressed through the
+	# real button, so the whole chain is exercised -- card_action, Events.choose,
+	# the unpause rule's single writer.
+	var stack = _main._hud.message_stack
+	var action_buttons: Array = []
+	for card in stack.get_children():
+		for b in card.find_children("*", "Button", true, false):
+			if b.text != "X":
+				action_buttons.append(b)
+	if action_buttons.size() < 2:
+		_fail("the decision card rendered %d choice buttons, expected at least 2" % action_buttons.size())
+		return
+	action_buttons[0].pressed.emit()
+	if Events.is_pending(ns):
+		_fail("answering from the card left the decision pending")
+		return
+	if clock.paused:
+		_fail("the decision was answered and the clock is still stopped")
 
 
 ## V2.9 (from the playtest): nothing anywhere said what is being played for. A

@@ -35,6 +35,7 @@ func _process(_delta: float) -> bool:
 	_check_mood_reads_the_polled_figure()
 	_check_action_bar_subrow()
 	_check_message_stack()
+	_check_card_is_an_answer_surface()
 	_check_foreign_acts_reach_the_column()
 	_check_minimap_slot_reserved()
 	_finish()
@@ -189,6 +190,43 @@ func _check_message_stack() -> void:
 ##   - an act AIMED AT the player always cards, whatever the stake
 ##   - an act between two other nations cards only if the player has a stake
 ##   - the player's own acts never card, because they issued them
+## V2.9: the decision card carries the choices as buttons, so answering is one
+## click where the news is instead of a route through Dispatches. A card pushed
+## with no actions renders none -- every existing caller is unchanged.
+func _check_card_is_an_answer_surface() -> void:
+	var stack = _main._hud.message_stack
+	stack.clear()
+
+	var seen: Array = []
+	stack.card_action.connect(func(id: String, index: int): seen.append([id, index]))
+
+	var id: String = stack.push("Procurement files", "Two bids. Answer now.", [
+		{"label": "Defence to command"},
+		{"label": "Civilian oversight"},
+	])
+	# The card's own dismiss X is a button too; count only the action row.
+	var buttons: Array = []
+	for card in stack.get_children():
+		for b in card.find_children("*", "Button", true, false):
+			if b.text in ["Defence to command", "Civilian oversight"]:
+				buttons.append(b)
+	if buttons.size() != 2:
+		_fail("a card with two choices rendered %d action buttons" % buttons.size())
+		return
+	buttons[0].pressed.emit()
+	if seen.is_empty() or seen[0][0] != id or seen[0][1] != 0:
+		_fail("pressing a card button did not emit card_action(id, 0): %s" % [seen])
+		return
+
+	stack.clear()
+	stack.push("No actions here", "Plain card.")
+	for card in stack.get_children():
+		for b in card.find_children("*", "Button", true, false):
+			if b.text != "X":
+				_fail("a card with no actions rendered an extra button '%s'" % b.text)
+	stack.clear()
+
+
 func _check_foreign_acts_reach_the_column() -> void:
 	var stack = _main._hud.message_stack
 	var state = _main._state
