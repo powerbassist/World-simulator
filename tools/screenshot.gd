@@ -248,6 +248,7 @@ var _city := false
 ## built -- the whole quantity is a DIVERGENCE, and at month 1 it is exactly what
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
+var _election := false
 
 ## V2.7, the twenty-sixth flag: ten years so the network term has moved the
 ## shares the accessibility column reads, the Region panel open on the league
@@ -388,6 +389,8 @@ func _init() -> void:
 			_site = true
 		elif args[i] == "--move":
 			_move = true
+		elif args[i] == "--election":
+			_election = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -487,6 +490,8 @@ func _apply_view() -> void:
 		_break_ground()
 	if _region:
 		_open_the_partition()
+	if _election:
+		_stage_the_election()
 	if _diverge:
 		_let_the_regions_diverge()
 	if _network:
@@ -1073,6 +1078,19 @@ func _tick_months(months: int) -> void:
 ## whole time.
 func _mark_panels_dirty() -> void:
 	_main._windows.mark_all_dirty()
+
+
+## V2.9, the twenty-ninth flag: the election result is the one modal moment and
+## this is the only way to photograph it -- ticked to May 2027 with the modal
+## LEFT OPEN (the _tick_months helper dismisses it, by design, for every other
+## flag). The dim backdrop and the verdict-first ordering are the frame's claims.
+func _stage_the_election() -> void:
+	if _main == null or _main._clock == null:
+		return
+	var target: int = _main._clock.year * 12 + _main._clock.month + 16
+	while _main._clock.year * 12 + _main._clock.month < target:
+		_main._clock.advance_one_day()
+	_main._update_top_bar()
 
 
 func _impose_a_spread() -> void:
