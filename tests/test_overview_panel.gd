@@ -116,15 +116,28 @@ func _check_fresh_game_has_no_trends() -> void:
 ## two-clock init in elections.gd). Read off the live panel rather than the
 ## field, so a wrong clock wired into the column fails here and not in a
 ## playtest. Runs on the fresh game, before anything advances the clock.
+##
+## V2.9 task 1 extends the same cross-surface rule to the top bar: the HUD's
+## "next vote" figure is the third surface counting to the player's vote, and
+## it counts by the one shared query (Trends.months_to_vote) rather than a
+## fourth hand-rolled pick.
 func _check_countdown_matches_the_player_clock() -> void:
 	var ns = _main._state.player()
 	var expected: int = Campaign.months_to_election(_main._state, ns)
+	if Trends.months_to_vote(_main._state, ns) != expected:
+		_fail("Trends.months_to_vote disagrees with Campaign.months_to_election (%d vs %d)" % [
+			Trends.months_to_vote(_main._state, ns), expected
+		])
 	var text := _column_text("election")
 	var months := _first_int(text)
 	if months < 0:
 		_fail("the election column prints no month count: %s" % text)
 	elif months != expected:
 		_fail("the election column counts %d months to the vote but the campaign clock says %d" % [months, expected])
+
+	var bar_text: String = _main._top_bar._figure_values["election"].text
+	if bar_text != "%d mo" % expected:
+		_fail("the top bar's next-vote figure reads '%s' and the campaign clock says %d months" % [bar_text, expected])
 
 
 func _check_trends_appear_after_a_run() -> void:
