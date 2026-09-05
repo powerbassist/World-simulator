@@ -121,8 +121,11 @@ calendar that costs something, and motion. It opens no new front -- war stays in
 | **V2.6** | people move | S | V2.5 |
 | **V2.7** | network and resources | S | V2.5 |
 | **V2.8** | energy, placed | S + U | V2.7 |
-| **V2.9** | environment and climate | S | V2.8 |
-| **V2.10** | the world in motion | U | V2.7 |
+| **V2.8.1** | playtest repair — **BUILT** | S | V2.8 |
+| **V2.9** | the player's seat — **BUILT** | S + M | V2.8.1 |
+| **V2.9b** | agency probe (the playtest's F6, measured) | M | V2.9 |
+| **V2.10** | environment and climate | S | V2.9 |
+| **V2.11** | the world in motion | U | V2.7 |
 
 Estimated at **30-40 sessions**, comparable to V1. **Blocks 5 and after are rows to
 challenge rather than commitments**, and that is written into the tier doc rather than left
