@@ -139,6 +139,7 @@ static func unrest_target(ns) -> float:
 	var sat: Dictionary = Opinion.issue_satisfaction(ns)
 	return clampf(
 		K.UNREST_MAX * hardship(sat)
+		- K.RELIEF_SCALE * relief(sat)
 		+ K.INEQUALITY_BETA * inequality_deviation(ns)
 		- K.SETTLEMENT_BETA * float(ns.settlement_stance)
 		# V1.5d, and the MINUS is the term: press_freedom is negative when the press is
@@ -202,6 +203,47 @@ static func hardship(sat: Dictionary) -> float:
 	if share_sum <= 0.0:
 		return 0.0
 	return -total / share_sum
+
+
+## The V3.0 relief, and the other half of hardship's bargain. The mobilised
+## blocs' GROSS improvement — the same weights, applied to the positive
+## satisfactions only — subtracts from the grievance target, so a consolidation
+## that heals the public finances answers part of the pain its taxes and cuts
+## caused. Without this term the V2.9b probe's F2 stands: one satisfaction pool
+## pricing two punishments (approval AND grievance), with governing able only
+## ever to feed the grievance and doing nothing the locally optimal style.
+##
+## The ASYMMETRY is deliberate and mirrors salience_weights()'s own: pain is
+## amplified by SALIENCE_GAIN inside the weights (that is what makes losing
+## attributable), and the relief pool amplifies the issue the bloc is WINNING
+## on by the same gain — the issue you are winning on becomes what you credit
+## the government for. An unamplified relief was tried first and measured: at
+## RELIEF_SCALE 45 the tax-led style's grievance moved only 11.4 -> 9.3 against
+## a B2 target of 6.8, because the improving side's base weights are a fraction
+## of the amplified pains'. The gain on the positive side is what makes the
+## pool's two halves comparable at all. maxf(sat, 0) is what keys the term to
+## the improving side; a worsening issue produces no relief, which
+## tests/test_unrest.gd asserts.
+##
+## Exactly 0.0 for a fresh game — every satisfaction is exactly zero — so the
+## idle path every band reads against cannot move because this term exists.
+static func relief(sat: Dictionary) -> float:
+	var total := 0.0
+	var share_sum := 0.0
+	for bloc in K.UNREST_BLOCS:
+		var size: float = float(OpinionK.BLOC_SIZE.get(bloc, 0.0))
+		var weights: Dictionary = Opinion.salience_weights(
+			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN
+		)
+		var row := 0.0
+		for issue in weights:
+			var s := float(sat.get(issue, 0.0))
+			row += float(weights[issue]) * maxf(s, 0.0) * (1.0 + OpinionK.SALIENCE_GAIN * maxf(s, 0.0))
+		total += size * row
+		share_sum += size
+	if share_sum <= 0.0:
+		return 0.0
+	return total / share_sum
 
 
 ## How far this nation's Gini index has drifted since the game began, in points —

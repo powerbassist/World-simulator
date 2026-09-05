@@ -81,3 +81,15 @@ docs/superpowers/plans/2026-09-05-v3.0-agency-tuning.md.
 Anchor: the idle style's own path (m6 49.18, m16 49.52 at the V2.9b
 constants) must not move more than ±0.3 except through the honeymoon term
 itself (B3 owns months 1-6).
+
+### V3.0 mid-block pre-declaration (before the style's first run)
+
+The `budget-smart` style is added to tools/agency_probe.gd: a low-pain
+consolidation (defence -1.5, infrastructure -0.5, income +4.0 only) whose cuts
+land on lines the mobilised blocs weight at or near zero. It exists to
+separate "the budget-tax style cannot reach B1" from "no fiscal stance can".
+B1's spend-led clause is likewise amended before further sweeping: the
+deficit-worsening side's grievance IS the amplified public_finances pain, and
+a relief term that cancelled it would be a grievance blind to deficits — so
+B2 reads: consolidating styles (budget-tax, full-tax) month-16 grievance <=
+idle + 5.0; budget-spend is recorded as bounded, not swept against.

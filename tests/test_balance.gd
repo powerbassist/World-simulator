@@ -147,7 +147,10 @@ func _init() -> void:
 ## infinity or pinning at zero." Checked every month, not just at the end — a
 ## value that pins and then recovers still means the model stopped working.
 func _check_ten_years_stay_off_every_clamp() -> void:
-	var run := _play(IGNORED, TEN_YEARS)
+	# stop_on_loss=false, V3.0: the do-nothing run now LOSES office mid-window
+	# (the fatigue finding), and the clamp watch needs its full horizon — losing
+	# an election is not what this check exists to catch.
+	var run := _play(IGNORED, TEN_YEARS, -1, "FRA", -1, -1, -1, -1, "", -1, 0, false)
 	var ns = run["state"].player()
 
 	if not run["problems"].is_empty():
@@ -165,7 +168,8 @@ func _check_ten_years_stay_off_every_clamp() -> void:
 ## (largest_party formation, ordinary_law amendment threshold, FPTP with no
 ## threshold), the same test V1.2a's Germany addition ran.
 func _check_gbr_ten_years_stay_off_every_clamp() -> void:
-	var run := _play(IGNORED, TEN_YEARS, -1, "GBR")
+	# stop_on_loss=false, for the same reason the FRA ten-year check above passes it.
+	var run := _play(IGNORED, TEN_YEARS, -1, "GBR", -1, -1, -1, -1, "", -1, 0, false)
 	var ns = run["state"].player()
 
 	if not run["problems"].is_empty():
@@ -204,9 +208,16 @@ func _check_two_full_terms_without_softlock() -> void:
 ## V1.2b: France's own two-term limit ends what would otherwise be an
 ## indefinitely-survivable do-nothing run -- the President is termed out at the
 ## third executive election (2037-05) rather than losing a vote. Distinct from
-## every other check here: in_government going false is the CORRECT outcome,
-## and the failure modes are firing early, firing late, or being
-## indistinguishable from an actual election defeat.
+## every other check here: in_government going false is the CORRECT outcome.
+##
+## V3.0 RE-CONTRACTED, and the change is the fatigue term's own finding: time in
+## office is now its own drag (the S5 deferral), and at the shipped rate the
+## do-nothing president no longer WINS the 2031 re-election at all — the run
+## ends in a lost vote at month 76, before the 2037 term-out. That is the
+## playtest's F6 ask working as designed (idle must not be locally optimal), so
+## the pinned property is no longer "terms out at exactly two elections" but
+## the one both paths share: office ENDS within the two-term window, the run
+## survives past its first term, and the end is clean.
 func _check_france_terms_out_at_the_limit() -> void:
 	var run := _play(IGNORED, MONTHS)
 	var ns = run["state"].player()
@@ -214,10 +225,11 @@ func _check_france_terms_out_at_the_limit() -> void:
 	if ns.in_government:
 		_fail("a do-nothing French run still holds office after %d months; the two-term limit should have ended it" % run["months"])
 		return
-	if run["elections"].size() != 2:
-		_fail("expected exactly 2 executive elections before the term limit barred a third, saw %d" % run["elections"].size())
-	if ns.terms_served != 2:
-		_fail("terms_served is %d when termed out; France's term_limit is 2" % ns.terms_served)
+	if run["months"] <= 60:
+		_fail("the do-nothing run ended at month %d — before its first term was out, which is a softlock or a crash, not a politics" % run["months"])
+		return
+	if run["elections"].size() < 1:
+		_fail("the do-nothing run ended with %d executive elections resolved; at least the re-election that ended it must have run" % run["elections"].size())
 	if not run["problems"].is_empty():
 		for p in (run["problems"] as Array).slice(0, 5):
 			_fail("termed-out run: %s" % p)
@@ -345,7 +357,7 @@ func _check_a_dissolution_stays_off_every_clamp() -> void:
 ## `dissolve_at_month` (1-indexed simulated month, -1 to never) calls
 ## Dissolution.dissolve() once that month is reached, in the same tick position
 ## main.gd and balance_probe.gd use: after Legislature, before Elections.
-func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1, capture_at_month: int = -1, order_action_id: String = "", order_month: int = -1, order_repeat_months: int = 0) -> Dictionary:
+func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation_id: String = "FRA", subsidise_at_month: int = -1, regulate_at_month: int = -1, nationalise_at_month: int = -1, capture_at_month: int = -1, order_action_id: String = "", order_month: int = -1, order_repeat_months: int = 0, stop_on_loss: bool = true) -> Dictionary:
 	var state = GameState.new_game(_loader, nation_id)
 	if not state.errors.is_empty():
 		_fail("new_game reported errors: %s" % [state.errors])
@@ -503,7 +515,10 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 
 		played += 1
 		problems.append_array(_problems(ns, year, month))
-		if not ns.in_government:
+		# V3.0's stop_on_loss: losing office is now a REACHABLE politics (the
+		# fatigue term), so the checks that watch a full horizon pass false and
+		# keep ticking past the loss; the ones about office itself keep the break.
+		if stop_on_loss and not ns.in_government:
 			break
 
 	return {"state": state, "months": played, "problems": problems, "elections": elections, "all_results": all_results}

@@ -138,9 +138,10 @@ static func _tick_nation(ns) -> void:
 		# construction. See unrest_constants.UNREST_OPINION_SCALE for why the term
 		# exists at all: an output-only price was designed, measured, and found unable
 		# to reach a voter in a model that prices rates.
-		var target: float = K.APPROVAL_NEUTRAL + K.APPROVAL_SPAN * clampf(
-			score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
-		)
+		var target: float = K.APPROVAL_NEUTRAL + K.time_in_office_offset(int(ns.months_in_term)) \
+			+ K.APPROVAL_SPAN * clampf(
+				score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
+			)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE
 		ns.bloc_approval[bloc] = clampf(approval, K.APPROVAL_MIN, K.APPROVAL_MAX)

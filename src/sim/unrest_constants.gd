@@ -263,7 +263,20 @@ const PRESS_UNREST_BETA := 8.0
 ## `managed` 5.31 -> 9.17) and the ACT COUNT IS UNCHANGED IN ALL 29 REGIMES -- zero
 ## everywhere except the two `managed_then_austerity` runs, which keep 2 and 1.
 ## tools/cycle_probe.gd table (f).
-const UNREST_THRESHOLD_PCT := 45.0
+##
+## RE-BASELINED AT V3.0, and this one MOVED, unlike V1.6a's: the fiscal pain
+## scales above it in opinion_constants (TAX_SCALE_PP 8 -> 16/24, SPEND_SCALE_PP
+## 3 -> 6) halve what any budget reads as suffering, and the V3.0 relief term
+## answers part of the improving side — so the `managed_then_austerity` regime's
+## measured grievance PEAK fell 45-48 -> 18.02 (tools/measure_austerity_peak.gd,
+## re-run on the day the scales shipped; the throwaway measurer's number is
+## recorded in the V3.0 report). A threshold of 45 under the new scales is 2.5x
+## above the harshest sane austerity and the acting agent is unreachable —
+## tests/test_unrest.gd's own reachability check was what caught it. Re-banded
+## on the V1.5d rule over [hands_off peak ~2, austerity peak 18.02] and shipped
+## at the interior: the unions still answer austerity, `hands_off` still never
+## fires, and the escalation labels stay reachable.
+const UNREST_THRESHOLD_PCT := 14.0
 
 ## Months before the next act can fire.
 ##
@@ -392,6 +405,25 @@ const UNREST_IMPULSE_SCALE := 2.0
 ##
 ## Full table: docs/unrest-model.md (d2).
 const UNREST_OPINION_SCALE := 0.15
+
+## V3.0's relief: how much of the mobilised blocs' GROSS improvement answers the
+## grievance, in the same units hardship charges — a fraction of UNREST_MAX per
+## unit of weighted improvement, subtracted from the target by unrest.gd's
+## relief(). The V2.9b probe's F2 finding was that hardship is the grievance's
+## ONLY satisfaction input, so governing could only ever feed it and doing
+## nothing was locally optimal; this is the positive-satisfaction path that
+## handoff named. It is UNAMPLIFIED by SALIENCE_GAIN (pain is amplified inside
+## the weights, improvement is not — see unrest.gd) and it is EXACTLY 0.0 for a
+## fresh game, so the idle path cannot move because the term exists.
+##
+## BAND (pre-declared, V3.0): governing styles' month-16 grievance <= idle + 5.0
+## (the B2 row of BALANCE_PLAN.md), idle month-16 grievance unchanged within
+## +-0.5 of its 1.9 anchor, and the relief term's own approval echo through
+## UNREST_OPINION_SCALE kept under 0.5 points so the relief cannot become an
+## approval lever bigger than the satisfactions it is derived from. Swept on
+## {10, 20, 30, 45} — the unit is POINTS of grievance per unit of weighted
+## improvement, hardship's own scale.
+const RELIEF_SCALE := 27.0
 
 ## Clamp on the accumulated output impulse, points of annual growth.
 ##

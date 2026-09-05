@@ -88,6 +88,16 @@ const STYLES := [
 		"spending_pct_gdp": {"pensions": -1.5, "health": -1.0},
 	}, "laws": true, "diplomacy": true, "project": true, "campaign": [8]},
 	{"id": "campaign-only", "budget": {}, "laws": false, "diplomacy": false, "project": false, "campaign": [8, 12]},
+	# V3.0, pre-declared in BALANCE_PLAN.md before its first run: a LOW-PAIN
+	# consolidation — cuts on lines the mobilised blocs weight at or near zero
+	# (workers: defence 0.00, students: defence 0.00/infrastructure 0.00), one
+	# tax on the halved income scale, no pension or health touch. The question
+	# it exists to answer: is ANY fiscal stance the model rewards, or is the
+	# B1 bound the budget-tax style's alone?
+	{"id": "budget-smart", "budget": {
+		"tax_rates_pct": {"income": 4.0},
+		"spending_pct_gdp": {"defence": -1.5, "infrastructure": -0.5},
+	}, "laws": false, "diplomacy": false, "project": false, "campaign": []},
 ]
 
 
