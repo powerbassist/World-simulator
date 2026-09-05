@@ -1009,6 +1009,51 @@ truncates at card width. `.gdskills/` is gitignored now. V2.9b (the agency
 probe — idle won 26.2, active lost 23.4, the playtest's F6) is the next row and
 it is a MEASUREMENT session, not a build.
 
+**V3.0 TUNED THE AGENCY PROBLEM AND THE GATE CAME BACK FAIL BY MEASUREMENT —
+which is the outcome the plan named, not a session failure.** A second playtest
+of the seat (reports/playtest-2026-09-05-b.md, gitignored, state-verified
+through the runtime bridge — no vision path this harness, frames to the author)
+confirmed every V2.9 mechanism live through a full term to re-election and
+measured the tier's two structural gaps: **the Union is one panel with eight
+members and an empty council**, and **max zoom halves the game's own clock
+(0.50 vs 1.12 game-days/sec)**. The V3 tier is drafted in
+[docs/tiers/v3.md](docs/tiers/v3.md) — agency first, map platform, alliance
+system, EU-27 roster in tranches, roads on the V2.7 graph, V2.10/V2.11
+absorbed — **pending the author's sign-off**, and V3.0 was executed on that
+draft's first row with bands pre-declared in `BALANCE_PLAN.md` before any run.
+What shipped: **honeymoon and fatigue as a PURE READ of
+`Elections.months_in_term`** — the S5 deferral discharged with no new field and
+no `SAVE_VERSION` move, because the counter had existed since V1.2 and the
+plan's own `inauguration_month` + version bump were deleted at execution time
+(the init-exactness pins forced `offset(0) == 0.0`, which killed the +6-day-one
+shape before it ran); the **fiscal re-weight** (income scale 8 → 24, shared tax
+8 → 16, `SPEND_SCALE_PP` 3 → 6, `DEFICIT_SCALE_PP` refused at 6.0 after the
+halving clamped the spend side's pain and crashed budget-spend to −13.03); the
+**grievance relief** (`unrest.gd::relief()` — the mobilised blocs' gross
+improvement, gain-amplified on the improving side after the unamplified form
+measured 11.4 → 9.3 against a 6.85 target at scale 45), V2.9b F2's path back;
+**`UNREST_THRESHOLD_PCT` 45 → 14** — the same scales took the austerity peak
+from ~45 to a measured **18.02** and the strike agent became unreachable,
+which `test_unrest`'s reachability check caught (tools/measure_austerity_peak.gd
+committed as the cited instrument); **B4 REFUSED** — the campaign binder is the
+authored 0.03 mobilisation content, not the cap, and at the cap the channel
+buys only +0.4 vote, so the content stays and the ceiling is recorded in
+campaign-model.md; **B5 monotone**, `INCUMBENT_SWING` untouched. The probe's
+bottom line: best active style **−2.00 approval points vs idle, from −7.57**;
+vote deficit 3.0 → 0.2 points; the GATE's +1.0 is a measured bound on every
+declared lever, and the three design routes past it (competence credit as a
+channel, an activity-keyed drag, or accepting the bound) are the AUTHOR's call,
+recorded in reports/agency-probe-v3.0.md. `test_balance` was re-contracted
+where the findings invalidated premises: the do-nothing France run now LOSES
+its 2031 re-election to fatigue (the playtest's F6 ask working — the re-run's
+other fatigue flips: redistributive, managed_then_redistributive; and the
+honeymoon GAINS managed_captures_the_courts its 2027 vote, a side effect
+flagged, not tuned away), and the ten-year clamp watches run past office loss
+via a `stop_on_loss` param. `test_opinion`/`test_tax` re-pinned with the
+measured numbers beside them. Suite 79/79 green, names clean, two screenshot
+frames (polling, economy) captured for the author. Handoff:
+.superpowers/sdd/v3.1-handoff.md.
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or

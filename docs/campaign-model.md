@@ -580,3 +580,25 @@ past the run-up to find a demonstration. Three frames judged clean after the fix
 
 Related: [[index]] · [[siting-model]] · [[election-model]] · [[opinion-model]] · [[media-model]] ·
 [[projects-model]] · [[v1]] · [[ROADMAP]]
+
+## V3.0 — the power band measured, and REFUSED
+
+V3.0's B4 asked whether the campaign channel could buy **+1.0 vote share**
+over idle in one term. Measured on the V3.0 constants, the answer is no, and
+the reason is structural:
+
+- The binder is the **authored mobilisation rates** (0.03-0.055 per month in
+  `data/campaign-actions/campaign.json`), not `MAX_MOBILISATION_PER_MONTH` —
+  the content sits 3× under the cap, so sweeping the cap to 0.30 moves
+  nothing.
+- Raising every effort to the cap itself (0.10/month, a 3.3× content change,
+  measured and **REVERTED**) reaches **+0.4 vote share** for two ideal
+  windows — the pipeline is turnout → affinity mix, and mobilising a bloc
+  only helps the incumbent to the degree its affinity already does.
+
+The refusal is the plan's own path taken: the ceiling is recorded here
+rather than the content being re-authored to chase a band. If a later
+session wants campaign to carry more weight, the lever is the CONTENT
+(the five efforts' mobilisation tables, with their demobilisation sides —
+V1.7a's targeting finding), and the +0.4-at-the-cap number is the bound it
+must be measured against.
