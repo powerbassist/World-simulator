@@ -307,7 +307,7 @@ func _refresh_contribution(ns) -> void:
 	if not is_zero_approx(float(parts["fine"])):
 		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(parts["fine"]), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Total: %+.3f%% of GDP" % ns.bloc_transfer_pct_gdp, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53%% of GDP.")
+	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP.")
 
 
 func _on_vote(choice: String) -> void:
