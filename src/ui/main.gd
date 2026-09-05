@@ -243,8 +243,11 @@ func _ready() -> void:
 	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
-	_budget_panel.committed.connect(func(before):
+	_budget_panel.committed.connect(func(before, pending):
 		_queue_effect("Budget change", before)
+		# The acknowledgment the playtest found missing: the biggest verb in the
+		# game used to answer with one corner number changing (F3).
+		_hud.message_stack.push("Budget committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
 		_update_top_bar()
 	)
 
@@ -268,8 +271,24 @@ func _ready() -> void:
 	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
-	_law_panel.proposed.connect(func(before, law_name):
-		_queue_effect(law_name, before)
+	_law_panel.proposed.connect(func(before, law_name, result):
+		_queue_effect(String(law_name), before)
+		var body: String
+		if bool(result.get("refused", false)):
+			if bool(result.get("referendum_in_flight", false)):
+				body = "A referendum is already in flight."
+			else:
+				body = "The assembly would not take it."
+		elif bool(result.get("withdrawn", false)):
+			body = "Withdrawn."
+		elif bool(result.get("referendum_route", false)):
+			body = "To the country -- the vote is scheduled."
+		else:
+			body = "%s. Yes %d, No %d." % [
+				"Passed" if bool(result.get("passed", false)) else "Failed",
+				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
+			]
+		_hud.message_stack.push(String(law_name), body)
 		_update_top_bar()
 	)
 
@@ -284,8 +303,15 @@ func _ready() -> void:
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
-	_nation_panel.acted.connect(func(before, label):
-		_queue_effect(label, before)
+	_nation_panel.acted.connect(func(before, label, result):
+		_queue_effect(String(label), before)
+		var body: String
+		if bool(result.get("refused", false)):
+			var reason := String(result.get("reason", ""))
+			body = "Refused." if reason.is_empty() else "Refused. %s" % reason
+		else:
+			body = "Agreed."
+		_hud.message_stack.push(String(label), body)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at

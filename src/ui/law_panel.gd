@@ -38,7 +38,7 @@ const FORECAST_UNCERTAIN_BAND := 0.15
 ## bill passed or not; main.gd only queues an effect worth measuring once a
 ## month has actually elapsed against it, which a failed vote changes nothing
 ## to distinguish -- an entry that shows "nothing moved" is still correct.
-signal proposed(before: Dictionary, law_name: String)
+signal proposed(before: Dictionary, law_name: String, result: Dictionary)
 
 var _state
 var _loader
@@ -551,15 +551,15 @@ func _build_held_bill(ns, law_id: String) -> Control:
 
 func _on_propose(law) -> void:
 	var before := Trends.snapshot_now(_state)
-	Legislature.propose(_state, _loader, law)
-	proposed.emit(before, law.law_name)
+	var result := Legislature.propose(_state, _loader, law)
+	proposed.emit(before, law.law_name, result)
 	_dirty = true
 
 
 func _on_referendum(law) -> void:
 	var before := Trends.snapshot_now(_state)
-	Legislature.propose(_state, _loader, law, false, true)
-	proposed.emit(before, law.law_name)
+	var result := Legislature.propose(_state, _loader, law, false, true)
+	proposed.emit(before, law.law_name, result)
 
 
 func _on_withdraw() -> void:
@@ -568,13 +568,13 @@ func _on_withdraw() -> void:
 	var law_name: String = law.law_name if law != null else Referendum.pending_law_id(ns)
 	var before := Trends.snapshot_now(_state)
 	Referendum.withdraw(ns)
-	proposed.emit(before, law_name)
+	proposed.emit(before, law_name, {"withdrawn": true})
 
 
 func _on_force(law) -> void:
 	var before := Trends.snapshot_now(_state)
-	Legislature.propose(_state, _loader, law, true)
-	proposed.emit(before, law.law_name)
+	var result := Legislature.propose(_state, _loader, law, true)
+	proposed.emit(before, law.law_name, result)
 	_dirty = true
 
 

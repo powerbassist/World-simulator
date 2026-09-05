@@ -178,7 +178,7 @@ func _check_acted_signal_carries_a_baseline(panel, state) -> void:
 		return
 
 	var seen := []
-	panel.acted.connect(func(before, label): seen.append({"before": before, "label": label}))
+	panel.acted.connect(func(before, label, result): seen.append({"before": before, "label": label, "result": result}))
 	button.pressed.emit()
 
 	if seen.is_empty():

@@ -31,7 +31,7 @@ signal closed
 ## Mirrors law_panel.gd's `proposed`, so main.gd's U4 decision-delta plumbing
 ## (_queue_effect, a baseline measured against the next history entry) takes it
 ## with no change of its own.
-signal acted(before, label)
+signal acted(before, label, result)
 
 var _state
 var _loader
@@ -408,10 +408,17 @@ func _refusal_text(key: String) -> String:
 
 func _on_act(action) -> void:
 	var before := Trends.snapshot_now(_state)
-	Diplomacy.execute(
+	var result := Diplomacy.execute(
 		_state, _loader.diplomatic_actions, action, _state.player_nation_id, _nation_id
 	)
-	acted.emit(before, "%s: %s" % [action.action_name, _nation_id])
+	# The refusal sentence travels in the result: the shell's acknowledgment
+	# card needs it, and the action object whose agreement terms feed the
+	# reason lives here, not there.
+	if bool(result.get("refused", false)):
+		result["reason"] = Diplomacy.refusal_reason(
+			_state, _state.player_nation_id, _nation_id, action.effects.get("agreement", {})
+		)
+	acted.emit(before, "%s: %s" % [action.action_name, _nation_id], result)
 	_dirty = true
 
 
