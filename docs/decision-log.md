@@ -145,6 +145,13 @@ changed no simulation: on a fresh French game `ns.term_months` says 60 while
 `next_election_*` is 41 months out, so an honest Overview would print "month 0 of
 60" next to "41 months until the vote". The term-progress line was dropped rather
 than shown. Whichever of the two figures is wrong belongs to a V1.1 session.
+**CLOSED at V2.8.1, and the answer was neither figure being wrong — they were on
+different clocks.** `next_election_*` is the Assembly's (Jun 2029); the vote that
+ends the player's office is the executive's (May 2027), which is what the Diary
+and the Campaign panel had been saying all along. Overview now counts to the
+executive vote where the nation has one, and the term sentence derives months
+served from that same subtraction instead of the fresh-game `months_in_term`
+counter.
 
 ## V1.1b — the effort column held, and a term the plan did not contain
 

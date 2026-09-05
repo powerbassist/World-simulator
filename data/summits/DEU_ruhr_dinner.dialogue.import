@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://d36auqjhwccpa"
+path="res://.godot/imported/DEU_ruhr_dinner.dialogue-88a9d1117464d716d2ef7bbf1eb4f82d.tres"
+
+[deps]
+
+source_file="res://data/summits/DEU_ruhr_dinner.dialogue"
+dest_files=["res://.godot/imported/DEU_ruhr_dinner.dialogue-88a9d1117464d716d2ef7bbf1eb4f82d.tres"]
+
+[params]
+
+defaults=true

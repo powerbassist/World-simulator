@@ -38,6 +38,14 @@ var _new_game_deu
 ## which is exactly the path that would keep passing if the panel stopped
 ## emitting a scenario at all.
 var _new_game_fra_scenario
+## The start list rows _check_scenario_select() leaves on the panel, and which
+## of them is Inheritance -- _check_start_row_geometry() reads them a frame
+## later, because the wrapped height only exists once the containers have
+## sorted and the autowrap labels re-measured at the real width (the fold
+## finding in docs/panel-system.md: a read in the build frame answers for the
+## previous width).
+var _start_rows: Array = []
+var _start_inheritance_index := -1
 
 
 func _init() -> void:
@@ -55,6 +63,15 @@ func _process(_delta: float) -> bool:
 			_check_settings()
 			_check_scenario_select()
 			_write_save()
+			return false
+		3:
+			# One frame of nothing, deliberately: the start list's containers sort
+			# and its autowrap labels re-measure at the real width on the frame
+			# after the build -- the frame _check_start_row_geometry() reads them
+			# on (docs/panel-system.md's fold finding).
+			return false
+		4:
+			_check_start_row_geometry()
 			_menu._start_game(SLOT)
 			_continued_game = root.get_child(root.get_child_count() - 1)
 			# _start_game() queue_free()s the menu it was called on -- deferred,
@@ -260,6 +277,23 @@ func _check_scenario_select() -> void:
 	if opened == null or not panel.is_ancestor_of(opened):
 		_fail("opening nation select left focus outside it, so it cannot be driven from the keyboard")
 
+	# Closing must never hand focus to a disabled control: Godot paints the brass
+	# focus stylebox over any state, so a disabled Continue wearing it read as
+	# enabled until clicked (playtest 2026-09-05). A click gives a disabled
+	# button focus anyway, so Continue is exactly the control an overlay can be
+	# asked to return to -- and disabled is forced here rather than assumed,
+	# because a machine with saves on disk would leave Continue enabled and the
+	# case would silently not reproduce.
+	_menu._continue_button.disabled = true
+	_menu._continue_button.grab_focus()
+	_menu._show(panel)
+	_menu._close(panel)
+	var returned: Control = root.gui_get_focus_owner()
+	var returned_button: Button = returned as Button
+	if returned_button != null and returned_button.disabled:
+		_fail("closing an overlay handed focus back to the disabled Continue")
+	_menu._show(panel)
+
 	var before: int = root.get_child_count()
 	_play_button(fra_row).pressed.emit()
 	if root.get_child_count() != before:
@@ -292,7 +326,35 @@ func _check_scenario_select() -> void:
 		_fail("Inheritance is not offered after Standard in France's start list (index %d)" % found_inheritance)
 		return
 
-	_play_button(rows[found_inheritance]).pressed.emit()
+	# The Inheritance press moves to _check_start_row_geometry(): the wrapped
+	# height it asserts on only exists a frame after this build, and starting
+	# the game here would free the menu before that frame could run.
+	_start_rows = rows
+	_start_inheritance_index = found_inheritance
+
+
+## The Inheritance row's description wraps at the real width; the row must
+## reserve that height or the Play button rides up onto the text (playtest
+## 2026-09-05). Standard's short description cannot expose the bug, so the
+## comparison is against it. Runs a frame after _check_scenario_select() built
+## the list -- container sorting and the autowrap label's re-measure settle on
+## the frame after the build (docs/panel-system.md's fold finding).
+func _check_start_row_geometry() -> void:
+	if _start_rows.size() < 2 or _start_inheritance_index < 1:
+		_fail("start rows were not captured for the wrapped-height check")
+		return
+
+	var one_line: Control = _start_rows[0]
+	var wrapped: Control = _start_rows[_start_inheritance_index]
+	if not is_instance_valid(one_line) or not is_instance_valid(wrapped):
+		_fail("the start rows were freed before the geometry check could read them")
+		return
+	if wrapped.size.y <= one_line.size.y:
+		_fail("the wrapped start row reserves no more height than the one-line row (%.0f vs %.0f): the Play button rides its own text" % [
+			wrapped.size.y, one_line.size.y
+		])
+
+	_play_button(wrapped).pressed.emit()
 	_new_game_fra_scenario = root.get_child(root.get_child_count() - 1)
 
 

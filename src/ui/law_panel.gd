@@ -387,7 +387,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		force_btn.text = "Force (49.3)"
 		force_btn.disabled = not Government.can_force(ns)
 		if force_btn.disabled:
-			force_btn.tooltip_text = "Available again in %d months." % ns.force_cooldown_months
+			force_btn.tooltip_text = "Cooldown: available again in %d months." % ns.force_cooldown_months
 		else:
 			force_btn.tooltip_text = "Adopt without a vote. The assembly may censure the government instead."
 		force_btn.pressed.connect(_on_force.bind(law))

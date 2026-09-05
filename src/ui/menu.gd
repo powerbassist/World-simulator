@@ -191,7 +191,10 @@ func _show(panel: Control) -> void:
 
 func _close(panel: Control) -> void:
 	panel.get_parent().hide()
-	if _focus_return != null:
+	# A disabled button must not take focus back: Godot paints the brass focus
+	# stylebox over any state, so a disabled Continue wearing it read as enabled
+	# until clicked (playtest 2026-09-05).
+	if _focus_return != null and not _focus_return.disabled:
 		_focus_return.grab_focus()
 
 

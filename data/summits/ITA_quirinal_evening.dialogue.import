@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://cekjdsubs0x13"
+path="res://.godot/imported/ITA_quirinal_evening.dialogue-a9333394fabcb816ea343833e7ffa627.tres"
+
+[deps]
+
+source_file="res://data/summits/ITA_quirinal_evening.dialogue"
+dest_files=["res://.godot/imported/ITA_quirinal_evening.dialogue-a9333394fabcb816ea343833e7ffa627.tres"]
+
+[params]
+
+defaults=true

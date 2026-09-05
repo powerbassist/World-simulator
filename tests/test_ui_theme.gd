@@ -77,6 +77,16 @@ func _check_theme_contents() -> void:
 	if theme.get_color("font_color", UiTheme.GOOD_TEXT) == theme.get_color("font_color", UiTheme.BAD_TEXT):
 		_fail("the good and bad text colours are identical")
 
+	# A disabled button must not wear the same border as a live one -- the menu's
+	# Continue read enabled with no saves (playtest 2026-09-05). The border is
+	# what reads "pressable"; HULL fill and font_disabled_color are the inert look.
+	for type in ["Button", "OptionButton"]:
+		var disabled_box := theme.get_stylebox("disabled", type) as StyleBoxFlat
+		var normal_box := theme.get_stylebox("normal", type) as StyleBoxFlat
+		if disabled_box != null and normal_box != null:
+			if disabled_box.border_width_left > 0 and disabled_box.border_color == normal_box.border_color:
+				_fail("the disabled %s keeps the live border" % type)
+
 	_check_signature(theme)
 	_check_fonts(theme)
 

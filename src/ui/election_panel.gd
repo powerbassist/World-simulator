@@ -12,6 +12,7 @@ extends PanelContainer
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 signal dismissed
 
@@ -41,6 +42,11 @@ func _ready() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The last content panel without this. Default mode lays _sections out at the
+	# child's own minimum width, which collapsed the results table to ~370px
+	# against the 640px plate and left the dead navy field the playtest
+	# photographed beside it. Sibling panels: calendar, city, bloc, campaign.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 
 	_sections = VBoxContainer.new()
@@ -209,19 +215,51 @@ func _build_party_table(result: Dictionary) -> Control:
 		ordered = seats.keys()
 		ordered.sort_custom(func(a, b): return int(seats[a]) > int(seats[b]))
 
-	var rows: Array = [["party", "vote share", "seats"]]
+	# The seats column exists only when the data does: an executive election
+	# allocates no seats, and a column of em dashes stacked in a ~20px gutter is
+	# how the playtest read "orphaned letters" down the side of the modal.
+	var has_seats: bool = not seats.is_empty()
+	var rows: Array = [["party", "vote share"] + (["seats"] if has_seats else [])]
 	for party_id in ordered:
 		var name_text := _party_name(party_id)
 		if party_id == result["incumbent_party_id"]:
 			name_text += "  (incumbent)"
-		rows.append([
+		var row: Array = [
 			name_text,
 			"%.1f%%" % (float(shares.get(party_id, 0.0)) * 100.0),
-			str(seats[party_id]) if seats.has(party_id) else PanelKit.MISSING,
-		])
+		]
+		if has_seats:
+			row.append(str(seats[party_id]))
+		rows.append(row)
 
 	var host := VBoxContainer.new()
 	PanelKit.ledger(host, rows)
+
+	# Bars under the ledger: the table numbers the seats, the bars weigh them —
+	# the economy panel's idiom, themed by ui_theme's ProgressBar entry, so no
+	# second visual rule is joined. The ledger stays one grid (V1.6f): the bar
+	# block is the panel's own, beside the grid rather than a cell inside it.
+	if has_seats:
+		var total := maxi(1, int(result["seats_total"]))
+		var bars := VBoxContainer.new()
+		bars.add_theme_constant_override("separation", 3)
+		for party_id in ordered:
+			var bar_row := HBoxContainer.new()
+			bar_row.add_theme_constant_override("separation", 8)
+			var label := Label.new()
+			label.text = _party_name(party_id)
+			label.theme_type_variation = UiTheme.CAPTION
+			label.custom_minimum_size.x = 180.0
+			bar_row.add_child(label)
+			var bar := ProgressBar.new()
+			bar.custom_minimum_size = Vector2(240.0, 12.0)
+			bar.max_value = 100.0
+			bar.value = 100.0 * float(seats[party_id]) / float(total)
+			bar.show_percentage = false
+			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bar_row.add_child(bar)
+			bars.add_child(bar_row)
+		host.add_child(bars)
 	return host
 
 
