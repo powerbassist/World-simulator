@@ -1418,8 +1418,15 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	if summit.is_empty():
 		return
 	_summit_before = arrival_before
-	_summit_panel.show_summit(summit)
+	# OPENED BEFORE show_summit(), because show_summit() can conclude SYNCHRONOUSLY --
+	# a missing DialogueManager or a scene that does not compile both push_error and
+	# call _conclude() before returning. With the open after it, the concluded handler's
+	# _windows.close("summit") ran against a window that was not open yet (close() bails
+	# on a hidden frame) and the line below then opened the blank plate the close exists
+	# to prevent. Opening first makes the close land, and an ordinary summit is
+	# unaffected: the frame is up either way before the first beat is drawn.
 	_windows.open("summit")
+	_summit_panel.show_summit(summit)
 
 
 ## The panel's verdict. The effects ride Legislature.apply_effects() -- the

@@ -180,6 +180,19 @@ func _build_result_summary(result: Dictionary) -> Control:
 		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
 
+	# V2.8 review. Two more outcomes with no division behind them, and the tally
+	# below would print "Yes 0 - No 0 - Abstain 0, of 577 seats" against both --
+	# a chamber that never sat, reported as one that voted the bill down. Same
+	# class as the four verdicts above, which is why they are branches and not a
+	# shared "refused" word.
+	if result.get("unavailable", false):
+		PanelKit.line(box, "That is not open to the assembly right now.", PanelKit.Tone.PLAIN)
+		return box
+
+	if result.get("referendum_in_flight", false):
+		PanelKit.line(box, "The country is already voting on something else.", PanelKit.Tone.PLAIN)
+		return box
+
 	if result.get("referendum_route", false) and result.get("refused", false):
 		PanelKit.line(box, "This constitution has no referendum route for that.", PanelKit.Tone.PLAIN)
 		return box

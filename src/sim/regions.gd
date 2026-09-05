@@ -155,6 +155,46 @@ static func accessibility_for(ns, region_list: Array, graph: Dictionary) -> Dict
 ## of them a clamp. The mix here is `sector_mix`: the six-branch production mix was
 ## REFUSED at clause (d) (rho 0.9170 against 0.90 -- one quantity written twice),
 ## and the refusal is recorded beside the field it would have extended.
+## The network and sited terms for every region at once, with everything that does
+## not vary by region lifted out of the loop. Returns region id -> the sum of the two.
+## _network_pct() and _sited_pct() below are kept as the single-region statements of
+## the same arithmetic, which is what tools/network_probe.gd's prose refers to.
+static func _deviation_terms(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for region in region_list:
+		out[region.id] = 0.0
+	if region_list.is_empty():
+		return out
+
+	var total: float = 0.0
+	for other in region_list:
+		total += share_of(ns, other.id)
+	if total <= 0.0:
+		return out
+
+	if NK.NETWORK_BETA != 0.0:
+		var national: Dictionary = _national_production_mix(ns, region_list)
+		var own_net: Dictionary = {}
+		var weighted: float = 0.0
+		for other in region_list:
+			var term: float = Net.specialisation(other.sector_mix, national) 				* log(maxf(float(access.get(other.id, 1.0)), 0.0001))
+			own_net[other.id] = term
+			weighted += share_of(ns, other.id) * term
+		var mean_net: float = weighted / total
+		for region in region_list:
+			out[region.id] += NK.NETWORK_BETA * (float(own_net[region.id]) - mean_net)
+
+	if not sites.is_empty():
+		var weighted_site: float = 0.0
+		for other in region_list:
+			weighted_site += share_of(ns, other.id) * float(sites.get(other.id, 0.0))
+		var mean_site: float = weighted_site / total
+		for region in region_list:
+			out[region.id] += float(sites.get(region.id, 0.0)) - mean_site
+
+	return out
+
+
 static func _network_pct(ns, region_list: Array, region, access: Dictionary) -> float:
 	if NK.NETWORK_BETA == 0.0:
 		return 0.0
@@ -232,10 +272,14 @@ static func tick_month(ns, region_list: Array, growth: float, access: Dictionary
 	# Network.adjacency(), Projects._advance() and Migration._tick_nation() all
 	# sort to protect and migration.gd states as a rule. Computed here, every read
 	# comes from one frozen snapshot.
-	var extra: Dictionary = {}
-	for region in region_list:
-		extra[region.id] = _network_pct(ns, region_list, region, access) \
-			+ _sited_pct(ns, region_list, region.id, sites)
+	# Both terms are (own_r - mean), and the mean is the same figure for every region
+	# -- so computing it inside a per-region call made this O(n^2) over 112 regions,
+	# with _national_production_mix() rebuilt 112 identical times per nation-month on
+	# top. Hoisted: the mean once, then one subtraction per region. Arithmetically
+	# identical (the weighted sums run over region_list in the same order), and this
+	# is the projection's hot path -- Budget.project() walks it for 24 months, twice
+	# per budget-panel refresh.
+	var extra: Dictionary = _deviation_terms(ns, region_list, access, sites)
 
 	var sum: float = 0.0
 

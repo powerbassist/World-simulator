@@ -855,8 +855,12 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# wholesale: A's question vanished with no cooldown, no charge and no record.
 	# Latent only because CHE is the sole `mandatory` nation and is not playable.
 	if route and Referendum.is_pending(ns):
+		# Its OWN flag rather than `referendum_route`, which law_panel.gd reads to
+		# print "this constitution has no referendum route for that" -- the opposite
+		# of what happened here, since this branch is only reachable BECAUSE the
+		# constitution has one.
 		var in_flight := {
-			"law_id": law.id, "passed": false, "refused": true, "referendum_route": true,
+			"law_id": law.id, "passed": false, "refused": true, "referendum_in_flight": true,
 			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
 			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
 		}

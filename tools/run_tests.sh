@@ -118,6 +118,27 @@ tests=(
   tests/test_playability.gd
 )
 
+# THE RUNNER IS THE WHOLE GATE -- there is no CI -- so a test file on disk that is
+# missing from the array above runs NOWHERE, and passes for as long as nobody looks.
+# That has now happened four times (test_companies at V1.4a, test_cabinet, test_summits
+# at V2.4b, test_map_plants at V2.8), each found by eye whole sessions later, and each
+# time the response was to add the one file rather than to close the class. Counting the
+# directory closes it: an unregistered test is a RED suite in the session that writes it,
+# which is the only moment the omission is cheap. A warning here would be read as noise
+# and skipped, which is the failure this replaces.
+unregistered=""
+for f in tests/test_*.gd; do
+  case " ${tests[*]} " in
+    *" $f "*) ;;
+    *) unregistered="$unregistered $f" ;;
+  esac
+done
+if [ -n "$unregistered" ]; then
+  echo "test files on disk but absent from this runner:$unregistered" >&2
+  echo "add them to tests=() above -- an unregistered test runs nowhere" >&2
+  exit 1
+fi
+
 # The MCP toolkit plugin registers an MCPRuntimeServer autoload, and its export
 # gate is OS.has_feature("editor") -- true for `--headless --script`, so every
 # test process binds a runtime port and announces it. Three lines per test, 55
@@ -149,10 +170,51 @@ if [ ! -d ".godot" ]; then
   godot --headless --import >/dev/null 2>&1 || true
 fi
 
+# A run is one engine start per test and several minutes long, and until now it
+# printed nothing at all until the first one finished -- a suite with no cursor cannot
+# be told from a hang. The status line goes to STDERR and is rewritten in place, so
+# every test's own stdout reads exactly as it did before and `> log` still captures
+# only test output. Not a terminal (a log, a pipe, a CI capture): one plain line per
+# test instead, because a carriage return in a file is a line nobody can read.
+BAR_WIDTH=24
+total="${#tests[@]}"
+started="$SECONDS"
+
+_status() {
+  # $1 = tests finished so far, $2 = the one about to run.
+  local done="$1" name="$2" elapsed=$((SECONDS - started)) filled bar eta left
+  if [ ! -t 2 ]; then
+    printf '[%2d/%2d] %s\n' "$((done + 1))" "$total" "$name" >&2
+    return 0
+  fi
+  filled=$((done * BAR_WIDTH / total))
+  bar="$(printf '%*s' "$filled" '' | tr ' ' '#')$(printf '%*s' "$((BAR_WIDTH - filled))" '')"
+  # The estimate is the mean of what has already run, so it is meaningless before the
+  # first test returns and says so rather than printing a confident zero.
+  eta="--:--"
+  if [ "$done" -gt 0 ]; then
+    left=$((elapsed * (total - done) / done))
+    eta="$(printf '%d:%02d' "$((left / 60))" "$((left % 60))")"
+  fi
+  printf '\r\033[K[%s] %2d/%2d  %-30s %d:%02d elapsed, ~%s left' \
+    "$bar" "$done" "$total" "$name" \
+    "$((elapsed / 60))" "$((elapsed % 60))" "$eta" >&2
+  return 0
+}
+
+_status_clear() {
+  if [ -t 2 ]; then printf '\r\033[K' >&2; fi
+  return 0
+}
+
 failed=0
+finished=0
 for t in "${tests[@]}"; do
+  _status "$finished" "${t#tests/}"
   out="$(godot --headless --script "res://$t" 2>&1)"
   status="$?"
+  finished=$((finished + 1))
+  _status_clear
   echo "$out" | grep -Ev "$mcp_noise"
   if [ "$status" -ne 0 ]; then
     echo "FAIL $t" >&2
@@ -163,8 +225,9 @@ for t in "${tests[@]}"; do
   fi
 done
 
+elapsed=$((SECONDS - started))
 if [ "$failed" -ne 0 ]; then
   echo "test suite failed" >&2
   exit 1
 fi
-echo "test suite passed"
+printf 'test suite passed -- %d tests in %d:%02d\n' "$total" "$((elapsed / 60))" "$((elapsed % 60))"

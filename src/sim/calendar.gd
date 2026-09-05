@@ -268,7 +268,7 @@ static func entries_in_month(state, year: int, month: int) -> Array:
 static func days_in_month(year: int, month: int) -> int:
 	if month < 1 or month > 12:
 		return 31
-	return _to_day_number(year, month + 1, 1) - _to_day_number(year, month, 1)
+	return _first_of_next_month(year, month) - _to_day_number(year, month, 1)
 
 
 ## The block a booking occupies, as a real date either side of the meeting.
@@ -305,7 +305,7 @@ static func day_cells(state, year: int, month: int) -> Array:
 	if month < 1 or month > 12:
 		return []
 	var first_dn := _to_day_number(year, month, 1)
-	var last_dn := _to_day_number(year, month + 1, 1) - 1
+	var last_dn := _first_of_next_month(year, month) - 1
 
 	var cells: Array = []
 	for d in range(1, last_dn - first_dn + 2):
@@ -344,6 +344,22 @@ static func _to_day_number(year: int, month: int, day: int) -> int:
 	})) / 86400
 
 
+## The first day of the month AFTER (year, month), as a day number. December is
+## the whole reason this is a function rather than `month + 1`:
+## Time.get_unix_time_from_datetime_dict() REFUSES month 13 -- it pushes an error
+## and answers 0 -- so both readers above measured December against the epoch.
+## days_in_month() came back -20788 (the day picker's maximum, so the booking
+## form's day spinner in December had a maximum below its minimum) and
+## day_cells() returned an EMPTY array, which is a ribbon with no days in it at
+## all. Found by playing into the twelfth month; the suite could not see it
+## because every date it builds comes from the month the run happens to be in,
+## and a fourteen-year run's Decembers are never the month a cell is read for.
+static func _first_of_next_month(year: int, month: int) -> int:
+	if month >= 12:
+		return _to_day_number(year + 1, 1, 1)
+	return _to_day_number(year, month + 1, 1)
+
+
 static func _from_day_number(n: int) -> Dictionary:
 	var d := Time.get_datetime_dict_from_unix_time(n * 86400)
 	return {"year": int(d["year"]), "month": int(d["month"]), "day": int(d["day"])}
@@ -379,11 +395,15 @@ static func fixed_dates(state) -> Array:
 	if typeof(pending) == TYPE_DICTIONARY and not pending.is_empty():
 		out.append(_fixed_in(
 			state, K.FIXED_COUNCIL_VOTE, int(pending.get("months_left", 0)),
-			# "proposal_id" is the key Bloc._tick_council() actually writes; there is
-			# no "id" on that dictionary, so this read returned "" every month and the
-			# diary said "Council votes" without ever naming the proposal. The
-			# result.get("ok")-vs-applied class again.
-			String(pending.get("proposal_id", ""))
+			# The authored HUMAN label, not "proposal_id". Bloc._tick_council() writes
+			# both, and this read was `.get("id", "")` -- a key that dictionary has
+			# never had -- so the diary said "Council votes" and never which proposal.
+			# Taking `proposal_id` fixed the emptiness and printed "stability_pact" at
+			# a player, because calendar_panel.gd has no lookup branch for a council
+			# vote the way it does for a cooldown, a project, a referendum and an
+			# event. That is V1.6f's `project_name` finding in the same panel, so the
+			# fix is the same one: the reference IS the name.
+			String(pending.get("name", ""))
 		))
 
 	if ns.dissolution_lockout_remaining > 0:
