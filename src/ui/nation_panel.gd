@@ -358,7 +358,11 @@ func _unavailable_reason(action, player_id: String) -> String:
 		return "Unavailable."
 	var key := Diplomacy.cooldown_key(action.id, _nation_id)
 	if ns.diplo_cooldown_months.has(key):
-		return "Available again in %d months." % int(ns.diplo_cooldown_months[key])
+		# The key is written when the act executes (diplomacy.gd), so this is a
+		# cooldown the player's own act started -- name it as one. "Available
+		# again in 12 months" read like a lock left over from before the game
+		# began (playtest 2026-09-05).
+		return "Cooldown: available again in %d months." % int(ns.diplo_cooldown_months[key])
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})

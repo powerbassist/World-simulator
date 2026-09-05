@@ -63,6 +63,7 @@ func _run() -> void:
 	# which is DEFERRED -- inside one frame the panel's children are the old labels
 	# and the new ones both, so only a presence assertion means anything here and
 	# an absence assertion would read the stale row and fail for nothing.
+	_check_cooldown_names_itself(panel, state)
 	_check_trade_rows_before_signing(panel, state)
 	_check_pressing_act_moves_relations(panel, state)
 	_check_acted_signal_carries_a_baseline(panel, state)
@@ -285,6 +286,46 @@ func _check_the_verbs_are_above_the_fold(panel, state) -> void:
 		_fail("the panel opens at %.0fpx, past U5a's %.0fpx usable band -- its last row is unreachable" % [
 			panel.custom_minimum_size.y, USABLE_BAND_PX,
 		])
+
+
+## V2.8.1. The cooldown tooltip used to read "Available again in 12 months.",
+## which the playtest read as a lock left over from before the game began -- but
+## the key is written when the player's OWN act executes (diplomacy.gd), so the
+## sentence has to name it as a cooldown. Read off the live button rather than
+## off _unavailable_reason() directly: what matters is what the player is shown,
+## and another branch could still be the one reaching the button.
+func _check_cooldown_names_itself(panel, state) -> void:
+	state.player().diplo_cooldown_months[Diplomacy.cooldown_key("state_visit", TARGET)] = 12
+	_show(panel, TARGET)
+
+	# The LAST matching row, not any matching row: _refresh_actions() clears with
+	# queue_free(), which is deferred, so this frame holds the previous rows AND
+	# the fresh ones -- the trap _check_a_refusing_partner_is_not_offered documents.
+	var button: Button = null
+	for row in panel._actions.get_children():
+		if not (row is HBoxContainer):
+			continue
+		var label := ""
+		var row_button: Button = null
+		for child in row.get_children():
+			if child is Label:
+				label = child.text
+			elif child is Button:
+				row_button = child
+		if label == "State Visit" and row_button != null:
+			button = row_button
+
+	if button == null:
+		_fail("no State Visit row was offered against %s, so the cooldown tooltip is untestable" % TARGET)
+	else:
+		if not button.disabled:
+			_fail("State Visit was offered enabled while its cooldown key was set -- the unavailable branch never ran")
+		elif not button.tooltip_text.begins_with("Cooldown:"):
+			_fail("the State Visit cooldown tooltip reads '%s' and does not name the cooldown" % button.tooltip_text)
+
+	# Erased rather than cleared: the checks after this one press whichever verb
+	# is enabled first, and only this key was this check's to set.
+	state.player().diplo_cooldown_months.erase(Diplomacy.cooldown_key("state_visit", TARGET))
 
 
 func _show(panel, nation_id: String) -> void:
