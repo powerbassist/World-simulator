@@ -22,6 +22,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Society = preload("res://src/sim/society.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 
 const DAYS_PER_MONTH := 31
 
@@ -48,6 +49,7 @@ func _process(_delta: float) -> bool:
 	_main._windows.open("overview")
 
 	_check_fresh_game_has_no_trends()
+	_check_countdown_matches_the_player_clock()
 	_check_trends_appear_after_a_run()
 	_check_approval_is_polled()
 	_check_services_are_silent_then_spoken()
@@ -104,6 +106,25 @@ func _check_fresh_game_has_no_trends() -> void:
 
 	if _lead_text().strip_edges().is_empty():
 		_fail("the lead line is empty on a fresh game")
+
+
+## V2.8.1. The Overview countdown, Campaign's months-to-vote and the Diary's
+## soonest fixed row must name the same election. The playtest caught Overview
+## on the Assembly clock (41 months) while Campaign and the Diary said 16: the
+## column is labelled "until the vote", and the vote that ends the player's term
+## is the executive one where the nation elects it separately (France's
+## two-clock init in elections.gd). Read off the live panel rather than the
+## field, so a wrong clock wired into the column fails here and not in a
+## playtest. Runs on the fresh game, before anything advances the clock.
+func _check_countdown_matches_the_player_clock() -> void:
+	var ns = _main._state.player()
+	var expected: int = Campaign.months_to_election(_main._state, ns)
+	var text := _column_text("election")
+	var months := _first_int(text)
+	if months < 0:
+		_fail("the election column prints no month count: %s" % text)
+	elif months != expected:
+		_fail("the election column counts %d months to the vote but the campaign clock says %d" % [months, expected])
 
 
 func _check_trends_appear_after_a_run() -> void:
@@ -167,6 +188,16 @@ func _advance_months(months: int) -> void:
 
 func _lead_text() -> String:
 	return _main._overview_panel._lead.text
+
+
+## The first integer in a column's text, or -1 when it prints none — the
+## election figure ("16 months") leads the column, ahead of the date and the
+## polling line, so the first number is the countdown.
+func _first_int(text: String) -> int:
+	var regex := RegEx.new()
+	regex.compile("\\d+")
+	var found := regex.search(text)
+	return int(found.get_string()) if found != null else -1
 
 
 func _column_text(id: String) -> String:

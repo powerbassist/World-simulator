@@ -163,7 +163,15 @@ func _refresh() -> void:
 		child.queue_free()
 
 	var censure := _censure_probe(ns)
-	var months_to_election := Trends.months_until(_state, int(ns.next_election_year), int(ns.next_election_month))
+	# The vote that ends the PLAYER's term. France elects its assembly on one
+	# clock and its president on another (elections.gd's two-clock init); this
+	# column used to read the assembly's, which is how it said 41 months beside
+	# a Diary saying May 2027. Where there is no separate executive the two
+	# clocks share a schedule, so the pick below is the same figure for the
+	# other nine. Closes decision-log U3.
+	var vote_year := int(ns.next_executive_year) if bool(ns.has_executive) else int(ns.next_election_year)
+	var vote_month := int(ns.next_executive_month) if bool(ns.has_executive) else int(ns.next_election_month)
+	var months_to_election := Trends.months_until(_state, vote_year, vote_month)
 	var satisfaction := Opinion.issue_satisfaction(ns)
 	var top := Opinion.top_issues(ns, TOP_ISSUE_COUNT)
 	var movements := Trends.movements(_state)
@@ -175,7 +183,7 @@ func _refresh() -> void:
 	_fill_defence(ns)
 	_fill_services(ns)
 	_fill_press(ns)
-	_fill_election(ns, months_to_election)
+	_fill_election(ns, months_to_election, vote_year, vote_month)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
 	_fill_recent_effects()
@@ -235,8 +243,13 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 		return sentence
 
 	if _state.history.is_empty():
+		# months_in_term is a fresh-game counter (0 at Jan 2026) and read
+		# "0 months into a 60-month term" beside a vote 16 months out. The term
+		# ends at the vote, so months served is the remainder of the same
+		# subtraction the countdown already did.
+		var months_served := maxi(0, int(ns.term_months) - months)
 		return "%s, %d months into a %d-month term. Nothing to compare against yet." % [
-			_standing_sentence(ns), int(ns.months_in_term), int(ns.term_months)
+			_standing_sentence(ns), months_served, int(ns.term_months)
 		]
 	return "%s, and nothing is moving sharply. Election %s." % [
 		_standing_sentence(ns), _when(months)
@@ -271,17 +284,14 @@ func _fill_government(ns, censure: Dictionary) -> void:
 			PanelKit.line(_columns["government"], "Article 49.3 in %s." % Trends.months_text(int(ns.force_cooldown_months)))
 
 
-func _fill_election(ns, months: int) -> void:
+func _fill_election(ns, months: int, vote_year: int, vote_month: int) -> void:
 	PanelKit.figure(_columns["election"], Trends.months_text(months), "until the vote")
 	PanelKit.line(_columns["election"], "%s %d." % [
-		MONTH_NAMES[int(ns.next_election_month) - 1], int(ns.next_election_year)
+		MONTH_NAMES[vote_month - 1], vote_year
 	])
-	# No "month N of M in this term" line. ns.term_months is the nation's nominal
-	# term, while next_election_* comes from the real electoral calendar, and on a
-	# fresh French game those read "month 0 of 60" beside "41 months until the
-	# vote" -- two true figures that look like a contradiction on the one tab
-	# whose job is to be unambiguous. Which of the two is wrong is a simulation
-	# question; see docs/decision-log.md's U3 entry.
+	# The date and the count come from the same clock (the executive's where the
+	# nation has one, the assembly's otherwise), which is what U3's old
+	# "41 months beside a Diary saying May 2027" contradiction was.
 	var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
 	PanelKit.line(_columns["election"], "Polling %.0f%% (%s)." % [_polled_approval(ns), Trends.change_text(change)])
 
