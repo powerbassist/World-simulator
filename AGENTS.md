@@ -972,7 +972,7 @@ frames were judged in-session -- the vision path V2.5 opened held. Model:
 [docs/energy-model.md](docs/energy-model.md).
 
 **V2.8.1 REPAIRED THE PLAYTEST'S BUGS, AND V2.9 BUILT THE PLAYER'S SEAT — both off
-the 2026-09-05 play report ([[playtest-2026-09-05]], repo root), which played two
+the 2026-09-05 play report ([[playtest-2026-09-05]] -- reports/, gitignored), which played two
 full terms through the real UI and returned "a serious simulation wearing no
 game." Two branches, one block each: `v2.8.1-repair` (five readout fixes: the
 election modal's collapsed table — the one content panel without

@@ -78,3 +78,6 @@ docs/superpowers/
 
 # Agent vision scratch (godot-agent-vision skill) — captures never stage
 .gdskills/
+
+# Session dev reports (playtests, probes, reviews) — local working record, never staged
+reports/
