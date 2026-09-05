@@ -491,7 +491,7 @@ func _ready() -> void:
 	# the player regardless of which tab is open, and settings/save-load are
 	# reached through the pause menu rather than the rail.
 	_election_panel = ElectionPanel.new()
-	_add_centered(_election_panel)
+	_add_centered(_election_panel, true)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
@@ -725,6 +725,23 @@ func _add_centered(panel: Control, blocking := false) -> void:
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if not blocking:
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	else:
+		# A term result is the one modal moment: dim the world behind it so the
+		# verdict owns the screen, and eat clicks -- the election already paused
+		# the clock; the backdrop makes the map agree (V2.9). The dim is a
+		# SIBLING of the holder, not a child: a CenterContainer collapses a
+		# full-rect child to its minimum size. Added before the holder so it
+		# draws below the panel and above everything added earlier (the map,
+		# the windows), with the HUD -- added later -- still readable above it.
+		# It follows the panel's visibility, so every existing show()/hide()
+		# call site keeps working unchanged.
+		var dim := ColorRect.new()
+		dim.color = Color(0.02, 0.03, 0.05, 0.55)
+		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_STOP
+		dim.visible = false
+		add_child(dim)
+		panel.visibility_changed.connect(func(): dim.visible = panel.visible)
 	holder.add_child(panel)
 	add_child(holder)
 

@@ -49,6 +49,7 @@ func _process(_delta: float) -> bool:
 		# panel is dismissed and the clock driven on — the double-election
 		# panel gets its own GEOMETRY_LAG frames before its geometry is read.
 		_check_exec_geometry()
+		_check_modal_blocks_the_world()
 		_run_national_text()
 	elif _frame == NATIONAL_GEOMETRY_FRAME:
 		_check_national_geometry()
@@ -86,6 +87,19 @@ func _run_exec_text() -> void:
 	# empty there), so the table must not carry a seats column at all.
 	if exec_text.contains("seats"):
 		_fail("the executive table carries a seats column although the office allocates none: %s" % exec_text)
+
+	# V2.9 task 7: the verdict owns the screen. The attribution ("What decided
+	# it") reads BEFORE the table -- the playtest buried the one line that says
+	# why under the numbers -- and the plate is a result screen, not a side
+	# panel. Case-insensitive: PanelKit prints the lines as written.
+	var lower := exec_text.to_lower()
+	if lower.find("what decided it") > lower.find("vote share"):
+		_fail("the attribution reads below the party table; the verdict must lead")
+
+	# The plate grew to hold a verdict and a table: 640 was the budget panel's
+	# size, and the seat bars need the width.
+	if _main._election_panel.custom_minimum_size.x < 860:
+		_fail("the election plate is %.0f wide; a result screen needs the room" % _main._election_panel.custom_minimum_size.x)
 
 	# The panel stays open: the geometry pass GEOMETRY_LAG frames from now reads
 	# it at its laid-out width before dismissing it.
@@ -173,6 +187,31 @@ func _run_national_text() -> void:
 		_fail("won the election but the panel offers no Continue button")
 	if not ns.in_government and has_continue:
 		_fail("lost the election but the panel still offers Continue")
+
+
+## V2.9 task 7: the modal blocks the world behind it -- a full-rect dim with
+## STOP filter sits beside the holder when the panel is visible, and follows
+## its visibility, so the map cannot be played behind a verdict.
+func _check_modal_blocks_the_world() -> void:
+	# Two modals are blocking now, so two dims sit among main's children; the
+	# election's is the last one BEFORE its own holder in tree order -- the
+	# pause menu's dim comes later and reads hidden.
+	var holder: Node = _main._election_panel.get_parent()
+	var dim: ColorRect = null
+	for child in _main.get_children():
+		if child == holder:
+			break
+		if child is ColorRect:
+			dim = child
+	if dim == null:
+		_fail("the election modal has no dim backdrop")
+		return
+	if not dim.visible:
+		_fail("the dim backdrop is hidden while the result is on screen")
+	if dim.mouse_filter != Control.MOUSE_FILTER_STOP:
+		_fail("the dim backdrop does not eat clicks")
+	if dim.size.x < 900.0:
+		_fail("the dim backdrop covers %.0fpx -- it must span the screen" % dim.size.x)
 
 
 func _check_national_geometry() -> void:

@@ -26,7 +26,10 @@ var _footer: Control
 func _ready() -> void:
 	# Placement is the owner's job — see the note in budget_panel.gd. Same bug
 	# class: a preset in _ready() lands this in the corner before it has a size.
-	custom_minimum_size = Vector2(640, 520)
+	# 860x600, V2.9: this is the one result screen in the game, carrying the
+	# verdict, the attribution and the seat bars -- 640 was the budget panel's
+	# size and the bars need the width.
+	custom_minimum_size = Vector2(860, 600)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -131,10 +134,13 @@ func show_results(results: Array) -> void:
 			ns.terms_served,
 			_loader.nations[ns.id].executive_title,
 		], PanelKit.Tone.PLAIN)
+	# V2.9: the verdict section leads and carries the attribution -- the
+	# playtest buried "What decided it" under the table. Where the executive is
+	# drawn from the chamber the NATIONAL result is the verdict and leads.
 	elif executive != null:
-		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title))
+		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title, true))
 	if national != null:
-		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name))
+		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name, executive == null))
 	if eu_result != null:
 		_sections.add_child(_build_section(eu_result, ""))
 
@@ -171,7 +177,7 @@ func show_results(results: Array) -> void:
 	_footer.add_child(cont)
 
 
-func _build_section(result: Dictionary, chamber_label: String) -> Control:
+func _build_section(result: Dictionary, chamber_label: String, verdict := false) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 
@@ -196,8 +202,15 @@ func _build_section(result: Dictionary, chamber_label: String) -> Control:
 			else "%s is no longer the largest party: %d of %d seats."
 		) % [incumbent_name, result["incumbent_seats"], result["seats_total"]], PanelKit.Tone.PLAIN)
 
+	# The verdict's own section reads verdict, then why, then the numbers -- a
+	# result screen, not a spreadsheet (V2.9). The other sections on a
+	# double-election panel keep table-then-attribution, which is where a
+	# chamber's detail belongs.
+	if verdict:
+		box.add_child(_build_attribution(result))
 	box.add_child(_build_party_table(result))
-	box.add_child(_build_attribution(result))
+	if not verdict:
+		box.add_child(_build_attribution(result))
 	return box
 
 
