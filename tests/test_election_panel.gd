@@ -206,10 +206,21 @@ func _check_national_geometry() -> void:
 
 ## Advance whole months, stopping early if an election pauses the clock.
 func _advance(clock: Node, months: int) -> void:
+	# V2.9: a DECISION arriving also pauses the clock now -- that used to be the
+	# election's alone, and this loop's early return is how an arrival stalled
+	# the drive at March 2027 with an empty panel read as its result. The player
+	# the loop pretends to be answers what lands on the desk and carries on; the
+	# pause that ends the drive is the one no answer exists for (the election).
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
 	for _month in range(months):
 		for _d in range(31):
 			clock.advance_one_day()
 			if clock.paused:
+				if Events.is_pending(ns) and not Events.pending_event(ns, _main._loader).choices.is_empty():
+					Events.choose(_main._state, _main._loader, String(Events.pending_event(ns, _main._loader).choices[0]["id"]))
+					clock.paused = false
+					continue
 				return
 
 
