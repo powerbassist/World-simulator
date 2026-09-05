@@ -51,11 +51,41 @@ func _run() -> void:
 		_fail("main.tscn did not produce a running game")
 		return
 
+	_check_decision_arrival_stops_the_clock()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
 	_check_no_panel_can_destroy_its_window()
 	_check_council_vote_leaves_a_record()
+
+
+## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen
+## seconds, and both playtest runs produced "Decided for you" records no player
+## answered. A decision ARRIVING must stop the clock -- interrupt or not; the
+## flag's own extra behaviour (opening Dispatches) stays interrupt-only. Staged
+## through the real register (Events.announce) and the real arrival branch
+## (_card_events with was_pending false), so a wiring break fails here.
+func _check_decision_arrival_stops_the_clock() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var clock: Node = _main.get_node("Clock")
+	var ns = _main._state.player()
+	var ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ev = candidate
+			break
+	if ev == null:
+		_fail("no non-interrupt event in the loader to stage the arrival with")
+		return
+	clock.paused = false
+	Events.announce(ns, ev)
+	_main._card_events(_main._state.year, _main._state.month, false, {})
+	if not clock.paused:
+		_fail("a decision arrived and the clock kept running")
+		return
+	# The staging must not leak into the next check: unanswered decision cleaned.
+	ns.event_pending = {}
+	clock.paused = false
 
 
 ## V2.9 (from the playtest): nothing anywhere said what is being played for. A

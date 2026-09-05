@@ -110,6 +110,7 @@ var _loader: DataLoader
 var _hud
 var _windows
 var _top_bar
+var _paused_for_decision := false
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -1323,6 +1324,14 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 				ev.summary, left, "month" if left == 1 else "months",
 			],
 		)
+		# A decision the player has not seen must not expire behind their back:
+		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
+		# runs produced "Decided for you" records no player answered (2026-09-05).
+		# Arrival pauses; the interrupt flag (V2.4b) still opens Dispatches on
+		# top -- non-modal, per events-model's argument, but the clock waits.
+		_paused_for_decision = true
+		_clock.paused = true
+		_hud.clock_cluster.refresh(_clock)
 
 
 func _unrest_title(label: String) -> String:
