@@ -279,7 +279,11 @@ static func _buttons(theme: Theme) -> void:
 		theme.set_stylebox("hover", type, _button_box(SLATE.lightened(0.10), ACCENT))
 		theme.set_stylebox("pressed", type, _button_box(SLATE.lightened(0.16), ACCENT))
 		theme.set_stylebox("focus", type, _button_box(Color(0, 0, 0, 0), ACCENT))
-		theme.set_stylebox("disabled", type, _button_box(HULL, EDGE))
+		# No border on disabled: live buttons carry EDGE, so the border is what
+		# reads "pressable" at a glance; HULL fill alone is the inert look
+		# (font_disabled_color already dims the text). The menu's disabled
+		# Continue read enabled until clicked (playtest 2026-09-05).
+		theme.set_stylebox("disabled", type, _button_box(HULL))
 		theme.set_color("font_hover_color", type, TEXT)
 		theme.set_color("font_pressed_color", type, ACCENT)
 		theme.set_color("font_disabled_color", type, TEXT_DIM)
