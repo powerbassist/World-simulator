@@ -10,6 +10,7 @@ const ICONS := "res://addons/at-icons/control/"
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
@@ -517,6 +518,21 @@ func _ready() -> void:
 		_on_load_requested(pending_load_slot)
 
 	_update_top_bar()
+
+	# The one sentence the playtest found missing: a new game opens on a running
+	# clock with nothing pending and no statement of what is being played for,
+	# and the deadline lived four clicks deep -- when it was stated at all. The
+	# opening card carries it in the stack's own voice, counted by the same
+	# Trends query the top bar and the Overview count by. It sits AFTER the load
+	# branch and inside the new-game case, so a loaded save never receives it.
+	if pending_load_slot.is_empty():
+		var ns = _state.player()
+		var when := Trends.vote_date(ns)
+		_hud.message_stack.push("Your term", "You hold %s until %s %d -- %s. Win the vote." % [
+			_nation_name(_state.player_nation_id),
+			ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+			Trends.months_text(Trends.months_to_vote(_state, ns)),
+		])
 
 
 ## Screen-filling CenterContainer per panel, which is the one placement mechanism

@@ -51,10 +51,42 @@ func _run() -> void:
 		_fail("main.tscn did not produce a running game")
 		return
 
+	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
 	_check_no_panel_can_destroy_its_window()
 	_check_council_vote_leaves_a_record()
+
+
+## V2.9 (from the playtest): nothing anywhere said what is being played for. A
+## new game opens on a running clock with nothing pending; the stack's first
+## card must state the office, the deadline and the count, read off the same
+## Trends query the top bar and the Overview count by. The load path cannot
+## reach the push (it sits inside the new-game branch of _ready, one code path
+## to keep correct), so no save-file harness is built to assert its absence.
+func _check_opening_card_states_the_goal() -> void:
+	var Trends := load("res://src/ui/trends.gd")
+	var ns = _main._state.player()
+	var when: Vector2i = Trends.vote_date(ns)
+	var months: int = Trends.months_to_vote(_main._state, ns)
+
+	var stack_text := _collect_labels(_main._hud.message_stack)
+	if not stack_text.contains("YOUR TERM"):
+		_fail("the opening card is missing -- a new game never states its goal (stack: '%s')" % stack_text)
+		return
+	if not stack_text.contains(str(months)) or not stack_text.contains(str(when.x)):
+		_fail("the opening card does not carry the deadline (count %d, year %d): '%s'" % [months, when.x, stack_text])
+
+
+## Every Label text under a node, deepest-first queue_free caveat aside -- the
+## stack is built once per card, so on this fresh boot no stale labels exist.
+func _collect_labels(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += child.text + " "
+		out += _collect_labels(child)
+	return out
 
 
 # V1. The term-limit branch used to set in_government = false and append NOTHING,
