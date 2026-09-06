@@ -28,6 +28,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --move
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 8
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 8 --paused
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -100,6 +101,13 @@ var _hover_project := ""  ## U6c, a project marker rather than a nation
 ## because the cull pass's acceptance is pixel identity at fixed zooms: the
 ## same flag must be able to reproduce a frame exactly.
 var _zoom := -1.0
+
+## V3.1. Stops the clock for the capture. Exists because the identity frames
+## caught the V1.4c date/state race class live: a capture whose frame budget
+## straddles a day flip reads 02 JAN against 01 JAN and 456 pixels move for a
+## reason that has nothing to do with the code under test. A capture that
+## compares states must stage a frozen state.
+var _paused := false
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
 ## none and a frame of an all-zero layer proves nothing about its ramp -- which is
@@ -326,6 +334,8 @@ func _init() -> void:
 			_hover_project = args[i + 1]
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
+		elif args[i] == "--paused":
+			_paused = true
 		elif args[i] == "--coerce":
 			_coerce = true
 		elif args[i] == "--bloc":
@@ -415,6 +425,12 @@ func _init() -> void:
 
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
+	if _paused:
+		# HERE, not in _apply_view(): _apply_view runs four frames before the
+		# capture, and the race the flag exists for is a day flip landing in
+		# those settle frames. add_child has run the scene's _ready, so the
+		# clock node exists and the flag freezes it from frame 1.
+		_main._clock.paused = true
 
 
 func _process(_delta: float) -> bool:
