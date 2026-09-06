@@ -27,6 +27,9 @@ var _texture: ImageTexture = null
 var _home_lonlat := Vector2.ZERO
 var _has_home := false
 
+## Never equal to a real view rect, so the first frame redraws.
+var _last_view := Rect2(-1.0, -1.0, -1.0, -1.0)
+
 
 func setup(map_view, loader, state) -> void:
 	_map_view = map_view
@@ -51,9 +54,18 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# The viewport rectangle has to follow every pan and zoom, and the map view
 	# emits no signal for those -- it is the background layer and deliberately
-	# knows nothing downstream of it. Redrawing 176x104 every frame is cheaper
-	# than giving map_view.gd a dependent to notify.
-	queue_redraw()
+	# knows nothing downstream of it. But following a view is polling it, not
+	# redrawing at it: the redraw sits behind a change test on the same rect
+	# this control always read. The every-frame redraw measured 0.35 ms
+	# (frame_probe.gd, the "no minimap" rows) and drew nothing new on a still
+	# map; a still view also cannot stale the draw, because this control
+	# carries no sim content -- raster, home dot, viewport box only.
+	if _map_view == null:
+		return
+	var view: Rect2 = _map_view.visible_lonlat_rect()
+	if view != _last_view:
+		_last_view = view
+		queue_redraw()
 
 
 ## The world drawn plate carrée into this control, letterboxed rather than
