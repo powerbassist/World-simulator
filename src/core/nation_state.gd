@@ -22,6 +22,21 @@ var id: String = ""
 var eu_member: bool = false
 var neighbours: Array = []
 
+## The orgs this nation belongs to, sorted org ids. V3.2. LIVE state, not a
+## content lookup: an accession or a withdrawal rewrites it months into a run,
+## and every reader -- the trade weight, resting relations, the appraisal's
+## external term, the councils -- must see the live truth. `eu_member` above
+## dies with the V3.2 readers task; until then both are written at new-game and
+## agree. Serialised; an absent entry reads [], which is the truth about a
+## non-member.
+var orgs := []
+
+## This nation's standing net contribution PER ORG it belongs to, percent of its
+## own GDP, derived from prosperity against EACH ORG'S OWN mean at new-game.
+## Entries exist only where membership does, so a non-member of an org reads
+## 0.0 by `.get(org_id, 0.0)` -- the old exact-zero property, per org.
+var org_base_transfer_pct_gdp := {}
+
 # --- Economy -----------------------------------------------------------------
 
 var sector_output := {}  # String -> float, EUR bn. Sums to gdp_eur_bn exactly.
@@ -1412,6 +1427,8 @@ func duplicate_state():
 	s.id = id
 	s.eu_member = eu_member
 	s.neighbours = neighbours.duplicate()
+	s.orgs = orgs.duplicate()
+	s.org_base_transfer_pct_gdp = org_base_transfer_pct_gdp.duplicate(true)
 
 	s.sector_output = sector_output.duplicate(true)
 	s.region_gdp_eur_bn = region_gdp_eur_bn.duplicate(true)
@@ -1640,6 +1657,8 @@ func to_dict() -> Dictionary:
 		"id": id,
 		"eu_member": eu_member,
 		"neighbours": neighbours,
+		"orgs": orgs,
+		"org_base_transfer_pct_gdp": org_base_transfer_pct_gdp,
 
 		"sector_output": sector_output,
 		"region_gdp_eur_bn": region_gdp_eur_bn,
@@ -1952,6 +1971,18 @@ static func from_dict(d: Dictionary):
 	# 0.0 against a live burden, which permanently MIS-SIGNS the europe issue: a
 	# player who loaded a save while in breach would be scored as though the
 	# breach were new. Both are eu_member/neighbours' case, not agreements' case.
+	# orgs entries are re-Stringed and re-sorted, so a save that somehow carried
+	# an unsorted array reloads into the order every reader iterates. The base
+	# transfer dict is re-floated key by key: JSON hands a whole-number value
+	# back as an int, and the budget line would otherwise depend on how a figure
+	# happened to be saved.
+	s.orgs = []
+	for org_id in d.get("orgs", []):
+		s.orgs.append(String(org_id))
+	s.orgs.sort()
+	s.org_base_transfer_pct_gdp = d.get("org_base_transfer_pct_gdp", {})
+	for org_id in s.org_base_transfer_pct_gdp.keys():
+		s.org_base_transfer_pct_gdp[org_id] = float(s.org_base_transfer_pct_gdp[org_id])
 	s.bloc_base_transfer_pct_gdp = float(d.get("bloc_base_transfer_pct_gdp", 0.0))
 	s.bloc_transfer_pct_gdp = float(d.get("bloc_transfer_pct_gdp", 0.0))
 	s.bloc_burden = float(d.get("bloc_burden", 0.0))

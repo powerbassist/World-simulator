@@ -21,6 +21,7 @@ const SAVE_DIR := "user://saves/"
 const TEMP_SUFFIX := ".tmp"
 const GameState = preload("res://src/core/game_state.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 
 
 static func _ensure_dir() -> void:
@@ -123,6 +124,10 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# derivation Projects.tick_month() runs, and it cannot disagree with it
 		# because it IS it.
 		state.project_sited_pct = Projects.sited_map(state, loader)
+		# V3.2: the org register's standing prices are a snapshot of STATIC
+		# content, re-derived here for the same reason -- membership and the
+		# council registers travel in the save; the bonuses do not.
+		Orgs.rebuild_static(state, loader)
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

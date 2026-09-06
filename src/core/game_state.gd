@@ -24,6 +24,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -432,7 +433,23 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## player's own meetings hold -- a dropped register hands every spoken-to region back
 ## at full reach, `campaign_started`'s exploit one level up: the tour un-spoken).
 ## Both absent read as the truth about every version-29 save.
-const SAVE_VERSION := 31
+##
+## V3.2 bumps this to 32 on THREE fields, all the same rename: `GameState.bloc`
+## becomes `GameState.orgs` -- one register per council org, not one hardcoded
+## object -- `NationState.eu_member` becomes `NationState.orgs` (the sorted list
+## of orgs this nation belongs to, LIVE state because an accession rewrites it),
+## and `NationState.bloc_base_transfer_pct_gdp` becomes
+## `.org_base_transfer_pct_gdp` (per org). All three are eu_member/neighbours'
+## case, bloc-model's own SAVE_VERSION argument verbatim: an absent register is
+## no council and no rules, which for an org whose premise is that its rules are
+## always in force is wrong rather than empty -- and across the RENAME the old
+## keys would be silently unread, dropping rules in force and a member's
+## standing transfer. Also serialised: `GameState.accessions` (membership
+## fights in negotiation; absent reads [], which is the truth about every save
+## that never began one -- measures' case at V1.3c). `GameState.org_effects` is
+## NOT serialised: static content, re-derived on load by Orgs.rebuild_static()
+## -- project_sited_pct's case at V2.7, and the absence is pinned by tests.
+const SAVE_VERSION := 32
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -540,7 +557,33 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## anywhere in it, so the council survives a save and a reload with no generator
 ## state to serialise -- the same property docs/opinion-model.md's polling noise
 ## gets for free. Written ONLY by src/sim/bloc.gd. See docs/bloc-model.md.
+##
+## V3.2: the ONE hardcoded register becomes ONE PER COUNCIL ORG on
+## `GameState.orgs` below; this field dies with src/sim/bloc.gd when the
+## machinery moves, and the rename is what earns SAVE_VERSION 32.
 var bloc := {}
+
+## One register per council org -- org_id -> {rules, pending, last_vote,
+## next_index, months_to_next} -- for every org whose content carries
+## `council: true`. The V1.3d register, one instance per council. Written ONLY
+## by src/sim/orgs.gd. Serialised; the bloc->orgs rename is what earns
+## SAVE_VERSION 32, because rules in force dropped silently across a rename are
+## wrong rather than empty.
+var orgs := {}
+
+## Each org's standing prices, org_id -> {relations_bonus, trade_bonus}. A
+## snapshot of STATIC content taken at new-game and re-derived on load
+## (Orgs.rebuild_static), so src/sim/foreign_policy.gd and src/sim/trade.gd can
+## price co-membership without a loader on their hot paths. NOT serialised --
+## project_sited_pct's case at V2.7; tests pin the absence and the re-derive.
+var org_effects := {}
+
+## Membership fights in their negotiation countdown -- [{nation_id, org_id,
+## kind, months_left, months_total}] -- after a referendum has passed and
+## before membership flips. Written ONLY by src/sim/orgs.gd. Serialised;
+## absent reads [], which is the truth about every save that never began a
+## fight (measures' case at V1.3c). Empty until the V3.2 fights land.
+var accessions: Array = []
 
 ## Defensive pacts -- V1.3g, and the fifth register rather than a fifth KIND of
 ## state. Symmetric pair state on the same key builder relations and agreements
@@ -771,6 +814,11 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	# what makes the europe issue exactly zero at new-game like every other, with no
 	# calibration term.
 	Bloc.init_state(gs)
+	# V3.2, beside it and for the same reason: one register per council org, the
+	# membership lists, and the static effects snapshot. Orgs.init_state() takes
+	# over the council register entirely when src/sim/bloc.gd dies later in the
+	# block; for now both run, and bloc.gd's object is the one the machine reads.
+	Orgs.init_state(gs, loader)
 
 	return gs
 
@@ -1062,6 +1110,16 @@ func duplicate_state():
 	# penalties a defied rule is charging as never having existed -- and the budget
 	# panel is the one surface that promises "this is what will happen".
 	gs.bloc = bloc.duplicate(true)
+	# V3.2: the per-org registers, the accession countdowns and the static
+	# effects snapshot, copied for the reason `bloc` above states -- the budget
+	# projection ticks the councils, and a copy that dropped them would price a
+	# defied rule at nothing. org_effects is NOT serialised but IS live-read on
+	# every trade weight and resting relation, so a duplicate without it runs a
+	# different model from the original -- eu_member/neighbours' case, one level
+	# up from a save.
+	gs.orgs = orgs.duplicate(true)
+	gs.org_effects = org_effects.duplicate(true)
+	gs.accessions = accessions.duplicate(true)
 	# duplicate(true) rather than assignment, and for a sharper reason than the
 	# three above: Defence.tick_month() WRITES `deployments` on this copy when it
 	# reconciles obligations, so a shared reference would let a budget-panel repaint
@@ -1132,6 +1190,8 @@ func to_dict() -> Dictionary:
 		"agreements": agreements,
 		"measures": measures,
 		"bloc": bloc,
+		"orgs": orgs,
+		"accessions": accessions,
 		"pacts": pacts,
 		"deployments": deployments,
 		"met_months": met_months,
@@ -1269,6 +1329,49 @@ static func from_dict(d: Dictionary):
 		var pend: Dictionary = gs.bloc["pending"]
 		if not pend.is_empty():
 			pend["months_left"] = int(pend.get("months_left", 1))
+
+	# V3.2: the per-org registers and the accession countdowns, re-floated and
+	# re-inted the same way raw_bloc is -- a rule's severity and a register's two
+	# scheduler ints must come back as the types the arithmetic expects.
+	var raw_orgs: Dictionary = d.get("orgs", {})
+	for org_id in raw_orgs.keys():
+		var reg: Dictionary = raw_orgs[org_id]
+		var org_rules := {}
+		for proposal_id in (reg.get("rules", {}) as Dictionary).keys():
+			var rule: Dictionary = reg["rules"][proposal_id]
+			org_rules[proposal_id] = {
+				"name": rule.get("name", ""),
+				"field": rule.get("field", ""),
+				"op": rule.get("op", ""),
+				"value": float(rule.get("value", 0.0)),
+				"tolerance": float(rule.get("tolerance", 1.0)),
+				"severity": float(rule.get("severity", 0.0)),
+				"transfer_pct_gdp": float(rule.get("transfer_pct_gdp", 0.0)),
+				"since_year": int(rule.get("since_year", 0)),
+				"since_month": int(rule.get("since_month", 0)),
+			}
+		var org_register := {
+			"rules": org_rules,
+			"pending": reg.get("pending", {}),
+			"last_vote": reg.get("last_vote", {}),
+			"next_index": int(reg.get("next_index", 0)),
+			"months_to_next": int(reg.get("months_to_next", 0)),
+		}
+		var org_pend: Dictionary = org_register["pending"]
+		if not (org_pend as Dictionary).is_empty():
+			org_pend["months_left"] = int(org_pend.get("months_left", 1))
+		gs.orgs[org_id] = org_register
+
+	var raw_accessions: Array = d.get("accessions", [])
+	for entry in raw_accessions:
+		var fight: Dictionary = entry as Dictionary
+		gs.accessions.append({
+			"nation_id": String(fight.get("nation_id", "")),
+			"org_id": String(fight.get("org_id", "")),
+			"kind": String(fight.get("kind", "")),
+			"months_left": int(fight.get("months_left", 0)),
+			"months_total": int(fight.get("months_total", 0)),
+		})
 
 	var hist: Array = d.get("history", [])
 	var typed_hist: Array[Dictionary] = []
