@@ -17,14 +17,14 @@ where an existing shape serves.
 ## 1. The adoption, and the gate that preceded it
 
 `dialogue_manager` (Nathan Hoad, 3.10.5, MIT) was parked in the editor since
-before U5a, named in CLAUDE.md's Gotchas as the one obvious future adoption.
+before U5a, named in AGENTS.md's Gotchas as the one obvious future adoption.
 V2.4b took it, and the **step 0 was a gate, not a build**: the addon had to
 instantiate and compile a dialogue under `godot --headless --script` —
 `tools/run_tests.sh`'s own regime — before any content was authored. It passed.
 An adoption that cannot run where the tests run would have broken the suite it
 joined the moment it was committed.
 
-The price, paid knowingly and recorded where CLAUDE.md prices it:
+The price, paid knowingly and recorded where AGENTS.md prices it:
 
 - `addons/dialogue_manager/` committed whole — 790 KB, 122 files — the
   `.gitignore`'s second exception, with the reason beside it: this is a **game

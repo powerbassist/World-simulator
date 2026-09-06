@@ -137,7 +137,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   re-add them on the next open, which is the dirt this section already describes and
   which must stay OUT of a commit.
 
-  A second half was found the same way, and it is CLAUDE.md's first gotcha reaching
+  A second half was found the same way, and it is AGENTS.md's first gotcha reaching
   the suite: with no `.godot/`, there is no `global_script_class_cache.cfg`, so
   dialogue_manager's own `class_name` types (`DMExpressionParser`, `DMCompilation`,
   `DMWaiter`) are unresolvable and **DialogueManager itself fails to parse on a cold
@@ -548,7 +548,7 @@ applies bloc_offset unanswered -- ~990 output lines wobbled, every one a margin 
 last digit, ZERO verdict flips, V1.8's re-run reason exactly. Two compile gotchas the
 build paid for: dialogue_manager TITLES reject spaces (the first draft's
 `~ Raise the Rhine shipping tolls` did not compile; snake_case titles, human labels),
-and a new script cannot type its own return -- CLAUDE.md's first gotcha, caught by
+and a new script cannot type its own return -- AGENTS.md's first gotcha, caught by
 `script_check` at the signature. Model:
 [docs/summits-model.md](docs/summits-model.md).
 
@@ -3518,12 +3518,12 @@ boundary, and end each session by writing the next one's handoff prompt — the
 convention is in [ROADMAP.md](ROADMAP.md). Verify against the session's
 done-when list before claiming done.
 
-**`CLAUDE.md` and `AGENTS.md` are two copies of this one file, and a session
-updates BOTH.** The second exists because a different assistant reads a different
-filename; neither is the source. V2.2b wrote its whole session paragraph into
-`AGENTS.md` alone, so for one commit the file this project's own instructions
-load claimed V2.2b had not happened — including a save-format line still calling
-V2.2a the third session to contribute nothing to it. `diff CLAUDE.md AGENTS.md`
-before committing: it should be empty. Two files holding one fact is exactly the
-duplication these docs keep warning about, and the copy that drifts is the one
-that will be believed.
+**There is ONE instructions file, `AGENTS.md`, as of the V3.1 close-out.** A
+second copy, `CLAUDE.md`, existed for a different assistant reading a different
+filename, and the convention was that a session updated BOTH with a `diff`
+gate before committing. The gate was quietly dropped: V2.8.1 stopped updating
+the copy and three session rows (V2.8.1/V2.9, V3.0, V3.1) drifted — the copy
+that drifts is the one that will be believed, exactly as this section used to
+warn. The file is deleted and every code comment, tool and model doc that
+cited it by name now cites `AGENTS.md`; the drift failure this paragraph once
+guarded against is impossible rather than merely remembered.

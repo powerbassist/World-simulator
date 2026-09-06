@@ -419,7 +419,7 @@ func _bind_rate_table(loader) -> void:
 		print("KILL SWITCH FIRED. No budget in the sweep binds inside the band.")
 		print("The currency is DELETED rather than left unused -- V1.3e's treatment")
 		print("of AGREEMENT_ACCEPT_MIN and SUPPORT_SIGMA. U6a ships on the diary,")
-		print("and CLAUDE.md records the first session in a long run with no new")
+		print("and AGENTS.md records the first session in a long run with no new")
 		print("tuned constant, and why.")
 	else:
 		print("Band cleared at: %s" % [accepted])

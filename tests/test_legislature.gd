@@ -8,7 +8,7 @@ extends SceneTree
 ## formula implies an outcome.
 
 ## PRELOADED RATHER THAN USED AS A BARE `class_name`, and the shadowing is deliberate --
-## src/core/data_loader.gd:9 does exactly this with the same identifier. CLAUDE.md's
+## src/core/data_loader.gd:9 does exactly this with the same identifier. AGENTS.md's
 ## gotcha is that a global class name does not resolve before
 ## .godot/global_script_class_cache.cfg exists, and `--headless --script` does not
 ## generate one -- so `Law.from_dict()` parsed here only because this machine had run

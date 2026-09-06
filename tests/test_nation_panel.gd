@@ -114,7 +114,7 @@ func _check_pressing_act_moves_relations(panel, state) -> void:
 ## V1.3b. The two rows the trade model added, checked by MUTATION rather than by
 ## looking for a label: a "the panel contains a Trade: line" assertion passes
 ## against a row that prints 0% forever, and a weight that never changes is the
-## silent-UI failure class CLAUDE.md asks for a test on.
+## silent-UI failure class AGENTS.md asks for a test on.
 ##
 ## Both rows are read off the PLAYER's side of the pair. That matters enough to
 ## assert: the weight is directed, so showing the partner's share instead would be
@@ -170,7 +170,7 @@ func _check_trade_rows_after_signing(panel, state) -> void:
 
 ## U4's decision-delta plumbing reads `before` as a Trends snapshot. A signal
 ## that fires with an empty baseline produces a "recent effect" measuring
-## nothing, which is the silent-UI-failure class CLAUDE.md asks for a test on.
+## nothing, which is the silent-UI-failure class AGENTS.md asks for a test on.
 func _check_acted_signal_carries_a_baseline(panel, state) -> void:
 	_show(panel, TARGET)
 	var button: Button = _first_enabled_button(panel)
@@ -279,7 +279,7 @@ const USABLE_BAND_PX := 886.0
 ## re-sort it would trigger is deferred to a frame the harness never reaches.
 ##
 ## So a fold is a thing this suite structurally cannot see, which is exactly why
-## tools/screenshot.gd exists and why CLAUDE.md says a UI session that does not run
+## tools/screenshot.gd exists and why AGENTS.md says a UI session that does not run
 ## it is not finished. This one did, and that is what found it.
 func _check_the_verbs_are_above_the_fold(panel, state) -> void:
 	if panel.custom_minimum_size.y > USABLE_BAND_PX:

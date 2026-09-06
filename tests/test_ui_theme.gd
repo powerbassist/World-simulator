@@ -117,7 +117,7 @@ func _check_signature(theme: Theme) -> void:
 ## .ttf makes _font() return null, the theme sets nothing, and the game renders
 ## in the engine's built-in sans looking merely plain rather than broken. This
 ## is the "new UI behaviour that can fail silently needs a test" rule in
-## CLAUDE.md, and it is why the check is on the loaded Font object rather than
+## AGENTS.md, and it is why the check is on the loaded Font object rather than
 ## on the file existing.
 func _check_fonts(theme: Theme) -> void:
 	if theme.default_font == null:

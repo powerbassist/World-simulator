@@ -130,7 +130,7 @@ fi
 # `^MCP.*=.*addons/godot_mcp` -- two conditions an entry had to meet to be seen, and
 # an enabled DialogueManager meets neither: it is not named MCP*, and it registers as
 # `uid://c3rodes2l3gxb` rather than as a path. It sat in the working tree unseen until
-# an external review found it. CLAUDE.md's rule is "no autoloads in the game code", so
+# an external review found it. AGENTS.md's rule is "no autoloads in the game code", so
 # the guard is now that rule rather than a list of the ways one addon writes itself in.
 if git rev-parse --git-dir >/dev/null 2>&1; then
   # What the NEXT commit will contain: the index when project.godot is staged,
@@ -159,7 +159,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
   fi
 
   # The same failure through the other door. `enabled=` names plugin.cfg paths, and
-  # every addon here is gitignored by CLAUDE.md's rule -- including the toolkit's own,
+  # every addon here is gitignored by AGENTS.md's rule -- including the toolkit's own,
   # which is why tracked-ness is NOT the test. The toolkit is the one this project
   # expects (the check above requires it); anything else in that list is whatever this
   # machine happens to have installed, and a fresh clone gets an editor error per entry.

@@ -87,7 +87,7 @@ every `tools/run_tests.sh` run, which still exits 0, which is exactly why it wen
 unnoticed for a year. That was **V5** in [[playability-audit]], the one finding a new
 contributor meets before they have played anything.
 
-It is also two of CLAUDE.md's own rules at once: *no autoloads in the game code*, and
+It is also two of AGENTS.md's own rules at once: *no autoloads in the game code*, and
 *`src/` may reference an addon file only if that file is committed*.
 
 So:
@@ -227,7 +227,7 @@ So `.gitignore` carves out `at-icons`, and each icon `src/` actually references 
 git add -f addons/at-icons/control/<icon>.svg
 ```
 
-Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothing under `src/` may reference an addon file that is not committed** — that is the whole rule, and it replaced a vaguer "no plugins in the game code" line in [CLAUDE.md](../CLAUDE.md).
+Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothing under `src/` may reference an addon file that is not committed** — that is the whole rule, and it replaced a vaguer "no plugins in the game code" line in [AGENTS.md](../AGENTS.md).
 
 > [!warning] LimboAI cannot hold the nation AI, and the reason is structural
 > Behaviour trees are the obvious tool for [[v1|V1.3]]'s AI foreign policy, which

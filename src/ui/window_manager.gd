@@ -73,7 +73,7 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	var frame := WindowFrame.new()
 	add_child(frame)
 	# setup() after add_child(): _ready() has to have run or everything the frame
-	# builds is null and the content lands under nothing. CLAUDE.md's gotcha.
+	# builds is null and the content lands under nothing. AGENTS.md's gotcha.
 	frame.setup(title, content, icon_path)
 	frame.hide()
 

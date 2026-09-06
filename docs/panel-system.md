@@ -47,7 +47,7 @@ three of them still in, which is why every assertion in
 `trends.gd` and `ui_theme.gd`'s shape. All nineteen panels already
 `extends PanelContainer`, so a hierarchy would buy nothing: the dirty sweep is
 duck-typed on `has_method("mark_dirty")` and finds them without one, and
-[[ROADMAP|CLAUDE.md]] lists abstract base classes among the things this project
+[[ROADMAP|AGENTS.md]] lists abstract base classes among the things this project
 does without. Migration is therefore a call-site substitution rather than a
 re-parenting, which is what makes V2.1b mechanical.
 

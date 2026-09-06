@@ -26,7 +26,7 @@ var effects: Dictionary = {}
 
 
 ## No `-> Summit` on the signature: a new script cannot reference its own
-## class_name before the global class cache exists -- CLAUDE.md's first gotcha,
+## class_name before the global class cache exists -- AGENTS.md's first gotcha,
 ## and U5b paid for it. The loader's calls are untyped anyway.
 static func from_dict(
 	dialogue_text: String, nation_id: String, file_id: String,

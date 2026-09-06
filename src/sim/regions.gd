@@ -56,7 +56,7 @@ static func init_nation(ns, region_list: Array) -> void:
 ## The region's own trend, by the same expression Economy.trend_pct() applies to a
 ## nation: share-weighted SECTOR_TREND over its authored mix. Ten nations get a
 ## hundred and twelve different trends out of one constant table and no per-region
-## branch, which is CLAUDE.md's first rule one level down.
+## branch, which is AGENTS.md's first rule one level down.
 static func trend_pct(region) -> float:
 	var trend: float = 0.0
 	for key in C.SECTOR_TREND.keys():

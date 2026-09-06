@@ -147,7 +147,7 @@ const CANDIDATES := {
 ## negative. It is not: Budget.tick_month() sets it to
 ## `total_spending_pct_gdp - total_revenue_pct_gdp`, so a SHORTFALL IS POSITIVE and
 ## `austerity` reads -9.41 because it runs a surplus. balance_probe.gd's own _print_row()
-## negates it for display, which is why every figure quoted in CLAUDE.md and in the model
+## negates it for display, which is why every figure quoted in AGENTS.md and in the model
 ## docs carries the opposite sign from the field -- and bloc.gd's rule, the one V1.3d's
 ## screenshot pass caught being printed at a player raw, reads `deficit_pct_gdp <= 3.0`.
 ## An event authored on the plan's sign would have fired only on a SURPLUS.

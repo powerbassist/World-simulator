@@ -19,7 +19,7 @@ extends RefCounted
 ## France is the regions abolished in 2016 and NUTS 1 for Italy is five
 ## statistical macro-areas -- a decision recorded in tools/import_data.py's
 ## REGION_LEVEL and in each file's `_source` line. src/ never learns a level
-## exists, which is CLAUDE.md's first rule: content lives in data, and a nation
+## exists, which is AGENTS.md's first rule: content lives in data, and a nation
 ## that behaves differently has a field saying so.
 ##
 ## There is no src/core/geography.gd. U6b deleted src/core/people.gd before

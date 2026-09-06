@@ -4,7 +4,7 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## U3's Overview test. Three things, all of which fail silently on screen --
-## which is the reason they are tested at all (CLAUDE.md: new UI behaviour that
+## which is the reason they are tested at all (AGENTS.md: new UI behaviour that
 ## can fail silently needs a test):
 ##
 ## 1. A brand-new game has no history, so every trend is unknown. The panel must

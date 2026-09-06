@@ -20,7 +20,7 @@ extends SceneTree
 ##     COMMITTED. register() is the one place a window's glyph is written;
 ##     reading it back off the registry here means this check cannot drift the
 ##     way the hand-written lists did. The file-exists half is the fresh-clone
-##     rule CLAUDE.md states for addons: src/ may reference an at-icons file
+##     rule AGENTS.md states for addons: src/ may reference an at-icons file
 ##     only if that file is committed, and a referenced-but-uncommitted SVG is
 ##     invisible until the clone that cannot load it.
 ##   - THE CARD SHOWS THE PLAYER'S LEADER'S ART. The one surface the session

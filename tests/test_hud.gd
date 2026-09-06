@@ -7,7 +7,7 @@ extends SceneTree
 ## The split is by failure mode rather than by file: everything here is
 ## something that goes wrong **without erroring** -- an icon that silently does
 ## not load, a flag whose colours never arrive, a message column that grows
-## until it runs off the screen. CLAUDE.md's rule that UI which can fail
+## until it runs off the screen. AGENTS.md's rule that UI which can fail
 ## silently needs a test is the whole reason this file exists.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")

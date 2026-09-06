@@ -24,7 +24,7 @@ extends RefCounted
 ## Static, stateless, `extends RefCounted` -- `trends.gd` and `ui_theme.gd`'s
 ## shape. Deliberately **not** a base class the panels extend: all nineteen
 ## already `extends PanelContainer`, the dirty sweep is duck-typed on
-## `has_method("mark_dirty")` and needs no hierarchy to find them, and CLAUDE.md
+## `has_method("mark_dirty")` and needs no hierarchy to find them, and AGENTS.md
 ## lists abstract base classes among the things this project does without.
 ##
 ## Colours come from `theme_type_variation` and never from an override, which is

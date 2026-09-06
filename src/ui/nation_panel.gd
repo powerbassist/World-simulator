@@ -86,7 +86,7 @@ func _ready() -> void:
 	_actions = VBoxContainer.new()
 	# 4 rather than 6: with fourteen verbs the separation is spent fourteen times,
 	# so two pixels a row is nearly a whole row back. Layout, so it stays at the
-	# call site -- see the styling rule in CLAUDE.md.
+	# call site -- see the styling rule in AGENTS.md.
 	_actions.add_theme_constant_override("separation", 4)
 	root.add_child(_actions)
 

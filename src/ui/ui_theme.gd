@@ -10,7 +10,7 @@ extends RefCounted
 ## Theme and not a module of helper functions.
 ##
 ## Built in code rather than authored as a .tres, for the same reason the panels
-## are (docs/engine-decision.md, CLAUDE.md style): a .tres is a blob that diffs
+## are (docs/engine-decision.md, AGENTS.md style): a .tres is a blob that diffs
 ## badly and can only be edited through the editor, whereas the palette below is
 ## greppable and a colour change is a one-line diff.
 ##

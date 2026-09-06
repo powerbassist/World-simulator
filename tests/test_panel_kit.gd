@@ -286,7 +286,7 @@ func _build_kit_samples() -> void:
 	])
 
 
-## CLAUDE.md's styling rule since U3, restated for the kit: colours and the type
+## AGENTS.md's styling rule since U3, restated for the kit: colours and the type
 ## scale come from ui_theme.gd through theme_type_variation, never from an
 ## override. A kit that reached for add_theme_color_override() would put the
 ## violation in twenty-five panels at once.

@@ -161,7 +161,7 @@ script_error='SCRIPT ERROR|Parse Error'
 # A FRESH CLONE HAS NO .godot/, AND WITHOUT ONE THERE IS NO
 # global_script_class_cache.cfg -- so every `class_name` in a committed addon is
 # unresolvable and DialogueManager, the project's one autoload, fails to parse.
-# That is CLAUDE.md's first gotcha reaching the suite itself: V2.4b's adoption gate
+# That is AGENTS.md's first gotcha reaching the suite itself: V2.4b's adoption gate
 # ("it must init under --headless --script, which is what tools/run_tests.sh is")
 # only ever ran on a machine that already had the cache, so the gate passed warm and
 # the invariant this runner rests on -- green from a fresh clone -- was false.

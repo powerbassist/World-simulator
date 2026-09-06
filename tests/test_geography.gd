@@ -37,7 +37,7 @@ extends SceneTree
 ##     failure companies.gd's share/state_share/regulation_burden split exists to
 ##     prevent one level down.
 ##   - THE NUTS LEVEL IS NOWHERE IN src/. France is imported at NUTS 1 and Italy at
-##     NUTS 2; the loader never learns a level exists, which is CLAUDE.md's first
+##     NUTS 2; the loader never learns a level exists, which is AGENTS.md's first
 ##     rule.
 ##   - data/geo/regions.geojson WAS NOT LOADED AT STARTUP at V2.2a -- nothing drew
 ##     it, so paying for 180 KB of geometry on every launch bought nothing. V2.2b

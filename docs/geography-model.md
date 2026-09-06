@@ -90,7 +90,7 @@ NUTS 1 is five statistical macro-areas and Switzerland's is **one**.
 
 **The level never reaches `src/`.** `tools/import_data.py`'s `REGION_LEVEL` and each
 file's `_source` line are the whole record; the loader reads `data/regions/` and never
-learns a level exists. That is CLAUDE.md's first rule, and `tests/test_geography.gd`
+learns a level exists. That is AGENTS.md's first rule, and `tests/test_geography.gd`
 checks it in the *data* — the region files' top-level keys are exactly `_source`,
 `_year`, `_note`, `regions` — rather than by grepping `src/` for the word, which was
 the first version of the check and failed on the comments explaining the absence.

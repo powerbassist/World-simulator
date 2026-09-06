@@ -227,7 +227,7 @@ func _ready() -> void:
 
 	# register() before setup(), every time. register() is what puts the panel in
 	# the tree, and a Control outside the tree has not run _ready(), so every
-	# label setup() writes to is still null -- CLAUDE.md's gotcha, and the same
+	# label setup() writes to is still null -- AGENTS.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
 	_overview_panel = OverviewPanel.new()
 	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "gauge.svg")
@@ -609,7 +609,7 @@ func _build_action_bar() -> void:
 		_entry("region", "Regions"),
 		_entry("city", "Cities"),
 		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
-		# rather than the shape of the object, and CLAUDE.md already carries the
+		# rather than the shape of the object, and AGENTS.md already carries the
 		# ruling -- region, city and energy are Economy.
 		_entry("energy", "Energy"),
 	])
