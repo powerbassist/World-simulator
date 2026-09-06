@@ -4,6 +4,7 @@
   "proposals": [
     {
       "id": "cohesion_fund",
+      "org": "eu",
       "name": "Cohesion Fund Expansion",
       "summary": "A larger common fund for the bloc's poorer regions, paid for by a higher call on every member's budget.",
       "position": { "economic": -0.45, "social": -0.15 },
@@ -11,6 +12,7 @@
     },
     {
       "id": "recovery_facility",
+      "org": "eu",
       "name": "Recovery and Resilience Facility",
       "summary": "Joint borrowing against the bloc's own credit, disbursed to members as investment grants. Cheaper than borrowing alone, and it is the bloc's balance sheet that carries it.",
       "position": { "economic": -0.30, "social": -0.05 },
@@ -18,6 +20,7 @@
     },
     {
       "id": "common_defence_floor",
+      "org": "eu",
       "name": "Common Defence Commitment",
       "summary": "Every member undertakes to hold defence spending at or above 2% of GDP. The commitment is political; the embarrassment of missing it is not.",
       "position": { "economic": 0.55, "social": 0.80 },
@@ -31,6 +34,7 @@
     },
     {
       "id": "common_external_tariff",
+      "org": "eu",
       "name": "Common External Tariff",
       "summary": "The bloc levies as one on goods entering from outside it. Every member's customs post charges the same rate, and no member sets its own.",
       "position": { "economic": 0.10, "social": 0.45 },

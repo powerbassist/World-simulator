@@ -1,0 +1,18 @@
+{
+  "_source": "authored",
+  "_note": "The euro. Every EU member in this roster is a euro member and neither non-EU neighbour is, so its member set equals the EU's -- that is the roster rather than a shortcut, and a V3.3 tranche that brings a non-euro EU member (DNK, ... or the states) will make the two sets diverge in data, which is the point of a register. Ships zero-priced on purpose: a currency union has no machinery behind it yet, and pricing one with no measurement is exactly the invented number this project refuses. The named trigger for pricing it: a session that wants the euro to DO something owes a measured band (inflation or credit channels are the candidates) and a BALANCE_PLAN pre-declaration.",
+  "id": "eurozone",
+  "name": "The Eurozone",
+  "summary": "The countries that gave up their own currencies. One interest rate, one exchange rate, and a shared stake in each other's debts.",
+  "members": {
+    "FRA": {}, "DEU": {}, "ITA": {}, "ESP": {}, "NLD": {}, "BEL": {}, "AUT": {}, "LUX": {}
+  },
+  "council": false,
+  "net_transfers": false,
+  "relations_bonus": 0.0,
+  "trade_bonus": 0.0,
+  "accession_months": 36,
+  "withdrawal_months": 24,
+  "accession_position": { "economic": -0.05, "social": 0.10 },
+  "withdrawal_position": { "economic": 0.30, "social": 0.30 }
+}

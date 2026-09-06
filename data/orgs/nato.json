@@ -1,0 +1,18 @@
+{
+  "_source": "authored",
+  "_note": "The alliance. AUT is a member of the EU and of NATO in the real world only by partnership -- here, as in fact, it is neutral and stays out; CHE is neutral twice over. GBR is the point of the register: a full member here and outside the EU, which the one hardcoded bloc object could not say. council: false in track (a) -- the org register and its membership land first, the council and its agenda (the 2 percent defence floor, moved here from the EU's proposal list where it never quite belonged) land with the fights and content in track (b). Bonuses zero-priced on the eurozone.json reasoning.",
+  "id": "nato",
+  "name": "NATO",
+  "summary": "The Atlantic alliance. An attack on one is an attack on all -- on paper, and in the domestic politics of every cabinet that has to pay for it.",
+  "members": {
+    "FRA": {}, "DEU": {}, "ITA": {}, "ESP": {}, "NLD": {}, "BEL": {}, "LUX": {}, "GBR": {}
+  },
+  "council": false,
+  "net_transfers": false,
+  "relations_bonus": 0.0,
+  "trade_bonus": 0.0,
+  "accession_months": 12,
+  "withdrawal_months": 12,
+  "accession_position": { "economic": 0.30, "social": 0.45 },
+  "withdrawal_position": { "economic": -0.45, "social": -0.35 }
+}

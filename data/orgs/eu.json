@@ -1,0 +1,29 @@
+{
+  "_source": "authored",
+  "_note": "The European Union, V3.2. This file absorbs data/eu_parliament.json (members, seats, next EP election) and the nation files' government.eu blocks -- membership is ONE source now, and the cross-validation those two copies needed is gone with them. relations_bonus 15.0 and trade_bonus 0.50 are the values diplomacy_constants.EU_CO_MEMBER_BONUS and trade_constants.EU_TRADE_BONUS held before the register existed, moved unchanged: the track-(a) balance re-run is bit-identical, and that is the proof. accession/withdrawal durations are the Art. 50 shape -- two years of negotiation after the vote. The accession question is put slightly off the status quo so a popular government can carry it and an unpopular one cannot; the withdrawal question sits clearly against it, because a withdrawal vote a government could pass on a whim is not the multi-year fight the someday row asked for.",
+  "id": "eu",
+  "name": "The European Union",
+  "summary": "The single market and the council: one trade area, a shared external tariff, and rules the members adopt together and answer to alone.",
+  "members": {
+    "FRA": { "ep_seats": 81 },
+    "DEU": { "ep_seats": 96 },
+    "ITA": { "ep_seats": 76 },
+    "ESP": { "ep_seats": 61 },
+    "NLD": { "ep_seats": 31 },
+    "BEL": { "ep_seats": 22 },
+    "AUT": { "ep_seats": 20 },
+    "LUX": { "ep_seats": 6 }
+  },
+  "parliament": {
+    "next_election": { "year": 2029, "month": 6 },
+    "term_years": 5
+  },
+  "council": true,
+  "net_transfers": true,
+  "relations_bonus": 15.0,
+  "trade_bonus": 0.50,
+  "accession_months": 24,
+  "withdrawal_months": 24,
+  "accession_position": { "economic": -0.10, "social": 0.05 },
+  "withdrawal_position": { "economic": 0.45, "social": 0.55 }
+}
