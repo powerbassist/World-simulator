@@ -387,24 +387,31 @@ static func fixed_dates(state) -> Array:
 			K.FIXED_HEAD_OF_STATE, ns.head_of_state_next_year, ns.head_of_state_next_month, ""
 		))
 
-	var bloc: Dictionary = state.bloc
-	var months_to_next := int(bloc.get("months_to_next", 0))
-	if months_to_next > 0:
-		out.append(_fixed_in(state, K.FIXED_COUNCIL_PROPOSAL, months_to_next, ""))
-	var pending = bloc.get("pending", {})
-	if typeof(pending) == TYPE_DICTIONARY and not pending.is_empty():
-		out.append(_fixed_in(
-			state, K.FIXED_COUNCIL_VOTE, int(pending.get("months_left", 0)),
-			# The authored HUMAN label, not "proposal_id". Bloc._tick_council() writes
-			# both, and this read was `.get("id", "")` -- a key that dictionary has
-			# never had -- so the diary said "Council votes" and never which proposal.
-			# Taking `proposal_id` fixed the emptiness and printed "stability_pact" at
-			# a player, because calendar_panel.gd has no lookup branch for a council
-			# vote the way it does for a cooldown, a project, a referendum and an
-			# event. That is V1.6f's `project_name` finding in the same panel, so the
-			# fix is the same one: the reference IS the name.
-			String(pending.get("name", ""))
-		))
+	# V3.2: one pair of entries per council org. Each org's scheduler is its own,
+	# so two councils can be mid-proposal at once and the diary has to say which
+	# one -- the org's name rides in the ref field, the same channel the proposal
+	# name uses below.
+	var org_ids: Array = state.orgs.keys()
+	org_ids.sort()
+	for org_id in org_ids:
+		var register: Dictionary = state.orgs[org_id]
+		var months_to_next := int(register.get("months_to_next", 0))
+		if months_to_next > 0:
+			out.append(_fixed_in(state, K.FIXED_COUNCIL_PROPOSAL, months_to_next, ""))
+		var pending = register.get("pending", {})
+		if typeof(pending) == TYPE_DICTIONARY and not pending.is_empty():
+			out.append(_fixed_in(
+				state, K.FIXED_COUNCIL_VOTE, int(pending.get("months_left", 0)),
+				# The authored HUMAN label, not "proposal_id". Bloc._tick_council() wrote
+				# both, and an earlier read was `.get("id", "")` -- a key that dictionary
+				# has never had -- so the diary said "Council votes" and never which
+				# proposal. Taking `proposal_id` fixed the emptiness and printed
+				# "stability_pact" at a player, because calendar_panel.gd has no lookup
+				# branch for a council vote the way it does for a cooldown, a project,
+				# a referendum and an event. That is V1.6f's `project_name` finding in
+				# the same panel, so the fix is the same one: the reference IS the name.
+				String(pending.get("name", ""))
+			))
 
 	if ns.dissolution_lockout_remaining > 0:
 		out.append(_fixed_in(

@@ -11,7 +11,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
@@ -394,7 +394,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
-		Bloc.tick_month(state, _loader)
+		Orgs.tick_month(state, _loader)
 		Diplomacy.tick_month(state, _loader)
 		# Added after the fact: project() has called both since V1.3g and V1.4a and this
 		# mirror never did. The omission was invisible because both are inert from an

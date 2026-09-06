@@ -51,7 +51,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -639,71 +639,53 @@ func _run_bloc_roundtrip(loader) -> void:
 		_fail("no stability_pact proposal to adopt")
 		return
 
-	state.bloc["rules"][proposal.id] = {
-		"name": proposal.proposal_name,
-		"field": String(proposal.constraint["field"]),
-		"op": String(proposal.constraint["op"]),
-		"value": float(proposal.constraint["value"]),
-		"tolerance": float(proposal.constraint["tolerance"]),
-		"severity": float(proposal.constraint["severity"]),
-		"transfer_pct_gdp": 0.0,
-		"since_year": state.year,
-		"since_month": state.month,
+	state.orgs["eu"]["rules"][proposal.id] = {
+		"name": proposal.proposal_name, "field": String(proposal.constraint["field"]),
+		"op": String(proposal.constraint["op"]), "value": float(proposal.constraint["value"]),
+		"tolerance": float(proposal.constraint["tolerance"]), "severity": float(proposal.constraint["severity"]),
+		"transfer_pct_gdp": 0.0, "since_year": 2026, "since_month": 1,
 	}
-	Bloc.tick_month(state, loader)
-	Budget.tick_month(state)
-	# After the tick, which counts months_to_next down -- set before it, these
-	# would be asserting the tick's arithmetic rather than the round trip's.
-	state.bloc["next_index"] = 2
-	state.bloc["months_to_next"] = 7
-
-	if is_zero_approx(state.player().bloc_burden):
-		_fail("could not set up a live bloc burden to save -- France should be in breach of a 3%% deficit rule")
-		return
-
+	Orgs.tick_month(state, loader)
+	state.orgs["eu"]["next_index"] = 2
+	state.orgs["eu"]["months_to_next"] = 7
 	var clock := Clock.new()
-	clock.year = state.year
-	clock.month = state.month
-	clock.day = 21
+	clock.day = 9
 	var save_error := SaveManager.save_game(state, clock, BLOC_SLOT)
 	clock.free()
 	if not save_error.is_empty():
-		_fail("save_game failed on a state with a bloc rule: %s" % save_error)
+		_fail("save_game(org register) failed: %s" % save_error)
 		return
+	var loaded_res: Dictionary = SaveManager.load_game(BLOC_SLOT, loader)
+	if not bool(loaded_res.get("ok", false)):
+		_fail("the org register save did not load: %s" % str(loaded_res.get("error", "")))
+		return
+	var loaded = loaded_res["state"]
 
-	var loaded_result := SaveManager.load_game(BLOC_SLOT, loader)
-	if not loaded_result["ok"]:
-		_fail("load_game failed on a save with a bloc rule: %s" % loaded_result["error"])
-		return
-
-	var loaded = loaded_result["state"]
-	if not (loaded.bloc.get("rules", {}) as Dictionary).has(proposal.id):
-		_fail("a save round trip dropped the %s rule" % proposal.id)
-		return
-	# The scheduler is the half most likely to round-trip subtly wrong: JSON gives
-	# every number back as a float, and a countdown comparing a float against an int
-	# would run forever without anything looking broken.
-	if typeof(loaded.bloc["next_index"]) != TYPE_INT or int(loaded.bloc["next_index"]) != 2:
-		_fail("bloc.next_index round-tripped as %s (%d), expected the int 2" % [
-			loaded.bloc["next_index"], typeof(loaded.bloc["next_index"])
+	if not ((loaded.orgs["eu"]["rules"] as Dictionary).has(proposal.id)):
+		_fail("a rule in force did not survive the save round trip")
+	if typeof(loaded.orgs["eu"]["next_index"]) != TYPE_INT or int(loaded.orgs["eu"]["next_index"]) != 2:
+		_fail("org register next_index round-tripped as %s, expected the int 2" % [
+			loaded.orgs["eu"]["next_index"], typeof(loaded.orgs["eu"]["next_index"])
 		])
-	if typeof(loaded.bloc["months_to_next"]) != TYPE_INT or int(loaded.bloc["months_to_next"]) != 7:
-		_fail("bloc.months_to_next round-tripped as %s, expected the int 7" % [loaded.bloc["months_to_next"]])
+	if typeof(loaded.orgs["eu"]["months_to_next"]) != TYPE_INT or int(loaded.orgs["eu"]["months_to_next"]) != 7:
+		_fail("org register months_to_next round-tripped as %s, expected the int 7" % [loaded.orgs["eu"]["months_to_next"]])
 
 	# And the rule has to still BITE, not merely still exist.
-	if not is_equal_approx(Bloc.burden(loaded, loaded.player()), Bloc.burden(state, state.player())):
-		_fail("the bloc burden does not survive a save round trip: %.6f vs %.6f" % [
-			Bloc.burden(loaded, loaded.player()), Bloc.burden(state, state.player())
+	if not is_equal_approx(Orgs.burden(loaded, loaded.player(), Orgs.council_ids(loaded)), Orgs.burden(state, state.player(), Orgs.council_ids(state))):
+		_fail("the org burden does not survive a save round trip: %.6f vs %.6f" % [
+			Orgs.burden(loaded, loaded.player(), Orgs.council_ids(loaded)), Orgs.burden(state, state.player(), Orgs.council_ids(state))
 		])
 
-	# The bump's argument, all three halves, checked the way 9 -> 10's halves are.
-	var no_bloc: Dictionary = state.to_dict()
-	no_bloc.erase("bloc")
-	var without = GameState.from_dict(no_bloc)
-	if not is_zero_approx(Bloc.burden(without, without.player())):
-		_fail("a save with no bloc key still produced a burden")
-	if is_equal_approx(Bloc.burden(without, without.player()), Bloc.burden(state, state.player())):
-		_fail("dropping the bloc register changed nothing -- that half of the bump's premise is wrong")
+	# The bump's argument, checked the way 9 -> 10's halves were: a save whose
+	# orgs key is missing reads as no council and no rules, which is WRONG rather
+	# than empty -- and that is why the rename earned version 32.
+	var no_orgs: Dictionary = state.to_dict()
+	no_orgs.erase("orgs")
+	var without = GameState.from_dict(no_orgs)
+	if not is_zero_approx(Orgs.burden(without, without.player(), Orgs.council_ids(without))):
+		_fail("a save with no orgs key still produced a burden")
+	if is_equal_approx(Orgs.burden(without, without.player(), Orgs.council_ids(without)), Orgs.burden(state, state.player(), Orgs.council_ids(state))):
+		_fail("dropping the org register changed nothing -- that half of the bump's premise is wrong")
 
 	var no_transfer: Dictionary = state.to_dict()
 	for id in (no_transfer["nations"] as Dictionary).keys():

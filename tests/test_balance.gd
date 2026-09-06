@@ -26,7 +26,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -396,7 +396,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
 		Budget.tick_month(state)
-		Bloc.tick_month(state, _loader)
+		Orgs.tick_month(state, _loader)
 		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
 		# Added to the harness in the same commit as the model, because the balance re-run
 		# came back BIT-IDENTICAL without it and the prediction said it would not -- the

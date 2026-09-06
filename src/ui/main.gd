@@ -25,7 +25,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
@@ -60,7 +60,7 @@ const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const Minimap = preload("res://src/ui/minimap.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
-const BlocPanel = preload("res://src/ui/bloc_panel.gd")
+const OrgsPanel = preload("res://src/ui/orgs_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
@@ -121,7 +121,7 @@ var _law_panel
 var _map_view
 var _minimap
 var _nation_panel
-var _bloc_panel
+var _orgs_panel
 var _calendar_panel
 var _people_panel
 var _companies_panel
@@ -324,14 +324,14 @@ func _ready() -> void:
 	# V1.3d. Beside Diplomacy in the World cluster, and its own window rather than
 	# a section of the nation panel: the council is not a nation and has no pixel
 	# on the map to click, so there is nothing to select it by.
-	_bloc_panel = BlocPanel.new()
-	_windows.register("bloc", "The Union", _bloc_panel, KEY_U, ICONS + "book_open.svg")
-	_bloc_panel.setup(_state, _loader)
-	_bloc_panel.hide_close_button()
+	_orgs_panel = OrgsPanel.new()
+	_windows.register("orgs", "Organisations", _orgs_panel, KEY_U, ICONS + "book_open.svg")
+	_orgs_panel.setup(_state, _loader)
+	_orgs_panel.hide_close_button()
 	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
 	# is a command like any other and earns the same U4 delta as a law or an act.
 	# It was the only one of the seven player commands with no signal at all.
-	_bloc_panel.voted.connect(func(before, label):
+	_orgs_panel.voted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
 	)
@@ -618,7 +618,7 @@ func _build_action_bar() -> void:
 	])
 	_hud.action_bar.add_cluster("world", "World", ICONS + "globe.svg", [
 		_entry("diplomacy", "Diplomacy"),
-		_entry("bloc", "The Union"),
+		_entry("orgs", "Organisations"),
 	])
 	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
 
@@ -946,8 +946,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# charges its penalty into NEXT month's recompute -- which is what stops a rule
 	# on the deficit feeding a fine that widens the deficit that deepens the breach.
 	# BEFORE Opinion, because the `europe` issue reads the burden, and wired the
-	# other way round every bloc reaction would carry a spurious extra month of lag.
-	Bloc.tick_month(_state, _loader)
+	# other way round every org reaction would carry a spurious extra month of lag.
+	Orgs.tick_month(_state, _loader)
 	# V1.5d, and BEFORE Opinion rather than after it, which is the opposite of where
 	# Society and Unrest sit. Those two write a load Opinion consumes next month on
 	# purpose, to break a loop that runs through approval. This one reads
@@ -1036,7 +1036,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	#
 	# The lag also breaks a real loop structurally rather than by iterating: bill ->
 	# deficit -> a PRECONDITION_FIELDS entry -> which verbs are available -> measures
-	# -> obligations -> bill. src/sim/bloc.gd makes the same call for the same reason.
+	# -> obligations -> bill. src/sim/orgs.gd makes the same call for the same reason.
 	# Counted either side of the tick so an obligation that opens can be carded
 	# without src/sim/ growing a record for the UI to read. Derived here rather than
 	# serialised, which is the same call V1.3f made for foreign_acts in reverse: that
@@ -1399,7 +1399,7 @@ func _unrest_title(label: String) -> String:
 
 ## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and
 ## src/ui/ owns the wording, the same split nation_panel.gd has for a refusal and
-## bloc_panel.gd for a vote.
+## orgs_panel.gd for a vote.
 func _act_reason_text(key: String) -> String:
 	match key:
 		ForeignPolicy.ACT_REASON_INTEREST: return "Their interests run this way."

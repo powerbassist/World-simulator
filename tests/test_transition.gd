@@ -220,7 +220,7 @@ func _check_load_bearing_cross_check_incomplete_bundle() -> void:
 	var fixture_loader := DataLoader.new()
 	fixture_loader.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/eu_parliament.json", "res://tests/fixtures/laws_bad_transition",
+		"res://tests/fixtures/laws_bad_transition",
 	)
 	var named := false
 	for e in fixture_loader.errors:
@@ -238,7 +238,7 @@ func _check_load_bearing_cross_check_illegal_target() -> void:
 	var fixture_loader := DataLoader.new()
 	fixture_loader.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/eu_parliament.json", "res://tests/fixtures/laws_bad_transition",
+		"res://tests/fixtures/laws_bad_transition",
 	)
 	var named := false
 	for e in fixture_loader.errors:

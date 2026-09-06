@@ -188,7 +188,7 @@ func _check_resting_is_symmetric() -> void:
 	for pair in Relations.all_pairs(_loader.nations.keys()):
 		var a = _loader.nations[pair[0]]
 		var b = _loader.nations[pair[1]]
-		if not is_equal_approx(Diplomacy.resting(a, b), Diplomacy.resting(b, a)):
+		if not is_equal_approx(Diplomacy.resting(a, b, 0.0), Diplomacy.resting(b, a, 0.0)):
 			_failures.append("resting(%s, %s) is not symmetric" % [pair[0], pair[1]])
 
 
@@ -198,15 +198,18 @@ func _check_resting_is_symmetric() -> void:
 func _check_resting_reads_both_inputs() -> void:
 	# DEU: EU member and a French neighbour. GBR: neither. NLD: EU, not a
 	# French neighbour. Each isolates one term against the pair above it.
-	var both := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"])
-	var eu_only := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["NLD"])
-	var neither := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["GBR"])
-	var border_only := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["CHE"])
+	# V3.2: the co-membership term is the register's content value, summed over
+	# shared orgs -- which for eu pairs is exactly the old constant.
+	var eu_bonus: float = _loader.orgs_by_id["eu"].relations_bonus
+	var both := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"], eu_bonus)
+	var eu_only := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["NLD"], eu_bonus)
+	var neither := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["GBR"], 0.0)
+	var border_only := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["CHE"], 0.0)
 
 	if not is_equal_approx(both - eu_only, DK.SHARED_BORDER_BONUS):
 		_failures.append("the shared-border term does not separate FRA|DEU from FRA|NLD")
-	if not is_equal_approx(eu_only - neither, DK.EU_CO_MEMBER_BONUS):
-		_failures.append("the EU term does not separate FRA|NLD from FRA|GBR")
+	if not is_equal_approx(eu_only - neither, eu_bonus):
+		_failures.append("the co-membership term does not separate FRA|NLD from FRA|GBR")
 	if not is_equal_approx(border_only - neither, DK.SHARED_BORDER_BONUS):
 		_failures.append("the shared-border term does not separate FRA|CHE from FRA|GBR")
 
@@ -215,7 +218,7 @@ func _check_resting_reads_both_inputs() -> void:
 ## overshoot and not keep going.
 func _check_drift_converges_and_stops() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
-	var resting := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"])
+	var resting := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"], _loader.orgs_by_id["eu"].relations_bonus)
 
 	# V1.3f: the agenda runs inside tick_month() and moves relations on purpose, so
 	# a drift test that did not quiet it would be measuring drift plus nine nations
@@ -316,7 +319,7 @@ func _check_preconditions_gate() -> void:
 	# precondition is unreachable content -- the failure docs/amendment-model.md
 	# found for Germany's two-thirds. Resting for FRA|DEU plus what one use of
 	# the strongest positive verb delivers must clear it.
-	var resting := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"])
+	var resting := Diplomacy.resting(_loader.nations["FRA"], _loader.nations["DEU"], _loader.orgs_by_id["eu"].relations_bonus)
 	var best := 0.0
 	for candidate in _loader.diplomatic_actions:
 		best = maxf(best, float(candidate.effects.get("relations", 0.0)))
@@ -518,7 +521,7 @@ func _expect_fixture_error(actions_dir: String, needle: String, message: String)
 	var fixture_loader := DataLoader.new()
 	fixture_loader.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/eu_parliament.json", "res://data/laws",
+		"res://data/laws",
 		"res://data/political-systems", "res://data/scenarios", actions_dir,
 	)
 	for e in fixture_loader.errors:
@@ -716,3 +719,12 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+## V3.2: the co-membership term is content -- the sum over the orgs both nations
+## belong to on the register. Tests that exercise one pair at rest pass it in.
+func _shared_bonus(a_id: String, b_id: String) -> float:
+	var total := 0.0
+	for org in _loader.orgs:
+		if org.is_member(a_id) and org.is_member(b_id):
+			total += org.relations_bonus
+	return total

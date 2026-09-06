@@ -358,8 +358,6 @@ var permits_system_change: bool = false
 ## EU membership and European Parliament seat count. Empty/zero for a
 ## non-member — GBR and CHE simply have no reader for these, see
 ## docs/electoral-systems.md.
-var eu_member: bool = false
-var eu_ep_seats: int = 0
 
 ## Which nations in the roster this one shares a land border with. A FACT, not
 ## a tuned number -- the same class as assembly_seats -- and the reason V1.3a
@@ -614,11 +612,6 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 
 	n.pretender_person_id = _extract_string(government, "pretender_person", filename, errors)
 
-	var eu: Dictionary = _extract_dict(government, "eu", filename, errors)
-	n.eu_member = _extract_bool(eu, "member", filename, errors)
-	if n.eu_member:
-		n.eu_ep_seats = _extract_int(eu, "ep_seats", "government.eu.ep_seats", filename, errors)
-		_check_range_int(n.eu_ep_seats, 1, 200, "government.eu.ep_seats", filename, errors)
 
 	# Required and possibly empty, rather than optional: an absent key would be
 	# indistinguishable from "this nation borders nobody", and one of the ten

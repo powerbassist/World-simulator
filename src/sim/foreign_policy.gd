@@ -47,6 +47,7 @@ extends RefCounted
 ## impose one, and this file says why.
 
 const RK = preload("res://src/core/relations.gd")
+const Org = preload("res://src/core/org.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const K = preload("res://src/sim/foreign_policy_constants.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
@@ -157,7 +158,7 @@ static func stake_vector(state, a_id: String) -> Dictionary:
 		# Zero for all forty-five pairs at new-game, by construction, and growing as
 		# the game is played -- so a fresh game's interests are purely material and
 		# a played one's carry what the player did.
-		var displacement: float = absf(_score(state, a_id, b_id) - _resting(a, b))
+		var displacement: float = absf(_score(state, a_id, b_id) - _resting(a, b, Org.shared_bonus(state, a_id, b_id, "relations_bonus")))
 		var history: float = minf(1.0, displacement / K.STAKE_HISTORY_SPAN)
 
 		raw[b_id] = (
@@ -217,7 +218,7 @@ static func amity(state, a_id: String, b_id: String) -> float:
 	var b = state.nations.get(b_id)
 	if a == null or b == null:
 		return 0.0
-	var level: float = (_score(state, a_id, b_id) - _resting(a, b)) / K.AMITY_SPAN
+	var level: float = (_score(state, a_id, b_id) - _resting(a, b, Org.shared_bonus(state, a_id, b_id, "relations_bonus"))) / K.AMITY_SPAN
 	# _alignment() is [0, 1]; re-centred so two governments at opposite ends of the
 	# ideology space read as a negative contribution rather than merely a small one.
 	var ideology: float = K.AMITY_IDEOLOGY_WEIGHT * (2.0 * _alignment(a, b) - 1.0)
@@ -584,7 +585,10 @@ static func _appraisal_terms(state, ns, proposal, rule_burden: float) -> Diction
 		var outside: float = 0.0
 		for other_id in weights.keys():
 			var other = state.nations.get(other_id)
-			if other != null and not other.eu_member:
+			# V3.2: "outside" is outside the ORG that is proposing -- read off the
+			# NationState's own membership list, so no loader and no cycle is
+			# needed here, and the term prices the right club's tariff.
+			if other != null and not other.orgs.has(proposal.org_id):
 				outside += float(weights[other_id])
 		external = -K.APPRAISE_EXTERNAL_WEIGHT * outside * float(proposal.external_measure.get("severity", 0.0))
 
@@ -855,10 +859,13 @@ static func _score(state, a_id: String, b_id: String) -> float:
 ## assembly_seats already is -- so they agree by construction rather than by
 ## maintenance, and tests/test_foreign_policy.gd asserts they agree for all
 ## forty-five pairs rather than trusting this comment.
-static func _resting(a, b) -> float:
+static func _resting(a, b, co_member_bonus: float) -> float:
 	var value: float = DK.REST_BASE
-	if a.eu_member and b.eu_member:
-		value += DK.EU_CO_MEMBER_BONUS
+	# V3.2: the co-membership bonus is content and rides in -- the same sum
+	# Diplomacy.resting() adds, computed by the caller through Org.shared_bonus(),
+	# so the two copies still agree by construction and the test still asserts it
+	# for all forty-five pairs rather than trusting this comment.
+	value += co_member_bonus
 	if a.neighbours.has(b.id):
 		value += DK.SHARED_BORDER_BONUS
 	return clampf(value, DK.RELATIONS_MIN, DK.RELATIONS_MAX)

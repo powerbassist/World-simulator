@@ -32,7 +32,6 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
 
-const EU = preload("res://src/core/eu.gd")
 const Org = preload("res://src/core/org.gd")
 const OrgK = preload("res://src/core/org_constants.gd")
 
@@ -159,7 +158,6 @@ var orgs_by_id: Dictionary = {}
 ## and preserving it is part of what the track-(a) bit-identity run proves.
 var org_proposals: Dictionary = {}
 
-var eu: EU = null
 var errors: Array[String] = []
 
 ## geo feature id -> Array[PackedVector2Array]. One entry per polygon in the
@@ -210,7 +208,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -303,10 +301,6 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	# validated against a register that has not been filled yet.
 	_load_orgs(orgs_dir)
 	_load_bloc_proposals(bloc_proposals_dir)
-
-	eu = EU.new()
-	eu.load(eu_path)
-	errors.append_array(eu.errors)
 
 	_validate_cross_file(geo_path, world_path)
 	_validate_amendments()
@@ -1685,14 +1679,6 @@ func _validate_cross_file(geo_path: String, world_path: String) -> void:
 		if not found:
 			errors.append("%s.json: leader.party '%s' does not match any party in data/parties/%s.json" % [id, n.leader_party_id, id])
 
-		if n.eu_member != eu.is_member(id):
-			errors.append("%s.json: government.eu.member=%s but data/eu_parliament.json members %s '%s'" % [
-				id, n.eu_member, "has" if eu.is_member(id) else "lacks", id
-			])
-		elif n.eu_member and n.eu_ep_seats != eu.ep_seats(id):
-			errors.append("%s.json: government.eu.ep_seats %d does not match data/eu_parliament.json's %d for '%s'" % [
-				id, n.eu_ep_seats, eu.ep_seats(id), id
-			])
 
 		_validate_political_system(n)
 

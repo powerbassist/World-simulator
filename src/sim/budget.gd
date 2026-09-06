@@ -15,7 +15,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -100,7 +100,7 @@ static func recompute(state, ns) -> void:
 	# made for the tariff revenue line, in the other direction.
 	#
 	# Read straight off NationState rather than recomputed here, because unlike the
-	# tariff line this one must NOT respond within the month: Bloc.tick_month() runs
+	# tariff line this one must NOT respond within the month: Orgs.tick_month() runs
 	# after this and charges next month's penalties, which is what stops a rule on
 	# the deficit from feeding a fine that widens the deficit. See src/sim/bloc.gd.
 	ns.total_spending_pct_gdp = (
@@ -393,7 +393,7 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# a defied rule keeps charging, and a projection that held the bloc frozen
 		# would under-report the deficit of a player in breach. V1.3b's repair, made
 		# once rather than rediscovered.
-		Bloc.tick_month(sim, loader)
+		Orgs.tick_month(sim, loader)
 		Diplomacy.tick_month(sim, loader)
 		# In main.gd's slot again, and required for the same reason Bloc and Diplomacy
 		# are: a projection that held defence frozen would report the bill of a player

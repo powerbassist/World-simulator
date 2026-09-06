@@ -15,11 +15,10 @@ const C = preload("res://src/sim/economy_constants.gd")
 var id: String = ""
 
 ## Copied from Nation at new-game and never mutated, the same class of field as
-## assembly_seats. Both are static facts, and both are read by the trade weight
-## in src/sim/trade.gd -- which is why they live here rather than being looked up
-## through the loader: Economy.tick_month() has no loader argument and has
-## twenty-eight call sites that would all have to grow one.
-var eu_member: bool = false
+## assembly_seats, and read by the trade weight in src/sim/trade.gd -- which is
+## why it lives here rather than being looked up through the loader:
+## Economy.tick_month() has no loader argument and has twenty-eight call sites
+## that would all have to grow one.
 var neighbours: Array = []
 
 ## The orgs this nation belongs to, sorted org ids. V3.2. LIVE state, not a
@@ -319,15 +318,7 @@ var inflation_impulse_pct: float = 0.0
 
 # --- The bloc ------------------------------------------------------------------
 
-## This nation's standing net contribution to the bloc, percent of its own GDP.
-## Signed: a net receiver carries a negative figure. Derived once at new-game by
-## Bloc.net_positions() from starting prosperity and never recomputed, which is
-## the same static-fact treatment eu_member and neighbours get -- and it is what
-## puts the contribution inside start_deficit_pct_gdp, where an inherited drag
-## the player did not choose belongs. Exactly 0.0 for a non-member.
-var bloc_base_transfer_pct_gdp: float = 0.0
-
-## What the bloc actually costs this month: the standing contribution above, plus
+## What the orgs actually cost this month: the standing contribution above, plus
 ## whatever the rules in force move it by, plus the penalties charged for defying
 ## them. Written by Bloc.tick_month() and read by Budget.recompute() as a line of
 ## its own -- not a sixth SPENDING_KEYS entry, because docs/tiers/v1.md section 6
@@ -1425,7 +1416,6 @@ var start_judicial_independence: float = 0.0
 func duplicate_state():
 	var s = new()
 	s.id = id
-	s.eu_member = eu_member
 	s.neighbours = neighbours.duplicate()
 	s.orgs = orgs.duplicate()
 	s.org_base_transfer_pct_gdp = org_base_transfer_pct_gdp.duplicate(true)
@@ -1479,7 +1469,6 @@ func duplicate_state():
 	s.inflation_anchor_pct = inflation_anchor_pct
 	s.inflation_impulse_pct = inflation_impulse_pct
 
-	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
 	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
 	s.bloc_burden = bloc_burden
 	s.start_bloc_burden = start_bloc_burden
@@ -1655,7 +1644,6 @@ func duplicate_state():
 func to_dict() -> Dictionary:
 	return {
 		"id": id,
-		"eu_member": eu_member,
 		"neighbours": neighbours,
 		"orgs": orgs,
 		"org_base_transfer_pct_gdp": org_base_transfer_pct_gdp,
@@ -1709,7 +1697,6 @@ func to_dict() -> Dictionary:
 		"inflation_anchor_pct": inflation_anchor_pct,
 		"inflation_impulse_pct": inflation_impulse_pct,
 
-		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
 		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
 		"bloc_burden": bloc_burden,
 		"start_bloc_burden": start_bloc_burden,
@@ -1869,7 +1856,6 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var s = new()
 	s.id = d.get("id", "")
-	s.eu_member = bool(d.get("eu_member", false))
 	s.neighbours = d.get("neighbours", [])
 
 	# RE-FLOATED KEY BY KEY, like every other float-valued dictionary in this file
@@ -1966,8 +1952,7 @@ static func from_dict(d: Dictionary):
 
 	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
 	# the one game_state.gd's own comment states rather than a new one. An absent
-	# bloc_base_transfer_pct_gdp reads as 0.0 -- a France that pays nothing into a
-	# budget it has always paid into -- and an absent start_bloc_burden reads as
+	# An absent start_bloc_burden reads as
 	# 0.0 against a live burden, which permanently MIS-SIGNS the europe issue: a
 	# player who loaded a save while in breach would be scored as though the
 	# breach were new. Both are eu_member/neighbours' case, not agreements' case.
@@ -1983,7 +1968,6 @@ static func from_dict(d: Dictionary):
 	s.org_base_transfer_pct_gdp = d.get("org_base_transfer_pct_gdp", {})
 	for org_id in s.org_base_transfer_pct_gdp.keys():
 		s.org_base_transfer_pct_gdp[org_id] = float(s.org_base_transfer_pct_gdp[org_id])
-	s.bloc_base_transfer_pct_gdp = float(d.get("bloc_base_transfer_pct_gdp", 0.0))
 	s.bloc_transfer_pct_gdp = float(d.get("bloc_transfer_pct_gdp", 0.0))
 	s.bloc_burden = float(d.get("bloc_burden", 0.0))
 	s.start_bloc_burden = float(d.get("start_bloc_burden", 0.0))

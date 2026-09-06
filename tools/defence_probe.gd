@@ -59,7 +59,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const FP = preload("res://src/sim/foreign_policy.gd")
@@ -203,7 +203,7 @@ func _run_world(loader, months: int):
 		state.month = i % 12 + 1
 		state.year = START_YEAR + i / 12
 		Economy.tick_month(state)
-		Bloc.tick_month(state, loader)
+		Orgs.tick_month(state, loader)
 		Diplomacy.tick_month(state, loader)
 		Defence.tick_month(state)
 	return state
@@ -441,7 +441,7 @@ func _obliged_stack_table(loader) -> void:
 	print("> 24 recorded acts are state_visit -- V1.3f's agenda is friendly by revealed")
 	print("> preference. So the only AI-driven source of a measure in the whole project")
 	print("> is the council's common_external_tariff, which is exactly the V1.3d feature")
-	print("> V1.3d's own re-run never fired and V1.3f's did. Bloc.tick_month() is")
+	print("> V1.3d's own re-run never fired and V1.3f's did. Orgs.tick_month() is")
 	print("> therefore LOAD-BEARING for this table; without it the obligation is")
 	print("> unreachable and the measurement says zero for the wrong reason.")
 	print("")
@@ -469,7 +469,7 @@ func _obliged_stack_table(loader) -> void:
 				Economy.tick_month(state)
 				Budget.tick_month(state)
 				# The council, and the whole reason this table is not all zeros.
-				Bloc.tick_month(state, loader)
+				Orgs.tick_month(state, loader)
 				Diplomacy.tick_month(state, loader)
 				Defence.tick_month(state)
 
@@ -505,7 +505,7 @@ func _partners_for(state, player_id: String, who: String) -> Array:
 		var ids: Array = state.nations.keys()
 		ids.sort()
 		for id in ids:
-			if String(id) != player_id and not state.nations[id].eu_member:
+			if String(id) != player_id and not state.nations[id].orgs.has("eu"):
 				out.append(String(id))
 		return out
 	return _top_partners(state, player_id, 2 if who == "top2" else 5)

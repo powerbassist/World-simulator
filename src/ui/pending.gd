@@ -29,6 +29,7 @@ extends RefCounted
 
 const Events = preload("res://src/sim/events.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 
 
 ## The window ids with something on them awaiting an answer, in the order a
@@ -49,10 +50,14 @@ static func window_ids(state) -> Array:
 	if not ns.referendum_pending.is_empty():
 		out.append("legislature")
 
-	# A proposal before the council that binds the player whether or not they
-	# voted for it. V1.3d.
-	if not Dictionary(state.bloc.get("pending", {})).is_empty():
-		out.append("bloc")
+	# A proposal before any council the player sits on, binding them whether or
+	# not they voted for it. V1.3d; per-org since V3.2.
+	for org_id in Orgs.council_ids(state):
+		if not state.nations[state.player_nation_id].orgs.has(org_id):
+			continue
+		if not (Orgs.pending(state, org_id) as Dictionary).is_empty():
+			out.append("orgs")
+			break
 
 	# The run-up, which is the only window in which an effort can be started at
 	# all -- V1.7a's "a standing rate with a deadline", and the deadline is a date

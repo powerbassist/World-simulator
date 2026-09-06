@@ -1,25 +1,29 @@
 extends PanelContainer
 
-## The bloc surface, V1.3d: what the council is voting on, how the player voted,
-## what carried, which rules bind, and what membership is charging.
+## The organisations surface, V3.2: what each council is voting on, how the
+## player voted, what carried, which rules bind, what membership in each org
+## charges -- and, for the orgs the player stands outside, what those orgs are
+## doing TO them.
+##
+## Generalises src/ui/bloc_panel.gd (V1.3d), whose window was "The Union"
+## because there was exactly one org and its membership was hardcoded. The
+## register replaced the hardcoding; this panel walks `loader.orgs` in sorted
+## order and asks each one the questions the old panel asked the one.
 ##
 ## Its own window rather than a section of nation_panel.gd, and that is the one
-## UI call this session had to make. The nation panel is where you act ON a
-## nation you have clicked, which is why V1.3a's verbs live there; the council is
-## not a nation and has no pixel on the map to click. A bloc section inside the
-## nation panel would have to appear under whichever nation happened to be
-## selected, which is exactly the "needs its own picker" problem that argument
-## avoids, inverted.
+## UI call V1.3d had to make: the nation panel is where you act ON a nation you
+## have clicked, and an org is not a nation and has no pixel on the map to
+## click.
 ##
 ## Read-only over sim state like every other panel: the vote leaves as an
-## explicit command (Bloc.cast_vote), and nothing here writes GameState. See
-## docs/engine-decision.md Rule 2 and docs/bloc-model.md.
+## explicit command (Orgs.cast_vote), and nothing here writes GameState. See
+## docs/engine-decision.md Rule 2 and docs/orgs-model.md.
 ##
 ## Built in code, like the other panels -- see budget_panel.gd's placement note.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -117,58 +121,37 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	var members := Bloc.members(_state, _loader)
-	_title.text = "The Union — %d members" % members.size()
+	var memberships: int = ns.orgs.size()
+	_title.text = "Organisations — %d, %d of them yours" % [_loader.orgs.size(), memberships]
 
-	if not ns.eu_member:
-		_refresh_outsider(ns, members)
-		return
-
-	_refresh_vote(ns)
-	_refresh_rules(ns)
-	_refresh_contribution(ns)
+	for org in _loader.orgs:
+		if ns.orgs.has(org.id):
+			_refresh_member_org(ns, org)
+		else:
+			_refresh_outsider_org(ns, org)
 
 
-## A non-member's view. The done-when this satisfies is the one V1.2d's cold read
-## would have caught: two of the three playable nations are outside this bloc, and
-## a session that gave them nothing would be shipping a mechanic one nation in
-## three can touch. What they get is the receiving end -- the bloc's collective
-## external tariff lands on them from every member at once, which is a thing no
-## single nation in this game can do.
-func _refresh_outsider(ns, members: Array) -> void:
-	PanelKit.heading(_body, "OUTSIDE THE UNION")
-	PanelKit.line(_body, "%s is not a member. It has no vote in the council and no rule of the" % ns.id, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "council binds it.", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Membership is fixed at the start of a game — see docs/bloc-model.md.")
+## One org the player belongs to: its council when it has one, the rules of
+## ITS that bind this nation, and what membership in it charges.
+func _refresh_member_org(ns, org) -> void:
+	PanelKit.heading(_body, org.name.to_upper())
+	if not org.summary.is_empty():
+		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
+
+	if org.council:
+		_refresh_vote(ns, org)
+		_refresh_rules(ns, org)
+	if org.net_transfers:
+		_refresh_contribution(ns, org)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
-	PanelKit.heading(_body, "MEASURES FROM MEMBERS")
-	var levied := 0
-	var worst := 0.0
-	for member_id in members:
-		var terms = _state.measures.get(Relations.directed_key(member_id, ns.id))
-		if terms == null:
-			continue
-		levied += 1
-		worst = maxf(worst, float(terms.get("severity", 0.0)))
-		PanelKit.line(_body, "%s: %s, severity %.2f" % [
-			member_id, terms.get("action_name", terms.get("action_id", "")),
-			float(terms.get("severity", 0.0)),
-		], PanelKit.Tone.PLAIN)
-	if levied == 0:
-		PanelKit.line(_body, "None. The council has adopted no common external measure.")
-	else:
-		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "A bloc acting as one is the only thing in this game that imposes from more than one direction at once.")
 
-
-## What is on the table, and the player's own vote. First, because it is the only
-## part of this panel the player can act on and the window is opened to act.
-func _refresh_vote(ns) -> void:
+## What is on the table at this org's council, and the player's own vote.
+## First, because it is the only part of this section the player can act on.
+func _refresh_vote(ns, org) -> void:
 	PanelKit.heading(_body, "BEFORE THE COUNCIL")
 
-	var pending: Dictionary = Bloc.pending(_state)
+	var pending: Dictionary = Orgs.pending(_state, org.id)
 	if pending.is_empty():
 		PanelKit.line(_body, "Nothing before the council. The presidency brings the next proposal forward in due course.")
 	else:
@@ -179,10 +162,10 @@ func _refresh_vote(ns) -> void:
 			"month" if int(pending.get("months_left", 0)) == 1 else "months",
 		], PanelKit.Tone.PLAIN)
 
-		var current := String(pending.get("player_vote", Bloc.VOTE_ABSTAIN))
+		var current := String(pending.get("player_vote", Orgs.VOTE_ABSTAIN))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
-		for choice in Bloc.VOTE_CHOICES:
+		for choice in Orgs.VOTE_CHOICES:
 			var button := Button.new()
 			button.text = choice.capitalize()
 			button.disabled = choice == current
@@ -190,18 +173,18 @@ func _refresh_vote(ns) -> void:
 			# out makes passage harder without spending anything on opposing it.
 			# Said here because it is the one rule of this panel a player would
 			# otherwise have to infer from a tally.
-			if choice == Bloc.VOTE_ABSTAIN:
+			if choice == Orgs.VOTE_ABSTAIN:
 				button.tooltip_text = "Counted against the threshold, for neither side."
-			button.pressed.connect(_on_vote.bind(choice))
+			button.pressed.connect(_on_vote.bind(org.id, choice))
 			if _primary == null and not button.disabled:
 				_primary = button
 			row.add_child(button)
 		_body.add_child(row)
 		PanelKit.line(_body, "Currently: %s. %s holds %d of the council's seats." % [
-			current, ns.id, _loader.eu.ep_seats(ns.id),
+			current, ns.id, org.ep_seats(ns.id),
 		])
 
-	var last: Dictionary = Bloc.last_vote(_state)
+	var last: Dictionary = Orgs.last_vote(_state, org.id)
 	if not last.is_empty():
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 		PanelKit.line(_body, "Last division: %s — %s" % [
@@ -215,19 +198,15 @@ func _refresh_vote(ns) -> void:
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
-## V1.3e. WHY each member voted as it did, not only how.
+## WHY each member voted as it did, not only how.
 ##
-## Until this session the eight voted on ideology alone and there was nothing to
-## say -- a reason would have read "because of who they are" for every member on
-## every proposal. Now they price a proposal against their own books, and the
-## division is only legible if the player can see that Luxembourg opposed a fund it
-## would pay for while Italy backed one it would draw on.
-##
-## Grouped by reason rather than listed per nation: eight rows of one nation each
-## is a table the player reads once and never again, and the interesting object is
-## the CAMP. The reasons are recorded at the moment of the division by
-## src/sim/bloc.gd, not recomputed here -- the books a member voted on were that
-## month's.
+## Until V1.3e the eight voted on ideology alone and there was nothing to say.
+## Now they price a proposal against their own books, and the division is only
+## legible if the player can see that Luxembourg opposed a fund it would pay for
+## while Italy backed one it would draw on. Grouped by reason rather than listed
+## per nation: the interesting object is the CAMP. The reasons are recorded at
+## the moment of the division by src/sim/orgs.gd, not recomputed here -- the
+## books a member voted on were that month's.
 func _refresh_why(last: Dictionary) -> void:
 	var reasons: Dictionary = last.get("reasons", {})
 	if reasons.is_empty():
@@ -242,7 +221,7 @@ func _refresh_why(last: Dictionary) -> void:
 		if not camps.has(key):
 			camps[key] = []
 		camps[key].append("%s %s" % [
-			String(id), "for" if String(votes.get(id, "")) == Bloc.VOTE_FOR else "against",
+			String(id), "for" if String(votes.get(id, "")) == Orgs.VOTE_FOR else "against",
 		])
 
 	var keys: Array = camps.keys()
@@ -258,22 +237,26 @@ func _vote_reason_text(key: String) -> String:
 		ForeignPolicy.VOTE_REASON_DRAWS_ON_IT: return "stood to draw on it"
 		ForeignPolicy.VOTE_REASON_ALREADY_IN_BREACH: return "already outside the rule"
 		ForeignPolicy.VOTE_REASON_WOULD_PAY: return "would have to pay for it"
-		ForeignPolicy.VOTE_REASON_TRADES_OUTSIDE: return "trades outside the bloc"
+		ForeignPolicy.VOTE_REASON_TRADES_OUTSIDE: return "trades outside the org"
 		ForeignPolicy.VOTE_REASON_POLITICS: return "on the politics of it"
 	return key
 
 
-## What binds, and what each rule is costing THIS nation rather than only what it
-## says. A rule the player complies with reads as compliant rather than vanishing:
-## the constraint is the interesting part, which is nation_panel.gd's own argument
-## for showing unavailable actions.
-func _refresh_rules(ns) -> void:
+## What THIS org's rules bind, and what each is costing THIS nation rather than
+## only what it says. A rule the player complies with reads as compliant rather
+## than vanishing: the constraint is the interesting part, which is
+## nation_panel.gd's own argument for showing unavailable actions.
+func _refresh_rules(ns, org) -> void:
 	PanelKit.heading(_body, "RULES IN FORCE")
 
-	var rules := Bloc.rules_in_force(_state, ns)
-	if rules.is_empty():
-		PanelKit.line(_body, "None. Nothing the council has adopted constrains domestic policy.")
+	var rules := Orgs.rules_in_force(_state, ns)
+	var org_rules: Array = []
 	for rule in rules:
+		if String(rule.get("org_id", "")) == org.id:
+			org_rules.append(rule)
+	if org_rules.is_empty():
+		PanelKit.line(_body, "None. Nothing this council has adopted constrains domestic policy.")
+	for rule in org_rules:
 		var field: String = String(rule.get("field", ""))
 		if field == "":
 			PanelKit.line(_body, "%s — no policy constraint" % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
@@ -292,38 +275,78 @@ func _refresh_rules(ns) -> void:
 				100.0 * float(rule["contribution"]) / maxf(float(rule["severity"]), 0.0001),
 			])
 
+	# The ONE opinion price: summed over every org and clamped once, said here
+	# once rather than repeated under each org's rules.
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Standing: %.2f of a possible %.2f" % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Standing: %.2f of a possible %.2f, across every organisation" % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this.")
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
-func _refresh_contribution(ns) -> void:
+func _refresh_contribution(ns, org) -> void:
 	PanelKit.heading(_body, "THE BUDGET")
-	var parts := Bloc.transfer_breakdown(_state, ns)
-	PanelKit.line(_body, "Net contribution: %+.3f%% of GDP" % float(parts["base"]), PanelKit.Tone.PLAIN)
-	if not is_zero_approx(float(parts["rules"])):
-		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(parts["rules"]), PanelKit.Tone.PLAIN)
-	if not is_zero_approx(float(parts["fine"])):
-		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(parts["fine"]), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Total: %+.3f%% of GDP" % ns.bloc_transfer_pct_gdp, PanelKit.Tone.PLAIN)
+	var parts := Orgs.transfer_breakdown(_state, ns)
+	var per_org: Dictionary = (parts.get("orgs", {}) as Dictionary).get(org.id, {})
+	PanelKit.line(_body, "Net contribution: %+.3f%% of GDP" % float(per_org.get("base", 0.0)), PanelKit.Tone.PLAIN)
+	if not is_zero_approx(float(per_org.get("rules", 0.0))):
+		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
+	if not is_zero_approx(float(per_org.get("fine", 0.0))):
+		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "All organisations, total: %+.3f%% of GDP" % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP.")
 
 
-func _on_vote(choice: String) -> void:
+## A non-member's view of one org. The done-when V1.2d's cold read would have
+## caught: two of the three playable nations are outside the EU, and a session
+## that gave them nothing would be shipping a mechanic one nation in three can
+## touch. What they get is the receiving end -- an org acting as one is the only
+## thing in this game that imposes from many directions at once.
+func _refresh_outsider_org(ns, org) -> void:
+	PanelKit.heading(_body, org.name.to_upper())
+	if not org.summary.is_empty():
+		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "%s is not a member. It has no vote in this council and no rule of it binds %s." % [ns.id, ns.id], PanelKit.Tone.PLAIN)
+
+	if not org.council:
+		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+		return
+
+	PanelKit.heading(_body, "MEASURES FROM MEMBERS")
+	var members := Orgs.members(_state, org.id)
+	var levied := 0
+	var worst := 0.0
+	for member_id in members:
+		var terms = _state.measures.get(Relations.directed_key(member_id, ns.id))
+		if terms == null:
+			continue
+		levied += 1
+		worst = maxf(worst, float(terms.get("severity", 0.0)))
+		PanelKit.line(_body, "%s: %s, severity %.2f" % [
+			member_id, terms.get("action_name", terms.get("action_id", "")),
+			float(terms.get("severity", 0.0)),
+		], PanelKit.Tone.PLAIN)
+	if levied == 0:
+		PanelKit.line(_body, "None. The council has adopted no common external measure.")
+	else:
+		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, "An organisation acting as one is the only thing in this game that imposes from more than one direction at once.")
+
+
+func _on_vote(org_id: String, choice: String) -> void:
 	var before := Trends.snapshot_now(_state)
-	Bloc.cast_vote(_state, choice)
-	voted.emit(before, "Council vote: %s" % choice)
+	Orgs.cast_vote(_state, org_id, choice)
+	voted.emit(before, "Council vote (%s): %s" % [org_id.to_upper(), choice])
 	_dirty = true
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,
 ## declared here at V2.1b.
 ##
-## The council's three vote buttons are rebuilt on every refresh and the one the
+## The councils' vote buttons are rebuilt on every refresh and the one the
 ## player already holds is disabled, so this is the FIRST ENABLED verb in build
 ## order rather than a member held from _ready(). Null while no proposal is
-## pending, which is most months: the panel is then a readout and has no verb to
-## put above the fold.
+## pending anywhere, which is most months: the panel is then a readout and has
+## no verb to put above the fold.
 func primary_action() -> Control:
 	return _primary
