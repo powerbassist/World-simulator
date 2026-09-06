@@ -108,6 +108,7 @@ var _zoom := -1.0
 ## reason that has nothing to do with the code under test. A capture that
 ## compares states must stage a frozen state.
 var _paused := false
+var _clock_frozen := false
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
 ## none and a frame of an all-zero layer proves nothing about its ramp -- which is
@@ -425,15 +426,17 @@ func _init() -> void:
 
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
-	if _paused:
-		# HERE, not in _apply_view(): _apply_view runs four frames before the
-		# capture, and the race the flag exists for is a day flip landing in
-		# those settle frames. add_child has run the scene's _ready, so the
-		# clock node exists and the flag freezes it from frame 1.
-		_main._clock.paused = true
 
 
 func _process(_delta: float) -> bool:
+	# Frame 1, and NOT in _init(): main's @onready vars do not exist while
+	# _init runs -- the first version froze the clock there, read a Nil, and
+	# the game silently ran on (three of eight identity captures crossed a day
+	# flip before the flag ever bit). Frame 1 is still inside the first
+	# accumulated second, so no day can have flipped ahead of the freeze.
+	if _paused and not _clock_frozen:
+		_clock_frozen = true
+		_main._clock.paused = true
 	_frame += 1
 	# Several frames before the capture, not one, and V1.3g is why. A panel refreshes
 	# in its own _process and returns early while it is not visible, so a window
