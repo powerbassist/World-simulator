@@ -216,6 +216,14 @@ const HOME_WIDTH := 2.5
 const REGION_BORDER := Color(0.71, 0.78, 0.86, 0.35)
 const REGION_BORDER_WIDTH := 1.0
 
+## V3.1 culling. The pad is DERIVED, not swept: the widest stroke on the map is
+## HOVER_WIDTH (4.0 px) and antialias feather adds a couple more, so a ring
+## whose box comes within 8 px of the view edge could still paint a pixel of
+## line. The ring passes convert it to degrees at the current zoom and share
+## one value, so no pass can pad differently and survive the two-pass enclave
+## rule; the city pass keeps it in screen pixels beside its own radius terms.
+const CULL_PAD_PX := 8.0
+
 ## Below this zoom a label is dropped. At the world view ten labels across Europe
 ## are ten labels on top of each other; the threshold is set just under the
 ## opening Europe fit, so the roster is named from the moment the game starts and
@@ -397,6 +405,36 @@ func visible_lonlat_rect() -> Rect2:
 		Vector2(top_left.x, bottom_right.y),
 		Vector2(bottom_right.x - top_left.x, top_left.y - bottom_right.y)
 	)
+
+
+## True when a lon/lat ring's bounding box reaches the view rect, grown by the
+## stroke pad. Conservative by construction: a bounding box can only
+## OVER-include, never clip a visible ring -- a huge ring whose box covers the
+## view draws whole, exactly as before. Static geometry (loader data never
+## mutates), so reading live lon/lat bounds carries no staleness class; city
+## populations are the live quantity and are culled on screen points instead.
+## Applied inside each pass over the same rings, which is what keeps the
+## two-pass enclave draw intact: any ring drawn at all is drawn as both fill
+## and hairline, because the hairline list is built only from rings this
+## predicate let through.
+func _ring_reaches_view(ring: PackedVector2Array, view: Rect2) -> bool:
+	if ring.size() < 3:
+		return false
+	var pad := CULL_PAD_PX / (BASE_SCALE * _zoom)
+	var min_lon := INF
+	var max_lon := -INF
+	var min_lat := INF
+	var max_lat := -INF
+	for p in ring:
+		min_lon = minf(min_lon, p.x)
+		max_lon = maxf(max_lon, p.x)
+		min_lat = minf(min_lat, p.y)
+		max_lat = maxf(max_lat, p.y)
+	if max_lon < view.position.x - pad or min_lon > view.end.x + pad:
+		return false
+	if max_lat < view.position.y - pad or min_lat > view.end.y + pad:
+		return false
+	return true
 
 
 ## Puts a lon/lat point at the centre of the control, then re-clamps. The minimap
@@ -692,9 +730,10 @@ func _draw_raster() -> void:
 ## Outlines only, no fill: the landmass is already in the photograph underneath,
 ## and what a border adds is the political line the photograph cannot show.
 func _draw_world_borders() -> void:
+	var view := visible_lonlat_rect()
 	for id in _world_polygons.keys():
 		for ring: PackedVector2Array in _world_polygons[id]:
-			if ring.size() < 3:
+			if not _ring_reaches_view(ring, view):
 				continue
 			var screen_points := PackedVector2Array()
 			for p in ring:
@@ -704,6 +743,7 @@ func _draw_world_borders() -> void:
 
 
 func _draw_roster() -> void:
+	var view := visible_lonlat_rect()
 	var viewer := viewer_id()
 	for id in _polygons.keys():
 		var color := MapLayers.color_for(_layer, _state, viewer, id)
@@ -728,7 +768,7 @@ func _draw_roster() -> void:
 		# hole in the country into a seam the eye cannot find. What the player
 		# sees as the fill is the regions.
 		for ring: PackedVector2Array in _polygons[id]:
-			if ring.size() < 3:
+			if not _ring_reaches_view(ring, view):
 				continue
 			var base_points := PackedVector2Array()
 			for p in ring:
@@ -746,7 +786,12 @@ func _draw_roster() -> void:
 		var region_rings: Array = []
 		for region in _loader.regions.get(id, []):
 			for ring: PackedVector2Array in _loader.region_features.get(region.id, []):
-				if ring.size() < 3:
+				# The cull gates the FILL, and region_rings is built only from
+				# rings the cull let through -- so the hairline loop below
+				# cannot disagree with it, which is how the two-pass enclave
+				# draw survives culling: any ring drawn at all is drawn in
+				# both passes.
+				if not _ring_reaches_view(ring, view):
 					continue
 				var region_points := PackedVector2Array()
 				for p in ring:
@@ -762,7 +807,7 @@ func _draw_roster() -> void:
 		# the bright line is the one that says which ten answer a click, and it
 		# belongs to the nation rather than to any region of it.
 		for ring: PackedVector2Array in _polygons[id]:
-			if ring.size() < 3:
+			if not _ring_reaches_view(ring, view):
 				continue
 			var stroke_points := PackedVector2Array()
 			for p in ring:
@@ -820,6 +865,18 @@ func _draw_cities() -> void:
 		var radius: float = MapCities.radius_of(city)
 		var hovered: bool = String(city["city_id"]) == _hovered_city
 		var width: float = MapCities.HOVER_WIDTH if hovered else MapCities.WIDTH
+
+		# V3.1. Culled on the SCREEN point because the population it sizes the
+		# glyph with is live state -- two shares times a head count, V2.6a's
+		# lesson about caching live quantities. The pad covers the cross's
+		# arms, an unrest ring and the stroke, so a glyph partly over the edge
+		# still draws whole. The hit test is untouched: a click cannot land
+		# off-screen, so an off-screen cross being a target costs nothing.
+		var cull_pad: float = radius + MapCities.ring_radius(city) + CULL_PAD_PX
+		if at.x < -cull_pad or at.x > size.x + cull_pad:
+			continue
+		if at.y < -cull_pad or at.y > size.y + cull_pad:
+			continue
 
 		# A cross rather than a dot: the one glyph left that says *people* rather
 		# than *thing*, and it stays legible from 2px to 12px where a ring would
