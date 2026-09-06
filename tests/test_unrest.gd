@@ -58,6 +58,8 @@ func _init() -> void:
 	_test_the_nine_never_move()
 	_test_hardship_is_not_the_national_roll_up()
 	_test_grievance_rises_under_hardship()
+	_test_relief_answers_the_credit()
+	_test_relief_is_silent_when_calm()
 	_test_settlement_closes_what_hardship_opens()
 	_test_the_stance_has_one_writer()
 	_test_inequality_is_a_declared_stopgap()
@@ -201,6 +203,44 @@ func _test_grievance_rises_under_hardship() -> void:
 		_fail("five years of austerity produced no grievance at all")
 	if state.player().unrest_pct >= K.UNREST_MAX:
 		_fail("austerity pinned the grievance at the clamp, so the clamp is setting the number rather than guarding it")
+
+
+## V3.0's relief half: a consolidation that IMPROVES the public finances answers
+## part of its own grievance. The austerity test above asserts the pain side;
+## this asserts the credit side at the term's own level. Without it, governing
+## can only ever feed the grievance (the V2.9b probe's F2: one satisfaction pool
+## pricing two punishments, with no path back).
+func _test_relief_answers_the_credit() -> void:
+	var state = _new_state()
+	var zero: Dictionary = Opinion.issue_satisfaction(state.player())
+
+	var healing := zero.duplicate()
+	healing["public_finances"] = 0.75  # the measured budget-tax credit, DEF=6
+	if Unrest.relief(healing) <= 0.0:
+		_fail("a +0.75 public_finances satisfaction produced no relief at all — the grievance has no positive-satisfaction path, which is the V2.9b F2 finding, not a fix")
+
+	var stronger := zero.duplicate()
+	stronger["public_finances"] = 1.5
+	if Unrest.relief(stronger) <= Unrest.relief(healing):
+		_fail("relief does not grow with the improvement: %.4f at +1.5 vs %.4f at +0.75" % [Unrest.relief(stronger), Unrest.relief(healing)])
+
+	var only_pain := zero.duplicate()
+	only_pain["tax_income"] = -0.5
+	if Unrest.relief(only_pain) != 0.0:
+		_fail("a worsening issue produced relief %.4f — the relief term is not keyed to the improving side" % Unrest.relief(only_pain))
+
+
+## The relief must be structurally silent when nothing improves, so the idle
+## path — the anchor every band in BALANCE_PLAN reads against — cannot move
+## because the term exists.
+func _test_relief_is_silent_when_calm() -> void:
+	var state = _new_state()
+	var sat: Dictionary = Opinion.issue_satisfaction(state.player())
+	for issue in sat:
+		if absf(float(sat[issue])) > 1.0e-9:
+			_fail("test premise broken: a fresh game reads issue '%s' at %s, not zero" % [issue, sat[issue]])
+	if Unrest.relief(sat) != 0.0:
+		_fail("a fresh game with every satisfaction at exactly zero reads relief %s, expected exactly 0.0" % Unrest.relief(sat))
 
 
 ## Without this the layer is the permanent monotone charge docs/defence-model.md names:

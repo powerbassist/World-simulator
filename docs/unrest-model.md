@@ -627,3 +627,38 @@ The act record gained four display keys and `SAVE_VERSION` stayed at 29.
 
 Related: [[index]] · [[siting-model]] · [[society-model]] · [[demography-model]] · [[opinion-model]] ·
 [[economy-model]] · [[legislature-model]] · [[companies-model]] · [[v1]] · [[ROADMAP]]
+
+## V3.0 — the relief, and the threshold that had to follow
+
+The V2.9b probe's F2: `hardship()` is the grievance's only satisfaction
+input, so governing can only ever FEED it — one pool pricing two punishments
+(approval and unrest), with no path back, and doing nothing locally optimal.
+
+**The relief.** `unrest.gd::relief()` answers the mobilised blocs' GROSS
+improvement — the same `salience_weights()` machinery applied to
+`maxf(sat, 0)`, with the gain amplifying the WINNING issue the way it
+amplifies the losing one (the issue you are winning on becomes what you
+credit the government for). `unrest_target()` subtracts
+`RELIEF_SCALE * relief(sat)`. An unamplified relief was tried first and
+measured: at scale 45 the tax-led style's grievance moved only 11.4 → 9.3
+against a 6.85 target, because the improving side's base weights are a
+fraction of the amplified pains'. Exactly 0.0 for a fresh game — the idle
+anchor cannot move because the term exists. `RELIEF_SCALE` swept on
+{10, 20, 26, 27, 30, 45}; 27 ships the interior: consolidating styles land
+6.16 / 6.91 against the idle + 5.0 band, and the relief's own approval echo
+through `UNREST_OPINION_SCALE` stays under half a point.
+
+**The threshold that followed.** The fiscal scales' halving (income 8 → 24,
+shared 8 → 16, spend 3 → 6 — V3.0's B1 levers, see [[opinion-model]]) took
+the `managed_then_austerity` grievance peak from ~45-48 to **18.02**
+(measured), leaving `UNREST_THRESHOLD_PCT` 45 at 2.5× the harshest sane
+austerity and the acting agent unreachable — `test_unrest`'s reachability
+check was what caught it, the same test the V1.6d tripwire proved. Re-banded
+45 → 14 on the V1.5d rule over [hands_off ~2, austerity 18.02]; the unions
+still answer austerity, `hands_off` still never fires.
+
+**The bounded half.** The deficit-WORSENING side (budget-spend, grievance
+15.7 at month 16) is recorded as a bound rather than swept against: its
+grievance IS the amplified `public_finances` pain, and a relief term big
+enough to cancel it would be a grievance blind to deficits — which is the
+one thing this model's public finances should never be.

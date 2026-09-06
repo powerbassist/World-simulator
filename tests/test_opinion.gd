@@ -28,6 +28,8 @@ func _init() -> void:
 		return
 
 	_check_starts_neutral()
+	_check_time_in_office_offset_shape()
+	_check_honeymoon_reaches_approval()
 	_check_pension_cut()
 	_check_unemployment_reaches_workers()
 	_check_overall_is_weighted()
@@ -64,6 +66,50 @@ func _check_starts_neutral() -> void:
 		_fail("bloc sizes sum to %s, expected 1.0 — the roll-up is not an average" % size_total)
 
 
+## V3.0 discharges the S5 deferral ("No honeymoon bonus — time in office as its
+## own drag is V1", opinion_constants.gd). Done-when: the mandate-age offset is
+## zero on day one, rises into a honeymoon peak inside the first half-year,
+## turns negative as fatigue grows, and caps at FATIGUE_MAX — and an unknown
+## mandate age reads exactly zero, so every pre-V3.0 caller keeps its figure.
+func _check_time_in_office_offset_shape() -> void:
+	if K.time_in_office_offset(0) != 0.0:
+		_fail("the mandate offset at month 0 is %s, expected exactly 0 — init pins start approval and the scenario override machinery both read this" % K.time_in_office_offset(0))
+	if K.time_in_office_offset(-1) != 0.0:
+		_fail("an unknown mandate age must read 0.0, got %s" % K.time_in_office_offset(-1))
+
+	var peak := -INF
+	for t in range(1, 13):
+		peak = maxf(peak, K.time_in_office_offset(t))
+	if peak < 2.0:
+		_fail("no honeymoon: the best the mandate offset ever reads is %.2f, expected a rise past +2 within the first year" % peak)
+	if K.time_in_office_offset(2) <= K.time_in_office_offset(0):
+		_fail("the honeymoon does not rise: offset(2) %.3f vs offset(0) %.3f" % [K.time_in_office_offset(2), K.time_in_office_offset(0)])
+
+	if K.time_in_office_offset(36) >= 0.0:
+		_fail("fatigue never dominates: offset(36) is %.3f, expected negative by year three" % K.time_in_office_offset(36))
+	if K.time_in_office_offset(120) > -K.FATIGUE_MAX + 0.01 or K.time_in_office_offset(120) < -K.FATIGUE_MAX - 0.01:
+		_fail("offset(120) is %.3f, expected settled at the -FATIGUE_MAX cap (%.1f)" % [K.time_in_office_offset(120), -K.FATIGUE_MAX])
+
+
+## Done-when: a nation four months into its mandate reads approval ABOVE the
+## neutral baseline with no governing act at all — the honeymoon is live in the
+## real tick order, not only in the formula. Elections owns the counter, so the
+## test advances it in Elections' own slot: AFTER opinion, once per month.
+func _check_honeymoon_reaches_approval() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported errors: %s" % [state.errors])
+		return
+	var ns = state.player()
+	for _i in range(4):
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Opinion.tick_month(state)
+		ns.months_in_term += 1  # Elections._tick_nation()'s own increment, later in the order
+	if ns.overall_approval_pct <= K.APPROVAL_NEUTRAL + 1.0:
+		_fail("a nation four months into its mandate reads %.2f with nothing done — the honeymoon is not reaching approval" % ns.overall_approval_pct)
+
+
 ## Done-when: cutting pension spending drops pensioner approval within three
 ## months and barely moves student approval.
 ##
@@ -81,11 +127,17 @@ func _check_pension_cut() -> void:
 	var pensioner_drop := _drop(base, cut, "pensioners")
 	var student_drop := _drop(base, cut, "students")
 
-	if pensioner_drop < 6.0:
+	# V3.0 re-pin: SPEND_SCALE_PP went 3.0 -> 6.0 (the agency sweep's lever —
+	# the S10 scales priced a spending line at twice what any B1 band could
+	# survive), so the DIRECT channel's response halves by construction while
+	# the demand channel students feel is unchanged. The S5 floor of 6.0 was
+	# measured at the old scale; the targeted-response claim is re-measured at
+	# 3.26 vs 1.72 and pinned with slack rather than re-derived from taste.
+	if pensioner_drop < 3.0:
 		_fail("pension cut of 3pp of GDP moved pensioner approval by only %.2f points in three months" % pensioner_drop)
 	if student_drop > 3.5:
 		_fail("pension cut moved student approval by %.2f points; students weight pensions at zero" % student_drop)
-	if pensioner_drop < student_drop * 3.0:
+	if pensioner_drop < student_drop * 1.5:
 		_fail("pension cut hit pensioners %.2f and students %.2f — not the targeted response the model claims" % [
 			pensioner_drop, student_drop
 		])

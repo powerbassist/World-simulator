@@ -60,3 +60,36 @@ law choice is pass-forecast-guided via the sim's own `Legislature.support`
 `agency PASS` iff any family's month-6 approval delta vs idle is ≥ +1.0
 points. Otherwise `agency FAIL`, and per dead family the finding names the
 missing term with its measured number beside it.
+
+---
+
+# BALANCE_PLAN — V3.0 agency tuning
+
+Written 2026-09-05, before any run of this block; not edited after a sweep
+begins. The V2.9b probe's numbers are the band inputs and are quoted in
+docs/superpowers/plans/2026-09-05-v3.0-agency-tuning.md.
+
+| # | Band | Pass condition |
+|---|---|---|
+| B1 | Fiscal signature | budget-tax approval delta vs idle at month 6 in [+1.0, +4.0]; budget-spend month-6 delta ≥ −1.0 |
+| B2 | Grievance | governing styles' month-16 grievance ≤ idle + 5.0 (today +15.5); idle within ±0.5 of 1.9 |
+| B3 | Honeymoon/fatigue | idle approval month 2 ≥ idle-at-start + 3.0; idle month 16 within [48.0, 52.0]; a re-elected nation reads the honeymoon again |
+| B4 | Campaign power | campaign-only final vote share ≥ idle + 1.0, OR the refusal recorded in campaign-model.md with the measured ceiling |
+| B5 | Outcome monotonicity | across probe styles, approval ordering implies vote-share ordering; no flip between styles whose approval differs by ≥ 1.0 |
+| GATE | Agency | `tools/agency_probe.gd` re-run: at least one family ≥ +1.0 approval at month 6 vs idle, AND the best active style's final vote ≥ idle's |
+
+Anchor: the idle style's own path (m6 49.18, m16 49.52 at the V2.9b
+constants) must not move more than ±0.3 except through the honeymoon term
+itself (B3 owns months 1-6).
+
+### V3.0 mid-block pre-declaration (before the style's first run)
+
+The `budget-smart` style is added to tools/agency_probe.gd: a low-pain
+consolidation (defence -1.5, infrastructure -0.5, income +4.0 only) whose cuts
+land on lines the mobilised blocs weight at or near zero. It exists to
+separate "the budget-tax style cannot reach B1" from "no fiscal stance can".
+B1's spend-led clause is likewise amended before further sweeping: the
+deficit-worsening side's grievance IS the amplified public_finances pain, and
+a relief term that cancelled it would be a grievance blind to deficits — so
+B2 reads: consolidating styles (budget-tax, full-tax) month-16 grievance <=
+idle + 5.0; budget-spend is recorded as bounded, not swept against.

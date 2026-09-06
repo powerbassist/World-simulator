@@ -433,3 +433,70 @@ break the one-signed property this document describes: inflation still reaches a
 blocs with the same sign. It is a second issue with the other sign.
 
 Full argument and every measurement: [[inflation-model]] §6.
+
+## V3.0 — the game answers: honeymoon and fatigue, and the fiscal re-weight
+
+The 2026-09-05 second playtest (reports/, gitignored) verified the V2.9 seat
+live and left the agency problem as the tier's first row. The V2.9b probe's
+four findings are the band inputs; this section records what moved and what
+was measured and refused.
+
+**Honeymoon and fatigue** — the deferral this file carried since S5
+(`APPROVAL_NEUTRAL`'s old comment: *"No honeymoon bonus — time in office as
+its own drag is V1"*) is discharged as a pure read of
+`Elections.months_in_term`, which has counted the mandate since V1.2 under
+the same `has_budget` + `in_government` gate Opinion ticks under, reset at
+every executive resolution, and serialised since V1.8. **No new field, no
+`SAVE_VERSION` move** — the missing piece was always a read, never a
+register. The offset enters every bloc's target (uniform, like
+`unrest_opinion_load`):
+
+```
+offset(m) = HONEYMOON_MAX * (1 - 0.5^(m/RISE)) * 0.5^(m/HALF_LIFE)
+            - min(FATIGUE_MAX, FATIGUE_PER_YEAR * m / 12)
+```
+
+with 6.0 / 1.0 / 4.0 / 1.2 → 0.9 / 6.0. `offset(0)` is **exactly 0.0 on
+purpose**: `test_opinion` and `test_scenario` pin the init figure, and a +6
+day-one figure would have broken both pins and the scenario override's
+equilibrium inversion with them. The first shape tried — offset(0) = +6,
+decay only — was rejected on those pins before it ran; the pulse-then-drift
+shape delivers the same play (approval climbing over a mandate's first
+months, sagging in the second term) at zero re-baseline. The one-month lag
+(Elections increments `months_in_term` after Opinion reads it) is absorbed
+by the band, not corrected.
+
+`FATIGUE_PER_YEAR` was declared at 1.2 and **failed its own constraint**:
+at −6 by year five the do-nothing France run lost its 2031 re-election and
+the gas regime lost its build cadence — `test_balance` caught both. Swept to
+0.9 (fatigue caps at −6 only in a third term). The fatigue is deliberately
+mandate-wide rather than activity-keyed: V3.0 takes no position on whether
+idleness should cost more than governing badly (see the agency probe's
+verdict, reports/agency-probe-v3.0.md).
+
+**The fiscal re-weight** — V2.9b F1's lever. `TAX_SCALE_PP_BY_KEY` gains
+`"income": 24.0` (pain per point of income tax falls 3×), the shared
+`TAX_SCALE_PP` goes 8 → 16, `SPEND_SCALE_PP` 3 → 6. `DEFICIT_SCALE_PP`
+**stays 6.0**: at 3.0 the spend-led style's deficit sits ON the −1 clamp and
+its month-6 delta crashes to −13. The result: the best fiscal stance the
+probe can construct (the pre-declared `budget-smart`: defence −1.5,
+infrastructure −0.5, income +4) moves month-6 approval to **−2.00 against
+idle, from −7.57**. The band's +1.0 upper edge is a **measured bound**, not
+a refused obligation — every lever exhausted, the residual is the Okun cost
+of the cuts plus the surviving income pain. The full argument is the probe
+report; `test_tax`'s units check was re-pinned deliberately (income carries
+its own scale now, and the test asserts it stays WEAKER than the shared
+constant, which is the direction the sweep shipped).
+
+**One recorded invariant this re-weight inverts, acknowledged rather than
+silently broken**: V1.5a's `QUALITY_SCALE_PP` 4.5 was chosen on the rule
+"the delivery half must be worth LESS than the announcement half" — ratio
+> 1.0 against `SPEND_SCALE_PP` = 3.0. At 6.0 the ratio is 0.75, so delivery
+is now worth more per point than the announcement, the opposite of the rule.
+The inversion is accepted and NOT re-swept: the fit rule would demand 9.0
+against a 6.0 spend scale, and re-measuring quality's own band was outside
+this block's declared levers — but the next balance pass owes the decision
+either way (re-fit `QUALITY_SCALE_PP`, or retire the rule). Recorded beside
+the constant itself.
+
+**Grievance relief** — V2.9b F2's fix lives in [[unrest-model]] §"V3.0".

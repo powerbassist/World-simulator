@@ -320,15 +320,19 @@ const ISSUE_LABEL := {
 ## Deltas that saturate an issue's satisfaction at full strength.
 const JOBS_SCALE_PP := 3.0        # points of unemployment
 const GROWTH_SCALE_PP := 4.0      # points of growth away from trend
-const TAX_SCALE_PP := 8.0         # points of a tax rate — the default, see below
-const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
+const TAX_SCALE_PP := 16.0        # points of a tax rate — the default, see below
+const SPEND_SCALE_PP := 6.0       # points of GDP on a spending line
 
 ## V1.6d. PER-KEY OVERRIDES on TAX_SCALE_PP, for the taxes whose rate is not on the
 ## same scale as income's.
 ##
 ## Sparse on purpose, exactly like BLOC_SALIENCE_BASE below: a tax with no entry here
-## reads the 8.0 above, so the three taxes S5 measured are untouched by this table's
-## existence and the constant they were measured against still says 8.0.
+## reads the shared constant above. V3.0 deliberately ends the table's income
+## abstention — the agency sweep's B1 lever IS income's rate scale (8.0 -> 24.0,
+## the fiscal re-weight, see docs/opinion-model.md) — so corporate and VAT still
+## ride the default and income no longer does. The wealth and capital_gains
+## entries keep their S10-fitted values: their fits were per-key against their
+## own reachable spans, and nothing this session measured moved them.
 ##
 ## THE SESSION WOULD RATHER NOT HAVE ADDED THIS, and what forced it is arithmetic
 ## rather than taste. opinion.gd prices every tax by `for key in C.TAX_KEYS`, in POINTS
@@ -348,6 +352,7 @@ const SPEND_SCALE_PP := 3.0       # points of GDP on a spending line
 ##
 ## SWEPT, and the band and tiebreaker are pre-committed in tools/tax_probe.gd's header.
 const TAX_SCALE_PP_BY_KEY := {
+	"income": 24.0,
 	"capital_gains": 4.80,
 	"wealth": 0.48,
 }
@@ -460,9 +465,16 @@ const INFLATION_SCALE_PP := 0.275
 ## been provisionally set to 6.0, which is the evidence it was not written backwards
 ## from a number already picked.
 ##
-## SPEND_SCALE_PP is deliberately NOT re-measured. Doing so would re-baseline all five
-## spending issues to correct a change that reaches one, and S10's own measurement of
-## it stays valid for the four lines that have no stock.
+## SPEND_SCALE_PP was deliberately NOT re-measured AT V1.5A, and that sentence is
+## now history rather than fact: V3.0's fiscal re-weight moved it 3.0 -> 6.0 as a
+## B1 lever (the S10 scales priced a spending change at twice what the agency band
+## could survive), which HALVES this ratio to 0.75 -- delivery is now worth more
+## per point than the announcement, the opposite of the rule that chose 4.5. The
+## inversion is accepted, not re-swept: the V1.5a fit rule would demand 9.0
+## against a 6.0 spend scale, and re-measuring quality's own band was outside the
+## block's declared levers. FLAGGED for the next balance pass -- either
+## QUALITY_SCALE_PP re-fits to the rule or the rule is retired; see
+## docs/opinion-model.md's V3.0 section.
 ##
 ## Full tables: docs/society-model.md (c).
 const QUALITY_SCALE_PP := 4.5
@@ -613,7 +625,8 @@ const SALIENCE_GAIN := 5.0
 # --- Approval ----------------------------------------------------------------
 
 ## Where every bloc starts and where a bloc with nothing to complain about sits.
-## No honeymoon bonus — time in office as its own drag is V1.
+## V3.0 discharges this file's own S5 deferral — see time_in_office_offset()
+## below for the honeymoon and fatigue that were "V1" for four tiers.
 const APPROVAL_NEUTRAL := 50.0
 
 ## Satisfaction is bounded to [-1, +1], so target approval lives in [10, 90] and
@@ -632,3 +645,47 @@ const APPROVAL_MAX := 100.0
 ## this constant actually shows: roughly 58% of the move lands within three
 ## months. See docs/opinion-model.md.
 const INERTIA_RATE := 0.25
+
+# --- Time in office (V3.0) ---------------------------------------------------
+
+## The S5 deferral, discharged. Points of approval added to every bloc's TARGET,
+## uniform across the six blocs the way unrest_opinion_load is — a fresh mandate
+## is a fact about the government, not about one row of the electorate. Because
+## it rides the target, INERTIA_RATE still governs the path: nothing jumps.
+##
+## The SHAPE is a rise-then-decay pulse minus a capped drift, and offset(0) is
+## EXACTLY 0.0 on purpose: test_opinion and test_scenario both pin the init
+## figure (the standard start sits on APPROVAL_NEUTRAL to 1e-9; a scenario's
+## authored bloc_approval reaches state to 0.001), and init_nation's own
+## _tick_nation call would read this at month 0. A +6 day-one figure would have
+## broken both pins and the scenario override's equilibrium inversion with them;
+## a pulse that climbs through INERTIA delivers the same play shape — approval
+## rising over a mandate's first months — at zero re-baseline. The one-month
+## lag this shape implies (Elections increments months_in_term AFTER Opinion
+## reads it) is absorbed by the band sweep, not corrected here.
+##
+## The counter is Elections'. months_in_term has counted the mandate since V1.2
+## — incremented under the same has_budget + in_government gate Opinion ticks
+## under, reset at every executive resolution, serialised since V1.8 — so the
+## deferral needed no new field and no SAVE_VERSION move, which is the finding
+## the plan that built this wrote down: the missing piece was always a READ,
+## never a register.
+const HONEYMOON_MAX := 6.0
+const HONEYMOON_RISE_MONTHS := 1.0
+const HONEYMOON_HALF_LIFE := 4.0
+const FATIGUE_PER_YEAR := 0.9
+const FATIGUE_MAX := 6.0
+
+## months_in_office is the mandate age, Elections.months_in_term. Negative is
+## "unknown" and reads exactly zero — the silence-first shape every absence in
+## this save format uses — though no save can carry one: the field has existed
+## since V1.8.
+static func time_in_office_offset(months_in_office: int) -> float:
+	if months_in_office <= 0:
+		return 0.0
+	var t := float(months_in_office)
+	var honeymoon := HONEYMOON_MAX \
+		* (1.0 - pow(0.5, t / HONEYMOON_RISE_MONTHS)) \
+		* pow(0.5, t / HONEYMOON_HALF_LIFE)
+	var fatigue := minf(FATIGUE_MAX, FATIGUE_PER_YEAR * t / 12.0)
+	return honeymoon - fatigue
