@@ -37,6 +37,10 @@ signal closed
 ## what you did could not name. Same shape as nation_panel.acted.
 signal voted(before, label)
 
+## The accession/withdrawal verbs, same shape as nation_panel.acted: a
+## membership fight is a decision the player took and Overview should name.
+signal acted(before, label)
+
 var _state
 var _loader
 var _title: Label
@@ -143,6 +147,7 @@ func _refresh_member_org(ns, org) -> void:
 		_refresh_rules(ns, org)
 	if org.net_transfers:
 		_refresh_contribution(ns, org)
+	_refresh_membership_verb(ns, org)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
@@ -181,7 +186,7 @@ func _refresh_vote(ns, org) -> void:
 			row.add_child(button)
 		_body.add_child(row)
 		PanelKit.line(_body, "Currently: %s. %s holds %d of the council's seats." % [
-			current, ns.id, org.ep_seats(ns.id),
+			current, ns.id, org.seats(ns.id),
 		])
 
 	var last: Dictionary = Orgs.last_vote(_state, org.id)
@@ -308,6 +313,7 @@ func _refresh_outsider_org(ns, org) -> void:
 	PanelKit.line(_body, "%s is not a member. It has no vote in this council and no rule of it binds %s." % [ns.id, ns.id], PanelKit.Tone.PLAIN)
 
 	if not org.council:
+		_refresh_membership_verb(ns, org)
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 		return
 
@@ -331,6 +337,58 @@ func _refresh_outsider_org(ns, org) -> void:
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 		PanelKit.line(_body, "%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
 		PanelKit.line(_body, "An organisation acting as one is the only thing in this game that imposes from more than one direction at once.")
+
+
+## One membership verb per org section: Join when outside, Leave when inside.
+## A membership fight is referendum-first, so the button ASKS THE COUNTRY
+## rather than flipping membership -- what it starts is a multi-year domestic
+## fight whose terms the org file authors, and the refusal reasons are the
+## machine's own, shown in the tooltip (the nation-panel unavailable-verb
+## pattern).
+func _refresh_membership_verb(ns, org) -> void:
+	var joining: bool = not ns.orgs.has(org.id)
+	var button := Button.new()
+	button.text = ("Begin leaving %s" % org.name) if not joining else ("Begin joining %s" % org.name)
+	var fight_running := false
+	for fight in _state.accessions:
+		if String(fight.get("nation_id", "")) == ns.id:
+			fight_running = true
+			break
+	if fight_running:
+		button.disabled = true
+		button.tooltip_text = "A membership fight is already running."
+	elif joining and org.accession_months == 0:
+		button.disabled = true
+		button.tooltip_text = "This organisation has no accession process."
+	elif not joining and org.withdrawal_months == 0:
+		button.disabled = true
+		button.tooltip_text = "This organisation has no withdrawal process."
+	elif not ns.referendum_pending.is_empty():
+		button.disabled = true
+		button.tooltip_text = "A referendum is already before the country."
+	else:
+		button.tooltip_text = "Puts the question to the country by referendum first; the negotiation that follows runs %d months." % (
+			int(org.accession_months) if joining else int(org.withdrawal_months))
+		button.pressed.connect(_on_membership.bind(org.id, joining))
+		if _primary == null:
+			_primary = button
+	_body.add_child(button)
+
+
+func _on_membership(org_id: String, joining: bool) -> void:
+	var before := Trends.snapshot_now(_state)
+	var ns = _state.player()
+	var result: Dictionary = Orgs.begin_accession(_state, _loader, ns, org_id) if joining 		else Orgs.begin_withdrawal(_state, _loader, ns, org_id)
+	if not bool(result.get("ok", false)):
+		# Refused at the machine; the tooltip said why already, but a press that
+		# did nothing is the silent-failure class, so the reason is spoken.
+		PanelKit.line(_body, "Refused: %s" % String(result.get("reason", "")))
+		_dirty = true
+		return
+	acted.emit(before, "Membership referendum called: %s %s %s" % [
+		ns.id, "joins" if joining else "leaves", org_id.to_upper(),
+	])
+	_dirty = true
 
 
 func _on_vote(org_id: String, choice: String) -> void:

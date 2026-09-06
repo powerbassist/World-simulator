@@ -31,6 +31,7 @@ const OK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Relations = preload("res://src/core/relations.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
 
 const PLAYER := "FRA"
 const OUTSIDER := "GBR"
@@ -63,6 +64,7 @@ func _init() -> void:
 	_check_the_council_reads_its_own_books()
 	_check_the_council_still_divides()
 	_check_composition_across_orgs()
+	_check_membership_fight()
 	_finish()
 
 
@@ -126,7 +128,7 @@ func _check_eu_absorbed_the_old_sources() -> void:
 	_ok(eu.members.size() == expected.size(), "eu carries 8 members, got %d" % eu.members.size())
 	for id in expected.keys():
 		_ok(eu.is_member(id), "eu has %s" % id)
-		_ok(eu.ep_seats(id) == expected[id], "eu %s holds %d seats, got %d" % [id, expected[id], eu.ep_seats(id)])
+		_ok(eu.seats(id) == expected[id], "eu %s holds %d seats, got %d" % [id, expected[id], eu.seats(id)])
 	_ok(not eu.is_member("GBR") and not eu.is_member("CHE"), "eu excludes the two neighbours")
 	_ok(int(eu.parliament.get("next_election", {}).get("year", 0)) == 2029, "eu EP clock reads 2029")
 	_ok(eu.council and eu.net_transfers, "eu carries the council and the transfer machinery")
@@ -145,6 +147,11 @@ func _check_eu_absorbed_the_old_sources() -> void:
 	_ok(nato.is_member("GBR") and not schengen.is_member("GBR"), "GBR is NATO and not Schengen")
 	_ok(schengen.is_member("CHE") and not _loader.orgs_by_id["eurozone"].is_member("CHE"), "CHE is Schengen, not the euro")
 	_ok(not nato.is_member("AUT"), "AUT stays out of NATO")
+	if nato.council:
+		var seat_sum := 0
+		for m in nato.members.keys():
+			seat_sum += nato.seats(m)
+		_ok(seat_sum > 0 and nato.seats("GBR") > nato.seats("BEL"), "NATO's council carries weighted seats")
 
 
 func _check_malformed_orgs_refused() -> void:
@@ -157,7 +164,7 @@ func _check_malformed_orgs_refused() -> void:
 	_ok(not errs.is_empty(), "an org with a member but no name is refused")
 
 	errs = []
-	Org.from_dict({"id": "x", "name": "X", "members": {"FRA": { "ep_seats": 5 }}, "parliament": {"next_election": {"year": 2029, "month": 6}, "term_years": 5}}, "bad3.json", errs)
+	Org.from_dict({"id": "x", "name": "X", "members": {"FRA": { "seats": 5 }}, "parliament": {"next_election": {"year": 2029, "month": 6}, "term_years": 5}}, "bad3.json", errs)
 	_ok(errs.is_empty(), "a parliament org whose members carry seats is accepted")
 
 	errs = []
@@ -179,7 +186,8 @@ func _check_proposals_name_orgs() -> void:
 		_ok(p.org_id != "", "proposal '%s' names an org" % p.id)
 		_ok(_loader.orgs_by_id.has(p.org_id), "proposal '%s' names a LOADED org" % p.id)
 		per_org[p.org_id] = int(per_org.get(p.org_id, 0)) + 1
-	_ok(int(per_org.get(EU_ORG, 0)) == 7, "eu carries 7 proposals before track (b) moves the floor, got %d" % int(per_org.get(EU_ORG, 0)))
+	_ok(int(per_org.get(EU_ORG, 0)) == 6, "eu carries 6 proposals after the floor moved to NATO, got %d" % int(per_org.get(EU_ORG, 0)))
+	_ok(int(per_org.get("nato", 0)) == 1, "nato carries the moved floor, got %d" % int(per_org.get("nato", 0)))
 
 	# File order IS the agenda. The eu list must be fiscal.json's proposals then
 	# union_policy.json's, in authored order -- a reorder would silently change
@@ -189,7 +197,7 @@ func _check_proposals_name_orgs() -> void:
 	var eu_ids: Array = []
 	for p in eu_agenda:
 		eu_ids.append(p.id)
-	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "minimum_corporate_rate", "cohesion_fund", "recovery_facility", "common_defence_floor", "common_external_tariff"],
+	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "minimum_corporate_rate", "cohesion_fund", "recovery_facility", "common_external_tariff"],
 		"eu agenda preserves flat-file order, got %s" % [eu_ids])
 
 
@@ -243,11 +251,10 @@ func _check_severities_sum_to_the_ceiling() -> void:
 		_ok(constraining <= K.MAX_RULES_IN_FORCE, "%s: %d proposals carry a constraint but only %d can bind at once" % [
 			org.id, constraining, K.MAX_RULES_IN_FORCE
 		])
-		if org.id == EU_ORG:
-			_ok(absf(total - K.BURDEN_MAX) <= 1.0e-9,
-				"eu rule severities sum to %.6f, not BURDEN_MAX %.2f -- either the clamp bites before total defiance, or total defiance does not reach it" % [
-				total, K.BURDEN_MAX
-			])
+		# The eu's four authored severities summed EXACTLY to the ceiling until
+		# track (b) moved the floor (0.22) to NATO; the eu table now sums 0.78 and
+		# the exact property is a record, not a claim. Every org still respects
+		# the ceiling, which is the part that stops a clamp ever biting.
 		_ok(total <= K.BURDEN_MAX + 1.0e-9, "%s rule severities sum to %.6f, above BURDEN_MAX %.2f" % [org.id, total, K.BURDEN_MAX])
 
 
@@ -435,7 +442,7 @@ func _check_an_abstention_is_not_a_no() -> void:
 	# where opposing adds their whole weight to one of them.
 	var abstained: Dictionary = Orgs.last_vote(abstain_state, EU_ORG)
 	var opposed: Dictionary = Orgs.last_vote(against_state, EU_ORG)
-	var player_seats: int = _loader.orgs_by_id[EU_ORG].ep_seats(PLAYER)
+	var player_seats: int = _loader.orgs_by_id[EU_ORG].seats(PLAYER)
 	_ok(int(opposed["seats_against"]) - int(abstained["seats_against"]) == player_seats,
 		"opposing added %d seats to the against tally, expected France's %d" % [
 		int(opposed["seats_against"]) - int(abstained["seats_against"]), player_seats
@@ -627,6 +634,123 @@ func _check_composition_across_orgs() -> void:
 	])
 	_ok(float(parts["total"]) > float(per_org[EU_ORG]["base"]),
 		"the second org's charges did not reach the budget line")
+
+
+# --- Part 3: the fights -----------------------------------------------------------
+
+## The whole accession/withdrawal machine, driven through the REAL referendum
+## machinery: begin puts the question to the country, the campaign runs its
+## authored months, the resolve is consumed once, and only a PASSED vote starts
+## the negotiation countdown that ends in membership actually flipping.
+func _check_membership_fight() -> void:
+	var state = _fresh()
+	var ns = state.player()
+
+	# Refusals, each one the machine's own answer.
+	var refused = Orgs.begin_accession(state, _loader, ns, EU_ORG)
+	if bool(refused.get("ok", false)):
+		_fail("begin_accession succeeded for a nation already in the eu")
+	var ai = state.nations["DEU"]
+	refused = Orgs.begin_accession(state, _loader, ai, EU_ORG)
+	if bool(refused.get("ok", false)):
+		_fail("begin_accession succeeded for a nation with no human at the desk")
+
+	# France leaves the EU: begin, campaign, resolve, negotiate, flip.
+	refused = Orgs.begin_withdrawal(state, _loader, ns, EU_ORG)
+	if not bool(refused.get("ok", false)):
+		_fail("begin_withdrawal refused: %s" % String(refused.get("reason", "")))
+		return
+	if not ns.referendum_pending.is_empty():
+		pass
+	else:
+		_fail("begin_withdrawal announced no referendum")
+	if state.accessions.size() != 1:
+		_fail("begin_withdrawal did not open a fight")
+	var second = Orgs.begin_withdrawal(state, _loader, ns, "nato")
+	if bool(second.get("ok", false)):
+		_fail("a second fight began while the first was running")
+
+	# Run the referendum out -- the campaign is the machine's own 11 months --
+	# by resolving directly, which is exactly what Legislature.tick_month calls.
+	var resolved := {}
+	for i in range(13):
+		resolved = Referendum.resolve_due(ns)
+		if not resolved.is_empty():
+			break
+	if resolved.is_empty() or not bool(resolved.get("passed", false)):
+		# The withdrawal position sits well against the status quo; if the
+		# electorate still refuses it the content is unfightable and the test
+		# says so rather than papering over it.
+		_fail("the withdrawal referendum did not pass (yes_share %.3f) -- authored position too weak to fight with" % float(resolved.get("yes_share", 0.0)))
+		return
+
+	# The resolve is consumed on the next Orgs.tick_month, which converts the
+	# fight to its negotiation countdown.
+	Orgs.tick_month(state, _loader)
+	if state.accessions.is_empty() or String(state.accessions[0].get("phase", "")) != "negotiation":
+		_fail("a passed referendum did not start the negotiation countdown")
+		return
+
+	# An AI nation's act must not begin a fight while the player's runs.
+	# The negotiation runs the authored 24 months: membership must hold for
+	# exactly that long and flip on the tick that expires it, not one before.
+	var flipped_month := -1
+	for i in range(30):
+		Orgs.tick_month(state, _loader)
+		if not ns.orgs.has(EU_ORG):
+			flipped_month = i
+			break
+	if flipped_month < 0:
+		_fail("membership did not flip after the negotiation elapsed")
+		return
+	if flipped_month < 23:
+		_fail("membership flipped before the authored negotiation elapsed (month %d)" % flipped_month)
+	if ns.next_ep_election_year != 0:
+		_fail("leaving the parliament org did not surrender the EP clock")
+	if not state.accessions.is_empty():
+		_fail("the finished fight was not removed from the register")
+
+	# A won withdrawal must not strand the net-position table at the old mean:
+	# the eu's members' bases are re-derived, and the ex-member carries none.
+	if ns.org_base_transfer_pct_gdp.has(EU_ORG):
+		_fail("the ex-member still carries a standing eu contribution")
+	# At least one remaining member's line must move: the mean the formula
+	# divides by changed when France walked out.
+	var fresh_deu: float = float(_fresh().nations["DEU"].org_base_transfer_pct_gdp.get(EU_ORG, 0.0))
+	var moved := false
+	for member_id in ["DEU", "ITA", "ESP", "NLD", "BEL", "AUT", "LUX"]:
+		if not is_equal_approx(float(state.nations[member_id].org_base_transfer_pct_gdp.get(EU_ORG, 0.0)), fresh_deu):
+			moved = true
+			break
+	if not moved:
+		_fail("no remaining member's contribution was re-derived after a member left")
+
+	# And a LOST referendum ends the fight with membership where it was. The
+	# question is forced to fail by overwriting the pending position with one
+	# the whole country opposes -- the machine reads whatever resolve_due hands
+	# back, which is the contract under test.
+	var state2 = _fresh()
+	var ns2 = state2.player()
+	var acc = Orgs.begin_withdrawal(state2, _loader, ns2, EU_ORG)
+	if not bool(acc.get("ok", false)):
+		_fail("a fresh withdrawal begin was refused: %s" % String(acc.get("reason", "")))
+		return
+	ns2.referendum_pending["position"] = {"economic": 0.45, "social": 0.55}
+	ns2.referendum_pending["months_left"] = 1
+	var lost := {}
+	for i in range(3):
+		lost = Referendum.resolve_due(ns2)
+		if not lost.is_empty():
+			break
+	if lost.is_empty() or bool(lost.get("passed", false)):
+		_fail("the forced-lost referendum did not fail -- the test's own fixture is broken")
+		return
+	Orgs.tick_month(state2, _loader)
+	Orgs.tick_month(state2, _loader)
+	if not state2.accessions.is_empty():
+		_fail("a lost referendum did not end the fight")
+	if not ns2.orgs.has(EU_ORG):
+		_fail("a lost referendum changed membership")
 
 
 # --- helpers -------------------------------------------------------------------

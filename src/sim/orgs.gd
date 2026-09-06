@@ -45,6 +45,7 @@ const RK = preload("res://src/core/relations.gd")
 ## not here. Nothing preloads orgs.gd except budget.gd.
 const FP = preload("res://src/sim/foreign_policy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
 
 const VOTE_FOR := "for"
 const VOTE_AGAINST := "against"
@@ -188,7 +189,7 @@ static func ep_seats(state, loader, nation_id: String) -> int:
 	var parl = parliament(loader)
 	if parl == null:
 		return 0
-	return parl.ep_seats(nation_id) if parl.is_member(nation_id) else 0
+	return parl.seats(nation_id) if parl.is_member(nation_id) else 0
 
 
 ## The orgs that hold a council, as sorted ids. state.orgs carries exactly the
@@ -209,7 +210,7 @@ static func tick_month(state, loader) -> void:
 	var council_ids := council_ids(state)
 	for org_id in council_ids:
 		_tick_council(state, loader, org_id)
-	_tick_accessions(state)
+	_tick_accessions(state, loader)
 
 	# Gated on has_budget rather than on the player id, the same flag
 	# Budget.tick_month and Opinion.tick_month use -- a second playable nation is
@@ -350,7 +351,7 @@ static func _resolve(state, loader, org_id: String) -> void:
 	var reasons := {}
 
 	for id in members(state, org_id):
-		var seats: int = loader.orgs_by_id[org_id].ep_seats(id)
+		var seats: int = loader.orgs_by_id[org_id].seats(id)
 		seats_total += seats
 		var choice := _vote_of(state, id, proposal, pending)
 		by_nation[id] = choice
@@ -606,23 +607,179 @@ static func _read_field(ns, field: String) -> float:
 			return 0.0
 
 
-# --- accession and withdrawal (the fights land in track (b)) ----------------------
+# --- accession and withdrawal -----------------------------------------------------
 
-## The per-month countdown over membership fights that have passed their
-## referendum and are negotiating. Empty until a fight begins; the register's
-## whole purpose is that a membership is LIVE state these days.
-static func _tick_accessions(state) -> void:
+## The fight, as someday.md's row named it: a domestic referendum first -- the
+## mandate -- and then a negotiation countdown authored per org, after which
+## membership actually flips. The referendum machinery is reused WHOLE:
+## Referendum.announce() takes any question id, its campaign is the domestic
+## fight, and losing it charges the president the same way losing an amendment
+## vote does. What is new here is only the countdown and the flip.
+##
+## PLAYER-INITIATED ONLY. The nine never begin a fight -- there is no desire
+## term for membership in any agenda model, and inventing one unmeasured is
+## exactly the synthetic-appetite shape foreign-policy-model refuses.
+## referendum.gd's own precedent, pinned by test.
+
+const FIGHT_ACCESSION := "accession"
+const FIGHT_WITHDRAWAL := "withdrawal"
+
+
+## Ask the country whether to join. Refused loudly, never silently recorded.
+static func begin_accession(state, loader, ns, org_id: String) -> Dictionary:
+	return _begin_fight(state, loader, ns, org_id, FIGHT_ACCESSION)
+
+
+## Ask the country whether to leave.
+static func begin_withdrawal(state, loader, ns, org_id: String) -> Dictionary:
+	return _begin_fight(state, loader, ns, org_id, FIGHT_WITHDRAWAL)
+
+
+static func _begin_fight(state, loader, ns, org_id: String, kind: String) -> Dictionary:
+	if not ns.has_budget:
+		# has_budget means a human decides here; this gate is what keeps the
+		# nine out, and it reads the OTHER way to every foreign-policy gate
+		# because a human deciding is the exception, not the rule.
+		return {"ok": false, "reason": "not the head of state's to call"}
+	if ns.orgs.has(org_id) and kind == FIGHT_ACCESSION:
+		return {"ok": false, "reason": "already a member"}
+	if not ns.orgs.has(org_id) and kind == FIGHT_WITHDRAWAL:
+		return {"ok": false, "reason": "not a member"}
+	if not ns.referendum_pending.is_empty():
+		# One question at a time -- the referendum register is the whole of that
+		# rule, and a country cannot credibly fight two constitutions at once.
+		return {"ok": false, "reason": "a referendum is already before the country"}
 	for fight in state.accessions:
-		fight["months_left"] = int(fight.get("months_left", 0)) - 1
+		if String(fight.get("nation_id", "")) == ns.id:
+			return {"ok": false, "reason": "a membership fight is already running"}
+	var org = loader.orgs_by_id.get(org_id)
+	if org == null:
+		return {"ok": false, "reason": "no such organisation"}
+
+	var position: Dictionary = org.accession_position if kind == FIGHT_ACCESSION else org.withdrawal_position
+	if position.is_empty():
+		return {"ok": false, "reason": "this organisation carries no way in or out"}
+
+	Referendum.announce(ns, kind + ":" + org_id, position)
+	state.accessions.append({
+		"nation_id": ns.id,
+		"org_id": org_id,
+		"kind": kind,
+		"phase": "referendum",
+		"months_left": 0,
+		"months_total": org.accession_months if kind == FIGHT_ACCESSION else org.withdrawal_months,
+	})
+	return {"ok": true, "reason": ""}
+
+
+## One month of every membership fight. Referendum results are consumed the
+## month AFTER they resolve -- Orgs.tick_month() runs before
+## Legislature.tick_month(), which is where Referendum.resolve_due() is called
+## -- so a passed vote spends its resolution month as news and begins the
+## negotiation countdown the next.
+static func _tick_accessions(state, loader) -> void:
+	var finished := []
+	for i in state.accessions.size():
+		var fight: Dictionary = state.accessions[i]
+		var ns = state.nations.get(String(fight.get("nation_id", "")))
+		if ns == null:
+			finished.append(i)
+			continue
+		var question := String(fight.get("kind", "")) + ":" + String(fight.get("org_id", ""))
+
+		if String(fight.get("phase", "")) == "referendum":
+			var result: Dictionary = ns.last_referendum_result
+			if String(result.get("law_id", "")) != question or bool(result.get("org_fight_consumed", false)):
+				continue
+			# Consumed exactly once: the flag lives on the result record, so a
+			# long negotiation cannot be re-triggered by whatever referendum
+			# overwrites last_referendum_result next.
+			result["org_fight_consumed"] = true
+			if bool(result.get("passed", false)):
+				fight["phase"] = "negotiation"
+				fight["months_left"] = int(fight.get("months_total", 0))
+			else:
+				# The people refused. _charge() already priced the loss; the
+				# fight simply ends with membership where it was.
+				finished.append(i)
+
+		elif String(fight.get("phase", "")) == "negotiation":
+			fight["months_left"] = int(fight.get("months_left", 0)) - 1
+			if int(fight["months_left"]) <= 0:
+				_flip_membership(state, loader, ns, fight)
+				finished.append(i)
+
+	finished.reverse()
+	for i in finished:
+		state.accessions.remove_at(i)
+
+
+## The day membership actually changes. Every consequence flows from the two
+## live reads: NationState.orgs (the trade weight, resting relations, the
+## appraisal's outside term, the councils) and the per-org base transfer, which
+## is re-derived for EVERY member of a transfer org because its own mean moved
+## with the roster.
+static func _flip_membership(state, loader, ns, fight) -> void:
+	var org_id := String(fight.get("org_id", ""))
+	var org = loader.orgs_by_id.get(org_id)
+	if org == null:
+		return
+
+	if String(fight.get("kind", "")) == FIGHT_ACCESSION:
+		if not ns.orgs.has(org_id):
+			ns.orgs.append(org_id)
+			ns.orgs.sort()
+		var parl = parliament(loader)
+		if parl != null and String(parl.id) == org_id:
+			# Joining the parliament org picks up its clock; the seats follow
+			# automatically because they are read live at election time.
+			var next_e: Dictionary = parl.parliament.get("next_election", {})
+			ns.next_ep_election_year = int(next_e.get("year", 0))
+			ns.next_ep_election_month = int(next_e.get("month", 0))
+	else:
+		ns.orgs.erase(org_id)
+		# The ex-member's standing contribution dies with the membership; the
+		# re-derive below writes the REMAINING members' lines at the new mean.
+		ns.org_base_transfer_pct_gdp.erase(org_id)
+		var parl = parliament(loader)
+		if parl != null and String(parl.id) == org_id:
+			ns.next_ep_election_year = 0
+			ns.next_ep_election_month = 0
+		# Withdrawal stops THIS nation levying the org's collective measures;
+		# measures the org's remaining members aim AT it stand, which is the
+		# common external tariff working as designed the day after exit.
+		var doomed := []
+		for directed in state.measures.keys():
+			var terms: Dictionary = state.measures[directed]
+			if String(terms.get("org", "")) == org_id and String(directed).begins_with(ns.id + ">"):
+				doomed.append(directed)
+		for directed in doomed:
+			state.measures.erase(directed)
+
+	if org.net_transfers:
+		# Re-derive the org's whole net-position table: the mean the formula
+		# divides by moved with the roster of members. A static table captured
+		# at new-game would quietly keep charging the old mean forever.
+		var positions := net_positions(loader, org_id)
+		for id in positions.keys():
+			var member = state.nations.get(id)
+			# Live membership, not content: net_positions() derives from the
+			# AUTHORED member table, which still lists a nation that just walked
+			# out -- writing its line back would un-erase the exit.
+			if member != null and member.orgs.has(org_id):
+				member.org_base_transfer_pct_gdp[org_id] = float(positions[id])
+
+
+
 
 
 # --- queries, for the UI and the tests -------------------------------------------
 
 ## Rules in force across every org this nation belongs to, as [{id, org_id,
-## org_name, name, field, op, value, severity, transfer_pct_gdp, breach,
-## contribution}], sorted by (org, rule id) so the panel's order is stable
-## across repaints. `breach` and `contribution` are this nation's, so the panel
-## can say which rule is costing what rather than only what the total is.
+## name, field, op, value, severity, transfer_pct_gdp, breach, contribution}],
+## sorted by (org, rule id) so the panel's order is stable across repaints.
+## `breach` and `contribution` are this nation's, so the panel can say which
+## rule is costing what rather than only what the total is.
 static func rules_in_force(state, ns) -> Array:
 	var out: Array = []
 	for org_id in council_ids(state):

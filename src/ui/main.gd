@@ -335,6 +335,10 @@ func _ready() -> void:
 		_queue_effect(label, before)
 		_update_top_bar()
 	)
+	_orgs_panel.acted.connect(func(before, label):
+		_queue_effect(label, before)
+		_update_top_bar()
+	)
 
 	# U6a. The one surface that reads dated state the game has carried since the
 	# MVP and never showed anywhere -- an election date, the council's next

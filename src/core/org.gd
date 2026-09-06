@@ -83,26 +83,28 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 		errors.append("%s: %s missing or empty 'members'" % [fname, org.id])
 		return org
 
-	# Seats are required exactly where a parliament exists and nowhere else --
-	# one rule instead of two, because a member entry whose shape depends on a
-	# sibling field is how one file drifts out of step with its own validator.
+	# Seats are required where a PARLIAMENT exists (the EP allocation) and where
+	# a COUNCIL exists -- a council whose members all weigh zero can never pass
+	# anything, which is the silent-failure class, so the loader refuses it
+	# instead. V3.2: the same key carries the EP's real seats and a council
+	# org's authored weights (NATO decides by consensus in reality; the game's
+	# council needs numbers, and the register is where content lives).
 	var raw_parl = raw.get("parliament", {})
-	var wants_seats: bool = typeof(raw_parl) == TYPE_DICTIONARY and not (raw_parl as Dictionary).is_empty()
+	var has_parliament: bool = typeof(raw_parl) == TYPE_DICTIONARY and not (raw_parl as Dictionary).is_empty()
+	var wants_seats: bool = has_parliament or bool(raw.get("council", false))
 	for member_id in raw_members.keys():
 		var entry = raw_members[member_id]
 		if wants_seats:
-			if typeof(entry) != TYPE_DICTIONARY or not entry.has("ep_seats"):
-				errors.append("%s: %s members.%s missing 'ep_seats' under a parliament" % [fname, org.id, member_id])
-				continue
-			var seats := int(entry["ep_seats"])
+			var seats_value = entry.get("seats", entry.get("ep_seats", 0)) if typeof(entry) == TYPE_DICTIONARY else 0
+			var seats := int(seats_value)
 			if seats < 1 or seats > 200:
-				errors.append("%s: %s members.%s.ep_seats %d out of range" % [fname, org.id, member_id, seats])
+				errors.append("%s: %s members.%s seats %d out of range" % [fname, org.id, member_id, seats])
 				continue
-			org.members[member_id] = {"ep_seats": seats}
+			org.members[member_id] = {"seats": seats}
 		else:
 			org.members[member_id] = {}
 
-	if wants_seats:
+	if has_parliament:
 		var next_e: Dictionary = raw_parl.get("next_election", {})
 		var year := int(next_e.get("year", 0))
 		var month := int(next_e.get("month", 0))
@@ -161,9 +163,12 @@ static func _extract_position(raw, key: String, org_id: String, fname: String, e
 	return out
 
 
-func ep_seats(nation_id: String) -> int:
+## The nation's voting weight in this org's council (and its EP seats where
+## this org carries the parliament -- the same number under two names, which is
+## why one method serves both).
+func seats(nation_id: String) -> int:
 	var entry: Dictionary = members.get(nation_id, {})
-	return int(entry.get("ep_seats", 0))
+	return int(entry.get("seats", 0))
 
 
 func is_member(nation_id: String) -> bool:

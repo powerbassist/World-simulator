@@ -1,0 +1,50 @@
+{
+  "_note": "The two parked V1 rows (embassies, foreign aid), landed on the existing effects.relations channel as the V3 tier's call. Magnitudes anchored on the measured ladder, not tuned: an embassy is state_visit's goodwill class (+5 relations, 12-month cooldown) bought once -- +6 at a 240-month cooldown, gated on having met at all, so it cannot substitute for the visit and cannot be repeated; foreign aid is settle_dispute's climbdown class priced at home (+8 relations, six-bloc split, every bloc under MAX_ACTION_BLOC_OFFSET's 0.15 ceiling), cooldown 48, because giving money away should be seen to cost something at home. The domestic prices are per-bloc by design -- a price on fewer than six blocs never clears the +-3.0 poll-noise floor in the roll-up (diplomacy-model's split-price property), and aid IS a split question: the spending-minded blocs approve, the ones who wanted it spent here do not.",
+  "actions": [
+    {
+      "id": "open_embassy",
+      "name": "Open an Embassy",
+      "summary": "A permanent resident mission in the partner's capital. It costs little and says much: the relationship is now infrastructure, not correspondence.",
+      "cooldown_months": 240,
+      "preconditions": [
+        {
+          "field": "met_recently",
+          "op": ">=",
+          "value": 1
+        },
+        {
+          "field": "relations",
+          "op": ">=",
+          "value": 50.0
+        }
+      ],
+      "effects": {
+        "relations": 6.0
+      }
+    },
+    {
+      "id": "foreign_aid",
+      "name": "Foreign Aid Package",
+      "summary": "Budget support for a partner under strain. Gratitude abroad; at home, every bloc that would rather have spent it here says so.",
+      "cooldown_months": 48,
+      "preconditions": [
+        {
+          "field": "met_recently",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "effects": {
+        "relations": 8.0,
+        "bloc_offset": {
+          "workers": -0.06,
+          "pensioners": -0.06,
+          "rural": -0.06,
+          "business": 0.04,
+          "urban": 0.04,
+          "students": 0.04
+        }
+      }
+    }
+  ]
+}
