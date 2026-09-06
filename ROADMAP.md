@@ -132,6 +132,21 @@ challenge rather than commitments**, and that is written into the tier doc rathe
 implicit: a row written this far ahead is a hypothesis, and each block gets a decomposition
 session that re-counts machines and surfaces before it splits.
 
+> [!note] V3 — drafted 2026-09-05, SIGNED 2026-09-06; V3.0 and V3.1 built
+> A second playtest of current main (report in `reports/`, gitignored) verified every
+> V2.9 seat mechanism live through one full term to re-election, and measured the two
+> structural gaps the next tier turns on: the Union is one panel with eight members, and
+> max zoom halves the game's own clock (0.50 vs 1.12 game-days/sec). The draft tier —
+> agency first, map platform, alliance system, EU-27 roster in tranches, roads on the
+> V2.7 graph, V2.10/V2.11 absorbed — is [docs/tiers/v3.md](docs/tiers/v3.md). V2.10 and
+> V2.11 are lifted there, not dropped. **Corrections as built:** the author signed the
+> tier at the V3.1 plan gate; **V3.0 shipped with the agency gate FAILing by measurement
+> (−2.00 approval points vs idle, the author's route call open)**; and **V3.1's profile
+> refuted the max-zoom finding's mechanism** — the clock is time-based and measured
+> 0.998 days/sec at max zoom under the same regime (P4's 0.50 was an unrecorded clock
+> pause), so the map block shipped off-screen culling against a restated frame-time gate
+> instead of a LOD platform ([docs/map-platform-model.md](docs/map-platform-model.md)).
+
 **Four calls were made before any code, and two of them are the tier's whole shape.**
 
 **A city is to population what a firm is to sector output.** V1.4a authored a firm as a

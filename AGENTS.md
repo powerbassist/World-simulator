@@ -1054,6 +1054,56 @@ measured numbers beside them. Suite 79/79 green, names clean, two screenshot
 frames (polling, economy) captured for the author. Handoff:
 .superpowers/sdd/v3.1-handoff.md.
 
+**V3.1 SHIPPED THE MAP PLATFORM, AND THE STEP-0 PROFILE REFUTED THE ROW'S PREMISE IN
+BOTH HALVES — the session's first result, before any code.** The handoff's gate was
+P4's "max zoom halves the game's own clock (0.50 vs 1.12 game-days/sec)", and the
+committed instrument (`tools/frame_probe.gd`, the `measure_austerity_peak.gd` precedent)
+killed it with its own regime: **`clock.gd` is time-based** — delta accumulation with a
+catch-up `while` — so render cost cannot slow it, and under P4's own conditions (vsync
+on, 1440p, speed 1, days counted from the clock's signal, **pause state logged**) the
+clock reads **0.999/0.998 days/sec** at fit/max zoom. P4's 1.12 and 0.99 are 9/8 and 8/8
+— day quantization of an 8-second sample; the 0.50 is 4/8, a clock PAUSE (the V2.9
+decision-arrival pause is the likeliest biter) inside a sample whose pause state was
+never recorded. The instrument now records it, so this artifact class cannot pass for a
+render number again. **And there is no deep-zoom cliff**: true frame cost (vsync off)
+ran 4.40–4.75 ms across the entire zoom range before any work — max/globe 1.02–1.07,
+inside the tier's own 10% gate — because the engine replays a cached command list. What
+was real is a **~3.6 ms zoom-independent constant**: ~900 draw calls and 68k primitives
+replayed every frame (no-map baseline 0.83 ms; geometry: world 251 rings/10 011 pts,
+roster 58/4 100, regions 265/9 267, 581 glyphs). **So V3.1 shipped culling, not a LOD
+platform, and the gate restated on frame time passed with room to spare: max zoom now
+0.51× globe view (2.10 vs 4.13 ms at 1440p) and map cost at deep zoom 1.33 ms against a
+pre-declared 2.0 ms — deep zoom is VIEWPORT-BOUNDED, which is the property V3.4's
+per-frame animated roads buy.** The cull is a lon/lat bbox per ring (`_ring_reaches_view`,
+pad `CULL_PAD_PX = 8.0` DERIVED from the widest stroke, not swept — no BALANCE_PLAN band
+exists to record), applied inside the world, roster-fill, region-fill and stroke passes
+with **the two-pass enclave rule preserved by construction — the hairline list is built
+only from rings the cull let through** — and city glyphs culled on SCREEN points because
+their populations are live state, V2.6a's lesson applied to the cull; the hit test is
+untouched and `_city_at_screen_point()`'s source-policing contract held. Minimap redraws
+on view change now (its 0.35 ms every-frame delta was mostly GPU replay — the change-test
+is right design, the saving small, said so in the doc). `tests/test_map_cull.gd` checks
+the predicate against a naive bbox over EVERY ring at two framings rather than one fixed
+"far region", because **the headless window is square (1920×1920, where a Paris max-zoom
+view legitimately reaches Madrid)** — a spot-check would have been aspect-brittle.
+Identity acceptance: **0 differing bytes × 4 zooms, same-tree, clock frozen** — and the
+method cost two tool findings worth keeping: **same-tree runs are byte-deterministic,
+cross-tree runs differ in ~0.3–0.4% of bytes** (sparse AA phase noise, best-aligned at
+offset (0,0) — judge identity same-tree or not at all), and **a capture straddling a day
+flip is a different frame** (V1.4c's race class live), so `screenshot.gd` grew `--zoom`
+and `--paused` — and `--paused` must freeze on frame 1, NEVER in `_init()`: a SceneTree
+script's `_init` reads main's `@onready` vars as Nil, the first version silently ran
+unpaused, and three of eight captures crossed a day flip. The same Nil-in-`_init` bit
+frame_probe's first draft the same hour. Refusals recorded in the model doc: per-tile
+raster LOD (the raster is one quad; fill rate did not move 1080p → 1440p), glyph
+clustering (no overlap at current thresholds), cached fills (the engine caches), polyline
+LOD (the named-but-refused lever if the everything-visible band ever breaks budget).
+`git diff main..HEAD -- src/sim/ src/core/` is EMPTY, `SAVE_VERSION` stays 31, no balance
+re-run — U-track only, and the re-run prediction (bit-identical) held trivially.
+Screenshot pass: vision WORKED this harness — identity frames and diff crops judged
+in-session. Model: [docs/map-platform-model.md](docs/map-platform-model.md). Handoff:
+.superpowers/sdd/v3.2-handoff.md.
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
