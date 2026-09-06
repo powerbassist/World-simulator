@@ -326,7 +326,7 @@ func _vote_table_for(state, loader, org) -> void:
 	var members := Orgs.members(state, org_id)
 	var seats_total := 0
 	for id in members:
-		seats_total += org.ep_seats(id)
+		seats_total += org.seats(id)
 	var needed: int = int(ceil(BK.PASS_SEAT_FRACTION * float(seats_total)))
 
 	# Where the other members actually sit, because the sweep below is
@@ -336,13 +336,13 @@ func _vote_table_for(state, loader, org) -> void:
 	for id in members:
 		var pos: Dictionary = state.nations[id].coalition_position
 		print("  %-4s %3d seats   econ %+.3f  social %+.3f" % [
-			id, org.ep_seats(id), float(pos["economic"]), float(pos["social"]),
+			id, org.seats(id), float(pos["economic"]), float(pos["social"]),
 		])
 	print("")
 
 	var pivotal_count := 0
 	var player_is_member: bool = state.nations[state.player_nation_id].orgs.has(org_id)
-	var player_seats: int = org.ep_seats(state.player_nation_id) if player_is_member else 0
+	var player_seats: int = org.seats(state.player_nation_id) if player_is_member else 0
 	var others_total: int = seats_total - player_seats
 	for p in agenda:
 		var others_for := 0
@@ -350,7 +350,7 @@ func _vote_table_for(state, loader, org) -> void:
 			if id == state.player_nation_id:
 				continue
 			if Orgs.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
-				others_for += org.ep_seats(id)
+				others_for += org.seats(id)
 
 		# Three outcomes, because the threshold is a share of the seats CAST. Voting
 		# for adds to the numerator; voting against adds to the denominator and

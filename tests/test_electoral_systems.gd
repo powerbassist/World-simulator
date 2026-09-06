@@ -172,7 +172,7 @@ func _check_eu_config() -> void:
 		var shares := {}
 		for party in parties:
 			shares[party.id] = party.seat_share
-		var seats: int = parliament.ep_seats(id)
+		var seats: int = parliament.seats(id)
 		var result := ElectoralSystems.pr_national(shares, seats, 0.0)
 		var total := 0
 		for v in result.values():
