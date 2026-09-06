@@ -1104,6 +1104,55 @@ Screenshot pass: vision WORKED this harness — identity frames and diff crops j
 in-session. Model: [docs/map-platform-model.md](docs/map-platform-model.md). Handoff:
 .superpowers/sdd/v3.2-handoff.md.
 
+**V3.2 SHIPPED THE ALLIANCE SYSTEM, AND THE STEP-0 AUDIT CORRECTED THE HANDOFF BEFORE
+ANY CODE — `bloc_offset` is the VOTER-bloc opinion channel (six electoral blocs) and
+carries nothing org-shaped; the bloc machine's opinion surface is the `europe` ISSUE,
+one-signed by bloc-model §1's own argument. So "multiple orgs writing the same
+channels" resolved to ONE clamped burden — no second approval number is structurally
+possible because no second channel is touched (V1.5c).** The audit also found membership
+DUAL-SOURCED (nation files' `government.eu` + `data/eu_parliament.json`, held together
+only by cross-validation); the register collapsed it to one source and the validation
+died with it. Track (a) is the register — `src/sim/orgs.gd` replaces `bloc.gd`,
+`src/core/org.gd` the content type, `data/orgs/*.json` the four authored orgs (eu,
+eurozone, schengen, nato), `NationState.orgs` LIVE membership, `SAVE_VERSION` 32 on the
+bloc->orgs rename (three fields, bloc-model's argument verbatim) with
+`GameState.accessions` serialised from day one and `org_effects` NOT serialised
+(project_sited_pct's case, pinned) — and it is **BIT-IDENTICAL, as predicted: 1680 of
+1680 printed lines, zero outcome changes**, both sides from worktrees. The two co-member
+prices moved into eu.json UNCHANGED (relations 15.0, trade 0.50) and the eu agenda kept
+flat-file order — that is what the identity run proves. `Orgs.init_state()` runs BEFORE
+`Diplomacy.seed_relations()` because resting relations now read live membership.
+
+**Track (b) moved exactly through its named channels, and the FIRST draft of the fight
+content was UNWINNABLE — the test caught it, not a probe.** Accession/withdrawal is
+referendum-first (machinery reused whole — `Referendum.announce()` takes any question
+id), then an authored negotiation countdown (eu 24 months, Art. 50's shape), then the
+flip; the draft withdrawal position (econ +0.45) measured yes_share **0.347**, and
+`tests/test_orgs.gd` fails on it by running the real vote, so the shipped positions are
+swept on Referendum's own curve (**0.510-0.523 at rest** — winnable by a president the
+country does not hate, losable by one it does). The 2 % floor MOVED to NATO's new
+council (authored, population-shaped seat weights — NATO has none in reality and the
+machinery needs numbers), taking the eu agenda 7 -> 6; seats GENERALIZED from EP-only to
+any council org because a zero-weight council can never divide, which the loader now
+refuses. Embassies and foreign aid landed on the relations channel, the two parked V1
+rows, magnitudes anchored on the measured ladder and stated in the file's own _note.
+Measured re-run: 47 of 51 regimes differ at 3-5 last-digit lines; **the ONE outcome
+change of 99 outcome lines is GBR `managed_abolishes_the_monarchy`** — a 2029
+rounding-boundary wobble compounding through the openness channel (trend 1.32 -> 1.30,
+V1.3f's own signature) into a 2039 election flip (33.3 % HELD -> 23.3 % LOST). Refusals
+recorded in docs/orgs-model.md: no org-side consent for accession (an admission vote has
+no material term the appraisal can price without a new term type), no AI desire for
+membership (inventing one unmeasured is the synthetic-appetite shape), Eurozone and
+Schengen zero-priced with a named trigger (a measured band and a BALANCE_PLAN
+pre-declaration, not an opinion), no war. Suite 80/80, names clean; the screenshot pass
+found ONE BUG and it was in the TOOL (a rename the staging had not caught), visible only
+because the frame's own numbers disagreed — Standing 0.00 against a fine the panel
+recomputed live. **No handoff file written at closeout, per the author's standing
+instruction for the rest of V3** — v3.3-handoff.md exists and its UNFILLED markers stay
+untouched by this session. Model: [docs/orgs-model.md](docs/orgs-model.md); bloc-model
+stands as the one-org record with a forward note.
+
+
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
 For the first time since the MVP a session opened with **no row to read, challenge or
