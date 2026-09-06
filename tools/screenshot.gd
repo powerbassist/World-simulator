@@ -1251,7 +1251,7 @@ func _open_the_council() -> void:
 		var seats_against := 0
 		var seats_total := 0
 		for id in Orgs.members(state, org_id):
-			var seats: int = _main._loader.orgs_by_id[org_id].ep_seats(id)
+			var seats: int = _main._loader.orgs_by_id[org_id].seats(id)
 			seats_total += seats
 			var backs: bool = Orgs.support(state, state.nations[id], divided) >= BlocK.SUPPORT_THRESHOLD
 			votes[id] = Orgs.VOTE_FOR if backs else Orgs.VOTE_AGAINST
@@ -1274,9 +1274,9 @@ func _open_the_council() -> void:
 	# So the burden, the penalty line and the breach caption are all non-zero.
 	Orgs.tick_month(state, _main._loader)
 
-	_main._windows.open("bloc")
-	if _main._bloc_panel != null:
-		_main._bloc_panel.mark_dirty()
+	_main._windows.open("orgs")
+	if _main._orgs_panel != null:
+		_main._orgs_panel.mark_dirty()
 
 
 ## Fill the diary so a frame of it shows something. U6a.
