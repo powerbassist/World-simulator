@@ -27,6 +27,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --move
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 8
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -93,6 +94,12 @@ var _layer := ""
 var _hover := ""
 var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
+
+## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
+## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
+## because the cull pass's acceptance is pixel identity at fixed zooms: the
+## same flag must be able to reproduce a frame exactly.
+var _zoom := -1.0
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
 ## none and a frame of an all-zero layer proves nothing about its ramp -- which is
@@ -317,6 +324,8 @@ func _init() -> void:
 			# lowercase -- one flag with two case rules is a flag that fails
 			# silently on whichever half you did not think of.
 			_hover_project = args[i + 1]
+		elif args[i] == "--zoom" and i + 1 < args.size():
+			_zoom = float(args[i + 1])
 		elif args[i] == "--coerce":
 			_coerce = true
 		elif args[i] == "--bloc":
@@ -448,6 +457,12 @@ func _process(_delta: float) -> bool:
 func _apply_view() -> void:
 	if _main == null or _main._map_view == null:
 		return
+	if _zoom > 0.0:
+		# The camera surface the minimap and the headless tests drive, via the
+		# tool's usual reach into _main; zoom_by() would need an anchor in
+		# screen space, and a capture wants an absolute zoom anyway.
+		_main._map_view._zoom = clampf(_zoom, _main._map_view.min_zoom(), _main._map_view.MAX_ZOOM)
+		_main._map_view.center_on_lonlat(2.35, 48.86)
 	if _coerce:
 		_impose_a_spread()
 	if _bloc:
