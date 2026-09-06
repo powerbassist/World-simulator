@@ -248,7 +248,7 @@ func _check_the_wealth_scale_is_not_incomes() -> void:
 		_fail("the wealth issue saturates at %.2f points against a lever that only reaches %.2f -- it can never saturate" % [scale, C.WEALTH_RATE_MAX_PCT])
 	if scale == OpinionK.TAX_SCALE_PP:
 		_fail("the wealth issue shares income's rate scale, which is the units error TAX_SCALE_PP_BY_KEY exists to fix")
-	# And the three S5 measured must be untouched by the table existing at all.
+	# And the remaining S5 measured must be untouched by the table existing at all.
 	# V3.0 deliberately ends this for `income`: the agency probe (V2.9b F1)
 	# measured the fiscal pain against the public_finances credit and income's
 	# rate scale is the lever that re-weighted it — the sweep is recorded in

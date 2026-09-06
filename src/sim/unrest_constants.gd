@@ -412,17 +412,22 @@ const UNREST_OPINION_SCALE := 0.15
 ## relief(). The V2.9b probe's F2 finding was that hardship is the grievance's
 ## ONLY satisfaction input, so governing could only ever feed it and doing
 ## nothing was locally optimal; this is the positive-satisfaction path that
-## handoff named. It is UNAMPLIFIED by SALIENCE_GAIN (pain is amplified inside
-## the weights, improvement is not — see unrest.gd) and it is EXACTLY 0.0 for a
-## fresh game, so the idle path cannot move because the term exists.
+## handoff named. The relief pool is GAIN-AMPLIFIED on the improving side, the
+## same SALIENCE_GAIN multiplying the issue a bloc is winning on that it gives
+## the issue it is suffering on — unrest.gd's docstring records the unamplified
+## form as the tried-and-rejected alternative (11.4 -> 9.3 at scale 45, against
+## a 6.85 target). Exactly 0.0 for a fresh game, so the idle path cannot move
+## because the term exists.
 ##
-## BAND (pre-declared, V3.0): governing styles' month-16 grievance <= idle + 5.0
-## (the B2 row of BALANCE_PLAN.md), idle month-16 grievance unchanged within
-## +-0.5 of its 1.9 anchor, and the relief term's own approval echo through
-## UNREST_OPINION_SCALE kept under 0.5 points so the relief cannot become an
-## approval lever bigger than the satisfactions it is derived from. Swept on
-## {10, 20, 30, 45} — the unit is POINTS of grievance per unit of weighted
-## improvement, hardship's own scale.
+## BAND (pre-declared, V3.0, as amended mid-block): the CONSOLIDATING styles'
+## (budget-tax, full-tax) month-16 grievance <= idle + 5.0 — BALANCE_PLAN.md's
+## B2 as amended, budget-spend being recorded there as bounded rather than
+## swept against; idle month-16 grievance unchanged within +-0.5 of its 1.9
+## anchor; and the relief term's own approval echo through UNREST_OPINION_SCALE
+## kept under 0.5 points so the relief cannot become an approval lever bigger
+## than the satisfactions it is derived from. Swept on {10, 20, 26, 27, 30, 45}
+## with 27 at the interior of the passing region — the unit is POINTS of
+## grievance per unit of weighted improvement, hardship's own scale.
 const RELIEF_SCALE := 27.0
 
 ## Clamp on the accumulated output impulse, points of annual growth.

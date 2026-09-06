@@ -327,8 +327,12 @@ const SPEND_SCALE_PP := 6.0       # points of GDP on a spending line
 ## same scale as income's.
 ##
 ## Sparse on purpose, exactly like BLOC_SALIENCE_BASE below: a tax with no entry here
-## reads the 8.0 above, so the three taxes S5 measured are untouched by this table's
-## existence and the constant they were measured against still says 8.0.
+## reads the shared constant above. V3.0 deliberately ends the table's income
+## abstention — the agency sweep's B1 lever IS income's rate scale (8.0 -> 24.0,
+## the fiscal re-weight, see docs/opinion-model.md) — so corporate and VAT still
+## ride the default and income no longer does. The wealth and capital_gains
+## entries keep their S10-fitted values: their fits were per-key against their
+## own reachable spans, and nothing this session measured moved them.
 ##
 ## THE SESSION WOULD RATHER NOT HAVE ADDED THIS, and what forced it is arithmetic
 ## rather than taste. opinion.gd prices every tax by `for key in C.TAX_KEYS`, in POINTS
@@ -461,9 +465,16 @@ const INFLATION_SCALE_PP := 0.275
 ## been provisionally set to 6.0, which is the evidence it was not written backwards
 ## from a number already picked.
 ##
-## SPEND_SCALE_PP is deliberately NOT re-measured. Doing so would re-baseline all five
-## spending issues to correct a change that reaches one, and S10's own measurement of
-## it stays valid for the four lines that have no stock.
+## SPEND_SCALE_PP was deliberately NOT re-measured AT V1.5A, and that sentence is
+## now history rather than fact: V3.0's fiscal re-weight moved it 3.0 -> 6.0 as a
+## B1 lever (the S10 scales priced a spending change at twice what the agency band
+## could survive), which HALVES this ratio to 0.75 -- delivery is now worth more
+## per point than the announcement, the opposite of the rule that chose 4.5. The
+## inversion is accepted, not re-swept: the V1.5a fit rule would demand 9.0
+## against a 6.0 spend scale, and re-measuring quality's own band was outside the
+## block's declared levers. FLAGGED for the next balance pass -- either
+## QUALITY_SCALE_PP re-fits to the rule or the rule is retired; see
+## docs/opinion-model.md's V3.0 section.
 ##
 ## Full tables: docs/society-model.md (c).
 const QUALITY_SCALE_PP := 4.5

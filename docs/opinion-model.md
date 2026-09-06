@@ -488,4 +488,15 @@ report; `test_tax`'s units check was re-pinned deliberately (income carries
 its own scale now, and the test asserts it stays WEAKER than the shared
 constant, which is the direction the sweep shipped).
 
+**One recorded invariant this re-weight inverts, acknowledged rather than
+silently broken**: V1.5a's `QUALITY_SCALE_PP` 4.5 was chosen on the rule
+"the delivery half must be worth LESS than the announcement half" — ratio
+> 1.0 against `SPEND_SCALE_PP` = 3.0. At 6.0 the ratio is 0.75, so delivery
+is now worth more per point than the announcement, the opposite of the rule.
+The inversion is accepted and NOT re-swept: the fit rule would demand 9.0
+against a 6.0 spend scale, and re-measuring quality's own band was outside
+this block's declared levers — but the next balance pass owes the decision
+either way (re-fit `QUALITY_SCALE_PP`, or retire the rule). Recorded beside
+the constant itself.
+
 **Grievance relief** — V2.9b F2's fix lives in [[unrest-model]] §"V3.0".
