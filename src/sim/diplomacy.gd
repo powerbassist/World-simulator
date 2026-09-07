@@ -24,6 +24,7 @@ extends RefCounted
 ## > it. There is no declared stopgap left in this file.
 
 const RK = preload("res://src/core/relations.gd")
+const Org = preload("res://src/core/org.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
@@ -52,19 +53,21 @@ static func init_nation(ns) -> void:
 
 
 ## Where a pair's relations settle if nobody acts. Derived from the two inputs
-## docs/data-sources.md can actually supply -- EU co-membership, which every
-## nation file already carries, and a shared land border, which V1.3a adds as a
-## fact rather than a tuning number.
+## docs/data-sources.md can actually supply -- org co-membership, which the
+## register carries as content since V3.2, and a shared land border, which V1.3a
+## adds as a fact rather than a tuning number.
 ##
 ## `a` and `b` are loader Nation objects, not NationState: neither input is live
 ## state and neither ever changes, so re-deriving from static data is correct
 ## and re-deriving from a played game's state would not be. Symmetric by
 ## construction -- swapping the arguments cannot change the answer, which is
 ## what lets src/core/relations.gd's key stay sorted.
-static func resting(a, b) -> float:
+static func resting(a, b, co_member_bonus: float) -> float:
 	var value := DK.REST_BASE
-	if a.eu_member and b.eu_member:
-		value += DK.EU_CO_MEMBER_BONUS
+	# V3.2: the co-membership bonus is content -- the sum over the orgs both
+	# nations belong to, computed by the caller through Org.shared_bonus().
+	# eu carries 15.0, the value EU_CO_MEMBER_BONUS held.
+	value += co_member_bonus
 	if a.neighbours.has(b.id):
 		value += DK.SHARED_BORDER_BONUS
 	return clampf(value, DK.RELATIONS_MIN, DK.RELATIONS_MAX)
@@ -76,7 +79,7 @@ static func seed_relations(state, loader) -> void:
 	for pair in RK.all_pairs(loader.nations.keys()):
 		var a = loader.nations[pair[0]]
 		var b = loader.nations[pair[1]]
-		state.relations[RK.key(pair[0], pair[1])] = resting(a, b)
+		state.relations[RK.key(pair[0], pair[1])] = resting(a, b, Org.shared_bonus(state, pair[0], pair[1], "relations_bonus"))
 
 
 ## Stagger the nine across the agenda cycle. Called once by GameState.new_game(),
@@ -143,7 +146,7 @@ static func tick_month(state, loader) -> void:
 		if a == null or b == null:
 			continue
 		var current := float(state.relations[pair_key])
-		var target := resting(a, b)
+		var target := resting(a, b, Org.shared_bonus(state, a.id, b.id, "relations_bonus"))
 		state.relations[pair_key] = clampf(
 			current + (target - current) * DK.DRIFT_RATE,
 			DK.RELATIONS_MIN, DK.RELATIONS_MAX

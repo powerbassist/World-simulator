@@ -41,6 +41,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[trade-model]] — the directed trade weight, per-partner external demand, bilateral agreements, and why relations move the mix and never the level
 - [[coercion-model]] — tariffs and sanctions on the first directed state: what a measure collects, what it destroys, who answers, and the Laffer curve nothing authors
 - [[bloc-model]] — the supranational bloc: proposals, the council, rules in force, transfers, and the twelfth opinion issue
+- [[orgs-model]] — the org register (V3.2): membership as data, one register per council, the composition rule, accession and withdrawal as fights
 - [[foreign-policy-model]] — why the other nine answer as they do, and how they choose a target and a verb unprompted
 - [[defence-model]] — capability derived from sustained spending, defensive pacts, and the alliance obligation that bills you at home
 - [[calendar-model]] — the president's diary: dated state put on a timeline, optional booking, and the currency a probe deleted

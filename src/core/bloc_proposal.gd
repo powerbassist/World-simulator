@@ -21,6 +21,11 @@ var id: String = ""
 var proposal_name: String = ""
 var summary: String = ""
 
+## The org whose council this proposal reaches. Required since V3.2 -- the
+## register carries many councils and the flat agenda list alone can no longer
+## answer "whose council is this". Validated against the loaded org ids.
+var org_id: String = ""
+
 ## Position on the same two-axis ideology space election_constants.gd's
 ## SLOT_POSITION uses -- economic (-1 left ... +1 right), social (-1 open ...
 ## +1 traditional). No parallel vocabulary, exactly as src/core/law.gd says.
@@ -44,13 +49,26 @@ var transfer_pct_gdp: float = 0.0
 var external_measure: Dictionary = {}
 
 
-static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
+static func from_dict(d: Dictionary, filename: String, errors: Array[String], org_ids: Array):
 	var p := new()
 
 	if not d.has("id") or typeof(d["id"]) != TYPE_STRING or d["id"] == "":
 		errors.append("%s: missing or invalid string field 'id'" % filename)
 	else:
 		p.id = d["id"]
+
+	# org is REQUIRED and validated against the loaded register, the same way an
+	# action's bloc_offset keys are validated against BLOC_KEYS -- a proposal on
+	# an org that does not exist is a council that can never convene. The ids
+	# ride in rather than a lookup, because a core content type reaching into
+	# the loader is the dependency pointing the wrong way.
+	var org = d.get("org", "")
+	if typeof(org) != TYPE_STRING or org == "":
+		errors.append("%s: %s missing string field 'org'" % [filename, p.id])
+	elif not org_ids.has(org):
+		errors.append("%s: %s names org '%s', which is not a loaded org" % [filename, p.id, org])
+	else:
+		p.org_id = org
 
 	if not d.has("name") or typeof(d["name"]) != TYPE_STRING or d["name"] == "":
 		errors.append("%s: %s missing or invalid string field 'name'" % [filename, p.id])

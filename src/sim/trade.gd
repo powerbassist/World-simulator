@@ -14,7 +14,7 @@ extends RefCounted
 ## Economy.tick_month() is the caller and has twenty-eight call sites; growing it a
 ## loader parameter to reach static nation facts would have been the largest
 ## mechanical edit in the session for no model gain. So the two facts the weight
-## needs -- eu_member and neighbours -- are copied onto NationState at new-game like
+## needs -- org membership and neighbours -- are copied onto NationState at new-game like
 ## assembly_seats already is, and an agreement's TERMS are stored in the register
 ## rather than resolved from the action id at read time. The second has an argument
 ## of its own beyond cost: an agreement is a signed contract, and its terms are what
@@ -28,6 +28,7 @@ extends RefCounted
 const K = preload("res://src/sim/trade_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const RK = preload("res://src/core/relations.gd")
+const Org = preload("res://src/core/org.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 
 
@@ -164,8 +165,11 @@ static func _raw(state, actor_id: String, with_agreements: bool, with_measures: 
 		var b = state.nations[partner_id]
 
 		var value: float = pow(maxf(0.0, b.gdp_eur_bn), K.GRAVITY_EXPONENT)
-		if a.eu_member and b.eu_member:
-			value *= 1.0 + K.EU_TRADE_BONUS
+		# V3.2: co-membership's trade price is content -- the sum over the orgs
+		# both nations belong to, read from live membership. eu carries 0.50, the
+		# value EU_TRADE_BONUS held; every other org ships 0.0, and multiplying by
+		# 1.0 is what the old non-member branch did.
+		value *= 1.0 + Org.shared_bonus(state, a.id, b.id, "trade_bonus")
 		if a.neighbours.has(partner_id):
 			value *= 1.0 + K.BORDER_TRADE_BONUS
 

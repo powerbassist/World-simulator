@@ -156,14 +156,23 @@ func _check_all_real_nation_configs() -> void:
 
 ## Same check for the European Parliament allocation each EU member runs.
 func _check_eu_config() -> void:
-	for id in _loader.eu.members.keys():
+	# V3.2: the parliament is the one org whose content carries one.
+	var parliament = null
+	for org in _loader.orgs:
+		if not org.parliament.is_empty():
+			parliament = org
+			break
+	if parliament == null:
+		_failures.append("no org carries a parliament to allocate EP seats with")
+		return
+	for id in parliament.members.keys():
 		var parties: Array = _loader.parties.get(id, [])
 		if parties.is_empty():
 			continue
 		var shares := {}
 		for party in parties:
 			shares[party.id] = party.seat_share
-		var seats: int = _loader.eu.ep_seats(id)
+		var seats: int = parliament.seats(id)
 		var result := ElectoralSystems.pr_national(shares, seats, 0.0)
 		var total := 0
 		for v in result.values():

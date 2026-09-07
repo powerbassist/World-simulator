@@ -1,0 +1,18 @@
+{
+  "_source": "authored",
+  "_note": "The border-free area. The one real difference from the EU in this roster is CHE, which is in Schengen and was never in the EU -- GBR is in neither. Ships zero-priced for the reason eurozone.json gives: an open-borders effect (a trade bonus is the obvious candidate) is a measured band or nothing, and nothing is what is measured so far. The accession and withdrawal positions are MEASURED, not felt: Referendum.yes_share() was swept over the two-axis grid at a neutral-approval new-game, and every authored question sits 0.010-0.023 above the strict majority at rest -- winnable by a president the country does not hate, losable by one it does (INCUMBENT_SWING moves both ways), because a membership vote no electorate could ever pass is not a fight, it is a locked door.",
+  "id": "schengen",
+  "name": "Schengen",
+  "summary": "The countries with no internal border controls. People, lorries and holiday traffic cross the lines without stopping.",
+  "members": {
+    "FRA": {}, "DEU": {}, "ITA": {}, "ESP": {}, "NLD": {}, "BEL": {}, "AUT": {}, "LUX": {}, "CHE": {}
+  },
+  "council": false,
+  "net_transfers": false,
+  "relations_bonus": 0.0,
+  "trade_bonus": 0.0,
+  "accession_months": 12,
+  "withdrawal_months": 12,
+  "accession_position": { "economic": -0.30, "social": -0.05 },
+  "withdrawal_position": { "economic": 0.00, "social": 0.10 }
+}

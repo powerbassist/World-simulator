@@ -32,7 +32,8 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
 
-const EU = preload("res://src/core/eu.gd")
+const Org = preload("res://src/core/org.gd")
+const OrgK = preload("res://src/core/org_constants.gd")
 
 var nations: Dictionary = {}  # String id -> Nation
 var parties: Dictionary = {}  # String id -> Array[Party]
@@ -144,7 +145,19 @@ var diplomatic_actions: Array[DiplomaticAction] = []
 ## the agenda. That is what keeps the council deterministic with no RNG.
 var bloc_proposals: Array[BlocProposal] = []
 
-var eu: EU = null
+## The supranational organisations, V3.2 -- data/orgs/*.json. Sorted by id so
+## anything that iterates the register is reproducible; orgs_by_id is the
+## lookup the validators and Orgs.net_positions() read. Membership on these
+## objects is the authored START; the live truth is NationState.orgs, which an
+## accession or a withdrawal rewrites months into a run.
+var orgs: Array[Org] = []
+var orgs_by_id: Dictionary = {}
+
+## Per-ORG proposal agendas, org_id -> Array[BlocProposal] in the same flat-file
+## order bloc_proposals holds -- file order inside an org is its agenda order,
+## and preserving it is part of what the track-(a) bit-identity run proves.
+var org_proposals: Dictionary = {}
+
 var errors: Array[String] = []
 
 ## geo feature id -> Array[PackedVector2Array]. One entry per polygon in the
@@ -195,7 +208,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", eu_path := "res://data/eu_parliament.json", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -219,6 +232,9 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	scenarios.clear()
 	diplomatic_actions.clear()
 	bloc_proposals.clear()
+	orgs.clear()
+	orgs_by_id.clear()
+	org_proposals.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -281,11 +297,10 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_load_political_systems(political_systems_dir)
 	_load_scenarios(scenarios_dir)
 	_load_diplomatic_actions(diplomatic_actions_dir)
+	# Orgs before proposals: a proposal names its org, and a reference cannot be
+	# validated against a register that has not been filled yet.
+	_load_orgs(orgs_dir)
 	_load_bloc_proposals(bloc_proposals_dir)
-
-	eu = EU.new()
-	eu.load(eu_path)
-	errors.append_array(eu.errors)
 
 	_validate_cross_file(geo_path, world_path)
 	_validate_amendments()
@@ -1466,6 +1481,78 @@ func _load_diplomatic_actions(actions_dir: String) -> void:
 ## this list to decide what reaches the council next, so the filename sort below
 ## and the authored order inside each file together are the agenda. That is the
 ## price of a scheduler with no RNG in it, and it is the right price.
+func _load_orgs(orgs_dir: String) -> void:
+	var da := DirAccess.open(orgs_dir)
+	if da == null:
+		errors.append("%s: directory not found" % orgs_dir)
+		return
+
+	var filenames: Array[String] = []
+	da.list_dir_begin()
+	var file_name := da.get_next()
+	while file_name != "":
+		if not da.current_is_dir() and file_name.ends_with(".json"):
+			filenames.append(file_name)
+		file_name = da.get_next()
+	da.list_dir_end()
+	filenames.sort()
+
+	for fname in filenames:
+		var path := orgs_dir.path_join(fname)
+		var text := FileAccess.get_file_as_string(path)
+		if text.is_empty():
+			errors.append("%s: could not read file" % fname)
+			continue
+
+		var parsed = JSON.parse_string(text)
+		if typeof(parsed) != TYPE_DICTIONARY:
+			errors.append("%s: invalid JSON" % fname)
+			continue
+
+		var per_file_errors: Array[String] = []
+		var org: Org = Org.from_dict(parsed, fname, per_file_errors)
+		errors.append_array(per_file_errors)
+		if org.id == "":
+			continue
+		if orgs_by_id.has(org.id):
+			errors.append("%s: duplicate org id '%s'" % [fname, org.id])
+			continue
+		orgs.append(org)
+		orgs_by_id[org.id] = org
+
+	# Sorted by id, not by filename: the register's iteration order is a model
+	# fact (every consumer iterates it sorted), not a side effect of file names.
+	orgs.sort_custom(func(a, b): return a.id < b.id)
+
+	# Every member must be on the roster: an org binding a nation that does not
+	# exist is content that reads as a membership and is not one -- the same
+	# class of quiet failure a scenario naming an unplayable nation is refused
+	# for. Runs after nations load, which the call order in load_all() promises.
+	for org in orgs:
+		if orgs.size() > OrgK.MAX_ORGS:
+			errors.append("orgs: %d orgs exceed the limit of %d" % [orgs.size(), OrgK.MAX_ORGS])
+			break
+		for member_id in org.members.keys():
+			if not nations.has(member_id):
+				errors.append("orgs: %s lists member '%s', which is not a loaded nation" % [org.id, member_id])
+
+	# A council org must carry what a new member enters with: the flip writes
+	# it as live seat state, and a joiner with no weight is a member whose vote
+	# never counts -- the second-class-member failure, refused at load.
+	for org in orgs:
+		if org.council and org.accession_seats < 1:
+			errors.append("orgs: %s holds a council but carries no accession_seats" % org.id)
+
+	# At most one parliament, because Elections seeds the EP clock from "the org
+	# that carries one" and two of them would make that phrase ambiguous.
+	var parliament_count := 0
+	for org in orgs:
+		if not org.parliament.is_empty():
+			parliament_count += 1
+	if parliament_count > 1:
+		errors.append("orgs: %d orgs carry a parliament; at most one may" % parliament_count)
+
+
 func _load_bloc_proposals(proposals_dir: String) -> void:
 	var da := DirAccess.open(proposals_dir)
 	if da == null:
@@ -1502,36 +1589,48 @@ func _load_bloc_proposals(proposals_dir: String) -> void:
 				errors.append("%s: proposals[%d] is not an object" % [fname, i])
 				continue
 			var per_file_errors: Array[String] = []
-			var proposal = BlocProposal.from_dict(entry, fname, per_file_errors)
+			var proposal = BlocProposal.from_dict(entry, fname, per_file_errors, orgs_by_id.keys())
 			errors.append_array(per_file_errors)
 			if proposal.id != "":
 				if seen_ids.has(proposal.id):
 					errors.append("%s: duplicate bloc proposal id '%s'" % [fname, proposal.id])
 				seen_ids[proposal.id] = true
 			bloc_proposals.append(proposal)
+			# The per-org agenda, in exactly the order the flat list collects --
+			# file order IS the agenda, and the register must not be the one
+			# place that reorders it.
+			if not org_proposals.has(proposal.org_id):
+				org_proposals[proposal.org_id] = []
+			org_proposals[proposal.org_id].append(proposal)
 
 
 ## The cross-file half: a proposal names no nation, but two of its shapes only
 ## mean something against the roster it will run in.
 ##
-## Runs after eu.load(), because both checks need the membership table.
+## Runs after _load_orgs(), because both checks need that org's membership.
 func _validate_bloc_proposals() -> void:
-	var member_count := 0
-	var outsider_count := 0
-	for id in nations.keys():
-		if eu.is_member(id):
-			member_count += 1
-		else:
-			outsider_count += 1
-
 	for p in bloc_proposals:
+		# The proposal's own org must exist and be populated -- a proposal on an
+		# org nobody belongs to can never reach a council, and one on an org that
+		# does not exist is a typo the register refuses loudly.
+		var org: Org = orgs_by_id.get(p.org_id, null)
+		if org == null:
+			errors.append("bloc-proposals: %s names org '%s', which is not loaded" % [p.id, p.org_id])
+			continue
+		var member_count := 0
+		var outsider_count := 0
+		for id in nations.keys():
+			if org.is_member(id):
+				member_count += 1
+			else:
+				outsider_count += 1
+		if member_count == 0:
+			errors.append("bloc-proposals: %s is loaded, but no loaded nation is a member of org '%s'" % [p.id, org.id])
 		# A collective external tariff with nobody outside the bloc to levy it on
 		# is content that can never do anything -- the same class of quiet failure
 		# a scenario naming an unplayable nation is refused for.
 		if not p.external_measure.is_empty() and outsider_count == 0:
-			errors.append("bloc-proposals: %s sets an external measure, but every loaded nation is a member" % p.id)
-		if member_count == 0:
-			errors.append("bloc-proposals: %s is loaded, but no loaded nation is a bloc member" % p.id)
+			errors.append("bloc-proposals: %s sets an external measure, but every loaded nation is a member of '%s'" % [p.id, org.id])
 
 
 ## A land border is mutual or it is not a land border. Nation.gd already checked
@@ -1587,14 +1686,6 @@ func _validate_cross_file(geo_path: String, world_path: String) -> void:
 		if not found:
 			errors.append("%s.json: leader.party '%s' does not match any party in data/parties/%s.json" % [id, n.leader_party_id, id])
 
-		if n.eu_member != eu.is_member(id):
-			errors.append("%s.json: government.eu.member=%s but data/eu_parliament.json members %s '%s'" % [
-				id, n.eu_member, "has" if eu.is_member(id) else "lacks", id
-			])
-		elif n.eu_member and n.eu_ep_seats != eu.ep_seats(id):
-			errors.append("%s.json: government.eu.ep_seats %d does not match data/eu_parliament.json's %d for '%s'" % [
-				id, n.eu_ep_seats, eu.ep_seats(id), id
-			])
 
 		_validate_political_system(n)
 

@@ -38,7 +38,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -88,10 +88,29 @@ func _init() -> void:
 
 ## What the derivation actually produces across the whole roster, printed first
 ## because every number in the two tables below is relative to one of these.
+## The co-membership bonus from static content -- the probe reads pairs at rest
+## before any game exists, so it sums the register itself rather than calling
+## Org.shared_bonus(), which needs a live state.
+func _loader_bonus(loader, a_id: String, b_id: String) -> float:
+	var total := 0.0
+	for org in loader.orgs:
+		if org.is_member(a_id) and org.is_member(b_id):
+			total += org.relations_bonus
+	return total
+
+
+func orgs_shared(loader, a_id: String, b_id: String) -> bool:
+	for org in loader.orgs:
+		if org.is_member(a_id) and org.is_member(b_id):
+			return true
+	return false
+
+
 func _resting_table(loader) -> void:
 	print("\n########## derived resting values ##########")
+	var eu_bonus: float = loader.orgs_by_id["eu"].relations_bonus
 	print("base %.1f  +eu %.1f  +border %.1f  drift %.3f/month" % [
-		DK.REST_BASE, DK.EU_CO_MEMBER_BONUS, DK.SHARED_BORDER_BONUS, DK.DRIFT_RATE,
+		DK.REST_BASE, eu_bonus, DK.SHARED_BORDER_BONUS, DK.DRIFT_RATE,
 	])
 	print("%-10s %8s %8s %8s   %s" % ["pair", "resting", "both eu", "border", "note"])
 	print("-".repeat(64))
@@ -101,12 +120,12 @@ func _resting_table(loader) -> void:
 	for pair in Relations.all_pairs(loader.nations.keys()):
 		var a = loader.nations[pair[0]]
 		var b = loader.nations[pair[1]]
-		var value := Diplomacy.resting(a, b)
+		var value := Diplomacy.resting(a, b, _loader_bonus(loader, a.id, b.id))
 		lowest = minf(lowest, value)
 		highest = maxf(highest, value)
 		print("%-10s %8.1f %8s %8s" % [
 			Relations.key(pair[0], pair[1]), value,
-			"yes" if (a.eu_member and b.eu_member) else "no",
+			"yes" if (orgs_shared(loader, a.id, b.id)) else "no",
 			"yes" if a.neighbours.has(b.id) else "no",
 		])
 	print("-".repeat(64))
@@ -290,7 +309,7 @@ func _tick(state, loader, i: int) -> void:
 
 	Economy.tick_month(state)
 	Budget.tick_month(state)
-	Bloc.tick_month(state, loader)
+	Orgs.tick_month(state, loader)
 	Opinion.tick_month(state)
 	var entry := Budget.snapshot(state)
 	entry.merge(Opinion.snapshot(state))

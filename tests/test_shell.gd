@@ -364,7 +364,7 @@ func _check_the_bar_marks_what_awaits_the_player() -> void:
 	if not bar.pending_clusters().is_empty():
 		_fail("the bar reports a pending cluster with nothing pending")
 
-	bar.show_pending(["events", "bloc"])
+	bar.show_pending(["events", "orgs"])
 	var marked: Array = bar.pending_clusters()
 	if not marked.has("state") or not marked.has("world"):
 		_fail("a pending dispatch and a pending council vote did not mark State and World: %s"

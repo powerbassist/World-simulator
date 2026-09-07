@@ -248,7 +248,7 @@ func _check_defeat_can_be_dismissed() -> void:
 func _check_no_panel_can_destroy_its_window() -> void:
 	var by_window := {
 		"diplomacy": "_nation_panel",
-		"bloc": "_bloc_panel",
+		"orgs": "_orgs_panel",
 		"calendar": "_calendar_panel",
 		"companies": "_companies_panel",
 		"people": "_people_panel",
@@ -287,17 +287,17 @@ func _check_no_panel_can_destroy_its_window() -> void:
 # council vote, binding on the player whichever way it goes, never reached the one
 # surface built to say what you did.
 func _check_council_vote_leaves_a_record() -> void:
-	var bloc_panel = _main._bloc_panel
-	if bloc_panel == null:
-		_fail("V8: main.gd built no bloc panel")
+	var orgs_panel = _main._orgs_panel
+	if orgs_panel == null:
+		_fail("V8: main.gd built no orgs panel")
 		return
 
-	if not bloc_panel.has_signal("voted"):
-		_fail("V8 REGRESSED: bloc_panel has no command signal, so a council vote is unrecorded again")
+	if not orgs_panel.has_signal("voted"):
+		_fail("V8 REGRESSED: orgs_panel has no command signal, so a council vote is unrecorded again")
 		return
 
 	# A signal nothing listens to is the same silence with more code in it.
-	if bloc_panel.voted.get_connections().is_empty():
+	if orgs_panel.voted.get_connections().is_empty():
 		_fail("V8 REGRESSED: bloc_panel.voted is connected to nothing, so no effect delta is queued")
 
 	# State the comparison rather than asserting the presence alone: this check is

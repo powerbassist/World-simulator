@@ -29,7 +29,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 
 const PLAYER := "FRA"
 const PARTNER := "DEU"
@@ -573,7 +573,7 @@ func _fresh():
 	state.month = 2
 	Economy.tick_month(state)
 	Budget.tick_month(state)
-	Bloc.tick_month(state, _loader)
+	Orgs.tick_month(state, _loader)
 	Opinion.tick_month(state)
 	state.day = 1
 	return state

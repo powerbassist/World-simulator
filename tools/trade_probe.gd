@@ -1,5 +1,20 @@
 extends SceneTree
 
+## V3.2: the co-membership price is content on the org register. The probe
+## sums it itself where it works from the loader alone, and through live
+## membership where it has a state -- the two agree at rest.
+func _shared_bonus(state, a_id: String, b_id: String, key: String) -> float:
+	var total := 0.0
+	for org_id in state.nations[a_id].orgs:
+		if state.nations[b_id].orgs.has(org_id):
+			total += float(state.org_effects.get(org_id, {}).get(key, 0.0))
+	return total
+
+
+func _loader_bonus_value(loader, key: String) -> float:
+	var eu = loader.orgs_by_id.get("eu", null)
+	return float(eu.get(key)) if eu != null else 0.0
+
 ## Trade envelope probe: godot --headless --script res://tools/trade_probe.gd
 ##
 ## V1.3b's named measurement, run BEFORE trade_constants.gd exists -- which is the
@@ -41,7 +56,7 @@ const TK = preload("res://src/sim/trade_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -137,7 +152,7 @@ func _aggregate_table(state, loader) -> void:
 		var n = loader.nations[id]
 		var ns = state.nations[id]
 		print("%-6s %12.0f   %-4s %s" % [
-			id, ns.gdp_eur_bn, "eu" if n.eu_member else "--", str(n.neighbours),
+			id, ns.gdp_eur_bn, "eu" if state.nations[id].orgs.has("eu") else "--", str(n.neighbours),
 		])
 	print("-".repeat(72))
 	print("GBR is the binding case: not in the EU, and its neighbours list is empty.")
@@ -211,7 +226,7 @@ func _detail_table(state, loader) -> void:
 	print("\n\n########## the chosen vector, in full ##########")
 	print("read off the sweep, then shipped -- printed here from src/sim/trade.gd itself.")
 	print("exponent %.2f  span %.2f  eu %.2f  border %.2f" % [
-		TK.GRAVITY_EXPONENT, TK.INTENSITY_SPAN, TK.EU_TRADE_BONUS, TK.BORDER_TRADE_BONUS,
+		TK.GRAVITY_EXPONENT, TK.INTENSITY_SPAN, _loader_bonus_value(loader, "trade_bonus"), TK.BORDER_TRADE_BONUS,
 	])
 	print("")
 
@@ -265,8 +280,7 @@ func _weights(state, loader, actor_id: String, exponent: float, span: float, eu:
 			continue
 		var b = loader.nations[id]
 		var value: float = pow(state.nations[id].gdp_eur_bn, exponent)
-		if a.eu_member and b.eu_member:
-			value *= 1.0 + eu
+		value *= 1.0 + _shared_bonus(state, a.id, id, "trade_bonus")
 		if a.neighbours.has(id):
 			value *= 1.0 + border
 		var relations: float = Diplomacy.score(state, actor_id, id)
@@ -560,7 +574,7 @@ func _tick(state, loader, i: int) -> void:
 
 	Economy.tick_month(state)
 	Budget.tick_month(state)
-	Bloc.tick_month(state, loader)
+	Orgs.tick_month(state, loader)
 	Opinion.tick_month(state)
 	var entry := Budget.snapshot(state)
 	entry.merge(Opinion.snapshot(state))

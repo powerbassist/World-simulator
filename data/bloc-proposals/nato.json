@@ -1,0 +1,23 @@
+{
+  "_source": "authored",
+  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set.",
+  "proposals": [
+    {
+      "id": "common_defence_floor",
+      "org": "nato",
+      "name": "Common Defence Commitment",
+      "summary": "Every member undertakes to hold defence spending at or above 2% of GDP. The commitment is political; the embarrassment of missing it is not.",
+      "position": {
+        "economic": 0.55,
+        "social": 0.8
+      },
+      "constraint": {
+        "field": "spending_defence",
+        "op": ">=",
+        "value": 2.0,
+        "tolerance": 2.0,
+        "severity": 0.22
+      }
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Orgs = preload("res://src/sim/orgs.gd")
+
 ## Monthly election check, vote share, and result attribution.
 ##
 ## Runs after Opinion.tick_month and after state.append_history, in the same
@@ -38,13 +40,14 @@ const TOP_ISSUE_COUNT := 3
 ## playable nation is then a data change, not a change here.
 ##
 ## `nation` is the Nation this NationState was built from; `party_list` is that
-## nation's Array[Party] from DataLoader.parties. `eu` is the loader's EU object.
+## nation's Array[Party] from DataLoader.parties. `parliament` is the org whose
+## content carries a parliament, or null (V3.2: was the loader's EU object).
 ##
 ## `seat_share_override` is a start scenario's authored assembly, {party id ->
 ## share}, merged over the party file's own shares below. Empty for a standard
 ## start, which is every call but the player's under a scenario. See
 ## docs/scenario-model.md.
-static func init_nation(ns, nation, party_list: Array, eu, seat_share_override: Dictionary = {}) -> void:
+static func init_nation(ns, nation, party_list: Array, parliament, seat_share_override: Dictionary = {}) -> void:
 	ns.assembly_seats = nation.assembly_seats
 	# V1.7c. Lifted from Nation onto NationState, exactly as V1.2b lifted
 	# formation_method, censure_rule, dissolution_rule and amendment_rule: an
@@ -72,9 +75,13 @@ static func init_nation(ns, nation, party_list: Array, eu, seat_share_override: 
 		ns.next_executive_year = nation.election_next_year
 		ns.next_executive_month = nation.election_next_month
 
-	if nation.eu_member:
-		ns.next_ep_election_year = eu.next_election_year
-		ns.next_ep_election_month = eu.next_election_month
+	# V3.2: the EP clock comes from the one org whose content carries a
+	# parliament -- a content query, not a nation flag. An acceding nation picks
+	# the clock up at its accession; a withdrawing one loses it with membership.
+	if parliament != null and parliament.is_member(nation.id):
+		var next_e: Dictionary = parliament.parliament.get("next_election", {})
+		ns.next_ep_election_year = int(next_e.get("year", 0))
+		ns.next_ep_election_month = int(next_e.get("month", 0))
 
 	ns.terms_served = 0
 	ns.incumbent_party_id = nation.leader_party_id
@@ -243,9 +250,13 @@ static func _tick_nation(state, ns, loader) -> Array:
 					Government.form(ns, party_list)
 					Cabinet.seat(ns, party_list)
 
-	if ns.in_government and nation.eu_member:
+	# The gate reads the nation's own EP clock rather than a membership flag: the
+	# clock is set exactly when the nation sits in the parliament org, and the
+	# seats are read live so an acceding nation's first election resolves with
+	# them (V3.2).
+	if ns.in_government and ns.next_ep_election_year > 0:
 		if state.year == ns.next_ep_election_year and state.month == ns.next_ep_election_month:
-			var ep_result := resolve(ns, party_list, "pr_national", 0.0, "eu_parliament", state.year, state.month, nation.eu_ep_seats)
+			var ep_result := resolve(ns, party_list, "pr_national", 0.0, "eu_parliament", state.year, state.month, Orgs.ep_seats(state, loader, ns.id))
 			ns.last_ep_election = ep_result
 			ns.next_ep_election_year = state.year + 5
 			ns.next_ep_election_month = state.month

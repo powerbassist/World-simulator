@@ -7,8 +7,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer relations
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer trade --hover DEU
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bloc --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
@@ -40,7 +40,7 @@ extends SceneTree
 ## framebuffer, and with no rendering device there is nothing in it.
 
 const Relations = preload("res://src/core/relations.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
@@ -123,14 +123,14 @@ var _coerce := false
 ## nothing about the layout that matters -- which is the one claim a screenshot
 ## exists to check. This puts a rule in force, a proposal on the table, and the
 ## player in breach of the rule, then opens the window.
-var _bloc := false
+var _orgs := false
 
 ## V1.3f. A new game's message column is empty and a frame of nothing proves
-## nothing about it -- the same argument --coerce and --bloc were each added on.
+## nothing about it -- the same argument --coerce and --orgs were each added on.
 var _agenda := false
 
 ## Which registered window to open before capturing, by the id main.gd registered
-## it under. Generic rather than a flag per panel: --bloc exists because it has to
+## it under. Generic rather than a flag per panel: --orgs exists because it has to
 ## SET UP state the panel has nothing to show without, which is a different job
 ## from simply opening a window.
 ## V1.7a, and --coerce's argument for the fifteenth time. A campaign register is EMPTY
@@ -167,7 +167,7 @@ var _open := ""
 ## the player is looking at as well as the mark on the cluster it lives in.
 var _cluster := ""
 
-## V1.3e, and --bloc's argument a third time. The nation panel's refusal line only
+## V1.3e, and --orgs's argument a third time. The nation panel's refusal line only
 ## renders for a partner who actually refuses, and which partners refuse is the
 ## whole thing the interest model decides -- so a frame of the panel opened on
 ## nobody, or on a partner who signs, shows the absence of the line rather than the
@@ -188,7 +188,7 @@ var _interrupt := false
 ## V1.4a. A new game's firm register is every firm at its authored share with no
 ## subsidy standing, so a frame of the companies panel shows three zeroes on the
 ## ledger and "no support" against every firm -- which proves nothing about the row
-## the panel exists to draw. Same argument --coerce, --bloc, --agenda and --defence
+## the panel exists to draw. Same argument --coerce, --orgs, --agenda and --defence
 ## each made; this is the fifth time.
 var _subsidy := false
 
@@ -339,8 +339,8 @@ func _init() -> void:
 			_paused = true
 		elif args[i] == "--coerce":
 			_coerce = true
-		elif args[i] == "--bloc":
-			_bloc = true
+		elif args[i] == "--orgs":
+			_orgs = true
 		elif args[i] == "--agenda":
 			_agenda = true
 		elif args[i] == "--defence":
@@ -484,7 +484,7 @@ func _apply_view() -> void:
 		_main._map_view.center_on_lonlat(2.35, 48.86)
 	if _coerce:
 		_impose_a_spread()
-	if _bloc:
+	if _orgs:
 		_open_the_council()
 	if _agenda:
 		_run_the_agenda()
@@ -578,7 +578,7 @@ func _apply_view() -> void:
 	# does NOT clear the child panel's own `visible`, so every panel consumes its
 	# one refresh on frame 1 and never rebuilds -- --defence --open budget showed an
 	# em dash against a live 0.498 bill for exactly that reason, and --coerce and
-	# --bloc have been getting away with it only because they open a panel whose
+	# --orgs have been getting away with it only because they open a panel whose
 	# figures they happen not to change. Marked here, in main.gd's own idiom.
 	_mark_panels_dirty()
 	if _hover != "":
@@ -625,7 +625,7 @@ func _run_the_agenda() -> void:
 ## severities to whatever the shipped verbs happen to use.
 ## V1.3g. A new game has no pact and no deployment, so a frame of the nation panel
 ## shows one "Alliance: none" caption and an em dash on the budget panel, and proves
-## nothing about the rows that matter. Same argument --coerce, --bloc and --agenda
+## nothing about the rows that matter. Same argument --coerce, --orgs and --agenda
 ## each made; this is the fourth time.
 ##
 ## Stands up BOTH kinds of commitment, because they are the two things the panel has
@@ -803,7 +803,7 @@ func _provoke_the_unions() -> void:
 ## other end.
 ## Run the economy hot until the price level has moved, and capture THAT. V1.6b.
 ##
-## The flag exists for the reason --bloc and --unrest do: the readout is a DEVIATION
+## The flag exists for the reason --orgs and --unrest do: the readout is a DEVIATION
 ## against the nation's own start, so it reads exactly +0.0 on a new game and a frame
 ## of that proves nothing about the line, the sign or the thirteenth issue's place on
 ## the polling agenda.
@@ -1167,12 +1167,21 @@ func _terms(state, kind: String, severity: float) -> Dictionary:
 ## capturing frame 540.
 func _open_the_council() -> void:
 	var state = _main._state
-	if state == null or state.bloc.is_empty():
+	if state == null or state.orgs.is_empty():
+		return
+
+	# V3.2: the first council org, sorted -- the tool stages ONE council view and
+	# does not care which, so it takes the register's own order rather than
+	# naming an id (an id here would be the cardinal sin in a dev tool, where it
+	# would at least be honest about being one).
+	var org_id: String = Orgs.council_ids(state)[0]
+	var agenda: Array = _main._loader.org_proposals.get(org_id, [])
+	if agenda.is_empty():
 		return
 
 	var proposal = null
 	var pending = null
-	for p in _main._loader.bloc_proposals:
+	for p in agenda:
 		if not p.constraint.is_empty() and proposal == null:
 			proposal = p
 		elif pending == null:
@@ -1180,7 +1189,7 @@ func _open_the_council() -> void:
 	if proposal == null:
 		return
 
-	state.bloc["rules"][proposal.id] = {
+	state.orgs[org_id]["rules"][proposal.id] = {
 		"name": proposal.proposal_name,
 		"field": String(proposal.constraint["field"]),
 		"op": String(proposal.constraint["op"]),
@@ -1191,7 +1200,7 @@ func _open_the_council() -> void:
 		"since_year": state.year, "since_month": state.month,
 	}
 	if pending != null:
-		state.bloc["pending"] = {
+		state.orgs[org_id]["pending"] = {
 			"proposal_id": pending.id, "name": pending.proposal_name,
 			"summary": pending.summary, "months_left": 2,
 			"player_vote": "against",
@@ -1202,7 +1211,7 @@ func _open_the_council() -> void:
 	# The panel's new section says why each member voted as it did, and it reads
 	# `last_vote`, which a pending proposal does not populate. Without this the
 	# frame shows the section's absence rather than the section -- exactly the
-	# three-"None"-captions frame --bloc was added to stop capturing.
+	# three-"None"-captions frame --orgs was added to stop capturing.
 	#
 	# Built through the real vote path (Bloc.support and Bloc.vote_reason) rather
 	# than by inventing a tally, because the one thing this frame has to check is
@@ -1215,7 +1224,7 @@ func _open_the_council() -> void:
 	# layer, one session later.
 	var divided = null
 	var fallback = null
-	for p in _main._loader.bloc_proposals:
+	for p in agenda:
 		if p.id == proposal.id or (pending != null and p.id == pending.id):
 			continue
 		if fallback == null:
@@ -1225,8 +1234,8 @@ func _open_the_council() -> void:
 		# what the section is for even when the reason is the same word.
 		var seen_for := false
 		var seen_against := false
-		for id in Bloc.members(state, _main._loader):
-			if Bloc.support(state, state.nations[id], p) >= BlocK.SUPPORT_THRESHOLD:
+		for id in Orgs.members(state, org_id):
+			if Orgs.support(state, state.nations[id], p) >= BlocK.SUPPORT_THRESHOLD:
 				seen_for = true
 			else:
 				seen_against = true
@@ -1241,18 +1250,19 @@ func _open_the_council() -> void:
 		var seats_for := 0
 		var seats_against := 0
 		var seats_total := 0
-		for id in Bloc.members(state, _main._loader):
-			var seats: int = _main._loader.eu.ep_seats(id)
+		for id in Orgs.members(state, org_id):
+			var seats: int = Orgs.live_seats(state, org_id, id)
 			seats_total += seats
-			var backs: bool = Bloc.support(state, state.nations[id], divided) >= BlocK.SUPPORT_THRESHOLD
-			votes[id] = Bloc.VOTE_FOR if backs else Bloc.VOTE_AGAINST
-			reasons[id] = Bloc.vote_reason(state, state.nations[id], divided)
+			var backs: bool = Orgs.support(state, state.nations[id], divided) >= BlocK.SUPPORT_THRESHOLD
+			votes[id] = Orgs.VOTE_FOR if backs else Orgs.VOTE_AGAINST
+			reasons[id] = Orgs.vote_reason(state, state.nations[id], divided)
 			if backs:
 				seats_for += seats
 			else:
 				seats_against += seats
-		state.bloc["last_vote"] = {
+		state.orgs[org_id]["last_vote"] = {
 			"proposal_id": divided.id, "name": divided.proposal_name,
+			"org_id": org_id,
 			"passed": float(seats_for) >= BlocK.PASS_SEAT_FRACTION * float(seats_for + seats_against),
 			"seats_for": seats_for, "seats_against": seats_against,
 			"seats_total": seats_total,
@@ -1262,11 +1272,11 @@ func _open_the_council() -> void:
 		}
 
 	# So the burden, the penalty line and the breach caption are all non-zero.
-	Bloc.tick_month(state, _main._loader)
+	Orgs.tick_month(state, _main._loader)
 
-	_main._windows.open("bloc")
-	if _main._bloc_panel != null:
-		_main._bloc_panel.mark_dirty()
+	_main._windows.open("orgs")
+	if _main._orgs_panel != null:
+		_main._orgs_panel.mark_dirty()
 
 
 ## Fill the diary so a frame of it shows something. U6a.

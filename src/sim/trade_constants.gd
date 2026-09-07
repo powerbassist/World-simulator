@@ -43,7 +43,6 @@ const GRAVITY_EXPONENT := 0.70
 ## bilateral trade far more than co-membership does, whereas for RELATIONS an
 ## institution whose whole purpose is alignment outweighs a border that cuts both
 ## ways.
-const EU_TRADE_BONUS := 0.50
 const BORDER_TRADE_BONUS := 1.20
 
 ## How far relations move the weight, as a multiplier on the raw weight:

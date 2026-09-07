@@ -28,7 +28,7 @@ tests=(
   tests/test_diplomacy.gd
   tests/test_trade.gd
   tests/test_coercion.gd
-  tests/test_bloc.gd
+  tests/test_orgs.gd
   tests/test_foreign_policy.gd
   tests/test_defence.gd
   tests/test_calendar.gd

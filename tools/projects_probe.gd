@@ -168,7 +168,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
@@ -792,7 +792,7 @@ func _tick(state, ns, payoff: float) -> void:
 		ns.project_potential_target_pct = truth
 
 	Budget.tick_month(state)
-	Bloc.tick_month(state, _loader)
+	Orgs.tick_month(state, _loader)
 	Inflation.tick_month(state)
 	Media.tick_month(state, _loader)
 	Opinion.tick_month(state)

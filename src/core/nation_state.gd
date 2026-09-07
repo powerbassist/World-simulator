@@ -15,12 +15,34 @@ const C = preload("res://src/sim/economy_constants.gd")
 var id: String = ""
 
 ## Copied from Nation at new-game and never mutated, the same class of field as
-## assembly_seats. Both are static facts, and both are read by the trade weight
-## in src/sim/trade.gd -- which is why they live here rather than being looked up
-## through the loader: Economy.tick_month() has no loader argument and has
-## twenty-eight call sites that would all have to grow one.
-var eu_member: bool = false
+## assembly_seats, and read by the trade weight in src/sim/trade.gd -- which is
+## why it lives here rather than being looked up through the loader:
+## Economy.tick_month() has no loader argument and has twenty-eight call sites
+## that would all have to grow one.
 var neighbours: Array = []
+
+## The orgs this nation belongs to, sorted org ids. V3.2. LIVE state, not a
+## content lookup: an accession or a withdrawal rewrites it months into a run,
+## and every reader -- the trade weight, resting relations, the appraisal's
+## external term, the councils -- must see the live truth. `eu_member` above
+## dies with the V3.2 readers task; until then both are written at new-game and
+## agree. Serialised; an absent entry reads [], which is the truth about a
+## non-member.
+var orgs := []
+
+## This nation's standing net contribution PER ORG it belongs to, percent of its
+## own GDP, derived from prosperity against EACH ORG'S OWN mean at new-game.
+## Entries exist only where membership does, so a non-member of an org reads
+## 0.0 by `.get(org_id, 0.0)` -- the old exact-zero property, per org.
+var org_base_transfer_pct_gdp := {}
+
+## This nation's voting weight PER ORG it belongs to. Seeded at new-game from
+## the content's seat table and rewritten by the accession flip from the org's
+## authored `accession_seats` -- LIVE state, not a content lookup, because a
+## nation that accedes mid-game is on no content table and a member whose vote
+## weighs zero is a member in name only (the review's second-class-member
+## finding). The council's division and the EP's seats both read this.
+var org_seats := {}
 
 # --- Economy -----------------------------------------------------------------
 
@@ -304,15 +326,7 @@ var inflation_impulse_pct: float = 0.0
 
 # --- The bloc ------------------------------------------------------------------
 
-## This nation's standing net contribution to the bloc, percent of its own GDP.
-## Signed: a net receiver carries a negative figure. Derived once at new-game by
-## Bloc.net_positions() from starting prosperity and never recomputed, which is
-## the same static-fact treatment eu_member and neighbours get -- and it is what
-## puts the contribution inside start_deficit_pct_gdp, where an inherited drag
-## the player did not choose belongs. Exactly 0.0 for a non-member.
-var bloc_base_transfer_pct_gdp: float = 0.0
-
-## What the bloc actually costs this month: the standing contribution above, plus
+## What the orgs actually cost this month: the standing contribution above, plus
 ## whatever the rules in force move it by, plus the penalties charged for defying
 ## them. Written by Bloc.tick_month() and read by Budget.recompute() as a line of
 ## its own -- not a sixth SPENDING_KEYS entry, because docs/tiers/v1.md section 6
@@ -1410,8 +1424,10 @@ var start_judicial_independence: float = 0.0
 func duplicate_state():
 	var s = new()
 	s.id = id
-	s.eu_member = eu_member
 	s.neighbours = neighbours.duplicate()
+	s.orgs = orgs.duplicate()
+	s.org_base_transfer_pct_gdp = org_base_transfer_pct_gdp.duplicate(true)
+	s.org_seats = org_seats.duplicate(true)
 
 	s.sector_output = sector_output.duplicate(true)
 	s.region_gdp_eur_bn = region_gdp_eur_bn.duplicate(true)
@@ -1462,7 +1478,6 @@ func duplicate_state():
 	s.inflation_anchor_pct = inflation_anchor_pct
 	s.inflation_impulse_pct = inflation_impulse_pct
 
-	s.bloc_base_transfer_pct_gdp = bloc_base_transfer_pct_gdp
 	s.bloc_transfer_pct_gdp = bloc_transfer_pct_gdp
 	s.bloc_burden = bloc_burden
 	s.start_bloc_burden = start_bloc_burden
@@ -1638,8 +1653,10 @@ func duplicate_state():
 func to_dict() -> Dictionary:
 	return {
 		"id": id,
-		"eu_member": eu_member,
 		"neighbours": neighbours,
+		"orgs": orgs,
+		"org_base_transfer_pct_gdp": org_base_transfer_pct_gdp,
+		"org_seats": org_seats,
 
 		"sector_output": sector_output,
 		"region_gdp_eur_bn": region_gdp_eur_bn,
@@ -1690,7 +1707,6 @@ func to_dict() -> Dictionary:
 		"inflation_anchor_pct": inflation_anchor_pct,
 		"inflation_impulse_pct": inflation_impulse_pct,
 
-		"bloc_base_transfer_pct_gdp": bloc_base_transfer_pct_gdp,
 		"bloc_transfer_pct_gdp": bloc_transfer_pct_gdp,
 		"bloc_burden": bloc_burden,
 		"start_bloc_burden": start_bloc_burden,
@@ -1850,7 +1866,6 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var s = new()
 	s.id = d.get("id", "")
-	s.eu_member = bool(d.get("eu_member", false))
 	s.neighbours = d.get("neighbours", [])
 
 	# RE-FLOATED KEY BY KEY, like every other float-valued dictionary in this file
@@ -1947,12 +1962,25 @@ static func from_dict(d: Dictionary):
 
 	# The pair of fields that earns V1.3d's SAVE_VERSION bump, and the reason is
 	# the one game_state.gd's own comment states rather than a new one. An absent
-	# bloc_base_transfer_pct_gdp reads as 0.0 -- a France that pays nothing into a
-	# budget it has always paid into -- and an absent start_bloc_burden reads as
+	# An absent start_bloc_burden reads as
 	# 0.0 against a live burden, which permanently MIS-SIGNS the europe issue: a
 	# player who loaded a save while in breach would be scored as though the
 	# breach were new. Both are eu_member/neighbours' case, not agreements' case.
-	s.bloc_base_transfer_pct_gdp = float(d.get("bloc_base_transfer_pct_gdp", 0.0))
+	# orgs entries are re-Stringed and re-sorted, so a save that somehow carried
+	# an unsorted array reloads into the order every reader iterates. The base
+	# transfer dict is re-floated key by key: JSON hands a whole-number value
+	# back as an int, and the budget line would otherwise depend on how a figure
+	# happened to be saved.
+	s.orgs = []
+	for org_id in d.get("orgs", []):
+		s.orgs.append(String(org_id))
+	s.orgs.sort()
+	s.org_base_transfer_pct_gdp = d.get("org_base_transfer_pct_gdp", {})
+	for org_id in s.org_base_transfer_pct_gdp.keys():
+		s.org_base_transfer_pct_gdp[org_id] = float(s.org_base_transfer_pct_gdp[org_id])
+	s.org_seats = d.get("org_seats", {})
+	for org_id in s.org_seats.keys():
+		s.org_seats[org_id] = int(s.org_seats[org_id])
 	s.bloc_transfer_pct_gdp = float(d.get("bloc_transfer_pct_gdp", 0.0))
 	s.bloc_burden = float(d.get("bloc_burden", 0.0))
 	s.start_bloc_burden = float(d.get("start_bloc_burden", 0.0))

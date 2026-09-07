@@ -214,7 +214,7 @@ func _check_load_bearing_cross_check() -> void:
 	var fixture_loader := DataLoader.new()
 	fixture_loader.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/eu_parliament.json", "res://tests/fixtures/laws_bad_amendment",
+		"res://tests/fixtures/laws_bad_amendment",
 	)
 	var named_both := false
 	for e in fixture_loader.errors:

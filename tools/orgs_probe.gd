@@ -1,11 +1,11 @@
 extends SceneTree
 
-## Bloc envelope probe: godot --headless --script res://tools/bloc_probe.gd
+## Org envelope probe: godot --headless --script res://tools/orgs_probe.gd
 ##
 ## V1.3d's named measurement. Table (a) runs BEFORE anything else in the session
 ## exists, because it is pure arithmetic over src/sim/opinion_constants.gd and it
 ## is what sets the six BLOC_SALIENCE_BASE rows every later step depends on.
-## Tables (b) onward need src/sim/bloc.gd and are run after the module and before
+## Tables (b) onward need src/sim/orgs.gd and are run after the module and before
 ## data/bloc-proposals/*.json -- the same split tools/coercion_probe.gd used, which
 ## preloads src/sim/coercion.gd and still preceded measures.json.
 ##
@@ -40,7 +40,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -125,6 +125,8 @@ func _init() -> void:
 ## tools/trade_probe.gd did for a weight -- it is what lets the measurement set
 ## the content's numbers instead of validating them afterwards.
 func _adopt(state, proposal) -> void:
+	if not state.orgs.has(proposal.org_id):
+		return
 	var entry := {
 		"name": proposal.proposal_name,
 		"field": "", "op": "", "value": 0.0, "tolerance": 1.0, "severity": 0.0,
@@ -137,7 +139,7 @@ func _adopt(state, proposal) -> void:
 		entry["value"] = float(proposal.constraint["value"])
 		entry["tolerance"] = float(proposal.constraint["tolerance"])
 		entry["severity"] = float(proposal.constraint["severity"])
-	state.bloc["rules"][proposal.id] = entry
+	state.orgs[proposal.org_id]["rules"][proposal.id] = entry
 
 
 ## Every loaded proposal that actually constrains policy, in agenda order.
@@ -256,27 +258,31 @@ func _transfer_table(loader) -> void:
 	])
 	print("-".repeat(70))
 
-	var positions := Bloc.net_positions(loader)
-	var total_gdp := 0.0
-	var total_pop := 0.0
-	for n in loader.nations.values():
-		if n.eu_member:
-			total_gdp += float(n.gdp_eur_bn)
-			total_pop += float(n.population)
-	var mean: float = total_gdp * 1.0e9 / total_pop / 1000.0
+	for org in loader.orgs:
+		if not org.net_transfers:
+			continue
+		print("-- org: %s --" % org.name)
+		var positions := Orgs.net_positions(loader, org.id)
+		var total_gdp := 0.0
+		var total_pop := 0.0
+		for n in loader.nations.values():
+			if org.is_member(n.id):
+				total_gdp += float(n.gdp_eur_bn)
+				total_pop += float(n.population)
+		var mean: float = total_gdp * 1.0e9 / total_pop / 1000.0
 
-	var ids: Array = loader.nations.keys()
-	ids.sort()
-	for id in ids:
-		var n = loader.nations[id]
-		# EUR thousand per person: gdp is in billions and population is absolute, so
-		# the raw ratio prints as 0.0000 and says nothing.
-		var per_capita: float = float(n.gdp_eur_bn) * 1.0e9 / float(n.population) / 1000.0
-		var net: float = float(positions.get(id, 0.0))
-		print("%-6s %8s %10.1f %12.3f %12.3f %10.2f   %s" % [
-			id, "yes" if n.eu_member else "no", per_capita, per_capita / mean, net,
-			net / 0.50, "yes" if absf(net) >= TRANSFER_LEGIBLE_PCT_GDP else "NO",
-		])
+		var ids: Array = loader.nations.keys()
+		ids.sort()
+		for id in ids:
+			var n = loader.nations[id]
+			# EUR thousand per person: gdp is in billions and population is absolute, so
+			# the raw ratio prints as 0.0000 and says nothing.
+			var per_capita: float = float(n.gdp_eur_bn) * 1.0e9 / float(n.population) / 1000.0
+			var net: float = float(positions.get(id, 0.0))
+			print("%-6s %8s %10.1f %12.3f %12.3f %10.2f   %s" % [
+				id, "yes" if org.is_member(id) else "no", per_capita, per_capita / mean, net,
+				net / 0.50, "yes" if absf(net) >= TRANSFER_LEGIBLE_PCT_GDP else "NO",
+			])
 	print("-".repeat(70))
 	print("A non-member must read EXACTLY 0.000, by construction rather than by")
 	print("rounding -- it is half of what keeps the balance re-run's diff readable.")
@@ -290,9 +296,21 @@ func _transfer_table(loader) -> void:
 ## because a vote that never changes the outcome is the decorative-axis failure
 ## docs/scenario-model.md records, with a ballot box drawn on it.
 func _vote_table(loader) -> void:
-	print("\n\n########## (d) is the council a real division? ##########")
+	print("
+
+########## (d) is every council a real division? ##########")
+	var state = GameState.new_game(loader, "FRA")
+	for org in loader.orgs:
+		if org.council:
+			_vote_table_for(state, loader, org)
+
+
+func _vote_table_for(state, loader, org) -> void:
+	var org_id: String = org.id
+	print("
+-- council: %s --" % org.name)
 	print("Members appraise a proposal against their own books since V1.3e -- this was")
-	print("the DECLARED STOPGAP and it is discharged. Weighted by ep_seats, %.0f%% to carry." % (BK.PASS_SEAT_FRACTION * 100.0))
+	print("the DECLARED STOPGAP and it is discharged. Weighted by the org's own seats, %.0f%% to carry." % (BK.PASS_SEAT_FRACTION * 100.0))
 	print("Threshold %.2f. The sweep that set it is tools/foreign_policy_probe.gd (c)." % BK.SUPPORT_THRESHOLD)
 	print("")
 	print("Read from FRANCE's seat. `pivotal` is the one that matters: it is true when")
@@ -304,34 +322,35 @@ func _vote_table(loader) -> void:
 	])
 	print("-".repeat(80))
 
-	var state = GameState.new_game(loader, "FRA")
-	var members := Bloc.members(state, loader)
+	var agenda: Array = loader.org_proposals.get(org_id, [])
+	var members := Orgs.members(state, org_id)
 	var seats_total := 0
 	for id in members:
-		seats_total += loader.eu.ep_seats(id)
+		seats_total += org.seats(id)
 	var needed: int = int(ceil(BK.PASS_SEAT_FRACTION * float(seats_total)))
 
-	# Where the eight other members actually sit, because the sweep below is
+	# Where the other members actually sit, because the sweep below is
 	# meaningless without it: if they are clustered, no sigma produces a spread and
 	# the fix is the proposals' POSITIONS rather than the constant.
 	print("Member governments, by seats:")
 	for id in members:
 		var pos: Dictionary = state.nations[id].coalition_position
 		print("  %-4s %3d seats   econ %+.3f  social %+.3f" % [
-			id, loader.eu.ep_seats(id), float(pos["economic"]), float(pos["social"]),
+			id, org.seats(id), float(pos["economic"]), float(pos["social"]),
 		])
 	print("")
 
 	var pivotal_count := 0
-	var player_seats: int = loader.eu.ep_seats("FRA")
+	var player_is_member: bool = state.nations[state.player_nation_id].orgs.has(org_id)
+	var player_seats: int = org.seats(state.player_nation_id) if player_is_member else 0
 	var others_total: int = seats_total - player_seats
-	for p in loader.bloc_proposals:
+	for p in agenda:
 		var others_for := 0
 		for id in members:
-			if id == "FRA":
+			if id == state.player_nation_id:
 				continue
-			if Bloc.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
-				others_for += loader.eu.ep_seats(id)
+			if Orgs.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
+				others_for += org.seats(id)
 
 		# Three outcomes, because the threshold is a share of the seats CAST. Voting
 		# for adds to the numerator; voting against adds to the denominator and
@@ -347,14 +366,14 @@ func _vote_table(loader) -> void:
 			"pass" if with_for else "fail",
 			"pass" if with_against else "fail",
 			"pass" if with_abstain else "fail",
-			others_for, "%.2f" % Bloc.support(state, state.player(), p),
+			others_for, "%.2f" % Orgs.support(state, state.player(), p),
 			"YES" if with_for != with_against else "no",
 		])
 	print("-".repeat(80))
-	print("Member seats %d, France holds %d, the other eight %d. %.0f%% of the seats" % [
-		seats_total, player_seats, others_total, BK.PASS_SEAT_FRACTION * 100.0,
+	print("Member seats %d, %s holds %d, the others %d. %.0f%% of the seats" % [
+		seats_total, state.player_nation_id, player_seats, others_total, BK.PASS_SEAT_FRACTION * 100.0,
 	])
-	print("CAST carries it -- so %d of %d with France voting, %d of %d without." % [
+	print("CAST carries it -- so %d of %d with the player voting, %d of %d without." % [
 		needed, seats_total,
 		int(ceil(BK.PASS_SEAT_FRACTION * float(others_total))), others_total,
 	])
@@ -362,15 +381,14 @@ func _vote_table(loader) -> void:
 	print("rather than a slower no. Against the whole council's strength instead of")
 	print("the seats cast, those two columns would be identical for every row forever.")
 	print("")
-	print("%d of %d proposals are decided by France's own vote." % [pivotal_count, loader.bloc_proposals.size()])
+	print("%d of %d proposals are decided by the player's own vote." % [pivotal_count, agenda.size()])
 	if pivotal_count == 0:
 		print("NONE. The player's vote never changes an outcome, which makes the council a")
 		print("cutscene. SUPPORT_THRESHOLD or PASS_SEAT_FRACTION has to move.")
-	elif pivotal_count == loader.bloc_proposals.size():
+	elif pivotal_count == agenda.size():
 		print("ALL of them, which is the other failure: if the player always decides, the")
-		print("bloc is a second legislature they happen to control rather than one member")
+		print("org is a second legislature they happen to control rather than one member")
 		print("among many.")
-
 
 
 ## V1.3d's SIGMA SWEEP lived here and is DELETED at V1.3e.
@@ -396,7 +414,7 @@ func _tick(state, loader, i: int) -> void:
 
 	Economy.tick_month(state)
 	Budget.tick_month(state)
-	Bloc.tick_month(state, loader)
+	Orgs.tick_month(state, loader)
 	Opinion.tick_month(state)
 	var entry := Budget.snapshot(state)
 	entry.merge(Opinion.snapshot(state))

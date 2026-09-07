@@ -99,7 +99,7 @@ func _check_resting_agrees_with_diplomacy() -> void:
 	for pair in Relations.all_pairs(_loader.nations.keys()):
 		var a: String = pair[0]
 		var b: String = pair[1]
-		var by_diplomacy := Diplomacy.resting(_loader.nations[a], _loader.nations[b])
+		var by_diplomacy := Diplomacy.resting(_loader.nations[a], _loader.nations[b], _shared_bonus(a, b))
 		# The seeded value IS Diplomacy.resting(), so a non-zero amity at new-game
 		# is exactly the two derivations disagreeing.
 		var drift := ForeignPolicy.amity(_state, a, b) - K.AMITY_IDEOLOGY_WEIGHT * (
@@ -437,3 +437,12 @@ func _finish() -> void:
 	for failure in _failures:
 		printerr("FAIL: %s" % failure)
 	quit(1)
+
+## V3.2: the co-membership term is content -- the sum over the orgs both nations
+## belong to on the register. Tests that exercise one pair at rest pass it in.
+func _shared_bonus(a_id: String, b_id: String) -> float:
+	var total := 0.0
+	for org in _loader.orgs:
+		if org.is_member(a_id) and org.is_member(b_id):
+			total += org.relations_bonus
+	return total

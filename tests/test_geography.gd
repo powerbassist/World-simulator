@@ -382,7 +382,7 @@ func _expect_fixture_error(regions_dir: String, needle: String, what: String) ->
 	var fixture := DataLoader.new()
 	fixture.load_all(
 		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
-		"res://data/eu_parliament.json", "res://data/laws",
+		"res://data/laws",
 		"res://data/political-systems", "res://data/scenarios",
 		"res://data/diplomatic-actions", "res://data/geo/world.geojson",
 		"res://data/bloc-proposals", "res://data/people", "res://data/companies",

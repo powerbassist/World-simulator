@@ -23,7 +23,7 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Bloc = preload("res://src/sim/bloc.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -432,7 +432,23 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## player's own meetings hold -- a dropped register hands every spoken-to region back
 ## at full reach, `campaign_started`'s exploit one level up: the tour un-spoken).
 ## Both absent read as the truth about every version-29 save.
-const SAVE_VERSION := 31
+##
+## V3.2 bumps this to 32 on THREE fields, all the same rename: `GameState.bloc`
+## becomes `GameState.orgs` -- one register per council org, not one hardcoded
+## object -- `NationState.eu_member` becomes `NationState.orgs` (the sorted list
+## of orgs this nation belongs to, LIVE state because an accession rewrites it),
+## and `NationState.bloc_base_transfer_pct_gdp` becomes
+## `.org_base_transfer_pct_gdp` (per org). All three are eu_member/neighbours'
+## case, bloc-model's own SAVE_VERSION argument verbatim: an absent register is
+## no council and no rules, which for an org whose premise is that its rules are
+## always in force is wrong rather than empty -- and across the RENAME the old
+## keys would be silently unread, dropping rules in force and a member's
+## standing transfer. Also serialised: `GameState.accessions` (membership
+## fights in negotiation; absent reads [], which is the truth about every save
+## that never began one -- measures' case at V1.3c). `GameState.org_effects` is
+## NOT serialised: static content, re-derived on load by Orgs.rebuild_static()
+## -- project_sited_pct's case at V2.7, and the absence is pinned by tests.
+const SAVE_VERSION := 32
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -539,8 +555,30 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## `next_index` and `months_to_next` are the whole scheduler. There is no RNG
 ## anywhere in it, so the council survives a save and a reload with no generator
 ## state to serialise -- the same property docs/opinion-model.md's polling noise
-## gets for free. Written ONLY by src/sim/bloc.gd. See docs/bloc-model.md.
-var bloc := {}
+## gets for free. Written ONLY by src/sim/orgs.gd. See docs/bloc-model.md and,
+## as of V3.2, docs/orgs-model.md.
+##
+## One register per council org -- org_id -> {rules, pending, last_vote,
+## next_index, months_to_next} -- for every org whose content carries
+## `council: true`. The V1.3d register, one instance per council. Written ONLY
+## by src/sim/orgs.gd. Serialised; the bloc->orgs rename is what earns
+## SAVE_VERSION 32, because rules in force dropped silently across a rename are
+## wrong rather than empty.
+var orgs := {}
+
+## Each org's standing prices, org_id -> {relations_bonus, trade_bonus}. A
+## snapshot of STATIC content taken at new-game and re-derived on load
+## (Orgs.rebuild_static), so src/sim/foreign_policy.gd and src/sim/trade.gd can
+## price co-membership without a loader on their hot paths. NOT serialised --
+## project_sited_pct's case at V2.7; tests pin the absence and the re-derive.
+var org_effects := {}
+
+## Membership fights in their negotiation countdown -- [{nation_id, org_id,
+## kind, months_left, months_total}] -- after a referendum has passed and
+## before membership flips. Written ONLY by src/sim/orgs.gd. Serialised;
+## absent reads [], which is the truth about every save that never began a
+## fight (measures' case at V1.3c). Empty until the V3.2 fights land.
+var accessions: Array = []
 
 ## Defensive pacts -- V1.3g, and the fifth register rather than a fifth KIND of
 ## state. Symmetric pair state on the same key builder relations and agreements
@@ -716,12 +754,21 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 			gs.errors.append("scenario '%s' is authored for nation '%s', not the player's '%s'" % [scenario_id, scenario.nation_id, player_id])
 			scenario = null
 
-	# Before the loop, because a nation's net position is relative to the bloc mean
-	# and so needs every member at once -- and it has to be in hand INSIDE
-	# _build_nation(), where the starting deficit that opinion measures against is
-	# captured. Derived from the loader's static data, so it is a fact about the
-	# starting world rather than something that drifts with live GDP.
-	var net_positions := Bloc.net_positions(loader)
+	# Before the loop, because a nation's net position is relative to EACH ORG'S
+	# OWN mean and so needs every member at once -- and it has to be in hand
+	# INSIDE _build_nation(), where the starting deficit that opinion measures
+	# against is captured. Derived from the loader's static data, so it is a fact
+	# about the starting world rather than something that drifts with live GDP.
+	# V3.2: per org, and only for orgs that run the transfer machinery.
+	var org_base_positions := {}
+	for org in loader.orgs:
+		if not org.net_transfers:
+			continue
+		var positions := Orgs.net_positions(loader, org.id)
+		for id in positions.keys():
+			if not org_base_positions.has(id):
+				org_base_positions[id] = {}
+			org_base_positions[id][org.id] = float(positions[id])
 
 	var ids: Array = loader.nations.keys()
 	ids.sort()
@@ -729,7 +776,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var party_list: Array = loader.parties.get(id, [])
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, loader.eu, loader.political_systems, gs.errors, applied, float(net_positions.get(id, 0.0)))
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, Orgs.parliament(loader), loader.political_systems, gs.errors, applied, org_base_positions.get(id, {}))
 
 	# AFTER the build loop rather than inside _build_nation(), and the placement is the
 	# argument: that function takes the nation's own content and nothing else, where a
@@ -755,22 +802,25 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 			if partner_id != ns.id:
 				ns.trade_baseline_by_partner[partner_id] = gs.nations[partner_id].growth_annual_pct
 
+	# BEFORE seed_relations(), because resting relations now read the co-membership
+	# bonus through Org.shared_bonus(), which reads NationState.orgs -- the
+	# membership lists must exist before the first pair is seeded. V3.2: this is
+	# also where one register per council org, the static effects snapshot, every
+	# nation's membership list and per-org base transfers are seeded. Nothing is
+	# in force at new-game, so every nation's burden is exactly zero and
+	# start_bloc_burden is too -- which is what makes the europe issue exactly
+	# zero at new-game like every other, with no calibration term.
+	Orgs.init_state(gs, loader)
+
 	# After every nation exists, because a pair needs both halves, and outside
 	# _build_nation() because relations are the one piece of starting state that
-	# is not a nation's own. Reads the loader's Nation objects (eu_member,
-	# neighbours) rather than NationState -- neither input is live state and
-	# neither ever changes. See docs/diplomacy-model.md.
+	# is not a nation's own. Reads NationState (org membership, neighbours)
+	# rather than NationState-unaware content -- membership is live state the day
+	# an accession fight is won. See docs/diplomacy-model.md.
 	Diplomacy.seed_relations(gs, loader)
 	# Next to seed_relations() and for the same reason: it needs every nation to
 	# exist, which the per-nation init_nation() cannot promise. V1.3f.
 	Diplomacy.seed_agenda(gs)
-
-	# After every nation exists, for the same reason relations are seeded here: the
-	# council is not any one nation's property. Nothing is in force at new-game, so
-	# every nation's burden is exactly zero and start_bloc_burden is too -- which is
-	# what makes the europe issue exactly zero at new-game like every other, with no
-	# calibration term.
-	Bloc.init_state(gs)
 
 	return gs
 
@@ -781,7 +831,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 ## where that value first enters live state. Everything downstream (discipline,
 ## the coalition, the cabinet, dissolution) then reads the overridden figures
 ## and needs no scenario awareness of its own. See docs/scenario-model.md.
-static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, eu, political_systems: Dictionary, errors: Array[String], scenario = null, bloc_net_position_pct_gdp: float = 0.0):
+static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, parliament, political_systems: Dictionary, errors: Array[String], scenario = null, org_base_positions: Dictionary = {}):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -789,7 +839,6 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 
 	# Static facts, copied once and never mutated, so the trade weight can read
 	# them without a loader. See NationState's own declaration for why that matters.
-	ns.eu_member = n.eu_member
 	# assign() rather than duplicate(): Nation.neighbours is an Array[String], and
 	# duplicate() preserves the element type. NationState's copy is declared plain
 	# Array and has to stay one -- test_state_copy.gd walks every field generically
@@ -880,8 +929,16 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# opinion then measures every later deficit against. Set after that recompute,
 	# it would appear on the first monthly tick and read to the electorate as the
 	# player having just started paying it.
-	ns.bloc_base_transfer_pct_gdp = bloc_net_position_pct_gdp
-	ns.bloc_transfer_pct_gdp = bloc_net_position_pct_gdp
+	# V3.2: the standing transfer is the SUM over this nation's org bases -- only
+	# orgs with the transfer machinery contribute, so a France in the EU alone
+	# reads exactly what the old single-org figure read. Orgs.init_state() below
+	# re-derives the same sum from the seeded dictionaries; this line exists
+	# because Budget.recompute() runs INSIDE this function and consumes it.
+	var org_transfer_total := 0.0
+	for org_id in org_base_positions.keys():
+		org_transfer_total += float(org_base_positions[org_id])
+	ns.org_base_transfer_pct_gdp = org_base_positions
+	ns.bloc_transfer_pct_gdp = org_transfer_total
 
 	ns.trend_annual_pct = Economy.trend_pct(ns)
 	ns.growth_annual_pct = ns.trend_annual_pct
@@ -937,7 +994,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# After recompute, so the starting deficit opinion measures against is real.
 	Opinion.init_nation(ns, scenario.bloc_approval if scenario != null else {})
 
-	Elections.init_nation(ns, n, party_list, eu, scenario.seat_share if scenario != null else {})
+	Elections.init_nation(ns, n, party_list, parliament, scenario.seat_share if scenario != null else {})
 	# Before Government, which reads discipline the moment it computes the first
 	# coalition bonus — seeding after formation would score that one government
 	# against an empty table.
@@ -1061,7 +1118,16 @@ func duplicate_state():
 	# now ticks Bloc, so a projection that dropped the council would report the
 	# penalties a defied rule is charging as never having existed -- and the budget
 	# panel is the one surface that promises "this is what will happen".
-	gs.bloc = bloc.duplicate(true)
+	# V3.2: the per-org registers, the accession countdowns and the static
+	# effects snapshot, copied for the reason the measures copy above states -- the budget
+	# projection ticks the councils, and a copy that dropped them would price a
+	# defied rule at nothing. org_effects is NOT serialised but IS live-read on
+	# every trade weight and resting relation, so a duplicate without it runs a
+	# different model from the original -- eu_member/neighbours' case, one level
+	# up from a save.
+	gs.orgs = orgs.duplicate(true)
+	gs.org_effects = org_effects.duplicate(true)
+	gs.accessions = accessions.duplicate(true)
 	# duplicate(true) rather than assignment, and for a sharper reason than the
 	# three above: Defence.tick_month() WRITES `deployments` on this copy when it
 	# reconciles obligations, so a shared reference would let a budget-panel repaint
@@ -1131,7 +1197,8 @@ func to_dict() -> Dictionary:
 		"relations": relations,
 		"agreements": agreements,
 		"measures": measures,
-		"bloc": bloc,
+		"orgs": orgs,
+		"accessions": accessions,
 		"pacts": pacts,
 		"deployments": deployments,
 		"met_months": met_months,
@@ -1243,12 +1310,16 @@ static func from_dict(d: Dictionary):
 	# int, and the burden arithmetic would otherwise depend on how a value happened
 	# to be saved. The scheduler's two counters are ints and must come back as ints,
 	# or the countdown compares a float against an int forever.
-	var raw_bloc: Dictionary = d.get("bloc", {})
-	if not raw_bloc.is_empty():
-		var rules := {}
-		for proposal_id in (raw_bloc.get("rules", {}) as Dictionary).keys():
-			var rule: Dictionary = raw_bloc["rules"][proposal_id]
-			rules[proposal_id] = {
+	# V3.2: the per-org registers and the accession countdowns, re-floated and
+	# re-inted the same way raw_bloc is -- a rule's severity and a register's two
+	# scheduler ints must come back as the types the arithmetic expects.
+	var raw_orgs: Dictionary = d.get("orgs", {})
+	for org_id in raw_orgs.keys():
+		var reg: Dictionary = raw_orgs[org_id]
+		var org_rules := {}
+		for proposal_id in (reg.get("rules", {}) as Dictionary).keys():
+			var rule: Dictionary = reg["rules"][proposal_id]
+			org_rules[proposal_id] = {
 				"name": rule.get("name", ""),
 				"field": rule.get("field", ""),
 				"op": rule.get("op", ""),
@@ -1259,16 +1330,33 @@ static func from_dict(d: Dictionary):
 				"since_year": int(rule.get("since_year", 0)),
 				"since_month": int(rule.get("since_month", 0)),
 			}
-		gs.bloc = {
-			"rules": rules,
-			"pending": raw_bloc.get("pending", {}),
-			"last_vote": raw_bloc.get("last_vote", {}),
-			"next_index": int(raw_bloc.get("next_index", 0)),
-			"months_to_next": int(raw_bloc.get("months_to_next", 0)),
+		var org_register := {
+			"rules": org_rules,
+			"pending": reg.get("pending", {}),
+			"last_vote": reg.get("last_vote", {}),
+			"next_index": int(reg.get("next_index", 0)),
+			"months_to_next": int(reg.get("months_to_next", 0)),
 		}
-		var pend: Dictionary = gs.bloc["pending"]
-		if not pend.is_empty():
-			pend["months_left"] = int(pend.get("months_left", 1))
+		var org_pend: Dictionary = org_register["pending"]
+		if not (org_pend as Dictionary).is_empty():
+			org_pend["months_left"] = int(org_pend.get("months_left", 1))
+		gs.orgs[org_id] = org_register
+
+	var raw_accessions: Array = d.get("accessions", [])
+	for entry in raw_accessions:
+		var fight: Dictionary = entry as Dictionary
+		gs.accessions.append({
+			"nation_id": String(fight.get("nation_id", "")),
+			"org_id": String(fight.get("org_id", "")),
+			"kind": String(fight.get("kind", "")),
+			# The PHASE is the state machine: _tick_accessions() matches on it, so
+			# a fight reloaded without it matches nothing, decrements nothing and
+			# is never removed -- membership frozen and every membership verb
+			# refused forever, with no error anywhere. The review's critical.
+			"phase": String(fight.get("phase", "")),
+			"months_left": int(fight.get("months_left", 0)),
+			"months_total": int(fight.get("months_total", 0)),
+		})
 
 	var hist: Array = d.get("history", [])
 	var typed_hist: Array[Dictionary] = []

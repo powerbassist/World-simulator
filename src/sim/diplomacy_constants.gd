@@ -37,7 +37,6 @@ const REST_BASE := 45.0
 
 ## Both nations in the EU. Live rather than degenerate: GBR and CHE are outside
 ## it, so eight of the ten share it and two do not.
-const EU_CO_MEMBER_BONUS := 15.0
 
 ## A shared land border, from Nation.neighbours. Smaller than co-membership
 ## because proximity cuts both ways -- neighbours cooperate more AND have more

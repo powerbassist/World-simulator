@@ -61,7 +61,7 @@ tags:
 - Export controls
 - ~~Resource dependency and who holds the supply~~ **Lifted to [[v2|V2.7]] and [[v2|V2.8]]** — import dependency is what an energy mix is *for*, which is why that block reaches [[trade-model]] and not only the budget.
 - Supply chain disruption propagating through trade links
-- Bloc accession and withdrawal as multi-year domestic fights
+- ~~Bloc accession and withdrawal as multi-year domestic fights~~ **Lifted to [[v3|V3.2]]** — the register made membership data, and the fight is referendum-first with an authored countdown ([[orgs-model]]).
 - UN-shaped international organisations, vetoes, resolutions
 - Treaty ratification fights in your own assembly
 - War declaration and strategic-level resolution — units, theatres, casualties. The domestic-politics half of defence (capability, deployments, alliance obligations) moved to [[v1|V1.3]]; this half stays here, because it is a second game

@@ -11,7 +11,11 @@
   },
   "flag": {
     "layout": "horizontal",
-    "bands": ["#ED2939", "#FFFFFF", "#ED2939"]
+    "bands": [
+      "#ED2939",
+      "#FFFFFF",
+      "#ED2939"
+    ]
   },
   "government": {
     "legislative": {
@@ -82,11 +86,11 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
     "pretender_person": "AUT_rudolf_v",
-    "eu": {
-      "member": true,
-      "ep_seats": 20
-    },
-    "neighbours": ["CHE", "DEU", "ITA"]
+    "neighbours": [
+      "CHE",
+      "DEU",
+      "ITA"
+    ]
   },
   "fiscal": {
     "_source": "authored",
@@ -141,7 +145,10 @@
       "growth_sd_pct": 1.664,
       "_from_year": 1990,
       "_to_year": 2024,
-      "_excludes": [2020, 2021]
+      "_excludes": [
+        2020,
+        2021
+      ]
     },
     "prices": {
       "inflation_pct": 2.457,
