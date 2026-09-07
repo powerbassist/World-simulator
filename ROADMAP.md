@@ -7,7 +7,7 @@ This document is **forward-looking**. What shipped is one line each in the table
 below; the corrections made along the way are in [[decision-log]]; the models are
 in the model notes.
 
-Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/v2.md](docs/tiers/v2.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
+Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/v2.md](docs/tiers/v2.md) · [docs/tiers/v3.md](docs/tiers/v3.md) · [docs/tiers/v4.md](docs/tiers/v4.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
 ## Two tracks
@@ -146,6 +146,28 @@ session that re-counts machines and surfaces before it splits.
 > 0.998 days/sec at max zoom under the same regime (P4's 0.50 was an unrecorded clock
 > pause), so the map block shipped off-screen culling against a restated frame-time gate
 > instead of a LOD platform ([docs/map-platform-model.md](docs/map-platform-model.md)).
+
+> [!warning] V4 — drafted 2026-09-07, NOT SIGNED; nothing in it starts before V3 closes
+> Drafted at the author's request off a cold count of the repository against their own
+> list of asks, and off a read of what Paradox actually ships. The organising goal —
+> **the world wants things** — is that this game currently contains nothing that wants
+> anything: 71 portraits are inert, the player is never told what they are playing for,
+> and 7 events fire in a career. **Ten blocks: the agency call settled first, then a
+> player agenda, a character layer, events at scale (7 -> 120-150, with chains, hooks,
+> severity, art and an AI chooser), the council as a real fight, industry at 18 -> ~200
+> firms that act, the reading surface (top bar 4 -> 10-12, alerts, nested tooltips, an
+> outliner, message settings), ceremony and sound, the stylised deep-zoom map, and the
+> roster past the EU-27.** Estimated 28-38 sessions:
+> [docs/tiers/v4.md](docs/tiers/v4.md). **Two things about it are load-bearing and
+> neither is content.** First, it opens on **V3.0's still-open route call** — best
+> active play measured **-2.00 approval points against idle**, so content authored on
+> that loop is content on mush, which is [docs/tiers/v3.md](docs/tiers/v3.md)'s own
+> *agency before content* argument restated a tier later because the gate was not met.
+> Second, V4.2 **deliberately overturns [docs/events-model.md](docs/events-model.md)
+> §3's office-never-a-person rule** — the session that builds it rewrites that rule at
+> the rule itself, with its reason; this draft does not pre-emptively edit it.
+> Eleven [docs/tiers/someday.md](docs/tiers/someday.md) rows are struck as lifts.
+> **The author's sequencing call at the draft's gate: finish V3 as written first.**
 
 **Four calls were made before any code, and two of them are the tier's whole shape.**
 
