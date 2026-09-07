@@ -1251,7 +1251,7 @@ func _open_the_council() -> void:
 		var seats_against := 0
 		var seats_total := 0
 		for id in Orgs.members(state, org_id):
-			var seats: int = _main._loader.orgs_by_id[org_id].seats(id)
+			var seats: int = Orgs.live_seats(state, org_id, id)
 			seats_total += seats
 			var backs: bool = Orgs.support(state, state.nations[id], divided) >= BlocK.SUPPORT_THRESHOLD
 			votes[id] = Orgs.VOTE_FOR if backs else Orgs.VOTE_AGAINST

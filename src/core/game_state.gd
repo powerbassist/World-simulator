@@ -1349,6 +1349,11 @@ static func from_dict(d: Dictionary):
 			"nation_id": String(fight.get("nation_id", "")),
 			"org_id": String(fight.get("org_id", "")),
 			"kind": String(fight.get("kind", "")),
+			# The PHASE is the state machine: _tick_accessions() matches on it, so
+			# a fight reloaded without it matches nothing, decrements nothing and
+			# is never removed -- membership frozen and every membership verb
+			# refused forever, with no error anywhere. The review's critical.
+			"phase": String(fight.get("phase", "")),
 			"months_left": int(fight.get("months_left", 0)),
 			"months_total": int(fight.get("months_total", 0)),
 		})

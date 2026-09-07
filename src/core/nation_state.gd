@@ -36,6 +36,14 @@ var orgs := []
 ## 0.0 by `.get(org_id, 0.0)` -- the old exact-zero property, per org.
 var org_base_transfer_pct_gdp := {}
 
+## This nation's voting weight PER ORG it belongs to. Seeded at new-game from
+## the content's seat table and rewritten by the accession flip from the org's
+## authored `accession_seats` -- LIVE state, not a content lookup, because a
+## nation that accedes mid-game is on no content table and a member whose vote
+## weighs zero is a member in name only (the review's second-class-member
+## finding). The council's division and the EP's seats both read this.
+var org_seats := {}
+
 # --- Economy -----------------------------------------------------------------
 
 var sector_output := {}  # String -> float, EUR bn. Sums to gdp_eur_bn exactly.
@@ -1419,6 +1427,7 @@ func duplicate_state():
 	s.neighbours = neighbours.duplicate()
 	s.orgs = orgs.duplicate()
 	s.org_base_transfer_pct_gdp = org_base_transfer_pct_gdp.duplicate(true)
+	s.org_seats = org_seats.duplicate(true)
 
 	s.sector_output = sector_output.duplicate(true)
 	s.region_gdp_eur_bn = region_gdp_eur_bn.duplicate(true)
@@ -1647,6 +1656,7 @@ func to_dict() -> Dictionary:
 		"neighbours": neighbours,
 		"orgs": orgs,
 		"org_base_transfer_pct_gdp": org_base_transfer_pct_gdp,
+		"org_seats": org_seats,
 
 		"sector_output": sector_output,
 		"region_gdp_eur_bn": region_gdp_eur_bn,
@@ -1968,6 +1978,9 @@ static func from_dict(d: Dictionary):
 	s.org_base_transfer_pct_gdp = d.get("org_base_transfer_pct_gdp", {})
 	for org_id in s.org_base_transfer_pct_gdp.keys():
 		s.org_base_transfer_pct_gdp[org_id] = float(s.org_base_transfer_pct_gdp[org_id])
+	s.org_seats = d.get("org_seats", {})
+	for org_id in s.org_seats.keys():
+		s.org_seats[org_id] = int(s.org_seats[org_id])
 	s.bloc_transfer_pct_gdp = float(d.get("bloc_transfer_pct_gdp", 0.0))
 	s.bloc_burden = float(d.get("bloc_burden", 0.0))
 	s.start_bloc_burden = float(d.get("start_bloc_burden", 0.0))

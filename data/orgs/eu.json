@@ -22,6 +22,7 @@
   "net_transfers": true,
   "relations_bonus": 15.0,
   "trade_bonus": 0.50,
+  "accession_seats": 76,
   "accession_months": 24,
   "withdrawal_months": 24,
   "accession_position": { "economic": -0.15, "social": 0.05 },

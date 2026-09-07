@@ -52,6 +52,14 @@ var trade_bonus: float = 0.0
 var accession_months: int = 0
 var withdrawal_months: int = 0
 
+## The voting weight a NEW member enters with, on the day the accession flips.
+## Authored per council org because the seats table is authored (the EP's real
+## allocation, NATO's population-shaped weights) and a joiner needs a number
+## from the same table's world -- code deriving one would be a second seat
+## arithmetic living outside the content that owns seats. 0 on a non-council
+## org, where no weight is ever read.
+var accession_seats: int = 0
+
 ## Where the ACCESSION or WITHDRAWAL question is put on the two-axis ideology
 ## space. Referendum.bloc_yes() scores YES here against the size-weighted
 ## status quo, so these two positions are what make a fight hard or easy --
@@ -134,6 +142,7 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 
 	org.accession_months = int(raw.get("accession_months", 0))
 	org.withdrawal_months = int(raw.get("withdrawal_months", 0))
+	org.accession_seats = int(raw.get("accession_seats", 0))
 	for key in ["accession_months", "withdrawal_months"]:
 		var m := int(org.get(key))
 		if m != 0 and (m < OrgK.MIN_ACCESSION_MONTHS or m > OrgK.MAX_ACCESSION_MONTHS):

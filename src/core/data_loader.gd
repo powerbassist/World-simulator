@@ -1536,6 +1536,13 @@ func _load_orgs(orgs_dir: String) -> void:
 			if not nations.has(member_id):
 				errors.append("orgs: %s lists member '%s', which is not a loaded nation" % [org.id, member_id])
 
+	# A council org must carry what a new member enters with: the flip writes
+	# it as live seat state, and a joiner with no weight is a member whose vote
+	# never counts -- the second-class-member failure, refused at load.
+	for org in orgs:
+		if org.council and org.accession_seats < 1:
+			errors.append("orgs: %s holds a council but carries no accession_seats" % org.id)
+
 	# At most one parliament, because Elections seeds the EP clock from "the org
 	# that carries one" and two of them would make that phrase ambiguous.
 	var parliament_count := 0

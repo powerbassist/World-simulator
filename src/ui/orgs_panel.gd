@@ -51,6 +51,12 @@ var _close_button: Button
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
 
+## A verb the machine refused, spoken on the NEXT refresh rather than appended
+## and immediately queue_free'd -- the first version added the line and then
+## marked the panel dirty, so the refresh erased it before a frame passed and
+## the message was a dead write.
+var _refusal_text := ""
+
 
 func _ready() -> void:
 	# 620 rather than the 420 this shipped with, and the screenshot pass is why: at
@@ -127,6 +133,10 @@ func _refresh() -> void:
 
 	var memberships: int = ns.orgs.size()
 	_title.text = "Organisations — %d, %d of them yours" % [_loader.orgs.size(), memberships]
+
+	if not _refusal_text.is_empty():
+		PanelKit.line(_body, _refusal_text)
+		_refusal_text = ""
 
 	for org in _loader.orgs:
 		if ns.orgs.has(org.id):
@@ -381,8 +391,11 @@ func _on_membership(org_id: String, joining: bool) -> void:
 	var result: Dictionary = Orgs.begin_accession(_state, _loader, ns, org_id) if joining 		else Orgs.begin_withdrawal(_state, _loader, ns, org_id)
 	if not bool(result.get("ok", false)):
 		# Refused at the machine; the tooltip said why already, but a press that
-		# did nothing is the silent-failure class, so the reason is spoken.
-		PanelKit.line(_body, "Refused: %s" % String(result.get("reason", "")))
+		# did nothing is the silent-failure class, so the reason is spoken -- on
+		# the next refresh, which the dirty flag triggers. Carried as a member
+		# rather than appended: a line added here is queue_free'd by the very
+		# refresh this mark schedules.
+		_refusal_text = "Refused: %s" % String(result.get("reason", ""))
 		_dirty = true
 		return
 	acted.emit(before, "Membership referendum called: %s %s %s" % [

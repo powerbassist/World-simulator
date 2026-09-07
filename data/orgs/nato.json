@@ -34,6 +34,7 @@
   "net_transfers": false,
   "relations_bonus": 0.0,
   "trade_bonus": 0.0,
+  "accession_seats": 9,
   "accession_months": 12,
   "withdrawal_months": 12,
   "accession_position": {

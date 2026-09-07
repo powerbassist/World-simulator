@@ -83,11 +83,16 @@ static func init_state(state, loader) -> void:
 	for ns in state.nations.values():
 		ns.orgs = []
 		ns.org_base_transfer_pct_gdp = {}
+		ns.org_seats = {}
 	for org in loader.orgs:
 		var positions := net_positions(loader, org.id) if org.net_transfers else {}
 		for ns in state.nations.values():
 			if org.is_member(ns.id):
 				ns.orgs.append(org.id)
+				# Seat weight is LIVE state seeded from the authored table: the
+				# council's division reads it, so what a member weighs and who is
+				# a member come from the same register.
+				ns.org_seats[org.id] = org.seats(ns.id)
 				if org.net_transfers:
 					ns.org_base_transfer_pct_gdp[org.id] = float(positions.get(ns.id, 0.0))
 	# Sorted, because every reader -- shared_bonus(), the transfer sum, the
@@ -100,6 +105,36 @@ static func init_state(state, loader) -> void:
 		ns.bloc_transfer_pct_gdp = 0.0
 		for org_id in ns.orgs:
 			ns.bloc_transfer_pct_gdp += float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0))
+
+
+## The load path's OTHER half, and the fight machine's save-safety net. A fight
+## in its referendum phase advances by reading `ns.last_referendum_result`,
+## which is deliberately NOT serialised -- `last_project_result`'s case, a
+## display record of something that has already happened. So a game saved in
+## the one-month window after a vote resolved but before this machine consumed
+## it reloads with the pending register empty and the answer gone. The honest
+## resolution is the failed vote's: end the fight with membership unchanged.
+## The domestic price was charged at the resolve, before the save; no outcome
+## is invented; the player is not stranded -- the review's critical finding
+## had `phase` dropped at load, which left fights matching NOTHING and every
+## membership verb refused forever. A fight in negotiation reloads intact: its
+## countdown is serialised state and needs no result to advance.
+static func reconcile_on_load(state, loader) -> void:
+	var doomed := []
+	for i in state.accessions.size():
+		var fight: Dictionary = state.accessions[i]
+		if String(fight.get("phase", "")) != "referendum":
+			continue
+		var ns = state.nations.get(String(fight.get("nation_id", "")))
+		var question := String(fight.get("kind", "")) + ":" + String(fight.get("org_id", ""))
+		# Still campaigning -- the pending register round-trips and the vote has
+		# not happened yet. Leave it alone.
+		if ns != null and String(ns.referendum_pending.get("law_id", "")) == question:
+			continue
+		doomed.append(i)
+	doomed.reverse()
+	for i in doomed:
+		state.accessions.remove_at(i)
 
 
 ## The load-path half of init_state: GameState.org_effects is a snapshot of
@@ -122,25 +157,41 @@ static func rebuild_static(state, loader) -> void:
 ## mean pays more, poorer receives, and a non-member reads exactly 0.0 by
 ## construction rather than rounding. Per-org means are why Luxembourg's line
 ## to the EU is not its line to a hypothetical rich clubs' alliance.
-static func net_positions(loader, org_id: String) -> Dictionary:
+## `live_members` is empty at new-game, where the AUTHORED roster is the truth.
+## The accession flip passes the post-flip LIVE roster, because the mean the
+## formula divides by moved with the new member and the content table did not:
+## a re-derive over the static roster writes back identical values, which is
+## the no-op-in-a-derivative's-clothing the review caught.
+static func net_positions(loader, org_id: String, live_members: Array = []) -> Dictionary:
 	var out := {}
 	var org = loader.orgs_by_id.get(org_id)
 	if org == null:
 		return out
 
+	var roster: Array = live_members
+	if roster.is_empty():
+		for n in loader.nations.values():
+			if org.is_member(n.id):
+				roster.append(n.id)
+		roster.sort()
+
 	var total_gdp := 0.0
 	var total_pop := 0.0
-	for n in loader.nations.values():
-		if not org.is_member(n.id):
+	for member_id in roster:
+		var n = loader.nations.get(member_id)
+		if n == null:
 			continue
 		total_gdp += float(n.gdp_eur_bn)
 		total_pop += float(n.population)
 	if total_pop <= 0.0 or total_gdp <= 0.0:
 		return out
+	if total_pop <= 0.0 or total_gdp <= 0.0:
+		return out
 	var mean: float = total_gdp / total_pop
 
-	for n in loader.nations.values():
-		if not org.is_member(n.id) or float(n.population) <= 0.0:
+	for member_id in roster:
+		var n = loader.nations.get(member_id)
+		if n == null or float(n.population) <= 0.0:
 			continue
 		var per_capita: float = float(n.gdp_eur_bn) / float(n.population)
 		out[n.id] = clampf(
@@ -182,14 +233,27 @@ static func parliament(loader):
 	return null
 
 
+## A nation's voting weight in one org, LIVE: 0 for a non-member. The council's
+## division weighs members by this, never by the content table -- the authored
+## seats are where a member STARTS (seeded into NationState.org_seats at
+## new-game), and the accession flip writes the org's authored
+## `accession_seats` for a joiner, who is on no content table at all.
+static func live_seats(state, org_id: String, nation_id: String) -> int:
+	var ns = state.nations.get(nation_id)
+	if ns == null or not ns.orgs.has(org_id):
+		return 0
+	return int(ns.org_seats.get(org_id, 0))
+
+
 ## A nation's seats in the parliament org, live: 0 for a non-member or where no
 ## org carries a parliament. Read at election time rather than copied, so a
-## nation that accedes mid-game resolves its first EP election with seats.
+## nation that accedes mid-game resolves its first EP election with the seats
+## the flip wrote -- the same live_seats read under the parliament org's id.
 static func ep_seats(state, loader, nation_id: String) -> int:
 	var parl = parliament(loader)
 	if parl == null:
 		return 0
-	return parl.seats(nation_id) if parl.is_member(nation_id) else 0
+	return live_seats(state, parl.id, nation_id)
 
 
 ## The orgs that hold a council, as sorted ids. state.orgs carries exactly the
@@ -351,7 +415,7 @@ static func _resolve(state, loader, org_id: String) -> void:
 	var reasons := {}
 
 	for id in members(state, org_id):
-		var seats: int = loader.orgs_by_id[org_id].seats(id)
+		var seats: int = live_seats(state, org_id, id)
 		seats_total += seats
 		var choice := _vote_of(state, id, proposal, pending)
 		by_nation[id] = choice
@@ -729,18 +793,44 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 		if not ns.orgs.has(org_id):
 			ns.orgs.append(org_id)
 			ns.orgs.sort()
+		# The joiner's weight: the org's authored `accession_seats`, written as
+		# LIVE seat state. The content table is the authored START and lists no
+		# joiner; a member whose vote weighs zero is a member in name only --
+		# the review's second-class-member finding, fixed at the write rather
+		# than patched at each reader.
+		ns.org_seats[org_id] = org.accession_seats
+		# Membership ends the org's collective measures aimed AT this nation:
+		# the common external tariff cannot keep levying on a fellow member,
+		# and there is no repeal path that would ever lift it otherwise. The
+		# mirror of the withdrawal cleanup below -- one direction each.
+		var doomed := []
+		for directed in state.measures.keys():
+			var terms: Dictionary = state.measures[directed]
+			if String(terms.get("org", "")) == org_id and String(directed).ends_with(">" + ns.id):
+				doomed.append(directed)
+		for directed in doomed:
+			state.measures.erase(directed)
 		var parl = parliament(loader)
 		if parl != null and String(parl.id) == org_id:
-			# Joining the parliament org picks up its clock; the seats follow
-			# automatically because they are read live at election time.
+			# Joining the parliament org picks up its clock -- rolled forward in
+			# whole terms until it is in the FUTURE, because the authored date
+			# is static content and a nation acceding after it would otherwise
+			# carry a deadline that has already passed and never vote again.
 			var next_e: Dictionary = parl.parliament.get("next_election", {})
-			ns.next_ep_election_year = int(next_e.get("year", 0))
-			ns.next_ep_election_month = int(next_e.get("month", 0))
+			var year := int(next_e.get("year", 0))
+			var month := int(next_e.get("month", 0))
+			var term := int(parl.parliament.get("term_years", 5))
+			while year < state.year or (year == state.year and month <= state.month):
+				year += term
+			ns.next_ep_election_year = year
+			ns.next_ep_election_month = month
 	else:
 		ns.orgs.erase(org_id)
-		# The ex-member's standing contribution dies with the membership; the
-		# re-derive below writes the REMAINING members' lines at the new mean.
+		# The ex-member's standing contribution and seat weight die with the
+		# membership; the re-derive below writes the REMAINING members' lines
+		# at the new mean.
 		ns.org_base_transfer_pct_gdp.erase(org_id)
+		ns.org_seats.erase(org_id)
 		var parl = parliament(loader)
 		if parl != null and String(parl.id) == org_id:
 			ns.next_ep_election_year = 0
@@ -757,15 +847,17 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 			state.measures.erase(directed)
 
 	if org.net_transfers:
-		# Re-derive the org's whole net-position table: the mean the formula
-		# divides by moved with the roster of members. A static table captured
-		# at new-game would quietly keep charging the old mean forever.
-		var positions := net_positions(loader, org_id)
+		# Re-derive the org's whole net-position table over the LIVE roster: the
+		# mean the formula divides by moved with the membership, and the content
+		# table did not -- a re-derive over the authored roster writes back
+		# identical values, which is a no-op wearing a derivative's clothes.
+		var live_roster := members(state, org_id)
+		var positions := net_positions(loader, org_id, live_roster)
 		for id in positions.keys():
 			var member = state.nations.get(id)
-			# Live membership, not content: net_positions() derives from the
-			# AUTHORED member table, which still lists a nation that just walked
-			# out -- writing its line back would un-erase the exit.
+			# Live membership, not content: net_positions() over the live roster
+			# already excludes the leaver, but the guard keeps the write honest
+			# if the roster and the bases ever disagree.
 			if member != null and member.orgs.has(org_id):
 				member.org_base_transfer_pct_gdp[org_id] = float(positions[id])
 

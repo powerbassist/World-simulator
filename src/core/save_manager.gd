@@ -128,6 +128,10 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# content, re-derived here for the same reason -- membership and the
 		# council registers travel in the save; the bonuses do not.
 		Orgs.rebuild_static(state, loader)
+		# The fight machine's save-safety net: referendum-phase fights whose
+		# vote resolved before the save (the result is a display record and
+		# does not travel) end honestly with membership unchanged.
+		Orgs.reconcile_on_load(state, loader)
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

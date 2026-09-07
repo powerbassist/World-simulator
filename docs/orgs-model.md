@@ -103,6 +103,27 @@ same way losing an amendment vote does. What is new is only the countdown
   live members only: `net_positions()` derives from the AUTHORED table, which
   still lists the nation that just walked out.
 
+**What the flip writes, and what the load path reconciles.** A joiner enters
+with the org's authored `accession_seats`, written as LIVE seat state on
+`NationState.org_seats` -- the council's division weighs members by it, and the
+parliament org's seats are the same read. The content table is the authored
+START and lists no joiner; a member whose vote weighs zero is a member in name
+only (the pre-merge review's second-class-member finding). The EP clock a
+joiner picks up is the authored next election ROLLED FORWARD in whole terms
+until it is in the future -- a static date and a mid-run accession would
+otherwise write a deadline that has already passed and never vote again.
+Membership ends the org's collective measures in BOTH directions: the joiner
+stops having the org's tariff levied on it (there is no repeal path that would
+ever lift it otherwise), the leaver stops levying it. A transfer org's net
+positions re-derive over the LIVE roster -- over the authored roster the
+re-derive writes back identical values, a no-op wearing a derivative's clothes.
+And because `last_referendum_result` is deliberately not serialised
+(`last_project_result`'s case), a game saved in the one-month window after a
+vote resolved but before the machine consumed it reloads with the fight ENDED,
+membership unchanged -- the honest resolution, no outcome invented, and the
+player not stranded. A negotiation-phase fight reloads intact: its countdown
+is serialised state.
+
 **The accession and withdrawal positions are MEASURED, not felt.** The first
 draft's withdrawal position (econ +0.45, social +0.55) measured yes_share
 **0.347** — unwinnable, a locked door rather than a fight, and

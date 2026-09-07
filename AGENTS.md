@@ -1149,7 +1149,19 @@ found ONE BUG and it was in the TOOL (a rename the staging had not caught), visi
 because the frame's own numbers disagreed — Standing 0.00 against a fine the panel
 recomputed live. **No handoff file written at closeout, per the author's standing
 instruction for the rest of V3** — v3.3-handoff.md exists and its UNFILLED markers stay
-untouched by this session. Model: [docs/orgs-model.md](docs/orgs-model.md); bloc-model
+untouched by this session. **The block's closeout ran the PR-review-merge gate, and the
+review EARNED IT: bugbot found 1 critical + 3 major + 1 minor, all in the fight machine
+the re-run structurally cannot reach** — a save during a fight dropped its `phase` at
+load and stranded every membership verb forever; an acceded nation joined with zero seat
+weight, zero EP seats and zero contribution (three content-table reads where the design
+says live); the EP clock was written from static content, so a post-2029 accession never
+voted again; the org's measures aimed at a joiner survived the join; and one test's
+re-derive check was vacuous (every member compared against one reference member). All
+five fixed pre-merge: `NationState.org_seats` live voting weight seeded from content and
+rewritten from the org's authored `accession_seats` at the flip, `phase` serialised,
+`Orgs.reconcile_on_load()` ends stranded referendum fights honestly, net positions
+re-derive over the LIVE roster, EP clock rolled forward in whole terms — each with a
+regression test, suite 80/80 green. Model: [docs/orgs-model.md](docs/orgs-model.md); bloc-model
 stands as the one-org record with a forward note.
 
 

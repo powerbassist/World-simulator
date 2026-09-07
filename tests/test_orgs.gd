@@ -714,16 +714,73 @@ func _check_membership_fight() -> void:
 	# the eu's members' bases are re-derived, and the ex-member carries none.
 	if ns.org_base_transfer_pct_gdp.has(EU_ORG):
 		_fail("the ex-member still carries a standing eu contribution")
-	# At least one remaining member's line must move: the mean the formula
-	# divides by changed when France walked out.
-	var fresh_deu: float = float(_fresh().nations["DEU"].org_base_transfer_pct_gdp.get(EU_ORG, 0.0))
+	# Every remaining member's line must move against ITS OWN pre-exit value:
+	# the mean the formula divides by changed when France walked out. Compared
+	# per member, not against one reference member -- the first version
+	# compared every member against DEU's fresh value, which any member other
+	# than DEU trips whether or not the re-derive did anything.
+	var fresh = _fresh()
 	var moved := false
 	for member_id in ["DEU", "ITA", "ESP", "NLD", "BEL", "AUT", "LUX"]:
-		if not is_equal_approx(float(state.nations[member_id].org_base_transfer_pct_gdp.get(EU_ORG, 0.0)), fresh_deu):
+		if not is_equal_approx(
+			float(state.nations[member_id].org_base_transfer_pct_gdp.get(EU_ORG, 0.0)),
+			float(fresh.nations[member_id].org_base_transfer_pct_gdp.get(EU_ORG, 0.0))):
 			moved = true
 			break
 	if not moved:
 		_fail("no remaining member's contribution was re-derived after a member left")
+
+	# The seat weight died with the membership, and the EP clock surrendered.
+	if ns.org_seats.has(EU_ORG):
+		_fail("the ex-member still carries a seat weight")
+
+	# AND BACK AGAIN: the review's second-class-member finding. FRA re-accedes,
+	# and on the flip it must enter with the org's authored accession_seats, a
+	# future EP clock, a live base contribution -- and the eu's collective
+	# measures aimed at it must lift.
+	var base_before: float = float(_fresh().nations["DEU"].org_base_transfer_pct_gdp.get(EU_ORG, 0.0))
+	# Stage the measures the org aims at the future member, the way
+	# _apply_external_measure writes them.
+	state.measures[Relations.directed_key("DEU", PLAYER)] = {
+		"action_id": "common_external_tariff", "action_name": "Common External Tariff",
+		"kind": "tariff", "severity": 0.35,
+		"since_year": state.year, "since_month": state.month,
+		"org": EU_ORG, "retaliated": true,
+	}
+	var rejoin = Orgs.begin_accession(state, _loader, ns, EU_ORG)
+	if not bool(rejoin.get("ok", false)):
+		_fail("re-accession refused: %s" % String(rejoin.get("reason", "")))
+		return
+	var res := {}
+	for i in range(13):
+		res = Referendum.resolve_due(ns)
+		if not res.is_empty():
+			break
+	if res.is_empty() or not bool(res.get("passed", false)):
+		_fail("the re-accession referendum did not pass (yes_share %.3f)" % float(res.get("yes_share", 0.0)))
+		return
+	Orgs.tick_month(state, _loader)
+	var flips := -1
+	for i in range(30):
+		Orgs.tick_month(state, _loader)
+		if ns.orgs.has(EU_ORG):
+			flips = i
+			break
+	if flips < 0:
+		_fail("re-accession membership did not flip")
+		return
+	if int(ns.org_seats.get(EU_ORG, 0)) != _loader.orgs_by_id[EU_ORG].accession_seats:
+		_fail("the joiner's seat weight is %s, expected the org's authored accession_seats %d" % [
+			str(ns.org_seats.get(EU_ORG, 0)), _loader.orgs_by_id[EU_ORG].accession_seats
+		])
+	if Orgs.live_seats(state, EU_ORG, PLAYER) != _loader.orgs_by_id[EU_ORG].accession_seats:
+		_fail("live_seats does not read the joiner's written weight")
+	if ns.next_ep_election_year <= state.year:
+		_fail("the joiner's EP clock reads %d, not rolled into the future" % ns.next_ep_election_year)
+	if float(ns.org_base_transfer_pct_gdp.get(EU_ORG, 0.0)) <= 0.0:
+		_fail("the joiner pays no standing contribution -- a free ride on the club it fought to join")
+	if state.measures.has(Relations.directed_key("DEU", PLAYER)):
+		_fail("the eu's collective measure survived the target's accession -- a tariff on a fellow member, permanently")
 
 	# And a LOST referendum ends the fight with membership where it was. The
 	# question is forced to fail by overwriting the pending position with one
