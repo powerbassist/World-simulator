@@ -149,24 +149,35 @@ session that re-counts machines and surfaces before it splits.
 
 > [!warning] V4 — drafted 2026-09-07, NOT SIGNED; nothing in it starts before V3 closes
 > Drafted at the author's request off a cold count of the repository against their own
-> list of asks, and off a read of what Paradox actually ships. The organising goal —
-> **the world wants things** — is that this game currently contains nothing that wants
-> anything: 71 portraits are inert, the player is never told what they are playing for,
-> and 7 events fire in a career. **Ten blocks: the agency call settled first, then a
-> player agenda, a character layer, events at scale (7 -> 120-150, with chains, hooks,
-> severity, art and an AI chooser), the council as a real fight, industry at 18 -> ~200
-> firms that act, the reading surface (top bar 4 -> 10-12, alerts, nested tooltips, an
-> outliner, message settings), ceremony and sound, the stylised deep-zoom map, and the
-> roster past the EU-27.** Estimated 28-38 sessions:
-> [docs/tiers/v4.md](docs/tiers/v4.md). **Two things about it are load-bearing and
-> neither is content.** First, it opens on **V3.0's still-open route call** — best
-> active play measured **-2.00 approval points against idle**, so content authored on
-> that loop is content on mush, which is [docs/tiers/v3.md](docs/tiers/v3.md)'s own
-> *agency before content* argument restated a tier later because the gate was not met.
-> Second, V4.2 **deliberately overturns [docs/events-model.md](docs/events-model.md)
-> §3's office-never-a-person rule** — the session that builds it rewrites that rule at
-> the rule itself, with its reason; this draft does not pre-emptively edit it.
-> Eleven [docs/tiers/someday.md](docs/tiers/someday.md) rows are struck as lifts.
+> list of asks. The organising goal — **the world wants things** — is that this game
+> currently contains nothing that wants anything, and the author's own verdict at the
+> gate is the reason the expensive routes were taken: *"i dont play the game right now,
+> its unplayable and not fun."* **Twelve blocks:** the agency call settled first, then a
+> player agenda; **the statute book** (compose a bill, repeal one, a tax panel showing
+> the rate as a number, a new tax as a new key, a briefing popup, and two commissioned
+> polls — assembly and popular — each a PAID REDUCTION IN A BLUR THAT ALREADY EXISTS);
+> a **deep bench of 214 -> ~1500-2000 people**; events at 7 -> 120-150 with chains, hooks,
+> severity, art and an AI chooser; the council as a real fight; **the commodity economy**;
+> industry at 18 -> ~2,900 firms that act; the reading surface (top bar 4 -> 10-12, alerts,
+> nested tooltips, an outliner, message settings); ceremony and sound; the stylised
+> deep-zoom map; and the roster past the EU-27. **Estimated 70-95 sessions — larger than
+> V1 and V2 put together**, and V4.6 alone is 15-22 of them:
+> [docs/tiers/v4.md](docs/tiers/v4.md).
+>
+> **Three things in it are load-bearing and only one is content.** (1) It opens on
+> **V3.0's still-open route call** — best active play measured **-2.00 approval points
+> against idle** — so content authored on that loop is content on mush, which is
+> [docs/tiers/v3.md](docs/tiers/v3.md)'s own *agency before content* argument restated a
+> tier later because the gate was not met. (2) V4.3 **deliberately overturns
+> [docs/events-model.md](docs/events-model.md) §3's office-never-a-person rule**, and
+> the session that builds it rewrites that rule at the rule itself. (3) **V4.6 replaces
+> the growth-rate model with a production model** — ~60-80 commodities, individualised
+> metals, lumped consumer goods, an industrial tree, and trade in named goods instead of
+> [docs/trade-model.md](docs/trade-model.md)'s abstract weights. **The region spine
+> survives**: `economy.gd:289` already makes GDP the region sum, so what is replaced is
+> the layer beneath a region, and `energy.gd`'s TWh stops being the simulation's one
+> physical quantity and becomes electricity. Fourteen
+> [docs/tiers/someday.md](docs/tiers/someday.md) rows are struck as lifts.
 > **The author's sequencing call at the draft's gate: finish V3 as written first.**
 
 **Four calls were made before any code, and two of them are the tier's whole shape.**

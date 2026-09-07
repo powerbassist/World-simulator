@@ -169,12 +169,16 @@ PR #27) are built; **V3.3 the EU-27 roster, V3.4 roads and motion, V3.5 climate 
 ceremony are not.** **V3.0's gate FAILED by measurement** -- best active play -2.00
 approval points against idle -- and the author's three-route call on it is **still
 open**; V3.1 and V3.2 were each told not to pick it up silently and neither did.
-[V4](docs/tiers/v4.md) is **drafted and unsigned** (2026-09-07): ten blocks, the agency
-call first, then a player agenda, a character layer, events at scale, the council
-contested, industry, the reading surface, ceremony, the stylised deep-zoom map and the
-roster past the EU-27; 28-38 sessions, nothing in it starts before V3 closes. **V4.2
+[V4](docs/tiers/v4.md) is **drafted and unsigned** (2026-09-07): twelve blocks, 70-95 sessions, the agency
+call first, then a player agenda, the statute book (compose, repeal, a tax panel, a
+bill briefing and two commissioned polls), a deep bench of ~1500-2000 people, events
+at scale, the council contested, **the commodity economy**, industry at ~2,900 firms,
+the reading surface, ceremony, the stylised deep-zoom map and the roster past the
+EU-27. Nothing in it starts before V3 closes. **V4.3
 deliberately overturns [events-model](docs/events-model.md) §3's office-never-a-person
-rule**, and the session that builds it rewrites that rule at the rule itself. Everything
+rule**, and the session that builds it rewrites that rule at the rule itself. **V4.6
+replaces the growth-rate model with a production model** -- the region spine survives
+because `economy.gd:289` already makes GDP the region sum. Everything
 below this paragraph is the V2.1 record and has not been re-cut since.
 
 **V2.1a shipped the panel system, V2.1b migrated every panel onto it, and V2.1c settled navigation.** `src/ui/panel_kit.gd`
