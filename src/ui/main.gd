@@ -753,7 +753,10 @@ func _add_centered(panel: Control, blocking := false) -> void:
 		# holder stayed up, and a new game was dead to the mouse from its first
 		# frame. `_set_pause_menu_visible()` had been hiding its own holder by
 		# hand for that reason since U5a; doing it here means the next blocking
-		# panel cannot forget.
+		# panel cannot forget -- and that call site now sets the PANEL only,
+		# because a second writer would be reverted by this one: hiding the
+		# holder re-emits visibility_changed on the panel while the panel's own
+		# flag is still true, and this handler would put the holder back.
 		panel.visibility_changed.connect(func():
 			dim.visible = panel.visible
 			holder.visible = panel.visible
@@ -762,11 +765,18 @@ func _add_centered(panel: Control, blocking := false) -> void:
 	add_child(holder)
 
 
-## The pause menu's *holder* is what is shown and hidden, not the panel. It is
-## the one holder built blocking, and a full-rect blocking CenterContainer goes
-## on swallowing map clicks while the panel inside it is invisible.
+## The panel alone -- `_add_centered()`'s blocking branch owns the holder and the
+## dim, and it is the ONLY owner. Setting the holder here as well used to be the
+## fix for a blocking CenterContainer that goes on swallowing map clicks while
+## the panel inside it is invisible; now it would be a write the panel's own
+## visibility_changed handler immediately reverts, because hiding a holder
+## re-emits on the panel while the panel's own flag is still true. One writer,
+## so the two cannot disagree and the order of two lines cannot decide whether
+## the screen is clickable.
+##
+## `_unhandled_input()` still reads the HOLDER to ask whether the menu is open.
+## That stays true: the holder now mirrors the panel by construction.
 func _set_pause_menu_visible(shown: bool) -> void:
-	_pause_menu.get_parent().visible = shown
 	_pause_menu.visible = shown
 
 

@@ -56,6 +56,7 @@ func _run() -> void:
 		return
 
 	_check_no_blocking_holder_at_start()
+	_check_the_pause_menu_still_opens_and_closes()
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
 	_check_every_panel_registered_and_reachable()
@@ -84,6 +85,11 @@ func _check_no_blocking_holder_at_start() -> void:
 	if _main._pause_menu.get_parent().visible:
 		_fail("the pause menu holder is visible at start, blocking the whole screen")
 
+	# Fractions of whatever the viewport is, not shipped pixel positions: a
+	# headless run reports 1920x1920 where the window ships 1920x1080, so a
+	# point picked to land on the bottom bar would not. The claim being made is
+	# aspect-independent -- a holder that covers the screen covers all four --
+	# and that is the whole of what this check asserts.
 	var viewport: Viewport = _main.get_viewport()
 	var size: Vector2 = viewport.get_visible_rect().size
 	var reachable: Array = [_main._map_view, _main._windows, _main._hud, _main._top_bar]
@@ -105,6 +111,25 @@ func _check_no_blocking_holder_at_start() -> void:
 		if not ok:
 			_fail("a click at %s lands on %s (%s), which is neither the map, a window, nor the HUD"
 				% [str(point), hit.name, hit.get_class()])
+
+
+## The other direction of the same rule, and the reason `_set_pause_menu_visible()`
+## may set the panel alone: a holder that never comes UP is a pause menu that
+## cannot be opened, which a start-state check cannot tell apart from a holder
+## that is correctly down. Asserted as a mutation -- open, look, close, look.
+func _check_the_pause_menu_still_opens_and_closes() -> void:
+	var holder: Control = _main._pause_menu.get_parent()
+	_main._open_pause_menu()
+	if not holder.visible:
+		_fail("the pause menu holder stays hidden when the menu opens, so nothing blocks the map behind it")
+	if not _main._pause_menu.visible:
+		_fail("the pause menu panel stays hidden when the menu opens")
+
+	_main._close_pause_menu()
+	if holder.visible:
+		_fail("the pause menu holder stays visible after closing, blocking the whole screen")
+	if _main._pause_menu.visible:
+		_fail("the pause menu panel stays visible after closing")
 
 
 ## U5a's structural claim in one assertion: the map is not in a tab, it is the
