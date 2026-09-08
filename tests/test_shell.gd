@@ -67,15 +67,44 @@ func _run() -> void:
 	_check_headline_figures_move_with_nothing_open()
 
 
-## The pause menu's holder is the one full-rect blocking CenterContainer -- if
-## it is visible before the player ever opens it, every click on the bottom bar
-## and every drag on the map is swallowed.
+## A modal's holder is a full-rect CenterContainer, and a Container defaults to
+## MOUSE_FILTER_PASS -- solid enough to take every click on the screen while the
+## panel inside it is invisible. This used to name the pause menu alone, which
+## is why V2.9 could make the election panel blocking too and ship a game where
+## nothing was clickable after the first frame: the panel was hidden, its holder
+## was not, and the check only ever looked at the other one.
+##
+## So it is asked as the player asks it -- point at the screen, see what the
+## click reaches -- rather than by naming holders. A modal nobody opened must
+## never be the answer, whichever modal it is.
 func _check_no_blocking_holder_at_start() -> void:
 	if _main._pause_menu == null:
 		_fail("main scene did not build a pause menu")
 		return
 	if _main._pause_menu.get_parent().visible:
 		_fail("the pause menu holder is visible at start, blocking the whole screen")
+
+	var viewport: Viewport = _main.get_viewport()
+	var size: Vector2 = viewport.get_visible_rect().size
+	var reachable: Array = [_main._map_view, _main._windows, _main._hud, _main._top_bar]
+	for fraction in [Vector2(0.5, 0.5), Vector2(0.2, 0.3), Vector2(0.8, 0.7), Vector2(0.5, 0.9)]:
+		var point := Vector2(size.x * fraction.x, size.y * fraction.y)
+		var motion := InputEventMouseMotion.new()
+		motion.position = point
+		motion.global_position = point
+		viewport.push_input(motion, true)
+
+		var hit: Control = viewport.gui_get_hovered_control()
+		if hit == null:
+			continue  # nothing solid there: the click falls through to the map
+		var ok := false
+		for surface in reachable:
+			if surface != null and (hit == surface or surface.is_ancestor_of(hit)):
+				ok = true
+				break
+		if not ok:
+			_fail("a click at %s lands on %s (%s), which is neither the map, a window, nor the HUD"
+				% [str(point), hit.name, hit.get_class()])
 
 
 ## U5a's structural claim in one assertion: the map is not in a tab, it is the

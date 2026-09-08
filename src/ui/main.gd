@@ -745,7 +745,19 @@ func _add_centered(panel: Control, blocking := false) -> void:
 		dim.mouse_filter = Control.MOUSE_FILTER_STOP
 		dim.visible = false
 		add_child(dim)
-		panel.visibility_changed.connect(func(): dim.visible = panel.visible)
+		# The HOLDER follows the panel too, not just the dim. A Container
+		# defaults to MOUSE_FILTER_PASS, so a full-rect blocking holder goes on
+		# taking every click on the screen while the panel inside it is
+		# invisible -- which is exactly what V2.9 shipped when it made the
+		# election panel blocking: `_election_panel.hide()` hid the panel, the
+		# holder stayed up, and a new game was dead to the mouse from its first
+		# frame. `_set_pause_menu_visible()` had been hiding its own holder by
+		# hand for that reason since U5a; doing it here means the next blocking
+		# panel cannot forget.
+		panel.visibility_changed.connect(func():
+			dim.visible = panel.visible
+			holder.visible = panel.visible
+		)
 	holder.add_child(panel)
 	add_child(holder)
 

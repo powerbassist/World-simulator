@@ -1215,6 +1215,23 @@ silently at ~340 s) is an environment rule learned the hard way: **serialize god
 runs**. Model docs: geography-model §9, network-model §12, orgs-model addendum,
 natural-change/migration single-region notes, BALANCE_PLAN addenda 1-5.
 
+**V3.3f: THE GAME SHIPPED UNCLICKABLE AND THE SUITE SAID GREEN.** V2.9 made the
+election panel *blocking*, and `_add_centered()`'s blocking branch tied only the DIM to
+the panel's visibility, never the HOLDER -- and a `CenterContainer` defaults to
+`MOUSE_FILTER_PASS`, so a full-rect holder over an invisible panel took every click on
+the screen from a new game's first frame. Map, bottom bar, windows, HUD: all dead, and
+nothing errored. `test_shell.gd` already owned the right check and the wrong SCOPE --
+`_check_no_blocking_holder_at_start()` named the pause menu's holder alone, which is the
+one panel that had been hiding its holder by hand since U5a, so the check could only ever
+pass. The fix is in `_add_centered()` (the holder follows the panel, so the next blocking
+panel cannot forget), and the check now asks the question the way the player asks it:
+push a motion at four points, read `gui_get_hovered_control()`, fail unless the click
+reaches the map, a window or the HUD. **A structural check that names one instance is a
+check for that instance, not for the rule** -- and a bug the player meets in the first
+second can sit behind a green 80/80 for a whole tier.
+
+
+
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
