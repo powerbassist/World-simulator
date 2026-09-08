@@ -39,6 +39,7 @@ func _init() -> void:
 
 	_check_anchor(loader, spines)
 	_check_box(spines)
+	_check_no_coincident_axis(spines)
 	_report()
 
 
@@ -83,6 +84,29 @@ func _check_box(spines: Array) -> void:
 		var box: Rect2 = (s["box"] as Rect2).grow(0.001)
 		if not box.has_point(s["a"]) or not box.has_point(s["b"]):
 			_fail("spine %s-%s has a box that misses its own ends" % [s["region_a"], s["region_b"]])
+			return
+
+
+## NO SPINE'S BOX MAY BE DEGENERATE. draw_spines() in src/ui/map_network.gd
+## culls with Rect2.intersects(), which defaults include_borders to false --
+## so a box with zero width or zero height that lines up exactly with a view
+## edge is silently culled away: no error, no missing-data signal, just a
+## road that is present at some pan positions and absent at others.
+## draw_spines() needs a live Control to exercise, so no drawing test can
+## catch this; the data is the only place it is cheap to catch, before a
+## degenerate box ever reaches the cull. Two cities[0] sharing an exact
+## longitude give a box with zero width; sharing an exact latitude gives zero
+## height -- either one is the failure this pins, on the RAW box, not the
+## grown one _check_box uses (grow(0.001) would turn a zero-width box
+## positive and hide exactly the case this exists to catch).
+func _check_no_coincident_axis(spines: Array) -> void:
+	for s in spines:
+		var box: Rect2 = s["box"]
+		if box.size.x == 0.0:
+			_fail("spine %s-%s shares an exact longitude (%f) -- its box has zero width and any view edge that lands on it culls the spine" % [s["region_a"], s["region_b"], (s["a"] as Vector2).x])
+			return
+		if box.size.y == 0.0:
+			_fail("spine %s-%s shares an exact latitude (%f) -- its box has zero height and any view edge that lands on it culls the spine" % [s["region_a"], s["region_b"], (s["a"] as Vector2).y])
 			return
 
 

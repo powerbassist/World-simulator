@@ -113,9 +113,10 @@ static func draw_spines(
 		# false, so a degenerate box lying exactly on the view's edge is culled
 		# away silently rather than drawn (probed on 4.7.1: true for a
 		# degenerate box strictly inside the view, false on an edge or corner).
-		# Inert today -- tests/test_map_network.gd scans all 463 committed
-		# edges and finds none whose cities[0] share an exact longitude or
-		# latitude -- but it goes live the day a future edge does.
+		# Guarded in the data, not here: tests/test_map_network.gd fails if any
+		# spine's two cities[0] share an exact longitude or an exact latitude,
+		# which is the only way a box here can be degenerate -- so this branch
+		# is dead code today, and stays dead as long as that check is green.
 		if not view.intersects(s["box"]):
 			continue
 		var a: Vector2 = to_screen.call(s["a"].x, s["a"].y)
