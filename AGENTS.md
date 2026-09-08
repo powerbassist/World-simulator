@@ -1164,6 +1164,57 @@ re-derive over the LIVE roster, EP clock rolled forward in whole terms — each 
 regression test, suite 80/80 green. Model: [docs/orgs-model.md](docs/orgs-model.md); bloc-model
 stands as the one-org record with a forward note.
 
+**V3.3 GREW THE ROSTER TO EU-27 + 2, AND THE STEP-0 AUDIT CORRECTED THE TRANCHE LABEL
+BEFORE ANYTHING RAN** — the loader REQUIRES parties, people and a full government block
+for every nation, so the tier's "(a) no politics" was impossible as written: (a) shipped
+the complete political content for the nineteen and deferred only portraits/playable/
+screenshots to (b). The import machinery is one roster list plus per-nation tables; the
+nineteen arrive at NUTS 2 without exception, five single-region on the LUX precedent
+(CYP EST LTU LVA MLT). **THE REGISTER IS 213 REGIONS, 1 065 CITIES, 464 EDGES, 16 SEA
+LINKS, ONE COMPONENT** — components counted before authoring (18), each link a real
+crossing (Oresund, Great Belt, the Greek archipelago from Piraeus/Igoumenitsa, Malta,
+Cyprus; Ireland needs none over the UKN land border). **THE NINETEEN MEASURED THE
+IMPORT'S ASSUMPTIONS DEAD IN FOUR PLACES**: Portugal's NUTS 2024 SPLIT AMLisboa (the
+vintage join grew a partition-sum shape beside NL's 1:1; exact because GDP/GVA are
+additive stocks and the unemployment file answers 2021 natively); Aland carries NO
+GeoNames place at all (cities15000's cut is above Mariehamn) so a region the register
+cannot name drops into the residual and its sea link died with it; Greece has NO
+tran_r_net MWAY rows at any year (27 codes fall back to the roster mean — a bound);
+Cyprus broke the bounding box (LON_MAX 32→35; the fit is lat-bound and did not move —
+recomputed at 2.08, CITY_MIN_ZOOM stays). **CITY_MIN_POP re-swept 71 000→58 000** on the
+pre-declared band (crossings 38 000/78 000, both smooth, interior ships, same answer at
+two grids). **THE WB CACHES WERE TEN-COUNTRY FILTERED** — every indicator re-fetched
+with 29 (per_page 2000: 29×35=1015 rows), through an API 5xx window that ate an hour.
+**SAVE_VERSION 32→33 ON NO FIELD** — the roster is content, but a v32 save made against
+the ten-nation roster loads, unrefused, as a silent ten-nation world against 27-member
+org data: the roster a save was made against is part of its contract. **THE SUITE
+CAUGHT SIX REAL THINGS**: Slovenia's 1990-2024 inflation mean is 30 %/yr (transition
+decade) so the anchor re-windowed to the euro era 1999-2024 for every nation (Rule 1)
+— the ten's anchors move −0.05..−0.5, BALANCE_PLAN addendum 2; the cycle anchor DOUBLED
+(transition years are real volatility; LVA's growth SD is 8.6 points) so
+CYCLE_AMPLITUDE_PCT re-denominated 1.70→3.245 — products invariant <0.1 %, addendum 1;
+LUX's contribution formula ran PAST the 1.20 ceiling (EU-27 mean is poorer; ceiling
+re-derived by its own placement rule → 1.35); the 27-seat council made constructive
+abstention unreachable on EVERY proposal, so debt_reduction_rule's position re-authored
+on the tally probe to land in the player's pivotal band (385 for of 639 cast — abstain
+carries, opposing blocks, backing passes); EVEN_SHARE was the literal 1/9 and every
+stake/accept term priced at a third of its meaning (DEU refused a deal the model was
+calibrated to sign) so the anchor derives now — foreign_policy.even_share(state), ten
+readers, map ramp and legend with it; and IRL's collected revenue is suppressed by its
+MNE-swollen GDP base, so its income rate is the fitted effective 12.7 on AUT's
+convention. **THE BALANCE RE-RUN HELD THE GATE**: 2 019 of 3 360 compared lines moved
+through exactly the predicted channels (cycle product, inflation window, trade gravity,
+org composition, relations seed, network accessibility), **ZERO outcome changes of 94**,
+50/50 invariants. **POL IS THE FOURTH PLAYABLE** — companies, outlets, opening scenario,
+the flag — on the counted cut that the playable kit is a content tranche, not a boolean;
+the other eighteen wait for theirs. Portraits: the author paused the pipeline for a
+ComfyUI rewrite — 213 raws exist locally, the duotone pass is pending the rewrite
+(missing art is the silent silhouette by design). The screenshot pass ran windowed and
+judged in-session. The concurrent-godot crash (two processes sharing .godot caches die
+silently at ~340 s) is an environment rule learned the hard way: **serialize godot
+runs**. Model docs: geography-model §9, network-model §12, orgs-model addendum,
+natural-change/migration single-region notes, BALANCE_PLAN addenda 1-5.
+
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**

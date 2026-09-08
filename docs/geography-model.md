@@ -337,6 +337,48 @@ regional economy is a genuinely different object in those two countries.
   was flipped with the reason recorded beside it.
 - **No regional GDP, unemployment or sector mix.** §5's.
 
+
+
+## 9. V3.3: the register grows to EU-27 + 2, and what the growth measured
+
+**The register is 213 regions over 29 nations, 1 065 named cities.** The ten-era
+tables above are kept as the historical record of the clauses; the numbers that
+govern now: REGION_LEVEL gained nineteen entries, all NUTS 2 (NUTS 1 for these
+nations is either a single region or a grouping coarser than the country's own
+planning unit), and five of them are single-region nations on the Luxembourg
+precedent -- CYP, EST, LTU, LVA, MLT.
+
+**The importer's bounding box widened east from 32 to 35 for Cyprus**, whose
+rings span to 34.6 E; the fit's binding dimension is latitude and did not move
+(recomputed, not assumed: 2.08 on 1080p against the old ~2.1), so
+`CITY_MIN_ZOOM` 2.0 kept its just-under place.
+
+**CITY_MIN_POP re-swept on BALANCE_PLAN.md's pre-declared band: 71 000 ->
+58 000.** The clauses rescaled with the roster: (ii) mean named share >= 0.30
+over 29 nations, (iii) at most 1 800 cities. Swept 20 000..120 000 and refined
+to the 1 000 grid at both crossings, which sit at 38 000 (count) and 78 000
+(coverage); the interior's midpoint shipped, stable across both grid steps --
+V1.5b's refinement diagnostic, third constant in a row to land that way.
+
+**THE NINETEEN MEASURED THE IMPORT'S OWN ASSUMPTIONS DEAD, in four places.**
+Portugal's NUTS 2024 revision SPLIT AMLisboa (PT17 answers under PT1A+PT1B)
+and carved Oeste e Vale do Tejo out (PT16->PT19, PT18->PT1C), so the vintage
+join grew a PARTITION shape beside the Netherlands' 1:1 renumbering -- exact
+only because GDP and GVA are additive stocks, and the unemployment file answers
+under 2021 codes natively. Åland (FI20) carries NO GeoNames place at all
+(cities15000's cut is above Mariehamn), so the top-up rule's assumption that
+every region has a largest city is false on this roster: a region with no
+nameable city drops into the residual -- where extra-regio and the overseas
+already live -- and its sea link died with it (a link naming a code the
+register does not carry is refused). Greece's motorway density is absent from
+tran_r_net at every year: a bound recorded in network-model.md, the mean
+fallback the endowment already carried. And the sea links numbered SIXTEEN
+(measured: the components adjacency leaves), each a real crossing in service --
+the Oresund and Great Belt fixed links carrying the Nordic bloc to the
+continent, the Greek archipelago served from Piraeus and Igoumenitsa, Malta
+from Pozzallo, Cyprus from Piraeus; Ireland needs none, over the land border
+with Northern Ireland.
+
 ---
 
 Related: [[tiers/v2]] · [[companies-model]] · [[data-sources]] · [[data-architecture]]

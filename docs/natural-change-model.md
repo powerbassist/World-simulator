@@ -293,3 +293,13 @@ Quieter than the same measurement at V2.6b1 (3 movers) and V2.6b2 (2 regimes +
 one noise block): the migration flow that drove those movers is now 34× weaker,
 and the natural flow's own contribution reaches the sim readers mostly through
 margins that were already wide.
+## V3.3: Luxembourg's bound is now six nations'
+
+CYP, EST, LTU, LVA and MLT are single-region at NUTS 2 like LUX: one region
+cannot differ from itself, so the differential is exactly zero everywhere and
+the nation's total moves only through the live national compound. All five
+carry MEASURED rates (Eurostat covers them; only Britain's UKM hole keeps the
+zero-everywhere rule). test_natural_change's spread assertion reads the
+register's own size rather than a nation list, so it needed no edit -- the
+bound generalised in data the way Rule 1 says it should.
+
