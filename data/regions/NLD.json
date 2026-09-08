@@ -141,6 +141,12 @@
           "name": "Apeldoorn",
           "share": 0.064758,
           "lonlat": [5.9694, 52.21]
+        },
+        {
+          "id": "NL22_ede",
+          "name": "Ede",
+          "share": 0.032063,
+          "lonlat": [5.6583, 52.0333]
         }
       ]
     },
@@ -195,6 +201,24 @@
           "name": "Amersfoort",
           "share": 0.102136,
           "lonlat": [5.3875, 52.155]
+        },
+        {
+          "id": "NL31_nieuwegein",
+          "name": "Nieuwegein",
+          "share": 0.044886,
+          "lonlat": [5.0806, 52.0292]
+        },
+        {
+          "id": "NL31_veenendaal",
+          "name": "Veenendaal",
+          "share": 0.044727,
+          "lonlat": [5.5589, 52.0286]
+        },
+        {
+          "id": "NL31_zeist",
+          "name": "Zeist",
+          "share": 0.044492,
+          "lonlat": [5.2333, 52.09]
         }
       ]
     },
@@ -264,6 +288,24 @@
           "name": "Zaandam",
           "share": 0.024643,
           "lonlat": [4.8264, 52.4385]
+        },
+        {
+          "id": "NL32_hoorn",
+          "name": "Hoorn",
+          "share": 0.023661,
+          "lonlat": [5.0597, 52.6425]
+        },
+        {
+          "id": "NL32_velsen_zuid",
+          "name": "Velsen-Zuid",
+          "share": 0.023285,
+          "lonlat": [4.65, 52.46]
+        },
+        {
+          "id": "NL32_den_helder",
+          "name": "Den Helder",
+          "share": 0.020471,
+          "lonlat": [4.7593, 52.9599]
         }
       ]
     },
@@ -339,6 +381,18 @@
           "name": "Gouda",
           "share": 0.019167,
           "lonlat": [4.7083, 52.0167]
+        },
+        {
+          "id": "NL33_alphen_aan_den_rijn",
+          "name": "Alphen aan den Rijn",
+          "share": 0.018713,
+          "lonlat": [4.6555, 52.1292]
+        },
+        {
+          "id": "NL33_capelle_aan_den_ijssel",
+          "name": "Capelle aan den IJssel",
+          "share": 0.017383,
+          "lonlat": [4.5778, 51.9292]
         }
       ]
     },
@@ -417,6 +471,12 @@
           "name": "Helmond",
           "share": 0.028825,
           "lonlat": [5.6611, 51.4817]
+        },
+        {
+          "id": "NL41_bergen_op_zoom",
+          "name": "Bergen op Zoom",
+          "share": 0.025553,
+          "lonlat": [4.2917, 51.495]
         }
       ]
     },

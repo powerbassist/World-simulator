@@ -96,6 +96,24 @@
           "name": "Kortrijk",
           "share": 0.01101,
           "lonlat": [3.2649, 50.828]
+        },
+        {
+          "id": "BE2_ostend",
+          "name": "Ostend",
+          "share": 0.010285,
+          "lonlat": [2.927, 51.2155]
+        },
+        {
+          "id": "BE2_sint_niklaas",
+          "name": "Sint-Niklaas",
+          "share": 0.010284,
+          "lonlat": [4.1437, 51.1651]
+        },
+        {
+          "id": "BE2_genk",
+          "name": "Genk",
+          "share": 0.009488,
+          "lonlat": [5.5008, 50.965]
         }
       ]
     },
@@ -141,6 +159,18 @@
           "name": "La Louvière",
           "share": 0.020838,
           "lonlat": [4.1879, 50.4866]
+        },
+        {
+          "id": "BE3_tournai",
+          "name": "Tournai",
+          "share": 0.018904,
+          "lonlat": [3.3893, 50.6071]
+        },
+        {
+          "id": "BE3_seraing",
+          "name": "Seraing",
+          "share": 0.016508,
+          "lonlat": [5.5011, 50.5836]
         }
       ]
     }

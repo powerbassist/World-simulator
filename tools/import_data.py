@@ -33,7 +33,14 @@ def confined(path, root=ROOT):
     return resolved
 
 
-NATIONS = ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT"]
+# V3.3. The roster is EU-27 plus the two non-EU neighbours. The order is the
+# original ten first so a diff of a re-import reads old-to-new; the new
+# nineteen are alphabetical within themselves.
+NATIONS = [
+    "FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT",
+    "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL",
+    "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE",
+]
 
 YEAR = 2024
 USD_TO_EUR = 0.92
@@ -50,7 +57,11 @@ USD_TO_EUR = 0.92
 TREND_FROM_YEAR = 2015
 
 # Drops overseas territories (e.g. French Guiana, Réunion) that bloat S8's map bounds.
-LON_MIN, LON_MAX = -11, 32
+# V3.3 widens the east edge from 32 to 35 for Cyprus (the island spans ~32.3-34.6 E
+# and the old edge dropped every one of its polygons); the north span that actually
+# binds the opening fit is unchanged, so the fit should not move -- computed, not
+# assumed, and CITY_MIN_ZOOM is re-derived against the computed number.
+LON_MIN, LON_MAX = -11, 35
 LAT_MIN, LAT_MAX = 34, 72
 
 # U5b, the world backdrop. Deliberately the 1:110m file rather than the 1:50m one
@@ -181,6 +192,21 @@ CYCLE_EXCLUDE_YEARS = [2020, 2021]
 PRICES_INDICATOR = "FP.CPI.TOTL.ZG"
 PRICES_FROM_YEAR = 1990
 PRICES_EXCLUDE_YEARS = []
+
+# V3.3. The ANCHOR's window is not the regression's window, and the nineteen are
+# the reason. A 1990 start is the business-cycle series' window because measuring
+# volatility wants several cycles -- but a mean over 1990-2024 for a post-communist
+# economy is a mean over its transition decade: Croatia's measures 84.1 %/yr and
+# Bulgaria's 57.2, against a loader bound of [-2, 20] that exists to catch broken
+# downloads, and a game set in 2026 would simulate Slovenia as a 30 %-inflation
+# country forever. V1.6b's own regression already told us which half of the window
+# is the stable regime -- it is why the shipped slope is the euro-era one -- so the
+# anchor is measured over the euro era, 1999-2024, for EVERY nation (Rule 1: no
+# per-nation window). The ten's anchors move with it, down by 0.05-0.5 points, and
+# that is a measured re-instrumentation recorded in BALANCE_PLAN.md's V3.3
+# addendum, not a retune. The regression below keeps the long window, because the
+# pre-euro/euro split IS its evidence.
+ANCHOR_FROM_YEAR = 1999
 
 # V1.6b. The Phillips regression needs unemployment over the SAME window as prices,
 # not over the 2015-2024 one everything else reads it at. The wide download is a
@@ -516,11 +542,11 @@ def build_prices_blocks(series, unemployment):
     """
     anchors = {}
     for nid in NATIONS:
-        values = list(series.get(nid, {}).values())
+        values = [v for y, v in series.get(nid, {}).items() if y >= ANCHOR_FROM_YEAR]
         if len(values) < 5:
             sys.exit(
                 f"{nid}: only {len(values)} usable years of {PRICES_INDICATOR} in "
-                f"[{PRICES_FROM_YEAR}, {YEAR}] -- an anchor cannot be measured "
+                f"[{ANCHOR_FROM_YEAR}, {YEAR}] -- an anchor cannot be measured "
                 f"from that"
             )
         anchors[nid] = sum(values) / len(values)
@@ -582,7 +608,7 @@ def build_prices_blocks(series, unemployment):
     return {
         nid: {
             "inflation_pct": round(anchors[nid], 3),
-            "_from_year": PRICES_FROM_YEAR,
+            "_from_year": ANCHOR_FROM_YEAR,
             "_to_year": YEAR,
             "_excludes": list(PRICES_EXCLUDE_YEARS),
         }
@@ -935,6 +961,30 @@ REGION_LEVEL = {
     "AUT": 2,  # 9 Bundeslaender
     "CHE": 2,  # 7 grandes regions
     "LUX": 2,  # one region at every level
+    # V3.3. The nineteen arrive at NUTS 2 without exception: NUTS 1 for these
+    # nations is either a single region (HRV at level 1, the Baltics) or a
+    # grouping coarser than the unit the country is actually organised by, so
+    # level 2 is the planning unit everywhere in the new roster. Five are
+    # single-region nations on LUX's precedent: CYP, EST, LTU, LVA, MLT.
+    "BGR": 2,  # 6 planning regions
+    "HRV": 2,  # 2: Kontinentalna, Jadranska
+    "CYP": 2,  # one region at every level
+    "CZE": 2,  # 8 kraje + Praha (Praha is an enclave in Stredni Cechy -- the hole machinery's third case)
+    "DNK": 2,  # 5 regions; Zealand and Funen are islands -- the graph tells us the links
+    "EST": 2,  # one region at every level
+    "FIN": 2,  # 4 mainland kept; Aland (FI20) drops into the residual -- no nameable city
+    "GRC": 2,  # 13, several of them island groups (Crete, the Aegean and Ionian chains)
+    "HUN": 2,  # 8 + Budapest
+    "IRL": 2,  # 3, all on one island that borders Northern Ireland (UKN) by land
+    "LTU": 2,  # one region at every level
+    "LVA": 2,  # one region at every level
+    "MLT": 2,  # one region at every level
+    "POL": 2,  # 16 voivodeships with Mazowieckie split into region and capital
+    "PRT": 2,  # 5 continental; the Azores (PT20) and Madeira (PT30) fall outside the bbox
+    "ROU": 2,  # 8 development regions
+    "SVK": 2,  # 4 oblasti
+    "SVN": 2,  # 2: Vzhodna, Zahodna
+    "SWE": 2,  # 8 riksomraden
 }
 
 REGION_NUTS_VINTAGE = 2021
@@ -942,13 +992,20 @@ REGION_YEAR = 2022
 
 # ISO3 -> the two-letter code Eurostat and GISCO use. `UK` rather than `GB`, which is
 # the one place the two disagree with GeoNames -- see CITY_COUNTRY below.
+# V3.3: Greece is the second place. Eurostat's NUTS codes are `EL*`; GeoNames
+# is ISO, `GR`.
 NUTS_COUNTRY = {
     "FRA": "FR", "DEU": "DE", "ITA": "IT", "ESP": "ES", "BEL": "BE",
     "NLD": "NL", "LUX": "LU", "CHE": "CH", "GBR": "UK", "AUT": "AT",
+    "BGR": "BG", "HRV": "HR", "CYP": "CY", "CZE": "CZ", "DNK": "DK",
+    "EST": "EE", "FIN": "FI", "GRC": "EL", "HUN": "HU", "IRL": "IE",
+    "LTU": "LT", "LVA": "LV", "MLT": "MT", "POL": "PL", "PRT": "PT",
+    "ROU": "RO", "SVK": "SK", "SVN": "SI", "SWE": "SE",
 }
 
-# GeoNames uses the ISO 3166 code, so Britain is `GB` where NUTS says `UK`.
-CITY_COUNTRY = dict(NUTS_COUNTRY, GBR="GB")
+# GeoNames uses the ISO 3166 code, so Britain is `GB` and Greece is `GR` where
+# NUTS says `UK` and `EL`.
+CITY_COUNTRY = dict(NUTS_COUNTRY, GBR="GB", GRC="GR")
 
 # Years fetched for demo_r_pjangrp3, newest first. Britain is the reason there is more
 # than one: Eurostat dropped UK regions after withdrawal, so the 2022 response carries
@@ -1020,7 +1077,19 @@ NACE_TO_SECTOR = {
 # the top-up rule below rather than by this constant. A band an observable cannot reach
 # is a bound and not a selector -- V1.5a's finding, and V1.5c's -- so it is recorded
 # here instead of being met by shipping 4 691 cities.
-CITY_MIN_POP = 71000
+CITY_MIN_POP = 58000
+
+# V3.3 re-sweep, on BALANCE_PLAN.md's pre-declared band. Two clauses, both fixed
+# before the run: (ii) the 29-nation roster's mean named share >= 0.30, and (iii)
+# at most 1800 named cities (the drawing side: the ten shipped 600 at ~60 per
+# nation, and the cap scales by nation count -- the roster's px/degree at the
+# opening fit barely moves because the fit is lat-bound, measured, not assumed).
+# Swept 20 000..120 000 at 4 000 and refined to 1 000 at both crossings: the
+# count clause first passes at 38 000 (1798 cities) and the coverage clause last
+# holds at 78 000 (0.3021). Both edges are smooth crossings, so neither selects
+# and the interior governs -- the midpoint, 58 000, at a register of about 1100.
+# The ten-era value (71 000, band [69 000, 73 000]) is superseded: its clauses
+# described a ten-nation roster.
 
 # ...PLUS EACH REGION'S LARGEST, whatever it is. docs/tiers/v2.md section 2 says a
 # region is "a main city plus the sum of the smaller cities under it", and a region
@@ -1152,7 +1221,24 @@ GBR_GDP_MIO_EUR = None
 # 3 753 944 -- equal to the person, the same evidence V2.2a used to collapse the
 # population file's two vintages. Reading a region's figure from its other vintage's
 # code is a join, not an invention; no figure here is authored.
-VINTAGE_SIBLING = {"NL31": "NL35", "NL33": "NL36"}
+# V2.5, the Netherlands: the register is 2021 geometry, and Utrecht and
+# Zuid-Holland were renumbered NL31 -> NL35 and NL33 -> NL36 for the economic
+# series while the population series proves the identity (equal to the person).
+# Reading a region's figure from its other vintage's code is a join, not an
+# invention; no figure here is authored.
+#
+# V3.3, Portugal: the NUTS 2024 revision is NOT a renumbering there. It SPLIT
+# AMLisboa into Grande Lisboa (PT1A) and Peninsula de Setubal (PT1B) and carved
+# Oeste e Vale do Tejo (PT1D) out of Centro and Lisboa, so the 2021 geometry's
+# PT17 answers under the SUM of PT1A and PT1B, and PT16/PT18 renumber 1:1 to
+# PT19/PT1C. GDP and GVA are additive stocks in the datasets' own units, so the
+# sum is the figure the old region would have carried; unemployment takes no
+# part in either map, because the 2022 unemployment file answers under the 2021
+# codes natively (its own labels mark them "NUTS 2021") and a rate cannot be
+# summed anyway.
+VINTAGE_SIBLING = {"NL31": "NL35", "NL33": "NL36",
+                   "PT16": "PT19", "PT18": "PT1C"}
+VINTAGE_PARTITION = {"PT17": ["PT1A", "PT1B"]}
 
 
 # V2.7. THE EIGHT SEA LINKS, and the count is a measurement rather than a taste.
@@ -1180,6 +1266,26 @@ SEA_LINKS = [
     ("ES51", "ES53", "Barcelona-Palma"),
     ("ES61", "ES63", "Algeciras-Ceuta"),
     ("ES61", "ES64", "Almeria-Melilla"),
+    # V3.3. The roster to EU-27 nearly doubles the component count the shared-vertex
+    # adjacency leaves (18 measured before authoring, against 9 for the ten), and each
+    # link here is the same discipline as the eight above: a real crossing in service,
+    # named so a reader can check it against the world. Ireland needs none -- it reaches
+    # the mainland through the land border with Northern Ireland (UKN) -- and Denmark's
+    # islands connect to EACH OTHER already, so one link carries both. The Greek island
+    # groups are three Aegean singles plus the Ionian chain, all served from Piraeus or
+    # Igoumenitsa; the 2021 vintage renumbered Greece (EL62 is the Ionian Islands, not
+    # Western Greece), which is why these codes look shifted against older tables.
+    # Aland's Turku-Mariehamn ferry was removed the same day the register learned
+    # FI20 carries no nameable city (cities15000's cut is above Mariehamn): a link
+    # naming a code the register does not carry is refused.
+    ("DK01", "SE22", "Oresund Bridge (Kobenhavn-Malmo)"),
+    ("DK02", "DK03", "Storebaeltsforbindelsen (Korsor-Nyborg)"),
+    ("EL30", "EL43", "Piraeus-Heraklion ferry"),
+    ("EL30", "EL42", "Piraeus-Rhodos ferry"),
+    ("EL30", "EL41", "Piraeus-Mytilini ferry"),
+    ("EL54", "EL62", "Igoumenitsa-Kerkyra ferry"),
+    ("ITG1", "MT00", "Pozzallo-Valletta ferry"),
+    ("EL30", "CY00", "Piraeus-Limassol ferry"),
 ]
 
 
@@ -1261,9 +1367,26 @@ def load_natural_change(code_lists):
 
 
 def econ_figure(table, code, fallback=None):
-    """table[code], or its 2024 sibling's value, or fallback."""
+    """table[code], or its other vintage's value, or fallback.
+
+    Two vintage shapes, each proven rather than assumed (see VINTAGE_SIBLING /
+    VINTAGE_PARTITION): a 1:1 renumbering reads the sibling code's figure, and
+    a split reads the SUM of the parts -- which is exact only because both
+    series reaching this path are additive stocks; a rate must answer under its
+    own vintage or not at all.
+    """
     if code in table:
         return table[code]
+    parts = VINTAGE_PARTITION.get(code)
+    if parts is not None and all(p in table for p in parts):
+        values = [table[p] for p in parts]
+        if isinstance(values[0], dict):
+            out = dict(values[0])
+            for v in values[1:]:
+                for k, x in v.items():
+                    out[k] = out.get(k, 0.0) + x
+            return out
+        return sum(values)
     sibling = VINTAGE_SIBLING.get(code)
     if sibling is not None and sibling in table:
         return table[sibling]
@@ -1459,11 +1582,24 @@ def load_transport_endowment(codes):
     return out
 
 
-def _principal_lonlat(region):
-    """The region's largest city's coordinate. cities[] is written descending by
-    population, so cities[0] is the principal place by construction rather than by a
-    sort here -- one ordering, one writer."""
-    return region["cities"][0]["lonlat"]
+def _principal_lonlat(region, feature):
+    """The region's largest city's coordinate, or its geometry's own centre.
+
+    cities[] is written descending by population, so cities[0] is the principal
+    place by construction rather than by a sort here -- one ordering, one
+    writer. V3.3 adds the fallback for the region no GeoNames place lives on:
+    Aland's only town is below cities15000's own cut, so its register entry is
+    honestly empty and the principal coordinate falls back to the outer ring's
+    centroid -- a derived point of committed geometry, not an invented city.
+    """
+    if region["cities"]:
+        return region["cities"][0]["lonlat"]
+    geometry = feature["geometry"]
+    polygons = ([geometry["coordinates"]]
+                if geometry["type"] == "Polygon" else geometry["coordinates"])
+    ring = polygons[0][0]
+    return [round(sum(p[0] for p in ring) / len(ring), 4),
+            round(sum(p[1] for p in ring) / len(ring), 4)]
 
 
 def _haversine_km(a, b):
@@ -1506,16 +1642,24 @@ def build_region_graph(registers, nuts):
         for a, b in itertools.combinations(sorted(owners), 2):
             pairs.add((a, b))
 
+    # The features are already resolved per code for the vertex pass; kept so
+    # the principal-point fallback reads the same geometry the adjacency did.
+    features_by_code = {
+        code: nuts[REGION_LEVEL[_nation_of(code, registers)]][code] for code in sorted(codes)
+    }
+
     edges = []
     for a, b in sorted(pairs):
-        km = _haversine_km(_principal_lonlat(by_region[a]), _principal_lonlat(by_region[b]))
+        km = _haversine_km(_principal_lonlat(by_region[a], features_by_code[a]),
+                           _principal_lonlat(by_region[b], features_by_code[b]))
         edges.append([a, b, round(km, 1), "land"])
 
     for a, b, _label in SEA_LINKS:
         if a not in codes or b not in codes:
             sys.exit(f"sea link {a}-{b} names a code the register does not carry")
         lo, hi = sorted((a, b))
-        km = _haversine_km(_principal_lonlat(by_region[lo]), _principal_lonlat(by_region[hi]))
+        km = _haversine_km(_principal_lonlat(by_region[lo], features_by_code[lo]),
+                           _principal_lonlat(by_region[hi], features_by_code[hi]))
         edges.append([lo, hi, round(km, 1), "sea"])
     edges.sort(key=lambda e: (e[0], e[1]))
 
@@ -1635,6 +1779,19 @@ def assign_cities(index):
                          % (nid, city["name"], lon, lat, near_kept))
 
         counts["subdivisions"] += drop_numbered_subdivisions(entry["kept"])
+
+        # V3.3. A region the register cannot name is not the register's object --
+        # "a main city plus the sum of the smaller cities under it" -- and the
+        # top-up rule assumed every region had SOME GeoNames place, which Aland
+        # (FI20) proves false on the EU-29 roster: cities15000's own cut sits
+        # above Mariehamn, so the island carries no place at all. Into the
+        # residual it goes, where extra-regio and the overseas regions already
+        # live, and the count is printed rather than absorbed.
+        unnamed = [r for r in entry["kept"] if not r["cities"]]
+        if unnamed:
+            entry["kept"] = [r for r in entry["kept"] if r["cities"]]
+            entry["dropped"].extend(unnamed)
+            counts["unnamed"] = counts.get("unnamed", 0) + len(unnamed)
     return counts
 
 
@@ -1940,8 +2097,10 @@ def main():
     cities = sum(len(r["cities"]) for f in region_files.values() for r in f["regions"])
     print(f"Wrote data/regions/ ({regions} regions, {cities} cities)")
     print(f"Wrote {REGION_GEO_OUT.relative_to(ROOT)} ({len(region_geo['features'])} features)")
-    print("  city join: %d inside, %d snapped, %d overseas, %d numbered subdivisions dropped"
-          % (join["inside"], join["snapped"], join["overseas"], join["subdivisions"]))
+    print("  city join: %d inside, %d snapped, %d overseas, %d numbered subdivisions dropped, "
+          "%d regions unnamed (residual)"
+          % (join["inside"], join["snapped"], join["overseas"], join["subdivisions"],
+             join.get("unnamed", 0)))
 
 
 def write_geojson(path, collection, indent):

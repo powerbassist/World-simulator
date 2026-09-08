@@ -84,6 +84,12 @@
           "name": "Klagenfurt am Wörthersee",
           "share": 0.177703,
           "lonlat": [14.3053, 46.6247]
+        },
+        {
+          "id": "AT21_villach",
+          "name": "Villach",
+          "share": 0.104305,
+          "lonlat": [13.8558, 46.6103]
         }
       ]
     },

@@ -87,6 +87,12 @@
           "name": "La Spezia",
           "share": 0.061811,
           "lonlat": [9.8238, 44.103]
+        },
+        {
+          "id": "ITC3_savona",
+          "name": "Savona",
+          "share": 0.040646,
+          "lonlat": [8.4771, 44.309]
         }
       ]
     },
@@ -162,6 +168,12 @@
           "name": "Cremona",
           "share": 0.007163,
           "lonlat": [10.0213, 45.1332]
+        },
+        {
+          "id": "ITC4_pavia",
+          "name": "Pavia",
+          "share": 0.006611,
+          "lonlat": [9.1592, 45.1921]
         }
       ]
     },
@@ -267,6 +279,30 @@
           "name": "Caserta",
           "share": 0.012951,
           "lonlat": [14.3323, 41.0726]
+        },
+        {
+          "id": "ITF3_castellammare_di_stabia",
+          "name": "Castellammare di Stabia",
+          "share": 0.011763,
+          "lonlat": [14.4869, 40.7021]
+        },
+        {
+          "id": "ITF3_afragola",
+          "name": "Afragola",
+          "share": 0.011462,
+          "lonlat": [14.3094, 40.923]
+        },
+        {
+          "id": "ITF3_acerra",
+          "name": "Acerra",
+          "share": 0.010651,
+          "lonlat": [14.3714, 40.9448]
+        },
+        {
+          "id": "ITF3_benevento",
+          "name": "Benevento",
+          "share": 0.010386,
+          "lonlat": [14.7782, 41.1307]
         }
       ]
     },
@@ -324,6 +360,18 @@
           "name": "Lecce",
           "share": 0.02057,
           "lonlat": [18.1724, 40.3548]
+        },
+        {
+          "id": "ITF4_altamura",
+          "name": "Altamura",
+          "share": 0.017981,
+          "lonlat": [16.5495, 40.8266]
+        },
+        {
+          "id": "ITF4_molfetta",
+          "name": "Molfetta",
+          "share": 0.015181,
+          "lonlat": [16.599, 41.2004]
         }
       ]
     },
@@ -372,6 +420,24 @@
           "name": "Catanzaro",
           "share": 0.042561,
           "lonlat": [16.6009, 38.8825]
+        },
+        {
+          "id": "ITF6_lamezia_terme",
+          "name": "Lamezia Terme",
+          "share": 0.037996,
+          "lonlat": [16.3094, 38.9626]
+        },
+        {
+          "id": "ITF6_crotone",
+          "name": "Crotone",
+          "share": 0.034817,
+          "lonlat": [17.1276, 39.0808]
+        },
+        {
+          "id": "ITF6_cosenza",
+          "name": "Cosenza",
+          "share": 0.034413,
+          "lonlat": [16.2531, 39.2989]
         }
       ]
     },
@@ -429,6 +495,18 @@
           "name": "Ragusa",
           "share": 0.015362,
           "lonlat": [14.7244, 36.9257]
+        },
+        {
+          "id": "ITG1_trapani",
+          "name": "Trapani",
+          "share": 0.013971,
+          "lonlat": [12.5362, 38.0176]
+        },
+        {
+          "id": "ITG1_caltanissetta",
+          "name": "Caltanissetta",
+          "share": 0.012992,
+          "lonlat": [14.0622, 37.4903]
         }
       ]
     },
@@ -456,6 +534,18 @@
           "name": "Sassari",
           "share": 0.057889,
           "lonlat": [8.5555, 40.7259]
+        },
+        {
+          "id": "ITG2_quartu_sant_elena",
+          "name": "Quartu Sant'Elena",
+          "share": 0.041967,
+          "lonlat": [9.25, 39.2293]
+        },
+        {
+          "id": "ITG2_olbia",
+          "name": "Olbia",
+          "share": 0.038014,
+          "lonlat": [9.498, 40.9234]
         }
       ]
     },
@@ -651,6 +741,12 @@
           "name": "Carpi",
           "share": 0.016077,
           "lonlat": [10.8777, 44.7824]
+        },
+        {
+          "id": "ITH5_imola",
+          "name": "Imola",
+          "share": 0.015807,
+          "lonlat": [11.7132, 44.3592]
         }
       ]
     },
@@ -708,6 +804,30 @@
           "name": "Pistoia",
           "share": 0.020155,
           "lonlat": [10.9237, 43.9306]
+        },
+        {
+          "id": "ITI1_massa",
+          "name": "Massa",
+          "share": 0.017684,
+          "lonlat": [10.1393, 44.0354]
+        },
+        {
+          "id": "ITI1_viareggio",
+          "name": "Viareggio",
+          "share": 0.016971,
+          "lonlat": [10.2502, 43.8669]
+        },
+        {
+          "id": "ITI1_grosseto",
+          "name": "Grosseto",
+          "share": 0.01663,
+          "lonlat": [11.1094, 42.763]
+        },
+        {
+          "id": "ITI1_carrara",
+          "name": "Carrara",
+          "share": 0.016014,
+          "lonlat": [10.0979, 44.0793]
         }
       ]
     },
@@ -762,6 +882,12 @@
           "name": "Pesaro",
           "share": 0.051938,
           "lonlat": [12.9164, 43.9092]
+        },
+        {
+          "id": "ITI3_fano",
+          "name": "Fano",
+          "share": 0.041003,
+          "lonlat": [13.0167, 43.8405]
         }
       ]
     },

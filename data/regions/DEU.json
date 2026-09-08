@@ -99,6 +99,42 @@
           "name": "Konstanz",
           "share": 0.007305,
           "lonlat": [9.1758, 47.6603]
+        },
+        {
+          "id": "DE1_aalen",
+          "name": "Aalen",
+          "share": 0.00603,
+          "lonlat": [10.0933, 48.8378]
+        },
+        {
+          "id": "DE1_sindelfingen",
+          "name": "Sindelfingen",
+          "share": 0.005511,
+          "lonlat": [9.0167, 48.7]
+        },
+        {
+          "id": "DE1_schwaebisch_gmuend",
+          "name": "Schwäbisch Gmünd",
+          "share": 0.005502,
+          "lonlat": [9.7981, 48.7995]
+        },
+        {
+          "id": "DE1_offenburg",
+          "name": "Offenburg",
+          "share": 0.005324,
+          "lonlat": [7.945, 48.4738]
+        },
+        {
+          "id": "DE1_friedrichshafen",
+          "name": "Friedrichshafen",
+          "share": 0.005249,
+          "lonlat": [9.4755, 47.6569]
+        },
+        {
+          "id": "DE1_goeppingen",
+          "name": "Göppingen",
+          "share": 0.005217,
+          "lonlat": [9.6521, 48.7035]
         }
       ]
     },
@@ -174,6 +210,30 @@
           "name": "Landshut",
           "share": 0.005453,
           "lonlat": [12.1618, 48.5296]
+        },
+        {
+          "id": "DE2_bamberg",
+          "name": "Bamberg",
+          "share": 0.005315,
+          "lonlat": [10.9007, 49.8987]
+        },
+        {
+          "id": "DE2_aschaffenburg",
+          "name": "Aschaffenburg",
+          "share": 0.005202,
+          "lonlat": [9.1521, 49.977]
+        },
+        {
+          "id": "DE2_kempten_allgaeu",
+          "name": "Kempten (Allgäu)",
+          "share": 0.004659,
+          "lonlat": [10.3139, 47.7267]
+        },
+        {
+          "id": "DE2_rosenheim",
+          "name": "Rosenheim",
+          "share": 0.004566,
+          "lonlat": [12.1225, 47.8564]
         }
       ]
     },
@@ -222,6 +282,12 @@
           "name": "Cottbus",
           "share": 0.033395,
           "lonlat": [14.3289, 51.7577]
+        },
+        {
+          "id": "DE4_brandenburg_an_der_havel",
+          "name": "Brandenburg an der Havel",
+          "share": 0.023573,
+          "lonlat": [12.55, 52.4167]
         }
       ]
     },
@@ -333,6 +399,18 @@
           "name": "Marburg an der Lahn",
           "share": 0.012532,
           "lonlat": [8.7707, 50.809]
+        },
+        {
+          "id": "DE7_fulda",
+          "name": "Fulda",
+          "share": 0.010128,
+          "lonlat": [9.6752, 50.5516]
+        },
+        {
+          "id": "DE7_ruesselsheim_am_main",
+          "name": "Rüsselsheim am Main",
+          "share": 0.009488,
+          "lonlat": [8.4225, 49.9896]
         }
       ]
     },
@@ -360,6 +438,18 @@
           "name": "Schwerin",
           "share": 0.059982,
           "lonlat": [11.4132, 53.6294]
+        },
+        {
+          "id": "DE8_neubrandenburg",
+          "name": "Neubrandenburg",
+          "share": 0.042256,
+          "lonlat": [13.261, 53.5573]
+        },
+        {
+          "id": "DE8_stralsund",
+          "name": "Stralsund",
+          "share": 0.036604,
+          "lonlat": [13.0818, 54.3091]
         }
       ]
     },
@@ -447,6 +537,18 @@
           "name": "Celle",
           "share": 0.008846,
           "lonlat": [10.0805, 52.6226]
+        },
+        {
+          "id": "DE9_garbsen",
+          "name": "Garbsen",
+          "share": 0.007892,
+          "lonlat": [9.5899, 52.4137]
+        },
+        {
+          "id": "DE9_hameln",
+          "name": "Hameln",
+          "share": 0.007308,
+          "lonlat": [9.3562, 52.104]
         }
       ]
     },
@@ -756,6 +858,72 @@
           "name": "Detmold",
           "share": 0.00411,
           "lonlat": [8.8732, 51.9385]
+        },
+        {
+          "id": "DEA_lippstadt",
+          "name": "Lippstadt",
+          "share": 0.00375,
+          "lonlat": [8.3448, 51.6737]
+        },
+        {
+          "id": "DEA_dinslaken",
+          "name": "Dinslaken",
+          "share": 0.003737,
+          "lonlat": [6.7434, 51.5623]
+        },
+        {
+          "id": "DEA_unna",
+          "name": "Unna",
+          "share": 0.003723,
+          "lonlat": [7.6897, 51.538]
+        },
+        {
+          "id": "DEA_herten",
+          "name": "Herten",
+          "share": 0.003643,
+          "lonlat": [7.1439, 51.5964]
+        },
+        {
+          "id": "DEA_herford",
+          "name": "Herford",
+          "share": 0.003619,
+          "lonlat": [8.6734, 52.1146]
+        },
+        {
+          "id": "DEA_grevenbroich",
+          "name": "Grevenbroich",
+          "share": 0.003613,
+          "lonlat": [6.5827, 51.091]
+        },
+        {
+          "id": "DEA_kerpen",
+          "name": "Kerpen",
+          "share": 0.003583,
+          "lonlat": [6.6969, 50.8699]
+        },
+        {
+          "id": "DEA_dormagen",
+          "name": "Dormagen",
+          "share": 0.003547,
+          "lonlat": [6.8317, 51.0968]
+        },
+        {
+          "id": "DEA_bergheim",
+          "name": "Bergheim",
+          "share": 0.003545,
+          "lonlat": [6.6399, 50.9557]
+        },
+        {
+          "id": "DEA_wesel",
+          "name": "Wesel",
+          "share": 0.003441,
+          "lonlat": [6.6204, 51.6669]
+        },
+        {
+          "id": "DEA_langenfeld",
+          "name": "Langenfeld",
+          "share": 0.003297,
+          "lonlat": [6.9483, 51.1082]
         }
       ]
     },
@@ -807,6 +975,12 @@
           "name": "Worms",
           "share": 0.019749,
           "lonlat": [8.3592, 49.6328]
+        },
+        {
+          "id": "DEB_neuwied",
+          "name": "Neuwied",
+          "share": 0.016268,
+          "lonlat": [7.4706, 50.4336]
         }
       ]
     },
@@ -867,6 +1041,12 @@
           "name": "Zwickau",
           "share": 0.024436,
           "lonlat": [12.4884, 50.7272]
+        },
+        {
+          "id": "DED_plauen",
+          "name": "Plauen",
+          "share": 0.016426,
+          "lonlat": [12.1378, 50.4973]
         }
       ]
     },
@@ -894,6 +1074,12 @@
           "name": "Halle (Saale)",
           "share": 0.109652,
           "lonlat": [11.9795, 51.4816]
+        },
+        {
+          "id": "DEE_dessau",
+          "name": "Dessau",
+          "share": 0.03123,
+          "lonlat": [12.2455, 51.8386]
         }
       ]
     },
@@ -972,6 +1158,12 @@
           "name": "Gera",
           "share": 0.049628,
           "lonlat": [12.0819, 50.8803]
+        },
+        {
+          "id": "DEG_weimar",
+          "name": "Weimar",
+          "share": 0.030692,
+          "lonlat": [11.329, 50.9803]
         }
       ]
     }
