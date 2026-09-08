@@ -42,11 +42,17 @@ Marseille–Ajaccio, Villa San Giovanni–Messina, Civitavecchia–Olbia,
 Barcelona–Palma, Algeciras–Ceuta, Almería–Melilla. The count is the
 measurement, not a preference.
 
-**Routed geometry is also refused on licence**: `docs/data-sources.md` rejects
-OpenStreetMap on ODbL's share-alike, which attaches to derived databases — and
-`data/` would be one — and no permissively-licensed European road or rail
-linework exists in this project's chosen sources. So routed geometry is not a
-more expensive option; it is one this repo may not take.
+**Licence removes one road source, not all of them**: `docs/data-sources.md`
+rejects OpenStreetMap on ODbL's share-alike, which attaches to derived
+databases, and `data/` would be one. It does **not** follow that nothing
+permissive exists — V3.4 measured one that does. Natural Earth 1:10m roads are
+public domain and put linework in 212 of the roster's 213 regions, and
+`docs/data-sources.md` refuses them on a different ground: no property key
+attributes a line to a region pair, so an edge's road cannot be looked up.
+Routed geometry stays refused on the count above — the handoff's own transit
+examples route fine over adjacency, Berlin→Hamburg in three hops and
+Berlin→Lombardia in five through a third country — not on there being nothing
+to route over.
 
 A first-pass bug is recorded so no session repeats it: reading only the outer
 ring reports **12 components and 10 isolates**, adding AT13 Wien, BE1 Bruxelles

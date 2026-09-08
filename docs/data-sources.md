@@ -24,7 +24,7 @@ Which open datasets seed the game's content, what each one is licensed under, an
 - **Label anchors:** Natural Earth's own `LABEL_X` / `LABEL_Y` are carried into both files as `label_lon` / `label_lat`. They are hand-placed and better than a polygon centroid — Norway's centroid is in Sweden.
 - **Note:** Sub-national regions are imported now but decorative at MVP. They exist so regional autonomy in [[v1]] doesn't require a second import pass.
 
-### Natural Earth roads — measured at V3.4, and refused on SHAPE after passing coverage
+### Natural Earth roads — measured at V3.4, and refused on ATTRIBUTION after passing coverage
 
 The probe was written expecting to refuse this on coverage, the way the V3.4
 row and its handoff both assumed. **It passed coverage and was refused anyway**,
@@ -43,39 +43,80 @@ reason anyone predicted.
   under the *first* region ring that contains it and then stops, so a vertex
   inside an enclave is taken by whichever host ring came first in feature order.
   Re-tested against their own rings alone, AT13 Wien carries 24 vertices and
-  RO32 București 101. **This is the second time the same enclaves have bitten a
-  probe here** — [[network-model]] §1 records the V2.7 network probe reporting
-  12 components and 10 isolates because AT13, BE1 and DE3 live in their hosts'
-  *hole* rings. Both numbers are printed side by side by the probe, so neither
-  can be read alone. Either is well clear of the ~90 % line set before the run.
-- **Edge identity — FAILED, and it decided.** A road feature's properties are
-  `name`, `type`, `sov_a3`, `length_km` and their kin: **not one names a region
-  or an edge.** So of `data/geo/region_graph.json`'s 463 edges, Natural Earth
-  can identify **zero**. This block draws one line per edge because the convoys
-  ride those lines and `Network.accessibility()` is priced over that same graph
-  — undifferentiated linework cannot carry either. Generated spines score 463 of
-  463 on this test by construction, because they are DERIVED from the graph
-  rather than matched to it.
+  RO32 București 101. **This is the second time the same enclave class has
+  bitten a probe here** — [[network-model]] §1 records the V2.7 network probe
+  reporting 12 components and 10 isolates over AT13, BE1 and DE3 — but by the
+  *opposite* mechanism, and it caught a different subset. V2.7 ignored hole
+  rings; this probe reads them and lets whichever ring comes first in feature
+  order take the point, so AT13 and RO32 (whose hosts AT12 and RO31 precede
+  them) lost their vertices while BE1 Bruxelles and DE3 Berlin, which precede
+  their hosts, were counted correctly this run. RO32 is not in §1's list at all.
+  The re-test corrects **false negatives only** — it runs on the empty codes —
+  so a host with no linework of its own but a road-bearing enclave in its hole
+  ring would be credited and never re-tested; no host on this roster is in that
+  state, which is why 212 is exact. Both numbers are printed side by side by the
+  probe, so neither can be read alone. Either is well clear of the ~90 % line
+  set before the run.
+- **Edge identity — no attribute join exists, and that decided.** The probe
+  prints all 31 property keys and **not one names a region or an edge**: no NUTS
+  code, no region id, no origin/destination pair. `sov_a3` names a sovereign
+  state, which is a nation and not one of the 213 regions — and over the 7 850
+  features inside the roster's box it is **null on every one of them**. `name`
+  is filled on only **1 719** of those 7 850, and what it holds is a route
+  number (`E` + `65`), a road designation rather than a place. `add`, `toll`,
+  `ignore` and `uident` are `0` on all 7 850. What is actually populated there
+  is `type`, `featurecla` and `continent` (7 850 each), `length_km` (7 789) and
+  the cartographic ranks — none of which is an identity. So a line for one of
+  `data/geo/region_graph.json`'s 463 edges cannot be **looked up** in this file;
+  the count of edges Natural Earth can name by attribute is **zero**, and the
+  probe derives both that zero and the 463 rather than printing them. This block
+  draws one line per edge because the convoys ride those lines and
+  `Network.accessibility()` is priced over that same graph — undifferentiated
+  linework cannot carry either. Generated spines score 463 of 463 on this test
+  by construction, because they are DERIVED from the graph rather than matched
+  to it.
+- **What was NOT measured, and is therefore not refused:** *geometric*
+  attribution — building a graph out of the linework itself and routing between
+  two regions' principal cities. That needs no identifier, so nothing above
+  rules it out. It was not attempted and not priced, and it is **out of V3.4's
+  scope**: it is a routing engine, not a draw call, against a block whose G3/G5
+  frame budgets are already set. The refusal stands on the two things that were
+  measured — no attribute join, and the vertex cost below — not on a claim that
+  this data cannot be attributed at all.
 - **The decorative-layer option, priced and declined.** Natural Earth could
-  still have gone UNDER the spines for looks. Measured by the same probe over
-  the roster's own bounding box — derived from `data/geo/regions.geojson`, not
-  typed in, so it still describes the roster after the eleventh nation joins:
-  7 850 features and 129 706 vertices in total; 1 338 / 29 209 for `Major
-  Highway` alone; 3 432 / 81 017 for `Major Highway` + `Secondary Highway`,
-  which is **1.44 MB** of coordinate text at the roster's 4-decimal precision.
-  That size is geometry only — `[lon,lat],` per vertex, no properties and no
-  envelope — and the probe prints the filter that produces it rather than
-  writing a file nobody asked for. The map's entire committed geometry today is
-  ~37 600 points, so the cheap half of that option is **+78 %** vertex mass and
-  the full one roughly **triples** it —
-  landing squarely in the everything-visible band, which is where culling
-  removes nothing and where the 7.08–7.23 ms measurement lives. Taking it would
-  have meant re-declaring V3.4's G3 and G5 gates upward before drawing anything,
-  which is choosing a gate to fit what you wanted to build.
+  still have gone UNDER the spines for looks. The probe prices it **two ways**,
+  because a bounding box is a rectangle and the roster is not — the box reaches
+  into Anatolia, North Africa and the Atlantic, and 846 of its 7 850 features
+  are on `continent` Asia or Africa. Both are derived from
+  `data/geo/regions.geojson`, not typed in, so both still describe the roster
+  after the eleventh nation joins:
+
+  | | box (the ceiling) | inside the region rings (what the map draws) |
+  |---|---|---|
+  | all types | 7 850 features / 129 706 vertices | 5 526 / 90 716 |
+  | `Major Highway` | 1 338 / 29 209 | 1 200 / 27 253 |
+  | `Major Highway` + `Secondary Highway` | 3 432 / 81 017 | 2 956 / 67 690 |
+  | that pair as coordinate text | **1.44 MB** | **1.20 MB** |
+
+  The MB is geometry only — `[lon,lat],` per vertex at the roster's 4 decimals,
+  no properties and no envelope. **The file such a clip produces is bigger**:
+  the same box-scoped pair written out as GeoJSON with its properties intact is
+  **3.37 MB**, and that is the number to weigh when asking whether to commit it.
+  The probe prints the filter that produces it rather than writing a file nobody
+  asked for. The map's entire committed geometry today is **37 861 points**
+  (europe 9 383 + regions 19 018 + world 9 460, counted by the probe), so the
+  cheap half of that option is **+77 %** vertex mass by the box and **+72 %**
+  inside the rings, and the full one is **×3.14** by the box and **×2.79**
+  inside them. It lands in the everything-visible band on either reading, which
+  is where culling removes nothing and where the 7.08–7.23 ms measurement lives.
+  Taking it would have meant re-declaring V3.4's G3 and G5 gates upward before
+  drawing anything, which is choosing a gate to fit what you wanted to build.
 - **What would reopen it:** a European road source that is permissive, covers
-  the roster, AND carries an identifier that resolves to a region pair. The
-  third condition is the one nothing currently satisfies; the first two are
-  already met by this file.
+  the roster, AND lets a line be attributed to a region pair — either by
+  carrying an identifier that resolves to one, which nothing measured here does,
+  or by a routing pass over the linework, which nobody has costed. The first two
+  conditions are already met by this file; the third is open, not closed, and
+  reopening it means measuring a route, not re-reading these keys.
 
 > [!note] `road-generator` is not the road layer either
 > AGENTS.md records the addon as parked ahead of a planned use. It generates 3D
@@ -251,6 +292,12 @@ curl -L -o "sources/ne_50m_admin_0_countries.geojson" \
 
 curl -L -o "sources/ne_110m_admin_0_countries.geojson" \
   "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_admin_0_countries.geojson"
+
+# V3.4. Roads, 48 MiB, and NOT imported -- this is the file tools/roads_probe.py
+# measures, and the roads verdict above is only re-derivable if it can be fetched.
+# Nothing in data/ is built from it; skip this line unless you are re-running the probe.
+curl -L -o "sources/ne_10m_roads.geojson" \
+  "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_roads.geojson"
 
 <!-- V3.3: every World Bank line below was re-fetched with the nineteen added to
 the country filter when the roster grew to EU-27 + 2; the wide 1990-2024 pulls
