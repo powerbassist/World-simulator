@@ -35,9 +35,19 @@ reason anyone predicted.
   the discriminator — that is exactly why this was the alternative worth
   measuring and OpenStreetMap was not (ODbL share-alike attaches to derived
   databases, and `data/` would be one).
-- **Coverage — PASSED** (`tools/roads_probe.py`, 1:10m at tag `v5.1.2`): 210 of
-  213 roster regions carry a road line, 98.6 %. The empty codes are AT13, ES63,
-  RO32. Well clear of the ~90 % line the probe set in advance.
+- **Coverage — PASSED** (`tools/roads_probe.py`, 1:10m at tag `v5.1.2`): the
+  probe's first-match count is **210 of 213** regions, 98.6 %, with AT13, ES63
+  and RO32 empty; the true figure is **212 of 213**, 99.5 %, and only **ES63**
+  (Ceuta, 19 km² of Spanish North Africa) is genuinely empty of linework. The
+  gap is the attribution method, not the data: the probe files each road vertex
+  under the *first* region ring that contains it and then stops, so a vertex
+  inside an enclave is taken by whichever host ring came first in feature order.
+  Re-tested against their own rings alone, AT13 Wien carries 24 vertices and
+  RO32 București 101. **This is the second time the same enclaves have bitten a
+  probe here** — [[network-model]] §1 records the V2.7 network probe reporting
+  12 components and 10 isolates because AT13, BE1 and DE3 live in their hosts'
+  *hole* rings. Both numbers are printed side by side by the probe, so neither
+  can be read alone. Either is well clear of the ~90 % line set before the run.
 - **Edge identity — FAILED, and it decided.** A road feature's properties are
   `name`, `type`, `sov_a3`, `length_km` and their kin: **not one names a region
   or an edge.** So of `data/geo/region_graph.json`'s 463 edges, Natural Earth
@@ -47,12 +57,17 @@ reason anyone predicted.
   463 on this test by construction, because they are DERIVED from the graph
   rather than matched to it.
 - **The decorative-layer option, priced and declined.** Natural Earth could
-  still have gone UNDER the spines for looks. Measured over the roster's own
-  bounding box: 7 850 features and 129 706 vertices in total; 1 338 / 29 209 for
-  `Major Highway` alone; 3 432 / 81 017 for `Major Highway` + `Secondary
-  Highway`, which is 1.71 MB at the roster's 4-decimal precision. The map's
-  entire committed geometry today is ~37 600 points, so the cheap half of that
-  option is **+78 %** vertex mass and the full one roughly **triples** it —
+  still have gone UNDER the spines for looks. Measured by the same probe over
+  the roster's own bounding box — derived from `data/geo/regions.geojson`, not
+  typed in, so it still describes the roster after the eleventh nation joins:
+  7 850 features and 129 706 vertices in total; 1 338 / 29 209 for `Major
+  Highway` alone; 3 432 / 81 017 for `Major Highway` + `Secondary Highway`,
+  which is **1.44 MB** of coordinate text at the roster's 4-decimal precision.
+  That size is geometry only — `[lon,lat],` per vertex, no properties and no
+  envelope — and the probe prints the filter that produces it rather than
+  writing a file nobody asked for. The map's entire committed geometry today is
+  ~37 600 points, so the cheap half of that option is **+78 %** vertex mass and
+  the full one roughly **triples** it —
   landing squarely in the everything-visible band, which is where culling
   removes nothing and where the 7.08–7.23 ms measurement lives. Taking it would
   have meant re-declaring V3.4's G3 and G5 gates upward before drawing anything,
