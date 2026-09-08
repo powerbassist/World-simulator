@@ -51,6 +51,7 @@ const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapCities = preload("res://src/ui/map_cities.gd")
 const MapPlants = preload("res://src/ui/map_plants.gd")
+const MapNetwork = preload("res://src/ui/map_network.gd")
 
 signal nation_clicked(nation_id: String)
 
@@ -159,6 +160,16 @@ var _hovered_project := ""
 ## and wins an overlap; see MapCities and refresh_cities() below.
 var _cities: Array = []
 var _hovered_city := ""
+
+## Built once in setup() from content that never mutates -- the graph, and each
+## region's cities[0]. Not rebuilt on the monthly hook the way _cities is: a
+## city's population is live state and a road's endpoints are not.
+var _spines: Array = []
+
+## How many spines the last _draw() SUBMITTED after the cull -- not how many
+## landed visible pixels, which is the distinction map_network.gd's own doc
+## draws. Read by tests/test_map_view.gd, which asserts the cull by number.
+var _spines_drawn: int = 0
 
 var _dragging := false
 var _drag_moved := 0.0
@@ -312,6 +323,11 @@ func setup(loader, state) -> void:
 	# Built here for _refresh_markers()'s reason: a hit test can happen before the
 	# first frame is drawn, and an empty list would answer it with "nothing here".
 	refresh_cities()
+
+	# Built here rather than in _draw() for the reason the city list is: content
+	# that never mutates is built once, and a first frame that finds an empty
+	# list draws a map with no roads on it.
+	_spines = MapNetwork.spines(loader)
 
 	# Built here as well as in _draw() for the reason _fit_zoom() is hooked in
 	# _notification(): a hit test can happen before the first frame is drawn, and
@@ -592,6 +608,35 @@ func layer() -> String:
 	return _layer
 
 
+## Public because src/ui/map_flows.gd needs the zoom band to choose between arcs
+## and convoys, and because a headless test cannot reach a private field. The
+## overlay reads this and CITY_MIN_ZOOM and nothing else about the camera except
+## visible_lonlat_rect() -- it never learns what BASE_SCALE is.
+func zoom() -> float:
+	return _zoom
+
+
+func spines_drawn() -> int:
+	return _spines_drawn
+
+
+## The whole list's size, so a cull test can state its bound as a FRACTION of
+## the roster rather than as a figure that silently becomes a test of the
+## window size the day anyone changes it.
+func spine_count() -> int:
+	return _spines.size()
+
+
+## Sets the zoom directly, for tests and probes. zoom_by() is the player's route
+## and takes an anchor; this is the one tools/frame_probe.gd and the map tests
+## already need and were reaching around for.
+func set_zoom_for_test(z: float) -> void:
+	_has_fitted = true
+	_zoom = clampf(z, min_zoom(), MAX_ZOOM)
+	_clamp_pan()
+	queue_redraw()
+
+
 ## The city id of the cross under a screen point, or "" if there is none --
 ## V2.2b, taking the marker hit test's contract exactly. A radius test in SCREEN
 ## space over the city list and nothing else, reaching neither the roster's
@@ -725,6 +770,7 @@ func _draw() -> void:
 	_draw_raster()
 	_draw_world_borders()
 	_draw_roster()
+	_draw_spines()
 	_draw_labels()
 	_draw_cities()
 	_refresh_markers()
@@ -838,6 +884,33 @@ func _draw_roster() -> void:
 			var closed := stroke_points.duplicate()
 			closed.append(stroke_points[0])
 			draw_polyline(closed, stroke, width)
+
+
+## The spine pass -- V3.4, between the roster fills and the labels. Over the land
+## it crosses and under every name and mark, which is where a road belongs on a
+## political map: it is the thing the marks sit ON.
+##
+## GATED ON CITY_MIN_ZOOM, the same number _draw_cities() uses rather than a
+## second one. A spine ends on two principal cities, so a spine drawn while
+## neither glyph is drawn is a line from nowhere to nowhere. Nothing was swept
+## for this -- the reason is structural, not a volume measurement, which is the
+## difference from the sweep that set CITY_MIN_POP.
+##
+## Culled in DEGREES against the view before anything is projected, which is
+## docs/map-platform-model.md §7's "cull first, transform second" in its own
+## words. The list is static content, so reading live lon/lat bounds carries no
+## staleness class -- the same argument _ring_reaches_view() already states.
+func _draw_spines() -> void:
+	_spines_drawn = 0
+	if _zoom < CITY_MIN_ZOOM:
+		return
+	var pad := CULL_PAD_PX / (BASE_SCALE * _zoom)
+	var view := visible_lonlat_rect().grow(pad)
+	_spines_drawn = MapNetwork.draw_spines(
+		self, _spines, view,
+		func(lon: float, lat: float) -> Vector2: return _lonlat_to_screen(lon, lat),
+		size
+	)
 
 
 ## The roster only. Naming the ~160 countries the player cannot click would say
