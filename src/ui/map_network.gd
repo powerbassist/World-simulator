@@ -36,8 +36,10 @@ const SEA := Color(0.788, 0.635, 0.153, 0.42)
 const WIDTH := 1.0
 
 ## The ferry dash. Long enough to read as a dash at the zoom roads appear at
-## (CITY_MIN_ZOOM), short enough that the shortest crossing in the register --
-## the Channel Tunnel -- still shows more than one.
+## (CITY_MIN_ZOOM). Whether it still reads as more than one dash on the
+## register's actual shortest sea crossing -- DK01-SE22, Copenhagen-Malmo, 28.4 km,
+## not the Channel Tunnel's FR1-UKI at 343.8 km -- is a look question this block
+## settles at the screenshot pass against a frame, not here.
 const DASH_PX := 7.0
 const GAP_PX := 5.0
 
@@ -88,7 +90,14 @@ static func spines(loader) -> Array:
 	return out
 
 
-## Draws every spine whose lon/lat box reaches the view, and returns how many.
+## Draws every spine whose lon/lat box reaches the view, and returns how many
+## survived that cull and were submitted for drawing -- not how many pixels
+## landed on screen. A sea spine can pass this coarse bbox cull and still have
+## _clip_to_box return an empty range once projected, drawing nothing; the land
+## branch's draw_line is likewise unclipped and can fall entirely off the
+## control. Both are consistent, not a bug, and Task 3's cull test asserts a
+## fraction of the roster rather than an exact figure -- but the number this
+## returns counts submissions, not verified pixels.
 ##
 ## The count is returned rather than kept, so tests/test_map_flows.gd and
 ## tests/test_map_view.gd can assert the cull by NUMBER at a deep zoom. A
@@ -100,6 +109,13 @@ static func draw_spines(
 ) -> int:
 	var drawn := 0
 	for s in spine_list:
+		# BORDERS EXCLUDED: Rect2.intersects() defaults include_borders to
+		# false, so a degenerate box lying exactly on the view's edge is culled
+		# away silently rather than drawn (probed on 4.7.1: true for a
+		# degenerate box strictly inside the view, false on an edge or corner).
+		# Inert today -- tests/test_map_network.gd scans all 463 committed
+		# edges and finds none whose cities[0] share an exact longitude or
+		# latitude -- but it goes live the day a future edge does.
 		if not view.intersects(s["box"]):
 			continue
 		var a: Vector2 = to_screen.call(s["a"].x, s["a"].y)

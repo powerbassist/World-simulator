@@ -68,11 +68,15 @@ func _check_anchor(loader, spines: Array) -> void:
 ## invisible road rather than a crash.
 ##
 ## GROWN BEFORE THE TEST, and by a hair rather than by a margin. Rect2.has_point()
-## is half-open -- it excludes the right and bottom edges -- and a TIGHT bounding
-## box always puts one of its two defining ends on exactly those edges, so the
-## check would reject every correct box in the list. AT11-AT12 is the worst of it:
-## both cities sit on the same latitude, the box has zero height, and neither end
-## counts as inside. 0.001 degrees is about 100 m, which is below any wrong-box
+## is half-open -- it excludes the right and bottom edges -- so a TIGHT bounding
+## box always excludes at least one of its two defining corners. AT11-AT12 shows
+## the general case: AT11 sits at (16.2591, 47.276), AT12 at (16.232, 47.8049) --
+## an anti-diagonal pair, lon falling from AT11 to AT12 while lat rises. The
+## box's max corner takes AT11's lon (the larger of the two) and AT12's lat (the
+## larger of the two); the min corner takes the other two. AT11 supplies the max
+## lon, so it lands on the excluded high edge on that axis; AT12 supplies the max
+## lat and fails on that axis instead. Neither end counts as inside, each for a
+## different reason. 0.001 degrees is about 100 m, which is below any wrong-box
 ## error worth catching -- those miss by whole degrees -- and above float noise.
 func _check_box(spines: Array) -> void:
 	for s in spines:
