@@ -1,0 +1,13 @@
+{
+  "_source": "invented",
+  "_note": "Fictional newspapers per docs/fictionalization.md. `reach` is of the outlet's OWN audience bloc; one bloc's named reaches sum to less than 1.0. `position` is the two-axis ideology space, the ONLY thing authored about an outlet's politics. Authored at V3.3 with Poland's playable kit on the FRA convention: the tabloid and the Catholic-conservative daily for the older and rural blocs, a business daily, and a Warsaw urban liberal sheet, spanning economic -0.55..+0.65 and social -0.70..+0.75 against a Polish party field read through election_constants.gd's SLOT_POSITION.",
+  "outlets": [
+    { "id": "POL_fakt_dzien", "name": "Fakt Dnia", "audience": "workers", "reach": 0.38, "position": { "economic": 0.25, "social": 0.35 } },
+    { "id": "POL_glos_roboczy", "name": "Głos Roboczy", "audience": "workers", "reach": 0.27, "position": { "economic": -0.55, "social": -0.10 } },
+    { "id": "POL_dziennik_polski", "name": "Dziennik Polski Niedzielny", "audience": "pensioners", "reach": 0.52, "position": { "economic": 0.20, "social": 0.75 } },
+    { "id": "POL_warszawa_miasto", "name": "Warszawa Miasto", "audience": "urban", "reach": 0.44, "position": { "economic": 0.05, "social": -0.70 } },
+    { "id": "POL_wies_jutrzejsza", "name": "Wieś Jutrzejsza", "audience": "rural", "reach": 0.49, "position": { "economic": 0.10, "social": 0.60 } },
+    { "id": "POL_gielda_i_rynek", "name": "Giełda i Rynek", "audience": "business", "reach": 0.58, "position": { "economic": 0.65, "social": -0.15 } },
+    { "id": "POL_mloda_rzeczpospolita", "name": "Młoda Rzeczpospolita", "audience": "students", "reach": 0.35, "position": { "economic": -0.45, "social": -0.55 } }
+  ]
+}

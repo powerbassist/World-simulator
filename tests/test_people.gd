@@ -24,7 +24,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Person = preload("res://src/core/person.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 
-const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
+const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
 var _failures: Array[String] = []
 var _loader

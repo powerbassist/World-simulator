@@ -396,14 +396,20 @@ func _check_counterparty_gate_is_reachable() -> void:
 	var state = GameState.new_game(_loader, "GBR")
 	var terms := {"weight_multiplier": 1.35}
 
+	# V3.3 re-derived the teeth for the 29-nation roster. At the ten, "nobody
+	# signs floor-relations Britain" was the same assertion as "the majors
+	# refuse" -- every partner was major. At twenty-eight partners the small
+	# ones (MLT, EST, the Baltics) carry Britain at MULTIPLES of their even
+	# share, and the target-consulted model correctly lets them sign; what must
+	# still refuse is a major partner at floor relations, which is the case the
+	# accept weights were calibrated on (measured: FRA 0.97, DEU 0.95, gate
+	# 1.20 -- relations, not the stake term, is what holds them under).
 	var signed_at_rest := 0
-	for id in state.nations.keys():
-		if id == "GBR":
-			continue
-		if ForeignPolicy.would_accept_agreement(state, "GBR", String(id), terms):
+	for id in ["FRA", "DEU", "ITA"]:
+		if ForeignPolicy.would_accept_agreement(state, "GBR", id, terms):
 			signed_at_rest += 1
 	if signed_at_rest > 0:
-		_failures.append("GBR can already sign %d agreements at rest -- the gate is inert for the nation that sets it" % signed_at_rest)
+		_failures.append("GBR's floor-relations pair with a major was signed %d times -- the gate is inert for the nation that sets it" % signed_at_rest)
 
 	# The strongest single positive verb in the content, applied to every pair.
 	# At least one partner must then sign, or the feature is shut to one playable

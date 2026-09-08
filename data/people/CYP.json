@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "CYP_hadjipavlou", "name": "Stavros Hadjipavlou" },
+    { "id": "CYP_petrou", "name": "Charalambos Petrou" },
+    { "id": "CYP_zachariou", "name": "Michalis Zachariou" },
+    { "id": "CYP_christofi", "name": "Andreas Christofi" },
+    { "id": "CYP_adamidis", "name": "Giorgos Adamidis" },
+    { "id": "CYP_giallouridou", "name": "Eleni Giallouridou" },
+    { "id": "CYP_henri_iii", "name": "Henri III" }
+  ]
+}

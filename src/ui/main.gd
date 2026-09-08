@@ -717,7 +717,7 @@ func _wire_hud() -> void:
 	# about which layer is up.
 	_hud.map_legend.layer_selected.connect(func(id: String):
 		_map_view.set_layer(id)
-		_hud.map_legend.show_layer(_map_view.layer())
+		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id())
 	)
 	_map_view.nation_hovered.connect(func(id: String):
 		_hud.map_legend.show_hover(id, _state, _map_view.viewer_id())
@@ -1223,7 +1223,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		return
 
 	var player_id: String = _state.player_nation_id
-	var floor_share: float = ForeignPolicyK.EVEN_SHARE * ForeignPolicyK.CARD_MIN_STAKE_SHARE
+	var floor_share: float = ForeignPolicy.even_share(_state) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
 
 	# Oldest first, so the newest act ends up at the top of the column: push()
 	# appends and the stack drops from the front when it overflows.

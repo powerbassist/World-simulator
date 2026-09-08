@@ -42,12 +42,12 @@ City names, populations and coordinates from the GeoNames geographical database
 (https://www.geonames.org), `cities15000`, licensed CC BY 4.0.
 
 Cities are filed under the NUTS region whose polygon contains them, so the
-attribution covers a derived subset — 581 places of the 4 732 the file holds for the
+attribution covers a derived subset — 1 065 places of the file's holdings for the
 ten nations in scope — rather than the database.
 
 ## Juggernaut X (portrait generation)
 
-The 71 committed portraits under `assets/portraits/` are AI-generated images
+The committed portraits under `assets/portraits/` are AI-generated images
 produced locally with RunDiffusion's Juggernaut X (Hyper variant, CivitAI,
 https://civitai.com/models/133005/juggernaut-xl), then duotoned by this repo's
 own `tools/portraits.gd`. The model's licence permits use with credit; this is

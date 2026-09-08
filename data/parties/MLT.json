@@ -1,0 +1,46 @@
+{
+  "parties": [
+    {
+      "id": "partit_gustizzja_socjali",
+      "name": "Partit Ġustizzja Soċjali",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.55,
+      "leader_person": "MLT_cassar",
+      "discipline": 0.9,
+      "competence": 0.75,
+      "excluded_partners": [
+        "partit_kristjan_malti"
+      ]
+    },
+    {
+      "id": "partit_kristjan_malti",
+      "name": "Partit Kristjan Malti",
+      "ideology_slot": "christian_democrat",
+      "seat_share": 0.43,
+      "leader_person": "MLT_zahra",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "alternattiva_hadra",
+      "name": "Alternattiva Ħadra",
+      "ideology_slot": "green",
+      "seat_share": 0.01,
+      "leader_person": "MLT_camilleri",
+      "discipline": 0.75,
+      "competence": 0.6,
+      "excluded_partners": []
+    },
+    {
+      "id": "partit_tas_centru",
+      "name": "Partit tas-Centru",
+      "ideology_slot": "centrist",
+      "seat_share": 0.01,
+      "leader_person": "MLT_portelli",
+      "discipline": 0.75,
+      "competence": 0.6,
+      "excluded_partners": []
+    }
+  ]
+}

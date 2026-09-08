@@ -184,5 +184,27 @@ green.
   Article-5-as-domestic-politics is where V1.3f's cut stands.
 
 ---
+## V3.3 addendum: the council at 27, and what the seats arithmetic did
+
+The roster grew and the council's content had to answer for it. Three facts,
+all measured on the real tally machinery (the session's probe, run per
+proposal per player-choice):
+
+- **The eu seats table is the real 2024-29 allocation and sums to exactly
+  720** over 27 members; eurozone is 17, schengen 26 (IRL the opt-out, CYP
+  not yet admitted -- both exclusions named in the file), nato 24.
+- **The contribution ceiling re-derived on its own placement rule**: 1.20 was
+  "just above Luxembourg's output" on the eight-member mean; the EU-27 mean is
+  poorer, LUX computes 1.339, so the ceiling moved to 1.35 and the test that
+  forbids a bound-sitting member stays green.
+- **One agenda position was re-authored, on a measurement**: at the old
+  positions the 27-seat council produced NO division in which the player's
+  abstention differed from her opposition -- constructive abstention was
+  unreachable on every shipped proposal, which is the decorative-verb failure.
+  `debt_reduction_rule` now sits where its division lands inside the player's
+  pivotal band (385 for of 639 cast): her abstention lets it carry, her
+  opposition blocks it, her backing passes it. `stability_pact` stays where
+  V1.3d put it -- uncarryable by the player is the point of a council.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]] · [[ROADMAP]]

@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "LVA_kreituss", "name": "Jānis Kreituss" },
+    { "id": "LVA_liepina", "name": "Māra Liepiņa" },
+    { "id": "LVA_krumins", "name": "Ojārs Krūmiņš" },
+    { "id": "LVA_veismane", "name": "Elīna Veismane" },
+    { "id": "LVA_ozolins", "name": "Viktors Ozoliņš" },
+    { "id": "LVA_kalns", "name": "Andrejs Kalns" },
+    { "id": "LVA_vitola", "name": "Ineta Vītola" },
+    { "id": "LVA_viesturs_ii", "name": "Viesturs II" }
+  ]
+}

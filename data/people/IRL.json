@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "IRL_lavelle", "name": "Aoife Lavelle" },
+    { "id": "IRL_kinsella", "name": "Declan Kinsella" },
+    { "id": "IRL_hession", "name": "Rory Hession" },
+    { "id": "IRL_tarrant", "name": "Niamh Tarrant" },
+    { "id": "IRL_mcelhinney", "name": "Colm McElhinney" },
+    { "id": "IRL_nolan", "name": "Saoirse Nolan" },
+    { "id": "IRL_goggins", "name": "Cian Goggins" },
+    { "id": "IRL_brian_iv", "name": "Brian IV" }
+  ]
+}

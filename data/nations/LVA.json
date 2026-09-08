@@ -1,0 +1,160 @@
+{
+  "id": "LVA",
+  "name": "Latvia",
+  "geo_id": "LVA",
+  "capital": "Riga",
+  "playable": false,
+  "leader": {
+    "person": "LVA_kreituss",
+    "title": "Prime Minister",
+    "party": "vienota_latvija"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#9E3039", "#FFFFFF", "#9E3039"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Saeima",
+      "assembly_seats": 100,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 1 October 2022 for a four-year term; polling day is fixed to the first Saturday of October, so the next falls on 3 October 2026. Wikipedia, 'Next Latvian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2026,
+          "month": 10
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Satversme has no self-dissolution vote: the Saeima dissolves by national referendum -- initiated by one third of the electorate (Art. 14) or proposed by the President and put to the vote (Art. 48) -- where more than half vote for dissolution (Art. 15). The machinery's self_dissolution reads that referendum-initiated mechanism. Satversme, Arts. 14-15, 48.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected by the Saeima for four years -- the indirect one among the Baltic presidencies; the incumbent was elected in May 2023, so the next falls due in 2027, at a sitting the Saeima schedules. Ceremonial but with a suspensive veto and a real role in government formation. Wikipedia, 'President of Latvia'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "LVA_vitola",
+      "term_years": 4,
+      "next": {
+        "year": 2027,
+        "month": 6
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Arts. 76-77: the Satversme amends by a 2/3 vote of the Saeima at a sitting where at least 2/3 of its members are present. Art. 77 makes Articles 1, 2, 3, 4, 6 and 77 itself amendable only by referendum, which the template's two_thirds rule cannot express; recorded below. Satversme, Arts. 76-77.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Art. 77's list -- sovereignty, territory, the state language, the flag, the democratic electoral order -- is a mandatory-referendum list, the sharpest of this block's Baltic clauses; ordinary amendments read none and the gap is this note. Satversme, Art. 77.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Articles 1-3 put the democratic republic and the sovereign territory behind Art. 77's referendum bar, and Latvian practice treats them as beyond ordinary revision -- flagged as convention rather than a written eternity clause."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Satversmes tiesa, Art. 85: reviews the conformity of laws and other enactments with the Satversme. Latvijas Republikas Satversme, Art. 85.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President names a candidate Prime Minister, who presents the Government and its programme and must win the Saeima's confidence (Art. 59) -- but the government that wins is a multi-party bargain, Latvia having governed by ever-shifting coalitions since 1991 with among Europe's highest government turnover, and the machinery's coalition_negotiation names that bargaining phase rather than a single investiture ritual. The Government stands while it holds the Saeima's confidence. Satversme, Arts. 55-59.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "LVA_kreituss"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "LVA_viesturs_ii",
+    "neighbours": ["EST", "LTU"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as AUT.json's block. VAT 21% is the statutory standard rate; corporate 20% is the statutory rate; income 21 is a blend of the 20/31 two-band schedule; capital gains 20% is the 2024 personal rate. Debt ~47.5% and revenue ~30.5% of GDP (Eurostat 2023-2024). Spending is the general-government split scaled to expenditure near 37% of GDP; defence 3.2% is the 2024 outlay, briefly the highest share in the Baltics; health 3.7% is Latvia's famously thin public provision.",
+    "debt_to_gdp_pct": 47.5,
+    "tax_revenue_pct_gdp": 30.5,
+    "tax_rates_pct": {
+      "income": 21.0,
+      "corporate": 20.0,
+      "vat": 21.0,
+      "capital_gains": 20.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 3.7,
+      "education": 4.6,
+      "defence": 3.2,
+      "pensions": 6.9,
+      "infrastructure": 2.0
+    },
+    "other_spending_pct_gdp": 13.8
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 1900000,
+    "gdp_eur_bn": 40.5,
+    "unemployment_pct": 6.9,
+    "sectors": {
+      "agriculture": 0.045,
+      "industry": 0.213,
+      "services": 0.742
+    },
+    "cohorts": {
+      "young_pct": 15.41,
+      "old_pct": 21.74,
+      "young_pct_per_yr": 0.033,
+      "old_pct_per_yr": 0.246,
+      "participation_pct": 76.66,
+      "pop_growth_pct": -0.642
+    },
+    "inequality": {
+      "gini_index": 34,
+      "gini_index_per_yr": -0.025,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.463,
+      "growth_sd_pct": 8.619,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 4.101,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.25944,
+        "nuclear": 0.0,
+        "renewable": 0.74056
+      },
+      "import_dependency_pct": 34.308,
+      "kwh_per_capita": 3767.7,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 75.7
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "EST_lepik", "name": "Madis Lepik" },
+    { "id": "EST_kirus", "name": "Jaan Kirus" },
+    { "id": "EST_soova", "name": "Maret Soova" },
+    { "id": "EST_luik", "name": "Urmas Luik" },
+    { "id": "EST_randma", "name": "Tiit Randma" },
+    { "id": "EST_talivee", "name": "Marju Talivee" },
+    { "id": "EST_kaarel_ii", "name": "Kaarel II" }
+  ]
+}

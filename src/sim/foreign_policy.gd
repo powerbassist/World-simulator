@@ -120,8 +120,21 @@ const ACT_REASON_KEYS := [ACT_REASON_INTEREST, ACT_REASON_GOODWILL, ACT_REASON_G
 ## repeated. Normalised, the question becomes WHO MATTERS TO BRITAIN rather than
 ## HOW MUCH BRITAIN CARES, and that has an answer for every nation.
 ##
-## Every threshold in this model is therefore expressed against
-## foreign_policy_constants.EVEN_SHARE (1/9) rather than against an absolute.
+## Every threshold in this model is expressed against even_share() below rather
+## than against an absolute.
+
+## The share that is "even": one over this nation's partners, DERIVED from the
+## live roster. The ten-era constant said 1/9, and its own comment claimed the
+## thresholds expressed against it mean "more than its fair share of my
+## attention" for every nation identically -- which stopped being true the day
+## the roster grew and nobody edited the nine (V3.3's suite failures trace to
+## exactly that: every stake term priced at a third of its meaning, so DEU
+## refused a deal the accept model was calibrated to sign). The anchor is the
+## RATIO, and the ratio's denominator is the partner count.
+static func even_share(state) -> float:
+	return 1.0 / float(maxi(1, state.nations.size() - 1))
+
+
 static func stake(state, a_id: String, b_id: String) -> float:
 	var vector: Dictionary = stake_vector(state, a_id)
 	return float(vector.get(b_id, 0.0))
@@ -152,7 +165,7 @@ static func stake_vector(state, a_id: String) -> Dictionary:
 		# which is exactly why the history term below reads displacement rather
 		# than level. Writing the same fact twice is the redundancy
 		# docs/coercion-model.md records the coercion probe cutting.
-		var dependence: float = float(trade.get(b_id, 0.0)) / K.EVEN_SHARE
+		var dependence: float = float(trade.get(b_id, 0.0)) / even_share(state)
 
 		# History: that somebody ACTED on this pair, whichever direction they went.
 		# Zero for all forty-five pairs at new-game, by construction, and growing as
@@ -247,7 +260,7 @@ static func amity(state, a_id: String, b_id: String) -> float:
 static func accept_score(state, actor_id: String, target_id: String, terms: Dictionary) -> float:
 	var multiplier: float = float(terms.get("weight_multiplier", 1.0))
 	return (
-		K.ACCEPT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / K.EVEN_SHARE - 1.0)
+		K.ACCEPT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / even_share(state) - 1.0)
 		+ K.ACCEPT_AMITY_WEIGHT * amity(state, target_id, actor_id)
 		+ K.ACCEPT_DEAL_WEIGHT * (multiplier - 1.0)
 	)
@@ -274,7 +287,7 @@ static func would_accept_agreement(state, actor_id: String, target_id: String, t
 ## Names the WEAKEST of the three terms rather than the total: the total is the
 ## thing the player cannot act on, the weakest term is the thing they can.
 static func refusal_reason(state, actor_id: String, target_id: String, terms: Dictionary) -> String:
-	var stake_term: float = K.ACCEPT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / K.EVEN_SHARE - 1.0)
+	var stake_term: float = K.ACCEPT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / even_share(state) - 1.0)
 	var amity_term: float = K.ACCEPT_AMITY_WEIGHT * amity(state, target_id, actor_id)
 	var deal_term: float = K.ACCEPT_DEAL_WEIGHT * (float(terms.get("weight_multiplier", 1.0)) - 1.0)
 
@@ -318,7 +331,7 @@ static func _pact_terms(state, actor_id: String, target_id: String) -> Dictionar
 	var asker = state.nations.get(actor_id)
 	var asker_capability: float = 0.0 if asker == null else float(asker.military_capability)
 	return {
-		"stake": K.PACT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / K.EVEN_SHARE - 1.0),
+		"stake": K.PACT_STAKE_WEIGHT * (stake(state, target_id, actor_id) / even_share(state) - 1.0),
 		"amity": K.PACT_AMITY_WEIGHT * amity(state, target_id, actor_id),
 		"capability": K.PACT_CAPABILITY_WEIGHT * (
 			asker_capability / DFK.CAPABILITY_REFERENCE - 1.0
@@ -381,10 +394,10 @@ static func pact_refusal_reason(state, actor_id: String, target_id: String) -> S
 static func retaliation_fraction(state, imposer_id: String, target_id: String, ceiling: float) -> float:
 	var leverage: float = float(
 		Trade.weights_before_measures(state, imposer_id).get(target_id, 0.0)
-	) / K.EVEN_SHARE
+	) / even_share(state)
 	var exposure: float = float(
 		Trade.weights_before_measures(state, target_id).get(imposer_id, 0.0)
-	) / K.EVEN_SHARE
+	) / even_share(state)
 
 	# A nation that already resents you answers harder than its books alone would
 	# justify. The one place in this file where grievance is allowed to beat
@@ -429,7 +442,7 @@ static func third_party_effects(state, actor_id: String, target_id: String, delt
 	if is_zero_approx(delta):
 		return out
 
-	var floor_share: float = K.EVEN_SHARE * K.THIRD_PARTY_MIN_STAKE_SHARE
+	var floor_share: float = even_share(state) * K.THIRD_PARTY_MIN_STAKE_SHARE
 
 	# Sorted, so the list is reproducible rather than dependent on Dictionary
 	# ordering -- the same reason Relations.all_pairs() and Bloc._members() sort.
@@ -454,7 +467,7 @@ static func third_party_effects(state, actor_id: String, target_id: String, delt
 		#
 		# The cap is the honest statement of the rule rather than a damping factor:
 		# NOBODY TAKES AN ACT HARDER THAN THE NATION IT WAS AIMED AT.
-		var reach: float = minf(1.0, care / K.EVEN_SHARE)
+		var reach: float = minf(1.0, care / even_share(state))
 
 		out.append({
 			"a": x_id,
@@ -668,7 +681,7 @@ static func target_terms(state, actor_id: String, target_id: String) -> Dictiona
 		# fourteen years, at all, while it sat comfortably above AGENDA_ACT_MIN the
 		# whole time. Being outranked forever is a different failure from being
 		# unreachable, and only the second one a bar can fix.
-		"stake_factor": pow(stake(state, actor_id, target_id) / K.EVEN_SHARE, K.AGENDA_STAKE_EXPONENT),
+		"stake_factor": pow(stake(state, actor_id, target_id) / even_share(state), K.AGENDA_STAKE_EXPONENT),
 		"amity": amity(state, actor_id, target_id),
 		# Read BEFORE measures, for the reason docs/coercion-model.md gives at length
 		# and retaliation_fraction() already follows: what a hostile act destroys is
@@ -676,7 +689,7 @@ static func target_terms(state, actor_id: String, target_id: String) -> Dictiona
 		# vector is what made high severity strictly dominated at V1.3c.
 		"exposure": float(
 			Trade.weights_before_measures(state, actor_id).get(target_id, 0.0)
-		) / K.EVEN_SHARE,
+		) / even_share(state),
 		# The answering model, run from the acting side. Deliberately the real
 		# function rather than a symmetric copy: an exchange whose two halves are
 		# computed by two functions is two models that will disagree, and this one

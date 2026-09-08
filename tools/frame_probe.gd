@@ -79,7 +79,7 @@ func _build_configs() -> void:
 	# ms is the real render cost and not the refresh interval.
 	_configs = [
 		{"label": "1080 min_zoom", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 opening fit", "zoom": 2.1, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
 		{"label": "1080 crosses 2.98", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
 		{"label": "1080 zoom 4.0", "zoom": 4.0, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
 		{"label": "1080 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
@@ -88,14 +88,14 @@ func _build_configs() -> void:
 		{"label": "1080 HUD only", "zoom": mv.MAX_ZOOM, "map": false, "minimap": false, "size": SIZE_BASE, "vsync": false},
 		# Sweep 2: the playtest's device resolution, same logical canvas.
 		{"label": "1440 min_zoom", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
-		{"label": "1440 opening fit", "zoom": 2.1, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
 		{"label": "1440 crosses 2.98", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
 		{"label": "1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
 		{"label": "1440 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "minimap": true, "size": SIZE_BIG, "vsync": false},
 	]
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
-	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.1, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
+	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
 
 

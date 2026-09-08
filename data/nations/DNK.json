@@ -1,0 +1,153 @@
+{
+  "id": "DNK",
+  "name": "Denmark",
+  "geo_id": "DNK",
+  "capital": "Copenhagen",
+  "playable": false,
+  "leader": {
+    "person": "DNK_sorensen",
+    "title": "Prime Minister",
+    "party": "socialdemokratisk_union"
+  },
+  "flag": {
+    "layout": "cross",
+    "bands": ["#C8102E", "#FFFFFF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Folketing",
+      "assembly_seats": 179,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 1 November 2022 for a four-year term, so the next is due by November 2026; no fixed date announced, since the PM sets the polling day. 175 seats are Denmark proper plus two each from the Faroes and Greenland, which the register folds into one 179-seat chamber. Wikipedia, 'Next Danish general election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2026,
+          "month": 11
+        },
+        "threshold_pct": 2.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The PM decides the polling day and advises the monarch, who dissolves the Folketing -- in practice an unfettered executive choice, Danish elections can and do come well before the four years are out, and there is no codified lockout; campaigns run about three weeks. Grundlov §7 and §32; Folketinget.dk, 'General elections'.",
+        "rule": "executive_discretion",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "person": "DNK_valdemar_vi"
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Grundlov §88: a constitutional amendment bill is passed by the Folketing, a general election is then called, the new Folketing must pass the bill again UNAMENDED, and it finally goes to a referendum within six months where approval needs a majority of votes cast AND at least 40% of every person entitled to vote. No single chamber supermajority exists anywhere in the procedure; the machinery's three_quarters carries the nearest entrenching number, and the interposed election and the confirmation referendum are not modelled as separate stages. Danmarks Riges Grundlov §88.",
+      "rule": "three_quarters",
+      "referendum": "none",
+      "_referendum_note": "The §88 referendum is a MANDATORY stage of the real procedure rather than an option; the machinery's mandatory mode requires the referendum_required rule, which this system's template does not permit, so the confirmation is folded into the authored bar -- the same folding AUT.json records for Art. 44(3) and the Dutch file for its second reading.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "§88's procedure reaches every part of the constitution including the monarchy itself -- the 1953 abolition of the Landsting went through it -- so a system change runs at the same bar, not a higher one."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Hojesteret: the Supreme Court has asserted the power to strike statutes down as unconstitutional since its early-century case law, and the 1999 Tvind judgment did so outright -- rare in practice, but real, which is what the value records. Domstolene.dk; Wikipedia, 'Judicial review in Denmark'.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The monarch appoints the statsminister after the post-election kongerunden talks between the party leaders, and Danish negative parliamentarism means a government never wins an investiture -- it survives while no majority votes against it. Grundlov §15: when a majority of the Folketing expresses no confidence in the Prime Minister, the PM must ask for the government's resignation or call an election, which is the machinery's simple_present. Folketinget.dk, 'The work of the Folketing'.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "DNK_sorensen"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "DNK_valdemar_vi",
+    "neighbours": ["DEU"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 25% is the statutory standard rate, among Europe's highest (Tax Foundation, 'VAT Rates in Europe 2024'); corporate 22% is the statutory rate; income 26 is a blend of the municipal-plus-state schedule whose all-in top marginal sits near 56%, carried HIGH because Denmark's OECD Revenue Statistics personal-tax-to-GDP share is the OECD's heaviest, above even Belgium's; capital gains 27% is the standard share-income rate (42% above the threshold, folded to the lower). Wealth 0 -- the Danish wealth tax was abolished in 1997. Debt ~28.9% and revenue ~46.5% of GDP (Eurostat/OECD 2024). Spending is the general-government split scaled to expenditure near 48% of GDP.",
+    "debt_to_gdp_pct": 28.9,
+    "tax_revenue_pct_gdp": 46.5,
+    "tax_rates_pct": {
+      "income": 26.0,
+      "corporate": 22.0,
+      "vat": 25.0,
+      "capital_gains": 27.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 9.8,
+      "education": 7.2,
+      "defence": 2.4,
+      "pensions": 10.0,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 13.4
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 6000000,
+    "gdp_eur_bn": 391.0,
+    "unemployment_pct": 5.4,
+    "sectors": {
+      "agriculture": 0.01,
+      "industry": 0.272,
+      "services": 0.718
+    },
+    "cohorts": {
+      "young_pct": 15.7,
+      "old_pct": 20.87,
+      "young_pct_per_yr": -0.135,
+      "old_pct_per_yr": 0.24,
+      "participation_pct": 82.12,
+      "pop_growth_pct": 0.561
+    },
+    "inequality": {
+      "gini_index": 29.9,
+      "gini_index_per_yr": 0.212,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.498,
+      "growth_sd_pct": 1.743,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 1.94,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.123822,
+        "nuclear": 0.0,
+        "renewable": 0.876178
+      },
+      "import_dependency_pct": 43.787,
+      "kwh_per_capita": 6165.5,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 91.5
+    }
+  }
+}

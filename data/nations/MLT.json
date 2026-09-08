@@ -1,0 +1,160 @@
+{
+  "id": "MLT",
+  "name": "Malta",
+  "geo_id": "MLT",
+  "capital": "Valletta",
+  "playable": false,
+  "leader": {
+    "person": "MLT_cassar",
+    "title": "Prime Minister",
+    "party": "partit_gustizzja_socjali"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#FFFFFF", "#CF142B"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "House of Representatives",
+      "assembly_seats": 65,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "The real system is the single transferable vote in multi-member districts -- with Ireland, one of the two STV national parliaments -- which the machinery does not carry; pr_national with no threshold is the nearest reading, and Malta genuinely has none, the transfer dynamics dropped being recorded here rather than modelled. The Kamra tad-Deputati's constitutional size is 65, elected 26 March 2022 for five years, so the next is due by 2027 and expected around June; the 2021 proportionality amendment can top the House up above 65 (79 sat in 2022) and is unmodelled. Wikipedia, 'Next Maltese general election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 6
+        },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The real rule is that the Prime Minister may at any time advise the President to dissolve the House, and the President shall act on that advice unless the Government has lost confidence -- an executive-discretion shape the parliamentary_republic template cannot express, so self_dissolution is the nearest reading and the honest gap is this note. Polling follows within about five weeks. Constitution of Malta, s. 74.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected by the House of Representatives for five years -- indirect, by resolution; the incumbent was elected in March 2024 and sworn in April 2024, so the next is due April 2029. Ceremonial. Wikipedia, 'President of Malta'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "MLT_attard",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 4
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "S. 66(3): amendments to entrenched provisions need 2/3 of all members of the House; the deeper-entrenched tier additionally needs 2/3 in a referendum held for the purpose. The machinery carries the two_thirds bar and reads the referendum tier as none, recorded below. Constitution of Malta, s. 66(3).",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "S. 66(3)(b): fundamental-rights and article-6 style provisions -- including the office of President -- amend only by 2/3 referendum as well, a second lock the machinery cannot express. Constitution of Malta, s. 66(3)(b).",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Malta's republican form sits in entrenched provisions whose amendment s. 66(3) already prices at 2/3, and practice treats the republic itself as beyond an ordinary amendment -- convention rather than an eternity clause."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "The constitutional jurisdiction sits with the Constitutional Court, one of the divisions of the Courts of Malta -- no separate constitutional tribunal -- and it reviews the constitutionality of laws. Constitution of Malta, ss. 95B-95U.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "There is no investiture vote: s. 80 has the President appoint as Prime Minister the member of the House who best commands its confidence, which in a two-party state is a formality rather than a coalition bargain. The method reads investiture because the machinery needs the confidence gate; the honest difference -- Malta forms without one -- is this note. Censure passes by simple majority of the House, and a government that loses it falls or asks for dissolution. Constitution of Malta, ss. 74, 80.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "MLT_cassar"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "MLT_ludovik_i",
+    "neighbours": []
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as AUT.json's block. VAT 18% is the statutory standard rate; corporate 35% is the statutory headline rate, softened in practice by refundable tax credits the game does not model; income 15 is a blend of the 0/15/25 three-band schedule whose mass sits at 15; capital gains 15 stands in for the final-withholding and property-transfer duties, Malta levying no general CGT on listed securities. Debt 47.4% (NSO, end-2024) and revenue ~35% of GDP (Eurostat). Spending is the general-government split scaled to expenditure near 38% of GDP; defence 0.6% reflects Malta's neutrality, education 5.6% its EU-high public spend.",
+    "debt_to_gdp_pct": 47.4,
+    "tax_revenue_pct_gdp": 35.0,
+    "tax_rates_pct": {
+      "income": 15.0,
+      "corporate": 35.0,
+      "vat": 18.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.6,
+      "education": 5.6,
+      "defence": 0.6,
+      "pensions": 6.5,
+      "infrastructure": 2.6
+    },
+    "other_spending_pct_gdp": 14.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 600000,
+    "gdp_eur_bn": 23.0,
+    "unemployment_pct": 3.1,
+    "sectors": {
+      "agriculture": 0.005,
+      "industry": 0.114,
+      "services": 0.881
+    },
+    "cohorts": {
+      "young_pct": 13.03,
+      "old_pct": 20.21,
+      "young_pct_per_yr": -0.133,
+      "old_pct_per_yr": 0.209,
+      "participation_pct": 81.5,
+      "pop_growth_pct": 2.786
+    },
+    "inequality": {
+      "gini_index": 31.8,
+      "gini_index_per_yr": 0.3,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.103,
+      "growth_sd_pct": 3.86,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.168,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.879022,
+        "nuclear": 0.0,
+        "renewable": 0.120978
+      },
+      "import_dependency_pct": 403.592,
+      "kwh_per_capita": 5013.1,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2023
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 69.5
+    }
+  }
+}

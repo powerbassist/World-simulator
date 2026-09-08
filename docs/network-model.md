@@ -274,3 +274,28 @@ been.
 - **The readout**: the Region panel's eighth column (`x%.2f`, the same scale
   as output per head), a never-silent land/sea line, the economy panel's reach
   line, and `--network`, the twenty-sixth flag.
+## 12. V3.3: the graph at EU-27, and the two bounds the growth added
+
+The graph rebuilt with the register: **213 regions, 464 edges, 16 sea links,
+one component.** The components count stayed a measurement -- adjacency alone
+leaves 18 pieces on the new roster (measured before authoring), and each link
+that closes one is a real crossing in service: the Oresund bridge and the
+Great Belt carry the Nordic bloc (Sweden-Finland is its own land mass in this
+graph; Denmark's islands are another), the Greek archipelago is served from
+Piraeus and Igoumenitsa, Malta from Pozzallo, Cyprus from Piraeus. Ireland
+needs no link -- it reaches the continent over the land border with Northern
+Ireland. Aland's ferry died with its region: FI20 carries no GeoNames place at
+all (cities15000's cut is above Mariehamn), so the register cannot name it,
+and a link naming a code the register does not carry is refused.
+
+- **Greece has no motorway endowment**: `tran_r_net` MWAY carries zero EL
+  codes at every year -- the rail refusal's cousin, a dataset boundary rather
+  than a download bug. The 27 codes missing endowment (all of Greece,
+  continental Portugal, most of Croatia) fall back to the roster mean the
+  loader already documents; the graph's distance term is measured everywhere
+  and the endowment is the local one. A second instrument for a
+  dimensionless local term is not bought for one nation.
+- **Luxembourg's bound is now five nations'**: CYP, EST, LTU, LVA, MLT are
+  single-region at NUTS 2 like LUX -- degree 0 within their own nation, the
+  panel's least-connected line names each, and none can differ from itself.
+

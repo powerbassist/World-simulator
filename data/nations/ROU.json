@@ -1,0 +1,171 @@
+{
+  "id": "ROU",
+  "name": "Romania",
+  "geo_id": "ROU",
+  "capital": "Bucharest",
+  "playable": false,
+  "leader": {
+    "person": "ROU_stanciu",
+    "title": "President of Romania",
+    "party": "partidul_civic_crestin"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#002B7F", "#FCD116", "#CE1126"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Camera Deputaților",
+      "assembly_seats": 330,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 1 December 2024 for a four-year term, so the next is due December 2028. Closed-list PR: seats first by Hare quota in 42 constituencies, remainders pooled nationally and awarded by d'Hondt -- the machinery's pr_dhondt reads the nearest. The 330 include the seats reserved for national minorities, which no list contests. Law 35/2008; Wikipedia, 'Next Romanian legislative election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2028,
+          "month": 12
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 89: after consulting the presidents of both chambers and the leaders of the parliamentary groups, the President may dissolve Parliament when no Government has won investiture within 60 days of the first request -- and may do so only ONCE in a twelve-month period; the machinery's lockout_months 6 reads that bar at its coarser step, the poll landing about a quarter later, notice_months 2. Constituția României, Art. 89.",
+        "rule": "executive_discretion",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senatul, 136 seats, elected on the same closed-list vote and the same 5% threshold as the Deputies. The two chambers are co-equal: every bill shuttles, and an ORGANIC law -- the electoral law among them -- needs identical texts in both, with a mediation committee when they disagree. Neither row the machinery offers is that, so ordinary and amendment read suspensive and the co-equality is the reduction recorded here, as AUT's amendment row is. Constituția României, Arts. 73-75; Wikipedia, 'Senate of Romania'.",
+      "chamber": "Senatul",
+      "seats": 136,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "kind": "executive_president",
+      "title": "President of Romania",
+      "person": "ROU_stanciu"
+    },
+    "term_limit": 2,
+    "amendment": {
+      "_source": "authored",
+      "_note": "The real bar is a two-thirds majority of EACH chamber; the template carries no two_thirds, so the rule reads three_fifths -- the nearest stricter reading, and the difference matters only to amendment content this game prices by support, SVK's note in the other direction. Constituția României, Art. 151.",
+      "rule": "three_fifths",
+      "referendum": "optional",
+      "_referendum_note": "A revision adopted by Parliament is also submitted to a referendum when it results from a citizens' initiative -- 500 000 signatures -- the same optional-stage shape FRA's Art. 89 gives the President's choice. Constituția României, Art. 151.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 152: no revision may be undertaken that results in the suppression of the national, independent, unitary and indivisible character of the Romanian State or of the republican form of government -- FRA's Art. 89 §5 shape: no amendment may change Romania's system_id at all."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Curtea Constituțională: pronounces on the constitutionality of laws BEFORE promulgation, on referral by the President, the president of either chamber, the Government, the High Court of Cassation and Justice, or fifty deputies or twenty-five senators -- and its negative a priori decisions are binding on Parliament, which is what connects this check to the two co-equal chambers above. Constituția României, Arts. 144 and 146.",
+      "review": "constitutional"
+    },
+    "executive": {
+      "_source": "authored",
+      "_note": "The President is directly elected for five years, at most two terms (Art. 81). The November 2024 vote was annulled and rerun on 18 May 2025, which takes the office off its usual November cycle; a full term from the May 2025 inauguration points to a spring 2030 vote, and no date has been set. Wikipedia, '2025 Romanian presidential election'.",
+      "title": "President of Romania",
+      "term_years": 5,
+      "next": {
+        "year": 2030,
+        "month": 5
+      }
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Art. 103: the President designates a candidate Prime Minister after consulting the party holding the absolute majority in Parliament or, failing that, the parties represented in it, and the designated candidate asks Parliament within ten days for a confidence vote on the programme and the complete list of the Government -- the machinery's presidential_appointment, with the parliamentary investiture the 60-day clock above reads. Art. 114: a motion of censure is voted by BOTH chambers in JOINT sitting and carries only with the absolute majority of all Deputies and Senators -- abstentions and absences count against, FRA's Art. 49 arithmetic. Constituția României, Arts. 103, 89 and 114.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "ROU_moraru"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "ROU_mihai_ii",
+    "neighbours": ["HUN", "BGR"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024-2025, rounded, on the same conventions as SVK.json's block. VAT 21% is the statutory standard rate after the August 2025 rise from 19% (Tax Foundation); corporate 16% is the statutory rate; income 10% is the famous flat rate; capital gains 10% is the flat rate on securities income. Revenue 27.5% of GDP is the OECD Revenue Statistics figure -- Europe's low outlier, and the reason the deficit has run near nine points (Eurostat, 2024), with debt at ~54.6% of GDP and rising. The spending split is the V1.2a policy split, not a reconciliation of the accounts.",
+    "debt_to_gdp_pct": 54.6,
+    "tax_revenue_pct_gdp": 27.5,
+    "tax_rates_pct": {
+      "income": 10.0,
+      "corporate": 16.0,
+      "vat": 21.0,
+      "capital_gains": 10.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.0,
+      "education": 3.5,
+      "defence": 2.4,
+      "pensions": 10.2,
+      "infrastructure": 4.0
+    },
+    "other_spending_pct_gdp": 13.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 19100000,
+    "gdp_eur_bn": 352.0,
+    "unemployment_pct": 5.4,
+    "sectors": {
+      "agriculture": 0.031,
+      "industry": 0.279,
+      "services": 0.69
+    },
+    "cohorts": {
+      "young_pct": 15.72,
+      "old_pct": 19.98,
+      "young_pct_per_yr": 0.007,
+      "old_pct_per_yr": 0.308,
+      "participation_pct": 66.95,
+      "pop_growth_pct": -0.436
+    },
+    "inequality": {
+      "gini_index": 29.8,
+      "gini_index_per_yr": -0.762,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.443,
+      "growth_sd_pct": 5.05,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 10.577,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.32512,
+        "nuclear": 0.203025,
+        "renewable": 0.471855
+      },
+      "import_dependency_pct": 28.06,
+      "kwh_per_capita": 2585.3,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2023,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2023
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 63.4
+    }
+  }
+}

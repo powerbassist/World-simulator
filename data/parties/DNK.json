@@ -1,0 +1,70 @@
+{
+  "parties": [
+    {
+      "id": "socialdemokratisk_union",
+      "name": "Socialdemokratisk Union",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.36,
+      "leader_person": "DNK_sorensen",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": [
+        "dansk_folkefront"
+      ]
+    },
+    {
+      "id": "liberalt_centrum",
+      "name": "Liberalt Centrum",
+      "ideology_slot": "liberal",
+      "seat_share": 0.17,
+      "leader_person": "DNK_lindberg",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "dansk_folkefront",
+      "name": "Dansk Folkefront",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.1,
+      "leader_person": "DNK_krogh",
+      "discipline": 0.7,
+      "competence": 0.55,
+      "excluded_partners": []
+    },
+    {
+      "id": "det_borgerlige_samling",
+      "name": "Det Borgerlige Samling",
+      "ideology_slot": "christian_democrat",
+      "seat_share": 0.15,
+      "leader_person": "DNK_dahl",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "frie_radikale",
+      "name": "Frie Radikale",
+      "ideology_slot": "centrist_liberal",
+      "seat_share": 0.11,
+      "leader_person": "DNK_brandt",
+      "discipline": 0.8,
+      "competence": 0.7,
+      "excluded_partners": [
+        "dansk_folkefront"
+      ]
+    },
+    {
+      "id": "gron_fremtid",
+      "name": "Grøn Fremtid",
+      "ideology_slot": "green",
+      "seat_share": 0.11,
+      "leader_person": "DNK_skovgaard",
+      "discipline": 0.8,
+      "competence": 0.6,
+      "excluded_partners": [
+        "dansk_folkefront"
+      ]
+    }
+  ]
+}

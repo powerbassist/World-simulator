@@ -56,8 +56,8 @@ func _run() -> void:
 
 
 func _check_geometry(loader) -> void:
-	if loader.geo_features.size() != 10:
-		_fail("expected geometry for 10 features, loaded %d" % loader.geo_features.size())
+	if loader.geo_features.size() != 29:
+		_fail("expected geometry for 29 features, loaded %d" % loader.geo_features.size())
 	for id in loader.nations.keys():
 		var n = loader.nations[id]
 		var polys: Array = loader.geo_features.get(n.geo_id, [])
@@ -85,9 +85,12 @@ func _check_world_geometry(loader, map) -> void:
 		if loader.world_features.has(geo_id):
 			_fail("%s is in both europe.geojson and world.geojson; it would be drawn twice" % geo_id)
 
-	# Warsaw. Inside Poland, which the game renders and does not simulate.
-	var warsaw: Vector2 = map._lonlat_to_screen(21.0, 52.2)
-	var hit: String = map.nation_at_screen_point(warsaw)
+	# Oslo. Inside Norway, which the game renders and does not simulate. (This
+	# point was Warsaw through the ten-nation era, because Poland itself was
+	# backdrop then; V3.3's roster made Poland a nation and the negative case
+	# moved north with it.)
+	var oslo: Vector2 = map._lonlat_to_screen(10.75, 59.9)
+	var hit: String = map.nation_at_screen_point(oslo)
 	if hit != "":
 		_fail("a point inside a non-simulated country hit-tested as '%s'" % hit)
 
@@ -133,6 +136,34 @@ func _check_projection_and_hit_test(map) -> void:
 	var miss: String = map.nation_at_screen_point(far_away)
 	if miss != "":
 		_fail("expected a point far outside every polygon to hit nothing, got '%s'" % miss)
+
+	# V3.3's bbox pre-reject must be behaviour-invisible: a lon/lat grid over
+	# the roster's full extent, tested against a naive full scan of the same
+	# polygons, agrees everywhere or the reject is answering a different
+	# question than the rings are.
+	var grid_hits := 0
+	var lon := -12.0
+	while lon <= 35.0:
+		var lat := 34.0
+		while lat <= 71.0:
+			var pt := Vector2(lon, lat)
+			var rejected: String = map._nation_at_lonlat(pt)
+			var naive := ""
+			for id in map._polygons.keys():
+				if naive != "":
+					break
+				for naive_ring: PackedVector2Array in map._polygons[id]:
+					if naive_ring.size() >= 3 and Geometry2D.is_point_in_polygon(pt, naive_ring):
+						naive = id
+						break
+			if rejected != naive:
+				_fail("bbox pre-reject disagrees with a full scan at %.2f,%.2f: '%s' vs '%s'" % [lon, lat, rejected, naive])
+			if rejected != "":
+				grid_hits += 1
+			lat += 0.5
+		lon += 0.5
+	if grid_hits < 29:
+		_fail("grid found only %d nation-hitting points across 29 nations" % grid_hits)
 
 
 func _check_pan_zoom(map) -> void:

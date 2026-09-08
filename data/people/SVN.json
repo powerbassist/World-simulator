@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "SVN_zajc", "name": "Mojca Zajc" },
+    { "id": "SVN_kotnik", "name": "Urša Kotnik" },
+    { "id": "SVN_bizjak", "name": "Klemen Bizjak" },
+    { "id": "SVN_rebernik", "name": "Nataša Rebernik" },
+    { "id": "SVN_saje", "name": "Borut Saje" },
+    { "id": "SVN_hribernik", "name": "Luka Hribernik" },
+    { "id": "SVN_kolenc", "name": "Tanja Kolenc" },
+    { "id": "SVN_aleksander_ii", "name": "Aleksander II" }
+  ]
+}

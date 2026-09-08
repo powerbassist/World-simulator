@@ -1,0 +1,160 @@
+{
+  "id": "BGR",
+  "name": "Bulgaria",
+  "geo_id": "BGR",
+  "capital": "Sofia",
+  "playable": false,
+  "leader": {
+    "person": "BGR_marinkov",
+    "title": "Prime Minister",
+    "party": "grazhdansko_razvitie"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FFFFFF", "#00966E", "#D62612"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "National Assembly",
+      "assembly_seats": 240,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 27 October 2024 for a four-year term, so by law the next is due by autumn 2028; no date announced. The game books October 2026 -- flagged as EARLIER than the statutory latest, a bet on the seven general elections Bulgaria has held since 2021 rather than on the constitution's own clock. Wikipedia, 'Next Bulgarian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2026,
+          "month": 10
+        },
+        "threshold_pct": 4.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 64 lets the Assembly dissolve itself by its own resolution before the term expires -- the machinery's self_dissolution -- and Art. 99(6) has the President dissolve it once a third formation attempt fails, which is why the President's own November 2026 clock sits one month after the election booked above. The constitution bars dissolution in the final stretch of the term and during a state of emergency; the machinery's 6-month lockout after a snap is SVK.json's resolution. Konstitutsiya, Arts. 64 and 99.",
+        "rule": "self_dissolution",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years by two-round vote; last elected November 2021, so the next falls in November 2026. Mostly ceremonial but with a veto, the Art. 99 formation mandates and the caretaker-government power Bulgarian politics has used repeatedly. Wikipedia, 'President of Bulgaria'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "BGR_kishev",
+      "term_years": 5,
+      "next": {
+        "year": 2026,
+        "month": 11
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 155: constitutional amendments pass by a two-thirds majority of all members, and the 'important' matters of Art. 158 -- the form of state structure and of government among them -- are additionally debated at three readings on three different days. The template's two_thirds happens to be the real bar, so unlike SVK.json this one needed no translation.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Bulgaria has a general referendum institution (Arts. 68-73) but it is not a ratification stage for constitutional amendments, and no amendment content in this game prices one -- SVK.json's reason.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "The roster's one written-text disagreement: the 2005-2006 amendments abolished the Grand National Assembly and folded its matters -- the form of state structure and of government -- into the ordinary two-thirds procedure, so the paper permits a form-of-government change at the same bar as any other revision. Authored false because this game models no path by which a parliamentary republic becomes something else at an ordinary bar; recorded rather than quietly resolved."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Konstitutsionen sad, Arts. 147-149: rules on the conformity of laws with the constitution and on competence disputes between state bodies. Konstitutsiya, Arts. 147-149.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Art. 99: the President hands an exploration mandate to the largest party, then to the second, then names a candidate of his own choosing, and a government takes office on the Assembly's confidence vote -- the mandate cycle is what the machinery's coalition_negotiation carries. Censure carries by simple majority of deputies present (Art. 89). Konstitutsiya, Arts. 84-89 and 99.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "BGR_marinkov"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "BGR_shishman_iii",
+    "neighbours": ["GRC", "ROU"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 20% is the statutory standard rate; corporate 10% and income 10% are Bulgaria's flat rates, unchanged since 2008; capital gains 10% is the flat capital-income rate. Debt ~24.5% and revenue ~30.5% of GDP (Eurostat/OECD 2024) -- the lowest debt on the roster. Spending is the general-government split scaled to expenditure near 38.5% of GDP.",
+    "debt_to_gdp_pct": 24.5,
+    "tax_revenue_pct_gdp": 30.5,
+    "tax_rates_pct": {
+      "income": 10.0,
+      "corporate": 10.0,
+      "vat": 20.0,
+      "capital_gains": 10.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.0,
+      "education": 3.6,
+      "defence": 2.3,
+      "pensions": 9.0,
+      "infrastructure": 2.6
+    },
+    "other_spending_pct_gdp": 16.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 6400000,
+    "gdp_eur_bn": 104.0,
+    "unemployment_pct": 4.2,
+    "sectors": {
+      "agriculture": 0.027,
+      "industry": 0.242,
+      "services": 0.731
+    },
+    "cohorts": {
+      "young_pct": 14.47,
+      "old_pct": 22.03,
+      "young_pct_per_yr": 0.063,
+      "old_pct_per_yr": 0.202,
+      "participation_pct": 73.2,
+      "pop_growth_pct": -0.895
+    },
+    "inequality": {
+      "gini_index": 39.5,
+      "gini_index_per_yr": 0.112,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.485,
+      "growth_sd_pct": 5.199,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 4.566,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.357367,
+        "nuclear": 0.413881,
+        "renewable": 0.228752
+      },
+      "import_dependency_pct": 40.931,
+      "kwh_per_capita": 5360.5,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2023,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2023
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 56.4
+    }
+  }
+}

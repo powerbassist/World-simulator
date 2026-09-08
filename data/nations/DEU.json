@@ -11,33 +11,14 @@
   },
   "flag": {
     "layout": "horizontal",
-    "bands": [
-      "#000000",
-      "#DD0000",
-      "#FFCE00"
-    ]
+    "bands": ["#000000", "#DD0000", "#FFCE00"]
   },
   "project_sites": {
-    "high_speed_rail": [
-      9.6,
-      50.4
-    ],
-    "national_grid": [
-      11.2,
-      52.4
-    ],
-    "freight_corridor": [
-      9.2,
-      53.2
-    ],
-    "national_fibre": [
-      12.2,
-      49.6
-    ],
-    "flood_defence": [
-      9.3,
-      54.2
-    ]
+    "high_speed_rail": [9.6, 50.4],
+    "national_grid": [11.2, 52.4],
+    "freight_corridor": [9.2, 53.2],
+    "national_fibre": [12.2, 49.6],
+    "flood_defence": [9.3, 54.2]
   },
   "government": {
     "legislative": {
@@ -108,14 +89,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
     "pretender_person": "DEU_friedrich_iv",
-    "neighbours": [
-      "AUT",
-      "BEL",
-      "CHE",
-      "FRA",
-      "LUX",
-      "NLD"
-    ]
+    "neighbours": ["AUT", "BEL", "CHE", "CZE", "DNK", "FRA", "LUX", "NLD", "POL"]
   },
   "fiscal": {
     "_source": "authored",
@@ -166,18 +140,15 @@
       "_from_year": 2015
     },
     "cycle": {
-      "amplitude_rel": 1.083,
+      "amplitude_rel": 0.567,
       "growth_sd_pct": 1.984,
       "_from_year": 1990,
       "_to_year": 2024,
-      "_excludes": [
-        2020,
-        2021
-      ]
+      "_excludes": [2020, 2021]
     },
     "prices": {
-      "inflation_pct": 2.087,
-      "_from_year": 1990,
+      "inflation_pct": 1.849,
+      "_from_year": 1999,
       "_to_year": 2024,
       "_excludes": []
     },

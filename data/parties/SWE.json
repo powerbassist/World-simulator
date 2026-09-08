@@ -1,0 +1,72 @@
+{
+  "parties": [
+    {
+      "id": "sociala_forbundet",
+      "name": "Sociala Förbundet",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.31,
+      "leader_person": "SWE_holmqvist",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": [
+        "sverigevanerna"
+      ]
+    },
+    {
+      "id": "borgliga_samlingen",
+      "name": "Borgliga Samlingen",
+      "ideology_slot": "centre_right",
+      "seat_share": 0.21,
+      "leader_person": "SWE_sandberg",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "sverigevanerna",
+      "name": "Sverigevänerna",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.2,
+      "leader_person": "SWE_hellstrom",
+      "discipline": 0.7,
+      "competence": 0.55,
+      "excluded_partners": []
+    },
+    {
+      "id": "balanspartiet",
+      "name": "Balanspartiet",
+      "ideology_slot": "centrist",
+      "seat_share": 0.1,
+      "leader_person": "SWE_bergvall",
+      "discipline": 0.8,
+      "competence": 0.7,
+      "excluded_partners": [
+        "sverigevanerna"
+      ]
+    },
+    {
+      "id": "vansterrorelsen",
+      "name": "Vänsterrörelsen",
+      "ideology_slot": "left_populist",
+      "seat_share": 0.09,
+      "leader_person": "SWE_vikstrom",
+      "discipline": 0.7,
+      "competence": 0.55,
+      "excluded_partners": [
+        "sverigevanerna"
+      ]
+    },
+    {
+      "id": "liberala_unionen",
+      "name": "Liberala Unionen",
+      "ideology_slot": "liberal",
+      "seat_share": 0.09,
+      "leader_person": "SWE_nordin",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": [
+        "sverigevanerna"
+      ]
+    }
+  ]
+}

@@ -80,14 +80,23 @@ func _ready() -> void:
 	_readout.theme_type_variation = UiTheme.FIGURE_LABEL
 	column.add_child(_readout)
 
-	show_layer(_layer)
+	# The re-show keeps whatever state the last caller handed in; without it the
+	# trade stops would revert to the empty literal table on every hover.
+	show_layer(_layer, _last_state, _last_viewer)
 
 
 ## Told, not asked. main.gd sets the map view's layer and then this, so the two
 ## cannot disagree about which one is up -- the panel never reads back from the
 ## control it just addressed.
-func show_layer(layer_id: String) -> void:
+var _last_state = null
+var _last_viewer := ""
+
+
+func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 	_layer = String(MapLayers.layer(layer_id)["id"])
+	if state != null:
+		_last_state = state
+		_last_viewer = viewer_id
 
 	for id in _buttons.keys():
 		_buttons[id].button_pressed = (id == _layer)
@@ -96,8 +105,17 @@ func show_layer(layer_id: String) -> void:
 		_stops.remove_child(child)
 		child.queue_free()
 
-	for stop in MapLayers.stops(_layer):
-		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"])))
+	# The trade layer's scale is the viewer's own partner count, so its stops --
+	# and the swatch colours beside them -- derive from the same even share the
+	# ramp draws with; a literal here is how the legend promised "an even ninth"
+	# on a twenty-eight-partner roster.
+	var stops: Array = MapLayers.stops(_layer)
+	var even := -1.0
+	if _layer == MapLayers.TRADE and state != null:
+		even = MapLayers.trade_even_share(state, viewer_id)
+		stops = MapLayers.trade_stops(even)
+	for stop in stops:
+		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even))
 
 	_caption.text = MapLayers.caption(_layer)
 	show_hover("", null, "")
@@ -106,12 +124,15 @@ func show_layer(layer_id: String) -> void:
 ## One row per legend stop. The swatch is MapLayers.ramp() at that stop's value
 ## rather than a colour typed here, so a ramp edit cannot leave the legend
 ## showing the old one.
-func _stop_row(at: float, text: String) -> Control:
+func _stop_row(at: float, text: String, trade_even := -1.0) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 
 	var swatch := ColorRect.new()
-	swatch.color = MapLayers.ramp(_layer, at)
+	# The trade layer colours through ramp_trade at the same derived even share
+	# the stops were computed with; a plain ramp() call here is what left every
+	# trade swatch at the ramp's low colour after the trade branch moved.
+	swatch.color = MapLayers.ramp_trade(at, trade_even) if trade_even > 0.0 else MapLayers.ramp(_layer, at)
 	swatch.custom_minimum_size = SWATCH_SIZE
 	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(swatch)

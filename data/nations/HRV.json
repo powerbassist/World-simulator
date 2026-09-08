@@ -1,0 +1,160 @@
+{
+  "id": "HRV",
+  "name": "Croatia",
+  "geo_id": "HRV",
+  "capital": "Zagreb",
+  "playable": false,
+  "leader": {
+    "person": "HRV_vidovic",
+    "title": "Prime Minister",
+    "party": "krscanska_unija"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FF0000", "#FFFFFF", "#171796"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Croatian Parliament",
+      "assembly_seats": 151,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 17 April 2024 for a four-year term, so constitutionally due by spring 2028; no date announced. The game books November 2027 -- flagged as earlier than the statutory latest. The real system elects by preferential list in ten constituencies with a 5% per-constituency bar plus diaspora and minority seats; the machinery's national list is the nearest reading. Wikipedia, 'Next Croatian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 11
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Arts. 104 and 112: the Sabor can topple the Prime Minister, and if it then fails to elect a successor within 30 days the Government falls and the President, on the Government's proposal with the Prime Minister's countersignature, dissolves the Sabor -- the machinery's confidence_failure, reachable only through a lost confidence vote. Elections follow within 60 days, which is the two-month notice; the Sabor cannot be dissolved during a state of war (Art. 82). Ustav RH, Arts. 82, 104 and 112.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years by two-round vote; last elected January 2025 (second round), so the next is due by January 2030 -- the game books the likely first round of December 2029. Commander-in-chief in peacetime and co-responsible for foreign policy on paper; in practice a cohabitation problem rather than an executive. Wikipedia, 'President of Croatia'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "HRV_ravlic",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 12
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 137: the Sabor adopts constitutional amendments by a two-thirds majority of all deputies, after the procedure of Arts. 136 -- a revision committee whose conclusions bind the final text. The template's two_thirds is the real bar, no translation needed. Ustav RH, Arts. 136-137.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Art. 87 lets the President call a referendum on a proposed constitutional amendment and Art. 136 lets the Sabor route one through the same stage, but no amendment content in this game prices a Croatian popular vote -- SVK.json's reason. Croatia's one constitutional referendum (EU accession, 2012) ran on its own statute.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "No written eternity clause; the 1990 founding and three decades of practice treat the democratic republic as beyond ordinary revision -- AUT.json's thinner citation, flagged as convention rather than a written clause."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Ustavni sud Republike Hrvatske, Arts. 128-141: decides on the conformity of laws with the Constitution, on competence disputes and on the President's impeachment. Ustav RH, Arts. 128-141.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President gives the mandate to a designated candidate, who presents the Government and its programme to the Sabor and must win its confidence within 15 days -- an investiture in the machinery's vocabulary. Censure of the Prime Minister carries by a majority of ALL deputies and is CONSTRUCTIVE -- the same vote must elect a successor -- which the template's simple_present reads coarsely; recorded here rather than detuned, SVK.json's tolerance of an absolute-of-all reality behind the permitted reading. Ustav RH, Arts. 97, 110-111.",
+      "method": "investiture",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "HRV_vidovic"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "HRV_zvonimir_iii",
+    "neighbours": ["HUN", "SVN"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 25% is the statutory standard rate; corporate 18% is the statutory rate (10% for small firms, blended up to the one number); income 23 is a blend of the 20/30 two-band schedule; capital gains 12% is the standard capital-income rate. Debt ~57.5% and revenue ~39.0% of GDP (Eurostat/OECD 2024). Spending is the general-government split scaled to expenditure near 43.5% of GDP.",
+    "debt_to_gdp_pct": 57.5,
+    "tax_revenue_pct_gdp": 39.0,
+    "tax_rates_pct": {
+      "income": 23.0,
+      "corporate": 18.0,
+      "vat": 25.0,
+      "capital_gains": 12.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 6.5,
+      "education": 4.5,
+      "defence": 2.0,
+      "pensions": 10.5,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 17.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 3900000,
+    "gdp_eur_bn": 85.5,
+    "unemployment_pct": 5,
+    "sectors": {
+      "agriculture": 0.035,
+      "industry": 0.231,
+      "services": 0.734
+    },
+    "cohorts": {
+      "young_pct": 13.92,
+      "old_pct": 23.19,
+      "young_pct_per_yr": -0.078,
+      "old_pct_per_yr": 0.44,
+      "participation_pct": 70.33,
+      "pop_growth_pct": -0.789
+    },
+    "inequality": {
+      "gini_index": 30.1,
+      "gini_index_per_yr": -0.125,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.681,
+      "growth_sd_pct": 5.884,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.719,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.298905,
+        "nuclear": 0.0,
+        "renewable": 0.701095
+      },
+      "import_dependency_pct": 57.291,
+      "kwh_per_capita": 4484.0,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2023
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 63.5
+    }
+  }
+}

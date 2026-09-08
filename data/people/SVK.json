@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "SVK_vozar", "name": "Marián Vozár" },
+    { "id": "SVK_petrik", "name": "Vladimír Petrík" },
+    { "id": "SVK_baran", "name": "Peter Barán" },
+    { "id": "SVK_hruskova", "name": "Zuzana Hrušková" },
+    { "id": "SVK_dankova", "name": "Alena Danková" },
+    { "id": "SVK_hraska", "name": "Tomáš Hraška" },
+    { "id": "SVK_pal_ii", "name": "Pál II" }
+  ]
+}

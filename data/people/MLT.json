@@ -1,0 +1,10 @@
+{
+  "people": [
+    { "id": "MLT_cassar", "name": "Adrian Cassar" },
+    { "id": "MLT_zahra", "name": "Bernard Zahra" },
+    { "id": "MLT_camilleri", "name": "Sandra Camilleri" },
+    { "id": "MLT_portelli", "name": "Michael Portelli" },
+    { "id": "MLT_attard", "name": "Marie-Louise Attard" },
+    { "id": "MLT_ludovik_i", "name": "Ludovik I" }
+  ]
+}

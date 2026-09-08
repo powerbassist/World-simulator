@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "LTU_bilius", "name": "Rimantas Bilius" },
+    { "id": "LTU_zukauskas", "name": "Gabrielius Žukauskas" },
+    { "id": "LTU_zaleckas", "name": "Marius Zaleckas" },
+    { "id": "LTU_urbonaite", "name": "Dalia Urbonaitė" },
+    { "id": "LTU_klimaite", "name": "Eglė Klimaitė" },
+    { "id": "LTU_stanulis", "name": "Vygantas Stanulis" },
+    { "id": "LTU_mindaugas_iii", "name": "Mindaugas III" }
+  ]
+}

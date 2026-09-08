@@ -49,7 +49,20 @@ extends RefCounted
 ## with candidates failing on both sides, and -- unlike a band edge -- it CONVERGES
 ## under refinement instead of moving, which is what V1.5b's and V1.5c's diagnostics are
 ## both really asking for. tools/cycle_probe.gd table (a).
-const CYCLE_AMPLITUDE_PCT := 1.70
+## V3.3 re-expresses this on the EU-29 anchor. The value above was fitted so a
+## nation of the OLD ten-nation roster's average volatility played at France's
+## measured 1.262-point growth SD; the roster's growth-SD mean then ROSE from
+## 1.832 to 3.496 when the nineteen joined, because their World Bank series
+## start in 1990 and the post-communist transition years are real volatility --
+## Latvia's SD is 8.6 points. `amplitude_rel` is a ratio to that mean, so the
+## ten's ratios halved, and shipping the old 1.70 unchanged would have silently
+## HALVED every nation's business cycle through content alone. The correction is
+## a units change, not a tune: 1.70 x 3.496/1.832 = 3.245 keeps the physical
+## product `CYCLE_AMPLITUDE_PCT x amplitude_rel` invariant for every nation to
+## within the 3-decimal rounding of `amplitude_rel` (< 0.1 %%), so the fit's
+## target -- France plays at France's volatility -- is untouched. The fit's own
+## bands and its convergence argument are untouched with it.
+const CYCLE_AMPLITUDE_PCT := 3.245
 
 ## Share of the cycle's VARIANCE that is common to all ten nations rather than
 ## idiosyncratic. Applied as sqrt(share) and sqrt(1 - share) so the total standard
@@ -140,7 +153,7 @@ const CYCLE_EPOCH_MONTH := 1
 ## Bounds on the per-nation `imported.cycle.amplitude_rel` at load, checked in
 ## src/core/nation.gd. Not a tuning dial: a ratio outside this is a broken import
 ## rather than an unusually volatile country, and the measured roster spans
-## 0.689 (France) to 1.475 (Luxembourg).
+## 0.361 (France) to 2.463 (Latvia) on the EU-29 anchor of V3.3.
 const AMPLITUDE_REL_MIN := 0.20
 const AMPLITUDE_REL_MAX := 5.00
 

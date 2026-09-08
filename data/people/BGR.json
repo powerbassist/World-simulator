@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "BGR_marinkov", "name": "Красимир Маринков" },
+    { "id": "BGR_kishev", "name": "Богдан Кисьов" },
+    { "id": "BGR_halilov", "name": "Осман Халилов" },
+    { "id": "BGR_tsonev", "name": "Пламен Цонев" },
+    { "id": "BGR_ganeva", "name": "Емилия Ганева" },
+    { "id": "BGR_rangelov", "name": "Димитър Рангелов" },
+    { "id": "BGR_koleva", "name": "Румяна Колева" },
+    { "id": "BGR_shishman_iii", "name": "Шишман III" }
+  ]
+}

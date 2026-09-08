@@ -63,6 +63,18 @@
           "name": "Gateshead",
           "share": 0.029224,
           "lonlat": [-1.6017, 54.9621]
+        },
+        {
+          "id": "UKC_washington",
+          "name": "Washington",
+          "share": 0.025248,
+          "lonlat": [-1.5167, 54.9]
+        },
+        {
+          "id": "UKC_tynemouth",
+          "name": "Tynemouth",
+          "share": 0.022809,
+          "lonlat": [-1.4256, 55.0179]
         }
       ]
     },
@@ -198,6 +210,48 @@
           "name": "Crewe",
           "share": 0.01047,
           "lonlat": [-2.4416, 53.0979]
+        },
+        {
+          "id": "UKD_rossendale",
+          "name": "Rossendale",
+          "share": 0.009232,
+          "lonlat": [-2.2769, 53.6846]
+        },
+        {
+          "id": "UKD_ellesmere_port_town",
+          "name": "Ellesmere Port Town",
+          "share": 0.008962,
+          "lonlat": [-2.9013, 53.2788]
+        },
+        {
+          "id": "UKD_sale",
+          "name": "Sale",
+          "share": 0.008568,
+          "lonlat": [-2.3244, 53.4252]
+        },
+        {
+          "id": "UKD_widnes",
+          "name": "Widnes",
+          "share": 0.008419,
+          "lonlat": [-2.7341, 53.3618]
+        },
+        {
+          "id": "UKD_runcorn",
+          "name": "Runcorn",
+          "share": 0.008375,
+          "lonlat": [-2.7312, 53.3417]
+        },
+        {
+          "id": "UKD_bury",
+          "name": "Bury",
+          "share": 0.008362,
+          "lonlat": [-2.3, 53.6]
+        },
+        {
+          "id": "UKD_wallasey",
+          "name": "Wallasey",
+          "share": 0.008053,
+          "lonlat": [-3.065, 53.4232]
         }
       ]
     },
@@ -297,6 +351,18 @@
           "name": "Barnsley",
           "share": 0.013022,
           "lonlat": [-1.4833, 53.55]
+        },
+        {
+          "id": "UKE_scarborough",
+          "name": "Scarborough",
+          "share": 0.011255,
+          "lonlat": [-0.4044, 54.2797]
+        },
+        {
+          "id": "UKE_dewsbury",
+          "name": "Dewsbury",
+          "share": 0.011125,
+          "lonlat": [-1.6291, 53.6908]
         }
       ]
     },
@@ -360,6 +426,18 @@
           "name": "High Peak",
           "share": 0.019261,
           "lonlat": [-1.8454, 53.368]
+        },
+        {
+          "id": "UKF_corby",
+          "name": "Corby",
+          "share": 0.014168,
+          "lonlat": [-0.6894, 52.4964]
+        },
+        {
+          "id": "UKF_loughborough",
+          "name": "Loughborough",
+          "share": 0.013486,
+          "lonlat": [-1.2, 52.7667]
         }
       ]
     },
@@ -489,6 +567,24 @@
           "name": "Shrewsbury",
           "share": 0.012996,
           "lonlat": [-2.7521, 52.7101]
+        },
+        {
+          "id": "UKG_stafford",
+          "name": "Stafford",
+          "share": 0.011873,
+          "lonlat": [-2.1164, 52.8052]
+        },
+        {
+          "id": "UKG_hereford",
+          "name": "Hereford",
+          "share": 0.010226,
+          "lonlat": [-2.7148, 52.0568]
+        },
+        {
+          "id": "UKG_halesowen",
+          "name": "Halesowen",
+          "share": 0.010172,
+          "lonlat": [-2.0494, 52.4486]
         }
       ]
     },
@@ -606,6 +702,12 @@
           "name": "Lowestoft",
           "share": 0.011439,
           "lonlat": [1.7517, 52.4752]
+        },
+        {
+          "id": "UKH_great_yarmouth",
+          "name": "Great Yarmouth",
+          "share": 0.010173,
+          "lonlat": [1.7305, 52.6083]
         }
       ]
     },
@@ -780,6 +882,60 @@
           "name": "Guildford",
           "share": 0.007833,
           "lonlat": [-0.5743, 51.2354]
+        },
+        {
+          "id": "UKJ_maidenhead",
+          "name": "Maidenhead",
+          "share": 0.00767,
+          "lonlat": [-0.7199, 51.5228]
+        },
+        {
+          "id": "UKJ_royal_tunbridge_wells",
+          "name": "Royal Tunbridge Wells",
+          "share": 0.00751,
+          "lonlat": [0.2626, 51.1332]
+        },
+        {
+          "id": "UKJ_folkestone",
+          "name": "Folkestone",
+          "share": 0.00724,
+          "lonlat": [1.1673, 51.0817]
+        },
+        {
+          "id": "UKJ_waterlooville",
+          "name": "Waterlooville",
+          "share": 0.007013,
+          "lonlat": [-1.0304, 50.8807]
+        },
+        {
+          "id": "UKJ_bognor_regis",
+          "name": "Bognor Regis",
+          "share": 0.006962,
+          "lonlat": [-0.6798, 50.7821]
+        },
+        {
+          "id": "UKJ_margate",
+          "name": "Margate",
+          "share": 0.006901,
+          "lonlat": [1.3862, 51.3813]
+        },
+        {
+          "id": "UKJ_ashford",
+          "name": "Ashford",
+          "share": 0.006843,
+          "lonlat": [0.8738, 51.1465]
+        },
+        {
+          "id": "UKJ_farnborough",
+          "name": "Farnborough",
+          "share": 0.00661,
+          "lonlat": [-0.7557, 51.2942]
+        },
+        {
+          "id": "UKJ_littlehampton",
+          "name": "Littlehampton",
+          "share": 0.006399,
+          "lonlat": [-0.5408, 50.8114]
         }
       ]
     },
@@ -855,6 +1011,30 @@
           "name": "Weston-super-Mare",
           "share": 0.01476,
           "lonlat": [-2.9766, 51.346]
+        },
+        {
+          "id": "UKK_paignton",
+          "name": "Paignton",
+          "share": 0.012021,
+          "lonlat": [-3.5679, 50.4357]
+        },
+        {
+          "id": "UKK_torquay",
+          "name": "Torquay",
+          "share": 0.011642,
+          "lonlat": [-3.5252, 50.462]
+        },
+        {
+          "id": "UKK_taunton",
+          "name": "Taunton",
+          "share": 0.011505,
+          "lonlat": [-3.1029, 51.0149]
+        },
+        {
+          "id": "UKK_stroud",
+          "name": "Stroud",
+          "share": 0.01071,
+          "lonlat": [-2.2, 51.75]
         }
       ]
     },
@@ -888,6 +1068,30 @@
           "name": "Newport",
           "share": 0.051494,
           "lonlat": [-2.9983, 51.5877]
+        },
+        {
+          "id": "UKL_rhondda",
+          "name": "Rhondda",
+          "share": 0.022161,
+          "lonlat": [-3.4489, 51.659]
+        },
+        {
+          "id": "UKL_wrexham",
+          "name": "Wrexham",
+          "share": 0.020945,
+          "lonlat": [-2.9913, 53.0466]
+        },
+        {
+          "id": "UKL_buckley",
+          "name": "Buckley",
+          "share": 0.02027,
+          "lonlat": [-3.0833, 53.1667]
+        },
+        {
+          "id": "UKL_tonypandy",
+          "name": "Tonypandy",
+          "share": 0.019941,
+          "lonlat": [-3.4554, 51.622]
         }
       ]
     },
@@ -972,6 +1176,24 @@
           "name": "Lisburn",
           "share": 0.041113,
           "lonlat": [-6.0353, 54.5234]
+        },
+        {
+          "id": "UKN_newtownabbey",
+          "name": "Newtownabbey",
+          "share": 0.033874,
+          "lonlat": [-5.9086, 54.6598]
+        },
+        {
+          "id": "UKN_bangor",
+          "name": "Bangor",
+          "share": 0.032363,
+          "lonlat": [-5.668, 54.6608]
+        },
+        {
+          "id": "UKN_craigavon",
+          "name": "Craigavon",
+          "share": 0.031421,
+          "lonlat": [-6.387, 54.4471]
         }
       ]
     }

@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "PRT_salgueiro", "name": "Marta Salgueiro" },
+    { "id": "PRT_vasconcelos", "name": "Duarte Vasconcelos" },
+    { "id": "PRT_sequeira", "name": "Rui Sequeira" },
+    { "id": "PRT_amaral", "name": "Tiago Amaral" },
+    { "id": "PRT_pacheco", "name": "Filipa Pacheco" },
+    { "id": "PRT_loureiro", "name": "Vasco Loureiro" },
+    { "id": "PRT_beja", "name": "Beatriz Beja" },
+    { "id": "PRT_manuel_iii", "name": "Manuel III" }
+  ]
+}

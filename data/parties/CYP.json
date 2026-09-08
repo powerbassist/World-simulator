@@ -1,0 +1,72 @@
+{
+  "parties": [
+    {
+      "id": "kypriaki_symmachia",
+      "name": "Κυπριακή Συμμαχία",
+      "ideology_slot": "centre_right",
+      "seat_share": 0.28,
+      "leader_person": "CYP_hadjipavlou",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": [
+        "ethniki_sympraxi"
+      ]
+    },
+    {
+      "id": "ergatiko_metopo",
+      "name": "Εργατικό Μέτωπο",
+      "ideology_slot": "left_populist",
+      "seat_share": 0.22,
+      "leader_person": "CYP_petrou",
+      "discipline": 0.85,
+      "competence": 0.65,
+      "excluded_partners": [
+        "ethniki_sympraxi"
+      ]
+    },
+    {
+      "id": "polites_tou_kentrou",
+      "name": "Πολίτες του Κέντρου",
+      "ideology_slot": "centrist",
+      "seat_share": 0.15,
+      "leader_person": "CYP_zachariou",
+      "discipline": 0.75,
+      "competence": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "fileleftheri_protovoulia",
+      "name": "Φιλελεύθερη Πρωτοβουλία",
+      "ideology_slot": "liberal",
+      "seat_share": 0.15,
+      "leader_person": "CYP_giallouridou",
+      "discipline": 0.8,
+      "competence": 0.7,
+      "excluded_partners": [
+        "ethniki_sympraxi"
+      ]
+    },
+    {
+      "id": "sosialistiki_poreia",
+      "name": "Σοσιαλιστική Πορεία",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.1,
+      "leader_person": "CYP_christofi",
+      "discipline": 0.8,
+      "competence": 0.65,
+      "excluded_partners": [
+        "ethniki_sympraxi"
+      ]
+    },
+    {
+      "id": "ethniki_sympraxi",
+      "name": "Εθνική Σύμπραξη",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.1,
+      "leader_person": "CYP_adamidis",
+      "discipline": 0.7,
+      "competence": 0.5,
+      "excluded_partners": []
+    }
+  ]
+}

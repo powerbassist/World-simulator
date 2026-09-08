@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "HRV_vidovic", "name": "Krešimir Vidović" },
+    { "id": "HRV_ravlic", "name": "Tomislav Ravlić" },
+    { "id": "HRV_kovacevic", "name": "Snježana Kovačević" },
+    { "id": "HRV_jurisic", "name": "Marko Jurišić" },
+    { "id": "HRV_benkovic", "name": "Nenad Benković" },
+    { "id": "HRV_saric", "name": "Lana Šarić" },
+    { "id": "HRV_zvonimir_iii", "name": "Zvonimir III" }
+  ]
+}

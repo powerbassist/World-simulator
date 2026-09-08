@@ -135,6 +135,54 @@
           "name": "Saint-Maur-des-Fossés",
           "share": 0.00609,
           "lonlat": [2.4932, 48.794]
+        },
+        {
+          "id": "FR1_aubervilliers",
+          "name": "Aubervilliers",
+          "share": 0.005727,
+          "lonlat": [2.3833, 48.9167]
+        },
+        {
+          "id": "FR1_maison_blanche",
+          "name": "Maison Blanche",
+          "share": 0.005193,
+          "lonlat": [2.3508, 48.8259]
+        },
+        {
+          "id": "FR1_drancy",
+          "name": "Drancy",
+          "share": 0.005047,
+          "lonlat": [2.4453, 48.9258]
+        },
+        {
+          "id": "FR1_noisy_le_grand",
+          "name": "Noisy-le-Grand",
+          "share": 0.005041,
+          "lonlat": [2.5627, 48.8498]
+        },
+        {
+          "id": "FR1_levallois_perret",
+          "name": "Levallois-Perret",
+          "share": 0.005022,
+          "lonlat": [2.2886, 48.8939]
+        },
+        {
+          "id": "FR1_issy_les_moulineaux",
+          "name": "Issy-les-Moulineaux",
+          "share": 0.004963,
+          "lonlat": [2.2772, 48.821]
+        },
+        {
+          "id": "FR1_neuilly_sur_seine",
+          "name": "Neuilly-sur-Seine",
+          "share": 0.004951,
+          "lonlat": [2.2696, 48.8846]
+        },
+        {
+          "id": "FR1_antony",
+          "name": "Antony",
+          "share": 0.004833,
+          "lonlat": [2.2967, 48.7533]
         }
       ]
     },
@@ -162,6 +210,12 @@
           "name": "Orléans",
           "share": 0.045066,
           "lonlat": [1.9041, 47.9025]
+        },
+        {
+          "id": "FRB_bourges",
+          "name": "Bourges",
+          "share": 0.026335,
+          "lonlat": [2.4, 47.0833]
         }
       ]
     },
@@ -273,6 +327,12 @@
           "name": "Calais",
           "share": 0.012407,
           "lonlat": [1.8563, 50.9519]
+        },
+        {
+          "id": "FRE_villeneuve_d_ascq",
+          "name": "Villeneuve-d'Ascq",
+          "share": 0.010401,
+          "lonlat": [3.1666, 50.6167]
         }
       ]
     },
@@ -318,6 +378,18 @@
           "name": "Nancy",
           "share": 0.018895,
           "lonlat": [6.185, 48.6844]
+        },
+        {
+          "id": "FRF_colmar",
+          "name": "Colmar",
+          "share": 0.011763,
+          "lonlat": [7.3558, 48.0808]
+        },
+        {
+          "id": "FRF_troyes",
+          "name": "Troyes",
+          "share": 0.010932,
+          "lonlat": [4.0852, 48.3007]
         }
       ]
     },
@@ -351,6 +423,18 @@
           "name": "Le Mans",
           "share": 0.037253,
           "lonlat": [0.2025, 48.0021]
+        },
+        {
+          "id": "FRG_saint_nazaire",
+          "name": "Saint-Nazaire",
+          "share": 0.017285,
+          "lonlat": [-2.2179, 47.2751]
+        },
+        {
+          "id": "FRG_la_roche_sur_yon",
+          "name": "La Roche-sur-Yon",
+          "share": 0.015314,
+          "lonlat": [-1.4276, 46.6697]
         }
       ]
     },
@@ -378,6 +462,18 @@
           "name": "Brest",
           "share": 0.042332,
           "lonlat": [-4.4863, 48.3903]
+        },
+        {
+          "id": "FRH_quimper",
+          "name": "Quimper",
+          "share": 0.018653,
+          "lonlat": [-4.0979, 47.996]
+        },
+        {
+          "id": "FRH_lorient",
+          "name": "Lorient",
+          "share": 0.016977,
+          "lonlat": [-3.3718, 47.7482]
         }
       ]
     },
@@ -423,6 +519,12 @@
           "name": "La Rochelle",
           "share": 0.012564,
           "lonlat": [-1.1522, 46.1631]
+        },
+        {
+          "id": "FRI_merignac",
+          "name": "Mérignac",
+          "share": 0.011416,
+          "lonlat": [-0.6451, 44.8425]
         }
       ]
     },
@@ -513,6 +615,18 @@
           "name": "Villeurbanne",
           "share": 0.0161,
           "lonlat": [4.8795, 45.766]
+        },
+        {
+          "id": "FRK_valence",
+          "name": "Valence",
+          "share": 0.007822,
+          "lonlat": [4.9096, 44.9256]
+        },
+        {
+          "id": "FRK_chambery",
+          "name": "Chambéry",
+          "share": 0.00755,
+          "lonlat": [5.9208, 45.5663]
         }
       ]
     },
@@ -570,6 +684,18 @@
           "name": "Cannes",
           "share": 0.014417,
           "lonlat": [7.0127, 43.5513]
+        },
+        {
+          "id": "FRL_la_seyne_sur_mer",
+          "name": "La Seyne-sur-Mer",
+          "share": 0.012055,
+          "lonlat": [5.8782, 43.1032]
+        },
+        {
+          "id": "FRL_juan_les_pins",
+          "name": "Juan-les-Pins",
+          "share": 0.011604,
+          "lonlat": [7.1131, 43.5695]
         }
       ]
     },

@@ -35,7 +35,10 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 
 const PLAYER := "FRA"
-const AUTHORED := ["FRA", "DEU", "GBR"]
+## POL joins the authored set at V3.3 -- playable means a press, and the
+## empty-register property this check pins is about OUTLET-less nations,
+## not about playable ones.
+const AUTHORED := ["FRA", "DEU", "GBR", "POL"]
 
 var _failures: Array[String] = []
 var _loader

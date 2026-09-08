@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "SWE_holmqvist", "name": "Karin Holmqvist" },
+    { "id": "SWE_sandberg", "name": "Erik Sandberg" },
+    { "id": "SWE_hellstrom", "name": "Ulla Hellström" },
+    { "id": "SWE_bergvall", "name": "Pär Bergvall" },
+    { "id": "SWE_vikstrom", "name": "Sten Vikström" },
+    { "id": "SWE_nordin", "name": "Cecilia Nordin" },
+    { "id": "SWE_karl_xvii", "name": "Karl XVII" }
+  ]
+}

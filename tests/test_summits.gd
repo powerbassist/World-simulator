@@ -209,8 +209,8 @@ func _check_no_new_state() -> void:
 	# 30 is V2.6b2's, on the campaign-sited registers -- not on anything a summit
 	# carries. The pin below that nothing summit-shaped is serialised still stands;
 	# a bump FOR a summit surface is what this check exists to catch.
-	if GameState.SAVE_VERSION != 32:
-		_fail("SAVE_VERSION moved for an ephemeral surface -- the bump is %d; if its recorded reason is a summit field, stop. V3.2's bump is the bloc->orgs rename, not a summit field" % GameState.SAVE_VERSION)
+	if GameState.SAVE_VERSION != 33:
+		_fail("SAVE_VERSION moved for an ephemeral surface -- the bump is %d; if its recorded reason is a summit field, stop. V3.2's bump is the bloc->orgs rename, not a summit field; V3.3's reason is recorded and is NO field -- the roster is content and round-trips through data/, but the roster a save was made against is part of its contract: from_dict builds nations from the save dictionary ALONE and the gate refuses only version MISMATCHES, so a version-32 save made against the ten-nation roster would load, unrefused, as a silent ten-nation world against twenty-seven-member org data -- nineteen nations dropped without an error anywhere -- so the bump is the loader saying the roster changed" % GameState.SAVE_VERSION)
 	var d: Dictionary = _state.to_dict()
 	if d.has("summits") or d.has("summit_history"):
 		_fail("GameState serialises summit state -- a summit is ephemeral by construction")

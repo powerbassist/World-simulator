@@ -1,0 +1,14 @@
+{
+  "_source": "invented",
+  "_note": "Fictional firms per docs/fictionalization.md -- near-miss style, sector legible, no real company's name, logo or trademarked styling. `share` is of the firm's SECTOR, not of GDP, and a sector's named shares sum to less than 1.0: the remainder is the unnamed rest of the sector. `headcount` is jobs at that authored share and is the differentiator. Authored at V3.3 with Poland's playable kit, on the FRA convention. The economy the near-misses echo: a copper-and-silver mining major, coal-era heavy industry rebuilding around batteries and rolling stock, the Baltic shipyards, retail consolidation, and the banking hubs of Warsaw.",
+  "companies": [
+    { "id": "POL_kopalnia_miedzi", "name": "Kopalnia Miedzi Wspólna", "sector": "industry", "share": 0.22, "headcount": 31000, "city": "PL72_kielce" },
+    { "id": "POL_huta_wisla", "name": "Huta Wisła", "sector": "industry", "share": 0.11, "headcount": 48000, "city": "PL22_katowice" },
+    { "id": "POL_stocznia_gdanska", "name": "Stocznia Gdańska Wschodnia", "sector": "industry", "share": 0.07, "headcount": 12000, "city": "PL63_gdansk" },
+    { "id": "POL_zboze_wielkopolskie", "name": "Zboże Wielkopolskie", "sector": "agriculture", "share": 0.24, "headcount": 19000, "city": "PL41_poznan" },
+    { "id": "POL_sady_lubelskie", "name": "Sady Lubelskie", "sector": "agriculture", "share": 0.17, "headcount": 11000, "city": "PL81_lublin" },
+    { "id": "POL_bank_kongresowy", "name": "Bank Kongresowy", "sector": "services", "share": 0.08, "headcount": 42000, "city": "PL91_warsaw" },
+    { "id": "POL_siec_baltyk", "name": "Sieć Bałtyk", "sector": "services", "share": 0.06, "headcount": 96000, "city": "PL42_szczecin" },
+    { "id": "POL_tabor_nowy", "name": "Tabor Nowy", "sector": "industry", "share": 0.05, "headcount": 15000, "city": "PL71_lodz" }
+  ]
+}

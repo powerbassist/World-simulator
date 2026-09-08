@@ -448,7 +448,16 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## that never began one -- measures' case at V1.3c). `GameState.org_effects` is
 ## NOT serialised: static content, re-derived on load by Orgs.rebuild_static()
 ## -- project_sited_pct's case at V2.7, and the absence is pinned by tests.
-const SAVE_VERSION := 32
+## V3.3 bumps this to 33 on NO field -- the roster is content and round-trips
+## through data/, so V2.2a's absence law applies and no nation state carries a
+## twenty-ninth entry. The bump is the other half of V1.6a's check firing:
+## `GameState.from_dict` builds nations from the save dictionary ALONE and the
+## version gate refuses only version MISMATCHES, so a version-32 save made
+## against the ten-nation roster would load, unrefused, as a silent ten-nation
+## world against twenty-seven-member org data -- nineteen nations dropped
+## without an error anywhere. The roster a save was made against is part of
+## its contract, and the bump is how the loader says so.
+const SAVE_VERSION := 33
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

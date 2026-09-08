@@ -131,6 +131,7 @@ var _loader
 var _state
 
 var _polygons: Dictionary = {}  # nation id -> Array[PackedVector2Array], raw lon/lat
+var _nation_boxes: Dictionary = {}  # nation id -> Rect2, the lon/lat bbox of the above
 var _world_polygons: Dictionary = {}  # same shape, the ~160 nations not simulated
 var _labels: Dictionary = {}  # nation id -> {pos: Vector2 lon/lat, text: String}
 var _texture: ImageTexture = null
@@ -237,14 +238,16 @@ const MARKER_HIT_PAD := 3.0
 const LABEL_MIN_ZOOM := 1.4
 
 ## Below this zoom a city cross is dropped -- V2.2b, on LABEL_MIN_ZOOM's own
-## discipline: set just under the opening Europe fit (which lands near 2.1 on
-## 1080p), so the crosses are there from the moment the game starts and clear
-## off as the player pulls back to the globe. That is the reading the register's
-## volume clause was measured for -- *"V2.2b draws by rank and the roster at the
-## opening fit is ~1000 px wide"* -- so a threshold above the opening fit would
-## ship 581 cities the default frame never shows. Names stay on hover alone,
-## where the labels at least get the opening fit. The HIT test reads the same
-## gate, so a glyph that is not drawn is never a target.
+## discipline: set just under the opening Europe fit, so the crosses are there
+## from the moment the game starts and clear off as the player pulls back to the
+## globe. The fit is computed from the committed extents, not eyeballed, and
+## V3.3 re-measured it for the EU-29 roster: 2.08 on 1080p, lat-bound as before
+## (the eastward growth to Cyprus does not move the binding dimension), so 2.0
+## keeps its just-under place and the value is unchanged. The volume clause was
+## re-measured with it: CITY_MIN_POP's 2021 sweep shipped ~1065 cities on the
+## new roster against the same px/degree, per BALANCE_PLAN.md's band. Names stay
+## on hover alone, where the labels at least get the opening fit. The HIT test
+## reads the same gate, so a glyph that is not drawn is never a target.
 const CITY_MIN_ZOOM := 2.0
 const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
 const LABEL_SHADOW := Color(0.0, 0.0, 0.0, 0.65)
@@ -275,6 +278,7 @@ func setup(loader, state) -> void:
 	_state = state
 	_polygons.clear()
 	_labels.clear()
+	_nation_boxes.clear()
 
 	var ids: Array = loader.nations.keys()
 	ids.sort()
@@ -282,6 +286,20 @@ func setup(loader, state) -> void:
 		var n = loader.nations[id]
 		var polys: Array = loader.geo_features.get(n.geo_id, [])
 		_polygons[id] = polys
+		# V3.3's watch-point made real: the hit test walks every roster outline
+		# per mouse-move, and the roster tripled, so each nation carries a bbox
+		# the test can reject on before touching a ring. Built from the same
+		# arrays the test walks, so the two cannot disagree.
+		var box := Rect2()
+		var first := true
+		for ring: PackedVector2Array in polys:
+			for pt in ring:
+				if first:
+					box = Rect2(pt, Vector2.ZERO)
+					first = false
+				else:
+					box = box.expand(pt)
+		_nation_boxes[id] = box
 		if loader.label_points.has(n.geo_id):
 			_labels[id] = {
 				"pos": loader.label_points[n.geo_id],
@@ -464,9 +482,14 @@ func _screen_to_lonlat(screen_pos: Vector2) -> Vector2:
 
 
 ## Returns the nation id whose outer ring contains the given lon/lat point, or
-## "" if none does. First match wins -- Europe's ten nations here don't overlap.
+## "" if none does. First match wins -- Europe's nations here don't overlap.
+## The bbox pre-reject is the watch-point V3.1's §7 handed this block: the
+## roster tripled the per-move point count, so a point outside a nation's box
+## never reaches that nation's rings.
 func _nation_at_lonlat(pt: Vector2) -> String:
 	for id in _polygons.keys():
+		if not (_nation_boxes.get(id, Rect2()) as Rect2).has_point(pt):
+			continue
 		for ring: PackedVector2Array in _polygons[id]:
 			if ring.size() >= 3 and Geometry2D.is_point_in_polygon(pt, ring):
 				return id

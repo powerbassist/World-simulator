@@ -1,13 +1,16 @@
 {
   "_source": "authored",
-  "_note": "Bloc proposals, V1.3d. Shaped after the real Stability and Growth Pact and the Excessive Deficit Procedure, but the numbers are game numbers set by tools/bloc_probe.gd and not by the Treaties -- see docs/bloc-model.md. File order is the council's agenda: src/sim/bloc.gd rotates an index over the loaded list, so a proposal added here changes what comes up and when.",
+  "_note": "Bloc proposals, V1.3d. Shaped after the real Stability and Growth Pact and the Excessive Deficit Procedure, but the numbers are game numbers set by tools/bloc_probe.gd and not by the Treaties -- see docs/bloc-model.md. File order is the council's agenda: src/sim/bloc.gd rotates an index over the loaded list, so a proposal added here changes what comes up and when. V3.3 re-measured the council over 27 members: the authored positions produced unanimous or near-unanimous divisions in which no member's abstention could matter, so debt_reduction_rule's position was re-set by tools/ (the tally probe) to land the division inside the player's pivotal band -- 385 for of 639 cast against a 351.45 threshold, so France's 81 seats decide it whichever way they vote.",
   "proposals": [
     {
       "id": "stability_pact",
       "org": "eu",
       "name": "Stability and Growth Pact",
       "summary": "Members undertake to hold the general government deficit under 3% of GDP. The Commission reports on those who do not, and the Council may levy a penalty.",
-      "position": { "economic": 0.55, "social": 0.15 },
+      "position": {
+        "economic": 0.55,
+        "social": 0.15
+      },
       "constraint": {
         "field": "deficit_pct_gdp",
         "op": "<=",
@@ -20,8 +23,11 @@
       "id": "debt_reduction_rule",
       "org": "eu",
       "name": "Debt Reduction Rule",
-      "summary": "A member carrying debt above 90% of GDP commits to a path back below it. The path is not enforced; the reporting is.",
-      "position": { "economic": 0.65, "social": 0.20 },
+      "summary": "A member carrying debt above 90% of GDP commits to a path back below it. The path is not enforced; the reporting is -- and the sponsorship is the green-liberal benches, whose fiscal hawkery is the debt brake's natural home in this council.",
+      "position": {
+        "economic": 0.15,
+        "social": -1.0
+      },
       "constraint": {
         "field": "debt_to_gdp_pct",
         "op": "<=",
@@ -35,7 +41,10 @@
       "org": "eu",
       "name": "Minimum Corporate Rate",
       "summary": "A floor under corporation tax across the bloc, so that no member can compete for headquarters by cutting below it.",
-      "position": { "economic": -0.50, "social": -0.10 },
+      "position": {
+        "economic": -0.5,
+        "social": -0.1
+      },
       "constraint": {
         "field": "tax_corporate",
         "op": ">=",

@@ -1,0 +1,165 @@
+{
+  "id": "CYP",
+  "name": "Cyprus",
+  "geo_id": "CYP",
+  "capital": "Nicosia",
+  "playable": false,
+  "leader": {
+    "person": "CYP_hadjipavlou",
+    "title": "President",
+    "party": "kypriaki_symmachia"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FFFFFF", "#D57800", "#FFFFFF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "House of Representatives",
+      "assembly_seats": 56,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 30 May 2021 for a five-year term, so the next is due by May 2026 -- the game books May 2026. The House nominally has 80 seats, 24 reserved for the Turkish-Cypriot community and vacant since 1964, so the 56 Greek-Cypriot seats are the count that actually votes. NO statutory electoral threshold: seats are pure proportional per constituency, and the machinery's 0.0 carries that literally. Wikipedia, 'Next Cypriot legislative election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2026,
+          "month": 5
+        },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Cyprus has NO presidential dissolution power: the House's five-year term is fixed and only the House itself curtails or extends it by law -- the 2016 self-extension is the precedent. The template's executive_discretion is the nearest machinery and is authored with a 6-month lockout and a two-month notice so the lever stays expensive; flagged as the template's approximation of a power the constitution does not give anyone. Syntagma, Art. 70.",
+        "rule": "executive_discretion",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "Cyprus is PURELY presidential, and the template is the nearest machinery rather than a description: the President is elected directly, names the ministers and answers to no assembly majority for his office -- there is no Prime Minister and the council of ministers is appointed by and answerable to the President alone (Arts. 43, 46, 54, 58). Every executive lever below routes to the President. Last elected February 2023, so the next falls in February 2028. Wikipedia, 'President of Cyprus'.",
+      "kind": "executive_president",
+      "title": "President",
+      "person": "CYP_hadjipavlou"
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 182 declares the 'fundamental Articles' unamendable outright -- an express eternity clause, with Art. 1 (an independent republic whose President IS the executive) among them -- and the rest of the text is amendable by separate two-thirds majorities of the Greek-Cypriot and Turkish-Cypriot members, which the 1964 withdrawal makes formally impossible; practice has gone through ordinary law instead. The template's three_fifths is the nearest single bar and the unamendable core is recorded here rather than modelled. Syntagma, Arts. 61 and 182.",
+      "rule": "three_fifths",
+      "referendum": "none",
+      "_referendum_note": "The constitution has no amendment-by-referendum route, and no amendment content in this game prices a Cypriot popular vote -- SVK.json's reason.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 182's unamendable core contains Art. 1, which writes the presidential form itself -- the roster's one EXPRESS eternity clause on the form of the state, stronger than France's Art. 89 §5 because the protected articles are enumerated in a court-enforceable text."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "The Supreme Court holds constitutional review -- the separate Constitutional Court was merged into it in 1964. Syntagma, Art. 162; Courts of Justice Law 1964; Wikipedia, 'Supreme Court of Cyprus'.",
+      "review": "constitutional"
+    },
+    "executive": {
+      "_source": "authored",
+      "_note": "First round early February 2028, run-off a week later; five-year term. Art. 43 limits a President to two CONSECUTIVE terms -- the machinery's term_limit counts terms in TOTAL, so it is authored 0 rather than mis-translated, and the consecutive-term rule is recorded here. This is the PLAYER-equivalent clock and it is a different clock from the House's. Wikipedia, 'Cypriot presidential election'.",
+      "title": "President",
+      "term_years": 5,
+      "next": {
+        "year": 2028,
+        "month": 2
+      }
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "There is no Prime Minister: the President appoints the eleven ministers and can dismiss them, and they answer to him and not to the House (Arts. 46, 54, 58). The House's control runs through the budget and oversight rather than a confidence vote -- no Cypriot government has ever fallen to parliament -- so the template's absolute-members bar is the nearest machinery reading. The head-of-government slot below is the President himself. Syntagma, Arts. 42-58.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "President",
+      "head_of_government_person": "CYP_hadjipavlou"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "CYP_henri_iii",
+    "neighbours": []
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 19% and corporate 12.5% are the statutory rates; income 22 is a blend of the 20/25/30 three-band schedule; capital gains 20% applies to immovable property while transfers of listed securities are exempt -- the narrower base recorded here, since the one number overstates it. Debt ~70% and revenue ~36.0% of GDP (Eurostat/OECD 2024), still digesting the 2012-13 restructuring. Spending is the general-government split scaled to expenditure near 40.5% of GDP.",
+    "debt_to_gdp_pct": 70.0,
+    "tax_revenue_pct_gdp": 36.0,
+    "tax_rates_pct": {
+      "income": 22.0,
+      "corporate": 12.5,
+      "vat": 19.0,
+      "capital_gains": 20.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.5,
+      "education": 5.0,
+      "defence": 1.3,
+      "pensions": 9.0,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 17.7
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 1400000,
+    "gdp_eur_bn": 34.6,
+    "unemployment_pct": 4.9,
+    "sectors": {
+      "agriculture": 0.013,
+      "industry": 0.125,
+      "services": 0.862
+    },
+    "cohorts": {
+      "young_pct": 16.07,
+      "old_pct": 14.62,
+      "young_pct_per_yr": 0.01,
+      "old_pct_per_yr": 0.235,
+      "participation_pct": 79.22,
+      "pop_growth_pct": 1.205
+    },
+    "inequality": {
+      "gini_index": 31.8,
+      "gini_index_per_yr": -0.275,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.994,
+      "growth_sd_pct": 3.478,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 1.915,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.840052,
+        "nuclear": 0.0,
+        "renewable": 0.159948
+      },
+      "import_dependency_pct": 117.038,
+      "kwh_per_capita": 3841.7,
+      "_years": {
+        "energy_import_dependency_pct": 2022,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2023
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 68.8
+    }
+  }
+}

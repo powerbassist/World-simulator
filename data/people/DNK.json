@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "DNK_valdemar_vi", "name": "Valdemar VI" },
+    { "id": "DNK_sorensen", "name": "Birte Sørensen" },
+    { "id": "DNK_lindberg", "name": "Torkil Lindberg" },
+    { "id": "DNK_krogh", "name": "Jens Erik Krogh" },
+    { "id": "DNK_dahl", "name": "Astrid Dahl" },
+    { "id": "DNK_brandt", "name": "Rikke Brandt" },
+    { "id": "DNK_skovgaard", "name": "Esben Skovgaard" }
+  ]
+}

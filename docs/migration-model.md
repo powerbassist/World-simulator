@@ -593,3 +593,11 @@ finding behind that — is [[natural-change-model]] §6.
 
 Related: [[tiers/v2]] · [[siting-model]] · [[geography-model]] · [[region-economy-model]] ·
 [[demography-model]] · [[decision-log]] · [[ROADMAP]]
+## V3.3: the zero-migration bound is now six nations'
+
+LUX's "one region cannot differ from itself" case arrives five times more:
+CYP, EST, LTU, LVA and MLT are single-region at NUTS 2, so `pull - mean` is
+exactly 0.0 at both levels for each, at any rate whatever. Their people still
+move through natural change (measured, unlike Britain's hole) and their cities
+still compete for the named jobs of the one region they share.
+

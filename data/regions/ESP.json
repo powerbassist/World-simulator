@@ -51,6 +51,12 @@
           "name": "Pontevedra",
           "share": 0.030749,
           "lonlat": [-8.6443, 42.431]
+        },
+        {
+          "id": "ES11_ferrol",
+          "name": "Ferrol",
+          "share": 0.024806,
+          "lonlat": [-8.2329, 43.4845]
         }
       ]
     },
@@ -150,6 +156,18 @@
           "name": "Getxo",
           "share": 0.036616,
           "lonlat": [-3.0115, 43.3569]
+        },
+        {
+          "id": "ES21_irun",
+          "name": "Irun",
+          "share": 0.028099,
+          "lonlat": [-1.7894, 43.339]
+        },
+        {
+          "id": "ES21_santutxu",
+          "name": "Santutxu",
+          "share": 0.0272,
+          "lonlat": [-2.9161, 43.2535]
         }
       ]
     },
@@ -330,6 +348,24 @@
           "name": "Valdemoro",
           "share": 0.011084,
           "lonlat": [-3.6789, 40.1908]
+        },
+        {
+          "id": "ES30_rivas_vaciamadrid",
+          "name": "Rivas-Vaciamadrid",
+          "share": 0.010144,
+          "lonlat": [-3.5109, 40.3261]
+        },
+        {
+          "id": "ES30_majadahonda",
+          "name": "Majadahonda",
+          "share": 0.0101,
+          "lonlat": [-3.8718, 40.4735]
+        },
+        {
+          "id": "ES30_collado_villalba",
+          "name": "Collado-Villalba",
+          "share": 0.009353,
+          "lonlat": [-4.0049, 40.6351]
         }
       ]
     },
@@ -375,6 +411,18 @@
           "name": "Palencia",
           "share": 0.033098,
           "lonlat": [-4.5241, 42.0095]
+        },
+        {
+          "id": "ES41_ponferrada",
+          "name": "Ponferrada",
+          "share": 0.028934,
+          "lonlat": [-6.5962, 42.5466]
+        },
+        {
+          "id": "ES41_zamora",
+          "name": "Zamora",
+          "share": 0.026025,
+          "lonlat": [-5.7446, 41.5063]
         }
       ]
     },
@@ -447,6 +495,12 @@
           "name": "Cáceres",
           "share": 0.090903,
           "lonlat": [-6.3722, 39.4765]
+        },
+        {
+          "id": "ES43_merida",
+          "name": "Mérida",
+          "share": 0.056639,
+          "lonlat": [-6.3429, 38.918]
         }
       ]
     },
@@ -558,6 +612,42 @@
           "name": "Rubí",
           "share": 0.009403,
           "lonlat": [2.033, 41.4923]
+        },
+        {
+          "id": "ES51_castelldefels",
+          "name": "Castelldefels",
+          "share": 0.008551,
+          "lonlat": [1.9703, 41.2779]
+        },
+        {
+          "id": "ES51_viladecans",
+          "name": "Viladecans",
+          "share": 0.008524,
+          "lonlat": [2.0143, 41.3141]
+        },
+        {
+          "id": "ES51_vilanova_i_la_geltru",
+          "name": "Vilanova i la Geltrú",
+          "share": 0.008488,
+          "lonlat": [1.7251, 41.2239]
+        },
+        {
+          "id": "ES51_el_prat_de_llobregat",
+          "name": "El Prat de Llobregat",
+          "share": 0.00817,
+          "lonlat": [2.0947, 41.3278]
+        },
+        {
+          "id": "ES51_granollers",
+          "name": "Granollers",
+          "share": 0.007856,
+          "lonlat": [2.2877, 41.608]
+        },
+        {
+          "id": "ES51_cerdanyola_del_valles",
+          "name": "Cerdanyola del Vallès",
+          "share": 0.007568,
+          "lonlat": [2.1408, 41.4911]
         }
       ]
     },
@@ -621,6 +711,36 @@
           "name": "Gandia",
           "share": 0.014453,
           "lonlat": [-0.1833, 38.9667]
+        },
+        {
+          "id": "ES52_benidorm",
+          "name": "Benidorm",
+          "share": 0.013791,
+          "lonlat": [-0.131, 38.5382]
+        },
+        {
+          "id": "ES52_sagunto",
+          "name": "Sagunto",
+          "share": 0.012934,
+          "lonlat": [-0.2667, 39.6833]
+        },
+        {
+          "id": "ES52_paterna",
+          "name": "Paterna",
+          "share": 0.012533,
+          "lonlat": [-0.4408, 39.5026]
+        },
+        {
+          "id": "ES52_grao_de_murviedro",
+          "name": "Grao de Murviedro",
+          "share": 0.012209,
+          "lonlat": [-0.2389, 39.6417]
+        },
+        {
+          "id": "ES52_alcoy",
+          "name": "Alcoy",
+          "share": 0.012049,
+          "lonlat": [-0.4743, 38.7054]
         }
       ]
     },
@@ -777,6 +897,54 @@
           "name": "Fuengirola",
           "share": 0.008398,
           "lonlat": [-4.6247, 36.54]
+        },
+        {
+          "id": "ES61_alcala_de_guadaira",
+          "name": "Alcalá de Guadaira",
+          "share": 0.008242,
+          "lonlat": [-5.8395, 37.3379]
+        },
+        {
+          "id": "ES61_sanlucar_de_barrameda",
+          "name": "Sanlúcar de Barrameda",
+          "share": 0.007993,
+          "lonlat": [-6.3515, 36.7781]
+        },
+        {
+          "id": "ES61_campina",
+          "name": "Campiña",
+          "share": 0.007978,
+          "lonlat": [-2.9807, 38.219]
+        },
+        {
+          "id": "ES61_estepona",
+          "name": "Estepona",
+          "share": 0.007873,
+          "lonlat": [-5.1459, 36.4276]
+        },
+        {
+          "id": "ES61_torremolinos",
+          "name": "Torremolinos",
+          "share": 0.007689,
+          "lonlat": [-4.4998, 36.6204]
+        },
+        {
+          "id": "ES61_la_linea_de_la_concepcion",
+          "name": "La Línea de la Concepción",
+          "share": 0.007589,
+          "lonlat": [-5.3478, 36.1681]
+        },
+        {
+          "id": "ES61_motril",
+          "name": "Motril",
+          "share": 0.007119,
+          "lonlat": [-3.5179, 36.7507]
+        },
+        {
+          "id": "ES61_benalmadena",
+          "name": "Benalmádena",
+          "share": 0.006914,
+          "lonlat": [-4.5727, 36.5961]
         }
       ]
     },
@@ -810,6 +978,12 @@
           "name": "Lorca",
           "share": 0.060849,
           "lonlat": [-1.7017, 37.6712]
+        },
+        {
+          "id": "ES62_molina_de_segura",
+          "name": "Molina de Segura",
+          "share": 0.041881,
+          "lonlat": [-1.2076, 38.0546]
         }
       ]
     },

@@ -12,7 +12,7 @@ const MigrationK = preload("res://src/sim/migration_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
+const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
 var _failures: Array[String] = []
 var _loader

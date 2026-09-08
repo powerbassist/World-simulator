@@ -1,0 +1,167 @@
+{
+  "id": "CZE",
+  "name": "Czechia",
+  "geo_id": "CZE",
+  "capital": "Prague",
+  "playable": false,
+  "leader": {
+    "person": "CZE_svehlik",
+    "title": "Prime Minister",
+    "party": "obcanska_aliance"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FFFFFF", "#D7141A"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Chamber of Deputies",
+      "assembly_seats": 200,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 3-4 October 2025 for a four-year term, so the next falls in October 2028; no fixed date announced. The real system runs d'Hondt over a single national constituency with a 5% bar for single parties and higher effective bars for coalitions; the machinery's plain d'Hondt carries the shape. Wikipedia, 'Next Czech legislative election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2028,
+          "month": 10
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 35: the President may dissolve the Chamber where a newly appointed government loses confidence, where the Chamber fails to decide on confidence within three months, or where it adjourns itself beyond 120 days -- the machinery's confidence_failure, reachable only through a lost vote. Since the 2009 amendment the power cannot be used in the last three months of the term; shortening the term then needs a constitutional act, which is what the Chamber did to itself that year -- and the Constitutional Court annulled the first attempt. Elections follow within 60 days, the two-month notice. Ustava, Arts. 31 and 35.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senate, 81 seats, one third elected every two years in two-round constituency contests. Ordinary: the Senate may reject or amend and the Chamber overrides by an absolute majority of all deputies (Art. 46) -- suspensive. The amendment row is ALSO suspensive, which is a REDUCTION and is recorded as one: constitutional acts require both chambers to pass the same text with a 3/5 majority each (Art. 39(4)), so the Senate cannot be overridden there at all -- the mirror of AUT.json's reduction, authored as fixed because this model has no joint-sitting machinery to carry the real rule. Ustava, Arts. 39, 46, 106.",
+      "chamber": "Senate",
+      "seats": 81,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years by two-round vote; last elected January 2023, so the next falls in January 2028. Mostly ceremonial but with a veto, the appointment role and the Art. 35 dissolution triggers. Wikipedia, 'President of the Czech Republic'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "CZE_kraus",
+      "term_years": 5,
+      "next": {
+        "year": 2028,
+        "month": 1
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 39(4): a constitutional act needs a 3/5 majority of all deputies and a 3/5 majority of senators present. The machinery carries no three_fifths in this template, so the rule reads two_thirds -- the nearest stricter reading, SVK.json's own resolution, and the difference only matters for amendment content this game prices by support, not by threshold. Ustava, Art. 39(4).",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 9(2): any change in the essential requirements of a democratic state governed by the rule of law is impermissible -- a written restraint on revising the system itself, and the Constitutional Court's 2009 Plenum judgment is the operative precedent for enforcing it. Thinner than Germany's Art. 79(3) identity clause; flagged as such rather than asserted with equal confidence."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Ustavni soud, Art. 87: strikes down laws or their parts contrary to the constitutional order; the 2009 judgment annulling the constitutional act that shortened the Chamber's term is the case the dissolution note above turns on. Ustava, Art. 87.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President appoints the Prime Minister, who presents the Government to the Chamber for a confidence vote within 30 days of appointment -- an investiture in the machinery's vocabulary. Censure carries by an absolute majority of all deputies on a written motion of fifty (Art. 72); the template's permitted readings are simple_present and the German-style constructive rule, so simple_present ships with the absolute-of-all reality recorded rather than detuned -- SVK.json's tolerance. Ustava, Arts. 68, 72, 75.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "CZE_svehlik"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "CZE_vaclav_v",
+    "neighbours": ["DEU", "POL", "AUT", "SVK"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 21% and corporate 21% are the statutory rates; income 17 is a blend of the 15/23 progressive schedule; capital gains 15% is the schedule's base rate (23% above the threshold). Debt ~42.6% and revenue ~33.5% of GDP (Eurostat/OECD 2024). Spending is the general-government split scaled to expenditure near 46.5% of GDP.",
+    "debt_to_gdp_pct": 42.6,
+    "tax_revenue_pct_gdp": 33.5,
+    "tax_rates_pct": {
+      "income": 17.0,
+      "corporate": 21.0,
+      "vat": 21.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 7.8,
+      "education": 4.2,
+      "defence": 2.1,
+      "pensions": 9.8,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 19.6
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 10900000,
+    "gdp_eur_bn": 319.0,
+    "unemployment_pct": 2.6,
+    "sectors": {
+      "agriculture": 0.021,
+      "industry": 0.32,
+      "services": 0.659
+    },
+    "cohorts": {
+      "young_pct": 15.4,
+      "old_pct": 20.85,
+      "young_pct_per_yr": 0.014,
+      "old_pct_per_yr": 0.305,
+      "participation_pct": 77.63,
+      "pop_growth_pct": 0.373
+    },
+    "inequality": {
+      "gini_index": 25.7,
+      "gini_index_per_yr": -0.025,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.991,
+      "growth_sd_pct": 3.469,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 3.157,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.449946,
+        "nuclear": 0.407755,
+        "renewable": 0.142299
+      },
+      "import_dependency_pct": 41.975,
+      "kwh_per_capita": 5876.9,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 77.4
+    }
+  }
+}

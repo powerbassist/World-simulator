@@ -117,6 +117,7 @@ GENDER = {
         Ingrid Theresa Elisabeth Naima Lore Celine Andrea Livia Katrin Annika
         Marlene Rocio Nuria Helene Camille Nadia Cecile Caroline Miriam Rhona
         Chiara Serena Nathalie Anouk Ellen Marijke Fenna
+        Tanja Karin Ulla Cecilia
     """,
     "male": """
         Bernhard Wolfgang Lukas Rudolf Joris Bram Pieter Tom Baudouin Reto

@@ -124,12 +124,30 @@ func _check_eu_absorbed_the_old_sources() -> void:
 	var expected := {
 		"FRA": 81, "DEU": 96, "ITA": 76, "ESP": 61,
 		"NLD": 31, "BEL": 22, "AUT": 20, "LUX": 6,
+		"BGR": 17, "HRV": 12, "CYP": 6, "CZE": 21,
+		"DNK": 15, "EST": 7, "FIN": 15, "GRC": 21,
+		"HUN": 21, "IRL": 14, "LTU": 11, "LVA": 9,
+		"MLT": 6, "POL": 53, "PRT": 21, "ROU": 33,
+		"SVK": 15, "SVN": 9, "SWE": 21,
 	}
-	_ok(eu.members.size() == expected.size(), "eu carries 8 members, got %d" % eu.members.size())
+	_ok(eu.members.size() == expected.size(), "eu carries 27 members, got %d" % eu.members.size())
+	# The real 2024-29 allocation sums to exactly 720, and the test is where
+	# that arithmetic is pinned rather than trusted.
+	var total_seats := 0
+	for id in expected.keys():
+		total_seats += expected[id]
+	_ok(total_seats == 720, "eu EP seats sum to 720, got %d" % total_seats)
 	for id in expected.keys():
 		_ok(eu.is_member(id), "eu has %s" % id)
 		_ok(eu.seats(id) == expected[id], "eu %s holds %d seats, got %d" % [id, expected[id], eu.seats(id)])
-	_ok(not eu.is_member("GBR") and not eu.is_member("CHE"), "eu excludes the two neighbours")
+	_ok(not eu.is_member("GBR") and not eu.is_member("CHE"), "eu excludes the two non-EU neighbours")
+	# V3.3, and the review caught the author missing three founding members:
+	# FIN, IRL and PRT were absent from eurozone.json until the pre-merge pass.
+	var ez = _loader.orgs_by_id.get("eurozone", null)
+	_ok(ez != null and ez.members.size() == 20, "eurozone carries 20 members, got %d" % (ez.members.size() if ez else -1))
+	if ez != null:
+		_ok(ez.is_member("FIN") and ez.is_member("IRL") and ez.is_member("PRT"), "eurozone carries the founding members FIN IRL PRT")
+		_ok(not ez.is_member("DNK") and not ez.is_member("SWE"), "eurozone excludes DNK and SWE")
 	_ok(int(eu.parliament.get("next_election", {}).get("year", 0)) == 2029, "eu EP clock reads 2029")
 	_ok(eu.council and eu.net_transfers, "eu carries the council and the transfer machinery")
 

@@ -118,16 +118,18 @@ screen, not on the roster. That is the property V3.4's per-frame animated roads 
 an animated layer re-records every frame, and a re-record that walks only on-screen
 rings stays bounded as the roster grows.
 
-**The EU-27 projection (arithmetic, not measurement — re-probe at each V3.3 tranche):**
-regions ~2.5×, cities ~2.6×, world borders unchanged. The worst case is the
-everything-visible band (opening fit and the city-cross zooms), where culling has
-nothing to remove: projected frame ≈ **7–8 ms at 1440p vsync off**, ~2× headroom against
-the 16.67 ms budget, before any new feature draws. Deep zoom projects to *no change*
-(viewport-bounded). **The bound, recorded with its number:** the everything-visible case
-is viewport-unbounded and grows linearly with the roster; if a V3.3 tranche breaks the
-budget there, the named lever is **polyline simplification LOD** — refused this block
-(it changes the map's look, and no measurement demanded it), named now so the next
-session does not re-derive it.
+**The EU-29 measurement (V3.3 tranche (a), the projection above replaced):**
+the roster grew to 29 nations / 213 regions / 1 065 city glyphs / 29-nation world
+backdrop, and `tools/frame_probe.gd` re-ran on it. The everything-visible band
+(opening fit and the city-cross zooms, where culling has nothing to remove)
+measured **7.08-7.23 ms at 1440p vsync off** — inside V3.1's 7-8 ms projection,
+2.3x headroom against the 16.67 ms budget. G1 max-zoom/globe = **0.28** (2.08 vs
+7.37 ms, declared <= 1.10); G2 map cost at max zoom = **1.37 ms** (2.08 - 0.71
+no-map baseline, declared <= 2.0). Deep zoom got CHEAPER at EU-29 than the
+ten-nation V3.1 numbers (viewport-bounded is viewport-bounded). **The
+polyline-LOD lever was not reached for: the band held under the measurement.**
+The probe's inventory at the new roster: world 145/231/9 460, roster 29/157/
+9 370, regions 213/641/18 778, cities drawn 1 065.
 
 ## 5. Refusals, recorded where the next session will look
 

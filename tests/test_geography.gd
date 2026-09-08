@@ -52,7 +52,7 @@ const Region = preload("res://src/core/region.gd")
 const City = preload("res://src/core/city.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
+const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
 ## tools/import_data.py's CITY_SNAP_DEG. A coastal commune falls outside the GISCO
 ## 10M coastline -- Birkenhead, Portsmouth, A Coruna, Cadiz, Antibes -- so the
@@ -194,7 +194,7 @@ func _check_headcount_reaches_a_city() -> void:
 		_fail("headcount_in_city(FR1_paris) = %f, authored %f" % [live, expected])
 
 	# A city no firm names is exactly zero, not a fallback and not an error: most of
-	# the 581 cities in the register employ nobody the game has named.
+	# the 1 065 cities in the register employ nobody the game has named.
 	if Companies.headcount_in_city(ns, _loader, "FRM_ajaccio") != 0.0:
 		_fail("a city with no firm should report exactly zero jobs")
 
