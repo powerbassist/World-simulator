@@ -194,6 +194,15 @@ func _check_ideology_is_the_weak_term() -> void:
 		ideological.nations[id].coalition_position = {"economic": 1.0, "social": 1.0}
 	ideological.nations[PLAYER].coalition_position = {"economic": -1.0, "social": -1.0}
 	var ideology_move := _l1(base, ForeignPolicy.stake_vector(ideological, PLAYER))
+	# V3.3: the aggregate L1 over the stake vector scales with the partner count,
+	# and the roster went from nine partners to twenty-eight -- the aggregate
+	# comparison stopped measuring term strength and started measuring roster
+	# size (measured: 0.2648 aggregate against one pair's 0.0499). Normalised
+	# per partner, which is the invariant this check was always about: ideology
+	# is weaker THAN A 25-POINT RELATIONS MOVE PER PARTNER, and the per-partner
+	# figure is unchanged by the roster (0.0095 against 0.0499, a 5x margin --
+	# the same margin shape the ten-nation run measured).
+	ideology_move /= float(maxi(1, ideological.nations.size() - 1))
 
 	# The material comparison: one pair's relations moved as far as sustained play
 	# can move it. Deliberately ONE pair against the ideology test's TEN nations,
@@ -218,7 +227,7 @@ func _check_ideology_is_the_weak_term() -> void:
 ## and forty-five pairs drift on every click for reasons no readout could explain.
 func _check_third_party_floor_holds() -> void:
 	var effects := ForeignPolicy.third_party_effects(_state, PLAYER, "DEU", -8.0)
-	var floor_share := K.EVEN_SHARE * K.THIRD_PARTY_MIN_STAKE_SHARE
+	var floor_share := ForeignPolicy.even_share(_state) * K.THIRD_PARTY_MIN_STAKE_SHARE
 	for effect in effects:
 		var x: String = String(effect["a"])
 		if ForeignPolicy.stake(_state, x, "DEU") < floor_share:

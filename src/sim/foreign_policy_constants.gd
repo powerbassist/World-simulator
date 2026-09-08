@@ -19,12 +19,10 @@ extends RefCounted
 
 ## An even share of one nation's attention across the other nine.
 ##
-## Not a tuning number -- it is 1/9 -- but named, because every threshold in this
-## file is expressed against it rather than against an absolute. That is what
-## makes the thresholds mean "more than its fair share of my attention" for every
-## nation identically, and it is the anchor src/ui/map_layers.gd's trade ramp
-## already uses for the same reason.
-const EVEN_SHARE := 1.0 / 9.0
+## EVEN_SHARE lived here as the literal 1/9 and is RETIRED at V3.3: the anchor
+## it named -- one over a nation's partners -- is a ratio to the LIVE roster, and
+## the constant hard-codes the ten-era denominator. foreign_policy.even_share()
+## derives it now; the thresholds' meaning is unchanged, which is the point.
 
 ## Economic exposure: the directed trade weight, straight from src/sim/trade.gd.
 ##

@@ -16,6 +16,7 @@ extends SceneTree
 ## did not build.
 
 const Relations = preload("res://src/core/relations.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Trade = preload("res://src/sim/trade.gd")
 
@@ -219,9 +220,28 @@ func _check_a_refusing_partner_is_not_offered(panel, state) -> void:
 		if not Diplomacy.would_accept_agreement(state, state.player_nation_id, String(id), terms):
 			refuser = String(id)
 			break
+	# V3.3: at the EU-29 roster the player's own accept score clears the gate for
+	# EVERY partner at rest -- France is the top trade partner of most of them,
+	# and the derived even-share anchor prices that honestly (the gate's teeth
+	# for a floor-relations proposer are pinned in test_trade's GBR check). The
+	# UI property this check guards -- a refusing partner is not offered as a
+	# live button -- is roster-proof only if the refusal is MANUFACTURED when
+	# none occurs naturally: the weakest partner's relations go to the floor,
+	# and if it still accepts with nothing left to lose, THAT is the inert-gate
+	# failure the original message names.
 	if refuser == "":
-		_fail("every partner accepts the shipped agreement at new-game, so the gate is untestable here and probably inert")
-		return
+		var weakest := ""
+		var weakest_score := INF
+		for id in state.nations.keys():
+			if id == state.player_nation_id:
+				continue
+			var s: float = ForeignPolicy.accept_score(state, state.player_nation_id, String(id), terms)
+			if s < weakest_score:
+				weakest_score = s
+				weakest = String(id)
+		state.relations[Relations.key(state.player_nation_id, weakest)] = 0.0
+		if not Diplomacy.would_accept_agreement(state, state.player_nation_id, weakest, terms):
+			refuser = weakest
 
 	_show(panel, refuser)
 

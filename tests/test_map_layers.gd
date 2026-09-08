@@ -75,7 +75,11 @@ func _check_registry_drives_the_switcher() -> void:
 ## just restate the constants -- but a check that the ramp is a ramp.
 func _check_ramps_are_monotone() -> void:
 	_check_ramp_spread(MapLayers.RELATIONS, MapLayers.RELATIONS_MIN_SHOWN, MapLayers.RELATIONS_MAX_SHOWN)
-	_check_ramp_spread(MapLayers.TRADE, 0.0, MapLayers.TRADE_MAX_SHOWN)
+	# The trade ramp's domain derives from the viewer's partner count (V3.3), so
+	# the spread is checked against the same even share the map draws with.
+	var state_for_trade = _main._state
+	var even := MapLayers.trade_even_share(state_for_trade, "FRA")
+	_check_ramp_spread_trade(even)
 	_check_ramp_spread(MapLayers.COERCION, 0.0, MapLayers.COERCION_MAX_SHOWN)
 
 	# Clamped, not extrapolated: relations above 76 and a trade share above a
@@ -89,6 +93,20 @@ func _check_ramps_are_monotone() -> void:
 	var below := MapLayers.ramp(MapLayers.RELATIONS, 0.0)
 	if not _close(bottom, below):
 		_fail("relations ramp is not clamped below its domain: %s vs %s" % [bottom, below])
+
+
+func _check_ramp_spread_trade(even: float) -> void:
+	var previous := MapLayers.ramp_trade(0.0, even)
+	var first := previous
+	for step in range(1, 21):
+		var at: float = 3.0 * even * float(step) / 20.0
+		var current := MapLayers.ramp_trade(at, even)
+		if _close(current, previous) and step > 1:
+			_fail("trade ramp is flat between two sampled values at %s" % at)
+			return
+		previous = current
+	if _close(first, previous):
+		_fail("trade ramp endpoints are not far apart")
 
 
 func _check_ramp_spread(layer_id: String, low: float, high: float) -> void:
@@ -210,9 +228,16 @@ func _check_unknown_layer_falls_back() -> void:
 ## time a ramp is edited. Every swatch is ramp() at that stop's value.
 func _check_legend_swatches_match_the_map() -> void:
 	var legend = _main._hud.map_legend
+	var state = _main._state
 	for layer_id in [MapLayers.RELATIONS, MapLayers.TRADE]:
-		legend.show_layer(layer_id)
+		legend.show_layer(layer_id, state, "FRA")
+		# The trade stops derive from the viewer's partner count -- the same even
+		# share the ramp colours with -- so the legend cannot promise a fixed
+		# scale the map no longer uses.
 		var stops: Array = MapLayers.stops(layer_id)
+		var even := MapLayers.trade_even_share(state, "FRA")
+		if layer_id == MapLayers.TRADE:
+			stops = MapLayers.trade_stops(even)
 		var rects: Array = _all_color_rects(legend)
 		if rects.size() != stops.size():
 			_fail("%s: legend shows %d swatches for %d stops" % [
@@ -220,13 +245,17 @@ func _check_legend_swatches_match_the_map() -> void:
 			])
 			continue
 		for i in stops.size():
-			var expected := MapLayers.ramp(layer_id, float(stops[i]["at"]))
+			var expected: Color
+			if layer_id == MapLayers.TRADE:
+				expected = MapLayers.ramp_trade(float(stops[i]["at"]), even)
+			else:
+				expected = MapLayers.ramp(layer_id, float(stops[i]["at"]))
 			if not _close(rects[i].color, expected):
 				_fail("%s: swatch %d is %s, ramp says %s" % [
 					layer_id, i, rects[i].color, expected
 				])
 
-	legend.show_layer(MapLayers.POLITICAL)
+	legend.show_layer(MapLayers.POLITICAL, state, "FRA")
 	if not _all_color_rects(legend).is_empty():
 		_fail("the political layer has no stops but the legend drew swatches")
 

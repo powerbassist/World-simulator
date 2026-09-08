@@ -18,8 +18,8 @@ extends SceneTree
 
 const MapCities = preload("res://src/ui/map_cities.gd")
 
-const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
-const EXPECTED_CITIES := 581  # geography-model.md §7(b)'s count, the volume clause
+const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+const EXPECTED_CITIES := 1065  # geography-model.md §7(b)'s count, the volume clause re-measured at V3.3: CITY_MIN_POP 58000 on the EU-29 roster, the interior of BALANCE_PLAN.md's pre-declared band
 
 var _failures: Array[String] = []
 var _main
@@ -58,7 +58,7 @@ func _run() -> void:
 	_check_click_routes_to_the_city(map)
 
 
-## Every named city on the roster, all ten nations, no more and no fewer. The
+## Every named city on the roster, all twenty-nine nations, no more and no fewer. The
 ## count is the volume clause geography-model.md §6 measured -- a register that
 ## grew past it has to come and re-measure the clause, not just this constant.
 func _check_the_list_is_the_register(loader, state) -> void:

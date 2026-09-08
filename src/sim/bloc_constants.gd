@@ -131,8 +131,15 @@ const CONTRIBUTION_PROSPERITY_SPAN := 0.50
 ## the bloc mean to run the formula somewhere absurd, and a budget line that large
 ## would out-weigh every fiscal lever in the game. The floor is negative because a
 ## poorer member genuinely receives.
+##
+## V3.3 moved the ceiling by the rule that set it: it was placed just above
+## Luxembourg's formula output on the EIGHT-member mean (~1.19 -> 1.20), and the
+## EU-27 mean is poorer, which lifts every rich member's ratio -- Luxembourg's
+## output is now 1.339 and Ireland's 1.102. Re-derived on the same placement
+## (just above the maximum output, measured against the committed roster):
+## 1.35. Nobody sits on it; Bulgaria reads 0.004 against a floor nowhere near.
 const CONTRIBUTION_MIN_PCT_GDP := -0.60
-const CONTRIBUTION_MAX_PCT_GDP := 1.20
+const CONTRIBUTION_MAX_PCT_GDP := 1.35
 
 
 # --- Content limits --------------------------------------------------------------

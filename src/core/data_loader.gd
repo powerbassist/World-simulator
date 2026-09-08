@@ -1655,8 +1655,11 @@ func _validate_neighbours() -> void:
 
 
 func _validate_cross_file(geo_path: String, world_path: String) -> void:
-	if nations.size() != 10:
-		errors.append("expected 10 nations, loaded %d" % nations.size())
+	# V3.3: the roster is EU-27 plus the two non-EU neighbours, so the pin the
+	# ten-nation era carried moves to 29. A tripwire, not a limit -- a roster
+	# change edits this number beside the data it describes.
+	if nations.size() != 29:
+		errors.append("expected 29 nations, loaded %d" % nations.size())
 
 	# At least one, not exactly one -- V1.2a made a second nation playable, and
 	# a third later is a one-flag data edit, not a code change. See ROADMAP.md.

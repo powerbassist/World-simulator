@@ -106,9 +106,12 @@ func _test_review_is_authored_for_all_ten() -> void:
 			_fail("%s judicial_review '%s' is not a recognised value" % [ns.id, ns.judicial_review])
 		if ns.judicial_review == JK.REVIEW_NONE:
 			none_count += 1
-	if none_count != 3:
-		_fail("expected three nations with no judicial review, got %d" % none_count)
-	for nation_id in ["GBR", "NLD", "CHE"]:
+	# V3.3: SWE joins them -- Sweden has no constitutional court and its courts
+	# cannot strike down statutes, which is the same parliamentary-sovereignty
+	# family as the other three rather than an authoring gap.
+	if none_count != 4:
+		_fail("expected four nations with no judicial review, got %d" % none_count)
+	for nation_id in ["GBR", "NLD", "CHE", "SWE"]:
 		if state.nations[nation_id].judicial_review != JK.REVIEW_NONE:
 			_fail("%s should have no review of primary legislation" % nation_id)
 

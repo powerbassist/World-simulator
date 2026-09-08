@@ -10,7 +10,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const NaturalChange = preload("res://src/sim/natural_change.gd")
 
-const NATIONS := ["AUT", "BEL", "CHE", "DEU", "ESP", "FRA", "GBR", "ITA", "LUX", "NLD"]
+const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
 var _failures: Array[String] = []
 var _loader
@@ -59,7 +59,7 @@ func _check_the_content_is_measured() -> void:
 			# why the bound is read off the register's size rather than named: a
 			# nation with no spread and more than one region is either a broken
 			# import or a bound that stopped being recorded.
-			_fail("%s carries no natural spread at all -- the field is measured for nine of ten nations" % nation_id)
+			_fail("%s carries no natural spread at all -- the field is measured for every multi-region nation but Britain" % nation_id)
 
 
 ## CONSERVATION AND DIRECTION ARE ORTHOGONAL FAILURES, test_migration.gd's sentence

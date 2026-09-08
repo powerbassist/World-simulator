@@ -108,8 +108,8 @@ func _test_authored_for_all_ten() -> void:
 			_fail("%s upper_ordinary '%s' is not a verdict" % [ns.id, ns.upper_ordinary])
 		if not CK.KNOWN_VERDICTS.has(ns.upper_amendment):
 			_fail("%s upper_amendment '%s' is not a verdict" % [ns.id, ns.upper_amendment])
-	if with_chamber != 9:
-		_fail("expected nine bicameral nations of ten, got %d" % with_chamber)
+	if with_chamber != 13:
+		_fail("expected thirteen bicameral nations of twenty-nine, got %d" % with_chamber)
 
 
 ## Luxembourg's Chambre des Deputes is unicameral and the Conseil d'Etat's opposition

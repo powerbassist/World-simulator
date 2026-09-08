@@ -501,11 +501,22 @@ func _check_fixed_dates() -> void:
 
 	# A cooldown is the densest source by far, and U6a's probe read it as exactly
 	# zero until it was pointed at a player who actually acts. Act, then look.
+	# V3.3: actions[0] is whatever sorts first, and on the EU-29 roster that is an
+	# act that carries no cooldown -- the assertion is about cooldowns, so the
+	# helper executes the first action that actually creates one.
 	var actions := Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, PARTNER)
 	if actions.is_empty():
 		_fail("no diplomatic action was available to set a cooldown with")
 		return
-	Diplomacy.execute(state, _loader.diplomatic_actions, actions[0], PLAYER, PARTNER)
+	var acted := false
+	for action in actions:
+		Diplomacy.execute(state, _loader.diplomatic_actions, action, PLAYER, PARTNER)
+		if not state.player().diplo_cooldown_months.is_empty():
+			acted = true
+			break
+	if not acted:
+		_fail("no diplomatic action set a cooldown to put in the diary")
+		return
 	if not _fixed_kinds(state).has(K.FIXED_COOLDOWN):
 		_fail("an act's own cooldown did not appear as a date the player can see")
 

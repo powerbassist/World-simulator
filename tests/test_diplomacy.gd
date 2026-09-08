@@ -171,12 +171,14 @@ func _check_key_is_canonical() -> void:
 		_failures.append("Relations.other() did not return the far side of the pair")
 
 
-## Ten nations is 45 unordered pairs. A missing pair would read as 0.0 -- the
+## Twenty-nine nations is 406 unordered pairs (the ten-era figure was 45, and
+## the number is the pin: a count this load-bearing is re-measured, not
+## relaxed, when the roster grows). A missing pair would read as 0.0 -- the
 ## WORST relations -- so "every pair exists" is a real invariant, not a count.
 func _check_every_pair_seeded() -> void:
 	var expected: int = Relations.all_pairs(_loader.nations.keys()).size()
-	if expected != 45:
-		_failures.append("expected 45 pairs over ten nations, all_pairs gave %d" % expected)
+	if expected != 406:
+		_failures.append("expected 406 pairs over twenty-nine nations, all_pairs gave %d" % expected)
 	if _state.relations.size() != expected:
 		_failures.append("seed_relations left %d pairs, expected %d" % [_state.relations.size(), expected])
 	for pair in Relations.all_pairs(_loader.nations.keys()):
@@ -435,7 +437,7 @@ func _check_third_parties_take_sides() -> void:
 	# A nation with no stake in the target must not be dragged in. Without the
 	# floor every act moves all eight remaining nations by some unreadable amount
 	# and forty-five pairs drift on every click.
-	var scale := ForeignPolicy.stake(state, "GBR", "DEU") / FK.EVEN_SHARE
+	var scale := ForeignPolicy.stake(state, "GBR", "DEU") / ForeignPolicy.even_share(state)
 	if scale <= 0.0:
 		_failures.append("GBR has literally no stake in DEU, which makes the floor untestable")
 

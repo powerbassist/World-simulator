@@ -45,13 +45,12 @@ const RELATIONS_MIN_SHOWN := 40.0
 const RELATIONS_MID_SHOWN := 60.0
 const RELATIONS_MAX_SHOWN := 72.0
 
-## A weight vector is normalised over the other nine, so the honest reference is
-## not zero but an even share. Mid-anchoring the trade ramp here makes the map
-## read as *above or below its fair share* rather than as *big or small*, which
-## is the question a directed weight actually answers. Measured spread, from
-## docs/trade-model.md: FRA->DEU 0.329, FRA->LUX 0.021.
-const EVEN_SHARE := 1.0 / 9.0
-const TRADE_MAX_SHOWN := 0.33
+## A weight vector is normalised over the viewer's partners, so the honest
+## reference is not zero but an even SHARE -- and which share is even depends on
+## the partner count, which is why V3.3 retired the literal 1/9 this ramp was
+## anchored on: at twenty-nine nations it drew four times a partner's fair
+## share as "even". trade_even_share() derives it; "dominant" stays three times
+## that, which is what TRADE_MAX_SHOWN's 0.33 always was against 1/9.
 
 ## The coercion ramp's domain: total severity on the pair, both directions summed.
 ##
@@ -112,11 +111,11 @@ const LAYERS: Array[Dictionary] = [
 		"id": TRADE,
 		"label": "Trade",
 		"alpha": 0.50,
-		"stops": [
-			{"at": 0.03, "text": "3%  marginal"},
-			{"at": EVEN_SHARE, "text": "11%  an even ninth"},
-			{"at": 0.33, "text": "33%  dominant"},
-		],
+		# The trade stops are DERIVED -- trade_stops(even) -- because their scale
+		# is the viewer's own partner count. map_legend.gd branches to it; keeping
+		# literals here is how the legend ended up promising "an even ninth" on a
+		# twenty-eight-partner roster.
+		"stops": [],
 		"caption": "Share of your external demand.",
 	},
 	{
@@ -249,7 +248,34 @@ static func swatch(layer_id: String, state, viewer_id: String, nation_id: String
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):
 		return NO_VALUE
+	if layer_id == TRADE:
+		return ramp_trade(v, trade_even_share(state, viewer_id))
 	return ramp(layer_id, v)
+
+
+## The trade ramp's anchor: one over the viewer's partner count, the share a
+## weight would carry if the viewer's demand were spread evenly -- the same
+## derivation foreign_policy.even_share() makes for the sim's thresholds, and
+## for the same reason. "Dominant" stays three times it.
+static func trade_even_share(state, viewer_id: String) -> float:
+	var count := Trade.weights(state, viewer_id).size()
+	return 1.0 / float(maxi(1, count))
+
+
+static func ramp_trade(v: float, even: float) -> Color:
+	if v <= even:
+		return TRADE_LOW.lerp(TRADE_MID, _fraction(v, 0.0, even))
+	return TRADE_MID.lerp(TRADE_HIGH, _fraction(v, even, 3.0 * even))
+
+
+## The trade legend's stops, derived beside the ramp so the words cannot promise
+## a scale the colours do not use.
+static func trade_stops(even: float) -> Array:
+	return [
+		{"at": even / 3.0, "text": "%d%%  marginal" % roundi(100.0 * even / 3.0)},
+		{"at": even, "text": "%d%%  an even share" % roundi(100.0 * even)},
+		{"at": 3.0 * even, "text": "%d%%  dominant" % roundi(300.0 * even)},
+	]
 
 
 ## The ramp alone, over a raw value. Public so map_legend.gd can colour a stop
@@ -262,10 +288,6 @@ static func ramp(layer_id: String, v: float) -> Color:
 					v, RELATIONS_MIN_SHOWN, RELATIONS_MID_SHOWN))
 			return REL_NEUTRAL.lerp(REL_WARM, _fraction(
 				v, RELATIONS_MID_SHOWN, RELATIONS_MAX_SHOWN))
-		TRADE:
-			if v <= EVEN_SHARE:
-				return TRADE_LOW.lerp(TRADE_MID, _fraction(v, 0.0, EVEN_SHARE))
-			return TRADE_MID.lerp(TRADE_HIGH, _fraction(v, EVEN_SHARE, TRADE_MAX_SHOWN))
 		COERCION:
 			# Broken at 1.0 -- a tariff answered -- rather than at the domain's
 			# midpoint, so the ordinary trade fight sits at the top of the first
