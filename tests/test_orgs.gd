@@ -141,6 +141,13 @@ func _check_eu_absorbed_the_old_sources() -> void:
 		_ok(eu.is_member(id), "eu has %s" % id)
 		_ok(eu.seats(id) == expected[id], "eu %s holds %d seats, got %d" % [id, expected[id], eu.seats(id)])
 	_ok(not eu.is_member("GBR") and not eu.is_member("CHE"), "eu excludes the two non-EU neighbours")
+	# V3.3, and the review caught the author missing three founding members:
+	# FIN, IRL and PRT were absent from eurozone.json until the pre-merge pass.
+	var ez = _loader.orgs_by_id.get("eurozone", null)
+	_ok(ez != null and ez.members.size() == 20, "eurozone carries 20 members, got %d" % (ez.members.size() if ez else -1))
+	if ez != null:
+		_ok(ez.is_member("FIN") and ez.is_member("IRL") and ez.is_member("PRT"), "eurozone carries the founding members FIN IRL PRT")
+		_ok(not ez.is_member("DNK") and not ez.is_member("SWE"), "eurozone excludes DNK and SWE")
 	_ok(int(eu.parliament.get("next_election", {}).get("year", 0)) == 2029, "eu EP clock reads 2029")
 	_ok(eu.council and eu.net_transfers, "eu carries the council and the transfer machinery")
 

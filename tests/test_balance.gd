@@ -126,41 +126,59 @@ func _init() -> void:
 		return
 
 	# V3.3 scratch: -- check-name runs ONE check (the crash isolation harness).
+	var _matched := 0
 	var only := ""
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		only = args[0]
 
 	if only == "" or only == "_check_ten_years_stay_off_every_clamp":
+		_matched += 1
 		_check_ten_years_stay_off_every_clamp()
 	if only == "" or only == "_check_gbr_ten_years_stay_off_every_clamp":
+		_matched += 1
 		_check_gbr_ten_years_stay_off_every_clamp()
 	if only == "" or only == "_check_two_full_terms_without_softlock":
+		_matched += 1
 		_check_two_full_terms_without_softlock()
 	if only == "" or only == "_check_france_terms_out_at_the_limit":
+		_matched += 1
 		_check_france_terms_out_at_the_limit()
 	if only == "" or only == "_check_managing_beats_ignoring":
+		_matched += 1
 		_check_managing_beats_ignoring()
 	if only == "" or only == "_check_a_ruinous_budget_loses":
+		_matched += 1
 		_check_a_ruinous_budget_loses()
 	if only == "" or only == "_check_losing_names_the_number_the_player_moved":
+		_matched += 1
 		_check_losing_names_the_number_the_player_moved()
 	if only == "" or only == "_check_a_dissolution_stays_off_every_clamp":
+		_matched += 1
 		_check_a_dissolution_stays_off_every_clamp()
 	if only == "" or only == "_check_a_subsidised_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_subsidised_run_stays_off_every_clamp()
 	if only == "" or only == "_check_a_regulated_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_regulated_run_stays_off_every_clamp()
 	if only == "" or only == "_check_a_nationalised_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_nationalised_run_stays_off_every_clamp()
 	if only == "" or only == "_check_a_redistributive_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_redistributive_run_stays_off_every_clamp()
 	if only == "" or only == "_check_a_captured_court_stays_off_every_clamp":
+		_matched += 1
 		_check_a_captured_court_stays_off_every_clamp()
 	if only == "" or only == "_check_a_nuclear_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_nuclear_run_stays_off_every_clamp()
 	if only == "" or only == "_check_a_gas_run_stays_off_every_clamp":
+		_matched += 1
 		_check_a_gas_run_stays_off_every_clamp()
+	if only != "" and _matched == 0:
+		_fail("unknown check name '%s' -- the filter ran nothing, and green-over-nothing is the V2.1c class" % only)
 	_finish()
 
 

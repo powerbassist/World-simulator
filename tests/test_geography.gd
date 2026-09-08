@@ -194,7 +194,7 @@ func _check_headcount_reaches_a_city() -> void:
 		_fail("headcount_in_city(FR1_paris) = %f, authored %f" % [live, expected])
 
 	# A city no firm names is exactly zero, not a fallback and not an error: most of
-	# the 581 cities in the register employ nobody the game has named.
+	# the 1 065 cities in the register employ nobody the game has named.
 	if Companies.headcount_in_city(ns, _loader, "FRM_ajaccio") != 0.0:
 		_fail("a city with no firm should report exactly zero jobs")
 

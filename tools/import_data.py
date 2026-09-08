@@ -976,7 +976,7 @@ REGION_LEVEL = {
     "GRC": 2,  # 13, several of them island groups (Crete, the Aegean and Ionian chains)
     "HUN": 2,  # 8 + Budapest
     "IRL": 2,  # 3, all on one island that borders Northern Ireland (UKN) by land
-    "LTU": 2,  # one region at every level
+    "LTU": 2,  # 2: Sostines + Kauno (NUTS 2021 splits Lithuania)
     "LVA": 2,  # one region at every level
     "MLT": 2,  # one region at every level
     "POL": 2,  # 16 voivodeships with Mazowieckie split into region and capital
