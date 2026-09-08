@@ -24,6 +24,50 @@ Which open datasets seed the game's content, what each one is licensed under, an
 - **Label anchors:** Natural Earth's own `LABEL_X` / `LABEL_Y` are carried into both files as `label_lon` / `label_lat`. They are hand-placed and better than a polygon centroid — Norway's centroid is in Sweden.
 - **Note:** Sub-national regions are imported now but decorative at MVP. They exist so regional autonomy in [[v1]] doesn't require a second import pass.
 
+### Natural Earth roads — measured at V3.4, and refused on SHAPE after passing coverage
+
+The probe was written expecting to refuse this on coverage, the way the V3.4
+row and its handoff both assumed. **It passed coverage and was refused anyway**,
+which is why the number is worth keeping: the reason recorded here is not the
+reason anyone predicted.
+
+- **License:** public domain, like the rest of Natural Earth. Licence was never
+  the discriminator — that is exactly why this was the alternative worth
+  measuring and OpenStreetMap was not (ODbL share-alike attaches to derived
+  databases, and `data/` would be one).
+- **Coverage — PASSED** (`tools/roads_probe.py`, 1:10m at tag `v5.1.2`): 210 of
+  213 roster regions carry a road line, 98.6 %. The empty codes are AT13, ES63,
+  RO32. Well clear of the ~90 % line the probe set in advance.
+- **Edge identity — FAILED, and it decided.** A road feature's properties are
+  `name`, `type`, `sov_a3`, `length_km` and their kin: **not one names a region
+  or an edge.** So of `data/geo/region_graph.json`'s 463 edges, Natural Earth
+  can identify **zero**. This block draws one line per edge because the convoys
+  ride those lines and `Network.accessibility()` is priced over that same graph
+  — undifferentiated linework cannot carry either. Generated spines score 463 of
+  463 on this test by construction, because they are DERIVED from the graph
+  rather than matched to it.
+- **The decorative-layer option, priced and declined.** Natural Earth could
+  still have gone UNDER the spines for looks. Measured over the roster's own
+  bounding box: 7 850 features and 129 706 vertices in total; 1 338 / 29 209 for
+  `Major Highway` alone; 3 432 / 81 017 for `Major Highway` + `Secondary
+  Highway`, which is 1.71 MB at the roster's 4-decimal precision. The map's
+  entire committed geometry today is ~37 600 points, so the cheap half of that
+  option is **+78 %** vertex mass and the full one roughly **triples** it —
+  landing squarely in the everything-visible band, which is where culling
+  removes nothing and where the 7.08–7.23 ms measurement lives. Taking it would
+  have meant re-declaring V3.4's G3 and G5 gates upward before drawing anything,
+  which is choosing a gate to fit what you wanted to build.
+- **What would reopen it:** a European road source that is permissive, covers
+  the roster, AND carries an identifier that resolves to a region pair. The
+  third condition is the one nothing currently satisfies; the first two are
+  already met by this file.
+
+> [!note] `road-generator` is not the road layer either
+> AGENTS.md records the addon as parked ahead of a planned use. It generates 3D
+> road meshes along splines; `src/ui/map_view.gd` is a 2D plate-carrée `_draw()`
+> over lon/lat. It is not this planned use, and the name should not make a
+> future session re-open it.
+
 ### NASA Blue Marble — the map raster
 
 - **License:** Public domain (NASA Earth Observatory imagery policy). No attribution required; credited anyway, because an unattributed asset is one nobody can re-source.
