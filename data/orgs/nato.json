@@ -26,6 +26,54 @@
     "LUX": {
       "seats": 1
     },
+    "BGR": {
+      "seats": 6
+    },
+    "HRV": {
+      "seats": 4
+    },
+    "CZE": {
+      "seats": 11
+    },
+    "DNK": {
+      "seats": 6
+    },
+    "EST": {
+      "seats": 1
+    },
+    "FIN": {
+      "seats": 6
+    },
+    "GRC": {
+      "seats": 10
+    },
+    "HUN": {
+      "seats": 10
+    },
+    "LTU": {
+      "seats": 3
+    },
+    "LVA": {
+      "seats": 2
+    },
+    "POL": {
+      "seats": 38
+    },
+    "PRT": {
+      "seats": 10
+    },
+    "ROU": {
+      "seats": 19
+    },
+    "SVK": {
+      "seats": 5
+    },
+    "SVN": {
+      "seats": 2
+    },
+    "SWE": {
+      "seats": 11
+    },
     "GBR": {
       "seats": 69
     }

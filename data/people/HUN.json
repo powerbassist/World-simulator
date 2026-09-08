@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "HUN_balogh", "name": "Zsolt Balogh" },
+    { "id": "HUN_cser", "name": "Gábor Cser" },
+    { "id": "HUN_daroczi", "name": "Réka Daróczi" },
+    { "id": "HUN_kallai", "name": "Marcell Kállai" },
+    { "id": "HUN_molnar", "name": "Ildikó Molnár" },
+    { "id": "HUN_nagy", "name": "Bence Nagy" },
+    { "id": "HUN_szekely", "name": "Tünde Székely" },
+    { "id": "HUN_matyas_ii", "name": "Mátyás II" }
+  ]
+}

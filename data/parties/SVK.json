@@ -1,0 +1,54 @@
+{
+  "parties": [
+    {
+      "id": "socialna_unia",
+      "name": "Sociálna únia",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.29,
+      "leader_person": "SVK_vozar",
+      "discipline": 0.9,
+      "competence": 0.7,
+      "excluded_partners": ["vlastenecka_koalicia"]
+    },
+    {
+      "id": "vlastenecka_koalicia",
+      "name": "Vlastenecká koalícia",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.23,
+      "leader_person": "SVK_baran",
+      "discipline": 0.85,
+      "competence": 0.55,
+      "excluded_partners": []
+    },
+    {
+      "id": "krestanska_republika",
+      "name": "Kresťanská republika",
+      "ideology_slot": "christian_democrat",
+      "seat_share": 0.19,
+      "leader_person": "SVK_hruskova",
+      "discipline": 0.85,
+      "competence": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "slobodne_slovensko",
+      "name": "Slobodné Slovensko",
+      "ideology_slot": "liberal",
+      "seat_share": 0.16,
+      "leader_person": "SVK_dankova",
+      "discipline": 0.8,
+      "competence": 0.75,
+      "excluded_partners": ["vlastenecka_koalicia"]
+    },
+    {
+      "id": "moderne_centrum",
+      "name": "Moderné centrum",
+      "ideology_slot": "centrist",
+      "seat_share": 0.13,
+      "leader_person": "SVK_hraska",
+      "discipline": 0.75,
+      "competence": 0.7,
+      "excluded_partners": []
+    }
+  ]
+}

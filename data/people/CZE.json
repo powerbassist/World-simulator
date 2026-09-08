@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "CZE_svehlik", "name": "Martin Švehlík" },
+    { "id": "CZE_kraus", "name": "Miloš Kraus" },
+    { "id": "CZE_siska", "name": "Radek Šiška" },
+    { "id": "CZE_dobesova", "name": "Klára Doběšová" },
+    { "id": "CZE_strnad", "name": "Jakub Strnad" },
+    { "id": "CZE_holub", "name": "Karel Holub" },
+    { "id": "CZE_krejcova", "name": "Milena Krejčová" },
+    { "id": "CZE_vaclav_v", "name": "Václav V" }
+  ]
+}

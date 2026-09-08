@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "FIN_rautio", "name": "Eero Rautio" },
+    { "id": "FIN_viitanen", "name": "Juho Viitanen" },
+    { "id": "FIN_salmela", "name": "Anni Salmela" },
+    { "id": "FIN_koiranen", "name": "Teemu Koiranen" },
+    { "id": "FIN_nummela", "name": "Sirkka Nummela" },
+    { "id": "FIN_peltomaa", "name": "Outi Peltomaa" },
+    { "id": "FIN_nordlund", "name": "Jonas Nordlund" },
+    { "id": "FIN_vaino_i", "name": "Väinö I" }
+  ]
+}

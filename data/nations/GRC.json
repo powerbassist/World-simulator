@@ -1,0 +1,159 @@
+{
+  "id": "GRC",
+  "name": "Greece",
+  "geo_id": "GRC",
+  "capital": "Athens",
+  "playable": false,
+  "leader": {
+    "person": "GRC_stavrou",
+    "title": "Prime Minister",
+    "party": "nea_politiki"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#0D5EAF", "#FFFFFF", "#0D5EAF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Hellenic Parliament",
+      "assembly_seats": 300,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 25 June 2023 for a four-year term, so the next is due by summer 2027; no fixed date announced. The real system is enhanced d'Hondt at constituency level with a 3% national threshold; the sliding-seat majority bonus that governed allocation through the 2023 elections was then abolished outright, and the note carries the pure form -- the machinery's pr_dhondt names the allocation. Wikipedia, '2023 Greek legislative election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 6
+        },
+        "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President dissolves, but only at the Government's instance: on the proposal of a government that has resigned or been rejected after losing confidence, or exceptionally on a substantiated Government proposal backed by an absolute majority of all MPs for a matter of national importance (Art. 41). The head of state's hand with a government's trigger is what the machinery's head_of_state_limited names -- the same shape ITA.json records for Art. 88. Elections follow within 30 days. Syntagma Arts. 39 and 41.",
+        "rule": "head_of_state_limited",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected by Parliament itself for a five-year term by a qualified majority that falls away on the third ballot to a relative majority; last elected February 2025, so the next is due early 2030. Mostly ceremonial, but holds the dissolution hand recorded in the dissolution note above. Wikipedia, 'President of Greece'.",
+      "kind": "elected_president",
+      "title": "President of the Republic",
+      "person": "GRC_vlachos",
+      "term_years": 5,
+      "next": {
+        "year": 2030,
+        "month": 2
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Syntagma Art. 110: revision needs an absolute three-fifths majority (180 of 300) at one sitting, or a two-fifths majority plus an interposed general election and an absolute majority of the NEW Parliament. The authored rule carries the nearest machinable bar of that two-reading path -- the same stand-in direction SVK.json records for its own 3/5. Syntagma Art. 110.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 110 §1 places provisions entirely beyond revision, and names the form of government as a Parliamentary Republic FIRST among them -- the roster's most explicit eternity clause, naming the very transition the Restoration Act models, stricter even than France's Art. 89 §5."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Decentralised constitutional review: the administrative and civil courts, apex the Council of State (Symvoulio tis Epikrateias), refuse to apply statutes found unconstitutional, and the Special Highest Court (Art. 100) settles conflicts over the constitution's meaning where courts disagree. Both together are what the value records. Syntagma Arts. 93, 95 and 100.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The leader of the party holding an absolute majority -- the largest party otherwise, and if that fails too, the leader of the second -- is elected Prime Minister by Parliament (Art. 38), and the Government must seek a confidence vote within fifteen days of the PM's swearing-in (Art. 84): an investiture in the machinery's vocabulary. A no-confidence motion carries on a simple majority of the members present, the machinery's simple_present. Syntagma Arts. 37, 38 and 84.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "GRC_stavrou"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "GRC_alexandros_ii",
+    "neighbours": ["BGR"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 24% is the statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'); corporate 22% is the statutory rate; income 22 is a blend of the 9/22/32/44 progressive bands, sitting low because so much of Greece's personal load is in social contributions; capital gains 15% is the flat rate on securities. Wealth 0. Debt ~153.6% and revenue ~40.5% of GDP (Eurostat/OECD 2024) -- the roster's heaviest debt, the reason the economy panel flags it. Defence 3.1% is NATO's highest share of GDP; pensions ~14.5 after the 2016-25 consolidation, still the roster's heaviest line relative to revenue.",
+    "debt_to_gdp_pct": 153.6,
+    "tax_revenue_pct_gdp": 40.5,
+    "tax_rates_pct": {
+      "income": 22.0,
+      "corporate": 22.0,
+      "vat": 24.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.9,
+      "education": 2.7,
+      "defence": 3.1,
+      "pensions": 14.5,
+      "infrastructure": 2.4
+    },
+    "other_spending_pct_gdp": 12.8
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 10400000,
+    "gdp_eur_bn": 236.0,
+    "unemployment_pct": 10.0,
+    "sectors": {
+      "agriculture": 0.043,
+      "industry": 0.173,
+      "services": 0.784
+    },
+    "cohorts": {
+      "young_pct": 13.22,
+      "old_pct": 23.94,
+      "young_pct_per_yr": -0.141,
+      "old_pct_per_yr": 0.318,
+      "participation_pct": 70.15,
+      "pop_growth_pct": -0.434
+    },
+    "inequality": {
+      "gini_index": 33.4,
+      "gini_index_per_yr": -0.325,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.067,
+      "growth_sd_pct": 3.735,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.184,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.555049,
+        "nuclear": 0.0,
+        "renewable": 0.444951
+      },
+      "import_dependency_pct": 89.246,
+      "kwh_per_capita": 4686.0,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 62.1
+    }
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "id": "IRL",
+  "name": "Ireland",
+  "geo_id": "IRL",
+  "capital": "Dublin",
+  "playable": false,
+  "leader": {
+    "person": "IRL_kinsella",
+    "title": "Taoiseach",
+    "party": "pairti_na_tire"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#169B62", "#FFFFFF", "#FF883E"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Dail Eireann",
+      "assembly_seats": 174,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 29 November 2024 for a five-year term, so the next is due by November 2029; no fixed date, since the Taoiseach advises the dissolution. The REAL system is single transferable vote in multi-seat constituencies, which the machinery does not carry -- pr_dhondt is the nearest proportional allocation, and threshold_pct 0.0 is the real absence of any threshold. Wikipedia, 'Next Irish general election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2029,
+          "month": 11
+        },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Taoiseach advises the President to dissolve the Dail and the President acts on the advice (Art. 13.2.1) -- but the President MAY IN ABSOLUTE DISCRETION refuse that advice where the Taoiseach has ceased to retain the Dail's confidence (Art. 13.2.2). The advice is the mechanism and the President's discretion is its limit, which is what the machinery's head_of_state_limited names -- the same shape ITA.json records for Art. 88, though here the limit is a convention the head of state has never used. Polling day follows at least eighteen days after the dissolution. Bunreacht na hEireann Arts. 13.2 and 16.",
+        "rule": "head_of_state_limited",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "Seanad Eireann, 60 seats -- 43 elected by vocational panels of councillors and MPs, six by university graduates, eleven nominated by the Taoiseach -- and constitutionally a REVISER: an ordinary bill the Seanad rejects or fails to pass is deemed enacted once 90 days elapse from its sending by the Dail (Art. 23), so the upper house is a deliberate brake and nothing more. A constitutional amendment bill (Art. 46) is not a money bill and so runs through the same 90-day gate before the referendum stage; both rows suspensive for the same reason. Bunreacht na hEireann Arts. 18 and 23.",
+      "chamber": "Seanad Eireann",
+      "seats": 60,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, DIRECTLY elected for a seven-year term by instant run-off; last elected October 2025, so the next is due autumn 2032. Ceremonial in the main, holding a veto over bills the Oireachtas can override only by referendum -- real but not modelled beyond the panel naming it. Wikipedia, 'President of Ireland'.",
+      "kind": "elected_president",
+      "title": "President of Ireland",
+      "person": "IRL_lavelle",
+      "term_years": 7,
+      "next": {
+        "year": 2032,
+        "month": 10
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "The real bar is the LOWEST on the roster: Arts. 46 and 51 put a constitutional amendment behind an ordinary majority in both Houses plus a confirmatory referendum, and Art. 51 lets even the transitional provisions be revised that way -- which is how Articles 1-3 were rewritten in 1998. The system template permits only two_thirds for a parliamentary republic, so the authored rule carries a bar the real constitution does not have; the direction of the stand-in is recorded here rather than hidden. Bunreacht na hEireann Arts. 46 and 51.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "The Art. 46 referendum is a MANDATORY stage of the real procedure, and the machinery's mandatory mode requires the referendum_required rule, which this system's template does not permit -- folded into the authored bar, as DNK.json records for §88. The game's own referendum machinery stays reachable through amendment content instead.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "Arts. 46 and 51 reach every provision without exception -- Articles 1-3 were themselves amended by referendum -- so a system change runs through the same ordinary-majority-plus-referendum path, not a higher one."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Decentralised constitutional review: Art. 34 gives the High Court and on appeal the Supreme Court power to hold statutes void for repugnancy to Bunreacht (Art. 15.4 is the voiding rule), and Art. 26 lets the President refer a bill to the Supreme Court BEFORE signing, a once-used ex-ante gate that runs beside the ordinary path. Bunreacht na hEireann Arts. 15.4, 26 and 34.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The Dail nominates the Taoiseach on the President's appointment and the Taoiseach appoints the other ministers, with the Government then approved by the Dail (Arts. 13.1.1 and 28.11) -- an investiture in the machinery's vocabulary. The Government falls when it loses the Dail's confidence on a simple majority (Art. 28.10), the machinery's simple_present. Bunreacht na hEireann Arts. 13 and 28.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Taoiseach",
+      "head_of_government_person": "IRL_kinsella"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "IRL_brian_iv",
+    "neighbours": ["GBR"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 23% is the statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'); corporate 12.5% is the statutory trading rate -- Ireland's corporate tax-to-GDP share is INFLATED by multinational profit booking, the mirror of CHE.json's reason for not revenue-scaling; income 12.7 is NOT the statutory blend (20/40 plus USC) -- it is the fitted effective rate on the ten-era convention (AUT.json's: the income rate is what makes the model's baseline reproduce the nation's own collected revenue), and Ireland's collected share is suppressed by the same GDP base distortion that inflates the corporate line's note. Modelled from statutory VAT 23, corporate 12.5 and capital gains 33, the base-share model yields 0.50 x income; the collected 21.5% of GDP leaves 6.3 points (rounded one step down from the exact 12.8 fit, because the modelled total lands an epsilon ABOVE the collected figure at the exact fit and the loader refuses a negative residual) for income against a 0.50 base. Read the 12.7 as the personal-tax take on the swollen denominator, not as politics; capital gains 33% is the statutory rate. Wealth 0 -- the Local Property Tax is a property-value levy, not a wealth tax. Debt ~42.9% and revenue ~21.5% of GDP (Eurostat/OECD 2024), both read against a GDP base swollen by the same multinationals; on modified GNI both would sit roughly half as high again, and the note carries the GDP-base figures because that is the series the rest of the roster uses.",
+    "debt_to_gdp_pct": 42.9,
+    "tax_revenue_pct_gdp": 21.5,
+    "tax_rates_pct": {
+      "income": 12.7,
+      "corporate": 12.5,
+      "vat": 23.0,
+      "capital_gains": 33.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.5,
+      "education": 3.0,
+      "defence": 0.4,
+      "pensions": 5.2,
+      "infrastructure": 2.2
+    },
+    "other_spending_pct_gdp": 6.3
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 5400000,
+    "gdp_eur_bn": 560.0,
+    "unemployment_pct": 4.3,
+    "sectors": {
+      "agriculture": 0.011,
+      "industry": 0.353,
+      "services": 0.636
+    },
+    "cohorts": {
+      "young_pct": 18.56,
+      "old_pct": 15.89,
+      "young_pct_per_yr": -0.307,
+      "old_pct_per_yr": 0.309,
+      "participation_pct": 77.23,
+      "pop_growth_pct": 1.541
+    },
+    "inequality": {
+      "gini_index": 29,
+      "gini_index_per_yr": -0.35,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.52,
+      "growth_sd_pct": 5.321,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.191,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.588705,
+        "nuclear": 0.0,
+        "renewable": 0.411295
+      },
+      "import_dependency_pct": 85.766,
+      "kwh_per_capita": 6298.2,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 84.4
+    }
+  }
+}

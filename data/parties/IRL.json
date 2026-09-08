@@ -1,0 +1,70 @@
+{
+  "parties": [
+    {
+      "id": "pairti_na_tire",
+      "name": "Páirtí na Tíre",
+      "ideology_slot": "centrist",
+      "seat_share": 0.3,
+      "leader_person": "IRL_kinsella",
+      "discipline": 0.8,
+      "competence": 0.75,
+      "excluded_partners": [
+        "sinn_pobail"
+      ]
+    },
+    {
+      "id": "comhaontas_naisiunta",
+      "name": "Comhaontas Náisiúnta",
+      "ideology_slot": "christian_democrat",
+      "seat_share": 0.235,
+      "leader_person": "IRL_hession",
+      "discipline": 0.85,
+      "competence": 0.75,
+      "excluded_partners": [
+        "sinn_pobail"
+      ]
+    },
+    {
+      "id": "sinn_pobail",
+      "name": "Sinn Pobail",
+      "ideology_slot": "left_populist",
+      "seat_share": 0.24,
+      "leader_person": "IRL_tarrant",
+      "discipline": 0.8,
+      "competence": 0.65,
+      "excluded_partners": [
+        "comhaontas_naisiunta"
+      ]
+    },
+    {
+      "id": "lucht_oibre_aontaithe",
+      "name": "Lucht Oibre Aontaithe",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.1,
+      "leader_person": "IRL_mcelhinney",
+      "discipline": 0.85,
+      "competence": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "daonlathaigh_nua",
+      "name": "Daonlathaigh Nua",
+      "ideology_slot": "progressive_liberal",
+      "seat_share": 0.095,
+      "leader_person": "IRL_nolan",
+      "discipline": 0.8,
+      "competence": 0.7,
+      "excluded_partners": []
+    },
+    {
+      "id": "glas_nua",
+      "name": "Glas Nua",
+      "ideology_slot": "green",
+      "seat_share": 0.03,
+      "leader_person": "IRL_goggins",
+      "discipline": 0.8,
+      "competence": 0.6,
+      "excluded_partners": []
+    }
+  ]
+}

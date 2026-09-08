@@ -1,0 +1,159 @@
+{
+  "id": "FIN",
+  "name": "Finland",
+  "geo_id": "FIN",
+  "capital": "Helsinki",
+  "playable": false,
+  "leader": {
+    "person": "FIN_viitanen",
+    "title": "Prime Minister",
+    "party": "kansallinen_liitto"
+  },
+  "flag": {
+    "layout": "cross",
+    "bands": ["#002F6C", "#FFFFFF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Eduskunta",
+      "assembly_seats": 200,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 2 April 2023 for a four-year term, so the next is due by April 2027; no date fixed by law. There is no formal national threshold -- the 3% is the effective district-level cost of one D'Hondt seat in the smallest multi-seat districts, which the model reads as a national bar. Wikipedia, 'Next Finnish parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 4
+        },
+        "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Parliament may be dissolved before the term expires by presidential decree on a reasoned proposal from the Prime Minister, after the parliamentary groups have been heard -- effectively the government's own choice of timing, which is what the machinery's self_dissolution names; new elections follow within 75 days. Perustuslaki §26.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, popularly elected for a six-year term; last elected January-February 2024, so the next is due early 2029. Not ceremonial in the SVK sense: the President leads foreign policy jointly with the Government and commands the armed forces -- the one head of state on the roster whose portfolio reaches beyond ceremony and appointment, which is why the panel names it. Wikipedia, 'President of Finland'.",
+      "kind": "elected_president",
+      "title": "President of the Republic",
+      "person": "FIN_rautio",
+      "term_years": 6,
+      "next": {
+        "year": 2029,
+        "month": 1
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Perustuslaki §73: a constitutional amendment needs a two-thirds majority in a first reading, then -- unless five sixths vote to treat it as urgent -- a general election intervenes and the newly elected Parliament passes the bill by simple majority. The authored rule carries the first reading's entrenching bar; the interposed election is not modelled, exactly as the Dutch file records for its second reading. Perustuslaki §73.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause: §73's own procedure reaches the form of the state, and the constitution is explicit that a proposal for a wholly NEW constitution runs through the same two-reading path."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Two-stage and unlike anyone else's on the roster: the Eduskunta's own Constitutional Law Committee (perustuslakivaliokunta) is the primary gate, reviewing bills against the constitution BEFORE passage, while the courts set aside an ordinary law only where the conflict is 'evident' -- a deliberately narrow ex-post channel. Both halves together are what the value records. eduskunta.fi, 'The Constitutional Law Committee'; Perustuslaki §106.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The post-election coalition talks, not any formal vote, decide the government; the Eduskunta then formally elects the Prime Minister the parties have agreed on and the President appoints (the 2000 parliamentarism arrangement). It is the negotiation, not the election, that can kill a cabinet -- which is what the machinery's coalition_negotiation names -- and a simple majority can withdraw its tolerance at any time, the machinery's simple_present. eduskunta.fi, 'Electing the Prime Minister'.",
+      "method": "chancellor_election",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "FIN_viitanen"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "FIN_vaino_i",
+    "neighbours": ["SWE"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 25.5% is the statutory standard rate since the September 2024 rise from 24%, the EU's highest alongside Hungary's (Tax Foundation, 'VAT Rates in Europe 2024'); corporate 20% is the statutory rate; income 22 is a blend of the progressive state schedule and the near-flat municipal tax, below the Nordic peers' because Finland carries more of the personal load in social contributions than Denmark does; capital gains 30% is the general rate (34% on listed dividends, folded to the lower). Wealth 0. Debt ~85.4% and revenue ~47.5% of GDP (Eurostat/OECD 2024). Spending is the general-government split scaled to expenditure near 50% of GDP.",
+    "debt_to_gdp_pct": 85.4,
+    "tax_revenue_pct_gdp": 47.5,
+    "tax_rates_pct": {
+      "income": 22.0,
+      "corporate": 20.0,
+      "vat": 25.5,
+      "capital_gains": 30.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 8.5,
+      "education": 5.6,
+      "defence": 2.4,
+      "pensions": 12.7,
+      "infrastructure": 2.8
+    },
+    "other_spending_pct_gdp": 12.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 5600000,
+    "gdp_eur_bn": 275.0,
+    "unemployment_pct": 8.4,
+    "sectors": {
+      "agriculture": 0.028,
+      "industry": 0.261,
+      "services": 0.711
+    },
+    "cohorts": {
+      "young_pct": 14.63,
+      "old_pct": 23.9,
+      "young_pct_per_yr": -0.192,
+      "old_pct_per_yr": 0.41,
+      "participation_pct": 79.42,
+      "pop_growth_pct": 0.281
+    },
+    "inequality": {
+      "gini_index": 27.4,
+      "gini_index_per_yr": 0.037,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.901,
+      "growth_sd_pct": 3.154,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 1.867,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.05371,
+        "nuclear": 0.402653,
+        "renewable": 0.543637
+      },
+      "import_dependency_pct": 30.272,
+      "kwh_per_capita": 14819.3,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 91.8
+    }
+  }
+}

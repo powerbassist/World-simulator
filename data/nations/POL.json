@@ -1,0 +1,168 @@
+{
+  "id": "POL",
+  "name": "Poland",
+  "geo_id": "POL",
+  "capital": "Warsaw",
+  "playable": true,
+  "leader": {
+    "person": "POL_zawadzki",
+    "title": "Prime Minister",
+    "party": "sojusz_obywatelski"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FFFFFF", "#DC143C"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Sejm",
+      "assembly_seats": 460,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "pr_dhondt is the real system: d'Hondt in 41 multi-member districts, so the machinery reads the formula directly. The threshold is real 5% for single parties, 8% for coalitions and exempt for ethnic-minority lists; the machinery carries one number, so the party rate ships. Elected 15 October 2023 for a four-year term, so the next is due by autumn 2027; expected ~October 2027. Wikipedia, 'Next Polish parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 10
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Sejm can shorten its own term only by a 2/3 majority (Art. 98), which has never happened; the shape the machinery carries is the President's power to shorten the term where the Sejm fails to give the Government confidence or cannot form one within the constitutional deadlines. The machinery reads that as confidence_failure, and polling follows within 45 days. Konstytucja RP, Arts. 98, 154-155, 225.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "Senate (Senat), 100 seats, chosen on the same polling day under first-past-the-post in 100 single-member districts. Art. 120: the Senate's rejection of or amendments to an ordinary bill fall if the Sejm overrides by absolute majority with at least half the statutory number present -- a suspensive veto. A constitutional amendment follows the same route (Art. 235), also suspensive here; the amendment bar itself is the amendment block's. Konstytucja RP, Arts. 97, 120, 235.",
+      "chamber": "Senate",
+      "seats": 100,
+      "ordinary": "suspensive",
+      "amendment": "suspensive"
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, popularly elected for five years in a two-round vote; the incumbent took office in August 2025 after the June 2025 runoff, so the term ends in August 2030 and the Marshal of the Sejm sets polling day 75-100 days ahead of that -- modelled as June 2030. Holds a veto the Sejm overrides by 3/5. Wikipedia, 'President of Poland'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "POL_ostrowski",
+      "term_years": 5,
+      "next": {
+        "year": 2030,
+        "month": 6
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 235: a constitutional amendment needs a 2/3 majority of the Sejm with at least half the statutory number present and an absolute majority of the Senate; the Senate's part of that route is the suspensive verdict the upper block records. Konstytucja RP, Art. 235.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Art. 235(6): an amendment to Chapter I (the Republic), Chapter II (freedoms and rights) or Chapter XII (emergency) goes to referendum when one-fifth of deputies demand it within 45 days -- an optional referendum, not the ordinary route, so the rule reads none. Konstytucja RP, Art. 235(6).",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Chapter I defines the Republic and Art. 235(6) routes any attempt at it past an optional referendum; the text carries no eternity clause, so the flag here is entrenchment-in-practice rather than the German Art. 79(3) shape AUT.json's note declines to claim."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Trybunal Konstytucyjny, Art. 188: adjudicates the conformity of statutes and ratified international agreements with the Constitution. Konstytucja RP, Art. 188.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Arts. 154-155: the President appoints a Prime Minister, who must win a confidence vote in the Sejm within 14 days by absolute majority; failing that, the Sejm elects its own Prime Minister by the same bar, and a second failure lets the President shorten the term. The first route is the machinery's investiture. Censure is constructive: Art. 158 requires a motion naming a candidate Prime Minister, carried by absolute majority with at least half the statutory number present and voting by name -- Poland's constructive vote of no confidence. Konstytucja RP, Arts. 154-155, 158.",
+      "method": "investiture",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "POL_zawadzki"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "POL_zygmunt_iv",
+    "neighbours": ["DEU", "CZE", "SVK", "LTU"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as AUT.json's block. VAT 23% is the statutory standard rate; corporate 19% is the statutory rate; income 17 is a blend of the 12/32 two-band schedule; capital gains 19% is the flat 'Belka' rate. Debt ~55.3% and revenue ~33.5% of GDP (Eurostat 2023-2024). Spending is the general-government split scaled to expenditure near 45% of GDP; defence 4.1% is the 2024 outlay, the highest share in NATO; pensions 11.6% is the demography-weighted heaviest row.",
+    "debt_to_gdp_pct": 55.3,
+    "tax_revenue_pct_gdp": 33.5,
+    "tax_rates_pct": {
+      "income": 17.0,
+      "corporate": 19.0,
+      "vat": 23.0,
+      "capital_gains": 19.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.4,
+      "education": 4.6,
+      "defence": 4.1,
+      "pensions": 11.6,
+      "infrastructure": 2.9
+    },
+    "other_spending_pct_gdp": 12.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 36600000,
+    "gdp_eur_bn": 844.0,
+    "unemployment_pct": 2.8,
+    "sectors": {
+      "agriculture": 0.029,
+      "industry": 0.306,
+      "services": 0.665
+    },
+    "cohorts": {
+      "young_pct": 14.81,
+      "old_pct": 20.14,
+      "young_pct_per_yr": -0.033,
+      "old_pct_per_yr": 0.53,
+      "participation_pct": 74.92,
+      "pop_growth_pct": -0.425
+    },
+    "inequality": {
+      "gini_index": 28.5,
+      "gini_index_per_yr": -0.413,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.754,
+      "growth_sd_pct": 2.637,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 3.712,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.803001,
+        "nuclear": 0.0,
+        "renewable": 0.196999
+      },
+      "import_dependency_pct": 48.819,
+      "kwh_per_capita": 4369.6,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 66.9
+    }
+  }
+}

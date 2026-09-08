@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "GRC_vlachos", "name": "Nikiforos Vlachos" },
+    { "id": "GRC_stavrou", "name": "Iason Stavrou" },
+    { "id": "GRC_iliopoulos", "name": "Takis Iliopoulos" },
+    { "id": "GRC_petraki", "name": "Sofia Petraki" },
+    { "id": "GRC_nikolaidis", "name": "Georgios Nikolaidis" },
+    { "id": "GRC_markou", "name": "Lefteris Markou" },
+    { "id": "GRC_zervos", "name": "Eleni Zervos" },
+    { "id": "GRC_alexandros_ii", "name": "Alexandros II" }
+  ]
+}

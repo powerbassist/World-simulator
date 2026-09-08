@@ -1,0 +1,14 @@
+{
+  "id": "pol_coalition",
+  "nation": "POL",
+  "name": "The Sixty-Per-Cent Mountain",
+  "description": "The nationalist right won the most seats and cannot build a majority without a partner that every other party has ruled out. The arithmetic is yours: invest a government or force a second election.",
+  "_source": "authored",
+  "_note": "The seat axis, pointed at what Poland's own institutions make dangerous. POL invests its Prime Minister by an absolute majority of the Sejm and censures constructively, so a pluralist Assembly with one excluded bloc is a standing negotiation the player can lose by arithmetic alone -- the Polish equivalent of the coalition axis docs/scenario-model.md gives FRA and DEU. narod_i_tradycja keeps its plurality at 0.34 so the formation rule still returns the authored leader's party as caretaker, and the 0.31/0.14/0.09/0.08/0.04 spread means every viable majority runs THROUGH either the bloc the liberals cannot stomach or the populists the centre cannot name. Authored at V3.3 with Poland's playable kit; the seat split is the standard start's own, restated here so the bloc_approval override is the only live edit.",
+  "overrides": {
+    "bloc_approval": {
+      "rural": 52.0,
+      "urban": 41.0
+    }
+  }
+}

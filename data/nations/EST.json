@@ -1,0 +1,160 @@
+{
+  "id": "EST",
+  "name": "Estonia",
+  "geo_id": "EST",
+  "capital": "Tallinn",
+  "playable": false,
+  "leader": {
+    "person": "EST_lepik",
+    "title": "Prime Minister",
+    "party": "uuendusliit"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#0072CE", "#000000", "#FFFFFF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Riigikogu",
+      "assembly_seats": 101,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 5 March 2023 for a four-year term; the next is due March 2027. The real system is open-list d'Hondt across twelve districts with a national 5% effective bar (a party under it still keeps seats it won outright in a district); the machinery's national list is the nearest reading. Wikipedia, 'Next Estonian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 3
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 89: when coalition talks fail, the President passes the mandate on; when every attempt fails he MAY dissolve the Riigikogu and announce extraordinary elections on the proposal of the failed candidate for Prime Minister -- the head-of-state-limited lever this machinery names, gated on a formation the player does not command. Extraordinary elections may not be called in the last stretch of the term, which the machinery already carries for this rule as the semestre bianco, so the lockout ships at 0 rather than doubling the real bar. Põhiseadus, Arts. 60 and 89.",
+        "rule": "head_of_state_limited",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected INDIRECTLY -- by the Riigikogu with a two-thirds majority, falling to an electoral body of MPs and local councillors on the second ballot; the roster's only indirect head of state. Five-year term; last elected in the autumn 2021 round, so the next falls in autumn 2026 -- the game books October 2026. Mostly ceremonial. Wikipedia, 'President of Estonia'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "EST_kirus",
+      "term_years": 5,
+      "next": {
+        "year": 2026,
+        "month": 10
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 163: the Constitution is amended by a law passed by referendum, by two consecutive compositions of the Riigikogu, or -- as the urgent route -- by a four-fifths majority of all members; a bill is debated across at least three months between readings (Art. 164). The machinery carries neither four_fifths nor a two-compositions route in this template, so the rule reads two_thirds -- the nearest stricter reading, SVK.json's own resolution, and the difference only matters for amendment content this game prices by support, not by threshold. Põhiseadus, Arts. 163-164.",
+      "rule": "two_thirds",
+      "referendum": "optional",
+      "_referendum_note": "The referendum is one of Art. 163's three amendment routes and the ONLY route for Chapters I and III (Art. 165, called by three-fifths of the membership); authored 'optional' because the ordinary routes do not require one and no amendment content in this game prices an Estonian popular vote.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Chapters I and III -- including Art. 1's 'Estonia is an independent and sovereign democratic republic' -- amend ONLY by referendum (Art. 165), so the form of the state sits beyond ordinary parliamentary revision. The referendum channel itself is not modelled as a system-change path, so the flag reads false with the written route recorded rather than treated as reachable."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Riigikohus, sitting as the Constitutional Review Chamber: declares a law unconstitutional and refuses to apply it (Art. 152), with the chancellor of justice as the other route to review. Põhiseadus, Arts. 142, 152; Wikipedia, 'Supreme Court of Estonia'.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Art. 89: the President nominates a candidate for Prime Minister on the parties' joint proposal, the candidate forms a coalition and presents the Government, and the Riigikogu votes confidence -- coalition dealing first, an investiture vote at the end; the machinery's coalition_negotiation carries the first half, and the failed-formation tail is what the dissolution note above turns on. Censure by majority vote of the Riigikogu (Art. 92); the template's simple_present ships with the reality that a lost vote feeds the same Art. 89 tail. Põhiseadus, Arts. 89-92.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "EST_lepik"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "EST_kaarel_ii",
+    "neighbours": ["LVA"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 24% is the statutory standard rate after the July 2025 rise (22% from January 2024, 20% before); corporate 22% is the statutory rate on DISTRIBUTED profit -- Estonia taxes retained earnings at zero, and the one number carries that shape; income 21 is a blend of the 2025 two-tier schedule; capital gains 20% are taxed as ordinary income. Debt ~23.5% and revenue ~34.0% of GDP (Eurostat/OECD 2024) -- the roster's second-lowest debt after Bulgaria. Defence 3.4 is the NATO-leading 2024 figure. Spending is the general-government split scaled to expenditure near 41% of GDP.",
+    "debt_to_gdp_pct": 23.5,
+    "tax_revenue_pct_gdp": 34.0,
+    "tax_rates_pct": {
+      "income": 21.0,
+      "corporate": 22.0,
+      "vat": 24.0,
+      "capital_gains": 20.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.4,
+      "education": 5.4,
+      "defence": 3.4,
+      "pensions": 7.5,
+      "infrastructure": 3.2
+    },
+    "other_spending_pct_gdp": 16.1
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 1400000,
+    "gdp_eur_bn": 39.7,
+    "unemployment_pct": 7.6,
+    "sectors": {
+      "agriculture": 0.02,
+      "industry": 0.23,
+      "services": 0.75
+    },
+    "cohorts": {
+      "young_pct": 15.64,
+      "old_pct": 21.3,
+      "young_pct_per_yr": -0.042,
+      "old_pct_per_yr": 0.268,
+      "participation_pct": 81.22,
+      "pop_growth_pct": 0.472
+    },
+    "inequality": {
+      "gini_index": 30.7,
+      "gini_index_per_yr": -0.25,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.012,
+      "growth_sd_pct": 7.041,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 4.079,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.55379,
+        "nuclear": 0.0,
+        "renewable": 0.44621
+      },
+      "import_dependency_pct": 3.771,
+      "kwh_per_capita": 5297.5,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 82.5
+    }
+  }
+}

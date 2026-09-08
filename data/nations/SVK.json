@@ -1,0 +1,159 @@
+{
+  "id": "SVK",
+  "name": "Slovakia",
+  "geo_id": "SVK",
+  "capital": "Bratislava",
+  "playable": false,
+  "leader": {
+    "person": "SVK_vozar",
+    "title": "Prime Minister",
+    "party": "socialna_unia"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FFFFFF", "#0B4EA2", "#EE1C25"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "National Council",
+      "assembly_seats": 150,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 30 September 2023 for a four-year term, so the next is due by autumn 2027; no fixed date announced. Wikipedia, 'Next Slovak parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2027,
+          "month": 9
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 72: the National Council can dissolve itself by a 3/5 majority of all deputies -- the mechanism the machinery's self_dissolution names. The President may dissolve it only after a failed confidence vote or a failed government formation, which the machinery reads as confidence_failure. ustavy SR, Art. 72.",
+        "rule": "self_dissolution",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, popularly elected for five years; last elected April 2024, so the next is due 2029. Mostly ceremonial but with a veto and the appointment role. Wikipedia, 'President of Slovakia'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "SVK_petrik",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 4
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 84: a constitutional amendment needs a 3/5 majority of all deputies. The machinery has no three_fifths in this template, so the rule reads two_thirds -- the nearest stricter reading, and the difference only matters for amendment content this game prices by support, not by threshold. ustava SR, Art. 84.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 93(2) puts constitutional change behind the same 3/5, and Slovak practice since 1998 treats the democratic form as beyond ordinary revision; flagged as convention rather than a written eternity clause."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Ustavny sud Slovenskej republiky, Art. 124: decides on the conformity of legal norms with the constitution. ustava SR, Art. 124.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President appoints the Prime Minister on the nomination of the largest party after consultation, and the Government must win a confidence vote in the National Council within 30 days -- an investiture in the machinery's vocabulary. Art. 110-116.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "SVK_vozar"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "SVK_pal_ii",
+    "neighbours": ["CZE", "POL", "HUN"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as AUT.json's block. VAT 23% is the statutory standard rate after the January 2025 rise from 20%; corporate 21% is the statutory rate; income 21 is a blend of the 19/25 two-band schedule; capital gains 19% is the lower schedule rate. Debt ~59.6% and revenue ~39.8% of GDP (Eurostat/OECD 2024). Spending is the general-government split scaled to expenditure near 46% of GDP.",
+    "debt_to_gdp_pct": 59.6,
+    "tax_revenue_pct_gdp": 39.8,
+    "tax_rates_pct": {
+      "income": 21.0,
+      "corporate": 21.0,
+      "vat": 23.0,
+      "capital_gains": 19.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.9,
+      "education": 3.8,
+      "defence": 2.1,
+      "pensions": 8.9,
+      "infrastructure": 2.4
+    },
+    "other_spending_pct_gdp": 12.1
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 5400000,
+    "gdp_eur_bn": 130.0,
+    "unemployment_pct": 5.3,
+    "sectors": {
+      "agriculture": 0.017,
+      "industry": 0.32,
+      "services": 0.663
+    },
+    "cohorts": {
+      "young_pct": 15.76,
+      "old_pct": 18.54,
+      "young_pct_per_yr": 0.048,
+      "old_pct_per_yr": 0.488,
+      "participation_pct": 76.23,
+      "pop_growth_pct": -0.004
+    },
+    "inequality": {
+      "gini_index": 23.8,
+      "gini_index_per_yr": -0.337,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.326,
+      "growth_sd_pct": 4.64,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 4.305,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.146047,
+        "nuclear": 0.618655,
+        "renewable": 0.235298
+      },
+      "import_dependency_pct": 57.887,
+      "kwh_per_capita": 4674.6,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 66.6
+    }
+  }
+}

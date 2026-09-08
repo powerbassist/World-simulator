@@ -1,0 +1,11 @@
+{
+  "people": [
+    { "id": "ROU_stanciu", "name": "Mircea Stanciu" },
+    { "id": "ROU_moraru", "name": "Vasile Moraru" },
+    { "id": "ROU_iordache", "name": "Elena Iordache" },
+    { "id": "ROU_radulescu", "name": "Tudor Rădulescu" },
+    { "id": "ROU_nagy", "name": "Katalin Nagy" },
+    { "id": "ROU_vasilescu", "name": "Octav Vasilescu" },
+    { "id": "ROU_mihai_ii", "name": "Mihai II" }
+  ]
+}

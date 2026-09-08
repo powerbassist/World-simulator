@@ -143,7 +143,6 @@ UDC
 Die Mitte
 Nestlé
 Novartis
-Roche
 UBS
 Glencore
 
@@ -199,5 +198,210 @@ voestalpine
 # dropping it lets a session name a fictional bank after a real one. The ban that
 # matters is the one about FIRMS, so it is scoped to the file a firm's name lives in.
 # Add an entry here only when a name is genuinely both.
+
+# --- V3.3, the nineteen (EU-27 roster growth) ---
+# Real parties and officeholders of the nations that joined at V3.3, added in
+# the same commit as the content that plays on them, on the S1 rule that the
+# list exists for every nation in scope. Party names are the real parties the
+# fictional ones echo; politician entries are sitting or recent heads of
+# state/government and party leaders, surnames alone where the surname is
+# distinctive, full names where it is generic.
+# --- Bulgaria ---
+GERB
+Graždanite za evropejsko razvitie na Bălgarija
+Prodălžavame Promjanata
+Văzrazhdane
+Borissov
+Radev
+Denkov
+Peevski
+Ninova
+Kostadinov
+# --- Croatia ---
+Hrvatska demokratska zajednica
+HDZ
+Socijaldemokratska partija Hrvatske
+Domovinski pokret
+Plenković
+Milanović
+Grabar-Kitarović
+# --- Cyprus ---
+DISY
+AKEL
+DIKO
+EDEK
+ELAM
+Christodoulides
+Anastasiades
+# --- Czechia ---
+ANO 2011
+Občanská demokratická strana
+Babiš
+Fiala
+Pavel
+Zeman
+Okamura
+# --- Denmark ---
+Socialdemokratiet
+Venstre
+Dansk Folkeparti
+Radikale Venstre
+Socialistisk Folkeparti
+Frederiksen
+Løkke Rasmussen
+Vestager
+Margrethe
+Frederik
+# --- Estonia ---
+Reformierakond
+Keskerakond
+EKRE
+Isamaa
+Kallas
+Ratas
+Karis
+Kaljulaid
+# --- Finland ---
+Suomen Sosialidemokraattinen Puolue
+Kansallinen Kokoomus
+Perussuomalaiset
+Keskusta
+Vihreä liitto
+Orpo
+Purra
+Marin
+Stubb
+Niinistö
+Halla-aho
+# --- Greece ---
+Néa Dimokratía
+PASOK
+SYRIZA
+Ellinikí Lýsi
+KKE
+Mitsotakis
+Tsipras
+Karamanlis
+# --- Hungary ---
+Fidesz
+Tisza
+Demokratikus Koalíció
+Mi Hazánk
+KDNP
+Orbán
+Magyar
+Dobrev
+Gyurcsány
+Szijjártó
+Sulyok
+# --- Ireland ---
+Fianna Fáil
+Fine Gael
+Sinn Féin
+Micheál Martin
+Varadkar
+McDonald
+Coveney
+# --- Lithuania ---
+Lietuvos socialdemokratų partija
+Tėvynės sąjunga
+Nemuno aušra
+Šimonytė
+Nausėda
+Paluckas
+Karbauskis
+Žemaitaitis
+Landsbergis
+# --- Latvia ---
+Jaunā Vienotība
+Nacionālā apvienība
+Progresīvie
+Saskaņa
+Siliņa
+Kariņš
+Rinkēvičs
+Ušakovs
+Levits
+# --- Malta ---
+Partit Laburista
+Partit Nazzjonalista
+Abela
+Grech
+Muscat
+# --- Poland ---
+Prawo i Sprawiedliwość
+Koalicja Obywatelska
+Polska 2050
+Trzecia Droga
+Konfederacja
+Polskie Stronnictwo Ludowe
+Tusk
+Morawiecki
+Kaczyński
+Hołownia
+Mentzen
+Bosak
+Nawrocki
+Trzaskowski
+Sikorski
+# --- Portugal ---
+Partido Social Democrata
+Partido Socialista
+Chega
+Iniciativa Liberal
+CDS
+Montenegro
+Marcelo
+Guterres
+Ventura
+# --- Romania ---
+Partidul Social Democrat
+Partidul Național Liberal
+Alianța pentru Unirea Românilor
+Uniunea Salvați România
+Iohannis
+Ciolacu
+Ponta
+Băsescu
+Simion
+Georgescu
+# --- Slovakia ---
+Smer
+Hlas
+Progresívne Slovensko
+OĽaNO
+Sloboda a Solidarita
+Fico
+Pellegrini
+Čaputová
+Matovič
+Sulík
+Kollár
+# --- Slovenia ---
+Slovenska demokratska stranka
+Gibanje Svoboda
+Levica
+Nova Slovenija
+Janša
+Golob
+# --- Sweden ---
+Socialdemokraterna
+Moderaterna
+Sverigedemokraterna
+Centerpartiet
+Vänsterpartiet
+Kristdemokraterna
+Kristersson
+Andersson
+Åkesson
+Bildt
+
+
 [places]
+# V3.3 moves Roche down here under the Santander rule: the register's EU-29 growth
+# imported La Roche-sur-Yon, a real French place, and the word is also the Swiss
+# pharma major the ten-era list banned everywhere. The ban that matters is FIRMS,
+# so it is scoped to data/companies/ like Santander.
 Santander
+
+Roche

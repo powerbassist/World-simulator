@@ -1,0 +1,12 @@
+{
+  "people": [
+    { "id": "POL_zawadzki", "name": "Marek Zawadzki" },
+    { "id": "POL_wilk", "name": "Grzegorz Wilk" },
+    { "id": "POL_grabowski", "name": "Szymon Grabowski" },
+    { "id": "POL_piasecki", "name": "Robert Piasecki" },
+    { "id": "POL_wilczynski", "name": "Tomasz Wilczyński" },
+    { "id": "POL_kalinowska", "name": "Ewa Kalinowska" },
+    { "id": "POL_ostrowski", "name": "Bogdan Ostrowski" },
+    { "id": "POL_zygmunt_iv", "name": "Zygmunt IV" }
+  ]
+}

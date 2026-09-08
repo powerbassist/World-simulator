@@ -1,0 +1,75 @@
+{
+  "parties": [
+    {
+      "id": "ifju_polgarok_szovetsege",
+      "name": "Ifjú Polgárok Szövetsége",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.52,
+      "leader_person": "HUN_cser",
+      "discipline": 0.9,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "kereszteny_nepszovetseg",
+      "name": "Keresztény Népszövetség",
+      "ideology_slot": "christian_democrat",
+      "seat_share": 0.09,
+      "leader_person": "HUN_szekely",
+      "discipline": 0.9,
+      "competence": 0.75,
+      "excluded_partners": []
+    },
+    {
+      "id": "duna_szovetseg",
+      "name": "Duna Szövetség",
+      "ideology_slot": "centrist",
+      "seat_share": 0.155,
+      "leader_person": "HUN_daroczi",
+      "discipline": 0.8,
+      "competence": 0.75,
+      "excluded_partners": [
+        "ifju_polgarok_szovetsege",
+        "anyafold_mozgalom"
+      ]
+    },
+    {
+      "id": "halado_koalicio",
+      "name": "Haladó Koalíció",
+      "ideology_slot": "progressive_liberal",
+      "seat_share": 0.09,
+      "leader_person": "HUN_kallai",
+      "discipline": 0.8,
+      "competence": 0.7,
+      "excluded_partners": [
+        "ifju_polgarok_szovetsege",
+        "anyafold_mozgalom"
+      ]
+    },
+    {
+      "id": "szocialista_unio",
+      "name": "Szocialista Unió",
+      "ideology_slot": "social_democratic",
+      "seat_share": 0.065,
+      "leader_person": "HUN_molnar",
+      "discipline": 0.85,
+      "competence": 0.7,
+      "excluded_partners": [
+        "ifju_polgarok_szovetsege",
+        "anyafold_mozgalom"
+      ]
+    },
+    {
+      "id": "anyafold_mozgalom",
+      "name": "Anyaföld Mozgalom",
+      "ideology_slot": "nationalist_right",
+      "seat_share": 0.08,
+      "leader_person": "HUN_nagy",
+      "discipline": 0.7,
+      "competence": 0.55,
+      "excluded_partners": [
+        "ifju_polgarok_szovetsege"
+      ]
+    }
+  ]
+}

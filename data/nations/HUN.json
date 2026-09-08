@@ -1,0 +1,159 @@
+{
+  "id": "HUN",
+  "name": "Hungary",
+  "geo_id": "HUN",
+  "capital": "Budapest",
+  "playable": false,
+  "leader": {
+    "person": "HUN_cser",
+    "title": "Prime Minister",
+    "party": "ifju_polgarok_szovetsege"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#CE2939", "#FFFFFF", "#477050"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "National Assembly",
+      "assembly_seats": 199,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 3 April 2022 for a four-year term, so the next is due by April 2026. The real system is 106 single-member constituencies decided first-past-the-post plus 93 national-list seats allocated proportionally at a 5% list threshold -- the machinery's parallel names exactly this split; compensatory list mandates and the ethnic-minority seats are not modelled. Wikipedia, 'Next Hungarian parliamentary election'.",
+        "system": "parallel",
+        "next": {
+          "year": 2026,
+          "month": 4
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The National Assembly may dissolve itself before the term expires by a two-thirds vote of all its members -- the machinery's self_dissolution -- and new elections follow within 90 days. The head of state's weaker dissolution route (on the Government's proposal) is the same machinery value's other half. Alaptorveny Art. 3.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected by the National Assembly for a five-year term; last elected February 2024 after the previous president's resignation, so the next is due early 2029. Ceremonial -- no reader beyond the government panel. Wikipedia, 'President of Hungary'.",
+      "kind": "elected_president",
+      "title": "President of the Republic",
+      "person": "HUN_balogh",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 3
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Alaptorveny Art. S(2): an amendment needs the votes of two-thirds of all Members of Parliament -- the one nation on the roster whose authored rule IS the constitution's own number rather than a stand-in for one. Alaptorveny Art. S.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": false,
+      "_permits_system_change_note": "No written eternity clause, but the Alkotmanybirosag's 22/2012 decision treats the National Avowal -- the Fundamental Law's opening declaration of the state's form -- as beyond amendment. Flagged as constitutional DOCTRINE rather than text, the same convention shape SVK.json and AUT.json record for their unwritten entrenchments."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Alkotmanybirosag: the Constitutional Court annuls laws and legal provisions contrary to the Fundamental Law (Art. 24), and its competence was narrowed by the Fourth Amendment (2013) to exclude fiscal matters from review on anything but procedural grounds -- a boundary that matters to a game about budgets, recorded rather than modelled. Alaptorveny Art. 24; Wikipedia, 'Constitutional Court of Hungary'.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President proposes a candidate and the National Assembly ELECTS the Prime Minister by a majority of all its members (Art. 13); the Government must also win a programme confidence vote within forty days of the PM's election. An investiture in the machinery's vocabulary. One deviation recorded where the value is a stand-in: removing the PM in reality requires electing a SUCCESSOR (Art. 39) -- a constructive censure the template also permits -- and the authored value carries the plainer simple_present; the successor requirement is the thing a later edit would change. Alaptorveny Arts. 13, 21 and 39.",
+      "method": "investiture",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "HUN_cser"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "HUN_matyas_ii",
+    "neighbours": ["AUT", "HRV", "ROU", "SVK", "SVN"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as SVK.json's block. VAT 27% is the EU's highest statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2024'); corporate 9% is its lowest; income 15.0 is the flat personal rate -- the 13% social-contribution payroll tax carried by the employer is not in this line; capital gains 15% under the same flat schedule. Wealth 0. Debt ~74.0% and revenue ~40.2% of GDP (Eurostat/OECD 2024). Spending is the general-government split, with Hungary's unusually large family-transfer programmes inside other_spending rather than in any of the five modelled lines.",
+    "debt_to_gdp_pct": 74.0,
+    "tax_revenue_pct_gdp": 40.2,
+    "tax_rates_pct": {
+      "income": 15.0,
+      "corporate": 9.0,
+      "vat": 27.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.2,
+      "education": 4.3,
+      "defence": 2.0,
+      "pensions": 10.0,
+      "infrastructure": 3.2
+    },
+    "other_spending_pct_gdp": 12.6
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 9600000,
+    "gdp_eur_bn": 205.0,
+    "unemployment_pct": 4.5,
+    "sectors": {
+      "agriculture": 0.032,
+      "industry": 0.277,
+      "services": 0.691
+    },
+    "cohorts": {
+      "young_pct": 14.4,
+      "old_pct": 20.99,
+      "young_pct_per_yr": -0.01,
+      "old_pct_per_yr": 0.326,
+      "participation_pct": 78.23,
+      "pop_growth_pct": -0.27
+    },
+    "inequality": {
+      "gini_index": 30.6,
+      "gini_index_per_yr": 0.1,
+      "_year": 2017,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.046,
+      "growth_sd_pct": 3.659,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 5.384,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.31114,
+        "nuclear": 0.473755,
+        "renewable": 0.215105
+      },
+      "import_dependency_pct": 62.51,
+      "kwh_per_capita": 4812.5,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 60.3
+    }
+  }
+}

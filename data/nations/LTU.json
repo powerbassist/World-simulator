@@ -1,0 +1,160 @@
+{
+  "id": "LTU",
+  "name": "Lithuania",
+  "geo_id": "LTU",
+  "capital": "Vilnius",
+  "playable": false,
+  "leader": {
+    "person": "LTU_bilius",
+    "title": "Prime Minister",
+    "party": "socialine_pazanga"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#FDB913", "#006A44", "#C1272D"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Seimas",
+      "assembly_seats": 141,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 13 October 2024 for a four-year term, so the next is due by autumn 2028; no fixed date announced. Wikipedia, 'Next Lithuanian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2028,
+          "month": 10
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 58: the Seimas can dissolve itself by a 3/5 majority of all members -- the mechanism the machinery's self_dissolution names. The President may dissolve it where the Seimas passes no confidence in the Government or twice rejects its programme, which the machinery reads as confidence_failure. Lietuvos Respublikos Konstitucija, Art. 58.",
+        "rule": "self_dissolution",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, popularly elected for five years in a two-round vote; last elected May 2024, so the next is due May 2029. Mostly ceremonial but with a veto and the appointment role. Wikipedia, 'President of Lithuania'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "LTU_stanulis",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 5
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 147: a constitutional amendment needs a 2/3 majority of all members of the Seimas. Art. 148 routes the independence and democratic-state provisions through a referendum instead, which the template cannot express; the ordinary-amendment rule reads two_thirds and the gap is recorded below. Lietuvos Respublikos Konstitucija, Arts. 147-148.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Art. 148: the constitutional definition of the independent democratic state and the foreign-policy core amend only by referendum -- a mandatory tier the machinery's none/mandatory switch cannot split, so ordinary amendments read none. Lietuvos Respublikos Konstitucija, Art. 148.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 148 puts the constitutional definition of the independent democratic republic behind a referendum, and Lithuanian practice treats it as beyond ordinary revision -- flagged as convention rather than a written eternity clause."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Konstitucinis Teismas, Art. 102: decides whether laws and other legal acts conform to the Constitution. Lietuvos Respublikos Konstitucija, Art. 102.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President nominates the Prime Minister, customarily the largest party's candidate after consultations, and both the appointment and the Government's programme must win the Seimas's approval within 15 days of the first sitting -- an investiture in the machinery's vocabulary. Censure passes by majority of the members present. Lietuvos Respublikos Konstitucija, Arts. 92-93, 101.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "LTU_bilius"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "LTU_mindaugas_iii",
+    "neighbours": ["LVA", "POL"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024, rounded, on the same conventions as AUT.json's block. VAT 21% is the statutory standard rate; corporate 16% is the statutory rate; income 20 is the flat labour rate, the band most revenue sits in (other income taxes at 15%); capital gains 15% is that lower schedule. Debt ~40.5% and revenue ~30.4% of GDP (Eurostat 2023-2024). Spending is the general-government split scaled to expenditure near 38% of GDP; defence 2.9% is the 2024 outlay on the NATO path.",
+    "debt_to_gdp_pct": 40.5,
+    "tax_revenue_pct_gdp": 30.4,
+    "tax_rates_pct": {
+      "income": 20.0,
+      "corporate": 16.0,
+      "vat": 21.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.9,
+      "education": 4.3,
+      "defence": 2.9,
+      "pensions": 8.0,
+      "infrastructure": 2.3
+    },
+    "other_spending_pct_gdp": 13.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 2900000,
+    "gdp_eur_bn": 78.7,
+    "unemployment_pct": 6.9,
+    "sectors": {
+      "agriculture": 0.027,
+      "industry": 0.256,
+      "services": 0.717
+    },
+    "cohorts": {
+      "young_pct": 14.71,
+      "old_pct": 20.17,
+      "young_pct_per_yr": 0.01,
+      "old_pct_per_yr": 0.143,
+      "participation_pct": 78.54,
+      "pop_growth_pct": -0.087
+    },
+    "inequality": {
+      "gini_index": 36,
+      "gini_index_per_yr": -0.175,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.135,
+      "growth_sd_pct": 7.473,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 3.261,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.169052,
+        "nuclear": 0.0,
+        "renewable": 0.830948
+      },
+      "import_dependency_pct": 71.456,
+      "kwh_per_capita": 4387.0,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 80.6
+    }
+  }
+}

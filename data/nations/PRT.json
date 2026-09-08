@@ -1,0 +1,159 @@
+{
+  "id": "PRT",
+  "name": "Portugal",
+  "geo_id": "PRT",
+  "capital": "Lisbon",
+  "playable": false,
+  "leader": {
+    "person": "PRT_vasconcelos",
+    "title": "Prime Minister",
+    "party": "movimento_reformista"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#046A38", "#DA291C"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Assembleia da República",
+      "assembly_seats": 230,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Elected 18 May 2025 for a four-year term, so the next is due by spring 2029; no fixed date announced. Closed-list PR in 22 constituencies on the d'Hondt quotient. Portugal's electoral law sets NO statutory threshold -- the authored 2.0 stands in for the exclusion district magnitude produces for small national lists, the same approximation ESP's note records for its per-constituency 3%. Wikipedia, 'Next Portuguese legislative election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2029,
+          "month": 5
+        },
+        "threshold_pct": 2.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The machinery's self_dissolution reads Portugal's real pattern from the wrong chair: it is the PRESIDENT who dissolves the Assembly -- on the Government's proposal with the Council of State heard, and necessarily when the programme is rejected twice -- and Portugal's three snap elections since 2021 all came from exactly that. The President may not dissolve in the six months before his own term ends, which is what lockout_months 6 reads, and the poll lands 45-60 days after the call, notice_months 2. Constituição, Art. 172; Wikipedia, 'Portuguese snap elections'.",
+        "rule": "self_dissolution",
+        "lockout_months": 6,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, popularly elected for five years; the next vote is scheduled for 18 January 2026 -- two weeks into the game's clock, the nearest any election in this register comes to the start. Mostly ceremonial, but with the appointment and dissolution roles the formation and dissolution rows read. Wikipedia, '2026 Portuguese presidential election'.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "PRT_salgueiro",
+      "term_years": 5,
+      "next": {
+        "year": 2026,
+        "month": 1
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Arts. 284-289: a revision proposal comes from deputies, parliamentary groups or a fifth of the registered electors, and is adopted by a two-thirds majority of the members in full exercise of their functions; the revision procedure runs through the Assembly alone, with no referendum stage in Portuguese practice, which the machinery's none reads. Constituição, Arts. 284-289.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 288 puts the republican form of government on the list of limits on revision -- FRA's Art. 89 §5 shape: no amendment may change Portugal's system_id at all."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Tribunal Constitucional: judges the constitutionality and legality of norms, and appreciates a priori on referral by the President, the Ombudsman or the Prime Minister -- the a priori route is what connects this check to formation, as in FRA. Constituição, Arts. 277-283.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Art. 187: the President appoints the Prime Minister after hearing the parties sitting in the Assembly and with regard to the election result, and the Government's programme then goes to the Assembly under debate -- the machinery's investiture. The moção de rejeição that kills a programme (Art. 190) and the censure motion against a sitting Government (Art. 197) each need only a QUARTER of the deputies to move, but pass on the absolute majority of the members in full exercise; the machinery's simple_present reads that bar low, a reduction recorded the way AUT's amendment row is. Constituição, Arts. 187, 190 and 197.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "PRT_vasconcelos"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "PRT_manuel_iii",
+    "neighbours": ["ESP"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD estimates ~2024-2025, rounded, on the same conventions as SVK.json's block. VAT 23% is the statutory standard rate (Tax Foundation, 'VAT Rates in Europe 2025'); corporate 21% is the statutory main rate; income 24 is a blend of the progressive 13-48% schedule; capital gains 28% is the flat rate; the AIMI property surtax is too narrow to read as a wealth tax. Revenue 41.4% of GDP is the OECD Revenue Statistics figure. Debt ~95% of GDP (Eurostat/Banco de Portugal, 2024). The spending split is the V1.2a policy split, not a reconciliation of the accounts.",
+    "debt_to_gdp_pct": 95.1,
+    "tax_revenue_pct_gdp": 41.4,
+    "tax_rates_pct": {
+      "income": 24.0,
+      "corporate": 21.0,
+      "vat": 23.0,
+      "capital_gains": 28.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 6.6,
+      "education": 5.0,
+      "defence": 1.5,
+      "pensions": 12.9,
+      "infrastructure": 2.3
+    },
+    "other_spending_pct_gdp": 12.6
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 10700000,
+    "gdp_eur_bn": 289.0,
+    "unemployment_pct": 6.5,
+    "sectors": {
+      "agriculture": 0.023,
+      "industry": 0.215,
+      "services": 0.762
+    },
+    "cohorts": {
+      "young_pct": 12.8,
+      "old_pct": 24.53,
+      "young_pct_per_yr": -0.166,
+      "old_pct_per_yr": 0.44,
+      "participation_pct": 77.78,
+      "pop_growth_pct": 0.356
+    },
+    "inequality": {
+      "gini_index": 33.9,
+      "gini_index_per_yr": -0.2,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.678,
+      "growth_sd_pct": 2.373,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.145,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.267978,
+        "nuclear": 0.0,
+        "renewable": 0.732022
+      },
+      "import_dependency_pct": 77.245,
+      "kwh_per_capita": 5293.8,
+      "_years": {
+        "energy_import_dependency_pct": 2023,
+        "elc_fossil_pct": 2023,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "institutions": {
+      "rule_of_law_score": 75.4
+    }
+  }
+}
