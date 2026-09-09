@@ -25,8 +25,9 @@ extends Control
 ## ON THE TRADE LAYER ALONE. Roads are geography and draw on every layer; a flow
 ## is a question the player asked, and the choropleth it rides already answers
 ## "how much does B matter to A" in colour. Arcs add the one thing a per-nation
-## fill cannot show: direction. It also means the per-frame redraw only runs
-## when it was asked for.
+## fill cannot show: direction. It also means the animated redraw only runs
+## when it was asked for -- and, since V3.4's gates were measured, at the capped
+## rate REDRAW_HZ sets rather than on every frame.
 
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapNetwork = preload("res://src/ui/map_network.gd")
@@ -64,6 +65,16 @@ const MAX_CONVOYS := 3
 ## to be real: the graph's own km, so a long ferry takes longer than a short hop.
 const PACE_KM_PER_DAY := 25.0
 
+## THE REDRAW IS RATE-LIMITED, and the measurement that forced it is recorded
+## rather than asserted: redrawing on every frame cost 3.01 ms at max zoom
+## against V3.4's 1.5 ms gate, and put the opening fit's whole frame at 13.73 ms
+## against its 11.0 ms one (docs/map-platform-model.md section 4). The cost is
+## paid per REDRAW and not per second, so the only lever is how often it is paid.
+## 30 Hz because that is above film's 24 -- the convoys still read as travelling,
+## and a camera move is exempt below, so nothing the player DRIVES is slowed.
+const REDRAW_HZ := 30.0
+const REDRAW_INTERVAL := 1.0 / REDRAW_HZ
+
 const LORRY_PX := 3.0
 const SHIP_PX := 4.0
 const CONVOY_COLOR := Color(0.976, 0.898, 0.639, 0.95)
@@ -89,6 +100,11 @@ var _phase_days: float = 0.0
 ## own sentinel.
 var _last_view := Rect2(-1.0, -1.0, -1.0, -1.0)
 var _view := Rect2()
+
+## Wall seconds owed to the next redraw. Wall and not game time: the rate limit
+## is about the frame the player waits on, which does not slow down when they
+## pause the world.
+var _since_redraw: float = 0.0
 
 
 func _ready() -> void:
@@ -213,12 +229,46 @@ func _process(delta: float) -> void:
 	if not _is_showing():
 		return
 
-	# Poll-behind-a-change-test, minimap.gd's pattern: while the clock runs the
-	# phase moved, so this redraws; while it is paused only a pan or a zoom does.
+	# Poll-behind-a-change-test, minimap.gd's pattern: nothing here is signalled,
+	# so the camera is compared and the clock is asked, once a frame.
 	var view: Rect2 = _map_view.visible_lonlat_rect()
-	if view != _last_view or not bool(_clock.paused):
-		_last_view = view
+	var view_changed: bool = view != _last_view
+	_last_view = view
+	if _redraw_due(delta, view_changed, bool(_clock.paused)):
 		queue_redraw()
+
+
+## THE REDRAW DECISION, LIFTED OUT OF _process SO A CHECK CAN ASK IT. The cap is
+## what brings G4 and G5 inside their gates, which makes its CADENCE load-bearing
+## and not a detail -- and queue_redraw() leaves nothing a headless test can read
+## back afterwards. So the decision is a function with an answer instead:
+## tests/test_map_flows.gd asks this one directly. It owns _since_redraw.
+func _redraw_due(delta: float, view_changed: bool, paused: bool) -> bool:
+	# A camera move is EXEMPT from the rate limit and redraws on the frame it
+	# happens: this control sits on the map, so an arc that arrives a frame after
+	# the coastline it is drawn over reads as the two layers coming apart. It is
+	# checked before the pause test because panning a paused map still moves the
+	# picture.
+	if view_changed:
+		_since_redraw = 0.0
+		return true
+	# While the clock is paused nothing but the camera can move the picture, so
+	# there is nothing to redraw for -- the same freeze tools/screenshot.gd
+	# --paused depends on.
+	if paused:
+		return false
+
+	_since_redraw += delta
+	if _since_redraw < REDRAW_INTERVAL:
+		return false
+	# The REMAINDER is kept and not zeroed, so the average rate stays REDRAW_HZ
+	# instead of drifting down by one frame's worth on every tick. fmod and not a
+	# subtraction, because a frame longer than the interval would otherwise leave
+	# a backlog and redraw on every frame until it was paid off -- a stall would
+	# turn the rate limit off exactly when the frame could least afford it. A
+	# redraw is a state, not an event queue: there is nothing to catch up on.
+	_since_redraw = fmod(_since_redraw, REDRAW_INTERVAL)
+	return true
 
 
 ## Arcs and convoys ride the trade layer; roads do not. A hidden control's

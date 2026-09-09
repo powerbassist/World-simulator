@@ -131,6 +131,64 @@ polyline-LOD lever was not reached for: the band held under the measurement.**
 The probe's inventory at the new roster: world 145/231/9 460, roster 29/157/
 9 370, regions 213/641/18 778, cities drawn 1 065.
 
+**V3.4's four gates, declared before any draw and measured after** (the
+per-frame animated roads projected above did not happen: roads ride
+`map_view`'s own event-driven pass, and the only animated surface is the flows
+overlay):
+
+| gate | declared | measured |
+|---|---|---|
+| G3 map band with roads, everything visible, 1440p vsync off | ≤ 8.0 ms | **6.94–7.88 ms** |
+| G4 flows overlay alone, TRADE layer, deep zoom | ≤ 1.5 ms | **0.59 ms** (2.55 − 1.96) |
+| G5 worst combined frame, the overlay animating over everything visible | ≤ 11.0 ms | **8.88 ms** |
+| G6 clock health with the overlay running | ~0.999 days/sec | **1.000 days/sec** |
+
+**Two of them failed first, and the number that forced the fix is the reason to
+write these down.** Redrawing the overlay on every frame, G4 measured
+**3.01 ms** (2.0× its gate) and G5 **13.73 ms** (1.25× its gate). The cost is
+the `_draw()` re-record and not its pixels — the same picture drawn once and
+then only re-submitted priced between −0.03 and 0.43 ms across runs, which is
+this pair's own run-to-run spread.
+Which part of the re-record dominates was not profiled. The design's named
+fallback was taken: `src/ui/map_flows.gd` rate-limits its own `queue_redraw()`
+to `REDRAW_HZ` (30), a camera move exempted so the overlay never lags the
+coastline it is drawn over, and the table above is the re-measurement.
+**A cap buys how OFTEN the frame is paid, not what it costs**: the worst single
+frame at the opening fit is still 13.69 ms — inside the 16.67 ms budget, but
+without the 1.5× headroom G5 was written to keep. A cheaper `_draw_convoys()`
+is the lever left on the table.
+
+**The instrument was wrong before any of this was true, and the wrong answer was
+a pass.** The gate rows first sampled with the clock PAUSED, and `map_flows`
+only queues a redraw while the clock runs — so they priced an already-recorded
+canvas item and reported the overlay at **0.24 ms** in the run that exposed it. `tools/frame_probe.gd` now
+carries a `"run"` key for the rows that must pay the per-frame re-record, prints
+the clock regime beside every sample, and flags a sample that an event decision
+paused mid-way.
+
+**The game opens on the overlay's expensive branch.** `map_flows` draws arcs
+below `CITY_MIN_ZOOM` (2.0) and convoys at or above it; the opening fit is 2.08.
+So the default view is convoys with every spine on screen and nothing for the
+cull to remove, which is what makes G5's row the worst frame rather than a
+corner case. The arc branch — the one the game does not open on — measured
+**8.34 ms** at min_zoom with the clock running and the cap in place, against the
+7.39 ms the same map row costs with the overlay off.
+
+The split that made the rest of it possible: `map_view.gd` stays event-driven
+and `src/ui/map_flows.gd` is a separate `Control` that redraws itself. Animating
+inside `_draw()` would have re-recorded all eight passes to move a lorry — the
+overlay's own re-record alone cost 3.01 ms at max zoom, and the map's is the
+6.94–7.88 ms band G3 measures.
+
+**One reading that is not a gate and should not be lost with the run that found
+it:** the probe's last clock window — max zoom, overlay on — is voided in every
+run so far by an event decision arriving, and around that arrival the process
+accumulates ~15 s of wall time the engine never counts as frame delta (15.78 s
+wall against 0.72 s counted, in four runs out of four). The clock is healthy per
+counted second in every clean window, which is why the wall figure that window
+prints (0.063 days/sec) is a stall and not a dead clock — the probe now prints
+both rates so the two cannot be confused. **The stall itself has no owner.**
+
 ## 5. Refusals, recorded where the next session will look
 
 - **Per-tile raster LOD** — the tier's "expensive option". The raster is one quad; fill
@@ -172,7 +230,21 @@ from:
 - **V3.3 (each roster tranche):** re-run `tools/frame_probe.gd`; the §4 projection is
   arithmetic until then. The instrument's clock windows now carry pause state, so the
   P4 artifact cannot recur as a false render number.
-- **V3.4 (roads, arcs, convoys):** animated layers re-record per frame; build on the
-  viewport-bounded property (cull first, transform second). The minimap's change-test
-  pattern is the precedent for any surface that mirrors the camera.
+- **V3.4 (roads, arcs, convoys) — DISCHARGED.** The animated layer is its own
+  control, culls in degrees before it projects, and runs only while the TRADE
+  layer is selected, the clock is unpaused, **and its own cap says the frame is
+  due** — `map_flows.REDRAW_HZ` is 30, with a camera move exempt so the overlay
+  never lags the coastline it is drawn over. The cap is not a polish pass: at
+  60 Hz the overlay measured 2.0× over G4 and put the whole frame 1.25× over G5
+  (§4), so it is the thing that makes two of the four gates pass, and its
+  cadence is therefore load-bearing. `tests/test_map_flows.gd` asserts that
+  cadence directly — at ~REDRAW_HZ and not at the frame rate, one redraw and not
+  a burst out of a 0.5 s stall, no drift below the rate over the long run —
+  because a `queue_redraw()` leaves nothing readable behind afterwards.
+  §4 carries the four gates.
+- **V3.5 onward:** any further animated surface uses the same split, and budgets
+  its redraw RATE before it budgets its draw: the cost here is paid per
+  re-record, so how often is the only lever a cap gives you, and 60 Hz was not
+  affordable. An eighth pass inside `map_view._draw()` that needs to move is a
+  pass in the wrong file.
 - **V3.3 watch-point:** `_nation_at_lonlat` bbox pre-reject (§5).

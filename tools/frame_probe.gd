@@ -64,6 +64,7 @@ var _clock_delta := 0.0
 var _clock_pause_log: Array = []
 var _last_logged_paused := false
 var _clock_t0 := 0
+var _sample_running := false
 
 
 func _initialize() -> void:
@@ -93,10 +94,47 @@ func _build_configs() -> void:
 		{"label": "1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
 		{"label": "1440 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "minimap": true, "size": SIZE_BIG, "vsync": false},
 	]
+	# V3.4's four gates, declared in the plan before any draw landed.
+	# G3: the map's own event-driven band with the spine pass live. The
+	# everything-visible band is the case with no headroom to spare, so it is
+	# measured at the opening fit and at the crosses zoom, not at max.
+	_configs.append({"label": "G3 1440 opening fit, roads", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	_configs.append({"label": "G3 1440 crosses 2.98, roads", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	# G4: the overlay alone. Measured as the difference between these two rows,
+	# which is the attribution method the minimap rows above already use.
+	_configs.append({"label": "G4 1440 max_zoom, convoys off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	_configs.append({"label": "G4 1440 max_zoom, convoys on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true})
+	# G5: the worst frame the game can actually show -- everything visible AND
+	# the overlay animating over it.
+	#
+	# LABELLED "convoys" AND NOT "arcs", because the opening fit is on the convoy
+	# side of the branch: map_flows draws arcs below map_view.CITY_MIN_ZOOM (2.0)
+	# and convoys at or above it, and the fit is 2.08. The game therefore OPENS in
+	# the overlay's expensive branch, with every spine in view and nothing for the
+	# cull to remove -- which is what makes this row the worst frame rather than a
+	# corner case. The arc branch gets its own row below, at min_zoom, so the
+	# cheap half of the overlay is measured instead of assumed.
+	_configs.append({"label": "G5 1440 opening fit, convoys", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true})
+	# The five rows above hold the clock, so the overlay draws ONCE and the rows
+	# price its pixels, not its animation. The four below run the clock, which is
+	# the only state in which map_flows queues a redraw at all -- the cost G4 and
+	# G5 are actually declared against. Both halves are kept because the
+	# difference between them IS the re-record, and naming it separates a fill
+	# problem from a script problem for whoever reads this next.
+	_configs.append({"label": "G4 max_zoom off, clock run", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true})
+	_configs.append({"label": "G4 max_zoom convoys, clock run", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	_configs.append({"label": "G5 1440 fit convoys, clock run", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	_configs.append({"label": "G5 1440 min_zoom arcs, run", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
+	# G6: the one that matters most. V3's own opening complaint is that map
+	# render cost eats the clock (0.50 days/sec at max zoom, pre-cull). An
+	# always-running 60 Hz redraw is that failure mode's exact shape returning,
+	# so it is measured under the same regime rather than argued about.
+	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 fit convoys", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
+	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 max convoys", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
 
 
 ## Absolute day count for one clock date -- clock.gd's own month lengths, so a
@@ -131,14 +169,18 @@ func _print_inventory() -> void:
 		_main._map_view._cities.size(), _main._map_view._markers.size()])
 
 
-func _set_zoom(target: float) -> void:
-	var mv = _main._map_view
-	mv._zoom = clampf(target, mv.min_zoom(), mv.MAX_ZOOM)
-	mv.center_on_lonlat(CENTER_LON, CENTER_LAT)
+func _set_zoom(z: float) -> void:
+	_main._map_view.set_zoom_for_test(z)
+	_main._map_view.center_on_lonlat(CENTER_LON, CENTER_LAT)
 
 
 func _apply_config(cfg: Dictionary) -> void:
-	_main._clock.paused = not bool(cfg.get("clock", false))
+	# V3.4. A frame sample of the flows overlay MUST run the clock. map_flows
+	# only queues a redraw while the clock is unpaused, so a paused sample
+	# measures an already-recorded canvas item and reports the animated cost as
+	# near zero. "run" marks the rows that pay the per-frame re-record.
+	_sample_running = bool(cfg.get("run", false))
+	_main._clock.paused = not (bool(cfg.get("clock", false)) or _sample_running)
 	if Vector2i(root.size) != Vector2i(cfg["size"]):
 		root.size = Vector2i(cfg["size"])
 		_settle_left = RESIZE_SETTLE_FRAMES
@@ -148,6 +190,12 @@ func _apply_config(cfg: Dictionary) -> void:
 		DisplayServer.VSYNC_ENABLED if bool(cfg["vsync"]) else DisplayServer.VSYNC_DISABLED)
 	_main._map_view.visible = bool(cfg["map"])
 	_main._minimap.visible = bool(cfg["minimap"])
+	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer
+	# gate rather than by a node; the flows overlay is its own control and is
+	# toggled by visibility AND by the layer, because it only animates on TRADE.
+	_main._map_view.set_layer("trade" if bool(cfg.get("flows", false)) else "political")
+	if _main._map_flows != null:
+		_main._map_flows.visible = bool(cfg.get("flows", false))
 	_set_zoom(float(cfg["zoom"]))
 
 
@@ -155,6 +203,7 @@ func _start_sample(label: String) -> void:
 	_current = {
 		"label": label, "frames": 0, "delta": 0.0, "max_ms": 0.0,
 		"calls": 0.0, "prims": 0.0,
+		"running": _sample_running, "paused_seen": false,
 	}
 	_phase = "settle_sample"
 
@@ -203,6 +252,12 @@ func _process(delta: float) -> bool:
 			if _settle_left <= 0:
 				_phase = "sample"
 		"sample":
+			# An event arrival pauses the clock (main.gd sets it on a decision),
+			# which freezes the overlay mid-sample and would understate the very
+			# cost the row exists to measure. Recorded, on the clock window's
+			# own precedent, rather than left to look like a good number.
+			if _sample_running and bool(_main._clock.paused):
+				_current["paused_seen"] = true
 			_current["frames"] = int(_current["frames"]) + 1
 			_current["delta"] = float(_current["delta"]) + delta
 			_current["max_ms"] = maxf(float(_current["max_ms"]), delta * 1000.0)
@@ -241,8 +296,13 @@ func _start_clock_window(label: String) -> void:
 func _finish_clock_window() -> void:
 	var secs := (Time.get_ticks_msec() - _clock_t0) / 1000.0
 	var fps := float(_clock_frames) / maxf(_clock_delta, 0.0001)
-	print("days=%d over %.2fs -> %.3f days/sec   fps=%.1f   paused_at_end=%s deciding=%s" % [
-		_clock_days, secs, float(_clock_days) / secs, fps,
+	# Two rates, because they disagree when the process is descheduled. The
+	# clock is time-based on the frame delta it is HANDED, so wall time that the
+	# engine never counted as delta is time the clock could not have used: a
+	# suspension shows up as a dead clock unless both are printed.
+	print("days=%d over %.2fs wall (%.2fs counted) -> %.3f days/sec wall, %.3f counted   fps=%.1f   paused_at_end=%s deciding=%s" % [
+		_clock_days, secs, _clock_delta,
+		float(_clock_days) / secs, float(_clock_days) / maxf(_clock_delta, 0.0001), fps,
 		_main._clock.paused, _main._paused_for_decision])
 	for entry in _clock_pause_log:
 		print("  pause change @%.2fs: paused=%s deciding=%s" % [
@@ -251,11 +311,16 @@ func _finish_clock_window() -> void:
 
 
 func _report() -> void:
-	print("--- frame samples (%d frames each, clock paused, vsync off unless labelled) ---" % FRAMES_PER_SAMPLE)
-	print("%-28s %8s %8s %8s %9s %11s" % [
-		"config", "avg ms", "max ms", "fps", "drawcalls", "primitives"])
+	# The clock column and not the header carries the pause state, because the
+	# rows no longer agree about it: the gate rows that must animate run it.
+	print("--- frame samples (%d frames each, vsync off unless labelled) ---" % FRAMES_PER_SAMPLE)
+	print("%-32s %8s %8s %8s %9s %11s  %s" % [
+		"config", "avg ms", "max ms", "fps", "drawcalls", "primitives", "clock"])
 	for s in _samples:
 		var avg_ms := float(s["delta"]) / float(s["frames"]) * 1000.0
 		var fps := float(s["frames"]) / maxf(float(s["delta"]), 0.0001)
-		print("%-28s %8.2f %8.2f %8.1f %9.0f %11.0f" % [
-			s["label"], avg_ms, float(s["max_ms"]), fps, s["calls"], s["prims"]])
+		var regime := "paused"
+		if bool(s.get("running", false)):
+			regime = "PAUSED MID-SAMPLE" if bool(s.get("paused_seen", false)) else "running"
+		print("%-32s %8.2f %8.2f %8.1f %9.0f %11.0f  %s" % [
+			s["label"], avg_ms, float(s["max_ms"]), fps, s["calls"], s["prims"], regime])

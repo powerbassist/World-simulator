@@ -34,6 +34,7 @@ func _process(_delta: float) -> bool:
 	_check_not_a_layer()
 	_check_cull_by_count()
 	_check_pause_freezes()
+	_check_redraw_is_rate_limited()
 	_check_convoys_store_nothing()
 	_report()
 	return true
@@ -114,6 +115,83 @@ func _check_pause_freezes() -> void:
 	flows._process(0.5)
 	if flows.phase_days() <= before:
 		_fail("phase did not advance with the clock running")
+
+
+## THE CAP IS WHAT MAKES TWO GATES PASS, so it is asserted and not trusted.
+## Measured with the overlay redrawing every frame: G4 3.01 ms against a 1.5 ms
+## gate, G5 13.73 ms against 11.0 (docs/map-platform-model.md section 4). That
+## makes the CADENCE load-bearing, not just the on/off the check above covers --
+## and queue_redraw() leaves nothing a headless run can read back, which is why
+## map_flows lifted the decision into _redraw_due() for this check to ask.
+func _check_redraw_is_rate_limited() -> void:
+	var flows = _main.get("_map_flows")
+	if flows == null:
+		return
+	var hz: float = float(flows.REDRAW_HZ)
+	var frame_60: float = 1.0 / 60.0
+
+	# 1. AT REDRAW_HZ, NOT AT THE FRAME RATE. 120 frames of 1/60 is two seconds,
+	# so a still view on a running clock owes 2 * REDRAW_HZ redraws -- about half
+	# the frames, which is the whole point.
+	flows._since_redraw = 0.0
+	var fired: int = 0
+	for i in 120:
+		if flows._redraw_due(frame_60, false, false):
+			fired += 1
+	var want: int = int(2.0 * hz)
+	if absi(fired - want) > 3:
+		_fail("60 fps for 2 s queued %d redraws, expected ~%d at REDRAW_HZ=%.0f" % [fired, want, hz])
+
+	# 2. ONE LONG FRAME IS ONE REDRAW, NOT A BURST. Subtracting the interval
+	# instead of fmod-ing it leaves a 0.5 s stall holding fourteen intervals of
+	# backlog and paying them off on consecutive frames -- the rate limit turning
+	# itself off exactly where the frame can least afford it. At 60 fps the cap
+	# allows one redraw every other frame, so five frames may hold at most three.
+	flows._since_redraw = 0.0
+	var stalled: bool = flows._redraw_due(0.5, false, false)
+	var after: int = 0
+	for i in 5:
+		if flows._redraw_due(frame_60, false, false):
+			after += 1
+	if not stalled:
+		_fail("a 0.5 s frame queued no redraw")
+	if after > 3:
+		_fail("the 5 frames after a 0.5 s stall queued %d redraws -- the accumulator burst its backlog" % after)
+
+	# 3. THE REMAINDER SURVIVES, so the long-run average does not drift below
+	# REDRAW_HZ. 0.019 s is 52.6 fps and divides into no whole number of
+	# intervals: zeroing the accumulator can then only fire every second frame,
+	# 26.3 Hz -- a sixth slow, and no single frame would look wrong.
+	flows._since_redraw = 0.0
+	var frames: int = 300
+	var d: float = 0.019
+	var long_fired: int = 0
+	for i in frames:
+		if flows._redraw_due(d, false, false):
+			long_fired += 1
+	var rate: float = float(long_fired) / (float(frames) * d)
+	if rate < hz - 1.0:
+		_fail("over %.1f s at %.0f fps the redraw averaged %.1f Hz against REDRAW_HZ=%.0f -- the accumulator's remainder is being dropped" % [float(frames) * d, 1.0 / d, rate, hz])
+
+	# 4. A CAMERA MOVE IS EXEMPT, twice in a row, because the exemption is only
+	# worth anything if the cap does not gate it: an arc arriving a frame after
+	# the coastline under it reads as the two layers coming apart.
+	flows._since_redraw = 0.0
+	if not flows._redraw_due(frame_60, true, false):
+		_fail("a camera move queued no redraw")
+	if not flows._redraw_due(frame_60, true, false):
+		_fail("a camera move on the very next frame queued no redraw -- the rate limit is gating the camera")
+
+	# 5. PAUSE STILL FREEZES IT. _check_pause_freezes above asserts the phase
+	# stops; Task 4's review noted nothing asserted the REDRAW stops, which is
+	# what tools/screenshot.gd --paused actually depends on for pixel identity.
+	flows._since_redraw = 0.0
+	var while_paused: int = 0
+	for i in 120:
+		if flows._redraw_due(frame_60, false, true):
+			while_paused += 1
+	if while_paused != 0:
+		_fail("%d redraws queued over 2 s of a paused clock with the view still" % while_paused)
 
 
 ## A CONVOY IS A PURE FUNCTION OF (edge, index, phase) AND STORES NOTHING. That
