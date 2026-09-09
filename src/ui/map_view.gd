@@ -768,8 +768,18 @@ func _draw_world_borders() -> void:
 func _draw_roster() -> void:
 	var view := visible_lonlat_rect()
 	var viewer := viewer_id()
+
+	# One pass for every fill on the layer, rather than one call per nation.
+	# What that buys is a trade-layer measurement: swatch() reads the viewer's
+	# partner vector twice per nation, so the per-nation form paid fifty-eight
+	# Trade.weights() builds to fill twenty-nine countries. See MapLayers.fills().
+	# A fill depends on the layer, the state and the viewer and on NOTHING the
+	# camera does, so hoisting it out of this loop cannot change when a colour
+	# updates -- it is still derived once per re-record, exactly as before.
+	var fills := MapLayers.fills(_layer, _state, viewer, _polygons.keys())
+
 	for id in _polygons.keys():
-		var color := MapLayers.color_for(_layer, _state, viewer, id)
+		var color: Color = fills[id]
 
 		# Brass for the nation the player governs, thicker white under the cursor,
 		# the plain coastline otherwise. The home mark wins a collision: hovering

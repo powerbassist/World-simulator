@@ -237,6 +237,65 @@ static func color_for(layer_id: String, state, viewer_id: String, nation_id: Str
 	return color
 
 
+## Every roster fill for one layer, derived in one pass. _draw_roster() calls
+## this instead of color_for() per nation, and the reason is a measurement
+## rather than tidiness.
+##
+## swatch() on the TRADE layer reads the viewer's partner vector TWICE per
+## nation -- once through value() for the share, once through
+## trade_even_share() for the anchor it is measured against -- and
+## Trade.weights() builds that whole vector from scratch each time, walking
+## every partner through a gravity term, shared_bonus() over live org
+## membership, relations, agreements and measures. At twenty-nine nations that
+## is FIFTY-EIGHT full vector builds to fill one roster, for a quantity that is
+## the same vector all fifty-eight times. Derived once here, it is one.
+##
+## Why this was invisible until V3.4: the map re-records on hover, pan, zoom and
+## the monthly tick, so the cost landed inside the run-to-run spread of an
+## event-driven redraw. A drag re-records EVERY FRAME, and at that rate the
+## trade layer measured ~14-17 ms per re-record above the political one, which
+## pays nothing here at all (a political fill is a hash of the nation id).
+##
+## Still stateless and still pure -- nothing is cached in this file. The caller
+## owns when a fill is derived exactly as it owned when color_for() was called,
+## so a fill can no more go stale than it could before.
+static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array) -> Dictionary:
+	var out: Dictionary = {}
+
+	# Every other layer reads a per-PAIR datum -- a relations score, a severity
+	# on the pair -- so there is nothing shared across nations to hoist, and
+	# going through color_for() keeps one definition of what a fill is rather
+	# than a second copy of swatch()'s branches that could drift from it.
+	# state == null takes this path too: value() answers NAN there and swatch()
+	# returns NO_VALUE, which is reached without building any vector.
+	if layer_id != TRADE or state == null:
+		for id in nation_ids:
+			var nation_id := String(id)
+			out[nation_id] = color_for(layer_id, state, viewer_id, nation_id)
+		return out
+
+	# The one vector. value() reads exactly this dictionary and
+	# trade_even_share() exactly this size, so the colour below is the colour
+	# swatch() would have returned -- tests/test_map_layers.gd pins that
+	# equality rather than trusting this comment.
+	var weights: Dictionary = Trade.weights(state, viewer_id)
+	var even := 1.0 / float(maxi(1, weights.size()))
+	var trade_alpha := alpha(TRADE)
+	for id in nation_ids:
+		var nation_id := String(id)
+		var color: Color
+		if is_viewer(viewer_id, nation_id):
+			color = NO_VALUE
+		else:
+			# get(..., 0.0) is value()'s own default: a roster nation absent from
+			# the vector trades nothing with the viewer, which is a real zero on
+			# this ramp and not a missing datum.
+			color = ramp_trade(float(weights.get(nation_id, 0.0)), even)
+		color.a = trade_alpha
+		out[nation_id] = color
+	return out
+
+
 ## The same colour at full opacity -- what a legend swatch and a test compare.
 ## Split from color_for() so a stop's swatch is provably the colour the map draws
 ## rather than a second table someone has to keep in step.

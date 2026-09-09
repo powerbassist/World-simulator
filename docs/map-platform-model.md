@@ -176,3 +176,116 @@ from:
   viewport-bounded property (cull first, transform second). The minimap's change-test
   pattern is the precedent for any surface that mirrors the camera.
 - **V3.3 watch-point:** `_nation_at_lonlat` bbox pre-reject (§5).
+
+## 8. The dragged frame: what the re-record actually walks
+
+V3.4 measured a **dragged** frame at 97.75-99.42 ms on the trade layer against
+7.35-7.78 ms with the camera held still. The still figure prices a canvas item the
+engine has already recorded; the dragged one prices building it again. Everything
+below is about that rebuild.
+
+The two halves V3.4 separated by measurement: `map_view`'s own re-record at ~69 ms
+(76.3-76.8 ms dragging with no overlay, minus the still 7.35-7.78), and the trade
+layer's roster fill at ~14-17 ms above the political one.
+
+### The roster fill, fixed
+
+`MapLayers.swatch()` on TRADE read the viewer's partner vector **twice per nation** --
+once through `value()` for the share, once through `trade_even_share()` for the anchor
+it is measured against -- and `Trade.weights()` rebuilds that vector from scratch each
+time. Twenty-nine nations, **fifty-eight full vector builds per re-record**, for a
+quantity that is the same vector all fifty-eight times.
+
+`MapLayers.fills()` derives the whole roster in one pass: **one** build. `_draw_roster()`
+calls it once instead of `color_for()` per nation. The layer, the state and the viewer
+are the only inputs -- a fill depends on nothing the camera does -- so this changes when
+a colour updates not at all, and no cache and no new staleness class is introduced.
+`tests/test_map_layers.gd` pins `fills()` against `color_for()` over every registered
+layer and every roster nation from two viewers, exactly rather than approximately,
+plus the null-state path.
+
+> [!warning] Unmeasured as committed
+> This was written and reasoned but **not re-run against the PAN rows** -- the session
+> that made the change had no Godot and no renderer available, so it has no before/after
+> number of its own and claims none. The prediction to falsify: the trade PAN row loses
+> most of its ~14-17 ms gap over the political one, and the political PAN row does not
+> move at all (a political fill is a hash of the nation id and never touched
+> `Trade.weights()`).
+
+### Where the other ~69 ms goes: counted, not profiled
+
+Not a profile -- the counts below are exact, derived from the committed geometry
+(`data/geo/*.geojson` read through `_outer_ring()`, which keeps the outer ring of each
+polygon and drops the holes), and they agree with §4's inventory. **What no line here
+claims is a share of the 69 ms in milliseconds.** That attribution is the probe's, and
+the probe has not been run on it.
+
+At the opening fit, zoom 2.08, culling has nothing to remove, so every ring is walked:
+
+| pass | `_ring_reaches_view()` calls | points walked |
+|---|---|---|
+| `_draw_world_borders` | 231 | 9 460 |
+| `_draw_roster` base fill | 157 | 9 370 |
+| `_draw_roster` region fills | 641 | 18 778 |
+| `_draw_roster` national stroke | 157 | 9 370 |
+| **per re-record** | **1 186** | **46 978** |
+
+Two findings, both of them counted redundant work rather than a guess about time:
+
+- **The cull test recomputes a constant.** `_ring_reaches_view()` walks every point of
+  a ring to derive its lon/lat bounding box, on every call, on every frame -- and its
+  own docstring says why it need not: *"Static geometry (loader data never mutates)."*
+  That is **46 978 point visits and ~188 000 `minf`/`maxf` calls per re-record spent
+  deriving numbers that were fixed at load.** The fix has a precedent in the same file:
+  `_nation_boxes`, built once in `setup()` for V3.3's hit-test pre-reject, from the same
+  arrays the test walks so the two cannot disagree.
+
+  This is also why V3.1's cull did not expose it. Culling saves a rejected ring's
+  projection, its appends, its draw call and its rasterisation -- everything except the
+  walk that decides to reject it. So the walk is a **floor that does not vary with
+  zoom**, and deep zoom, where culling wins, is precisely where it is hardest to see.
+
+- **The roster outline is projected twice.** `_draw_roster()` builds `base_points` from
+  `_polygons[id]` for the same-hue base fill, then builds `stroke_points` from the same
+  rings for the national stroke -- same input, same projection, same output, discarded
+  and recomputed. **9 370 of the 46 978 point visits and 9 370 of the projections per
+  re-record are exact duplicates.** The two-pass fill/hairline order §4's comment
+  defends is about the *region* rings and is not what this is; reusing one projected
+  array for both national passes leaves every draw call in the order it is in today.
+
+Every projected point also costs a `_lonlat_to_screen()` call, which itself calls
+`_control_center()`, plus a `PackedVector2Array.append()`: **46 978 projections and
+~94 000 GDScript-level calls per re-record** before any of it reaches the renderer.
+
+### Ruled out as the ~69 ms
+
+- **The city glyph loop.** 1 065 glyphs, a handful of draw calls each, and no per-point
+  ring walk anywhere in it -- an order of magnitude below the 46 978 above. Not zero,
+  not this.
+- **`refresh_cities()`.** Not on the draw path at all: monthly since V2.6b1, and the
+  comment there records why it was moved off.
+- **`_draw_labels`.** Twenty-nine strings, gated on `LABEL_MIN_ZOOM`.
+- **`_draw_raster`.** One `draw_texture_rect`; §5 already killed per-tile raster LOD on
+  a fill-rate measurement.
+- **`_refresh_markers()`.** Walks started projects, of which there are a handful.
+- **Throttling the redraw during a drag.** Refused, not deferred. A map that lags the
+  cursor is a worse defect than a slow frame, and it is the trade V3.4 declined for its
+  own overlay.
+
+### What to measure next, and how
+
+Both findings are behaviour-preserving by construction, so each is a small revertable
+patch and one PAN row prices it:
+
+1. Precompute the ring bounding boxes in `setup()` (`_nation_boxes`' shape, keyed the
+   way the ring arrays are keyed), have `_ring_reaches_view()` read them, and re-run the
+   PAN rows. `tests/test_map_cull.gd` calls the predicate directly over arbitrary
+   feature sets, so it must be extended to assert the precomputed box agrees with the
+   walk -- otherwise the suite would cover less than it appears to, which is the failure
+   class `tools/run_tests.sh` has shipped four times.
+2. Project the roster outline once and use it for both the base fill and the national
+   stroke; re-run the PAN rows.
+
+Acceptance for either is §6's method unchanged: same-tree, files toggled, clock frozen,
+pixel identity at min/fit/cross/max. Neither changes a drawn pixel, so a non-zero
+differing-byte count is a defect and not a tuning question.

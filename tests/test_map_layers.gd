@@ -51,6 +51,51 @@ func _run() -> void:
 	_check_legend_swatches_match_the_map()
 	_check_readout_says_what_each_layer_may_claim()
 	_check_coercion_is_summed_not_netted()
+	_check_fills_match_the_per_nation_form()
+
+
+## fills() exists to make a DRAG affordable, and the only way it may do that is
+## by returning the colour color_for() would have returned. It reaches the same
+## ramp by a different route -- one Trade.weights() build read for every nation
+## instead of two builds per nation -- so nothing but this equality stops the
+## two from drifting into different maps.
+##
+## Over EVERY registered layer, not just trade: fills() branches on the layer
+## id, and a branch that is only exercised on the layer somebody was thinking
+## about is the shape of check this project has shipped broken four times.
+## Colour equality is exact rather than approximate -- both sides run the same
+## float arithmetic on the same inputs, so anything less than exact means the
+## two forms genuinely disagree.
+func _check_fills_match_the_per_nation_form() -> void:
+	var state = _main._state
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	if ids.size() < 2:
+		_fail("the roster is too small to compare fills against (%d)" % ids.size())
+		return
+
+	for viewer_id: String in [String(ids[0]), String(ids[ids.size() - 1])]:
+		for layer_id: String in MapLayers.ids():
+			var bulk := MapLayers.fills(layer_id, state, viewer_id, ids)
+			if bulk.size() != ids.size():
+				_fail("fills() returned %d colours for %d nations on '%s'" % [
+					bulk.size(), ids.size(), layer_id])
+				continue
+			for id in ids:
+				var nation_id := String(id)
+				var one := MapLayers.color_for(layer_id, state, viewer_id, nation_id)
+				var many: Color = bulk.get(nation_id, Color(0, 0, 0, 0))
+				if many != one:
+					_fail("fills() disagrees with color_for() on '%s' for %s seen from %s: %s vs %s" % [
+						layer_id, nation_id, viewer_id, many, one])
+
+	# A null state is a real path -- the map draws before setup() hands it one --
+	# and it must not reach Trade.weights() with nothing to read.
+	var empty := MapLayers.fills(MapLayers.TRADE, null, String(ids[0]), ids)
+	for id in ids:
+		var nation_id := String(id)
+		if empty.get(nation_id) != MapLayers.color_for(MapLayers.TRADE, null, String(ids[0]), nation_id):
+			_fail("fills() over a null state disagrees with color_for() for %s" % nation_id)
 
 
 ## The contract that let U5c run before V1.3c: adding a layer is one entry in
