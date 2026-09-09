@@ -20,10 +20,12 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
+const MapNetwork = preload("res://src/ui/map_network.gd")
 
 signal layer_selected(layer_id: String)
 
 const SWATCH_SIZE := Vector2(22, 12)
+const KEY_SIZE := Vector2(22, 8)
 
 ## Wide enough that the hover readout's longest form -- "NLD  11.1% of FRA's
 ## demand" -- does not resize the plate as the cursor crosses the map. A legend
@@ -32,6 +34,7 @@ const MIN_WIDTH := 196
 
 var _buttons := {}          ## layer id -> Button
 var _stops: VBoxContainer
+var _key: VBoxContainer
 var _caption: Label
 var _readout: Label
 var _layer := MapLayers.POLITICAL
@@ -70,6 +73,15 @@ func _ready() -> void:
 	_stops = VBoxContainer.new()
 	_stops.add_theme_constant_override("separation", 2)
 	column.add_child(_stops)
+
+	# V3.4. Always present, on every layer, because the roads are: they are
+	# geography rather than a view of it. Two rows and no toggle -- a switcher
+	# for a thing that is always on is a control that only ever says yes.
+	_key = VBoxContainer.new()
+	_key.add_theme_constant_override("separation", 2)
+	column.add_child(_key)
+	_key.add_child(_key_row(false, "road"))
+	_key.add_child(_key_row(true, "ferry"))
 
 	_caption = Label.new()
 	_caption.theme_type_variation = UiTheme.CAPTION
@@ -142,6 +154,35 @@ func _stop_row(at: float, text: String, trade_even := -1.0) -> Control:
 	label.text = text
 	row.add_child(label)
 
+	return row
+
+
+## One key row. The sample is drawn with MapNetwork's own colour and dash rather
+## than a literal here, for the same reason _stop_row() takes its swatch from
+## MapLayers.ramp(): a stroke edit must not leave the legend showing the old one.
+func _key_row(dashed: bool, text: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+
+	var sample := Control.new()
+	sample.custom_minimum_size = KEY_SIZE
+	sample.draw.connect(func():
+		var y := KEY_SIZE.y / 2.0
+		if dashed:
+			var x := 0.0
+			while x < KEY_SIZE.x:
+				var to_x: float = minf(x + MapNetwork.DASH_PX, KEY_SIZE.x)
+				sample.draw_line(Vector2(x, y), Vector2(to_x, y), MapNetwork.SEA, MapNetwork.WIDTH)
+				x += MapNetwork.DASH_PX + MapNetwork.GAP_PX
+		else:
+			sample.draw_line(Vector2(0, y), Vector2(KEY_SIZE.x, y), MapNetwork.LAND, MapNetwork.WIDTH)
+	)
+	row.add_child(sample)
+
+	var label := Label.new()
+	label.theme_type_variation = UiTheme.MICRO
+	label.text = text
+	row.add_child(label)
 	return row
 
 

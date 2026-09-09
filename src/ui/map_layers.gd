@@ -116,7 +116,7 @@ const LAYERS: Array[Dictionary] = [
 		# literals here is how the legend ended up promising "an even ninth" on a
 		# twenty-eight-partner roster.
 		"stops": [],
-		"caption": "Share of your external demand.",
+		"caption": "Share of your external demand. Arcs show direction; convoys ride the roads when you zoom in.",
 	},
 	{
 		"id": COERCION,

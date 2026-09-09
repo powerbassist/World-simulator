@@ -1050,6 +1050,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_map_view.refresh_cities()
 		_map_view.queue_redraw()
 
+		# Same monthly hook and the same reason as the city list beside it: a
+		# trade weight moves with every partner's GDP and an accessibility index
+		# with every region's output share. Without this the convoys keep the
+		# densities they had at new game, which is what "cities grow and shrink
+		# for free" actually did on screen until a screenshot pass looked.
+		if _map_flows != null:
+			_map_flows.refresh()
+
 	# Discipline reads the approval Opinion has just settled, so it goes after
 	# that and before anything that reads a coalition bonus or a censure vote.
 	Discipline.tick_month(_state, _loader)
@@ -1663,6 +1671,11 @@ func _on_load_requested(slot: String) -> void:
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)
+	# A loaded game is a different _state, and an overlay left holding the
+	# throwaway one built at _ready() is the same five-panel drift the V2.8
+	# review found below -- setup(), not refresh(), because the reference itself
+	# is what has to be replaced.
+	_map_flows.setup(_map_view, _clock, _loader, _state)
 
 	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
 	# A panel stores `state` in its own setup(), so one omitted here keeps a
