@@ -158,6 +158,68 @@ frame at the opening fit is still 13.69 ms — inside the 16.67 ms budget, but
 without the 1.5× headroom G5 was written to keep. A cheaper `_draw_convoys()`
 is the lever left on the table.
 
+### The cap covers a STILL camera, and a drag is not covered
+
+Every gate row above sets the camera once and holds it for the whole sample, so
+none of them saw the case the exemption creates. `_redraw_due()` returns true
+unconditionally on a changed view rect, and during a **sustained drag** the view
+rect differs on every frame — so the exemption fires on every frame and the
+overlay is back at the uncapped rate for the length of the gesture. That is not
+a bug in the exemption; it is what the exemption is for. It was measured rather
+than argued: `tools/frame_probe.gd` gained three PAN rows that move the camera
+once per frame through `center_on_lonlat()` — ~8 logical px, the same
+`_clamp_pan()` + `queue_redraw()` pair a real `pan_by()` drag ends in — at the
+opening fit, clock running, 1440p vsync off, 240 frames each.
+
+| row, panning every frame | run 7 avg / max | run 8 avg / max |
+|---|---|---|
+| map alone, political layer, no overlay | 76.78 / 102.93 | 76.30 / 122.83 |
+| trade layer, no overlay | 91.16 / 142.40 | 93.22 / 149.18 |
+| trade layer, convoys on | **97.75** / 128.91 | **99.42** / 130.50 |
+
+**The overlay's own share of a drag is 6.2–6.6 ms** (the third row minus the
+second), against G4's 1.5 ms gate — **4.1–4.4× over**. It is not a new cost: the
+pre-cap uncapped overlay at this same view measured 6.04 ms (13.73 − 7.69), and
+the capped still-camera overlay measures 1.75–2.09 ms. So the cap buys about
+4.5 ms **while the camera is still and nothing while it moves**, exactly as
+written, and the number confirms the mechanism rather than surprising it.
+
+**The whole frame under a drag is 97.75–99.42 ms — 10 fps, 9× G5's 11.0 ms
+gate — and 91–93 of those milliseconds are not the overlay's.** Three
+readings, none of which any earlier row could have produced:
+
+1. **The map's own re-record under a drag is ~69 ms.** The same view, same
+   layer, no overlay, costs 7.35–7.78 ms while the camera is still; a drag
+   re-records it every frame and it costs
+   76.3–76.8 ms, 13 fps. This is `map_view`'s cost, it predates V3.4, and no cap
+   in `map_flows` touches it. It is also the strongest evidence yet FOR the
+   V3.4 split: the file header's claim that animating inside `map_view._draw()`
+   would have been unaffordable now has a number, and the number is 69 ms.
+2. **The trade layer's roster fill costs ~14–17 ms more per re-record than the
+   political one.** `map_layers.swatch()` on TRADE calls `Trade.weights()` twice
+   per nation — `value()` once and `trade_even_share()` once, a full partner
+   vector each — where POLITICAL is a hash into a palette. At event-driven rates
+   that difference hides inside the run-to-run spread; under a per-frame
+   re-record it does not. This is why the pan rows are a triple and not the pair
+   the G4 rows use: a pair that varied the layer and the overlay together would
+   have charged the overlay for the fill.
+3. The three rows agree across two runs to within 2.1 ms, and the pattern
+   reproduced in two earlier two-row runs (76.98/96.55 and 77.11/99.84).
+
+**OPEN ITEM, and deliberately not fixed here.** Capping the camera move would
+close the frame cost and open a worse defect — the overlay detaching from the
+coastline under the cursor, which is the reason the exemption exists. The lever
+that would actually help is the map's re-record, not the overlay's cap, and that
+is `map_view`'s to spend. Nothing was tuned to make this table look better.
+
+**The middle row cannot be sampled clean, and it is structural.** It is flagged
+`PAUSED MID-SAMPLE` in both runs: at ~11 fps a 240-frame sample is 22 seconds of
+running clock, which is long enough that an event decision reliably arrives
+inside it. A decision pause cannot change what that row draws — the redraw comes
+from the camera move, not from the clock — and no ~15 s stall landed inside it
+(its worst frame is 149 ms, not 15 000), so the figure is reported with the flag
+rather than re-taken indefinitely.
+
 **The instrument was wrong before any of this was true, and the wrong answer was
 a pass.** The gate rows first sampled with the clock PAUSED, and `map_flows`
 only queues a redraw while the clock runs — so they priced an already-recorded
@@ -181,10 +243,15 @@ overlay's own re-record alone cost 3.01 ms at max zoom, and the map's is the
 6.94–7.88 ms band G3 measures.
 
 **One reading that is not a gate and should not be lost with the run that found
-it:** the probe's last clock window — max zoom, overlay on — is voided in every
-run so far by an event decision arriving, and around that arrival the process
-accumulates ~15 s of wall time the engine never counts as frame delta (15.78 s
-wall against 0.72 s counted, in four runs out of four). The clock is healthy per
+it:** one of the probe's clock windows is voided in every run so far by an event
+decision arriving, and around that arrival the process accumulates ~15 s of wall
+time the engine never counts as frame delta (15.78 s wall against 0.72 s
+counted, in the first four runs). **It is not always the same window.** The
+first four runs lost the last one (max zoom, overlay on); runs 7 and 8, whose
+pan rows put four extra minutes of wall time in front of the windows, lost the
+FIRST one instead (18.77 s wall against 2.96 s counted, 0.160 days/sec wall
+against 1.014 counted) and all three others came back clean. So the stall
+follows the decision and not the zoom. The clock is healthy per
 counted second in every clean window, which is why the wall figure that window
 prints (0.063 days/sec) is a stall and not a dead clock — the probe now prints
 both rates so the two cannot be confused. **The stall itself has no owner.**
@@ -239,9 +306,23 @@ from:
   (§4), so it is the thing that makes two of the four gates pass, and its
   cadence is therefore load-bearing. `tests/test_map_flows.gd` asserts that
   cadence directly — at ~REDRAW_HZ and not at the frame rate, one redraw and not
-  a burst out of a 0.5 s stall, no drift below the rate over the long run —
-  because a `queue_redraw()` leaves nothing readable behind afterwards.
+  a burst out of a 0.5 s stall, no drift below the rate over the long run, a
+  zero delta inert and a negative one recovering rather than wedging — because a
+  `queue_redraw()` leaves nothing readable behind afterwards.
   §4 carries the four gates.
+  **THE CAMERA EXEMPTION IS UNCAPPED BY CONSTRUCTION, and whoever inherits this
+  pattern has to know it before they copy it.** The exemption is not one-shot:
+  a sustained drag changes the view rect on every frame, so every frame of the
+  gesture takes that branch and the cap is off for the whole of it. Measured
+  (§4): the overlay's share of a dragged frame is 6.2–6.6 ms against G4's
+  1.5 ms, which is the uncapped cost the cap was introduced to avoid, arriving
+  by the exemption's own front door. The exemption stays — an overlay that
+  detaches from the coastline under the cursor is a worse defect than a frame
+  cost — and the same measurement found that ~93 of the dragged frame's ~99 ms
+  is `map_view`'s own re-record and the trade layer's fill, not the overlay.
+  **A cap on a redraw is a cap on the IDLE rate only.** Any surface that exempts
+  an input from its cap has to measure the frame while that input is held, not
+  only while it is still.
 - **V3.5 onward:** any further animated surface uses the same split, and budgets
   its redraw RATE before it budgets its draw: the cost here is paid per
   re-record, so how often is the only lever a cap gives you, and 60 Hz was not

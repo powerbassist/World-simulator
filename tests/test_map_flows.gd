@@ -173,14 +173,22 @@ func _check_redraw_is_rate_limited() -> void:
 	if rate < hz - 1.0:
 		_fail("over %.1f s at %.0f fps the redraw averaged %.1f Hz against REDRAW_HZ=%.0f -- the accumulator's remainder is being dropped" % [float(frames) * d, 1.0 / d, rate, hz])
 
-	# 4. A CAMERA MOVE IS EXEMPT, twice in a row, because the exemption is only
-	# worth anything if the cap does not gate it: an arc arriving a frame after
-	# the coastline under it reads as the two layers coming apart.
+	# 4. A CAMERA MOVE IS EXEMPT. The first call pins the exemption itself: an arc
+	# arriving a frame after the coastline under it reads as the two layers coming
+	# apart, and any ordering that let the cap gate a pan fails here, since
+	# _since_redraw is 0 and one frame of 1/60 does not reach the interval.
+	#
+	# The second call pins something else, and it is the reason both are here: the
+	# exemption is NOT one-shot. A sustained drag changes the view rect on every
+	# frame, so every frame of it takes this branch and the cap is off for the
+	# whole gesture -- uncapped BY CONSTRUCTION, not by accident. That is a cost,
+	# and tools/frame_probe.gd's PAN rows measure it rather than leaving this
+	# assertion to imply it is free (docs/map-platform-model.md section 4).
 	flows._since_redraw = 0.0
 	if not flows._redraw_due(frame_60, true, false):
 		_fail("a camera move queued no redraw")
 	if not flows._redraw_due(frame_60, true, false):
-		_fail("a camera move on the very next frame queued no redraw -- the rate limit is gating the camera")
+		_fail("a camera move on the very next frame queued no redraw -- the exemption is one-shot")
 
 	# 5. PAUSE STILL FREEZES IT. _check_pause_freezes above asserts the phase
 	# stops; Task 4's review noted nothing asserted the REDRAW stops, which is
@@ -192,6 +200,39 @@ func _check_redraw_is_rate_limited() -> void:
 			while_paused += 1
 	if while_paused != 0:
 		_fail("%d redraws queued over 2 s of a paused clock with the view still" % while_paused)
+
+	# 6. A ZERO DELTA IS INERT -- it does not fire, and it does not spend the
+	# credit already banked. The engine hands out a 0.0 frame on a resumed window,
+	# and an accumulator that lost its remainder to one would drift the cadence
+	# down by exactly the number of them, silently.
+	var interval: float = 1.0 / hz
+	flows._since_redraw = interval * 0.9
+	var zero_fired: int = 0
+	for i in 100:
+		if flows._redraw_due(0.0, false, false):
+			zero_fired += 1
+	if zero_fired != 0:
+		_fail("%d redraws queued over 100 frames of delta 0.0" % zero_fired)
+	if not flows._redraw_due(interval * 0.2, false, false):
+		_fail("the 0.9 of an interval already banked did not survive 100 zero-delta frames")
+
+	# 7. A NEGATIVE DELTA RECOVERS RATHER THAN WEDGING. Nothing is meant to hand
+	# one over, which is why it is worth pinning: the accumulator goes below zero
+	# and the overlay owes that debt back before it redraws again. ONE FRAME'S
+	# WORTH, because the debt is proportional -- the cap does not floor it, so a
+	# large negative delta would stop the overlay for as long as the real frames
+	# take to repay it, and a test that fed it -1 s would be asserting a wedge
+	# rather than the recovery. A single flipped frame costs one redraw out of the
+	# next two seconds' sixty, which is inside assertion 1's own tolerance.
+	flows._since_redraw = 0.0
+	if flows._redraw_due(-frame_60, false, false):
+		_fail("a negative delta queued a redraw")
+	var recovered: int = 0
+	for i in 120:
+		if flows._redraw_due(frame_60, false, false):
+			recovered += 1
+	if absi(recovered - want) > 3:
+		_fail("after one frame of delta %.4f, 2 s at 60 fps queued %d redraws, expected ~%d -- the accumulator did not recover" % [-frame_60, recovered, want])
 
 
 ## A CONVOY IS A PURE FUNCTION OF (edge, index, phase) AND STORES NOTHING. That

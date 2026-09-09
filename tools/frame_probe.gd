@@ -41,6 +41,22 @@ const MainScene := "res://src/ui/main.tscn"
 const CENTER_LON := 2.35
 const CENTER_LAT := 48.86
 
+## THE SUSTAINED DRAG. Every other row holds the camera still for the whole
+## sample, and map_flows._redraw_due() exempts a camera move from REDRAW_HZ --
+## so while the view rect differs on every frame the overlay is back at the
+## uncapped regime the cap was introduced to leave, and nothing measured it.
+## "pan" rows move the camera once per frame through center_on_lonlat(), the
+## same public surface map_view's own drag calls.
+##
+## In FRACTIONS OF THE CONTROL'S WIDTH and not in degrees, because a player
+## drags the screen rather than the globe: the step is the same ~8 logical
+## pixels per frame (about 460 px/s at 60 fps, a brisk drag) at any zoom. The
+## half-amplitude keeps the drag inside a fifth of a screen either way, so the
+## polygons under the view are the still row's and the difference between the
+## two rows is the panning and not the content.
+const PAN_STEP_FRAC := 0.004
+const PAN_SPAN_FRAC := 0.10
+
 const SETTLE_FRAMES := 12
 const RESIZE_SETTLE_FRAMES := 40
 const FRAMES_PER_SAMPLE := 240
@@ -65,6 +81,12 @@ var _clock_pause_log: Array = []
 var _last_logged_paused := false
 var _clock_t0 := 0
 var _sample_running := false
+var _sample_panning := false
+var _pan_anchor_lon := 0.0
+var _pan_dir := 1.0
+var _pan_step := 0.0
+var _pan_span := 0.0
+var _pan_stuck := 0
 
 
 func _initialize() -> void:
@@ -125,6 +147,23 @@ func _build_configs() -> void:
 	_configs.append({"label": "G4 max_zoom convoys, clock run", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
 	_configs.append({"label": "G5 1440 fit convoys, clock run", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
 	_configs.append({"label": "G5 1440 min_zoom arcs, run", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	# THE PAN TRIPLE -- the case the cap does not cover. The rows above sample the
+	# capped regime, which is only what a player sees while the camera is STILL.
+	# A drag makes the view rect differ on every frame, and _redraw_due()'s camera
+	# exemption then redraws the overlay on every frame BY CONSTRUCTION. The
+	# opening fit, because that is where the game starts AND where the convoy
+	# branch has every spine on screen -- the drag a player actually performs on
+	# the worst view.
+	#
+	# THREE ROWS AND NOT A PAIR. Every camera move queues a map_view redraw too
+	# (pan_by() and center_on_lonlat() both end in one), so a drag re-records the
+	# whole map as well as the overlay, and the trade layer's roster fill costs
+	# more per re-record than the political one does. Two rows would hand the
+	# overlay the bill for both. The steps are therefore taken one at a time: the
+	# map alone, then the layer, then the overlay.
+	_configs.append({"label": "PAN fit, political, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "PAN fit, TRADE, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "trade": true, "run": true, "pan": true})
+	_configs.append({"label": "PAN fit, TRADE, convoys on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true, "pan": true})
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
@@ -180,6 +219,7 @@ func _apply_config(cfg: Dictionary) -> void:
 	# measures an already-recorded canvas item and reports the animated cost as
 	# near zero. "run" marks the rows that pay the per-frame re-record.
 	_sample_running = bool(cfg.get("run", false))
+	_sample_panning = bool(cfg.get("pan", false))
 	_main._clock.paused = not (bool(cfg.get("clock", false)) or _sample_running)
 	if Vector2i(root.size) != Vector2i(cfg["size"]):
 		root.size = Vector2i(cfg["size"])
@@ -193,10 +233,53 @@ func _apply_config(cfg: Dictionary) -> void:
 	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer
 	# gate rather than by a node; the flows overlay is its own control and is
 	# toggled by visibility AND by the layer, because it only animates on TRADE.
-	_main._map_view.set_layer("trade" if bool(cfg.get("flows", false)) else "political")
+	# THE LAYER AND THE OVERLAY ARE SEPARABLE, and under a per-frame re-record
+	# they have to be. map_layers.swatch() on TRADE calls Trade.weights() twice
+	# per nation -- a full partner vector each -- where POLITICAL is a hash into a
+	# palette, so a trade-layer roster fill costs materially more than a political
+	# one EVERY TIME IT IS RE-RECORDED. At the event-driven rates every other row
+	# samples that difference hides inside the spread; under a drag it does not,
+	# and a pair that varied the layer and the overlay together would charge the
+	# overlay for the fill. "trade" defaults to "flows" so every existing row is
+	# byte-for-byte the configuration it was.
+	_main._map_view.set_layer("trade" if bool(cfg.get("trade", cfg.get("flows", false))) else "political")
 	if _main._map_flows != null:
 		_main._map_flows.visible = bool(cfg.get("flows", false))
 	_set_zoom(float(cfg["zoom"]))
+	if _sample_panning:
+		_arm_pan()
+
+
+## The drag's anchor and its two lengths, read off the view the zoom just set --
+## the step is a screen distance, so it has to be converted at the zoom it will
+## be walked at.
+func _arm_pan() -> void:
+	var view: Rect2 = _main._map_view.visible_lonlat_rect()
+	_pan_anchor_lon = view.position.x + view.size.x * 0.5
+	_pan_dir = 1.0
+	_pan_step = view.size.x * PAN_STEP_FRAC
+	_pan_span = view.size.x * PAN_SPAN_FRAC
+	_pan_stuck = 0
+
+
+## One frame of the drag. The centre is READ BACK off the camera every frame
+## rather than integrated from a counter, so the clamp cannot leave the probe
+## asking for a longitude the camera has already refused.
+func _step_pan() -> void:
+	var mv = _main._map_view
+	var before: Rect2 = mv.visible_lonlat_rect()
+	var centre: float = before.position.x + before.size.x * 0.5
+	if absf(centre - _pan_anchor_lon) > _pan_span:
+		_pan_dir = -_pan_dir
+	mv.center_on_lonlat(centre + _pan_dir * _pan_step, CENTER_LAT)
+	# THE MOVE HAS TO LAND. A view rect that did not change is a frame the
+	# camera exemption does not fire on, and the row would then be sampling the
+	# capped regime it exists to be compared against. _clamp_pan() at the world
+	# edge is the way that happens, so the rect itself is the only honest test --
+	# and a row that hit it says so in its own output rather than reading clean.
+	if mv.visible_lonlat_rect() == before:
+		_pan_dir = -_pan_dir
+		_pan_stuck += 1
 
 
 func _start_sample(label: String) -> void:
@@ -204,6 +287,7 @@ func _start_sample(label: String) -> void:
 		"label": label, "frames": 0, "delta": 0.0, "max_ms": 0.0,
 		"calls": 0.0, "prims": 0.0,
 		"running": _sample_running, "paused_seen": false,
+		"pan": _sample_panning, "pan_stuck": 0,
 	}
 	_phase = "settle_sample"
 
@@ -220,6 +304,10 @@ func _restore_toggles() -> void:
 
 
 func _process(delta: float) -> bool:
+	# Before the phase work, so the settle frames drag too and the sample opens
+	# in the steady state of a drag rather than on its first frame.
+	if _sample_panning and (_phase == "settle_sample" or _phase == "sample"):
+		_step_pan()
 	match _phase:
 		"settle":
 			_settle_left -= 1
@@ -250,6 +338,8 @@ func _process(delta: float) -> bool:
 		"settle_sample":
 			_settle_left -= 1
 			if _settle_left <= 0:
+				# The settle frames' own stuck count is not the sample's.
+				_pan_stuck = 0
 				_phase = "sample"
 		"sample":
 			# An event arrival pauses the clock (main.gd sets it on a decision),
@@ -264,6 +354,7 @@ func _process(delta: float) -> bool:
 			if int(_current["frames"]) >= FRAMES_PER_SAMPLE:
 				_current["calls"] = Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
 				_current["prims"] = Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
+				_current["pan_stuck"] = _pan_stuck
 				_finish_sample()
 		"clock_window":
 			_clock_frames += 1
@@ -322,5 +413,9 @@ func _report() -> void:
 		var regime := "paused"
 		if bool(s.get("running", false)):
 			regime = "PAUSED MID-SAMPLE" if bool(s.get("paused_seen", false)) else "running"
+		if bool(s.get("pan", false)):
+			regime += " PAN"
+			if int(s.get("pan_stuck", 0)) > 0:
+				regime += " STUCK=%d" % int(s["pan_stuck"])
 		print("%-32s %8.2f %8.2f %8.1f %9.0f %11.0f  %s" % [
 			s["label"], avg_ms, float(s["max_ms"]), fps, s["calls"], s["prims"], regime])
