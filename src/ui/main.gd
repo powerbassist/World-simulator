@@ -59,6 +59,7 @@ const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const Minimap = preload("res://src/ui/minimap.gd")
+const MapFlows = preload("res://src/ui/map_flows.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const OrgsPanel = preload("res://src/ui/orgs_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
@@ -120,6 +121,7 @@ var _election_panel
 var _law_panel
 var _map_view
 var _minimap
+var _map_flows
 var _nation_panel
 var _orgs_panel
 var _calendar_panel
@@ -209,6 +211,17 @@ func _ready() -> void:
 		_city_panel.show_city(city_id)
 		_windows.open("city")
 	)
+
+	# V3.4. Above the map and below the windows: the flows are drawn ON the map,
+	# and a panel the player opened must still cover them. Its mouse filter is
+	# IGNORE (map_flows.gd's _ready() sets it and tests/test_map_flows.gd asserts
+	# it) so a full-rect control over the whole game takes no clicks -- V3.3f
+	# shipped exactly that bug through a CenterContainer's default of PASS and it
+	# sat behind a green suite for a tier.
+	_map_flows = MapFlows.new()
+	_map_flows.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_map_flows)
+	_map_flows.setup(_map_view, _clock, _loader, _state)
 
 	_windows = WindowManager.new()
 	add_child(_windows)
