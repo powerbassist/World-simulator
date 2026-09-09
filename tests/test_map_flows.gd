@@ -34,6 +34,7 @@ func _process(_delta: float) -> bool:
 	_check_not_a_layer()
 	_check_cull_by_count()
 	_check_pause_freezes()
+	_check_convoys_store_nothing()
 	_report()
 	return true
 
@@ -113,6 +114,36 @@ func _check_pause_freezes() -> void:
 	flows._process(0.5)
 	if flows.phase_days() <= before:
 		_fail("phase did not advance with the clock running")
+
+
+## A CONVOY IS A PURE FUNCTION OF (edge, index, phase) AND STORES NOTHING. That
+## is what keeps SAVE_VERSION at 33 and what makes a reloaded save show the same
+## world -- V1.8's events precedent, where a hazard is a pure function of
+## (nation, event, year, month) rather than a rolled-and-kept number.
+## Read from the source, the way tests/test_events.gd polices the splitmix
+## constants: a convoy that gained a stored position would still LOOK right and
+## the save would quietly stop round-tripping.
+func _check_convoys_store_nothing() -> void:
+	var text := FileAccess.get_file_as_string("res://src/ui/map_flows.gd")
+	var start := text.find("func _draw_convoys")
+	if start < 0:
+		_fail("map_flows.gd has no _draw_convoys()")
+		return
+	# THE PASS IS TWO FUNCTIONS AND THE REGION HAS TO COVER BOTH. _draw_convoys()
+	# walks the spines; the per-direction _draw_convoy_run() it calls is where the
+	# stagger and the phase actually are. Stopping at the next "func " reads the
+	# caller alone, and the only "Cycle.unit" in that slice is the WORD inside
+	# _draw_convoy_run()'s doc comment -- measured: with the narrow region a
+	# planted randf() in _draw_convoy_run() did not fail this check, and the green
+	# was prose rather than code.
+	var last := text.find("func _draw_convoy_run")
+	var stop := text.find("\nfunc ", maxi(start, last) + 1)
+	var body := text.substr(start, stop - start if stop > start else -1)
+	if not body.contains("Cycle.unit"):
+		_fail("the convoy pass does not draw its stagger from Cycle.unit()")
+	for forbidden in ["randf", "randi", "RandomNumberGenerator", "Time.get_"]:
+		if body.contains(forbidden):
+			_fail("the convoy pass reaches %s -- a convoy is a pure function of the edge and the clock" % forbidden)
 
 
 func _fail(msg: String) -> void:

@@ -33,6 +33,7 @@ const MapNetwork = preload("res://src/ui/map_network.gd")
 const Clock = preload("res://src/core/clock.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 
 ## Below this share of an even partner vector an arc is a hairline nobody can
 ## read, and 28 of them are a hairball. The scale is the layer's own: an even
@@ -47,11 +48,25 @@ const ARC_HEAD_PX := 7.0
 const ARC_OUT := Color(0.976, 0.898, 0.639, 0.80)   ## map_layers.gd's TRADE_HIGH
 const ARC_IN := Color(0.788, 0.635, 0.153, 0.55)    ## its TRADE_MID
 
-## A mark has a radius, so an edge whose lon/lat box stops just outside the
-## window can still put pixels inside it. Widening the cull box by a fraction of
-## the view rather than by a pixel count keeps that margin the same size on
-## screen at every zoom.
-const CULL_PAD_RATIO := 0.02
+## At most three either way. The scale is "times the mean", so three is a spine
+## carrying three times an average crossing -- and past three a count stops being
+## something the eye reads off a line at a glance, which is a legend's job rather
+## than a mark's.
+const MAX_CONVOYS := 3
+
+## How far a convoy travels in a game-day. NOT a haulage speed: it is a viewing
+## pace, chosen against the graph rather than against a lorry. The 463 spines'
+## median run is 157 km, so at Clock's speed 1 -- one day per second -- a typical
+## crossing takes about six seconds, and the longest, a 914 km sea link, about
+## thirty-seven. A physically honest version would need a real kilometres-per-day
+## figure, which is the same kind of number docs/network-model.md §7 refuses a
+## project's edge-cost discount for wanting. What survives is the part that had
+## to be real: the graph's own km, so a long ferry takes longer than a short hop.
+const PACE_KM_PER_DAY := 25.0
+
+const LORRY_PX := 3.0
+const SHIP_PX := 4.0
+const CONVOY_COLOR := Color(0.976, 0.898, 0.639, 0.95)
 
 var _map_view = null
 var _clock: Node = null
@@ -259,7 +274,16 @@ func _spines_in_view() -> Array:
 	var out: Array = []
 	if _view.size.x <= 0.0 or _view.size.y <= 0.0:
 		return out
-	var view: Rect2 = _view.grow(_view.size.x * CULL_PAD_RATIO)
+	# DERIVED FROM THE GLYPH, not chosen. The widest mark this overlay puts on a
+	# spine is a ship at SHIP_PX, and a convoy sitting just off the edge must
+	# still draw, so the pad is exactly that radius expressed in degrees --
+	# `_view.size.x / size.x` is the control's own degrees-per-pixel, which it
+	# already has because it mirrors the camera. map_view.gd's CULL_PAD_PX is
+	# derived from its widest stroke the same way and for the same reason: a
+	# tuned pad is a number nobody can re-derive, and this one shrinks with zoom
+	# exactly as the glyph's footprint in degrees does.
+	var deg_per_px: float = _view.size.x / maxf(1.0, size.x)
+	var view: Rect2 = _view.grow(maxf(SHIP_PX, LORRY_PX) * deg_per_px)
 	for s in _spines:
 		if view.intersects(s["box"]):
 			out.append(s)
@@ -280,7 +304,10 @@ func _draw_arcs() -> void:
 		if chord.length() < 1.0:
 			continue
 		var color: Color = ARC_OUT if bool(arc["outbound"]) else ARC_IN
-		var width := clampf(float(arc["ratio"]) * ARC_MIN_WIDTH, ARC_MIN_WIDTH, ARC_MAX_WIDTH)
+		# The ratio is already "times the mean", so it IS the width in pixels: an
+		# average partner draws a 1 px thread and a dominant one draws up to five.
+		# No scale constant, because there is no second unit to convert into.
+		var width: float = clampf(float(arc["ratio"]), ARC_MIN_WIDTH, ARC_MAX_WIDTH)
 		var control := a + chord * 0.5 + Vector2(-chord.y, chord.x).normalized() * chord.length() * ARC_BOW
 
 		var points := PackedVector2Array()
@@ -303,8 +330,78 @@ func _draw_arcs() -> void:
 		)
 
 
-## Filled in Task 5. Present and called from here so the zoom branch is complete,
-## and given the culled list rather than _spines so the count above stays the one
-## the test reads.
-func _draw_convoys(_in_view: Array) -> void:
-	pass
+## The convoys -- lorries on land, ships on the sea links, moving along the same
+## spines src/ui/map_network.gd draws.
+##
+## COUNTED FROM THE TRAFFIC RATIO, PER DIRECTION. A cross-border spine's two
+## counts come from w(A->B) and w(B->A) separately, so the asymmetry V1.3b
+## derived is a thing you can SEE: more lorries leave Luxembourg for France than
+## arrive, because w(LUX->FRA) is 12x w(FRA->LUX). An internal spine's two counts
+## are equal, because accessibility is undirected and pretending otherwise would
+## be drawing a number that does not exist.
+##
+## THE CULL IS NOT HERE, and that is deliberate. Task 4's _spines_in_view() owns
+## it and hands this function the survivors, so `_spines_considered` is written
+## in exactly one place and a convoy pass cannot quietly count a second time.
+## Walking `_spines` here instead would double the readout and turn the cull test
+## red while drawing the identical picture.
+func _draw_convoys(in_view: Array) -> void:
+	for s in in_view:
+		var key := "%s|%s" % [s["region_a"], s["region_b"]]
+		var load: Dictionary = _traffic.get(key, {"ab": 0.0, "ba": 0.0})
+		var a := _to_screen(s["a"].x, s["a"].y)
+		var b := _to_screen(s["b"].x, s["b"].y)
+		var sea := String(s["kind"]) == "sea"
+		# The graph's own kilometres, so the trip time is a property of the
+		# crossing rather than a constant per edge. The one-day floor catches the
+		# four spines shorter than 25 km, whose convoys would otherwise complete a
+		# run in under a second at speed 1 and read as a flicker, not as travel.
+		var trip_days: float = maxf(1.0, float(s["km"]) / PACE_KM_PER_DAY)
+
+		_draw_convoy_run(key, a, b, float(load["ab"]), trip_days, sea, 0)
+		_draw_convoy_run(key, b, a, float(load["ba"]), trip_days, sea, 1)
+
+
+## One direction's marks. The stagger is Cycle.unit() of the edge key and the
+## index -- a pure hash, so nothing is stored and a reloaded save puts every
+## convoy back where a fresh clock would. src/sim/cycle.gd is the ONE
+## deterministic draw in the simulation and this reads it rather than carrying a
+## second copy, which is the rule its own header states.
+func _draw_convoy_run(
+	key: String, from: Vector2, to: Vector2, ratio: float, trip_days: float,
+	sea: bool, direction: int
+) -> void:
+	var count: int = clampi(int(round(ratio)), 0, MAX_CONVOYS)
+	if count <= 0:
+		return
+	var span := to - from
+	if span.length() < 2.0:
+		return
+	var heading := span.normalized()
+	var side := Vector2(-heading.y, heading.x)
+	var radius: float = SHIP_PX if sea else LORRY_PX
+
+	for i in count:
+		var stagger := Cycle.unit("%s|%d" % [key, direction], i)
+		var t := fposmod(stagger + _phase_days / trip_days, 1.0)
+		var at := from + span * t
+		if at.x < -radius or at.x > size.x + radius:
+			continue
+		if at.y < -radius or at.y > size.y + radius:
+			continue
+		if sea:
+			# A hull: a triangle pointed the way it is going. The only glyph on
+			# the map that says "moving" rather than "here", which is why the
+			# cities' cross and the plants' circle are both wrong for it.
+			draw_colored_polygon(
+				PackedVector2Array([
+					at + heading * radius,
+					at - heading * radius + side * radius * 0.7,
+					at - heading * radius - side * radius * 0.7,
+				]),
+				CONVOY_COLOR
+			)
+		else:
+			# A short bar along the road. Not a dot: at this size a dot is a
+			# small city cross and the map already has 1 065 of those.
+			draw_line(at - heading * radius, at + heading * radius, CONVOY_COLOR, 2.0)
