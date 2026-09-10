@@ -173,6 +173,27 @@ re-probe it hoping for a regional energy series.
   same treatment the value-added indicators above get, because raw they sum to
   94–99 % (statistical difference and years that do not line up).
 
+#### V3.5 — emissions
+
+One indicator on the same loop, `EN.GHG.CO2.PC.CE.AR5` — total greenhouse-gas
+emissions per capita, tonnes CO2e on the AR5 GWP set — **29 of 29 nations at
+2024**, so every nation reads the same vintage and the nearest-year loader it
+goes through falls back for nobody. `imported.emissions` carries
+`co2e_per_capita_t` plus its `_year`; France 4.0, Poland 7.55, Estonia 7.76,
+Luxembourg 10.56, Sweden 3.57.
+
+- **The AR4-era code is gone.** `EN.ATM.CO2E.PC` was probed first and answers
+  *"indicator not found — it may have been deleted"*; the AR5 code was found by
+  that probe, not by memory. The successor-series landscape is recorded here so
+  the next climate session does not re-derive it.
+- **The 2024 figures are on the 2015:2024 cache window** (290 rows = 29 × 10
+  years, none null at 2024). A narrower 2018:2023 probe window capped at 2023 —
+  the wider window is what the other cache files use, and it is what makes the
+  vintage uniform.
+- **Measured, like GDP — not fictionalized.** A nation's baseline is its real
+  per-capita footprint; the fleet the player builds is the lever that moves it
+  (`src/sim/energy.gd`'s displacement read). Rounding is to 2 dp at import.
+
 ### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
 
 - **`ISO_A3` is `-99` for France.** The import script matches on **`ADM0_A3`** instead, which is populated correctly for all ten nations in scope.
@@ -341,6 +362,11 @@ curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
 for I in EG.IMP.CONS.ZS EG.ELC.FOSL.ZS EG.ELC.NUCL.ZS EG.ELC.RNEW.ZS EG.USE.ELEC.KH.PC; do
   curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
 done
+
+# V3.5. Emissions, one series on the standard window -- complete at 2024 for all
+# 29, so the nearest-year loader it goes through never actually falls back.
+curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=1000"
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing
