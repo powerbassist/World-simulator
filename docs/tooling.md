@@ -246,7 +246,7 @@ Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothi
 > tree. If behaviour trees are wanted, the plain-GDScript version is a few
 > hundred lines of `RefCounted` and stays headless.
 
-`materialLayers` and `road-generator` both assume 3D. [[scope]] fixes "2D map plus dense UI panels, no 3D" as a constraint everything else is designed around, so neither has a use path without changing that — noted rather than judged; they cost nothing sitting there.
+`materialLayers` and `road-generator` both assume 3D. [[scope]] fixes "2D map plus dense UI panels, no 3D" as a constraint everything else is designed around, so neither has a use path without changing that — noted rather than judged; they cost nothing sitting there. **V3.4 settled `road-generator`'s case by building the thing it was parked for.** The road layer shipped as 2D lon/lat spines drawn straight into `map_view.gd`'s `_draw()`; the addon generates 3D meshes along splines and was never a candidate. See [data-sources.md](data-sources.md)'s `road-generator` callout for the full reasoning, recorded there so the addon's NAME cannot re-open a question its shape already closes.
 
 ## `tools/screenshot.gd` is CRLF where the rest of the tree is LF
 

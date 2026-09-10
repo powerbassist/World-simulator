@@ -59,6 +59,7 @@ const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
 const Minimap = preload("res://src/ui/minimap.gd")
+const MapFlows = preload("res://src/ui/map_flows.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const OrgsPanel = preload("res://src/ui/orgs_panel.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
@@ -120,6 +121,7 @@ var _election_panel
 var _law_panel
 var _map_view
 var _minimap
+var _map_flows
 var _nation_panel
 var _orgs_panel
 var _calendar_panel
@@ -209,6 +211,17 @@ func _ready() -> void:
 		_city_panel.show_city(city_id)
 		_windows.open("city")
 	)
+
+	# V3.4. Above the map and below the windows: the flows are drawn ON the map,
+	# and a panel the player opened must still cover them. Its mouse filter is
+	# IGNORE (map_flows.gd's _ready() sets it and tests/test_map_flows.gd asserts
+	# it) so a full-rect control over the whole game takes no clicks -- V3.3f
+	# shipped exactly that bug through a CenterContainer's default of PASS and it
+	# sat behind a green suite for a tier.
+	_map_flows = MapFlows.new()
+	_map_flows.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_map_flows)
+	_map_flows.setup(_map_view, _clock, _loader, _state)
 
 	_windows = WindowManager.new()
 	add_child(_windows)
@@ -319,6 +332,12 @@ func _ready() -> void:
 		# colour change the player should see the moment they act rather than at
 		# the next month's tick.
 		_map_view.queue_redraw()
+		# And a tariff or an agreement moves the trade weights the arcs are drawn
+		# from, on the same press and for the same reason -- the overlay caches
+		# them, so without this the arcs keep their pre-action widths until the
+		# month rolls over.
+		if _map_flows != null:
+			_map_flows.refresh()
 	)
 
 	# V1.3d. Beside Diplomacy in the World cluster, and its own window rather than
@@ -1037,6 +1056,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_map_view.refresh_cities()
 		_map_view.queue_redraw()
 
+		# Same monthly hook and the same reason as the city list beside it: a
+		# trade weight moves with every partner's GDP and an accessibility index
+		# with every region's output share. Without this the convoys keep the
+		# densities they had at new game, which is what "cities grow and shrink
+		# for free" actually did on screen until a screenshot pass looked.
+		if _map_flows != null:
+			_map_flows.refresh()
+
 	# Discipline reads the approval Opinion has just settled, so it goes after
 	# that and before anything that reads a coalition bonus or a censure vote.
 	Discipline.tick_month(_state, _loader)
@@ -1532,9 +1559,12 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
-	# nation_panel's own `acted` handler redraws.
+	# nation_panel's own `acted` handler redraws. The arcs move on the same day
+	# and for the same reason the handler refreshes them.
 	if _map_view != null:
 		_map_view.queue_redraw()
+		if _map_flows != null:
+			_map_flows.refresh()
 
 
 ## A kept appointment is something that happened to the player's government with
@@ -1650,6 +1680,11 @@ func _on_load_requested(slot: String) -> void:
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)
+	# A loaded game is a different _state, and an overlay left holding the
+	# throwaway one built at _ready() is the same five-panel drift the V2.8
+	# review found below -- setup(), not refresh(), because the reference itself
+	# is what has to be replaced.
+	_map_flows.setup(_map_view, _clock, _loader, _state)
 
 	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
 	# A panel stores `state` in its own setup(), so one omitted here keeps a

@@ -14,6 +14,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _stage: int = 0
 
 
 func _init() -> void:
@@ -26,8 +27,14 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the scene's _ready() run
 
-	_run()
-	_finish()
+	if _frame == 2:
+		_run()
+
+	# V3.4's staged checks hold the report back until each has had its own
+	# settled frame; a run that never built a map view has nothing to stage and
+	# has already recorded that failure in _run().
+	if _main._map_view == null or _check_roads_staged():
+		_finish()
 	return false
 
 
@@ -53,6 +60,7 @@ func _run() -> void:
 	_check_camera(map)
 	_check_layer_state(map)
 	_check_click_opens_panel_with_live_values(map)
+	_check_roads_take_no_clicks()
 
 
 func _check_geometry(loader) -> void:
@@ -320,6 +328,77 @@ func _check_click_opens_panel_with_live_values(map) -> void:
 	var static_gdp_text := "%.0f" % n.gdp_eur_bn
 	if static_gdp_text != live_gdp_text and text.contains(static_gdp_text):
 		_fail("nation panel shows the static data GDP figure instead of the live one: %s" % text)
+
+
+## V3.4. Two properties, each needing its own settled frame.
+##
+## Staged rather than called inline because queue_redraw() is a REQUEST: the
+## pass runs when the engine next draws this control, and reading the counter in
+## the same frame reads the frame before it. Calling _draw() by hand instead is
+## worse than useless -- draw_line() outside NOTIFICATION_DRAW is an engine
+## error, so the "test" would measure a function that drew nothing.
+##
+## Returns true once every stage has been asserted.
+func _check_roads_staged() -> bool:
+	var map = _main._map_view
+	match _stage:
+		0:
+			# ROADS ARE GATED ON THE CITY THRESHOLD, and it is the SAME number
+			# rather than a second one. A spine ends on two principal cities, so
+			# a spine drawn when neither glyph is drawn is a line from nowhere to
+			# nowhere -- structural, which is why nothing was swept for it.
+			map.set_zoom_for_test(map.CITY_MIN_ZOOM - 0.2)
+			_stage = 1
+		1:
+			if map.spines_drawn() != 0:
+				_fail("%d spines drawn below CITY_MIN_ZOOM" % map.spines_drawn())
+			map.set_zoom_for_test(map.CITY_MIN_ZOOM + 0.2)
+			_stage = 2
+		2:
+			if map.spines_drawn() <= 0:
+				_fail("no spines drawn above CITY_MIN_ZOOM -- the pass is not wired")
+			# THE CULL IS ASSERTED BY COUNT, NOT BY EYE. A pass that transforms
+			# first and culls second draws the identical picture, costs the whole
+			# roster, and no frame would say so -- so the failing case is a count
+			# of exactly 463 and the bound has to sit below it.
+			#
+			# The bound is a FRACTION rather than a figure, because the figure
+			# depends on the window: MAX_ZOOM is 8.0 and BASE_SCALE 12, so at the
+			# project's 1920x1080 the view at max zoom is ~20 deg by ~11 deg --
+			# France, Benelux, western Germany and northern Italy, which is a
+			# large minority of the roster and not a handful. A hard number here
+			# would be a test of the window size.
+			map.set_zoom_for_test(map.MAX_ZOOM)
+			map.center_on_lonlat(2.35, 48.86)
+			_stage = 3
+		3:
+			var total: int = map.spine_count()
+			if map.spines_drawn() >= total:
+				_fail("all %d spines drew at max zoom -- the pass transforms before it culls" % total)
+			elif map.spines_drawn() > int(total * 0.6):
+				_fail("%d of %d spines survived the cull at max zoom over Paris -- not viewport-bounded" % [map.spines_drawn(), total])
+			elif map.spines_drawn() <= 0:
+				_fail("no spines at all at max zoom over Paris -- the cull is rejecting everything")
+			return true
+	return false
+
+
+## A ROAD SWALLOWS NO CLICKS. The chain is placement -> plants -> projects ->
+## cities -> nations and this block adds nothing to it. Read from the source the
+## way tests/test_map_cities.gd and tests/test_map_plants.gd read theirs: a hit
+## test that learned about spines would be a hit test answering for two things.
+func _check_roads_take_no_clicks() -> void:
+	var text := FileAccess.get_file_as_string("res://src/ui/map_view.gd")
+	for fn in ["func _city_at_screen_point", "func _nation_at_lonlat", "func _project_at_screen_point", "func _plant_at_screen_point"]:
+		var start := text.find(fn)
+		if start < 0:
+			_fail("map_view.gd has no %s()" % fn)
+			continue
+		var stop := text.find("\nfunc ", start + 1)
+		var body := text.substr(start, stop - start if stop > start else -1)
+		for forbidden in ["_spines", "MapNetwork"]:
+			if body.contains(forbidden):
+				_fail("%s() reaches %s -- a road takes no clicks" % [fn, forbidden])
 
 
 func _mouse_event(button: int, pressed: bool, pos: Vector2) -> InputEventMouseButton:
