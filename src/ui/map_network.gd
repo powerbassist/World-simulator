@@ -36,10 +36,19 @@ const SEA := Color(0.788, 0.635, 0.153, 0.42)
 const WIDTH := 1.0
 
 ## The ferry dash. Long enough to read as a dash at the zoom roads appear at
-## (CITY_MIN_ZOOM). Whether it still reads as more than one dash on the
-## register's actual shortest sea crossing -- DK01-SE22, Copenhagen-Malmo, 28.4 km,
-## not the Channel Tunnel's FR1-UKI at 343.8 km -- is a look question this block
-## settles at the screenshot pass against a frame, not here.
+## (CITY_MIN_ZOOM).
+##
+## MEASURED AT THE SCREENSHOT PASS, and the shortest crossing loses. DK01-SE22
+## (Copenhagen-Malmo, 28.4 km, the register's shortest sea edge -- not the
+## Channel's FR1-UKI at 343.8 km, which is twelfth of sixteen) spans 0.4408
+## degrees, so at BASE_SCALE 12 it is 5.29 px per unit of zoom: 10.6 px at
+## CITY_MIN_ZOOM, SHORTER THAN THE 12 px DASH+GAP CYCLE. It draws one dash there,
+## two from zoom 3.6, three by zoom 6.
+##
+## THE CONSTANTS ARE NOT THE LEVER AND WERE LEFT ALONE. Its two endpoint city
+## markers are ~5 px each and cover that 10.6 px between them whatever the dash
+## measures, so no shrink rescues the low zoom; it would only make the other
+## fifteen sea edges dottier at the zooms where they are actually read.
 const DASH_PX := 7.0
 const GAP_PX := 5.0
 

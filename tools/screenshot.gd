@@ -29,6 +29,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --move
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 8
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 8 --paused
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --flows --zoom 1.6
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --flows --zoom 6 --paused
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 6 --center 12.85 55.66
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -109,6 +112,18 @@ var _zoom := -1.0
 ## compares states must stage a frozen state.
 var _paused := false
 var _clock_frozen := false
+
+## V3.4. The trade layer is the arcs' and the convoys' gate, so one flag sets it
+## rather than asking the operator to remember two flags for one picture.
+var _flows := false
+
+## V3.4. Somewhere other than Paris to point --zoom at. Exists because the
+## register's shortest sea crossing is DK01-SE22 (Copenhagen-Malmo, 28.4 km) and
+## the dash constants were sized against a crossing twelve times longer; the look
+## question cannot be asked of a frame that does not contain the edge.
+var _center_lon := 0.0
+var _center_lat := 0.0
+var _has_center := false
 
 ## V1.3c. Impose a spread of measures before capturing, because a new game has
 ## none and a frame of an all-zero layer proves nothing about its ramp -- which is
@@ -335,6 +350,12 @@ func _init() -> void:
 			_hover_project = args[i + 1]
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
+		elif args[i] == "--center" and i + 2 < args.size():
+			_center_lon = float(args[i + 1])
+			_center_lat = float(args[i + 2])
+			_has_center = true
+		elif args[i] == "--flows":
+			_flows = true
 		elif args[i] == "--paused":
 			_paused = true
 		elif args[i] == "--coerce":
@@ -481,7 +502,16 @@ func _apply_view() -> void:
 		# tool's usual reach into _main; zoom_by() would need an anchor in
 		# screen space, and a capture wants an absolute zoom anyway.
 		_main._map_view._zoom = clampf(_zoom, _main._map_view.min_zoom(), _main._map_view.MAX_ZOOM)
-		_main._map_view.center_on_lonlat(2.35, 48.86)
+		if _has_center:
+			_main._map_view.center_on_lonlat(_center_lon, _center_lat)
+		else:
+			_main._map_view.center_on_lonlat(2.35, 48.86)
+	if _flows and _layer == "":
+		# Routed through --layer's own variable rather than calling set_layer()
+		# here, so the flag also gets that path's legend sync: the legend's
+		# road/ferry key is one of the things a flows frame exists to judge, and
+		# a legend left on POLITICAL over a TRADE map would be the frame lying.
+		_layer = "trade"
 	if _coerce:
 		_impose_a_spread()
 	if _orgs:
@@ -572,7 +602,15 @@ func _apply_view() -> void:
 		_main._hud.action_bar.show_cluster(_cluster)
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
-		_main._hud.map_legend.show_layer(_main._map_view.layer())
+		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without
+		# them the trade branch of show_layer() falls back to MapLayers.stops(),
+		# whose TRADE entry is a deliberately empty literal because that layer's
+		# stops are DERIVED from the viewer's partner count -- so every --layer
+		# trade frame this tool ever took photographed a ramp legend with no ramp
+		# rows in it, which is not the legend a player sees. Inherited from V1.3f.
+		_main._hud.map_legend.show_layer(
+			_main._map_view.layer(), _main._state, _main._map_view.viewer_id()
+		)
 	# EVERY setup flag above writes sim state behind panels that have already
 	# refreshed, and a panel refreshes once per dirty flag. Hiding a window frame
 	# does NOT clear the child panel's own `visible`, so every panel consumes its
