@@ -1054,6 +1054,12 @@ func _validate_energy_sources() -> void:
 	var covered: Dictionary = {}
 	for source in energy_sources.values():
 		covered[source.branch] = true
+		# from_dict() parses a missing emission_t_per_twh to a -1.0 sentinel, so this
+		# one check refuses both an absent key and an authored negative. Absence must
+		# fail loudly: 0.0 tonnes per TWh on a gas station is a confident lie the
+		# emissions read would print for years.
+		if source.emission_t_per_twh < 0.0:
+			errors.append("energy source '%s' is missing emission_t_per_twh -- the key must exist for every source and be non-negative" % source.id)
 	for branch in EnergyK.BRANCHES:
 		if not covered.has(branch):
 			errors.append("no energy source builds branch '%s' -- every measured branch needs a verb" % branch)

@@ -8,9 +8,10 @@ extends RefCounted
 ## src/core/project_action.gd's position rather than src/core/investment_action.gd's:
 ## V1.6e refused a second authored strength because a constant already turned its one
 ## dial into a bill, a rate and a coefficient. Here energy_constants.gd holds no such
-## constant, so output, duration, two prices, an import intensity and an opposition
-## are six independent facts about a named technology. A cheap fast small plant is a
-## genuinely different object from a dear slow large one, and the ladder is the lever.
+## constant, so output, duration, two prices, an import intensity, an opposition
+## and an emission intensity are seven independent facts about a named technology.
+## A cheap fast small plant is a genuinely different object from a dear slow large
+## one, and the ladder is the lever.
 ##
 ## THE BRANCH IS CHECKED AGAINST energy_constants.BRANCHES rather than left free.
 ## The mix is a partition over exactly the three branches the import measured, so a
@@ -27,6 +28,7 @@ var build_months: int = 0
 var build_cost_pct_gdp: float = 0.0
 var run_cost_pct_gdp: float = 0.0
 var import_intensity: float = 0.0
+var emission_t_per_twh: float = 0.0
 var opposition: float = 0.0
 
 
@@ -63,6 +65,12 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	s.import_intensity = float(d.get("import_intensity", -1.0))
 	if s.import_intensity < 0.0 or s.import_intensity > 1.0:
 		errors.append("%s: %s import_intensity must be in [0, 1]" % [filename, s.id])
+
+	# The -1.0 sentinel is import_intensity's own idiom: a missing key would
+	# otherwise read the 0.0 default, which for a fossil source is a silent lie,
+	# so absence fails the loader's non-negative check rather than parsing into
+	# a number. _validate_energy_sources() refuses on it.
+	s.emission_t_per_twh = float(d.get("emission_t_per_twh", -1.0))
 
 	s.opposition = float(d.get("opposition", -1.0))
 	if s.opposition < 0.0:

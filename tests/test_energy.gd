@@ -24,6 +24,9 @@ func _init() -> void:
 	_check_place_prices(loader)
 	_check_partition_after_build(loader)
 	_check_small_nation(loader)
+	_check_emissions_inert_at_start(loader)
+	_check_emissions_displace_downward(loader)
+	_check_emissions_fossil_raises(loader)
 	_check_precondition_fields(loader)
 	_check_harnesses_tick()
 	_report()
@@ -122,6 +125,44 @@ func _check_small_nation(loader) -> void:
 	ns.plants["p1"] = {"source_id": "nuclear_epr", "region_id": "LU00", "months_left": 0, "done": true}
 	if float(Energy.mix(ns, loader)["nuclear"]) < 0.50:
 		_fail("one reactor is under half of Luxembourg's mix -- check the denominator")
+
+
+## --- V3.5: emissions are a third derived read of the same partition -------------
+
+## THE SAME EXACT-ZERO PROPERTY the re-run prediction rests on, one quantity over:
+## with no plants the mix IS the start mix term by term, so every delta is exactly
+## 0.0 and the deviation is EXACTLY 0.0 -- not 1e-9. V1.4a's bar, at the same five
+## nations _check_inert_at_start() walks.
+func _check_emissions_inert_at_start(loader) -> void:
+	for nation_id in ["FRA", "DEU", "CHE", "LUX", "GBR"]:
+		var state = GameState.new_game(loader, nation_id)
+		var ns = state.nations[nation_id]
+		var d: float = Energy.emissions_deviation_tonnes(ns, loader)
+		if d != 0.0:
+			_fail("%s emissions deviation is %.17f with no plants, expected exactly 0.0" % [nation_id, d])
+
+
+## A DONE RENEWABLE ADDS CLEAN TWH: mix()'s fossil share falls, so the deviation
+## goes NEGATIVE even though total generation rose. That is the displacement
+## physics and the reason the read is share-based, not stock-based.
+func _check_emissions_displace_downward(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.nations["FRA"]
+	ns.plants["p1"] = {"source_id": "wind_onshore", "region_id": "FR1",
+		"lon": 2.0, "lat": 48.0, "months_left": 0, "done": true, "connection": 1.0}
+	if Energy.emissions_deviation_tonnes(ns, loader) >= 0.0:
+		_fail("a done wind farm did not push the emissions deviation negative -- the read is not share-based")
+
+
+## And a done gas station pushes it POSITIVE, or the sign of the whole channel is
+## decoration. The fossil share rises on the same arithmetic, signed the other way.
+func _check_emissions_fossil_raises(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.nations["FRA"]
+	ns.plants["p1"] = {"source_id": "gas_ccgt", "region_id": "FR1",
+		"lon": 2.0, "lat": 48.0, "months_left": 0, "done": true, "connection": 1.0}
+	if Energy.emissions_deviation_tonnes(ns, loader) <= 0.0:
+		_fail("a done gas station did not push the emissions deviation positive")
 
 
 ## THE WHITELIST AND THE READER ARE THE SAME LIST IN TWO PLACES, and V1.5c shipped

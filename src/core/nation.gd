@@ -29,6 +29,9 @@ const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
 	"institutions", "energy",
+	# V3.5a imported the block; the parse into a state field is the next task's
+	# wiring, so until then the key is accepted here and read nowhere.
+	"emissions",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 

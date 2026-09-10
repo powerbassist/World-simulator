@@ -3,6 +3,9 @@ extends RefCounted
 ## The electricity mix, its import dependency, and the fleet that moves them --
 ## V2.8. Model: docs/energy-model.md.
 ##
+## V3.5: the mix now has THREE derived reads -- dependency, impulse, emissions --
+## each a pure read over the same partition.
+##
 ## THE MIX IS A PARTITION, NOT A STOCK. The measured national shares are the
 ## baseline and built capacity is the deviation, so with an empty register every
 ## quantity here reads EXACTLY its measured content -- trade_baseline_by_partner's
@@ -130,6 +133,58 @@ static func _branch_intensity(loader) -> Dictionary:
 	for branch in K.BRANCHES:
 		out[branch] = 0.0 if float(den[branch]) <= 0.0 else float(num[branch]) / float(den[branch])
 	return out
+
+
+## branch -> tonnes CO2e per TWh, output-weighted over the branch's sources --
+## _branch_intensity()'s exact idiom over the emission key, so a branch holding a
+## 6 TWh coal station and a 5 TWh gas one is described by neither alone.
+static func emission_branch_intensity(loader) -> Dictionary:
+	var num: Dictionary = {}
+	var den: Dictionary = {}
+	for branch in K.BRANCHES:
+		num[branch] = 0.0
+		den[branch] = 0.0
+	var ids: Array = loader.energy_sources.keys()
+	ids.sort()
+	for source_id in ids:
+		var source = loader.energy_sources[source_id]
+		num[source.branch] = float(num[source.branch]) + source.output_twh * source.emission_t_per_twh
+		den[source.branch] = float(den[source.branch]) + source.output_twh
+	var out: Dictionary = {}
+	for branch in K.BRANCHES:
+		out[branch] = 0.0 if float(den[branch]) <= 0.0 else float(num[branch]) / float(den[branch])
+	return out
+
+
+## How far the fleet has moved national emissions against the nation's OWN start,
+## in tonnes CO2e a year. Share-based, like dependency_deviation_pct: the baseline
+## is the nation's measured TOTAL and the fleet is the lever that moves it, so a
+## renewable TWh displaces the fossil share it erodes -- EXACTLY 0.0 at an empty
+## register, dependency_deviation_pct()'s own property.
+static func emissions_deviation_tonnes(ns, loader) -> float:
+	var live: Dictionary = mix(ns, loader)
+	var intensity: Dictionary = emission_branch_intensity(loader)
+	var twh: float = national_twh(ns)
+	var moved: float = 0.0
+	for branch in K.BRANCHES:
+		var delta: float = float(live.get(branch, 0.0)) - float(ns.start_energy_mix.get(branch, 0.0))
+		moved += delta * float(intensity.get(branch, 0.0)) * twh
+	return moved
+
+
+## Total national emissions in tonnes CO2e a year: the measured baseline against
+## the LIVE population, plus the fleet's deviation. The accord's rule constrains
+## the PER-CAPITA form; this is its numerator.
+static func emissions_tonnes(ns, loader) -> float:
+	return ns.start_co2e_per_capita_t * ns.population + emissions_deviation_tonnes(ns, loader)
+
+
+## The constrained field. Baseline per-capita against the live population, so a
+## growing country drifts up on its own -- correct, and no constant expresses it.
+static func co2e_per_capita_t(ns, loader) -> float:
+	if ns.population <= 0.0:
+		return ns.start_co2e_per_capita_t
+	return emissions_tonnes(ns, loader) / ns.population
 
 
 ## What building here costs, as a multiplier on the authored build cost.
