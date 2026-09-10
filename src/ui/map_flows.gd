@@ -106,6 +106,10 @@ var _view := Rect2()
 ## pause the world.
 var _since_redraw: float = 0.0
 
+## Whether the last frame was on the trade layer. False at start so arriving on
+## TRADE is not read as a departure from it.
+var _was_showing: bool = false
+
 
 func _ready() -> void:
 	# The whole reason this control can sit over the map at all. V3.3f shipped a
@@ -134,6 +138,12 @@ func setup(map_view, clock: Node, loader, state) -> void:
 func refresh() -> void:
 	_traffic.clear()
 	_arcs.clear()
+	# The recompute is not the paint. _redraw_due() answers false for a paused
+	# clock and the cadence is 33 ms otherwise, so without this a month's new
+	# widths sit in _arcs unpainted -- and a player who acts while paused, which
+	# is when they read the layer, sees last month's arcs over this month's
+	# numbers.
+	queue_redraw()
 	if _state == null or _loader == null:
 		return
 
@@ -226,7 +236,10 @@ func _process(delta: float) -> void:
 		var speed_index: int = clampi(int(_clock.speed) - 1, 0, Clock.SPEED_DAYS_PER_SECOND.size() - 1)
 		_phase_days += delta * Clock.SPEED_DAYS_PER_SECOND[speed_index]
 
-	if not _is_showing():
+	var showing: bool = _is_showing()
+	if _leaving_view(showing):
+		queue_redraw()
+	if not showing:
 		return
 
 	# Poll-behind-a-change-test, minimap.gd's pattern: nothing here is signalled,
@@ -275,6 +288,20 @@ func _redraw_due(delta: float, view_changed: bool, paused: bool) -> bool:
 ## _process still runs, so the layer test lives here rather than in visibility.
 func _is_showing() -> bool:
 	return _map_view != null and String(_map_view.layer()) == MapLayers.TRADE
+
+
+## THE FALLING EDGE, AND WHY LEAVING THE LAYER NEEDS ONE. Nothing hides this
+## control when the layer changes -- _is_showing() gates _draw() instead -- and a
+## CanvasItem keeps the commands of its last draw until the next one. So the frame
+## that leaves TRADE has to ask for a draw it will immediately early-return out
+## of: that empty draw is what clears the arcs off the layer that replaced them.
+## A function with an answer for the same reason _redraw_due() is one -- a
+## queue_redraw() leaves a headless test nothing to read back. It owns
+## _was_showing.
+func _leaving_view(showing: bool) -> bool:
+	var leaving: bool = _was_showing and not showing
+	_was_showing = showing
+	return leaving
 
 
 func spines_considered() -> int:

@@ -332,6 +332,12 @@ func _ready() -> void:
 		# colour change the player should see the moment they act rather than at
 		# the next month's tick.
 		_map_view.queue_redraw()
+		# And a tariff or an agreement moves the trade weights the arcs are drawn
+		# from, on the same press and for the same reason -- the overlay caches
+		# them, so without this the arcs keep their pre-action widths until the
+		# month rolls over.
+		if _map_flows != null:
+			_map_flows.refresh()
 	)
 
 	# V1.3d. Beside Diplomacy in the World cluster, and its own window rather than
@@ -1553,9 +1559,12 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
-	# nation_panel's own `acted` handler redraws.
+	# nation_panel's own `acted` handler redraws. The arcs move on the same day
+	# and for the same reason the handler refreshes them.
 	if _map_view != null:
 		_map_view.queue_redraw()
+		if _map_flows != null:
+			_map_flows.refresh()
 
 
 ## A kept appointment is something that happened to the player's government with

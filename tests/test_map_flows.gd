@@ -35,6 +35,7 @@ func _process(_delta: float) -> bool:
 	_check_cull_by_count()
 	_check_pause_freezes()
 	_check_redraw_is_rate_limited()
+	_check_leaving_the_layer_clears()
 	_check_convoys_store_nothing()
 	_report()
 	return true
@@ -233,6 +234,28 @@ func _check_redraw_is_rate_limited() -> void:
 			recovered += 1
 	if absi(recovered - want) > 3:
 		_fail("after one frame of delta %.4f, 2 s at 60 fps queued %d redraws, expected ~%d -- the accumulator did not recover" % [-frame_60, recovered, want])
+
+
+## LEAVING THE LAYER HAS TO CLEAR THE CANVAS, and the review that found this had
+## the overlay painting its arcs over Political and Relations for as long as the
+## player stayed there: _process returned on `not _is_showing()` before it could
+## ask for anything, and a CanvasItem keeps its last draw until the next one. The
+## falling edge is what asks -- so it fires ONCE on the way out and not while the
+## layer is away, or the clear becomes a redraw every frame of every other layer.
+func _check_leaving_the_layer_clears() -> void:
+	var flows = _main.get("_map_flows")
+	if flows == null:
+		return
+
+	flows._was_showing = false
+	if flows._leaving_view(true):
+		_fail("arriving on the trade layer was read as leaving it")
+	if flows._leaving_view(true):
+		_fail("a second frame on the trade layer was read as leaving it")
+	if not flows._leaving_view(false):
+		_fail("leaving the trade layer queued no redraw -- the arcs stay painted over the layer that replaced them")
+	if flows._leaving_view(false):
+		_fail("a frame away from the trade layer kept clearing -- the falling edge is not falling")
 
 
 ## A CONVOY IS A PURE FUNCTION OF (edge, index, phase) AND STORES NOTHING. That
