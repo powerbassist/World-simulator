@@ -114,7 +114,14 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   four are parked on purpose, not junk** — `at-icons` is half adopted (V2.3 committed
   the icons `src/` names) and `materialLayers` and `road-generator` are each installed
   ahead of a planned use, so do not strip any of them on the reasoning that nothing in
-  `src/` reads them yet. **`dialogue_manager` is no longer parked: V2.4b adopted it**,
+  `src/` reads them yet. **`road-generator`'s planned use is now spent and it was not
+  this one**: V3.4 drew the road layer and did NOT reach for the addon, because it
+  generates 3D road meshes along splines and `map_view.gd` is a 2D plate-carrée
+  `_draw()` over lon/lat. The reasoning is in
+  [docs/data-sources.md](docs/data-sources.md)'s `road-generator` callout — read it
+  before the name tempts a future session to re-open the question. It is still parked
+  rather than stripped; what changed is that nothing on any tier is now waiting for
+  it. **`dialogue_manager` is no longer parked: V2.4b adopted it**,
   and it is the project's STATED EXCEPTION to the no-autoloads rule — taken knowingly
   at plan time, gated on a headless smoke test (it must init under
   `--headless --script`, which is what `tools/run_tests.sh` is), committed whole into
@@ -1170,8 +1177,10 @@ for every nation, so the tier's "(a) no politics" was impossible as written: (a)
 the complete political content for the nineteen and deferred only portraits/playable/
 screenshots to (b). The import machinery is one roster list plus per-nation tables; the
 nineteen arrive at NUTS 2 without exception, five single-region on the LUX precedent
-(CYP EST LTU LVA MLT). **THE REGISTER IS 213 REGIONS, 1 065 CITIES, 464 EDGES, 16 SEA
-LINKS, ONE COMPONENT** — components counted before authoring (18), each link a real
+(CYP EST LTU LVA MLT). **THE REGISTER IS 213 REGIONS, 1 065 CITIES, 463 EDGES (447 LAND + 16 SEA
+LINKS), ONE COMPONENT** (this row first said 464; corrected at the V3.4 close
+from `data/geo/region_graph.json`, whose 463 edge records tag 447 `land` and
+16 `sea`) — components counted before authoring (18), each link a real
 crossing (Oresund, Great Belt, the Greek archipelago from Piraeus/Igoumenitsa, Malta,
 Cyprus; Ireland needs none over the UKN land border). **THE NINETEEN MEASURED THE
 IMPORT'S ASSUMPTIONS DEAD IN FOUR PLACES**: Portugal's NUTS 2024 SPLIT AMLisboa (the
@@ -1229,6 +1238,125 @@ push a motion at four points, read `gui_get_hovered_control()`, fail unless the 
 reaches the map, a window or the HUD. **A structural check that names one instance is a
 check for that instance, not for the rule** -- and a bug the player meets in the first
 second can sit behind a green 80/80 for a whole tier.
+
+
+**V3.4 DREW THE GRAPH AND SHIPPED NINE FALSE OR OVERSTATED CLAIMS -- REVIEW CAUGHT ALL
+NINE, THE SUITE CAUGHT NONE, AND THE PATTERN UNDER THEM IS ONE SENTENCE: A CLAIM'S
+CONFIDENCE TRACKED HOW GOOD IT SOUNDED RATHER THAN HOW IT WAS OBTAINED.** Three
+committed comments in Task 2 (an INVENTED AT11-AT12 worked example -- they are 0.53 deg
+apart and no edge in the register has coincident axes; the Channel named as "the shortest
+crossing" when FR1-UKI is 343.8 km and TWELFTH of sixteen, the shortest being DK01-SE22
+at 28.4; and a FIX ROUND'S OWN NEW COMMENT crediting a test with a scan it did not
+perform), three more in Task 5 (a section number pointing at a file with no such section,
+PACE_KM_PER_DAY justified by an unobserved claim about how the animation reads, and a
+MAX_CONVOYS glyph collision nobody had measured), one in Task 7 (a test comment about
+what a single call would miss, disproved by the reviewer), and two in Task 8 -- a
+**FABRICATED GIT CITATION**, a SHA quoted as provenance that is unrelated V1.3f diplomacy
+code, plus a convoy tail of 7 marks that MAX_CONVOYS 3 per direction structurally cannot
+produce. None was a lie and none was careless prose: each was a plausible specific
+written in the voice this project rewards, by an author who had not gone and looked.
+**The remedy is structural, not diligence: assert only what you have verified and say in
+the same sentence how.** **AND THREE TESTS COULD NOT FAIL, each found by the NEXT task
+rather than by the suite** -- `_main._map_flows` on a Node lacking that member RAISES
+rather than reading null, so four checks aborted as SCRIPT ERRORs while the file printed
+"all checks passed" and exited 0 (only the runner's separate script-error gate saw it);
+a source-policing check sliced `func _draw_convoys` to the next `\nfunc ` while the code
+it policed lives in `_draw_convoy_run()`, so the slice held a DOC COMMENT that happened
+to contain the words it looked for and a planted `randf()` did not fail it; and a
+`Rect2.has_point()` assertion could never pass because that method is HALF-OPEN.
+Mutation-verify every new assertion. **THE INSTRUMENT WAS WRONG BEFORE ANY OF IT WAS
+TRUE, AND ITS WRONG ANSWER WAS A PASS**: the gate rows first sampled with the clock
+PAUSED, and `map_flows` only queues a redraw while the clock runs, so they priced an
+already-recorded canvas item and reported the overlay at a false **0.24 ms**. Third
+instrument finding of this kind in the project's history (P4, the Nil clock in `_init`,
+now this); `frame_probe.gd` now carries a "run" key for rows that must pay the per-frame
+re-record and prints the clock regime beside every sample.
+
+**What shipped, and it is U-TRACK BY MEASUREMENT: the track row said `S + U` and the
+block built `U`.** V2.7 modelled a transport graph that had never drawn a pixel and
+V1.3b derived a directed trade weight for every ordered pair that had never drawn one
+either; V3.4 draws both. **463 spines** (447 land, 16 sea) between adjacent regions'
+`cities[0]` -- the same anchors `build_region_graph()` measured its kilometres between,
+so the line on screen and the distance the model discounts by cannot disagree -- as
+`_draw_spines()`, the **eighth** draw pass `map_view` now owns (the fourth it calls),
+gated on the EXISTING `CITY_MIN_ZOOM` 2.0 with no new constant and nothing swept. The sixteen sea links are dashed and the land edges solid:
+ONE hue at two alphas, because a road never needs picking out of the map, only reading
+off it. The animated layer is a **sibling overlay** (`src/ui/map_flows.gd`, a separate
+full-rect Control, `MOUSE_FILTER_IGNORE`, camera mirrored through
+`visible_lonlat_rect()`, culling in DEGREES before it projects): directed trade arcs
+below the gate, moving convoys above it. **NOTHING IS STORED** -- a convoy's stagger is
+`Cycle.unit()` of the edge key and direction with the mark's index and its phase advances
+off the sim clock, so pause freezes it and a reloaded save puts every convoy where a
+fresh clock would. `SAVE_VERSION` stays **33**, `git diff main..HEAD -- src/sim/
+src/core/` is EMPTY, and **the balance re-run was predicted bit-identical BEFORE it ran
+and came back stronger than the prediction: the two captures are byte-identical
+UNFILTERED -- 1 697 of 1 697 raw lines, one md5, a zero-line diff**, 50/50 invariants OK
+each side, zero outcome changes. Both sides ran from worktrees (bfcda29 and c4ba7df), so
+even the addon parse noise cancelled and the comparison needed no filter at all -- which
+is also why V1.7c's third-stray-line trap could not be sprung: the filter removed ZERO
+lines from either side and therefore hid nothing. Surfaces recount: **5 new source files against the row's 4** (`map_network.gd`,
+`map_flows.gd`, their two tests, plus `tools/roads_probe.py` -- the step-0 instrument the
+count did not anticipate), 11 files modified.
+
+**THE STEP-0 MEASUREMENT CAME BACK THE OTHER WAY AND THE REFUSAL HAD TO BE REWRITTEN
+AROUND A TEST NOBODY HAD WRITTEN DOWN.** Natural Earth 1:10m roads -- public domain, so
+never a licence problem -- PASSED coverage at 212/213 regions (99.5 %) where the row, the
+handoff and the plan all assumed they would fail, and the first implementer stopped
+without committing rather than write a refusal its own numbers contradicted. Correct
+call. They were refused on **EDGE IDENTITY** instead: road properties carry
+name/type/sov_a3/length_km and nothing naming a region or an edge, so **0 of 463 graph
+edges can be looked up in them**, where derived spines score 463/463 by construction. The
+decorative under-layer was declined on measured cost (Major Highway alone is **+77 %
+vertex mass** on a map whose whole geometry is 37 861 points, landing in the
+everything-visible band where culling removes nothing). Geometric attribution was NOT
+measured and is therefore NOT refused -- recorded as open in docs/data-sources.md. **A
+CORRECTION THIS BLOCK MADE: the graph is 463 EDGES, not 464** -- one number written three
+places (network-model.md section 12, AGENTS.md's own V3.3 row above, and the V3.4
+handoff), wrong in all three, corrected here against `data/geo/region_graph.json`.
+
+**FOUR NEW GATES DECLARED AND ALL FOUR MEASURED -- TWO FAILED FIRST, AND THE FIX IS
+LOAD-BEARING RATHER THAN POLISH.** Uncapped, the overlay put **G4 at 3.01 ms against 1.5
+and G5 at 13.73 against 11.0**; the design's named fallback was taken (`map_flows`
+rate-limits its own `queue_redraw()` to `REDRAW_HZ` 30, camera moves exempt) and the
+re-measure passes all four: **G3 6.94-7.88 ms** (gate 8.0), **G4 0.59** (1.5), **G5 8.88**
+(11.0), **G6 1.000 days/sec**. The failing numbers are recorded beside the passing ones
+in map-platform-model.md section 4, and the cadence is pinned by five mutation-verified
+assertions. **THE CAP COVERS A STILL CAMERA ONLY, and review caught that nothing had
+measured a drag**: a dragged frame costs **97.75-99.42 ms -- 10 fps, 9x G5** -- and
+**91-93 of those ms are NOT the overlay** (`map_view`'s own re-record is ~69 ms, and the
+TRADE layer's roster fill costs 14-17 ms more per re-record than POLITICAL because
+`map_layers.swatch()` calls `Trade.weights()` TWICE per nation). Both predate V3.4;
+recorded as an OPEN ITEM and deliberately unfixed, because capping the camera move trades
+a frame cost for a worse visual defect -- the overlay detaching from the coastline under
+the cursor. Spun out as `task_022b47f3`. Strongest evidence yet FOR the block's
+architecture: the file header claimed animating inside `map_view._draw()` would be
+unaffordable, and it now has a number, and the number is 69 ms. A second open item, also
+spun out (`task_a06604dc`): a **~15 s main-thread stall on an event decision**, 15.78 s
+wall against 0.72 s counted delta, frames not scheduled at all; `await`, `Thread`, sync
+`load()` and timer chaining ruled out by reading -- real freeze vs unattended-window
+artifact UNDECIDED, and it needs timestamps rather than more inference.
+
+**FOURTH SCREENSHOT PASS RUNNING TO FIND A BUG, AND THE FIRST TO FIND ONE YOUNGER THAN
+ITS OWN SESSION.** `tools/screenshot.gd` called `show_layer()` with one argument, correct
+since U5c -- V3.3c (two days earlier) gave it state + viewer_id and updated `main.gd:733`
+but not this caller, so **every `--layer trade` frame since had photographed a ramp legend
+with no ramp rows**. A signature change that updates one call site of two, in a tool no
+test covers, is invisible until somebody looks at a frame. Seven frames judged, every
+verdict citing a colour, a count or a pixel run along a computed line, with the vision
+path verified against an unrelated pre-existing capture BEFORE any claim was made: roads
+read as a network (hubs at Paris, Madrid, Lyon), a ferry is unmistakable by stroke alone,
+and convoy asymmetry was COUNTED at ~2x on cross-border spines against internal ones --
+V1.3b's directed weights finally drawn. Two honest negatives kept: **the 7 px arrowhead
+does not resolve at zoom 1.6** (direction reads by hue and bow; the head is sized for
+zoomed-in reading and was left alone), and **DK01-SE22 -- the shortest crossing, the
+question `map_network.gd` had deferred by name -- IS INVISIBLE at the zoom roads first
+appear**, 10.6 px against a 12 px dash cycle with two ~5 px city markers covering the gap.
+Frame and arithmetic agree to the pixel; the constants were left alone because no shrink
+rescues 10.6 px between two markers. Suite **82 files** green, names clean. Model:
+[docs/network-model.md](docs/network-model.md) section 13;
+[docs/map-platform-model.md](docs/map-platform-model.md) section 4 and section 7, whose
+obligation this block DISCHARGED and re-issued: **any further animated surface uses the
+same split**, and **a cap on a redraw is a cap on the IDLE rate only**.
 
 
 
