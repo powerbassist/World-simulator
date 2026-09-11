@@ -29,6 +29,8 @@ const KNOWN_IMPORTED_KEYS: Array[String] = [
 	"_source", "_year", "_trend_from_year", "_usd_eur", "population", "gdp_eur_bn",
 	"unemployment_pct", "sectors", "cohorts", "inequality", "cycle", "prices",
 	"institutions", "energy",
+	# V3.5a imported the block; V3.5c parses it beside the energy reads below.
+	"emissions",
 ]
 const KNOWN_SECTOR_KEYS: Array[String] = ["agriculture", "industry", "services"]
 
@@ -96,6 +98,15 @@ const KNOWN_INSTITUTIONS_KEYS: Array[String] = ["rule_of_law_score"]
 const KNOWN_ENERGY_KEYS: Array[String] = [
 	"mix", "import_dependency_pct", "kwh_per_capita", "_years",
 ]
+
+## V3.5. imported.emissions, KNOWN_ENERGY_KEYS' treatment: script-written like every
+## block under `imported`, so an absent or misspelled key is a broken import rather
+## than an authoring choice to be tolerated. `_year` is required provenance and not
+## decoration -- the figure is read at its own nearest year (tools/import_data.py's
+## load_wb_indicator_nearest_year), which need not be the year the file's other
+## series describe, so a file that omits it claims a figure measured the way
+## everything around it was measured.
+const KNOWN_EMISSIONS_KEYS: Array[String] = ["co2e_per_capita_t", "_year"]
 
 ## The 15-64 share may not fall below this, in points. It is a guard on the RESIDUAL:
 ## Demography.working_share() is 1 - young - old and is a DENOMINATOR twice over, in
@@ -445,6 +456,12 @@ var energy_mix: Dictionary = {}
 var energy_import_dependency_pct: float = 0.0
 var energy_kwh_per_capita: float = 0.0
 
+## V3.5. The measured per-capita GHG baseline, from imported.emissions -- World
+## Bank EN.GHG.CO2.PC.CE.AR5, tonnes CO2e a year per head on the AR5 GWP set. The
+## content the tick-rewritten reading on NationState is a deviation against, and
+## the base term Energy.emissions_tonnes() starts from.
+var co2e_per_capita_t: float = 0.0
+
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	var n := new()
@@ -676,6 +693,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.energy_mix = _extract_dict(imported, "energy", filename, errors).get("mix", {})
 	_validate_energy(imported.get("energy", {}), n, filename, errors)
 
+	n.co2e_per_capita_t = _extract_dict(imported, "emissions", filename, errors).get("co2e_per_capita_t", 0.0)
+	_validate_emissions(imported.get("emissions", {}), n, filename, errors)
+
 	return n
 
 
@@ -905,6 +925,37 @@ static func _validate_energy(energy_block: Dictionary, n: Nation, filename: Stri
 	n.energy_kwh_per_capita = float(energy_block["kwh_per_capita"])
 	if n.energy_kwh_per_capita <= 0.0:
 		errors.append("%s: imported.energy.kwh_per_capita must be positive" % filename)
+
+
+## V3.5. _validate_energy()'s shape, one block over. REQUIRED rather than optional,
+## and the reason is the register's own rule -- an absent regions file is an error:
+## every nation HAS emissions, so a file without the block is a broken download and
+## not a country that emits nothing. The distinction matters downstream: 0.0
+## t/capita against a live ~4 is a decarbonised country, and it would be the base
+## term Energy.emissions_tonnes() prices the accord's rule on.
+##
+## Positive, for the same reason kwh_per_capita is: the figure is a baseline a
+## readout and a rule are measured against, and a zero or negative would be a
+## confident lie no dataset produced. No upper bound -- the roster's own spread is
+## the fact, and a bound here would be decoration.
+static func _validate_emissions(emissions_block: Dictionary, n: Nation, filename: String, errors: Array[String]) -> void:
+	var keys := emissions_block.keys()
+	keys.sort()
+	var expected := KNOWN_EMISSIONS_KEYS.duplicate()
+	expected.sort()
+	if keys != expected:
+		errors.append("%s: imported.emissions must have exactly keys %s, got %s" % [filename, expected, keys])
+		return
+
+	for key in KNOWN_EMISSIONS_KEYS:
+		var raw = emissions_block[key]
+		if not (typeof(raw) == TYPE_FLOAT or typeof(raw) == TYPE_INT):
+			errors.append("%s: imported.emissions.%s is not numeric" % [filename, key])
+			return
+
+	n.co2e_per_capita_t = float(emissions_block["co2e_per_capita_t"])
+	if n.co2e_per_capita_t <= 0.0:
+		errors.append("%s: imported.emissions.co2e_per_capita_t must be positive" % filename)
 
 
 static func _validate_prices(prices_block: Dictionary, filename: String, errors: Array[String]) -> void:

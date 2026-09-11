@@ -160,6 +160,10 @@
         "energy_kwh_per_capita": 2024
       }
     },
+    "emissions": {
+      "co2e_per_capita_t": 7.13,
+      "_year": 2024
+    },
     "institutions": {
       "rule_of_law_score": 77.4
     }

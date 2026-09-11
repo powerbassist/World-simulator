@@ -156,6 +156,10 @@
         "elc_renewable_pct": 2021,
         "energy_kwh_per_capita": 2024
       }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 4.0,
+      "_year": 2024
     }
   }
 }

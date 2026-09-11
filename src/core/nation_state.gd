@@ -486,7 +486,11 @@ var last_referendum_result: Dictionary = {}
 ##
 ## `event_name` is copied in at announcement so src/sim/calendar.gd can draw a diary row
 ## off this register while still preloading nothing -- V1.6f's project entry and V1.7c's
-## referendum, a third time.
+## referendum, a third time. V3.5: a SITED event adds `region_id` and `region_name`,
+## copied at announcement on the same leaf argument -- and stored rather than re-derived
+## because the register carries no announcement month, so a save reloaded mid-crisis
+## could not reconstruct which month drew which place. A non-sited event's register
+## carries neither key.
 ##
 ## Written by Events.announce(), Events.tick_month() and Events.choose(), and by nothing
 ## else.
@@ -953,6 +957,15 @@ var plant_seq: int = 0
 var start_energy_mix := {}
 var start_import_dependency_pct: float = 0.0
 var energy_kwh_per_capita: float = 0.0
+
+## V3.5. The measured per-capita baseline, same content-derived-static rule as the
+## three above it: serialised because from_dict() never sees the loader.
+var start_co2e_per_capita_t: float = 0.0
+
+## Written every tick from the mix, for the readouts and the accord's rule field --
+## import_dependency_pct's own shape, and Energy.tick_month() runs BEFORE
+## Orgs.tick_month() (budget.gd:388 then :396), so the council judges settled books.
+var co2e_per_capita_t: float = 0.0
 
 ## Recomputed from `plants` and the content on the first tick. Serialised so a save
 ## reloaded and not yet ticked reports the budget it was saved with --
@@ -1595,6 +1608,8 @@ func duplicate_state():
 	s.start_energy_mix = start_energy_mix.duplicate(true)
 	s.start_import_dependency_pct = start_import_dependency_pct
 	s.energy_kwh_per_capita = energy_kwh_per_capita
+	s.start_co2e_per_capita_t = start_co2e_per_capita_t
+	s.co2e_per_capita_t = co2e_per_capita_t
 	s.energy_bill_pct_gdp = energy_bill_pct_gdp
 	s.import_dependency_pct = import_dependency_pct
 	s.energy_impulse_pct = energy_impulse_pct
@@ -1813,6 +1828,8 @@ func to_dict() -> Dictionary:
 		"start_energy_mix": start_energy_mix,
 		"start_import_dependency_pct": start_import_dependency_pct,
 		"energy_kwh_per_capita": energy_kwh_per_capita,
+		"start_co2e_per_capita_t": start_co2e_per_capita_t,
+		"co2e_per_capita_t": co2e_per_capita_t,
 		"energy_bill_pct_gdp": energy_bill_pct_gdp,
 		"import_dependency_pct": import_dependency_pct,
 		"energy_impulse_pct": energy_impulse_pct,
@@ -2147,6 +2164,14 @@ static func from_dict(d: Dictionary):
 	s.start_energy_mix = d.get("start_energy_mix", {})
 	s.start_import_dependency_pct = float(d.get("start_import_dependency_pct", 0.0))
 	s.energy_kwh_per_capita = float(d.get("energy_kwh_per_capita", 0.0))
+	# V3.5. `start_co2e_per_capita_t` is what earned the bump to 34 -- V1.6a's
+	# content-derived-static rule, V2.8's three one row up: absent it a reloaded
+	# France emits 0.0 t/capita against a live 4.0, a decarbonised country and not
+	# an empty register. The reading below earns nothing -- import_dependency_pct's
+	# case, rewritten from the mix on the first tick -- and is serialised so a save
+	# reloaded and not yet ticked reports the figure it was saved with.
+	s.start_co2e_per_capita_t = float(d.get("start_co2e_per_capita_t", 0.0))
+	s.co2e_per_capita_t = float(d.get("co2e_per_capita_t", 0.0))
 	s.energy_bill_pct_gdp = float(d.get("energy_bill_pct_gdp", 0.0))
 	s.import_dependency_pct = float(d.get("import_dependency_pct", 0.0))
 	s.energy_impulse_pct = float(d.get("energy_impulse_pct", 0.0))

@@ -10,6 +10,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -176,6 +177,10 @@ var _senate := false
 var _court := false
 var _event := false
 var _event_answered := false
+## V3.5. A SITED event -- the place suffix on the card and on the panel question is
+## this block's contribution to the surface, and no earlier flag waits for one:
+## `--event` stops at whatever draws first and only NOTES a missing subject.
+var _climate := false
 
 var _open := ""
 ## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
@@ -412,6 +417,8 @@ func _init() -> void:
 			_court = true
 		elif args[i] == "--event":
 			_event = true
+		elif args[i] == "--climate":
+			_climate = true
 		elif args[i] == "--event-answered":
 			_event_answered = true
 		elif args[i] == "--region":
@@ -588,6 +595,8 @@ func _apply_view() -> void:
 		_lose_the_court()
 	if _event:
 		_put_a_crisis_on_the_desk()
+	if _climate:
+		_put_a_sited_crisis_on_the_desk()
 	if _event_answered:
 		_answer_a_crisis()
 	if _nation != "":
@@ -1434,7 +1443,10 @@ func _stage_an_interrupt() -> void:
 	if crisis == null:
 		push_error("--interrupt: blackout_night did not load")
 		return
-	Events.announce(ns, crisis)
+	# The announce signature grew the month and the name map at V3.5; blackout_night
+	# is non-sited, so both are inert -- filled exactly as tick_month fills them.
+	Events.announce(ns, crisis, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, loader))
 	_main._enforce_interrupt()
 	_main._windows.mark_all_dirty()
 
@@ -2126,6 +2138,36 @@ func _put_a_crisis_on_the_desk() -> void:
 		printerr("--event: '%s' names no subject, so the frame shows no person" % ev.id)
 
 
+## V3.5. A sited crisis on the desk, with its place in the title.
+##
+## `--event`'s sibling, and separate from it because the two flags want DIFFERENT
+## first arrivals: --event stops at whatever draws and only notes a missing
+## subject, while this loop's whole claim is the place suffix, so it keeps ticking
+## until the pending event is one the hazard SITED. That wait is a fixed month,
+## not a search -- the hazard is pure in (nation, event, month), events.gd's own
+## argument -- and the non-sited events met on the way lapse on their own
+## respond_months and cooldown, because answering one would put a row in the
+## ledger that this frame's `--open events` companion would then not explain.
+func _put_a_sited_crisis_on_the_desk() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	# 240 rather than --event's 48: the flood is a 0.06 draw behind the one-slot
+	# queue and its cooldown, and the horizon has to cover a run of bad hashes
+	# rather than the mean of them. The re-run measured ~10 draws in 168 months,
+	# so the deterministic sequence lands well inside this.
+	var horizon := 240
+	for _m in range(horizon):
+		_tick_months(1)
+		# The register only gains region_id on a sited announce, so the key is the
+		# honest marker -- checking the event content here would be a second opinion
+		# about what sited means.
+		if Events.is_pending(ns) and ns.event_pending.has("region_id"):
+			return
+	printerr("--climate: no sited event drew inside %d months" % horizon)
+
+
 ## The other end of the same panel, and it wants the opposite scroll.
 ##
 ## V1.6e's screenshot correction says to scroll to where the flag's own claim is, and
@@ -2147,7 +2189,10 @@ func _answer_a_crisis() -> void:
 		return
 
 	var first = _main._loader.events[0]
-	Events.announce(ns, first)
+	# The announce signature grew the month and the name map at V3.5; the shipped
+	# content is non-sited, so both are inert -- filled as tick_month fills them.
+	Events.announce(ns, first, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, _main._loader))
 	var answered := ""
 	for c in first.choices:
 		if not bool(c["is_default"]):
@@ -2157,7 +2202,8 @@ func _answer_a_crisis() -> void:
 
 	var second = _main._loader.events[1]
 	ns.event_quiet_months = 0
-	Events.announce(ns, second)
+	Events.announce(ns, second, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, _main._loader))
 	_tick_months(second.respond_months + 1)
 
 	if ns.event_history.size() < 2:

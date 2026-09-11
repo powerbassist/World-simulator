@@ -234,6 +234,14 @@ ENERGY_INDICATORS = {
     "energy_kwh_per_capita": "EG.USE.ELEC.KH.PC",
 }
 
+# V3.5. Total greenhouse-gas emissions per capita, tonnes of CO2 equivalent on the
+# AR5 GWP set -- the mix's climate shadow, read rather than computed: the World Bank
+# series is measured for all 29 at 2024 (the successor/AR4 codes are retired), so
+# importing it costs one file and inventing it from the mix would be a number no
+# dataset produced. Emissions.rebuild() starts from this and lets the fleet's
+# displacement move it -- the same baseline-plus-deviation shape the energy block has.
+EMISSIONS_INDICATOR = "EN.GHG.CO2.PC.CE.AR5"
+
 
 def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
@@ -392,6 +400,28 @@ def build_energy_block(nid, energy):
         "import_dependency_pct": round(out["energy_import_dependency_pct"], 3),
         "kwh_per_capita": round(out["energy_kwh_per_capita"], 1),
         "_years": years,
+    }
+
+
+def build_emissions_block(nid, emissions):
+    """V3.5. Total GHG per capita, tonnes CO2e, and the year the figure came from.
+
+    One series through the nearest-year loader: the roster is complete at 2024
+    (29 of 29, checked at probe time), so every nation reads the same vintage and
+    the block is one value plus its `_year` -- V1.5c's shape minus the slope,
+    because no sim reader needs a drift term yet and a slope nothing reads is
+    V2.6b1's sited-but-unused register.
+    """
+    if nid not in emissions:
+        sys.exit(
+            f"{nid}: no {EMISSIONS_INDICATOR} value at ANY year in the downloaded "
+            f"window -- World Bank GHG coverage is 29 of 29, so an absent nation "
+            f"is a broken download rather than a gap"
+        )
+    value, year_used = emissions[nid]
+    return {
+        "co2e_per_capita_t": round(value, 2),
+        "_year": year_used,
     }
 
 
@@ -655,6 +685,10 @@ def build_imported_block(year):
         for name, code in ENERGY_INDICATORS.items()
     }
 
+    # V3.5. One GHG series, nearest-year for the loader's symmetry -- the roster is
+    # complete at 2024, so in practice nothing falls back.
+    emissions = load_wb_indicator_nearest_year(EMISSIONS_INDICATOR, year)
+
     # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a
     # ratio against the roster mean and so cannot be built one nation at a time --
     # the only block here with that shape. See build_cycle_blocks().
@@ -739,6 +773,7 @@ def build_imported_block(year):
             "cycle": cycle_blocks[nid],
             "prices": prices_blocks[nid],
             "energy": build_energy_block(nid, energy),
+            "emissions": build_emissions_block(nid, emissions),
             # V1.1e. One decimal, `unemployment_pct`'s and `gini_index`'s treatment.
             # No provenance keys and no slope: the series is read at the block's own
             # `_year` on the block's own window, so `_year` above already describes it.

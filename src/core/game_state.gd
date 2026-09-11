@@ -457,7 +457,16 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## world against twenty-seven-member org data -- nineteen nations dropped
 ## without an error anywhere. The roster a save was made against is part of
 ## its contract, and the bump is how the loader says so.
-const SAVE_VERSION := 33
+##
+## V3.5 bumps this to 34 on ONE field: `start_co2e_per_capita_t`, the measured
+## per-capita emissions baseline and a fourth content-derived static beside V2.8's
+## three -- NationState.from_dict() rebuilds from the dictionary alone and never
+## sees the loader, so absent the field a reloaded France reads 0.0 t/capita
+## against a live 4.0 and Energy.emissions_tonnes() loses its base term. The
+## tick-rewritten reading beside it (`co2e_per_capita_t`) earns nothing:
+## import_dependency_pct's case, recomputed from the mix on the first tick and
+## serialised so an unticked save reports the figure it was saved with.
+const SAVE_VERSION := 34
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -907,6 +916,9 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	ns.start_energy_mix = n.energy_mix.duplicate(true)
 	ns.start_import_dependency_pct = n.energy_import_dependency_pct
 	ns.energy_kwh_per_capita = n.energy_kwh_per_capita
+	# V3.5. The measured emissions baseline, captured with the other starts.
+	ns.start_co2e_per_capita_t = n.co2e_per_capita_t
+	ns.co2e_per_capita_t = n.co2e_per_capita_t
 	# V1.6d. From a model constant rather than from the nation file, and that is a
 	# deliberate refusal rather than a shortcut: nothing on tools/import_data.py's
 	# licence-clean loop measures how progressive a bracket structure is, and ten

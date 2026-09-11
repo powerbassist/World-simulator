@@ -81,6 +81,22 @@ func _init() -> void:
 	if not names_working:
 		failures.append("corrupt cohort fixture did not produce an error naming the working-age floor: %s" % [cohort_errors])
 
+	# V3.5. The emissions block is required for all twenty-nine, because an absent
+	# or key-less figure parses 0.0 t/capita against a live ~4-9 -- a decarbonised
+	# country rather than an empty one, and the base term of
+	# Energy.emissions_tonnes(). The fixture keeps the BLOCK and drops the KEY, so
+	# the error names the field and not merely the block it lives in.
+	var emissions_text := FileAccess.get_file_as_string("res://tests/fixtures/nation_bad_emissions.json")
+	var emissions_dict = JSON.parse_string(emissions_text)
+	var emissions_errors: Array[String] = []
+	Nation.from_dict(emissions_dict, "nation_bad_emissions.json", emissions_errors)
+	var names_co2e := false
+	for e in emissions_errors:
+		if e.find("co2e_per_capita_t") != -1:
+			names_co2e = true
+	if not names_co2e:
+		failures.append("emissions fixture without co2e_per_capita_t did not produce an error naming it: %s" % [emissions_errors])
+
 	if loader.nations.has("FRA"):
 		var fra: Nation = loader.nations["FRA"]
 		var expected_gdp := 2900.0
@@ -110,7 +126,7 @@ func _init() -> void:
 	# next session that adds a block is TOLD rather than expected to remember: the
 	# leading-underscore keys are provenance and optional, everything else is a block
 	# _extract_dict() will error on. That makes this check maintain itself.
-	for fixture in ["nation_bad_cohorts", "nation_bad_formation_method", "nation_bad_unemployment"]:
+	for fixture in ["nation_bad_cohorts", "nation_bad_formation_method", "nation_bad_unemployment", "nation_bad_emissions"]:
 		var path := "res://tests/fixtures/%s.json" % fixture
 		var raw := FileAccess.get_file_as_string(path)
 		var parsed = JSON.parse_string(raw)

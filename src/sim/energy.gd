@@ -3,6 +3,9 @@ extends RefCounted
 ## The electricity mix, its import dependency, and the fleet that moves them --
 ## V2.8. Model: docs/energy-model.md.
 ##
+## V3.5: the mix now has THREE derived reads -- dependency, impulse, emissions --
+## each a pure read over the same partition.
+##
 ## THE MIX IS A PARTITION, NOT A STOCK. The measured national shares are the
 ## baseline and built capacity is the deviation, so with an empty register every
 ## quantity here reads EXACTLY its measured content -- trade_baseline_by_partner's
@@ -132,6 +135,58 @@ static func _branch_intensity(loader) -> Dictionary:
 	return out
 
 
+## branch -> tonnes CO2e per TWh, output-weighted over the branch's sources --
+## _branch_intensity()'s exact idiom over the emission key, so a branch holding a
+## 6 TWh coal station and a 5 TWh gas one is described by neither alone.
+static func emission_branch_intensity(loader) -> Dictionary:
+	var num: Dictionary = {}
+	var den: Dictionary = {}
+	for branch in K.BRANCHES:
+		num[branch] = 0.0
+		den[branch] = 0.0
+	var ids: Array = loader.energy_sources.keys()
+	ids.sort()
+	for source_id in ids:
+		var source = loader.energy_sources[source_id]
+		num[source.branch] = float(num[source.branch]) + source.output_twh * source.emission_t_per_twh
+		den[source.branch] = float(den[source.branch]) + source.output_twh
+	var out: Dictionary = {}
+	for branch in K.BRANCHES:
+		out[branch] = 0.0 if float(den[branch]) <= 0.0 else float(num[branch]) / float(den[branch])
+	return out
+
+
+## How far the fleet has moved national emissions against the nation's OWN start,
+## in tonnes CO2e a year. Share-based, like dependency_deviation_pct: the baseline
+## is the nation's measured TOTAL and the fleet is the lever that moves it, so a
+## renewable TWh displaces the fossil share it erodes -- EXACTLY 0.0 at an empty
+## register, dependency_deviation_pct()'s own property.
+static func emissions_deviation_tonnes(ns, loader) -> float:
+	var live: Dictionary = mix(ns, loader)
+	var intensity: Dictionary = emission_branch_intensity(loader)
+	var twh: float = national_twh(ns)
+	var moved: float = 0.0
+	for branch in K.BRANCHES:
+		var delta: float = float(live.get(branch, 0.0)) - float(ns.start_energy_mix.get(branch, 0.0))
+		moved += delta * float(intensity.get(branch, 0.0)) * twh
+	return moved
+
+
+## Total national emissions in tonnes CO2e a year: the measured baseline against
+## the LIVE population, plus the fleet's deviation. The accord's rule constrains
+## the PER-CAPITA form; this is its numerator.
+static func emissions_tonnes(ns, loader) -> float:
+	return ns.start_co2e_per_capita_t * ns.population + emissions_deviation_tonnes(ns, loader)
+
+
+## The constrained field. Baseline per-capita against the live population, so a
+## growing country drifts up on its own -- correct, and no constant expresses it.
+static func co2e_per_capita_t(ns, loader) -> float:
+	if ns.population <= 0.0:
+		return ns.start_co2e_per_capita_t
+	return emissions_tonnes(ns, loader) / ns.population
+
+
 ## What building here costs, as a multiplier on the authored build cost.
 ##
 ## EXACTLY 1.0 AT THE MEAN ACCESSIBILITY, because network.gd's index is normalised
@@ -180,7 +235,7 @@ static func bill_pct_gdp(ns, loader) -> float:
 	return bill
 
 
-## Advance every build and rewrite the two derived readings.
+## Advance every build and rewrite the four derived readings.
 ##
 ## `access_by_nation` is nation id -> the accessibility index, built by the caller,
 ## because this file never learns that a graph exists. It is REQUIRED and NOT
@@ -206,6 +261,7 @@ static func tick_month(state, loader, access_by_nation: Dictionary) -> void:
 		ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
 		ns.import_dependency_pct = import_dependency_pct(ns, loader)
 		ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
+		ns.co2e_per_capita_t = co2e_per_capita_t(ns, loader)
 
 
 ## The one channel energy has into the economy, in points of annual growth.
@@ -369,15 +425,16 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
 
-	# ALL THREE DERIVED READINGS, not just the bill. Recomputing one and leaving the
-	# other two to the next tick was the inconsistent case: import_dependency_pct is
+	# ALL FOUR DERIVED READINGS, not just the bill. Recomputing some and leaving the
+	# rest to the next tick was the inconsistent case: import_dependency_pct is
 	# a live PRECONDITION field, so in the month a done fossil plant was
 	# decommissioned the mix had already changed while the gate still read the
 	# pre-decommission dependency -- enough to chain a second action the new mix no
-	# longer qualifies for. Same three writes tick_month() makes, in the same order.
+	# longer qualifies for. Same four writes tick_month() makes, in the same order.
 	ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
 	ns.import_dependency_pct = import_dependency_pct(ns, loader)
 	ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
+	ns.co2e_per_capita_t = co2e_per_capita_t(ns, loader)
 	var result := {
 		"action_id": action.id,
 		"action_name": action.action_name,

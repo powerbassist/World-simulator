@@ -374,7 +374,8 @@ static func read_field(ns, field: String) -> float:
 		"growth_annual_pct": return ns.growth_annual_pct
 		"terms_served": return float(ns.terms_served)
 		"unrest_pct": return ns.unrest_pct
-		# V1.5c added the entry above and legislature_constants.PRECONDITION_FIELDS in
+		"co2e_per_capita_t": return ns.co2e_per_capita_t
+		# V1.5c added the unrest_pct entry and legislature_constants.PRECONDITION_FIELDS in
 		# two separate edits, and the suite caught the gap between them: the whitelist
 		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE
 		# and a session can add half of it. Not merged here -- src/core/law.gd validates

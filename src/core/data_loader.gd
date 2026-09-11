@@ -1054,6 +1054,12 @@ func _validate_energy_sources() -> void:
 	var covered: Dictionary = {}
 	for source in energy_sources.values():
 		covered[source.branch] = true
+		# from_dict() parses a missing emission_t_per_twh to a -1.0 sentinel, so this
+		# one check refuses both an absent key and an authored negative. Absence must
+		# fail loudly: 0.0 tonnes per TWh on a gas station is a confident lie the
+		# emissions read would print for years.
+		if source.emission_t_per_twh < 0.0:
+			errors.append("energy source '%s' is missing emission_t_per_twh -- the key must exist for every source and be non-negative" % source.id)
 	for branch in EnergyK.BRANCHES:
 		if not covered.has(branch):
 			errors.append("no energy source builds branch '%s' -- every measured branch needs a verb" % branch)
@@ -1952,12 +1958,25 @@ func _load_events(events_dir: String) -> void:
 			for cond in ev.preconditions:
 				fields.append("%s%s%s" % [cond["field"], cond["op"], str(cond["value"])])
 			fields.sort()
-			var gate := "%s|%s" % [ev.subject_office, ",".join(fields)]
-			if gates.has(gate):
-				errors.append("%s: '%s' has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice, and the second fires only where the first did not" % [
-					fname, ev.id, str(gates[gate])
-				])
-			gates[gate] = ev.id
+			# V3.5f: A GATE IS WHAT AN EVENT NAMES. This check's target is the gate
+			# somebody wrote twice -- "two scandals about the prime minister with
+			# identical gates" -- but the empty join below made every event with no
+			# subject office and no precondition collide with the first such event
+			# loaded, and data/events/climate.json's river_flood against
+			# broadcast_charter was the first false positive: a pure-hazard crisis
+			# about nobody is a shape the content owns (the scandals' own argument,
+			# one file over), and two such events are separated by id, body,
+			# likelihood, once-ness and the per-event hazard hash, with content order
+			# deciding only which of two same-month draws goes first --
+			# src/sim/events.gd's own comment. The check keeps its full strength for
+			# every event that names a subject or a gate.
+			if ev.has_subject() or not ev.preconditions.is_empty():
+				var gate := "%s|%s" % [ev.subject_office, ",".join(fields)]
+				if gates.has(gate):
+					errors.append("%s: '%s' has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice, and the second fires only where the first did not" % [
+						fname, ev.id, str(gates[gate])
+					])
+				gates[gate] = ev.id
 			events.append(ev)
 
 

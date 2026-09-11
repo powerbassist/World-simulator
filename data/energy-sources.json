@@ -3,6 +3,7 @@
   "_units_note": "output_twh is a year's generation for ONE plant of this kind, in TWh. It is a physical fact and it is the only physical unit in src/ -- the model divides it by a measured national consumption immediately, so nothing downstream learns what a terawatt-hour is (network.gd's 'src/ never learns what a kilometre is', one module over). The two costs are shares of GDP: build_cost_pct_gdp bills every month of the build, run_cost_pct_gdp every month after it, forever or until decommission.",
   "_import_note": "import_intensity is the fraction of this source's fuel the country must buy abroad. Fossil is ~1.0 for a Europe that produces almost no oil or gas; nuclear is LOW rather than zero because uranium is imported but is a small share of the cost of running a reactor; wind, solar and hydro are 0.0 because there is no fuel. These are the numbers that make the dependency line move, and they are the model rather than decoration.",
   "_opposition_note": "opposition is how hard the local politics of hosting one is, before the region's own size is read. Nuclear highest, onshore wind next (real and documented), solar and hydro lowest. tools/energy_probe.gd's table (c) sweeps what this is worth; the ladder is authored and the scale is measured.",
+  "_emission_note": "emission_t_per_twh is tonnes of CO2e per terawatt-hour, lifecycle (mine-to-grid) -- the quantity V3.5's emissions deviation prices. The basis is the IPCC AR5 lifecycle medians (nuclear 12 g/kWh, onshore wind 11 rounded to 12, utility PV 48, hydro 24), with the two thermal stations on their fuel figures instead of a technology median: hard coal ~0.95 Mt/TWh, gas ~0.40 Mt/TWh including methane slip. These are physical constants, content and not a swept dial -- energy_probe.gd's tables measure what the model does with them, never the numbers themselves. Hydro is the one technology the planning table had no row for and carries AR5's 24 directly; offshore wind is a row with no source in this catalogue, added the day a source is.",
   "sources": [
     {
       "id": "nuclear_epr",
@@ -13,6 +14,7 @@
       "build_cost_pct_gdp": 0.180,
       "run_cost_pct_gdp": 0.022,
       "import_intensity": 0.15,
+      "emission_t_per_twh": 12000,
       "opposition": 1.00
     },
     {
@@ -24,6 +26,7 @@
       "build_cost_pct_gdp": 0.035,
       "run_cost_pct_gdp": 0.030,
       "import_intensity": 1.00,
+      "emission_t_per_twh": 400000,
       "opposition": 0.35
     },
     {
@@ -35,6 +38,7 @@
       "build_cost_pct_gdp": 0.055,
       "run_cost_pct_gdp": 0.038,
       "import_intensity": 0.85,
+      "emission_t_per_twh": 950000,
       "opposition": 0.70
     },
     {
@@ -46,6 +50,7 @@
       "build_cost_pct_gdp": 0.014,
       "run_cost_pct_gdp": 0.004,
       "import_intensity": 0.00,
+      "emission_t_per_twh": 12000,
       "opposition": 0.55
     },
     {
@@ -57,6 +62,7 @@
       "build_cost_pct_gdp": 0.009,
       "run_cost_pct_gdp": 0.003,
       "import_intensity": 0.00,
+      "emission_t_per_twh": 48000,
       "opposition": 0.20
     },
     {
@@ -68,6 +74,7 @@
       "build_cost_pct_gdp": 0.048,
       "run_cost_pct_gdp": 0.005,
       "import_intensity": 0.00,
+      "emission_t_per_twh": 24000,
       "opposition": 0.45
     }
   ]

@@ -465,10 +465,14 @@ static func fixed_dates(state) -> Array:
 	if not ns.event_pending.is_empty():
 		var event_left := int(ns.event_pending.get("months_left", 0))
 		if event_left > 0:
-			out.append(_fixed_in(
-				state, K.FIXED_EVENT, event_left,
-				String(ns.event_pending.get("event_name", ""))
-			))
+			var label := String(ns.event_pending.get("event_name", ""))
+			# V3.5: a sited event's place rides the register the same way, so the
+			# row still needs no lookup -- and the diary names the flood's valley,
+			# not just the flood.
+			var where := String(ns.event_pending.get("region_name", ""))
+			if where != "":
+				label = "%s — %s" % [label, where]
+			out.append(_fixed_in(state, K.FIXED_EVENT, event_left, label))
 
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out

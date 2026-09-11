@@ -255,3 +255,128 @@ end-state inversion printed as a recorded note. The same re-contract
 precedent is V3.0's own: "re-contracted where the findings invalidated
 premises". The author may want the end-state contrast back; that is a tuning
 act with its own band, not this block's.
+
+---
+
+# BALANCE_PLAN — V3.5 environment and climate
+
+Written 2026-09-10, before the re-run runs; the prediction is the hypothesis
+and the diff is the measurement. **This block shipped NO tuned constant** --
+the disasters' magnitudes are content (authored effects on the two channels
+every event rides, spending_pct_gdp and bloc_offset), and the ceiling's
+tolerance and the accession positions were swept in T7 with their own evidence
+recorded in the content `_note` lines -- so no band is pre-declared here and
+that absence is the entry: there is no constant on this block's output for a
+band to price.
+
+## The re-run prediction, written first
+
+Baseline = `3d0b2fe` (the merge-base with origin/main), both sides from
+worktrees, run SERIALLY, full printed output compared with the MCP-port line
+filtered and V1.7c's third-stray-line check applied. The harness is
+`tools/balance_probe.gd`, FRA plus the GBR transition regime, 168 months per
+regime. Every moved line must land in one of these channels or it is a
+defect:
+
+| Channel | Why it moves | Expected size |
+|---|---|---|
+| accord council — solidarity transfer | the fifth org's council ticks from month 1 inside the `Orgs.tick_month` call the harness already makes — no new tick call. `climate_solidarity_clause` (+0.04 % GDP) is authored OUTSIDE the player's pivotal band on purpose and ADOPTS WITHOUT THE PLAYER: 306/452 = 67.7 % of cast, above the 0.55 pass fraction on every player line, abstain and against both. The agenda's rotation (PROPOSAL_INTERVAL_MONTHS 18, VOTE_DELAY_MONTHS 3) puts its division at tick 42 (2029-07 — the probe seeds 2026-01 and its first tick lands 2026-02); the transfer enters the spending total the following month as a standing new term | FRA's deficit column moves a whole +0.04 from the first annual row after the division — the row printed at tick 48, labelled 2030 because the row label lags the simulated year by one (the probe prints two decimals there) — gdp level and debt a compounding last digit behind it, election lines at most last digits; the transfer-check invariant (> 2 tax points) nowhere near firing |
+| accord council — the ceiling adopts too, and is INVISIBLE | prediction-time check REFUTED the "< 62 %" handoff note: PASS_SEAT_FRACTION is 0.55 and has not moved this block, so the measured abstain tally 219/383 = 57.2 % is ABOVE the carrying line 0.55 x 383 = 211 — which is what the content's own `_note` already says ("her abstention carries") and what climate_probe.gd's band arithmetic (BAND_MIN 211, BAND_MAX 248) is built on. The ceiling in force moves NO printed line: FRA sits inside it at 4.0 t (breach, contribution, fine and transfer all exactly 0; the `europe` issue reads FRA's burden, which stays 0), the solidarity's timing is identical either way (the rotation index advances at SELECTION, not at adoption), and non-player nations never get a transfer sum written (the tick gates on has_budget) | none. A moved line that ONLY the ceiling's adoption can explain is a finding, not a channel |
+| event draw order | climate.json sorts first in `loader.events`; `river_flood` (no gate, likelihood 0.06, sited) draws for the player from month 1 — expect ~10 draws over 168 months at FRA. `heat_wave` draws NOWHERE in this harness: the gate is co2e >= 6.5 and the only two nations the harness ever plays sit under it (FRA 4.0, GBR 4.22). The hazard is pure per (nation, event, month), so EXISTING events draw the same coins in the same months — the displacement is the ONE pending slot: a flood pending its 2 response months swallows any crisis or scandal that fires inside the window, each resolution starts the 9-month cooldown, and a displaced event re-enters at a later month whose coin is a different draw | whole AUTHORED effects, not last digits of arithmetic: the default choices apply bloc_offsets of +-0.011..0.045 per bloc per flood — one occurrence mostly sits under the overall approval column's %.1f, but the hi-lo bloc spread (%.1f) wobbles a last digit, the lo-bloc NAME can change when two blocs sit within one offset of each other, and election lines move last digits. Crisis/scandal lines appear at DIFFERENT months than baseline (displaced), or not at all |
+| SAVE_VERSION 34 | already moved at 09919b5, recorded here for the record: `start_co2e_per_capita_t` is content-derived static state `from_dict` cannot re-derive, V1.6a's check | none in-run — the harness regenerates, never loads |
+| excluded by construction | mix/energy inert in the harness (zero plants — the derived emissions read prices no growth term), migration and trade gravity (the accord's bonuses are 0.0 — the zero-priced pin), relations seeds (0.0 summed over SHARED orgs), EP seats (the EP clock reads the eu alone), siting shares (the accord carries no unrest channel), no new tick call (both new machines ride ticks the harness already makes) | a moved line in any of these is a DEFECT |
+
+## Verdict — written after the run
+
+Both sides from worktrees (`nswt-v35-base` at `3d0b2fe`, `nswt-v35-head` at
+`27e2619`), run SERIALLY, exit 0 both, **zero MCP-port noise on either side**
+(the worktrees carry the committed project.godot, so the per-machine autoload
+never existed there — the filter had nothing to do and was applied anyway).
+1679 vs 1681 lines compared. **51 regimes both sides; 43 moved, 8 did not**
+— and the 8 (spendthrift, austerity, tax_max, tax_zero, spend_max,
+spend_zero, austerity_dissolves_late, austerity_cabinet_shorted) all stop at
+2027-05 (printed), tick 17: before the tick-42 division, inside the run-up
+where no flood's default had yet crossed a print threshold. Their stillness
+is TIMING, not immunity.
+
+Three counts, three units — different measurements, not meant to sum:
+
+- **869 moved line-positions**: strict positional compare inside the 51
+  regime blocks, one count per line position however many tokens inside it
+  moved (includes the +2 net lines the answers regimes gained).
+- **1498 column-moves** across the 423 paired annual rows — one count per
+  printed column whose token differs — and the per-column decomposition
+  below sums to exactly it: approval 353, hi-lo spread 356, lo-bloc name 60,
+  lo-bloc value 172, deficit 280, debt 227, economy (gdp/growth/trend/
+  unemployment) 50.
+- 2170 raw unified-diff lines: every moved line printed on both sides plus
+  hunk headers. A raw artifact count, stated for completeness; the shape
+  tallies below came off this form, so their raw numbers are EVEN — divide
+  by two for moved lines.
+
+- **Solidarity transfer** (predicted +0.04 % GDP from the tick-42 division,
+  2029-07): **280 deficit column-moves** across the 423 paired rows, of
+  which **259 sit at exactly the three band magnitudes 0.04/0.05/0.06**
+  (130/111/18 per the magnitude histogram); the 21 outside are the answered
+  floods' authored +0.31..0.66 spending — the event channel landing on the
+  same column — plus a tail of small second-order wobbles. **227 debt
+  column-moves**, one .1 digit each, compounding behind them. First visible
+  at the row printed at tick 48 and labelled 2030, so the arrival is exactly
+  at the predicted division tick. GBR, not an accord member, carries **no
+  +0.04 anywhere** in its block — its tiny deficit wobbles (±0.01) are the
+  event channel's growth-second-order through revenue, and the transfer's
+  non-membership immunity is confirmed rather than assumed.
+- **Event draw order**, all counts across the same 423 paired annual rows
+  unless the unit says otherwise: **353 approval column-moves, 356 spread
+  column-moves, 60 lo-bloc NAME changes, 172 lo-bloc value moves**;
+  **273 moved discipline rows** (raw tally 546 diff-sides; discipline prints
+  1:1 with annual rows, so 273 of a possible 423); **41 moved unrest lines**
+  (82 raw diff-sides); roughly eighty moved election lines and roughly forty
+  moved attribution lines — raw-side tallies whose exact split is not
+  re-derivable now the captures are gone, and not load-bearing: the claims
+  they supported (election NUMBERS move, verdicts do not; attribution
+  numbers move) were verified by full pairwise comparison, not by these
+  tallies. The two answers regimes ANSWERED the flood seven times between
+  them — seven answer-print lines in the capture (base printed 20 answered
+  events, head 22: 'The grid fails' halved 8 -> 4, 'Industry asks for terms'
+  1 -> 0, displaced by the slot) — and their ANSWERED floods' authored
+  spending moves the TREND itself: **47 of the 50 economy column-moves** sit
+  inside managed_answers_softly/hard (16 rows); the other 3 are single
+  last-digit wobbles (tinkering growth once, GBR growth and unemployment
+  once each). heat_wave drew nowhere, as predicted.
+- **Excluded by construction: CONFIRMED.** 19 of the 423 paired rows carry
+  any economy column-move at all (the 16 answers-regime rows above plus the
+  3 wobbles), so **404 of 423 rows are bit-identical in
+  gdp/growth/trend/unemployment** — the mix/energy, migration, trade-gravity,
+  relations, EP-seat and siting channels moved exactly nothing. Verb lines
+  (TARIFFS, signed, amendment, DISSOLVED, SNAP, resignations, electoral
+  reform) are byte-identical.
+- **Zero outcome changes.** Every presidential HELD/LOST verdict identical
+  across all 51 regimes (the GBR 2039 LOST deepened 21.9 -> 20.5 and still
+  lost; the FRA 2032 LOST moved 23.1 -> 22.9 and still lost); no
+  COHABITATION/MINORITY anywhere on either side (none existed before); the 5
+  censure-CARRIES lines are the same divisions with moved numbers; the 5
+  PROBLEM debt-runaway lines are at the same ticks, one digit apart
+  (1061 -> 1062, the transfer's second-order).
+- **Third-stray-line check: CLEAN.** Both files END on their last
+  `invariants: OK` marker — base line 1679 of 1679, head line 1681 of 1681 —
+  with nothing after the last invariant on either side.
+
+The prediction got two things wrong, both recorded:
+
+1. It inherited the T7 note's "< 62 %" and corrected it at prediction time —
+   the run confirms the correction: the ceiling's adoption left NO
+   fingerprint on any printed line (the entry's "none" row held).
+2. The event channel's SIZE was phrased as "last digits" and that was too
+   shy. One flood's offsets are last digits; ten floods plus the displaced
+   crises' re-rolled months COMPOUND to whole points of bloc spread (up to
+   ~2.0) and tenths of overall approval, and an ANSWERED flood moves the
+   trend through its authored infrastructure line. The channel, the
+   mechanism (one slot, per-month coins, 9-month cooldown, defaults
+   applying) and the sign were right; the magnitude sentence was written for
+   the unanswered majority of regimes and undersold the two that answer.
+
+Verdict sentence: **the re-run held the prediction's channels exactly — two
+channels, every moved line accounted, zero outcome changes, the excluded
+channels bit-identical, and the one number the handoff had wrong (the 62 %
+pass fraction) was corrected before the run and confirmed by it.**
