@@ -236,7 +236,7 @@ ENERGY_INDICATORS = {
 
 # V3.5. Total greenhouse-gas emissions per capita, tonnes of CO2 equivalent on the
 # AR5 GWP set -- the mix's climate shadow, read rather than computed: the World Bank
-# series is measured for all 29 at 2023 (the successor/AR4 codes are retired), so
+# series is measured for all 29 at 2024 (the successor/AR4 codes are retired), so
 # importing it costs one file and inventing it from the mix would be a number no
 # dataset produced. Emissions.rebuild() starts from this and lets the fleet's
 # displacement move it -- the same baseline-plus-deviation shape the energy block has.
@@ -406,7 +406,7 @@ def build_energy_block(nid, energy):
 def build_emissions_block(nid, emissions):
     """V3.5. Total GHG per capita, tonnes CO2e, and the year the figure came from.
 
-    One series through the nearest-year loader: the roster is complete at 2023
+    One series through the nearest-year loader: the roster is complete at 2024
     (29 of 29, checked at probe time), so every nation reads the same vintage and
     the block is one value plus its `_year` -- V1.5c's shape minus the slope,
     because no sim reader needs a drift term yet and a slope nothing reads is
@@ -686,7 +686,7 @@ def build_imported_block(year):
     }
 
     # V3.5. One GHG series, nearest-year for the loader's symmetry -- the roster is
-    # complete at 2023, so in practice nothing falls back.
+    # complete at 2024, so in practice nothing falls back.
     emissions = load_wb_indicator_nearest_year(EMISSIONS_INDICATOR, year)
 
     # V1.6a. Computed once for all ten before the loop, because `amplitude_rel` is a

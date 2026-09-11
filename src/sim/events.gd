@@ -283,8 +283,9 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool)
 	Legislature.apply_effects(state, ns, choice.get("effects", {}), loader)
 
 	# The place is read BEFORE the register is cleared: a past act's site cannot be
-	# re-derived once the shares have moved (V2.6b1's record argument), and the
-	# announcement month leaves the register with it.
+	# re-derived once the shares have moved (V2.6b1's record argument) -- and the
+	# register carries no announcement month to reconstruct the shares it moved
+	# from, which is why the place itself is stored rather than re-derived.
 	var region_name := String(ns.event_pending.get("region_name", ""))
 	ns.event_pending = {}
 	ns.event_quiet_months = K.EVENT_COOLDOWN_MONTHS

@@ -173,7 +173,10 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 **Where the tiers stand (2026-09-11).** [V3](docs/tiers/v3.md) is SIGNED and
 **open**: V3.0 (agency), V3.1 (map platform), V3.2 (the alliance system, PR #27),
 V3.3 (the EU-27 roster) and V3.4 (roads and motion, PR #32) are built and on `main`;
-**V3.5 climate is in flight** on `v3.5-environment-climate` through V3.5f, and **V3.6
+**V3.5 climate is BUILT** on `v3.5-environment-climate` -- emissions read, two sited
+disasters, the climate accord as a fifth org, `SAVE_VERSION` 34, re-run and readout
+all shipped; the as-built record is the V3.5 row below and
+[docs/tiers/v3.md](docs/tiers/v3.md)'s built-at note -- and **V3.6
 ceremony has not started.** **V3.0's gate FAILED by measurement** -- best active play -2.00
 approval points against idle -- and the author's three-route call on it is **still
 open**; V3.1 through V3.5 were each told not to pick it up silently and none did.
