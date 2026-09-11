@@ -235,7 +235,7 @@ static func bill_pct_gdp(ns, loader) -> float:
 	return bill
 
 
-## Advance every build and rewrite the two derived readings.
+## Advance every build and rewrite the four derived readings.
 ##
 ## `access_by_nation` is nation id -> the accessibility index, built by the caller,
 ## because this file never learns that a graph exists. It is REQUIRED and NOT
@@ -261,6 +261,7 @@ static func tick_month(state, loader, access_by_nation: Dictionary) -> void:
 		ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
 		ns.import_dependency_pct = import_dependency_pct(ns, loader)
 		ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
+		ns.co2e_per_capita_t = co2e_per_capita_t(ns, loader)
 
 
 ## The one channel energy has into the economy, in points of annual growth.
@@ -424,15 +425,16 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 			)
 
-	# ALL THREE DERIVED READINGS, not just the bill. Recomputing one and leaving the
-	# other two to the next tick was the inconsistent case: import_dependency_pct is
+	# ALL FOUR DERIVED READINGS, not just the bill. Recomputing some and leaving the
+	# rest to the next tick was the inconsistent case: import_dependency_pct is
 	# a live PRECONDITION field, so in the month a done fossil plant was
 	# decommissioned the mix had already changed while the gate still read the
 	# pre-decommission dependency -- enough to chain a second action the new mix no
-	# longer qualifies for. Same three writes tick_month() makes, in the same order.
+	# longer qualifies for. Same four writes tick_month() makes, in the same order.
 	ns.energy_bill_pct_gdp = bill_pct_gdp(ns, loader)
 	ns.import_dependency_pct = import_dependency_pct(ns, loader)
 	ns.energy_impulse_pct = growth_impulse_pct(ns, loader)
+	ns.co2e_per_capita_t = co2e_per_capita_t(ns, loader)
 	var result := {
 		"action_id": action.id,
 		"action_name": action.action_name,

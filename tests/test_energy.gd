@@ -27,6 +27,7 @@ func _init() -> void:
 	_check_emissions_inert_at_start(loader)
 	_check_emissions_displace_downward(loader)
 	_check_emissions_fossil_raises(loader)
+	_check_source_emission_fixture()
 	_check_precondition_fields(loader)
 	_check_harnesses_tick()
 	_report()
@@ -163,6 +164,22 @@ func _check_emissions_fossil_raises(loader) -> void:
 		"lon": 2.0, "lat": 48.0, "months_left": 0, "done": true, "connection": 1.0}
 	if Energy.emissions_deviation_tonnes(ns, loader) <= 0.0:
 		_fail("a done gas station did not push the emissions deviation positive")
+
+
+## THE TASK-2 REVIEW'S CARRY-OVER: the loader's emission refusal shipped untested.
+## from_dict() parses a missing emission_t_per_twh to the -1.0 sentinel and
+## _validate_energy_sources() refuses it -- the negative case is RUN here rather
+## than assumed, because 0.0 tonnes per TWh on a gas station is a confident lie
+## the emissions read would print for years. test_political_systems.gd's precedent
+## for reaching a loader validator directly.
+func _check_source_emission_fixture() -> void:
+	var loader = DataLoader.new()
+	loader._load_energy_sources("res://tests/fixtures/energy_sources_bad_emission.json")
+	loader._validate_energy_sources()
+	for e in loader.errors:
+		if e.find("emission_t_per_twh") != -1:
+			return
+	_fail("a source without emission_t_per_twh loaded without an error naming it: %s" % [loader.errors])
 
 
 ## THE WHITELIST AND THE READER ARE THE SAME LIST IN TWO PLACES, and V1.5c shipped

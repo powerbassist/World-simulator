@@ -1,0 +1,16 @@
+{
+  "_note": "V3.5. ONE otherwise-valid source minus emission_t_per_twh -- the negative case for _validate_energy_sources()'s refusal, which the Task 2 review found shipped untested. from_dict() parses the missing key to the -1.0 sentinel and the loader refuses it: 0.0 tonnes per TWh on a gas station is a confident lie the emissions read would print for years. Every other field is valid so the missing key is the only error the loader can report.",
+  "sources": [
+    {
+      "id": "gas_ccgt_no_emission",
+      "name": "Gas CCGT without an emission figure",
+      "branch": "fossil",
+      "output_twh": 5.0,
+      "build_months": 36,
+      "build_cost_pct_gdp": 0.05,
+      "run_cost_pct_gdp": 0.01,
+      "import_intensity": 0.8,
+      "opposition": 0.3
+    }
+  ]
+}
