@@ -76,7 +76,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[mvp]] — France, one term, one way to lose
 - [[v1]] — what gets built once the MVP works. Complete; nothing left in it
 - [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
-- [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.2 built
+- [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.4 built, V3.5 in flight
 - [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. **DRAFT, unsigned**
 - [[someday]] — the parking lot, not scheduled
 - [[declined]] — considered and decided against, with what would reopen each

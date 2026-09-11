@@ -178,6 +178,14 @@ session that re-counts machines and surfaces before it splits.
 > the layer beneath a region, and `energy.gd`'s TWh stops being the simulation's one
 > physical quantity and becomes electricity. Fourteen
 > [docs/tiers/someday.md](docs/tiers/someday.md) rows are struck as lifts.
+>
+> **The one risk added after the draft (2026-09-08, a reception pass over the same two
+> games): V4.6 needs a tick budget and this project has never had one.** Victoria 3
+> ships the model V4.6 copies the shape of and its own players call the late game
+> unplayable; `tools/frame_probe.gd` is the only timing instrument here and it times
+> frames, so every measured gate this project owns covers the renderer and none covers
+> the simulation. V4.6 now carries a second step-0 probe: a synthetic month at full
+> V4.6 + V4.7 scale, timed before a recipe is authored.
 > **The author's sequencing call at the draft's gate: finish V3 as written first.**
 
 **Four calls were made before any code, and two of them are the tier's whole shape.**
