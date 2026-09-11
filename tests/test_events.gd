@@ -60,9 +60,11 @@ const HAZARD_ONLY := "procurement_scandal"
 const GATED := "emergency_budget_demand"
 const ONCE_ONLY := "broadcast_charter"
 
-## V3.5's two example sited ids. FIXTURES, not content: no data/events/ file carries
-## them yet, and that is the point -- this file tests the schema, and the climate
-## content that will use it must not be able to arrive behind a green suite.
+## The two climate events' ids. V3.5f: data/events/climate.json carries BOTH now, so
+## the sweep below runs the LOADER's events -- a lost `"sited": true`, a renamed id or
+## a missing file fails there as missing content instead of passing on fixtures. The
+## schema tests above still build their own through _make_event(), because a schema
+## test needs an event no content edit can move.
 const SITED_A := "river_flood"
 const SITED_B := "heat_wave"
 
@@ -117,6 +119,7 @@ func _init() -> void:
 	_test_the_site_draw_is_pure()
 	_test_sited_register_carries_place()
 	_test_a_non_sited_register_gains_no_keys()
+	_test_the_climate_content()
 	_test_every_nation_can_be_sited()
 	_finish()
 
@@ -318,23 +321,35 @@ func _test_a_non_sited_register_gains_no_keys() -> void:
 			_fail("a non-sited event's register gained '%s' -- old saves and old events must read identically" % key)
 
 
-## The loud gate: both example ids, over two years, for every one of the twenty-nine
-## nations. A draw outside a nation's own live register, or a region with no name,
-## means announce and the loader have come apart. The sweep also witnesses MOVEMENT:
-## a nation of several regions whose 48 draws are all one region is the constant-
-## return defect (V2.6b1's static site) and not a coincidence -- at France's 13
-## regions the odds are (1/13)^47.
+## The loud gate: both climate events, over two years, for every one of the
+## twenty-nine nations. V3.5f runs the LOADER's events -- the fixtures above built
+## their own, and a green sweep over them would say nothing about the file the player
+## actually loads. A draw outside a nation's own live register, or a region with no
+## name, means announce and the loader have come apart. The sweep also witnesses
+## MOVEMENT: a nation of several regions whose 48 draws are all one region is the
+## constant-return defect (V2.6b1's static site) and not a coincidence -- at France's
+## 13 regions the odds are (1/13)^47.
 func _test_every_nation_can_be_sited() -> void:
 	var state = _new_state()
 	if state.nations.size() != 29:
 		_fail("the sweep ran over %d nations, expected 29" % state.nations.size())
+	var events: Array = []
+	for ev_id in [SITED_A, SITED_B]:
+		var ev = _event(ev_id)
+		if ev == null:
+			_fail("the sited content '%s' did not load, so the sweep would pass on nothing" % ev_id)
+		elif not ev.sited:
+			_fail("'%s' loaded without \"sited\": true -- the sweep would sweep a non-sited event" % ev_id)
+		else:
+			events.append(ev)
+	if events.size() != 2:
+		return
 	var varied := false
 	for nation_id in state.nations.keys():
 		var ns = state.nations[nation_id]
 		var by_id: Dictionary = Events.region_names(ns, _loader)
 		var distinct := {}
-		for ev_id in [SITED_A, SITED_B]:
-			var ev = _make_event(ev_id, true)
+		for ev in events:
 			for i in range(24):
 				Events.announce(ns, ev, Events._absolute_month(2027, 1) + i, by_id)
 				var drawn := String(ns.event_pending.get("region_id", ""))
@@ -354,6 +369,37 @@ func _test_every_nation_can_be_sited() -> void:
 				varied = true
 	if not varied:
 		_fail("no nation's site draw ever varied over the whole sweep")
+
+
+## The content pins, for the reason blackout_night's interrupt pin exists: the machine
+## tests run fixtures, so nothing else would notice the day the file loses its key or
+## its split. river_flood is the pure-hazard member -- a revelation of rain, arriving
+## whether or not it is deserved -- and heat_wave the preconditioned one, gated on the
+## live emissions field at the measured 6.5 t. A session that changes either half of
+## the split comes here and says why.
+func _test_the_climate_content() -> void:
+	var flood = _event(SITED_A)
+	var heat = _event(SITED_B)
+	if flood == null or heat == null:
+		return
+	if not flood.preconditions.is_empty():
+		_fail("river_flood carries a gate -- the pure-hazard member of the split is the point")
+	if heat.preconditions.size() != 1:
+		_fail("heat_wave carries %d precondition rows, expected the one emissions gate" % heat.preconditions.size())
+	else:
+		var row: Dictionary = heat.preconditions[0]
+		if String(row["field"]) != "co2e_per_capita_t" or String(row["op"]) != ">=" or float(row["value"]) != 6.5:
+			_fail("heat_wave's gate is not the measured co2e_per_capita_t >= 6.5: %s" % [row])
+	for ev in [flood, heat]:
+		if ev.once:
+			_fail("'%s' is a once event -- a hazard that cannot recur is a script, not climate" % ev.id)
+		# The split's France answer at the 2026 baseline: the flood's gate is open by
+		# construction (there is nothing to meet), the heat wave's closed at 4.0 t --
+		# until the grid that feeds the live field is rebuilt dirtier.
+		var ns = _new_state().player()
+		var expected_open: bool = ev.id == SITED_A
+		if Legislature.preconditions_met(ns, ev.preconditions) != expected_open:
+			_fail("France's gate for '%s' reads %s at the 2026 baseline -- wrong half of the split" % [ev.id, not expected_open])
 
 
 func _finish() -> void:
