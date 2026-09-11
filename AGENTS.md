@@ -1380,8 +1380,120 @@ rescues 10.6 px between two markers. Suite **82 files** green, names clean. Mode
 obligation this block DISCHARGED and re-issued: **any further animated surface uses the
 same split**, and **a cap on a redraw is a cap on the IDLE rate only**.
 
+**V3.5 SHIPPED ENVIRONMENT AND CLIMATE, AND THE BLOCK'S OUTPUT SHIPS NO TUNED CONSTANT
+AT ALL -- `projects_constants.gd`'s position a fourth time, this one by design rather
+than by swept-and-deleted.** The disasters' magnitudes are authored effects on the two
+channels every event already rides (spending_pct_gdp, bloc_offset), the ceiling's value
+is DERIVED, and its tolerance and the accession positions were swept with the evidence
+recorded in the content's own `_note` lines -- so BALANCE_PLAN.md's V3.5 section
+pre-declared no band and made that absence its entry, which is why the re-run
+prediction was written in channels rather than digits. What shipped: an emissions read
+over V2.8's mix, two sited disasters, the climate accord as a fifth org on the V3.2
+register, `SAVE_VERSION` 34 on ONE field, and the closeout's readout line on the energy
+panel. Model: [docs/climate-model.md](docs/climate-model.md).
 
+**EMISSIONS ARE A READ OFF THE MIX, NOT A STOCK, AND THE EXACT-ZERO PROPERTY IS
+ASSERTED RATHER THAN ARGUED.** The baseline is the measured per-capita footprint
+(`imported.emissions.co2e_per_capita_t`, WB `EN.GHG.CO2.PC.CE.AR5`, **29 of 29 at
+2024**, so the nearest-year loader falls back for nobody; the AR4 code is retired and
+data-sources.md records the probe that found the successor), and the fleet is the
+lever: `sum over branches of (mix[b] - start_mix[b]) * intensity[b] * national_twh` --
+share displacement, a renewable TWh displacing the fossil share it erodes,
+`dependency_deviation_pct()`'s shape one quantity over, three pure reads in
+`src/sim/energy.gd`. **The intensities are PHYSICAL CONSTANTS with their basis in the
+file**: IPCC AR5 lifecycle medians (nuclear 12000, wind_onshore 12000, solar 48000,
+hydro 24000 t CO2e/TWh) with the two thermal stations on fuel figures (coal 950000,
+gas 400000 including methane slip), branch level output-weighted. **The plan's sixth
+row named offshore and the catalogue's sixth source is hydro** -- the one technology
+the planning table had no row for, carrying AR5's 24 directly; the `_emission_note` in
+`data/energy-sources.json` is the rule future sources read, and the mismatch is
+recorded rather than patched. **`SAVE_VERSION` 33 -> 34 on `start_co2e_per_capita_t`
+ALONE**: content-derived static `from_dict()` cannot re-derive, V1.6a's check, a
+fourth beside V2.8's three; the tick-rewritten reading is serialised too, so an
+unticked save reports the figure it was saved with. The inert check asserts exact 0.0
+by running five nations, not by an algebra claim -- the T2 review's correction kept as
+the check's own shape.
 
+**A DISASTER CAN HAVE A PLACE NOW, AND THE PLACE IS AS PURE AS THE HAZARD THAT DREW
+IT.** `"sited": true` is the whole content-side contract: the site is
+`Cycle.unit("%s|%s|site", month)` UNIFORM over the nation's sorted region ids -- NOT
+population-weighted, because a weighted draw is Ile-de-France for ever (V2.6b1's
+measured 73.9 % margin) and a disaster that cannot move is a decoration -- and the
+register carries `region_id` AND `region_name`, because the calendar draws its diary
+row off the register and preloads nothing. A non-sited event gains NO keys, so every
+version-33 register reads exactly as it did; the single-region bound is
+CYP/EST/LTU/LVA/MLT at index 0, where a hash would be a second answer to a question
+with one response. The content is `river_flood` (gateless, 0.06 -- rain is not
+deserved, the scandals' argument) and `heat_wave`, gated on `co2e_per_capita_t >=
+6.5`, **measured before it was authored: the gate opens for SEVEN of twenty-nine and
+never for France at 4.0** -- the plan said roughly the dirtier half, the roster says
+the dirtier quarter, and the count is recorded rather than the threshold tuned to the
+sentence. **The national-price gap is the AUTHOR's accepted call at the plan gate
+(2026-09-10)**: the flood names a region and the price lands on the nation -- V2.6b1's
+regional-opinion refusal named beside it, because a second approval number with a
+different label is still V1.5c's reason.
+
+**THE CLIMATE ACCORD IS A FIFTH ORG WITH NOTHING NEW TO BUILD -- V3.2's council
+machinery pointed at a cost the player's own industry pays.** EU-27 founding (every
+loaded nation but GBR and CHE), **452 seats** on NATO's pop/1M rule,
+`accession_seats` 17 the author's call at the plan gate, bonuses zero-priced on the
+eurozone/schengen precedent with the named trigger in the file. **The ceiling 5.5 is
+DERIVED, not authored**: the EU-27 population-weighted mean 5.4687 rounded to 0.5,
+`CONTRIBUTION_MAX_PCT_GDP`'s placement discipline, 15 of 27 inside at start so the
+division is real before anyone builds -- and `tools/climate_probe.gd` table (a)
+recomputes it and prints MATCH, so a re-import that moves the numbers turns red
+instead of silently re-pricing the council. **The tolerance sweep found the band's
+edge by REFUSING to open**: below ~5 the pivotal band is EMPTY (the 180-seat
+high-emitter bloc holds against the rule at every position on the grid), 6.0 opens the
+219-seat plateau; shipped there, severity 0.33. **The player is PIVOTAL**: for
+288/452 passes, abstain 219/383 carries, against 219/452 blocks -- and the solidarity
+clause (+0.04 % GDP) is authored OUTSIDE the band on purpose, 306 others-for carrying
+it whichever way France casts: a coalition's question, the contrast that makes the
+band mean something. GBR/CHE accession 0.5177 and withdrawal 0.5179, both swept into
+V3.2's 0.510-0.523 band.
+
+**THE OWED MEASUREMENT CAME BACK CONTACT, AND THE CONTACT IS THE FINDING.**
+orgs-model's named bound -- the session that authors a second rule-carrying org owes
+the cross-org burden re-measurement -- discharged by probe tables (d)/(d2): at one
+rule per org the raw burden is 0.88 and the clamp never touches; at TOTAL defiance of
+every authored rule in force, **the pre-existing set filled the clamp exactly (eu 0.78
++ nato 0.22) before the accord existed, and the ceiling's 0.33 takes the raw total to
+1.33 against BURDEN_MAX 1.0 -- a 24.8 % overhang**. A defier of the whole register
+loses a quarter of the opinion price to the ceiling; the bound has its number now.
+
+**THE RE-RUN HELD THE PREDICTION'S CHANNELS EXACTLY**: 43 of 51 regimes move (the 8
+still ones all stop at tick 17, before the tick-42 division -- stillness by TIMING,
+not immunity), 869 moved line-positions, 1498 column-moves across the 423 paired
+annual rows, **zero outcome changes**; 259 of 280 deficit column-moves sit at exactly
+the three transfer magnitudes, and GBR, not a member, carries no +0.04 anywhere --
+non-membership immunity confirmed rather than assumed. The ceiling's adoption left NO
+fingerprint on any printed line (the handoff's "< 62 %" pass-fraction note was
+corrected at prediction time and the run confirmed the correction), `heat_wave` drew
+nowhere as predicted, and the excluded channels are bit-identical. Two prediction
+misses recorded beside the verdict: the inherited 62 % note, and the event channel's
+magnitude undersold -- the two answers regimes compound ten floods and displaced
+crises into whole points of bloc spread.
+
+**THE SCREENSHOT PASS JUDGED FOUR FRAMES, ALL PASSING, AND ITS ONE FINDING WAS A HOLE
+IN THE TOOL RATHER THAN IN THE GAME**: no existing flag could photograph a SITED card
+-- `--event` stops at whatever draws first and only notes a missing subject, so the
+sited title suffix this block shipped had no frame. `--climate` is the new flag: tick
+until the pending register carries `region_id` (the honest marker -- reading event
+content instead would be a second opinion about what sited means), then let `--open
+events` compose. The frames: the energy panel's new EMISSIONS section reading
+**274.4 Mt / 4.0 t / +0.00 t** against the computed expectation (4.0 x 68.6 M,
+exactly); the orgs panel staging the ACCORD's council (it sorts first now) with the
+pending solidarity division and the ceiling compliant at 5.5; the flood sited at
+Corse, on the card and the panel question both. Honest note kept, not fixed: at month
+0 before the first tick the dependency figure reads 0.0 % -- V2.8's documented
+recompute-on-first-tick shape, six sessions old and not this block's line. The panel
+line itself is one never-silent EMISSIONS section under dependency (`%.1f Mt` -- raw
+tonnes print six zeroes the eye cannot read), per head, and the delta riding the
+PER-CAPITA form because that is the quantity the ceiling constrains.
+
+Suite **82 files** green -- the brief said 83, the disk says 82, and the runner's own
+unregistered-file gate is the count that counts. Names clean. Model:
+[docs/climate-model.md](docs/climate-model.md).
 
 **THE V1 TIER IS CLOSED AND V2 IS THE TIER NOW. Read
 [docs/tiers/v2.md](docs/tiers/v2.md) before [docs/tiers/v1.md](docs/tiers/v1.md).**
