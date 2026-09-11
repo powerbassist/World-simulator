@@ -300,7 +300,14 @@ func _spoken_for(kind: String, ns, titles: Array) -> bool:
 	# unseen in 32 months of 32 -- a probe wrong about its own headline.
 	var name := Events.pending_event_name(ns).to_upper()
 	for title in titles:
-		if String(title).to_upper() == name:
+		# A sited event's card title appends the place -- "NAME — REGION" (V3.5) --
+		# so the match must be on the name alone: everything from the first
+		# " — " onward is the place. Titles without the suffix are unchanged.
+		var shown := String(title)
+		var cut := shown.find(" — ")
+		if cut >= 0:
+			shown = shown.substr(0, cut)
+		if shown.to_upper() == name:
 			return true
 	return false
 
