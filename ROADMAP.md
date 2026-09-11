@@ -7,7 +7,7 @@ This document is **forward-looking**. What shipped is one line each in the table
 below; the corrections made along the way are in [[decision-log]]; the models are
 in the model notes.
 
-Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/v2.md](docs/tiers/v2.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
+Scope reference: [docs/scope.md](docs/scope.md) · [docs/tiers/mvp.md](docs/tiers/mvp.md) · [docs/tiers/v1.md](docs/tiers/v1.md) · [docs/tiers/v2.md](docs/tiers/v2.md) · [docs/tiers/v3.md](docs/tiers/v3.md) · [docs/tiers/v4.md](docs/tiers/v4.md) · [docs/tiers/declined.md](docs/tiers/declined.md)
 Stack reference: [docs/engine-decision.md](docs/engine-decision.md) · [docs/data-architecture.md](docs/data-architecture.md)
 
 ## Two tracks
@@ -146,6 +146,39 @@ session that re-counts machines and surfaces before it splits.
 > 0.998 days/sec at max zoom under the same regime (P4's 0.50 was an unrecorded clock
 > pause), so the map block shipped off-screen culling against a restated frame-time gate
 > instead of a LOD platform ([docs/map-platform-model.md](docs/map-platform-model.md)).
+
+> [!warning] V4 — drafted 2026-09-07, NOT SIGNED; nothing in it starts before V3 closes
+> Drafted at the author's request off a cold count of the repository against their own
+> list of asks. The organising goal — **the world wants things** — is that this game
+> currently contains nothing that wants anything, and the author's own verdict at the
+> gate is the reason the expensive routes were taken: *"i dont play the game right now,
+> its unplayable and not fun."* **Twelve blocks:** the agency call settled first, then a
+> player agenda; **the statute book** (compose a bill, repeal one, a tax panel showing
+> the rate as a number, a new tax as a new key, a briefing popup, and two commissioned
+> polls — assembly and popular — each a PAID REDUCTION IN A BLUR THAT ALREADY EXISTS);
+> a **deep bench of 214 -> ~1500-2000 people**; events at 7 -> 120-150 with chains, hooks,
+> severity, art and an AI chooser; the council as a real fight; **the commodity economy**;
+> industry at 18 -> ~2,900 firms that act; the reading surface (top bar 4 -> 10-12, alerts,
+> nested tooltips, an outliner, message settings); ceremony and sound; the stylised
+> deep-zoom map; and the roster past the EU-27. **Estimated 70-95 sessions — larger than
+> V1 and V2 put together**, and V4.6 alone is 15-22 of them:
+> [docs/tiers/v4.md](docs/tiers/v4.md).
+>
+> **Three things in it are load-bearing and only one is content.** (1) It opens on
+> **V3.0's still-open route call** — best active play measured **-2.00 approval points
+> against idle** — so content authored on that loop is content on mush, which is
+> [docs/tiers/v3.md](docs/tiers/v3.md)'s own *agency before content* argument restated a
+> tier later because the gate was not met. (2) V4.3 **deliberately overturns
+> [docs/events-model.md](docs/events-model.md) §3's office-never-a-person rule**, and
+> the session that builds it rewrites that rule at the rule itself. (3) **V4.6 replaces
+> the growth-rate model with a production model** — ~60-80 commodities, individualised
+> metals, lumped consumer goods, an industrial tree, and trade in named goods instead of
+> [docs/trade-model.md](docs/trade-model.md)'s abstract weights. **The region spine
+> survives**: `economy.gd:289` already makes GDP the region sum, so what is replaced is
+> the layer beneath a region, and `energy.gd`'s TWh stops being the simulation's one
+> physical quantity and becomes electricity. Fourteen
+> [docs/tiers/someday.md](docs/tiers/someday.md) rows are struck as lifts.
+> **The author's sequencing call at the draft's gate: finish V3 as written first.**
 
 **Four calls were made before any code, and two of them are the tier's whole shape.**
 
