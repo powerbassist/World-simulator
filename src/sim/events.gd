@@ -143,7 +143,11 @@ static func tick_month(state, loader) -> void:
 
 	var next = _next_event(state, ns, loader)
 	if next != null:
-		announce(ns, next)
+		announce(
+			ns, next,
+			_absolute_month(int(state.year), int(state.month)),
+			region_names(ns, loader)
+		)
 
 
 ## The first event, in content order, whose gate is open this month.
@@ -183,6 +187,31 @@ static func _absolute_month(year: int, month: int) -> int:
 	return year * 12 + month
 
 
+## The region a sited event strikes: floor(unit(hash(nation|event|site), month) x n).
+## Uniform over the nation's sorted region ids -- NOT population-weighted, because
+## a weighted draw is Ile-de-France for ever in France (the static-site finding,
+## V2.6b1) and a disaster that cannot move is a decoration. Pure, like the hazard:
+## same inputs, same place, reload-safe. One region takes index 0 -- the CYP, EST,
+## LTU, LVA and MLT bound named at V3.3: a nation of one region cannot differ from
+## itself, so the draw is national by construction there and a hash would be a
+## second answer to a question with one response.
+static func _site_index(nation_id: String, event_id: String, month_index: int, n_regions: int) -> int:
+	if n_regions <= 1:
+		return 0
+	return int(Cycle.unit("%s|%s|site" % [nation_id, event_id], month_index) * float(n_regions))
+
+
+## id -> name for one nation's own regions, read off the loader's region content --
+## the per-nation array every UI helper that names a region already scans. Built per
+## announcement and handed to announce(), which stores the NAME it needs; nothing
+## keeps the map, so there is no second index of the loader to drift.
+static func region_names(ns, loader) -> Dictionary:
+	var out := {}
+	for region in loader.regions.get(ns.id, []):
+		out[String(region.id)] = String(region.region_name)
+	return out
+
+
 ## Put the event in front of the player.
 ##
 ## `event_name` is COPIED IN, not looked up at read time, for Referendum.announce()'s
@@ -195,7 +224,7 @@ static func _absolute_month(year: int, month: int) -> int:
 ## it is announced; the choice is the response to it, not the event. Marking at
 ## resolution would also mean a save reloaded mid-crisis could see the same revelation
 ## announced twice.
-static func announce(ns, ev) -> void:
+static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void:
 	# V2.4b: the flag rides the register, because the UI that pauses the clock
 	# reads the pending state and has no access to the content. Absent in an old
 	# save reads false, which is correct.
@@ -205,6 +234,22 @@ static func announce(ns, ev) -> void:
 		"months_left": int(ev.respond_months),
 		"interrupt": bool(ev.interrupt),
 	}
+	# V3.5: the place is drawn at announcement and stored BOTH WAYS -- the id, and
+	# the name beside it, because the calendar draws its diary row off this register
+	# and preloads nothing (the reason `event_name` above is copied in rather than
+	# looked up, one key over). Stored rather than re-derived at read time because
+	# the register carries no announcement month: months_left only counts down, so a
+	# save reloaded mid-crisis cannot reconstruct which month drew which place. A
+	# non-sited event gains NO keys -- an old save's register reads exactly as it
+	# did. A name that fails to resolve stores empty, and every reader appends only
+	# on non-empty, so the failure is a missing label and never a dangling dash --
+	# and tests/test_events.gd sweeps all 29 nations to pin the map complete.
+	if ev.sited:
+		var ids: Array = ns.region_pop_share.keys()
+		ids.sort()
+		var region_id: String = ids[_site_index(ns.id, ev.id, month_index, ids.size())]
+		ns.event_pending["region_id"] = region_id
+		ns.event_pending["region_name"] = String(region_by_id.get(region_id, ""))
 	if ev.once:
 		ns.event_fired[ev.id] = true
 
@@ -237,6 +282,10 @@ static func choose(state, loader, choice_id: String) -> Dictionary:
 static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool) -> Dictionary:
 	Legislature.apply_effects(state, ns, choice.get("effects", {}), loader)
 
+	# The place is read BEFORE the register is cleared: a past act's site cannot be
+	# re-derived once the shares have moved (V2.6b1's record argument), and the
+	# announcement month leaves the register with it.
+	var region_name := String(ns.event_pending.get("region_name", ""))
 	ns.event_pending = {}
 	ns.event_quiet_months = K.EVENT_COOLDOWN_MONTHS
 
@@ -249,6 +298,10 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool)
 		"year": int(state.year),
 		"month": int(state.month),
 	}
+	# Only for a sited event, and only when the name resolved: an absent key is what
+	# every record before V3.5 carried, and a missing figure is an em dash, never "".
+	if region_name != "":
+		record["region_name"] = region_name
 	# A DISPLAY RECORD AND NOT A MEMORY. Nothing in src/sim/ reads this back, and
 	# tests/test_events.gd asserts it by reading every file in the directory -- V1.3e's
 	# *no grievance ledger* property and V1.3f's own `foreign_acts` check, in the one

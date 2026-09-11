@@ -60,10 +60,23 @@ const HAZARD_ONLY := "procurement_scandal"
 const GATED := "emergency_budget_demand"
 const ONCE_ONLY := "broadcast_charter"
 
+## V3.5's two example sited ids. FIXTURES, not content: no data/events/ file carries
+## them yet, and that is the point -- this file tests the schema, and the climate
+## content that will use it must not be able to arrive behind a green suite.
+const SITED_A := "river_flood"
+const SITED_B := "heat_wave"
+
 const NEWLINE := "\n"
 
 var _failures: Array[String] = []
 var _loader
+
+
+## The one piece of the real loader `choose()` reads: the event list. A fixture is
+## not content, so the record test hands this in rather than shipping test events
+## in data/events/.
+class _StubLoader:
+	var events: Array = []
 
 
 func _init() -> void:
@@ -100,6 +113,11 @@ func _init() -> void:
 	_test_every_harness_ticks_it()
 	_test_the_hash_is_not_copied()
 	_test_the_interrupt_flag()
+	_test_sited_schema_loads()
+	_test_the_site_draw_is_pure()
+	_test_sited_register_carries_place()
+	_test_a_non_sited_register_gains_no_keys()
+	_test_every_nation_can_be_sited()
 	_finish()
 
 
@@ -142,13 +160,13 @@ func _test_the_interrupt_flag() -> void:
 	# The register: announce copies the flag.
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
-	Events.announce(ns, ev2)
+	_announce(state, ev2)
 	if ns.event_pending.get("interrupt", "MISSING") != true:
 		_fail("announce did not copy the interrupt flag into the pending register")
 	# and a non-flag event's register reads false, not missing.
 	var ev3 = GameEvent.from_dict(raw.duplicate(true), "x.json", errs2,
 		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
-	Events.announce(ns, ev3)
+	_announce(state, ev3)
 	if bool(ns.event_pending.get("interrupt", false)):
 		_fail("a non-interrupt event's pending register claims the flag")
 
@@ -199,6 +217,145 @@ func _test_the_interrupt_flag() -> void:
 		_fail("_enforce_interrupt does not gate on the flag -- it would pause for every event, and V1.8's argument would die")
 
 
+# --- V3.5: the schema grows `sited` ----------------------------------------------
+
+## The interrupt precedent, one boolean later: absent reads false, which is the truth
+## about every event file and every save made before the key existed, so no bump and
+## the unknown-key refusal still guards every OTHER field.
+func _test_sited_schema_loads() -> void:
+	var plain = _make_event("plain_event", false)
+	if plain.sited:
+		_fail("an event without 'sited' did not default to false")
+	var sited = _make_event(SITED_A, true)
+	if not sited.sited:
+		_fail("from_dict did not read sited: true off the content")
+
+
+## The site is a pure function of (nation, event, absolute month) -- the SAME hash
+## family as the hazard, salted. A save reloaded on the arrival month therefore gets
+## the same crisis in the same place. Two different months CAN draw two different
+## places, but the assertion here is purity, not movement: movement is witnessed over
+## the sweep below, not asserted month to month.
+func _test_the_site_draw_is_pure() -> void:
+	for combo in [["FRA", SITED_A, 13], ["DEU", SITED_B, 38], ["GBR", SITED_A, 12], ["FRA", SITED_B, 13]]:
+		var n: int = combo[2]
+		for m in range(Events._absolute_month(2027, 1), Events._absolute_month(2031, 1)):
+			var a: int = Events._site_index(combo[0], combo[1], m, n)
+			var b: int = Events._site_index(combo[0], combo[1], m, n)
+			if a != b:
+				_fail("the site draw gave two answers for %s/%s month %d" % [combo[0], combo[1], m])
+			if a < 0 or a >= n:
+				_fail("the site draw returned %d against %d regions -- announce would index past the register" % [a, n])
+	# One region takes index 0 -- the CYP/EST/LTU/LVA/MLT bound named in the handoff:
+	# a nation of one region cannot differ from itself, and a hash would be a second
+	# answer to a question with one response.
+	if Events._site_index("MLT", SITED_A, Events._absolute_month(2029, 7), 1) != 0:
+		_fail("a one-region nation did not draw its only region")
+	# The salt is what keeps a site draw from being the hazard draw's echo, and its
+	# absence is behaviourally invisible over any short sweep -- both draws stay
+	# pure -- so it is pinned at source, _enforce_interrupt()'s way.
+	if not _code("res://src/sim/events.gd").contains("|site"):
+		_fail("the site draw lost its salt -- it is the hazard stream again")
+
+
+## A past act's site cannot be re-derived once the shares have moved -- V2.6b1's
+## record argument -- and the calendar is a leaf, so the register stores id AND name.
+func _test_sited_register_carries_place() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var ev = _make_event(SITED_A, true)
+	_announce(state, ev)
+
+	var drawn := String(ns.event_pending.get("region_id", ""))
+	var named := String(ns.event_pending.get("region_name", ""))
+	if drawn == "" or named == "":
+		_fail("a sited event's register carries id '%s' name '%s'" % [drawn, named])
+		return
+	if not ns.region_pop_share.has(drawn):
+		_fail("the register's region '%s' is not one of the nation's live regions" % drawn)
+	# The name must be the LOADER's name for the drawn id -- consistent with the same
+	# array every UI helper scans -- not merely with whatever this test handed in.
+	for region in _loader.regions.get(ns.id, []):
+		if String(region.id) == drawn and String(region.region_name) != named:
+			_fail("the register names %s '%s', the loader says '%s'" % [drawn, named, region.region_name])
+	# And the keys gained are exactly the two: the old register's shape is untouched.
+	for key in ns.event_pending.keys():
+		if key != "event_id" and key != "event_name" and key != "months_left" \
+				and key != "interrupt" and key != "region_id" and key != "region_name":
+			_fail("a sited register gained '%s'" % key)
+
+	# The diary row carries the place, because the register does -- the one UI
+	# surface this file can reach headless.
+	var found := false
+	for row in Calendar.fixed_dates(state):
+		if String(row.get("kind", "")) == CalendarK.FIXED_EVENT:
+			found = true
+			if String(row.get("ref", "")) != "%s — %s" % [ev.event_name, named]:
+				_fail("the diary row carries '%s', without the place" % row.get("ref", ""))
+	if not found:
+		_fail("a sited event does not appear in the diary")
+
+	# And the record keeps it after the register is gone. choose() resolves the
+	# event off the loader, so the fixture rides a stub carrying exactly it -- the
+	# stub's bloc_offset effects reach apply_effects without a real loader.
+	var stub := _StubLoader.new()
+	stub.events = [ev]
+	var record := Events.choose(state, stub, "b")
+	if record.is_empty():
+		_fail("answering the sited fixture recorded nothing")
+	elif String(record.get("region_name", "")) != named:
+		_fail("the history record lost the place: '%s'" % String(record.get("region_name", "")))
+
+
+## THE OLD-SAVE-SHAPE PIN. A non-sited event's register is what version-31 through 34
+## saves carry, byte for byte: no empty-string keys, nothing to read differently.
+func _test_a_non_sited_register_gains_no_keys() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	_announce(state, _event(HAZARD_ONLY))
+	for key in ["region_id", "region_name"]:
+		if ns.event_pending.has(key):
+			_fail("a non-sited event's register gained '%s' -- old saves and old events must read identically" % key)
+
+
+## The loud gate: both example ids, over two years, for every one of the twenty-nine
+## nations. A draw outside a nation's own live register, or a region with no name,
+## means announce and the loader have come apart. The sweep also witnesses MOVEMENT:
+## a nation of several regions whose 48 draws are all one region is the constant-
+## return defect (V2.6b1's static site) and not a coincidence -- at France's 13
+## regions the odds are (1/13)^47.
+func _test_every_nation_can_be_sited() -> void:
+	var state = _new_state()
+	if state.nations.size() != 29:
+		_fail("the sweep ran over %d nations, expected 29" % state.nations.size())
+	var varied := false
+	for nation_id in state.nations.keys():
+		var ns = state.nations[nation_id]
+		var by_id: Dictionary = Events.region_names(ns, _loader)
+		var distinct := {}
+		for ev_id in [SITED_A, SITED_B]:
+			var ev = _make_event(ev_id, true)
+			for i in range(24):
+				Events.announce(ns, ev, Events._absolute_month(2027, 1) + i, by_id)
+				var drawn := String(ns.event_pending.get("region_id", ""))
+				var named := String(ns.event_pending.get("region_name", ""))
+				if drawn == "" or not ns.region_pop_share.has(drawn):
+					_fail("%s drew '%s', which is not one of its own regions" % [nation_id, drawn])
+					continue
+				if named == "":
+					_fail("%s drew %s with no name" % [nation_id, drawn])
+				elif named != String(by_id.get(drawn, "")):
+					_fail("%s names %s '%s', the loader says '%s'" % [nation_id, drawn, named, by_id.get(drawn, "")])
+				distinct[drawn] = true
+		if ns.region_pop_share.size() > 1:
+			if distinct.size() == 1:
+				_fail("%s drew %s in all 48 draws -- the site cannot move" % [nation_id, distinct.keys()[0]])
+			else:
+				varied = true
+	if not varied:
+		_fail("no nation's site draw ever varied over the whole sweep")
+
+
 func _finish() -> void:
 	if _failures.is_empty():
 		print("test_events: all checks passed")
@@ -222,6 +379,35 @@ func _new_state():
 
 func _event(id: String):
 	return Events.event_by_id(_loader, id)
+
+
+## The two arguments announce() grew at V3.5, filled exactly as tick_month fills them,
+## so a test that stages an event stages it the way the month tick would.
+func _announce(state, ev) -> void:
+	var ns = state.player()
+	Events.announce(
+		ns, ev,
+		Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, _loader)
+	)
+
+
+## A fixture built through the real from_dict, so a schema refusal fails here rather
+## than in the content that will one day carry the key.
+func _make_event(id: String, sited: bool):
+	var raw := {"id": id, "name": id.capitalize(), "summary": "s", "likelihood": 0.05,
+		"respond_months": 2, "choices": [
+			{"id": "a", "label": "A", "summary": "do a", "effects": {"bloc_offset": {"business": 0.01}}, "default": true},
+			{"id": "b", "label": "B", "summary": "do b", "effects": {"bloc_offset": {"workers": 0.01}}},
+		]}
+	if sited:
+		raw["sited"] = true
+	var errs: Array[String] = []
+	var ev = GameEvent.from_dict(raw, "x.json", errs,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	if not errs.is_empty():
+		_fail("the fixture '%s' did not load: %s" % [id, errs])
+	return ev
 
 
 ## src/ui/main.gd's order, trimmed to what an event reads and what reads an event.
@@ -480,8 +666,8 @@ func _test_register_seeds_empty() -> void:
 func _test_one_pending_slot() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	Events.announce(ns, _event(HAZARD_ONLY))
-	Events.announce(ns, _event(GATED))
+	_announce(state, _event(HAZARD_ONLY))
+	_announce(state, _event(GATED))
 	if Events.pending_event_id(ns) != GATED:
 		_fail("announcing twice did not replace the slot")
 	if typeof(ns.event_pending) != TYPE_DICTIONARY:
@@ -498,7 +684,7 @@ func _test_the_default_applies_exactly_once() -> void:
 	var bloc := String((default_choice["effects"]["bloc_offset"] as Dictionary).keys()[0])
 	var delta: float = float(default_choice["effects"]["bloc_offset"][bloc])
 
-	Events.announce(ns, ev)
+	_announce(state, ev)
 	var before: float = float(ns.bloc_offset.get(bloc, 0.0))
 	for _i in range(ev.respond_months):
 		Events.tick_month(state, _loader)
@@ -524,7 +710,7 @@ func _test_answering_applies_the_choice() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var ev = _event(HAZARD_ONLY)
-	Events.announce(ns, ev)
+	_announce(state, ev)
 
 	var chosen: Dictionary = {}
 	for c in ev.choices:
@@ -565,11 +751,11 @@ func _test_answering_early_and_late_cost_the_same() -> void:
 	var bloc := String(terms.keys()[0])
 
 	var early = _new_state()
-	Events.announce(early.player(), ev)
+	_announce(early, ev)
 	Events.choose(early, _loader, String(chosen["id"]))
 
 	var late = _new_state()
-	Events.announce(late.player(), ev)
+	_announce(late, ev)
 	for _i in range(ev.respond_months - 1):
 		Events.tick_month(late, _loader)
 	Events.choose(late, _loader, String(chosen["id"]))
@@ -591,7 +777,7 @@ func _test_once_is_marked_at_announcement() -> void:
 	if not ev.once:
 		_fail("'%s' is not a `once` event, so this check measures nothing" % ONCE_ONLY)
 		return
-	Events.announce(ns, ev)
+	_announce(state, ev)
 	if not ns.event_fired.has(ev.id):
 		_fail("a `once` event was not marked at announcement")
 
@@ -612,7 +798,7 @@ func _test_the_quiet_period_holds() -> void:
 func _test_the_diary_shows_the_deadline() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	Events.announce(ns, _event(GATED))
+	_announce(state, _event(GATED))
 	var found := false
 	for row in Calendar.fixed_dates(state):
 		if String(row.get("kind", "")) == CalendarK.FIXED_EVENT:

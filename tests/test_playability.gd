@@ -78,7 +78,10 @@ func _check_decision_arrival_stops_the_clock() -> void:
 		_fail("no non-interrupt event in the loader to stage the arrival with")
 		return
 	clock.paused = false
-	Events.announce(ns, ev)
+	# The announce signature grew the month and the name map at V3.5; the staged
+	# event is non-sited, so both are inert -- filled as tick_month fills them.
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
 	_main._card_events(_main._state.year, _main._state.month, false, {})
 	if not clock.paused:
 		_fail("a decision arrived and the clock kept running")

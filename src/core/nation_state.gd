@@ -486,7 +486,11 @@ var last_referendum_result: Dictionary = {}
 ##
 ## `event_name` is copied in at announcement so src/sim/calendar.gd can draw a diary row
 ## off this register while still preloading nothing -- V1.6f's project entry and V1.7c's
-## referendum, a third time.
+## referendum, a third time. V3.5: a SITED event adds `region_id` and `region_name`,
+## copied at announcement on the same leaf argument -- and stored rather than re-derived
+## because the register carries no announcement month, so a save reloaded mid-crisis
+## could not reconstruct which month drew which place. A non-sited event's register
+## carries neither key.
 ##
 ## Written by Events.announce(), Events.tick_month() and Events.choose(), and by nothing
 ## else.

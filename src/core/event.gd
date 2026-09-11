@@ -91,6 +91,15 @@ var once: bool = false
 ## save reads as non-interrupt, which is the truth about that save.
 var interrupt := false
 
+## V3.5, and the environment block's first claim on this schema: a crisis that
+## happens to a PLACE -- a flood, a heatwave -- rather than only to the government.
+## The site itself is drawn at announcement, uniform over the nation's live regions
+## and pure in (nation, event, absolute month) exactly like the hazard above; see
+## src/sim/events.gd. Content opts in with `"sited": true`; absent reads false,
+## which is the truth about every event file and every save made before the key
+## existed -- the interrupt flag's argument one boolean later.
+var sited := false
+
 ## Array of {"field", "op", "value"} on legislature_constants.PRECONDITION_FIELDS,
 ## minus events_constants.EVENT_PRECONDITION_REFUSED. Often EMPTY, and that is the
 ## honest split between section 8's two bullets rather than a shortcut: a scandal is
@@ -153,6 +162,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 	ev.once = bool(d.get("once", false))
 	ev.interrupt = bool(d.get("interrupt", false))
+	ev.sited = bool(d.get("sited", false))
 	ev.preconditions = Law.extract_preconditions(
 		d, ev.id, filename, errors, K.EVENT_PRECONDITION_REFUSED
 	)
@@ -171,7 +181,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
-	"once", "preconditions", "choices", "interrupt",
+	"once", "preconditions", "choices", "interrupt", "sited",
 ]
 
 const CHOICE_KEYS := ["id", "label", "summary", "effects", "default"]

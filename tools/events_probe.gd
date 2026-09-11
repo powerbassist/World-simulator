@@ -699,7 +699,11 @@ func _state_at(months: int):
 func _outcome(base, ev, choice: Dictionary) -> Dictionary:
 	var state = base.duplicate_state()
 	var ns = state.player()
-	Events.announce(ns, ev)
+	# The announce signature grew the month and the name map at V3.5; every event in
+	# the content is non-sited today, so both are inert here -- filled exactly as
+	# tick_month fills them, so that stays true when that changes.
+	Events.announce(ns, ev, Events._absolute_month(int(base.year), int(base.month)),
+		Events.region_names(ns, _loader))
 	Legislature.apply_effects(state, ns, choice.get("effects", {}), _loader)
 	ns.event_pending = {}
 	for i in range(HORIZON):

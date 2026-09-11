@@ -1434,7 +1434,10 @@ func _stage_an_interrupt() -> void:
 	if crisis == null:
 		push_error("--interrupt: blackout_night did not load")
 		return
-	Events.announce(ns, crisis)
+	# The announce signature grew the month and the name map at V3.5; blackout_night
+	# is non-sited, so both are inert -- filled exactly as tick_month fills them.
+	Events.announce(ns, crisis, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, loader))
 	_main._enforce_interrupt()
 	_main._windows.mark_all_dirty()
 
@@ -2147,7 +2150,10 @@ func _answer_a_crisis() -> void:
 		return
 
 	var first = _main._loader.events[0]
-	Events.announce(ns, first)
+	# The announce signature grew the month and the name map at V3.5; the shipped
+	# content is non-sited, so both are inert -- filled as tick_month fills them.
+	Events.announce(ns, first, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, _main._loader))
 	var answered := ""
 	for c in first.choices:
 		if not bool(c["is_default"]):
@@ -2157,7 +2163,8 @@ func _answer_a_crisis() -> void:
 
 	var second = _main._loader.events[1]
 	ns.event_quiet_months = 0
-	Events.announce(ns, second)
+	Events.announce(ns, second, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, _main._loader))
 	_tick_months(second.respond_months + 1)
 
 	if ns.event_history.size() < 2:

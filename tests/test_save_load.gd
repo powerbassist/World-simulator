@@ -1498,7 +1498,10 @@ func _check_event_fields(loader) -> void:
 	if ev == null:
 		_fail("broadcast_charter is not in the event list, so the event round trip measures nothing")
 		return
-	Events.announce(ns, ev)
+	# The announce signature grew the month and the name map at V3.5; broadcast_charter
+	# is non-sited, so both are inert -- filled as tick_month fills them.
+	Events.announce(ns, ev, Events._absolute_month(int(state.year), int(state.month)),
+		Events.region_names(ns, loader))
 	ns.event_quiet_months = 0
 	# One resolved event in the ledger, so the display record has something to survive.
 	var earlier = Events.event_by_id(loader, "procurement_scandal")
@@ -1592,7 +1595,14 @@ func _check_event_fields(loader) -> void:
 	# entry that dropped it would reload past a question the player never
 	# answered. Everything else about the event still round-trips through
 	# data/events/.
-	var allowed := ["event_id", "event_name", "months_left", "interrupt"]
+	#
+	# V3.5 adds the sited pair on the same argument: the register carries no
+	# announcement month (months_left only counts down), so a save reloaded
+	# mid-crisis could not reconstruct which month drew which place, and a past
+	# act's site cannot be re-derived once the shares have moved. Live state, not
+	# content; a non-sited event's register carries neither key.
+	var allowed := ["event_id", "event_name", "months_left", "interrupt",
+		"region_id", "region_name"]
 	for key in (dict["nations"]["FRA"]["event_pending"] as Dictionary).keys():
 		if not allowed.has(String(key)):
 			_fail("a serialised event carries '%s' -- the choices round-trip through data/events/, not through the save" % key)

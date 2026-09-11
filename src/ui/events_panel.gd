@@ -164,7 +164,14 @@ func _build_pending(ns) -> void:
 			PanelKit.line(_body, "Nothing today.")
 		return
 
-	PanelKit.line(_body, ev.event_name, PanelKit.Tone.PLAIN)
+	# A sited crisis names its place -- read off the register, which carries the
+	# name because every reader of it (this panel, the calendar, the card) is a
+	# leaf over pending state (V3.5).
+	var title: String = ev.event_name
+	var where := String(ns.event_pending.get("region_name", ""))
+	if where != "":
+		title = "%s — %s" % [title, where]
+	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 
 	var who := _subject_label(ns, ev)
 	if who != "":
@@ -282,9 +289,16 @@ func _build_record(record: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
+	# The place, for a sited event: the record carries the name because a past
+	# act's site cannot be re-derived once the shares have moved (V2.6b1).
+	var heading := String(record.get("event_name", ""))
+	var where := String(record.get("region_name", ""))
+	if where != "":
+		heading = "%s — %s" % [heading, where]
+
 	PanelKit.line(block, "%04d-%02d  %s" % [
 		int(record.get("year", 0)), int(record.get("month", 0)),
-		String(record.get("event_name", "")),
+		heading,
 	], PanelKit.Tone.PLAIN)
 
 	var answer := Label.new()

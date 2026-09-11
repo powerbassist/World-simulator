@@ -1396,10 +1396,17 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 	if was_pending and not Events.is_pending(ns) and not ns.event_history.is_empty():
 		var record: Dictionary = ns.event_history[0]
 		if bool(record.get("defaulted", false)) and int(record.get("year", 0)) == year and int(record.get("month", 0)) == month:
+			# A sited crisis names its place here too: this card and the Dispatches
+			# ledger print the same record, and two readouts of one record that
+			# disagree is the failure class this column keeps catching.
+			var named := String(record.get("event_name", ""))
+			var where := String(record.get("region_name", ""))
+			if where != "":
+				named = "%s — %s" % [named, where]
 			_hud.message_stack.push(
 				"Decided for you",
 				"%s. Nobody answered, so it went the way it was always going to: %s." % [
-					String(record.get("event_name", "")), String(record.get("choice_label", "")),
+					named, String(record.get("choice_label", "")),
 				],
 			)
 			# The delta is queued HERE and not at the choice, because this is the one
@@ -1431,7 +1438,14 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 				String(choice.get("label", "")),
 				"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
 			]})
-		_decision_card_id = _hud.message_stack.push(ev.event_name, _decision_body(ev, left), actions)
+		# The title names the place for a sited event -- read straight off the
+		# register, `pending_event_name()` untouched (V3.5). The name is already in
+		# the register because every reader of it is a leaf over pending state.
+		var title: String = ev.event_name
+		var where := String(ns.event_pending.get("region_name", ""))
+		if where != "":
+			title = "%s — %s" % [title, where]
+		_decision_card_id = _hud.message_stack.push(title, _decision_body(ev, left), actions)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the
