@@ -21,6 +21,9 @@ extends SceneTree
 ## carries over with the same teeth.
 ##
 ## PART 3 (Task 7) -- accession and withdrawal.
+##
+## PART 4 (V3.5 Task 7) -- the climate accord: a fifth org on the register, a
+## derived ceiling, a division the player can turn.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -32,10 +35,14 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Relations = preload("res://src/core/relations.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Trade = preload("res://src/sim/trade.gd")
 
 const PLAYER := "FRA"
 const OUTSIDER := "GBR"
 const EU_ORG := "eu"
+const ACCORD := "climate_accord"
+const CEILING := "emissions_ceiling"
+const SOLIDARITY := "climate_solidarity_clause"
 
 var _failures: Array[String] = []
 var _loader
@@ -66,6 +73,10 @@ func _init() -> void:
 	_check_the_council_still_divides()
 	_check_composition_across_orgs()
 	_check_membership_fight()
+	_check_climate_accord_register()
+	_check_climate_accord_player_is_pivotal_on_the_ceiling()
+	_check_climate_accord_positions_are_winnable()
+	_check_climate_accord_is_zero_priced()
 	_finish()
 
 
@@ -103,7 +114,8 @@ func _check_register_loads() -> void:
 	var ids: Array = []
 	for org in _loader.orgs:
 		ids.append(org.id)
-	_ok(ids == ["eu", "eurozone", "nato", "schengen"], "register ids sorted, got %s" % [ids])
+	# V3.5: the climate accord is a fifth org, and the register stays sorted.
+	_ok(ids == ["climate_accord", "eu", "eurozone", "nato", "schengen"], "register ids sorted, got %s" % [ids])
 	for org in _loader.orgs:
 		_ok(org.name != "", "%s carries a name" % org.id)
 		for member_id in org.members.keys():
@@ -207,6 +219,7 @@ func _check_proposals_name_orgs() -> void:
 		per_org[p.org_id] = int(per_org.get(p.org_id, 0)) + 1
 	_ok(int(per_org.get(EU_ORG, 0)) == 6, "eu carries 6 proposals after the floor moved to NATO, got %d" % int(per_org.get(EU_ORG, 0)))
 	_ok(int(per_org.get("nato", 0)) == 1, "nato carries the moved floor, got %d" % int(per_org.get("nato", 0)))
+	_ok(int(per_org.get(ACCORD, 0)) == 2, "the accord carries its two proposals, got %d" % int(per_org.get(ACCORD, 0)))
 
 	# File order IS the agenda. The eu list must be fiscal.json's proposals then
 	# union_policy.json's, in authored order -- a reorder would silently change
@@ -856,6 +869,194 @@ func _check_membership_fight() -> void:
 		_fail("a lost referendum did not end the fight")
 	if not ns2.orgs.has(EU_ORG):
 		_fail("a lost referendum changed membership")
+
+
+# --- Part 4: the climate accord (V3.5, Task 7) -------------------------------------
+
+## The register test: five orgs now, and the accord's own content. The seat
+## table is round(population / 1e6) over the EU-27, measured off the committed
+## nation files, and it sums to exactly 452 -- the test is where that arithmetic
+## is pinned rather than trusted, the eu-720 precedent. The LIVE membership is
+## the EU-27's, because the founding register IS the eu's minus GBR and CHE:
+## asserted against Orgs.members() so the two reads cannot drift apart.
+func _check_climate_accord_register() -> void:
+	var accord = _loader.orgs_by_id.get(ACCORD, null)
+	_ok(accord != null, "climate_accord is loaded")
+	if accord == null:
+		return
+	_ok(accord.name != "" and accord.summary != "", "the accord carries a name and a summary")
+	_ok(accord.council and not accord.net_transfers, "the accord holds a council and no transfer machinery")
+	_ok(accord.parliament.is_empty(), "the accord carries no parliament -- eu keeps the register's only one")
+	_ok(is_equal_approx(accord.relations_bonus, 0.0) and is_equal_approx(accord.trade_bonus, 0.0),
+		"the accord ships zero-priced on the eurozone/schengen precedent")
+	_ok(accord.accession_seats == 17, "a joiner enters with the EU-27 mean weight 17, got %d" % accord.accession_seats)
+	_ok(accord.accession_months == 18 and accord.withdrawal_months == 24,
+		"the accord's fights run 18 and 24 months, got %d and %d" % [accord.accession_months, accord.withdrawal_months])
+
+	_ok(accord.members.size() == 27, "the accord carries 27 founding members, got %d" % accord.members.size())
+	var seat_sum := 0
+	for m in accord.members.keys():
+		seat_sum += accord.seats(m)
+	_ok(seat_sum == 452, "the accord's seats sum to 452, got %d" % seat_sum)
+	_ok(not accord.is_member("GBR") and not accord.is_member("CHE"), "GBR and CHE stay outside the accord")
+
+	var eu = _loader.orgs_by_id[EU_ORG]
+	for id in eu.members.keys():
+		_ok(accord.is_member(id), "the accord's founding register is the EU-27: %s missing" % id)
+	for id in accord.members.keys():
+		_ok(eu.is_member(id), "the accord lists %s, who is not in the eu -- the founding rule is the eu minus two" % id)
+
+	# The council register initializes with every other council's, and the LIVE
+	# membership agrees with the eu's live membership -- the founding rule read
+	# from state, not from content.
+	var state = _fresh()
+	_ok(Orgs.council_ids(state).has(ACCORD), "the accord's council register initializes on a new game")
+	_ok(Orgs.members(state, ACCORD) == Orgs.members(state, EU_ORG),
+		"the accord's live membership is not the eu's live membership")
+	for id in [OUTSIDER, "CHE"]:
+		_ok(not Orgs.is_member(state, ACCORD, id), "%s is a live member of the accord" % id)
+	_ok(Orgs.live_seats(state, ACCORD, PLAYER) == 69, "France weighs 69 in the accord's council")
+
+	# The agenda is file order, the same pin the eu's list carries.
+	var agenda: Array = _loader.org_proposals.get(ACCORD, [])
+	var agenda_ids: Array = []
+	for p in agenda:
+		agenda_ids.append(p.id)
+	_ok(agenda_ids == [CEILING, SOLIDARITY], "the accord's agenda preserves flat-file order, got %s" % [agenda_ids])
+	for p in agenda:
+		if p.id == CEILING:
+			var c: Dictionary = p.constraint
+			_ok(not c.is_empty() and String(c.get("field", "")) == "co2e_per_capita_t",
+				"the ceiling constrains co2e_per_capita_t")
+			_ok(String(c.get("op", "")) == "<=" and is_equal_approx(float(c.get("value", 0.0)), 5.5),
+				"the ceiling's value is the derived 5.5, got %s" % str(c.get("value")))
+			_ok(is_equal_approx(float(c.get("severity", 0.0)), 0.33), "the ceiling's severity is 0.33")
+		if p.id == SOLIDARITY:
+			_ok((p.constraint as Dictionary).is_empty(), "the solidarity clause constrains nobody's policy")
+			_ok(is_equal_approx(p.transfer_pct_gdp, 0.04), "the solidarity clause moves 0.04%% of GDP, got %s" % str(p.transfer_pct_gdp))
+			_ok(p.external_measure.is_empty(), "the solidarity clause sets no external measure")
+
+
+## THE PLAYER-PIVOTAL TEST. V3.3's own finding: a 27-seat council made
+## constructive abstention unreachable on EVERY proposal until the position was
+## re-authored. The player's 69 of 452 seats must sit inside the ceiling's
+## pivotal band -- her abstention carries it, her opposition blocks it, her
+## backing passes it -- measured on the real division, not asserted from the
+## seats. tools/climate_probe.gd table (b) is the instrument that placed it;
+## the band arithmetic: with 383 seats among the others, the ceiling carries on
+## an abstention while others_for sits in [211, 248] (0.55 x 383 = 210.65, and
+## 0.55 x 452 = 248.6 blocks it once France's 69 join the opposition).
+func _check_climate_accord_player_is_pivotal_on_the_ceiling() -> void:
+	var carried := {}
+	var tallies := {}
+	for choice in [Orgs.VOTE_FOR, Orgs.VOTE_ABSTAIN, Orgs.VOTE_AGAINST]:
+		var s = _fresh()
+		carried[choice] = _force_vote(s, CEILING, choice)
+		tallies[choice] = Orgs.last_vote(s, ACCORD)
+		if (tallies[choice] as Dictionary).is_empty():
+			_fail("the ceiling never divided on the player's %s" % choice)
+			return
+
+	_ok(carried[Orgs.VOTE_FOR], "the ceiling failed on the player's backing -- the position overshot the pivotal band")
+	_ok(carried[Orgs.VOTE_ABSTAIN], "the ceiling failed on the player's abstention -- constructive abstention is unreachable on the accord's first page")
+	_ok(not carried[Orgs.VOTE_AGAINST], "the ceiling carried against the player's opposition -- her 69 seats do not block it")
+
+	# And the three tallies are three different tallies, which is the
+	# constructive-abstention arithmetic asserted at the number level: opposing
+	# adds her whole weight to the against column, abstaining adds her to
+	# neither, backing adds it to the for column.
+	var for_t: Dictionary = tallies[Orgs.VOTE_FOR]
+	var ab_t: Dictionary = tallies[Orgs.VOTE_ABSTAIN]
+	var ag_t: Dictionary = tallies[Orgs.VOTE_AGAINST]
+	_ok(int(ag_t["seats_against"]) - int(ab_t["seats_against"]) == 69,
+		"opposing added %d seats to the against tally, expected France's 69" % (int(ag_t["seats_against"]) - int(ab_t["seats_against"])))
+	_ok(int(ab_t["seats_for"]) == int(ag_t["seats_for"]),
+		"abstaining changed the for tally, which no player choice but backing should")
+	_ok(int(for_t["seats_for"]) - int(ab_t["seats_for"]) == 69,
+		"backing added %d seats to the for tally, expected France's 69" % (int(for_t["seats_for"]) - int(ab_t["seats_for"])))
+
+	# The other page is NOT the player's: the solidarity clause is a coalition's
+	# question -- it lands where her choice changes nothing, which is the
+	# contrast that makes the ceiling's pivotal band mean something. Recorded
+	# tallies in tools/climate_probe.gd table (b2).
+	var solid := {}
+	for choice in [Orgs.VOTE_FOR, Orgs.VOTE_ABSTAIN, Orgs.VOTE_AGAINST]:
+		var s = _fresh()
+		solid[choice] = _force_vote(s, SOLIDARITY, choice)
+	_ok(solid[Orgs.VOTE_FOR] == solid[Orgs.VOTE_ABSTAIN] and solid[Orgs.VOTE_ABSTAIN] == solid[Orgs.VOTE_AGAINST],
+		"the player's choice changes the solidarity clause's outcome -- the council is not a coalition's question")
+
+
+## The 0.510-0.523-at-rest band every fight content ships inside: winnable by a
+## president the country does not hate, losable by one it does (V3.2's
+## accession/withdrawal discipline, now on the accord's own way in). Swept by
+## tools/climate_probe.gd table (c) BEFORE the numbers went into the file; this
+## asserts the file the sweep produced. The fixture guards are the test's
+## honesty: the sweep measured a NEUTRAL-approval new-game, so a re-measure on a
+## state that is no longer that fails loudly here rather than vacuously.
+func _check_climate_accord_positions_are_winnable() -> void:
+	var accord = _loader.orgs_by_id[ACCORD]
+	_ok(not (accord.accession_position as Dictionary).is_empty(), "the accord carries no accession_position to fight with")
+	_ok(not (accord.withdrawal_position as Dictionary).is_empty(), "the accord carries no withdrawal_position -- a door nobody can open from inside is not a fight")
+
+	for outsider in [OUTSIDER, "CHE"]:
+		var state = _fresh(outsider)
+		var ns = state.player()
+
+		# Fixture viability, the LUX-emissions shape: the sweep measured a
+		# NEUTRAL-approval new-game, so assert the state still is one. A future
+		# change to the seeding turns these red instead of turning the band
+		# assertion below into a lie.
+		for bloc in OK.BLOC_KEYS:
+			_ok(is_equal_approx(float(ns.bloc_approval.get(bloc, 0.0)), float(OK.APPROVAL_NEUTRAL)),
+				"the %s fixture is not a neutral-approval new-game: %s reads %s" % [
+				outsider, bloc, str(ns.bloc_approval.get(bloc, 0.0))])
+
+		var in_share: float = Referendum.yes_share(ns, accord.accession_position)
+		_ok(in_share >= 0.510 and in_share <= 0.523,
+			"%s's accession to the accord reads yes_share %.4f at rest, outside [0.510, 0.523] -- the door is locked or already open" % [outsider, in_share])
+		var out_share: float = Referendum.yes_share(ns, accord.withdrawal_position)
+		_ok(out_share >= 0.510 and out_share <= 0.523,
+			"%s's withdrawal from the accord reads yes_share %.4f at rest, outside [0.510, 0.523]" % [outsider, out_share])
+
+
+## Zero-priced honesty, and the pin T8's bit-identity prediction leans on: the
+## accord carries no relations_bonus and no trade_bonus, so a shared-bonus sum
+## over it is exactly 0.0 and stripping the accord from the register moves NO
+## pair. Not approximately -- the eu's 15.0 and 0.50 ride the same sum, so any
+## accidental price here would move every FRA-DEU relation and weight.
+func _check_climate_accord_is_zero_priced() -> void:
+	var state = _fresh()
+	var accord = _loader.orgs_by_id[ACCORD]
+	var effects: Dictionary = state.org_effects.get(ACCORD, {})
+	_ok(is_equal_approx(float(effects.get("relations_bonus", -1.0)), 0.0)
+		and is_equal_approx(float(effects.get("trade_bonus", -1.0)), 0.0),
+		"the accord's effects snapshot carries a price")
+
+	# Fixture viability: the pair must actually share the accord before we
+	# measure its absence, or the identity below is vacuous.
+	_ok(state.nations[PLAYER].orgs.has(ACCORD) and state.nations["DEU"].orgs.has(ACCORD),
+		"FRA and DEU do not both hold the accord -- the fixture is broken")
+
+	var rel_before: float = Org.shared_bonus(state, PLAYER, "DEU", "relations_bonus")
+	var trade_before: float = Org.shared_bonus(state, PLAYER, "DEU", "trade_bonus")
+	var weights_before: Dictionary = Trade.weights(state, PLAYER)
+	var w_before: float = float(weights_before["DEU"])
+
+	# Membership is live data, so removing the accord from the two orgs lists is
+	# exactly what the machine reads as "a register without the accord".
+	state.nations[PLAYER].orgs.erase(ACCORD)
+	state.nations["DEU"].orgs.erase(ACCORD)
+
+	_ok(Org.shared_bonus(state, PLAYER, "DEU", "relations_bonus") == rel_before,
+		"stripping the accord moved FRA-DEU resting relations by %.17f" % [
+		Org.shared_bonus(state, PLAYER, "DEU", "relations_bonus") - rel_before])
+	_ok(Org.shared_bonus(state, PLAYER, "DEU", "trade_bonus") == trade_before,
+		"stripping the accord moved the FRA-DEU shared trade bonus by %.17f" % [
+		Org.shared_bonus(state, PLAYER, "DEU", "trade_bonus") - trade_before])
+	var weights_after: Dictionary = Trade.weights(state, PLAYER)
+	_ok(float(weights_after["DEU"]) == w_before,
+		"stripping the accord moved the FRA-DEU trade weight by %.17f" % (float(weights_after["DEU"]) - w_before))
 
 
 # --- helpers -------------------------------------------------------------------

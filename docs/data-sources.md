@@ -194,6 +194,17 @@ Luxembourg 10.56, Sweden 3.57.
   per-capita footprint; the fleet the player builds is the lever that moves it
   (`src/sim/energy.gd`'s displacement read). Rounding is to 2 dp at import.
 
+The same series is what places the climate accord's founding membership
+(V3.5g). The members are the EU-27 — every nation in `data/nations/` but GBR and
+CHE — with council seats at `round(population / 1e6)` off the committed files,
+summing to exactly 452; and the ceiling the accord's first proposal constrains
+is the EU-27 **population-weighted mean of `co2e_per_capita_t`**, 5.4687 t,
+rounded to 0.5 → **5.5 t**, with 15 of 27 members inside at start. Both are
+derived from the import rather than authored: `tools/climate_probe.gd` table (a)
+recomputes the mean and prints MATCH or MISMATCH against the loaded proposal, so
+a re-import that moves the numbers turns red here instead of silently
+re-pricing the council's first division.
+
 ### Two gotchas in the Natural Earth data, confirmed against the 1:50m file
 
 - **`ISO_A3` is `-99` for France.** The import script matches on **`ADM0_A3`** instead, which is populated correctly for all ten nations in scope.
