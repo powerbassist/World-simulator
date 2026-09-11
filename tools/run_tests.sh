@@ -143,95 +143,36 @@ if [ -n "$unregistered" ]; then
   exit 1
 fi
 
-# The MCP toolkit plugin registers an MCPRuntimeServer autoload, and its export
-# gate is OS.has_feature("editor") -- true for `--headless --script`, so every
-# test process binds a runtime port and announces it. Three lines per test, 55
-# tests, none of them about the simulation. Filtered here rather than fixed in
-# the addon (addons/ is gitignored and reinstalled per machine, so a patch there
-# is lost) and rather than left in (a green suite nobody reads is a suite nobody
-# reads). Exit status comes from godot via PIPESTATUS, never from grep.
-mcp_noise='^\[MCP(RuntimeServer|Registry)\]'
+# --print-tests: the machine-readable registry (the GUI and any caller read
+# the list from here so the array above stays the only list anywhere).
+if [ "${1:-}" = "--print-tests" ]; then
+  printf '%s\n' "${tests[@]}"
+  exit 0
+fi
 
-# A test that quits(0) while the engine printed a SCRIPT ERROR is a GREEN RUN OVER
-# BROKEN CODE, and this runner has produced two of them: V2.1b's tests reached
-# panel members that session had deleted, both found by eye rather than here.
-# V2.1c reproduced it on purpose -- a parse error in main.gd left test_shell.gd
-# printing "all checks passed" over a scene that had not loaded. Zero are emitted
-# today, so this costs nothing until it saves something.
-script_error='SCRIPT ERROR|Parse Error'
+# Python is a gate dependency now -- tools/import_data.py already made it
+# one for the import pipeline. Fail loud, never silent.
+if ! command -v python >/dev/null 2>&1; then
+  echo "python not found -- the suite runner needs it (tools/suite_runner.py)" >&2
+  exit 2
+fi
+
+# Step 0: the gate tests its own tooling before it gates anything else.
+python tools/suite_runner.py --selftest || exit 1
 
 # A FRESH CLONE HAS NO .godot/, AND WITHOUT ONE THERE IS NO
 # global_script_class_cache.cfg -- so every `class_name` in a committed addon is
-# unresolvable and DialogueManager, the project's one autoload, fails to parse.
-# That is AGENTS.md's first gotcha reaching the suite itself: V2.4b's adoption gate
-# ("it must init under --headless --script, which is what tools/run_tests.sh is")
-# only ever ran on a machine that already had the cache, so the gate passed warm and
-# the invariant this runner rests on -- green from a fresh clone -- was false.
-# One import pass builds the cache; it is skipped when .godot/ is already there, so
-# this costs a warm run nothing.
+# unresolvable and DialogueManager, the project's one autoload, fails to parse
+# (the V2.8 review's cloning finding). One import pass builds the cache; the
+# runner also does this, but keep it here so the error text is the bash one
+# on a machine whose python is missing.
 if [ ! -d ".godot" ]; then
   echo "no .godot/ -- importing once so the script class cache exists" >&2
   godot --headless --import >/dev/null 2>&1 || true
 fi
 
-# A run is one engine start per test and several minutes long, and until now it
-# printed nothing at all until the first one finished -- a suite with no cursor cannot
-# be told from a hang. The status line goes to STDERR and is rewritten in place, so
-# every test's own stdout reads exactly as it did before and `> log` still captures
-# only test output. Not a terminal (a log, a pipe, a CI capture): one plain line per
-# test instead, because a carriage return in a file is a line nobody can read.
-BAR_WIDTH=24
-total="${#tests[@]}"
-started="$SECONDS"
-
-_status() {
-  # $1 = tests finished so far, $2 = the one about to run.
-  local done="$1" name="$2" elapsed=$((SECONDS - started)) filled bar eta left
-  if [ ! -t 2 ]; then
-    printf '[%2d/%2d] %s\n' "$((done + 1))" "$total" "$name" >&2
-    return 0
-  fi
-  filled=$((done * BAR_WIDTH / total))
-  bar="$(printf '%*s' "$filled" '' | tr ' ' '#')$(printf '%*s' "$((BAR_WIDTH - filled))" '')"
-  # The estimate is the mean of what has already run, so it is meaningless before the
-  # first test returns and says so rather than printing a confident zero.
-  eta="--:--"
-  if [ "$done" -gt 0 ]; then
-    left=$((elapsed * (total - done) / done))
-    eta="$(printf '%d:%02d' "$((left / 60))" "$((left % 60))")"
-  fi
-  printf '\r\033[K[%s] %2d/%2d  %-30s %d:%02d elapsed, ~%s left' \
-    "$bar" "$done" "$total" "$name" \
-    "$((elapsed / 60))" "$((elapsed % 60))" "$eta" >&2
-  return 0
-}
-
-_status_clear() {
-  if [ -t 2 ]; then printf '\r\033[K' >&2; fi
-  return 0
-}
-
-failed=0
-finished=0
-for t in "${tests[@]}"; do
-  _status "$finished" "${t#tests/}"
-  out="$(godot --headless --script "res://$t" 2>&1)"
-  status="$?"
-  finished=$((finished + 1))
-  _status_clear
-  echo "$out" | grep -Ev "$mcp_noise"
-  if [ "$status" -ne 0 ]; then
-    echo "FAIL $t" >&2
-    failed=1
-  elif echo "$out" | grep -Eq "$script_error"; then
-    echo "FAIL $t -- exited 0 with a script error in its output" >&2
-    failed=1
-  fi
-done
-
-elapsed=$((SECONDS - started))
-if [ "$failed" -ne 0 ]; then
-  echo "test suite failed" >&2
-  exit 1
-fi
-printf 'test suite passed -- %d tests in %d:%02d\n' "$total" "$((elapsed / 60))" "$((elapsed % 60))"
+# One execution core. The status line, per-test capture, noise filter and
+# script-error scan that lived below this point moved into it, so they exist
+# in exactly one place. Flags pass through: -j1 for sequential, --verbose
+# for the old print-everything stream.
+exec python tools/suite_runner.py --ci "$@" "${tests[@]}"
