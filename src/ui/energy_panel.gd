@@ -138,6 +138,7 @@ func _refresh() -> void:
 	_build_order(ns)
 	_build_mix(ns)
 	_build_dependency(ns)
+	_build_emissions(ns)
 	_build_fleet(ns)
 
 
@@ -247,6 +248,27 @@ func _build_dependency(ns) -> void:
 	PanelKit.row(group, "Since the term began", PanelKit.delta(moved, " pts", 2),
 		PanelKit.tone_for(moved, true))
 	PanelKit.line(group, "Above 100 is possible: a country that re-exports fuel buys more than it burns.")
+
+
+func _build_emissions(ns) -> void:
+	var group := PanelKit.section(_body, "Emissions")
+	# NEVER SILENT, the dependency figure's rule one section over: at an empty
+	# fleet this prints the measured baseline and that is the truth the panel
+	# exists for -- a line that appeared only once the mix had moved would be a
+	# warning light wired to stay dark until it should shine. Divided to Mt here
+	# rather than printed raw: a national total in tonnes is six zeroes the eye
+	# cannot read, and %.1f Mt is one digit of headroom the fleet cannot exhaust
+	# (the dirtiest plausible fleet moves France by single Mt, not hundreds).
+	PanelKit.figure(group, "%.1f Mt" % (Energy.emissions_tonnes(ns, _loader) / 1.0e6),
+		"of CO2e the country emits in a year, every gas on one scale")
+	PanelKit.row(group, "Per head", "%.1f t" % ns.co2e_per_capita_t)
+	# The delta rides the PER-CAPITA form, not the national total, because the
+	# per-capita figure is the one the accord's ceiling constrains -- a row about
+	# a different quantity than the one the politics reads would be a second
+	# answer to the same question (V1.6d's class, at panel scale).
+	var moved: float = ns.co2e_per_capita_t - ns.start_co2e_per_capita_t
+	PanelKit.row(group, "Since the term began", PanelKit.delta(moved, " t", 2),
+		PanelKit.tone_for(moved, true))
 
 
 func _build_fleet(ns) -> void:
