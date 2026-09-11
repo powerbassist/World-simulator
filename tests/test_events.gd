@@ -38,6 +38,7 @@ const GameEvent = preload("res://src/core/event.gd")
 const Events = preload("res://src/sim/events.gd")
 const K = preload("res://src/sim/events_constants.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -78,6 +79,7 @@ func _init() -> void:
 	_test_no_choice_is_empty()
 	_test_institutional_is_refused_by_name()
 	_test_approval_precondition_is_refused()
+	_test_emissions_precondition_resolves()
 	_test_a_second_default_is_refused()
 	_test_a_choice_with_no_effects_is_refused()
 	_test_no_randomness_in_the_source()
@@ -334,6 +336,36 @@ func _test_approval_precondition_is_refused() -> void:
 	# one list rather than a second list. If this stops being true the two have drifted.
 	if not LegislatureK.PRECONDITION_FIELDS.has("overall_approval_pct"):
 		_fail("overall_approval_pct was removed from PRECONDITION_FIELDS rather than refused on this channel")
+
+
+## V3.5: an event may precondition on the nation's emissions. The schema accepts the
+## row because the field sits on the ONE precondition list (not the refused
+## subtraction), and the row resolves through the same preconditions_met() a law's
+## does -- so it must track the LIVE field, or a crisis could not answer a warming
+## world.
+func _test_emissions_precondition_resolves() -> void:
+	var errors := _validate({
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"preconditions": [{"field": "co2e_per_capita_t", "op": "<=", "value": 8.0}],
+		"choices": [
+			{"id": "a", "label": "A", "summary": "s", "default": true,
+			 "effects": {"bloc_offset": {"urban": -0.1}}},
+			{"id": "b", "label": "B", "summary": "s", "effects": {"bloc_offset": {"urban": 0.1}}},
+		],
+	})
+	if not errors.is_empty():
+		_fail("an event preconditioned on co2e_per_capita_t was refused: %s" % [errors])
+
+	var state = _new_state()
+	var ns = state.player()
+	var row := [{"field": "co2e_per_capita_t", "op": "<=", "value": 8.0}]
+	if not Legislature.preconditions_met(ns, row):
+		_fail("France at %.2f t failed an at-most-8.0 t precondition" % ns.co2e_per_capita_t)
+	var measured: float = ns.co2e_per_capita_t
+	ns.co2e_per_capita_t = 9.0
+	if Legislature.preconditions_met(ns, row):
+		_fail("a nation at 9.0 t passed an at-most-8.0 t precondition -- the row is not reading the live field")
+	ns.co2e_per_capita_t = measured
 
 
 func _test_a_second_default_is_refused() -> void:

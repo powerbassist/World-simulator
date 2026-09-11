@@ -662,6 +662,7 @@ static func _read_field(ns, field: String) -> float:
 		"spending_infrastructure": return float(ns.spending_pct_gdp.get("infrastructure", 0.0))
 		"tax_corporate": return float(ns.tax_rates_pct.get("corporate", 0.0))
 		"tax_vat": return float(ns.tax_rates_pct.get("vat", 0.0))
+		"co2e_per_capita_t": return ns.co2e_per_capita_t
 		_:
 			# Loud, like every sibling _read_field(). This was the one that returned
 			# 0.0 in silence while its own comment claimed it behaved like the others

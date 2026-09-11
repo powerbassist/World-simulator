@@ -156,6 +156,7 @@ const CONSTRAINT_FIELDS := [
 	"spending_infrastructure",
 	"tax_corporate",
 	"tax_vat",
+	"co2e_per_capita_t",
 ]
 
 const CONSTRAINT_OPS := ["<", "<=", ">", ">="]
@@ -174,6 +175,7 @@ const CONSTRAINT_LABEL := {
 	"spending_infrastructure": "Infrastructure spending, % of GDP",
 	"tax_corporate": "Corporation tax rate",
 	"tax_vat": "VAT rate",
+	"co2e_per_capita_t": "CO2e per capita, tonnes",
 }
 
 const CONSTRAINT_OP_LABEL := {

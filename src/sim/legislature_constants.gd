@@ -103,7 +103,7 @@ const BLOC_OFFSET_MAX := 1.0
 const PRECONDITION_FIELDS := [
 	"debt_to_gdp_pct", "unemployment_pct", "deficit_pct_gdp",
 	"overall_approval_pct", "growth_annual_pct", "terms_served",
-	"unrest_pct",
+	"unrest_pct", "co2e_per_capita_t",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

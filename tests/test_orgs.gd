@@ -55,6 +55,7 @@ func _init() -> void:
 	_check_new_game_is_exactly_quiet()
 	_check_severities_sum_to_the_ceiling()
 	_check_burden_reads_the_breach()
+	_check_the_rules_read_emissions()
 	_check_a_non_member_carries_nothing()
 	_check_transfers_are_derived_and_signed()
 	_check_the_council_divides_and_binds()
@@ -313,6 +314,35 @@ func _check_burden_reads_the_breach() -> void:
 	)
 	_ok(absf(_burden(state, ns) - 0.4) <= 1.0e-9,
 		"a floor rule breached by one tolerance gave burden %.6f, expected 0.4" % _burden(state, ns))
+
+
+## V3.5: a council rule can read the nation's emissions. The two nations ARE the
+## division the constraint exists to make -- France at the measured 4.0 t/capita
+## breaches NOTHING against an 8.0 t ceiling (the rule is not a tax on ordinary
+## life), while Luxembourg at 10.56 t is in real breach, and the breach is the
+## over-run itself so the contribution lands at severity x over/tolerance.
+func _check_the_rules_read_emissions() -> void:
+	var state = _fresh()
+	var rule := _rule("co2e_per_capita_t", "<=", 8.0, 4.0, 0.33)
+
+	var fra := Orgs.rule_breach(state, state.player(), EU_ORG, rule)
+	_ok(float(fra["breach"]) == 0.0 and float(fra["contribution"]) == 0.0,
+		"France at %.2f t CO2e per capita read breach %.4f against an 8.0 t rule" % [
+		state.player().co2e_per_capita_t, float(fra["breach"])
+	])
+
+	# LUX is a eu member (Part 1 pins the register), so the membership gate lets
+	# the rule reach it -- a non-member would read 0.0 for the wrong reason.
+	var lux = state.nations["LUX"]
+	var breach := Orgs.rule_breach(state, lux, EU_ORG, rule)
+	var over: float = lux.co2e_per_capita_t - 8.0
+	_ok(over > 0.0, "the fixture is useless: LUX at %.2f t does not breach 8.0" % lux.co2e_per_capita_t)
+	_ok(float(breach["breach"]) > 0.0 and is_equal_approx(float(breach["breach"]), over),
+		"LUX's breach read %.4f, expected the over-run %.4f off the live field" % [
+		float(breach["breach"]), over
+	])
+	_ok(is_equal_approx(float(breach["contribution"]), 0.33 * over / 4.0),
+		"LUX's contribution read %.6f, expected severity x over/tolerance" % float(breach["contribution"]))
 
 
 ## GBR and CHE are not eu members. Every eu quantity must be exactly zero for
