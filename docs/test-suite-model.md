@@ -10,7 +10,7 @@ The response is one execution core with the gate's semantics in exactly one plac
 
 ## 2. The one core: `tools/suite_runner.py`
 
-`tools/run_tests.sh` is the human entry and keeps four jobs: the registry, the unregistered-test check, a loud python check (exit 2 — python is a gate dependency, `tools/import_data.py` already made it one), the runner selftest as step 0, and the cold-clone `.godot/` import pass (V2.8's fresh-clone finding: no class cache means the committed autoload does not parse). Everything below that is `exec python tools/suite_runner.py --ci "$@" "${tests[@]}"`. The bash status line, per-test capture, noise filter and script-error scan are deleted — they exist once now, in the Python.
+`tools/run_tests.sh` is the human entry and keeps five jobs: the registry, the unregistered-test check, a loud python check (exit 2 — python is a gate dependency, `tools/import_data.py` already made it one), the runner selftest as step 0, and the cold-clone `.godot/` import pass (V2.8's fresh-clone finding: no class cache means the committed autoload does not parse). Everything below that is `exec python tools/suite_runner.py --ci "$@" "${tests[@]}"`. The bash status line, per-test capture, noise filter and script-error scan are deleted — they exist once now, in the Python.
 
 **The registry stays the only list.** `bash tools/run_tests.sh --print-tests` prints it; the cockpit and any caller read it from there. The runner never holds a test list, and no second list exists anywhere to drift (the keycode lesson, the panel-list lesson, applied to the suite itself).
 

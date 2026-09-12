@@ -34,7 +34,8 @@ python tools/suite_runner.py --ci
 
 THE AGENT GATE — same core, exit code + `reports/suite_runs/<ts>/`
 (JSON + per-test logs). Run tests this way, not by hand-rolling godot
-invocations.
+invocations. Single or subset runs: append test paths —
+`python tools/suite_runner.py --ci tests/test_clock.gd tests/test_data.gd`.
 
 ```bash
 bash tools/run_tests_gui.sh
