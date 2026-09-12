@@ -99,6 +99,7 @@ func _run() -> void:
 	_check_window_icons()
 	_check_card_shows_art()
 	_check_emotion_completeness()
+	_check_emotion_axis()
 	_check_alpha_is_real()
 	_check_scene_files()
 	_check_scene_set_pin()
@@ -109,18 +110,25 @@ func _check_no_orphan_art(loader, art: Array[String]) -> void:
 	if art.is_empty():
 		_fail("assets/portraits/ holds no art at all in either layer -- neither generation has been run or committed")
 	for f in art:
-		if not loader.person_by_id.has(f.get_basename()):
+		if not loader.person_by_id.has(_pid_of(f)):
 			_fail("portrait '%s' belongs to no person in the register" % f)
+
+
+## The art list carries two shapes: flat legacy names ("AUT_kettler.png") and
+## per-emotion paths ("neutral/AUT_kettler.webp"). The person id is the
+## basename of the FILE part in both -- a get_basename() on the whole string
+## kept the directory in the id and failed every WebP as an orphan.
+func _pid_of(f: String) -> String:
+	var file_part := f.get_slice("/", 1) if "/" in f else f
+	return file_part.get_basename()
 
 
 ## The headless-fresh-clone half of the bytes rule: whatever art exists must
 ## materialise as a texture here, where no .godot/ import has ever run.
 func _check_bytes_path(art: Array[String]) -> void:
 	for f in art:
-		var emotion_name := f.get_slice("/", 0)
-		var pid := f.get_slice("/", 1) if "/" in f else f.get_basename()
-		var emotion: int = _emotion_index(emotion_name) if "/" in f else 0
-		var tex = Portrait.texture_for(pid, emotion)
+		var emotion: int = _emotion_index(f.get_slice("/", 0)) if "/" in f else 0
+		var tex = Portrait.texture_for(_pid_of(f), emotion)
 		if tex == null:
 			_fail("portrait '%s' did not load from bytes -- read via load() rather than the disk?" % f)
 			continue
@@ -130,8 +138,7 @@ func _check_bytes_path(art: Array[String]) -> void:
 
 
 func _emotion_index(name: String) -> int:
-	var dirs := ["neutral", "pleased", "stern", "worried", "weary"]
-	return dirs.find(name)
+	return Portrait.EMOTION_DIRS.find(name)
 
 
 func _check_missing_falls_back() -> void:
@@ -154,9 +161,9 @@ func _check_window_icons() -> void:
 
 
 func _check_card_shows_art() -> void:
-	# The card's bust is a Framed wrapper (the nation band) around the art, so
-	# the check walks in one level -- the same reach-through test_map_view.gd
-	# uses for map._texture.
+	# The card's bust is a plain frame (or, from Phase B, a Staged composite)
+	# around the art, so the check walks in one level -- the same reach-through
+	# test_map_view.gd uses for map._texture.
 	var bust = _main._hud.portrait_card._bust
 	if bust == null or bust.get_child_count() == 0 or not (bust.get_child(0) is TextureRect):
 		_fail("the portrait card is showing the silhouette -- the player's own leader has no art")
@@ -189,6 +196,18 @@ func _check_emotion_completeness() -> void:
 		if per_person[pid] != EMOTIONS.size():
 			_fail("'%s' carries %d of %d emotions -- one mood would fall back mid-session"
 				% [pid, per_person[pid], EMOTIONS.size()])
+
+
+## The emotion vocabulary is hand-carried in tools/ and src/ -- the scene
+## lists got a two-sources pin, so the emotion axis gets its own: the
+## display's directory list is exactly the five names in enum order, and this
+## test's local copy agrees. Without it, a -1 find() silently reads "weary".
+func _check_emotion_axis() -> void:
+	if Portrait.EMOTION_DIRS.size() != EMOTIONS.size():
+		_fail("EMOTION_DIRS carries %d entries, expected %d" % [Portrait.EMOTION_DIRS.size(), EMOTIONS.size()])
+	for i in mini(Portrait.EMOTION_DIRS.size(), EMOTIONS.size()):
+		if String(Portrait.EMOTION_DIRS[i]) != EMOTIONS[i]:
+			_fail("EMOTION_DIRS[%d] is '%s', expected '%s'" % [i, Portrait.EMOTION_DIRS[i], EMOTIONS[i]])
 
 
 ## V3.7: the matting step's silent failure mode. A bust with no transparent

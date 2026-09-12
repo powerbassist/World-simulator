@@ -64,8 +64,10 @@ def _safe_segment(value, what, allow_slash=False):
 
 def _open(path, data=None, headers=None, timeout=90):
     """Every request goes through here, and here is where the one allowed
-    destination is enforced: plain http to the local ComfyUI and nothing
-    else, ever."""
+    destination is enforced on the URL this module builds: plain http to the
+    local ComfyUI and nothing else, ever. (urllib follows redirects; the
+    server is trusted localhost dev infrastructure -- this clamp is against
+    misuse by callers, not against a hostile server.)"""
     url = urllib.parse.urlunparse(("http", "%s:%d" % (HOST, PORT), path, "", "", ""))
     parts = urllib.parse.urlparse(url)
     if parts.scheme != "http" or parts.hostname not in ALLOWED_HOSTS:
@@ -126,7 +128,9 @@ def upload_image(data: bytes, name: str) -> str:
     """POST one PNG into ComfyUI's input dir; return the name LoadImage wants.
     overwrite=true keeps the name stable across re-uploads of the same base --
     without it the server renames to "x (1).png" and the input dir grows one
-    copy per emotion pass."""
+    copy per emotion pass. The name rides a multipart header, so it passes the
+    same segment discipline as anything server-facing."""
+    name = _safe_segment(name, "upload name")
     boundary = "ws-portraits-boundary"
     body = (("--%s\r\nContent-Disposition: form-data; name=\"image\"; filename=\"%s\"\r\n"
              "Content-Type: image/png\r\n\r\n" % (boundary, name)).encode()

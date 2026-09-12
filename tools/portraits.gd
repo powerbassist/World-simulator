@@ -56,8 +56,10 @@ const SOURCE_FRAME := Vector2i(832, 1216)
 const CROP := Rect2i(0, 48, 832, 1140)
 const OUT_W := 432
 const OUT_H := 592
-## Backdrops keep the source's own aspect (832:1216 = 432:630.5, rounded);
-## the display's COVER crop takes the half-dozen pixels of difference.
+## Backdrops resize the FULL frame, never the portrait crop -- the portrait's
+## crop would stretch them 6.8 % vertically (832x1140 into a 432:632 box).
+## 432x632 keeps the source's own aspect (832:1216); the display's COVER crop
+## takes the half-dozen pixels of difference.
 const SCENE_OUT_W := 432
 const SCENE_OUT_H := 632
 
@@ -103,7 +105,10 @@ func _init() -> void:
 			var bust := _crop_and_resize(img)
 			bust = _compose_alpha(bust, _crop_and_resize(mask))
 			var out_path := OUT_DIR.path_join(emotion).path_join(pid + ".webp")
-			var err := bust.save_webp(out_path, false, 0.90)
+			# lossy=TRUE is the lossy encoder; false encodes lossless and
+			# ignores quality -- pinned by size comparison, after a first
+			# reading of the signature had it inverted (the review's P0).
+			var err := bust.save_webp(out_path, true, 0.90)
 			if err != OK:
 				printerr("FAIL: could not write %s (%d)" % [out_path, err])
 				quit(1)
@@ -124,9 +129,10 @@ func _init() -> void:
 			if img == null:
 				quit(1)
 				return
-			var backdrop := _crop_and_resize(img, Vector2i(SCENE_OUT_W, SCENE_OUT_H))
-			var out_path := SCENE_OUT_DIR.path_join(f.get_basename() + ".webp")
-			if backdrop.save_webp(out_path, false, 0.90) != OK:
+		var backdrop := img.duplicate()
+		backdrop.resize(SCENE_OUT_W, SCENE_OUT_H, Image.INTERPOLATE_LANCZOS)
+		var out_path := SCENE_OUT_DIR.path_join(f.get_basename() + ".webp")
+		if backdrop.save_webp(out_path, true, 0.90) != OK:
 				printerr("FAIL: could not write %s" % out_path)
 				quit(1)
 				return
@@ -175,7 +181,7 @@ func _load_frame(path: String) -> Image:
 	return img
 
 
-func _crop_and_resize(img: Image, out_size: Vector2i = Vector2i(OUT_W, OUT_H)) -> Image:
+func _crop_and_resize(img: Image) -> Image:
 	var out := img.get_region(CROP)
 	out.resize(out_size.x, out_size.y, Image.INTERPOLATE_LANCZOS)
 	return out

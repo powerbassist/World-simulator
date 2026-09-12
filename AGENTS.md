@@ -198,11 +198,17 @@ balance re-run was bit-identical per prediction.** What exists now: the trait
 sidecar (`tools/portraits_traits.json`, 213 ids seeded, hand-editable, sex at
 0.35 female against the measured 12.7 % wall), the region/role/wardrobe
 prompts with the likeness policy ENFORCED (`--self-check`, gated by
-`tests/test_portraits.gd` on every suite run), four workflow templates proven
+`tests/test_portraits.gd` on every suite run), three workflow templates proven
 against the live node graph (`tools/workflow_check.py`), the rewritten
-post-pass (mask→alpha bytes, WebP q90 lossy — the handoff's `true` argument
-was LOSSLESS and would have blown the 59 MB budget; a probe pinned the
-signature before the first save), and `portrait.gd` rebuilt around
+post-pass (mask→alpha bytes, **WebP q90 lossy — and the signature story is
+the review's P0, recorded straight because the next session will trust it:
+`Image.save_webp(path, lossy, quality)` — the second argument is LOSSY, so
+the handoff's `save_webp(path, true, 0.90)` was correct all along and the
+plan-time "correction" to `false` shipped the LOSSLESS encoder with quality
+ignored. The code review caught it before any asset existed — Phase A writes
+none, exactly the silent class the suite cannot see — and a size comparison
+pinned the semantics; the committed call is `save_webp(out_path, true,
+0.90)`**), and `portrait.gd` rebuilt around
 `framed_for(id, size, emotion, scene)` with the `Staged` composite and its
 per-scene tint grade as Phase B's dial. **The LEGACY PNG BRIDGE is the load-
 bearing consequence**: the repo holds new code and old duotone PNGs, the game

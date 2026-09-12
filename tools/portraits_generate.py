@@ -404,7 +404,22 @@ def self_check(people) -> int:
         if REGION["FRA"] == REGION["FIN"]:
             failures.append("FRA and FIN read the same region text")
 
-    # 5. determinism: the same id twice yields the same prompt and seed
+    # 5. determinism: the same id twice yields the same prompt and seed --
+    # within the process AND against a committed golden value, which is what
+    # catches cross-process drift (a hash() swap, a seed-formula change). The
+    # seed depends only on the id and the emotion name, so the golden pin says
+    # the SEEDING contract held; prompt TEXT may drift freely -- the sidecar
+    # is hand-editable art direction by design. If this seed moves, every
+    # portrait re-renders differently. AUT_kettler's has been stable since
+    # the sidecar was first seeded.
+    golden_pid, golden_seed = "AUT_kettler", 3982541790
+    golden_name = next((n for p, n in people if p == golden_pid), None)
+    if golden_name is None:
+        failures.append("golden id %s left the register -- pick a new pin" % golden_pid)
+    else:
+        if prompt_for(golden_pid, golden_name, "neutral")[0] != golden_seed:
+            failures.append("golden seed for %s moved (expected %d) -- every portrait would re-render"
+                            % (golden_pid, golden_seed))
     for pid, name in people[:3]:
         for emotion in EMOTIONS:
             if prompt_for(pid, name, emotion)[:2] != prompt_for(pid, name, emotion)[:2]:
