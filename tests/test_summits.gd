@@ -53,6 +53,7 @@ func _init() -> void:
 	_check_draw_is_deterministic_and_covering()
 	_check_content_compiles()
 	_check_sidecar_contract_refuses_bad_content()
+	_check_scene_field()
 	_check_no_new_state()
 	_check_arrival_chain_by_source()
 	_finish()
@@ -244,6 +245,51 @@ func _check_arrival_chain_by_source() -> void:
 		if line.contains("apply_effects") or line.contains("Budget.commit"):
 			_fail("summit_panel applies effects -- the panel owns the frame, the orchestrator owns the state: %s" % line.strip_edges())
 			break
+
+
+## The V3.7 scene field: which backdrop the portrait system stages behind the
+## leader. It is DISPLAY data, but it is carried by the CONTENT, so the
+## validation lives where the other sidecar clauses live -- at load. An
+## unknown name must be refused loudly (a summit staged into a room the game
+## cannot draw is the unread refusal wearing a backdrop), and the absent key
+## must default to the summit hall -- ConfigFile has no per-key erase and a
+## Dictionary does, so "the default fires on absence" is tested by rebuilding
+## the dict WITHOUT the key, the established pattern.
+func _check_scene_field() -> void:
+	var dialogue := "~ start\nA: Line.\n- Sign it => Sign it\n~ Sign it\nA: Signed. => END\n"
+	var errs: Array[String] = []
+	var s = Summit.from_dict(dialogue, "DEU", "X5",
+		{"name": "n", "summary": "s", "scene": "nightclub", "effects": {"Sign it": {}}},
+		"X5", errs,
+		["income_tax", "vat"], ["health", "defence"], ["business", "workers"],
+		["agriculture", "industry", "services"])
+	if errs.is_empty():
+		_fail("a scene the game cannot stage ('nightclub') was accepted")
+	if String(s.scene) != "summit_hall":
+		_fail("a refused scene must leave the field at the default, got '%s'" % s.scene)
+
+	# Absent key -> the default. Same fixture minus the key.
+	errs = []
+	var s2 = Summit.from_dict(dialogue, "DEU", "X6",
+		{"name": "n", "summary": "s", "effects": {"Sign it": {}}},
+		"X6", errs,
+		["income_tax", "vat"], ["health", "defence"], ["business", "workers"],
+		["agriculture", "industry", "services"])
+	if not errs.is_empty():
+		_fail("a sidecar with no scene key was refused: %s" % [errs])
+	if String(s2.scene) != "summit_hall":
+		_fail("an absent scene must default to summit_hall, got '%s'" % s2.scene)
+
+	# The shipped content: every sidecar's scene is one the game can stage, and
+	# the draw carries it through to the panel.
+	for nation_id in _loader.summits.keys():
+		for summit in _loader.summits[nation_id]:
+			var drawn := Summits.draw(_state, _loader, nation_id)
+			if drawn.is_empty():
+				continue
+			if String(drawn.get("scene", "")) == "":
+				_fail("draw for %s carries no scene -- the panel cannot stage it" % summit.id)
+				break
 
 
 func _fail(message: String) -> void:

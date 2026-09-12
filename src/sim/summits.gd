@@ -22,7 +22,8 @@ const Cycle = preload("res://src/sim/cycle.gd")
 
 
 ## The summit for this meeting, as data:
-## {id, nation_id, nation_name, title, dialogue_text, effects, leader_person_id}
+## {id, nation_id, nation_name, title, summary, dialogue_text, effects,
+##  leader_person_id, scene}
 ## or {} when the nation has no summit content -- a meeting without a scene is
 ## the ordinary state visit of V2.4a and before, not an error. The stamp is the
 ## meeting register's own value, read as the draw's index so a RE-visit can
@@ -46,6 +47,7 @@ static func draw(state, loader, nation_id: String) -> Dictionary:
 		"leader_person_id": String(nation.leader_person_id) if nation != null else "",
 		"dialogue_text": String(summit.dialogue_text),
 		"effects": summit.effects,
+		"scene": String(summit.scene),
 	}
 
 

@@ -1,0 +1,9 @@
+{
+  "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "Juggernaut_X_RunDiffusion.safetensors"}},
+  "2": {"class_type": "CLIPTextEncode", "inputs": {"text": "__SCENE_PROMPT__", "clip": ["1", 1]}},
+  "3": {"class_type": "CLIPTextEncode", "inputs": {"text": "people, person, faces, crowd in focus, text, caption, watermark, logo, illustration, painting", "clip": ["1", 1]}},
+  "4": {"class_type": "EmptyLatentImage", "inputs": {"width": 832, "height": 1216, "batch_size": 1}},
+  "5": {"class_type": "KSampler", "inputs": {"seed": 0, "steps": 25, "cfg": 6.0, "sampler_name": "dpmpp_sde", "scheduler": "karras", "denoise": 1.0, "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0]}},
+  "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
+  "7": {"class_type": "SaveImage", "inputs": {"filename_prefix": "background", "images": ["6", 0]}}
+}

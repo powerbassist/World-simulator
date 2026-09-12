@@ -189,6 +189,41 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**V3.7 shipped the portrait wall's PHASE A 2026-09-12, and the block's
+central promise held: the whole generation stack is built, wired and tested
+with the GPU never fired — `sources/` and `assets/portraits/` are untouched,
+`SAVE_VERSION` stays 34, `src/sim/` gained exactly one declared line
+(`summits.gd`'s draw dict carrying the new inert `scene` string) and the
+balance re-run was bit-identical per prediction.** What exists now: the trait
+sidecar (`tools/portraits_traits.json`, 213 ids seeded, hand-editable, sex at
+0.35 female against the measured 12.7 % wall), the region/role/wardrobe
+prompts with the likeness policy ENFORCED (`--self-check`, gated by
+`tests/test_portraits.gd` on every suite run), three workflow templates proven
+against the live node graph (`tools/workflow_check.py`), the rewritten
+post-pass (mask→alpha bytes, **WebP q90 lossy — and the signature story is
+the review's P0, recorded straight because the next session will trust it:
+`Image.save_webp(path, lossy, quality)` — the second argument is LOSSY, so
+the handoff's `save_webp(path, true, 0.90)` was correct all along and the
+plan-time "correction" to `false` shipped the LOSSLESS encoder with quality
+ignored. The code review caught it before any asset existed — Phase A writes
+none, exactly the silent class the suite cannot see — and a size comparison
+pinned the semantics; the committed call is `save_webp(out_path, true,
+0.90)`**), and `portrait.gd` rebuilt around
+`framed_for(id, size, emotion, scene)` with the `Staged` composite and its
+per-scene tint grade as Phase B's dial. **The LEGACY PNG BRIDGE is the load-
+bearing consequence**: the repo holds new code and old duotone PNGs, the game
+is playable and 82/82 green, and the bridge dies in Phase B's assets commit —
+signposted temporary; do not let it rot. Two findings to inherit: Impact Pack
+V8.x split `UltralyticsDetectorProvider` into ComfyUI-Impact-Subpack (the
+handoff's five-class check failed until it was installed), and the emoji's
+`test_hud` contract was re-anchored to the face (bands 55/45/35; the first
+full-suite run caught the stale read). **PHASE B IS UNRUN** — the ~2.5 h GPU
+pass fires on the author's word alone; runbook: three-person slice first, the
+contact sheet is the gate, the legacy branch deleted in the assets commit.
+**The V3 tier closes at V3.7, not V3.6** — the retrospective and every open
+call (V3.0's gate routes, V3.5's loader-gate ack, Phase B) are in
+docs/tiers/v3.md's close-out section, handed to the author in one place.
+
 **V3.6 shipped ceremony, sound and the front door 2026-09-12, and the row's
 "small" held: three machines and one told line on surfaces that already
 existed, one new `src/` file, and `git diff main..HEAD --stat -- src/sim/
@@ -612,31 +647,38 @@ deleted it to one line through the registry, so registering the two panels IS th
 And the month-136 warning on `nav_probe.gd`'s loop was inherited by nothing: no probe this
 session runs a month at all, and `geography_probe.gd` still runs none.
 
-**V2.3 SHIPPED THE FACE OF POWER: 71 duotone portraits, a glyph on every window, and the placeholder silhouette PROMOTED to the shared fallback.** The recipe is two
+**V2.3 SHIPPED THE FACE OF POWER: 71 portraits, a glyph on every window, and the placeholder silhouette PROMOTED to the shared fallback.** The recipe is two
 committed halves and one machine dependency stated honestly: `tools/portraits_generate.py`
 drives the author's local ComfyUI (updated in-session to 0.34.0 / torch 2.13) through
 `tools/portraits_workflow.json` -- API format, where a stray `_comment` key is a 500 --
-and `tools/portraits.gd` imposes the ONE look: a fixed crop and eyeline, a posterized
-INK-to-SLATE-to-brass ramp on the theme's own three colours, 216x296 out, committed
-`importer="keep"` .imports beside each. **The pass is deterministic (hash-proven on
-re-run) and the committed PNGs are canonical where the machine drifts.** Measured:
-**1.77 MB over 71 files, largest 33.9 KB** -- the largest asset decision by COUNT, nothing
-near the Blue Marble by bytes. **Likeness policy, the author's call: a portrait EVOKES the
-real politician its fictional name plays on and never depicts them** -- prompts are
-described archetypes (age, hair, facial hair, glasses, face shape, expression, one quirk,
-each decorrelated by its own hash of the person id), never a name. **The player rejected
-the first wall on sight -- "too lookalike" -- and the correction is the session's sharpest
-finding: "one crop, one eyeline" constrains the FRAME; the FACE is where variety lives.**
-A prompt that pinned everything but the seed made 71 near-siblings. **A missing portrait
-is SILENT in game**: `portrait_card.gd`'s Bust moved into `src/ui/portrait.gd` and became
-the fallback behind `control_for()`/`framed_for()`, so the register can grow a session
-ahead of the art run; the refused direction is stale art nobody references, held by the
-tool and by `tests/test_portraits.gd` alongside the bytes-not-`load()` check and the
-one-committed-icon-per-registered-window check. The author's "background per situation"
-call: a **nation-hue band** behind every portrait, display-side, the map's own PALETTE --
-one PNG stays canonical. Faces live on the card and the People window (executive, party
-leaders, Abroad); a name in a sentence is not identity content, and later spread is one
-`framed_for()` per surface. **Icons travel on `register()` itself** (drawer entries, title
+and `tools/portraits.gd` imposed the ONE look as V2.3 built it: a fixed crop and eyeline,
+a posterized INK-to-SLATE-to-brass ramp, 216x296 out, committed `importer="keep"`
+.imports beside each. **The pass is deterministic (hash-proven on re-run) and the
+committed assets are canonical where the machine drifts.** **Likeness policy, the
+author's call: a portrait EVOKES the real politician its fictional name plays on and
+never depicts them** -- prompts are described archetypes, never a name. **The player
+rejected the first wall on sight -- "too lookalike" -- and the correction is the
+session's sharpest finding: "one crop, one eyeline" constrains the FRAME; the FACE is
+where variety lives.** A prompt that pinned everything but the seed made 71
+near-siblings. **A missing portrait is SILENT in game**: `portrait_card.gd`'s Bust moved
+into `src/ui/portrait.gd` and became the fallback behind `control_for()`/`framed_for()`,
+so the register can grow a session ahead of the art run; the refused direction is stale
+art nobody references, held by the tool and by `tests/test_portraits.gd` alongside the
+bytes-not-`load()` check and the one-committed-icon-per-registered-window check.
+**V3.7 STRUCK TWO OF THESE CALLS, and this paragraph is corrected rather than deleted
+because a comment contradicting its code is a defect:** the **duotone ramp is gone**
+(realism is the look; the unifying work that survives is the crop, the eyeline and the
+one output size, plus matting masks turned into real alpha), and the **nation-hue band
+is gone** -- "background per situation" is now the real thing it stood in for: a 14-scene
+backdrop library (`assets/portrait_scenes/`, rendered by `tools/backgrounds_generate.py`)
+composited behind the bust at display time, grade-tinted per scene. Five expressions per
+person (`neutral/pleased/stern/worried/weary`) replaced the emoji read; WebP q90 with
+alpha at 432x592 replaced the duotone PNGs; and the prompt now carries region, role, sex
+and wardrobe from the generator-owned sidecar (`tools/portraits_traits.json`) -- the
+V2.3 `GENDER` table defaulted 140 of 213 people to male. The likeness policy is unchanged
+and is now ENFORCED by a test, not a docstring. Faces live on the card, the People
+window and the summit panel; later spread is one `framed_for()` per surface. **Icons
+travel on `register()` itself** (drawer entries, title
 bars, the test, all one source -- the keycode lesson applied one session early), sixteen
 new at-icons SVGs committed via `git add -f`. **No sim file touched, `SAVE_VERSION` stays
 27, no balance re-run** -- drawing is not a verb, third time running. **The honest gap: no
