@@ -31,25 +31,25 @@
   "wardrobe": "dark grey suit, pale blue tie"
  },
  "AUT_kranzler": {
-  "sex": "male",
+  "sex": "female",
   "age": 50,
   "build": "trim",
-  "hair": "flat, severely parted hair",
+  "hair": "raven-black hair, blunt fringe",
   "glasses": "dark-framed glasses",
-  "facial": "clean-shaven",
   "face": "round, soft-featured face",
   "quirk": "weathered, lined skin",
-  "wardrobe": "midnight blue suit, silver tie"
+  "wardrobe": "midnight blue suit, silver brooch"
  },
  "AUT_prantl": {
-  "sex": "female",
+  "sex": "male",
   "age": 62,
   "build": "broad-shouldered",
-  "hair": "dark hair pulled back tightly",
+  "hair": "light brown hair with a cowlick",
   "glasses": "no glasses",
   "face": "narrow, angular face",
   "quirk": "weathered, lined skin",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "salt-and-pepper beard"
  },
  "AUT_rudolf_v": {
   "sex": "male",
@@ -63,14 +63,15 @@
   "wardrobe": "dark formal suit, discreet tie pin"
  },
  "AUT_steinhauser": {
-  "sex": "female",
+  "sex": "male",
   "age": 48,
   "build": "trim",
-  "hair": "short silver pixie cut",
+  "hair": "short curly greying hair",
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "heavy eyelids",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "BEL_baudouin_iii": {
   "sex": "male",
@@ -84,14 +85,15 @@
   "facial": "neat stubble"
  },
  "BEL_coussement": {
-  "sex": "female",
+  "sex": "male",
   "age": 52,
   "build": "solid",
-  "hair": "grey hair in a low bun",
+  "hair": "thinning dark hair combed back",
   "glasses": "dark-framed glasses",
   "face": "round, soft-featured face",
   "quirk": "strong brow ridge",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "BEL_dewilde": {
   "sex": "female",
@@ -137,15 +139,14 @@
   "wardrobe": "navy suit, dark red tie"
  },
  "BEL_vanhamme": {
-  "sex": "male",
+  "sex": "female",
   "age": 47,
   "build": "trim",
-  "hair": "bald head",
+  "hair": "blonde hair, loose curls",
   "glasses": "no glasses",
-  "facial": "clean-shaven",
   "face": "narrow, angular face",
   "quirk": "high cheekbones",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "BGR_ganeva": {
   "sex": "male",
@@ -296,14 +297,15 @@
   "wardrobe": "dark formal suit, discreet tie pin"
  },
  "CHE_zbinden": {
-  "sex": "female",
+  "sex": "male",
   "age": 53,
   "build": "slim",
-  "hair": "chin-length greying hair",
+  "hair": "wavy dark hair",
   "glasses": "no glasses",
   "face": "narrow, angular face",
   "quirk": "thin lips",
-  "wardrobe": "open-collar dark blazer"
+  "wardrobe": "open-collar dark suit, no tie",
+  "facial": "trimmed grey moustache"
  },
  "CYP_adamidis": {
   "sex": "female",
@@ -467,15 +469,14 @@
   "wardrobe": "black suit, high collar"
  },
  "DEU_bohlen": {
-  "sex": "male",
+  "sex": "female",
   "age": 61,
   "build": "trim",
-  "hair": "short neat hair",
+  "hair": "shoulder-length hair",
   "glasses": "no glasses",
-  "facial": "salt-and-pepper beard",
   "face": "broad face with a strong jaw",
   "quirk": "prominent nose",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "DEU_emmerich": {
   "sex": "male",
@@ -489,35 +490,36 @@
   "wardrobe": "black formal suit, white pocket square"
  },
  "DEU_falk": {
-  "sex": "female",
+  "sex": "male",
   "age": 63,
   "build": "slim",
-  "hair": "layered mid-length hair",
+  "hair": "wild salt-and-pepper hair",
   "glasses": "no glasses",
   "face": "round, soft-featured face",
   "quirk": "widow's peak",
-  "wardrobe": "charcoal suit, bold scarf"
+  "wardrobe": "charcoal suit, party-badge lapel pin",
+  "facial": "clean-shaven"
  },
  "DEU_friedrich_iv": {
-  "sex": "female",
+  "sex": "male",
   "age": 63,
   "build": "solid",
-  "hair": "layered mid-length hair",
+  "hair": "auburn hair swept forward",
   "glasses": "no glasses",
   "face": "broad face with a strong jaw",
   "quirk": "widow's peak",
-  "wardrobe": "black tailored dress, discreet jewels"
+  "wardrobe": "black suit, high collar",
+  "facial": "neat stubble"
  },
  "DEU_grotholt": {
-  "sex": "male",
+  "sex": "female",
   "age": 56,
   "build": "slim",
-  "hair": "short neat hair",
+  "hair": "raven-black hair, blunt fringe",
   "glasses": "thin rectangular glasses",
-  "facial": "short full beard",
   "face": "narrow, angular face",
   "quirk": "strong brow ridge",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "DEU_ruppert": {
   "sex": "male",
@@ -531,15 +533,14 @@
   "wardrobe": "brown suit, patterned tie"
  },
  "DEU_seibold": {
-  "sex": "male",
+  "sex": "female",
   "age": 59,
   "build": "solid",
-  "hair": "wavy dark hair",
+  "hair": "chestnut hair in a chignon",
   "glasses": "no glasses",
-  "facial": "trimmed grey moustache",
   "face": "round, soft-featured face",
   "quirk": "high cheekbones",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "DEU_vogler": {
   "sex": "male",
@@ -671,15 +672,14 @@
   "wardrobe": "charcoal suit, party-badge lapel pin"
  },
  "ESP_palomares": {
-  "sex": "male",
+  "sex": "female",
   "age": 63,
   "build": "solid",
-  "hair": "thick silver hair",
+  "hair": "long straight hair",
   "glasses": "round wire-frame glasses",
-  "facial": "short full beard",
   "face": "square face with heavy brows",
   "quirk": "widow's peak",
-  "wardrobe": "charcoal suit, party-badge lapel pin"
+  "wardrobe": "charcoal suit, bold scarf"
  },
  "ESP_sanchis": {
   "sex": "male",
@@ -852,14 +852,15 @@
   "wardrobe": "navy suit, pearl earrings"
  },
  "FRA_aubertin": {
-  "sex": "female",
+  "sex": "male",
   "age": 50,
   "build": "trim",
-  "hair": "dark hair pulled back tightly",
+  "hair": "thinning dark hair combed back",
   "glasses": "no glasses",
   "face": "narrow, angular face",
   "quirk": "weathered, lined skin",
-  "wardrobe": "charcoal suit, bold scarf"
+  "wardrobe": "charcoal suit, party-badge lapel pin",
+  "facial": "clean-shaven"
  },
  "FRA_aumont": {
   "sex": "male",
@@ -916,15 +917,14 @@
   "facial": "clean-shaven"
  },
  "FRA_perrault": {
-  "sex": "male",
+  "sex": "female",
   "age": 71,
   "build": "heavyset",
-  "hair": "wavy dark hair",
+  "hair": "layered mid-length hair",
   "glasses": "no glasses",
-  "facial": "salt-and-pepper beard",
   "face": "long face with a high forehead",
   "quirk": "high cheekbones",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "FRA_vasseur": {
   "sex": "male",
@@ -948,66 +948,68 @@
   "wardrobe": "burgundy blazer, dark trousers"
  },
  "GBR_harlow": {
-  "sex": "female",
+  "sex": "male",
   "age": 71,
   "build": "trim",
-  "hair": "long straight hair",
+  "hair": "swept-back grey hair",
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "high cheekbones",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "GBR_kilbride": {
-  "sex": "male",
+  "sex": "female",
   "age": 44,
   "build": "trim",
-  "hair": "thick silver hair",
+  "hair": "wavy auburn hair",
   "glasses": "thin rectangular glasses",
-  "facial": "clean-shaven",
   "face": "long face with a high forehead",
   "quirk": "strong brow ridge",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "GBR_marchbanks": {
-  "sex": "female",
+  "sex": "male",
   "age": 52,
   "build": "trim",
-  "hair": "short silver pixie cut",
+  "hair": "thinning dark hair combed back",
   "glasses": "no glasses",
   "face": "round, soft-featured face",
   "quirk": "heavy eyelids",
-  "wardrobe": "charcoal tailored suit, silk scarf"
+  "wardrobe": "charcoal suit, subdued tie",
+  "facial": "clean-shaven"
  },
  "GBR_pell": {
-  "sex": "female",
+  "sex": "male",
   "age": 51,
   "build": "solid",
-  "hair": "long straight hair",
+  "hair": "wild salt-and-pepper hair",
   "glasses": "round wire-frame glasses",
   "face": "broad face with a strong jaw",
   "quirk": "high cheekbones",
-  "wardrobe": "open-collar dark blazer"
+  "wardrobe": "open-collar dark suit, no tie",
+  "facial": "salt-and-pepper beard"
  },
  "GBR_robert_iii": {
-  "sex": "female",
+  "sex": "male",
   "age": 70,
   "build": "trim",
-  "hair": "dark hair pulled back tightly",
+  "hair": "sandy blond hair, receding",
   "glasses": "dark-framed glasses",
   "face": "broad face with a strong jaw",
   "quirk": "weathered, lined skin",
-  "wardrobe": "midnight blue suit, silver brooch"
+  "wardrobe": "midnight blue suit, silver tie",
+  "facial": "salt-and-pepper beard"
  },
  "GBR_wexford": {
-  "sex": "male",
+  "sex": "female",
   "age": 49,
   "build": "solid",
-  "hair": "flat, severely parted hair",
+  "hair": "chestnut hair in a chignon",
   "glasses": "round wire-frame glasses",
-  "facial": "clean-shaven",
   "face": "square face with heavy brows",
   "quirk": "thin lips",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "GRC_alexandros_ii": {
   "sex": "male",
@@ -1353,36 +1355,35 @@
   "wardrobe": "navy suit, dark red tie"
  },
  "ITA_caputo": {
-  "sex": "male",
+  "sex": "female",
   "age": 53,
   "build": "heavyset",
-  "hair": "bald head",
+  "hair": "chestnut hair in a chignon",
   "glasses": "no glasses",
-  "facial": "neat stubble",
   "face": "long face with a high forehead",
   "quirk": "thin lips",
-  "wardrobe": "charcoal suit, party-badge lapel pin"
+  "wardrobe": "charcoal suit, bold scarf"
  },
  "ITA_carlo_alberto_ii": {
-  "sex": "female",
+  "sex": "male",
   "age": 67,
   "build": "trim",
-  "hair": "long straight hair",
+  "hair": "short neat hair",
   "glasses": "no glasses",
   "face": "narrow, angular face",
   "quirk": "high cheekbones",
-  "wardrobe": "black tailored dress, discreet jewels"
+  "wardrobe": "black suit, high collar",
+  "facial": "clean-shaven"
  },
  "ITA_fossati": {
-  "sex": "male",
+  "sex": "female",
   "age": 62,
   "build": "trim",
-  "hair": "receding hairline",
+  "hair": "platinum hair, slicked back",
   "glasses": "thin rectangular glasses",
-  "facial": "clean-shaven",
   "face": "narrow, angular face",
   "quirk": "deep-set eyes",
-  "wardrobe": "open-collar dark suit, no tie"
+  "wardrobe": "open-collar dark blazer"
  },
  "ITA_lambertini": {
   "sex": "male",
@@ -1396,34 +1397,37 @@
   "wardrobe": "open-collar dark suit, no tie"
  },
  "ITA_ronchi": {
-  "sex": "female",
+  "sex": "male",
   "age": 60,
   "build": "solid",
-  "hair": "grey hair in a low bun",
+  "hair": "sandy blond hair, receding",
   "glasses": "thin rectangular glasses",
   "face": "narrow, angular face",
   "quirk": "strong brow ridge",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "ITA_salvagno": {
-  "sex": "female",
+  "sex": "male",
   "age": 44,
   "build": "slim",
-  "hair": "grey hair in a low bun",
+  "hair": "short curly greying hair",
   "glasses": "no glasses",
   "face": "broad face with a strong jaw",
   "quirk": "strong brow ridge",
-  "wardrobe": "midnight blue suit, silver brooch"
+  "wardrobe": "midnight blue suit, silver tie",
+  "facial": "trimmed grey moustache"
  },
  "ITA_trevisan": {
-  "sex": "female",
+  "sex": "male",
   "age": 53,
   "build": "broad-shouldered",
-  "hair": "chin-length greying hair",
+  "hair": "wavy dark hair",
   "glasses": "no glasses",
   "face": "square face with heavy brows",
   "quirk": "thin lips",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "LTU_bilius": {
   "sex": "male",
@@ -1533,36 +1537,35 @@
   "wardrobe": "charcoal suit, party-badge lapel pin"
  },
  "LUX_reiland": {
-  "sex": "male",
+  "sex": "female",
   "age": 63,
   "build": "solid",
-  "hair": "thick silver hair",
+  "hair": "layered mid-length hair",
   "glasses": "round wire-frame glasses",
-  "facial": "clean-shaven",
   "face": "long face with a high forehead",
   "quirk": "high cheekbones",
-  "wardrobe": "charcoal suit, party-badge lapel pin"
+  "wardrobe": "charcoal suit, bold scarf"
  },
  "LUX_steichen": {
-  "sex": "female",
+  "sex": "male",
   "age": 47,
   "build": "solid",
-  "hair": "layered mid-length hair",
+  "hair": "swept-back grey hair",
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "widow's peak",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "brown suit, patterned tie",
+  "facial": "clean-shaven"
  },
  "LUX_weiler": {
-  "sex": "male",
+  "sex": "female",
   "age": 64,
   "build": "slim",
-  "hair": "wavy dark hair",
+  "hair": "grey hair in a low bun",
   "glasses": "thin rectangular glasses",
-  "facial": "salt-and-pepper beard",
   "face": "narrow, angular face",
   "quirk": "strong brow ridge",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "LVA_kalns": {
   "sex": "male",
@@ -1737,14 +1740,15 @@
   "wardrobe": "open-collar dark blazer"
  },
  "NLD_kuiperink": {
-  "sex": "female",
+  "sex": "male",
   "age": 71,
   "build": "broad-shouldered",
-  "hair": "long straight hair",
+  "hair": "auburn hair swept forward",
   "glasses": "no glasses",
   "face": "round, soft-featured face",
   "quirk": "high cheekbones",
-  "wardrobe": "open-collar dark blazer"
+  "wardrobe": "open-collar dark suit, no tie",
+  "facial": "clean-shaven"
  },
  "NLD_maurits_iii": {
   "sex": "male",
@@ -1758,15 +1762,14 @@
   "wardrobe": "midnight blue suit, silver tie"
  },
  "NLD_stoffels": {
-  "sex": "male",
+  "sex": "female",
   "age": 71,
   "build": "broad-shouldered",
-  "hair": "bald head",
+  "hair": "shoulder-length hair",
   "glasses": "round wire-frame glasses",
-  "facial": "neat stubble",
   "face": "narrow, angular face",
   "quirk": "widow's peak",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "NLD_terborg": {
   "sex": "male",
@@ -1780,15 +1783,14 @@
   "wardrobe": "charcoal suit, subdued tie"
  },
  "NLD_wielinga": {
-  "sex": "male",
+  "sex": "female",
   "age": 53,
   "build": "broad-shouldered",
-  "hair": "short curly greying hair",
+  "hair": "chin-length greying hair",
   "glasses": "no glasses",
-  "facial": "short full beard",
   "face": "long face with a high forehead",
   "quirk": "prominent nose",
-  "wardrobe": "open-collar dark suit, no tie"
+  "wardrobe": "open-collar dark blazer"
  },
  "POL_grabowski": {
   "sex": "male",
@@ -2143,15 +2145,14 @@
   "wardrobe": "charcoal suit, bold scarf"
  },
  "SVN_kolenc": {
-  "sex": "male",
+  "sex": "female",
   "age": 62,
   "build": "broad-shouldered",
-  "hair": "closely cropped hair",
+  "hair": "dark hair pulled back tightly",
   "glasses": "dark-framed glasses",
-  "facial": "salt-and-pepper beard",
   "face": "narrow, angular face",
   "quirk": "weathered, lined skin",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "SVN_kotnik": {
   "sex": "male",
@@ -2207,26 +2208,24 @@
   "wardrobe": "charcoal suit, bold scarf"
  },
  "SWE_hellstrom": {
-  "sex": "male",
+  "sex": "female",
   "age": 44,
   "build": "slim",
-  "hair": "short curly greying hair",
+  "hair": "dark hair pulled back tightly",
   "glasses": "no glasses",
-  "facial": "neat stubble",
   "face": "long face with a high forehead",
   "quirk": "strong brow ridge",
-  "wardrobe": "brown suit, patterned tie"
+  "wardrobe": "burgundy blazer, dark trousers"
  },
  "SWE_holmqvist": {
-  "sex": "male",
+  "sex": "female",
   "age": 65,
   "build": "heavyset",
-  "hair": "thick silver hair",
+  "hair": "honey-blonde bob",
   "glasses": "no glasses",
-  "facial": "neat stubble",
   "face": "broad face with a strong jaw",
   "quirk": "prominent nose",
-  "wardrobe": "charcoal suit, subdued tie"
+  "wardrobe": "charcoal tailored suit, silk scarf"
  },
  "SWE_karl_xvii": {
   "sex": "male",
@@ -2240,15 +2239,14 @@
   "wardrobe": "black formal suit, white pocket square"
  },
  "SWE_nordin": {
-  "sex": "male",
+  "sex": "female",
   "age": 44,
   "build": "slim",
-  "hair": "short curly greying hair",
+  "hair": "dark hair pulled back tightly",
   "glasses": "thin rectangular glasses",
-  "facial": "salt-and-pepper beard",
   "face": "narrow, angular face",
   "quirk": "strong brow ridge",
-  "wardrobe": "charcoal suit, party-badge lapel pin"
+  "wardrobe": "charcoal suit, bold scarf"
  },
  "SWE_sandberg": {
   "sex": "female",
