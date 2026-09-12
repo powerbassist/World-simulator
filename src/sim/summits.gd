@@ -46,6 +46,7 @@ static func draw(state, loader, nation_id: String) -> Dictionary:
 		"leader_person_id": String(nation.leader_person_id) if nation != null else "",
 		"dialogue_text": String(summit.dialogue_text),
 		"effects": summit.effects,
+		"scene": String(summit.scene),
 	}
 
 

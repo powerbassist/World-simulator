@@ -24,6 +24,20 @@ var dialogue_text: String = ""
 ## {response label -> effects dict in Legislature.apply_effects() channels}.
 var effects: Dictionary = {}
 
+## Which backdrop the portrait system (src/ui/portrait.gd) stages behind the
+## leader. The names are the VALIDATION source for this field;
+## portrait.gd's SCENE_NAMES is the display source, and tests/test_portraits.gd
+## pins the two equal -- two sources with no test is the hand-written-list
+## failure this repo keeps re-finding.
+const SCENES := ["office", "office_night", "cabinet_room", "parliament_chamber", "press_room",
+                 "tv_studio", "corridor", "podium_flags", "summit_hall", "state_dinner",
+                 "street_city", "plaza_crowd", "garden_park", "airport_tarmac"]
+
+## Defaulted, not defaulted-silently: the loader check below turns an unknown
+## string into an error, and absence -- a version-34-era sidecar -- reads the
+## plain summit hall, the room any meeting can be staged in.
+var scene: String = "summit_hall"
+
 
 ## No `-> Summit` on the signature: a new script cannot reference its own
 ## class_name before the global class cache exists -- AGENTS.md's first gotcha,
@@ -45,6 +59,15 @@ static func from_dict(
 	s.summary = d.get("summary", "")
 	if typeof(s.summary) != TYPE_STRING or s.summary == "":
 		errors.append("%s: missing or invalid string field 'summary' -- a scene that cannot say what it is about is a window that opens for nothing" % filename)
+
+	# V3.7's display field. Content owns it, so content's own rule applies: an
+	# unknown name is refused loudly here rather than silently unstaged at
+	# draw time, where it would be one summit quietly missing its backdrop.
+	s.scene = d.get("scene", "summit_hall")
+	if typeof(s.scene) != TYPE_STRING or not SCENES.has(s.scene):
+		errors.append("%s: scene '%s' is not a backdrop the game can stage (%s)" % [
+			filename, str(d.get("scene")), ", ".join(SCENES)])
+		s.scene = "summit_hall"
 
 	if s.dialogue_text.strip_edges() == "":
 		errors.append("%s: empty dialogue text" % filename)
