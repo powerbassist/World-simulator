@@ -22,6 +22,8 @@ extends SceneTree
 ## tools/balance_probe.gd is the exploratory version of the same harness, kept
 ## separate because it prints trajectories rather than asserting on them.
 
+## suite-shard-checks: _check_ten_years_stay_off_every_clamp,_check_gbr_ten_years_stay_off_every_clamp,_check_two_full_terms_without_softlock,_check_france_terms_out_at_the_limit,_check_managing_beats_ignoring,_check_a_ruinous_budget_loses,_check_losing_names_the_number_the_player_moved,_check_a_dissolution_stays_off_every_clamp,_check_a_subsidised_run_stays_off_every_clamp,_check_a_regulated_run_stays_off_every_clamp,_check_a_nationalised_run_stays_off_every_clamp,_check_a_redistributive_run_stays_off_every_clamp,_check_a_captured_court_stays_off_every_clamp,_check_a_nuclear_run_stays_off_every_clamp,_check_a_gas_run_stays_off_every_clamp
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")

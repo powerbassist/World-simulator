@@ -128,9 +128,36 @@ def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
 
 
 def normalize_shard_log(text: str, test: str, all_passed: bool) -> str:
-    # Replaced in the sharding task; nothing is shard-tagged yet, so this
-    # never runs.
-    return text
+    """Each shard child is its own godot process: every one prints the engine
+    banner (and the blank line under it) and, green, its own `_finish()` line,
+    while the monolithic run prints ONE banner and ONE green line. Drop each
+    child's banner pair and green line, re-emit the banner once at the top,
+    and append the single green line iff everything passed. Per-check prints
+    (balance's `note:` line) are the only content left and keep their check
+    order, which is the tag's order. On red both forms emit only the
+    FAIL:/problem lines in check order, so they match byte for byte -- the
+    mutation gate (Task 4) proves it rather than trusts it."""
+    stem = test.removeprefix("tests/").removesuffix(".gd")
+    green = "%s: all checks passed" % stem
+    banner = ""
+    kept: list[str] = []
+    lines = text.splitlines()
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        if ln.startswith("Godot Engine v"):
+            if not banner:
+                banner = ln
+            # the engine prints one blank line under the banner; drop it too
+            i += 2 if i + 1 < len(lines) and lines[i + 1].strip() == "" else 1
+            continue
+        if ln.strip() != green:
+            kept.append(ln)
+        i += 1
+    out = ([banner, ""] if banner else []) + kept
+    if all_passed:
+        out.append(green)
+    return "\n".join(out) + ("\n" if out else "")
 
 
 def flatten_jobs(tests: list[str]) -> list[tuple[str, str | None, list[str]]]:
@@ -328,7 +355,25 @@ def _selftest() -> int:
            "exit 0 over a script error must fail (V2.1c)")
     expect(child_verdict("x", 1) == "fail", "non-zero exit must fail")
 
-    # Shard normalization arrives in Task 4; its cases are added there.
+    # Shard normalization: the green collapse and the red order (Task 4), plus
+    # the banner rule the baselines forced -- a shard child is its own godot
+    # process, so the concat carries the banner once per child while the
+    # monolithic run carries it once.
+    green = normalize_shard_log(
+        "test_x: all checks passed\ntest_x: all checks passed\n",
+        "tests/test_x.gd", True)
+    expect(green == "test_x: all checks passed\n",
+           "green shard concat must collapse to one line: %r" % green)
+    red = normalize_shard_log(
+        "FAIL: a\ntest_x: all checks passed\nFAIL: b\n",
+        "tests/test_x.gd", False)
+    expect(red == "FAIL: a\nFAIL: b\n", "red concat keeps failure order: %r" % red)
+    bann = normalize_shard_log(
+        "Godot Engine vTEST\n\nnote: n\nGodot Engine vTEST\n\n"
+        "test_x: all checks passed\n",
+        "tests/test_x.gd", True)
+    expect(bann == "Godot Engine vTEST\n\nnote: n\ntest_x: all checks passed\n",
+           "child banner+blank collapses to one at the top, note kept: %r" % bann)
     ex, checks = read_tags_from("extends SceneTree\n"
                                 "## suite-exclusive: writes user://settings.cfg\n")
     expect(ex and checks == [], "exclusive tag parse: %r %r" % (ex, checks))

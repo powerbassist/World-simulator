@@ -5,6 +5,8 @@ extends SceneTree
 ##
 ## V2.6a, people move. Model: docs/migration-model.md.
 
+## suite-shard-checks: _check_seed_matches_the_content,_check_pull_is_expected_income,_check_city_pull_matches_named_payroll,_check_both_partitions_close,_check_the_national_figure_is_untouched,_check_no_share_goes_negative,_check_share_delta_direction,_check_the_tick_moves_toward_the_pull,_check_both_harnesses_tick,_check_the_copy_carries_both,_check_one_tuned_constant
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Migration = preload("res://src/sim/migration.gd")
@@ -24,17 +26,48 @@ func _init() -> void:
 	if not _loader.errors.is_empty():
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
-	_check_seed_matches_the_content()
-	_check_pull_is_expected_income()
-	_check_city_pull_matches_named_payroll()
-	_check_both_partitions_close()
-	_check_the_national_figure_is_untouched()
-	_check_no_share_goes_negative()
-	_check_share_delta_direction()
-	_check_the_tick_moves_toward_the_pull()
-	_check_both_harnesses_tick()
-	_check_the_copy_carries_both()
-	_check_one_tuned_constant()
+	# V3.3 scratch: -- check-name runs ONE check (the crash isolation harness).
+	var only := ""
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 0:
+		only = args[0]
+
+	var _matched := 0
+	if only == "" or only == "_check_seed_matches_the_content":
+		_matched += 1
+		_check_seed_matches_the_content()
+	if only == "" or only == "_check_pull_is_expected_income":
+		_matched += 1
+		_check_pull_is_expected_income()
+	if only == "" or only == "_check_city_pull_matches_named_payroll":
+		_matched += 1
+		_check_city_pull_matches_named_payroll()
+	if only == "" or only == "_check_both_partitions_close":
+		_matched += 1
+		_check_both_partitions_close()
+	if only == "" or only == "_check_the_national_figure_is_untouched":
+		_matched += 1
+		_check_the_national_figure_is_untouched()
+	if only == "" or only == "_check_no_share_goes_negative":
+		_matched += 1
+		_check_no_share_goes_negative()
+	if only == "" or only == "_check_share_delta_direction":
+		_matched += 1
+		_check_share_delta_direction()
+	if only == "" or only == "_check_the_tick_moves_toward_the_pull":
+		_matched += 1
+		_check_the_tick_moves_toward_the_pull()
+	if only == "" or only == "_check_both_harnesses_tick":
+		_matched += 1
+		_check_both_harnesses_tick()
+	if only == "" or only == "_check_the_copy_carries_both":
+		_matched += 1
+		_check_the_copy_carries_both()
+	if only == "" or only == "_check_one_tuned_constant":
+		_matched += 1
+		_check_one_tuned_constant()
+	if only != "" and _matched == 0:
+		_fail("unknown check name '%s' -- the filter ran nothing, and green-over-nothing is the V2.1c class" % only)
 	_finish()
 
 

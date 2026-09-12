@@ -5,6 +5,8 @@ extends SceneTree
 ##
 ## V2.6c, natural change. Model: docs/natural-change-model.md.
 
+## suite-shard-checks: _check_the_content_is_measured,_check_share_delta_direction,_check_conservation_is_exact,_check_the_national_figure_is_untouched,_check_luxembourg_cannot_differ_from_itself,_check_cities_ride_but_are_not_pushed,_check_the_flow_moves_where_births_are,_check_the_composition_is_the_call_site
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Migration = preload("res://src/sim/migration.gd")
@@ -22,14 +24,39 @@ func _init() -> void:
 	if not _loader.errors.is_empty():
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
-	_check_the_content_is_measured()
-	_check_share_delta_direction()
-	_check_conservation_is_exact()
-	_check_the_national_figure_is_untouched()
-	_check_luxembourg_cannot_differ_from_itself()
-	_check_cities_ride_but_are_not_pushed()
-	_check_the_flow_moves_where_births_are()
-	_check_the_composition_is_the_call_site()
+	# V3.3 scratch: -- check-name runs ONE check (the crash isolation harness).
+	var only := ""
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 0:
+		only = args[0]
+
+	var _matched := 0
+	if only == "" or only == "_check_the_content_is_measured":
+		_matched += 1
+		_check_the_content_is_measured()
+	if only == "" or only == "_check_share_delta_direction":
+		_matched += 1
+		_check_share_delta_direction()
+	if only == "" or only == "_check_conservation_is_exact":
+		_matched += 1
+		_check_conservation_is_exact()
+	if only == "" or only == "_check_the_national_figure_is_untouched":
+		_matched += 1
+		_check_the_national_figure_is_untouched()
+	if only == "" or only == "_check_luxembourg_cannot_differ_from_itself":
+		_matched += 1
+		_check_luxembourg_cannot_differ_from_itself()
+	if only == "" or only == "_check_cities_ride_but_are_not_pushed":
+		_matched += 1
+		_check_cities_ride_but_are_not_pushed()
+	if only == "" or only == "_check_the_flow_moves_where_births_are":
+		_matched += 1
+		_check_the_flow_moves_where_births_are()
+	if only == "" or only == "_check_the_composition_is_the_call_site":
+		_matched += 1
+		_check_the_composition_is_the_call_site()
+	if only != "" and _matched == 0:
+		_fail("unknown check name '%s' -- the filter ran nothing, and green-over-nothing is the V2.1c class" % only)
 	_finish()
 
 
