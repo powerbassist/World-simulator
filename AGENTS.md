@@ -189,6 +189,77 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**V3.6 shipped ceremony, sound and the front door 2026-09-12, and the row's
+"small" held: three machines and one told line on surfaces that already
+existed, one new `src/` file, and `git diff main..HEAD --stat -- src/sim/
+src/core/` EMPTY — `SAVE_VERSION` stays 34, the re-run prediction was
+bit-identical by construction and no balance re-run was owed (V3.1/V3.4's
+U-track precedent).** The sign-off was taken on the plan's four defaults
+(author's "execute"): synthesized sting and its timbre, the default told-line
+copy, the 300 ms degrade clause, sound defaulting On.
+
+**The front door is the game's own map, and the plate decision is the record.**
+`menu.gd` builds a throwaway `GameState.new_game(loader, "FRA")` — month 0,
+measured at **20 ms** against the pre-declared 300 ms degrade clause
+(`tools/menu_boot_probe.gd`, threshold written before the probe ran) — and puts
+a real `map_view.gd` over it under a 45 % scrim. The refused alternative is
+recorded because a later session will reach for it under balance pressure: a
+reduced static drawer reading only the loader duplicates the lon/lat->screen
+projection map_view's header calls "the one transform" — the two-copies trap.
+Month 0 is clean by construction (unrest ring, campaign ring, markers and
+plants are all empty before the first tick), the plate is `MOUSE_FILTER_IGNORE`
+set AFTER `add_child` (map_view's own `_ready()` claims STOP and clobbers an
+earlier assignment — the ordering bug the first draft had), and it has no
+`_process`: the door never redraws.
+
+**The tally is a reveal over the computed result, and its skip path is two
+paths on purpose.** Each bar's final is recorded at build time and the bar
+starts empty; a Tween (1.2 s, 0.08 s stagger, time-based — never
+frame-counted) walks them out; any click on the plate finishes it through
+`_gui_input()`; Continue is live from frame one and its press is NOT the skip
+path — a click that lands on it is a dismissal the player meant, and a
+ceremony that could eat that click would be a ceremony that ate a result (the
+handoff's own sentence, kept). The test found the shape of "settled":
+`bar.value` round-trips a 32-bit property against a 64-bit `final`, so settled
+is a 0.005 tolerance and not an equality — the printed digits agree and the
+last bits do not.
+
+**The sting is SYNTHESIZED, which is the block's load-bearing refusal: the
+handoff's audio obligations dissolved wholesale rather than being met.** No
+licence, no ATTRIBUTION row, no committed binary, no `.import`, no bus layout
+in `project.godot`, no fresh-clone audio question — the fonts'
+bytes-not-`load()` discipline exists because a font cannot be generated, and a
+chord can. `src/ui/sting.gd` is a D-chord toll (D3-A3-D4, 1.4 s, -8 dB, 12 ms
+attack) as PCM into an `AudioStreamWAV`, cached in a static, byte-identical
+across builds (pinned), one self-freeing `AudioStreamPlayer` per election.
+`SettingsPanel.sound_enabled()` reads `settings.cfg` at PLAY time (not boot),
+so the pause menu's change governs the next sting with no second wiring path;
+settings.cfg grew `[audio] enabled` (default true) and the settings screen's
+"there is no audio" header sentence was rewritten in the same commit. The
+fallback route (a recorded CC0 file and the obligations it re-opens) is in the
+plan's audit section if a later session wants a real instrument.
+
+**The told line is the V3.0 probe's route 3 stated in the game's voice, once.**
+"The vote follows the economy with a lag. A term that ran the country better
+can poll worse than one that did nothing." rides the verdict's attribution
+block only (the test counts once on the double-election panel — the first
+draft printed it per table). It states the measured bound — approval prices
+CHANGE, not level; budget-spend approval 38.1 vs idle 49.4 while unemployment
+6.95 vs 7.58 and the deficit halved — and **resolves nothing: V3.0's three
+design routes (competence-credit channel, activity-keyed drag, accept the
+bound) remain the AUTHOR's open call**, handed to V3.7's tier close-out to put
+before the author in one place, which is this block's outstanding obligation.
+
+**Two test findings to inherit.** The double-election panel's text is counted
+at the geometry frame because `show_results()` reaps its predecessor with
+`queue_free()` — same-frame reads see the ghost's copy (the fold finding, a
+third place). And `ConfigFile` has no per-key erase, so "the default fires on
+an absent key" is tested by rebuilding the file without the section. The
+screenshot pass found NO BUG — the menu plate, the tally mid-fill and its
+settled frame were all judged clean in-session (vision path verified working
+this harness first). Suite 82/82; names clean; frames in
+`.superpowers/sdd/frames/`.
+
 **The test-suite cockpit shipped 2026-09-11** — the gate is one execution core,
 `python tools/suite_runner.py --ci`, and the measured wall moved **51:56 → 9:18**
 (parallel + per-check sharding, 82/82 held at every step); the model doc is
