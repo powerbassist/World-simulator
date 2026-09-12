@@ -1,8 +1,5 @@
 #!/bin/bash
-# Launch the test suite inside its progress window (V3.3, author request).
-# Detached via `start` so the window survives the calling shell; the suite's
-# output is teed to reports/suite_gui.log either way.
+# The suite cockpit (V3.6 tooling). Detached so the window survives the
+# calling shell; it launches tools/suite_runner.py itself.
 cd "$(dirname "$0")/.." || exit 1
-mkdir -p reports
-python tools/test_progress_gui.py --log reports/suite_gui.log &
-echo "progress window running; output teed to reports/suite_gui.log"
+python tools/suite_gui.py &

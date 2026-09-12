@@ -68,6 +68,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
+- [[test-suite-model]] — one execution core for the gate: parallel workers, exclusive lane, per-check sharding byte-identical to the monolithic run, and the cockpit that reads it
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
 - [[playability-audit]] — the first pass that tried to PLAY the game: nine defects, five that break a playthrough, and the register kept as assertions that turn red when fixed
 
