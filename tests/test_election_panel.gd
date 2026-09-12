@@ -35,9 +35,11 @@ var _main
 var _frame := 0
 var _done := false
 
-# suite-exclusive (V3.6): backs up and restores user://settings.cfg, because
-# the sting checks write the Sound setting -- and forces it On for the run, so
-# the wiring assertion holds whatever the machine's own setting says.
+## suite-exclusive: backs up and restores user://settings.cfg -- the sting
+## checks write the Sound setting, and exclusivity is what keeps this file off
+## the parallel pool while test_menu.gd mutates the same file. The runner's
+## regex reads this line's exact shape; a reworded tag silently re-parallelises
+## the test (the V3.6 review's blocker).
 var _had_settings := false
 var _settings_backup := ""
 

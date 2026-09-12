@@ -507,7 +507,10 @@ func _process(_delta: float) -> bool:
 	# V3.6: the tally's two frames. First the plate mid-fill, then the skip --
 	# through _gui_input, the same entry a real click takes -- and two frames
 	# on, the settled plate. Writing both costs one run instead of two.
-	if _tally:
+	# Gated on not _menu: the menu has no _election_panel, and a --menu --tally
+	# combination would otherwise dereference it every frame after the first
+	# shot and never quit (the V3.6 review's minor).
+	if _tally and not _menu:
 		if _tally_shot == 0:
 			if not _write_frame(_out_path, "mid-tally"):
 				return true
