@@ -101,25 +101,35 @@ func _check_flag_data_reaches_the_card() -> void:
 ## Three surfaces show approval -- the portrait, the polling panel and the
 ## election screen -- and they must agree. A face reading the raw model while
 ## the polls read the noised figure would have the player's own expression
-## disagreeing with their own poll.
+## disagreeing with their own poll. V3.7: the emoji face is gone and the
+## portrait's own expression is the mood read, so the property survives with a
+## new mechanism -- the card's emotion band must be derived from the same
+## polled figure the label prints.
 func _check_mood_reads_the_polled_figure() -> void:
 	var card = _main._hud.portrait_card
-	var mood = card._mood
-	if mood == null:
-		_fail("the portrait card has no mood indicator")
-		return
-
 	var shown: String = card._approval_label.text
 	if not shown.ends_with("%"):
 		_fail("the portrait's approval is not a percentage: '%s'" % shown)
+		return
 	var parsed := float(shown.trim_suffix("%"))
-	if absf(parsed - mood._approval) > 0.51:
-		_fail("the face reads %.1f while the number reads %s" % [mood._approval, shown])
+	if card._emotion != card._emotion_for(parsed):
+		_fail("the face reads band %d while the number %s implies %d"
+			% [card._emotion, shown, card._emotion_for(parsed)])
 
-	# The two thresholds must straddle the neutral point, or a government
-	# sitting at 50 flickers between faces on poll noise alone.
-	if mood.UNHAPPY_BELOW >= 50.0 or mood.HAPPY_ABOVE <= 50.0:
-		_fail("the mood thresholds do not straddle 50")
+	# The neutral band must contain 50, or a government sitting at the neutral
+	# point re-stages the bust every month on poll noise alone -- the emoji's
+	# threshold property, carried over to the bands that replaced it.
+	var neutral: int = card._emotion_for(50.0)
+	if card._emotion_for(49.5) != neutral or card._emotion_for(50.5) != neutral:
+		_fail("the neutral emotion band does not straddle 50")
+
+	# And the bands must be four distinct faces, or the emotion axis is
+	# decorative -- an axis that cannot express the range it names.
+	var bands := {}
+	for value in [58.0, 50.0, 40.0, 30.0]:
+		bands[card._emotion_for(value)] = true
+	if bands.size() != 4:
+		_fail("approval bands collapse to %d distinct faces, expected 4" % bands.size())
 
 
 func _check_action_bar_subrow() -> void:
