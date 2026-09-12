@@ -18,6 +18,8 @@ extends SceneTree
 ## a panel written for a single result.
 
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const Sting = preload("res://src/ui/sting.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 
 const EXEC_MONTHS := 16       # January 2026 to May 2027, FRA's presidential term.
 const TARGET_MONTHS := 41     # January 2026 to June 2029, the Assembly's term.
@@ -32,8 +34,15 @@ var _main
 var _frame := 0
 var _done := false
 
+# suite-exclusive (V3.6): backs up and restores user://settings.cfg, because
+# the sting checks write the Sound setting -- and forces it On for the run, so
+# the wiring assertion holds whatever the machine's own setting says.
+var _had_settings := false
+var _settings_backup := ""
+
 
 func _init() -> void:
+	_backup_settings()
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
 
@@ -52,9 +61,31 @@ func _process(_delta: float) -> bool:
 		_check_modal_blocks_the_world()
 		_run_national_text()
 	elif _frame == NATIONAL_GEOMETRY_FRAME:
+		_check_tally()
 		_check_national_geometry()
+		_check_sting_gate()
 		_finish()
 	return false
+
+
+## user://settings.cfg does not outlive this run changed: the sting checks
+## wrote it, so the player's real file (or its absence) goes back at the end.
+func _backup_settings() -> void:
+	_had_settings = FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if _had_settings:
+		_settings_backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", true)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+
+
+func _restore_settings() -> void:
+	if _had_settings:
+		var f := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		f.store_string(_settings_backup)
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 
 
 func _run_exec_text() -> void:
@@ -188,6 +219,57 @@ func _run_national_text() -> void:
 	if not ns.in_government and has_continue:
 		_fail("lost the election but the panel still offers Continue")
 
+	_check_sting_wiring()
+
+
+## V3.6: show_results() wired the sting. Counted on the same frame the panel
+## opened -- a finished player frees itself when the 1.4 s stream ends, which
+## no frame gap here can reach, so the count is the wiring's word, not a race.
+func _check_sting_wiring() -> void:
+	var players := _count_sting_players()
+	if players < 1:
+		_fail("sound is on but show_results() placed no sting player on the plate")
+
+
+## V3.6: the sting itself. The synth must be a pure function of the sample
+## index (two builds byte-identical, exact length), and the Sound setting must
+## gate Sting.play() with no player left behind when it is Off. The gate is
+## driven directly and synchronously: one frame, so no finished-player reaping
+## can touch the counts.
+func _check_sting_gate() -> void:
+	var a := Sting._synth()
+	var b := Sting._synth()
+	if a != b:
+		_fail("the sting synth is not deterministic")
+	if a.size() != 123480:  # 2 bytes x 44100 Hz x 1.4 s, 16-bit mono
+		_fail("sting buffer is %d bytes, expected 123480" % a.size())
+
+	var panel = _main._election_panel
+	var before := _count_sting_players()
+	_set_sound(false)
+	Sting.play(panel)
+	if _count_sting_players() != before:
+		_fail("sound is off but Sting.play() placed a player anyway")
+	_set_sound(true)
+	Sting.play(panel)
+	if _count_sting_players() != before + 1:
+		_fail("sound is on but Sting.play() placed no player")
+
+
+func _count_sting_players() -> int:
+	var n := 0
+	for c in _main._election_panel.get_children():
+		if c is AudioStreamPlayer:
+			n += 1
+	return n
+
+
+func _set_sound(enabled: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", enabled)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+
 
 ## V2.9 task 7: the modal blocks the world behind it -- a full-rect dim with
 ## STOP filter sits beside the holder when the panel is visible, and follows
@@ -308,6 +390,7 @@ func _fail(message: String) -> void:
 
 func _finish() -> void:
 	_done = true
+	_restore_settings()
 	if _failures.is_empty():
 		print("test_election_panel: all checks passed")
 		quit(0)
@@ -315,3 +398,8 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## Filled in by the tally task; a stub here keeps this commit's run green.
+func _check_tally() -> void:
+	pass

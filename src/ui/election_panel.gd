@@ -13,6 +13,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Sting = preload("res://src/ui/sting.gd")
 
 signal dismissed
 
@@ -175,6 +176,8 @@ func show_results(results: Array) -> void:
 	cont.text = "Leave office" if defeated else "Continue"
 	cont.pressed.connect(func(): hide(); dismissed.emit())
 	_footer.add_child(cont)
+
+	Sting.play(self)
 
 
 func _build_section(result: Dictionary, chamber_label: String, verdict := false) -> Control:
