@@ -17,11 +17,20 @@ const Sting = preload("res://src/ui/sting.gd")
 
 signal dismissed
 
+## Display pacing, not model tuning: how long a seat bar takes to fill and how
+## much each row waits on the one above it. Skippable by any press (see
+## _gui_input) -- a ceremony the player can end is a ceremony, one they cannot
+## is an obstacle.
+const TALLY_S := 1.2
+const TALLY_STAGGER_S := 0.08
+
 var _state
 var _loader
 var _title: Label
 var _sections: VBoxContainer
 var _footer: Control
+var _tally_pairs: Array = []
+var _tally_tween: Tween
 
 
 func _ready() -> void:
@@ -73,6 +82,7 @@ func setup(state, loader) -> void:
 ## panel fresh; there is no partial-refresh path because this only ever shows
 ## once per election, not every frame like the other two panels.
 func show_results(results: Array) -> void:
+	_kill_tally()
 	for child in _sections.get_children():
 		child.queue_free()
 	for child in _footer.get_children():
@@ -177,7 +187,52 @@ func show_results(results: Array) -> void:
 	cont.pressed.connect(func(): hide(); dismissed.emit())
 	_footer.add_child(cont)
 
+	_start_tally()
 	Sting.play(self)
+
+
+## The tally reveals what show_results already computed: each bar tweens to the
+## `final` recorded at build time, so a skip lands on exactly the numbers the
+## result carries. Time-based (Tween), never frame-counted -- the ceremony must
+## cost the same at 30 and 144 fps. The out-of-tree guard is the half-dead
+## Control gotcha: create_tween() on a node outside the tree does not run, so a
+## cold caller gets the finished readout rather than a silent non-animation.
+func _start_tally() -> void:
+	if _tally_pairs.is_empty():
+		return
+	if not is_inside_tree():
+		_kill_tally()
+		return
+	_tally_tween = create_tween()
+	for i in _tally_pairs.size():
+		var p: Dictionary = _tally_pairs[i]
+		_tally_tween.tween_property(p["bar"], "value", p["final"], TALLY_S) \
+			.set_delay(i * TALLY_STAGGER_S)
+
+
+## Any click finishes the tally instantly; Space or Enter on the focused footer
+## button dismisses outright, which ends the ceremony its own way. The button's
+## press is deliberately NOT routed through here: a click that lands on it is a
+## dismissal the player meant, and a ceremony that could eat that click would
+## be a ceremony that ate a result (the V3.6 handoff's own sentence).
+func _gui_input(event: InputEvent) -> void:
+	if _tally_tween == null:
+		return
+	if event is InputEventMouseButton and event.pressed:
+		_kill_tally()
+
+
+## Kills the tween and snaps every live bar to its final. Freed bars (a
+## previous election's, queue_free'd when the plate rebuilt) are skipped --
+## setting a value on a freed instance is the crash this guard exists for.
+func _kill_tally() -> void:
+	if _tally_tween != null and _tally_tween.is_valid():
+		_tally_tween.kill()
+	_tally_tween = null
+	for p in _tally_pairs:
+		if is_instance_valid(p["bar"]):
+			p["bar"].value = p["final"]
+	_tally_pairs.clear()
 
 
 func _build_section(result: Dictionary, chamber_label: String, verdict := false) -> Control:
@@ -270,7 +325,11 @@ func _build_party_table(result: Dictionary) -> Control:
 			var bar := ProgressBar.new()
 			bar.custom_minimum_size = Vector2(240.0, 12.0)
 			bar.max_value = 100.0
-			bar.value = 100.0 * float(seats[party_id]) / float(total)
+			# The tally starts the bars empty and records the finished value the
+			# table already computed -- the reveal interpolates DISPLAY values
+			# only; nothing about the result is recomputed or gated on frames.
+			bar.value = 0.0
+			_tally_pairs.append({"bar": bar, "final": 100.0 * float(seats[party_id]) / float(total)})
 			bar.show_percentage = false
 			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			bar_row.add_child(bar)

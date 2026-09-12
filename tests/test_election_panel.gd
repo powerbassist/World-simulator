@@ -400,6 +400,41 @@ func _finish() -> void:
 		quit(1)
 
 
-## Filled in by the tally task; a stub here keeps this commit's run green.
+## V3.6: the tally. Bars start empty and fill by tween; any press on the plate
+## snaps them to the finals the result already computed; a footer button stays
+## live throughout (the test drives dismissal itself below, so a swallowed
+## click here would stall the whole ladder). The mid-animation read leans on
+## the stagger: the LAST bar carries (n-1) x 0.08 s of delay plus 1.2 s of
+## fill, which two frames cannot consume.
 func _check_tally() -> void:
-	pass
+	var panel = _main._election_panel
+	if panel._tally_pairs.is_empty():
+		_fail("the national panel opened with no tally pairs (no seat bars built)")
+		return
+	# The verdict and the ledger numbers are static information: they were
+	# complete on the frame the animation started, and the finals recorded in
+	# the pairs must be exactly what the bars are filling toward.
+	var pairs: Array = panel._tally_pairs.duplicate()
+	for p in pairs:
+		if float(p["final"]) <= 0.0:
+			_fail("a tally final reads %.2f; the result's own bar math is positive" % p["final"])
+	if panel._tally_tween == null or not panel._tally_tween.is_valid():
+		_fail("the tally tween is not running while the panel is up")
+		return
+	var last: Dictionary = pairs[pairs.size() - 1]
+	if float(last["bar"].value) >= float(last["final"]):
+		_fail("the last seat bar reached its final before the stagger allowed it")
+	# Skip: a press anywhere on the plate finishes the tally instantly.
+	var ev := InputEventMouseButton.new()
+	ev.pressed = true
+	ev.button_index = MOUSE_BUTTON_LEFT
+	panel._gui_input(ev)
+	for p in pairs:
+		# Tolerance, not equality: bar.value round-trips a 32-bit property while
+		# `final` is a 64-bit double -- the printed digits agree and the last
+		# bits do not, and a hundredth of a seat-percent is far under one pixel
+		# of bar.
+		if not is_instance_valid(p["bar"]) or absf(float(p["bar"].value) - float(p["final"])) > 0.005:
+			_fail("after skip, a seat bar reads %.4f against final %.4f" % [p["bar"].value, p["final"]])
+	if not panel._tally_pairs.is_empty():
+		_fail("the tally register did not clear on skip")
