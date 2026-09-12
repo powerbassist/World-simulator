@@ -13,6 +13,8 @@ extends SceneTree
 ## docs/engine-decision.md: a node only gets its _ready() when it is actually
 ## in the tree, so nothing here can be asserted during _init().
 
+## suite-exclusive: backs up and restores user://settings.cfg
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")

@@ -6,6 +6,14 @@ semantics live in exactly one place: non-zero exit or a SCRIPT ERROR in the
 output is a failure, MCP bridge noise is filtered from display but never
 from the verdict, any failure exits 1. Agents run `--ci`; the cockpit reads
 the same events. Stdlib only -- a cold clone needs nothing installed.
+
+There is ONE execution path: jobs run on a worker pool (default
+-j min(8, cpu_count)), reported in registry order whatever order the pool
+finished in. -j1 is the same code with a one-worker pool, so sequential
+semantics hold by construction rather than by a second code path. Tests
+tagged `## suite-exclusive:` in their own source run on a dedicated
+single-worker lane -- they back up and restore the live user:// state and
+must never overlap each other.
 """
 from __future__ import annotations
 
@@ -15,6 +23,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -34,6 +43,13 @@ SHARD_TAG = re.compile(r"^## suite-shard-checks: *(.+)$", re.MULTILINE)
 
 GODOT = os.environ.get("GODOT_BIN", "godot")
 
+# Live child processes, kept so an interrupt can kill them: Ctrl-C is
+# delivered to the main thread only -- blocked in as_completed() -- while
+# the children belong to worker threads, and a killed runner must not
+# orphan godots holding user:// open against the next run's exclusive lane.
+_LIVE_CHILDREN: set = set()
+_CHILDREN_LOCK = threading.Lock()
+
 
 @dataclass
 class TestResult:
@@ -43,6 +59,15 @@ class TestResult:
     sharded: bool = False
     checks: list[str] = field(default_factory=list)
     log_text: str = ""
+
+
+class Interrupted(Exception):
+    """Ctrl-C mid-run; carries the tests that had completed by then, in
+    registry order, for the partial results.json."""
+
+    def __init__(self, results: list[TestResult]) -> None:
+        super().__init__("interrupted")
+        self.results = results
 
 
 def filter_noise(lines: list[str]) -> list[str]:
@@ -55,7 +80,8 @@ def child_verdict(out: str, rc: int) -> str:
     return "fail"
 
 
-def _tags_from_text(src: str) -> tuple[bool, list[str]]:
+def read_tags_from(src: str) -> tuple[bool, list[str]]:
+    """(exclusive?, [check names]) from the test's own source comments."""
     exclusive = bool(EXCLUSIVE_TAG.search(src))
     m = SHARD_TAG.search(src)
     checks = [c.strip() for c in m.group(1).split(",")] if m else []
@@ -63,35 +89,177 @@ def _tags_from_text(src: str) -> tuple[bool, list[str]]:
 
 
 def read_tags(test: str) -> tuple[bool, list[str]]:
-    """(exclusive?, [check names]) from the test's own source comments."""
     try:
-        src = (REPO / test).read_text(encoding="utf-8")
+        return read_tags_from((REPO / test).read_text(encoding="utf-8"))
     except OSError:
         return False, []
-    return _tags_from_text(src)
+
+
+def _kill_live_children() -> None:
+    with _CHILDREN_LOCK:
+        live = list(_LIVE_CHILDREN)
+    for proc in live:
+        try:
+            proc.kill()
+        except OSError:
+            pass
 
 
 def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
     """Returns (filtered output, exit code, status)."""
+    proc = subprocess.Popen(
+        cmd, cwd=str(REPO), stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+        errors="replace",
+    )
+    with _CHILDREN_LOCK:
+        _LIVE_CHILDREN.add(proc)
     try:
-        proc = subprocess.run(
-            cmd, cwd=str(REPO), stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", timeout=timeout,
-        )
-        out, rc = proc.stdout, proc.returncode
-        status = child_verdict(out, rc)
+        out, _ = proc.communicate(timeout=timeout)
+        rc, status = proc.returncode, child_verdict(out or "", proc.returncode)
     except subprocess.TimeoutExpired as e:
-        out = (e.stdout or "") if isinstance(e.stdout, str) else ""
+        proc.kill()  # subprocess.run's own timeout path does the same
+        out = e.stdout if isinstance(e.stdout, str) else ""
         rc, status = -1, "timeout"
-    return "\n".join(filter_noise(out.splitlines())), rc, status
+    finally:
+        with _CHILDREN_LOCK:
+            _LIVE_CHILDREN.discard(proc)
+    return "\n".join(filter_noise((out or "").splitlines())), rc, status
+
+
+def normalize_shard_log(text: str, test: str, all_passed: bool) -> str:
+    # Replaced in the sharding task; nothing is shard-tagged yet, so this
+    # never runs.
+    return text
+
+
+def flatten_jobs(tests: list[str]) -> list[tuple[str, str | None, list[str]]]:
+    """(test, check-or-None, command) in registry order; a shard-tagged test
+    expands to one child per check using the file's own -- --check contract
+    (test_balance.gd's V3.3 crash-isolation dispatch)."""
+    jobs: list[tuple[str, str | None, list[str]]] = []
+    for test in tests:
+        _exclusive, checks = read_tags(test)
+        if checks:
+            for check in checks:
+                jobs.append((test, check,
+                             [GODOT, "--headless", "--script", "res://" + test,
+                              "--", check]))
+        else:
+            jobs.append((test, None,
+                         [GODOT, "--headless", "--script", "res://" + test]))
+    return jobs
+
+
+def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]],
+                 timeout: float, verbose: bool, writer: RunWriter,
+                 jobs_n: int) -> list[TestResult]:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    tags = {t: read_tags(t) for t in tests}
+    exclusive_tests = {t for t, (ex, _c) in tags.items() if ex}
+    shard_checks = {t: c for t, (_ex, c) in tags.items()}
+
+    # Children complete out of order; the log is assembled LATER, in the
+    # tag's listed order, so the sharded artifact stays byte-identical to
+    # the monolithic run whatever order the pool finished in.
+    children: dict[str, dict[str, dict]] = {t: {} for t in tests}
+    plain: dict[str, dict] = {t: {} for t in tests}
+
+    def _run_job(test: str, check: str | None, cmd: list[str]) -> None:
+        t0 = time.monotonic()
+        if check is not None:
+            writer.event({"event": "child_start", "test": test, "check": check})
+        out, rc, status = run_child(cmd, timeout)
+        rec = {"out": out, "status": status, "start": t0,
+               "end": time.monotonic()}
+        if check is None:
+            plain[test] = rec
+            writer.event({"event": "done", "test": test, "status": status,
+                          "duration": round(rec["end"] - t0, 3)})
+        else:
+            children[test][check] = rec
+            writer.event({"event": "child_done", "test": test, "check": check,
+                          "status": status,
+                          "duration": round(rec["end"] - t0, 3)})
+
+    def _build(test: str) -> TestResult | None:
+        """The finished result for one test, or None if it never completed
+        (an interrupted run) -- the caller decides what that means."""
+        r = TestResult(test)
+        if shard_checks[test]:
+            recs = [children[test][c] for c in shard_checks[test]
+                    if c in children[test]]
+            if len(recs) != len(shard_checks[test]):
+                return None
+            r.sharded = True
+            r.checks = list(shard_checks[test])
+            statuses = [rec["status"] for rec in recs]
+            r.status = ("timeout" if "timeout" in statuses else
+                        "fail" if "fail" in statuses else "pass")
+            r.duration = max(rec["end"] for rec in recs) - \
+                min(rec["start"] for rec in recs)
+            text = "".join(rec["out"] + "\n" for rec in recs)
+            r.log_text = normalize_shard_log(text, test, r.status == "pass")
+        else:
+            rec = plain[test]
+            if not rec:
+                return None
+            r.status = rec["status"]
+            r.duration = rec["end"] - rec["start"]
+            r.log_text = rec["out"] + ("\n" if rec["out"] else "")
+        return r
+
+    plain_jobs = [j for j in jobs if j[0] not in exclusive_tests]
+    excl_jobs = [j for j in jobs if j[0] in exclusive_tests]
+    futures: list = []
+    interrupted = False
+    try:
+        # The exclusive lane is one worker: two tests that back up and
+        # restore the same user:// state cannot overlap, structurally.
+        with ThreadPoolExecutor(max_workers=max(1, jobs_n)) as pool, \
+                ThreadPoolExecutor(max_workers=1) as excl_pool:
+            try:
+                futures = [pool.submit(_run_job, *j) for j in plain_jobs]
+                futures += [excl_pool.submit(_run_job, *j) for j in excl_jobs]
+                for f in as_completed(futures):
+                    f.result()  # _run_job does not raise; re-raise if it ever does
+            except KeyboardInterrupt:
+                interrupted = True
+                for f in futures:
+                    f.cancel()  # queued jobs never spawn a child
+                _kill_live_children()
+                # The with-exit's shutdown(wait=True) then drains only the
+                # just-killed jobs, fast.
+    except KeyboardInterrupt:
+        interrupted = True  # a second Ctrl-C during the drain
+
+    if interrupted:
+        raise Interrupted([r for r in (_build(t) for t in tests) if r])
+
+    # Report in REGISTRY order, whatever order the pool finished in.
+    results = []
+    for n, test in enumerate(tests, 1):
+        r = _build(test)
+        if r is None:  # impossible here: every job completed above
+            raise RuntimeError("no record for %s after a complete run" % test)
+        rel = writer.write_log(r)
+        writer.event({"event": "done", "test": test, "status": r.status,
+                      "duration": round(r.duration, 3), "log": rel})
+        print("[%d/%d] %s %s %.1fs" % (n, len(tests), test, r.status,
+                                       r.duration), file=sys.stderr)
+        if r.status != "pass":
+            print(r.log_text)
+        elif verbose:
+            print(r.log_text)
+        results.append(r)
+    return results
 
 
 class RunWriter:
     """events.ndjson + per-test logs + results.json for one suite run."""
 
     def __init__(self, run_dir: Path | None) -> None:
-        import threading
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         self.dir = run_dir or (REPORTS / "suite_runs" / stamp)
         (self.dir / "tests").mkdir(parents=True, exist_ok=True)
@@ -138,29 +306,6 @@ class RunWriter:
         return exit_code
 
 
-def run_sequential(tests: list[str], timeout: float, verbose: bool,
-                   writer: RunWriter) -> list[TestResult]:
-    results: list[TestResult] = []
-    for n, test in enumerate(tests, 1):
-        writer.event({"event": "start", "test": test})
-        t0 = time.monotonic()
-        out, rc, status = run_child(
-            [GODOT, "--headless", "--script", "res://" + test], timeout)
-        result = TestResult(test, status, time.monotonic() - t0,
-                            log_text=out + ("\n" if out else ""))
-        rel = writer.write_log(result)
-        writer.event({"event": "done", "test": test, "status": result.status,
-                      "duration": round(result.duration, 3), "log": rel})
-        print("[%d/%d] %s %s %.1fs" % (n, len(tests), test, result.status,
-                                       result.duration), file=sys.stderr)
-        if status != "pass":
-            print(out)
-        elif verbose:
-            print(out)
-        results.append(result)
-    return results
-
-
 # ---------------------------------------------------------------- selftest
 
 def _selftest() -> int:
@@ -184,10 +329,10 @@ def _selftest() -> int:
     expect(child_verdict("x", 1) == "fail", "non-zero exit must fail")
 
     # Shard normalization arrives in Task 4; its cases are added there.
-    ex, checks = _tags_from_text("extends SceneTree\n"
-                                 "## suite-exclusive: writes user://settings.cfg\n")
+    ex, checks = read_tags_from("extends SceneTree\n"
+                                "## suite-exclusive: writes user://settings.cfg\n")
     expect(ex and checks == [], "exclusive tag parse: %r %r" % (ex, checks))
-    ex2, checks2 = _tags_from_text("## suite-shard-checks: _check_a, _check_b\n")
+    ex2, checks2 = read_tags_from("## suite-shard-checks: _check_a, _check_b\n")
     expect(not ex2 and checks2 == ["_check_a", "_check_b"],
            "shard tag parse: %r %r" % (ex2, checks2))
 
@@ -235,9 +380,25 @@ def main(argv: list[str] | None = None) -> int:
     writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
     print("run dir: %s" % writer.dir, file=sys.stderr)
     t0 = time.monotonic()
-    results = run_sequential(args.tests, args.timeout, args.verbose, writer)
+    try:
+        jobs = flatten_jobs(args.tests)
+        results = run_parallel(args.tests, jobs, args.timeout, args.verbose,
+                               writer, args.jobs)
+    except Interrupted as exc:
+        elapsed = int(time.monotonic() - t0)
+        print("interrupted after %d:%02d -- partial results in %s"
+              % (elapsed // 60, elapsed % 60, writer.dir), file=sys.stderr)
+        for r in exc.results:  # the captured output of the finished ones
+            writer.write_log(r)
+        writer.finish(exc.results, interrupted=True, jobs=args.jobs)
+        return 130
+    except KeyboardInterrupt:  # second Ctrl-C, or one before any child ran
+        _kill_live_children()
+        print("interrupted", file=sys.stderr)
+        writer.finish([], interrupted=True, jobs=args.jobs)
+        return 130
     elapsed = int(time.monotonic() - t0)
-    code = writer.finish(results, interrupted=False, jobs=1)
+    code = writer.finish(results, interrupted=False, jobs=args.jobs)
     if code == 0:
         print("test suite passed -- %d tests in %d:%02d"
               % (len(results), elapsed // 60, elapsed % 60))

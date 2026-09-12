@@ -18,6 +18,8 @@ extends SceneTree
 ## (user:// is the live-state location, res:// is read-only static content).
 ## The slot names here are test-only and removed again at the end.
 
+## suite-exclusive: real filesystem I/O against user://saves/
+
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Media = preload("res://src/sim/media.gd")
