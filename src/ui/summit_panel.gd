@@ -128,7 +128,11 @@ func show_summit(summit: Dictionary) -> void:
 		child.queue_free()
 	var person_id := String(summit.get("leader_person_id", ""))
 	if person_id != "":
-		_leader_box.add_child(Portrait.framed_for(person_id, Vector2(180, 247)))
+		# The room the sidecar names, staged behind the leader -- the summit's
+		# own scene field, validated at load; an unknown name already died there.
+		_leader_box.add_child(Portrait.framed_for(
+			person_id, Vector2(180, 247), Portrait.Emotion.NEUTRAL,
+			Portrait.scene_from_name(String(summit.get("scene", "summit_hall")))))
 
 	_advance("")
 

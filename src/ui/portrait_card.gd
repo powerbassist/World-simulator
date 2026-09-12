@@ -30,9 +30,10 @@ const FLAG_SIZE := Vector2(30, 20)
 
 var _state
 var _loader
+var _leader_id := ""
+var _emotion: int = -1  # Portrait.Emotion; -1 forces the first swap
 
 var _bust: Control
-var _mood: Control
 var _approval_label: Label
 var _leader_label: Label
 var _nation_label: Label
@@ -66,11 +67,6 @@ func _ready() -> void:
 	_approval_label = Label.new()
 	_approval_label.theme_type_variation = UiTheme.HERO
 	approval_row.add_child(_approval_label)
-
-	_mood = Mood.new()
-	_mood.custom_minimum_size = Vector2(26, 26)
-	_mood.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	approval_row.add_child(_mood)
 
 	var approval_caption := Label.new()
 	approval_caption.text = "APPROVAL"
@@ -109,7 +105,10 @@ func setup(state, loader) -> void:
 	_nation_label.text = nation.nation_name
 	_leader_label.text = "%s, %s" % [loader.person_name(nation.leader_person_id), nation.leader_title]
 	_flag.setup(nation.flag_bands, nation.flag_layout)
-	_set_bust(Portrait.framed_for(nation.leader_person_id, Vector2(54, 74)))
+	_leader_id = nation.leader_person_id
+	_emotion = -1
+	_set_bust(Portrait.framed_for(_leader_id, Vector2(54, 74),
+		Portrait.Emotion.NEUTRAL, Portrait.Scene.OFFICE))
 	refresh()
 
 
@@ -135,52 +134,30 @@ func refresh() -> void:
 		PollNoise.poll_id(_state.year, _state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct
 	)
 	_approval_label.text = "%.0f%%" % shown
-	_mood.set_approval(shown)
+	_update_bust(_emotion_for(shown))
 
 
-## A face, not a number. The approval figure is already right beside it, so what
-## this adds is a reading the player takes at a glance without parsing digits --
-## the same job the reference's smiley does.
-class Mood extends Control:
-	const UiTheme = preload("res://src/ui/ui_theme.gd")
+## The card's face IS the mood read now -- the V2.9-era emoji face beside the
+## number is gone, because a face that cannot change expression is exactly why
+## the emoji existed. Bands either side of 50 so a government hovering at the
+## neutral point does not flicker between two portraits on poll noise alone.
+## STERN has no approval slot: it is the dismissal/clash face, held for later
+## content rather than shaved off the neutral band.
+func _emotion_for(approval: float) -> int:
+	if approval >= 55.0:
+		return Portrait.Emotion.PLEASED
+	if approval >= 45.0:
+		return Portrait.Emotion.NEUTRAL
+	if approval >= 35.0:
+		return Portrait.Emotion.WORRIED
+	return Portrait.Emotion.WEARY
 
-	## Below the first the country is against you, above the second it is with
-	## you. Both sit either side of 50 rather than on it, so a government
-	## hovering at the neutral point does not flicker between two faces every
-	## month on poll noise alone.
-	const UNHAPPY_BELOW := 44.0
-	const HAPPY_ABOVE := 56.0
 
-	var _approval := 50.0
-
-	func set_approval(value: float) -> void:
-		_approval = value
-		queue_redraw()
-
-	func _draw() -> void:
-		var center := size / 2.0
-		var radius := minf(size.x, size.y) / 2.0 - 1.0
-
-		var tint := UiTheme.TEXT_DIM
-		var curve := 0.0
-		if _approval < UNHAPPY_BELOW:
-			tint = UiTheme.BAD
-			curve = -radius * 0.34
-		elif _approval > HAPPY_ABOVE:
-			tint = UiTheme.GOOD
-			curve = radius * 0.34
-
-		draw_arc(center, radius, 0.0, TAU, 28, tint, 1.5)
-		draw_circle(center + Vector2(-radius * 0.34, -radius * 0.22), 1.6, tint)
-		draw_circle(center + Vector2(radius * 0.34, -radius * 0.22), 1.6, tint)
-
-		# The mouth is one quadratic through three points, so neutral is a flat
-		# line rather than a special case.
-		var left := center + Vector2(-radius * 0.42, radius * 0.28)
-		var right := center + Vector2(radius * 0.42, radius * 0.28)
-		var control := center + Vector2(0.0, radius * 0.28 + curve)
-		var mouth := PackedVector2Array()
-		for i in range(9):
-			var t := i / 8.0
-			mouth.append(left.lerp(control, t).lerp(control.lerp(right, t), t))
-		draw_polyline(mouth, tint, 1.5)
+## Re-stages the bust only when the emotion band actually changes -- a monthly
+## TextureRect churn over poll noise is the rasterise-on-the-clock-path class
+## V2.3 already paid for once.
+func _update_bust(emotion: int) -> void:
+	if emotion == _emotion or _leader_id == "":
+		return
+	_emotion = emotion
+	_set_bust(Portrait.framed_for(_leader_id, Vector2(54, 74), emotion, Portrait.Scene.OFFICE))
