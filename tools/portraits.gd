@@ -83,7 +83,9 @@ func _init() -> void:
 	var written := 0
 	var bytes_total := 0
 	var per_emotion := {}  # emotion -> Array[Image] thumbs, for the sheets
+	DirAccess.make_dir_recursive_absolute(OUT_DIR)
 	for emotion in EMOTIONS:
+		DirAccess.make_dir_recursive_absolute(OUT_DIR.path_join(emotion))
 		if not DirAccess.dir_exists_absolute(RAW_ROOT.path_join(emotion)):
 			per_emotion[emotion] = []
 			continue  # the whole of Phase A: no art exists yet, keep the tool runnable
@@ -129,10 +131,10 @@ func _init() -> void:
 			if img == null:
 				quit(1)
 				return
-		var backdrop := img.duplicate()
-		backdrop.resize(SCENE_OUT_W, SCENE_OUT_H, Image.INTERPOLATE_LANCZOS)
-		var out_path := SCENE_OUT_DIR.path_join(f.get_basename() + ".webp")
-		if backdrop.save_webp(out_path, true, 0.90) != OK:
+			var backdrop: Image = img.duplicate()
+			backdrop.resize(SCENE_OUT_W, SCENE_OUT_H, Image.INTERPOLATE_LANCZOS)
+			var out_path := SCENE_OUT_DIR.path_join(f.get_basename() + ".webp")
+			if backdrop.save_webp(out_path, true, 0.90) != OK:
 				printerr("FAIL: could not write %s" % out_path)
 				quit(1)
 				return
@@ -183,7 +185,7 @@ func _load_frame(path: String) -> Image:
 
 func _crop_and_resize(img: Image) -> Image:
 	var out := img.get_region(CROP)
-	out.resize(out_size.x, out_size.y, Image.INTERPOLATE_LANCZOS)
+	out.resize(OUT_W, OUT_H, Image.INTERPOLATE_LANCZOS)
 	return out
 
 

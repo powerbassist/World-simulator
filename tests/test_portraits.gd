@@ -262,24 +262,30 @@ func _check_scene_files() -> void:
 		if not f.ends_with(".webp"):
 			continue
 		var base := f.get_basename()
-		var matched := false
-		for scene_name in Portrait.SCENE_NAMES.values():
-			if not base.begins_with(scene_name + "_"):
-				continue
-			var tail := base.substr(scene_name.length() + 1)
-			var us := tail.rfind("_")
-			if us == -1 or not tail.substr(us + 1).is_valid_int():
-				continue
-			matched = true
-			var head := tail.substr(0, us)
-			if head != "":
-				if head.length() != 3 or head != head.to_upper():
-					_fail("backdrop '%s' carries no valid nation code" % f)
-				else:
-					var key: String = scene_name + "_" + head
-					nation_counts[key] = int(nation_counts.get(key, 0)) + 1
-		if not matched:
+		# Longest scene name wins: "airport_tarmac_0" is the scene
+		# airport_tarmac + variant 0, not something called "airport".
+		var scene_name := ""
+		var tail := ""
+		for candidate in Portrait.SCENE_NAMES.values():
+			if base.begins_with(candidate + "_") and candidate.length() > scene_name.length():
+				scene_name = candidate
+				tail = base.substr(candidate.length() + 1)
+		if scene_name == "":
 			_fail("backdrop '%s' matches no scene naming convention" % f)
+			continue
+		var us := tail.rfind("_")
+		if us == -1:
+			continue  # the generic <scene>_<n>
+		if not tail.substr(us + 1).is_valid_int():
+			_fail("backdrop '%s' matches no scene naming convention" % f)
+			continue
+		var head := tail.substr(0, us)
+		if head != "":
+			if head.length() != 3 or head != head.to_upper():
+				_fail("backdrop '%s' carries no valid nation code" % f)
+			else:
+				var key: String = scene_name + "_" + head
+				nation_counts[key] = int(nation_counts.get(key, 0)) + 1
 	for key in nation_counts:
 		if nation_counts[key] != 3:
 			_fail("nation backdrop '%s' has %d of 3 variants" % [key, nation_counts[key]])
