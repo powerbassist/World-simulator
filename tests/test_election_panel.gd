@@ -20,6 +20,7 @@ extends SceneTree
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Sting = preload("res://src/ui/sting.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const ElectionPanel = preload("res://src/ui/election_panel.gd")
 
 const EXEC_MONTHS := 16       # January 2026 to May 2027, FRA's presidential term.
 const TARGET_MONTHS := 41     # January 2026 to June 2029, the Assembly's term.
@@ -61,6 +62,7 @@ func _process(_delta: float) -> bool:
 		_check_modal_blocks_the_world()
 		_run_national_text()
 	elif _frame == NATIONAL_GEOMETRY_FRAME:
+		_check_told_once()
 		_check_tally()
 		_check_national_geometry()
 		_check_sting_gate()
@@ -126,6 +128,13 @@ func _run_exec_text() -> void:
 	var lower := exec_text.to_lower()
 	if lower.find("what decided it") > lower.find("vote share"):
 		_fail("the attribution reads below the party table; the verdict must lead")
+
+	# V3.6: the one told thing the agency work earned. The verdict's own
+	# attribution carries the bound in the game's voice; on a double-election
+	# panel it must appear ONCE, on the verdict, not on every section.
+	var told_count := exec_text.count(ElectionPanel.TOLD_LINE)
+	if told_count < 1:
+		_fail("the verdict attribution is missing the told line: %s" % ElectionPanel.TOLD_LINE)
 
 	# The plate grew to hold a verdict and a table: 640 was the budget panel's
 	# size, and the seat bars need the width.
@@ -220,6 +229,18 @@ func _run_national_text() -> void:
 		_fail("lost the election but the panel still offers Continue")
 
 	_check_sting_wiring()
+
+
+## V3.6: on the double-election panel the told line rides the verdict's
+## attribution alone -- a sentence printed under every table would be
+## wallpaper. Counted here rather than in _run_national_text(): that frame is
+## the one show_results ran in, and the previous panel's sections are
+## queue_free()d but not yet reaped, so a text read there sees the ghost's
+## copy too (the fold finding: a same-frame read answers for the last frame).
+func _check_told_once() -> void:
+	var text := _collect_text(_main._election_panel)
+	if text.count(ElectionPanel.TOLD_LINE) != 1:
+		_fail("the told line appears %d times on the double-election panel, expected once" % text.count(ElectionPanel.TOLD_LINE))
 
 
 ## V3.6: show_results() wired the sting. Counted on the same frame the panel

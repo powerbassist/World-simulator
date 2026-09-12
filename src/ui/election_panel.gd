@@ -24,6 +24,14 @@ signal dismissed
 const TALLY_S := 1.2
 const TALLY_STAGGER_S := 0.08
 
+## The one thing the agency work proved the player needs TOLD rather than
+## shown (V3.6): approval prices CHANGE, not level, so standing still reads
+## neutral while a term that ran the country better polls worse -- and the
+## vote follows the outcomes with a lag. Measured, not opinion: the V3.0
+## probe's table (budget-spend approval 38.1 vs idle 49.4; unemployment 6.95
+## vs 7.58; deficit halved). Copy pinned by the author at the plan gate.
+const TOLD_LINE := "The vote follows the economy with a lag. A term that ran the country better can poll worse than one that did nothing."
+
 var _state
 var _loader
 var _title: Label
@@ -265,7 +273,7 @@ func _build_section(result: Dictionary, chamber_label: String, verdict := false)
 	# double-election panel keep table-then-attribution, which is where a
 	# chamber's detail belongs.
 	if verdict:
-		box.add_child(_build_attribution(result))
+		box.add_child(_build_attribution(result, true))
 	box.add_child(_build_party_table(result))
 	if not verdict:
 		box.add_child(_build_attribution(result))
@@ -338,7 +346,7 @@ func _build_party_table(result: Dictionary) -> Control:
 	return host
 
 
-func _build_attribution(result: Dictionary) -> Control:
+func _build_attribution(result: Dictionary, is_verdict := false) -> Control:
 	var box := VBoxContainer.new()
 
 	PanelKit.line(box, "What decided it", PanelKit.Tone.PLAIN)
@@ -350,6 +358,11 @@ func _build_attribution(result: Dictionary) -> Control:
 		PanelKit.line(box, "%s — %s (salience %.0f%%)" % [
 			OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0,
 		], PanelKit.Tone.PLAIN)
+
+	# Once, on the verdict's attribution only -- a sentence printed under every
+	# table on a double-election panel is wallpaper, not a message.
+	if is_verdict:
+		PanelKit.line(box, TOLD_LINE, PanelKit.Tone.DIM)
 
 	return box
 
