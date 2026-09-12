@@ -23,6 +23,25 @@ Design vault is `docs/` — open **the project root** as the Obsidian vault, not
 bash tools/run_tests.sh
 ```
 
+The human entry: the registry and the unregistered-test check stay here;
+execution delegates to `python tools/suite_runner.py` (python is a gate
+dependency — `tools/import_data.py` already made it one). `-j1` is
+sequential, `--verbose` restores the print-everything stream.
+
+```bash
+python tools/suite_runner.py --ci
+```
+
+THE AGENT GATE — same core, exit code + `reports/suite_runs/<ts>/`
+(JSON + per-test logs). Run tests this way, not by hand-rolling godot
+invocations.
+
+```bash
+bash tools/run_tests_gui.sh
+```
+
+The cockpit: per-test results, durations, filters, re-run, live attach.
+
 ```bash
 bash tools/check_names.sh
 ```
@@ -35,7 +54,6 @@ bash tools/check_mcp.sh
 godot --path "<repo>"
 ```
 
-Single test: `godot --headless --script res://tests/test_<name>.gd`.
 `tools/` is dev-only and never ships.
 
 ## Architecture — three rules, from [docs/engine-decision.md](docs/engine-decision.md)
@@ -169,6 +187,13 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   and it was real.
 
 ## Current focus
+
+**The test-suite cockpit shipped 2026-09-11** — the gate is one execution core,
+`python tools/suite_runner.py --ci`, and the measured wall moved **51:56 → 9:18**
+(parallel + per-check sharding, 82/82 held at every step); the model doc is
+[docs/test-suite-model.md](docs/test-suite-model.md), the cockpit
+(`bash tools/run_tests_gui.sh`) is a view and never a gate. Everything below this
+row remains the standing record.
 
 **Where the tiers stand (2026-09-11).** [V3](docs/tiers/v3.md) is SIGNED and
 **open**: V3.0 (agency), V3.1 (map platform), V3.2 (the alliance system, PR #27),
