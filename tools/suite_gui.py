@@ -18,8 +18,11 @@ submission; a plain test gives one worker `done` (test/status/duration/log
 and later a report-phase `done` that is the same shape; a sharded test gives
 `child_start`/`child_done` per check plus the final `done` (its log exists
 only then -- children complete out of order and the artifact is the ordered
-concat). A run that dies before its summary becomes a `runner_gone` event
-here, synthesized by the tail thread.
+concat). An OWN child that dies before its summary becomes a `runner_gone`
+event here, synthesized by the tail thread and stamped with the run token
+(stale tokens are dropped -- a replaced run's tail cannot speak into the
+new run's window). An attached run has no child to observe; its results.json
+arrival is its end.
 """
 from __future__ import annotations
 
@@ -129,6 +132,12 @@ class Cockpit(tk.Tk):
         self.note: str | None = None
         self.launched: list[str] = []
         self._escalate: threading.Timer | None = None
+        # Identity of the current run: tail threads and their synthesized
+        # runner_gone events are stamped with it, and stale tokens are
+        # dropped -- without it, run A's tail queues a runner_gone (and its
+        # unread done lines) into run B's window, whose status then lies
+        # for B's whole life. Bumped by _start and load_results.
+        self._run_token = 0
 
         bar = tk.Frame(self)
         bar.pack(fill="x", padx=8, pady=6)
@@ -148,29 +157,30 @@ class Cockpit(tk.Tk):
                                 command=self.refresh)
             rb.pack(side="left", padx=3)
 
-        # Plain pack, no paned splitter: the ttk panedwindow's initial sash
-        # is wherever requested sizes land, and both real windows opened
-        # with the log pane either a ~10px sliver or the tree crushed -- the
-        # status label ended at 0px either way. Fixed log height, tree takes
-        # the rest, status is the last thing packed and therefore always
-        # visible.
+        # Plain pack, and the packing ORDER is the layout contract: pack
+        # allocates in packing order and clips last-packed widgets first
+        # under a height deficit, so the fixed band and the status line are
+        # packed from the bottom edge first and the tree -- packed last --
+        # is what a too-small window clips. At the default size the tree
+        # takes the leftover; the status line cannot vanish (the paned
+        # layout it replaces crushed it to 0px).
         cols = ("status", "test", "seconds")
         self.tree = ttk.Treeview(self, columns=cols, show="headings",
                                  selectmode="browse")
         for c, w in zip(cols, (90, 420, 90)):
             self.tree.heading(c, text=c)
             self.tree.column(c, width=w, anchor="w")
-        self.tree.pack(fill="both", expand=True)
+        self.status = tk.Label(self, text="idle", anchor="w")
+        self.status.pack(side="bottom", fill="x", padx=8, pady=4)
         outframe = tk.Frame(self)
-        outframe.pack(fill="x")
+        outframe.pack(side="bottom", fill="x")
         xsb = tk.Scrollbar(outframe, orient="horizontal")
         self.out = tk.Text(outframe, wrap="none", bg="#111", fg="#ccc",
                            height=12, font=("Consolas", 9),
                            xscrollcommand=xsb.set)
         xsb.pack(side="bottom", fill="x")
         self.out.pack(side="left", fill="both", expand=True)
-        self.status = tk.Label(self, text="idle", anchor="w")
-        self.status.pack(fill="x", padx=8, pady=4)
+        self.tree.pack(fill="both", expand=True)
         self.tree.bind("<<TreeviewSelect>>", self.show_log)
         for tag, color in (("pass", "#0a7a2f"), ("fail", "#b02020"),
                            ("timeout", "#b06010"), ("running", "#8a6d1a")):
@@ -198,8 +208,11 @@ class Cockpit(tk.Tk):
     def _start(self, tests: list[str]) -> None:
         if not tests:
             return
+        self._run_token += 1
+        token = self._run_token
         self.stop()
         self._cancel_escalate()
+        self._drain_queue()
         self.summary = None
         self.gone = None
         self.note = None
@@ -219,25 +232,46 @@ class Cockpit(tk.Tk):
             stderr=subprocess.DEVNULL,
             creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
         self.launched = list(tests)
-        threading.Thread(target=self._tail, daemon=True).start()
+        threading.Thread(target=self._tail, args=(token,), daemon=True).start()
 
-    def _tail(self) -> None:
+    def _drain_queue(self) -> None:
+        # The stale tail thread of the run being replaced still writes its
+        # last events into the shared queue; without this drain its
+        # runner_gone (and any unread dones) land in the NEW run's window.
+        try:
+            while True:
+                self.q.get_nowait()
+        except queue.Empty:
+            pass
+
+    def _tail(self, token: int) -> None:
         import time as _time
         # Locals, not self: a second launch must not have the previous
         # thread waiting on the NEW process or reading the NEW run dir.
+        # token marks everything this thread synthesizes as ITS run's;
+        # _poll drops events whose token has been superseded.
         run_dir, proc = self.run_dir, self.proc
         events = run_dir / "events.ndjson"
         while not events.exists() and proc is not None and proc.poll() is None:
             _time.sleep(0.2)
         if not events.exists():
+            # The runner died before its writer existed (missing GODOT_BIN,
+            # a crash before RunWriter) -- exactly the "looks like a stall"
+            # outcome, so it is reported, not swallowed.
+            if proc is not None and proc.poll() is not None:
+                self.q.put(json.dumps({"event": "runner_gone",
+                                       "exit": proc.returncode,
+                                       "token": token}))
             return
         saw_summary = False
 
         def _done() -> None:
             if proc is not None:
                 proc.wait()
-                if self._escalate:
-                    self._escalate.cancel()
+            # Only THIS run's escalation backstop may be cancelled by this
+            # thread: a stale _done must not cancel the current run's.
+            if self._run_token == token and self._escalate:
+                self._escalate.cancel()
 
         with open(events, encoding="utf-8", errors="replace") as fh:
             while True:
@@ -261,7 +295,7 @@ class Cockpit(tk.Tk):
                         if not saw_summary:
                             self.q.put(json.dumps(
                                 {"event": "runner_gone",
-                                 "exit": proc.returncode}))
+                                 "exit": proc.returncode, "token": token}))
                         _done()
                         return
                 elif (run_dir / "results.json").exists():
@@ -276,9 +310,10 @@ class Cockpit(tk.Tk):
                   ("pass", "running", None)]
         if failed:
             self._start(failed)
-        elif self.rows:
+        elif any(r.get("status") for r in self.rows.values()):
             self.note = "no failures to re-run"  # _start clears it
         else:
+            # Nothing has ever run: Re-run failed IS Run all.
             self._start(list(self.tests))
 
     def stop(self) -> None:
@@ -320,8 +355,10 @@ class Cockpit(tk.Tk):
     def load_results(self, data: dict, run_dir: Path) -> None:
         """A past run, read-only: rows from its results.json, logs reached
         by the same click that serves a live run."""
+        self._run_token += 1  # a live run's tail is now the stale one
         self.stop()
         self._cancel_escalate()
+        self._drain_queue()
         self.proc = None
         self.summary = None
         self.gone = None
@@ -358,7 +395,10 @@ class Cockpit(tk.Tk):
                     self._surface_failures()
                     continue
                 if ev == "runner_gone":
-                    self.gone = e
+                    # A stale run's tail is still draining: only the current
+                    # token's report may set the status.
+                    if e.get("token") == self._run_token:
+                        self.gone = e
                     continue
                 for test, row in rows_from_events([line]).items():
                     self.rows.setdefault(test, {}).update(row)
@@ -369,17 +409,21 @@ class Cockpit(tk.Tk):
         if self.gone is not None:
             self.status.config(text="runner exited (code %s) without a summary — %s"
                                % (self.gone.get("exit"), self.run_dir or ""))
+        elif self.note is not None:
+            # Before the summary: "no failures to re-run" clicked on a
+            # finished green run must actually be seen.
+            self.status.config(text=self.note)
         elif self.summary is not None:
             self.status.config(text="finished: %d tests, %d failed, exit %d — %s" % (
                 self.summary.get("total", 0), self.summary.get("failed", 0),
                 self.summary.get("exit", 0), self.run_dir or ""))
-        elif self.note is not None:
-            self.status.config(text=self.note)
         else:
             total = len(self.launched or self.tests)
-            done = sum(1 for r in self.rows.values() if r.get("status") not in
+            done = sum(1 for t in (self.launched or self.tests)
+                       if self.rows.get(t, {}).get("status") not in
                        ("running", None))
-            fails = sum(1 for r in self.rows.values() if r.get("status") not in
+            fails = sum(1 for t in (self.launched or self.tests)
+                        if self.rows.get(t, {}).get("status") not in
                         ("pass", "running", None))
             self.status.config(text="%d/%d done, %d failed%s" % (
                 done, total, fails,
@@ -474,7 +518,7 @@ def _selftest() -> int:
            duration=1.1, log="tests/test_two.gd.log", ts=7.6),
         # A re-run resets a finished row to running.
         ev(event="start", test="tests/test_clock.gd", ts=8),
-        ev(event="summary", total=4, failed=2, interrupted=False, exit=1, ts=9),
+        ev(event="summary", total=5, failed=2, interrupted=False, exit=1, ts=9),
         "{torn",
     ]
     rows = rows_from_events(sample)
@@ -531,7 +575,9 @@ def main() -> int:
     app = Cockpit(tests, args.jobs)
     if args.attach:
         app.run_dir = args.attach
-        threading.Thread(target=app._tail, daemon=True).start()
+        app._run_token += 1
+        threading.Thread(target=app._tail, args=(app._run_token,),
+                         daemon=True).start()
     elif not args.no_run:
         # Runs on open: the cockpit's whole point is showing the run, not
         # offering a button that starts it.
