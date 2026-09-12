@@ -63,6 +63,7 @@ func _process(_delta: float) -> bool:
 		2:
 			_check_structure()
 			_check_settings()
+			_check_sound_setting()
 			_check_scenario_select()
 			_write_save()
 			return false
@@ -188,6 +189,54 @@ func _check_settings() -> void:
 	else:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 		root.content_scale_factor = 1.0
+
+
+## V3.6: the Sound row persists, and sound_enabled() reads the file rather than
+## the panel. OptionButton.select() emits nothing, so every mutation here calls
+## _save_and_apply() explicitly, like _check_settings() above. Rides this file's
+## own backup/restore discipline: the real settings.cfg goes back exactly as it
+## was found (or stays absent).
+func _check_sound_setting() -> void:
+	var panel = _menu._settings_panel
+	if panel == null:
+		_fail("menu did not build its settings panel")
+		return
+
+	var backup := ""
+	var had_config := FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if had_config:
+		backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
+
+	# Off writes the key; the static read sees it on the next launch's terms.
+	panel._sound_button.select(0)
+	panel._save_and_apply()
+	if SettingsPanel.sound_enabled():
+		_fail("Sound set to Off but sound_enabled() reads true")
+
+	panel._sound_button.select(1)
+	panel._save_and_apply()
+	if not SettingsPanel.sound_enabled():
+		_fail("Sound set to On but sound_enabled() reads false")
+
+	# The default must be the ABSENT key's answer, not a stored true: store a
+	# false, then erase it -- true can now only mean the default fired.
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", false)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	if SettingsPanel.sound_enabled():
+		_fail("stored [audio] enabled=false but sound_enabled() reads true")
+	cfg.erase_key("audio", "enabled")
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	if not SettingsPanel.sound_enabled():
+		_fail("no [audio]/enabled in settings.cfg but sound_enabled() is not the default true")
+
+	if had_config:
+		var restore := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		restore.store_string(backup)
+		restore.close()
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 
 
 ## A save the menu can be asked to continue from. Written straight through

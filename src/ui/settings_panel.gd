@@ -2,10 +2,12 @@ extends PanelContainer
 
 ## The settings screen, reachable from the main menu and from the pause menu.
 ##
-## Three controls, because three is how many settings this game currently has
-## that do something. There is no audio, no autosave, no difficulty and no
-## keybind remapping, so there are no rows for them -- a screen of dead toggles
-## advertises scope that does not exist.
+## Four controls, because four is how many settings this game currently has
+## that do something. There is no autosave, no difficulty and no keybind
+## remapping, so there are no rows for them -- a screen of dead toggles
+## advertises scope that does not exist. Sound arrived at V3.6 as one binary
+## row rather than a volume ladder: one synthesized sting exists, and Off/On
+## is every level it needs.
 ##
 ## Persisted to user://settings.cfg with the engine's own ConfigFile. Settings
 ## that reset on every launch are not settings.
@@ -47,9 +49,14 @@ const DEFAULT_FULLSCREEN := true
 const UI_SCALES: Array[float] = [0.85, 1.0, 1.15, 1.3]
 const DEFAULT_SCALE_INDEX := 1
 
+## Sound on a first launch. Audible rather than muted by default: a sting that
+## ships silent is scope nobody will ever notice shipped (V3.6).
+const DEFAULT_SOUND := true
+
 var _fullscreen_button: OptionButton
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
+var _sound_button: OptionButton
 
 
 # --- persistence -------------------------------------------------------------
@@ -82,16 +89,27 @@ static func _apply(window: Window, fullscreen: bool, resolution_index: int, scal
 		window.content_scale_factor = UI_SCALES[clampi(scale_index, 0, UI_SCALES.size() - 1)]
 
 
+## Read at play time rather than applied at boot: a settings change made from
+## the in-game pause menu governs the very next sting with no second wiring
+## path, and nothing in the boot order comes to depend on audio existing.
+static func sound_enabled() -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	return bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND))
+
+
 func _save_and_apply() -> void:
 	var fullscreen := _fullscreen_button.selected == 1
 	var resolution_index := _resolution_button.selected
 	var scale_index := _scale_button.selected
+	var sound_on := _sound_button.selected == 1
 
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.set_value("display", "resolution_index", resolution_index)
 	cfg.set_value("display", "ui_scale_index", scale_index)
+	cfg.set_value("audio", "enabled", sound_on)
 	cfg.save(CONFIG_PATH)
 
 	_apply(get_window(), fullscreen, resolution_index, scale_index)
@@ -123,6 +141,7 @@ func _ready() -> void:
 	_fullscreen_button = _add_row(grid, "Window", ["Windowed", "Fullscreen"])
 	_resolution_button = _add_row(grid, "Resolution", _resolution_labels())
 	_scale_button = _add_row(grid, "Interface scale", _scale_labels())
+	_sound_button = _add_row(grid, "Sound", ["Off", "On"])
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -188,4 +207,5 @@ func _load_into_controls() -> void:
 	_fullscreen_button.select(1 if fullscreen else 0)
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
+	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_resolution_button.disabled = fullscreen
