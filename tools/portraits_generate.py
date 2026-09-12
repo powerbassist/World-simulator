@@ -190,12 +190,17 @@ HAIR = {
         "short neat hair", "receding hairline", "closely cropped hair",
         "thick silver hair", "swept-back grey hair", "bald head",
         "wavy dark hair", "short curly greying hair", "flat, severely parted hair",
+        "thinning dark hair combed back", "wild salt-and-pepper hair",
+        "sandy blond hair, receding", "auburn hair swept forward",
+        "light brown hair with a cowlick",
     ],
     "female": [
         "shoulder-length hair", "short bob", "long straight hair",
         "grey hair in a low bun", "chin-length greying hair",
         "dark hair pulled back tightly", "layered mid-length hair",
-        "short silver pixie cut",
+        "short silver pixie cut", "chestnut hair in a chignon",
+        "wavy auburn hair", "blonde hair, loose curls", "raven-black hair, blunt fringe",
+        "honey-blonde bob", "platinum hair, slicked back",
     ],
 }
 FACIAL_HAIR = [
@@ -210,8 +215,28 @@ GLASSES = [
 FACE = [
     "broad face with a strong jaw", "narrow, angular face",
     "round, soft-featured face", "long face with a high forehead",
-    "square face with heavy brows",
+    "square face with heavy brows", "gaunt, hollow-cheeked face",
+    "heart-shaped face", "long thin face with deep nasolabial folds",
 ]
+## How the AGE reads in the face -- the number alone does not survive the
+## model's "distinguished statesman" prior; this is what makes a 38-year-old
+## look 38 and not 55 with better lighting. Picked by its own hash, then
+## constrained by the age band so the words never contradict the number.
+FACE_AGE = {
+    "young": ["youthful face", "young for their age, fresh complexion"],
+    "prime": ["middle-aged features", "mature but vigorous face"],
+    "old": ["heavily lined face", "aged, weathered face", "face lined by decades in office"],
+}
+## The age band, and why role moved it: a 44-71 wall read as one late-career
+## blob (the author's judgement on the first slice). Real cabinets hold
+## 35-year-old rising party leaders and 78-year-old monarchs.
+AGE_BAND = {
+    "head_of_government": (42, 72),
+    "head_of_state": (48, 78),
+    "pretender": (45, 75),
+    "party_leader": (35, 68),
+    "figure": (40, 70),
+}
 QUIRK = [
     "prominent nose", "deep-set eyes", "high cheekbones",
     "strong brow ridge", "thin lips", "weathered, lined skin",
@@ -229,6 +254,16 @@ def _pick(person_id: str, category: str, options) -> str:
     """One decorrelated pick per category: hash the id WITH the category name,
     so two categories never read the same slice of the seed."""
     return options[comfy.djb2(person_id + ":" + category) % len(options)]
+
+
+def _face_age_bucket(age: int):
+    """The FACE_AGE words the age number allows -- the words must agree with
+    the number or the prompt argues with itself."""
+    if age < 48:
+        return FACE_AGE["young"]
+    if age < 62:
+        return FACE_AGE["prime"]
+    return FACE_AGE["old"]
 
 
 def _sweep_slots():
@@ -282,9 +317,11 @@ def load_traits(people) -> dict:
             continue
         female = comfy.djb2(pid + ":sex") % 10000 < int(FEMALE_PROBABILITY * 10000)
         role = role_map.get(pid, "figure")
+        lo, hi = AGE_BAND[role]
+        age = lo + comfy.djb2(pid + ":age") % (hi - lo + 1)
         traits[pid] = {
             "sex": "female" if female else "male",
-            "age": 44 + comfy.djb2(pid + ":age") % 28,
+            "age": age,
             "build": _pick(pid, "build", BUILDS),
             "hair": _pick(pid, "hair", HAIR["female" if female else "male"]),
             "glasses": _pick(pid, "glasses", GLASSES),
@@ -322,6 +359,10 @@ def prompt_for(person_id, name, emotion="neutral"):
         region,
         t["build"] + " build",
         t["face"],
+        # Derived from the live age, never stored: the words must agree with
+        # the number even after a hand edit moves it, and the empty-string
+        # join would otherwise print a double comma on older sidecar entries.
+        _pick(person_id, "face_age", _face_age_bucket(t["age"])),
         t["hair"],
     ]
     if "facial" in t:

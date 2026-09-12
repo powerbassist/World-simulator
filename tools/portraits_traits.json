@@ -73,14 +73,15 @@
   "wardrobe": "burgundy blazer, dark trousers"
  },
  "BEL_baudouin_iii": {
-  "sex": "female",
-  "age": 67,
+  "sex": "male",
+  "age": 71,
   "build": "trim",
-  "hair": "layered mid-length hair",
+  "hair": "thin grey hair, receding",
   "glasses": "no glasses",
   "face": "broad face with a strong jaw",
   "quirk": "widow's peak",
-  "wardrobe": "black formal suit, white blouse"
+  "wardrobe": "black formal suit, white pocket square",
+  "facial": "neat stubble"
  },
  "BEL_coussement": {
   "sex": "female",
@@ -563,7 +564,7 @@
  },
  "DNK_dahl": {
   "sex": "female",
-  "age": 65,
+  "age": 49,
   "build": "heavyset",
   "hair": "shoulder-length hair",
   "glasses": "round wire-frame glasses",
@@ -904,14 +905,15 @@
   "wardrobe": "charcoal suit, party-badge lapel pin"
  },
  "FRA_moucron": {
-  "sex": "female",
-  "age": 63,
-  "build": "heavyset",
-  "hair": "layered mid-length hair",
+  "sex": "male",
+  "age": 46,
+  "build": "slim",
+  "hair": "thinning dark hair combed back",
   "glasses": "round wire-frame glasses",
-  "face": "square face with heavy brows",
-  "quirk": "widow's peak",
-  "wardrobe": "charcoal tailored suit, silk scarf"
+  "face": "long thin face with deep nasolabial folds",
+  "quirk": "prominent nose",
+  "wardrobe": "navy suit, dark red tie",
+  "facial": "clean-shaven"
  },
  "FRA_perrault": {
   "sex": "male",
