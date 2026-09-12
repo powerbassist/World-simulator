@@ -1,142 +1,190 @@
-"""V2.3 portrait recipe, generation half. Stdlib only.
+"""V3.7 portrait recipe, generation half. Stdlib only (HTTP via comfy_client).
 
 Sweeps data/people/*.json (the register IS the roster -- nothing here is a
-hand-written list of people), derives one prompt per person, and drives a
-running ComfyUI over its HTTP API using tools/portraits_workflow.json as the
-template -- API format, so every key in that file is a node the server must
-know: a "_comment" key at the top level is a 500 on current ComfyUI, which is
-why the recipe's notes live here instead. The workflow is one fixed framing,
-background and lighting (Juggernaut X Hyper, 832x1216, 8 steps) so the duotone
-pass in tools/portraits.gd is what unifies the wall -- "one crop, one eyeline"
-starts here.
+hand-written list of people), derives one prompt per person per emotion, and
+drives a running ComfyUI over its HTTP API using tools/portraits_workflow.json
+(base) and tools/portraits_expression_workflow.json (the four non-neutral
+expressions, FaceDetailer inpaint over the base) -- API format, so every key in
+those files is a node the server must know: a "_comment" key at the top level
+is a 500 on current ComfyUI, which is why the recipe's notes live here instead.
+The workflow is one fixed framing, camera and lighting (Juggernaut X Hyper,
+832x1216, 8 steps, PerfectEyesXL at 0.35); variety comes from the PROMPT -- the
+V2.3 duotone pass that used to unify the wall is gone, realism is the look.
 
-Likeness policy, fixed at plan time: a portrait EVOKES the real politician its
-fictional name plays on, it does not depict them. The prompt is built from a
-described archetype (age band, hair, glasses, demeanour) and never contains a
-real person's name. Someone not in ARCHETYPES falls back to a generic archetype
-for their gender and a seed-chosen age -- the pipeline never gates the register.
+Variety axes, and why they live here: "one crop, one eyeline" constrains the
+FRAME; the FACE is where variety lives. The prompt is built from the person's
+own sidecar entry (tools/portraits_traits.json -- sex, age, build, hair,
+glasses, facial hair, face shape, one quirk, wardrobe), the nation prefix's
+region look, and the role the data already assigns them. Art direction stays
+OUT of data/people/: src/core/person.gd is id-and-name by construction, and
+age, sex and wardrobe are not game facts. The sidecar is seeded for any id
+missing from it (deterministically, from the same decorrelated djb2 pickers),
+then read forever after -- hand-editable, and person 214 never requires
+touching this file. The V2.3 GENDER first-name table is gone: it defaulted
+unknown names to male, which across 213 people is most of them, and is why the
+wall skewed 12.7% female.
 
-Person 72: add them to data/people/, optionally one ARCHETYPES line, run this
-script (only missing ids are generated), then run tools/portraits.gd. The
-committed PNGs are canonical; a ComfyUI or checkpoint drift changes what a
-regeneration would produce, never what is shipped.
+Likeness policy, fixed at plan time and unchanged: a portrait EVOKES the real
+politician its fictional name plays on, it does not depict them. The prompt is
+built from described traits only and never contains a real person's name --
+--self-check enforces this against tools/banned_names.txt rather than trusting
+the docstring.
+
+Passes: 1 renders the base (neutral) for every person missing one; 2 runs the
+four non-neutral expressions through the expression workflow against each base.
+Out: sources/portraits/raw/<emotion>/<person_id>.png and
+sources/portraits/mask/<emotion>/<person_id>.png -- the mask is matting
+(BiRefNet-portrait), written beside the raw for the Godot post-pass to turn
+into alpha. Only missing ids are generated, per person per emotion.
+
+--dry-run: seed the sidecar, print every prompt, contact nothing. Read it --
+213 prompts that differ by region, role, sex, age and wardrobe, or the trait
+machines are wrong and a generation run would burn hours proving it.
+--self-check: the five properties tests/test_portraits.gd also gates.
 
 Machine dependency, stated honestly: needs ComfyUI_windows_portable at
 F:/ComfyUI_windows_portable with Juggernaut_X_RunDiffusion_Hyper.safetensors
-(RunDiffusion's Juggernaut X, CivitAI) listening on 127.0.0.1:8188. Start it
-with run_nvidia_gpu.bat from that directory first.
+listening on 127.0.0.1:8188 (start run_nvidia_gpu.bat first). The ComfyUI
+environment -- node packs, matting weights -- is checked by
+tools/workflow_check.py against the live server.
 """
 
 import json
 import re
 import sys
-import time
-import urllib.parse
-import urllib.request
 from pathlib import Path
 
-HOST = "127.0.0.1"
-PORT = 8188
-ALLOWED_HOSTS = ("127.0.0.1", "localhost")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import comfy_client as comfy  # noqa: E402
 
 TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
 WORKFLOW = TOOLS / "portraits_workflow.json"
+EXPRESSION_WORKFLOW = TOOLS / "portraits_expression_workflow.json"
+TRAITS_PATH = TOOLS / "portraits_traits.json"
+BANNED_NAMES = TOOLS / "banned_names.txt"
 PEOPLE_DIR = REPO / "data" / "people"
 RAW_DIR = REPO / "sources" / "portraits" / "raw"
+MASK_DIR = REPO / "sources" / "portraits" / "mask"
 
+## Node ids in the two workflow templates -- where the generator injects the
+## prompt and seed, and where the image + mask come back out. If a template is
+## restructured, these move with it and workflow_check.py says so.
+BASE_TEXT_NODE, BASE_SEED_NODE = "4", "6"
+BASE_IMAGE_NODE, BASE_MASK_NODE = "8", "11"
+EXPR_TEXT_NODE, EXPR_SEED_NODE, EXPR_LOAD_NODE = "5", "9", "1"
+EXPR_IMAGE_NODE, EXPR_MASK_NODE = "10", "13"
 
-def _confined(path, root):
-    """Every filesystem path this script touches is normalized here and proven
-    to resolve inside its declared root, so no joined or discovered path can
-    walk out of the directories this recipe owns."""
-    resolved = Path(path).resolve()
-    base = Path(root).resolve()
-    if base not in resolved.parents and resolved != base:
-        raise RuntimeError("path '%s' escapes its allowed root '%s'" % (path, root))
-    return resolved
+EMOTIONS = ["neutral", "pleased", "stern", "worried", "weary"]
 
-
-## The loader's own namespacing rule (tests/test_people.gd checks the same
-## thing): a person id is <NATION>_<surname>. Every output filename this script
-## builds starts from a person id read out of a JSON file, so the ids are
-## validated against the scheme before they are joined -- the register is
-## trusted content, but a path is not the place to find out.
-ID_SCHEME = re.compile(r"^[A-Z]{3}_[a-z][a-z0-9_]*$")
-
-
-def _checked_id(person_id):
-    if not ID_SCHEME.match(person_id):
-        raise RuntimeError("person id '%s' does not match the register's <NATION>_<surname> scheme" % person_id)
-    return person_id
-
-
-def _raw_path(person_id):
-    return _confined(RAW_DIR / (_checked_id(person_id) + ".png"), RAW_DIR)
-
-
-## Anything that reaches a URL path or query -- the server-issued prompt id, a
-## returned filename -- passes through here first: no parent-directory walks,
-## no drive letters, no backslashes, no leading slash. ComfyUI subfolders may
-## contain "/" (they are relative paths), everything else may not.
-def _safe_segment(value, what, allow_slash=False):
-    if value is None:
-        raise RuntimeError("unsafe %s from the API: %r" % (what, value))
-    text = str(value)
-    if text == "":
-        return text  # the API's "no subfolder" -- empty cannot traverse
-    if text.startswith(("/", "\\")) or ":" in text or "\\" in text or ".." in text:
-        raise RuntimeError("unsafe %s from the API: %r" % (what, text))
-    if "/" in text and not allow_slash:
-        raise RuntimeError("unsafe %s from the API: %r" % (what, text))
-    return text
-
-
-## The frame constants, and nothing about the person: suit, camera, background,
-## lighting. The expression moved out of here into EXPRESSION below -- it was
-## pinned here when only the seed varied, which is half of why the first wall
-## read as siblings.
-STYLE = (
-    "formal dark suit, looking directly at the camera, head and shoulders "
-    "framing, plain dark grey background, soft directional studio lighting, "
-    "sharp focus, photorealistic, 85mm lens"
-)
-
-## person id -> the described archetype that replaces "a man in his 50s". Filled
-## from the author's counterpart notes; extends one line at a time and unknown
-## ids fall back below, so this is art direction rather than a roster the
-## pipeline depends on. Described traits only -- a real name in here would be a
-## likeness, which is exactly what the policy above refuses.
-ARCHETYPES = {}
-
-## First names occurring in the register, mapped to gender for the fallback
-## archetype's wording. Same discipline as ARCHETYPES: a vocabulary that
-## extends for free, unknown names fall back with a logged note.
-GENDER = {
-    "female": """
-        Ingrid Theresa Elisabeth Naima Lore Celine Andrea Livia Katrin Annika
-        Marlene Rocio Nuria Helene Camille Nadia Cecile Caroline Miriam Rhona
-        Chiara Serena Nathalie Anouk Ellen Marijke Fenna
-        Tanja Karin Ulla Cecilia
-    """,
-    "male": """
-        Bernhard Wolfgang Lukas Rudolf Joris Bram Pieter Tom Baudouin Reto
-        Markus Fabio Ulrich Matthias Jens Dietrich Friedrich Alvaro Mateo Iker
-        Alfonso Daniel Bruno Gilles Charles Edward Adrian Duncan Robert Lorenzo
-        Piergiorgio Vittorio Enzo Umberto Carlo Marc Serge Jean-Paul Adolphe
-        Sander Willem Ruben Maurits
-    """,
+## The five faces, as FaceDetailer-positive fragments. "smiling broadly" in the
+## base negative still holds: pleased is a FAINT smile.
+EMOTION_FRAGMENTS = {
+    "neutral": "calm, composed, neutral expression, lips closed",
+    "pleased": "faint warm smile, eyes slightly creased, relaxed brow",
+    "stern": "stern, jaw set, brows drawn down, lips pressed thin",
+    "worried": "worried, brows raised inward, tension around the eyes",
+    "weary": "weary, heavy eyelids, tired, drawn face",
 }
 
+## The frame constants, and nothing about the person: camera, background,
+## lighting. Wardrobe moved out of here into the sidecar at V3.7 -- it is a
+## per-person trait now, role-keyed, not a constant of the recipe.
+STYLE = (
+    "looking directly at the camera, head and shoulders framing, plain dark "
+    "grey background, soft directional studio lighting, sharp focus, "
+    "photorealistic, 85mm lens"
+)
 
-## Per-person trait vocabulary. "One crop, one eyeline" constrains the FRAME;
-## the FACE is where variety lives, and a fixed prompt with only the seed
-## varying made the first wall of 71 read as siblings -- the author's judgement
-## on the contact sheet, not a hypothesis. Each category is picked by its own
-## hash of the person id, so traits are decorrelated (hair does not predict
-## glasses) and the whole thing stays deterministic per person. Described
-## archetypes in ARCHETYPES above bypass all of this for the people the author
-## has notes on.
+## Sex seeding replaces the V2.3 male-by-default first-name table. The wall it
+## shipped read 12.7% female (27 of 213, measured 2026-09-12); 0.35 is the
+## plan-time default the author signed off, applied as a hash pick so it is
+## deterministic per person and hand-editable in the sidecar after.
+FEMALE_PROBABILITY = 0.35
+
+## 4a. Region look, keyed off the nation prefix already in the person id --
+## the single biggest missing variety axis (a Finnish and a Greek minister
+## were drawn from one distribution). 29 codes; described appearance only, and
+## deliberately not word-identical between neighbouring nations -- siblings
+## were the first wall's failure.
+REGION = {
+    "AUT": "Central European, fair skin, light eyes common",
+    "BEL": "Western European, fair to medium skin",
+    "BGR": "Balkan, olive skin, dark hair",
+    "CHE": "Alpine European, fair skin",
+    "CYP": "eastern Mediterranean, olive skin, dark eyes",
+    "CZE": "Central European, fair skin, broad features",
+    "DEU": "Central European, fair skin, cool complexion",
+    "DNK": "Nordic, fair skin, blonde hair common",
+    "ESP": "Mediterranean, olive skin, dark eyes",
+    "EST": "Baltic, fair skin, light eyes",
+    "FIN": "Nordic, fair skin, pale eyes",
+    "FRA": "Western European, fair to olive skin",
+    "GBR": "British Isles, fair skin, ruddy complexion common",
+    "GRC": "Mediterranean, olive skin, dark eyes",
+    "HRV": "Central European and Balkan mix, fair to olive skin",
+    "HUN": "Central European, fair skin, dark blond hair common",
+    "IRL": "British Isles, fair skin, freckles common",
+    "ITA": "Mediterranean, olive skin, dark eyes",
+    "LTU": "Baltic, fair skin, light eyes",
+    "LUX": "Western European, fair skin",
+    "LVA": "Baltic, fair skin",
+    "MLT": "Mediterranean, olive skin, dark eyes, warm complexion",
+    "NLD": "North Sea European, fair skin, tall build",
+    "POL": "Central European, fair skin, angular features",
+    "PRT": "Iberian, olive skin, dark eyes",
+    "ROU": "Balkan and Eastern European mix, olive to fair skin",
+    "SVK": "Central European, fair skin, high cheekbones",
+    "SVN": "Alpine and Balkan mix, fair to olive skin",
+    "SWE": "Nordic, fair skin, pale eyes",
+}
+
+## 4b. Role, derived from the data that already owns the relationship -- the
+## office is the slot pointing at the person, never a field on them (the
+## Person rule). The sweep reads leader.person, government.head_of_state.person
+## and government.pretender_person from data/nations/, leader_person from
+## data/parties/; precedence head_of_government > head_of_state > pretender >
+## party_leader, and parties never overwrite a national office.
+ROLE_BEARING = {
+    "head_of_government": "head-of-government bearing, confident composed posture",
+    "head_of_state": "ceremonial head-of-state bearing, dignified reserved posture",
+    "pretender": "formal courtly bearing, composed and watchful",
+    "party_leader": "party-leader energy, direct engaging posture",
+    "figure": "professional bearing",
+}
+## Wardrobe is role-keyed and sex-keyed: the V2.3 lesson generalized -- one
+## list for everyone put a pale blue tie on every woman in Europe.
+WARDROBE_BY_ROLE = {
+    "head_of_government": {
+        "male": ["charcoal suit, subdued tie", "navy suit, dark red tie",
+                 "dark grey suit, pale blue tie"],
+        "female": ["charcoal tailored suit, silk scarf", "navy suit, pearl earrings",
+                   "dark tailored suit, brooch"],
+    },
+    "head_of_state": {
+        "male": ["black formal suit, white pocket square", "midnight blue suit, silver tie"],
+        "female": ["black formal suit, white blouse", "midnight blue suit, silver brooch"],
+    },
+    "pretender": {
+        "male": ["dark formal suit, discreet tie pin", "black suit, high collar"],
+        "female": ["dark formal dress, high collar", "black tailored dress, discreet jewels"],
+    },
+    "party_leader": {
+        "male": ["open-collar dark suit, no tie", "brown suit, patterned tie",
+                 "charcoal suit, party-badge lapel pin"],
+        "female": ["open-collar dark blazer", "burgundy blazer, dark trousers",
+                   "charcoal suit, bold scarf"],
+    },
+    "figure": {
+        "male": ["grey suit, plain tie", "dark jacket, open collar"],
+        "female": ["grey suit, plain blouse", "dark jacket, open collar"],
+    },
+}
+
+## Per-person trait vocabulary, carried over from V2.3 where it worked (the
+## first wall's per-category hash pickers) plus the new axes. Each category is
+## picked by its own hash of the person id, so traits are decorrelated (hair
+## does not predict glasses) and the whole thing stays deterministic.
 HAIR = {
     "male": [
         "short neat hair", "receding hairline", "closely cropped hair",
@@ -159,11 +207,6 @@ GLASSES = [
     "no glasses", "no glasses", "no glasses",  # likewise
     "thin rectangular glasses", "round wire-frame glasses", "dark-framed glasses",
 ]
-EXPRESSION = [
-    "calm, composed expression", "serious, thoughtful expression",
-    "faint reserved smile", "stern, determined expression",
-    "weary but alert expression", "quietly amused expression",
-]
 FACE = [
     "broad face with a strong jaw", "narrow, angular face",
     "round, soft-featured face", "long face with a high forehead",
@@ -174,130 +217,264 @@ QUIRK = [
     "strong brow ridge", "thin lips", "weathered, lined skin",
     "widow's peak", "heavy eyelids",
 ]
-AGES = ["mid 40s", "late 40s", "early 50s", "mid 50s", "late 50s", "60s", "mid 60s", "70s"]
+BUILDS = ["trim", "solid", "heavyset", "slim", "broad-shouldered"]
+
+## Populated by main() before any prompt is built: person_id -> sidecar entry,
+## person_id -> role.
+_traits = {}
+_roles = {}
 
 
 def _pick(person_id: str, category: str, options) -> str:
     """One decorrelated pick per category: hash the id WITH the category name,
     so two categories never read the same slice of the seed."""
-    return options[djb2(person_id + ":" + category) % len(options)]
+    return options[comfy.djb2(person_id + ":" + category) % len(options)]
 
 
-def _strip_accents(s):
-    swaps = {
-        "á": "a", "é": "e", "è": "e", "ê": "e", "í": "i", "ó": "o", "ú": "u",
-        "ñ": "n", "ç": "c", "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U",
-    }
-    return "".join(swaps.get(c, c) for c in s)
+def _sweep_slots():
+    """Yield (person_id, slot_name) for every person the content points at.
+    THE one walk over the data; roles() builds its map from this, and
+    --self-check re-runs it to prove the map covers every slot."""
+    for path in sorted((REPO / "data" / "nations").glob("*.json")):
+        d = json.loads(comfy._confined(path, REPO).read_text(encoding="utf-8"))
+        leader = d.get("leader", {}).get("person")
+        if isinstance(leader, str) and leader:
+            yield leader, "head_of_government"
+        head = d.get("government", {}).get("head_of_state")
+        if isinstance(head, dict) and isinstance(head.get("person"), str) and head["person"]:
+            yield head["person"], "head_of_state"
+        pretender = d.get("government", {}).get("pretender_person")
+        if isinstance(pretender, str) and pretender:
+            yield pretender, "pretender"
+    for path in sorted((REPO / "data" / "parties").glob("*.json")):
+        d = json.loads(comfy._confined(path, REPO).read_text(encoding="utf-8"))
+        for party in d.get("parties", []):
+            pid = party.get("leader_person")
+            if isinstance(pid, str) and pid:
+                yield pid, "party_leader"
 
 
-def _open(path, data=None, headers=None, timeout=90):
-    """Every request this script makes goes through here, and here is where the
-    one allowed destination is enforced: plain http to the local ComfyUI and
-    nothing else, ever."""
-    url = urllib.parse.urlunparse(("http", "%s:%d" % (HOST, PORT), path, "", "", ""))
-    parts = urllib.parse.urlparse(url)
-    if parts.scheme != "http" or parts.hostname not in ALLOWED_HOSTS:
-        raise RuntimeError("refusing non-local API URL: %s" % url)
-    req = urllib.request.Request(url, data=data, headers=headers or {})
-    return urllib.request.urlopen(req, timeout=timeout)
+def roles() -> dict:
+    """person_id -> role, off the sweep. First match in the sweep order wins,
+    which is the precedence list -- and party leaders only ever fill people no
+    national office points at."""
+    out = {}
+    for pid, slot in _sweep_slots():
+        if pid not in out:
+            out[pid] = slot
+    return out
 
 
-def djb2(s):
-    """Stable across languages and engine versions -- String.hash() is neither
-    guaranteed across Godot bumps nor matching Python. The seed must survive
-    re-runs, so it gets its own five lines."""
-    h = 5381
-    for c in s.encode("utf-8"):
-        h = ((h * 33) + c) & 0xFFFFFFFF
-    return h
+def load_traits(people) -> dict:
+    """The sidecar is the art direction; the register is the roster. Any id
+    missing from the sidecar is seeded here -- deterministically, from the
+    decorrelated pickers, sex as a hash pick at FEMALE_PROBABILITY (which
+    replaces the male-default first-name table) and role-keyed wardrobe -- and
+    the file is written back immediately, so --dry-run persists it and the
+    author can hand-edit any line before a generation run."""
+    traits = {}
+    if TRAITS_PATH.exists():
+        traits = json.loads(comfy._confined(TRAITS_PATH, TOOLS).read_text(encoding="utf-8"))
+    role_map = roles()
+    changed = False
+    for pid, _name in people:
+        if pid in traits:
+            continue
+        female = comfy.djb2(pid + ":sex") % 10000 < int(FEMALE_PROBABILITY * 10000)
+        role = role_map.get(pid, "figure")
+        traits[pid] = {
+            "sex": "female" if female else "male",
+            "age": 44 + comfy.djb2(pid + ":age") % 28,
+            "build": _pick(pid, "build", BUILDS),
+            "hair": _pick(pid, "hair", HAIR["female" if female else "male"]),
+            "glasses": _pick(pid, "glasses", GLASSES),
+            # females carry no facial-hair trait at all -- the sidecar entry is
+            # the art direction, not a marker: omitting the key is how the
+            # prompt stays clean (a "clean-shaven" string on a woman was
+            # exactly the leak the dry-run caught).
+            **({} if female else {"facial": _pick(pid, "facial", FACIAL_HAIR)}),
+            "face": _pick(pid, "face", FACE),
+            "quirk": _pick(pid, "quirk", QUIRK),
+            "wardrobe": _pick(pid, "wardrobe:" + role,
+                              WARDROBE_BY_ROLE[role]["female" if female else "male"]),
+        }
+        changed = True
+    if changed:
+        TRAITS_PATH.write_text(
+            json.dumps(dict(sorted(traits.items())), indent=1, ensure_ascii=False) + "\n",
+            encoding="utf-8")
+    return traits
 
 
-def prompt_for(person_id, name):
-    seed = djb2(person_id)
-    notes = []
-    if person_id in ARCHETYPES:
-        subject = ARCHETYPES[person_id]
-    else:
-        first = _strip_accents(name.split()[0]).lower()
-        gender = None
-        for candidate, blob in GENDER.items():
-            if first in blob.lower().split():
-                gender = candidate
-                break
-        if gender is None:
-            gender = "male"
-            notes.append("first name '%s' not in the gender table, defaulting to male" % name.split()[0])
-        female = gender == "female"
-        noun = "woman" if female else "man"
-        poss = "her" if female else "his"
-        age = _pick(person_id, "age", AGES)
-        parts = [
-            "a %s in %s %s" % (noun, poss, age),
-            _pick(person_id, "face", FACE),
-            _pick(person_id, "hair", HAIR["female" if female else "male"]),
-            _pick(person_id, "expression", EXPRESSION),
-            _pick(person_id, "quirk", QUIRK),
-        ]
-        if not female:
-            parts.append(_pick(person_id, "facial", FACIAL_HAIR))
-        parts.append(_pick(person_id, "glasses", GLASSES))
-        subject = ", ".join(parts)
+def prompt_for(person_id, name, emotion="neutral"):
+    """The prompt, from the person's own sidecar entry + region + role + the
+    emotion fragment. `name` is carried in the signature for the register
+    sweep's shape and deliberately reaches no prompt -- the likeness policy is
+    that no real name ever does, which --self-check enforces. The seed varies
+    per emotion so the FaceDetailer pass never re-rolls the base's own noise."""
+    t = _traits[person_id]
+    region = REGION.get(person_id.split("_")[0], "European")
+    role = _roles.get(person_id, "figure")
+    noun = "woman" if t["sex"] == "female" else "man"
+    poss = "her" if t["sex"] == "female" else "his"
+    parts = [
+        "a %d-year-old %s in %s prime" % (t["age"], noun, poss),
+        region,
+        t["build"] + " build",
+        t["face"],
+        t["hair"],
+    ]
+    if "facial" in t:
+        parts.append(t["facial"])
+    parts += [
+        t["glasses"],
+        t["quirk"],
+        ROLE_BEARING[role],
+        t["wardrobe"],
+        EMOTION_FRAGMENTS[emotion],
+    ]
+    subject = ", ".join(parts)
     text = "professional studio headshot portrait photograph of %s, %s" % (subject, STYLE)
-    return seed, text, notes
+    seed = comfy.djb2(person_id + ":" + emotion)
+    return seed, text, []
 
 
-def generate(person_id, seed, text):
-    workflow = json.loads(_confined(WORKFLOW, TOOLS).read_text(encoding="utf-8"))
-    workflow["3"]["inputs"]["seed"] = seed
-    workflow["6"]["inputs"]["text"] = text
-    payload = json.dumps({"prompt": workflow, "client_id": "ws-portraits"}).encode()
-    prompt_id = json.load(_open("/prompt", data=payload,
-                                headers={"Content-Type": "application/json"}))["prompt_id"]
-    prompt_id = _safe_segment(prompt_id, "prompt id")
-    for _ in range(120):
-        time.sleep(2)
-        history = json.loads(_open("/history/" + prompt_id).read())
-        if prompt_id not in history:
-            continue
-        entry = history[prompt_id]
-        status = entry.get("status", {})
-        if status.get("status_str") == "error":
-            raise RuntimeError("ComfyUI error for %s" % person_id)
-        if not status.get("completed"):
-            continue
-        for node in entry["outputs"].values():
-            for image in node.get("images", []):
-                query = urllib.parse.urlencode({
-                    "filename": _safe_segment(image["filename"], "image filename"),
-                    "subfolder": _safe_segment(image.get("subfolder", ""), "image subfolder", allow_slash=True),
-                    "type": _safe_segment(image["type"], "image type")})
-                return _open("/view?" + query).read()
-    raise RuntimeError("timed out waiting for %s" % person_id)
+def _load_people():
+    people = []
+    for path in sorted(PEOPLE_DIR.glob("*.json")):
+        data = json.loads(comfy._confined(path, REPO).read_text(encoding="utf-8"))
+        for person in data["people"]:
+            people.append((comfy._checked_id(person["id"]), person["name"]))
+    return people
+
+
+def _banned_pattern():
+    """banned_names.txt up to its [places] marker: politician and party names,
+    enforced against every prompt. The [places] section is scoped to
+    data/companies/ by its own rule and is not prompt vocabulary."""
+    entries = []
+    for line in BANNED_NAMES.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line == "[places]":
+            break
+        if line and not line.startswith("#"):
+            entries.append(line)
+    return re.compile(r"\b(?:" + "|".join(re.escape(e) for e in entries) + r")\b", re.IGNORECASE)
+
+
+def self_check(people) -> int:
+    """Phase A's real teeth -- the five properties the suite gates on every
+    run, no GPU required. Returns the process exit code."""
+    failures = []
+
+    # 1. the sidecar covers every register id (load_traits seeded it)
+    missing = [pid for pid, _ in people if pid not in _traits]
+    if missing:
+        failures.append("sidecar missing %d ids, first: %s" % (len(missing), missing[0]))
+
+    # 2. the likeness policy, enforced: no banned name in any of the 5*213 prompts
+    pattern = _banned_pattern()
+    hits = []
+    for pid, name in people:
+        for emotion in EMOTIONS:
+            _seed, text, _notes = prompt_for(pid, name, emotion)
+            found = pattern.search(text)
+            if found:
+                hits.append("%s/%s: '%s'" % (pid, emotion, found.group(0)))
+    if hits:
+        failures.append("banned names in prompts: %s" % "; ".join(hits[:5]))
+
+    # 3. role derivation covers every person the content points at
+    role_map = roles()
+    uncovered = [pid for pid, _slot in _sweep_slots() if pid not in role_map]
+    if uncovered:
+        failures.append("role map missing slotted people: %s" % uncovered[:5])
+
+    # 4. region variety: the point is that the wall is not ONE distribution.
+    #    Not all 29 descriptions must be word-distinct (real neighbours share a
+    #    look) but the table must not have collapsed; 25 of 29 distinct plus
+    #    the explicit FRA-vs-FIN pair is the line.
+    distinct = len(set(REGION.values()))
+    if distinct < 25:
+        failures.append("only %d distinct region descriptions across %d nations" % (distinct, len(REGION)))
+    by_prefix = {}
+    for pid, _name in people:
+        by_prefix.setdefault(pid.split("_")[0], pid)
+    if "FRA" in by_prefix and "FIN" in by_prefix:
+        if REGION["FRA"] == REGION["FIN"]:
+            failures.append("FRA and FIN read the same region text")
+
+    # 5. determinism: the same id twice yields the same prompt and seed
+    for pid, name in people[:3]:
+        for emotion in EMOTIONS:
+            if prompt_for(pid, name, emotion)[:2] != prompt_for(pid, name, emotion)[:2]:
+                failures.append("prompt_for(%s, %s) is not deterministic" % (pid, emotion))
+                break
+
+    # Task 4's teeth: the five emotion prompts differ pairwise
+    for pid, name in people[:10]:
+        texts = [prompt_for(pid, name, e)[1] for e in EMOTIONS]
+        if len(set(texts)) != len(EMOTIONS):
+            failures.append("emotion prompts collide for %s" % pid)
+
+    if failures:
+        for f in failures:
+            print("FAIL: %s" % f)
+        return 1
+    print("self-check: %d people, %d sidecar entries, %d roles derived, %d region texts -- all properties hold"
+          % (len(people), len(_traits), len(role_map), distinct))
+    return 0
+
+
+def generate_base(person_id, seed, text):
+    """One base render through the base workflow: image and matting mask out."""
+    workflow = json.loads(comfy._confined(WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    workflow[BASE_SEED_NODE]["inputs"]["seed"] = seed
+    workflow[BASE_TEXT_NODE]["inputs"]["text"] = text
+    prompt_id = comfy.queue(workflow)
+    out = comfy.outputs(prompt_id)
+
+    def first_meta(node):
+        if not out.get(node):
+            raise RuntimeError("no output at node %s for %s" % (node, person_id))
+        return out[node][0]
+
+    return comfy.fetch(first_meta(BASE_IMAGE_NODE)), comfy.fetch(first_meta(BASE_MASK_NODE))
 
 
 def main():
-    people = []
-    for path in sorted(PEOPLE_DIR.glob("*.json")):
-        data = json.loads(_confined(path, REPO).read_text(encoding="utf-8"))
-        for person in data["people"]:
-            people.append((_checked_id(person["id"]), person["name"]))
+    people = _load_people()
+    global _traits, _roles
+    _traits = load_traits(people)
+    _roles = roles()
+
+    if "--self-check" in sys.argv:
+        return self_check(people)
+
+    if "--dry-run" in sys.argv:
+        for pid, name in people:
+            seed, text, _ = prompt_for(pid, name, "neutral")
+            print("%s (seed %d)\n  %s" % (pid, seed, text))
+            for emotion in EMOTIONS[1:]:
+                _s, variant, _ = prompt_for(pid, name, emotion)
+                print("  [%s] %s" % (emotion, EMOTION_FRAGMENTS[emotion]))
+        print("dry-run: %d people, nothing contacted" % len(people))
+        return 0
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    todo = [(pid, name) for pid, name in people if not _raw_path(pid).exists()]
-
-    print("register holds %d people (%d with an authored archetype); "
-          "%d already have raw output, %d to generate"
-          % (len(people), sum(1 for pid, _ in people if pid in ARCHETYPES),
-             len(people) - len(todo), len(todo)))
+    MASK_DIR.mkdir(parents=True, exist_ok=True)
+    todo = [(pid, name) for pid, name in people
+            if not (RAW_DIR / "neutral" / (pid + ".png")).exists()]
+    print("register holds %d people; %d base portraits exist, %d to generate"
+          % (len(people), len(people) - len(todo), len(todo)))
     for i, (person_id, name) in enumerate(todo):
-        seed, text, notes = prompt_for(person_id, name)
-        for note in notes:
-            print("  note: %s" % note)
-        out = _raw_path(person_id)
-        out.write_bytes(generate(person_id, seed, text))
+        seed, text, _ = prompt_for(person_id, name, "neutral")
+        image, mask = generate_base(person_id, seed, text)
+        out = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
+        out.write_bytes(image)
+        (comfy._confined(MASK_DIR / "neutral" / (person_id + ".png"), MASK_DIR)).write_bytes(mask)
         print("  [%d/%d] %s (seed %d)" % (i + 1, len(todo), person_id, seed))
-    print("done: %d raw portraits under sources/portraits/raw" % len(people))
+    print("done: base portraits under sources/portraits/raw/neutral")
     return 0
 
 
