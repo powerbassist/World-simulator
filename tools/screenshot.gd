@@ -286,6 +286,20 @@ var _city := false
 var _diverge := false
 var _election := false
 
+## V3.6, the thirty-first flag: the front door. Boots menu.tscn instead of
+## main.tscn and photographs the plate -- the real MapView over its month-0
+## viewer state under the scrim. No clock exists in the menu, so --paused is
+## accepted but a no-op there, and every main-scene staging flag is ignored.
+var _menu := false
+
+## V3.6, the thirty-second flag: the tally's two states. Stages the June 2029
+## double election (41 months -- the May 2027 presidential plate has no seats,
+## so no bars), captures the plate mid-fill, then finishes the tally the way a
+## click does and captures it settled. The election pauses the clock itself, so
+## the second frame cannot cross a day flip.
+var _tally := false
+var _tally_shot := 0
+
 ## V2.7, the twenty-sixth flag: ten years so the network term has moved the
 ## shares the accessibility column reads, the Region panel open on the league
 ## table where the new column lives.
@@ -439,6 +453,10 @@ func _init() -> void:
 			_move = true
 		elif args[i] == "--election":
 			_election = true
+		elif args[i] == "--menu":
+			_menu = true
+		elif args[i] == "--tally":
+			_tally = true
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -452,7 +470,10 @@ func _init() -> void:
 		elif args[i] == "--nation" and i + 1 < args.size():
 			_nation = args[i + 1].to_upper()
 
-	_main = load("res://src/ui/main.tscn").instantiate()
+	if _menu:
+		_main = load("res://src/ui/menu.tscn").instantiate()
+	else:
+		_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
 
 
@@ -462,7 +483,8 @@ func _process(_delta: float) -> bool:
 	# the game silently ran on (three of eight identity captures crossed a day
 	# flip before the flag ever bit). Frame 1 is still inside the first
 	# accumulated second, so no day can have flipped ahead of the freeze.
-	if _paused and not _clock_frozen:
+	# The menu has no clock to freeze and no _clock property to read.
+	if _paused and not _menu and not _clock_frozen:
 		_clock_frozen = true
 		_main._clock.paused = true
 	_frame += 1
@@ -476,26 +498,62 @@ func _process(_delta: float) -> bool:
 	# Not at _init() either, for the original reason: the map has to have been laid
 	# out and fitted before a lon/lat can be turned into the screen point the hover
 	# needs, and the legend has to have run _ready() to be told anything.
-	if _frame == _frames_wanted - APPLY_LEAD_FRAMES:
+	# The menu stages nothing -- its plate is built in _ready() and static.
+	if _frame == _frames_wanted - APPLY_LEAD_FRAMES and not _menu:
 		_apply_view()
 	if _frame < _frames_wanted:
 		return false
 
+	# V3.6: the tally's two frames. First the plate mid-fill, then the skip --
+	# through _gui_input, the same entry a real click takes -- and two frames
+	# on, the settled plate. Writing both costs one run instead of two.
+	# Gated on not _menu: the menu has no _election_panel, and a --menu --tally
+	# combination would otherwise dereference it every frame after the first
+	# shot and never quit (the V3.6 review's minor).
+	if _tally and not _menu:
+		if _tally_shot == 0:
+			if not _write_frame(_out_path, "mid-tally"):
+				return true
+			_tally_shot = 1
+			var ev := InputEventMouseButton.new()
+			ev.pressed = true
+			ev.button_index = MOUSE_BUTTON_LEFT
+			_main._election_panel._gui_input(ev)
+			return false
+		if _frame < _frames_wanted + 2:
+			return false
+		if not _write_frame(_final_path(), "tally settled"):
+			return true
+		quit(0)
+		return true
+
+	if not _write_frame(_out_path, ""):
+		return true
+	quit(0)
+	return true
+
+
+## Grabs the framebuffer and saves it. Returns false (having quit) when the
+## grab failed -- run windowed, not --headless.
+func _write_frame(path: String, note: String) -> bool:
 	var image := root.get_texture().get_image()
 	if image == null:
 		printerr("no framebuffer -- run windowed, not --headless")
 		quit(1)
-		return true
-
-	var error := image.save_png(_out_path)
+		return false
+	var error := image.save_png(path)
 	if error != OK:
-		printerr("could not write %s: %d" % [_out_path, error])
+		printerr("could not write %s: %d" % [path, error])
 		quit(1)
-		return true
-
-	print("wrote %s (%dx%d)" % [ProjectSettings.globalize_path(_out_path), image.get_width(), image.get_height()])
-	quit(0)
+		return false
+	var suffix := " (%s)" % note if note != "" else ""
+	print("wrote %s (%dx%d)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(), suffix])
 	return true
+
+
+## The settled tally's own file, beside the mid-fill one.
+func _final_path() -> String:
+	return _out_path.get_basename() + "_final.png"
 
 
 ## Drives the map through its public surface rather than synthesising input:
@@ -563,6 +621,8 @@ func _apply_view() -> void:
 		_open_the_partition()
 	if _election:
 		_stage_the_election()
+	if _tally:
+		_stage_the_tally()
 	if _diverge:
 		_let_the_regions_diverge()
 	if _network:
@@ -1169,6 +1229,19 @@ func _stage_the_election() -> void:
 	if _main == null or _main._clock == null:
 		return
 	var target: int = _main._clock.year * 12 + _main._clock.month + 16
+	while _main._clock.year * 12 + _main._clock.month < target:
+		_main._clock.advance_one_day()
+	_main._update_top_bar()
+
+
+## V3.6: 41 months, the June 2029 double election -- the first plate with seat
+## bars, so the one the tally exists on. The May 2027 presidential result fires
+## on the way (the advance is manual, it does not stop for the pause) and its
+## plate is replaced, which is the same read a player gets.
+func _stage_the_tally() -> void:
+	if _main == null or _main._clock == null:
+		return
+	var target: int = _main._clock.year * 12 + _main._clock.month + 41
 	while _main._clock.year * 12 + _main._clock.month < target:
 		_main._clock.advance_one_day()
 	_main._update_top_bar()

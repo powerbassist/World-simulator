@@ -226,6 +226,14 @@ So the signal holds: a budget the opinion model itself flags as fiscally
 unsustainable wins, and wins more comfortably than the starting assembly. This is
 recorded rather than fixed here, per the roadmap's instruction — no opinion or
 election constant in this session was retuned to make it come out differently.
+
+The result plate's tally (V3.6) is display-only: each seat bar tweens to a
+final that `show_results()` already computed, skippable by any press, and no
+model quantity is recomputed or gated on the animation. The attribution block
+on the verdict carries one told line stating the agency bound the V3.0 probe
+measured (approval prices change, not level); it says the bound, it does not
+re-open it.
+
 It is [[ROADMAP|S10]]'s first concrete balance question: whether unlimited
 short-term deficit spending should cost votes *within* a single term, not only
 across the one after it.

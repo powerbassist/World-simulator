@@ -18,6 +18,9 @@ extends SceneTree
 ## a panel written for a single result.
 
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const Sting = preload("res://src/ui/sting.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const ElectionPanel = preload("res://src/ui/election_panel.gd")
 
 const EXEC_MONTHS := 16       # January 2026 to May 2027, FRA's presidential term.
 const TARGET_MONTHS := 41     # January 2026 to June 2029, the Assembly's term.
@@ -32,8 +35,17 @@ var _main
 var _frame := 0
 var _done := false
 
+## suite-exclusive: backs up and restores user://settings.cfg -- the sting
+## checks write the Sound setting, and exclusivity is what keeps this file off
+## the parallel pool while test_menu.gd mutates the same file. The runner's
+## regex reads this line's exact shape; a reworded tag silently re-parallelises
+## the test (the V3.6 review's blocker).
+var _had_settings := false
+var _settings_backup := ""
+
 
 func _init() -> void:
+	_backup_settings()
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
 
@@ -52,9 +64,32 @@ func _process(_delta: float) -> bool:
 		_check_modal_blocks_the_world()
 		_run_national_text()
 	elif _frame == NATIONAL_GEOMETRY_FRAME:
+		_check_told_once()
+		_check_tally()
 		_check_national_geometry()
+		_check_sting_gate()
 		_finish()
 	return false
+
+
+## user://settings.cfg does not outlive this run changed: the sting checks
+## wrote it, so the player's real file (or its absence) goes back at the end.
+func _backup_settings() -> void:
+	_had_settings = FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if _had_settings:
+		_settings_backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", true)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+
+
+func _restore_settings() -> void:
+	if _had_settings:
+		var f := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		f.store_string(_settings_backup)
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 
 
 func _run_exec_text() -> void:
@@ -95,6 +130,13 @@ func _run_exec_text() -> void:
 	var lower := exec_text.to_lower()
 	if lower.find("what decided it") > lower.find("vote share"):
 		_fail("the attribution reads below the party table; the verdict must lead")
+
+	# V3.6: the one told thing the agency work earned. The verdict's own
+	# attribution carries the bound in the game's voice; on a double-election
+	# panel it must appear ONCE, on the verdict, not on every section.
+	var told_count := exec_text.count(ElectionPanel.TOLD_LINE)
+	if told_count < 1:
+		_fail("the verdict attribution is missing the told line: %s" % ElectionPanel.TOLD_LINE)
 
 	# The plate grew to hold a verdict and a table: 640 was the budget panel's
 	# size, and the seat bars need the width.
@@ -187,6 +229,69 @@ func _run_national_text() -> void:
 		_fail("won the election but the panel offers no Continue button")
 	if not ns.in_government and has_continue:
 		_fail("lost the election but the panel still offers Continue")
+
+	_check_sting_wiring()
+
+
+## V3.6: on the double-election panel the told line rides the verdict's
+## attribution alone -- a sentence printed under every table would be
+## wallpaper. Counted here rather than in _run_national_text(): that frame is
+## the one show_results ran in, and the previous panel's sections are
+## queue_free()d but not yet reaped, so a text read there sees the ghost's
+## copy too (the fold finding: a same-frame read answers for the last frame).
+func _check_told_once() -> void:
+	var text := _collect_text(_main._election_panel)
+	if text.count(ElectionPanel.TOLD_LINE) != 1:
+		_fail("the told line appears %d times on the double-election panel, expected once" % text.count(ElectionPanel.TOLD_LINE))
+
+
+## V3.6: show_results() wired the sting. Counted on the same frame the panel
+## opened -- a finished player frees itself when the 1.4 s stream ends, which
+## no frame gap here can reach, so the count is the wiring's word, not a race.
+func _check_sting_wiring() -> void:
+	var players := _count_sting_players()
+	if players < 1:
+		_fail("sound is on but show_results() placed no sting player on the plate")
+
+
+## V3.6: the sting itself. The synth must be a pure function of the sample
+## index (two builds byte-identical, exact length), and the Sound setting must
+## gate Sting.play() with no player left behind when it is Off. The gate is
+## driven directly and synchronously: one frame, so no finished-player reaping
+## can touch the counts.
+func _check_sting_gate() -> void:
+	var a := Sting._synth()
+	var b := Sting._synth()
+	if a != b:
+		_fail("the sting synth is not deterministic")
+	if a.size() != 123480:  # 2 bytes x 44100 Hz x 1.4 s, 16-bit mono
+		_fail("sting buffer is %d bytes, expected 123480" % a.size())
+
+	var panel = _main._election_panel
+	var before := _count_sting_players()
+	_set_sound(false)
+	Sting.play(panel)
+	if _count_sting_players() != before:
+		_fail("sound is off but Sting.play() placed a player anyway")
+	_set_sound(true)
+	Sting.play(panel)
+	if _count_sting_players() != before + 1:
+		_fail("sound is on but Sting.play() placed no player")
+
+
+func _count_sting_players() -> int:
+	var n := 0
+	for c in _main._election_panel.get_children():
+		if c is AudioStreamPlayer:
+			n += 1
+	return n
+
+
+func _set_sound(enabled: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", enabled)
+	cfg.save(SettingsPanel.CONFIG_PATH)
 
 
 ## V2.9 task 7: the modal blocks the world behind it -- a full-rect dim with
@@ -308,6 +413,7 @@ func _fail(message: String) -> void:
 
 func _finish() -> void:
 	_done = true
+	_restore_settings()
 	if _failures.is_empty():
 		print("test_election_panel: all checks passed")
 		quit(0)
@@ -315,3 +421,43 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## V3.6: the tally. Bars start empty and fill by tween; any press on the plate
+## snaps them to the finals the result already computed; a footer button stays
+## live throughout (the test drives dismissal itself below, so a swallowed
+## click here would stall the whole ladder). The mid-animation read leans on
+## the stagger: the LAST bar carries (n-1) x 0.08 s of delay plus 1.2 s of
+## fill, which two frames cannot consume.
+func _check_tally() -> void:
+	var panel = _main._election_panel
+	if panel._tally_pairs.is_empty():
+		_fail("the national panel opened with no tally pairs (no seat bars built)")
+		return
+	# The verdict and the ledger numbers are static information: they were
+	# complete on the frame the animation started, and the finals recorded in
+	# the pairs must be exactly what the bars are filling toward.
+	var pairs: Array = panel._tally_pairs.duplicate()
+	for p in pairs:
+		if float(p["final"]) <= 0.0:
+			_fail("a tally final reads %.2f; the result's own bar math is positive" % p["final"])
+	if panel._tally_tween == null or not panel._tally_tween.is_valid():
+		_fail("the tally tween is not running while the panel is up")
+		return
+	var last: Dictionary = pairs[pairs.size() - 1]
+	if float(last["bar"].value) >= float(last["final"]):
+		_fail("the last seat bar reached its final before the stagger allowed it")
+	# Skip: a press anywhere on the plate finishes the tally instantly.
+	var ev := InputEventMouseButton.new()
+	ev.pressed = true
+	ev.button_index = MOUSE_BUTTON_LEFT
+	panel._gui_input(ev)
+	for p in pairs:
+		# Tolerance, not equality: bar.value round-trips a 32-bit property while
+		# `final` is a 64-bit double -- the printed digits agree and the last
+		# bits do not, and a hundredth of a seat-percent is far under one pixel
+		# of bar.
+		if not is_instance_valid(p["bar"]) or absf(float(p["bar"].value) - float(p["final"])) > 0.005:
+			_fail("after skip, a seat bar reads %.4f against final %.4f" % [p["bar"].value, p["final"]])
+	if not panel._tally_pairs.is_empty():
+		_fail("the tally register did not clear on skip")

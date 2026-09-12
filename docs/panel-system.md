@@ -603,3 +603,67 @@ half a mark is worthless without.
 
 The tool gained `--cluster <id>`, which pulls a drawer open so a frame can show the
 entry mark as well as the cluster mark.
+
+## 18. The front door and the ceremony (V3.6)
+
+The 2026-09-05 playtest's verdict on the menu was **"menu shows none of the
+game"**, and the row that answered it is three small machines on surfaces that
+already existed.
+
+**The plate is the game's own map, not a copy of it.** `menu.gd` already ran
+`DataLoader.load_all()` (New Game needs the roster); what V3.6 adds is a real
+`map_view.gd` over a real throwaway `GameState.new_game(loader, "FRA")` --
+month 0, built and discarded in `_ready()` -- under a 45 % scrim of the old
+background colour. The refused alternative was a reduced static drawer reading
+only the loader: it would have duplicated the lon/lat->screen projection that
+map_view's own header calls "the one transform drawing, hit-testing and the
+minimap all share", and two copies of that predicate is how one of them
+quietly stops agreeing with the other. Month 0 is clean by construction -- the
+unrest ring needs grievance past the threshold, the campaign ring a running
+effort, markers and plants non-empty registers, and all four are empty before
+the first tick. The plate is mouse-dead (`MOUSE_FILTER_IGNORE`, set AFTER
+`add_child` because map_view's own `_ready()` claims STOP and would clobber an
+earlier assignment), has no `_process`, and never redraws: the door is a
+window, not a second game. The boot cost was measured before the decision was
+final (tools/menu_boot_probe.gd, threshold declared first): `new_game()` adds
+**20 ms** against a 300 ms degrade clause, so the plate holds.
+
+**The tally is a reveal, never a recompute.** `show_results()` records each
+bar's final at build time and starts it empty; a Tween (time-based, never
+frame-counted) walks the bars to the recorded finals with an 0.08 s stagger,
+1.2 s each. The verdict, the ledger numbers and the attribution are complete
+on the frame the animation starts -- information first, ornament second. Any
+click on the plate finishes the tally instantly through `_gui_input()`;
+Space or Enter on the focused footer button dismisses outright. The button's
+press is deliberately NOT routed through the skip path: a click that lands on
+Continue is a dismissal the player meant, and a ceremony that could eat that
+click would be a ceremony that ate a result. The test found the float trap the
+design implied: `bar.value` round-trips a 32-bit property, `final` is a 64-bit
+double, so "settled" is a 0.005 tolerance, not an equality.
+
+**The sting is synthesized, which dissolves the asset obligations.** The
+project's first sound is `src/ui/sting.gd`: a D-chord toll (D3-A3-D4, 1.4 s,
+-8 dB, 12 ms attack) generated as PCM into an `AudioStreamWAV`, cached in a
+static. No licence to read, no attribution file to keep true, no `.import` to
+commit, no bus layout in `project.godot`, no fresh-clone loading question --
+the fonts' bytes-not-`load()` discipline exists because a font cannot be
+generated; a chord can. Two builds are byte-identical and the test pins it.
+One `AudioStreamPlayer`, self-freeing on `finished`, gated at play time by
+`SettingsPanel.sound_enabled()` -- read from `settings.cfg` per call so the
+in-game pause menu's change governs the very next sting with no second wiring
+path. Default On; the settings screen's own header claimed "there is no audio"
+and that sentence was rewritten in the same commit.
+
+**The told line.** One sentence on the verdict's attribution and nowhere else
+on a double-election panel (the test counts once): the V3.0 probe's route 3,
+in the game's voice -- approval prices change, not level, so a term that ran
+the country better can poll worse than one that did nothing. The probe's three
+design routes remain the author's open call; the line states the bound, it
+does not resolve it.
+
+**Two test findings worth keeping.** The double-election panel counts its text
+at the geometry frame, not the show_results frame, because the previous
+panel's sections are `queue_free()`d but not yet reaped in the same frame --
+the fold finding again, a same-frame read answering for the last frame. And
+`ConfigFile` has no per-key erase, so "the default fires on an absent key" is
+tested by rebuilding the file without the audio section.

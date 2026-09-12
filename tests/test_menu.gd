@@ -63,6 +63,8 @@ func _process(_delta: float) -> bool:
 		2:
 			_check_structure()
 			_check_settings()
+			_check_sound_setting()
+			_check_plate()
 			_check_scenario_select()
 			_write_save()
 			return false
@@ -188,6 +190,72 @@ func _check_settings() -> void:
 	else:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 		root.content_scale_factor = 1.0
+
+
+## V3.6: the Sound row persists, and sound_enabled() reads the file rather than
+## the panel. OptionButton.select() emits nothing, so every mutation here calls
+## _save_and_apply() explicitly, like _check_settings() above. Rides this file's
+## own backup/restore discipline: the real settings.cfg goes back exactly as it
+## was found (or stays absent).
+func _check_sound_setting() -> void:
+	var panel = _menu._settings_panel
+	if panel == null:
+		_fail("menu did not build its settings panel")
+		return
+
+	var backup := ""
+	var had_config := FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if had_config:
+		backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
+
+	# Off writes the key; the static read sees it on the next launch's terms.
+	panel._sound_button.select(0)
+	panel._save_and_apply()
+	if SettingsPanel.sound_enabled():
+		_fail("Sound set to Off but sound_enabled() reads true")
+
+	panel._sound_button.select(1)
+	panel._save_and_apply()
+	if not SettingsPanel.sound_enabled():
+		_fail("Sound set to On but sound_enabled() reads false")
+
+	# The default must be the ABSENT key's answer, not a stored true: store a
+	# false, then save a config that carries no audio section at all -- true can
+	# now only mean the default fired. (ConfigFile has no per-key erase, so the
+	# section is dropped by rebuilding the file without it.)
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", false)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	if SettingsPanel.sound_enabled():
+		_fail("stored [audio] enabled=false but sound_enabled() reads true")
+	var fresh := ConfigFile.new()
+	fresh.set_value("display", "ui_scale_index", 1)
+	fresh.save(SettingsPanel.CONFIG_PATH)
+	if not SettingsPanel.sound_enabled():
+		_fail("no [audio]/enabled in settings.cfg but sound_enabled() is not the default true")
+
+	if had_config:
+		var restore := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		restore.store_string(backup)
+		restore.close()
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
+
+
+## V3.6: the front door shows the game it opens. A real MapView over a real
+## month-0 viewer state, and mouse-dead -- a window onto the game, not a second
+## game to play before the menu. Built in the menu's _ready(), so frame 2 is
+## the first frame anything can be read off it.
+func _check_plate() -> void:
+	if _menu._viewer_state == null:
+		_fail("the menu built no viewer GameState for the plate")
+	if _menu._plate == null or not _menu._plate.is_inside_tree():
+		_fail("the menu has no map plate")
+	elif _menu._plate.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		_fail("the menu plate is interactive (mouse_filter is not IGNORE)")
+	elif not _menu._plate.visible:
+		_fail("the menu plate is built but hidden")
 
 
 ## A save the menu can be asked to continue from. Written straight through
