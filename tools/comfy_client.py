@@ -123,11 +123,16 @@ def fetch(meta: dict) -> bytes:
 
 
 def upload_image(data: bytes, name: str) -> str:
-    """POST one PNG into ComfyUI's input dir; return the name LoadImage wants."""
+    """POST one PNG into ComfyUI's input dir; return the name LoadImage wants.
+    overwrite=true keeps the name stable across re-uploads of the same base --
+    without it the server renames to "x (1).png" and the input dir grows one
+    copy per emotion pass."""
     boundary = "ws-portraits-boundary"
     body = (("--%s\r\nContent-Disposition: form-data; name=\"image\"; filename=\"%s\"\r\n"
              "Content-Type: image/png\r\n\r\n" % (boundary, name)).encode()
-            + data + ("\r\n--%s--\r\n" % boundary).encode())
+            + data
+            + ("\r\n--%s\r\nContent-Disposition: form-data; name=\"overwrite\"\r\n\r\ntrue\r\n"
+               "--%s--\r\n" % (boundary, boundary)).encode())
     meta = json.loads(_open("/upload/image", data=body, headers={
         "Content-Type": "multipart/form-data; boundary=%s" % boundary}).read())
     return _safe_segment(meta.get("name"), "uploaded image name")

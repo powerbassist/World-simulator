@@ -442,6 +442,27 @@ def generate_base(person_id, seed, text):
     return comfy.fetch(first_meta(BASE_IMAGE_NODE)), comfy.fetch(first_meta(BASE_MASK_NODE))
 
 
+def generate_expression(person_id, emotion, seed, text):
+    """One FaceDetailer inpaint over the person's own base: image and matting
+    mask out. The base is uploaded under a per-person name with overwrite, so
+    all four expression passes of one person read the same pixels in."""
+    base_path = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
+    workflow = json.loads(comfy._confined(EXPRESSION_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    workflow[EXPR_LOAD_NODE]["inputs"]["image"] = comfy.upload_image(
+        base_path.read_bytes(), person_id + "_base.png")
+    workflow[EXPR_TEXT_NODE]["inputs"]["text"] = text
+    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = seed
+    prompt_id = comfy.queue(workflow)
+    out = comfy.outputs(prompt_id, timeout_s=900)
+
+    def first_meta(node):
+        if not out.get(node):
+            raise RuntimeError("no output at node %s for %s/%s" % (node, person_id, emotion))
+        return out[node][0]
+
+    return comfy.fetch(first_meta(EXPR_IMAGE_NODE)), comfy.fetch(first_meta(EXPR_MASK_NODE))
+
+
 def main():
     people = _load_people()
     global _traits, _roles
@@ -463,6 +484,10 @@ def main():
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     MASK_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Pass 1: the base (neutral), for every person missing one. All 213 are
+    # re-rendered on the first V3.7 run -- they are the wall the author
+    # rejected as "too lookalike", and they were leaving duotone regardless.
     todo = [(pid, name) for pid, name in people
             if not (RAW_DIR / "neutral" / (pid + ".png")).exists()]
     print("register holds %d people; %d base portraits exist, %d to generate"
@@ -470,11 +495,26 @@ def main():
     for i, (person_id, name) in enumerate(todo):
         seed, text, _ = prompt_for(person_id, name, "neutral")
         image, mask = generate_base(person_id, seed, text)
-        out = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
-        out.write_bytes(image)
-        (comfy._confined(MASK_DIR / "neutral" / (person_id + ".png"), MASK_DIR)).write_bytes(mask)
-        print("  [%d/%d] %s (seed %d)" % (i + 1, len(todo), person_id, seed))
-    print("done: base portraits under sources/portraits/raw/neutral")
+        comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR).write_bytes(image)
+        comfy._confined(MASK_DIR / "neutral" / (person_id + ".png"), MASK_DIR).write_bytes(mask)
+        print("  [%d/%d] %s base (seed %d)" % (i + 1, len(todo), person_id, seed))
+
+    # Pass 2: the four non-neutral expressions, FaceDetailer over each base.
+    # A person with no base is skipped here -- the base pass creates it; this
+    # guard is what makes either pass alone resumable.
+    for emotion in EMOTIONS[1:]:
+        todo_e = [(pid, name) for pid, name in people
+                  if (RAW_DIR / "neutral" / (pid + ".png")).exists()
+                  and not (RAW_DIR / emotion / (pid + ".png")).exists()]
+        print("%s: %d to generate" % (emotion, len(todo_e)))
+        for i, (person_id, name) in enumerate(todo_e):
+            seed, text, _ = prompt_for(person_id, name, emotion)
+            image, mask = generate_expression(person_id, emotion, seed, text)
+            comfy._confined(RAW_DIR / emotion / (person_id + ".png"), RAW_DIR).write_bytes(image)
+            comfy._confined(MASK_DIR / emotion / (person_id + ".png"), MASK_DIR).write_bytes(mask)
+            print("  [%d/%d] %s %s (seed %d)" % (i + 1, len(todo_e), person_id, emotion, seed))
+
+    print("done: portraits and masks under sources/portraits/{raw,mask}/<emotion>")
     return 0
 
 
