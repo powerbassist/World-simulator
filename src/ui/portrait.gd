@@ -153,8 +153,20 @@ static func framed_for(person_id: String, size: Vector2,
 static func _stage(person_id: String, size: Vector2,
 		emotion: Emotion, scene: Scene) -> Control:
 	var scene_name: String = SCENE_NAMES[scene]
-	var path := SCENES_DIR.path_join("%s_%d.webp" % [scene_name, _djb2(person_id + ":" + scene_name) % 3])
-	var backdrop_tex := _scene_texture(path)
+	# The person's own room first: <scene>_<NATION>_<n>.webp carries the flag
+	# they serve and the view from their capital's window (rendered per nation
+	# by backgrounds_generate.py --nation). The nation comes off the id's own
+	# prefix, the same derivation the loader already trusts. The generic
+	# <scene>_<n>.webp is the fallback -- it is deliberately flag-free, so a
+	# nation without variants still reads as nowhere-in-particular rather
+	# than as somebody else's country.
+	var variant := _djb2(person_id + ":" + scene_name) % 3
+	var nation := person_id.split("_")[0]
+	var backdrop_tex := _scene_texture(
+		SCENES_DIR.path_join("%s_%s_%d.webp" % [scene_name, nation, variant]))
+	if backdrop_tex == null:
+		backdrop_tex = _scene_texture(
+			SCENES_DIR.path_join("%s_%d.webp" % [scene_name, variant]))
 	if backdrop_tex == null:
 		return null
 	var backdrop := TextureRect.new()

@@ -252,6 +252,38 @@ func _check_scene_files() -> void:
 			if not FileAccess.file_exists(path):
 				_fail("scene '%s' is missing its committed backdrop '%s' -- the composite would degrade silently for every person" % [scene_name, path])
 
+	# Per-nation variants (<scene>_<NATION>_<n>.webp): optional per scene and
+	# nation, but never partial -- the variant pool exists as a pool of three
+	# or not at all, and every name must parse as a scene the display stages
+	# plus a nation code. This is the flag-in-the-office rule: a Belgian
+	# monarch's backdrop must not be somebody else's country.
+	var nation_counts := {}
+	for f in DirAccess.get_files_at(SCENES_DIR):
+		if not f.ends_with(".webp"):
+			continue
+		var base := f.get_basename()
+		var matched := false
+		for scene_name in Portrait.SCENE_NAMES.values():
+			if not base.begins_with(scene_name + "_"):
+				continue
+			var tail := base.substr(scene_name.length() + 1)
+			var us := tail.rfind("_")
+			if us == -1 or not tail.substr(us + 1).is_valid_int():
+				continue
+			matched = true
+			var head := tail.substr(0, us)
+			if head != "":
+				if head.length() != 3 or head != head.to_upper():
+					_fail("backdrop '%s' carries no valid nation code" % f)
+				else:
+					var key := scene_name + "_" + head
+					nation_counts[key] = int(nation_counts.get(key, 0)) + 1
+		if not matched:
+			_fail("backdrop '%s' matches no scene naming convention" % f)
+	for key in nation_counts:
+		if nation_counts[key] != 3:
+			_fail("nation backdrop '%s' has %d of 3 variants" % [key, nation_counts[key]])
+
 
 ## The two-sources rule: Summit.SCENES is what the loader VALIDATES the data
 ## against; Portrait.SCENE_NAMES is what the display COMPOSITES from. Either

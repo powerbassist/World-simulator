@@ -478,6 +478,22 @@ def generate_expression(person_id, emotion, seed, text):
     return comfy.fetch(first_meta(EXPR_IMAGE_NODE)), comfy.fetch(first_meta(EXPR_MASK_NODE))
 
 
+def _only_filter(people):
+    """--only <person_id> (repeatable): generate a slice, not the wall. This is
+    Phase B's own verification shape -- a three-person slice (three nations,
+    three regions, three roles) before the 2.5 h run -- and needs no temp-file
+    surgery on the register. Traits are still seeded for the WHOLE register;
+    only generation is filtered."""
+    pids = set()
+    args = sys.argv
+    for i, a in enumerate(args):
+        if a == "--only" and i + 1 < len(args):
+            pids.add(comfy._checked_id(args[i + 1]))
+    if not pids:
+        return people
+    return [(pid, name) for pid, name in people if pid in pids]
+
+
 def main():
     people = _load_people()
     global _traits, _roles
@@ -488,7 +504,7 @@ def main():
         return self_check(people)
 
     if "--dry-run" in sys.argv:
-        for pid, name in people:
+        for pid, name in _only_filter(people):
             seed, text, _ = prompt_for(pid, name, "neutral")
             print("%s (seed %d)\n  %s" % (pid, seed, text))
             for emotion in EMOTIONS[1:]:
@@ -499,11 +515,15 @@ def main():
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     MASK_DIR.mkdir(parents=True, exist_ok=True)
+    for emotion in EMOTIONS:
+        (RAW_DIR / emotion).mkdir(parents=True, exist_ok=True)
+        (MASK_DIR / emotion).mkdir(parents=True, exist_ok=True)
+    slice_people = _only_filter(people)
 
     # Pass 1: the base (neutral), for every person missing one. All 213 are
     # re-rendered on the first V3.7 run -- they are the wall the author
     # rejected as "too lookalike", and they were leaving duotone regardless.
-    todo = [(pid, name) for pid, name in people
+    todo = [(pid, name) for pid, name in slice_people
             if not (RAW_DIR / "neutral" / (pid + ".png")).exists()]
     print("register holds %d people; %d base portraits exist, %d to generate"
           % (len(people), len(people) - len(todo), len(todo)))
@@ -518,7 +538,7 @@ def main():
     # A person with no base is skipped here -- the base pass creates it; this
     # guard is what makes either pass alone resumable.
     for emotion in EMOTIONS[1:]:
-        todo_e = [(pid, name) for pid, name in people
+        todo_e = [(pid, name) for pid, name in slice_people
                   if (RAW_DIR / "neutral" / (pid + ".png")).exists()
                   and not (RAW_DIR / emotion / (pid + ".png")).exists()]
         print("%s: %d to generate" % (emotion, len(todo_e)))
