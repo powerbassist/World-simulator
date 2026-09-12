@@ -276,7 +276,7 @@ func _check_scene_files() -> void:
 				if head.length() != 3 or head != head.to_upper():
 					_fail("backdrop '%s' carries no valid nation code" % f)
 				else:
-					var key := scene_name + "_" + head
+					var key: String = scene_name + "_" + head
 					nation_counts[key] = int(nation_counts.get(key, 0)) + 1
 		if not matched:
 			_fail("backdrop '%s' matches no scene naming convention" % f)
