@@ -277,6 +277,12 @@ class Cockpit(tk.Tk):
             while True:
                 line = fh.readline()
                 if line:
+                    # The drain in _start/load_results bounds the backlog,
+                    # not the stream: a replaced run's tail can wake once
+                    # more and read fresh lines. Token-check before every
+                    # put so a stale thread can never speak at all.
+                    if self._run_token != token:
+                        return
                     self.q.put(line)
                     try:
                         if json.loads(line).get("event") == "summary":
