@@ -202,8 +202,12 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
                "end": time.monotonic()}
         if check is None:
             plain[test] = rec
+            # The log lands when the child finishes, not at the report
+            # phase -- the cockpit's reason a finished test is clickable
+            # DURING a run. The report phase rewrites it identically.
+            rel = writer.write_log_text(test, out + ("\n" if out else ""))
             writer.event({"event": "done", "test": test, "status": status,
-                          "duration": round(rec["end"] - t0, 3)})
+                          "duration": round(rec["end"] - t0, 3), "log": rel})
         else:
             children[test][check] = rec
             writer.event({"event": "child_done", "test": test, "check": check,
@@ -242,6 +246,12 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
     futures: list = []
     interrupted = False
     try:
+        # One start event per test, in registry order, at submission: the
+        # cockpit's live "running" state (plain children emit no per-test
+        # start of their own, and a queued test is indistinguishable from a
+        # never-run one without this).
+        for t in tests:
+            writer.event({"event": "start", "test": t})
         # The exclusive lane is one worker: two tests that back up and
         # restore the same user:// state cannot overlap, structurally.
         with ThreadPoolExecutor(max_workers=max(1, jobs_n)) as pool, \
@@ -302,9 +312,12 @@ class RunWriter:
             self._events.flush()
 
     def write_log(self, result: TestResult) -> str:
-        rel = "tests/%s.log" % result.name.removeprefix("tests/")
+        return self.write_log_text(result.name, result.log_text)
+
+    def write_log_text(self, name: str, text: str) -> str:
+        rel = "tests/%s.log" % name.removeprefix("tests/")
         (self.dir / rel).parent.mkdir(parents=True, exist_ok=True)
-        (self.dir / rel).write_text(result.log_text, encoding="utf-8")
+        (self.dir / rel).write_text(text, encoding="utf-8")
         return rel
 
     def finish(self, results: list[TestResult], interrupted: bool, jobs: int) -> int:

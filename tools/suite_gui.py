@@ -7,12 +7,19 @@ events.ndjson, and shows one row per test with status, duration and full
 output on click. Re-run goes through the runner, so there is one execution
 path and this file cannot drift from it. Stdlib tkinter only.
 
-Event shapes actually emitted by suite_runner.py: a plain test gives one
-worker `done` (test/status/duration, no log) and later a report-phase `done`
-that adds `log`; a sharded test gives `child_start`/`child_done` per check
-plus that same final `done`. There are no `start` events at all, so a row
-exists only from its first `done` onward and last-done-wins is exactly the
-right merge.
+It runs on open: the author's 2026-09-12 verdict on the first version was
+"not automatic" -- a window of grey dashes demanding a click before doing
+its one job. --no-run opts out; --attach never auto-runs (it is watching
+someone else's run).
+
+Event shapes actually emitted by suite_runner.py: a `start` per test at
+submission; a plain test gives one worker `done` (test/status/duration/log
+-- the log lands with the child, so a finished test is clickable mid-run)
+and later a report-phase `done` that is the same shape; a sharded test gives
+`child_start`/`child_done` per check plus the final `done` (its log exists
+only then -- children complete out of order and the artifact is the ordered
+concat). A run that dies before its summary becomes a `runner_gone` event
+here, synthesized by the tail thread.
 """
 from __future__ import annotations
 
@@ -59,21 +66,33 @@ def registry() -> list[str]:
 def rows_from_events(lines: list[str]) -> dict[str, dict]:
     """Pure: events.ndjson lines -> per-test row state. Selftested.
 
-    Last done wins, which is what makes the runner's two-done shape merge
-    correctly (the worker's log-less done, then the report-phase done with
-    one), and `log` is only ever taken from a done that carries one --
-    child_done lines count checks and never invent output."""
+    `start` opens a row as running and RESETS it -- that is what makes a
+    re-run show fresh state instead of the previous run's verdicts. `done`
+    is last-wins, which merges the runner's worker-done/report-done pair,
+    and `log` is only ever taken from a done that carries one; child_start
+    marks running without inventing output."""
     rows: dict[str, dict] = {}
     for line in lines:
         try:
             e = json.loads(line)
         except json.JSONDecodeError:
             continue  # a torn tail line while the writer is mid-write
-        if e.get("event") == "done":
+        ev = e.get("event")
+        if ev == "start":
+            rows[e["test"]] = {"status": "running", "duration": 0.0,
+                               "log": "", "checks": 0}
+        elif ev == "child_start":
+            r = rows.setdefault(e["test"], {"status": "running", "duration": 0.0,
+                                            "log": "", "checks": 0})
+            r["status"] = "running"
+        elif ev == "done":
             r = rows.setdefault(e["test"], {})
+            checks = r.get("checks", 0)
             r.update({"status": e["status"], "duration": e["duration"],
                       "log": e.get("log", "")})
-        elif e.get("event") == "child_done":
+            if checks:
+                r["checks"] = checks  # child_done accounting outlives the done
+        elif ev == "child_done":
             r = rows.setdefault(e["test"], {"status": "running", "duration": 0.0,
                                             "log": "", "checks": 0})
             r["checks"] = r.get("checks", 0) + 1
@@ -106,6 +125,8 @@ class Cockpit(tk.Tk):
         self.proc: subprocess.Popen | None = None
         self.q: queue.Queue = queue.Queue()
         self.summary: dict | None = None
+        self.gone: dict | None = None
+        self.note: str | None = None
         self.launched: list[str] = []
         self._escalate: threading.Timer | None = None
 
@@ -127,26 +148,34 @@ class Cockpit(tk.Tk):
                                 command=self.refresh)
             rb.pack(side="left", padx=3)
 
-        # ttk's panedwindow, not tk's: only the ttk one takes a weight per
-        # pane (the classic widget's add() rejects it with TclError).
-        pane = ttk.PanedWindow(self, orient="vertical")
-        pane.pack(fill="both", expand=True)
+        # Plain pack, no paned splitter: the ttk panedwindow's initial sash
+        # is wherever requested sizes land, and both real windows opened
+        # with the log pane either a ~10px sliver or the tree crushed -- the
+        # status label ended at 0px either way. Fixed log height, tree takes
+        # the rest, status is the last thing packed and therefore always
+        # visible.
         cols = ("status", "test", "seconds")
-        self.tree = ttk.Treeview(pane, columns=cols, show="headings",
+        self.tree = ttk.Treeview(self, columns=cols, show="headings",
                                  selectmode="browse")
         for c, w in zip(cols, (90, 420, 90)):
             self.tree.heading(c, text=c)
             self.tree.column(c, width=w, anchor="w")
-        pane.add(self.tree, weight=3)
-        self.out = tk.Text(pane, wrap="none", bg="#111", fg="#ccc")
-        pane.add(self.out, weight=2)
+        self.tree.pack(fill="both", expand=True)
+        outframe = tk.Frame(self)
+        outframe.pack(fill="x")
+        xsb = tk.Scrollbar(outframe, orient="horizontal")
+        self.out = tk.Text(outframe, wrap="none", bg="#111", fg="#ccc",
+                           height=12, font=("Consolas", 9),
+                           xscrollcommand=xsb.set)
+        xsb.pack(side="bottom", fill="x")
+        self.out.pack(side="left", fill="both", expand=True)
+        self.status = tk.Label(self, text="idle", anchor="w")
+        self.status.pack(fill="x", padx=8, pady=4)
         self.tree.bind("<<TreeviewSelect>>", self.show_log)
         for tag, color in (("pass", "#0a7a2f"), ("fail", "#b02020"),
                            ("timeout", "#b06010"), ("running", "#8a6d1a")):
             self.tree.tag_configure(tag, foreground=color)
 
-        self.status = tk.Label(self, text="idle", anchor="w")
-        self.status.pack(fill="x", padx=8, pady=4)
         for t in tests:
             self.tree.insert("", "end", iid=t, values=("—", t, ""))
         # Exclusivity read from each test's own `## suite-exclusive:` tag
@@ -158,11 +187,22 @@ class Cockpit(tk.Tk):
         self.after(POLL_MS, self._poll)
 
     # -- running --------------------------------------------------------
+    def _cancel_escalate(self) -> None:
+        # A Stop's 5s force-kill timer must not survive into the next run:
+        # Stop -> Run all left it armed against the NEW process, which it
+        # then killed (the escalation race the final review carried).
+        if self._escalate is not None:
+            self._escalate.cancel()
+            self._escalate = None
+
     def _start(self, tests: list[str]) -> None:
         if not tests:
             return
         self.stop()
+        self._cancel_escalate()
         self.summary = None
+        self.gone = None
+        self.note = None
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         self.run_dir = REPO / "reports" / "suite_runs" / stamp
         try:
@@ -191,30 +231,37 @@ class Cockpit(tk.Tk):
             _time.sleep(0.2)
         if not events.exists():
             return
+        saw_summary = False
+
         def _done() -> None:
             if proc is not None:
                 proc.wait()
                 if self._escalate:
                     self._escalate.cancel()
 
-        with open(events, encoding="utf-8") as fh:
+        with open(events, encoding="utf-8", errors="replace") as fh:
             while True:
                 line = fh.readline()
                 if line:
                     self.q.put(line)
                     try:
                         if json.loads(line).get("event") == "summary":
+                            saw_summary = True
                             _done()
                             return  # the stream's own end marker
                     except json.JSONDecodeError:
                         pass
                     continue
                 # EOF: our own child's exit is the stream's end; an attached
-                # run is polled until its writer's summary (its results.json
-                # is the fallback if it died without one). A dead attached
-                # run with neither leaves a daemon thread at 5 wakes/s.
+                # run is polled until its writer's summary. A run that died
+                # WITHOUT a summary must not look like a stall -- the
+                # cockpit says so (runner_gone), it never says idle.
                 if proc is not None:
                     if proc.poll() is not None:
+                        if not saw_summary:
+                            self.q.put(json.dumps(
+                                {"event": "runner_gone",
+                                 "exit": proc.returncode}))
                         _done()
                         return
                 elif (run_dir / "results.json").exists():
@@ -227,7 +274,12 @@ class Cockpit(tk.Tk):
     def run_failed(self) -> None:
         failed = [t for t, r in self.rows.items() if r.get("status") not in
                   ("pass", "running", None)]
-        self._start(failed or list(self.tests))
+        if failed:
+            self._start(failed)
+        elif self.rows:
+            self.note = "no failures to re-run"  # _start clears it
+        else:
+            self._start(list(self.tests))
 
     def stop(self) -> None:
         if self.proc and self.proc.poll() is None:
@@ -269,8 +321,11 @@ class Cockpit(tk.Tk):
         """A past run, read-only: rows from its results.json, logs reached
         by the same click that serves a live run."""
         self.stop()
+        self._cancel_escalate()
         self.proc = None
         self.summary = None
+        self.gone = None
+        self.note = None
         self.launched = []
         self.run_dir = run_dir
         self.rows = {}
@@ -281,6 +336,9 @@ class Cockpit(tk.Tk):
             if rec.get("sharded") and checks:
                 row["checks"] = len(checks)
             self.rows[rec["name"]] = row
+        for t in self.tests:
+            if suite_runner.read_tags(t)[0]:
+                self.rows.setdefault(t, {})["exclusive"] = True
         self.refresh()
 
     # -- view -----------------------------------------------------------
@@ -294,8 +352,13 @@ class Cockpit(tk.Tk):
                     e = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if e.get("event") == "summary":
+                ev = e.get("event")
+                if ev == "summary":
                     self.summary = e
+                    self._surface_failures()
+                    continue
+                if ev == "runner_gone":
+                    self.gone = e
                     continue
                 for test, row in rows_from_events([line]).items():
                     self.rows.setdefault(test, {}).update(row)
@@ -303,10 +366,15 @@ class Cockpit(tk.Tk):
             pass
         if got:
             self.refresh()
-        if self.summary is not None:
+        if self.gone is not None:
+            self.status.config(text="runner exited (code %s) without a summary — %s"
+                               % (self.gone.get("exit"), self.run_dir or ""))
+        elif self.summary is not None:
             self.status.config(text="finished: %d tests, %d failed, exit %d — %s" % (
                 self.summary.get("total", 0), self.summary.get("failed", 0),
                 self.summary.get("exit", 0), self.run_dir or ""))
+        elif self.note is not None:
+            self.status.config(text=self.note)
         else:
             total = len(self.launched or self.tests)
             done = sum(1 for r in self.rows.values() if r.get("status") not in
@@ -319,28 +387,51 @@ class Cockpit(tk.Tk):
                 else ", running"))
         self.after(POLL_MS, self._poll)
 
+    def _surface_failures(self) -> None:
+        """A finished run with failures answers 'what broke' by itself:
+        failed filter on, first failure selected, its log in the pane. The
+        first version made the author hunt for the one red row."""
+        failed = [t for t in self.tests
+                  if self.rows.get(t, {}).get("status") not in
+                  ("pass", "running", None)]
+        if not failed:
+            return
+        self.mode.set("failed")
+        self.refresh()
+        self.tree.selection_set(failed[0])
+        self.tree.see(failed[0])
+        self.show_log()
+
     def refresh(self) -> None:
+        # Rows stay in REGISTRY order: detach hides a filtered-out row and
+        # the visible ones are re-stacked in registry order -- reattaching
+        # to "" (the first version) made the table reshuffle under the eye
+        # as rows completed.
+        idx = 0
         for t in self.tests:
             row = self.rows.get(t, {})
             if not row_keeps(row, self.mode.get()):
                 self.tree.detach(t)
                 continue
-            self.tree.reattach(t, "", "end")
+            if self.tree.exists(t):
+                self.tree.move(t, "", idx)
+            idx += 1
             status = row.get("status") or "—"
             self.tree.set(t, "status", status)
             self.tree.set(t, "test", t)
-            # A not-yet-run row has no duration; printing 0.0 there is the
+            # A running row has no duration yet; printing 0.0 there is the
             # confident-zero bug in miniature, so it prints nothing.
             dur = row.get("duration") or 0.0
-            self.tree.set(t, "seconds", "%.1f" % dur if status != "—" else "")
+            self.tree.set(t, "seconds", "%.1f" % dur
+                          if status not in ("—", "running") else "")
             self.tree.item(t, tags=(status,))
 
     def show_log(self, _e=None) -> None:
         sel = self.tree.selection()
+        self.out.delete("1.0", "end")
         if not sel or not self.run_dir:
             return
         log = self.run_dir / "tests" / (sel[0].removeprefix("tests/") + ".log")
-        self.out.delete("1.0", "end")
         self.out.insert("1.0", log.read_text(encoding="utf-8", errors="replace")
                         if log.exists() else "(no log yet)")
 
@@ -356,49 +447,61 @@ def _selftest() -> int:
         return json.dumps(kw)
 
     sample = [
-        # The runner's two-done shape: worker done (no log) first, the
-        # report-phase done (with one) second -- last wins.
+        # start opens the row running before any child reports.
+        ev(event="start", test="tests/test_x.gd", ts=0),
+        # The runner's two-done shape: worker done first, the report-phase
+        # done second -- last wins.
         ev(event="done", test="tests/test_clock.gd", status="pass",
            duration=2.0, ts=1),
         ev(event="done", test="tests/test_clock.gd", status="pass",
            duration=2.1, log="tests/test_clock.gd.log", ts=2),
         # A sharded test: check events, then the same final done.
+        ev(event="child_start", test="tests/test_balance.gd", check="_check_a",
+           ts=3),
         ev(event="child_done", test="tests/test_balance.gd", check="_check_a",
-           status="pass", duration=1.0, ts=3),
+           status="pass", duration=1.0, ts=4),
         ev(event="child_done", test="tests/test_balance.gd", check="_check_b",
-           status="fail", duration=1.0, ts=4),
+           status="fail", duration=1.0, ts=5),
         ev(event="done", test="tests/test_balance.gd", status="fail",
-           duration=2.0, log="tests/test_balance.gd.log", ts=5),
+           duration=2.0, log="tests/test_balance.gd.log", ts=6),
         ev(event="done", test="tests/test_data.gd", status="fail",
-           duration=0.5, log="x", ts=6),
-        # A child_done-only row: mid-run truth -- running, no invented log.
-        ev(event="child_done", test="tests/test_shard.gd", check="_c",
-           status="pass", duration=9.0, ts=7),
-        ev(event="summary", total=4, failed=2, interrupted=False, exit=1, ts=8),
+           duration=0.5, log="x", ts=7),
+        # The two-done merge, isolated: worker done (no log), then the
+        # report-phase done with one.
+        ev(event="done", test="tests/test_two.gd", status="pass",
+           duration=1.0, ts=7.5),
+        ev(event="done", test="tests/test_two.gd", status="pass",
+           duration=1.1, log="tests/test_two.gd.log", ts=7.6),
+        # A re-run resets a finished row to running.
+        ev(event="start", test="tests/test_clock.gd", ts=8),
+        ev(event="summary", total=4, failed=2, interrupted=False, exit=1, ts=9),
         "{torn",
     ]
     rows = rows_from_events(sample)
 
-    expect(rows["tests/test_clock.gd"]["log"] == "tests/test_clock.gd.log",
+    expect(rows["tests/test_x.gd"]["status"] == "running",
+           "start must open a row running")
+    expect(rows["tests/test_clock.gd"]["status"] == "running"
+           and rows["tests/test_clock.gd"]["duration"] == 0.0,
+           "a re-run's start must reset a finished row")
+    expect(rows["tests/test_two.gd"]["log"] == "tests/test_two.gd.log",
            "report-phase done must win over the worker's log-less one")
     expect(rows["tests/test_balance.gd"]["checks"] == 2,
            "child_done accounting must survive the done replacement")
-    expect(rows["tests/test_shard.gd"] == {"status": "running", "duration": 0.0,
-                                           "log": "", "checks": 1},
-           "child_done-only row: running, no log, checks counted")
-    expect(len(rows) == 4,
+    expect(rows["tests/test_balance.gd"]["log"] == "tests/test_balance.gd.log",
+           "a sharded test's final done carries its log")
+    expect(len(rows) == 5,
            "summary and torn lines must not become rows: %r" % sorted(rows))
 
     expect(row_keeps(rows["tests/test_data.gd"], "failed"),
            "failed filter keeps failures")
     expect(row_keeps(rows["tests/test_balance.gd"], "failed"),
            "failed filter keeps a failed shard's test")
-    expect(not row_keeps(rows["tests/test_shard.gd"], "failed"),
-           "a running child_done-only row is not a failure")
+    expect(not row_keeps({"status": "running"}, "failed"),
+           "a running row is not a failure")
     expect(not row_keeps({"status": "pass"}, "failed"),
            "failed filter drops passes")
-    expect(not row_keeps(rows["tests/test_clock.gd"], "slow"),
-           "slow filter drops 2.1s")
+    expect(not row_keeps({"duration": 2.1}, "slow"), "slow filter drops 2.1s")
     expect(row_keeps({"duration": 60.0}, "slow"), "slow filter keeps 60s")
     expect(row_keeps({"exclusive": True}, "exclusive"), "exclusive filter")
     expect(not row_keeps({}, "exclusive"), "exclusive filter drops untagged")
@@ -417,6 +520,8 @@ def main() -> int:
     ap.add_argument("--attach", type=Path, default=None,
                     help="watch an existing run dir instead of launching one")
     ap.add_argument("-j", "--jobs", type=int, default=8)
+    ap.add_argument("--no-run", action="store_true",
+                    help="open idle instead of running the suite on launch")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("tests", nargs="*")
     args = ap.parse_args()
@@ -427,6 +532,10 @@ def main() -> int:
     if args.attach:
         app.run_dir = args.attach
         threading.Thread(target=app._tail, daemon=True).start()
+    elif not args.no_run:
+        # Runs on open: the cockpit's whole point is showing the run, not
+        # offering a button that starts it.
+        app.after(400, app.run_all)
     app.mainloop()
     return 0
 
