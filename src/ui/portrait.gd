@@ -1,70 +1,124 @@
 extends RefCounted
 
-## Finds a person's portrait, or the silhouette they fall back to -- V2.3.
+## Finds a person's portrait in one of five expressions, stages it into a
+## scene when asked, or falls back to the silhouette -- V3.7.
 ##
-## One call, `control_for()`, is what every surface that shows a person uses:
-## art where art exists, the placeholder silhouette where it does not. The
-## fallback is the design rather than the failure -- docs/tiers/v2.md §3's own
-## call, recorded there: a person can be authored into the register and ship
-## before the art run catches up, so a missing portrait is silent, in game,
-## forever. (Stale art nobody references is the other direction and is refused
-## -- by tools/portraits.gd and by tests/test_portraits.gd, not here.)
+## One call, `framed_for()`, is what every surface that shows a person uses:
+## art where art exists, the placeholder silhouette where it does not, and --
+## new at V3.7 -- a situational backdrop composited BEHIND the bust when the
+## caller names a scene. The fallback is the design rather than the failure --
+## docs/tiers/v2.md §3's own call, recorded there: a person can be authored
+## into the register and ship before the art run catches up, so a missing
+## portrait is silent, in game, forever. (Stale art nobody references is the
+## other direction and is refused -- by tools/portraits.gd and by
+## tests/test_portraits.gd, not here.)
 ##
-## The bytes rule, and the reason this is not `load()`: assets/portraits/ sits
-## beside the fonts, the at-icons SVGs and the Blue Marble raster, and all four
-## are read off disk and decoded in memory so a fresh clone running
-## tools/run_tests.sh headless -- no .godot/, no import -- sees the same game
-## the editor does. `load()` returns the imported CompressedTexture2D, which
-## lives in .godot/ and is absent exactly there. map_raster.gd and icon.gd
-## carry the same comment; test_map_view.gd's raster check is the pattern
-## tests/test_portraits.gd follows.
+## What V3.7 retired, and why the seams this file now owns exist at all: the
+## V2.3 duotone ramp hid every cut-out seam for free and the nation-hue band
+## was the stand-in for "background per situation". Realism replaced the
+## ramp, and a photographic scene library (assets/portrait_scenes/, rendered
+## by tools/backgrounds_generate.py) replaced the band. A photographic cutout
+## on a photographic room is where the two meet, and SCENE_GRADE below is the
+## dial that keeps the head IN the room rather than ON it.
 ##
-## The sweep is derived, never counted: a portrait is found by the person's own
-## id and the register is the list of ids, so no roster of filenames exists
-## anywhere in src/ (the warning box in docs/tiers/v2.md §3). Person 72 either
-## has a PNG -- or does not, and shows the silhouette until they do.
+## The bytes rule, and the reason this is not `load()`: assets/portraits/ and
+## assets/portrait_scenes/ sit beside the fonts, the at-icons SVGs and the
+## Blue Marble raster, and all are read off disk and decoded in memory so a
+## fresh clone running tools/run_tests.sh headless -- no .godot/, no import --
+## sees the same game the editor does. `load()` returns the imported
+## CompressedTexture2D, which lives in .godot/ and is absent exactly there.
+## map_raster.gd and icon.gd carry the same comment; test_map_view.gd's raster
+## check is the pattern tests/test_portraits.gd follows.
+##
+## The sweep is derived, never counted: a portrait is found by the person's
+## own id and the register is the list of ids, so no roster of filenames
+## exists anywhere in src/ (the warning box in docs/tiers/v2.md §3). Person
+## 214 either has art -- or does not, and shows the silhouette until they do.
 
 const PORTRAITS_DIR := "res://assets/portraits/"
+const SCENES_DIR := "res://assets/portrait_scenes/"
 
-const MapLayers = preload("res://src/ui/map_layers.gd")
+enum Emotion { NEUTRAL, PLEASED, STERN, WORRIED, WEARY }
+enum Scene { NONE, OFFICE, OFFICE_NIGHT, CABINET_ROOM, PARLIAMENT_CHAMBER, PRESS_ROOM,
+             TV_STUDIO, CORRIDOR, PODIUM_FLAGS, SUMMIT_HALL, STATE_DINNER,
+             STREET_CITY, PLAZA_CROWD, GARDEN_PARK, AIRPORT_TARMAC }
 
-## The band a portrait sits on: that person's nation's own map tone -- V2.3,
-## and the author's call rather than the tier doc's. On the People window's
-## Abroad wall each leader then reads on their country's colour, the same
-## colour the map fills that country with, through the same PALETTE lookup --
-## identity derived from the person id's own nation prefix, never authored.
-## Display-side on purpose: the committed PNG stays canonical and one art
-## asset serves every situation it may be shown in.
-const BAND := 3
+## The enum's own file vocabulary, one name per non-NONE value. The names are
+## the backdrop files tools/backgrounds_generate.py renders and the strings
+## data/summits/ may carry; src/core/summit.gd's SCENES is the VALIDATION
+## source for that data and tests/test_portraits.gd pins the two lists equal
+## -- two sources with no test is the hand-written-list failure this repo
+## keeps re-finding.
+const SCENE_NAMES := {
+	Scene.OFFICE: "office", Scene.OFFICE_NIGHT: "office_night",
+	Scene.CABINET_ROOM: "cabinet_room", Scene.PARLIAMENT_CHAMBER: "parliament_chamber",
+	Scene.PRESS_ROOM: "press_room", Scene.TV_STUDIO: "tv_studio",
+	Scene.CORRIDOR: "corridor", Scene.PODIUM_FLAGS: "podium_flags",
+	Scene.SUMMIT_HALL: "summit_hall", Scene.STATE_DINNER: "state_dinner",
+	Scene.STREET_CITY: "street_city", Scene.PLAZA_CROWD: "plaza_crowd",
+	Scene.GARDEN_PARK: "garden_park", Scene.AIRPORT_TARMAC: "airport_tarmac",
+}
+## Directory names under assets/portraits/, index-aligned with Emotion.
+const EMOTION_DIRS := ["neutral", "pleased", "stern", "worried", "weary"]
 
-## One decode per person per session. Portraits are 216x296 and the People
-## window rebuilds its rows on every dirty sweep, so an uncached read would
-## decode the same handful of PNGs once a month for no reason. A miss is cached
-## too: the fallback path should not re-stat the disk every refresh either.
+## The realism glue, and the dial Phase B turns if a bust reads as a sticker:
+## the head is modulated toward the scene's tint by `dim` so a studio-lit
+## cut-out sits IN a warm evening room rather than ON it. Numbers are authored
+## judgements to be tuned against real frames in Phase B -- there is no
+## measuring a tint against art that does not exist yet.
+const SCENE_GRADE := {
+	"office": {"tint": Color(1.0, 0.97, 0.92), "dim": 0.05},
+	"office_night": {"tint": Color(0.75, 0.78, 1.0), "dim": 0.22},
+	"cabinet_room": {"tint": Color(1.0, 0.93, 0.85), "dim": 0.10},
+	"parliament_chamber": {"tint": Color(1.0, 0.95, 0.90), "dim": 0.12},
+	"press_room": {"tint": Color(0.95, 0.97, 1.0), "dim": 0.04},
+	"tv_studio": {"tint": Color(0.85, 0.92, 1.0), "dim": 0.15},
+	"corridor": {"tint": Color(1.0, 0.96, 0.90), "dim": 0.08},
+	"podium_flags": {"tint": Color(1.0, 1.0, 0.98), "dim": 0.06},
+	"summit_hall": {"tint": Color(1.0, 0.96, 0.90), "dim": 0.10},
+	"state_dinner": {"tint": Color(1.0, 0.88, 0.75), "dim": 0.18},
+	"street_city": {"tint": Color(0.97, 0.98, 1.0), "dim": 0.06},
+	"plaza_crowd": {"tint": Color(1.0, 0.99, 0.95), "dim": 0.08},
+	"garden_park": {"tint": Color(0.97, 1.0, 0.95), "dim": 0.05},
+	"airport_tarmac": {"tint": Color(0.92, 0.94, 1.0), "dim": 0.14},
+}
+
+## Below this the scene is skipped regardless of what the caller asked: at
+## the People window's 22x30 a backdrop is mush that costs a decode.
+const SCENE_MIN_PX := 40.0
+
+## One decode per person per emotion, and one per backdrop file, per session.
+## The People window rebuilds its rows on every dirty sweep, so an uncached
+## read would decode the same handful of images once a month for no reason. A
+## miss is cached too: the fallback path should not re-stat the disk every
+## refresh either.
 static var _cache := {}
+static var _scene_cache := {}
 
 
-## The texture, or null when this person has no portrait. The only reader of
-## assets/portraits/ in the game.
-static func texture_for(person_id: String) -> ImageTexture:
-	if _cache.has(person_id):
-		return _cache[person_id]
-	var tex := _load(person_id)
-	_cache[person_id] = tex
+## The texture, or null when this person has no art for this emotion. The only
+## reader of assets/portraits/ in the game.
+static func texture_for(person_id: String, emotion: Emotion = Emotion.NEUTRAL) -> ImageTexture:
+	var key := person_id + ":" + str(emotion)
+	if _cache.has(key):
+		return _cache[key]
+	var tex := _load(person_id, emotion)
+	_cache[key] = tex
 	return tex
 
 
 ## A Control showing this person at `size`: a TextureRect of the art, or the
 ## silhouette Bust. Callers hold this, add it, and never think about which one
 ## they got -- that is the point of there being one call.
-static func control_for(person_id: String, size: Vector2) -> Control:
-	var tex := texture_for(person_id)
+static func control_for(person_id: String, size: Vector2,
+		emotion: Emotion = Emotion.NEUTRAL) -> Control:
+	var tex := texture_for(person_id, emotion)
 	if tex != null:
 		var rect := TextureRect.new()
 		rect.texture = tex
 		rect.custom_minimum_size = size
 		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		# The art is generated at the source's own aspect (216x296), and every
+		# The art is generated at the source's own aspect (432x592), and every
 		# caller asks for that same aspect, so COVER crops nothing in practice --
 		# it is here so a caller with a differently-shaped slot degrades to a
 		# centered crop rather than a squash.
@@ -75,58 +129,159 @@ static func control_for(person_id: String, size: Vector2) -> Control:
 	return bust
 
 
-## The face with its nation's colour behind it -- the form every in-game
-## surface shows. The band is the whole "background per situation" mechanism:
-## one canonical PNG, the situation painted around it.
-static func framed_for(person_id: String, size: Vector2) -> Control:
-	var frame := Framed.new()
+## The face, staged into its situation when one is named and possible: a
+## backdrop the person keeps between calls (variant picked from their own id,
+## so one person's office is stably THEIR office), a contact shadow, the
+## tinted bust, a light vignette. Any miss -- Scene.NONE, below the 40px
+## floor, no committed backdrop file yet -- lands on the plain theme ground,
+## which is what keeps the game whole in Phase A when the scene library does
+## not exist yet.
+static func framed_for(person_id: String, size: Vector2,
+		emotion: Emotion = Emotion.NEUTRAL, scene: Scene = Scene.NONE) -> Control:
+	if scene != Scene.NONE and minf(size.x, size.y) >= SCENE_MIN_PX:
+		var staged := _stage(person_id, size, emotion, scene)
+		if staged != null:
+			return staged
+	var frame := Control.new()
 	frame.custom_minimum_size = size
-	frame.tone = MapLayers.swatch(MapLayers.POLITICAL, null, "", _nation_of(person_id))
-	frame.add_child(control_for(person_id, size - Vector2(BAND, BAND) * 2.0))
+	var inner := control_for(person_id, size, emotion)
+	frame.add_child(inner)
+	inner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return frame
 
 
-## Person ids are `<NATION>_<surname>` by the loader's own namespacing rule, so
-## the nation is in the id and no second mapping exists to drift.
-static func _nation_of(person_id: String) -> String:
-	return String(person_id.split("_")[0])
-
-
-static func _load(person_id: String) -> ImageTexture:
-	var bytes := FileAccess.get_file_as_bytes(PORTRAITS_DIR.path_join(person_id + ".png"))
-	if bytes.is_empty():
+static func _stage(person_id: String, size: Vector2,
+		emotion: Emotion, scene: Scene) -> Control:
+	var scene_name: String = SCENE_NAMES[scene]
+	var path := SCENES_DIR.path_join("%s_%d.webp" % [scene_name, _djb2(person_id + ":" + scene_name) % 3])
+	var backdrop_tex := _scene_texture(path)
+	if backdrop_tex == null:
 		return null
-	var img := Image.new()
-	if img.load_png_from_buffer(bytes) != OK:
-		push_error("portrait '%s' is not a decodable PNG; falling back to the silhouette" % person_id)
-		return null
-	return ImageTexture.create_from_image(img)
+	var backdrop := TextureRect.new()
+	backdrop.texture = backdrop_tex
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	var bust := control_for(person_id, size, emotion)
+	var staged := Staged.new(backdrop, bust, SCENE_GRADE[scene_name])
+	staged.custom_minimum_size = size
+	return staged
 
 
-## The face, seated on its nation's band: a plain Control painting the band and
-## holding the portrait inset by INSET pixels. Not a Container on purpose -- the
-## inner is placed by anchors, so the portrait keeps whatever fixed minimum the
-## caller asked for and nothing relayouts it. INSET mirrors the outer BAND; an
-## inner class does not see the outer script's constants, so they are two
-## declarations of one number with this comment tying them.
-class Framed extends Control:
-	const INSET := 3.0
+## The Scene enum from the name the data carries. Unknowns read NONE -- the
+## loader has already refused an unknown scene at load (src/core/summit.gd),
+## so this is the seatbelt, not the gate.
+static func scene_from_name(name: String) -> Scene:
+	for scene in SCENE_NAMES:
+		if SCENE_NAMES[scene] == name:
+			return scene
+	return Scene.NONE
 
-	var tone := Color(0.106, 0.173, 0.290)
 
-	func _init() -> void:
-		# The only child this frame ever gets is the portrait; anchoring it on
-		# entry beats a container, which would own the portrait's size.
-		child_entered_tree.connect(func(child: Node):
-			child.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			child.offset_left = INSET
-			child.offset_top = INSET
-			child.offset_right = -INSET
-			child.offset_bottom = -INSET
-		)
+## Stable across engine versions and matching the Python djb2 the generator
+## seeds with -- String.hash() is neither (tools/comfy_client.py carries the
+## same five lines); the variant pick must survive re-runs.
+static func _djb2(s: String) -> int:
+	var h := 5381
+	for b in s.to_utf8_buffer():
+		h = ((h * 33) + b) & 0xFFFFFFFF
+	return h
 
-	func _draw() -> void:
-		draw_rect(Rect2(Vector2.ZERO, size), tone)
+
+## WebP bytes -> texture, or null. Kept as its own function so both the bust
+## and the backdrop paths decode the same way.
+static func _scene_texture(path: String) -> ImageTexture:
+	if _scene_cache.has(path):
+		return _scene_cache[path]
+	var tex: ImageTexture = null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if not bytes.is_empty():
+		var img := Image.new()
+		if img.load_webp_from_buffer(bytes) == OK:
+			tex = ImageTexture.create_from_image(img)
+	_scene_cache[path] = tex
+	return tex
+
+
+static func _load(person_id: String, emotion: Emotion) -> ImageTexture:
+	var bytes := FileAccess.get_file_as_bytes(
+		PORTRAITS_DIR.path_join(EMOTION_DIRS[emotion]).path_join(person_id + ".webp"))
+	if not bytes.is_empty():
+		var img := Image.new()
+		if img.load_webp_from_buffer(bytes) == OK:
+			return ImageTexture.create_from_image(img)
+		push_error("portrait '%s/%s' is not decodable WebP; falling back" % [person_id, EMOTION_DIRS[emotion]])
+	# LEGACY BRIDGE -- the Phase A/B gap: new code, old duotone PNGs. The flat
+	# file answers ANY emotion until the per-emotion WebPs are committed, so
+	# the game stays playable and the suite stays green across the gap. TEMPORARY
+	# by design: delete this branch in Phase B, in the same commit that adds
+	# the assets -- signposted so it cannot rot.
+	var legacy := FileAccess.get_file_as_bytes(PORTRAITS_DIR.path_join(person_id + ".png"))
+	if not legacy.is_empty():
+		var img := Image.new()
+		if img.load_png_from_buffer(legacy) == OK:
+			return ImageTexture.create_from_image(img)
+	return null
+
+
+## The composite: backdrop, contact shadow, tinted bust, vignette. Not a
+## Container, for the same reason the old Framed was not: the children are
+## placed by anchors so nothing relayouts the bust. The overlays are
+## MOUSE_FILTER_IGNORE because they sit ON TOP of the bust -- a vignette that
+## claimed clicks would eat the surfaces under it.
+class Staged extends Control:
+	const UiTheme = preload("res://src/ui/ui_theme.gd")
+
+	func _init(backdrop: TextureRect, bust: Control, grade: Dictionary) -> void:
+		backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(backdrop)
+		var shadow := Shadow.new()
+		add_child(shadow)
+		bust.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		# white.lerp(tint, dim): modulate, never a colour overlay -- the cut-
+		# out's own highlights must survive the grade.
+		bust.modulate = Color.WHITE.lerp(grade["tint"], grade["dim"])
+		add_child(bust)
+		var vignette := TextureRect.new()
+		vignette.texture = _vignette_texture()
+		vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(vignette)
+
+	## Radial darkening toward the frame's edge -- the soft focus look a real
+	## photograph of a person in a room carries, and one more thing that makes
+	## a cut-out read as situated. Built once per stage; it is 128x176.
+	static func _vignette_texture() -> GradientTexture2D:
+		var grad := Gradient.new()
+		grad.colors = PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0.02, 0.03, 0.06, 0.30)])
+		grad.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+		var tex := GradientTexture2D.new()
+		tex.gradient = grad
+		tex.fill = GradientTexture2D.FILL_RADIAL
+		tex.fill_from = Vector2(0.5, 0.42)
+		tex.fill_to = Vector2(0.5, 0.42) + Vector2(0.75, 0.75)
+		tex.width = 128
+		tex.height = 176
+		return tex
+
+	## The contact shadow: two stacked translucent ellipses under the
+	## shoulders, drawn where the bust's own draw cannot -- behind it.
+	class Shadow extends Control:
+		func _ready() -> void:
+			set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+		func _draw() -> void:
+			var c := Vector2(size.x * 0.5, size.y * 0.94)
+			_draw_blob(c, Vector2(size.x * 0.30, size.y * 0.035), 0.22)
+			_draw_blob(c, Vector2(size.x * 0.20, size.y * 0.022), 0.30)
+
+		func _draw_blob(center: Vector2, radius: Vector2, alpha: float) -> void:
+			var pts := PackedVector2Array()
+			for i in range(24):
+				var a := TAU * i / 24.0
+				pts.append(center + Vector2(cos(a) * radius.x, sin(a) * radius.y))
+			draw_colored_polygon(pts, Color(0, 0, 0, alpha))
 
 
 ## The placeholder portrait_card.gd shipped alone at U5a, kept as the fallback

@@ -38,6 +38,11 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 
+## V3.7's two art layers, probed from the tree state that actually exists:
+## the flat legacy PNGs (the Phase A/B bridge) and the per-emotion WebPs.
+## Floors differ because the two generations are different rasters -- 216px
+## duotone sources vs 432px photographic cut-outs.
+
 
 func _init() -> void:
 	_main = load("res://src/ui/main.tscn").instantiate()
@@ -64,6 +69,13 @@ func _run() -> void:
 	for f in DirAccess.get_files_at(PORTRAITS_DIR):
 		if f.ends_with(".png"):
 			art.append(f)
+	for emotion in ["neutral", "pleased", "stern", "worried", "weary"]:
+		var sub := PORTRAITS_DIR.path_join(emotion)
+		if not DirAccess.dir_exists_absolute(sub):
+			continue
+		for f in DirAccess.get_files_at(sub):
+			if f.ends_with(".webp"):
+				art.append(emotion + "/" + f)
 
 	_check_no_orphan_art(loader, art)
 	_check_bytes_path(art)
@@ -74,7 +86,7 @@ func _run() -> void:
 
 func _check_no_orphan_art(loader, art: Array[String]) -> void:
 	if art.is_empty():
-		_fail("assets/portraits/ holds no PNGs at all -- the duotone pass has not been run or committed")
+		_fail("assets/portraits/ holds no art at all in either layer -- neither generation has been run or committed")
 	for f in art:
 		if not loader.person_by_id.has(f.get_basename()):
 			_fail("portrait '%s' belongs to no person in the register" % f)
@@ -84,11 +96,21 @@ func _check_no_orphan_art(loader, art: Array[String]) -> void:
 ## materialise as a texture here, where no .godot/ import has ever run.
 func _check_bytes_path(art: Array[String]) -> void:
 	for f in art:
-		var tex := Portrait.texture_for(f.get_basename())
+		var emotion_name := f.get_slice("/", 0)
+		var pid := f.get_slice("/", 1) if "/" in f else f.get_basename()
+		var emotion: int = _emotion_index(emotion_name) if "/" in f else 0
+		var tex = Portrait.texture_for(pid, emotion)
 		if tex == null:
 			_fail("portrait '%s' did not load from bytes -- read via load() rather than the disk?" % f)
-		elif tex.get_width() < 200:
-			_fail("portrait '%s' is %d px wide, far below the shipped 216" % [f, tex.get_width()])
+			continue
+		var floor_px := 400 if "/" in f else 200
+		if tex.get_width() < floor_px:
+			_fail("portrait '%s' is %d px wide, below the %d floor" % [f, tex.get_width(), floor_px])
+
+
+func _emotion_index(name: String) -> int:
+	var dirs := ["neutral", "pleased", "stern", "worried", "weary"]
+	return dirs.find(name)
 
 
 func _check_missing_falls_back() -> void:
