@@ -13,6 +13,8 @@ extends Control
 
 const SaveManager = preload("res://src/core/save_manager.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const MapView = preload("res://src/ui/map_view.gd")
 const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const CreditsPanel = preload("res://src/ui/credits_panel.gd")
@@ -21,6 +23,14 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const GAME_SCENE := "res://src/ui/main.tscn"
 
+## The nation the menu plate builds its throwaway month-0 state around. FRA is
+## the premise nation, and the plate reads only content that is identical for
+## every viewer at month 0: the unrest ring needs grievance past the threshold,
+## the campaign ring a running effort, markers and plants non-empty registers
+## -- all four come back empty before the first tick, so the door shows a clean
+## opening map whatever nation the player then picks.
+const VIEWER_NATION_ID := "FRA"
+
 var _continue_button: Button
 var _new_game_button: Button
 var _load_panel
@@ -28,6 +38,8 @@ var _settings_panel
 var _credits_panel
 var _nation_select_panel
 var _loader: DataLoader
+var _plate
+var _viewer_state
 ## The menu entry that opened the current overlay, so closing it puts keyboard
 ## focus back where the player left it rather than nowhere.
 var _focus_return: Control
@@ -51,7 +63,23 @@ func _ready() -> void:
 			push_error(e)
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(_build_background())
+	# Presence (V3.6): the door shows the game it opens. A real MapView over a
+	# real month-0 GameState rather than a reduced copy of the map's draw
+	# passes -- duplicating the lon/lat->screen projection here is the
+	# two-copies trap AGENTS.md warns about, and reusing the whole view means
+	# the menu cannot drift from the game's own map. The state is a viewer,
+	# built and discarded here; New Game builds its own in main.gd as before.
+	_viewer_state = GameState.new_game(_loader, VIEWER_NATION_ID)
+	_plate = MapView.new()
+	_plate.setup(_loader, _viewer_state)
+	_plate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_plate)
+	# IGNORE, set AFTER add_child: map_view's own _ready() claims STOP, and a
+	# filter set before that call is silently clobbered by it. The front door is
+	# a window onto the game, not a second game to play before the menu -- no
+	# pan, no zoom, no hover, and no code in the map that knows it is in a menu.
+	_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_build_scrim())
 	add_child(_build_menu())
 
 	_load_panel = SaveLoadPanel.new()
@@ -105,12 +133,15 @@ func _person_name_map() -> Dictionary:
 	return out
 
 
-func _build_background() -> Control:
-	var background := ColorRect.new()
-	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	background.color = Color(0.07, 0.08, 0.09)
-	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return background
+## A scrim, not a backdrop: the map is behind it, the menu column on top of it.
+## The pre-V3.6 background colour at 45% alpha -- enough dimming that the brass
+## column keeps its contrast whatever the map is showing under it.
+func _build_scrim() -> Control:
+	var scrim := ColorRect.new()
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.07, 0.08, 0.09, 0.45)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return scrim
 
 
 func _build_menu() -> Control:

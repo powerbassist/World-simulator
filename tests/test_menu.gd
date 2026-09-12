@@ -64,6 +64,7 @@ func _process(_delta: float) -> bool:
 			_check_structure()
 			_check_settings()
 			_check_sound_setting()
+			_check_plate()
 			_check_scenario_select()
 			_write_save()
 			return false
@@ -219,15 +220,18 @@ func _check_sound_setting() -> void:
 		_fail("Sound set to On but sound_enabled() reads false")
 
 	# The default must be the ABSENT key's answer, not a stored true: store a
-	# false, then erase it -- true can now only mean the default fired.
+	# false, then save a config that carries no audio section at all -- true can
+	# now only mean the default fired. (ConfigFile has no per-key erase, so the
+	# section is dropped by rebuilding the file without it.)
 	var cfg := ConfigFile.new()
 	cfg.load(SettingsPanel.CONFIG_PATH)
 	cfg.set_value("audio", "enabled", false)
 	cfg.save(SettingsPanel.CONFIG_PATH)
 	if SettingsPanel.sound_enabled():
 		_fail("stored [audio] enabled=false but sound_enabled() reads true")
-	cfg.erase_key("audio", "enabled")
-	cfg.save(SettingsPanel.CONFIG_PATH)
+	var fresh := ConfigFile.new()
+	fresh.set_value("display", "ui_scale_index", 1)
+	fresh.save(SettingsPanel.CONFIG_PATH)
 	if not SettingsPanel.sound_enabled():
 		_fail("no [audio]/enabled in settings.cfg but sound_enabled() is not the default true")
 
@@ -237,6 +241,21 @@ func _check_sound_setting() -> void:
 		restore.close()
 	else:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
+
+
+## V3.6: the front door shows the game it opens. A real MapView over a real
+## month-0 viewer state, and mouse-dead -- a window onto the game, not a second
+## game to play before the menu. Built in the menu's _ready(), so frame 2 is
+## the first frame anything can be read off it.
+func _check_plate() -> void:
+	if _menu._viewer_state == null:
+		_fail("the menu built no viewer GameState for the plate")
+	if _menu._plate == null or not _menu._plate.is_inside_tree():
+		_fail("the menu has no map plate")
+	elif _menu._plate.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		_fail("the menu plate is interactive (mouse_filter is not IGNORE)")
+	elif not _menu._plate.visible:
+		_fail("the menu plate is built but hidden")
 
 
 ## A save the menu can be asked to continue from. Written straight through
