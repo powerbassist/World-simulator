@@ -81,15 +81,15 @@ This is checkable, so it gets checked. A banned-names list lives alongside the p
 
 The check is cheap now and gets expensive to retrofit once there are hundreds of data files, which is exactly why it starts at [[ROADMAP|session S2]].
 
-## Portraits — the counterpart grounding (author call, 2026-09-13)
+## Portraits — the counterpart grounding (author calls, 2026-09-13)
 
 The portrait layer grounds every fictional person in the real politician they play on — the author's instruction, with the Eversim/Power & Revolution precedent: a simulation may closely follow a real officeholder's appearance as long as the NAME differs. The line this project draws, recorded so the next session knows exactly where it sits:
 
-- **Names stay invented** — this page's rule above is untouched; the ban list keeps guarding every committed file.
-- **Portraits closely evoke the counterpart via described traits**: age (the real politician's, twisted ≤3 years), skin tone, eye colour, build, hair. The traits live in `tools/portraits_traits.json` (generator-side art direction — the person record stays id-and-name, [[people-model]] §13).
-- **The counterpart mapping itself carries real names and is deliberately UNCOMMITTED** (`tools/portraits_counterparts.json`, gitignored): real names never enter the repository, `data/`, or any prompt. `portraits_generate.py --self-check` enforces the no-leak against the mapping and the ban list on every suite run — mechanically, not as a promise.
-- **No real photo is ever fetched or used as generation input.** The images come from described traits alone; the escalation (img2img on public photos) is a later, separately licensed decision the author has not taken.
-- People without a real counterpart (invented royal claimant lines, thin-knowledge stand-ins) keep nation-realistic authored traits.
+- **Names stay invented** — this page's rule above is untouched for names, parties and companies; the ban list keeps guarding every committed file except the single attribution record below.
+- **Portraits are img2img over the real politician's Wikimedia Commons photograph** (the author's call of 2026-09-13, on top of the same day's trait-grounding decision: per-person age, skin, eyes, build and bust from the counterpart, twisted ≤3 years where a twist applies). `tools/fetch_photos.py` fetches only free licences (CC0/CC-BY/CC-BY-SA/public domain); NC and ND are refused because the portraits are derivatives and the game may be sold. The denoise level (0.55) keeps the face recognisable while the prompt's traits and emotion steer.
+- **Attribution is committed**: `docs/portrait-attribution.md` credits every source photograph (author, licence, source) — the ONE file where real names legitimately appear, because the licences require it. `tools/check_names.sh` excludes that file by documented exception; everywhere else the ban list holds.
+- **The counterpart mapping itself is deliberately UNCOMMITTED** (`tools/portraits_counterparts.json`, gitignored): the fictional-to-real pairing never enters the repository, `data/`, or any prompt. `portraits_generate.py --self-check` enforces the no-leak against the mapping and the ban list on every suite run — mechanically, not as a promise.
+- **People without a real counterpart** (invented royal claimant lines, thin-knowledge stand-ins, failed photo fetches) render from described traits alone through the seed-locked text path — the same pipeline as their pictured colleagues, minus the photo.
 
 ---
 

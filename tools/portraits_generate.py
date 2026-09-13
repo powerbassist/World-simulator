@@ -61,6 +61,8 @@ TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
 WORKFLOW = TOOLS / "portraits_workflow.json"
 EXPRESSION_WORKFLOW = TOOLS / "portraits_expression_workflow.json"
+PHOTO_WORKFLOW = TOOLS / "portraits_photo_workflow.json"
+REFERENCE_DIR = REPO / "sources" / "portraits" / "reference"
 TRAITS_PATH = TOOLS / "portraits_traits.json"
 BANNED_NAMES = TOOLS / "banned_names.txt"
 PEOPLE_DIR = REPO / "data" / "people"
@@ -376,6 +378,8 @@ def prompt_for(person_id, name, emotion="neutral"):
     parts = [p for p in parts if p]
     if "facial" in t:
         parts.append(t["facial"])
+    if t["sex"] == "female" and "bust" in t:
+        parts.append(t["bust"])
     parts += [
         t["glasses"],
         t["quirk"],
@@ -551,6 +555,41 @@ def generate_expression(person_id, emotion, seed, text):
     return comfy.fetch(first_meta(EXPR_IMAGE_NODE)), comfy.fetch(first_meta(EXPR_MASK_NODE))
 
 
+def reference_file(person_id):
+    """The downloaded Commons photo for this person's real counterpart, or None
+    -- Phase B3's img2img path is available only where the author's photo
+    scrape found a free-license portrait."""
+    for ext in (".jpg", ".jpeg", ".png"):
+        candidate = REFERENCE_DIR / (person_id + ext)
+        if candidate.exists() and candidate.stat().st_size > 0:
+            return candidate
+    return None
+
+
+def generate_photo(person_id, emotion, seed, text):
+    """One img2img render over the real counterpart's Commons photo -- the
+    author's 2026-09-13 call: real photos as generation input, licence metadata
+    recorded per person by tools/fetch_photos.py. The photo anchors identity
+    (the face follows the real politician through the 0.55 denoise); the
+    prompt's emotion fragment and traits steer. The seed varies per emotion
+    here -- identity comes from the photo, not the seed."""
+    workflow = json.loads(comfy._confined(PHOTO_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    ref = reference_file(person_id)
+    workflow[PHOTO_IMAGE_NODE]["inputs"]["image"] = comfy.upload_image(
+        ref.read_bytes(), person_id + "_ref" + ref.suffix)
+    workflow[PHOTO_TEXT_NODE]["inputs"]["text"] = text
+    workflow[PHOTO_SEED_NODE]["inputs"]["seed"] = seed
+    prompt_id = comfy.queue(workflow)
+    out = comfy.outputs(prompt_id, timeout_s=900)
+
+    def first_meta(node):
+        if not out.get(node):
+            raise RuntimeError("no output at node %s for %s/%s" % (node, person_id, emotion))
+        return out[node][0]
+
+    return comfy.fetch(first_meta(PHOTO_IMAGE_NODE)), comfy.fetch(first_meta(PHOTO_MASK_NODE))
+
+
 def _only_filter(people):
     """--only <person_id> (repeatable): generate a slice, not the wall. This is
     Phase B's own verification shape -- a three-person slice (three nations,
@@ -593,23 +632,30 @@ def main():
         (MASK_DIR / emotion).mkdir(parents=True, exist_ok=True)
     slice_people = _only_filter(people)
 
-    # Pass 1: the base (neutral), for every person missing one. All 213 are
-    # re-rendered on the first V3.7 run -- they are the wall the author
-    # rejected as "too lookalike", and they were leaving duotone regardless.
+    # Pass 1: the base (neutral). Two routes, per person: a Commons photo of
+    # the real counterpart exists -> img2img (Phase B3, the author's call --
+    # identity from the photo); no photo -> the seed-locked text render (the
+    # pre-B3 method, still the fallback for invented lines and thin picks).
     todo = [(pid, name) for pid, name in slice_people
             if not (RAW_DIR / "neutral" / (pid + ".png")).exists()]
     print("register holds %d people; %d base portraits exist, %d to generate"
           % (len(people), len(people) - len(todo), len(todo)))
     for i, (person_id, name) in enumerate(todo):
         seed, text, _ = prompt_for(person_id, name, "neutral")
-        image, mask = generate_base(person_id, seed, text)
+        if reference_file(person_id) is not None:
+            image, mask = generate_photo(person_id, "neutral", seed, text)
+            route = "photo"
+        else:
+            image, mask = generate_base(person_id, seed, text)
+            route = "text"
         comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR).write_bytes(image)
         comfy._confined(MASK_DIR / "neutral" / (person_id + ".png"), MASK_DIR).write_bytes(mask)
-        print("  [%d/%d] %s base (seed %d)" % (i + 1, len(todo), person_id, seed))
+        print("  [%d/%d] %s base (%s, seed %d)" % (i + 1, len(todo), person_id, route, seed))
 
-    # Pass 2: the four non-neutral expressions, FaceDetailer over each base.
-    # A person with no base is skipped here -- the base pass creates it; this
-    # guard is what makes either pass alone resumable.
+    # Pass 2: the four non-neutral expressions, on the person's own route
+    # (img2img over the photo, or the seed-locked text render). A person with
+    # no base is skipped here -- the base pass creates it; this guard is what
+    # makes either pass alone resumable.
     for emotion in EMOTIONS[1:]:
         todo_e = [(pid, name) for pid, name in slice_people
                   if (RAW_DIR / "neutral" / (pid + ".png")).exists()
@@ -617,7 +663,10 @@ def main():
         print("%s: %d to generate" % (emotion, len(todo_e)))
         for i, (person_id, name) in enumerate(todo_e):
             seed, text, _ = prompt_for(person_id, name, emotion)
-            image, mask = generate_expression(person_id, emotion, seed, text)
+            if reference_file(person_id) is not None:
+                image, mask = generate_photo(person_id, emotion, seed, text)
+            else:
+                image, mask = generate_expression(person_id, emotion, seed, text)
             comfy._confined(RAW_DIR / emotion / (person_id + ".png"), RAW_DIR).write_bytes(image)
             comfy._confined(MASK_DIR / emotion / (person_id + ".png"), MASK_DIR).write_bytes(mask)
             print("  [%d/%d] %s %s (seed %d)" % (i + 1, len(todo_e), person_id, emotion, seed))
