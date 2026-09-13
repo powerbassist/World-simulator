@@ -72,8 +72,8 @@ MASK_DIR = REPO / "sources" / "portraits" / "mask"
 ## restructured, these move with it and workflow_check.py says so.
 BASE_TEXT_NODE, BASE_SEED_NODE = "4", "6"
 BASE_IMAGE_NODE, BASE_MASK_NODE = "8", "11"
-EXPR_TEXT_NODE, EXPR_SEED_NODE, EXPR_LOAD_NODE = "5", "9", "1"
-EXPR_IMAGE_NODE, EXPR_MASK_NODE = "10", "13"
+EXPR_TEXT_NODE, EXPR_SEED_NODE = "4", "6"
+EXPR_IMAGE_NODE, EXPR_MASK_NODE = "8", "11"
 
 EMOTIONS = ["neutral", "pleased", "stern", "worried", "weary"]
 
@@ -502,15 +502,21 @@ def generate_base(person_id, seed, text):
 
 
 def generate_expression(person_id, emotion, seed, text):
-    """One FaceDetailer inpaint over the person's own base: image and matting
-    mask out. The base is uploaded under a per-person name with overwrite, so
-    all four expression passes of one person read the same pixels in."""
-    base_path = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
+    """One expression render: the SEED-LOCKED RE-RENDER, not an inpaint.
+
+    The history that chose this shape: FaceDetailer's inpaint path was the
+    plan's method, but it silently passes its input through on ComfyUI 0.34
+    (its upscale-skip rule fires on our large face crops, and where it does
+    sample, its internal noise/sigma handling returns garbage -- two full
+    overnight runs rendered 852 images identical to their bases before this
+    was diagnosed). The replacement uses the recipe's own determinism: the
+    SAME seed as the person's base render with ONLY the emotion fragment
+    changed in the prompt -- SDXL re-renders the same composition, and the
+    face's expression is the part the fragment moves. Identity comes from
+    the seed lock; no matting/upload/taps needed."""
     workflow = json.loads(comfy._confined(EXPRESSION_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
-    workflow[EXPR_LOAD_NODE]["inputs"]["image"] = comfy.upload_image(
-        base_path.read_bytes(), person_id + "_base.png")
+    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = comfy.djb2(person_id + ":neutral")
     workflow[EXPR_TEXT_NODE]["inputs"]["text"] = text
-    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = seed
     prompt_id = comfy.queue(workflow)
     out = comfy.outputs(prompt_id, timeout_s=900)
 
