@@ -350,16 +350,20 @@ def prompt_for(person_id, name, emotion="neutral"):
     """The prompt, from the person's own sidecar entry + region + role + the
     emotion fragment. `name` is carried in the signature for the register
     sweep's shape and deliberately reaches no prompt -- the likeness policy is
-    that no real name ever does, which --self-check enforces. The seed varies
-    per emotion so the FaceDetailer pass never re-rolls the base's own noise."""
+    that no real name ever does, which --self-check enforces. For the
+    expression renders the caller locks the seed to the base render's
+    (generate_expression), so identity holds and only the fragment moves."""
     t = _traits[person_id]
+    # V3.7 Phase B2: per-person skin and eyes come first when the sidecar has
+    # them (from the counterpart mapping) -- the REGION look is the fallback
+    # only for people they do not cover, and it is now nation-realistic.
     region = REGION.get(person_id.split("_")[0], "European")
     role = _roles.get(person_id, "figure")
     noun = "woman" if t["sex"] == "female" else "man"
     poss = "her" if t["sex"] == "female" else "his"
     parts = [
         "a %d-year-old %s in %s prime" % (t["age"], noun, poss),
-        region,
+        t.get("skin", region),
         t["build"] + " build",
         t["face"],
         # Derived from the live age, never stored: the words must agree with
@@ -367,7 +371,9 @@ def prompt_for(person_id, name, emotion="neutral"):
         # join would otherwise print a double comma on older sidecar entries.
         _pick(person_id, "face_age", _face_age_bucket(t["age"])),
         t["hair"],
+        t.get("eyes", ""),
     ]
+    parts = [p for p in parts if p]
     if "facial" in t:
         parts.append(t["facial"])
     parts += [
@@ -475,6 +481,23 @@ def self_check(people) -> int:
         texts = [prompt_for(pid, name, e)[1] for e in EMOTIONS]
         if len(set(texts)) != len(EMOTIONS):
             failures.append("emotion prompts collide for %s" % pid)
+
+    # 6. the no-leak seal on the counterpart mapping: the local mapping file
+    # carries real names (uncommitted by design), and none of them may reach
+    # any prompt -- enforced here mechanically, not promised.
+    mapping_path = TOOLS / "portraits_counterparts.json"
+    if mapping_path.exists():
+        mapping = json.loads(comfy._confined(mapping_path, TOOLS).read_text(encoding="utf-8"))
+        real_names = [e["real"] for e in mapping.values()
+                      if isinstance(e, dict) and e.get("real")
+                      and "thin knowledge" not in e["real"] and "(invented)" not in e["real"]]
+        pattern2 = re.compile(r"(?:" + "|".join(re.escape(n) for n in real_names) + r")", re.IGNORECASE)
+        for pid, name in people:
+            for emotion in EMOTIONS:
+                _s, text, _n = prompt_for(pid, name, emotion)
+                if pattern2.search(text):
+                    failures.append("real counterpart name leaked into %s/%s prompt" % (pid, emotion))
+                    break
 
     if failures:
         for f in failures:

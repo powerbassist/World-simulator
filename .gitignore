@@ -81,3 +81,7 @@ docs/superpowers/
 
 # Session dev reports (playtests, probes, reviews) — local working record, never staged
 reports/
+tools/_fetch_born.py
+tools/portraits_counterparts.json
+tools/_apply_corrections.py
+tools/_merge_traits.py
