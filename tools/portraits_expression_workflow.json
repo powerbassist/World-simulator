@@ -103,7 +103,7 @@
    "cfg": 1.8,
    "sampler_name": "dpmpp_sde",
    "scheduler": "karras",
-   "denoise": 0.45,
+   "denoise": 0.55,
    "feather": 20,
    "noise_mask": true,
    "force_inpaint": false,

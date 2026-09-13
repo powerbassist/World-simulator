@@ -77,14 +77,17 @@ EXPR_IMAGE_NODE, EXPR_MASK_NODE = "10", "13"
 
 EMOTIONS = ["neutral", "pleased", "stern", "worried", "weary"]
 
-## The five faces, as FaceDetailer-positive fragments. "smiling broadly" in the
-## base negative still holds: pleased is a FAINT smile.
+## The five faces, as FaceDetailer-positive fragments. V1 wording produced
+## identity-perfect but nearly identical faces -- the author's verdict on the
+## first wall's strip -- so these are written LOUD: gross features (mouth
+## curve, brow, eyelids) must carry the emotion at the card's 54x74. The
+## expression negative deliberately drops "smiling broadly", pleased needs it.
 EMOTION_FRAGMENTS = {
     "neutral": "calm, composed, neutral expression, lips closed",
-    "pleased": "faint warm smile, eyes slightly creased, relaxed brow",
-    "stern": "stern, jaw set, brows drawn down, lips pressed thin",
-    "worried": "worried, brows raised inward, tension around the eyes",
-    "weary": "weary, heavy eyelids, tired, drawn face",
+    "pleased": "warm broad smile, teeth visible, eyes crinkled with joy, cheeks raised",
+    "stern": "stern angry glare, deep frown, brows compressed down, jaw clenched, lips a hard thin line",
+    "worried": "deeply worried, anxious frown, forehead furrowed, brows knotted upward, eyes wide with concern",
+    "weary": "utterly exhausted, heavy sagging eyelids, deep eye bags, hollow drained face",
 }
 
 ## The frame constants, and nothing about the person: camera, background,
