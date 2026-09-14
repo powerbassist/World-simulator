@@ -26,24 +26,30 @@ extends RefCounted
 const K = preload("res://src/sim/network_constants.gd")
 
 ## Two caches, both correctness-neutral and both load-bearing for the harness: the
-## graph is CONTENT, so the 112x112 endowment-adjusted distance table is a property
+## graph is CONTENT, so the 213x213 endowment-adjusted distance table is a property
 ## of the committed file and never changes during a run -- computing it fresh per
 ## call would put a full Dijkstra sweep inside every month of every nation. The
 ## index memo catches the other repetition: migration and unrest read the same
 ## nation's shares within one month, and the shares move only when the economy
-## ticks. Deep equality (GDScript's == on Dictionaries) is the validity test, so a
-## caller passing a different nation's weights can never read another's index.
+## ticks. The graph is keyed by REFERENCE (is_same, not ==): equality on
+## Dictionaries is a deep comparison, and once the roster carried 213 regions that
+## comparison cost as much as the recompute it guarded -- and the duplicate(true)
+## that used to run per miss deep-copied the whole graph on every one of the
+## month's misses. The weights ARE rebuilt live every call, so they are still
+## compared by VALUE: a caller passing a different nation's weights can never read
+## another's index.
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
 ## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
 ## hit the case the paragraph above describes: accessibility() is called once per
 ## nation per system, so between Migration's call for FRA and Unrest's call for FRA
-## the other nine nations' calls had each evicted it, and the full 112-region market
-## potential sweep ran about thirty times a month instead of ten. The roster is ten,
-## so a linear scan of deep-equality comparisons is nothing beside the sweep it
-## saves. Bounded so a caller that somehow varies its weights every call cannot grow
-## this without limit.
-const MEMO_MAX := 16
+## the other nations' calls had each evicted it, and the full market potential
+## sweep ran four times a month instead of once. MEMO_MAX was 16, sized when "the
+## roster is ten"; at 29 nations a single sweep evicted its own head, so no call
+## in a 29-nation pass could ever hit. 32 is the roster plus headroom, and
+## tests/test_network.gd pins that the memo holds a full roster sweep, so the next
+## roster growth re-opens this constant on purpose.
+const MEMO_MAX := 32
 static var _memo: Array = []
 
 
@@ -126,7 +132,7 @@ static func distances_from(graph: Dictionary, from_id: String) -> Dictionary:
 ## own rule one module over.
 static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	for entry in _memo:
-		if entry["weights"] == weights and entry["graph"] == graph:
+		if entry["weights"] == weights and is_same(entry["graph"], graph):
 			return entry["index"]
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
@@ -164,11 +170,11 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for region_id in ids:
 		out[region_id] = float(raw[region_id]) / mean
-	# Stored by VALUE on every side. `out` and `graph` went in by reference before,
-	# which is safe only while no caller mutates what it was handed -- the kind of
-	# invariant that holds until it does not.
+	# The graph is stored by REFERENCE (content, never mutated -- see the cache
+	# comment above); the weights and the index by value, because weights are the
+	# one input a caller recomputes and the index is what those callers read.
 	_memo.append({
-		"graph": graph.duplicate(true),
+		"graph": graph,
 		"weights": weights.duplicate(true),
 		"index": out.duplicate(true),
 	})
@@ -181,12 +187,12 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 ## cache comment above the constants for why this is a cache and not a computation
 ## the caller schedules.
 static func _distance_rows(graph: Dictionary) -> Dictionary:
-	if graph == _matrix_graph and not _matrix_rows.is_empty():
+	if is_same(graph, _matrix_graph) and not _matrix_rows.is_empty():
 		return _matrix_rows
 	var rows: Dictionary = {}
 	for region_id in graph.get("endowment", {}).keys():
 		rows[String(region_id)] = distances_from(graph, String(region_id))
-	_matrix_graph = graph.duplicate(true)
+	_matrix_graph = graph
 	_matrix_rows = rows
 	return rows
 
@@ -196,6 +202,15 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 ## with it. Bounded in [0, 1] BY CONSTRUCTION -- two partitions each summing to 1.0
 ## have an L1 distance of at most 2 -- so this file ships no clamp, which is
 ## V1.7a's log-odds argument in a third place.
+## Warms the per-graph caches. The 213x213 distance table costs ~2 s to build
+## ONCE per process, and built lazily that cost landed on the player's first
+## month boundary as a visible freeze -- the only slow call in 240 simmed
+## months (measured, tools/_spike_probe.gd's verdict). Paid at boot instead,
+## right after the state exists, where the loading moment already is.
+static func warm(graph: Dictionary) -> void:
+	_distance_rows(graph)
+
+
 static func specialisation(mix: Dictionary, national_mix: Dictionary) -> float:
 	var keys: Array = national_mix.keys()
 	keys.sort()

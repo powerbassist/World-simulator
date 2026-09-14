@@ -21,6 +21,8 @@ func _init() -> void:
 	_check_adjacency(loader)
 	_check_mean_one(loader)
 	_check_specialisation()
+	_check_memo_holds_the_roster(loader)
+	_check_warm(loader)
 	_report()
 
 
@@ -84,6 +86,60 @@ func _check_specialisation() -> void:
 	var disjoint: float = Network.specialisation({"a": 1.0, "b": 0.0}, {"a": 0.0, "b": 1.0})
 	if absf(disjoint - 1.0) > 0.000001:
 		_fail("a fully disjoint mix reads specialisation %f, not 1.0" % disjoint)
+
+
+## The memo must hold ONE ENTRY PER NATION for a full EU-27 sweep. MEMO_MAX was
+## sized to the ten-nation roster ("a linear scan ... is nothing" beside the
+## sweep it saves) and 16 slots cannot serve 29: a monthly sweep evicts its own
+## head, so every accessibility call in every pass was a miss paying the full
+## recompute plus a graph deep-copy -- four sweeps a month across main.gd's
+## Energy pre-pass, Economy, Migration and map_flows. This test fails on the old
+## constant and pins the invariant the fix exists for, so the next roster growth
+## re-opens MEMO_MAX on purpose.
+func _check_memo_holds_the_roster(loader) -> void:
+	var graph: Dictionary = loader.region_graph
+	var endowment: Dictionary = graph.get("endowment", {})
+	var ids: Array = endowment.keys()
+	if ids.size() < 29:
+		_fail("only %d regions in the graph; the roster-sweep test needs 29" % ids.size())
+		return
+	Network._memo.clear()
+	var first_weights: Dictionary = {}
+	var first_index: Dictionary = {}
+	for i in range(29):
+		var weights: Dictionary = {}
+		for j in range(i + 7):
+			weights[String(ids[j])] = 1.0 / float(j + 1)
+		var index: Dictionary = Network.accessibility(graph, weights)
+		if i == 0:
+			first_weights = weights
+			first_index = index
+	if Network._memo.size() != 29:
+		_fail("memo holds %d entries after a 29-nation sweep, expected 29 (MEMO_MAX %d)" % [
+			Network._memo.size(), Network.MEMO_MAX])
+	# A re-call with equal weights must come back from the memo, not the sweep:
+	# the hit path returns the stored object, so identity is the observable.
+	var again = Network.accessibility(graph, first_weights.duplicate())
+	if again != first_index:
+		_fail("re-call with equal weights returned a different index")
+
+
+## warm() must populate the distance table, and main.gd must call it at boot:
+## the ~2 s one-time build is boot cost when paid eagerly and a freeze on the
+## player's first month boundary when paid lazily. The source scan is the
+## wiring half of the pin -- the same idiom test_regions.gd uses for callers
+## that must not quietly disappear.
+func _check_warm(loader) -> void:
+	var graph: Dictionary = loader.region_graph
+	Network._matrix_rows.clear()
+	Network._matrix_graph = {}
+	Network.warm(graph)
+	if Network._matrix_rows.size() != graph.get("endowment", {}).size():
+		_fail("warm() built %d distance rows, expected %d" % [
+			Network._matrix_rows.size(), graph.get("endowment", {}).size()])
+	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	if not text.contains("Net.warm("):
+		_fail("src/ui/main.gd no longer warms the network table at boot")
 
 
 func _fail(message: String) -> void:
