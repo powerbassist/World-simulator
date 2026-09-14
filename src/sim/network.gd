@@ -139,10 +139,24 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	ids.sort()
 	var endowment: Dictionary = graph.get("endowment", {})
 	var rows: Dictionary = _distance_rows(graph)
+	# THE SPLIT. The market potential of region i is a foreign part -- every
+	# region OUTSIDE the asking nation, priced at the static endowment -- plus an
+	# own-nation part priced at live output shares. The foreign part does not
+	# depend on which nation is asking, so it is built ONCE per graph and
+	# corrected per call: for each own region j, the foreign part already
+	# counted e_j at the static endowment, so the live share w_j contributes
+	# (w_j - e_j) * exp(-d/decay). The zero-share branch mirrors the per-pair
+	# rule below it: a weight of 0 falls back to the endowment, which the
+	# foreign part already carries, so the correction is 0. The arithmetic is
+	# the old interleaved loop regrouped, so last-bit drift against it is
+	# possible; tests/test_network.gd holds the split to 1e-9 against a
+	# reference copy of the interleaved form, and the balance re-run gates the
+	# shipping at a handful of print-boundary digits.
+	var foreign: Dictionary = _foreign_part(graph)
 	for region_id in ids:
 		var dist: Dictionary = rows.get(String(region_id), {})
-		var potential: float = 0.0
-		for other in endowment.keys():
+		var potential: float = float(foreign.get(String(region_id), 0.0))
+		for other in weights.keys():
 			if String(other) == String(region_id):
 				continue
 			var d = dist.get(other)
@@ -153,8 +167,8 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 			# includes German output, and this file holds no second nation's shares.
 			var mass: float = float(weights.get(other, 0.0))
 			if mass <= 0.0:
-				mass = float(endowment.get(other, 0.0))
-			potential += mass * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
+				continue
+			potential += (mass - float(endowment.get(other, 0.0))) * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
 		raw[region_id] = potential
 	var weighted: float = 0.0
 	var total: float = 0.0
@@ -202,6 +216,36 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 ## with it. Bounded in [0, 1] BY CONSTRUCTION -- two partitions each summing to 1.0
 ## have an L1 distance of at most 2 -- so this file ships no clamp, which is
 ## V1.7a's log-odds argument in a third place.
+## region id -> sum over EVERY OTHER region k of endowment_k * exp(-d/decay),
+## with the per-pair reachability rule of the caller applied. Nation-independent:
+## the asking nation's own live shares enter as the (w - e) correction in
+## accessibility(), never here. Built once per graph, keyed by the same identity
+## test as the distance table -- see the cache comment above the constants.
+static var _foreign_graph: Dictionary = {}
+static var _foreign_rows: Dictionary = {}
+
+static func _foreign_part(graph: Dictionary) -> Dictionary:
+	if is_same(graph, _foreign_graph) and not _foreign_rows.is_empty():
+		return _foreign_rows
+	var endowment: Dictionary = graph.get("endowment", {})
+	var rows: Dictionary = _distance_rows(graph)
+	var out: Dictionary = {}
+	for region_id in endowment.keys():
+		var dist: Dictionary = rows.get(String(region_id), {})
+		var sum: float = 0.0
+		for other in endowment.keys():
+			if String(other) == String(region_id):
+				continue
+			var d = dist.get(other)
+			if d == null:
+				continue
+			sum += float(endowment.get(other, 0.0)) * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
+		out[String(region_id)] = sum
+	_foreign_graph = graph
+	_foreign_rows = out
+	return out
+
+
 ## Warms the per-graph caches. The 213x213 distance table costs ~2 s to build
 ## ONCE per process, and built lazily that cost landed on the player's first
 ## month boundary as a visible freeze -- the only slow call in 240 simmed
@@ -209,6 +253,7 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 ## right after the state exists, where the loading moment already is.
 static func warm(graph: Dictionary) -> void:
 	_distance_rows(graph)
+	_foreign_part(graph)
 
 
 static func specialisation(mix: Dictionary, national_mix: Dictionary) -> float:

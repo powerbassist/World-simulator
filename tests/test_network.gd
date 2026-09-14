@@ -23,6 +23,7 @@ func _init() -> void:
 	_check_specialisation()
 	_check_memo_holds_the_roster(loader)
 	_check_warm(loader)
+	_check_split_matches_reference(loader)
 	_report()
 
 
@@ -140,6 +141,68 @@ func _check_warm(loader) -> void:
 	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
 	if not text.contains("Net.warm("):
 		_fail("src/ui/main.gd no longer warms the network table at boot")
+
+
+## The foreign-endowment split regroups the interleaved market-potential sum,
+## so its values are the same numbers to the last bits only if the algebra is
+## right. This holds the split to 1e-9 RELATIVE against a reference copy of the
+## old interleaved form, over every nation's real weights at a new game --
+## the same bar Siting.normalised() is held to, and loose enough that the
+## regrouping's own last-bit reordering cannot trip it.
+func _check_split_matches_reference(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var graph: Dictionary = loader.region_graph
+	for nation_id in state.nations.keys():
+		var ns = state.nations[nation_id]
+		var region_list: Array = state.regions.get(nation_id, [])
+		var weights: Dictionary = {}
+		for region in region_list:
+			weights[region.id] = Regions.share_of(ns, region.id)
+		var split: Dictionary = Network.accessibility(graph, weights)
+		var reference: Dictionary = _reference_accessibility(graph, weights)
+		for region_id in split.keys():
+			var a: float = float(split[region_id])
+			var b: float = float(reference.get(region_id, 0.0))
+			if absf(a - b) > 1e-9 * maxf(1.0, absf(b)):
+				_fail("split accessibility %s/%s reads %.17f, reference %.17f" % [
+					nation_id, region_id, a, b])
+				return
+
+
+## The pre-split form, kept verbatim as the reference the split must agree with.
+func _reference_accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
+	var NetK = preload("res://src/sim/network_constants.gd")
+	var rows: Dictionary = {}
+	for region_id in graph.get("endowment", {}).keys():
+		rows[String(region_id)] = Network.distances_from(graph, String(region_id))
+	var raw: Dictionary = {}
+	var ids: Array = weights.keys()
+	ids.sort()
+	var endowment: Dictionary = graph.get("endowment", {})
+	for region_id in ids:
+		var dist: Dictionary = rows.get(String(region_id), {})
+		var potential: float = 0.0
+		for other in endowment.keys():
+			if String(other) == String(region_id):
+				continue
+			var d = dist.get(other)
+			if d == null:
+				continue
+			var mass: float = float(weights.get(other, 0.0))
+			if mass <= 0.0:
+				mass = float(endowment.get(other, 0.0))
+			potential += mass * exp(-float(d) / maxf(NetK.DECAY_KM, 1.0))
+		raw[region_id] = potential
+	var weighted: float = 0.0
+	var total: float = 0.0
+	for region_id in ids:
+		weighted += float(weights[region_id]) * float(raw[region_id])
+		total += float(weights[region_id])
+	var out: Dictionary = {}
+	var mean: float = weighted / total
+	for region_id in ids:
+		out[region_id] = float(raw[region_id]) / mean
+	return out
 
 
 func _fail(message: String) -> void:
