@@ -37,6 +37,7 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 ## below already owned the loop, so the decision belongs here and Coercion keeps
 ## only the terms it builds.
 const FP = preload("res://src/sim/foreign_policy.gd")
+const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DFK = preload("res://src/sim/defence_constants.gd")
@@ -338,6 +339,14 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 	var best_score: float = FPK.AGENDA_ACT_MIN
 	var best: Dictionary = {}
 
+	# Once per acting nation, not once per target: the stake vector and the
+	# actor's own before-measures weights are invariant across this loop, and
+	# rebuilding them per target was ~112 full trade-vector builds per acting
+	# nation at the 29-nation roster -- the largest single line in the month
+	# tick's measured budget. target_terms() carries the same reasoning.
+	var sv: Dictionary = FP.stake_vector(state, actor_id)
+	var wbm: Dictionary = Trade.weights_before_measures(state, actor_id)
+
 	for target_id in ids:
 		if target_id == actor_id:
 			continue
@@ -346,7 +355,7 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 		if offers.is_empty():
 			continue
 
-		var terms := FP.target_terms(state, actor_id, target_id)
+		var terms := FP.target_terms(state, actor_id, target_id, sv, wbm)
 
 		for action in offers:
 			# Agreements between an AI and the PLAYER are out of scope, and the

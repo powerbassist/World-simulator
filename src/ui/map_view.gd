@@ -320,6 +320,23 @@ func setup(loader, state) -> void:
 	_world_polygons = loader.world_features
 	_texture = MapRaster.texture()
 
+	# Per-ring bounding boxes for the draw cull, built ONCE beside the arrays
+	# they walk -- the same call _nation_boxes made for the hit test. The cull
+	# itself used to recompute each ring's box on every re-record, walking all
+	# ~28k visible-ring points per pan frame for a number that never changes:
+	# the rings are content. Built from the same arrays the draw walks, so a
+	# box and its ring cannot disagree.
+	_ring_boxes_roster.clear()
+	_ring_boxes_region.clear()
+	_ring_boxes_world.clear()
+	for id in ids:
+		_ring_boxes_roster[id] = _ring_boxes_for(_polygons[id])
+	for region_id in loader.region_features.keys():
+		_ring_boxes_region[String(region_id)] = _ring_boxes_for(
+			loader.region_features[region_id])
+	for id in _world_polygons.keys():
+		_ring_boxes_world[id] = _ring_boxes_for(_world_polygons[id])
+
 	# Built here for _refresh_markers()'s reason: a hit test can happen before the
 	# first frame is drawn, and an empty list would answer it with "nothing here".
 	refresh_cities()
@@ -451,6 +468,10 @@ func visible_lonlat_rect() -> Rect2:
 ## two-pass enclave draw intact: any ring drawn at all is drawn as both fill
 ## and hairline, because the hairline list is built only from rings this
 ## predicate let through.
+## The single-ring statement of the draw cull, and the shape the cached boxes
+## in _draw() answer for the whole roster at once -- the same split as
+## network.gd's _network_pct/_sited_pct beside their per-roster pass. Kept as
+## the readable contract tests/test_map_cull.gd pins; the draw reads the boxes.
 func _ring_reaches_view(ring: PackedVector2Array, view: Rect2) -> bool:
 	if ring.size() < 3:
 		return false
@@ -483,6 +504,36 @@ func center_on_lonlat(lon: float, lat: float) -> void:
 
 func _control_center() -> Vector2:
 	return size / 2.0
+
+
+## Per-ring bounding boxes, index-aligned with the ring arrays they gate. A
+## negative-size Rect2 marks a ring the old cull never drew (fewer than three
+## points) so the draw's single `continue` covers both gates.
+var _ring_boxes_roster: Dictionary = {}
+var _ring_boxes_region: Dictionary = {}
+var _ring_boxes_world: Dictionary = {}
+
+
+func _ring_boxes_for(polys: Array) -> Array:
+	var out: Array = []
+	for ring: PackedVector2Array in polys:
+		if ring.size() < 3:
+			out.append(Rect2(0, 0, -1, -1))
+			continue
+		var box := Rect2(ring[0], Vector2.ZERO)
+		for i in range(1, ring.size()):
+			box = box.expand(ring[i])
+		out.append(box)
+	return out
+
+
+## The per-draw expansion of _lonlat_to_screen()'s affine: screen =
+## (p.x * _kx + _ox, p.y * _ky + _oy). Written by _draw(), read by the heavy
+## ring passes only. See the comment in _draw().
+var _kx: float = 0.0
+var _ky: float = 0.0
+var _ox: float = 0.0
+var _oy: float = 0.0
 
 
 func _lonlat_to_screen(lon: float, lat: float) -> Vector2:
@@ -767,6 +818,19 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	_fit_zoom()
+	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW. The heavy passes below inline
+	# _lonlat_to_screen() as two multiply-adds over these locals: a pan re-record
+	# walks every visible ring's points (65k at the EU-27 roster), and a GDScript
+	# function call per point cost ~80 ms per pan frame -- a drag at 11 fps.
+	# The folded constants reorder two multiplications against the function
+	# body, which moves projected vertices by less than a billionth of a pixel;
+	# the function stays the readable statement of the transform and every
+	# non-hot path (hit tests, cities, labels, markers, plants) still calls it.
+	_kx = BASE_SCALE * _zoom
+	_ky = -BASE_SCALE * _zoom
+	var cc := _control_center()
+	_ox = _pan_offset.x + cc.x - _center_lon * _kx
+	_oy = _pan_offset.y + cc.y + _center_lat * _kx
 	_draw_raster()
 	_draw_world_borders()
 	_draw_roster()
@@ -800,19 +864,25 @@ func _draw_raster() -> void:
 ## and what a border adds is the political line the photograph cannot show.
 func _draw_world_borders() -> void:
 	var view := visible_lonlat_rect()
+	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
 	for id in _world_polygons.keys():
-		for ring: PackedVector2Array in _world_polygons[id]:
-			if not _ring_reaches_view(ring, view):
+		var polys: Array = _world_polygons[id]
+		var boxes: Array = _ring_boxes_world[id]
+		for r in range(polys.size()):
+			var box: Rect2 = boxes[r]
+			if box.size.x < 0.0 or not padded.intersects(box):
 				continue
+			var ring: PackedVector2Array = polys[r]
 			var screen_points := PackedVector2Array()
 			for p in ring:
-				screen_points.append(_lonlat_to_screen(p.x, p.y))
+				screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			screen_points.append(screen_points[0])
 			draw_polyline(screen_points, WORLD_BORDER, WORLD_BORDER_WIDTH)
 
 
 func _draw_roster() -> void:
 	var view := visible_lonlat_rect()
+	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
 	var viewer := viewer_id()
 
 	# One pass for every fill on the layer, rather than one call per nation.
@@ -846,12 +916,16 @@ func _draw_roster() -> void:
 		# is a few pixels at MAX_ZOOM, and the base turns that disagreement from a
 		# hole in the country into a seam the eye cannot find. What the player
 		# sees as the fill is the regions.
-		for ring: PackedVector2Array in _polygons[id]:
-			if not _ring_reaches_view(ring, view):
+		var polys: Array = _polygons[id]
+		var boxes: Array = _ring_boxes_roster[id]
+		for r in range(polys.size()):
+			var box: Rect2 = boxes[r]
+			if box.size.x < 0.0 or not padded.intersects(box):
 				continue
+			var ring: PackedVector2Array = polys[r]
 			var base_points := PackedVector2Array()
 			for p in ring:
-				base_points.append(_lonlat_to_screen(p.x, p.y))
+				base_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			draw_colored_polygon(base_points, color)
 
 		# Region fills first, ALL of them, then ALL the hairlines. The two-pass
@@ -864,17 +938,21 @@ func _draw_roster() -> void:
 		# In the same hue the covered fills are invisible; only the lines show.
 		var region_rings: Array = []
 		for region in _loader.regions.get(id, []):
-			for ring: PackedVector2Array in _loader.region_features.get(region.id, []):
+			var region_ring_arrays: Array = _loader.region_features.get(region.id, [])
+			var region_boxes: Array = _ring_boxes_region.get(region.id, [])
+			for ri in range(region_ring_arrays.size()):
+				var ring: PackedVector2Array = region_ring_arrays[ri]
 				# The cull gates the FILL, and region_rings is built only from
 				# rings the cull let through -- so the hairline loop below
 				# cannot disagree with it, which is how the two-pass enclave
 				# draw survives culling: any ring drawn at all is drawn in
 				# both passes.
-				if not _ring_reaches_view(ring, view):
+				var rbox: Rect2 = region_boxes[ri] if ri < region_boxes.size() else Rect2(0, 0, -1, -1)
+				if rbox.size.x < 0.0 or not padded.intersects(rbox):
 					continue
 				var region_points := PackedVector2Array()
 				for p in ring:
-					region_points.append(_lonlat_to_screen(p.x, p.y))
+					region_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 				draw_colored_polygon(region_points, color)
 				region_rings.append(region_points)
 		for region_points: PackedVector2Array in region_rings:
@@ -885,12 +963,14 @@ func _draw_roster() -> void:
 		# The national stroke last, from the 1:50m outline it has always used:
 		# the bright line is the one that says which ten answer a click, and it
 		# belongs to the nation rather than to any region of it.
-		for ring: PackedVector2Array in _polygons[id]:
-			if not _ring_reaches_view(ring, view):
+		for r in range(polys.size()):
+			var box: Rect2 = boxes[r]
+			if box.size.x < 0.0 or not padded.intersects(box):
 				continue
+			var ring: PackedVector2Array = polys[r]
 			var stroke_points := PackedVector2Array()
 			for p in ring:
-				stroke_points.append(_lonlat_to_screen(p.x, p.y))
+				stroke_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			var closed := stroke_points.duplicate()
 			closed.append(stroke_points[0])
 			draw_polyline(closed, stroke, width)

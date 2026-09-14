@@ -14,6 +14,7 @@ const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Net = preload("res://src/sim/network.gd")
 const Region = preload("res://src/core/region.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -180,6 +181,10 @@ func _ready() -> void:
 		for e in _state.errors:
 			push_error(e)
 		return
+	# The distance table is warmed HERE, not on its first lazy caller: ~2 s once
+	# per process is boot cost, while a lazy build makes the player's first
+	# month boundary freeze. See network.gd::warm().
+	Net.warm(_state.region_graph)
 	_state.year = _clock.year
 	_state.month = _clock.month
 

@@ -26,24 +26,34 @@ extends RefCounted
 const K = preload("res://src/sim/network_constants.gd")
 
 ## Two caches, both correctness-neutral and both load-bearing for the harness: the
-## graph is CONTENT, so the 112x112 endowment-adjusted distance table is a property
+## graph is CONTENT, so the 213x213 endowment-adjusted distance table is a property
 ## of the committed file and never changes during a run -- computing it fresh per
 ## call would put a full Dijkstra sweep inside every month of every nation. The
 ## index memo catches the other repetition: migration and unrest read the same
 ## nation's shares within one month, and the shares move only when the economy
-## ticks. Deep equality (GDScript's == on Dictionaries) is the validity test, so a
-## caller passing a different nation's weights can never read another's index.
+## ticks. Both caches key the graph by VALUE (GDScript's == on Dictionaries):
+## the graph is CONTENT, so every reference in the process -- the loader's, the
+## state's, and Budget.project()'s duplicated simulation state -- holds equal
+## dictionaries, and value keying is what lets a copy hit the cache instead of
+## paying a full Dijkstra rebuild. The comparison is cheap next to what it
+## guards (measured ~90 us against a ~1.4 ms recompute); what actually priced
+## the old shape was the bound below and the deep copy per miss, both gone.
+## The weights ARE rebuilt live every call, so they are compared by VALUE too:
+## a caller passing a different nation's weights can never read another's
+## index. Stored by reference, because content is never mutated -- data_loader
+## reads it once and nothing in src/ writes through it.
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
 ## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
 ## hit the case the paragraph above describes: accessibility() is called once per
 ## nation per system, so between Migration's call for FRA and Unrest's call for FRA
-## the other nine nations' calls had each evicted it, and the full 112-region market
-## potential sweep ran about thirty times a month instead of ten. The roster is ten,
-## so a linear scan of deep-equality comparisons is nothing beside the sweep it
-## saves. Bounded so a caller that somehow varies its weights every call cannot grow
-## this without limit.
-const MEMO_MAX := 16
+## the other nations' calls had each evicted it, and the full market potential
+## sweep ran four times a month instead of once. MEMO_MAX was 16, sized when "the
+## roster is ten"; at 29 nations a single sweep evicted its own head, so no call
+## in a 29-nation pass could ever hit. 32 is the roster plus headroom, and
+## tests/test_network.gd pins that the memo holds a full roster sweep, so the next
+## roster growth re-opens this constant on purpose.
+const MEMO_MAX := 32
 static var _memo: Array = []
 
 
@@ -133,10 +143,24 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	ids.sort()
 	var endowment: Dictionary = graph.get("endowment", {})
 	var rows: Dictionary = _distance_rows(graph)
+	# THE SPLIT. The market potential of region i is a foreign part -- every
+	# region OUTSIDE the asking nation, priced at the static endowment -- plus an
+	# own-nation part priced at live output shares. The foreign part does not
+	# depend on which nation is asking, so it is built ONCE per graph and
+	# corrected per call: for each own region j, the foreign part already
+	# counted e_j at the static endowment, so the live share w_j contributes
+	# (w_j - e_j) * exp(-d/decay). The zero-share branch mirrors the per-pair
+	# rule below it: a weight of 0 falls back to the endowment, which the
+	# foreign part already carries, so the correction is 0. The arithmetic is
+	# the old interleaved loop regrouped, so last-bit drift against it is
+	# possible; tests/test_network.gd holds the split to 1e-9 against a
+	# reference copy of the interleaved form, and the balance re-run gates the
+	# shipping at a handful of print-boundary digits.
+	var foreign: Dictionary = _foreign_part(graph)
 	for region_id in ids:
 		var dist: Dictionary = rows.get(String(region_id), {})
-		var potential: float = 0.0
-		for other in endowment.keys():
+		var potential: float = float(foreign.get(String(region_id), 0.0))
+		for other in weights.keys():
 			if String(other) == String(region_id):
 				continue
 			var d = dist.get(other)
@@ -147,8 +171,8 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 			# includes German output, and this file holds no second nation's shares.
 			var mass: float = float(weights.get(other, 0.0))
 			if mass <= 0.0:
-				mass = float(endowment.get(other, 0.0))
-			potential += mass * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
+				continue
+			potential += (mass - float(endowment.get(other, 0.0))) * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
 		raw[region_id] = potential
 	var weighted: float = 0.0
 	var total: float = 0.0
@@ -164,11 +188,11 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for region_id in ids:
 		out[region_id] = float(raw[region_id]) / mean
-	# Stored by VALUE on every side. `out` and `graph` went in by reference before,
-	# which is safe only while no caller mutates what it was handed -- the kind of
-	# invariant that holds until it does not.
+	# The graph is stored by REFERENCE (content, never mutated -- see the cache
+	# comment above); the weights and the index by value, because weights are the
+	# one input a caller recomputes and the index is what those callers read.
 	_memo.append({
-		"graph": graph.duplicate(true),
+		"graph": graph,
 		"weights": weights.duplicate(true),
 		"index": out.duplicate(true),
 	})
@@ -186,9 +210,49 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 	var rows: Dictionary = {}
 	for region_id in graph.get("endowment", {}).keys():
 		rows[String(region_id)] = distances_from(graph, String(region_id))
-	_matrix_graph = graph.duplicate(true)
+	_matrix_graph = graph
 	_matrix_rows = rows
 	return rows
+
+
+## region id -> sum over EVERY OTHER region k of endowment_k * exp(-d/decay),
+## with the per-pair reachability rule of the caller applied. Nation-independent:
+## the asking nation's own live shares enter as the (w - e) correction in
+## accessibility(), never here. Built once per graph, keyed by the same identity
+## test as the distance table -- see the cache comment above the constants.
+static var _foreign_graph: Dictionary = {}
+static var _foreign_rows: Dictionary = {}
+
+static func _foreign_part(graph: Dictionary) -> Dictionary:
+	if graph == _foreign_graph and not _foreign_rows.is_empty():
+		return _foreign_rows
+	var endowment: Dictionary = graph.get("endowment", {})
+	var rows: Dictionary = _distance_rows(graph)
+	var out: Dictionary = {}
+	for region_id in endowment.keys():
+		var dist: Dictionary = rows.get(String(region_id), {})
+		var sum: float = 0.0
+		for other in endowment.keys():
+			if String(other) == String(region_id):
+				continue
+			var d = dist.get(other)
+			if d == null:
+				continue
+			sum += float(endowment.get(other, 0.0)) * exp(-float(d) / maxf(K.DECAY_KM, 1.0))
+		out[String(region_id)] = sum
+	_foreign_graph = graph
+	_foreign_rows = out
+	return out
+
+
+## Warms the per-graph caches. The 213x213 distance table costs ~2 s to build
+## ONCE per process, and built lazily that cost landed on the player's first
+## month boundary as a visible freeze -- the only slow call in 240 simmed
+## months (measured, tools/_spike_probe.gd's verdict). Paid at boot instead,
+## right after the state exists, where the loading moment already is.
+static func warm(graph: Dictionary) -> void:
+	_distance_rows(graph)
+	_foreign_part(graph)
 
 
 ## Half the L1 distance between a region's production mix and its nation's: 0.0 for a

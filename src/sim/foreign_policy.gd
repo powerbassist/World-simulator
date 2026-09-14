@@ -391,9 +391,13 @@ static func pact_refusal_reason(state, actor_id: String, target_id: String) -> S
 ## Luxembourg tariffing France is answered at the ceiling. That asymmetry is the
 ## thing V1.3b's directed table made SAYABLE and no session until this one could
 ## act on.
-static func retaliation_fraction(state, imposer_id: String, target_id: String, ceiling: float) -> float:
+static func retaliation_fraction(state, imposer_id: String, target_id: String, ceiling: float,
+		imposer_wbm: Dictionary = {}) -> float:
+	# The imposer's own before-measures vector, hoistable by a caller already
+	# holding it (target_terms does); empty means build-your-own.
+	var iw: Dictionary = imposer_wbm if not imposer_wbm.is_empty() else Trade.weights_before_measures(state, imposer_id)
 	var leverage: float = float(
-		Trade.weights_before_measures(state, imposer_id).get(target_id, 0.0)
+		iw.get(target_id, 0.0)
 	) / even_share(state)
 	var exposure: float = float(
 		Trade.weights_before_measures(state, target_id).get(imposer_id, 0.0)
@@ -667,7 +671,17 @@ static func desire(state, actor_id: String, effects: Dictionary, target_id: Stri
 ##
 ## The split is also where the API stops being about a verb: Diplomacy holds one
 ## of these per target and asks desire_from() about each action it has.
-static func target_terms(state, actor_id: String, target_id: String) -> Dictionary:
+static func target_terms(state, actor_id: String, target_id: String,
+		stake_vec: Dictionary = {}, actor_wbm: Dictionary = {}) -> Dictionary:
+	# The AI agenda scores ~28 targets per acting nation, and stake_vector() plus
+	# the actor's own before-measures weights do not vary across that loop --
+	# nothing mutates state between scoring and the execute() that follows it.
+	# The caller may therefore hoist both and pass them in; empty means
+	# build-your-own, so every player-facing caller and test keeps its shape.
+	# The read that genuinely varies per target -- the TARGET's before-measures
+	# vector, inside retaliation_fraction -- stays built there.
+	var sv: Dictionary = stake_vec if not stake_vec.is_empty() else stake_vector(state, actor_id)
+	var aw: Dictionary = actor_wbm if not actor_wbm.is_empty() else Trade.weights_before_measures(state, actor_id)
 	return {
 		# How much this partner matters, as a MULTIPLIER on the opportunity rather
 		# than a term added to it. See _desire_parts() for why that distinction is
@@ -681,15 +695,13 @@ static func target_terms(state, actor_id: String, target_id: String) -> Dictiona
 		# fourteen years, at all, while it sat comfortably above AGENDA_ACT_MIN the
 		# whole time. Being outranked forever is a different failure from being
 		# unreachable, and only the second one a bar can fix.
-		"stake_factor": pow(stake(state, actor_id, target_id) / even_share(state), K.AGENDA_STAKE_EXPONENT),
+		"stake_factor": pow(float(sv.get(target_id, 0.0)) / even_share(state), K.AGENDA_STAKE_EXPONENT),
 		"amity": amity(state, actor_id, target_id),
 		# Read BEFORE measures, for the reason docs/coercion-model.md gives at length
 		# and retaliation_fraction() already follows: what a hostile act destroys is
 		# the trade you had, not the trade that survives it. Reading the post-measure
 		# vector is what made high severity strictly dominated at V1.3c.
-		"exposure": float(
-			Trade.weights_before_measures(state, actor_id).get(target_id, 0.0)
-		) / even_share(state),
+		"exposure": float(aw.get(target_id, 0.0)) / even_share(state),
 		# The answering model, run from the acting side. Deliberately the real
 		# function rather than a symmetric copy: an exchange whose two halves are
 		# computed by two functions is two models that will disagree, and this one
@@ -698,7 +710,7 @@ static func target_terms(state, actor_id: String, target_id: String) -> Dictiona
 		# Read as DETERRENCE -- how willing and able this target is to hit back at
 		# all -- rather than as a prediction that this specific act draws a specific
 		# tariff, which is why it scales a condemnation too.
-		"risk": retaliation_fraction(state, actor_id, target_id, CK.RETALIATION_FRACTION),
+		"risk": retaliation_fraction(state, actor_id, target_id, CK.RETALIATION_FRACTION, aw),
 	}
 
 

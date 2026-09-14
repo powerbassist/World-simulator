@@ -1178,7 +1178,9 @@ func duplicate_state():
 	# that lost the graph would run every Regions network read against {} -- the
 	# accessibility index of a country with no places in it. The register above
 	# duplicated for the same "must have one" reason and paid for the empty case
-	# once already.
+	# once already. The copy stays deep because the state-copy contract pins it
+	# (tests/test_state_copy.gd) and the network caches key by VALUE, so the copy
+	# hits them instead of paying a Dijkstra rebuild per projection.
 	gs.region_graph = region_graph.duplicate(true)
 	# The sited-payoff map is derived state, and a projection that lost it would
 	# run every month after its first Projects tick with the sited term silently
