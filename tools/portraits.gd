@@ -177,13 +177,30 @@ func _load_frame(path: String) -> Image:
 	if img.load_png_from_buffer(bytes) != OK:
 		printerr("FAIL: %s is not a decodable PNG" % path)
 		return null
+	# 832x1216 is the generated frame; photo-route renders carry the Commons
+	# photo's own dimensions by design -- _crop_and_resize centre-crops those.
 	if img.get_size() != SOURCE_FRAME:
-		printerr("FAIL: %s is %s, expected the workflow's %s frame" % [path, img.get_size(), SOURCE_FRAME])
-		return null
+		print("note: %s is %s (photo route) -- centre-cropping" % [path.get_file(), img.get_size()])
 	return img
 
 
 func _crop_and_resize(img: Image) -> Image:
+	# The 832x1216 generated frame gets the tuned crop (eyeline at a fixed
+	# height). Photo-route renders carry the Commons photo's own dimensions
+	# (img2img preserves them) -- they get a centre-crop to the bust aspect,
+	# because a square or landscape reference has no equivalent of the
+	# generated framing to preserve.
+	if img.get_size() != SOURCE_FRAME:
+		var aspect := float(OUT_W) / float(OUT_H)
+		var w := img.get_width()
+		var h := img.get_height()
+		var cw := mini(w, int(h * aspect))
+		var ch := mini(h, int(w / aspect))
+		var cx := (w - cw) / 2
+		var cy := (h - ch) / 2
+		var out := img.get_region(Rect2i(cx, cy, cw, ch))
+		out.resize(OUT_W, OUT_H, Image.INTERPOLATE_LANCZOS)
+		return out
 	var out := img.get_region(CROP)
 	out.resize(OUT_W, OUT_H, Image.INTERPOLATE_LANCZOS)
 	return out

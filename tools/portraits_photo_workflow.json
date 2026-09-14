@@ -1,0 +1,148 @@
+{
+ "1": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "__REFERENCE_FILENAME__"
+  }
+ },
+ "2": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "Juggernaut_X_RunDiffusion_Hyper.safetensors"
+  }
+ },
+ "3": {
+  "class_type": "LoraLoader",
+  "inputs": {
+   "lora_name": "PerfectEyesXL.safetensors",
+   "strength_model": 0.35,
+   "strength_clip": 0.35,
+   "model": [
+    "2",
+    0
+   ],
+   "clip": [
+    "2",
+    1
+   ]
+  }
+ },
+ "4": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "__PORTRAIT_PROMPT__",
+   "clip": [
+    "3",
+    1
+   ]
+  }
+ },
+ "5": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "cartoon, painting, illustration, 3d render, deformed face, extra fingers, bad hands, watermark, text, caption, frame, border, hat, sunglasses, colorful background, busy background, full body, multiple people",
+   "clip": [
+    "3",
+    1
+   ]
+  }
+ },
+ "6": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "1",
+    0
+   ],
+   "vae": [
+    "2",
+    2
+   ]
+  }
+ },
+ "7": {
+  "class_type": "KSampler",
+  "inputs": {
+   "seed": 0,
+   "steps": 8,
+   "cfg": 1.8,
+   "sampler_name": "dpmpp_sde",
+   "scheduler": "karras",
+   "denoise": 0.55,
+   "model": [
+    "3",
+    0
+   ],
+   "positive": [
+    "4",
+    0
+   ],
+   "negative": [
+    "5",
+    0
+   ],
+   "latent_image": [
+    "6",
+    0
+   ]
+  }
+ },
+ "8": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "7",
+    0
+   ],
+   "vae": [
+    "2",
+    2
+   ]
+  }
+ },
+ "9": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "photo_portrait",
+   "images": [
+    "8",
+    0
+   ]
+  }
+ },
+ "10": {
+  "class_type": "BiRefNetRMBG",
+  "inputs": {
+   "image": [
+    "8",
+    0
+   ],
+   "model": "BiRefNet-portrait",
+   "sensitivity": 1.0,
+   "mask_blur": 0,
+   "mask_offset": 0,
+   "invert_output": false,
+   "refine_foreground": false,
+   "background": "Alpha"
+  }
+ },
+ "11": {
+  "class_type": "MaskToImage",
+  "inputs": {
+   "mask": [
+    "10",
+    1
+   ]
+  }
+ },
+ "12": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "photo_mask",
+   "images": [
+    "11",
+    0
+   ]
+  }
+ }
+}

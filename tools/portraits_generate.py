@@ -61,6 +61,8 @@ TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
 WORKFLOW = TOOLS / "portraits_workflow.json"
 EXPRESSION_WORKFLOW = TOOLS / "portraits_expression_workflow.json"
+PHOTO_WORKFLOW = TOOLS / "portraits_photo_workflow.json"
+REFERENCE_DIR = REPO / "sources" / "portraits" / "reference"
 TRAITS_PATH = TOOLS / "portraits_traits.json"
 BANNED_NAMES = TOOLS / "banned_names.txt"
 PEOPLE_DIR = REPO / "data" / "people"
@@ -72,19 +74,24 @@ MASK_DIR = REPO / "sources" / "portraits" / "mask"
 ## restructured, these move with it and workflow_check.py says so.
 BASE_TEXT_NODE, BASE_SEED_NODE = "4", "6"
 BASE_IMAGE_NODE, BASE_MASK_NODE = "8", "11"
-EXPR_TEXT_NODE, EXPR_SEED_NODE, EXPR_LOAD_NODE = "5", "9", "1"
-EXPR_IMAGE_NODE, EXPR_MASK_NODE = "10", "13"
+EXPR_TEXT_NODE, EXPR_SEED_NODE = "4", "6"
+PHOTO_IMAGE_NODE, PHOTO_TEXT_NODE, PHOTO_SEED_NODE = "1", "4", "7"
+PHOTO_IMAGE_NODE_OUT, PHOTO_MASK_NODE_OUT = "9", "12"
+EXPR_IMAGE_NODE, EXPR_MASK_NODE = "8", "11"
 
 EMOTIONS = ["neutral", "pleased", "stern", "worried", "weary"]
 
-## The five faces, as FaceDetailer-positive fragments. "smiling broadly" in the
-## base negative still holds: pleased is a FAINT smile.
+## The five faces, as FaceDetailer-positive fragments. V1 wording produced
+## identity-perfect but nearly identical faces -- the author's verdict on the
+## first wall's strip -- so these are written LOUD: gross features (mouth
+## curve, brow, eyelids) must carry the emotion at the card's 54x74. The
+## expression negative deliberately drops "smiling broadly", pleased needs it.
 EMOTION_FRAGMENTS = {
     "neutral": "calm, composed, neutral expression, lips closed",
-    "pleased": "faint warm smile, eyes slightly creased, relaxed brow",
-    "stern": "stern, jaw set, brows drawn down, lips pressed thin",
-    "worried": "worried, brows raised inward, tension around the eyes",
-    "weary": "weary, heavy eyelids, tired, drawn face",
+    "pleased": "warm broad smile, teeth visible, eyes crinkled with joy, cheeks raised",
+    "stern": "stern angry glare, deep frown, brows compressed down, jaw clenched, lips a hard thin line",
+    "worried": "deeply worried, anxious frown, forehead furrowed, brows knotted upward, eyes wide with concern",
+    "weary": "utterly exhausted, heavy sagging eyelids, deep eye bags, hollow drained face",
 }
 
 ## The frame constants, and nothing about the person: camera, background,
@@ -347,16 +354,20 @@ def prompt_for(person_id, name, emotion="neutral"):
     """The prompt, from the person's own sidecar entry + region + role + the
     emotion fragment. `name` is carried in the signature for the register
     sweep's shape and deliberately reaches no prompt -- the likeness policy is
-    that no real name ever does, which --self-check enforces. The seed varies
-    per emotion so the FaceDetailer pass never re-rolls the base's own noise."""
+    that no real name ever does, which --self-check enforces. For the
+    expression renders the caller locks the seed to the base render's
+    (generate_expression), so identity holds and only the fragment moves."""
     t = _traits[person_id]
+    # V3.7 Phase B2: per-person skin and eyes come first when the sidecar has
+    # them (from the counterpart mapping) -- the REGION look is the fallback
+    # only for people they do not cover, and it is now nation-realistic.
     region = REGION.get(person_id.split("_")[0], "European")
     role = _roles.get(person_id, "figure")
     noun = "woman" if t["sex"] == "female" else "man"
     poss = "her" if t["sex"] == "female" else "his"
     parts = [
         "a %d-year-old %s in %s prime" % (t["age"], noun, poss),
-        region,
+        t.get("skin", region),
         t["build"] + " build",
         t["face"],
         # Derived from the live age, never stored: the words must agree with
@@ -364,9 +375,13 @@ def prompt_for(person_id, name, emotion="neutral"):
         # join would otherwise print a double comma on older sidecar entries.
         _pick(person_id, "face_age", _face_age_bucket(t["age"])),
         t["hair"],
+        t.get("eyes", ""),
     ]
+    parts = [p for p in parts if p]
     if "facial" in t:
         parts.append(t["facial"])
+    if t["sex"] == "female" and "bust" in t:
+        parts.append(t["bust"])
     parts += [
         t["glasses"],
         t["quirk"],
@@ -473,6 +488,23 @@ def self_check(people) -> int:
         if len(set(texts)) != len(EMOTIONS):
             failures.append("emotion prompts collide for %s" % pid)
 
+    # 6. the no-leak seal on the counterpart mapping: the local mapping file
+    # carries real names (uncommitted by design), and none of them may reach
+    # any prompt -- enforced here mechanically, not promised.
+    mapping_path = TOOLS / "portraits_counterparts.json"
+    if mapping_path.exists():
+        mapping = json.loads(comfy._confined(mapping_path, TOOLS).read_text(encoding="utf-8"))
+        real_names = [e["real"] for e in mapping.values()
+                      if isinstance(e, dict) and e.get("real")
+                      and "thin knowledge" not in e["real"] and "(invented)" not in e["real"]]
+        pattern2 = re.compile(r"(?:" + "|".join(re.escape(n) for n in real_names) + r")", re.IGNORECASE)
+        for pid, name in people:
+            for emotion in EMOTIONS:
+                _s, text, _n = prompt_for(pid, name, emotion)
+                if pattern2.search(text):
+                    failures.append("real counterpart name leaked into %s/%s prompt" % (pid, emotion))
+                    break
+
     if failures:
         for f in failures:
             print("FAIL: %s" % f)
@@ -499,15 +531,21 @@ def generate_base(person_id, seed, text):
 
 
 def generate_expression(person_id, emotion, seed, text):
-    """One FaceDetailer inpaint over the person's own base: image and matting
-    mask out. The base is uploaded under a per-person name with overwrite, so
-    all four expression passes of one person read the same pixels in."""
-    base_path = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
+    """One expression render: the SEED-LOCKED RE-RENDER, not an inpaint.
+
+    The history that chose this shape: FaceDetailer's inpaint path was the
+    plan's method, but it silently passes its input through on ComfyUI 0.34
+    (its upscale-skip rule fires on our large face crops, and where it does
+    sample, its internal noise/sigma handling returns garbage -- two full
+    overnight runs rendered 852 images identical to their bases before this
+    was diagnosed). The replacement uses the recipe's own determinism: the
+    SAME seed as the person's base render with ONLY the emotion fragment
+    changed in the prompt -- SDXL re-renders the same composition, and the
+    face's expression is the part the fragment moves. Identity comes from
+    the seed lock; no matting/upload/taps needed."""
     workflow = json.loads(comfy._confined(EXPRESSION_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
-    workflow[EXPR_LOAD_NODE]["inputs"]["image"] = comfy.upload_image(
-        base_path.read_bytes(), person_id + "_base.png")
+    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = comfy.djb2(person_id + ":neutral")
     workflow[EXPR_TEXT_NODE]["inputs"]["text"] = text
-    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = seed
     prompt_id = comfy.queue(workflow)
     out = comfy.outputs(prompt_id, timeout_s=900)
 
@@ -517,6 +555,41 @@ def generate_expression(person_id, emotion, seed, text):
         return out[node][0]
 
     return comfy.fetch(first_meta(EXPR_IMAGE_NODE)), comfy.fetch(first_meta(EXPR_MASK_NODE))
+
+
+def reference_file(person_id):
+    """The downloaded Commons photo for this person's real counterpart, or None
+    -- Phase B3's img2img path is available only where the author's photo
+    scrape found a free-license portrait."""
+    for ext in (".jpg", ".jpeg", ".png"):
+        candidate = REFERENCE_DIR / (person_id + ext)
+        if candidate.exists() and candidate.stat().st_size > 0:
+            return candidate
+    return None
+
+
+def generate_photo(person_id, emotion, seed, text):
+    """One img2img render over the real counterpart's Commons photo -- the
+    author's 2026-09-13 call: real photos as generation input, licence metadata
+    recorded per person by tools/fetch_photos.py. The photo anchors identity
+    (the face follows the real politician through the 0.55 denoise); the
+    prompt's emotion fragment and traits steer. The seed varies per emotion
+    here -- identity comes from the photo, not the seed."""
+    workflow = json.loads(comfy._confined(PHOTO_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    ref = reference_file(person_id)
+    workflow[PHOTO_IMAGE_NODE]["inputs"]["image"] = comfy.upload_image(
+        ref.read_bytes(), person_id + "_ref" + ref.suffix)
+    workflow[PHOTO_TEXT_NODE]["inputs"]["text"] = text
+    workflow[PHOTO_SEED_NODE]["inputs"]["seed"] = seed
+    prompt_id = comfy.queue(workflow)
+    out = comfy.outputs(prompt_id, timeout_s=900)
+
+    def first_meta(node):
+        if not out.get(node):
+            raise RuntimeError("no output at node %s for %s/%s" % (node, person_id, emotion))
+        return out[node][0]
+
+    return comfy.fetch(first_meta(PHOTO_IMAGE_NODE_OUT)), comfy.fetch(first_meta(PHOTO_MASK_NODE_OUT))
 
 
 def _only_filter(people):
@@ -561,23 +634,30 @@ def main():
         (MASK_DIR / emotion).mkdir(parents=True, exist_ok=True)
     slice_people = _only_filter(people)
 
-    # Pass 1: the base (neutral), for every person missing one. All 213 are
-    # re-rendered on the first V3.7 run -- they are the wall the author
-    # rejected as "too lookalike", and they were leaving duotone regardless.
+    # Pass 1: the base (neutral). Two routes, per person: a Commons photo of
+    # the real counterpart exists -> img2img (Phase B3, the author's call --
+    # identity from the photo); no photo -> the seed-locked text render (the
+    # pre-B3 method, still the fallback for invented lines and thin picks).
     todo = [(pid, name) for pid, name in slice_people
             if not (RAW_DIR / "neutral" / (pid + ".png")).exists()]
     print("register holds %d people; %d base portraits exist, %d to generate"
           % (len(people), len(people) - len(todo), len(todo)))
     for i, (person_id, name) in enumerate(todo):
         seed, text, _ = prompt_for(person_id, name, "neutral")
-        image, mask = generate_base(person_id, seed, text)
+        if reference_file(person_id) is not None:
+            image, mask = generate_photo(person_id, "neutral", seed, text)
+            route = "photo"
+        else:
+            image, mask = generate_base(person_id, seed, text)
+            route = "text"
         comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR).write_bytes(image)
         comfy._confined(MASK_DIR / "neutral" / (person_id + ".png"), MASK_DIR).write_bytes(mask)
-        print("  [%d/%d] %s base (seed %d)" % (i + 1, len(todo), person_id, seed))
+        print("  [%d/%d] %s base (%s, seed %d)" % (i + 1, len(todo), person_id, route, seed))
 
-    # Pass 2: the four non-neutral expressions, FaceDetailer over each base.
-    # A person with no base is skipped here -- the base pass creates it; this
-    # guard is what makes either pass alone resumable.
+    # Pass 2: the four non-neutral expressions, on the person's own route
+    # (img2img over the photo, or the seed-locked text render). A person with
+    # no base is skipped here -- the base pass creates it; this guard is what
+    # makes either pass alone resumable.
     for emotion in EMOTIONS[1:]:
         todo_e = [(pid, name) for pid, name in slice_people
                   if (RAW_DIR / "neutral" / (pid + ".png")).exists()
@@ -585,7 +665,10 @@ def main():
         print("%s: %d to generate" % (emotion, len(todo_e)))
         for i, (person_id, name) in enumerate(todo_e):
             seed, text, _ = prompt_for(person_id, name, emotion)
-            image, mask = generate_expression(person_id, emotion, seed, text)
+            if reference_file(person_id) is not None:
+                image, mask = generate_photo(person_id, emotion, seed, text)
+            else:
+                image, mask = generate_expression(person_id, emotion, seed, text)
             comfy._confined(RAW_DIR / emotion / (person_id + ".png"), RAW_DIR).write_bytes(image)
             comfy._confined(MASK_DIR / emotion / (person_id + ".png"), MASK_DIR).write_bytes(mask)
             print("  [%d/%d] %s %s (seed %d)" % (i + 1, len(todo_e), person_id, emotion, seed))

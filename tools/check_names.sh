@@ -22,6 +22,12 @@ hits=0
 while IFS= read -r f; do
   case "$f" in
     tools/banned_names.txt|tools/check_names.sh) continue ;;
+    # V3.7 Phase B3: the portrait reference attribution is the ONE committed
+    # file where real names must appear -- the Commons photo licences for the
+    # img2img references require crediting the source works. The
+    # fictionalization rule still guards every other file, and the names here
+    # are source-credits, not content. See docs/fictionalization.md.
+    docs/portrait-attribution.md) continue ;;
   esac
   # -w, because the banned list holds short real party names that are honest
   # substrings of longer invented ones -- one Dutch and one British case in
