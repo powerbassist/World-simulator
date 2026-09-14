@@ -211,11 +211,6 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 	return rows
 
 
-## Half the L1 distance between a region's production mix and its nation's: 0.0 for a
-## region that makes exactly what the country makes, 1.0 for one that shares nothing
-## with it. Bounded in [0, 1] BY CONSTRUCTION -- two partitions each summing to 1.0
-## have an L1 distance of at most 2 -- so this file ships no clamp, which is
-## V1.7a's log-odds argument in a third place.
 ## region id -> sum over EVERY OTHER region k of endowment_k * exp(-d/decay),
 ## with the per-pair reachability rule of the caller applied. Nation-independent:
 ## the asking nation's own live shares enter as the (w - e) correction in
@@ -256,6 +251,11 @@ static func warm(graph: Dictionary) -> void:
 	_foreign_part(graph)
 
 
+## Half the L1 distance between a region's production mix and its nation's: 0.0 for a
+## region that makes exactly what the country makes, 1.0 for one that shares nothing
+## with it. Bounded in [0, 1] BY CONSTRUCTION -- two partitions each summing to 1.0
+## have an L1 distance of at most 2 -- so this file ships no clamp, which is
+## V1.7a's log-odds argument in a third place.
 static func specialisation(mix: Dictionary, national_mix: Dictionary) -> float:
 	var keys: Array = national_mix.keys()
 	keys.sort()

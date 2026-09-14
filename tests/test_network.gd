@@ -118,11 +118,14 @@ func _check_memo_holds_the_roster(loader) -> void:
 	if Network._memo.size() != 29:
 		_fail("memo holds %d entries after a 29-nation sweep, expected 29 (MEMO_MAX %d)" % [
 			Network._memo.size(), Network.MEMO_MAX])
-	# A re-call with equal weights must come back from the memo, not the sweep:
-	# the hit path returns the stored object, so identity is the observable.
-	var again = Network.accessibility(graph, first_weights.duplicate())
-	if again != first_index:
-		_fail("re-call with equal weights returned a different index")
+	# A re-call with equal weights must come back from the memo, not the sweep.
+	# The observable is IDENTITY between two consecutive equal-weights calls --
+	# the hit path returns the stored object, and a value comparison would pass
+	# even for a cache that recomputed every time (same formula, same values).
+	var hit_a = Network.accessibility(graph, first_weights.duplicate())
+	var hit_b = Network.accessibility(graph, first_weights.duplicate())
+	if not is_same(hit_a, hit_b):
+		_fail("two consecutive equal-weights calls returned different objects -- the memo is not serving hits")
 
 
 ## warm() must populate the distance table, and main.gd must call it at boot:

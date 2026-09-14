@@ -49,11 +49,26 @@ func _init() -> void:
 	_check_income_tax_rise()
 	_check_debt_accumulates()
 	_check_projection_matches()
+	_check_projection_shares_the_graph()
 	_check_projection_matches_after_diplomacy()
 	_check_projection_matches_under_unrest()
 	_check_projection_matches_under_defence_and_companies()
 
 	_finish()
+
+
+## The projection runs on a duplicated state, and the network caches key the
+## graph by REFERENCE (content never changes -- network.gd's cache comment).
+## If duplicate_state() ever hands the projection a deep copy again, every
+## projected month pays a full Dijkstra rebuild and re-poisons the cache the
+## live tick reads: a ~2 s stall per budget-panel forecast that no value
+## comparison can see, because only time moves. Sharing the reference is the
+## contract; this pin is what says so.
+func _check_projection_shares_the_graph() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var sim = state.duplicate_state()
+	if not is_same(sim.region_graph, state.region_graph):
+		_fail("duplicate_state() copied the region graph -- the projection would rebuild the network caches from scratch every month")
 
 
 ## The revenue residual exists so a fresh game starts on the real figure rather
