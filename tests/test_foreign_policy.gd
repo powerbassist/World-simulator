@@ -50,6 +50,7 @@ func _init() -> void:
 	_check_retaliation_is_bounded()
 	_check_reason_keys_are_declared()
 	_check_desire_is_zero_at_neutral()
+	_check_target_terms_threading()
 	_check_warm_pairs_generate_no_further_goodwill()
 	_check_desire_prices_hostility()
 	_check_no_sim_module_reads_the_act_record()
@@ -333,6 +334,25 @@ func _l1(a: Dictionary, b: Dictionary) -> float:
 ## term", which is what it read before the probe found interest-as-an-addend
 ## driving a goodwill ratchet. That correction is what makes this assertion
 ## available at all, and it is asserted at exactly zero rather than near it.
+## Threading prebuilt vectors must change no number: the AI agenda hoists the
+## actor's stake and before-measures vectors across its 28-target loop (they
+## are invariant there -- nothing mutates state between scoring and the
+## execute() that follows), and this is the test that the hoisted form and the
+## build-your-own form agree to the last bit.
+func _check_target_terms_threading() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	for target_id in ["DEU", "GBR", "LUX", "ITA"]:
+		var short_form: Dictionary = ForeignPolicy.target_terms(state, PLAYER, target_id)
+		var sv: Dictionary = ForeignPolicy.stake_vector(state, PLAYER)
+		var wbm: Dictionary = Trade.weights_before_measures(state, PLAYER)
+		var threaded: Dictionary = ForeignPolicy.target_terms(state, PLAYER, target_id, sv, wbm)
+		for key in short_form.keys():
+			if float(short_form[key]) != float(threaded[key]):
+				_failures.append("term '%s' for %s moved under threading: %.17f vs %.17f" % [
+					key, target_id, float(short_form[key]), float(threaded[key])])
+				return
+
+
 func _check_desire_is_zero_at_neutral() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var inert := {}
