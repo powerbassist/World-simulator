@@ -75,6 +75,8 @@ MASK_DIR = REPO / "sources" / "portraits" / "mask"
 BASE_TEXT_NODE, BASE_SEED_NODE = "4", "6"
 BASE_IMAGE_NODE, BASE_MASK_NODE = "8", "11"
 EXPR_TEXT_NODE, EXPR_SEED_NODE = "4", "6"
+PHOTO_IMAGE_NODE, PHOTO_TEXT_NODE, PHOTO_SEED_NODE = "1", "4", "7"
+PHOTO_IMAGE_NODE_OUT, PHOTO_MASK_NODE_OUT = "9", "12"
 EXPR_IMAGE_NODE, EXPR_MASK_NODE = "8", "11"
 
 EMOTIONS = ["neutral", "pleased", "stern", "worried", "weary"]
@@ -587,7 +589,7 @@ def generate_photo(person_id, emotion, seed, text):
             raise RuntimeError("no output at node %s for %s/%s" % (node, person_id, emotion))
         return out[node][0]
 
-    return comfy.fetch(first_meta(PHOTO_IMAGE_NODE)), comfy.fetch(first_meta(PHOTO_MASK_NODE))
+    return comfy.fetch(first_meta(PHOTO_IMAGE_NODE_OUT)), comfy.fetch(first_meta(PHOTO_MASK_NODE_OUT))
 
 
 def _only_filter(people):

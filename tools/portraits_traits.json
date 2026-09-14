@@ -9,7 +9,8 @@
   "quirk": "widow's peak",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "AUT_haslinger": {
   "sex": "female",
@@ -21,7 +22,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "AUT_kettler": {
   "sex": "male",
@@ -46,7 +48,8 @@
   "quirk": "weathered, lined skin",
   "wardrobe": "midnight blue suit, silver brooch",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "AUT_prantl": {
   "sex": "male",
@@ -123,7 +126,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "BEL_segers": {
   "sex": "male",
@@ -174,7 +178,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "BGR_ganeva": {
   "sex": "female",
@@ -186,7 +191,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "BGR_halilov": {
   "sex": "male",
@@ -224,7 +230,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "BGR_marinkov": {
   "sex": "male",
@@ -308,7 +315,8 @@
   "glasses": "thin rectangular glasses",
   "face": "broad face with a strong jaw",
   "quirk": "strong brow ridge",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "average bust"
  },
  "CHE_frei": {
   "sex": "female",
@@ -318,7 +326,8 @@
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "prominent nose",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "small bust"
  },
  "CHE_perrenoud": {
   "sex": "female",
@@ -328,7 +337,8 @@
   "glasses": "round wire-frame glasses",
   "face": "long face with a high forehead",
   "quirk": "widow's peak",
-  "wardrobe": "charcoal suit, bold scarf"
+  "wardrobe": "charcoal suit, bold scarf",
+  "bust": "average bust"
  },
  "CHE_ulrich_iv": {
   "sex": "male",
@@ -392,7 +402,8 @@
   "quirk": "widow's peak",
   "wardrobe": "open-collar dark blazer",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "CYP_hadjipavlou": {
   "sex": "male",
@@ -454,7 +465,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "CZE_holub": {
   "sex": "male",
@@ -492,7 +504,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "CZE_siska": {
   "sex": "male",
@@ -554,7 +567,8 @@
   "quirk": "prominent nose",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "DEU_emmerich": {
   "sex": "male",
@@ -605,7 +619,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "DEU_ruppert": {
   "sex": "male",
@@ -630,7 +645,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "DEU_vogler": {
   "sex": "male",
@@ -655,7 +671,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "DNK_dahl": {
   "sex": "female",
@@ -665,7 +682,8 @@
   "glasses": "round wire-frame glasses",
   "face": "broad face with a strong jaw",
   "quirk": "prominent nose",
-  "wardrobe": "open-collar dark blazer"
+  "wardrobe": "open-collar dark blazer",
+  "bust": "full bust"
  },
  "DNK_krogh": {
   "sex": "male",
@@ -716,7 +734,8 @@
   "quirk": "thin lips",
   "wardrobe": "dark tailored suit, brooch",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "small bust"
  },
  "DNK_valdemar_vi": {
   "sex": "male",
@@ -793,7 +812,8 @@
   "quirk": "widow's peak",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "ESP_sanchis": {
   "sex": "female",
@@ -805,7 +825,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "EST_kaarel_ii": {
   "sex": "male",
@@ -828,7 +849,8 @@
   "quirk": "thin lips",
   "wardrobe": "black formal suit, white blouse",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "EST_lepik": {
   "sex": "male",
@@ -890,7 +912,8 @@
   "quirk": "prominent nose",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "FIN_koiranen": {
   "sex": "male",
@@ -928,7 +951,8 @@
   "quirk": "widow's peak",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "FIN_peltomaa": {
   "sex": "female",
@@ -940,7 +964,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "small bust"
  },
  "FIN_rautio": {
   "sex": "male",
@@ -965,7 +990,8 @@
   "quirk": "widow's peak",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "FIN_vaino_i": {
   "sex": "male",
@@ -1016,7 +1042,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "dark jacket, open collar",
   "skin": "dark brown skin, Black French",
-  "eyes": "dark brown eyes"
+  "eyes": "dark brown eyes",
+  "bust": "full bust"
  },
  "FRA_charles_xi": {
   "sex": "male",
@@ -1041,7 +1068,8 @@
   "quirk": "weathered, lined skin",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "FRA_lachapelle": {
   "sex": "male",
@@ -1079,7 +1107,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "FRA_vasseur": {
   "sex": "female",
@@ -1091,7 +1120,8 @@
   "quirk": "thin lips",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "GBR_cobbett": {
   "sex": "female",
@@ -1103,7 +1133,8 @@
   "quirk": "prominent nose",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "GBR_harlow": {
   "sex": "male",
@@ -1128,7 +1159,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "GBR_marchbanks": {
   "sex": "male",
@@ -1179,7 +1211,8 @@
   "quirk": "thin lips",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "dark brown skin, Black British",
-  "eyes": "dark brown eyes"
+  "eyes": "dark brown eyes",
+  "bust": "average bust"
  },
  "GRC_alexandros_ii": {
   "sex": "male",
@@ -1241,7 +1274,8 @@
   "glasses": "round wire-frame glasses",
   "face": "round, soft-featured face",
   "quirk": "widow's peak",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "small bust"
  },
  "GRC_stavrou": {
   "sex": "male",
@@ -1277,7 +1311,8 @@
   "glasses": "dark-framed glasses",
   "face": "broad face with a strong jaw",
   "quirk": "heavy eyelids",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "full bust"
  },
  "HRV_benkovic": {
   "sex": "male",
@@ -1337,7 +1372,8 @@
   "quirk": "thin lips",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "HRV_vidovic": {
   "sex": "male",
@@ -1399,7 +1435,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "HUN_kallai": {
   "sex": "male",
@@ -1435,7 +1472,8 @@
   "quirk": "widow's peak",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "HUN_nagy": {
   "sex": "male",
@@ -1458,7 +1496,8 @@
   "glasses": "no glasses",
   "face": "narrow, angular face",
   "quirk": "thin lips",
-  "wardrobe": "charcoal suit, bold scarf"
+  "wardrobe": "charcoal suit, bold scarf",
+  "bust": "full bust"
  },
  "IRL_brian_iv": {
   "sex": "male",
@@ -1520,7 +1559,8 @@
   "quirk": "widow's peak",
   "wardrobe": "black formal suit, white blouse",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "IRL_mcelhinney": {
   "sex": "male",
@@ -1545,7 +1585,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin, freckles",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "small bust"
  },
  "IRL_tarrant": {
   "sex": "female",
@@ -1557,7 +1598,8 @@
   "quirk": "weathered, lined skin",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "ITA_bagnasco": {
   "sex": "male",
@@ -1582,7 +1624,8 @@
   "quirk": "thin lips",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "ITA_carlo_alberto_ii": {
   "sex": "male",
@@ -1607,7 +1650,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "open-collar dark blazer",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "ITA_lambertini": {
   "sex": "male",
@@ -1658,7 +1702,8 @@
   "quirk": "thin lips",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "full bust"
  },
  "LTU_bilius": {
   "sex": "male",
@@ -1683,7 +1728,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "LTU_mindaugas_iii": {
   "sex": "male",
@@ -1797,7 +1843,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "LUX_steichen": {
   "sex": "male",
@@ -1820,7 +1867,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "light brown skin, Japanese-born",
-  "eyes": "dark brown eyes"
+  "eyes": "dark brown eyes",
+  "bust": "full bust"
  },
  "LVA_kalns": {
   "sex": "male",
@@ -1915,7 +1963,8 @@
   "quirk": "thin lips",
   "wardrobe": "black formal suit, white blouse",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "MLT_attard": {
   "sex": "female",
@@ -1927,7 +1976,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "midnight blue suit, silver brooch",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "MLT_camilleri": {
   "sex": "female",
@@ -1937,7 +1987,8 @@
   "glasses": "thin rectangular glasses",
   "face": "broad face with a strong jaw",
   "quirk": "deep-set eyes",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "average bust"
  },
  "MLT_cassar": {
   "sex": "male",
@@ -2010,7 +2061,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "NLD_kuiperink": {
   "sex": "male",
@@ -2048,7 +2100,8 @@
   "quirk": "widow's peak",
   "wardrobe": "burgundy blazer, dark trousers",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "NLD_terborg": {
   "sex": "male",
@@ -2073,7 +2126,8 @@
   "quirk": "prominent nose",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "small bust"
  },
  "POL_grabowski": {
   "sex": "male",
@@ -2172,7 +2226,8 @@
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "deep-set eyes",
-  "wardrobe": "dark formal dress, high collar"
+  "wardrobe": "dark formal dress, high collar",
+  "bust": "average bust"
  },
  "PRT_amaral": {
   "sex": "male",
@@ -2197,7 +2252,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "olive skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "PRT_loureiro": {
   "sex": "male",
@@ -2233,7 +2289,8 @@
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "strong brow ridge",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "full bust"
  },
  "PRT_salgueiro": {
   "sex": "male",
@@ -2284,7 +2341,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "ROU_mihai_ii": {
   "sex": "male",
@@ -2387,7 +2445,8 @@
   "quirk": "high cheekbones",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "SVK_hraska": {
   "sex": "male",
@@ -2410,7 +2469,8 @@
   "glasses": "dark-framed glasses",
   "face": "broad face with a strong jaw",
   "quirk": "deep-set eyes",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "average bust"
  },
  "SVK_pal_ii": {
   "sex": "male",
@@ -2481,7 +2541,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "SVN_kolenc": {
   "sex": "female",
@@ -2491,7 +2552,8 @@
   "glasses": "dark-framed glasses",
   "face": "narrow, angular face",
   "quirk": "weathered, lined skin",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "average bust"
  },
  "SVN_kotnik": {
   "sex": "female",
@@ -2503,7 +2565,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "dark tailored suit, brooch",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "SVN_rebernik": {
   "sex": "female",
@@ -2515,7 +2578,8 @@
   "quirk": "strong brow ridge",
   "wardrobe": "open-collar dark blazer",
   "skin": "fair skin",
-  "eyes": "brown eyes"
+  "eyes": "brown eyes",
+  "bust": "small bust"
  },
  "SVN_saje": {
   "sex": "male",
@@ -2540,7 +2604,8 @@
   "quirk": "deep-set eyes",
   "wardrobe": "midnight blue suit, silver brooch",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "SWE_bergvall": {
   "sex": "male",
@@ -2563,7 +2628,8 @@
   "glasses": "no glasses",
   "face": "long face with a high forehead",
   "quirk": "strong brow ridge",
-  "wardrobe": "burgundy blazer, dark trousers"
+  "wardrobe": "burgundy blazer, dark trousers",
+  "bust": "small bust"
  },
  "SWE_holmqvist": {
   "sex": "female",
@@ -2575,7 +2641,8 @@
   "quirk": "prominent nose",
   "wardrobe": "charcoal tailored suit, silk scarf",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "full bust"
  },
  "SWE_karl_xvii": {
   "sex": "male",
@@ -2598,7 +2665,8 @@
   "glasses": "thin rectangular glasses",
   "face": "narrow, angular face",
   "quirk": "strong brow ridge",
-  "wardrobe": "charcoal suit, bold scarf"
+  "wardrobe": "charcoal suit, bold scarf",
+  "bust": "small bust"
  },
  "SWE_sandberg": {
   "sex": "female",
@@ -2610,7 +2678,8 @@
   "quirk": "heavy eyelids",
   "wardrobe": "charcoal suit, bold scarf",
   "skin": "fair skin",
-  "eyes": "blue eyes"
+  "eyes": "blue eyes",
+  "bust": "small bust"
  },
  "SWE_vikstrom": {
   "sex": "male",
