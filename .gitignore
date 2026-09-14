@@ -85,3 +85,5 @@ tools/_fetch_born.py
 tools/portraits_counterparts.json
 tools/_apply_corrections.py
 tools/_merge_traits.py
+tools/fetch_photos.py
+tools/portraits_photo_sources.json
