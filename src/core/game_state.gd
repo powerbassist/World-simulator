@@ -1174,17 +1174,14 @@ func duplicate_state():
 	# panel projected a France that lost 98 % of its output. V2.5 shipped exactly
 	# that and test_budget caught it.
 	gs.regions = regions.duplicate(true)
-	# Content, so SHARED OWNERSHIP is the whole point and only PRESENCE matters:
-	# a projection that lost the graph would run every Regions network read
-	# against {} -- the accessibility index of a country with no places in it.
-	# The register above duplicated for the same "must have one" reason and paid
-	# for the empty case once already. The copy here used to be deep, and the
-	# network caches keyed it by value so the copy hit them; when the caches
-	# moved to reference identity (content never changes -- see network.gd's
-	# cache comment) this copy became a fresh reference the caches must rebuild
-	# from scratch: a full Dijkstra sweep inside every Budget.project(). Sharing
-	# the reference is what the sentence above always said.
-	gs.region_graph = region_graph
+	# Content, so shared ownership is fine and only PRESENCE matters: a projection
+	# that lost the graph would run every Regions network read against {} -- the
+	# accessibility index of a country with no places in it. The register above
+	# duplicated for the same "must have one" reason and paid for the empty case
+	# once already. The copy stays deep because the state-copy contract pins it
+	# (tests/test_state_copy.gd) and the network caches key by VALUE, so the copy
+	# hits them instead of paying a Dijkstra rebuild per projection.
+	gs.region_graph = region_graph.duplicate(true)
 	# The sited-payoff map is derived state, and a projection that lost it would
 	# run every month after its first Projects tick with the sited term silently
 	# zero -- the empty-register bug's shape one level up, so the copy is taken

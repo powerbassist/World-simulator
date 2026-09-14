@@ -31,13 +31,17 @@ const K = preload("res://src/sim/network_constants.gd")
 ## call would put a full Dijkstra sweep inside every month of every nation. The
 ## index memo catches the other repetition: migration and unrest read the same
 ## nation's shares within one month, and the shares move only when the economy
-## ticks. The graph is keyed by REFERENCE (is_same, not ==): equality on
-## Dictionaries is a deep comparison, and once the roster carried 213 regions that
-## comparison cost as much as the recompute it guarded -- and the duplicate(true)
-## that used to run per miss deep-copied the whole graph on every one of the
-## month's misses. The weights ARE rebuilt live every call, so they are still
-## compared by VALUE: a caller passing a different nation's weights can never read
-## another's index.
+## ticks. Both caches key the graph by VALUE (GDScript's == on Dictionaries):
+## the graph is CONTENT, so every reference in the process -- the loader's, the
+## state's, and Budget.project()'s duplicated simulation state -- holds equal
+## dictionaries, and value keying is what lets a copy hit the cache instead of
+## paying a full Dijkstra rebuild. The comparison is cheap next to what it
+## guards (measured ~90 us against a ~1.4 ms recompute); what actually priced
+## the old shape was the bound below and the deep copy per miss, both gone.
+## The weights ARE rebuilt live every call, so they are compared by VALUE too:
+## a caller passing a different nation's weights can never read another's
+## index. Stored by reference, because content is never mutated -- data_loader
+## reads it once and nothing in src/ writes through it.
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
 ## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
@@ -132,7 +136,7 @@ static func distances_from(graph: Dictionary, from_id: String) -> Dictionary:
 ## own rule one module over.
 static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	for entry in _memo:
-		if entry["weights"] == weights and is_same(entry["graph"], graph):
+		if entry["weights"] == weights and entry["graph"] == graph:
 			return entry["index"]
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
@@ -201,7 +205,7 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 ## cache comment above the constants for why this is a cache and not a computation
 ## the caller schedules.
 static func _distance_rows(graph: Dictionary) -> Dictionary:
-	if is_same(graph, _matrix_graph) and not _matrix_rows.is_empty():
+	if graph == _matrix_graph and not _matrix_rows.is_empty():
 		return _matrix_rows
 	var rows: Dictionary = {}
 	for region_id in graph.get("endowment", {}).keys():
@@ -220,7 +224,7 @@ static var _foreign_graph: Dictionary = {}
 static var _foreign_rows: Dictionary = {}
 
 static func _foreign_part(graph: Dictionary) -> Dictionary:
-	if is_same(graph, _foreign_graph) and not _foreign_rows.is_empty():
+	if graph == _foreign_graph and not _foreign_rows.is_empty():
 		return _foreign_rows
 	var endowment: Dictionary = graph.get("endowment", {})
 	var rows: Dictionary = _distance_rows(graph)
