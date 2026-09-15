@@ -469,15 +469,22 @@ const INFLATION_SCALE_PP := 0.275
 ## now history rather than fact: V3.0's fiscal re-weight moved it 3.0 -> 6.0 as a
 ## B1 lever (the S10 scales priced a spending change at twice what the agency band
 ## could survive), which HALVES this ratio to 0.75 -- delivery is now worth more
-## per point than the announcement, the opposite of the rule that chose 4.5. The
-## inversion is accepted, not re-swept: the V1.5a fit rule would demand 9.0
-## against a 6.0 spend scale, and re-measuring quality's own band was outside the
-## block's declared levers. FLAGGED for the next balance pass -- either
-## QUALITY_SCALE_PP re-fits to the rule or the rule is retired; see
-## docs/opinion-model.md's V3.0 section.
+## per point than the announcement, the opposite of the rule that chose 4.5.
 ##
-## Full tables: docs/society-model.md (c).
-const QUALITY_SCALE_PP := 4.5
+## V4.0 DISCHARGED THE FLAG (Task 4, 2026-09-14), on the isolated path V1.5a
+## measured, per candidate constant set live rather than rescaled (the
+## INFLATION_SCALE_PP lesson): the band passes at 6.0 (-4.14), 6.5 (-3.68),
+## 6.75 (-3.48), 7.0 (-3.30), 7.25 (-3.14), 7.40 (-3.05) and 7.45 (-3.02),
+## and FAILS at 7.5 (-2.99) and 9.0 (-2.29) — the crossing is ~7.47 and the
+## band is one-sided-down, so the fit rule (ratio > 1.0 against the 6.0 spend
+## scale) and the band meet on (6.0, 7.47). 6.75 ships: interior of the
+## crossing, midpoint-stable at the 0.5 and 0.25 grid steps, ratio 1.125.
+## Branch one of agency-model §4's Q1; the V3.0 inversion is repaired, not
+## retired. No test pins this constant; the measured deviation (-2.2287 pt of
+## GDP at 60 months, saturated corruption) is unchanged from V1.5a's table.
+##
+## Full tables: docs/society-model.md (c) and docs/agency-model.md §5b.
+const QUALITY_SCALE_PP := 6.75
 
 # --- Salience ----------------------------------------------------------------
 
@@ -645,6 +652,74 @@ const APPROVAL_MAX := 100.0
 ## this constant actually shows: roughly 58% of the move lands within three
 ## months. See docs/opinion-model.md.
 const INERTIA_RATE := 0.25
+
+# --- Competence credit (V4.0) -------------------------------------------------
+
+## Points of approval for a national record one full scale-unit net positive —
+## the channel that prices the RECORD rather than the act, added into the
+## per-bloc target beside time_in_office_offset(). docs/agency-model.md §2 is
+## the design and §4 the bands; the defect it answers was measured at V3.0:
+## budget-smart halved the deficit and was PUNISHED 2.00 approval points for
+## it, because every satisfaction is a delta against a starting figure and
+## doing nothing is exactly neutral by construction.
+##
+## The three addends are opinion.gd's own `jobs`, `public_finances` and
+## `growth` expressions at the SAME scales — JOBS_SCALE_PP, DEFICIT_SCALE_PP
+## and GROWTH_SCALE_PP are reused here, not re-tuned: a second scale for one
+## quantity is two answers to one question, and the scales were each swept on
+## their own record (S5/S10, V1.6b, V3.0's fiscal re-weight). One clamp over
+## the net sum, so a saturated satisfaction cannot leak a second windfall
+## through the credit.
+##
+## NO quality term, and that is the author's call of 2026-09-14 recorded in
+## the model doc: the three measured outcomes are unemployment, deficit and
+## growth against trend — the record a president is actually accountable for
+## at a term's end — and quality already prices its delivery half through
+## QUALITY_SCALE_PP on the same issues. A fourth addend would be the
+## double-count the additive resolution at V1.5a exists to prevent.
+##
+## UNIFORM across the six blocs, unrest_opinion_load's reason: a fact about
+## the government, not about one row of the electorate, and an authored
+## per-bloc row would be a table with no measurement behind it.
+##
+## TWO REFUSED FORMS, both recorded in docs/agency-model.md §2 because a later
+## session under balance pressure will reach for them:
+## - MILESTONES (a fired-threshold register, "deficit under 3 %, once") —
+##   pulse-gaming: it prices CROSSING, not GOVERNING, and the fired register
+##   is a SAVE_VERSION move bought for a form that can be gamed less honestly.
+## - A DECAYING STOCK (accumulate while outcomes are good, decay when not) —
+##   a second stored register whose whole advantage over this form is a
+##   MEMORY OF COMPETENCE PAST: a president coasting on a good first year.
+##   It is the declared fallback, not an upgrade: if the level form misses
+##   C1's gate in the sweep, the decaying form is the next measurement, taken
+##   knowingly with its version bump.
+##
+## MEASURED AT THE SWEEP (Task 4, 2026-09-14), and the gate verdict is FAIL —
+## C1 is unreachable at ANY span in the declared [1, 8] grid. The sweep's
+## finding, in full in docs/agency-model.md §5b: the response is EXACTLY
+## LINEAR in span and the slope is NEGATIVE for every style, idle included —
+## at month 6 the sim's cycle has France 0.4 % below potential with growth
+## 0.08 %/yr against a 1.31 % trend, so the growth addend reads -0.31 for
+## EVERY style before any policy moves, and the between-style differential is
+## ~0.02 record units against that shared -0.37 world term. The level form
+## prices the WORLD (a fresh-game artifact), not the RECORD's policy
+## component: per span unit, idle falls 0.233, budget-smart falls 0.300,
+## budget-bad falls 0.392, so the best-family delta moves only -0.068 per
+## unit — C1 (+1.0 from -2.04) needs span ~45, past the credit's own clamp
+## long before, while C3 (idle within +-0.3 of baseline) caps the span at
+## ~1.02 (0.296 at 1.0, 0.354 at 1.25). C2 held at every candidate (the
+## control falls FASTER than idle: acting badly is punished more, the
+## Task-2 deficit worry did not materialise).
+##
+## 0.0 SHIPS (author's call, 2026-09-14): the level form MISSED its gate, so
+## the channel is INERT — every fresh game stays on the pre-V4.0 baseline,
+## and the measured ~0.3-point idle drift and the `ruinous` HELD→LOST flip
+## that the re-run (897348d) measured at span 1.0 are deliberately NOT
+## shipped. The infrastructure — this constant, `competence_credit`, the C2
+## control, the test — survives for the decaying-form block (§2's declared
+## next route) to flip live: that block is its own scoped block with a
+## SAVE_VERSION bump taken knowingly. See docs/agency-model.md §5b and §5f.
+const COMPETENCE_SPAN := 0.0
 
 # --- Time in office (V3.0) ---------------------------------------------------
 

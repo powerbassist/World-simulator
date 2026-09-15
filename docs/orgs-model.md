@@ -173,11 +173,33 @@ green.
   the whole gate. Recorded as the absence, not an oversight.
 - **No AI desire for membership.** See above.
 - **Eurozone and Schengen ship zero-priced.** Their member sets are the
-  register's content (CHE is the one real difference; a V3.3 tranche with a
-  non-euro EU member diverges them in data, which is the point of a register).
-  Pricing one — a trade bonus for Schengen, an inflation or credit channel for
-  the euro — needs a measured band and a BALANCE_PLAN pre-declaration, not an
-  opinion.
+register's content (CHE is the one real difference; a V3.3 tranche with a
+non-euro EU member diverges them in data, which is the point of a register).
+Pricing one — a trade bonus for Schengen, an inflation or credit channel for
+the euro — needs a measured band and a BALANCE_PLAN pre-declaration, not an
+opinion. **V4.0 measured the band (E1, 2026-09-14), and the zero price is now
+a MEASURED BOUND, not an absence.** Method: the Schengen `trade_bonus` set
+directly on the loaded org (the path an authored price would take —
+`Trade._raw` reads it through `Org.shared_bonus`), everything else
+bit-identical, headline approval read at 60 and at 168 months. At the eu's
+own authored magnitude (0.50, the largest co-membership bonus in the
+register) the FRA headline moves **+0.01** at 60 months; at the load-time
+ceiling `MAX_AGREEMENT_WEIGHT_MULTIPLIER` (2.50) it moves **+0.03** at 60
+months and **+0.05** at 168; even a bonus of 5.00 — past the loader's own
+bound, run to prove saturation — reads **+0.03** at 60 months, +0.04 at 168.
+The response saturates because the only consumer is
+`TRADE_OPENNESS_BETA × d_open` inside `potential_shift_pct`, which
+`SHIFT_MAX_PCT` = 1.0 clamps and which 60 months of `SHIFT_ADJUST` then
+dilutes into a trend figure the growth addend prices at `GROWTH_SCALE_PP`
+4.0 — the settled trend delta at the ceiling is **+0.002 points/yr**, so the
+headline channel is structurally two orders of magnitude short of the
+±3.0 poll-noise floor. **The euro side has no code channel at all**
+(`inflation.gd`, `trade.gd`, `economy.gd` read nothing eurozone-shaped; an
+inflation or credit channel would be a build, not a price, and this band was
+a measurement only). Bound recorded: no reachable Schengen trade bonus
+clears the floor; the euro question stays closed until a session builds a
+channel AND measures it against this same floor. Either way, the
+orgs-model trigger priced here is discharged.
 - **No repeal of a rule in force** (bloc-model's rule, unchanged). The player's
   answer to a rule they hate is to defy it and pay, or to leave.
 - **No war.** NATO here is an org with a council and a spending floor;

@@ -95,8 +95,24 @@ const STYLES := [
 	# it exists to answer: is ANY fiscal stance the model rewards, or is the
 	# B1 bound the budget-tax style's alone?
 	{"id": "budget-smart", "budget": {
-		"tax_rates_pct": {"income": 4.0},
-		"spending_pct_gdp": {"defence": -1.5, "infrastructure": -0.5},
+	"tax_rates_pct": {"income": 4.0},
+	"spending_pct_gdp": {"defence": -1.5, "infrastructure": -0.5},
+	}, "laws": false, "diplomacy": false, "project": false, "campaign": []},
+# V4.0, the C2 NEGATIVE CONTROL, written before any competence constant
+# existed: a style that ACTS (quarterly commits land) but WORSENS the
+# tracked outcomes -- cuts the lines pensioners and workers feel, raises
+# VAT. If the channel pays for activity-as-such, this style gains, and the
+# gate is broken by construction. It must score <= idle at month 6.
+# CAVEAT (V4.0 review): the control is NOT structural -- budget-bad's cuts
+# outweigh its VAT rise, so the DEFICIT improves and the credit's deficit
+# addend helps it; the control only holds by MEASUREMENT at the shipped
+# scales (measured slopes per span unit, docs/agency-model.md §5b: idle
+# -0.233, budget-smart -0.300, budget-bad -0.392 -- the control falls
+# FASTER than idle). The verdict's slope half (below) is the sharper proof
+# and is meaningful only when COMPETENCE_SPAN > 0.
+{"id": "budget-bad", "budget": {
+	"tax_rates_pct": {"vat": 4.0},
+	"spending_pct_gdp": {"health": -2.0, "education": -1.5, "pensions": -1.0},
 	}, "laws": false, "diplomacy": false, "project": false, "campaign": []},
 ]
 
@@ -123,20 +139,73 @@ func _init() -> void:
 			best_delta = d6
 			best_family = family
 
-	var verdict := "PASS" if best_delta >= AGENCY_BAND else "FAIL"
+# The C2 negative control, printed before the verdict: if a style that
+# worsens every tracked outcome scores ABOVE idle, any competence channel
+# added later is paying for activity-as-such and the gate is broken.
+# The approval delta alone is the WEAK half of the control -- budget-bad's
+# cuts improve the deficit, so its record could price better than idle's
+# while its approval still falls. The sharper proof is the record itself
+# (idle -0.370 vs budget-bad -0.381 at m6) and the measured slope per
+# span unit (idle -0.233 vs budget-bad -0.392, docs/agency-model.md §5b):
+# the control must fall FASTER than idle, so acting badly is punished more
+# the louder the channel is. Both are printed below; neither gates the
+# verdict at the shipped span (see the block above the verdict for why the
+# record LEVEL cannot gate) -- the slope is meaningful only when
+# COMPETENCE_SPAN > 0, and a later block that raises the span owes the
+# assertion: control slope more negative than idle's, per §5b.
+	var bad_delta: float = float(summaries["budget-bad"]["approval_m6"]) - float(idle["approval_m6"])
+	print("control budget-bad delta at month 6: %+.2f (must be <= 0.0)" % bad_delta)
+
+# V4.0 Task 4: the gate is BOTH halves — the band (C1) and the control
+# (C2). A PASS with the control broken would be a gate that pays for
+# activity-as-such; a FAIL here hands the next route back, never a tuning
+# pass past a broken control.
+#
+# The control's slope half, gated on the span: the C2 verdict requires the
+# control's RECORD to be worse than idle's (its own three-addend read, not
+# its approval delta) — at span 0.0 the record is still computed by
+# competence_record() and the comparison stays live, while the approval
+# deltas collapse to ~0. The span>0 slope assertion (-0.392 vs -0.233 per
+# unit, §5b) is documented here rather than asserted, because the shipped
+# span is 0.0 and an assertion that can never fire is decoration.
+	var bad_record: float = float(summaries["budget-bad"].get("competence_record_m6", 0.0))
+	var idle_record: float = float(idle.get("competence_record_m6", 0.0))
+	print("control budget-bad record at month 6: %+.4f vs idle %+.4f (diagnostic: the level prices the deficit improvement, not the slope)" % [bad_record, idle_record])
+	# The record LEVEL is deliberately NOT a verdict clause, and the shipped
+	# probe run is the evidence: budget-bad's cuts improve the deficit (-0.80
+	# vs the inherited 5.05), so its m6 record reads BETTER than idle's
+	# (+0.76 vs +0.14) while its approval still falls faster -- §5b's
+	# "-0.381 vs -0.370" was the sweep's decomposition of the record's
+	# POLICY component, not this probe's live read with the event channel
+	# answered. The record level prices the deficit improvement; the SLOPE
+	# (-0.392 vs -0.233 per span unit) is what punishes the Okun and growth
+	# damage, and a slope check needs a span > 0 probe run. At the shipped
+	# 0.0 the approval deltas collapse and neither sharpening can fire, so
+	# the verdict's control half stays the always-on approval-delta gate and
+	# the record pair is printed as the diagnostic the decaying-form block
+	# (which raises the span knowingly) will inherit.
+	var span_zero_note := ""
+	if K.COMPETENCE_SPAN <= 0.0:
+		span_zero_note = " (COMPETENCE_SPAN is 0.0: the credit channel is INERT, all deltas collapse, FAIL is the correct reading)"
+	var verdict := "PASS" if (best_delta >= AGENCY_BAND and bad_delta <= 0.0) else "FAIL"
 
 	if as_json:
 		print(JSON.stringify({
-			"schema": "agency-probe/v1",
-			"band_points_m6": AGENCY_BAND,
-			"styles": summaries,
-			"deltas_vs_idle_m6": deltas,
-			"best_family": best_family,
-			"best_delta_m6": best_delta,
-			"verdict": verdict,
-		}, "  "))
+		"schema": "agency-probe/v1",
+		"band_points_m6": AGENCY_BAND,
+		"competence_span": K.COMPETENCE_SPAN,
+		"styles": summaries,
+		"deltas_vs_idle_m6": deltas,
+		"best_family": best_family,
+		"best_delta_m6": best_delta,
+		"control_bad_delta_m6": bad_delta,
+		"control_bad_record_m6": bad_record,
+		"control_idle_record_m6": idle_record,
+		"verdict": verdict,
+		}, " "))
 	else:
 		_print_table(summaries, deltas, best_family, best_delta, verdict)
+		print(span_zero_note)
 	quit(0)
 
 
@@ -186,6 +255,7 @@ func _run_style(style: Dictionary) -> Dictionary:
 	var year := START_YEAR
 	var month := 1
 	var result_record := {}
+	var record_m6 := 0.0
 	for i in range(MONTHS):
 		month += 1
 		if month > 12:
@@ -211,6 +281,8 @@ func _run_style(style: Dictionary) -> Dictionary:
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
 		state.append_history(entry)
+		if state.history.size() == 6:
+			record_m6 = Opinion.competence_record(ns)
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state, loader)
 		Dissolution.tick_month(state)
@@ -274,9 +346,10 @@ func _run_style(style: Dictionary) -> Dictionary:
 			decided += " (" + "; ".join(bits) + ")"
 
 	return {
-		"approval_m6": _approval_at(state, 6),
-		"approval_m16": _approval_at(state, 16),
-		"unemployment_m16": float(ns.unemployment_pct),
+	"approval_m6": _approval_at(state, 6),
+	"approval_m16": _approval_at(state, 16),
+	"competence_record_m6": Opinion.competence_record(ns),
+	"unemployment_m16": float(ns.unemployment_pct),
 		"deficit_m16": float(ns.deficit_pct_gdp),
 		"grievance_m16": float(ns.unrest_pct),
 		"vote_share": vote_share,

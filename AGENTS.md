@@ -189,6 +189,38 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**V4.0 MEASURED THE AGENCY CALL AND THE LEVEL FORM MISSED ITS GATE — the
+verdict is FAIL and the channel's form, not its span, is what missed
+(2026-09-14).** The competence-credit channel shipped as designed
+(`Opinion.competence_credit`, one addend in the per-bloc target beside
+`time_in_office_offset`, three terms — jobs/deficit/growth vs the inauguration
+figures, uniform across blocs, no `SAVE_VERSION` move) and the sweep found the
+form wrong: **C1 is unreachable at any span** because the level form prices the
+WORLD, not the record's policy component — at month 6 the fresh-game cycle has
+France 0.4 % below potential (growth 0.08 %/yr vs a 1.31 % trend), so the
+growth addend reads −0.31 for EVERY style including idle before any policy
+moves, the response is exactly linear in span with a NEGATIVE slope for every
+style, C1 needs span ≈ 45 while C3 caps it at ≈ 1.02. `COMPETENCE_SPAN` ships
+**1.0 as the C3 bound**, not a tuned value; the negative control (`budget-bad`,
+acts with worsening outcomes) held at every candidate — acting badly is
+punished MORE the louder the channel. The verdict is wired into
+`tools/agency_probe.gd` (PASS needs C1 ≥ +1.0 AND C2 ≤ 0.0). **The declared
+next route is the decaying-credit form (docs/agency-model.md §2's refused form
+2), then activity-keyed drag — its own scoped block, never a silent extension
+of this one.** The two standing obligations discharged: `QUALITY_SCALE_PP`
+re-fit 4.5 → **6.75** (the V1.5a delivery-under-announcement rule restored at
+ratio 1.125, the V3.0 inversion repaired not retired), and the
+Eurozone/Schengen zero-price band measured to a bound (~60× short of the
+poll-noise floor at the loader's ceiling; the euro side has no code channel at
+all) — recorded in `docs/orgs-model.md`'s deliberately-absent list. The re-run
+held with one recorded prediction miss: 821 line pairs moved in 51 regimes,
+49/51 verdicts unchanged, two election flips (`managed_then_austerity_settles`
+LOST→HELD through the declared unrest-act channel; `ruinous` HELD→LOST on a
+23.6→23.2 knife-edge the prediction wrongly called unreachable — recorded as
+the miss, mechanism is the two declared channels, not a third). Suite 82/82.
+Model: [docs/agency-model.md](docs/agency-model.md). **V4.1 follows and names
+this channel verbatim — its handoff carries the agreement clause.**
+
 **V3.7 shipped the portrait wall's PHASE A 2026-09-12, and the block's
 central promise held: the whole generation stack is built, wired and tested
 with the GPU never fired — `sources/` and `assets/portraits/` are untouched,
@@ -310,9 +342,11 @@ disasters, the climate accord as a fifth org, `SAVE_VERSION` 34, re-run and read
 all shipped; the as-built record is the V3.5 row below and
 [docs/tiers/v3.md](docs/tiers/v3.md)'s built-at note -- and **V3.6
 ceremony has not started.** **V3.0's gate FAILED by measurement** -- best active play -2.00
-approval points against idle -- and the author's three-route call on it is **still
-open**; V3.1 through V3.5 were each told not to pick it up silently and none did.
-[V4](docs/tiers/v4.md) is **drafted and unsigned** (2026-09-07): twelve blocks, 70-95 sessions, the agency
+approval points against idle -- and the author's route call was taken 2026-09-12
+(the competence-credit channel) and **measured at V4.0 (2026-09-14): the level
+form missed its gate** -- see the V4.0 row above; the decaying form is the next
+route.
+[V4](docs/tiers/v4.md) is **SIGNED (2026-09-13)**: twelve blocks, 70-95 sessions, the agency
 call first, then a player agenda, the statute book (compose, repeal, a tax panel, a
 bill briefing and two commissioned polls), a deep bench of ~1500-2000 people, events
 at scale, the council contested, **the commodity economy**, industry at ~2,900 firms,

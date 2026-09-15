@@ -139,6 +139,7 @@ static func _tick_nation(ns) -> void:
 		# exists at all: an output-only price was designed, measured, and found unable
 		# to reach a voter in a model that prices rates.
 		var target: float = K.APPROVAL_NEUTRAL + K.time_in_office_offset(int(ns.months_in_term)) \
+			+ competence_credit(ns) \
 			+ K.APPROVAL_SPAN * clampf(
 				score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
 			)
@@ -294,6 +295,65 @@ static func issue_satisfaction(ns) -> Dictionary:
 	)
 
 	return sat
+
+
+## V4.0. The competence credit: the national RECORD, priced once, uniformly.
+## docs/agency-model.md §2 is the design; this is it verbatim.
+##
+## The defect it answers was measured, not felt: V3.0's probe ran budget-smart
+## — a budget that HALVED the deficit — and the model punished it 2.00 approval
+## points against idle. Every satisfaction is a delta against a starting
+## figure, so doing nothing is exactly neutral while any change is partly
+## punished, and the existing satisfactions only deliver the record to a bloc
+## in proportion to how much that bloc weights the issue — `business` feels a
+## halved deficit, `pensioners` barely do. This term prices the record itself,
+## once, for every bloc the same way, which is what lets competent governing
+## reach a voter the salience simplex was hiding it from.
+##
+## The three addends are the SAME expressions issue_satisfaction() computes for
+## `jobs`, `public_finances` and `growth`, at the SAME scales — reused, not
+## re-tuned; a second set of scales for the same quantities would be two
+## answers to one question. What is new is the sign structure and the site:
+## here, beside time_in_office_offset() in the target, NOT inside
+## issue_satisfaction(). In the satisfaction dict the term would be split by
+## the salience simplex, amplified by SALIENCE_GAIN, and named as an issue on
+## the polling panel — unrest_opinion_load's placement argument, applied to a
+## positive term. Riding the target, INERTIA_RATE governs the path and nothing
+## jumps.
+##
+## LEVEL against the inauguration figures, symmetric in sign — a president
+## who leaves unemployment above the figure they inherited reads a NEGATIVE
+## credit. A bad record is a record. Uniform across the six blocs, the
+## reason unrest_constants gave for its own uniformity: a fact about the
+## government, not about one row of the electorate, and an authored per-bloc
+## row would be a table with no measurement behind it.
+##
+## ONE clamp over the SUM, deliberately not per-term _scaled(): the three raw
+## ratios net each other (a deficit halved can pay for an Okun cost of the
+## cuts that caused it), and the single clamp keeps a saturated satisfaction
+## from leaking a second windfall through the credit — the anti-double-count
+## answer in the other direction. The clamp bounds the term to
+## +-COMPETENCE_SPAN, small beside APPROVAL_SPAN's 40, by design.
+##
+## A pure read — no writes, no RNG (the file header's constraint), no state —
+## and exactly 0.0 on a fresh game, because every delta is zero. That silence
+## is C3's by-construction half and test_opinion pins it.
+##
+## The record is exposed as its own function so the probe's C2 control can
+## compare records rather than approval deltas without restating the formula
+## (two copies of one expression is how one of them stops agreeing). At the
+## shipped span 0.0 the credit is inert while the record still reads — the
+## quantity the FAILED level form was about, kept for the decaying-form block.
+static func competence_record(ns) -> float:
+	return clampf(
+		(ns.start_unemployment_pct - ns.unemployment_pct) / K.JOBS_SCALE_PP
+		+ (ns.start_deficit_pct_gdp - ns.deficit_pct_gdp) / K.DEFICIT_SCALE_PP
+		+ (ns.growth_annual_pct - ns.trend_annual_pct) / K.GROWTH_SCALE_PP,
+		-1.0, 1.0)
+
+
+static func competence_credit(ns) -> float:
+	return K.COMPETENCE_SPAN * competence_record(ns)
 
 
 ## Base weights amplified by bad news, then renormalised. The renormalisation is

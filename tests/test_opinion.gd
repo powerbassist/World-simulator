@@ -28,6 +28,7 @@ func _init() -> void:
 		return
 
 	_check_starts_neutral()
+	_check_competence_credit()
 	_check_time_in_office_offset_shape()
 	_check_honeymoon_reaches_approval()
 	_check_pension_cut()
@@ -64,6 +65,69 @@ func _check_starts_neutral() -> void:
 		size_total += float(K.BLOC_SIZE[bloc])
 	if absf(size_total - 1.0) > 1.0e-9:
 		_fail("bloc sizes sum to %s, expected 1.0 — the roll-up is not an average" % size_total)
+
+
+## V4.0: the competence-credit channel (docs/agency-model.md §2). Fresh game ->
+## exactly 0 (every delta is zero, idle pays nothing -- C3's by-construction
+## half, tested rather than asserted after V3.0's honeymoon lesson); better
+## outcomes than the inauguration figures -> positive; worse -> negative
+## (symmetric in sign, so C2 is a real test). A pure read: checked mid-list
+## because if it ever reads nonzero on a fresh game, every approval pin in
+## this file is measuring from the wrong place.
+##
+## THE SHIPPED SPAN IS 0.0 (the review's finding: the level form FAILED its
+## gate, docs/agency-model.md §5f), so the credit reads exactly 0 for EVERY
+## input and the sign/symmetry assertions below would be vacuous against the
+## credit. The assertions hold against the RECORD — the quantity the form
+## was about, which survives for the decaying-form block — and the credit's
+## own assertions become span-conditional: the fresh-game zero holds at any
+## span, the sign/symmetry pins assert credit == span * record so they are
+## exact at 0.0 AND still test the form whenever a later block raises the
+## span.
+func _check_competence_credit() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("new_game reported errors: %s" % [state.errors])
+		return
+	var ns = state.player()
+
+	var fresh := Opinion.competence_credit(ns)
+	if absf(fresh) > 1.0e-9:
+		_fail("a fresh game's competence credit is %s, expected exactly 0 — every satisfaction is a delta against a starting figure and the credit must be silent when nothing has moved" % fresh)
+
+	# Better than the inauguration record: unemployment a point down. The
+	# SIGN lives on the record, so it is asserted there at any span.
+	var start_unemp: float = ns.start_unemployment_pct
+	ns.unemployment_pct = start_unemp - 1.0
+	if Opinion.competence_record(ns) <= 0.0:
+		_fail("unemployment 1pt below the inauguration figure reads record %s, expected positive" % Opinion.competence_record(ns))
+
+	# Worse than the inauguration record, same size: symmetric in sign.
+	ns.unemployment_pct = start_unemp + 1.0
+	if Opinion.competence_record(ns) >= 0.0:
+		_fail("unemployment 1pt above the inauguration figure reads record %s, expected negative" % Opinion.competence_record(ns))
+
+	# Symmetric in magnitude: 1pt of unemployment over JOBS_SCALE_PP must read
+	# the same record either way, or the channel is not pricing the record.
+	var worse := Opinion.competence_record(ns)
+	ns.unemployment_pct = start_unemp - 1.0
+	var better := Opinion.competence_record(ns)
+	if absf(worse + better) > 1.0e-9:
+		_fail("the record is not symmetric: +1pt reads %s, -1pt reads %s" % [worse, better])
+
+	# The credit is the span applied to the record: at the shipped 0.0 this is
+	# the INERT pin (credit reads exactly 0 whatever the record does), and at
+	# any span > 0 it is the sign/symmetry pin the original assertions carried.
+	ns.unemployment_pct = start_unemp + 1.0
+	var credit_worse := Opinion.competence_credit(ns)
+	ns.unemployment_pct = start_unemp - 1.0
+	var credit_better := Opinion.competence_credit(ns)
+	if absf(credit_worse - K.COMPETENCE_SPAN * worse) > 1.0e-9:
+		_fail("the credit is not span * record: span %s, record %s, credit %s" % [K.COMPETENCE_SPAN, worse, credit_worse])
+	if absf(credit_better - K.COMPETENCE_SPAN * better) > 1.0e-9:
+		_fail("the credit is not span * record: span %s, record %s, credit %s" % [K.COMPETENCE_SPAN, better, credit_better])
+	if K.COMPETENCE_SPAN == 0.0 and (credit_worse != 0.0 or credit_better != 0.0):
+		_fail("at span 0.0 the credit must be inert: +1pt reads %s, -1pt reads %s" % [credit_worse, credit_better])
 
 
 ## V3.0 discharges the S5 deferral ("No honeymoon bonus — time in office as its
