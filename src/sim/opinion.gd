@@ -33,6 +33,14 @@ const Inflation = preload("res://src/sim/inflation.gd")
 ## start scenario, and must respect the same bounds a law is held to.
 const LK = preload("res://src/sim/legislature_constants.gd")
 
+## V4.1. One-way, both of them: this file reads the register's pulse and the
+## stock's span/decay constants, and programme.gd does not preload this file --
+## the pulse is a pure read of the register and the stock's only writer is the
+## advance in _tick_nation() below. tests/test_programme.gd pins programme.gd's
+## own short preload list; this direction is the one the model allows.
+const Programme = preload("res://src/sim/programme.gd")
+const PK = preload("res://src/sim/programme_constants.gd")
+
 
 ## Set every bloc to the neutral baseline and record the starting deficit that
 ## the public_finances issue is measured against.
@@ -100,6 +108,29 @@ static func tick_month(state) -> void:
 
 
 static func _tick_nation(ns) -> void:
+	# V4.1. The programme stock advances here, ONCE per nation per month, before
+	# the bloc loop reads the credit -- the decaying bounded form agency-model §2
+	# declared, discharging V4.0's failed level form (programme-model §3 is the
+	# agreement clause and the reason the form changed). The pulse is this
+	# month's conclusions, read off the register; the caller ticks
+	# Programme.tick_month immediately before this file, with Elections last,
+	# which is what makes a conclusion and the pulse that prices it the SAME
+	# month -- a conclusion landing in an election month is stamped and paid
+	# before the vote resets the counters the stamp is matched against.
+	#
+	# The bound is the point of the form: the stock saturates at +-1, so
+	# PROGRAMME_SPAN is the whole price and no downstream clamp can set the
+	# number -- the failure class that killed the level form. With no register
+	# the pulse is exactly 0.0 and this advance is exactly
+	# 0.0 + 0.0 - 0.0 * rate, so the idle and nine-AI baseline is untouched to
+	# the bit -- the balance re-run's prediction and P3's by-construction half,
+	# asserted by the probe and tests/test_programme_channel.gd anyway.
+	var pulse: float = Programme.programme_pulse(ns)
+	ns.programme_stock = clampf(
+		float(ns.programme_stock) + pulse - float(ns.programme_stock) * PK.PROGRAMME_DECAY_RATE,
+		PK.STOCK_MIN, PK.STOCK_MAX
+	)
+
 	var sat := issue_satisfaction(ns)
 
 	var national := {}
@@ -140,6 +171,7 @@ static func _tick_nation(ns) -> void:
 		# to reach a voter in a model that prices rates.
 		var target: float = K.APPROVAL_NEUTRAL + K.time_in_office_offset(int(ns.months_in_term)) \
 			+ competence_credit(ns) \
+			+ programme_credit(ns) \
 			+ K.APPROVAL_SPAN * clampf(
 				score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
 			)
@@ -354,6 +386,21 @@ static func competence_record(ns) -> float:
 
 static func competence_credit(ns) -> float:
 	return K.COMPETENCE_SPAN * competence_record(ns)
+
+
+## V4.1. The programme credit: PROGRAMME_SPAN points of approval per unit of
+## the bounded stock the advance in _tick_nation() maintains.
+## docs/programme-model.md §3 is the design and this line is it verbatim
+## (`credit = PROGRAMME_SPAN * stock`). UNIFORM across the six blocs, the
+## honeymoon's and unrest_opinion_load's reason -- a fact about the government,
+## not about one row of the electorate -- and riding the target beside
+## competence_credit(), so INERTIA_RATE governs the path and a conclusion moves
+## nothing instantly. Exactly 0.0 while the stock is 0.0: an empty register (no
+## programme chosen, the nine AI nations) and a chosen-but-unconcluded register
+## both read 0.0. Its own function for competence_record()'s reason -- the probe
+## and the channel test read the credit rather than restating the expression.
+static func programme_credit(ns) -> float:
+	return PK.PROGRAMME_SPAN * float(ns.programme_stock)
 
 
 ## Base weights amplified by bad news, then renormalised. The renormalisation is

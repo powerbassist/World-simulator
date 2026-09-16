@@ -1,0 +1,262 @@
+{
+  "_note": "Task 5's European register: the goals whose frame is the continent and whose ledger is still the nation's own -- credibility for the trade fight, convergence with the continent's strongest economy, the climate fleet, the border fund. The co2e entries carry a TWO-SIDED `possible` gate, argued here because it is the book's one authored band: an absolute per-capita goal means nothing across a roster whose emissions run from nuclear France to coal-and-gas elsewhere, so the energy entries are offered only inside the band where the number is both UNMET (above the goal) and REACHABLE (not so far above that no build programme closes it). A goal nobody's country can reach is not ambition; a gate is.",
+  "programme": [
+    {
+      "id": "prog_the_european_voice",
+      "name": "The European Voice",
+      "summary": "To speak for Europe the president first has to be backed at home -- fifty-four per cent, held open until it lands. The weight abroad is borrowed from the mandate, and the register is where the mandate is audited.",
+      "group": "europe",
+      "activation": "player",
+      "immediate": {
+        "bloc_offset": {
+          "urban": 0.04,
+          "business": 0.04
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 54.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 54.0,
+      "progressbar": "up",
+      "weight": 10,
+      "pinned": true
+    },
+    {
+      "id": "prog_rhine_axis",
+      "name": "The Rhine Axis",
+      "summary": "Two per cent alongside the continent's strongest economy, within the year -- convergence filed as a programme rather than a press release. A eurozone recession overtakes the entry rather than failing it; a merely slow year fails it on the clock.",
+      "group": "europe",
+      "activation": "player",
+      "complete": {
+        "field": "growth_annual_pct",
+        "op": ">=",
+        "value": 2.0
+      },
+      "invalid": {
+        "field": "growth_annual_pct",
+        "op": "<=",
+        "value": -1.5
+      },
+      "timeout_months": 12,
+      "current_value": "growth_annual_pct",
+      "goal_value": 2.0,
+      "progressbar": "up",
+      "on_fail": {
+        "bloc_offset": {
+          "business": -0.04
+        }
+      },
+      "weight": 8,
+      "pinned": true
+    },
+    {
+      "id": "prog_energy_union",
+      "name": "The Energy Union",
+      "summary": "The fleet, the grid and the per-capita figure at three point seven tonnes -- the European climate ambition in the only units the ledger keeps. Offered inside the band where the number is both unmet and reachable, and open-ended because a build-out is measured in years and the register is patient.",
+      "group": "europe",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "co2e_per_capita_t",
+          "op": ">=",
+          "value": 3.8
+        },
+        {
+          "field": "co2e_per_capita_t",
+          "op": "<=",
+          "value": 5.5
+        }
+      ],
+      "complete": {
+        "field": "co2e_per_capita_t",
+        "op": "<=",
+        "value": 3.7
+      },
+      "fail": {
+        "field": "co2e_per_capita_t",
+        "op": ">=",
+        "value": 5.6
+      },
+      "timeout_months": 0,
+      "current_value": "co2e_per_capita_t",
+      "goal_value": 3.7,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.05,
+          "urban": 0.04
+        }
+      },
+      "weight": 7,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_tariff_line",
+      "name": "The Tariff Line",
+      "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with a corporate levy raised the day the programme opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
+      "group": "europe",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">",
+          "value": 4.5
+        },
+        {
+          "field": "deficit_pct_gdp",
+          "op": "<",
+          "value": 7.0
+        }
+      ],
+      "immediate": {
+        "tax_rates_pct": {
+          "corporate": 0.75
+        }
+      },
+      "complete": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 4.5
+      },
+      "fail": {
+        "field": "deficit_pct_gdp",
+        "op": ">=",
+        "value": 7.0
+      },
+      "timeout_months": 8,
+      "current_value": "deficit_pct_gdp",
+      "goal_value": 4.5,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.05
+        }
+      },
+      "weight": 6,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_continents_granary",
+      "name": "The Continent's Granary",
+      "summary": "The rural payroll inside a European farm policy: unemployment under seven point two by the tenth month, with the countryside's stake declared at choice. A labour market with a clock on it, because harvests have them. Offered only where the harvest line still sits ahead of the payroll.",
+      "group": "europe",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unemployment_pct",
+          "op": ">",
+          "value": 7.2
+        },
+        {
+          "field": "unemployment_pct",
+          "op": "<",
+          "value": 8.5
+        }
+      ],
+      "immediate": {
+        "bloc_offset": {
+          "rural": 0.05
+        }
+      },
+      "complete": {
+        "field": "unemployment_pct",
+        "op": "<=",
+        "value": 7.2
+      },
+      "fail": {
+        "field": "unemployment_pct",
+        "op": ">=",
+        "value": 8.5
+      },
+      "timeout_months": 10,
+      "current_value": "unemployment_pct",
+      "goal_value": 7.2,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "rural": 0.06
+        }
+      },
+      "weight": 5,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_border_fund",
+      "name": "The Border Fund",
+      "summary": "Cross-border infrastructure, paid for at choice and judged like every other programme -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
+      "group": "europe",
+      "activation": "player",
+      "immediate": {
+        "spending_pct_gdp": {
+          "infrastructure": 0.3
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 43.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.04,
+          "rural": 0.04
+        }
+      },
+      "weight": 4,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_federal_moment",
+      "name": "The Federal Moment",
+      "summary": "The chapter of the treaty only a renewed mandate can open -- offered to a second-term president and concluded at fifty-seven per cent, because a continent follows a leader its own country still follows. A recession overtakes the moment like it overtakes anything.",
+      "group": "europe",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 57.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 40.0
+      },
+      "invalid": {
+        "field": "growth_annual_pct",
+        "op": "<=",
+        "value": -1.5
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 57.0,
+      "progressbar": "up",
+      "weight": 3,
+      "pinned": false
+    }
+  ]
+}

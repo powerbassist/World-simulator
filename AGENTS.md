@@ -189,6 +189,55 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 ## Current focus
 
+**V4.1 SHIPPED THE PROGRAMME 2026-09-15 — the agenda register, the decaying
+credit channel at span 4.5 with the gate PASSED, and the game's first answer
+to "what are you for".** The machine is `src/sim/programme.gd` (a leaf, four
+statuses and no flags — `active → complete|fail|invalid` once, precedence
+complete > fail > invalid > timeout, the term-start gate a LEVEL READ of
+`months_in_term`), `_load_programme` refuses off the field whitelist loudly,
+`SAVE_VERSION` 35 on three serialised pieces (`programme`,
+`programme_chosen_term`, `programme_stock`; progress deliberately earns
+nothing). The channel is V4.0's declared decaying form driven without the
+wait: pulses ±1.0 symmetric by construction (invalid zero-pulse) into a
+stock bounded [−1,1] on a 14-month half-life, `programme_credit =
+PROGRAMME_SPAN × stock` beside the honeymoon inside `Opinion._tick_nation`,
+tick order Programme→Opinion→Elections PINNED at source (Elections is the
+stamp pair's only writer and runs last — moved between the pair, a won
+election would eat the pulse). **Sweep: PASS** — response exactly linear
+0.25 points/unit, P1 +1.125, P2 −1.175, P3 +0.000 to the bit, P4 bounded,
+P5 14 vs 13.86; the band is one-sided-up, crossing 4.0 grid-independent by
+the linearity, V1.5b's midpoint diagnostic degenerates and is recorded as
+such. Content is 37 entries in five groups (economy 9, institutions 7,
+europe 7, society 7, office 7); the review's CRITICAL was the
+already-won/lost class — co2e fail lines inside their own `possible` bands
+offered five nations a FAIL at tick one, and nine ungated entries were
+already-won/lost at playable start figures — fixed with authored bands (the
+open interval between an entry's own complete and fail lines, unresolvable
+at the offer by construction) and the triviality sweep widened into a
+mutation-checked suite gate. Pledges stayed APART on a shared read, not a
+shared schema; `COMPETENCE_SPAN` stays 0.0. Surfaces: the Agenda panel (K),
+a top-bar strip hidden while nothing runs, a never-silent Overview PROGRAMME
+section, cards on open/complete/fail/invalid, and the term start as an
+arrival pause idempotent and subordinated to the election verdict's. Two
+review finds fixed: the agenda icon untracked (fresh-clone class,
+force-added) and the boot pending-mark firing before the card it marks.
+Suite 85/85. Model: [docs/programme-model.md](docs/programme-model.md) —
+its §10 holds the close-out record and the re-run result. The final review fixed three: the offer gates on
+not-already-failed (`available()` skips an entry whose authored `fail` trigger
+is already true — the mid-game reopening of the already-lost class, which no
+authored band can close because the offer re-fires against drifted figures;
+deliberately one-sided, an already-WON entry stays offered and the test pins
+it), `REQUIRED_FIELDS` is enforced at load (a missing required key or a blank
+`summary` is a load error — all 37 entries already carried one), and §4's
+shared read SHIPPED: the Campaign panel's Promises section opens on the term's
+programme through a new `Programme.this_term()` pure read that replaced the
+`chosen_term == terms_served` filter previously hand-written in the agenda and
+overview panels. Two limitations recorded in §10, not fixed: the zero-goal
+`down` bar draws 0 % until the figure moves (prog_in_the_black), and a
+decision event answered after the same-month election dismissal can eat the
+term-start pause — three boolean pausers, one clock — with the offer staying
+answerable until Elections next advances `months_in_term`.
+
 **V4.0 MEASURED THE AGENCY CALL AND THE LEVEL FORM MISSED ITS GATE — the
 verdict is FAIL and the channel's form, not its span, is what missed
 (2026-09-14).** The competence-credit channel shipped as designed
@@ -344,8 +393,8 @@ all shipped; the as-built record is the V3.5 row below and
 ceremony has not started.** **V3.0's gate FAILED by measurement** -- best active play -2.00
 approval points against idle -- and the author's route call was taken 2026-09-12
 (the competence-credit channel) and **measured at V4.0 (2026-09-14): the level
-form missed its gate** -- see the V4.0 row above; the decaying form is the next
-route.
+form missed its gate** -- see the V4.0 row above; the decaying form shipped at
+V4.1 as the programme credit (the top row, gate PASSED).
 [V4](docs/tiers/v4.md) is **SIGNED (2026-09-13)**: twelve blocks, 70-95 sessions, the agency
 call first, then a player agenda, the statute book (compose, repeal, a tax panel, a
 bill briefing and two commissioned polls), a deep bench of ~1500-2000 people, events

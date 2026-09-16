@@ -32,6 +32,9 @@ extends RefCounted
 ## this grammar's layout rather than any one panel's.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+## The direction vocabulary's home -- progress_fraction() reads it so the kit
+## and the content cannot disagree about what "up" means.
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -259,6 +262,28 @@ static func pop_text(pop: float) -> String:
 	if pop >= 1_000_000.0:
 		return "%.1f M" % (pop / 1_000_000.0)
 	return "%.0f k" % (pop / 1_000.0)
+
+
+## The 0..1 fraction a programme's progress bar draws -- V4.1. The register
+## stores no progress and no start reference (docs/programme-model.md §2: a
+## stored progress value could disagree with the live figure it reads, and then
+## the panel lies), so the goal is the only scale there is: the fraction is the
+## current figure against the goal, taken so the bar completes exactly when the
+## goal is met -- `up` fills as the figure climbs to it, `down` as it falls to
+## it. One arithmetic here rather than one per surface, pop_text()'s rule: the
+## Agenda window, the top-bar strip and the Overview cannot draw three answers
+## to one read. The direction vocabulary is the constants file's own and the
+## loader refuses an entry outside it. Clamped, and zero rather than NAN on a
+## zero denominator -- a goal of zero (balance the books) has no ratio to give.
+static func progress_fraction(current: float, goal: float, direction: String) -> float:
+	var fills_upward: bool = direction == String(ProgrammeK.PROGRESS_DIRECTIONS[0])
+	var frac := 0.0
+	if fills_upward:
+		if not is_zero_approx(goal):
+			frac = current / goal
+	elif not is_zero_approx(current):
+		frac = goal / current
+	return clampf(frac, 0.0, 1.0)
 
 
 ## Which way a movement reads. The convention is the caller's, because the same

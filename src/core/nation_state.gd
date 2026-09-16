@@ -1116,6 +1116,44 @@ var pledges: Array = []
 ## `last_campaign_result`'s shape, and not serialised for its reason either.
 var last_pledge_result := {}
 
+# --- The government's programme (V4.1) ----------------------------------------------
+
+## The programme register: the entries this nation has CHOSEN, at most one per term,
+## each carrying the six decision keys -- which entry, which term, how many months
+## live, the status, and the (term, month-of-term) pair the conclusion happened in.
+## Written by Programme.choose() and Programme.tick_month() and by nothing else.
+##
+## *** IT HOLDS NO CONTENT. *** The triggers, the goal and every effect live in
+## data/programme/ and are read through the loader on every read, and progress is
+## DERIVED from the live figure -- Programme.progress_of() -- never stored, because
+## a cached value could disagree with the figure it reads and then the panel lies.
+## tests/test_programme.gd pins the six-key shape and the round trip.
+##
+## EARNED THE BUMP TO 35, taken at Task 3 with the absences rather than at the
+## pulse wiring -- the version gate is shut on the day PROGRAMME_SPAN goes live,
+## before the first save that could hold a priced register is ever written. The
+## case is game_state.gd's SAVE_VERSION comment's: a save that dropped this
+## register un-prices a term the player already lived. Until Task 2 the pledges
+## precedent held exactly -- a version-34 save was made by code with no programme
+## verb on any tick path, so "absent reads []" was the truth about every save
+## that existed -- and it is serialised for the verb's reason regardless: a verb
+## writes it and no tick recomputes it.
+var programme: Array = []
+
+## The last term a programme was chosen in, -1 meaning never. The one-choice-per-
+## term gate is a comparison against terms_served -- a level read, so there is no
+## "has chosen this term" flag anywhere and nothing lifts one.
+var programme_chosen_term: int = -1
+
+## The bounded [-1, 1] stock the conclusion pulses feed -- +1 a completion, -1 a
+## failure, 0 an invalid -- decayed monthly at PROGRAMME_DECAY_RATE and read by
+## Opinion as PROGRAMME_SPAN * stock beside the honeymoon
+## (docs/programme-model.md section 3). Accumulated state nothing recomputes, so
+## serialised for corruption's reason: a save that dropped it would re-price every
+## delivery the player already lived. Typed-cast in from_dict() -- a stock of 1.0
+## comes back from JSON as the int 1.
+var programme_stock: float = 0.0
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1623,6 +1661,12 @@ func duplicate_state():
 	# `breach_months` INSIDE one -- a shallow duplicate would let a Budget.project()
 	# copy count breaches onto the live register. tests/test_state_copy.gd's own probe.
 	s.pledges = pledges.duplicate(true)
+	# The programme register, for the pledges reason exactly: Programme.tick_month()
+	# writes `status` and `concluded_term_month` INSIDE an entry, and a projection
+	# copy concluding an entry would conclude it for the live state too.
+	s.programme = programme.duplicate(true)
+	s.programme_chosen_term = programme_chosen_term
+	s.programme_stock = programme_stock
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1840,6 +1884,9 @@ func to_dict() -> Dictionary:
 		"campaign_sites": campaign_sites,
 		"campaign_saturation": campaign_saturation,
 		"pledges": pledges,
+		"programme": programme,
+		"programme_chosen_term": programme_chosen_term,
+		"programme_stock": programme_stock,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -2181,6 +2228,13 @@ static func from_dict(d: Dictionary):
 	# the seventh time -- and tests/test_save_load.gd checks the PREMISE that dropping
 	# it changes behaviour rather than asserting it.
 	s.pledges = _pledges_from(d.get("pledges", []))
+	# V4.1, on _pledges_from's terms: the register is decision state whose ints must
+	# come back ints, and the stock's whole-number floats come back from JSON as
+	# ints without the cast -- a stock of exactly 1.0 is the reachable case, not a
+	# corner.
+	s.programme = _programme_from(d.get("programme", []))
+	s.programme_chosen_term = int(d.get("programme_chosen_term", -1))
+	s.programme_stock = float(d.get("programme_stock", 0.0))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -2263,6 +2317,28 @@ static func _pledges_from(raw) -> Array:
 			"until_month": int(entry.get("until_month", 1)),
 			"breach_months": int(entry.get("breach_months", 0)),
 			"months_live": int(entry.get("months_live", 0)),
+		})
+	return out
+
+
+## The programme register, with its types restored -- _pledges_from's shape and its
+## reason. The six keys are what src/sim/programme.gd writes; an entry carrying
+## anything else in a hand-edited save is dropped on the floor by this whitelist,
+## which keeps "the register carries no content" true across a round trip.
+static func _programme_from(raw) -> Array:
+	if typeof(raw) != TYPE_ARRAY:
+		return []
+	var out: Array = []
+	for entry in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		out.append({
+			"entry_id": String(entry.get("entry_id", "")),
+			"chosen_term": int(entry.get("chosen_term", 0)),
+			"months_live": int(entry.get("months_live", 0)),
+			"status": String(entry.get("status", "active")),
+			"concluded_term": int(entry.get("concluded_term", -1)),
+			"concluded_term_month": int(entry.get("concluded_term_month", -1)),
 		})
 	return out
 

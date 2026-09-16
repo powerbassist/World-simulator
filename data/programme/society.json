@@ -1,0 +1,272 @@
+{
+  "_note": "Task 5's society register: the health line, the schools line, the pension line, the migration argument and the towns' growth -- each filed as a goal the register holds, not a promise the campaign made. The book's one deliberate PAIR lives here: the open door and the firm hand are the two answers to the same argument, and the register offers both rather than a verdict -- the player picks a side and is then held to it. Entries that spend at choice (the hospital year, the classroom ledger, the pension pact) price the act in `immediate` and the verdict in the conclusion, because a service is legislated once and judged for a term.",
+  "programme": [
+    {
+      "id": "prog_the_hospital_year",
+      "name": "The Hospital Year",
+      "summary": "Eight tenths of GDP onto the health line the day the programme is chosen, and the term's verdict taken from the only poll that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
+      "group": "society",
+      "activation": "player",
+      "immediate": {
+        "spending_pct_gdp": {
+          "health": 0.8
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "pensioners": 0.06,
+          "workers": 0.04
+        }
+      },
+      "weight": 9,
+      "pinned": true
+    },
+    {
+      "id": "prog_the_classroom_ledger",
+      "name": "The Classroom Ledger",
+      "summary": "The schools line raised at choice, the judgement due within the year -- education is the spending the country audits fastest. Miss the clock and the students' bloc keeps the score.",
+      "group": "society",
+      "activation": "player",
+      "immediate": {
+        "spending_pct_gdp": {
+          "education": 0.8
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 52.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 43.0
+      },
+      "timeout_months": 12,
+      "current_value": "overall_approval_pct",
+      "goal_value": 52.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "students": 0.1,
+          "urban": 0.04
+        }
+      },
+      "on_timeout": {
+        "bloc_offset": {
+          "students": -0.04
+        }
+      },
+      "weight": 8,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_pension_pact",
+      "name": "The Pension Pact",
+      "summary": "The pension line touched at choice -- a settlement's worth of friction and six hundredths off the pensioners' ledger, priced in -- and the deficit under four and a half as the pact's proof. If the streets answer instead, the register records what the pact cost. Offered only to a ledger still above the four and a half, where the pact is a proof rather than a formality.",
+      "group": "society",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">",
+          "value": 4.5
+        }
+      ],
+      "immediate": {
+        "society": {
+          "settlement": -0.2
+        },
+        "bloc_offset": {
+          "pensioners": -0.06
+        }
+      },
+      "complete": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 4.5
+      },
+      "fail": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 20.0
+      },
+      "timeout_months": 0,
+      "current_value": "deficit_pct_gdp",
+      "goal_value": 4.5,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.06,
+          "pensioners": 0.02
+        }
+      },
+      "weight": 7,
+      "pinned": true
+    },
+    {
+      "id": "prog_the_open_door",
+      "name": "The Open Door",
+      "summary": "A migration stance opened at choice and argued for a term -- the programme concludes when the country is persuaded, not when the decree is signed. The streets at thirty overtake the argument: a country on strike is not debating.",
+      "group": "society",
+      "activation": "player",
+      "immediate": {
+        "society": {
+          "migration": 0.35
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 54.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 30.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 54.0,
+      "progressbar": "up",
+      "weight": 6,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_firm_hand",
+      "name": "The Firm Hand",
+      "summary": "The other answer to the same argument, offerable only once the country is angry enough to ask for it: the stance closed, and a majority earned from the country that becomes. At forty the streets have overtaken the question.",
+      "group": "society",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 5.0
+        }
+      ],
+      "immediate": {
+        "society": {
+          "migration": -0.35
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 55.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 40.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 40.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 55.0,
+      "progressbar": "up",
+      "weight": 5,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_measured_country",
+      "name": "The Measured Country",
+      "summary": "The deeper clean, priced at six tenths of corruption and offerable only to a second mandate -- a first-term president who promises to measure the country has not yet earned the instruments. Judged at fifty-six per cent.",
+      "group": "society",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "immediate": {
+        "society": {
+          "corruption": -0.6
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 56.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 40.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 56.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.08,
+          "business": 0.04
+        }
+      },
+      "weight": 3,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_growing_towns",
+      "name": "The Growing Towns",
+      "summary": "Half a point of GDP into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the programme, not the programme failing.",
+      "group": "society",
+      "activation": "player",
+      "immediate": {
+        "spending_pct_gdp": {
+          "infrastructure": 0.5
+        },
+        "bloc_offset": {
+          "rural": 0.05
+        }
+      },
+      "complete": {
+        "field": "growth_annual_pct",
+        "op": ">=",
+        "value": 1.8
+      },
+      "invalid": {
+        "field": "growth_annual_pct",
+        "op": "<=",
+        "value": -1.5
+      },
+      "timeout_months": 12,
+      "current_value": "growth_annual_pct",
+      "goal_value": 1.8,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "rural": 0.06
+        }
+      },
+      "weight": 2,
+      "pinned": false
+    }
+  ]
+}

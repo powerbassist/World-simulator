@@ -34,6 +34,8 @@ const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
+const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -52,6 +54,7 @@ const RegionPanel = preload("res://src/ui/region_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
+const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
@@ -114,6 +117,10 @@ var _windows
 var _top_bar
 var _paused_for_decision := false
 var _decision_card_id := ""
+## V4.1. The term-start programme's card and its pause -- the arrival-pause
+## machinery pointed at the agenda. See _enforce_term_start_programme().
+var _paused_for_programme := false
+var _programme_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -133,6 +140,7 @@ var _region_panel
 var _city_panel
 var _energy_panel
 var _campaign_panel
+var _agenda_panel
 var _events_panel
 var _summit_panel
 var _summit_before := {}
@@ -250,6 +258,15 @@ func _ready() -> void:
 	_overview_panel = OverviewPanel.new()
 	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "gauge.svg")
 	_overview_panel.setup(_state, _loader)
+
+	# V4.1. The government's programme: the one window where a programme is
+	# chosen and tracked (docs/programme-model.md §4). In the State cluster
+	# beside the Overview it frames -- the agenda is what the term is FOR,
+	# which is the sentence the Overview's other columns read against.
+	_agenda_panel = AgendaPanel.new()
+	_windows.register("agenda", "Agenda", _agenda_panel, KEY_K, ICONS + "target.svg")
+	_agenda_panel.setup(_state, _loader)
+	_agenda_panel.programme_chosen.connect(_on_programme_chosen)
 
 	_economy_panel = EconomyPanel.new()
 	_windows.register("economy", "Economy", _economy_panel, KEY_E, ICONS + "pie_chart.svg")
@@ -532,6 +549,10 @@ func _ready() -> void:
 			get_tree().change_scene_to_file(MENU_SCENE)
 			return
 		_clock.paused = false
+		# V4.1. A won election that started a new term left the choice open,
+		# and the dismissal must not quietly resume past it. A no-op when
+		# there is nothing to choose.
+		_enforce_term_start_programme()
 	)
 
 	_save_load_panel = SaveLoadPanel.new()
@@ -573,8 +594,6 @@ func _ready() -> void:
 	if not pending_load_slot.is_empty():
 		_on_load_requested(pending_load_slot)
 
-	_update_top_bar()
-
 	# The one sentence the playtest found missing: a new game opens on a running
 	# clock with nothing pending and no statement of what is being played for,
 	# and the deadline lived four clicks deep -- when it was stated at all. The
@@ -589,6 +608,19 @@ func _ready() -> void:
 			ClockCluster.MONTH_NAMES[when.y - 1], when.x,
 			Trends.months_text(Trends.months_to_vote(_state, ns)),
 		])
+
+	# V4.1, after the opening card so the two land together: a new game IS an
+	# unchosen term start, so the clock sits still behind the programme choice
+	# until one is made. The load branch above already ran its own enforcement,
+	# and this call is idempotent -- one live card either way.
+	_enforce_term_start_programme()
+
+	# AFTER the enforcement, matching the load path's own order: the programme
+	# card names "agenda" in Pending.window_ids, and at boot the clock is paused
+	# with no month tick to refresh the strip later -- a bar built before the
+	# enforcement would leave the State-cluster mark dark on a decision the
+	# desk is actively holding open.
+	_update_top_bar()
 
 
 ## Screen-filling CenterContainer per panel, which is the one placement mechanism
@@ -606,6 +638,9 @@ func _ready() -> void:
 func _build_action_bar() -> void:
 	_hud.action_bar.add_cluster("state", "State", ICONS + "institutional_building.svg", [
 		_entry("overview", "Overview"),
+		# V4.1. The term's programme, right after the Overview it frames -- a
+		# president deals with what the term is for before the machinery.
+		_entry("agenda", "Agenda"),
 		_entry("politics", "Politics"),
 		_entry("legislature", "Legislature"),
 		# A president's diary is state. One line, exactly as the comment above
@@ -706,8 +741,12 @@ func _wire_hud() -> void:
 	# appointment -- and there was nowhere for a click to go. An event card is a
 	# QUESTION, so clicking it opens the window where it is answered. Every card routes
 	# here and the window is right for all of them: whatever the player clicked, what
-	# they wanted was the decision on their desk.
-	_hud.message_stack.card_activated.connect(func(_id: String):
+	# they wanted was the decision on their desk. V4.1's programme card routes to the
+	# window where that choice is made instead -- the same rule, one card earlier.
+	_hud.message_stack.card_activated.connect(func(id: String):
+		if not _programme_card_id.is_empty() and id == _programme_card_id:
+			_windows.open("agenda")
+			return
 		_windows.open("events")
 	)
 
@@ -1019,7 +1058,32 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	Inflation.tick_month(_state)
 
 	Media.tick_month(_state, _loader)
+	# V4.1, immediately before Opinion: the register concludes first, so a
+	# conclusion and the pulse Opinion prices off it land in the SAME month --
+	# programme_pulse() reads concluded_this_month(), which matches the
+	# conclusion's stamped (terms_served, months_in_term) against the live pair.
+	#
+	# THE TERM-BOUNDARY GUARANTEE: no code between this call and the
+	# Opinion.tick_month call below writes either counter, and the ONLY writer
+	# of the pair anywhere in this loop is Elections.tick_month, which runs
+	# LAST -- so a conclusion landing in the election month is stamped and paid
+	# before the vote can reset months_in_term. The pair cannot desync within a
+	# tick by construction. If Elections ever moves between these two calls, a
+	# won election stamps (T, m) and resets to (T+1, 0) between stamp and read,
+	# concluded_this_month() matches nothing, and the pulse is silently unpaid --
+	# move Elections back after the pair before trusting a conclusion again.
+	Programme.tick_month(_state, _loader)
 	Opinion.tick_month(_state)
+	# V4.1. The conclusions, as cards -- deliberately AFTER Opinion and not
+	# between the pair: tests/test_programme_channel.gd pins that nothing but
+	# comments runs between Programme.tick_month and Opinion.tick_month, and
+	# the pin is the same-month guarantee's source form. The read is safe
+	# anywhere in this handler BEFORE Elections.tick_month, which is the ONLY
+	# writer of the (terms_served, months_in_term) pair
+	# concluded_this_month() matches against and which runs last -- so the
+	# cards see exactly the conclusions the pulse was priced on, one
+	# statement later.
+	_card_programme_conclusions()
 
 	var entry := Budget.snapshot(_state)
 	entry.merge(Opinion.snapshot(_state))
@@ -1215,6 +1279,16 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_clock.paused = true
 		_election_panel.show_results(results)
 		_election_panel.show()
+
+	# V4.1, last so the read is of the state this tick SETTLED: a won election
+	# resets months_in_term above, and the month a new term begins is a term
+	# start again. SKIPPED when a result is on screen -- the election owns the
+	# pause until it is dismissed, and the dismissal handler re-runs this; two
+	# pauses stacked on one tick would let the answerable one (the programme
+	# card) eat the verdict's. A no-op every ordinary month -- the level read
+	# closes itself.
+	if results.is_empty():
+		_enforce_term_start_programme()
 
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
@@ -1743,6 +1817,9 @@ func _on_load_requested(slot: String) -> void:
 	# answered. (A save-scum dodge the other way -- reload to rethink -- still
 	# works; the re-raise kills the silent skip, not the rethink.)
 	_enforce_interrupt()
+	# V4.1. A save made at an unchosen term start is still one: the same
+	# reload-re-raise reasoning _enforce_interrupt() carries, one register over.
+	_enforce_term_start_programme()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
@@ -1774,12 +1851,126 @@ func _enforce_interrupt() -> void:
 	_hud.clock_cluster.refresh(_clock)
 
 
+## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at
+## the programme. At a term start with the choice still open, the clock does
+## not run past it: the offer is surfaced as a CARD (the decision-card shape --
+## the Agenda window is the answer surface, and clicking the card opens it,
+## through the card_activated routing in _wire_hud()), the clock pauses, and
+## the choice resumes through _on_programme_chosen().
+##
+## NOT a blocking modal, on events-model's own argument one level up: the
+## choice can be seen past -- the brass mark on the State cluster and the card
+## on the desk both stay until it is answered -- but the clock waiting is what
+## makes it a decision rather than a suggestion.
+##
+## Three callers, one code path: _ready() (a new game IS a term start),
+## _on_load_requested() beside _enforce_interrupt() (a save made at an
+## unchosen term start re-raises it), and the end of _on_month_elapsed()
+## (a won election resets months_in_term; the month a new term begins is a
+## term start again). Idempotent by construction: the previous card is
+## dismissed before a fresh one is pushed, so repeated calls leave exactly
+## one live card.
+func _enforce_term_start_programme() -> void:
+	if _state == null:
+		return
+	var ns = _state.player()
+	if ns == null:
+		return
+	# Programme.available() is empty everywhere but an unchosen term start,
+	# structurally, before any content is consulted -- so this one read is the
+	# whole gate. An empty offer pauses nothing: there is no decision to wait
+	# behind, and a clock stopped with nothing on the desk is a stuck game.
+	if Programme.available(_state, ns, _loader).is_empty():
+		return
+	if not _programme_card_id.is_empty():
+		_hud.message_stack.dismiss(_programme_card_id)
+	_programme_card_id = _hud.message_stack.push(
+		"The term's programme",
+		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
+	)
+	_paused_for_programme = true
+	_clock.paused = true
+	_hud.clock_cluster.refresh(_clock)
+
+
+## The panel emits; main performs. Programme.choose() refuses rather than
+## half-applies, so a stale CHOOSE pressed after a choice landed lands here as
+## a card that says so, and the register it could not reach is untouched.
+func _on_programme_chosen(entry_id: String) -> void:
+	if _state == null:
+		return
+	var ns = _state.player()
+	if ns == null:
+		return
+	var before := Budget.snapshot(_state)
+	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
+	if bool(result.get("refused", false)):
+		_hud.message_stack.push("Programme refused", _programme_refusal_text(String(result.get("reason", ""))))
+		return
+
+	# Entry open, as a card -- the register now holds the term's programme,
+	# and the pulse it will pay lives on its conclusion, not here.
+	var name_text := String(result.get("name", entry_id))
+	_queue_effect("Programme set: %s" % name_text, before)
+	_hud.message_stack.push(name_text,
+		"This term's programme. Deliver it and the credit lands on the record;"
+		+ " miss its deadline and the miss pays the same shape back.")
+	if not _programme_card_id.is_empty():
+		_hud.message_stack.dismiss(_programme_card_id)
+		_programme_card_id = ""
+	if _paused_for_programme:
+		_paused_for_programme = false
+		_clock.paused = false
+		_hud.clock_cluster.refresh(_clock)
+	_update_top_bar()
+	_windows.mark_all_dirty()
+
+
+## src/sim returns refusal keys; src/ui owns the wording -- _act_reason_text()'s
+## split, so the machine can change a key without rewriting a sentence.
+func _programme_refusal_text(reason: String) -> String:
+	match reason:
+		"not_term_start":
+			return "The term has already begun."
+		"already_chosen":
+			return "This term's programme is already set."
+		"not_offerable":
+			return "That goal is not on offer."
+	return ""
+
+
+## V4.1. What concluded this month, as a card -- complete, fail and invalid
+## alike, concluded_this_month()'s one read. _card_foreign_acts()'s split: the
+## sim writes the record, the UI decides what earns a card, and src/sim/ never
+## reads the list back. Called from _on_month_elapsed() INSIDE the tick window
+## the pulse is priced in -- see the Programme.tick_month call site.
+func _card_programme_conclusions() -> void:
+	if _hud == null or _hud.message_stack == null or _state == null:
+		return
+	var ns = _state.player()
+	if ns == null:
+		return
+	for entry in Programme.concluded_this_month(ns):
+		var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
+		var name_text := String(terms.get("name", String(entry["entry_id"])))
+		match String(entry["status"]):
+			ProgrammeK.STATUS_COMPLETE:
+				_hud.message_stack.push("Delivered: %s" % name_text,
+					"The goal is met, and the register marks it complete.")
+			ProgrammeK.STATUS_FAIL:
+				_hud.message_stack.push("Missed: %s" % name_text,
+					"The goal was not met in time, and the register marks the miss.")
+			_:
+				_hud.message_stack.push("Overtaken: %s" % name_text,
+					"The world moved on and the entry no longer applies. It concludes without a verdict.")
+
+
 ## Everything on screen that is not inside a window. Kept under U2's name
 ## because ~15 call sites already say it and the job is unchanged -- the strip
 ## simply is not the only always-visible surface any more.
 func _update_top_bar() -> void:
 	if _top_bar != null:
-		_top_bar.refresh(_state, _clock)
+		_top_bar.refresh(_state, _clock, _loader)
 	if _hud != null:
 		_hud.clock_cluster.refresh(_clock)
 		_hud.portrait_card.refresh()
@@ -1787,4 +1978,4 @@ func _update_top_bar() -> void:
 		# also STOPS pending when the player answers it, and every command in this
 		# file already ends by calling this function -- so the mark clears on the
 		# press rather than a month later.
-		_hud.action_bar.show_pending(Pending.window_ids(_state))
+		_hud.action_bar.show_pending(Pending.window_ids(_state, _loader))

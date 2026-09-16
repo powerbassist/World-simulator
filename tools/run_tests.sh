@@ -68,6 +68,14 @@ tests=(
   tests/test_projects.gd
   tests/test_campaign.gd
   tests/test_pledges.gd
+  # V4.1: the programme register machine -- the offer, the once-only term-start
+  # choice, the three conclusions through the ONE applier, the derived progress,
+  # and the leaf contract (preloads, AI inert, no hand-written id list).
+  tests/test_programme.gd
+  # V4.1: the credit CHANNEL -- the pulse Opinion prices, the bounded stock,
+  # the decay band, and the main.gd tick ordering the same-month guarantee
+  # rests on. PROGRAMME_SPAN is deliberately not pinned; the sweep owns it.
+  tests/test_programme_channel.gd
   tests/test_referendum.gd
   tests/test_upper_house.gd
   tests/test_judiciary.gd
@@ -92,6 +100,9 @@ tests=(
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
   tests/test_people_panel.gd
+  # V4.1: the agenda surface -- the term-start pause, the offer built from the
+  # register, the choose command path, the derived progress bar, and the cards.
+  tests/test_agenda_panel.gd
   # V2.3's pipeline: orphan art refused, the bytes-not-load() path held green
   # headless, the missing-portrait fallback, one committed icon per registered
   # window, and the card showing the player's leader's art.

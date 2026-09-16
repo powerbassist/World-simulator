@@ -1,0 +1,250 @@
+{
+  "_note": "Task 5's register of the state itself: confidence, corruption, the courts, the press, the administration and the settlement of the streets. The institution group prices its work on the only verdict the register carries -- overall approval -- because a state reform that leaves no trace in the country's confidence is indistinguishable from one that never happened. The schema-wide notes (_field_note, _progress_note, _pulse_note) live once in economy.json; this file carries only what is this group's own. Entries gated by terms_served or by unrest carry their gate in `possible`, so the offer itself is what makes the goal honest.",
+  "programme": [
+    {
+      "id": "prog_confidence_majority",
+      "name": "A Governing Majority of Opinion",
+      "summary": "Fifty-five per cent, and the register holds you to the number -- a governing majority in the polls, where every other programme this term will have to be paid for. The fail line is the forties: an opinion the country has withdrawn.",
+      "group": "institutions",
+      "activation": "player",
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 55.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 40.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 55.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.05,
+          "business": 0.04
+        }
+      },
+      "weight": 10,
+      "pinned": true
+    },
+    {
+      "id": "prog_clean_hands",
+      "name": "Clean Hands",
+      "summary": "An anti-corruption drive filed as the term's institutional work and priced on the only verdict that matters: the country's confidence. The agency is created on the day the programme is chosen; the judgement waits for the number.",
+      "group": "institutions",
+      "activation": "player",
+      "immediate": {
+        "society": {
+          "corruption": -0.4
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 35.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.07
+        }
+      },
+      "weight": 8,
+      "pinned": true
+    },
+    {
+      "id": "prog_settle_the_streets",
+      "name": "Settling the Streets",
+      "summary": "Offerable only once the country is actually angry, and concluded only when it is not: unrest back under the line the offer was written at. A settlement is the instrument; the register is the witness.",
+      "group": "institutions",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 5.0
+        }
+      ],
+      "immediate": {
+        "society": {
+          "settlement": 0.3
+        }
+      },
+      "complete": {
+        "field": "unrest_pct",
+        "op": "<=",
+        "value": 4.0
+      },
+      "fail": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 20.0
+      },
+      "timeout_months": 0,
+      "current_value": "unrest_pct",
+      "goal_value": 4.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "workers": 0.08
+        }
+      },
+      "weight": 7,
+      "pinned": false
+    },
+    {
+      "id": "prog_free_airwaves",
+      "name": "The Free Airwaves",
+      "summary": "A broadcasting law the government cannot quiet, judged like everything else this term -- on the confidence it leaves behind. The press freedom is granted on the day of the choice; the verdict belongs to the register.",
+      "group": "institutions",
+      "activation": "player",
+      "immediate": {
+        "society": {
+          "press_freedom": 0.3
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 54.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 54.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.05,
+          "students": 0.04
+        }
+      },
+      "weight": 6,
+      "pinned": false
+    },
+    {
+      "id": "prog_sworn_offices",
+      "name": "The Sworn Offices",
+      "summary": "The courts settled beyond a government's reach, and a programme for a second mandate only -- a first-term president who promises judicial independence is announcing a fight, not a programme.",
+      "group": "institutions",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "immediate": {
+        "society": {
+          "judicial_independence": 3.0
+        }
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 41.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "weight": 5,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_long_record",
+      "name": "The Long Record",
+      "summary": "Fifty-eight per cent in a second mandate -- the number a re-elected president is promised by the job and rarely shown by the country. Open-ended, because a record compounds or it does not; the reward is drawn from every bloc because a number that size is made of every bloc.",
+      "group": "institutions",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 58.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 58.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.04,
+          "rural": 0.04,
+          "business": 0.04,
+          "workers": 0.04
+        }
+      },
+      "weight": 3,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_civil_register",
+      "name": "The Civil Register",
+      "summary": "The administration rewritten onto one register -- licences, filings and the wait for both, halved. Ten months on the clock, because an administration that cannot be fixed inside a year was never going to be fixed.",
+      "group": "institutions",
+      "activation": "player",
+      "immediate": {
+        "potential_growth_pct": 0.06
+      },
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 44.0
+      },
+      "timeout_months": 10,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.05
+        }
+      },
+      "weight": 2,
+      "pinned": false
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "_note": "Task 5's register of the office itself: the mandate, its length, its ledger and its end. These are the entries a president signs about the presidency -- the opening sprint, the record majority, the orderly house, the full term -- and they are the book's most approval-shaped group on purpose: the office's own output IS the standing it leaves. The gated entries carry their gate honestly: a second-mandate entry is inert at a first term, and the full term is offerable ONLY to a first (terms_served <= 0), because its conclusion arrives by calendar and a second-term player would already have lived it.",
+  "programme": [
+    {
+      "id": "prog_first_hundred_days",
+      "name": "The First Hundred Days",
+      "summary": "The honeymoon spent rather than banked: fifty-three per cent by the sixth month, or the term's opening written down as a miss. Six months on the clock, because that is all a beginning ever gets.",
+      "group": "office",
+      "activation": "player",
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 53.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 44.0
+      },
+      "timeout_months": 6,
+      "current_value": "overall_approval_pct",
+      "goal_value": 53.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.05
+        }
+      },
+      "weight": 10,
+      "pinned": true
+    },
+    {
+      "id": "prog_the_record_majority",
+      "name": "The Record Majority",
+      "summary": "Fifty-eight per cent by the year's end -- a majority the assembly does not grant and the register can. The broadest reward in the book, because a number that size is made of every bloc.",
+      "group": "office",
+      "activation": "player",
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 58.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 42.0
+      },
+      "timeout_months": 12,
+      "current_value": "overall_approval_pct",
+      "goal_value": 58.0,
+      "progressbar": "up",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.04,
+          "rural": 0.04,
+          "business": 0.04,
+          "students": 0.03
+        }
+      },
+      "weight": 8,
+      "pinned": true
+    },
+    {
+      "id": "prog_the_orderly_house",
+      "name": "The Orderly House",
+      "summary": "The deficit held under two and a half for as long as the register is open -- discipline as the term's character rather than its clock. The anti-avoidance yield lands on the day of the choice; the drift, not the president, writes the fail line. Offered between the lines, where discipline is still a choice.",
+      "group": "office",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">",
+          "value": 2.5
+        },
+        {
+          "field": "deficit_pct_gdp",
+          "op": "<",
+          "value": 8.0
+        }
+      ],
+      "immediate": {
+        "other_revenue_pct_gdp": 0.3
+      },
+      "complete": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 2.5
+      },
+      "fail": {
+        "field": "deficit_pct_gdp",
+        "op": ">=",
+        "value": 8.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 35.0
+      },
+      "timeout_months": 0,
+      "current_value": "deficit_pct_gdp",
+      "goal_value": 2.5,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.05
+        }
+      },
+      "weight": 7,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_statesman_term",
+      "name": "The Statesman's Term",
+      "summary": "Sixty per cent as the work of a final mandate -- the entry a term-limited president signs when the next election is someone else's. The world can still overtake it; the streets can end anything.",
+      "group": "office",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 2
+        }
+      ],
+      "complete": {
+        "field": "overall_approval_pct",
+        "op": ">=",
+        "value": 60.0
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 40.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 40.0
+      },
+      "timeout_months": 0,
+      "current_value": "overall_approval_pct",
+      "goal_value": 60.0,
+      "progressbar": "up",
+      "weight": 5,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_presidents_ledger",
+      "name": "The President's Ledger",
+      "summary": "The ratio two points under where the decade found it, left there on purpose: a second-mandate programme, because the first mandate spends and the second one answers for it.",
+      "group": "office",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "complete": {
+        "field": "debt_to_gdp_pct",
+        "op": "<=",
+        "value": 114.0
+      },
+      "fail": {
+        "field": "debt_to_gdp_pct",
+        "op": ">=",
+        "value": 123.0
+      },
+      "timeout_months": 0,
+      "current_value": "debt_to_gdp_pct",
+      "goal_value": 114.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.06
+        }
+      },
+      "weight": 3,
+      "pinned": false
+    },
+    {
+      "id": "prog_the_full_term",
+      "name": "The Full Term",
+      "summary": "Carry the office to its next mandate -- the one programme whose conclusion arrives by calendar rather than by achievement, offerable only to a first term because a second-term player has already lived it. The fail line is not a number a government plans against; it is the register keeping a record anyway.",
+      "group": "office",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": "<=",
+          "value": 0
+        }
+      ],
+      "complete": {
+        "field": "terms_served",
+        "op": ">=",
+        "value": 1
+      },
+      "fail": {
+        "field": "overall_approval_pct",
+        "op": "<=",
+        "value": 35.0
+      },
+      "timeout_months": 0,
+      "current_value": "terms_served",
+      "goal_value": 1.0,
+      "progressbar": "up",
+      "weight": 2,
+      "pinned": false
+    }
+  ]
+}

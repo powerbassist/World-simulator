@@ -30,6 +30,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
+const Programme = preload("res://src/sim/programme.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
@@ -466,7 +467,19 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## tick-rewritten reading beside it (`co2e_per_capita_t`) earns nothing:
 ## import_dependency_pct's case, recomputed from the mix on the first tick and
 ## serialised so an unticked save reports the figure it was saved with.
-const SAVE_VERSION := 34
+##
+## V4.1 bumps this to 35 on the government's programme, on two fields:
+## `ns.programme`, the chosen register, and `programme_stock`, the bounded credit
+## its conclusion pulses feed. A save that dropped the register would un-price a
+## term the player already lived -- the term they chose a programme for reads as
+## never chosen, its conclusions as never delivered -- and a dropped stock reads
+## 0.0, a clean slate over a record the player watched. Progress earns nothing:
+## it is re-derived from the same live figure the panel reads
+## (docs/programme-model.md section 8), and the absence of any stored progress is
+## pinned in tests/test_save_load.gd. The bump is taken ahead of the pulse
+## wiring, so a version-34 save is refused before the first save that could hold
+## a priced register is ever written.
+const SAVE_VERSION := 35
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -1010,6 +1023,10 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# across every existing regime.
 	Campaign.init_nation(ns)
 	Pledges.init_nation(ns)
+	# V4.1. An empty register for all ten, and only the player's is ever populated:
+	# nothing in src/sim/ calls Programme.choose(), so the nine's pulse is exactly
+	# zero and the balance harness stays bit-identical until a player picks one.
+	Programme.init_nation(ns)
 	Referendum.init_nation(ns)
 
 	# After recompute, so the starting deficit opinion measures against is real.

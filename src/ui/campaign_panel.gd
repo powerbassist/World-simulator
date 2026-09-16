@@ -34,6 +34,8 @@ signal acted(before, label)
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
+const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -442,6 +444,8 @@ func _on_act(ns, action) -> void:
 func _build_promises(ns) -> void:
 	PanelKit.heading(_body, "Promises")
 
+	_build_programme(ns)
+
 	var books: Array = Pledges.on_the_books(ns)
 	if books.is_empty():
 		PanelKit.line(_body, 
@@ -458,6 +462,47 @@ func _build_promises(ns) -> void:
 		if Pledges.has_pledged(ns, String(terms.get("pledge_id", ""))):
 			continue
 		_build_promise_offer(ns, action, terms, offered.has(action))
+
+
+## The term's programme as a READ-ONLY line, docs/programme-model.md section 4's
+## mitigation: pledges and programmes are kept apart, but "apart" must not rot
+## into two lists the player reconciles by hand -- so the Promises section opens
+## on the programme, read through the same Programme.this_term() /
+## progress_of() / PanelKit.progress_fraction() trio the Agenda and the Overview
+## read. Never a second answer to one read, and never a write: the choice
+## happens on the Agenda or nowhere. A concluded entry prints its verdict rather
+## than a fraction -- a bar over a delivered programme would be a lie about a
+## term that is already priced.
+func _build_programme(ns) -> void:
+	var this_term: Array = Programme.this_term(ns)
+	if this_term.is_empty():
+		if Programme.is_term_start(ns):
+			PanelKit.line(_body, "The term's programme is unset -- the Agenda (K) holds the offer.", PanelKit.Tone.DIM)
+		else:
+			PanelKit.line(_body, "No programme was set this term.", PanelKit.Tone.DIM)
+		return
+	for entry in this_term:
+		var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
+		if terms.is_empty():
+			# Content the loader no longer defines: the id stands in rather
+			# than a bar over nothing, agenda_panel.gd's rule.
+			PanelKit.line(_body, "%s -- the content behind it is gone; it concludes on the next tick." % String(entry["entry_id"]), PanelKit.Tone.DIM)
+			continue
+		var name_text := String(terms["name"])
+		match String(entry["status"]):
+			ProgrammeK.STATUS_ACTIVE:
+				var read: Dictionary = Programme.progress_of(ns, terms)
+				var fraction: float = PanelKit.progress_fraction(
+					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
+				PanelKit.line(_body, "%s · %.2f now against a %.2f goal · %d%% there" % [
+					name_text, float(read["current_value"]), float(read["goal_value"]), roundi(fraction * 100.0),
+				], PanelKit.Tone.PLAIN)
+			ProgrammeK.STATUS_COMPLETE:
+				PanelKit.line(_body, "%s · Delivered." % name_text, PanelKit.Tone.GOOD)
+			ProgrammeK.STATUS_FAIL:
+				PanelKit.line(_body, "%s · Missed." % name_text, PanelKit.Tone.BAD)
+			_:
+				PanelKit.line(_body, "%s · Overtaken by the world." % name_text, PanelKit.Tone.DIM)
 
 
 func _build_promise_row(ns, entry: Dictionary) -> void:

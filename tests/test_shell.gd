@@ -428,12 +428,12 @@ func _check_the_bar_marks_what_awaits_the_player() -> void:
 
 	# And the reader itself: with nothing pending in the simulation it must return
 	# an empty list rather than everything or nothing-shaped garbage.
-	var ids: Array = Pending.window_ids(_main._state)
+	var ids: Array = Pending.window_ids(_main._state, _main._loader)
 	for id in ids:
 		if _main._windows.frame(String(id)) == null:
 			_fail("pending.gd named '%s', which is not a registered window" % id)
 
-	bar.show_pending(Pending.window_ids(_main._state))
+	bar.show_pending(Pending.window_ids(_main._state, _main._loader))
 
 
 func _press(keycode: int) -> void:

@@ -15,6 +15,8 @@ extends PanelContainer
 ## government_panel.gd already reads it the same way.
 
 const Defence = preload("res://src/sim/defence.gd")
+const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -70,6 +72,7 @@ var _loader
 var _title: Label
 var _lead: Label
 var _columns := {}   # id -> VBoxContainer holding that column's rebuilt body
+var _programme_box: VBoxContainer
 var _effects_box: VBoxContainer
 var _dirty := true
 
@@ -116,6 +119,20 @@ func _ready() -> void:
 
 	root.add_child(HSeparator.new())
 
+	# V4.1. The term's programme, full width UNDER the four columns rather than
+	# as a fifth: the row is already at four across 1130px (the finding that
+	# kept RECENT DECISIONS out of it), and a list of goals reads as lines.
+	_programme_box = VBoxContainer.new()
+	_programme_box.add_theme_constant_override("separation", 4)
+
+	var programme_heading := Label.new()
+	programme_heading.text = "PROGRAMME"
+	programme_heading.theme_type_variation = UiTheme.HEADING
+	root.add_child(programme_heading)
+	root.add_child(_programme_box)
+
+	root.add_child(HSeparator.new())
+
 	var effects_heading := Label.new()
 	effects_heading.text = "RECENT DECISIONS"
 	effects_heading.theme_type_variation = UiTheme.HEADING
@@ -159,6 +176,8 @@ func _refresh() -> void:
 	for body in _columns.values():
 		for child in body.get_children():
 			child.queue_free()
+	for child in _programme_box.get_children():
+		child.queue_free()
 	for child in _effects_box.get_children():
 		child.queue_free()
 
@@ -182,6 +201,7 @@ func _refresh() -> void:
 	_fill_election(ns, months_to_election, vote.x, vote.y)
 	_fill_issues(top, satisfaction)
 	_fill_moving(movements, worst)
+	_fill_programme(ns)
 	_fill_recent_effects()
 
 
@@ -421,6 +441,96 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 		PanelKit.line(_columns["moving"], "Nothing has moved much.")
 	else:
 		PanelKit.line(_columns["moving"], "%s is the one to watch." % String(worst["label"]))
+
+
+## V4.1. The term's programme, per-entry rows with the derived progress -- the
+## same PanelKit.progress_fraction() the Agenda window and the top-bar strip
+## draw, so the three surfaces cannot carry three answers to one read.
+##
+## NEVER SILENT, unlike the press and delivery lines above and for a different
+## reason: those hide at zero because a permanent line about nothing moved is
+## furniture. An unset programme is not zero -- it is the one decision the
+## resting-screen probe (V2.1c) measured the game failing to announce, so the
+## unset state says where the choice lives instead of hiding.
+func _fill_programme(ns) -> void:
+	# The shared read, Programme.this_term(): the Agenda and the Campaign
+	# panel's promises line answer the same question from the same filter, so
+	# no second answer to "what is this term's programme" can drift into a
+	# panel.
+	var this_term: Array = Programme.this_term(ns)
+
+	if this_term.is_empty():
+		if Programme.is_term_start(ns):
+			PanelKit.line(_programme_box,
+				"The term's programme is unset -- the Agenda (K) holds the offer.")
+		else:
+			PanelKit.line(_programme_box, "No programme was set this term.")
+		return
+
+	for entry in this_term:
+		_programme_box.add_child(_programme_row(ns, entry))
+
+
+func _programme_row(ns, entry: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
+	var name_label := Label.new()
+	name_label.text = String(terms.get("name", String(entry["entry_id"])))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name_label)
+
+	var status_label := Label.new()
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	match String(entry["status"]):
+		ProgrammeK.STATUS_ACTIVE:
+			var fraction := _entry_fraction(ns, terms)
+			var bar := ProgressBar.new()
+			bar.custom_minimum_size = Vector2(160.0, 12.0)
+			bar.max_value = 1.0
+			# Step 0: Range's default 0.01 snap would round the derived fraction
+			# away from the pair the Agenda and the strip print beside it.
+			bar.step = 0.0
+			bar.value = fraction
+			bar.show_percentage = false
+			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bar.tooltip_text = _entry_tooltip(ns, terms, entry)
+			row.add_child(bar)
+			status_label.text = "%.0f%%" % (fraction * 100.0)
+		ProgrammeK.STATUS_COMPLETE:
+			status_label.text = "Delivered"
+			status_label.theme_type_variation = UiTheme.GOOD_TEXT
+		ProgrammeK.STATUS_FAIL:
+			status_label.text = "Missed"
+			status_label.theme_type_variation = UiTheme.BAD_TEXT
+		_:
+			status_label.text = "Overtaken"
+			status_label.theme_type_variation = UiTheme.CAPTION
+	row.add_child(status_label)
+	return row
+
+
+func _entry_fraction(ns, terms: Dictionary) -> float:
+	if terms.is_empty():
+		return 0.0
+	var read: Dictionary = Programme.progress_of(ns, terms)
+	return PanelKit.progress_fraction(
+		float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
+
+
+func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
+	if terms.is_empty():
+		return "No content behind this entry; it concludes on the next tick."
+	var read: Dictionary = Programme.progress_of(ns, terms)
+	var tip := "%.2f against a %.2f goal" % [
+		float(read["current_value"]), float(read["goal_value"]),
+	]
+	var timeout := int(terms.get("timeout_months", 0))
+	if timeout > 0:
+		var left := timeout - int(entry["months_live"])
+		tip += " · %s to its deadline" % ("1 month" if left <= 1 else "%d months" % left)
+	return tip
 
 
 ## U4: the last few committed decisions, each with the figures it moved most --

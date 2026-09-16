@@ -1,0 +1,373 @@
+{
+  "_note": "V4.1's full book, economy share: nine economy entries and one office entry (A Second Mandate's Economy), part of the 37-entry programme the five files in this directory make up. Every entry was swept against docs/programme-model.md section 6's bands -- the open interval between an entry's own complete and fail lines on its trigger field, so no offer is already won or already lost at any playable start. A GLOBAL FLAT LIST rather than a per-nation directory, on data/campaign-actions/'s argument: a programme is chosen by the PLAYER's nation and names no place and no institution, so nothing here is true of France in a way it is not true of Germany.",
+  "_field_note": "THE ENTRY SCHEMA IS programme_constants.ENTRY_FIELDS AND THE LOADER REFUSES AN ENTRY CARRYING ANYTHING ELSE. `possible` is WHAT makes an entry offerable; `activation` is WHO opens it -- `player` is the term-start choice Task 2 built, and `authored`/`event`/`forced` are later blocks' writers, inert by construction until something can fire them. `immediate` and every `on_*` ride the shared effect channels only, through Law.extract_shared_effects -> Legislature.apply_effects -- the ONE applier; a conclusion needing a channel laws and events cannot use is content this model refuses at load. THERE IS NO `institutional` SLOT: a programme is not an amendment.",
+  "_progress_note": "`current_value` / `goal_value` / `progressbar` ARE THE PROGRESS READ, AND PROGRESS IS DERIVED, NEVER STORED. current_value names the live figure; goal_value is the target; progressbar is which way the bar fills (`up` = the goal is above the figure, `down` = below). The fraction the panel draws is its own arithmetic on the pair -- a stored progress value could disagree with the live figure it reads, and then the panel lies.",
+  "_pulse_note": "MAKING A PROGRAMME PAYS NOTHING AT CHOICE TIME beyond its authored `immediate`. The price is delivery's, on conclusion: +PROGRAMME_PULSE_COMPLETE into a bounded, decaying stock for a completion, -PROGRAMME_PULSE_FAIL for a failure, ZERO for an invalid -- the outcome was outside the player's agency. Model: docs/programme-model.md section 3.",
+  "programme": [
+    {
+      "id": "prog_jobs_first",
+      "name": "Unemployment Below Seven",
+      "summary": "Not a promise made to voters in a run-up -- a goal set for the term, in the language of the ledger: unemployment under seven per cent, and the register holds you to it every month until it lands or the term moves on. Offered only where the seven still sits ahead of the country.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unemployment_pct",
+          "op": ">",
+          "value": 7.0
+        },
+        {
+          "field": "unemployment_pct",
+          "op": "<",
+          "value": 10.0
+        }
+      ],
+      "immediate": {
+        "bloc_offset": {
+          "workers": 0.05
+        }
+      },
+      "complete": {
+        "field": "unemployment_pct",
+        "op": "<=",
+        "value": 7.0
+      },
+      "fail": {
+        "field": "unemployment_pct",
+        "op": ">=",
+        "value": 10.0
+      },
+      "timeout_months": 0,
+      "current_value": "unemployment_pct",
+      "goal_value": 7.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "workers": 0.10
+        }
+      },
+      "weight": 10,
+      "pinned": true
+    },
+    {
+      "id": "prog_maastricht_letter",
+      "name": "The Three Per Cent Letter",
+      "summary": "Bring the deficit under the old Maastricht line within the year and file it as a programme rather than an accident of the cycle. The deadline is the point: a goal without a clock is a mood.",
+      "group": "economy",
+      "activation": "player",
+      "complete": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 3.0
+      },
+      "timeout_months": 6,
+      "current_value": "deficit_pct_gdp",
+      "goal_value": 3.0,
+      "progressbar": "down",
+      "on_timeout": {
+        "bloc_offset": {
+          "business": -0.05
+        }
+      },
+      "weight": 8,
+      "pinned": true
+    },
+    {
+      "id": "prog_industrial_renewal",
+      "name": "The Industrial Renewal",
+      "summary": "Two per cent growth, sustained, as the term's economic project. The goal the world can overtake: if the country is on the streets at forty per cent unrest, the programme stops ticking rather than failing a president who never got to play it.",
+      "group": "economy",
+      "activation": "player",
+      "complete": {
+        "field": "growth_annual_pct",
+        "op": ">=",
+        "value": 2.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 40.0
+      },
+      "timeout_months": 0,
+      "current_value": "growth_annual_pct",
+      "goal_value": 2.0,
+      "progressbar": "up",
+      "weight": 6,
+      "pinned": false
+    },
+    {
+      "id": "prog_in_the_black",
+      "name": "A Year in the Black",
+      "summary": "Balance the books outright -- not the deficit halved, not the Maastricht line met, the ledger read at zero. The register holds it open until it lands, because a surplus reached in the third year is still a surplus; the fail line is the deficit the drift writes for you if the effort stops. Offered between the two: past the fail line the verdict is already written, and a country already in surplus has no books to balance.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">",
+          "value": 0.0
+        },
+        {
+          "field": "deficit_pct_gdp",
+          "op": "<",
+          "value": 8.0
+        }
+      ],
+      "complete": {
+        "field": "deficit_pct_gdp",
+        "op": "<=",
+        "value": 0.0
+      },
+      "fail": {
+        "field": "deficit_pct_gdp",
+        "op": ">=",
+        "value": 8.0
+      },
+      "timeout_months": 0,
+      "current_value": "deficit_pct_gdp",
+      "goal_value": 0.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.08
+        }
+      },
+      "on_fail": {
+        "bloc_offset": {
+          "business": -0.04
+        }
+      },
+      "weight": 9,
+      "pinned": false
+    },
+    {
+      "id": "prog_turn_the_debt",
+      "name": "Turning the Tide on the Debt",
+      "summary": "Take the ratio down a full point -- the first honest digit any government has turned in a decade. The debt only moves for a surplus kept, so this is the austerity programme with the register watching; the fail line stands where the drift alone would deliver the verdict. Offered only where the point is still there to turn.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">",
+          "value": 115.0
+        },
+        {
+          "field": "debt_to_gdp_pct",
+          "op": "<",
+          "value": 124.0
+        }
+      ],
+      "complete": {
+        "field": "debt_to_gdp_pct",
+        "op": "<=",
+        "value": 115.0
+      },
+      "fail": {
+        "field": "debt_to_gdp_pct",
+        "op": ">=",
+        "value": 124.0
+      },
+      "timeout_months": 0,
+      "current_value": "debt_to_gdp_pct",
+      "goal_value": 115.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "business": 0.06,
+          "pensioners": 0.03
+        }
+      },
+      "weight": 7,
+      "pinned": true
+    },
+    {
+      "id": "prog_six_per_cent",
+      "name": "Unemployment Below Six",
+      "summary": "The full-employment ambition under the seven the term starts with: a matching reform at choice, a demand impulse, and the years to let both compound. Open-ended because a labour market is not turned by a deadline; the fail line is the unemployment a dead term walks into. Offered only where six is still ahead of the country.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unemployment_pct",
+          "op": ">",
+          "value": 6.0
+        },
+        {
+          "field": "unemployment_pct",
+          "op": "<",
+          "value": 9.5
+        }
+      ],
+      "immediate": {
+        "structural_unemployment_pct": -0.15
+      },
+      "complete": {
+        "field": "unemployment_pct",
+        "op": "<=",
+        "value": 6.0
+      },
+      "fail": {
+        "field": "unemployment_pct",
+        "op": ">=",
+        "value": 9.5
+      },
+      "timeout_months": 0,
+      "current_value": "unemployment_pct",
+      "goal_value": 6.0,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "workers": 0.1
+        }
+      },
+      "weight": 5,
+      "pinned": true
+    },
+    {
+      "id": "prog_paybelt",
+      "name": "The Six And A Half Line",
+      "summary": "Six and a half by the twelfth month -- the jobs goal with a clock on it, sized for one term of labour reform and one honest impulse of demand. The streets at thirty-five per cent overtake it: a country that age cannot be judged on its payroll. Offered only where the six and a half still sits ahead.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "unemployment_pct",
+          "op": ">",
+          "value": 6.5
+        },
+        {
+          "field": "unemployment_pct",
+          "op": "<",
+          "value": 9.0
+        }
+      ],
+      "complete": {
+        "field": "unemployment_pct",
+        "op": "<=",
+        "value": 6.5
+      },
+      "fail": {
+        "field": "unemployment_pct",
+        "op": ">=",
+        "value": 9.0
+      },
+      "invalid": {
+        "field": "unrest_pct",
+        "op": ">=",
+        "value": 35.0
+      },
+      "timeout_months": 12,
+      "current_value": "unemployment_pct",
+      "goal_value": 6.5,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "workers": 0.07
+        }
+      },
+      "weight": 3,
+      "pinned": false
+    },
+    {
+      "id": "prog_strong_year",
+      "name": "A Strong Year",
+      "summary": "Two and a half per cent within the year -- not the renewal sustained but the year seized, the demand impulse spent while it is still cheap to spend it. Twelve months on the clock: a recession overtakes the entry rather than failing it, because the cycle is not the president's to command.",
+      "group": "economy",
+      "activation": "player",
+      "complete": {
+        "field": "growth_annual_pct",
+        "op": ">=",
+        "value": 2.5
+      },
+      "invalid": {
+        "field": "growth_annual_pct",
+        "op": "<=",
+        "value": -1.5
+      },
+      "timeout_months": 12,
+      "current_value": "growth_annual_pct",
+      "goal_value": 2.5,
+      "progressbar": "up",
+      "on_fail": {
+        "bloc_offset": {
+          "business": -0.03
+        }
+      },
+      "weight": 2,
+      "pinned": false
+    },
+    {
+      "id": "prog_green_industry",
+      "name": "The Carbon Ledger",
+      "summary": "A carbon price at the factory fence and the per-capita figure under three point eight five tonnes -- offerable only to countries still emitting above the line, and only while the line sits within a build programme's reach. Open-ended: a power fleet turns in years, not in a budget cycle.",
+      "group": "economy",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "co2e_per_capita_t",
+          "op": ">=",
+          "value": 4.0
+        },
+        {
+          "field": "co2e_per_capita_t",
+          "op": "<=",
+          "value": 5.0
+        }
+      ],
+      "immediate": {
+        "company": {
+          "sector": "industry",
+          "burden": 0.25
+        }
+      },
+      "complete": {
+        "field": "co2e_per_capita_t",
+        "op": "<=",
+        "value": 3.85
+      },
+      "fail": {
+        "field": "co2e_per_capita_t",
+        "op": ">=",
+        "value": 5.05
+      },
+      "timeout_months": 0,
+      "current_value": "co2e_per_capita_t",
+      "goal_value": 3.85,
+      "progressbar": "down",
+      "on_complete": {
+        "bloc_offset": {
+          "urban": 0.06,
+          "business": 0.03
+        }
+      },
+      "weight": 1,
+      "pinned": false
+    },
+    {
+      "id": "prog_office_honour",
+      "name": "A Second Mandate's Economy",
+      "summary": "Three per cent growth as the work of a third term -- offerable only to a president two terms in, because a programme is also a statement about the mandate behind it.",
+      "group": "office",
+      "activation": "player",
+      "possible": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 2
+        }
+      ],
+      "complete": {
+        "field": "growth_annual_pct",
+        "op": ">=",
+        "value": 3.0
+      },
+      "timeout_months": 0,
+      "current_value": "growth_annual_pct",
+      "goal_value": 3.0,
+      "progressbar": "up",
+      "weight": 4,
+      "pinned": false
+    }
+  ]
+}

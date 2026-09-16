@@ -61,6 +61,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
+const Programme = preload("res://src/sim/programme.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const Events = preload("res://src/sim/events.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
@@ -144,6 +145,13 @@ var _orgs := false
 ## V1.3f. A new game's message column is empty and a frame of nothing proves
 ## nothing about it -- the same argument --coerce and --orgs were each added on.
 var _agenda := false
+
+## V4.1. Choose a programme (by entry id) through the real command path before
+## capturing, so the chosen-state surfaces -- the agenda's progress bars, the
+## top-bar strip, the Overview's PROGRAMME rows -- have something to draw.
+## --agenda alone ticks 48 months with nothing chosen, which photographs the
+## empty state and none of the rows the block exists to fill.
+var _programme := ""
 
 ## Which registered window to open before capturing, by the id main.gd registered
 ## it under. Generic rather than a flag per panel: --orgs exists because it has to
@@ -383,6 +391,8 @@ func _init() -> void:
 			_orgs = true
 		elif args[i] == "--agenda":
 			_agenda = true
+		elif args[i] == "--programme" and i + 1 < args.size():
+			_programme = args[i + 1]
 		elif args[i] == "--defence":
 			_defence = true
 		elif args[i] == "--book":
@@ -583,6 +593,8 @@ func _apply_view() -> void:
 		_open_the_council()
 	if _agenda:
 		_run_the_agenda()
+	if _programme != "":
+		_choose_a_programme()
 	if _defence:
 		_stand_up_an_alliance()
 	if _book:
@@ -723,6 +735,23 @@ func _run_the_agenda() -> void:
 	if state == null:
 		return
 	_tick_months(48)
+
+
+## V4.1. Through Programme.choose() itself -- the command path the panel's CHOOSE
+## button drives -- rather than by poking the register, so the frame is evidence
+## of what a choice produces (the strip lights, the bars fill, the Overview rows
+## appear). A handful of months first so the register has live progress to read.
+## The id is the tool's argument, so no surface hand-writes it.
+func _choose_a_programme() -> void:
+	var state = _main._state
+	if state == null:
+		return
+	var ns = state.player()
+	var result: Dictionary = Programme.choose(state, ns, _programme, _main._loader)
+	if not result.get("applied", false):
+		printerr("--programme: choose('%s') refused: %s" % [_programme, result])
+		return
+	_tick_months(3)
 
 
 ## One measure at each legend stop, so the captured frame shows the whole ramp

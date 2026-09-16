@@ -30,17 +30,29 @@ extends RefCounted
 const Events = preload("res://src/sim/events.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Programme = preload("res://src/sim/programme.gd")
 
 
 ## The window ids with something on them awaiting an answer, in the order a
-## president would deal with them: the thing with a deadline first.
-static func window_ids(state) -> Array:
+## president would deal with them: the thing with a deadline first. The loader
+## rides along for the one read that needs content (the programme's offer) --
+## every other check is a read of live state alone.
+static func window_ids(state, loader) -> Array:
 	var out: Array = []
 	if state == null:
 		return out
 	var ns = state.player()
 	if ns == null:
 		return out
+
+	# The term's programme, ahead of everything else: Programme.available() is
+	# empty everywhere but an unchosen term start -- structurally, before any
+	# content is consulted -- so a non-empty offer IS the pending choice. And
+	# the clock is paused behind it (main.gd's term-start enforcement), which
+	# makes it the first thing a president deals with rather than one mark
+	# among many. Nothing offerable, nothing pending.
+	if loader != null and not Programme.available(state, ns, loader).is_empty():
+		out.append("agenda")
 
 	# A crisis with a countdown, which answers itself if nobody answers it.
 	if Events.is_pending(ns):

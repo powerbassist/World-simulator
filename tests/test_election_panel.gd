@@ -355,7 +355,12 @@ func _advance(clock: Node, months: int) -> void:
 	# the drive at March 2027 with an empty panel read as its result. The player
 	# the loop pretends to be answers what lands on the desk and carries on; the
 	# pause that ends the drive is the one no answer exists for (the election).
+	# V4.1: an unchosen term start is the second answerable pause -- the driver
+	# picks the first offer off the live list and answers it through the same
+	# programme_chosen command path the Agenda's CHOOSE button uses, which is
+	# what unpauses the clock. A fresh game starts paused behind exactly this.
 	var Events := load("res://src/sim/events.gd")
+	var Programme := load("res://src/sim/programme.gd")
 	var ns = _main._state.player()
 	for _month in range(months):
 		for _d in range(31):
@@ -365,6 +370,14 @@ func _advance(clock: Node, months: int) -> void:
 					Events.choose(_main._state, _main._loader, String(Events.pending_event(ns, _main._loader).choices[0]["id"]))
 					clock.paused = false
 					continue
+				# A verdict on screen is the pause the drive STOPS for -- the
+				# reading frames own it -- so the offer is answered only when
+				# no result panel is showing.
+				if not _main._election_panel.visible:
+					var offer: Array = Programme.available(_main._state, ns, _main._loader)
+					if not offer.is_empty():
+						_main._agenda_panel.programme_chosen.emit(String(offer[0]["id"]))
+						continue
 				return
 
 
