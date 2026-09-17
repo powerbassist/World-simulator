@@ -19,6 +19,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 const TOP_ISSUE_COUNT := 4
 const HEADLINE_KEY := "overall"
@@ -26,6 +27,10 @@ const HEADLINE_KEY := "overall"
 signal closed
 
 var _state
+var _loader = null
+## B3: the chamber this panel's clock counts -- always the ASSEMBLY schedule
+## (ns.next_election_*), named off the loader's nation data when one is wired in.
+var _chamber := "assembly"
 var _title: Label
 var _headline: Label
 var _election_countdown: Label
@@ -103,12 +108,18 @@ func hide_close_button() -> void:
 	_close_button.hide()
 
 
-## `loader` is accepted and unused so every registered panel takes the same two
-## arguments, which is what lets main.gd's load path re-setup() them off
-## WindowManager.panels() instead of a hand-written list. This panel reads only
-## GameState.
-func setup(state, _loader = null) -> void:
+## `loader` is optional so every registered panel takes the same two arguments,
+## which is what lets main.gd's load path re-setup() them off WindowManager.panels()
+## instead of a hand-written list. B3 (playtest 2026-09-16): the loader names the
+## chamber when given, so this countdown and the top bar's executive one stop
+## reading as a contradiction -- but main.gd's first setup passes only state, so
+## "assembly" is the fallback wording.
+func setup(state, loader = null) -> void:
 	_state = state
+	_loader = loader
+	_chamber = "assembly"
+	if loader != null and loader.nations.has(state.player().id):
+		_chamber = String(loader.nations[state.player().id].chamber_name)
 	_title.text = "POLLING — %s" % _state.player().id
 	_dirty = true
 
@@ -146,7 +157,7 @@ func _refresh() -> void:
 		_shown_poll_id = id
 
 	_headline.text = "Approval  %.0f%%" % current[HEADLINE_KEY]
-	_election_countdown.text = "Next election: %s" % _months_until_text(ns)
+	_election_countdown.text = "Next %s election: %s" % [_chamber, _months_until_text(ns)]
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -173,10 +184,10 @@ func _change_text(key: String, value: float) -> String:
 	return "%+.0f" % (value - float(_previous[key]))
 
 
+## B3: one shared query -- Trends.months_text carries the plural and the clamp,
+## so this panel and the top bar cannot print two grammars for one kind of
+## countdown. This still counts the ASSEMBLY clock (ns.next_election_*) directly;
+## vote_date() would switch to the executive schedule where one exists.
 func _months_until_text(ns) -> String:
 	var months: int = (int(ns.next_election_year) - _state.year) * 12 + (int(ns.next_election_month) - _state.month)
-	if months <= 0:
-		return "this month"
-	if months == 1:
-		return "1 month"
-	return "%d months" % months
+	return Trends.months_text(months)

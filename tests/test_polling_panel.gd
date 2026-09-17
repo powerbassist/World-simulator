@@ -60,6 +60,7 @@ func _process(_delta: float) -> bool:
 			_setup_panel()
 		2:
 			_check_panel_shows_noised_values()
+			_check_countdown_names_the_chamber_clock()
 		3:
 			_check_panel_holds_still_within_a_month()
 			_finish()
@@ -141,8 +142,7 @@ func _check_unbiased() -> void:
 # --- The panel ---------------------------------------------------------------
 
 func _setup_panel() -> void:
-	# A few months so approval is somewhere other than its starting value.
-	Budget.commit(_state, {"spending_pct_gdp": {"pensions": 11.0}})
+	# A few months so approval is somewhere other than its starting value.	Budget.commit(_state, {"spending_pct_gdp": {"pensions": 11.0}})
 	for _i in range(6):
 		Economy.tick_month(_state)
 		Budget.tick_month(_state)
@@ -159,6 +159,26 @@ func _setup_panel() -> void:
 
 ## Every figure on screen is the true one plus this poll's error — never the true
 ## one, and never a figure from a different poll.
+## B3 (playtest 2026-09-16): the top bar counts the executive clock, this panel
+## the assembly's -- both correct, so each now NAMES its clock and the two
+## countdowns stop reading as a contradiction. Without a loader (main.gd's first
+## setup passes only state) the generic "assembly" wording ships.
+func _check_countdown_names_the_chamber_clock() -> void:
+	var Trends := load("res://src/ui/trends.gd")
+	var text: String = _panel._election_countdown.text
+	if not text.begins_with("Next assembly election: "):
+		_fail("B3: the countdown label reads '%s', expected the 'Next assembly election: ...' form" % text)
+		return
+
+	# The count after the label must still be this panel's own assembly arithmetic
+	# expressed through the shared Trends.months_text query.
+	var ns = _state.player()
+	var months: int = (int(ns.next_election_year) - _state.year) * 12 + (int(ns.next_election_month) - _state.month)
+	var expected := "Next assembly election: %s" % Trends.months_text(months)
+	if text != expected:
+		_fail("B3: countdown reads '%s', expected '%s' (assembly months %d)" % [text, expected, months])
+
+
 func _check_panel_shows_noised_values() -> void:
 	var ns = _state.player()
 	var id := PollNoise.poll_id(_state.year, _state.month)
