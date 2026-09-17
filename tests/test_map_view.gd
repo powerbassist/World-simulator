@@ -61,6 +61,67 @@ func _run() -> void:
 	_check_layer_state(map)
 	_check_click_opens_panel_with_live_values(map)
 	_check_roads_take_no_clicks()
+	_check_draw_order_and_labels()
+	_check_legend_key_samples()
+
+
+## B6, read from source the way _check_roads_take_no_clicks() reads: draw order
+## is a literal sequence in _draw() and a headless suite cannot photograph it.
+## Labels must ride ABOVE the city crosses (a brass cross over near-white text
+## buried the name) and BELOW the interactive pins, which stay last.
+func _check_draw_order_and_labels() -> void:
+	var text := FileAccess.get_file_as_string("res://src/ui/map_view.gd")
+	var draw_start := text.find("func _draw()")
+	var draw_stop := text.find("\nfunc ", draw_start + 1)
+	var body := text.substr(draw_start, draw_stop - draw_start)
+	var cities := body.find("_draw_cities()")
+	var labels := body.find("_draw_labels()")
+	var markers := body.find("_draw_markers()")
+	if cities < 0 or labels < 0 or markers < 0:
+		_fail("_draw() is missing one of the cities/labels/markers passes")
+		return
+	if labels <= cities:
+		_fail("_draw_labels() must come AFTER _draw_cities() -- the crosses drew over the country names (B6)")
+	if markers <= labels:
+		_fail("_draw_markers() must stay LAST -- interactive pins stay on top of text")
+	# The contrast half of B6 lives in _draw_labels(): the near-white labels now
+	# carry a draw_string_outline halo, and the 1px offset shadow it replaced is
+	# gone (outline + shadow would double-darken every glyph edge).
+	var labels_start := text.find("func _draw_labels()")
+	var labels_stop := text.find("\nfunc ", labels_start + 1)
+	var labels_body := text.substr(labels_start, labels_stop - labels_start)
+	if not labels_body.contains("draw_string_outline"):
+		_fail("_draw_labels() does not draw a draw_string_outline halo")
+	if labels_body.contains("+ Vector2.ONE"):
+		_fail("_draw_labels() still draws the old 1px offset shadow alongside the outline")
+
+
+## B11: the legend's key samples draw opaque KEY_* colours at 2px, not
+## MapNetwork's alpha 0.30/0.42 at 1px, which vanished on the dark plate.
+## Read from source; the samples draw inside a lambda a headless suite cannot
+## inspect on a built control.
+func _check_legend_key_samples() -> void:
+	var text := FileAccess.get_file_as_string("res://src/ui/map_legend.gd")
+	var start := text.find("func _key_row")
+	var stop := text.find("\nfunc ", start + 1)
+	var body := text.substr(start, stop - start)
+	if body.contains("MapNetwork.LAND") or body.contains("MapNetwork.SEA"):
+		_fail("_key_row() samples still use MapNetwork.LAND/SEA -- invisible at alpha 0.30/0.42 on the dark plate")
+	for key in ["KEY_LAND", "KEY_SEA", "KEY_WIDTH"]:
+		if not body.contains(key):
+			_fail("_key_row() does not use %s" % key)
+	for key in ["KEY_LAND", "KEY_SEA"]:
+		var line_start := text.find("const %s := Color(" % key)
+		if line_start < 0:
+			_fail("map_legend.gd has no const %s" % key)
+			continue
+		var open := text.find("(", line_start)
+		var close := text.find(")", open)
+		var parts := text.substr(open + 1, close - open - 1).split(",")
+		if parts.size() == 4 and parts[3].to_float() < 0.9:
+			_fail("%s alpha %s < 0.9 -- the key sample must be opaque to read on the plate" % [key, parts[3]])
+	if not text.contains("const KEY_WIDTH := 2.0"):
+		_fail("KEY_WIDTH is not 2.0 -- a 1px sample does not read at 22x8")
 
 
 func _check_geometry(loader) -> void:

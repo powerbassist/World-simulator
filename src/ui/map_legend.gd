@@ -27,6 +27,15 @@ signal layer_selected(layer_id: String)
 const SWATCH_SIZE := Vector2(22, 12)
 const KEY_SIZE := Vector2(22, 8)
 
+## Opaque key-sample colours, for _key_row() alone. MapNetwork.LAND/SEA are
+## tuned at alpha 0.30/0.42 for 1px strokes ON the map over terrain; the same
+## colours at that alpha on the dark legend plate at 22x8 are invisible, so the
+## key samples draw the same hue opaque and 2px wide. MapNetwork itself stays
+## untouched -- the map's look is tuned and holds.
+const KEY_LAND := Color(0.788, 0.635, 0.153, 0.95)
+const KEY_SEA := Color(0.788, 0.635, 0.153, 0.95)
+const KEY_WIDTH := 2.0
+
 ## Wide enough that the hover readout's longest form -- "NLD  11.1% of FRA's
 ## demand" -- does not resize the plate as the cursor crosses the map. A legend
 ## that changes width while being read is furniture moving under the player.
@@ -157,9 +166,9 @@ func _stop_row(at: float, text: String, trade_even := -1.0) -> Control:
 	return row
 
 
-## One key row. The sample is drawn with MapNetwork's own colour and dash rather
-## than a literal here, for the same reason _stop_row() takes its swatch from
-## MapLayers.ramp(): a stroke edit must not leave the legend showing the old one.
+## One key row. The sample carries the hue (not the raw alpha) of the layer it
+## names: the map's own LAND/SEA alphas are tuned for 1px strokes over terrain
+## and vanish on the dark plate at this size, so the key reads opaque and 2px.
 func _key_row(dashed: bool, text: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -172,10 +181,10 @@ func _key_row(dashed: bool, text: String) -> Control:
 			var x := 0.0
 			while x < KEY_SIZE.x:
 				var to_x: float = minf(x + MapNetwork.DASH_PX, KEY_SIZE.x)
-				sample.draw_line(Vector2(x, y), Vector2(to_x, y), MapNetwork.SEA, MapNetwork.WIDTH)
+				sample.draw_line(Vector2(x, y), Vector2(to_x, y), KEY_SEA, KEY_WIDTH)
 				x += MapNetwork.DASH_PX + MapNetwork.GAP_PX
 		else:
-			sample.draw_line(Vector2(0, y), Vector2(KEY_SIZE.x, y), MapNetwork.LAND, MapNetwork.WIDTH)
+			sample.draw_line(Vector2(0, y), Vector2(KEY_SIZE.x, y), KEY_LAND, KEY_WIDTH)
 	)
 	row.add_child(sample)
 
