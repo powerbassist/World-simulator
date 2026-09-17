@@ -150,6 +150,9 @@ var _summit_panel
 var _summit_before := {}
 var _government_panel
 var _save_load_panel
+## Whether the OPEN save dialog was reached from the pause menu (whose hidden
+## state `closed` restores) or straight from the top bar (nothing to restore).
+var _save_from_menu := false
 var _pause_menu
 var _settings_panel
 ## The clock's pause state from before the pause menu opened. Resume restores
@@ -564,6 +567,15 @@ func _ready() -> void:
 	_save_load_panel.hide()
 	_save_load_panel.save_requested.connect(_on_save_requested)
 	_save_load_panel.load_requested.connect(_on_load_requested)
+	# The settings panel's own contract (three lines up): closing a panel the
+	# pause menu opened puts the menu back, or the player is stranded outside
+	# the flow that paused the clock. Only when the menu opened it -- the top
+	# bar's SAVE reaches the same panel with no menu to restore.
+	_save_load_panel.closed.connect(func():
+		if _save_from_menu:
+			_set_pause_menu_visible(true)
+		_save_from_menu = false
+	)
 
 	_settings_panel = SettingsPanel.new()
 	_add_centered(_settings_panel)
@@ -578,6 +590,7 @@ func _ready() -> void:
 	_pause_menu.resumed.connect(_close_pause_menu)
 	_pause_menu.save_load_requested.connect(func():
 		_set_pause_menu_visible(false)
+		_save_from_menu = true
 		_save_load_panel.show()
 		_save_load_panel.mark_dirty()
 	)
@@ -712,6 +725,7 @@ func _wire_hud() -> void:
 		_update_top_bar()
 	)
 	_hud.top_bar.save_load_requested.connect(func():
+		_save_from_menu = false
 		_save_load_panel.show()
 		_save_load_panel.mark_dirty()
 	)
@@ -887,7 +901,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			# cannot both be live with the dialog anyway (it opens over a
 			# hidden pause menu and no placement runs from behind it).
 			if save_dialog_open:
-				_save_load_panel.visible = false
+				# close() rather than a bare hide: the pause-menu restore hangs
+				# off `closed`, and this path must not strand the menu behind.
+				_save_load_panel.close()
 				return
 			# V2.8. An armed placement cancels FIRST and the pause menu never
 			# opens -- Escape ending the thing it was offered for is the mode's
@@ -925,8 +941,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_hud.action_bar.close_subrow()
 		KEY_S:
 			if _save_load_panel != null:
-				_save_load_panel.visible = not _save_load_panel.visible
 				if _save_load_panel.visible:
+					_save_load_panel.close()
+				else:
+					_save_from_menu = false
+					_save_load_panel.show()
 					_save_load_panel.mark_dirty()
 
 

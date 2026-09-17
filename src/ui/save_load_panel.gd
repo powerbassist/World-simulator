@@ -80,15 +80,21 @@ func _build_footer() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
 
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(func():
-		hide()
-		closed.emit()
-	)
-	row.add_child(close)
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(close)
+	row.add_child(close_btn)
 
 	return row
+
+
+## The one close path. Escape and the S toggle in main.gd come through here
+## too, so every way of putting this panel away emits `closed` -- the signal
+## the pause-menu restore hangs off. A close that bypasses it (a bare
+## visible=false) leaves a pause menu hidden behind nothing.
+func close() -> void:
+	hide()
+	closed.emit()
 
 
 ## Load-only mode, for the main menu: there is no game in progress to save, so
@@ -189,5 +195,10 @@ func _on_save_pressed() -> void:
 	var slot := _name_field.text.strip_edges()
 	if slot.is_empty():
 		_status.text = "enter a save name first"
+		return
+	# Refused here rather than only inside SaveManager so the player learns at
+	# the field; the manager refuses again as the boundary (delete trusts it).
+	if not SaveManager.valid_slot_name(slot):
+		_status.text = "a save name is one line of text -- no slashes or dots"
 		return
 	save_requested.emit(slot)

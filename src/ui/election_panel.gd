@@ -187,13 +187,12 @@ func show_results(results: Array) -> void:
 	# The defeat sentence lives in _sections, not _footer: the footer is an
 	# ALIGNMENT_END HBox also holding the button, and an autowrapping Label with no
 	# horizontal expand collapses there to a ~one-character column -- the vertical
-	# letter stack the 2026-09-16 playtest photographed (finding B2). Same sentence,
-	# same reading order, in the container the termed-out branch already used.
-	if defeated:
-		PanelKit.line(_sections, (
-			"You have served the maximum number of terms. You leave office." if termed_out
-			else "You have lost your office. This term is over."
-		), PanelKit.Tone.PLAIN)
+	# letter stack the 2026-09-16 playtest photographed (finding B2). The
+	# termed-out verdict is excluded: its own paragraph above already says it,
+	# and while the footer bug crushed this copy to a column the duplication
+	# was invisible -- one sentence per verdict now that both render.
+	if defeated and not termed_out:
+		PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN)
 
 	var cont := Button.new()
 	cont.text = "Leave office" if defeated else "Continue"

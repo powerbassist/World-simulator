@@ -32,6 +32,21 @@ static func _path_for(slot: String) -> String:
 	return SAVE_DIR + slot + ".json"
 
 
+## A slot name becomes a filename inside user://saves/, and the name field is
+## free text -- so the boundary is HERE, at the source, rather than at each
+## caller. Separators and traversal components would leave the saves
+## directory, and delete_slot() makes that destructive: the review's
+## path-traversal finding, refused once for every path.
+static func valid_slot_name(slot: String) -> bool:
+	if slot.is_empty() or slot.length() > 64:
+		return false
+	if slot != slot.strip_edges():
+		return false
+	if "/" in slot or "\\" in slot or ":" in slot or ".." in slot:
+		return false
+	return true
+
+
 ## Writes `slot`.json under user://saves/. Returns "" on success, an error
 ## message otherwise.
 ##
@@ -163,7 +178,11 @@ static func slot_mtime(slot: String) -> int:
 
 ## Removes a save file. Refuses a name that has no file, so a stale row's
 ## second click after another path deleted it reports rather than "succeeds".
+## Refuses an invalid name for the same reason valid_slot_name exists: this
+## is the destructive one, so it never trusts its input.
 static func delete_slot(slot: String) -> bool:
+	if not valid_slot_name(slot):
+		return false
 	var path := _path_for(slot)
 	if not FileAccess.file_exists(path):
 		return false

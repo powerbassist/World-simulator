@@ -263,7 +263,34 @@ func _run_defeated_text() -> void:
 	ns.in_government = was_gov
 
 	panel.show_results([_fake_result("termed_out")])
-	_check_defeat_placement("You have served the maximum number of terms. You leave office.")
+	_check_termed_out_single_sentence()
+
+
+## The termed-out verdict carries its own long paragraph; the review's P1 was
+## the generic defeat line duplicating it (invisible only while the footer bug
+## crushed one copy to a column). Pinned: exactly the long sentence, and
+## neither short defeat line anywhere on the plate.
+func _check_termed_out_single_sentence() -> void:
+	var panel = _main._election_panel
+	var long_form := 0
+	for node in _descendants(panel._sections):
+		# show_results() queue_frees the previous staging's children; same-frame
+		# reads still see the ghost's copy (the fold finding, a third place).
+		if node is Label and not node.is_queued_for_deletion():
+			if "the most the constitution allows" in node.text:
+				long_form += 1
+			if "You have lost your office" in node.text or "You have served the maximum" in node.text:
+				_fail("the termed-out verdict prints a second defeat line: '%s'" % node.text)
+	if long_form != 1:
+		_fail("the termed-out paragraph appears %d times, expected exactly 1" % long_form)
+	var has_button := false
+	for node in panel._footer.get_children():
+		if node is Label:
+			_fail("a defeat sentence sits in _footer, the HBox that collapses autowrap")
+		if node is Button and node.text == "Leave office":
+			has_button = true
+	if not has_button:
+		_fail("the termed-out modal footer offers no Leave office button")
 
 
 ## A minimal verdict in the shape Elections.resolve() hands show_results(): no
@@ -310,7 +337,9 @@ func _check_defeat_placement(sentence: String) -> void:
 ## this sentence is dozens of lines tall and a few px wide.
 func _check_defeated_geometry() -> void:
 	var panel = _main._election_panel
-	var label := _find_label(panel._sections, "You have served the maximum number of terms. You leave office.")
+	# The termed-out staging ran last, so the specimen is its long paragraph --
+	# a longer string than the generic line and a harsher test of the wrap.
+	var label := _find_label(panel._sections, "the most the constitution allows")
 	if label == null:
 		_fail("the defeat sentence label vanished before the geometry read")
 		return
@@ -324,9 +353,11 @@ func _check_defeated_geometry() -> void:
 		_fail("the defeat sentence lays out %.1f lines tall; the one-character column is back" % (min_size.y / line_h))
 
 
+## Substring match: the geometry specimens are named by a stable fragment of
+## authored copy rather than a full sentence built from loader names.
 func _find_label(node, text: String) -> Label:
 	for child in node.get_children():
-		if child is Label and child.text == text:
+		if child is Label and text in child.text:
 			return child
 		var found := _find_label(child, text)
 		if found != null:

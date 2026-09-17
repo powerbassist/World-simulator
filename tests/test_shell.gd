@@ -480,6 +480,28 @@ func _check_save_dialog_traps_hotkeys() -> void:
 	_press(KEY_ESCAPE)
 	if panel.visible:
 		_fail("Escape did not close the save dialog")
+	_main._windows.close_all()
+
+	# The restore contract behind every close path (the review's P1): a dialog
+	# the PAUSE MENU opened puts the menu back -- the settings panel's own
+	# contract -- and one the TOP BAR opened leaves nothing behind. Both routes
+	# driven through their real signals.
+	_main._pause_menu.save_load_requested.emit()
+	if not panel.visible or _main._pause_menu.get_parent().visible:
+		_fail("the pause menu's save route did not open the dialog over a hidden menu")
+	_press(KEY_ESCAPE)
+	if panel.visible:
+		_fail("Escape did not close the pause-menu-opened save dialog")
+	if not _main._pause_menu.get_parent().visible:
+		_fail("closing a pause-menu-opened save dialog left the pause menu hidden -- the player is stranded outside the flow that paused the clock")
+	_main._close_pause_menu()
+
+	_main._hud.top_bar.save_load_requested.emit()
+	if not panel.visible:
+		_fail("the top bar's save route did not open the dialog")
+	_press(KEY_ESCAPE)
+	if panel.visible or _main._pause_menu.get_parent().visible:
+		_fail("closing a top-bar-opened save dialog raised the pause menu unasked")
 
 	panel.hide()
 	_main._windows.close_all()
