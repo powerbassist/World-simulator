@@ -184,8 +184,13 @@ func show_results(results: Array) -> void:
 	# -- so a defeated player was left with a plate carrying nothing to press, over
 	# a HUD that stayed live because the holder is MOUSE_FILTER_IGNORE. Space
 	# unpaused it and the run continued indefinitely behind a "DEFEATED" title.
+	# The defeat sentence lives in _sections, not _footer: the footer is an
+	# ALIGNMENT_END HBox also holding the button, and an autowrapping Label with no
+	# horizontal expand collapses there to a ~one-character column -- the vertical
+	# letter stack the 2026-09-16 playtest photographed (finding B2). Same sentence,
+	# same reading order, in the container the termed-out branch already used.
 	if defeated:
-		PanelKit.line(_footer, (
+		PanelKit.line(_sections, (
 			"You have served the maximum number of terms. You leave office." if termed_out
 			else "You have lost your office. This term is over."
 		), PanelKit.Tone.PLAIN)
