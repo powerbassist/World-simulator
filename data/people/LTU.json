@@ -1,11 +1,1120 @@
 {
   "people": [
-    { "id": "LTU_bilius", "name": "Rimantas Bilius" },
-    { "id": "LTU_zukauskas", "name": "Gabrielius Žukauskas" },
-    { "id": "LTU_zaleckas", "name": "Marius Zaleckas" },
-    { "id": "LTU_urbonaite", "name": "Dalia Urbonaitė" },
-    { "id": "LTU_klimaite", "name": "Eglė Klimaitė" },
-    { "id": "LTU_stanulis", "name": "Vygantas Stanulis" },
-    { "id": "LTU_mindaugas_iii", "name": "Mindaugas III" }
+    {
+      "id": "LTU_bilius",
+      "name": "Rimantas Bilius",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_zukauskas",
+      "name": "Gabrielius Žukauskas",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_zaleckas",
+      "name": "Marius Zaleckas",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_urbonaite",
+      "name": "Dalia Urbonaitė",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_klimaite",
+      "name": "Eglė Klimaitė",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_stanulis",
+      "name": "Vygantas Stanulis",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_mindaugas_iii",
+      "name": "Mindaugas III",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LTU_adomaitis",
+      "name": "Laimonas Adomaitis",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LTU_balciunas",
+      "name": "Kęstutis Balčiūnas",
+      "kind": "judge",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_cepas",
+      "name": "Orestas Čepas",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.77,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LTU_dobilaitis",
+      "name": "Orestas Dobilaitis",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialine_pazanga"
+    },
+    {
+      "id": "LTU_eidukas",
+      "name": "Giedrė Eidukas",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "pazangos_liberalai"
+    },
+    {
+      "id": "LTU_grigas",
+      "name": "Eglė Grigas",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_jankauskas",
+      "name": "Sigita Jankauskas",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 33.8
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_kairys",
+      "name": "Mindaugas Kairys",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_laukaitis",
+      "name": "Kęstutis Laukaitis",
+      "kind": "press_owner",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_mazeika",
+      "name": "Edmundas Mažeika",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_norkunas",
+      "name": "Jonas Norkūnas",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "pazangos_liberalai"
+    },
+    {
+      "id": "LTU_petrauskas",
+      "name": "Edmundas Petrauskas",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tautos_ausra"
+    },
+    {
+      "id": "LTU_ragauskas",
+      "name": "Irena Ragauskas",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_sakalauskas",
+      "name": "Algirdas Sakalauskas",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_tumenas",
+      "name": "Darius Tumėnas",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialine_pazanga"
+    },
+    {
+      "id": "LTU_urbonavicius",
+      "name": "Vytautas Urbonavičius",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_valancius",
+      "name": "Vida Valančius",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_zilys",
+      "name": "Nerijus Žilys",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_adamkevicius",
+      "name": "Nijolė Adamkevičius",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_burokas",
+      "name": "Vida Burokas",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "pazangos_liberalai"
+    },
+    {
+      "id": "LTU_cirtautas",
+      "name": "Laimonas Cirtautas",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_danisas",
+      "name": "Rimantas Danišas",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_emuzis",
+      "name": "Mindaugas Ėmužis",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_fokas",
+      "name": "Gintaras Fokas",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_gudauskas",
+      "name": "Darius Gudauskas",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialine_pazanga"
+    },
+    {
+      "id": "LTU_ivanauskas",
+      "name": "Eglė Ivanauskas",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:krikscioniu_tautos_sajunga",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialine_pazanga"
+    },
+    {
+      "id": "LTU_juozapavicius",
+      "name": "Edmundas Juozapavičius",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_kazlauskas",
+      "name": "Rasa Kazlauskas",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_lukosevicius",
+      "name": "Nerijus Lukoševičius",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_matulis",
+      "name": "Laimonas Matulis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialine_pazanga"
+    },
+    {
+      "id": "LTU_navickas",
+      "name": "Mindaugas Navickas",
+      "kind": "activist",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_paulauskas",
+      "name": "Kęstutis Paulauskas",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_ramanauskas",
+      "name": "Rimantas Ramanauskas",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_simkus",
+      "name": "Algirdas Simkus",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.94,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LTU_tamosiunas",
+      "name": "Rimantas Tamošiūnas",
+      "kind": "union_leader",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.7,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LTU_uleckas",
+      "name": "Rimantas Uleckas",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_vaitkus",
+      "name": "Algirdas Vaitkus",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tautos_ausra"
+    },
+    {
+      "id": "LTU_zaborskis",
+      "name": "Sigita Zaborskis",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_baltusis",
+      "name": "Rimantas Baltušis",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_dvariakis",
+      "name": "Nijolė Dvariakis",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_adomavicius",
+      "name": "Mindaugas Adomavičius",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_bagdonas",
+      "name": "Rasa Bagdonas",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kaimo_sajunga"
+    },
+    {
+      "id": "LTU_ciurlionis",
+      "name": "Laima Čiurlionis",
+      "kind": "press_owner",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LTU_dobilas",
+      "name": "Rimantas Dobilas",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:tautos_ausra",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_eimutis",
+      "name": "Eglė Eimutis",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LTU_gaska",
+      "name": "Nijolė Gaška",
+      "kind": "regional_figure",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krikscioniu_tautos_sajunga"
+    },
+    {
+      "id": "LTU_ignatavicius",
+      "name": "Darius Ignatavičius",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "pazangos_liberalai"
+    },
+    {
+      "id": "LTU_jurgutis",
+      "name": "Edmundas Jurgutis",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tautos_ausra"
+    }
   ]
 }

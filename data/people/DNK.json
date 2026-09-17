@@ -1,11 +1,1113 @@
 {
   "people": [
-    { "id": "DNK_valdemar_vi", "name": "Valdemar VI" },
-    { "id": "DNK_sorensen", "name": "Birte Sørensen" },
-    { "id": "DNK_lindberg", "name": "Torkil Lindberg" },
-    { "id": "DNK_krogh", "name": "Jens Erik Krogh" },
-    { "id": "DNK_dahl", "name": "Astrid Dahl" },
-    { "id": "DNK_brandt", "name": "Rikke Brandt" },
-    { "id": "DNK_skovgaard", "name": "Esben Skovgaard" }
+    {
+      "id": "DNK_valdemar_vi",
+      "name": "Valdemar VI",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_sorensen",
+      "name": "Birte Sørensen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_lindberg",
+      "name": "Torkil Lindberg",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:liberalt_centrum",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_krogh",
+      "name": "Jens Erik Krogh",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_dahl",
+      "name": "Astrid Dahl",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_brandt",
+      "name": "Rikke Brandt",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_skovgaard",
+      "name": "Esben Skovgaard",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DNK_abildgaard",
+      "name": "Elly Abildgaard",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:gron_fremtid",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_brorson",
+      "name": "Jesper Brorson",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_clemmensen",
+      "name": "Astrid Clemmensen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "det_borgerlige_samling"
+    },
+    {
+      "id": "DNK_damgaard",
+      "name": "Freja Damgaard",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_egholm",
+      "name": "Gunnar Egholm",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DNK_friisberg",
+      "name": "Jesper Friisberg",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_gronbaek",
+      "name": "Bendt Grønbæk",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frie_radikale"
+    },
+    {
+      "id": "DNK_holst",
+      "name": "Flemming Holst",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_iversen",
+      "name": "Ejvind Iversen",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "office:party_leadership:frie_radikale",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_jerndorff",
+      "name": "Karen Jerndorff",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DNK_kjeldgaard",
+      "name": "Mogens Kjeldgaard",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "dansk_folkefront"
+    },
+    {
+      "id": "DNK_lindqvist",
+      "name": "Holger Lindqvist",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_moller",
+      "name": "Freja Møller",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_norregaard",
+      "name": "Elly Nørregaard",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "dansk_folkefront"
+    },
+    {
+      "id": "DNK_olesen",
+      "name": "Aksel Olesen",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frie_radikale"
+    },
+    {
+      "id": "DNK_poulsen",
+      "name": "Kjeld Poulsen",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_quist",
+      "name": "Jesper Quist",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_ravn",
+      "name": "Kjeld Ravn",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_skytte",
+      "name": "Sigrid Skytte",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_thygesen",
+      "name": "Laurids Thygesen",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_ulstrup",
+      "name": "Flemming Ulstrup",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_vestergaard",
+      "name": "Flemming Vestergaard",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_wiborg",
+      "name": "Freja Wiborg",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_ostergaard",
+      "name": "Sigrid Østergaard",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "office:party_leadership:dansk_folkefront",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_aaskov",
+      "name": "Bodil Aaskov",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_birkerod",
+      "name": "Søren Birkerød",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_clitgas",
+      "name": "Sigrid Clitgas",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_dyrholm",
+      "name": "Laurids Dyrholm",
+      "kind": "regional_figure",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_enevoldsen",
+      "name": "Aksel Enevoldsen",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_fabricius",
+      "name": "Laurids Fabricius",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_gisl",
+      "name": "Gunnar Gisl",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_hammelsvang",
+      "name": "Flemming Hammelsvang",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_ingemann",
+      "name": "Aksel Ingemann",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.24,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DNK_juhl",
+      "name": "Mogens Juhl",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frie_radikale"
+    },
+    {
+      "id": "DNK_kirkegaard",
+      "name": "Aksel Kirkegaard",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_laursen",
+      "name": "Holger Laursen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "det_borgerlige_samling"
+    },
+    {
+      "id": "DNK_mansson",
+      "name": "Laurids Månsson",
+      "kind": "activist",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_nordenhof",
+      "name": "Inge Nordenhof",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_paludan",
+      "name": "Bendt Paludan",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frie_radikale"
+    },
+    {
+      "id": "DNK_schroder",
+      "name": "Bodil Schrøder",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_ahlefeldt",
+      "name": "Astrid Ahlefeldt",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_bircherod",
+      "name": "Astrid Bircherod",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frie_radikale"
+    },
+    {
+      "id": "DNK_dinesen",
+      "name": "Ejvind Dinesen",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialdemokratisk_union"
+    },
+    {
+      "id": "DNK_erslev",
+      "name": "Carl Erslev",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "gron_fremtid"
+    },
+    {
+      "id": "DNK_friis_moller",
+      "name": "Karen Friis-Møller",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "det_borgerlige_samling"
+    },
+    {
+      "id": "DNK_gjedde",
+      "name": "Bodil Gjedde",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "dansk_folkefront"
+    },
+    {
+      "id": "DNK_heering",
+      "name": "Karen Heering",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DNK_krogsgaard",
+      "name": "Astrid Krogsgaard",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "office:party_leadership:gron_fremtid",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberalt_centrum"
+    }
   ]
 }

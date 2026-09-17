@@ -1,10 +1,1083 @@
 {
   "people": [
-    { "id": "ESP_bustamante", "name": "Álvaro Bustamante" },
-    { "id": "ESP_larranaga", "name": "Mateo Larrañaga" },
-    { "id": "ESP_sanchis", "name": "Rocío Sanchís" },
-    { "id": "ESP_mendiola", "name": "Iker Mendiola" },
-    { "id": "ESP_palomares", "name": "Nuria Palomares" },
-    { "id": "ESP_alfonso_vii", "name": "Alfonso VII" }
+    {
+      "id": "ESP_bustamante",
+      "name": "Álvaro Bustamante",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_larranaga",
+      "name": "Mateo Larrañaga",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:verdes_iberia",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_sanchis",
+      "name": "Rocío Sanchís",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_mendiola",
+      "name": "Iker Mendiola",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_palomares",
+      "name": "Nuria Palomares",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_alfonso_vii",
+      "name": "Alfonso VII",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:voz_nacional",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ESP_aguirrecha",
+      "name": "Lucas Aguirrecha",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_bembibre",
+      "name": "Gonzalo Bembibre",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_cadalso",
+      "name": "Carlota Cadalso",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_delgado",
+      "name": "Almudena Delgado",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frente_progresista"
+    },
+    {
+      "id": "ESP_escalante",
+      "name": "Lucas Escalante",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_figueroa",
+      "name": "Marisol Figueroa",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.94,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ESP_grijalba",
+      "name": "Gloria Grijalba",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_herranz",
+      "name": "Andrés Herranz",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_iturbe",
+      "name": "Javier Iturbe",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_jaramillo",
+      "name": "Javier Jaramillo",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "convergencia_ciudadana"
+    },
+    {
+      "id": "ESP_lacalle",
+      "name": "Fermín Lacalle",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_montalban",
+      "name": "Isidro Montalbán",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frente_progresista"
+    },
+    {
+      "id": "ESP_navarrete",
+      "name": "Eduardo Navarrete",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_olivencia",
+      "name": "Nuria Olivencia",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_palazuelos",
+      "name": "Gloria Palazuelos",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 44.2
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "convergencia_ciudadana"
+    },
+    {
+      "id": "ESP_querol",
+      "name": "Eduardo Querol",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_rentero",
+      "name": "Silvia Rentero",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_sanchidrian",
+      "name": "Rodrigo Sanchidrián",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_tejedor",
+      "name": "Rodrigo Tejedor",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "office:party_leadership:voz_nacional",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frente_progresista"
+    },
+    {
+      "id": "ESP_uribarri",
+      "name": "Nicolás Uribarri",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "voz_nacional"
+    },
+    {
+      "id": "ESP_vallespin",
+      "name": "Borja Vallespín",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_yague",
+      "name": "Rocío Yagüe",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_zamorano",
+      "name": "Rocío Zamorano",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_aranda",
+      "name": "Lourdes Aranda",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_berrocal",
+      "name": "Carlota Berrocal",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_castejon",
+      "name": "Mateo Castejón",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ESP_duenas",
+      "name": "Eduardo Dueñas",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_estrada",
+      "name": "Lucas Estrada",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_fuentenebro",
+      "name": "Eduardo Fuentenebro",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "voz_nacional"
+    },
+    {
+      "id": "ESP_galindez",
+      "name": "Silvia Galíndez",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frente_progresista"
+    },
+    {
+      "id": "ESP_higuera",
+      "name": "Mateo Higuera",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_ibanez",
+      "name": "Belén Ibáñez",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ESP_jove",
+      "name": "Carlota Jové",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_larrauri",
+      "name": "Andrés Larrauri",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_mendive",
+      "name": "Silvia Mendive",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_otxoa",
+      "name": "Javier Otxoa",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_pelaez",
+      "name": "Rodrigo Peláez",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_quintanilla",
+      "name": "Esperanza Quintanilla",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:voz_nacional",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_saenz",
+      "name": "Isidro Sáenz",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_villalobos",
+      "name": "Silvia Villalobos",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "voz_nacional"
+    },
+    {
+      "id": "ESP_arriaga",
+      "name": "Lourdes Arriaga",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "voz_nacional"
+    },
+    {
+      "id": "ESP_barcelo",
+      "name": "Javier Barceló",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_cuadrado",
+      "name": "Borja Cuadrado",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_domenech",
+      "name": "Isidro Domenech",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_etxebarria",
+      "name": "Lucas Etxebarria",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_ferrandiz",
+      "name": "Gonzalo Ferrándiz",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdes_iberia"
+    },
+    {
+      "id": "ESP_gutierre",
+      "name": "Silvia Gutierre",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ESP_huertas",
+      "name": "Lourdes Huertas",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ESP_ibarrola",
+      "name": "Gloria Ibarrola",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_popular"
+    }
   ]
 }

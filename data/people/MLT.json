@@ -1,10 +1,1155 @@
 {
   "people": [
-    { "id": "MLT_cassar", "name": "Adrian Cassar" },
-    { "id": "MLT_zahra", "name": "Bernard Zahra" },
-    { "id": "MLT_camilleri", "name": "Sandra Camilleri" },
-    { "id": "MLT_portelli", "name": "Michael Portelli" },
-    { "id": "MLT_attard", "name": "Marie-Louise Attard" },
-    { "id": "MLT_ludovik_i", "name": "Ludovik I" }
+    {
+      "id": "MLT_cassar",
+      "name": "Adrian Cassar",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_zahra",
+      "name": "Bernard Zahra",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "office:party_leadership:partit_gustizzja_socjali",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_camilleri",
+      "name": "Sandra Camilleri",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_portelli",
+      "name": "Michael Portelli",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_attard",
+      "name": "Marie-Louise Attard",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_ludovik_i",
+      "name": "Ludovik I",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MLT_agius",
+      "name": "David Agius",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_borg",
+      "name": "David Borg",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 36.0
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_debono",
+      "name": "Carmel Debono",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_ellul",
+      "name": "Mario Ellul",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_farrugia",
+      "name": "Emanuel Farrugia",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:partit_kristjan_malti",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "alternattiva_hadra"
+    },
+    {
+      "id": "MLT_grima",
+      "name": "Emanuel Grima",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_hili",
+      "name": "Anthony Hili",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_inglott",
+      "name": "Marthese Inglott",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_jones",
+      "name": "Giovanna Jones",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_magro",
+      "name": "Joseph Magro",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:partit_tas_centru",
+          "stance": "want"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_navarro",
+      "name": "Emanuel Navarro",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.4
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_rizzo",
+      "name": "Emanuel Rizzo",
+      "kind": "union_leader",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_said",
+      "name": "Louise Said",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_vella",
+      "name": "David Vella",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_kristjan_malti"
+    },
+    {
+      "id": "MLT_zammit",
+      "name": "Vincent Zammit",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_azzopardi",
+      "name": "Rita Azzopardi",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_buhagiar",
+      "name": "Noel Buhagiar",
+      "kind": "union_leader",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_chircop",
+      "name": "David Chircop",
+      "kind": "activist",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_dalli",
+      "name": "Nathalie Dalli",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_ebejer",
+      "name": "Joseph Ebejer",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_fenech",
+      "name": "Nathalie Fenech",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_kristjan_malti"
+    },
+    {
+      "id": "MLT_galea",
+      "name": "Doreen Galea",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_gauci",
+      "name": "Raymond Gauci",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_micallef",
+      "name": "Noel Micallef",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_pace",
+      "name": "Emanuel Pace",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_pisani",
+      "name": "Doreen Pisani",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alternattiva_hadra"
+    },
+    {
+      "id": "MLT_sciberras",
+      "name": "Carmen Sciberras",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_sultana",
+      "name": "David Sultana",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "MLT_tabone",
+      "name": "Raymond Tabone",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_vassallo",
+      "name": "Evelyn Vassallo",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_xuereb",
+      "name": "Noel Xuereb",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_kristjan_malti"
+    },
+    {
+      "id": "MLT_cachia",
+      "name": "Noel Cachia",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_cremona",
+      "name": "David Cremona",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:partit_kristjan_malti",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_falzon",
+      "name": "Carmel Falzon",
+      "kind": "judge",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_bonnici",
+      "name": "Godfrey Bonnici",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_caruana",
+      "name": "David Caruana",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_demartino",
+      "name": "Sylvana DeMartino",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_emanuel",
+      "name": "Patrick Emanuel",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_kristjan_malti"
+    },
+    {
+      "id": "MLT_fiorini",
+      "name": "Lawrence Fiorini",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_gambin",
+      "name": "Noel Gambin",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_haber",
+      "name": "Godfrey Haber",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_incorvaja",
+      "name": "Evelyn Incorvaja",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_joanprez",
+      "name": "Louise Joanprez",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_mamo",
+      "name": "Raymond Mamo",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "office:party_leadership:partit_kristjan_malti",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_tas_centru"
+    },
+    {
+      "id": "MLT_naudi",
+      "name": "Joseph Naudi",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_oman",
+      "name": "Vincent Oman",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_gustizzja_socjali"
+    },
+    {
+      "id": "MLT_parnis",
+      "name": "David Parnis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:partit_tas_centru",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "partit_kristjan_malti"
+    },
+    {
+      "id": "MLT_rapa",
+      "name": "Lawrence Rapa",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "MLT_serracino_inglott",
+      "name": "Pauline Serracino-Inglott",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

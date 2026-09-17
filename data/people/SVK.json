@@ -1,11 +1,1098 @@
 {
   "people": [
-    { "id": "SVK_vozar", "name": "Marián Vozár" },
-    { "id": "SVK_petrik", "name": "Vladimír Petrík" },
-    { "id": "SVK_baran", "name": "Peter Barán" },
-    { "id": "SVK_hruskova", "name": "Zuzana Hrušková" },
-    { "id": "SVK_dankova", "name": "Alena Danková" },
-    { "id": "SVK_hraska", "name": "Tomáš Hraška" },
-    { "id": "SVK_pal_ii", "name": "Pál II" }
+    {
+      "id": "SVK_vozar",
+      "name": "Marián Vozár",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_petrik",
+      "name": "Vladimír Petrík",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_baran",
+      "name": "Peter Barán",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_hruskova",
+      "name": "Zuzana Hrušková",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_dankova",
+      "name": "Alena Danková",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_hraska",
+      "name": "Tomáš Hraška",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_pal_ii",
+      "name": "Pál II",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVK_banik",
+      "name": "Ladislav Baník",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_cupak",
+      "name": "Erik Cupák",
+      "kind": "activist",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_durcansky",
+      "name": "František Ďurčanský",
+      "kind": "activist",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_erdelyi",
+      "name": "Andrej Erdélyi",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_ferkoly",
+      "name": "Katarína Ferkoly",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 32.6
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_gaspar",
+      "name": "Marek Gašpar",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_hlin",
+      "name": "Karol Hlin",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_ihrik",
+      "name": "Mária Ihrík",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_janos",
+      "name": "Gabriel Jánoš",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_kostka",
+      "name": "Karol Kostka",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "office:party_leadership:krestanska_republika",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:vlastenecka_koalicia",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_luptak",
+      "name": "Danica Lupták",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVK_martinak",
+      "name": "Zuzana Martinák",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVK_nadassky",
+      "name": "Ctibor Nádašský",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_oravec",
+      "name": "Zuzana Oravec",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_palarik",
+      "name": "Ctibor Palárik",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlastenecka_koalicia"
+    },
+    {
+      "id": "SVK_rusnak",
+      "name": "Dušan Rusnák",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialna_unia"
+    },
+    {
+      "id": "SVK_slavik",
+      "name": "Ladislav Slávik",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_turcek",
+      "name": "Hana Turček",
+      "kind": "activist",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_urda",
+      "name": "Eva Urda",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_vansa",
+      "name": "Gabriel Vansa",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_zaborsky",
+      "name": "Andrej Záborský",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_bernolak",
+      "name": "Zuzana Bernolák",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_cabaj",
+      "name": "Mária Cabaj",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_dolinsky",
+      "name": "Karol Dolinský",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_fabian",
+      "name": "Jozef Fabian",
+      "kind": "union_leader",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.74,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVK_gregor",
+      "name": "Dušan Gregor",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_hruska",
+      "name": "Ľudmila Hruška",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_illas",
+      "name": "Dušan Illáš",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.91,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVK_jedinak",
+      "name": "Branislav Jedinák",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialna_unia"
+    },
+    {
+      "id": "SVK_kolencik",
+      "name": "Marek Kolenčík",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_labuda",
+      "name": "Andrej Labuda",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialna_unia"
+    },
+    {
+      "id": "SVK_miklos",
+      "name": "Jana Mikloš",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlastenecka_koalicia"
+    },
+    {
+      "id": "SVK_novota",
+      "name": "Karol Novota",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodne_slovensko"
+    },
+    {
+      "id": "SVK_ondrus",
+      "name": "Alžbeta Ondruš",
+      "kind": "press_owner",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_pribis",
+      "name": "Ctibor Pribiš",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_rezeik",
+      "name": "Jozef Rezeik",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_sokol",
+      "name": "Marek Sokol",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlastenecka_koalicia"
+    },
+    {
+      "id": "SVK_tomasov",
+      "name": "Gabriela Tomašov",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_vlcek",
+      "name": "Mária Vlček",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socialna_unia"
+    },
+    {
+      "id": "SVK_zimka",
+      "name": "Božena Zimka",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_amtmann",
+      "name": "Marek Amtmann",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_bertranik",
+      "name": "Ivana Bertránik",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlastenecka_koalicia"
+    },
+    {
+      "id": "SVK_cipov",
+      "name": "Gabriela Cipov",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "moderne_centrum"
+    },
+    {
+      "id": "SVK_derer",
+      "name": "František Dérer",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 34.0
+        }
+      ],
+      "bench": true,
+      "party_id": "vlastenecka_koalicia"
+    },
+    {
+      "id": "SVK_estok",
+      "name": "Danica Estok",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVK_frano",
+      "name": "Božena Fraňo",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krestanska_republika"
+    },
+    {
+      "id": "SVK_galis",
+      "name": "Gabriela Gális",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVK_hrebik",
+      "name": "Dušan Hrebík",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [],
+      "bench": true
+    }
   ]
 }

@@ -1,12 +1,1150 @@
 {
   "people": [
-    { "id": "ITA_bagnasco", "name": "Lorenzo Bagnasco" },
-    { "id": "ITA_ronchi", "name": "Piergiorgio Ronchi" },
-    { "id": "ITA_lambertini", "name": "Vittorio Lambertini" },
-    { "id": "ITA_fossati", "name": "Chiara Fossati" },
-    { "id": "ITA_trevisan", "name": "Enzo Trevisan" },
-    { "id": "ITA_caputo", "name": "Serena Caputo" },
-    { "id": "ITA_salvagno", "name": "Umberto Salvagno" },
-    { "id": "ITA_carlo_alberto_ii", "name": "Carlo Alberto II" }
+    {
+      "id": "ITA_bagnasco",
+      "name": "Lorenzo Bagnasco",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_ronchi",
+      "name": "Piergiorgio Ronchi",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_lambertini",
+      "name": "Vittorio Lambertini",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_fossati",
+      "name": "Chiara Fossati",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_trevisan",
+      "name": "Enzo Trevisan",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_caputo",
+      "name": "Serena Caputo",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_salvagno",
+      "name": "Umberto Salvagno",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:movimento_cittadino",
+          "stance": "want"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 30.3
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_carlo_alberto_ii",
+      "name": "Carlo Alberto II",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ITA_albinetti",
+      "name": "Dario Albinetti",
+      "kind": "press_owner",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_barbagallo",
+      "name": "Ottavia Barbagallo",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alleanza_settentrionale"
+    },
+    {
+      "id": "ITA_carafa",
+      "name": "Oreste Carafa",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "forza_patria"
+    },
+    {
+      "id": "ITA_dell_orto",
+      "name": "Selvaggia Dell'Orto",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "fratelli_della_nazione"
+    },
+    {
+      "id": "ITA_ferretti",
+      "name": "Oreste Ferretti",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_gargiulo",
+      "name": "Mariangela Gargiulo",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 38.1
+        }
+      ],
+      "bench": true,
+      "party_id": "democrazia_popolare"
+    },
+    {
+      "id": "ITA_imperiali",
+      "name": "Gianluca Imperiali",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.3
+        }
+      ],
+      "bench": true,
+      "party_id": "movimento_cittadino"
+    },
+    {
+      "id": "ITA_lombrosio",
+      "name": "Marcello Lombrosio",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "office:party_leadership:democrazia_popolare",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "alleanza_settentrionale"
+    },
+    {
+      "id": "ITA_mancuso",
+      "name": "Amerigo Mancuso",
+      "kind": "activist",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 36.3
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_nesci",
+      "name": "Bianca Nesci",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_oliverio",
+      "name": "Bianca Oliverio",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "forza_patria"
+    },
+    {
+      "id": "ITA_petroselli",
+      "name": "Marcello Petroselli",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "movimento_cittadino"
+    },
+    {
+      "id": "ITA_quarta",
+      "name": "Amerigo Quarta",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "fratelli_della_nazione"
+    },
+    {
+      "id": "ITA_ravagnani",
+      "name": "Ilaria Ravagnani",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "movimento_cittadino"
+    },
+    {
+      "id": "ITA_sconfienza",
+      "name": "Emilio Sconfienza",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_taddei",
+      "name": "Bruno Taddei",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "fratelli_della_nazione"
+    },
+    {
+      "id": "ITA_ughi",
+      "name": "Emilio Ughi",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_vismara",
+      "name": "Giulietta Vismara",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_zaccagnini",
+      "name": "Oreste Zaccagnini",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "democrazia_popolare"
+    },
+    {
+      "id": "ITA_bandello",
+      "name": "Mariangela Bandello",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.93,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ITA_cimabue",
+      "name": "Chiara Cimabue",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democrazia_popolare"
+    },
+    {
+      "id": "ITA_dossena",
+      "name": "Selvaggia Dossena",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_ermenegildo",
+      "name": "Amerigo Ermenegildo",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "forza_patria"
+    },
+    {
+      "id": "ITA_ferradini",
+      "name": "Raffaella Ferradini",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_gentileschi",
+      "name": "Amerigo Gentileschi",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 39.2
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_laudomi",
+      "name": "Nanni Laudomi",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.3
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "fratelli_della_nazione"
+    },
+    {
+      "id": "ITA_marchionni",
+      "name": "Bianca Marchionni",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.4
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_natalicchio",
+      "name": "Emilio Natalicchio",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_orsini",
+      "name": "Ludovico Orsini",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democrazia_popolare"
+    },
+    {
+      "id": "ITA_pischedda",
+      "name": "Marcello Pischedda",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:forza_patria",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "democrazia_popolare"
+    },
+    {
+      "id": "ITA_reali",
+      "name": "Ilaria Reali",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_sferrazza",
+      "name": "Marcello Sferrazza",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_tirabassi",
+      "name": "Bruno Tirabassi",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:movimento_cittadino",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "alleanza_settentrionale"
+    },
+    {
+      "id": "ITA_valguarnera",
+      "name": "Fabrizio Valguarnera",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alleanza_settentrionale"
+    },
+    {
+      "id": "ITA_zingaretti",
+      "name": "Chiara Zingaretti",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verdi_italiani"
+    },
+    {
+      "id": "ITA_aloisio",
+      "name": "Dario Aloisio",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alleanza_settentrionale"
+    },
+    {
+      "id": "ITA_brancadoro",
+      "name": "Dario Brancadoro",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "movimento_cittadino"
+    },
+    {
+      "id": "ITA_cuccurullo",
+      "name": "Ottavia Cuccurullo",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_diotallevi",
+      "name": "Oreste Diotallevi",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "forza_patria"
+    },
+    {
+      "id": "ITA_fogliano",
+      "name": "Ottavia Fogliano",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "fratelli_della_nazione"
+    },
+    {
+      "id": "ITA_aversa",
+      "name": "Cesare Aversa",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.47,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ITA_bellandi",
+      "name": "Lavinia Bellandi",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "forza_patria"
+    },
+    {
+      "id": "ITA_cantalamessa",
+      "name": "Gianluca Cantalamessa",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.72,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ITA_del_monte",
+      "name": "Chiara Del Monte",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ITA_errani",
+      "name": "Fiorella Errani",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ITA_ferruzzi",
+      "name": "Gianluca Ferruzzi",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "office:party_leadership:movimento_cittadino",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:forza_patria",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "movimento_cittadino"
+    },
+    {
+      "id": "ITA_gallarate",
+      "name": "Oreste Gallarate",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

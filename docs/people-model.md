@@ -453,29 +453,35 @@ government (penalise). Tick order **after `Cabinet.tick_month`, before
 bloc_offset that Opinion reads next month, and Elections, the stamp pair's
 only writer, still runs last. Pinned by a source-scanning test.
 
-### 14.6 The bands — DECLARED, swept, and the one verdict that is content-bound
+### 14.6 The bands — DECLARED, swept, and what the sweep changed
 
 Written before the probe ran (the project law); `tools/characters_probe.gd`
-measures, this section records:
+measures, this section records. The sweep was run twice: once against the
+empty 213-cast and once against the generated bench (1,595 people), and the
+FIRST run found two machine defects the second run's bands pin:
 
-- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2). The
-  negative control held cold: with no player decision anywhere in the state,
-  nothing fires, exactly as the machine's gates read.
-- **P2: CONTENT-BOUND, recorded as such — 1 challenge/resignation in 168
-  months against a band of ≥ 2.** The measured cause: the 213-entry cast
-  seeds standing at 0.50 flat (no traits or ambition authored on it — Task
-  4's bench is the content that authors them), below the challenge
-  threshold of 0.70, so a challenge CANNOT fire and the probe's
-  grudge-injection drives the resignation alone. Tuning the threshold down
-  to make an empty cast pass would be measuring the content's absence; the
-  band re-runs after the bench lands.
+- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2). The first
+  sweep, against the bench, FAILED at 7 acts — every one a `brief_against`
+  by a person whose meter want was denied by the STARTING world, grudging
+  and re-grudging monthly. The fix is the edge-trigger: a want that TURNS
+  denied writes one grudge pulse, a want that stays denied writes nothing —
+  V4.0's "prices the inherited cycle, not the record" defect in miniature,
+  fixed at the same level it was found. `person_want_state` (the sixth
+  register) is the flip memory.
+- **P2: PASS — 4 challenges/resignations in 168 months** (band ≥ 2) with
+  the bench authored. The first sweep against the empty cast was
+  CONTENT-BOUND (standing seeds 0.50 flat, no challenge possible); recorded
+  rather than tuned. The challenge gate gained a GRUDGE FLOOR
+  (CHALLENGE_GRUDGE_FLOOR 0.5) after the first bench sweep fired five
+  day-one coups — the already-won/lost defect class in a person's shape.
 - **P3: PASS, pinned structurally** — the fire gates read the register, and
   tests/test_characters.gd's identical-runs check observes the same gate.
 - **P4: bounded by construction** — every act prices through
   `Government.penalise_blocs`, which writes the bloc_offset accumulator the
-  opinion model already clamps and smooths (INERTIA_RATE and the
-  opinion-model bounds apply to a character act exactly as to a law); no
-  act writes approval directly anywhere.
+  opinion model already clamps and smooths; measured indirectly by the
+  balance suite's clamp checks staying green with the layer live (the first
+  bench sweep pushed `bloc_offset['students']` ONTO its clamp under a
+  captured court through brief-spam; the edge-trigger fixed it).
 - **P5: PASS — no rand() in characters.gd**, pinned by
   tests/test_characters.gd's two-identical-states check.
 

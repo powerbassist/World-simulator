@@ -53,9 +53,12 @@ const LOYALTY_RESIGN_FLOOR := -0.4
 ## Defect when the grudge passes this.
 const GRUDGE_DEFECT_THRESHOLD := 0.6
 
-## Challenge when standing passes this (ambition's discount below it).
+## Challenge when standing passes this (ambition's discount below it), AND
+## the grudge floor -- the floor is the already-won/lost guard: standing
+## alone would coup every leader on day one of a fresh term.
 const CHALLENGE_STANDING_THRESHOLD := 0.7
 const CHALLENGE_AMBITIOUS_DISCOUNT := 0.1
+const CHALLENGE_GRUDGE_FLOOR := 0.5
 
 ## Brief against when the grudge passes this -- below the defection
 ## threshold, because leaking is what a frustrated ally does on the way out.

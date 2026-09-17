@@ -481,9 +481,10 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## wiring, so a version-34 save is refused before the first save that could hold
 ## a priced register is ever written.
 ##
-## V4.3 bumps this to 36 on the five person-state registers (nation_state.gd's
+## V4.3 bumps this to 36 on the six person-state registers (nation_state.gd's
 ## character-layer section): `person_loyalty`, `person_standing`,
-## `person_grudges`, `party_leader_override`, `person_party_override`. An
+## `person_grudges`, `party_leader_override`, `person_party_override`, and
+## `person_want_state` (the edge-trigger's memory). An
 ## absent loyalty dict reads "nobody remembers anything you did to them" --
 ## the V1.6a test in the game's own voice, `programme_stock`'s case exactly --
 ## and no re-derivation can rescue it, because nothing outside the register

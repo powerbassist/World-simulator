@@ -1,10 +1,1096 @@
 {
   "people": [
-    { "id": "LUX_everling", "name": "Marc Everling" },
-    { "id": "LUX_weiler", "name": "Nathalie Weiler" },
-    { "id": "LUX_hoffmann", "name": "Serge Hoffmann" },
-    { "id": "LUX_reiland", "name": "Anouk Reiland" },
-    { "id": "LUX_steichen", "name": "Jean-Paul Steichen" },
-    { "id": "LUX_adolphe_iii", "name": "Adolphe III" }
+    {
+      "id": "LUX_everling",
+      "name": "Marc Everling",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_weiler",
+      "name": "Nathalie Weiler",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_hoffmann",
+      "name": "Serge Hoffmann",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "office:party_leadership:union_chretienne",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_reiland",
+      "name": "Anouk Reiland",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:union_chretienne",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_steichen",
+      "name": "Jean-Paul Steichen",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_adolphe_iii",
+      "name": "Adolphe III",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LUX_ahnen",
+      "name": "Nicolas Ahnen",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_bintner",
+      "name": "Gaston Bintner",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "office:party_leadership:parti_ouvrier_uni",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_claus",
+      "name": "Yvette Claus",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_diederich",
+      "name": "Camille Diederich",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_elschner",
+      "name": "Genviève Elschner",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_fabritius",
+      "name": "Camille Fabritius",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_greisch",
+      "name": "Lucien Greisch",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.26,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LUX_hansen",
+      "name": "Josiane Hansen",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LUX_jungblut",
+      "name": "Félix Jungblut",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_krier",
+      "name": "Léonie Krier",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_lamesch",
+      "name": "Nadine Lamesch",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_majerus",
+      "name": "Victor Majerus",
+      "kind": "judge",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_nickels",
+      "name": "Benoît Nickels",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_populaire"
+    },
+    {
+      "id": "LUX_oestreicher",
+      "name": "Angèle Oestreicher",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_pulver",
+      "name": "Nicolas Pulver",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_reiffers",
+      "name": "Genviève Reiffers",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_populaire"
+    },
+    {
+      "id": "LUX_schmit",
+      "name": "Félix Schmit",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_thiel",
+      "name": "Lucien Thiel",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "office:party_leadership:union_chretienne",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_wagner",
+      "name": "Nicolas Wagner",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_weber",
+      "name": "Félix Weber",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_liberale"
+    },
+    {
+      "id": "LUX_zeimet",
+      "name": "Elise Zeimet",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_backes",
+      "name": "Gaston Backes",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_caspary",
+      "name": "Camille Caspary",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_delle",
+      "name": "Yvette Dellé",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "office:party_leadership:renouveau_populaire",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_engel",
+      "name": "Émile Engel",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_frantz",
+      "name": "Josiane Frantz",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_glaesener",
+      "name": "Benoît Glaesener",
+      "kind": "regional_figure",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_herrmann",
+      "name": "Camille Herrmann",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_jacoby",
+      "name": "Serge Jacoby",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_kirpach",
+      "name": "Camille Kirpach",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_liberale"
+    },
+    {
+      "id": "LUX_lentz",
+      "name": "Marc Lentz",
+      "kind": "press_owner",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_mertens",
+      "name": "Nicolas Mertens",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_neumann",
+      "name": "Lucien Neumann",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_liberale"
+    },
+    {
+      "id": "LUX_origer",
+      "name": "Nicolas Origer",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "LUX_pfeffer",
+      "name": "Désiré Pfeffer",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_liberale"
+    },
+    {
+      "id": "LUX_rippinger",
+      "name": "Désiré Rippinger",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_schwartz",
+      "name": "Camille Schwartz",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_populaire"
+    },
+    {
+      "id": "LUX_theisen",
+      "name": "Claire Theisen",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_waringo",
+      "name": "Claire Waringo",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_zenner",
+      "name": "Serge Zenner",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_arnold",
+      "name": "Victor Arnold",
+      "kind": "judge",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_bintz",
+      "name": "Genviève Bintz",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_clemens",
+      "name": "Nicolas Clemens",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "office:party_leadership:renouveau_populaire",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_deltour",
+      "name": "Benoît Deltour",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_chretienne"
+    },
+    {
+      "id": "LUX_erpelding",
+      "name": "Odile Erpelding",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_federspiel",
+      "name": "Gaston Federspiel",
+      "kind": "judge",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LUX_graas",
+      "name": "Nicolas Graas",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_ouvrier_uni"
+    },
+    {
+      "id": "LUX_hess",
+      "name": "Désiré Hess",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_nationaux"
+    },
+    {
+      "id": "LUX_junge",
+      "name": "Félix Junge",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [],
+      "bench": true
+    }
   ]
 }

@@ -1,12 +1,1186 @@
 {
   "people": [
-    { "id": "POL_zawadzki", "name": "Marek Zawadzki" },
-    { "id": "POL_wilk", "name": "Grzegorz Wilk" },
-    { "id": "POL_grabowski", "name": "Szymon Grabowski" },
-    { "id": "POL_piasecki", "name": "Robert Piasecki" },
-    { "id": "POL_wilczynski", "name": "Tomasz Wilczyński" },
-    { "id": "POL_kalinowska", "name": "Ewa Kalinowska" },
-    { "id": "POL_ostrowski", "name": "Bogdan Ostrowski" },
-    { "id": "POL_zygmunt_iv", "name": "Zygmunt IV" }
+    {
+      "id": "POL_zawadzki",
+      "name": "Marek Zawadzki",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_wilk",
+      "name": "Grzegorz Wilk",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:narod_i_tradycja",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_grabowski",
+      "name": "Szymon Grabowski",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_piasecki",
+      "name": "Robert Piasecki",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_wilczynski",
+      "name": "Tomasz Wilczyński",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_kalinowska",
+      "name": "Ewa Kalinowska",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_ostrowski",
+      "name": "Bogdan Ostrowski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_zygmunt_iv",
+      "name": "Zygmunt IV",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "POL_adamczyk",
+      "name": "Grzegorz Adamczyk",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_barcicki",
+      "name": "Piotr Barcicki",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ludowa_lewica"
+    },
+    {
+      "id": "POL_cieszkowski",
+      "name": "Jadwiga Cieszkowski",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "POL_dmochowski",
+      "name": "Grzegorz Dmochowski",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_ejsmont",
+      "name": "Lucyna Ejsmont",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_filipowicz",
+      "name": "Krystyna Filipowicz",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_glowacki",
+      "name": "Henryk Głowacki",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_hermanowski",
+      "name": "Czesław Hermanowski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_iwanski",
+      "name": "Henryk Iwański",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:stronnictwo_ziemi",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "stronnictwo_ziemi"
+    },
+    {
+      "id": "POL_jablonowski",
+      "name": "Danuta Jabłonowski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_kaminski",
+      "name": "Henryk Kamiński",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_lewandowicz",
+      "name": "Renata Lewandowicz",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "trzeci_kierunek"
+    },
+    {
+      "id": "POL_michalak",
+      "name": "Marek Michalak",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:stronnictwo_ziemi",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_nowicki",
+      "name": "Grzegorz Nowicki",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "stronnictwo_ziemi"
+    },
+    {
+      "id": "POL_olszewski",
+      "name": "Andrzej Olszewski",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:ludowa_lewica",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_piotrowski",
+      "name": "Stanisław Piotrowski",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:wolnosc_i_wlasnosc",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "trzeci_kierunek"
+    },
+    {
+      "id": "POL_rybicki",
+      "name": "Danuta Rybicki",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ludowa_lewica"
+    },
+    {
+      "id": "POL_sobolewski",
+      "name": "Andrzej Sobolewski",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_tolwinski",
+      "name": "Stanisław Tołwiński",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_ulanowski",
+      "name": "Jadwiga Ulanowski",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ludowa_lewica"
+    },
+    {
+      "id": "POL_wisniewski",
+      "name": "Danuta Wiśniewski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ludowa_lewica"
+    },
+    {
+      "id": "POL_zalewski",
+      "name": "Stanisław Zalewski",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_adamowski",
+      "name": "Czesław Adamowski",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_bilinski",
+      "name": "Marek Biliński",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "narod_i_tradycja"
+    },
+    {
+      "id": "POL_cybulski",
+      "name": "Marek Cybulski",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "trzeci_kierunek"
+    },
+    {
+      "id": "POL_dabrowski",
+      "name": "Zbigniew Dąbrowski",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_ernestowicz",
+      "name": "Malgorzata Ernestowicz",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_fijas",
+      "name": "Ewa Fijas",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_godlewski",
+      "name": "Bronisław Godlewski",
+      "kind": "judge",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_horodynski",
+      "name": "Jan Horodyński",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "stronnictwo_ziemi"
+    },
+    {
+      "id": "POL_jakubowski",
+      "name": "Ewa Jakubowski",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_kowalczyk",
+      "name": "Grzegorz Kowalczyk",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_lipinski",
+      "name": "Jan Lipiński",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_malinowski",
+      "name": "Dariusz Malinowski",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ludowa_lewica"
+    },
+    {
+      "id": "POL_nieborowski",
+      "name": "Agnieszka Nieborowski",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_orzechowski",
+      "name": "Marek Orzechowski",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 43.9
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_pulaski",
+      "name": "Marek Pułaski",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_romanowski",
+      "name": "Stanisław Romanowski",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_sadowski",
+      "name": "Stanisław Sadowski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.2
+        }
+      ],
+      "bench": true,
+      "party_id": "trzeci_kierunek"
+    },
+    {
+      "id": "POL_wojcik",
+      "name": "Agnieszka Wojcik",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "wolnosc_i_wlasnosc"
+    },
+    {
+      "id": "POL_ankwicz",
+      "name": "Zbigniew Ankwicz",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.63,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "POL_bakowski",
+      "name": "Piotr Bąkowski",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "trzeci_kierunek"
+    },
+    {
+      "id": "POL_chodakowski",
+      "name": "Andrzej Chodakowski",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_dunin",
+      "name": "Czesław Dunin",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "POL_estko",
+      "name": "Renata Estko",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "stronnictwo_ziemi"
+    },
+    {
+      "id": "POL_galicinski",
+      "name": "Zbigniew Galicinski",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sojusz_obywatelski"
+    },
+    {
+      "id": "POL_holowinski",
+      "name": "Bronisław Hołowiński",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sojusz_obywatelski"
+    }
   ]
 }

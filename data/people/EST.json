@@ -1,11 +1,1134 @@
 {
   "people": [
-    { "id": "EST_lepik", "name": "Madis Lepik" },
-    { "id": "EST_kirus", "name": "Jaan Kirus" },
-    { "id": "EST_soova", "name": "Maret Soova" },
-    { "id": "EST_luik", "name": "Urmas Luik" },
-    { "id": "EST_randma", "name": "Tiit Randma" },
-    { "id": "EST_talivee", "name": "Marju Talivee" },
-    { "id": "EST_kaarel_ii", "name": "Kaarel II" }
+    {
+      "id": "EST_lepik",
+      "name": "Madis Lepik",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:rahva_koda",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_kirus",
+      "name": "Jaan Kirus",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_soova",
+      "name": "Maret Soova",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_luik",
+      "name": "Urmas Luik",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:rahvuslik_parand",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_randma",
+      "name": "Tiit Randma",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_talivee",
+      "name": "Marju Talivee",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_kaarel_ii",
+      "name": "Kaarel II",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "EST_aare",
+      "name": "Rein Aare",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_blomfeldt",
+      "name": "Kadri Blomfeldt",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_claudt",
+      "name": "Piret Claudt",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_deemant",
+      "name": "Liis Deemant",
+      "kind": "union_leader",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_eensoo",
+      "name": "Ülle Eensoo",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahva_koda"
+    },
+    {
+      "id": "EST_freiberg",
+      "name": "Rein Freiberg",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kodumaa_liit"
+    },
+    {
+      "id": "EST_grunberg",
+      "name": "Lembit Grünberg",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_halliste",
+      "name": "Peeter Halliste",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:rahva_koda",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_ilves",
+      "name": "Kadri Ilves",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_jogi",
+      "name": "Tiina Jõgi",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "office:party_leadership:rahvuslik_parand",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_kask",
+      "name": "Endel Kask",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kodumaa_liit"
+    },
+    {
+      "id": "EST_lillemae",
+      "name": "Tiina Lillemäe",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "EST_mandmaa",
+      "name": "Tõnu Mändmaa",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_nurmsalu",
+      "name": "Eve Nurmsalu",
+      "kind": "activist",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_oja",
+      "name": "Eve Oja",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_parn",
+      "name": "Olev Pärn",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 37.5
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_rand",
+      "name": "Tõnu Rand",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kodumaa_liit"
+    },
+    {
+      "id": "EST_salu",
+      "name": "Aino Salu",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_tammeorg",
+      "name": "Kalju Tammeorg",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_uibo",
+      "name": "Kalju Uibo",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_valbe",
+      "name": "Anneli Välbe",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_oopik",
+      "name": "Peeter Ööpik",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_allik",
+      "name": "Vello Allik",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_bockler",
+      "name": "Anneli Böckler",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_dittmer",
+      "name": "Olev Dittmer",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahva_koda"
+    },
+    {
+      "id": "EST_ehala",
+      "name": "Tõnu Ehala",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_fjodorov",
+      "name": "Tiina Fjodorov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_grents",
+      "name": "Jaan Grents",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kodumaa_liit"
+    },
+    {
+      "id": "EST_harma",
+      "name": "Aarne Härma",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_ikkonen",
+      "name": "Liis Ikkonen",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_jurgens",
+      "name": "Endel Jürgens",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahva_koda"
+    },
+    {
+      "id": "EST_kutt",
+      "name": "Lembit Kütt",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_laurits",
+      "name": "Vello Laurits",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_mets",
+      "name": "Kalju Mets",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.4,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "EST_nommik",
+      "name": "Kadri Nõmmik",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_orav",
+      "name": "Peeter Orav",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_parts",
+      "name": "Rein Parts",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_raudsepp",
+      "name": "Kalju Raudsepp",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_sirel",
+      "name": "Jaan Sirel",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_teder",
+      "name": "Endel Teder",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_aarma",
+      "name": "Endel Aarma",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_bernstein",
+      "name": "Rein Bernstein",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_deutschmann",
+      "name": "Eve Deutschmann",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uhiskondlik_kaitse"
+    },
+    {
+      "id": "EST_eero",
+      "name": "Ülle Eero",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahva_koda"
+    },
+    {
+      "id": "EST_feldbach",
+      "name": "Vello Feldbach",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uuendusliit"
+    },
+    {
+      "id": "EST_gerassimov",
+      "name": "Kadri Gerassimov",
+      "kind": "judge",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "EST_hallik",
+      "name": "Rein Hallik",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "rahvuslik_parand"
+    },
+    {
+      "id": "EST_jaanson",
+      "name": "Mati Jaanson",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "office:party_leadership:uhiskondlik_kaitse",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "rahva_koda"
+    }
   ]
 }

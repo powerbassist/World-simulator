@@ -1214,6 +1214,16 @@ var party_leader_override: Dictionary[String, String] = {}
 ## the block's most consequential verb reverts to its authored shape.
 var person_party_override: Dictionary[String, String] = {}
 
+## person id + "|" + want object -> was the want served last month (bool).
+## The EDGE-TRIGGER's memory: a grudge fires when a want TURNS denied and a
+## loyalty pulse when it TURNS served, so the register the month-over-month
+## comparison reads must survive the save -- a denial straddling a save would
+## otherwise re-fire its grudge on every load. Absent it (a version-35 save)
+## every want reads as its own current state, so the FIRST post-load month
+## writes no pulse -- which is the honest reading: the load knows nothing
+## about what the save's last month saw.
+var person_want_state: Dictionary[String, bool] = {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1736,6 +1746,7 @@ func duplicate_state():
 	s.person_grudges = person_grudges.duplicate(true)
 	s.party_leader_override = party_leader_override.duplicate(true)
 	s.person_party_override = person_party_override.duplicate(true)
+	s.person_want_state = person_want_state.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1961,6 +1972,7 @@ func to_dict() -> Dictionary:
 		"person_grudges": person_grudges,
 		"party_leader_override": party_leader_override,
 		"person_party_override": person_party_override,
+		"person_want_state": person_want_state,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -2318,6 +2330,7 @@ static func from_dict(d: Dictionary):
 	s.person_grudges = _float_map_from(d.get("person_grudges", {}))
 	s.party_leader_override = _string_map_from(d.get("party_leader_override", {}))
 	s.person_party_override = _string_map_from(d.get("person_party_override", {}))
+	s.person_want_state = _bool_map_from(d.get("person_want_state", {}))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -2444,6 +2457,17 @@ static func _string_map_from(raw) -> Dictionary[String, String]:
 	var src: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	for key in src.keys():
 		out[String(key)] = String(src[key])
+	return out
+
+
+## The edge-trigger register's from-dict half: JSON hands back no booleans
+## distinction worth guarding beyond truthiness, but a typed map deserves the
+## cast the others get.
+static func _bool_map_from(raw) -> Dictionary[String, bool]:
+	var out: Dictionary[String, bool] = {}
+	var src: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	for key in src.keys():
+		out[String(key)] = bool(src[key])
 	return out
 
 

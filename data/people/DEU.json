@@ -1,12 +1,1129 @@
 {
   "people": [
-    { "id": "DEU_vogler", "name": "Matthias Vogler" },
-    { "id": "DEU_bohlen", "name": "Katrin Bohlen" },
-    { "id": "DEU_ruppert", "name": "Jens Ruppert" },
-    { "id": "DEU_seibold", "name": "Annika Seibold" },
-    { "id": "DEU_falk", "name": "Dietrich Falk" },
-    { "id": "DEU_grotholt", "name": "Marlene Grotholt" },
-    { "id": "DEU_emmerich", "name": "Wolfgang Emmerich" },
-    { "id": "DEU_friedrich_iv", "name": "Friedrich IV" }
+    {
+      "id": "DEU_vogler",
+      "name": "Matthias Vogler",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:linke_allianz",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_bohlen",
+      "name": "Katrin Bohlen",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_ruppert",
+      "name": "Jens Ruppert",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_seibold",
+      "name": "Annika Seibold",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_falk",
+      "name": "Dietrich Falk",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_grotholt",
+      "name": "Marlene Grotholt",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_emmerich",
+      "name": "Wolfgang Emmerich",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_friedrich_iv",
+      "name": "Friedrich IV",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "DEU_ahrendts",
+      "name": "Konrad Ahrendts",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DEU_bergmann",
+      "name": "Silke Bergmann",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "gruene_zukunft"
+    },
+    {
+      "id": "DEU_claussen",
+      "name": "Cornelius Claussen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_diekmann",
+      "name": "Franka Diekmann",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "freiheitliche_mitte"
+    },
+    {
+      "id": "DEU_eilers",
+      "name": "Achim Eilers",
+      "kind": "regional_figure",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerunion"
+    },
+    {
+      "id": "DEU_feuerbach",
+      "name": "Jörn Feuerbach",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_groenewold",
+      "name": "Dietlinde Groenewold",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DEU_hartung",
+      "name": "Falk Hartung",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_isenberg",
+      "name": "Achim Isenberg",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_kastner",
+      "name": "Lena Kastner",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_lindhorst",
+      "name": "Sophie Lindhorst",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_mertens",
+      "name": "Dietlinde Mertens",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_nolte",
+      "name": "Hauke Nolte",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "linke_allianz"
+    },
+    {
+      "id": "DEU_osterkamp",
+      "name": "Marlies Osterkamp",
+      "kind": "judge",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_pfeiffer",
+      "name": "Meinolf Pfeiffer",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_quast",
+      "name": "Achim Quast",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "gruene_zukunft"
+    },
+    {
+      "id": "DEU_ricken",
+      "name": "Ludger Ricken",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "linke_allianz"
+    },
+    {
+      "id": "DEU_schwarzkopf",
+      "name": "Dietlinde Schwarzkopf",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_tiefensee",
+      "name": "Cornelius Tiefensee",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_uhlig",
+      "name": "Annelie Uhlig",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "gruene_zukunft"
+    },
+    {
+      "id": "DEU_vollbrecht",
+      "name": "Franka Vollbrecht",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "office:party_leadership:linke_allianz",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_wenzel",
+      "name": "Ludger Wenzel",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_ziegenhals",
+      "name": "Gernot Ziegenhals",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerunion"
+    },
+    {
+      "id": "DEU_brinkmann",
+      "name": "Katharina Brinkmann",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:gruene_zukunft",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_drolshagen",
+      "name": "Bertram Drolshagen",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "freiheitliche_mitte"
+    },
+    {
+      "id": "DEU_ehlers",
+      "name": "Heide Ehlers",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_fischbach",
+      "name": "Konrad Fischbach",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_gerlach",
+      "name": "Eckhard Gerlach",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:nationale_erneuerung",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_hulsbusch",
+      "name": "Gernot Hülsbusch",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_iserlohe",
+      "name": "Silke Iserlohe",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_kesselring",
+      "name": "Achim Kesselring",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerunion"
+    },
+    {
+      "id": "DEU_lobbert",
+      "name": "Ludger Löbbert",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.5,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DEU_mummert",
+      "name": "Johanna Mummert",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DEU_nienhaus",
+      "name": "Lena Nienhaus",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_overbeck",
+      "name": "Antje Overbeck",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_potter",
+      "name": "Meinolf Pötter",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.2,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "DEU_rolfes",
+      "name": "Wiebke Rolfes",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 43.7
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_suhren",
+      "name": "Silke Suhren",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_erneuerung"
+    },
+    {
+      "id": "DEU_tschirner",
+      "name": "Silke Tschirner",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:buergerunion",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_waldmann",
+      "name": "Wiebke Waldmann",
+      "kind": "judge",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_arndt",
+      "name": "Ludger Arndt",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_busemann",
+      "name": "Johanna Busemann",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_diederichs",
+      "name": "Jörn Diederichs",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sozialer_fortschritt"
+    },
+    {
+      "id": "DEU_emden",
+      "name": "Sophie Emden",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "DEU_frevert",
+      "name": "Jörn Frevert",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "freiheitliche_mitte"
+    },
+    {
+      "id": "DEU_grotehusmann",
+      "name": "Jörn Grotehusmann",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:gruene_zukunft",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerunion"
+    },
+    {
+      "id": "DEU_hillen",
+      "name": "Marlies Hillen",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

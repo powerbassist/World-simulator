@@ -55,6 +55,7 @@ static func init_nation(ns, people_list: Array) -> void:
 	ns.person_grudges.clear()
 	ns.party_leader_override.clear()
 	ns.person_party_override.clear()
+	ns.person_want_state.clear()
 	for person in people_list:
 		var standing := CK.STANDING_SEED_BASE + CK.STANDING_SEED_AMBITION * float(person.ambition)
 		if person.traits.has("ambitious"):
@@ -120,17 +121,26 @@ static func _decay_grudges(ns) -> void:
 		)
 
 
-## Loyalty and grudge movement from one month's want read. A want served pays
-## loyalty; a want denied pays grudge; a meter want reads the CURRENT value
-## against its authored threshold, and an office want reads the slots.
+## Loyalty and grudge movement from one month's want read. EDGE-TRIGGERED, not
+## level-priced -- V4.0's own finding one level down: pricing the LEVEL means
+## a want denied by the world the player INHERITED writes grudge every month,
+## and an idle term accumulates betrayals nobody committed. A want that TURNS
+## denied writes one grudge pulse; one that turns served writes one loyalty
+## pulse; a want that stays where it was writes nothing. The month a
+## satisfaction flips is the month the player's decisions (or their absence)
+## moved the world under the want -- which is the only month the person
+## blames them for.
 static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dictionary) -> void:
 	for want in person.wants:
 		var stance := String(want["stance"])
+		var object := String(want["object"])
 		var satisfied := _want_satisfied(ns, person, want, meters, authored_leaders)
 		var served: bool = satisfied if stance != "oppose" else not satisfied
-		if served:
+		var prev: bool = ns.person_want_state.get(person.id + "|" + object, served)
+		ns.person_want_state[person.id + "|" + object] = served
+		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
-		else:
+		elif prev and not served:
 			_adjust_grudge(ns, person, CK.GRUDGE_WANT_DENIED)
 
 
@@ -234,6 +244,14 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 				return false
 			var incumbent := _party_leader(ns, target_party, authored_leaders)
 			if incumbent == person.id:
+				return false
+			# A challenge needs GRIEVANCE as well as standing: standing alone
+			# is ambition, and month one of a fresh term would otherwise see
+			# every ambitious bench figure coup their leader on day one --
+			# the already-won/lost defect class, in a person's shape. The
+			# grudge is what the player's choices write; the standing is only
+			# the muscle that makes the grudge dangerous.
+			if grudge < CK.CHALLENGE_GRUDGE_FLOOR:
 				return false
 			var threshold := CK.CHALLENGE_STANDING_THRESHOLD
 			if person.traits.has("ambitious"):

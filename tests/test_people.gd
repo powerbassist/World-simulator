@@ -114,6 +114,10 @@ func _check_every_reference_resolves() -> void:
 
 
 ## The unusual half of the load, and the one this session earned the hard way.
+## V4.3's rescoped rule: a person is referenced by a slot, OR by a
+## non-politician kind (the kind is the meter hook), OR by an authored
+## party_id (the backbencher edge). The loader enforces it; this check
+## re-derives it independently so the two cannot silently diverge.
 func _check_no_orphans() -> void:
 	var referenced := {}
 	for nation_id in NATIONS:
@@ -124,6 +128,10 @@ func _check_no_orphans() -> void:
 		referenced[nation.pretender_person_id] = true
 		for party in _loader.parties[nation_id]:
 			referenced[party.leader_person_id] = true
+	for nation_id in _loader.people.keys():
+		for person in _loader.people[nation_id]:
+			if person.kind != "politician" or person.party_id != "":
+				referenced[person.id] = true
 	for pid in _loader.person_by_id.keys():
 		if not referenced.has(pid):
 			_fail("person '%s' is referenced by nothing -- an orphan should not have loaded" % pid)

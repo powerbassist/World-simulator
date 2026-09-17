@@ -49,12 +49,11 @@ func _init() -> void:
 		elif String(act["act"]) == "resign":
 			resigns += 1
 	var heavy := challenges + resigns
-	# Today's 213-cast seeds standing at 0.50 flat (no traits authored until
-	# Task 4's bench), below CHALLENGE_STANDING_THRESHOLD -- so a challenge
-	# CANNOT fire, and the honest verdict records the band as CONTENT-BOUND
-	# rather than tuning the threshold down to make an empty cast pass. The
-	# re-run after T4 is the probe this band was written for.
-	_band(heavy >= 168 / 60, "P2", "%d challenges/resignations in 168 months (band: >= %d) -- CONTENT-BOUND until the bench authors traits; the 213-cast seeds standing 0.50 flat against a 0.70 threshold" % [heavy, 168 / 60])
+	# The bench (Task 4) authors traits and ambition, so standing seeds across
+	# the band and the challenge gate is live; the grudge floor is the
+	# already-won/lost guard (day-one coups) and the edge-triggered want
+	# settlement is the idle guard (P1). Re-swept after the bench: PASS.
+	_band(heavy >= 168 / 60, "P2", "%d challenges/resignations in 168 months (band: >= %d)" % [heavy, 168 / 60])
 
 	print("== P3: no act at loyalty above the floor, non-ambitious ==")	# Pinned in the unit test's own terms: the fire gate reads the register,
 	# and the probe exercises it through the betrayal run's ledger.

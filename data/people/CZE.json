@@ -1,12 +1,1194 @@
 {
   "people": [
-    { "id": "CZE_svehlik", "name": "Martin Švehlík" },
-    { "id": "CZE_kraus", "name": "Miloš Kraus" },
-    { "id": "CZE_siska", "name": "Radek Šiška" },
-    { "id": "CZE_dobesova", "name": "Klára Doběšová" },
-    { "id": "CZE_strnad", "name": "Jakub Strnad" },
-    { "id": "CZE_holub", "name": "Karel Holub" },
-    { "id": "CZE_krejcova", "name": "Milena Krejčová" },
-    { "id": "CZE_vaclav_v", "name": "Václav V" }
+    {
+      "id": "CZE_svehlik",
+      "name": "Martin Švehlík",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_kraus",
+      "name": "Miloš Kraus",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_siska",
+      "name": "Radek Šiška",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_dobesova",
+      "name": "Klára Doběšová",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_strnad",
+      "name": "Jakub Strnad",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_holub",
+      "name": "Karel Holub",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_krejcova",
+      "name": "Milena Krejčová",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_vaclav_v",
+      "name": "Václav V",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CZE_bartos",
+      "name": "Jitka Bartoš",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_caha",
+      "name": "Ctirad Caha",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_dolezal",
+      "name": "Petra Doležal",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "office:party_leadership:suverenita_a_rad",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "meststi_liberalove"
+    },
+    {
+      "id": "CZE_elias",
+      "name": "Luboš Eliáš",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_fiser",
+      "name": "František Fišer",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_gregor",
+      "name": "Ctirad Gregor",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "leva_alternativa"
+    },
+    {
+      "id": "CZE_hajek",
+      "name": "Ctirad Hájek",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_chalupa",
+      "name": "Ctirad Chalupa",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_janda",
+      "name": "Petra Janda",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "meststi_liberalove"
+    },
+    {
+      "id": "CZE_kroupa",
+      "name": "Eduard Kroupa",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_lukes",
+      "name": "Jaromír Lukeš",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_marek",
+      "name": "Radim Marek",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_novotny",
+      "name": "Dobroslav Novotný",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_odehnal",
+      "name": "Eduard Odehnal",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_petr",
+      "name": "Naďa Petr",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_rychtar",
+      "name": "Anežka Rychtář",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "leva_alternativa"
+    },
+    {
+      "id": "CZE_sedlacek",
+      "name": "Ctirad Sedláček",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tradice_a_odpovednost"
+    },
+    {
+      "id": "CZE_toman",
+      "name": "Luboš Toman",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.9
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_uhlir",
+      "name": "Eva Uhlíř",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tradice_a_odpovednost"
+    },
+    {
+      "id": "CZE_vavra",
+      "name": "Dobroslav Vávra",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_zaruba",
+      "name": "Eva Záruba",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.5
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_benes",
+      "name": "Klára Beneš",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_chmelar",
+      "name": "Lucie Chmelař",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "office:party_leadership:meststi_liberalove",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_dvoracek",
+      "name": "Karel Dvořáček",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "CZE_fojtik",
+      "name": "Klára Fojtík",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_hruby",
+      "name": "Božena Hrubý",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "office:party_leadership:leva_alternativa",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_jilek",
+      "name": "Radim Jílek",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_kopecky",
+      "name": "Dobroslav Kopecký",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_musil",
+      "name": "Eduard Musil",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_nemec",
+      "name": "Karel Němec",
+      "kind": "activist",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_pribyl",
+      "name": "Ctirad Přibyl",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "hnuti_pro_budoucnost"
+    },
+    {
+      "id": "CZE_sova",
+      "name": "Luboš Sova",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_simek",
+      "name": "Markéta Šimek",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tradice_a_odpovednost"
+    },
+    {
+      "id": "CZE_tesar",
+      "name": "Radim Tesař",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "office:party_leadership:suverenita_a_rad",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "tradice_a_odpovednost"
+    },
+    {
+      "id": "CZE_vanek",
+      "name": "Karel Vaněk",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_zemek",
+      "name": "Naďa Zemek",
+      "kind": "regional_figure",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "meststi_liberalove"
+    },
+    {
+      "id": "CZE_beran",
+      "name": "Klára Beran",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.4,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "CZE_cisar",
+      "name": "Jaromír Císař",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "leva_alternativa"
+    },
+    {
+      "id": "CZE_duda",
+      "name": "Jitka Duda",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_havlicek",
+      "name": "Luboš Havlíček",
+      "kind": "judge",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_adamec",
+      "name": "Karel Adamec",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:suverenita_a_rad",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "suverenita_a_rad"
+    },
+    {
+      "id": "CZE_benesovsky",
+      "name": "Bohumil Benešovský",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_cvejn",
+      "name": "Milan Cvejn",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "office:party_leadership:meststi_liberalove",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "meststi_liberalove"
+    },
+    {
+      "id": "CZE_dosek",
+      "name": "František Došek",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "meststi_liberalove"
+    },
+    {
+      "id": "CZE_fialka",
+      "name": "Milan Fialka",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CZE_hofman",
+      "name": "Naďa Hofman",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "leva_alternativa"
+    },
+    {
+      "id": "CZE_jires",
+      "name": "Milan Jireš",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obcanska_aliance"
+    }
   ]
 }

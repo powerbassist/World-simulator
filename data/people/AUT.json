@@ -1,11 +1,1096 @@
 {
   "people": [
-    { "id": "AUT_kettler", "name": "Bernhard Kettler" },
-    { "id": "AUT_haslinger", "name": "Ingrid Haslinger" },
-    { "id": "AUT_prantl", "name": "Wolfgang Prantl" },
-    { "id": "AUT_aichinger", "name": "Theresa Aichinger" },
-    { "id": "AUT_steinhauser", "name": "Lukas Steinhauser" },
-    { "id": "AUT_kranzler", "name": "Elisabeth Kranzler" },
-    { "id": "AUT_rudolf_v", "name": "Rudolf V" }
+    {
+      "id": "AUT_kettler",
+      "name": "Bernhard Kettler",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_haslinger",
+      "name": "Ingrid Haslinger",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "office:party_leadership:nationale_sammlung",
+          "stance": "want"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_prantl",
+      "name": "Wolfgang Prantl",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_aichinger",
+      "name": "Theresa Aichinger",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_steinhauser",
+      "name": "Lukas Steinhauser",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_kranzler",
+      "name": "Elisabeth Kranzler",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_rudolf_v",
+      "name": "Rudolf V",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:arbeiterbund",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "AUT_adlmannseder",
+      "name": "Severin Adlmannseder",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "neues_zentrum"
+    },
+    {
+      "id": "AUT_berghammer",
+      "name": "Eduard Berghammer",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerliche_mitte"
+    },
+    {
+      "id": "AUT_czerny",
+      "name": "Klemens Czerny",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_dienstl",
+      "name": "Gerti Dienstl",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "neues_zentrum"
+    },
+    {
+      "id": "AUT_ebner",
+      "name": "Severin Ebner",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_frauscher",
+      "name": "Augustin Frauscher",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_sammlung"
+    },
+    {
+      "id": "AUT_gruber",
+      "name": "Eduard Gruber",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_haidinger",
+      "name": "Florian Haidinger",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "AUT_innerhofer",
+      "name": "Jakob Innerhofer",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_jagsch",
+      "name": "Balthasar Jagsch",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_kienast",
+      "name": "Ingrid Kienast",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_lettner",
+      "name": "Severin Lettner",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_moser",
+      "name": "Klemens Moser",
+      "kind": "press_owner",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_neumayer",
+      "name": "Ignaz Neumayer",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_sammlung"
+    },
+    {
+      "id": "AUT_oberhauser",
+      "name": "Ingrid Oberhauser",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_puntigam",
+      "name": "Leopold Puntigam",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "arbeiterbund"
+    },
+    {
+      "id": "AUT_quendler",
+      "name": "Johanna Quendler",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_reiterer",
+      "name": "Klemens Reiterer",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.65,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "AUT_schwarzenberger",
+      "name": "Severin Schwarzenberger",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_trimmel",
+      "name": "Balthasar Trimmel",
+      "kind": "judge",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_unterberger",
+      "name": "Mitzi Unterberger",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "neues_zentrum"
+    },
+    {
+      "id": "AUT_vollnhofer",
+      "name": "Christoph Vollnhofer",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_wiesner",
+      "name": "Gerti Wiesner",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_zauner",
+      "name": "Eduard Zauner",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerliche_mitte"
+    },
+    {
+      "id": "AUT_aschauer",
+      "name": "Balthasar Aschauer",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_birngruber",
+      "name": "Eduard Birngruber",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_sammlung"
+    },
+    {
+      "id": "AUT_dannecker",
+      "name": "Klemens Dannecker",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_ederer",
+      "name": "Hanna Ederer",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_felbermair",
+      "name": "Christoph Felbermair",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_gstrein",
+      "name": "Balthasar Gstrein",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_hafner",
+      "name": "Aloisia Hafner",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "office:party_leadership:arbeiterbund",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "arbeiterbund"
+    },
+    {
+      "id": "AUT_iro",
+      "name": "Severin Iro",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_kaltenbrunner",
+      "name": "Gottfried Kaltenbrunner",
+      "kind": "union_leader",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 34.7
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_loidl",
+      "name": "Balthasar Loidl",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_matischek",
+      "name": "Elisabeth Matischek",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_nagler",
+      "name": "Eduard Nagler",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "oekologische_liste"
+    },
+    {
+      "id": "AUT_omann",
+      "name": "Gottfried Omann",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "arbeiterbund"
+    },
+    {
+      "id": "AUT_piribauer",
+      "name": "Florian Piribauer",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.3
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerliche_mitte"
+    },
+    {
+      "id": "AUT_steinbauer",
+      "name": "Barbara Steinbauer",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerliche_mitte"
+    },
+    {
+      "id": "AUT_windbichler",
+      "name": "Florian Windbichler",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_achleitner",
+      "name": "Karin Achleitner",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "arbeiterbund"
+    },
+    {
+      "id": "AUT_brunner",
+      "name": "Augustin Brunner",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "AUT_capesius",
+      "name": "Klemens Capesius",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_doppler",
+      "name": "Balthasar Doppler",
+      "kind": "activist",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_fraungruber",
+      "name": "Barbara Fraungruber",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "buergerliche_mitte"
+    },
+    {
+      "id": "AUT_grabner",
+      "name": "Aloisia Grabner",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.73,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "AUT_hiebler",
+      "name": "Elisabeth Hiebler",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "AUT_jud",
+      "name": "Christoph Jud",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

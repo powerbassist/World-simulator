@@ -1,11 +1,1148 @@
 {
   "people": [
-    { "id": "ROU_stanciu", "name": "Mircea Stanciu" },
-    { "id": "ROU_moraru", "name": "Vasile Moraru" },
-    { "id": "ROU_iordache", "name": "Elena Iordache" },
-    { "id": "ROU_radulescu", "name": "Tudor Rădulescu" },
-    { "id": "ROU_nagy", "name": "Katalin Nagy" },
-    { "id": "ROU_vasilescu", "name": "Octav Vasilescu" },
-    { "id": "ROU_mihai_ii", "name": "Mihai II" }
+    {
+      "id": "ROU_stanciu",
+      "name": "Mircea Stanciu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 33.1
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_moraru",
+      "name": "Vasile Moraru",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_iordache",
+      "name": "Elena Iordache",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 34.0
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_radulescu",
+      "name": "Tudor Rădulescu",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_nagy",
+      "name": "Katalin Nagy",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_vasilescu",
+      "name": "Octav Vasilescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "office:party_leadership:partidul_civic_crestin",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_mihai_ii",
+      "name": "Mihai II",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ROU_alecsandrescu",
+      "name": "Florentina Alecsandrescu",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_balcescu",
+      "name": "Dumitru Bălcescu",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_carp",
+      "name": "Cornel Carp",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_dobrescu",
+      "name": "Nadia Dobrescu",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "blocul_muncitoresc"
+    },
+    {
+      "id": "ROU_enache",
+      "name": "Adrian Enache",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_filipescu",
+      "name": "Florentina Filipescu",
+      "kind": "activist",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 33.9
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_hurmuzache",
+      "name": "Nicolae Hurmuzache",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_ionescu",
+      "name": "Gheorghe Ionescu",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_jalea",
+      "name": "Camelia Jalea",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "office:party_leadership:blocul_muncitoresc",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "blocul_muncitoresc"
+    },
+    {
+      "id": "ROU_kretzulescu",
+      "name": "Sorin Kretzulescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "office:party_leadership:uniunea_maghiara",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_cetatenilor"
+    },
+    {
+      "id": "ROU_lupescu",
+      "name": "Ilinca Lupescu",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "blocul_muncitoresc"
+    },
+    {
+      "id": "ROU_munteanu",
+      "name": "Gheorghe Munteanu",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_nastase",
+      "name": "Ilinca Năstase",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frontul_renasterii"
+    },
+    {
+      "id": "ROU_odobescu",
+      "name": "Nicolae Odobescu",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_petrescu",
+      "name": "Emil Petrescu",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_rosetti",
+      "name": "Viorica Rosetti",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_sturdza",
+      "name": "Larisa Sturdza",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_titulescu",
+      "name": "Camelia Titulescu",
+      "kind": "activist",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_ureche",
+      "name": "Mioara Ureche",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_voda",
+      "name": " Florin Vodă",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_zamfirescu",
+      "name": "Rodica Zamfirescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:uniunea_cetatenilor",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_andronescu",
+      "name": "Adrian Andronescu",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "ROU_bratianu",
+      "name": "Georgeta Brătianu",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_cirstea",
+      "name": "Viorica Cîrstea",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_diaconescu",
+      "name": "Petru Diaconescu",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_eftimie",
+      "name": " Florin Eftimie",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_falcoianu",
+      "name": "Camelia Fălcoianu",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "blocul_muncitoresc"
+    },
+    {
+      "id": "ROU_golescu",
+      "name": "Emil Golescu",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frontul_renasterii"
+    },
+    {
+      "id": "ROU_hasdeu",
+      "name": "Ion Hasdeu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_ilie",
+      "name": "Ion Ilie",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_lazar",
+      "name": "Petru Lazăr",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_manescu",
+      "name": "Emil Mănescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partidul_civic_crestin"
+    },
+    {
+      "id": "ROU_negruzzi",
+      "name": "Sorin Negruzzi",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_cetatenilor"
+    },
+    {
+      "id": "ROU_popescu",
+      "name": "Emil Popescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "frontul_renasterii"
+    },
+    {
+      "id": "ROU_racovita",
+      "name": "Nadia Racoviță",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "office:party_leadership:partidul_civic_crestin",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_slatineanu",
+      "name": "Lucian Slătineanu",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "office:party_leadership:partidul_civic_crestin",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "frontul_renasterii"
+    },
+    {
+      "id": "ROU_tanasescu",
+      "name": "Camelia Tănăsescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "frontul_renasterii"
+    },
+    {
+      "id": "ROU_vladescu",
+      "name": "Marian Vlădescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:frontul_renasterii",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_zosim",
+      "name": "Cornel Zosim",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_albu",
+      "name": "Nicolae Albu",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_bradeanu",
+      "name": "Elena Brădeanu",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_cantacuzino",
+      "name": "Gheorghe Cantacuzino",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:uniunea_maghiara",
+          "stance": "want"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_cetatenilor"
+    },
+    {
+      "id": "ROU_dumitresc",
+      "name": "Doina Dumitresc",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_cetatenilor"
+    },
+    {
+      "id": "ROU_enescu",
+      "name": "Emil Enescu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "partidul_civic_crestin"
+    },
+    {
+      "id": "ROU_fundeni",
+      "name": "Dumitru Fundeni",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "uniunea_maghiara"
+    },
+    {
+      "id": "ROU_ghica",
+      "name": "Elena Ghica",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "ROU_hurmuzachi",
+      "name": "Petru Hurmuzachi",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:uniunea_maghiara",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "miscarea_progresista"
+    },
+    {
+      "id": "ROU_iorceanu",
+      "name": "Adina Iorceanu",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "office:party_leadership:frontul_renasterii",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "blocul_muncitoresc"
+    }
   ]
 }
