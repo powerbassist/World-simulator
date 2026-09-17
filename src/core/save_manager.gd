@@ -153,3 +153,21 @@ static func list_slots() -> Array[String]:
 
 	names.sort_custom(func(a, b): return FileAccess.get_modified_time(_path_for(a)) > FileAccess.get_modified_time(_path_for(b)))
 	return names
+
+
+## A slot file's modified time in Unix seconds, for the save/load UI's stamp.
+## 0 (the error value) if the file is gone between the listing and this read.
+static func slot_mtime(slot: String) -> int:
+	return FileAccess.get_modified_time(_path_for(slot))
+
+
+## Removes a save file. Refuses a name that has no file, so a stale row's
+## second click after another path deleted it reports rather than "succeeds".
+static func delete_slot(slot: String) -> bool:
+	var path := _path_for(slot)
+	if not FileAccess.file_exists(path):
+		return false
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return false
+	return dir.remove(slot + ".json") == OK

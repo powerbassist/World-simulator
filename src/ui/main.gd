@@ -121,6 +121,10 @@ var _decision_card_id := ""
 ## machinery pointed at the agenda. See _enforce_term_start_programme().
 var _paused_for_programme := false
 var _programme_card_id := ""
+## The opening "Your term" card. Its countdown ages with the clock, so the id
+## is kept and the body is rewritten in place each month -- a stale snapshot
+## was playtest finding B4. Empty for a loaded save, which never receives it.
+var _term_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
@@ -601,13 +605,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty():
-		var ns = _state.player()
-		var when := Trends.vote_date(ns)
-		_hud.message_stack.push("Your term", "You hold %s until %s %d -- %s. Win the vote." % [
-			_nation_name(_state.player_nation_id),
-			ClockCluster.MONTH_NAMES[when.y - 1], when.x,
-			Trends.months_text(Trends.months_to_vote(_state, ns)),
-		])
+		_term_card_id = _hud.message_stack.push("Your term", _term_card_body())
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -861,6 +859,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed:
 		return
 
+	# B16 (playtest): with the save dialog open, every letter here was routed
+	# straight at the windows behind it -- or typed into the dialog's name field
+	# once it held focus -- and Escape did nothing. While the dialog is visible
+	# the panel-hotkey branch is skipped (the toggle in the match below still
+	# runs, so S keeps closing it) and Escape closes the dialog first, before
+	# anything else in the match can eat the key.
+	var save_dialog_open: bool = _save_load_panel != null and _save_load_panel.visible
+
 	# V2.1c. The six letters U2 bound to tabs still open the six panels they
 	# opened, and the other eight windows have a letter now -- but the map from
 	# key to window lives at the register() call rather than in a match block
@@ -868,7 +874,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# A key TOGGLES rather than selects, because with no rail there is nothing
 	# showing which panel is "current": pressing B twice puts the player back on
 	# the map.
-	if _windows != null:
+	if not save_dialog_open and _windows != null:
 		var by_key: String = _windows.id_for_key(event.keycode)
 		if not by_key.is_empty():
 			_toggle_window(by_key)
@@ -876,6 +882,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	match event.keycode:
 		KEY_ESCAPE:
+			# B16: the open save dialog is the topmost thing Escape can mean.
+			# Checked before the armed placement and the pause menu, which
+			# cannot both be live with the dialog anyway (it opens over a
+			# hidden pause menu and no placement runs from behind it).
+			if save_dialog_open:
+				_save_load_panel.visible = false
+				return
 			# V2.8. An armed placement cancels FIRST and the pause menu never
 			# opens -- Escape ending the thing it was offered for is the mode's
 			# own contract, and a pause menu over a waiting reticle is a second
@@ -1279,6 +1292,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_clock.paused = true
 		_election_panel.show_results(results)
 		_election_panel.show()
+
+	# B4: the opening card's countdown is rewritten (or taken) against the state
+	# this tick settled, Elections included -- it runs after the pair above for
+	# the same reason the programme enforcement below does.
+	_refresh_term_card()
 
 	# V4.1, last so the read is of the state this tick SETTLED: a won election
 	# resets months_in_term above, and the month a new term begins is a term
@@ -1870,6 +1888,43 @@ func _enforce_interrupt() -> void:
 ## term start again). Idempotent by construction: the previous card is
 ## dismissed before a fresh one is pushed, so repeated calls leave exactly
 ## one live card.
+## The opening "Your term" card's sentence, built in one place so the boot push
+## and every monthly refresh print the same countdown off the same query --
+## the playtest's B4 was a snapshot of exactly the drift two copies would make.
+func _term_card_body() -> String:
+	var ns = _state.player()
+	var when := Trends.vote_date(ns)
+	return "You hold %s until %s %d -- %s. Win the vote." % [
+		_nation_name(_state.player_nation_id),
+		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+		Trends.months_text(Trends.months_to_vote(_state, ns)),
+	]
+
+
+## The monthly refresh of the opening card, from _on_month_elapsed(). The body
+## is rewritten in place (set_body keeps the card's position; a dismiss-then-
+## re-push would jump the stack) while there is still a vote ahead, and the
+## card is TAKEN AWAY once there is not -- a "Win the vote" card standing next
+## to a verdict that already held it is the same stale class B4 photographed.
+## A gone id (evicted by MAX_CARDS, or never pushed on a load) no-ops through
+## set_body and the empty-id guards here.
+func _refresh_term_card() -> void:
+	if _term_card_id.is_empty() or _hud == null or _hud.message_stack == null:
+		return
+	var ns = _state.player()
+	if ns == null:
+		# Out of office: the verdict surface took over, the same dismiss as the
+		# no-vote-left branch below, without reading a null nation.
+		_hud.message_stack.dismiss(_term_card_id)
+		_term_card_id = ""
+		return
+	if Trends.months_to_vote(_state, ns) <= 0:
+		_hud.message_stack.dismiss(_term_card_id)
+		_term_card_id = ""
+		return
+	_hud.message_stack.set_body(_term_card_id, _term_card_body())
+
+
 func _enforce_term_start_programme() -> void:
 	if _state == null:
 		return

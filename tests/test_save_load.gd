@@ -1912,10 +1912,18 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)
+
+	# The list above IS the contract, asserted rather than trusted: ORG_FIGHT
+	# and NETWORK were each missing from it and their slots outlived every run
+	# that wrote them (playtest B16a -- a test polluting the live slot list).
+	# Any new save_game call in this file must join both lists or this goes red.
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, BOGUS_SLOT]:
+		if FileAccess.file_exists(SaveManager._path_for(slot)):
+			_fail("cleanup left '%s' behind in %s" % [slot, SaveManager.SAVE_DIR])
 
 
 ## Same reflective, enumerate-off-the-object approach as test_state_copy.gd --

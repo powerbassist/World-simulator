@@ -138,12 +138,51 @@ func _build_slot_row(slot: String) -> Control:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_label)
 
+	# B16: a slot list without dates cannot tell quicksave from quicksave -- the
+	# newest-first order is the only ordering the player is shown and nothing
+	# explains it. An unreadable stamp prints the missing-figure em dash rather
+	# than a confident zero-time (V1.6d's rule).
+	var stamp := Label.new()
+	var mtime: int = SaveManager.slot_mtime(slot)
+	if mtime <= 0:
+		stamp.text = "--"
+	else:
+		var dt := Time.get_datetime_dict_from_unix_time(mtime)
+		stamp.text = "%04d-%02d-%02d %02d:%02d" % [
+			dt.year, dt.month, dt.day, dt.hour, dt.minute]
+	row.add_child(stamp)
+
 	var load_btn := Button.new()
 	load_btn.text = "Load"
 	load_btn.pressed.connect(func(): load_requested.emit(slot))
 	row.add_child(load_btn)
 
+	row.add_child(_build_delete_button(slot))
+
 	return row
+
+
+## Deleting is destructive and this game has no undo, no trash and no second
+## copy -- so the first click only ARMS: the button re-labels "Delete?" and the
+## second click, and only the second, removes the file. Any list rebuild builds
+## a fresh button, which is the disarm -- a click anywhere else in the panel
+## (a save, a load) puts the guard back up.
+func _build_delete_button(slot: String) -> Button:
+	var del_btn := Button.new()
+	del_btn.text = "Delete"
+	del_btn.set_meta("armed", false)
+	del_btn.pressed.connect(func():
+		if not bool(del_btn.get_meta("armed")):
+			del_btn.set_meta("armed", true)
+			del_btn.text = "Delete?"
+			return
+		if SaveManager.delete_slot(slot):
+			_status.text = "deleted '%s'" % slot
+		else:
+			_status.text = "could not delete '%s'" % slot
+		_dirty = true
+	)
+	return del_btn
 
 
 func _on_save_pressed() -> void:
