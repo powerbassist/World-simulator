@@ -1154,6 +1154,66 @@ var programme_chosen_term: int = -1
 ## comes back from JSON as the int 1.
 var programme_stock: float = 0.0
 
+# --- The character layer (V4.3) ------------------------------------------------
+## FIVE REGISTERS OF PERSON STATE, and they are the whole of what a save remembers
+## about what the player did to the people in it. Content says who a person IS --
+## traits, ambition, kind, party, wants (src/core/person.gd, data/people/) -- and
+## never moves; these say what has happened to them. The split is
+## docs/people-model.md section 14's, and it is V1.4a's content/state line drawn
+## around a person rather than a firm.
+
+## person id -> loyalty in [-1, 1]. Written by characters.gd (Task 3); nothing
+## writes it yet.
+##
+## EARNS THE SAVE_VERSION BUMP TO 36, with the four below. Absent it reads as an
+## empty register, so every person reads 0.0 -- "nobody remembers anything you did
+## to them" -- which is the V1.6a load-bearing test stated in the game's own voice
+## and `programme_stock`'s case exactly: a warm, neutral memory where the save
+## should carry a history the player spent a term writing. Re-deriving on load
+## cannot rescue it, because there is nothing outside this register to derive it
+## from -- the acts that wrote it are not stored either.
+var person_loyalty: Dictionary[String, float] = {}
+
+## person id -> political standing in [0, 1]. A person's weight in the acts they
+## take: the challenge threshold and how far an endorsement carries. Written by
+## characters.gd; nothing writes it yet.
+##
+## Earns the bump for the field above's reason, stated once. A dropped standing
+## register reads every person at 0.0 -- nobody carries any weight -- so a
+## deposed or promoted figure reverts to the anonymous bench.
+var person_standing: Dictionary[String, float] = {}
+
+## person id -> accumulated grudge in [0, 1]. The slow channel: a denied want and a
+## betrayal add to it, and it decays on the half-life characters.gd owns. Written
+## by characters.gd; nothing writes it yet.
+##
+## Earns the bump with the pair above, and it is the one a lost save is most
+## visible in: a dropped register forgives every grudge the player earned, which is
+## a second chance the game never granted.
+var person_grudges: Dictionary[String, float] = {}
+
+## party id -> the person id currently leading it, where a leadership challenge has
+## moved the party off its authored `leader_person_id`. Empty means the authored
+## leader, which is the truth about every version-35 save. Written by
+## characters.gd; nothing writes it yet.
+##
+## EARNS THE BUMP ON ITS OWN ARGUMENT, which the loyalty dict does not have: an
+## absent override is not neutral, it RESURRECTS A DEPOSED RIVAL mid-term. The
+## player watched a leadership change; the save, dropped, hands the party back to
+## the person they removed, and the panel and the party's own edge disagree with
+## the world they left.
+var party_leader_override: Dictionary[String, String] = {}
+
+## person id -> the party they now sit in, where a defection has moved them off
+## their authored `party_id`. Empty means the authored affiliation. Written by
+## characters.gd; nothing writes it yet.
+##
+## EARNS THE BUMP for the override's reason one level down: an absent entry is not
+## "no change", it SILENTLY RE-AFFILIATES a defector the save remembers -- the
+## person walks back to the party they left, and a bench that had been changed by
+## the block's most consequential verb reverts to its authored shape.
+var person_party_override: Dictionary[String, String] = {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1667,6 +1727,15 @@ func duplicate_state():
 	s.programme = programme.duplicate(true)
 	s.programme_chosen_term = programme_chosen_term
 	s.programme_stock = programme_stock
+	# The five character registers, for the programme pair's reason one level
+	# down: characters.gd (Task 3) mutates entries inside them, and a
+	# projection copy writing through to the live register would corrupt what
+	# the player's acts did to the actual cast.
+	s.person_loyalty = person_loyalty.duplicate(true)
+	s.person_standing = person_standing.duplicate(true)
+	s.person_grudges = person_grudges.duplicate(true)
+	s.party_leader_override = party_leader_override.duplicate(true)
+	s.person_party_override = person_party_override.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
@@ -1887,6 +1956,11 @@ func to_dict() -> Dictionary:
 		"programme": programme,
 		"programme_chosen_term": programme_chosen_term,
 		"programme_stock": programme_stock,
+		"person_loyalty": person_loyalty,
+		"person_standing": person_standing,
+		"person_grudges": person_grudges,
+		"party_leader_override": party_leader_override,
+		"person_party_override": person_party_override,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -2235,6 +2309,15 @@ static func from_dict(d: Dictionary):
 	s.programme = _programme_from(d.get("programme", []))
 	s.programme_chosen_term = int(d.get("programme_chosen_term", -1))
 	s.programme_stock = float(d.get("programme_stock", 0.0))
+	# The five character registers. Per-entry casts on the campaign_sites
+	# pattern -- a JSON 1.0 comes back as the int 1 and a typed Dictionary
+	# deserves the float it declares, and a stray non-string key in an override
+	# is a corrupted save refusing loudly rather than a silent type hole.
+	s.person_loyalty = _float_map_from(d.get("person_loyalty", {}))
+	s.person_standing = _float_map_from(d.get("person_standing", {}))
+	s.person_grudges = _float_map_from(d.get("person_grudges", {}))
+	s.party_leader_override = _string_map_from(d.get("party_leader_override", {}))
+	s.person_party_override = _string_map_from(d.get("person_party_override", {}))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -2326,6 +2409,7 @@ static func _pledges_from(raw) -> Array:
 ## anything else in a hand-edited save is dropped on the floor by this whitelist,
 ## which keeps "the register carries no content" true across a round trip.
 static func _programme_from(raw) -> Array:
+
 	if typeof(raw) != TYPE_ARRAY:
 		return []
 	var out: Array = []
@@ -2340,6 +2424,26 @@ static func _programme_from(raw) -> Array:
 			"concluded_term": int(entry.get("concluded_term", -1)),
 			"concluded_term_month": int(entry.get("concluded_term_month", -1)),
 		})
+	return out
+
+
+## The character registers' from-dict halves, one pair because three float maps
+## and two string maps share them. Casts every entry the way campaign_sites
+## always has: JSON hands back ints for round floats and every typed register
+## deserves the type it declares.
+static func _float_map_from(raw) -> Dictionary[String, float]:
+	var out: Dictionary[String, float] = {}
+	var src: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	for key in src.keys():
+		out[String(key)] = float(src[key])
+	return out
+
+
+static func _string_map_from(raw) -> Dictionary[String, String]:
+	var out: Dictionary[String, String] = {}
+	var src: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	for key in src.keys():
+		out[String(key)] = String(src[key])
 	return out
 
 

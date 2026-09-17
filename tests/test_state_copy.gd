@@ -121,7 +121,7 @@ func _check_pair(where: String, original, copy) -> void:
 
 		# 2. Copied by reference?
 		if typeof(a) == TYPE_DICTIONARY:
-			a[SENTINEL_KEY] = SENTINEL_NUMBER
+			a[SENTINEL_KEY] = _dict_sentinel(a)
 			if b.has(SENTINEL_KEY):
 				_fail("%s.%s: Dictionary is shared with the copy, not duplicated" % [where, name])
 			a.erase(SENTINEL_KEY)
@@ -146,6 +146,20 @@ func _array_sentinel(a: Array):
 		TYPE_DICTIONARY: return {SENTINEL_KEY: SENTINEL_NUMBER}
 		TYPE_ARRAY: return [SENTINEL_NUMBER]
 		TYPE_STRING: return SENTINEL_KEY
+		TYPE_INT: return int(SENTINEL_NUMBER)
+	return SENTINEL_NUMBER
+
+
+## The dictionary half of the same lesson, and V4.3's five character registers
+## are what pushed it open: until them, every copied Dictionary on either state
+## object was untyped, so the bare float sentinel worked -- and a
+## Dictionary[String, String] override register REFUSES a float value, the set
+## errors into the log, and the suite fails a correctly-duplicated field for
+## the wrong reason (the _array_sentinel comment's own argument, one type over).
+func _dict_sentinel(a: Dictionary):
+	match a.get_typed_value_builtin():
+		TYPE_STRING: return SENTINEL_KEY
+		TYPE_FLOAT: return SENTINEL_NUMBER
 		TYPE_INT: return int(SENTINEL_NUMBER)
 	return SENTINEL_NUMBER
 

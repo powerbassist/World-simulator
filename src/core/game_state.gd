@@ -479,7 +479,23 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## pinned in tests/test_save_load.gd. The bump is taken ahead of the pulse
 ## wiring, so a version-34 save is refused before the first save that could hold
 ## a priced register is ever written.
-const SAVE_VERSION := 35
+##
+## V4.3 bumps this to 36 on the five person-state registers (nation_state.gd's
+## character-layer section): `person_loyalty`, `person_standing`,
+## `person_grudges`, `party_leader_override`, `person_party_override`. An
+## absent loyalty dict reads "nobody remembers anything you did to them" --
+## the V1.6a test in the game's own voice, `programme_stock`'s case exactly --
+## and no re-derivation can rescue it, because nothing outside the register
+## records the acts that wrote it. The two overrides are worse than neutral:
+## a dropped `party_leader_override` RESURRECTS A DEPOSED RIVAL mid-term, and
+## a dropped `person_party_override` silently walks a defector back to the
+## party they left -- the save contradicting the world the player watched.
+## Nothing writes these registers yet (characters.gd, the block's Task 3); the
+## version ships once, ahead of the first writer, so a version-35 save is
+## refused before the first save that could hold a priced register exists --
+## the V4.1 precedent taken identically. Absences pinned in
+## tests/test_save_load.gd.
+const SAVE_VERSION := 36
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
