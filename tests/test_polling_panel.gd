@@ -26,6 +26,7 @@ const POLLS := 120
 var _failures: Array[String] = []
 var _state
 var _panel
+var _loader
 var _frame := 0
 
 
@@ -36,6 +37,7 @@ func _init() -> void:
 		_failures.append("data did not load cleanly: %s" % [loader.errors])
 		_finish()
 		return
+	_loader = loader
 
 	_state = GameState.new_game(loader, "FRA")
 	if not _state.errors.is_empty():
@@ -60,6 +62,7 @@ func _process(_delta: float) -> bool:
 			_setup_panel()
 		2:
 			_check_panel_shows_noised_values()
+			_check_countdown_names_the_chamber_clock()
 		3:
 			_check_panel_holds_still_within_a_month()
 			_finish()
@@ -152,13 +155,36 @@ func _setup_panel() -> void:
 			_state.month = 1
 			_state.year += 1
 
-	_panel.setup(_state)
+	_panel.setup(_state, _loader)
 	_panel.show()
 	_panel._refresh()
 
 
 ## Every figure on screen is the true one plus this poll's error — never the true
 ## one, and never a figure from a different poll.
+## B3 (playtest 2026-09-16): the top bar counts the executive clock, this panel
+## the assembly's -- both correct, so each NAMES its clock and the two countdowns
+## stop reading as a contradiction. main.gd passes the loader from boot, so the
+## chamber's own name is the shipping form; the generic "assembly" wording is
+## the no-loader FALLBACK and is pinned as that, not as the game's wording.
+func _check_countdown_names_the_chamber_clock() -> void:
+	var Trends := load("res://src/ui/trends.gd")
+	var ns = _state.player()
+	var months: int = (int(ns.next_election_year) - _state.year) * 12 + (int(ns.next_election_month) - _state.month)
+
+	var chamber: String = _loader.nations[ns.id].chamber_name
+	var text: String = _panel._election_countdown.text
+	var expected := "Next %s election: %s" % [chamber, Trends.months_text(months)]
+	if text != expected:
+		_fail("B3: countdown reads '%s', expected the chamber-named '%s'" % [text, expected])
+		return
+
+	_panel.setup(_state)
+	_panel._refresh()
+	if not _panel._election_countdown.text.begins_with("Next assembly election: "):
+		_fail("B3: the no-loader fallback lost its generic assembly wording")
+
+
 func _check_panel_shows_noised_values() -> void:
 	var ns = _state.player()
 	var id := PollNoise.poll_id(_state.year, _state.month)

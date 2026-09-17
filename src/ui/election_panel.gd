@@ -184,11 +184,15 @@ func show_results(results: Array) -> void:
 	# -- so a defeated player was left with a plate carrying nothing to press, over
 	# a HUD that stayed live because the holder is MOUSE_FILTER_IGNORE. Space
 	# unpaused it and the run continued indefinitely behind a "DEFEATED" title.
-	if defeated:
-		PanelKit.line(_footer, (
-			"You have served the maximum number of terms. You leave office." if termed_out
-			else "You have lost your office. This term is over."
-		), PanelKit.Tone.PLAIN)
+	# The defeat sentence lives in _sections, not _footer: the footer is an
+	# ALIGNMENT_END HBox also holding the button, and an autowrapping Label with no
+	# horizontal expand collapses there to a ~one-character column -- the vertical
+	# letter stack the 2026-09-16 playtest photographed (finding B2). The
+	# termed-out verdict is excluded: its own paragraph above already says it,
+	# and while the footer bug crushed this copy to a column the duplication
+	# was invisible -- one sentence per verdict now that both render.
+	if defeated and not termed_out:
+		PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN)
 
 	var cont := Button.new()
 	cont.text = "Leave office" if defeated else "Continue"

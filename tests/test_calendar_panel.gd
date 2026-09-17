@@ -65,6 +65,7 @@ func _run() -> void:
 	_check_strip_spans_the_horizon(panel, state)
 	_check_booking_appears_on_the_strip(panel, state)
 	_check_a_refusal_is_printed(panel, state)
+	_check_away_line_months(panel, state)
 
 
 ## The two lines main.gd's own comment predicted three sessions ago. Checked
@@ -201,6 +202,51 @@ func _check_a_refusal_is_printed(panel, state) -> void:
 	# blank after a press is one where a refusal goes unsaid.
 	if panel._status.text.is_empty():
 		_fail("pressing Book left the status line empty -- a refusal the player cannot read is `refused_by_partner` a fourth time")
+
+
+## B8 (playtest 2026-09-16): the away suffix printed both month tokens even when
+## the whole trip sat inside one month -- "(away 08-16, MAR-MAR)" -- which every
+## single-month trip renders as a duplicate. One month prints once; a trip that
+## crosses a month boundary keeps the span form. Exercised through the panel's
+## own line builder, so a formatter regression fails here and not on a player's
+## screen. Checked as "no repeated token" rather than the exact string, so a
+## later copy edit that keeps the rule stays green.
+func _check_away_line_months(panel, state) -> void:
+	var year: int = state.year
+	# Far enough ahead that the horizon and the passed-date refusals stay out of
+	# the way; the formatter reads only the entry.
+	var month: int = state.month + 3 if state.month <= 8 else 3
+	var single := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, year, month, 20, "state_visit", "DEU", "", "", "", "", 3
+	)
+	var one: String = panel._booking_text(single)
+	if not one.contains("(away "):
+		_fail("a booking with travel produced no away suffix: '%s'" % one)
+	var halves: PackedStringArray = one.split("(")
+	var away: String = halves[halves.size() - 1]
+	var tokens: PackedStringArray = away.replace("–", " ").replace("-", " ").replace(",", " ").split(" ", false)
+	for i in tokens.size():
+		for j in range(i + 1, tokens.size()):
+			if tokens[i] == tokens[j] and String(tokens[i]).length() == 3 \
+					and String(tokens[i]) == String(tokens[i]).to_upper():
+				_fail("the away suffix repeats a month token: '%s'" % one)
+				return
+
+	var crossing := Calendar.make_entry(
+		K.KIND_DIPLOMATIC, year, month, 2, "summit", "ITA", "", "", "", "", 6
+	)
+	var two: String = panel._booking_text(crossing)
+	var d: Dictionary = Calendar.departure(crossing)
+	var h: Dictionary = Calendar.arrival_home(crossing)
+	if int(d["month"]) == int(h["month"]):
+		_fail("the multi-month fixture did not actually cross a month boundary")
+		return
+	var dm: String = panel.ClockCluster.MONTH_NAMES[int(d["month"]) - 1].substr(0, 3)
+	var hm: String = panel.ClockCluster.MONTH_NAMES[int(h["month"]) - 1].substr(0, 3)
+	if not two.contains(dm) or not two.contains(hm):
+		_fail("a month-crossing trip lost one of its months: '%s'" % two)
+	if not two.contains("–"):
+		_fail("the two-month away form lost its month span dash: '%s'" % two)
 
 
 func _refresh(panel) -> void:

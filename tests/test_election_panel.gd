@@ -29,6 +29,7 @@ const GEOMETRY_LAG := 2       # frames between a panel opening and its sizes bei
 const EXEC_TEXT_FRAME := 2
 const EXEC_GEOMETRY_FRAME := EXEC_TEXT_FRAME + GEOMETRY_LAG
 const NATIONAL_GEOMETRY_FRAME := EXEC_GEOMETRY_FRAME + GEOMETRY_LAG
+const DEFEATED_GEOMETRY_FRAME := NATIONAL_GEOMETRY_FRAME + GEOMETRY_LAG
 
 var _failures: Array[String] = []
 var _main
@@ -68,6 +69,9 @@ func _process(_delta: float) -> bool:
 		_check_tally()
 		_check_national_geometry()
 		_check_sting_gate()
+		_run_defeated_text()
+	elif _frame == DEFEATED_GEOMETRY_FRAME:
+		_check_defeated_geometry()
 		_finish()
 	return false
 
@@ -239,6 +243,128 @@ func _run_national_text() -> void:
 ## the one show_results ran in, and the previous panel's sections are
 ## queue_free()d but not yet reaped, so a text read there sees the ghost's
 ## copy too (the fold finding: a same-frame read answers for the last frame).
+## Playtest 2026-09-16 finding B2: the defeat sentences used to be added to
+## _footer, an ALIGNMENT_END HBox, where an autowrapping Label with no
+## horizontal expand collapses to a ~one-character column -- a vertical stack of
+## letters. Both variants (plain defeat, term limit) must sit in _sections like
+## the termed-out notice already did, with the footer holding only the button.
+## The live ladder never reaches a defeat (France wins both elections above), so
+## the verdicts are staged directly through show_results(), the same frame-driven
+## pattern the checks above use. State the defeat reads is set and restored
+## around the staging; the panel never writes GameState.
+func _run_defeated_text() -> void:
+	var panel = _main._election_panel
+	var ns = _main._state.player()
+	var was_gov: bool = ns.in_government
+
+	ns.in_government = false
+	panel.show_results([_fake_result("executive")])
+	_check_defeat_placement("You have lost your office. This term is over.")
+	ns.in_government = was_gov
+
+	panel.show_results([_fake_result("termed_out")])
+	_check_termed_out_single_sentence()
+
+
+## The termed-out verdict carries its own long paragraph; the review's P1 was
+## the generic defeat line duplicating it (invisible only while the footer bug
+## crushed one copy to a column). Pinned: exactly the long sentence, and
+## neither short defeat line anywhere on the plate.
+func _check_termed_out_single_sentence() -> void:
+	var panel = _main._election_panel
+	var long_form := 0
+	for node in _descendants(panel._sections):
+		# show_results() queue_frees the previous staging's children; same-frame
+		# reads still see the ghost's copy (the fold finding, a third place).
+		if node is Label and not node.is_queued_for_deletion():
+			if "the most the constitution allows" in node.text:
+				long_form += 1
+			if "You have lost your office" in node.text or "You have served the maximum" in node.text:
+				_fail("the termed-out verdict prints a second defeat line: '%s'" % node.text)
+	if long_form != 1:
+		_fail("the termed-out paragraph appears %d times, expected exactly 1" % long_form)
+	var has_button := false
+	for node in panel._footer.get_children():
+		if node is Label:
+			_fail("a defeat sentence sits in _footer, the HBox that collapses autowrap")
+		if node is Button and node.text == "Leave office":
+			has_button = true
+	if not has_button:
+		_fail("the termed-out modal footer offers no Leave office button")
+
+
+## A minimal verdict in the shape Elections.resolve() hands show_results(): no
+## seats (an executive office allocates none) and no attribution, because the
+## checks here are about the defeat sentence and the footer, not the table.
+func _fake_result(kind: String) -> Dictionary:
+	var ns = _main._state.player()
+	return {
+		"kind": kind,
+		"incumbent_largest": false,
+		"incumbent_party_id": ns.incumbent_party_id,
+		"incumbent_vote_share": 0.41,
+		"largest_party_id": ns.incumbent_party_id,
+		"seats": {},
+		"vote_share": {ns.incumbent_party_id: 0.41},
+		"seats_total": 0,
+		"attribution": [],
+		"termed_out": kind == "termed_out",
+		"snap": false,
+	}
+
+
+func _check_defeat_placement(sentence: String) -> void:
+	var panel = _main._election_panel
+	var in_sections := false
+	for node in _descendants(panel._sections):
+		if node is Label and node.text == sentence:
+			in_sections = true
+	if not in_sections:
+		_fail("the defeat sentence '%s' is not in _sections" % sentence)
+	var has_button := false
+	for node in panel._footer.get_children():
+		if node is Label:
+			_fail("a defeat sentence sits in _footer, the HBox that collapses autowrap")
+		if node is Button and node.text == "Leave office":
+			has_button = true
+	if not has_button:
+		_fail("the defeated modal footer offers no Leave office button")
+
+
+## The geometry half of B2, read GEOMETRY_LAG frames after the panel was built
+## (the fold lesson: a Label's minimum-size cache lags one invalidation). A
+## healthy sentence is one plate-width line or two -- a one-character column of
+## this sentence is dozens of lines tall and a few px wide.
+func _check_defeated_geometry() -> void:
+	var panel = _main._election_panel
+	# The termed-out staging ran last, so the specimen is its long paragraph --
+	# a longer string than the generic line and a harsher test of the wrap.
+	var label := _find_label(panel._sections, "the most the constitution allows")
+	if label == null:
+		_fail("the defeat sentence label vanished before the geometry read")
+		return
+	var line_h: float = label.get_theme_font("font").get_height(label.get_theme_font_size("font_size"))
+	var min_size := label.get_combined_minimum_size()
+	print("PROBE defeat: label.x=%.0f min.y=%.0f line_h=%.1f (%.1f lines)" % [
+		label.size.x, min_size.y, line_h, min_size.y / line_h])
+	if label.size.x <= 200.0:
+		_fail("the defeat sentence lays out at %.0f px wide; it must span the plate" % label.size.x)
+	if min_size.y > line_h * 5.0:
+		_fail("the defeat sentence lays out %.1f lines tall; the one-character column is back" % (min_size.y / line_h))
+
+
+## Substring match: the geometry specimens are named by a stable fragment of
+## authored copy rather than a full sentence built from loader names.
+func _find_label(node, text: String) -> Label:
+	for child in node.get_children():
+		if child is Label and text in child.text:
+			return child
+		var found := _find_label(child, text)
+		if found != null:
+			return found
+	return null
+
+
 func _check_told_once() -> void:
 	var text := _collect_text(_main._election_panel)
 	if text.count(ElectionPanel.TOLD_LINE) != 1:

@@ -32,6 +32,30 @@ static func _path_for(slot: String) -> String:
 	return SAVE_DIR + slot + ".json"
 
 
+## A slot name becomes a filename inside user://saves/, and the name field is
+## free text -- so the boundary is HERE, at the source, rather than at each
+## caller. Separators and traversal components would leave the saves
+## directory, and delete_slot() makes that destructive: the review's
+## path-traversal finding, refused once for every path.
+static func valid_slot_name(slot: String) -> bool:
+	if slot.is_empty() or slot.length() > 64:
+		return false
+	if slot != slot.strip_edges():
+		return false
+	if "/" in slot or "\\" in slot or ":" in slot or ".." in slot:
+		return false
+	# Windows device names: save_game would fail on them with an engine-level
+	# "Invalid parameter" the player cannot read -- refused here with the rest.
+	var lower := slot.to_lower()
+	for reserved in ["con", "prn", "aux", "nul"]:
+		if lower == reserved:
+			return false
+	for i in range(1, 10):
+		if lower == "com%d" % i or lower == "lpt%d" % i:
+			return false
+	return true
+
+
 ## Writes `slot`.json under user://saves/. Returns "" on success, an error
 ## message otherwise.
 ##
@@ -43,8 +67,12 @@ static func _path_for(slot: String) -> String:
 ## Windows it is replace-then-rename, so the guarantee there is "the live file
 ## is never the one being written to", not true atomicity.
 static func save_game(state, clock, slot: String) -> String:
-	if slot.is_empty():
-		return "save slot name cannot be empty"
+	# The boundary, as save_load_panel's comment claims: no path reaches a
+	# user:// file with a name that could leave the saves directory -- the
+	# panel refuses at the field, and this is the refusal every OTHER caller
+	# (a future quicksave hotkey, a new menu route) passes through.
+	if not valid_slot_name(slot):
+		return "'%s' is not a valid save name -- one line of text, no slashes" % slot
 
 	_ensure_dir()
 	var payload := {
@@ -153,3 +181,25 @@ static func list_slots() -> Array[String]:
 
 	names.sort_custom(func(a, b): return FileAccess.get_modified_time(_path_for(a)) > FileAccess.get_modified_time(_path_for(b)))
 	return names
+
+
+## A slot file's modified time in Unix seconds, for the save/load UI's stamp.
+## 0 (the error value) if the file is gone between the listing and this read.
+static func slot_mtime(slot: String) -> int:
+	return FileAccess.get_modified_time(_path_for(slot))
+
+
+## Removes a save file. Refuses a name that has no file, so a stale row's
+## second click after another path deleted it reports rather than "succeeds".
+## Refuses an invalid name for the same reason valid_slot_name exists: this
+## is the destructive one, so it never trusts its input.
+static func delete_slot(slot: String) -> bool:
+	if not valid_slot_name(slot):
+		return false
+	var path := _path_for(slot)
+	if not FileAccess.file_exists(path):
+		return false
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return false
+	return dir.remove(slot + ".json") == OK

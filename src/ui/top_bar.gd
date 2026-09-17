@@ -54,7 +54,11 @@ func _ready() -> void:
 	figures.add_theme_constant_override("separation", 34)
 	row.add_child(figures)
 
-	figures.add_child(_build_figure("deficit", "Budget deficit"))
+	# B10 (playtest 2026-09-16): the value was always signed -- a surplus printed
+	# "+2.1%", a deficit "-10.5%" -- so "DEFICIT +10.50%" was a live contradiction
+	# on screen. A balance is a signed quantity; the label now says so.
+	figures.add_child(_build_figure("deficit", "Budget balance",
+		"Surplus is +, deficit is −."))
 	figures.add_child(_build_figure("gdp", "GDP"))
 	figures.add_child(_build_figure("unemployment", "Unemployment"))
 	figures.add_child(_build_figure("election", "Next vote"))
@@ -83,7 +87,7 @@ func _ready() -> void:
 
 ## Label and value on one line rather than stacked, which is what lets the strip
 ## be 40px instead of U2's 64 and still read at a glance.
-func _build_figure(key: String, title: String) -> Control:
+func _build_figure(key: String, title: String, tip := "") -> Control:
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 7)
 
@@ -98,6 +102,9 @@ func _build_figure(key: String, title: String) -> Control:
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	box.add_child(value)
 	_figure_values[key] = value
+	if not tip.is_empty():
+		value.tooltip_text = tip
+		label.tooltip_text = tip
 
 	return box
 
@@ -142,16 +149,32 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		return
 	var ns = state.player()
 
-	# Signed the way a player reads it: a deficit is a negative number.
+	# Signed the way a player reads it: a deficit is a negative number. B10: the
+	# title above now says "BALANCE" so the + and − signs on this figure agree
+	# with their own label.
 	_figure_values["deficit"].text = "%+.2f%%" % -ns.deficit_pct_gdp
 	_figure_values["gdp"].text = "%.0f Bn" % ns.gdp_eur_bn
 	_figure_values["unemployment"].text = "%.2f%%" % ns.unemployment_pct
 	# Count, not date: the number ticking down is the urgency; the Overview's
 	# date line and the Diary carry the calendar. Same query as theirs, so the
 	# three surfaces cannot disagree again. Tooltip keeps the date for free.
+	#
+	# B3: months_to_vote counts the EXECUTIVE clock where the nation has one,
+	# while the Polling panel counts the assembly's -- both correct, so the
+	# tooltip names which vote this figure is counting rather than leaving two
+	# correct numbers to read as a contradiction.
 	var months := Trends.months_to_vote(state, ns)
-	_figure_values["election"].text = "%d mo" % months
-	_figure_values["election"].tooltip_text = "The vote that ends your term -- %s. Win it." % Trends.months_text(months)
+	# B1 (playtest 2026-09-16): the raw int printed "NEXT VOTE -44 mo" in two
+	# ten-year captures -- months_to_vote can legally go negative once the date
+	# has passed and the next schedule has not been drawn. The tooltip's
+	# months_text clamps; the figure must too.
+	if months > 0:
+		_figure_values["election"].text = "%d mo" % months
+	elif months == 0:
+		_figure_values["election"].text = "now"
+	else:
+		_figure_values["election"].text = "—"
+	_figure_values["election"].tooltip_text = _election_tooltip(state, ns, loader, months)
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.
@@ -175,6 +198,26 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		tip += " · %s" % clock_text
 	_programme_label.tooltip_text = tip
 	_programme_value.tooltip_text = tip
+
+
+## B1/B3. The vote figure counts Trends.vote_date() -- the EXECUTIVE clock where
+## the nation elects one separately, the single chamber's schedule where it does
+## not (the two are then the same schedule, trends.gd's own note). Name which
+## vote is being counted, off the loader's nation data; no nation-specific copy.
+## Without a loader the two-argument call still works and keeps the original
+## generic wording.
+func _election_tooltip(state, ns, loader, months: int) -> String:
+	if months < 0:
+		# No "Win it." here: the vote the player was supposed to win is over.
+		return "The vote that ends your term has been held."
+	var what := "vote"
+	if loader != null and loader.nations.has(ns.id):
+		var nation = loader.nations[ns.id]
+		if bool(ns.has_executive):
+			what = "vote for %s" % nation.executive_title
+		else:
+			what = "vote for the %s" % nation.chamber_name
+	return "The %s that ends your term -- %s. Win it." % [what, Trends.months_text(months)]
 
 
 ## The register entry the strip prices: the live one with the nearest deadline,

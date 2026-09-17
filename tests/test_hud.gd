@@ -35,6 +35,7 @@ func _process(_delta: float) -> bool:
 	_check_mood_reads_the_polled_figure()
 	_check_action_bar_subrow()
 	_check_message_stack()
+	_check_set_body()
 	_check_card_is_an_answer_surface()
 	_check_foreign_acts_reach_the_column()
 	_check_minimap_slot_reserved()
@@ -182,6 +183,44 @@ func _check_message_stack() -> void:
 		_fail("the stack holds %d cards, expected a cap of %d" % [stack.card_count(), MessageStack.MAX_CARDS])
 	if _collect_text(stack).contains("CARD 0"):
 		_fail("the stack dropped a newer card instead of the oldest")
+
+	stack.clear()
+
+
+## B4's machine: a standing card whose content ages must be rewritable in
+## place -- and an unknown or evicted id must be a silent no-op, because the
+## caller that tracked a card cannot tell eviction from survival.
+func _check_set_body() -> void:
+	var stack = _main._hud.message_stack
+	stack.clear()
+
+	var id: String = stack.push("Your term", "You hold France until some month -- 16 months. Win the vote.")
+	stack.set_body(id, "You hold France until some month -- 15 months. Win the vote.")
+	var text := _collect_text(stack)
+	if not text.contains("15 months"):
+		_fail("set_body did not rewrite the card's body: '%s'" % text)
+	if not text.contains("YOUR TERM"):
+		_fail("set_body disturbed the card's title: '%s'" % text)
+	if stack.card_count() != 1:
+		_fail("set_body changed the card count to %d" % stack.card_count())
+
+	# An id nothing pushed: no crash, no card, no residue.
+	stack.set_body("card_99999", "ghost text")
+	if stack.card_count() != 1:
+		_fail("set_body on an unknown id changed the card count")
+	if _collect_text(stack).contains("ghost text"):
+		_fail("set_body on an unknown id materialised a card")
+
+	# An id the MAX_CARDS eviction has dropped: no-op, and no resurrection.
+	stack.clear()
+	var first: String = stack.push("First", "first body")
+	for i in range(MessageStack.MAX_CARDS + 1):
+		stack.push("Filler %d" % i, "body")
+	stack.set_body(first, "resurrected text")
+	if _collect_text(stack).contains("resurrected text"):
+		_fail("set_body wrote through an evicted card's id")
+	if stack.card_count() != MessageStack.MAX_CARDS:
+		_fail("set_body on an evicted id changed the card count to %d" % stack.card_count())
 
 	stack.clear()
 

@@ -19,8 +19,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open laws
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open government
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open politics
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --court --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
@@ -677,6 +677,14 @@ func _apply_view() -> void:
 		_main._on_nation_clicked(_nation)
 	if _open != "":
 		_main._windows.open(_open)
+		# B14: open() silently no-ops on an id that was never registered, so a
+		# stale help-text id photographed the plain map while the operator
+		# believed they had captured a surface. The frame is still written --
+		# evidence is evidence -- but the empty capture is made unmissable.
+		if not _main._windows.is_open(_open):
+			push_error("screenshot: --open '%s' matched no registered window; valid ids: %s" % [
+				_open, ", ".join(PackedStringArray(_main._windows.panel_ids())),
+			])
 	# After --open, because opening a window marks its own entry in whatever
 	# drawer is showing and the drawer has to exist first.
 	if _cluster != "":

@@ -261,7 +261,11 @@ const LABEL_MIN_ZOOM := 1.4
 ## reads the same gate, so a glyph that is not drawn is never a target.
 const CITY_MIN_ZOOM := 2.0
 const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
-const LABEL_SHADOW := Color(0.0, 0.0, 0.0, 0.65)
+## The outline halo (near-black, a=0.8) replaces the old 1px offset drop shadow
+## -- the shadow was too weak over Alpine snow, and outline+shadow together
+## would double-darken every glyph edge for no gain, so only the outline draws.
+const LABEL_OUTLINE_COLOR := Color(0.0, 0.0, 0.0, 0.8)
+const LABEL_OUTLINE_PX := 3
 
 
 func _ready() -> void:
@@ -835,8 +839,11 @@ func _draw() -> void:
 	_draw_world_borders()
 	_draw_roster()
 	_draw_spines()
-	_draw_labels()
+	# Labels above city crosses: a brass cross over near-white text buried the
+	# name (B6), and text is what the cross points at. _refresh_markers() is a
+	# state read, not a draw, so the pins still draw last and stay on top.
 	_draw_cities()
+	_draw_labels()
 	_refresh_markers()
 	_draw_markers()
 	MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
@@ -1020,10 +1027,11 @@ func _draw_labels() -> void:
 		var text: String = entry["text"]
 		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 		var at := _lonlat_to_screen(lonlat.x, lonlat.y) - Vector2(width / 2.0, 0.0)
-		# One-pixel drop shadow rather than a plate behind the text: over a
-		# satellite image the contrast varies from Alpine snow to North Sea, and a
-		# shadow holds legibility on both without putting a box on the map.
-		draw_string(font, at + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_SHADOW)
+		# An outline halo rather than the old 1px offset shadow: over a satellite
+		# image the contrast varies from Alpine snow to North Sea, and a 3px
+		# near-black halo holds legibility on both without putting a box on the
+		# map. Outline only -- the shadow it replaced is NOT drawn beside it.
+		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_OUTLINE_PX, LABEL_OUTLINE_COLOR)
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
 
 

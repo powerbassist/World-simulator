@@ -66,6 +66,8 @@ func _run() -> void:
 	_check_the_bar_marks_the_open_window()
 	_check_the_bar_marks_what_awaits_the_player()
 	_check_headline_figures_move_with_nothing_open()
+	_check_save_dialog_traps_hotkeys()
+	_check_term_card_refresh()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -441,6 +443,102 @@ func _press(keycode: int) -> void:
 	event.keycode = keycode
 	event.pressed = true
 	_main._unhandled_input(event)
+
+
+## B16's focus/hotkey trap: with the save dialog visible, the single-letter
+## panel hotkeys must NOT toggle the windows behind it, and Escape must close
+## the dialog. The dialog is shown through the same path the pause menu uses
+## (its save_load_requested lambda), not by poking visibility from nothing.
+func _check_save_dialog_traps_hotkeys() -> void:
+	var panel = _main.get("_save_load_panel")
+	if panel == null:
+		_fail("main scene built no save/load panel")
+		return
+	_main._windows.close_all()
+
+	# The pause menu's own route into the dialog.
+	_main._set_pause_menu_visible(false)
+	panel.show()
+	panel.mark_dirty()
+	if not panel.visible:
+		_fail("the save dialog did not open")
+		return
+
+	_press(KEY_B)
+	if _main._windows.is_open("budget"):
+		_fail("a panel hotkey opened a window while the save dialog was visible")
+	_main._windows.close_all()
+
+	# S keeps its toggle so it can still CLOSE the dialog it opened.
+	_press(KEY_S)
+	if panel.visible:
+		_fail("S no longer closes the save dialog")
+
+	# Reopen, then Escape -- the key the playtest found doing nothing.
+	panel.show()
+	panel.mark_dirty()
+	_press(KEY_ESCAPE)
+	if panel.visible:
+		_fail("Escape did not close the save dialog")
+	_main._windows.close_all()
+
+	# The restore contract behind every close path (the review's P1): a dialog
+	# the PAUSE MENU opened puts the menu back -- the settings panel's own
+	# contract -- and one the TOP BAR opened leaves nothing behind. Both routes
+	# driven through their real signals.
+	_main._pause_menu.save_load_requested.emit()
+	if not panel.visible or _main._pause_menu.get_parent().visible:
+		_fail("the pause menu's save route did not open the dialog over a hidden menu")
+	_press(KEY_ESCAPE)
+	if panel.visible:
+		_fail("Escape did not close the pause-menu-opened save dialog")
+	if not _main._pause_menu.get_parent().visible:
+		_fail("closing a pause-menu-opened save dialog left the pause menu hidden -- the player is stranded outside the flow that paused the clock")
+	_main._close_pause_menu()
+
+	_main._hud.top_bar.save_load_requested.emit()
+	if not panel.visible:
+		_fail("the top bar's save route did not open the dialog")
+	_press(KEY_ESCAPE)
+	if panel.visible or _main._pause_menu.get_parent().visible:
+		_fail("closing a top-bar-opened save dialog raised the pause menu unasked")
+
+	panel.hide()
+	_main._windows.close_all()
+
+
+## B4: the opening "Your term" card is a live countdown, not a snapshot -- its
+## body must change as the months pass. Two months is enough for the months
+## text to move, well inside a term.
+func _check_term_card_refresh() -> void:
+	var stack = _main._hud.message_stack
+	var card_id: String = _main.get("_term_card_id")
+	if card_id.is_empty():
+		_fail("a new game pushed no 'Your term' card id")
+		return
+	if not stack._bodies.has(card_id):
+		_fail("the term card id '%s' is not a live card in the stack" % card_id)
+		return
+
+	var before: String = stack._bodies[card_id].text
+	var clock: Node = _main.get_node("Clock")
+	for _d in range(31 * 2):
+		clock.advance_one_day()
+		# The opening card is the OLDEST card in the stack, so the monthly
+		# ticks' own cards (foreign acts and the rest) would evict it under
+		# MAX_CARDS before the refresh could be observed -- that eviction is
+		# by design and is test_hud's business. Dismiss the others as they
+		# arrive so this check isolates the refresh, not the cap.
+		for cid in stack._cards.keys():
+			if String(cid) != card_id:
+				stack.dismiss(String(cid))
+
+	if not stack._cards.has(card_id):
+		_fail("the term card did not survive two simulated months")
+		return
+	var after: String = stack._bodies[card_id].text
+	if before == after:
+		_fail("the 'Your term' card body did not change after two simulated months: '%s'" % before)
 
 
 ## The done-when line U2's own test satisfied by accident, extended: the top

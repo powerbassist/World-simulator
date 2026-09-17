@@ -57,6 +57,9 @@ func _run() -> void:
 	_check_defeat_can_be_dismissed()
 	_check_no_panel_can_destroy_its_window()
 	_check_council_vote_leaves_a_record()
+	_check_no_counted_nation_copy()
+	_check_top_bar_budget_balance_label()
+	_check_top_bar_election_clamp()
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen
@@ -337,8 +340,94 @@ func _descendants(node) -> Array:
 	return out
 
 
+## B5 (playtest 2026-09-16). "The ten the game simulates" was a hardcoded count
+## in player-visible copy, and it went stale once already -- the roster has been
+## 29 nations since V3.3 when the copy still said ten. The fix is count-free, so
+## this scan forbids the fragment anywhere under src/ui/ rather than pinning the
+## two repaired files: a source scan is the only form that also catches the next
+## session reintroducing it in a third place. String literals only by convention
+## -- comment lines are stripped first, the same discipline the geography
+## register scan adopted after it fired on a docstring.
+func _check_no_counted_nation_copy() -> void:
+	var dir := DirAccess.open("res://src/ui")
+	if dir == null:
+		_fail("could not open res://src/ui for the copy scan")
+		return
+	dir.list_dir_begin()
+	var name := dir.get_next()
+	while name != "":
+		if not dir.current_is_dir() and name.ends_with(".gd"):
+			var lines: PackedStringArray = FileAccess.open(
+				"res://src/ui/" + name, FileAccess.READ
+			).get_as_text().split("\n")
+			for i in lines.size():
+				var line := lines[i]
+				var hash := line.find("#")
+				if hash != -1:
+					line = line.substr(0, hash)
+				if line.contains("The ten "):
+					_fail("stale nation count in player copy: src/ui/%s:%d" % [name, i + 1])
+		name = dir.get_next()
+
+
 func _fail(message: String) -> void:
 	_failures.append(message)
+
+
+## B10 (playtest 2026-09-16): the figure was titled "DEFICIT" while its value was
+## signed -- a surplus printed "+2.1%", a deficit "-10.5%", so "DEFICIT +10.50%"
+## sat on screen contradicting itself. The label is a balance now.
+func _check_top_bar_budget_balance_label() -> void:
+	var top_bar = _main._top_bar
+	if top_bar == null:
+		_fail("B10: main.gd built no top bar")
+		return
+	var found := false
+	for node in _descendants(top_bar):
+		if node is Label and node.text == "BUDGET BALANCE":
+			found = true
+	if not found:
+		_fail("B10 REGRESSED: the top bar carries no BUDGET BALANCE label -- the deficit figure reverted to its self-contradicting title")
+
+
+## B1/B3 (playtest 2026-09-16): the election figure printed the raw int, and two
+## ten-year captures showed "NEXT VOTE -44 mo" -- months_to_vote can legally go
+## negative once the vote date has passed. The figure must clamp like its own
+## tooltip already does, and the tooltip must name WHICH clock it counts
+## (executive where one exists) beside the polling panel's assembly one.
+func _check_top_bar_election_clamp() -> void:
+	var top_bar = _main._top_bar
+	if top_bar == null:
+		_fail("B1: main.gd built no top bar")
+		return
+
+	var state = GameState.new_game(_main._loader, "FRA")
+	if not state.errors.is_empty():
+		_fail("B1: new_game reported %s" % [state.errors])
+		return
+	var ns = state.player()
+
+	# > 0: the ordinary countdown, "%d mo".
+	top_bar.refresh(state, _main._clock, _main._loader)
+	var positive: String = top_bar._figure_values["election"].text
+	if not positive.ends_with("mo"):
+		_fail("B1: a future vote printed '%s', expected the '%d mo' countdown form" % [positive, ns.next_election_year])
+
+	# == 0: the vote is this month.
+	ns.next_executive_year = state.year
+	ns.next_executive_month = state.month
+	top_bar.refresh(state, _main._clock, _main._loader)
+	if top_bar._figure_values["election"].text != "now":
+		_fail("B1: a vote due this month printed '%s', expected 'now'" % top_bar._figure_values["election"].text)
+
+	# < 0: the date has passed and the schedule has not rolled -- the -44 capture.
+	ns.next_executive_month -= 44
+	top_bar.refresh(state, _main._clock, _main._loader)
+	if top_bar._figure_values["election"].text != "—":
+		_fail("B1 REGRESSED: a stale vote date printed '%s' -- the raw negative that captured as 'NEXT VOTE -44 mo'" % top_bar._figure_values["election"].text)
+	var tip: String = top_bar._figure_values["election"].tooltip_text
+	if tip != "The vote that ends your term has been held.":
+		_fail("B1: the past-vote tooltip reads '%s'" % tip)
 
 
 func _finish() -> void:

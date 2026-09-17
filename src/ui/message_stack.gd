@@ -32,6 +32,7 @@ const CARD_WIDTH := 232
 const MAX_CARDS := 6
 
 var _cards := {}   # id -> PanelContainer
+var _bodies := {}  # id -> Label, the parallel the body needs to be updatable in place
 var _next_id := 0
 
 
@@ -97,6 +98,7 @@ func push(title: String, body: String, actions: Array = []) -> String:
 
 	add_child(card)
 	_cards[id] = card
+	_bodies[id] = body_label
 
 	while _cards.size() > MAX_CARDS:
 		dismiss(_cards.keys()[0])
@@ -104,11 +106,24 @@ func push(title: String, body: String, actions: Array = []) -> String:
 	return id
 
 
+## Rewrites a live card's body in place. A standing card whose content ages --
+## main.gd's "Your term" countdown -- must not be re-pushed to say so:
+## dismiss-then-push moves it to the bottom of the column, and the position IS
+## the card's age in a stack that drops from the front. A gone id (dismissed,
+## or dropped by the MAX_CARDS eviction) is a clean no-op: the caller's card
+## simply no longer exists, and nothing about that is an error.
+func set_body(id: String, body: String) -> void:
+	if not _bodies.has(id):
+		return
+	_bodies[id].text = body
+
+
 func dismiss(id: String) -> void:
 	if not _cards.has(id):
 		return
 	var card: Control = _cards[id]
 	_cards.erase(id)
+	_bodies.erase(id)
 	remove_child(card)
 	card.queue_free()
 	card_dismissed.emit(id)
