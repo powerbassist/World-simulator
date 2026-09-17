@@ -173,13 +173,15 @@ func _expect_fixture_error(people_dir: String, needle: String, what: String) -> 
 	_fail("%s did not fail to load, or did not name the problem: %s" % [what, fixture.errors])
 
 
-## Person has SEVEN fields -- id, person_name, kind, traits, ambition,
-## party_id, wants -- read off the file rather than asserted about an
+## Person has EIGHT fields -- id, person_name, kind, traits, ambition,
+## party_id, wants, bench -- read off the file rather than asserted about an
 ## instance, because the failure this guards against is a later session ADDING
 ## one (an `age`, a `competence`, a `loyalty`) and an instance check would
-## still pass with an eighth field sitting there unused. The character layer's
+## still pass with a ninth field sitting there unused. The character layer's
 ## law (people-model 14.1) is that WHAT MOVES lives on NationState; this check
-## is what makes that enforceable rather than aspirational.
+## is what makes that enforceable rather than aspirational. `bench` is the
+## portrait tiering flag -- an art-logistics marker, not character content,
+## and the one field a person carries for the pipeline rather than the model.
 func _check_person_field_contract() -> void:
 	var src := FileAccess.get_file_as_string("res://src/core/person.gd")
 	if src.is_empty():
@@ -196,10 +198,10 @@ func _check_person_field_contract() -> void:
 	for f in fields:
 		names.append(f.replace("var ", "").get_slice(":", 0).strip_edges())
 	var expected: Array[String] = []
-	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants"]:
+	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants", "bench"]:
 		expected.append(String(n))
 	if names != expected:
-		_fail("Person declares %s, expected exactly [id, person_name, kind, traits, ambition, party_id, wants] -- an eighth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names)])
+		_fail("Person declares %s, expected exactly [id, person_name, kind, traits, ambition, party_id, wants, bench] -- a ninth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names)])
 
 
 ## Every kind plugs in or is refused: a politician shape acts through wants +

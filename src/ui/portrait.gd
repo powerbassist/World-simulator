@@ -222,16 +222,11 @@ static func _load(person_id: String, emotion: Emotion) -> ImageTexture:
 		if img.load_webp_from_buffer(bytes) == OK:
 			return ImageTexture.create_from_image(img)
 		push_error("portrait '%s/%s' is not decodable WebP; falling back" % [person_id, EMOTION_DIRS[emotion]])
-	# LEGACY BRIDGE -- the Phase A/B gap: new code, old duotone PNGs. The flat
-	# file answers ANY emotion until the per-emotion WebPs are committed, so
-	# the game stays playable and the suite stays green across the gap. TEMPORARY
-	# by design: delete this branch in Phase B, in the same commit that adds
-	# the assets -- signposted so it cannot rot.
-	var legacy := FileAccess.get_file_as_bytes(PORTRAITS_DIR.path_join(person_id + ".png"))
-	if not legacy.is_empty():
-		var img := Image.new()
-		if img.load_png_from_buffer(legacy) == OK:
-			return ImageTexture.create_from_image(img)
+	# The LEGACY BRIDGE (flat .png fallback) died in the same commit that
+	# committed the per-emotion assets -- its premise was new code over old
+	# PNGs, and there are no old PNGs on the tree anymore. A person with no
+	# art reads null and the silhouette answers, which is what a register a
+	# generation ahead of its art has always looked like.
 	return null
 
 

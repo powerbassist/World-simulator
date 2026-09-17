@@ -48,6 +48,13 @@ var traits: Array[String] = []
 var ambition: float = 0.5
 var party_id: String = ""
 var wants: Array[Dictionary] = []
+## The portrait tiering flag: `bench: false` is the met cast (V2.3's
+## political register), `bench: true` is the V4.3 deep bench. The PORTRAIT
+## pipeline reads it (met cast renders five emotions, bench renders the
+## single neutral) and nothing in src/sim/ does -- it is not character
+## content, it is an art-logistics marker, which is also why it defaults to
+## false: every person of the pre-V4.3 register is met cast.
+var bench: bool = false
 
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
@@ -113,6 +120,12 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			errors.append("%s: %s field 'party_id' must be a string" % [filename, path])
 		else:
 			p.party_id = String(d["party_id"])
+
+	if d.has("bench"):
+		if typeof(d["bench"]) == TYPE_BOOL:
+			p.bench = bool(d["bench"])
+		else:
+			errors.append("%s: %s field 'bench' must be a boolean" % [filename, path])
 
 	if d.has("wants"):
 		if typeof(d["wants"]) != TYPE_ARRAY:
