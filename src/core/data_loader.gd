@@ -483,8 +483,11 @@ func _resolve_want(want: Dictionary, nation_id: String, person_id: String, party
 		return
 
 	if object.begins_with("office:"):
-		if rest == "premiership":
-			# Every nation has exactly one; nothing to resolve against.
+		if object == "office:premiership":
+			# Every nation has exactly one; nothing to resolve against. The
+			# whole-string compare IS the guard: "office:premiership:junk" is
+			# a typo wearing a valid prefix, and a resolver that read only the
+			# first segment would load it as the premiership itself.
 			return
 		if rest.begins_with("portfolio:"):
 			var key := rest.substr("portfolio:".length())
@@ -508,7 +511,9 @@ func _resolve_want(want: Dictionary, nation_id: String, person_id: String, party
 		)
 		return
 
-	# meter:<key> resolved against METER_KEYS at parse; nothing further here.
+	# meter:<key> is validated against METER_KEYS in person.gd, at parse -- it
+	# is a closed vocabulary, not a cross-register reference; nothing further
+	# here.
 
 
 func _check_person_ref(nation_id: String, where: String, slot: String, pid: String, referenced: Dictionary) -> void:

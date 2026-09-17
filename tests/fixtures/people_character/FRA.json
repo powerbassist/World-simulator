@@ -90,6 +90,16 @@
         { "object": "office:presidency", "stance": "want" }
       ]
     },
+    { "id": "FRA_junkprem", "name": "Aristide Junkprem",
+      "wants": [
+        { "object": "office:premiership:eternal", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_badmeter", "name": "Octave Badmeter",
+      "wants": [
+        { "object": "meter:corruption", "below": 30.0, "stance": "demand" }
+      ]
+    },
     { "id": "FRA_badparty", "name": "Wandrille Badparty",
       "party_id": "not_a_party" }
   ]

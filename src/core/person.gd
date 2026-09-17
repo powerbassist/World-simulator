@@ -150,6 +150,17 @@ static func _validate_want(w, wpath: String, filename: String, errors: Array[Str
 		errors.append("%s: %s stance '%s' is not legal for a %s want (%s)" % [
 			filename, wpath, stance, family, str(CharacterK.WANT_STANCES[family])])
 		return
+	# The meter's own key, HERE rather than in data_loader._validate_want: it is
+	# a closed vocabulary like kind and traits, and the loader's half only
+	# resolves cross-register references. A want for "meter:corruption" would
+	# otherwise load clean and sit inert forever -- the exact class the closed
+	# lists exist to make loud.
+	if family == "meter":
+		var meter_key := object.substr("meter:".length())
+		if not CharacterK.METER_KEYS.has(meter_key):
+			errors.append("%s: %s names meter '%s', which is not one of the meters (%s)" % [
+				filename, wpath, meter_key, str(CharacterK.METER_KEYS)])
+			return
 	if seen_objects.has(object):
 		errors.append("%s: %s repeats object '%s'; one want per object" % [
 			filename, wpath, object])
