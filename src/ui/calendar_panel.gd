@@ -407,11 +407,16 @@ func _booking_text(entry: Dictionary) -> String:
 			if travel > 0:
 				var depart: Dictionary = Calendar.departure(entry)
 				var home: Dictionary = Calendar.arrival_home(entry)
-				line += "  (away %02d–%02d, %s–%s)" % [
-					int(depart["day"]), int(home["day"]),
-					ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
-					ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
-				]
+				# One month prints once -- "MAR–MAR" is always a duplicate, and the
+				# playtest read it as broken text. Two months keep the span form.
+				var dm := ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3)
+				var hm := ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3)
+				if dm == hm:
+					line += "  (away %02d–%02d %s)" % [int(depart["day"]), int(home["day"]), dm]
+				else:
+					line += "  (away %02d–%02d, %s–%s)" % [
+						int(depart["day"]), int(home["day"]), dm, hm,
+					]
 			return line
 		K.KIND_LAW:
 			return "Propose %s" % _law_name(String(entry.get("law_id", "")))

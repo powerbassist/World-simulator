@@ -44,6 +44,7 @@ func _run() -> void:
 		return
 
 	_check_registry_drives_the_switcher()
+	_check_political_caption()
 	_check_ramps_are_monotone()
 	_check_viewer_relative()
 	_check_the_viewer_has_no_value()
@@ -113,6 +114,30 @@ func _check_registry_drives_the_switcher() -> void:
 	for id in ids:
 		if not legend._buttons.has(id):
 			_fail("no toggle for registered layer '%s'" % id)
+
+
+## B5 (playtest 2026-09-16): the political caption was "The ten the game
+## simulates." -- a fragment that 25 of 58 frames read as broken text, and a
+## hardcoded count that went stale when the roster hit 29 at V3.3. The repair is
+## count-free, and this check pins both halves: the exact authored string, and
+## the shape rules a count-free caption must satisfy so the next one does not
+## reintroduce either defect.
+func _check_political_caption() -> void:
+	var caption := String(MapLayers.layer(MapLayers.POLITICAL)["caption"])
+	var authored := "Every nation the game simulates, in its own colour."
+	if caption != authored:
+		_fail("the political caption is not the authored string: '%s'" % caption)
+	if caption.is_empty():
+		_fail("the political caption is empty")
+		return
+	if not caption.ends_with("."):
+		_fail("the political caption does not end with a period: '%s'" % caption)
+	if caption.contains("The ten"):
+		_fail("the political caption still carries the stale 'The ten' fragment")
+	for i in 10:
+		if caption.contains(str(i)):
+			_fail("the political caption hardcodes a count: '%s'" % caption)
+			break
 
 
 ## Monotone over the shown domain, and endpoints far enough apart to be told

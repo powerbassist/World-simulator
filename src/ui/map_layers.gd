@@ -93,7 +93,7 @@ const LAYERS: Array[Dictionary] = [
 		"label": "Political",
 		"alpha": 0.20,
 		"stops": [],
-		"caption": "The ten the game simulates.",
+		"caption": "Every nation the game simulates, in its own colour.",
 	},
 	{
 		"id": RELATIONS,

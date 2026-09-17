@@ -144,7 +144,7 @@ func _show_empty_state() -> void:
 		child.queue_free()
 	for child in _actions.get_children():
 		child.queue_free()
-	PanelKit.line(_body, "Click a country on the map to open its file. The ten the game simulates are the coloured ones.", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "Click a country on the map to open its file. The coloured ones are the nations the game simulates.", PanelKit.Tone.PLAIN)
 
 
 func mark_dirty() -> void:

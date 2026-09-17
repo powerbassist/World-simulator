@@ -57,6 +57,7 @@ func _run() -> void:
 	_check_defeat_can_be_dismissed()
 	_check_no_panel_can_destroy_its_window()
 	_check_council_vote_leaves_a_record()
+	_check_no_counted_nation_copy()
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen
@@ -335,6 +336,36 @@ func _descendants(node) -> Array:
 	for child in node.get_children():
 		out.append_array(_descendants(child))
 	return out
+
+
+## B5 (playtest 2026-09-16). "The ten the game simulates" was a hardcoded count
+## in player-visible copy, and it went stale once already -- the roster has been
+## 29 nations since V3.3 when the copy still said ten. The fix is count-free, so
+## this scan forbids the fragment anywhere under src/ui/ rather than pinning the
+## two repaired files: a source scan is the only form that also catches the next
+## session reintroducing it in a third place. String literals only by convention
+## -- comment lines are stripped first, the same discipline the geography
+## register scan adopted after it fired on a docstring.
+func _check_no_counted_nation_copy() -> void:
+	var dir := DirAccess.open("res://src/ui")
+	if dir == null:
+		_fail("could not open res://src/ui for the copy scan")
+		return
+	dir.list_dir_begin()
+	var name := dir.get_next()
+	while name != "":
+		if not dir.current_is_dir() and name.ends_with(".gd"):
+			var lines: PackedStringArray = FileAccess.open(
+				"res://src/ui/" + name, FileAccess.READ
+			).get_as_text().split("\n")
+			for i in lines.size():
+				var line := lines[i]
+				var hash := line.find("#")
+				if hash != -1:
+					line = line.substr(0, hash)
+				if line.contains("The ten "):
+					_fail("stale nation count in player copy: src/ui/%s:%d" % [name, i + 1])
+		name = dir.get_next()
 
 
 func _fail(message: String) -> void:

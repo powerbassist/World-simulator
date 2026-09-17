@@ -156,7 +156,7 @@ func _build_order(ns) -> void:
 		if source == null:
 			continue
 		offered += 1
-		PanelKit.line(group, "%s · %s · %d months · %.3f %% of GDP a year to build, %.3f to run" % [
+		PanelKit.line(group, "%s · %s · %d months · %.3f %% of GDP a year to build, %.3f %% of GDP a year to run" % [
 			source.source_name, source.branch, source.build_months,
 			source.build_cost_pct_gdp, source.run_cost_pct_gdp,
 		])
