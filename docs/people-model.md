@@ -43,24 +43,31 @@ So U6b's real job was **making a person first-class the way a party already is**
 one record, an id, and state that stores the id. The tier table had no U6b row —
 **tenth consecutive instance** of the missing-row failure V1.3b recorded.
 
-## 2. A person is an ID and a NAME, and nothing else
+## 2. A person is an ID, a NAME — and, since V4.3, what they WANT
 
-`src/core/person.gd` has two fields. Three more were planned and all three were
-cut before the file was written, for the same reason each time: **the reference
-that owns the relationship already states it.**
+`src/core/person.gd` was born with two fields, on an argument that held for the
+political cast: **the reference that owns the relationship already states it.**
+Three fields were cut before the file was written. V4.3 re-admits one of them,
+narrowed; the other two cuts stand:
 
-| Cut | Because |
+| Field | Status |
 |---|---|
-| `title` | A head of state's title is `ns.head_of_state_title`, which an amendment can change. A person carrying one would go stale the moment the office did. |
-| `party_id` | A party leader is whoever that party's `leader_person_id` points at. A person claiming a party the party does not claim back is the divergence `_validate_neighbours()` checks borders for. |
-| `role` | The office a person holds is *the slot pointing at them*. A `role` field would be a second record of the reference graph, and Daniel Moucron — head of state **and** a party leader — shows it cannot even be single-valued. |
+| `title` | **Still cut.** A head of state's title is `ns.head_of_state_title`, which an amendment can change. A person carrying one would go stale the moment the office did. |
+| `role` | **Still cut.** The office a person holds is *the slot pointing at them*. A `role` field would be a second record of the reference graph, and Daniel Moucron — head of state **and** a party leader — shows it cannot even be single-valued. |
+| `party_id` | **Re-admitted at V4.3, backbencher form.** A party leader is still whoever that party's `leader_person_id` points at, and anyone a slot or a leadership points at leaves this field empty. It exists because a *bench* politician's affiliation has no slot pointing at it — authored once here, resolved against the nation's own party list at load, rather than dangling with no edge at all. |
 
-What that buys is worth more than the fields: **there is no field on a person
-that could carry a mechanism**, so "no mechanism on a person" is true by
-construction rather than by discipline. `tests/test_people.gd` reads the file and
-fails if a third field appears. [[v1]] §4 and §5 add the mechanisms that give a
-journalist or a firm something to do; they inherit this register and extend it,
-and the first field with a number in it is the one to argue about.
+What the two-field construction bought survives for the political cast: no
+field a slot already states. But the second half of the original argument —
+*no field that could carry a mechanism* — held only while every person was the
+political cast, and **V4.3 overturns it deliberately** ([[v4]] §V4.3, the tier's
+own citation): a person outside the political register has *nothing pointing at
+them*, so the register could never grow a union leader or a judge without
+giving them something authored. The answer is the character layer — `kind`,
+`traits`, `ambition`, `wants`, §14 — and its own law is the one this file now
+enforces instead: **a person is a WANT carrier, not a mechanism carrier.** The
+numbers that move (loyalty, standing, grudges, overrides) are live state on
+`NationState`, never fields here; `tests/test_people.gd` reads the file and
+fails on any EIGHTH field.
 
 ## 3. Ids are namespaced where party ids are not
 
@@ -95,6 +102,15 @@ That is not tidiness. It is the same standard as the session's own probe: an
 unreferenced person is content with no caller, which is precisely what U6b cut a
 five-deep minister bench for. Authoring a name and wiring it to nothing should
 fail loudly rather than sit in a file looking like a feature.
+
+**V4.3 widened what a reference is.** A person is referenced by a slot, OR by a
+**non-politician `kind`** — the kind is the meter hook, so a union leader with
+no slot anywhere is pointed at by the grievance ladder their kind reads — OR by
+an **authored `party_id`**, the backbencher edge §2 re-admitted. A politician
+with no slot, no kind and no party is still an orphan and still fails the load.
+The rule change is what lets the register grow a bench at all: before it,
+every person had to be electable-by-slot, which is precisely the cast the
+register could never leave.
 
 ## 5. The probe corrected the model once and itself twice
 
@@ -320,17 +336,149 @@ reversed.
 loyalty or ambition. §2 — and `Person` having no field to hold one is what makes
 this enforceable rather than aspirational.
 
+> **OVERTURNED AT V4.3, BY NAME** ([[v4]] §V4.3, the tier citation this file's
+> §2 also carries): a person now carries `kind`, `traits`, `ambition` and
+> `wants` — the want carrier §14 defines. What this bullet still refuses, and
+> §2's field-count check still enforces: **age, biography, career, competence**
+> — nothing reads them; **loyalty, or any number that moves** — state lives on
+> `NationState` (SAVE_VERSION 36), never on the content register, so a person
+> file cannot drift from what the player did; **portraits as a field** — an
+> asset keyed by the id the register already has ([[portrait-attribution|V3.7]]),
+> not an attribute. The U6b law that survives is the one §2 still states: no
+> field a slot already says.
+
 **Journalists, celebrities, business.** They have no target that exists, so
 meeting one *is* a new effect channel. [[v1]] §4 and §5 own them, each arriving
 with the mechanism that gives it something to do — the split the whole U6
 decomposition was taken on.
 
+> Half-overturned at V4.3: the journalist and the union leader exist now as
+> KINDS (`press_owner`, `union_leader`, §14.4) — because their target DID come
+> to exist, the meters of [[unrest-model]], [[media-model]] and
+> [[judiciary-model]]. What stays refused is meeting one as an EVENT channel:
+> a person acts through the acts §14.5 prices, not through a new effect key.
+
 **A person on the nation panel beyond the leader line that was already there.**
 That panel is at 860px against U5a's ~886 ceiling and has paid for the fold twice
 (V1.3e, V1.3g). U6b's change there is a *resolve*, not a new row.
+
+## 14. The character layer (V4.3)
+
+The tier block [[v4]] §V4.3 calls *People who want things*. Everything above
+this line is the register as U6b built it; this section is what V4.3 added and
+the law it added it under. Plan of record:
+`docs/superpowers/plans/2026-09-17-v4.3-people-who-want-things.md`.
+
+### 14.1 Content vs state — who a person is vs what you did to them
+
+| Content (`data/people/*.json`, never moves) | Live state (`NationState`, SAVE_VERSION 36) |
+|---|---|
+| `kind` — the six, below | `person_loyalty{id: float}` — [-1, +1], moves with acts |
+| `traits` — 2–3 from the fixed eight, below | `person_standing{id: float}` — [0, 1], political weight |
+| `ambition` — [0, 1], static drive | `person_grudges{id: float}` — [0, 1], written by betrayal, decays |
+| `party_id` — optional backbencher edge | `party_leader_override{party_id: person_id}` — challenges |
+| `wants[]` — objects + stance, below | `person_party_override{id: party_id}` — defections |
+
+A want denied is a grudge; a want served is loyalty. The whole price book is
+two channels, both existing registers — no third number was built.
+
+### 14.2 The trait set — eight, each mechanically defined
+
+`src/sim/character_constants.gd`, `TRAIT_KEYS`. Each trait gates an act
+threshold or price (the CK lever the tier signed); 2–3 per person, authored:
+
+| Trait | The whole mechanical definition |
+|---|---|
+| `ambitious` | standing gain ×AMBITION_STANDING_GAIN; challenge threshold lowered |
+| `loyal` | grudge from betrayal ×0.5; loyalty floor higher |
+| `principled` | opposing their want costs double grudge; their own acts cost them more standing |
+| `pragmatic` | grudge decay ×2; wants sway (stance softens) at high loyalty |
+| `vain` | office wants weighted ×1.5 in their act choice |
+| `stubborn` | grudge decay halved |
+| `networked` | their endorsement/brief carries ×1.5 bloc_offset magnitude |
+| `fervent` | collective reads (grievance, salience) amplify ×1.5 for union/activist kinds |
+
+A ninth needs a measurement, not a mood. `ambition` the scalar and `ambitious`
+the trait are different things and both exist — the scalar is the dial, the
+trait is the floor.
+
+### 14.3 The want grammar
+
+```json
+{"object": "programme:prog_the_hospital_year", "stance": "sponsor"}
+{"object": "office:portfolio:health", "stance": "want"}
+{"object": "office:premiership", "stance": "want"}
+{"object": "office:party_leadership:renouveau_civique", "stance": "want"}
+{"object": "meter:grievance", "below": 35.0, "stance": "demand"}
+{"object": "meter:judicial_independence", "above": 0.8, "stance": "defend"}
+```
+
+Objects resolve AT LOAD — shape and closed vocabularies in `person.gd`
+(kinds, traits, stance-for-family, threshold coherence: a meter want carries
+EXACTLY ONE of `below`/`above`, and no other family reads one), cross-register
+halves in `data_loader._validate_people()`, the first place the whole loader is
+in hand — people load BEFORE parties and programme, so a want cannot be checked
+against registers that are not filled yet. Unresolvable = load error, loud,
+naming the file and the person id. **Satisfaction is DERIVED, never stored** —
+`Programme.progress_of()`, the office-holder slots, the meter reads; the
+region-share discipline, one level up.
+
+### 14.4 Kinds and the meters they read
+
+`KIND_KEYS`: `politician` (the version-35 default every pre-V4.3 entry reads),
+`regional_figure`, `union_leader`, `press_owner`, `judge`, `activist`.
+`KIND_METERS` hooks the non-political kinds to EXISTING meters — grievance
+(`ns.unrest_pct`, [[unrest-model]]), press_freedom ([[media-model]]), judicial
+independence ([[judiciary-model]]) — and **no second meter is built**: the
+Victoria-3 collective escalation (Passive→Agitating→Protesting→Rioting) is
+unrest's own ladder with a person's face on it. `characters.gd` READS these and
+never writes them. A kind with no meter and no political lever is a load error
+by test, so a seventh kind must declare where it plugs in.
+
+### 14.5 Acts land on existing machines
+
+| Act | Landing site | Never touches |
+|---|---|---|
+| Resign (office-holder) | office slot cleared + `Government.penalise_blocs` | cabinet effectiveness math (a portfolio stays party-held — the mechanism; the register persons it) |
+| Defect | `person_party_override` + card + bloc_offset price | `seats_by_party` (elections' to write; the seat follows the whip) |
+| Leadership challenge | `party_leader_override` + standing contest | party content, `seats_by_party` |
+| Brief against / leak | bloc_offset through **the ONE applier** (`Legislature.apply_effects`) | a second approval writer |
+| Demand a portfolio | want + grudge (feeds resign/challenge) | cabinet.gd's assignment rule |
+| Endorse / refuse (election) | bloc_offset-priced, campaign-visible card | elections.gd internals |
+| Sponsor / oppose a programme entry | reads `Programme`; a conclusion pays through the on_* effects ([[programme-model]] §V4.1's lobbying channel) | a new channel |
+
+`characters.gd` is a leaf: character_constants + legislature (the applier) +
+government (penalise). Tick order **after `Cabinet.tick_month`, before
+`Elections.tick_month`** — wants read Opinion-settled state, acts price
+bloc_offset that Opinion reads next month, and Elections, the stamp pair's
+only writer, still runs last. Pinned by a source-scanning test.
+
+### 14.6 The bands — DECLARED, not yet swept
+
+Written before the probe runs (the project law); the sweep is characters.gd's
+own task and records its verdicts beside each:
+
+- **P1**: an idle 168-month term fires ≤ 2 acts total across the cast.
+- **P2**: a betrayal term (want denied + ally sacked + region cut) fires ≥ 1
+  challenge or resignation per 60 months.
+- **P3**: no act fires at loyalty > LOYALTY_ACT_FLOOR for a non-ambitious
+  person.
+- **P4**: acts' total approval movement per year bounded by the poll floor
+  (±3.0 — the V2.6b1 readability standard).
+- **P5**: challenge outcomes deterministic (no rand — the project law).
+
+### 14.7 Refuses carried forward from the tier
+
+Dynasties, marriage, inheritance, lifespans, the leader's personal wealth.
+Refused HERE as well: seat movement by defection, a second
+grievance/press/court meter, per-person relations graphs — loyalty is to the
+player, one edge, not a matrix ([[v4]] §V4.5 owns the nation-to-nation
+relations channel).
 
 ---
 
 Related: [[index]] · [[cabinet-model]] · [[calendar-model]] ·
 [[fictionalization]] · [[transition-model]] · [[government-model]] ·
 [[data-architecture]] · [[v1]] · [[ROADMAP]]
+
+

@@ -1,0 +1,96 @@
+{
+  "people": [
+    { "id": "FRA_moucron", "name": "Daniel Moucron" },
+    { "id": "FRA_vasseur", "name": "Hélène Vasseur" },
+    { "id": "FRA_lachapelle", "name": "Bruno Lachapelle" },
+    { "id": "FRA_ferrand", "name": "Camille Ferrand" },
+    { "id": "FRA_aubertin", "name": "Gilles Aubertin" },
+    { "id": "FRA_perrault", "name": "Nadia Perrault" },
+    { "id": "FRA_aumont", "name": "Cécile Aumont" },
+    { "id": "FRA_charles_xi", "name": "Charles XI" },
+
+    { "id": "FRA_legrain", "name": "Odile Legrain", "kind": "judge",
+      "traits": ["principled", "stubborn"], "ambition": 0.3,
+      "wants": [
+        { "object": "meter:judicial_independence", "above": 0.8, "stance": "defend" }
+      ]
+    },
+    { "id": "FRA_okwant", "name": "Rémi Okwant", "kind": "politician",
+      "party_id": "renouveau_civique",
+      "traits": ["ambitious", "pragmatic"], "ambition": 0.7,
+      "wants": [
+        { "object": "programme:prog_the_hospital_year", "stance": "sponsor" },
+        { "object": "office:portfolio:health", "stance": "want" },
+        { "object": "meter:grievance", "above": 45.0, "stance": "defend" }
+      ]
+    },
+
+    { "id": "FRA_badkind", "name": "Marc Badkind", "kind": "oligarch" },
+    { "id": "FRA_badtrait", "name": "Anne Badtrait",
+      "traits": ["tall"] },
+    { "id": "FRA_duptrait", "name": "Luc Duptrait",
+      "traits": ["loyal", "loyal"] },
+    { "id": "FRA_fourtrait", "name": "Colette Fourtrait",
+      "traits": ["vain", "loyal", "pragmatic", "stubborn"] },
+    { "id": "FRA_badamb", "name": "Paul Badamb", "ambition": 1.4 },
+    { "id": "FRA_badambtype", "name": "Sylvie Badambtype", "ambition": "high" },
+    { "id": "FRA_badstance", "name": "Hugo Badstance",
+      "wants": [
+        { "object": "programme:prog_the_hospital_year", "stance": "demand" }
+      ]
+    },
+    { "id": "FRA_badfamily", "name": "Agnès Badfamily",
+      "wants": [
+        { "object": "cake:chocolate", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_boththr", "name": "Thierry Boththr",
+      "wants": [
+        { "object": "meter:grievance", "below": 30.0, "above": 40.0, "stance": "demand" }
+      ]
+    },
+    { "id": "FRA_nothr", "name": "Fabienne Nothr",
+      "wants": [
+        { "object": "meter:grievance", "stance": "demand" }
+      ]
+    },
+    { "id": "FRA_offthr", "name": "Jérôme Offthr",
+      "wants": [
+        { "object": "office:premiership", "stance": "want", "below": 10.0 }
+      ]
+    },
+    { "id": "FRA_badwantkey", "name": "Nadine Badwantkey",
+      "wants": [
+        { "object": "meter:grievance", "stance": "demand", "below": 30.0, "threhold": 30.0 }
+      ]
+    },
+    { "id": "FRA_dupwant", "name": "Étienne Dupwant",
+      "wants": [
+        { "object": "office:premiership", "stance": "want" },
+        { "object": "office:premiership", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_badprog", "name": "Camille Badprog",
+      "wants": [
+        { "object": "programme:prog_nonexistent", "stance": "sponsor" }
+      ]
+    },
+    { "id": "FRA_badfolio", "name": "Xavier Badfolio",
+      "wants": [
+        { "object": "office:portfolio:sports", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_badlead", "name": "Yvonne Badlead",
+      "wants": [
+        { "object": "office:party_leadership:fake_party", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_badoffice", "name": "Zoé Badoffice",
+      "wants": [
+        { "object": "office:presidency", "stance": "want" }
+      ]
+    },
+    { "id": "FRA_badparty", "name": "Wandrille Badparty",
+      "party_id": "not_a_party" }
+  ]
+}
