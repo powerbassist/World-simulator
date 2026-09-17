@@ -308,7 +308,10 @@ func _ready() -> void:
 
 	_polling_panel = PollingPanel.new()
 	_windows.register("society", "Society", _polling_panel, KEY_P, ICONS + "speech_bubble.svg")
-	_polling_panel.setup(_state)
+	# Loader from the start: the countdown names the chamber off the loader's
+	# own titles, and a boot without it printed the generic "assembly" until
+	# the first load put the two out of agreement.
+	_polling_panel.setup(_state, _loader)
 	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
@@ -897,9 +900,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_ESCAPE:
 			# B16: the open save dialog is the topmost thing Escape can mean.
-			# Checked before the armed placement and the pause menu, which
-			# cannot both be live with the dialog anyway (it opens over a
-			# hidden pause menu and no placement runs from behind it).
+			# Checked before the armed placement and the pause menu. A placement
+			# CAN be armed with the dialog open (its holder is
+			# MOUSE_FILTER_IGNORE, so the map under it stays clickable) -- the
+			# ordering is a choice, not an impossibility: this press closes the
+			# dialog, the reticle survives it and dies on the next Escape.
 			if save_dialog_open:
 				# close() rather than a bare hide: the pause-menu restore hangs
 				# off `closed`, and this path must not strand the menu behind.

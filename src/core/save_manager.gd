@@ -44,6 +44,15 @@ static func valid_slot_name(slot: String) -> bool:
 		return false
 	if "/" in slot or "\\" in slot or ":" in slot or ".." in slot:
 		return false
+	# Windows device names: save_game would fail on them with an engine-level
+	# "Invalid parameter" the player cannot read -- refused here with the rest.
+	var lower := slot.to_lower()
+	for reserved in ["con", "prn", "aux", "nul"]:
+		if lower == reserved:
+			return false
+	for i in range(1, 10):
+		if lower == "com%d" % i or lower == "lpt%d" % i:
+			return false
 	return true
 
 
@@ -58,8 +67,12 @@ static func valid_slot_name(slot: String) -> bool:
 ## Windows it is replace-then-rename, so the guarantee there is "the live file
 ## is never the one being written to", not true atomicity.
 static func save_game(state, clock, slot: String) -> String:
-	if slot.is_empty():
-		return "save slot name cannot be empty"
+	# The boundary, as save_load_panel's comment claims: no path reaches a
+	# user:// file with a name that could leave the saves directory -- the
+	# panel refuses at the field, and this is the refusal every OTHER caller
+	# (a future quicksave hotkey, a new menu route) passes through.
+	if not valid_slot_name(slot):
+		return "'%s' is not a valid save name -- one line of text, no slashes" % slot
 
 	_ensure_dir()
 	var payload := {
