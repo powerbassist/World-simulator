@@ -88,8 +88,13 @@ func _initialize() -> void:
 	var year := START_YEAR
 	# One warmup month OUTSIDE the timer: the first tick pays one-time lazy
 	# caches (network.gd's per-graph Dijkstra table among them), and counting it
-	# would pin a phantom 100x outlier on whichever system ran first.
+	# would pin a phantom 100x outlier on whichever system ran first. Clearing
+	# the accumulator is the "outside the timer" the comment always claimed:
+	# _tick records through _time, so without the clear the warmup's ~2 s build
+	# landed in the accessibility row's max and mean denominator -- the 2026-09-16
+	# playtest read that artifact as a live 2.24 s month-boundary freeze.
 	_tick(state, loader, year, month)
+	_us.clear()
 
 	for i in range(MONTHS):
 		month += 1
