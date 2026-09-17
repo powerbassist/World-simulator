@@ -24,6 +24,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
@@ -913,6 +914,18 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		if answer_events != "":
 			_answer_event(state, loader, ns, answer_events, regime_name, year, month)
 		Cabinet.tick_month(state, loader)
+		# V4.3, main.gd's slot: after Cabinet, before the agreement/election
+		# blocks. The acts are PRINTED (one line per act) so the re-run's
+		# prediction -- idle regimes fire ~zero acts, act lines are the only
+		# new output -- is checkable from the diff itself. Meters read here and
+		# handed in: characters.gd preloads none of their systems.
+		var _char_acts := Characters.tick_month(state, loader, {
+			"grievance": float(ns.unrest_pct),
+			"press_freedom": float(ns.press_freedom),
+			"judicial_independence": Judiciary.independence_deviation(ns),
+		})
+		for _act in _char_acts:
+			print("characters: %s %s" % [regime_name, String(_act["act"])])
 
 		if i + 1 == agreement_month:
 			_sign_agreement(state, loader, ns, regime_name, year, month)

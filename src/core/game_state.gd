@@ -32,6 +32,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Events = preload("res://src/sim/events.gd")
@@ -824,6 +825,14 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
 		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, Orgs.parliament(loader), loader.political_systems, gs.errors, applied, org_base_positions.get(id, {}))
+		# V4.3, and here rather than inside _build_nation() for the Programme
+		# comment's exact reason one level up: the build function takes the
+		# nation's own content and a people register is a second file. Seeds
+		# the PLAYER's cast only -- an AI nation's person registers stay empty
+		# and nothing reads them, so month one has weight to move and a game
+		# with no player decision in it moves nothing.
+		if id == player_id:
+			Characters.init_nation(gs.nations[id], loader.people.get(id, []))
 
 	# AFTER the build loop rather than inside _build_nation(), and the placement is the
 	# argument: that function takes the nation's own content and nothing else, where a

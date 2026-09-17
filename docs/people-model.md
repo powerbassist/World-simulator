@@ -453,19 +453,31 @@ government (penalise). Tick order **after `Cabinet.tick_month`, before
 bloc_offset that Opinion reads next month, and Elections, the stamp pair's
 only writer, still runs last. Pinned by a source-scanning test.
 
-### 14.6 The bands — DECLARED, not yet swept
+### 14.6 The bands — DECLARED, swept, and the one verdict that is content-bound
 
-Written before the probe runs (the project law); the sweep is characters.gd's
-own task and records its verdicts beside each:
+Written before the probe ran (the project law); `tools/characters_probe.gd`
+measures, this section records:
 
-- **P1**: an idle 168-month term fires ≤ 2 acts total across the cast.
-- **P2**: a betrayal term (want denied + ally sacked + region cut) fires ≥ 1
-  challenge or resignation per 60 months.
-- **P3**: no act fires at loyalty > LOYALTY_ACT_FLOOR for a non-ambitious
-  person.
-- **P4**: acts' total approval movement per year bounded by the poll floor
-  (±3.0 — the V2.6b1 readability standard).
-- **P5**: challenge outcomes deterministic (no rand — the project law).
+- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2). The
+  negative control held cold: with no player decision anywhere in the state,
+  nothing fires, exactly as the machine's gates read.
+- **P2: CONTENT-BOUND, recorded as such — 1 challenge/resignation in 168
+  months against a band of ≥ 2.** The measured cause: the 213-entry cast
+  seeds standing at 0.50 flat (no traits or ambition authored on it — Task
+  4's bench is the content that authors them), below the challenge
+  threshold of 0.70, so a challenge CANNOT fire and the probe's
+  grudge-injection drives the resignation alone. Tuning the threshold down
+  to make an empty cast pass would be measuring the content's absence; the
+  band re-runs after the bench lands.
+- **P3: PASS, pinned structurally** — the fire gates read the register, and
+  tests/test_characters.gd's identical-runs check observes the same gate.
+- **P4: bounded by construction** — every act prices through
+  `Government.penalise_blocs`, which writes the bloc_offset accumulator the
+  opinion model already clamps and smooths (INERTIA_RATE and the
+  opinion-model bounds apply to a character act exactly as to a law); no
+  act writes approval directly anywhere.
+- **P5: PASS — no rand() in characters.gd**, pinned by
+  tests/test_characters.gd's two-identical-states check.
 
 ### 14.7 Refuses carried forward from the tier
 
