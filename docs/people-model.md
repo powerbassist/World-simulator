@@ -493,6 +493,37 @@ grievance/press/court meter, per-person relations graphs — loyalty is to the
 player, one edge, not a matrix ([[v4]] §V4.5 owns the nation-to-nation
 relations channel).
 
+### 14.8 As built (2026-09-18) — and what the follow-up session harvests
+
+The block shipped on `v4.3-people` (commits 9236f48 → 61bb3bf): the schema,
+the six registers (the planned five plus `person_want_state`), the machine,
+the 1,595-person bench, the surfaces, and the V3.7 wall committed inside the
+block per the signed gate. Two machine defects the band probe found are
+recorded in §14.6 (the edge-trigger and the grudge floor); the re-baseline
+re-run is [reports/v43-rerun-prediction.md](../reports/v43-rerun-prediction.md)
+— bit-identical, 1681/1681.
+
+**THE FOLLOW-UP SESSION'S HARVEST, in order:** (1) the bench GPU pass
+(fired detached 2026-09-18, log `reports/v43_bench_gpu.log`, ~1,382 neutral
+renders on `--bench-neutral-only`) — check its completion, run the
+post-pass, re-run `python tools/suite_runner.py` with the registry;
+(2) the bench-assets commit (the new `assets/portraits/neutral/*.webp` +
+their `.import`s — the tier-aware completeness gate goes green on it);
+(3) the AUTHOR's wall verdict — the contact sheet
+(`.superpowers/sdd/frames/v43_wall_contact_neutral.png`) and the counterpart
+review table (`reports/portrait_counterparts_review.md`, confidence-marked);
+rejects go through `python tools/curate_references.py --reject <pids>` and
+the regenerate path; (4) the PR, the review (the subagent wave this session
+was rate-limited out of — the self-review's two holes are fixed and
+recorded, the fresh-eyes pass is owed), the merge; (5) scratch sweep.
+
+**Portrait tiering as shipped:** met cast = `bench: false` (the V2.3
+register, five emotions, committed), bench = `bench: true` (single neutral,
+the GPU pass). The flag is on `Person` (the eighth field, an art-logistics
+marker argued at the field) and read by `tools/portraits_generate.py`
+(`--bench-neutral-only`) and `tests/test_portraits.gd` (tier-aware
+completeness) — one flag, three readers, no list.
+
 ---
 
 Related: [[index]] · [[cabinet-model]] · [[calendar-model]] ·
