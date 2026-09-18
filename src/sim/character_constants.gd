@@ -20,10 +20,27 @@ extends RefCounted
 ## trait needs a measurement, not a mood (the SLOT_POSITION standard).
 ## `ambitious` the trait and `ambition` the authored scalar are different
 ## things and both exist: the scalar is the dial, the trait is the floor.
+##
+## ALL EIGHT ARE MECHANICALLY REAL, and the review's I3 is why this comment now
+## says so: five of them (loyal, principled, pragmatic, vain, fervent) were
+## FICTION at the first ship -- named in this list, authored into 1,595 people,
+## and read by nothing. Where the shipped form differs from 14.2's sketch, the
+## table was corrected to the code rather than the code stretched to the prose:
+## `loyal` halves the grudge PULSE (not the relief), `principled` doubles it,
+## `pragmatic`/`stubborn` scale the DECAY where the person is in hand, `vain`'s
+## discount is gated on the target being an office want they carry, and
+## `fervent` amplifies METER-want pulses for the collective kinds rather than
+## building a second salience read it would have to invent.
 const TRAIT_KEYS := [
-	"ambitious", "loyal", "principled", "pragmatic", "vain", "stubborn",
-	"networked", "fervent",
+ "ambitious", "loyal", "principled", "pragmatic", "vain", "stubborn",
+ "networked", "fervent",
 ]
+
+## The kinds whose lever is the COLLECTIVE read -- grievance as a body of people
+## rather than a politician's own standing. `fervent`'s gate reads this list
+## rather than naming kinds inline (14.2's "union/activist kinds"), so a kind
+## added to the collective side is added in one place.
+const KIND_COLLECTIVE := ["union_leader", "activist"]
 
 ## What a person IS when no political slot points at them. `politician` is the
 ## version-35 default every existing entry reads (the whole register was the

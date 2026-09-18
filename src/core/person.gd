@@ -191,7 +191,16 @@ static func _validate_want(w, wpath: String, filename: String, errors: Array[Str
 			errors.append("%s: %s must carry exactly one of below/above" % [filename, wpath])
 		else:
 			var key := "below" if has_below else "above"
-			if typeof((w as Dictionary)[key]) not in [TYPE_FLOAT, TYPE_INT]:
+			# The stance PAIRS with its direction, or the stance is prose
+			# nothing reads: "demand" wants the meter DOWN (below) and
+			# "defend" wants it HELD UP (above) -- a demand-above want loads
+			# as "wants it high", which is defend's meaning in demand's
+			# clothing. Refused loudly rather than read either way.
+			var stance_expects_below := stance == "demand"
+			if (has_below and not stance_expects_below) or (has_above and stance_expects_below):
+				errors.append("%s: %s stance '%s' pairs with '%s', not '%s'" % [
+					filename, wpath, stance, "below" if stance_expects_below else "above", key])
+			elif typeof((w as Dictionary)[key]) not in [TYPE_FLOAT, TYPE_INT]:
 				errors.append("%s: %s '%s' must be a number" % [filename, wpath, key])
 	elif has_below or has_above:
 		errors.append("%s: %s carries a threshold; only a meter want reads one" % [

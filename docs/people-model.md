@@ -437,6 +437,12 @@ by test, so a seventh kind must declare where it plugs in.
 
 ### 14.5 Acts land on existing machines
 
+**Four acts shipped this block** (resign, defect, challenge, brief_against —
+`ACT_KEYS`); the table's "Demand a portfolio" and "Endorse / refuse" rows
+DID NOT — the want feed exists (a portfolio want prices through satisfaction
+and the grudge ladder) but the verbs were cut for scope, and they belong to
+whichever block builds the dismissal/endorsement surfaces.
+
 | Act | Landing site | Never touches |
 |---|---|---|
 | Resign (office-holder) | office slot cleared + `Government.penalise_blocs` | cabinet effectiveness math (a portfolio stays party-held — the mechanism; the register persons it) |
@@ -453,35 +459,44 @@ government (penalise). Tick order **after `Cabinet.tick_month`, before
 bloc_offset that Opinion reads next month, and Elections, the stamp pair's
 only writer, still runs last. Pinned by a source-scanning test.
 
-### 14.6 The bands — DECLARED, swept, and what the sweep changed
+### 14.6 The bands — DECLARED, swept twice, and what the whole-branch review changed
 
 Written before the probe ran (the project law); `tools/characters_probe.gd`
-measures, this section records. The sweep was run twice: once against the
-empty 213-cast and once against the generated bench (1,595 people), and the
-FIRST run found two machine defects the second run's bands pin:
+measures, this section records. The first sweep found two machine defects;
+the whole-branch REVIEW (PR #44, round one) found two more the probe had
+masked — and both rounds' verdicts are the record:
 
-- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2). The first
-  sweep, against the bench, FAILED at 7 acts — every one a `brief_against`
-  by a person whose meter want was denied by the STARTING world, grudging
-  and re-grudging monthly. The fix is the edge-trigger: a want that TURNS
-  denied writes one grudge pulse, a want that stays denied writes nothing —
-  V4.0's "prices the inherited cycle, not the record" defect in miniature,
-  fixed at the same level it was found. `person_want_state` (the sixth
-  register) is the flip memory.
-- **P2: PASS — 4 challenges/resignations in 168 months** (band ≥ 2) with
-  the bench authored. The first sweep against the empty cast was
-  CONTENT-BOUND (standing seeds 0.50 flat, no challenge possible); recorded
-  rather than tuned. The challenge gate gained a GRUDGE FLOOR
-  (CHALLENGE_GRUDGE_FLOOR 0.5) after the first bench sweep fired five
-  day-one coups — the already-won/lost defect class in a person's shape.
-- **P3: PASS, pinned structurally** — the fire gates read the register, and
-  tests/test_characters.gd's identical-runs check observes the same gate.
+- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2), after the
+  first sweep's failure (7 briefs by people whose wants were denied by the
+  STARTING world) bought the edge-trigger: a want that TURNS denied writes
+  one pulse, a want that stays put writes nothing. V4.0's
+  prices-the-inherited-cycle defect, found in a person's shape.
+- **P2: the honest split — the brief rung is LIVE, the higher rungs are
+  CONTENT-BOUND.** The first ship's channel was ARITHMETICALLY DEAD (pulses
+  +0.02 against decay −0.05 — no grudge survived the month it was written —
+  and NO negative loyalty writer, so resign's floor was unreachable), which
+  the first probe's injection-masked P2 hid; the review's C2 found it. The
+  re-derivation: decay 0.008 (a standing denial nets +0.012/month), the
+  brief's own GRUDGE_BRIEF_RELIEF valve (0.012 — exactly one month's single
+  denial, so a lone ally leaks for ever without escalating), and the
+  LOYALTY_ACT_COST the briefer pays (the walk's other end: four briefs from
+  neutral reach the resign floor). Measured on the re-swept reachable
+  fixture (meters flipped to denied at month 24): **4 distinct briefers
+  fire; challenges and resignations do NOT, because escalation needs
+  TWO-PLUS simultaneous denials and no authored person carries more than
+  one METER want** — the valve pins a single denial at the rung its serves,
+  which is the envelope invariant working as designed. The higher rungs go
+  live the day content authors multi-denial people or a later block builds
+  the dismissal verb. NOT the first ship's silence: the ladder is
+  reachable, the content is not yet wide enough to climb it.
+- **P3: PASS — measured** over both runs' ledgers (every fired act belongs
+  to a person the meters denied; the gates read the register).
 - **P4: bounded by construction** — every act prices through
-  `Government.penalise_blocs`, which writes the bloc_offset accumulator the
-  opinion model already clamps and smooths; measured indirectly by the
-  balance suite's clamp checks staying green with the layer live (the first
-  bench sweep pushed `bloc_offset['students']` ONTO its clamp under a
-  captured court through brief-spam; the edge-trigger fixed it).
+  `Government.penalise_blocs`, NEGATIVE by the constants' own convention
+  (the review's C1: the first ship's three prices were POSITIVE, so an act
+  of betrayal RAISED approval — found by the every-authored-penalty-is-
+  negative convention, fixed by declaring the prices negative at the
+  constants); the accumulator clamps and the opinion model smooths.
 - **P5: PASS — no rand() in characters.gd**, pinned by
   tests/test_characters.gd's two-identical-states check.
 

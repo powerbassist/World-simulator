@@ -31,6 +31,7 @@ signal closed
 
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
@@ -319,6 +320,25 @@ func _want_satisfied(ns, person, want: Dictionary) -> bool:
 	if object.begins_with("office:party_leadership:"):
 		var pid := object.substr("office:party_leadership:".length())
 		return String(ns.party_leader_override.get(pid, _authored_leader(pid))) == person.id
+	if object.begins_with("meter:"):
+		# The meter family, missing from the first panel copy -- the review's
+		# I1: every meter want read "denied" forever because this copy fell to
+		# `return false`. The reads are the same three fields main.gd hands
+		# characters.gd (judicial independence through the same derived read),
+		# and the compare matches the machine's exactly: below/against the
+		# authored threshold, no clamps on either side.
+		var meter_key := object.substr("meter:".length())
+		var value := 0.0
+		match meter_key:
+			"grievance":
+				value = float(ns.unrest_pct)
+			"press_freedom":
+				value = float(ns.press_freedom)
+			"judicial_independence":
+				value = float(Judiciary.independence_deviation(ns))
+		if want.has("below"):
+			return value < float(want["below"])
+		return value > float(want["above"])
 	return false
 
 

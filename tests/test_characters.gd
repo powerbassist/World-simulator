@@ -58,7 +58,11 @@ func _check_leaf_property() -> void:
 		"character_constants.gd", "character_act_constants.gd",
 		"government.gd", "legislature.gd",
 	]
-	for line in src.split("\n"):
+	# Comments STRIPPED (the tick-order check's own lesson): characters.gd
+	# discusses the systems it refuses to preload at length, and a comment
+	# naming an allowed file beside a disallowed preload would pass a raw scan.
+	var code := _code_only(src)
+	for line in code.split("\n"):
 		var l := String(line)
 		if not l.contains("preload("):
 			continue
@@ -99,7 +103,7 @@ func _check_tick_order_pin() -> void:
 func _check_single_writers() -> void:
 	var register_writers: Array[String] = [
 		"person_loyalty", "person_standing", "person_grudges",
-		"party_leader_override", "person_party_override",
+		"party_leader_override", "person_party_override", "person_want_state",
 	]
 	for file in _sim_files():
 		var src := FileAccess.get_file_as_string("res://src/sim/%s" % file)
@@ -111,8 +115,29 @@ func _check_single_writers() -> void:
 			# seats_by_party through .get() or a for-in, never assigns into it.
 			_fail("src/sim/%s writes seats_by_party -- elections.gd owns the seat, the whip follows it" % file)
 		for reg in register_writers:
-			if file != "characters.gd" and code.contains("%s[" % reg):
+			if file != "characters.gd" and _indexed_write(code, reg):
 				_fail("src/sim/%s writes the %s register -- characters.gd is its one writer" % [file, reg])
+	# And the same scan over src/core and src/ui, where a stray writer would be
+	# no less a defect -- the UI writes nothing, and core's state layer touches
+	# the registers only through whole-property assignment in the round-trip.
+	for dir in ["src/core", "src/ui"]:
+		var da := DirAccess.open("res://%s" % dir)
+		if da == null:
+			continue
+		da.list_dir_begin()
+		var f := da.get_next()
+		while f != "":
+			if not f.ends_with(".gd"):
+				f = da.get_next()
+				continue
+			var src := FileAccess.get_file_as_string("res://%s/%s" % [dir, f])
+			if not src.is_empty():
+				var code := _code_only(src)
+				for reg in register_writers:
+					if _indexed_write(code, reg):
+						_fail("%s/%s writes the %s register -- characters.gd is its one writer" % [dir, f, reg])
+			f = da.get_next()
+		da.list_dir_end()
 
 
 ## DETERMINISM: two fresh copies of one made state, ticked with the same
@@ -146,8 +171,10 @@ func _check_determinism() -> void:
 
 ## The idle negative control at the unit level: month one of a fresh game, no
 ## player decision anywhere, must fire ZERO acts -- P1's principle before the
-## probe's 168-month sweep. The 213-entry cast has no authored wants yet (the
-## bench generator, Task 4, adds them), so the registers move nothing.
+## probe's 168-month sweep. The bench carries authored wants; month one reads
+## them all as `prev = served` (the edge-trigger's first-observation default),
+## so no pulse writes and no register moves -- the structural reason the idle
+## term stays silent, not an absence of content.
 func _check_idle_nation_is_silent() -> void:
 	var state = GameState.new_game(_loader, "FRA")
 	var meters := {"grievance": float(state.player().unrest_pct), "press_freedom": float(state.player().press_freedom), "judicial_independence": 0.0}
@@ -163,6 +190,7 @@ func _snapshot(ns) -> Dictionary:
 		"person_grudges": (ns.person_grudges as Dictionary).duplicate(true),
 		"party_leader_override": (ns.party_leader_override as Dictionary).duplicate(true),
 		"person_party_override": (ns.person_party_override as Dictionary).duplicate(true),
+		"person_want_state": (ns.person_want_state as Dictionary).duplicate(true),
 	}
 
 
@@ -180,6 +208,21 @@ func _sim_files() -> Array[String]:
 		f = da.get_next()
 	da.list_dir_end()
 	return out
+
+
+## Assignment-shaped write detection: a line that indexes the register AND
+## assigns into it (`] =`) or erases from it. A bare `register[key]` read --
+## top_bar's `ns.person_grudges[pid] >= 0.05` -- is a reader's right; the
+## scan is a tripwire for WRITERS, and the read/write shape is what says
+## which is which.
+func _indexed_write(code: String, reg: String) -> bool:
+	for raw_line in code.split("\n"):
+		var line := String(raw_line)
+		if not line.contains("%s[" % reg):
+			continue
+		if line.contains("] =") or line.contains(".erase("):
+			return true
+	return false
 
 
 func _code_only(src: String) -> String:

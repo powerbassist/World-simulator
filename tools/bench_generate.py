@@ -583,14 +583,26 @@ def wants_for(rng: random.Random, person_kind: str, nation: str, party_ids: list
     for entry in programme_ids:
         candidates.append({"object": "programme:%s" % entry, "stance": "sponsor"})
         candidates.append({"object": "programme:%s" % entry, "stance": "oppose"})
-    # every kind may carry a meter want; the metered kinds most of all
-    meter_weight = 3 if person_kind in ("union_leader", "activist", "press_owner", "judge") else 1
+    # The metered kinds' want lists are METERS FIRST -- the probe's reachable
+    # betrayal (review C2's re-derivation) found the first mix authored 130
+    # meter wants across 1595 people because 74 programme candidates buried
+    # 9 meter candidates under every shuffle. A union leader's want list IS
+    # grievance and press; a judge's IS the court. Meters are placed BEFORE
+    # the shuffle-pick so the metered kinds draw them, and weighted x2 for
+    # everyone else so a politician can still care about the country.
+    meter_first = person_kind in ("union_leader", "activist", "press_owner", "judge")
+    meter_candidates = []
     for key in METER_KEYS:
         direction, band = METER_BANDS[key]
-        for _ in range(meter_weight):
+        reps = 6 if meter_first else 2
+        for _ in range(reps):
             want = {"object": "meter:%s" % key, "stance": "demand" if direction == "below" else "defend"}
             want[direction] = round(rng.uniform(band[0], band[1]), 1)
-            candidates.append(want)
+            meter_candidates.append(want)
+    if meter_first:
+        candidates = meter_candidates + candidates
+    else:
+        candidates += meter_candidates
 
     rng.shuffle(candidates)
     for cand in candidates:
@@ -651,9 +663,20 @@ def main() -> int:
             existing_surnames.add(p["id"].split("_", 1)[1])
 
         # --- retrofit the political cast -------------------------------------
+        # --regen-wants: rebuild the BENCH's want lists (the 213 originals keep
+        # theirs -- the political cast's content is authored, not generated).
+        # Used when the want MIX changes: the committed bench's wants were
+        # drawn from the old candidate ordering, and re-running the same seed
+        # with the new mix produces the new register deterministically.
+        regen = "--regen-wants" in sys.argv
         for p in existing:
-            if "kind" in p:
+            if "kind" in p and not (regen and p.get("bench", False)):
                 continue  # already retrofitted (idempotent re-run)
+            if regen and p.get("bench", False):
+                # rebuild THIS person's wants from their OWN kind's mix --
+                # the 213 originals never enter this branch (bench: False)
+                p["wants"] = wants_for(rng, p["kind"], nation, party_ids, programme_ids)
+                continue
             is_regnal = " " not in p["name"] and any(c.isdigit() for c in p["name"])
             if is_regnal:
                 # a monarch: regional_figure (no slot points at the crown's

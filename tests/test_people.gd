@@ -270,6 +270,7 @@ func _check_character_fixture_refusals() -> void:
 		"not a want field",
 		"one want per object",
 		"which is not one of the meters",
+		"pairs with",
 		"which is not in the register",
 		"not one of the cabinet's",
 		"not a party of this nation",

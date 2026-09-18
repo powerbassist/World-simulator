@@ -166,7 +166,15 @@
       "ambition": 0.39,
       "wants": [
         {
-          "object": "office:party_leadership:sociala_forbundet",
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:balanspartiet",
+          "stance": "want"
+        },
+        {
+          "object": "office:portfolio:health",
           "stance": "want"
         }
       ],
@@ -184,7 +192,12 @@
       "ambition": 0.46,
       "wants": [
         {
-          "object": "programme:prog_in_the_black",
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.8
+        },
+        {
+          "object": "programme:prog_paybelt",
           "stance": "oppose"
         }
       ],
@@ -200,12 +213,7 @@
         "principled"
       ],
       "ambition": 0.63,
-      "wants": [
-        {
-          "object": "programme:prog_maastricht_letter",
-          "stance": "oppose"
-        }
-      ],
+      "wants": [],
       "bench": true
     },
     {
@@ -219,12 +227,12 @@
       "ambition": 0.26,
       "wants": [
         {
-          "object": "programme:prog_confidence_majority",
+          "object": "programme:prog_free_airwaves",
           "stance": "sponsor"
         },
         {
-          "object": "programme:prog_the_statesman_term",
-          "stance": "oppose"
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
         }
       ],
       "bench": true
@@ -238,12 +246,7 @@
         "principled"
       ],
       "ambition": 0.3,
-      "wants": [
-        {
-          "object": "programme:prog_free_airwaves",
-          "stance": "oppose"
-        }
-      ],
+      "wants": [],
       "bench": true
     },
     {
@@ -257,8 +260,12 @@
       "ambition": 0.89,
       "wants": [
         {
-          "object": "programme:prog_office_honour",
+          "object": "programme:prog_jobs_first",
           "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -275,12 +282,8 @@
       "ambition": 0.54,
       "wants": [
         {
-          "object": "programme:prog_the_federal_moment",
+          "object": "programme:prog_strong_year",
           "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_the_pension_pact",
-          "stance": "oppose"
         }
       ],
       "bench": true
@@ -296,12 +299,8 @@
       "ambition": 0.42,
       "wants": [
         {
-          "object": "programme:prog_maastricht_letter",
+          "object": "programme:prog_the_open_door",
           "stance": "sponsor"
-        },
-        {
-          "object": "office:portfolio:pensions",
-          "stance": "want"
         }
       ],
       "bench": true,
@@ -318,12 +317,8 @@
       "ambition": 0.48,
       "wants": [
         {
-          "object": "programme:prog_paybelt",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_clean_hands",
-          "stance": "sponsor"
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
         }
       ],
       "bench": true
@@ -340,11 +335,12 @@
       "ambition": 0.77,
       "wants": [
         {
-          "object": "programme:prog_the_tariff_line",
-          "stance": "sponsor"
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
         },
         {
-          "object": "programme:prog_the_pension_pact",
+          "object": "programme:prog_office_honour",
           "stance": "sponsor"
         }
       ],
@@ -362,12 +358,12 @@
       "ambition": 0.65,
       "wants": [
         {
-          "object": "programme:prog_office_honour",
+          "object": "programme:prog_green_industry",
           "stance": "sponsor"
         },
         {
-          "object": "programme:prog_clean_hands",
-          "stance": "oppose"
+          "object": "office:premiership",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -385,15 +381,11 @@
       "ambition": 0.72,
       "wants": [
         {
-          "object": "programme:prog_the_continents_granary",
-          "stance": "oppose"
+          "object": "office:party_leadership:vansterrorelsen",
+          "stance": "want"
         },
         {
-          "object": "programme:prog_the_full_term",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_in_the_black",
+          "object": "programme:prog_the_growing_towns",
           "stance": "oppose"
         }
       ],
@@ -411,8 +403,13 @@
       "ambition": 0.31,
       "wants": [
         {
-          "object": "programme:prog_the_federal_moment",
+          "object": "programme:prog_strong_year",
           "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.1
         }
       ],
       "bench": true
@@ -428,12 +425,12 @@
       "ambition": 0.9,
       "wants": [
         {
-          "object": "programme:prog_rhine_axis",
+          "object": "programme:prog_green_industry",
           "stance": "oppose"
         },
         {
-          "object": "programme:prog_green_industry",
-          "stance": "sponsor"
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
         }
       ],
       "bench": true
@@ -450,12 +447,8 @@
       "ambition": 0.65,
       "wants": [
         {
-          "object": "programme:prog_six_per_cent",
+          "object": "programme:prog_in_the_black",
           "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_the_presidents_ledger",
-          "stance": "sponsor"
         }
       ],
       "bench": true
@@ -470,8 +463,12 @@
       "ambition": 0.23,
       "wants": [
         {
-          "object": "programme:prog_rhine_axis",
-          "stance": "oppose"
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -488,7 +485,15 @@
       "ambition": 0.47,
       "wants": [
         {
-          "object": "programme:prog_the_full_term",
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
           "stance": "sponsor"
         }
       ],
@@ -506,16 +511,8 @@
       "ambition": 0.77,
       "wants": [
         {
-          "object": "office:portfolio:defence",
+          "object": "office:portfolio:infrastructure",
           "stance": "want"
-        },
-        {
-          "object": "programme:prog_clean_hands",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_the_classroom_ledger",
-          "stance": "oppose"
         }
       ],
       "bench": true,
@@ -533,12 +530,8 @@
       "ambition": 0.62,
       "wants": [
         {
-          "object": "programme:prog_the_presidents_ledger",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_sworn_offices",
-          "stance": "sponsor"
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
         }
       ],
       "bench": true,
@@ -556,9 +549,8 @@
       "ambition": 0.72,
       "wants": [
         {
-          "object": "meter:grievance",
-          "stance": "demand",
-          "below": 42.6
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
         }
       ],
       "bench": true
@@ -574,12 +566,12 @@
       "ambition": 0.48,
       "wants": [
         {
-          "object": "office:portfolio:defence",
-          "stance": "want"
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
         },
         {
-          "object": "programme:prog_the_federal_moment",
-          "stance": "oppose"
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -596,11 +588,7 @@
       "ambition": 0.42,
       "wants": [
         {
-          "object": "programme:prog_the_border_fund",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_office_honour",
+          "object": "programme:prog_sworn_offices",
           "stance": "oppose"
         }
       ],
@@ -617,7 +605,11 @@
       "ambition": 0.25,
       "wants": [
         {
-          "object": "programme:prog_the_firm_hand",
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
           "stance": "oppose"
         }
       ],
@@ -634,16 +626,12 @@
       "ambition": 0.87,
       "wants": [
         {
-          "object": "programme:prog_the_hospital_year",
-          "stance": "oppose"
-        },
-        {
           "object": "office:party_leadership:liberala_unionen",
           "stance": "want"
         },
         {
-          "object": "office:portfolio:health",
-          "stance": "want"
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -660,7 +648,15 @@
       "ambition": 0.64,
       "wants": [
         {
-          "object": "programme:prog_maastricht_letter",
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
           "stance": "sponsor"
         }
       ],
@@ -679,7 +675,11 @@
       "ambition": 0.92,
       "wants": [
         {
-          "object": "programme:prog_strong_year",
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
           "stance": "oppose"
         }
       ],
@@ -698,8 +698,12 @@
       "ambition": 0.56,
       "wants": [
         {
-          "object": "office:portfolio:health",
-          "stance": "want"
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
         }
       ],
       "bench": true,
@@ -717,16 +721,9 @@
       "ambition": 0.44,
       "wants": [
         {
-          "object": "programme:prog_the_record_majority",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_the_measured_country",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_the_full_term",
-          "stance": "sponsor"
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
         }
       ],
       "bench": true,
@@ -745,15 +742,15 @@
       "wants": [
         {
           "object": "programme:prog_in_the_black",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_clean_hands",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_the_full_term",
           "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -769,7 +766,12 @@
         "principled"
       ],
       "ambition": 0.63,
-      "wants": [],
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
       "bench": true
     },
     {
@@ -784,8 +786,8 @@
       "ambition": 0.65,
       "wants": [
         {
-          "object": "programme:prog_the_firm_hand",
-          "stance": "oppose"
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
         }
       ],
       "bench": true
@@ -800,12 +802,17 @@
       "ambition": 0.37,
       "wants": [
         {
-          "object": "office:party_leadership:balanspartiet",
-          "stance": "want"
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
         },
         {
-          "object": "programme:prog_green_industry",
-          "stance": "oppose"
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -822,12 +829,17 @@
       "ambition": 0.51,
       "wants": [
         {
-          "object": "programme:prog_the_european_voice",
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
           "stance": "oppose"
         },
         {
-          "object": "programme:prog_the_presidents_ledger",
-          "stance": "sponsor"
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.4
         }
       ],
       "bench": true,
@@ -845,8 +857,17 @@
       "ambition": 0.81,
       "wants": [
         {
-          "object": "programme:prog_strong_year",
+          "object": "programme:prog_maastricht_letter",
           "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
         }
       ],
       "bench": true,
@@ -862,8 +883,8 @@
       "ambition": 0.55,
       "wants": [
         {
-          "object": "programme:prog_the_statesman_term",
-          "stance": "sponsor"
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
         }
       ],
       "bench": true,
@@ -880,15 +901,12 @@
       "ambition": 0.78,
       "wants": [
         {
-          "object": "office:portfolio:education",
-          "stance": "want"
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
         },
         {
-          "object": "programme:prog_the_long_record",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_the_presidents_ledger",
+          "object": "programme:prog_in_the_black",
           "stance": "sponsor"
         }
       ],
@@ -907,15 +925,15 @@
       "ambition": 0.58,
       "wants": [
         {
-          "object": "programme:prog_clean_hands",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_the_tariff_line",
+          "object": "programme:prog_the_classroom_ledger",
           "stance": "oppose"
         },
         {
-          "object": "programme:prog_industrial_renewal",
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
           "stance": "sponsor"
         }
       ],
@@ -933,11 +951,11 @@
       "ambition": 0.83,
       "wants": [
         {
-          "object": "programme:prog_the_record_majority",
-          "stance": "oppose"
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
         },
         {
-          "object": "programme:prog_sworn_offices",
+          "object": "programme:prog_strong_year",
           "stance": "oppose"
         }
       ],
@@ -954,12 +972,12 @@
       "ambition": 0.34,
       "wants": [
         {
-          "object": "programme:prog_the_pension_pact",
+          "object": "programme:prog_the_long_record",
           "stance": "sponsor"
         },
         {
-          "object": "programme:prog_the_civil_register",
-          "stance": "sponsor"
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
         }
       ],
       "bench": true
@@ -975,7 +993,11 @@
       "ambition": 0.86,
       "wants": [
         {
-          "object": "programme:prog_the_statesman_term",
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
           "stance": "sponsor"
         }
       ],
@@ -992,12 +1014,8 @@
       "ambition": 0.7,
       "wants": [
         {
-          "object": "programme:prog_green_industry",
+          "object": "programme:prog_the_growing_towns",
           "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_turn_the_debt",
-          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -1014,15 +1032,15 @@
       "ambition": 0.42,
       "wants": [
         {
-          "object": "programme:prog_energy_union",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_settle_the_streets",
+          "object": "programme:prog_maastricht_letter",
           "stance": "sponsor"
         },
         {
           "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
           "stance": "oppose"
         }
       ],
@@ -1041,8 +1059,8 @@
       "ambition": 0.57,
       "wants": [
         {
-          "object": "programme:prog_the_presidents_ledger",
-          "stance": "oppose"
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -1058,16 +1076,7 @@
         "vain"
       ],
       "ambition": 0.3,
-      "wants": [
-        {
-          "object": "programme:prog_the_firm_hand",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_jobs_first",
-          "stance": "sponsor"
-        }
-      ],
+      "wants": [],
       "bench": true
     },
     {
@@ -1081,16 +1090,12 @@
       "ambition": 0.61,
       "wants": [
         {
-          "object": "office:portfolio:infrastructure",
+          "object": "office:party_leadership:vansterrorelsen",
           "stance": "want"
         },
         {
-          "object": "programme:prog_the_classroom_ledger",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_in_the_black",
-          "stance": "oppose"
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
         }
       ],
       "bench": true,
@@ -1107,15 +1112,7 @@
       "ambition": 0.9,
       "wants": [
         {
-          "object": "programme:prog_settle_the_streets",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_confidence_majority",
-          "stance": "sponsor"
-        },
-        {
-          "object": "programme:prog_in_the_black",
+          "object": "programme:prog_the_civil_register",
           "stance": "sponsor"
         }
       ],
@@ -1134,7 +1131,15 @@
       "ambition": 0.77,
       "wants": [
         {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
           "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
           "stance": "sponsor"
         }
       ],
@@ -1153,11 +1158,7 @@
       "ambition": 0.88,
       "wants": [
         {
-          "object": "programme:prog_the_record_majority",
-          "stance": "oppose"
-        },
-        {
-          "object": "programme:prog_industrial_renewal",
+          "object": "programme:prog_six_per_cent",
           "stance": "oppose"
         }
       ],

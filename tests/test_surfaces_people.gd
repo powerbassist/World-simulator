@@ -69,10 +69,21 @@ func _check_no_person_lists_in_ui() -> void:
 			if close == -1:
 				break
 			var literal := rest.substr(idx + 1, close - idx - 1)
-			for raw_word in literal.split(" "):
-				var w := _strip_punct(String(raw_word).strip_edges())
-				if w.length() > 4 and w.contains("_") and _looks_like_person_id(w):
-					found[w] = true
+			# Split on EVERY separator a list might use -- spaces alone let a
+			# comma-joined list of ids collapse into one token and evade the
+			# count (the review's finding).
+			var token := ""
+			for c in literal:
+				if c == " " or c == "," or c == ";" or c == "\t":
+					var w := _strip_punct(token)
+					if w.length() > 4 and w.contains("_") and _looks_like_person_id(w):
+						found[w] = true
+					token = ""
+				else:
+					token += c
+			var w_last := _strip_punct(token)
+			if w_last.length() > 4 and w_last.contains("_") and _looks_like_person_id(w_last):
+				found[w_last] = true
 			rest = rest.substr(close + 1)
 			idx = rest.find("\"")
 		if found.size() >= 3:
@@ -81,19 +92,30 @@ func _check_no_person_lists_in_ui() -> void:
 
 
 ## A person id is <NATION>_<surname> where NATION is one of the roster's
-## three-letter codes and the surname is lowercase. Used narrowly: the
-## check counts a literal as a person id only when the nation prefix is a
-## REAL roster nation, so a false hit needs a real nation code by accident.
-const ROSTER := ["AUT", "BEL", "BGR", "CHE", "CYP", "CZE", "DEU", "DNK", "ESP",
-	"EST", "FIN", "FRA", "GBR", "GRC", "HRV", "HUN", "IRL", "ITA", "LTU",
-	"LUX", "LVA", "MLT", "NLD", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## three-letter codes and the surname is lowercase. DERIVED from data/nations/
+## at run time, not hand-carried: a 30th nation would silently stop matching
+## a hand-written 29 (the review's finding), where the directory listing
+## cannot drift from the roster it is.
+func _roster() -> Array:
+	var out: Array = []
+	var da := DirAccess.open("res://data/nations")
+	if da == null:
+		return out
+	da.list_dir_begin()
+	var f := da.get_next()
+	while f != "":
+		if f.ends_with(".json"):
+			out.append(f.get_basename().to_upper())
+		f = da.get_next()
+	da.list_dir_end()
+	return out
 
 
 func _looks_like_person_id(w: String) -> bool:
 	var parts := w.split("_")
 	if parts.size() < 2:
 		return false
-	if not ROSTER.has(parts[0]):
+	if not _roster().has(parts[0]):
 		return false
 	for i in range(1, parts.size()):
 		if parts[i].is_empty() or parts[i] != parts[i].to_lower():
