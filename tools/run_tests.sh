@@ -83,6 +83,10 @@ tests=(
   # the decay band, and the main.gd tick ordering the same-month guarantee
   # rests on. PROGRAMME_SPAN is deliberately not pinned; the sweep owns it.
   tests/test_programme_channel.gd
+  # V4.6: the goods register and the recipe table -- the register's size and
+  # category coverage, and the cross-file rule that makes an input naming a good
+  # nobody declares a LOAD ERROR rather than a recipe that produces nothing.
+  tests/test_commodities_data.gd
   tests/test_referendum.gd
   tests/test_upper_house.gd
   tests/test_judiciary.gd
