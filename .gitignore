@@ -70,6 +70,7 @@ Thumbs.db
 # Per-machine agent state, like .mcp.json above -- plans and scratch belonging to
 # whichever assistant is driving, not to this game.
 .zcode/
+.zcodeignore
 .mimosa/
 docs/superpowers/
 # .v2c/plugin_root holds one absolute path into .zcode/ above, so it is the
