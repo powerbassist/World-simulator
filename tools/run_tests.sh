@@ -87,6 +87,10 @@ tests=(
   # category coverage, and the cross-file rule that makes an input naming a good
   # nobody declares a LOAD ERROR rather than a recipe that produces nothing.
   tests/test_commodities_data.gd
+  # V4.6: the commodity state and the production tick -- the leaf property, the
+  # single writer, determinism across twelve months, and the two bounds a
+  # shortage would otherwise escape (no NaN, prices inside the band).
+  tests/test_commodities.gd
   tests/test_referendum.gd
   tests/test_upper_house.gd
   tests/test_judiciary.gd

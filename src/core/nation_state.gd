@@ -1225,6 +1225,35 @@ var person_party_override: Dictionary[String, String] = {}
 ## about what the save's last month saw.
 var person_want_state: Dictionary[String, bool] = {}
 
+# --- The commodity layer (V4.6) -------------------------------------------------
+## The nation's commodity state: what it can make, what it wants, what it made,
+## what it bought and sold, and the ONE world price vector. Written by
+## commodities.gd and by nothing else (single writer, pinned by
+## tests/test_commodities.gd reading src/), seeded by Commodities.init_nation at
+## new game.
+##
+## SEVEN KEYS, and the shape is the module's contract rather than this field's:
+##   capacity           good id -> units/month the nation COULD make, from its
+##                      measured sector output and the recipe structure.
+##   demand             good id -> units it wants this month, at the live price.
+##   output             good id -> units actually made, after the recipe limit.
+##   surplus            good id -> output minus demand where that is positive,
+##                      i.e. what it has to sell; 0.0 where it does not.
+##   trade              good id -> units bought (positive) or sold (negative).
+##   price              good id -> the world price (EUR/unit), one vector shared
+##                      by every nation and clamped to
+##                      commodity_constants.PRICE_BAND of base.
+##   value_added_eur_bn what this month's output was worth, EUR bn -- the CHANGE
+##                      the block models (the step-0 verdict: levels are not
+##                      reproducible from recipes, deltas are). Nothing reads it
+##                      yet; a later task wires it or does not.
+##
+## NOT SERIALISED YET, and that is Task 5's to decide rather than an oversight:
+## the field is declared plain and empty so the round-trip gets its own recorded
+## reason -- an absent register reads as a nation with no production at all,
+## which is the `region_gdp_eur_bn` class and not the neutral-empty one.
+var commodity_state: Dictionary = {}
+
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
 ## converging on what the nation actually spends on it delivered. Written by
 ## Society.tick_month() and by nothing else. Keyed by society_constants.QUALITY_KEYS,
@@ -1748,6 +1777,11 @@ func duplicate_state():
 	s.party_leader_override = party_leader_override.duplicate(true)
 	s.person_party_override = person_party_override.duplicate(true)
 	s.person_want_state = person_want_state.duplicate(true)
+	# The commodity state, for the registers' reason and for a sharper one: it is
+	# a Dictionary OF Dictionaries, and a shallow copy would share the inner price
+	# vector -- so a projection run would move the live world's prices as it went.
+	# test_state_copy.gd's nested walk is what catches a shallow duplicate here.
+	s.commodity_state = commodity_state.duplicate(true)
 	s.last_company_result = last_company_result.duplicate(true)
 	s.service_quality = service_quality.duplicate(true)
 	s.start_service_quality = start_service_quality.duplicate(true)
