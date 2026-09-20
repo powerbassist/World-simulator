@@ -43,24 +43,31 @@ So U6b's real job was **making a person first-class the way a party already is**
 one record, an id, and state that stores the id. The tier table had no U6b row —
 **tenth consecutive instance** of the missing-row failure V1.3b recorded.
 
-## 2. A person is an ID and a NAME, and nothing else
+## 2. A person is an ID, a NAME — and, since V4.3, what they WANT
 
-`src/core/person.gd` has two fields. Three more were planned and all three were
-cut before the file was written, for the same reason each time: **the reference
-that owns the relationship already states it.**
+`src/core/person.gd` was born with two fields, on an argument that held for the
+political cast: **the reference that owns the relationship already states it.**
+Three fields were cut before the file was written. V4.3 re-admits one of them,
+narrowed; the other two cuts stand:
 
-| Cut | Because |
+| Field | Status |
 |---|---|
-| `title` | A head of state's title is `ns.head_of_state_title`, which an amendment can change. A person carrying one would go stale the moment the office did. |
-| `party_id` | A party leader is whoever that party's `leader_person_id` points at. A person claiming a party the party does not claim back is the divergence `_validate_neighbours()` checks borders for. |
-| `role` | The office a person holds is *the slot pointing at them*. A `role` field would be a second record of the reference graph, and Daniel Moucron — head of state **and** a party leader — shows it cannot even be single-valued. |
+| `title` | **Still cut.** A head of state's title is `ns.head_of_state_title`, which an amendment can change. A person carrying one would go stale the moment the office did. |
+| `role` | **Still cut.** The office a person holds is *the slot pointing at them*. A `role` field would be a second record of the reference graph, and Daniel Moucron — head of state **and** a party leader — shows it cannot even be single-valued. |
+| `party_id` | **Re-admitted at V4.3, backbencher form.** A party leader is still whoever that party's `leader_person_id` points at, and anyone a slot or a leadership points at leaves this field empty. It exists because a *bench* politician's affiliation has no slot pointing at it — authored once here, resolved against the nation's own party list at load, rather than dangling with no edge at all. |
 
-What that buys is worth more than the fields: **there is no field on a person
-that could carry a mechanism**, so "no mechanism on a person" is true by
-construction rather than by discipline. `tests/test_people.gd` reads the file and
-fails if a third field appears. [[v1]] §4 and §5 add the mechanisms that give a
-journalist or a firm something to do; they inherit this register and extend it,
-and the first field with a number in it is the one to argue about.
+What the two-field construction bought survives for the political cast: no
+field a slot already states. But the second half of the original argument —
+*no field that could carry a mechanism* — held only while every person was the
+political cast, and **V4.3 overturns it deliberately** ([[v4]] §V4.3, the tier's
+own citation): a person outside the political register has *nothing pointing at
+them*, so the register could never grow a union leader or a judge without
+giving them something authored. The answer is the character layer — `kind`,
+`traits`, `ambition`, `wants`, §14 — and its own law is the one this file now
+enforces instead: **a person is a WANT carrier, not a mechanism carrier.** The
+numbers that move (loyalty, standing, grudges, overrides) are live state on
+`NationState`, never fields here; `tests/test_people.gd` reads the file and
+fails on any EIGHTH field.
 
 ## 3. Ids are namespaced where party ids are not
 
@@ -95,6 +102,15 @@ That is not tidiness. It is the same standard as the session's own probe: an
 unreferenced person is content with no caller, which is precisely what U6b cut a
 five-deep minister bench for. Authoring a name and wiring it to nothing should
 fail loudly rather than sit in a file looking like a feature.
+
+**V4.3 widened what a reference is.** A person is referenced by a slot, OR by a
+**non-politician `kind`** — the kind is the meter hook, so a union leader with
+no slot anywhere is pointed at by the grievance ladder their kind reads — OR by
+an **authored `party_id`**, the backbencher edge §2 re-admitted. A politician
+with no slot, no kind and no party is still an orphan and still fails the load.
+The rule change is what lets the register grow a bench at all: before it,
+every person had to be electable-by-slot, which is precisely the cast the
+register could never leave.
 
 ## 5. The probe corrected the model once and itself twice
 
@@ -320,17 +336,260 @@ reversed.
 loyalty or ambition. §2 — and `Person` having no field to hold one is what makes
 this enforceable rather than aspirational.
 
+> **OVERTURNED AT V4.3, BY NAME** ([[v4]] §V4.3, the tier citation this file's
+> §2 also carries): a person now carries `kind`, `traits`, `ambition` and
+> `wants` — the want carrier §14 defines. What this bullet still refuses, and
+> §2's field-count check still enforces: **age, biography, career, competence**
+> — nothing reads them; **loyalty, or any number that moves** — state lives on
+> `NationState` (SAVE_VERSION 36), never on the content register, so a person
+> file cannot drift from what the player did; **portraits as a field** — an
+> asset keyed by the id the register already has ([[portrait-attribution|V3.7]]),
+> not an attribute. The U6b law that survives is the one §2 still states: no
+> field a slot already says.
+
 **Journalists, celebrities, business.** They have no target that exists, so
 meeting one *is* a new effect channel. [[v1]] §4 and §5 own them, each arriving
 with the mechanism that gives it something to do — the split the whole U6
 decomposition was taken on.
 
+> Half-overturned at V4.3: the journalist and the union leader exist now as
+> KINDS (`press_owner`, `union_leader`, §14.4) — because their target DID come
+> to exist, the meters of [[unrest-model]], [[media-model]] and
+> [[judiciary-model]]. What stays refused is meeting one as an EVENT channel:
+> a person acts through the acts §14.5 prices, not through a new effect key.
+
 **A person on the nation panel beyond the leader line that was already there.**
 That panel is at 860px against U5a's ~886 ceiling and has paid for the fold twice
 (V1.3e, V1.3g). U6b's change there is a *resolve*, not a new row.
+
+## 14. The character layer (V4.3)
+
+The tier block [[v4]] §V4.3 calls *People who want things*. Everything above
+this line is the register as U6b built it; this section is what V4.3 added and
+the law it added it under. Plan of record:
+`docs/superpowers/plans/2026-09-17-v4.3-people-who-want-things.md`.
+
+### 14.1 Content vs state — who a person is vs what you did to them
+
+| Content (`data/people/*.json`, never moves) | Live state (`NationState`, SAVE_VERSION 36) |
+|---|---|
+| `kind` — the six, below | `person_loyalty{id: float}` — [-1, +1], moves with acts |
+| `traits` — 2–3 from the fixed eight, below | `person_standing{id: float}` — [0, 1], political weight |
+| `ambition` — [0, 1], static drive | `person_grudges{id: float}` — [0, 1], written by betrayal, decays |
+| `party_id` — optional backbencher edge | `party_leader_override{party_id: person_id}` — challenges |
+| `wants[]` — objects + stance, below | `person_party_override{id: party_id}` — defections |
+
+A want denied is a grudge; a want served is loyalty. The whole price book is
+two channels, both existing registers — no third number was built.
+
+### 14.2 The trait set — eight, each mechanically defined
+
+`src/sim/character_constants.gd`, `TRAIT_KEYS`. Each trait gates an act
+threshold or price (the CK lever the tier signed); 2–3 per person, authored:
+
+| Trait | The whole mechanical definition (as shipped — the table was corrected to the code) |
+|---|---|
+| `ambitious` | standing SEED bonus (+STANDING_SEED_AMBITIOUS_BONUS at init — standing never moves again); challenge standing-threshold lowered by CHALLENGE_AMBITIOUS_DISCOUNT |
+| `loyal` | grudge taken ×0.5 (LOYAL_GRUDGE_FACTOR); resign floor relieved (LOYAL_RESIGN_RELIEF) |
+| `principled` | grudge taken ×2 (PRINCIPLED_GRUDGE_FACTOR) — a denied want bills them double; no standing channel exists |
+| `pragmatic` | grudge decay ×2 (PRAGMATIC_DECAY_FACTOR) — they let go faster; no stance-softening mechanism exists |
+| `vain` | challenge standing-threshold lowered by CHALLENGE_VAIN_DISCOUNT (0.1) when they carry a leadership want — a threshold discount, not an act-choice weighting |
+| `stubborn` | grudge decay halved (STUBBORN_DECAY_FACTOR) |
+| `networked` | their brief carries ×1.5 bloc_offset magnitude (NETWORKED_MAGNITUDE) |
+| `fervent` | a METER want's denial pulse ×1.5 (FERVENT_METER_FACTOR) for the collective kinds — the meter is their own register; no salience read exists |
+
+A ninth needs a measurement, not a mood. `ambition` the scalar and `ambitious`
+the trait are different things and both exist — the scalar is the dial, the
+trait is the floor.
+
+### 14.3 The want grammar
+
+```json
+{"object": "programme:prog_the_hospital_year", "stance": "sponsor"}
+{"object": "office:portfolio:health", "stance": "want"}
+{"object": "office:premiership", "stance": "want"}
+{"object": "office:party_leadership:renouveau_civique", "stance": "want"}
+{"object": "meter:grievance", "below": 35.0, "stance": "demand"}
+{"object": "meter:judicial_independence", "above": 0.8, "stance": "defend"}
+```
+
+Objects resolve AT LOAD — shape and closed vocabularies in `person.gd`
+(kinds, traits, stance-for-family, threshold coherence: a meter want carries
+EXACTLY ONE of `below`/`above`, and no other family reads one), cross-register
+halves in `data_loader._validate_people()`, the first place the whole loader is
+in hand — people load BEFORE parties and programme, so a want cannot be checked
+against registers that are not filled yet. Unresolvable = load error, loud,
+naming the file and the person id. **Satisfaction is DERIVED, never stored** —
+`Programme.progress_of()`, the office-holder slots, the meter reads; the
+region-share discipline, one level up.
+
+### 14.4 Kinds and the meters they read
+
+`KIND_KEYS`: `politician` (the version-35 default every pre-V4.3 entry reads),
+`regional_figure`, `union_leader`, `press_owner`, `judge`, `activist`.
+`KIND_METERS` hooks the non-political kinds to EXISTING meters — grievance
+(`ns.unrest_pct`, [[unrest-model]]), press_freedom ([[media-model]]), judicial
+independence ([[judiciary-model]]) — and **no second meter is built**: the
+Victoria-3 collective escalation (Passive→Agitating→Protesting→Rioting) is
+unrest's own ladder with a person's face on it. `characters.gd` READS these and
+never writes them. A kind with no meter and no political lever is a load error
+by test, so a seventh kind must declare where it plugs in.
+
+### 14.5 Acts land on existing machines
+
+**Four acts shipped this block** (resign, defect, challenge, brief_against —
+`ACT_KEYS`); the table's "Demand a portfolio" and "Endorse / refuse" rows
+DID NOT — the want feed exists (a portfolio want prices through satisfaction
+and the grudge ladder) but the verbs were cut for scope, and they belong to
+whichever block builds the dismissal/endorsement surfaces.
+
+| Act | Landing site | Never touches |
+|---|---|---|
+| Resign (office-holder) | office slot cleared + `Government.penalise_blocs` | cabinet effectiveness math (a portfolio stays party-held — the mechanism; the register persons it) |
+| Defect | `person_party_override` + card + bloc_offset price | `seats_by_party` (elections' to write; the seat follows the whip) |
+| Leadership challenge | `party_leader_override` + standing contest | party content, `seats_by_party` |
+| Brief against / leak | bloc_offset through **the ONE applier** (`Legislature.apply_effects`) | a second approval writer |
+| Demand a portfolio | want + grudge (feeds resign/challenge) | cabinet.gd's assignment rule |
+| Endorse / refuse (election) | bloc_offset-priced, campaign-visible card | elections.gd internals |
+| Sponsor / oppose a programme entry | reads `Programme`; a conclusion pays through the on_* effects ([[programme-model]] §V4.1's lobbying channel) | a new channel |
+
+`characters.gd` is a leaf: character_constants + legislature (the applier) +
+government (penalise). Tick order **after `Cabinet.tick_month`, before
+`Elections.tick_month`** — wants read Opinion-settled state, acts price
+bloc_offset that Opinion reads next month, and Elections, the stamp pair's
+only writer, still runs last. Pinned by a source-scanning test.
+
+### 14.6 The bands — DECLARED, swept twice, and what the whole-branch review changed
+
+Written before the probe ran (the project law); `tools/characters_probe.gd`
+measures, this section records. The first sweep found two machine defects;
+the whole-branch REVIEW (PR #44, round one) found two more the probe had
+masked — and both rounds' verdicts are the record:
+
+- **P1: PASS — 0 acts in an idle 168-month term** (band ≤ 2), after the
+  first sweep's failure (7 briefs by people whose wants were denied by the
+  STARTING world) bought the edge-trigger: a want that TURNS denied writes
+  one pulse, a want that stays put writes nothing. V4.0's
+  prices-the-inherited-cycle defect, found in a person's shape.
+- **P2: the honest split — the brief rung is LIVE, the higher rungs are
+  CONTENT-BOUND.** The first ship's channel was ARITHMETICALLY DEAD (pulses
+  +0.02 against decay −0.05 — no grudge survived the month it was written —
+  and NO negative loyalty writer, so resign's floor was unreachable), which
+  the first probe's injection-masked P2 hid; the review's C2 found it. The
+  re-derivation: decay 0.008 (a standing denial nets +0.012/month), the
+  brief's own GRUDGE_BRIEF_RELIEF valve (0.012 — exactly one month's single
+  denial, so a lone ally leaks for ever without escalating), and the
+  LOYALTY_ACT_COST the briefer pays (the walk's other end: four briefs from
+  neutral reach the resign floor). Measured on the re-swept reachable
+  fixture (meters flipped to denied at month 24): **4 distinct briefers
+  fire; challenges and resignations do NOT, because escalation needs
+  TWO-PLUS simultaneous denials and no authored person carries more than
+  one METER want** — the valve pins a single denial at the rung its serves,
+  which is the envelope invariant working as designed. The higher rungs go
+  live the day content authors multi-denial people or a later block builds
+  the dismissal verb. NOT the first ship's silence: the ladder is
+  reachable, the content is not yet wide enough to climb it.
+- **P3: PASS — measured** over both runs' ledgers (every fired act belongs
+  to a person the meters denied; the gates read the register).
+- **P4: bounded by construction** — every act prices through
+  `Government.penalise_blocs`, NEGATIVE by the constants' own convention
+  (the review's C1: the first ship's three prices were POSITIVE, so an act
+  of betrayal RAISED approval — found by the every-authored-penalty-is-
+  negative convention, fixed by declaring the prices negative at the
+  constants); the accumulator clamps and the opinion model smooths.
+- **P5: PASS — no rand() in characters.gd**, pinned by
+  tests/test_characters.gd's two-identical-states check.
+
+### 14.7 Refuses carried forward from the tier
+
+Dynasties, marriage, inheritance, lifespans, the leader's personal wealth.
+Refused HERE as well: seat movement by defection, a second
+grievance/press/court meter, per-person relations graphs — loyalty is to the
+player, one edge, not a matrix ([[v4]] §V4.5 owns the nation-to-nation
+relations channel).
+
+### 14.8 As built (2026-09-18) — shipped, harvested, and what owes an eye
+
+The block shipped on `v4.3-people` (9236f48 → c52c7a7): the schema, the six
+registers (the planned five plus `person_want_state`), the machine, the
+1,595-person bench, the surfaces, the V3.7 wall AND the bench wall
+harvested (2,206 rasters, zero people without art). Two machine defects the
+band probe found are recorded in §14.6 (the edge-trigger and the grudge
+floor); two more the whole-branch review found (the dead channel, the price
+signs) are fixed in the same section. The re-baseline re-run is
+[reports/v43-rerun-prediction.md](../reports/v43-rerun-prediction.md) —
+bit-identical first, then act-lines-only (two briefs in `managed_censors`,
+the regime built to deny them) after the fixes.
+
+**WHAT STILL OWES A HUMAN:** the AUTHOR's face verdict — the contact sheet
+(`.superpowers/sdd/frames/v43_wall_contact_neutral.png`) and the
+confidence-marked counterpart review table
+(`reports/portrait_counterparts_review.md`); rejects go through
+`python tools/curate_references.py --reject <pids>` and the regenerate
+path. The GUI verification of the PANELS is done (the People panel
+photographed live at `.superpowers/sdd/frames/v43_people_panel.png`); the
+FACES are the only unjudged surface.
+
+**Portrait tiering as shipped:** met cast = `bench: false` (the V2.3
+register, five emotions, committed), bench = `bench: true` (single neutral,
+committed). The flag is on `Person` (the eighth field, an art-logistics
+marker argued at the field) and read by `tools/portraits_generate.py`
+(`--bench-neutral-only`) and `tests/test_portraits.gd` (tier-aware
+completeness) — one flag, three readers, no list. The bench generator's
+`--regen-wants` rebuilds bench want lists when the candidate MIX changes
+(the meters-first re-mix needed it); the 213 originals' wants are authored
+content and never regenerate.
+
+**The standard review's round (2026-09-20) — two machine fixes, five record fixes, both
+machine fixes proven harness-silent.** The /code-review standard pass at `72ad3dd` scored 16
+candidates and kept 7 at ≥80. The two machine finds, fixed and pinned:
+
+- **A completed programme entry counted as ALIVE (score 92).** `_programme_entry` scanned the
+  all-terms register with no term gate and accepted `status == "complete"`, so an
+  oppose-stance author of any completed entry read their want denied for ever and the C2
+  channel billed the standing denial (+0.012/month) to the end of the run — the
+  priced-forever class the ownership latch exists to refuse, reached not by a dropped save
+  but by the machine's own comment lying about its code. Measured content: 1,103 of 2,237
+  programme wants are oppose; 816 people carry 2+ standing wants. Fixed: the read is
+  term-gated (`chosen_term == ns.terms_served`, the `Programme.this_term()` comparison
+  inlined to keep the leaf's preloads untouched) AND alive-only (`status == "active"`); the
+  comment now states both gates. Pinned by `test_characters`'s
+  `_check_programme_want_is_term_scoped_and_alive_only` (not chosen / active this term /
+  completed this term / active past term).
+- **A fired challenge never reached the premiership (score 85).** The challenge act writes
+  `party_leader_override` and nothing else; `Government._describe` filled `pm_person_id`
+  from the AUTHORED edge (`government.gd`'s `by_id[pm_party_id].leader_person_id`, and the
+  incumbent branch restored the start-of-game record), so the next election or fall
+  reinstated the person the player watched deposed — the resurrected-rival outcome the
+  SAVE_VERSION 36 argument refuses for dropped saves, reproduced by the machine itself.
+  `_clear_office`'s comment claimed the refill read the live leadership; now it does:
+  override first, then the start-of-game special case, then the authored edge, in
+  `_describe` (the one funnel all three formation builders share). `events_panel.gd`'s
+  largest-party-leader line reads override-first too (the second surface the find named).
+  Pinned by `test_characters`'s `_check_challenge_reaches_the_premiership` (override names
+  the challenger; clearing it restores the authored path exactly).
+
+**The re-run obligation, discharged by structure plus measurement instead of a two-hour
+double batch.** The harness (`tools/balance_probe.gd`) never references Programme — grep
+proves no regime ever chooses an entry, so `ns.programme` is `[]` every month of every
+regime and the term gate cannot change any read there; the override register is written
+only by the challenge act, and the branch's recorded act inventory (the V4.3 re-run's
+verdict) shows challenges never fire in the harness. Empirical half: `hands_off` and
+`managed` (the regimes that elect and form governments every term) run byte-identical
+against a `72ad3dd` worktree — `reports/stdrev/` holds both sides. The other five finds are
+records, not machines: §14.2's trait table rewritten to the shipped constants (the
+constants' header already claimed the table was corrected; now it is), the
+`LOYALTY_ACT_COST`/`GRUDGE_ACT_RELIEF` paragraphs naming the right valve, the six-register
+comment sweep (nation_state headers, duplicate/from_dict, game_state's bump-timing note,
+the tests), and the want voice moved to `person_card.gd`'s shared `STANCE_LABEL` /
+`object_text` so the panel and the card cannot print two renderings of one want (the
+panel's private copies deleted). `tools/characters_probe.gd.uid` staged (the U5b gotcha).
+Suite 87/87 with the two new checks.
 
 ---
 
 Related: [[index]] · [[cabinet-model]] · [[calendar-model]] ·
 [[fictionalization]] · [[transition-model]] · [[government-model]] ·
 [[data-architecture]] · [[v1]] · [[ROADMAP]]
+
+

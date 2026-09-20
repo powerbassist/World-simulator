@@ -1,12 +1,1158 @@
 {
   "people": [
-    { "id": "BGR_marinkov", "name": "Красимир Маринков" },
-    { "id": "BGR_kishev", "name": "Богдан Кисьов" },
-    { "id": "BGR_halilov", "name": "Осман Халилов" },
-    { "id": "BGR_tsonev", "name": "Пламен Цонев" },
-    { "id": "BGR_ganeva", "name": "Емилия Ганева" },
-    { "id": "BGR_rangelov", "name": "Димитър Рангелов" },
-    { "id": "BGR_koleva", "name": "Румяна Колева" },
-    { "id": "BGR_shishman_iii", "name": "Шишман III" }
+    {
+      "id": "BGR_marinkov",
+      "name": "Красимир Маринков",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "office:party_leadership:grazhdansko_razvitie",
+          "stance": "want"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_kishev",
+      "name": "Богдан Кисьов",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_halilov",
+      "name": "Осман Халилов",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_tsonev",
+      "name": "Пламен Цонев",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_ganeva",
+      "name": "Емилия Ганева",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_rangelov",
+      "name": "Димитър Рангелов",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_koleva",
+      "name": "Румяна Колева",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_shishman_iii",
+      "name": "Шишман III",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BGR_aleksiev",
+      "name": "Emiliya Aleksiev",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_bodurov",
+      "name": "Martin Bodurov",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.92,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "BGR_chervenkov",
+      "name": "Gergana Chervenkov",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "promyana_sega"
+    },
+    {
+      "id": "BGR_dimov",
+      "name": "Asen Dimov",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_elenkov",
+      "name": "Deyan Elenkov",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sotsialna_alternativa"
+    },
+    {
+      "id": "BGR_georgiev",
+      "name": "Stoyan Georgiev",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "grazhdansko_razvitie"
+    },
+    {
+      "id": "BGR_hristov",
+      "name": "Filip Hristov",
+      "kind": "union_leader",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_ivanov",
+      "name": "Maya Ivanov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_kolarov",
+      "name": "Vanya Kolarov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_lazarov",
+      "name": "Bogdana Lazarov",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_minev",
+      "name": "Martin Minev",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_neykov",
+      "name": "Stoyan Neykov",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_petrov",
+      "name": "Vanya Petrov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_radanov",
+      "name": "Filip Radanov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_stefanov",
+      "name": "Deyan Stefanov",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_tomov",
+      "name": "Asen Tomov",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_uzunov",
+      "name": "Kiril Uzunov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_videv",
+      "name": "Georgi Videv",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_yanev",
+      "name": "Asen Yanev",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_zlatarov",
+      "name": "Georgi Zlatarov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:otechestven_saiuz",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_andonov",
+      "name": "Kiril Andonov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_banev",
+      "name": "Lyubomir Banev",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "grazhdansko_razvitie"
+    },
+    {
+      "id": "BGR_donev",
+      "name": "Martin Donev",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_enchev",
+      "name": "Nikolay Enchev",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.93,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "BGR_ganev",
+      "name": "Asen Ganev",
+      "kind": "activist",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_hinkov",
+      "name": "Georgi Hinkov",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_ilarionov",
+      "name": "Gergana Ilarionov",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "grazhdansko_razvitie"
+    },
+    {
+      "id": "BGR_kojuharov",
+      "name": "Filip Kojuharov",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "office:party_leadership:naroden_glas",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "sotsialna_alternativa"
+    },
+    {
+      "id": "BGR_lozanov",
+      "name": "Ivan Lozanov",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_mihov",
+      "name": "Georgi Mihov",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_naydenov",
+      "name": "Ivayla Naydenov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_penev",
+      "name": "Gergana Penev",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "otechestven_saiuz"
+    },
+    {
+      "id": "BGR_rusinov",
+      "name": "Boris Rusinov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_simeonov",
+      "name": "Bogdana Simeonov",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "promyana_sega"
+    },
+    {
+      "id": "BGR_todorov",
+      "name": "Deyan Todorov",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "grazhdansko_razvitie"
+    },
+    {
+      "id": "BGR_valchanov",
+      "name": "Kiril Valchanov",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sotsialna_alternativa"
+    },
+    {
+      "id": "BGR_vulkov",
+      "name": "Deyan Vulkov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_zografski",
+      "name": "Asen Zografski",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 41.9
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_boikov",
+      "name": "Ivayla Boikov",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_cholakov",
+      "name": "Kalina Cholakov",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "office:party_leadership:obshtinski_saiuz",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_angelov",
+      "name": "Stoyan Angelov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "office:party_leadership:naroden_glas",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sotsialna_alternativa"
+    },
+    {
+      "id": "BGR_borisov",
+      "name": "Gergana Borisov",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:obshtinski_saiuz",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_chavdarov",
+      "name": "Filip Chavdarov",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sotsialna_alternativa"
+    },
+    {
+      "id": "BGR_dimitrov",
+      "name": "Maya Dimitrov",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "obshtinski_saiuz"
+    },
+    {
+      "id": "BGR_elenin",
+      "name": "Kiril Elenin",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BGR_genchev",
+      "name": "Stoyan Genchev",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.4
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "naroden_glas"
+    },
+    {
+      "id": "BGR_hadjivasilev",
+      "name": "Gergana Hadjivasilev",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

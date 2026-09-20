@@ -1,11 +1,1123 @@
 {
   "people": [
-    { "id": "HRV_vidovic", "name": "Krešimir Vidović" },
-    { "id": "HRV_ravlic", "name": "Tomislav Ravlić" },
-    { "id": "HRV_kovacevic", "name": "Snježana Kovačević" },
-    { "id": "HRV_jurisic", "name": "Marko Jurišić" },
-    { "id": "HRV_benkovic", "name": "Nenad Benković" },
-    { "id": "HRV_saric", "name": "Lana Šarić" },
-    { "id": "HRV_zvonimir_iii", "name": "Zvonimir III" }
+    {
+      "id": "HRV_vidovic",
+      "name": "Krešimir Vidović",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_ravlic",
+      "name": "Tomislav Ravlić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_kovacevic",
+      "name": "Snježana Kovačević",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "office:party_leadership:slobodna_alijansa",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_jurisic",
+      "name": "Marko Jurišić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_benkovic",
+      "name": "Nenad Benković",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "office:party_leadership:regionalni_savez",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_saric",
+      "name": "Lana Šarić",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_zvonimir_iii",
+      "name": "Zvonimir III",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "HRV_babic",
+      "name": "Hrvoje Babić",
+      "kind": "regional_figure",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "office:party_leadership:socijalna_koalicija",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "socijalna_koalicija"
+    },
+    {
+      "id": "HRV_cindric",
+      "name": "Filip Cindrić",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "HRV_dujella",
+      "name": "Goran Dujella",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.23,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "HRV_eric",
+      "name": "Zlata Erić",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_frkanovic",
+      "name": "Lidija Frkanović",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "office:party_leadership:krscanska_unija",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_grgic",
+      "name": "Ana Grgić",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socijalna_koalicija"
+    },
+    {
+      "id": "HRV_horvat",
+      "name": "Filip Horvat",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_ivancic",
+      "name": "Filip Ivančić",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_kovacic",
+      "name": "Božidar Kovačić",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "socijalna_koalicija"
+    },
+    {
+      "id": "HRV_lukic",
+      "name": "Andrija Lukić",
+      "kind": "activist",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 32.1
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_maric",
+      "name": "Filip Marić",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 41.7
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_novosel",
+      "name": "Luka Novosel",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_ostojic",
+      "name": "Nada Ostojić",
+      "kind": "activist",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_pavkovic",
+      "name": "Božidar Pavković",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_radic",
+      "name": "Sanja Radić",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_srakocic",
+      "name": "Zvonimir Srakočić",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 33.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_tomljanovic",
+      "name": "Nada Tomljanović",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_vukasovic",
+      "name": "Zvonimir Vukasović",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_zoric",
+      "name": "Domagoj Zorić",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "socijalna_koalicija"
+    },
+    {
+      "id": "HRV_andelic",
+      "name": "Lidija Anđelić",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_bartulovic",
+      "name": "Andrija Bartulović",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_cvitkovic",
+      "name": "Petra Cvitković",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_drazenovic",
+      "name": "Nada Draženović",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_filipovic",
+      "name": "Andrija Filipović",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.5
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_grubisic",
+      "name": "Andrija Grubišić",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_hrzenjak",
+      "name": "Andrija Hrženjak",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "HRV_ille",
+      "name": "Krešimir Ille",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "office:party_leadership:krscanska_unija",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_jelavic",
+      "name": "Ivan Jelavić",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_katic",
+      "name": "Ivana Katić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_lucic",
+      "name": "Zvonimir Lucić",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_matosevic",
+      "name": "Ivan Matošević",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 30.7
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_nikolic",
+      "name": "Hrvoje Nikolić",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_oreski",
+      "name": "Ivan Oreski",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_perisic",
+      "name": "Vesna Perišić",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_roglic",
+      "name": "Tihana Roglić",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_simic",
+      "name": "Ana Šimić",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_tomic",
+      "name": "Goran Tomić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 33.0
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_vlasic",
+      "name": "Ana Vlašić",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.28,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "HRV_zupan",
+      "name": "Hrvoje Župan",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_andric",
+      "name": "Božidar Andrić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_bakar",
+      "name": "Luka Bakar",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:domoljubni_blok",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "regionalni_savez"
+    },
+    {
+      "id": "HRV_crnkovic",
+      "name": "Sanja Crnković",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "domoljubni_blok"
+    },
+    {
+      "id": "HRV_dujmusic",
+      "name": "Vesna Dujmušić",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_frlan",
+      "name": "Tihana Frlan",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "HRV_grcic",
+      "name": "Ana Grčić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 37.7
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_horvatic",
+      "name": "Luka Horvatić",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_jankovic",
+      "name": "Nada Janković",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.6
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "slobodna_alijansa"
+    },
+    {
+      "id": "HRV_klanjcic",
+      "name": "Miroslav Klanjčić",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krscanska_unija"
+    }
   ]
 }

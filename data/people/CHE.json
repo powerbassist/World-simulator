@@ -1,11 +1,1154 @@
 {
   "people": [
-    { "id": "CHE_baumgartner", "name": "Reto Baumgartner" },
-    { "id": "CHE_perrenoud", "name": "Céline Perrenoud" },
-    { "id": "CHE_zbinden", "name": "Markus Zbinden" },
-    { "id": "CHE_bissig", "name": "Andrea Bissig" },
-    { "id": "CHE_frei", "name": "Livia Frei" },
-    { "id": "CHE_bernasconi", "name": "Fabio Bernasconi" },
-    { "id": "CHE_ulrich_iv", "name": "Ulrich IV" }
+    {
+      "id": "CHE_baumgartner",
+      "name": "Reto Baumgartner",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_perrenoud",
+      "name": "Céline Perrenoud",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_zbinden",
+      "name": "Markus Zbinden",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_bissig",
+      "name": "Andrea Bissig",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_frei",
+      "name": "Livia Frei",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_bernasconi",
+      "name": "Fabio Bernasconi",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_ulrich_iv",
+      "name": "Ulrich IV",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:alliance_nationale_suisse",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CHE_aeberhardt",
+      "name": "Martin Aeberhardt",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_brunner",
+      "name": "Gerhard Brunner",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_helvetiques"
+    },
+    {
+      "id": "CHE_christen",
+      "name": "Gerhard Christen",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:centre_federal",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:ligue_populaire",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_dappen",
+      "name": "Christian Däppen",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_egger",
+      "name": "Gerhard Egger",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_fasnacht",
+      "name": "Niklaus Fasnacht",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_grubenmann",
+      "name": "Karin Grubenmann",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_hoffmann",
+      "name": "Niklaus Hoffmann",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:parti_radical_liberal",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_imfeld",
+      "name": "Beatrice Imfeld",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_jenni",
+      "name": "Franziska Jenni",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_kagi",
+      "name": "Kaspar Kägi",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_helvetiques"
+    },
+    {
+      "id": "CHE_luthi",
+      "name": "Christian Lüthi",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_meier",
+      "name": "Niklaus Meier",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_nussbaumer",
+      "name": "Fritz Nussbaumer",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_ottiger",
+      "name": "Martin Ottiger",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_pfister",
+      "name": "Fritz Pfister",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_quaderer",
+      "name": "Lorenz Quaderer",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_rickenbach",
+      "name": "Adelheid Rickenbach",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_stucki",
+      "name": "Christa Stucki",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_nationale_suisse"
+    },
+    {
+      "id": "CHE_thonen",
+      "name": "Beat Thönen",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_uehlinger",
+      "name": "Ernst Uehlinger",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_helvetiques"
+    },
+    {
+      "id": "CHE_vollenweider",
+      "name": "Kaspar Vollenweider",
+      "kind": "activist",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_wyss",
+      "name": "Beatrice Wyss",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_amstutz",
+      "name": "Martin Amstutz",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "office:party_leadership:parti_radical_liberal",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_nationale_suisse"
+    },
+    {
+      "id": "CHE_bosshart",
+      "name": "Martin Bosshart",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_nationale_suisse"
+    },
+    {
+      "id": "CHE_caduff",
+      "name": "Niklaus Caduff",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_dutsch",
+      "name": "Adelheid Dütsch",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_eugster",
+      "name": "Adelheid Eugster",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:ligue_populaire",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_fuchs",
+      "name": "Albrecht Fuchs",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_nationale_suisse"
+    },
+    {
+      "id": "CHE_giezendanner",
+      "name": "Albrecht Giezendanner",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_honegger",
+      "name": "Irene Honegger",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "CHE_isler",
+      "name": "Niklaus Isler",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_kohler",
+      "name": "Liselotte Kohler",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "CHE_lorz",
+      "name": "Franziska Lorz",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_nationale_suisse"
+    },
+    {
+      "id": "CHE_meile",
+      "name": "Gerhard Meile",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:union_ouvriere_helvetique",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_helvetiques"
+    },
+    {
+      "id": "CHE_niederer",
+      "name": "Beatrice Niederer",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_osterwalder",
+      "name": "Marta Osterwalder",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_rickenbacher",
+      "name": "Kaspar Rickenbacher",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "verts_helvetiques"
+    },
+    {
+      "id": "CHE_schurch",
+      "name": "Ernst Schürch",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_abplanalp",
+      "name": "Marta Abplanalp",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_balmer",
+      "name": "Heidi Balmer",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "office:party_leadership:parti_radical_liberal",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_collenberg",
+      "name": "Karin Collenberg",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_daenzer",
+      "name": "Lorenz Daenzer",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ligue_populaire"
+    },
+    {
+      "id": "CHE_eichenberger",
+      "name": "Beat Eichenberger",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_fluckiger",
+      "name": "Kaspar Flückiger",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_radical_liberal"
+    },
+    {
+      "id": "CHE_gyger",
+      "name": "Liselotte Gyger",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "centre_federal"
+    },
+    {
+      "id": "CHE_humbel",
+      "name": "Irene Humbel",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CHE_joller",
+      "name": "Heidi Joller",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_ouvriere_helvetique"
+    }
   ]
 }

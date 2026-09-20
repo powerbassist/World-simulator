@@ -1,12 +1,1131 @@
 {
   "people": [
-    { "id": "SVN_zajc", "name": "Mojca Zajc" },
-    { "id": "SVN_kotnik", "name": "Urša Kotnik" },
-    { "id": "SVN_bizjak", "name": "Klemen Bizjak" },
-    { "id": "SVN_rebernik", "name": "Nataša Rebernik" },
-    { "id": "SVN_saje", "name": "Borut Saje" },
-    { "id": "SVN_hribernik", "name": "Luka Hribernik" },
-    { "id": "SVN_kolenc", "name": "Tanja Kolenc" },
-    { "id": "SVN_aleksander_ii", "name": "Aleksander II" }
+    {
+      "id": "SVN_zajc",
+      "name": "Mojca Zajc",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_kotnik",
+      "name": "Urša Kotnik",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_bizjak",
+      "name": "Klemen Bizjak",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_rebernik",
+      "name": "Nataša Rebernik",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "office:party_leadership:gibanje_naprej",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_saje",
+      "name": "Borut Saje",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_hribernik",
+      "name": "Luka Hribernik",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "office:party_leadership:solidarnost",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_kolenc",
+      "name": "Tanja Kolenc",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_aleksander_ii",
+      "name": "Aleksander II",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SVN_ambroz",
+      "name": "Vesna Ambrož",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_breg",
+      "name": "Gregor Breg",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_cerar",
+      "name": "Alenka Cerar",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_dolinsek",
+      "name": "Aleš Dolinšek",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "demokratska_zveza"
+    },
+    {
+      "id": "SVN_erjavec",
+      "name": "Tine Erjavec",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_faganeli",
+      "name": "Darko Faganeli",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "solidarnost"
+    },
+    {
+      "id": "SVN_gantar",
+      "name": "Gregor Gantar",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_hocevar",
+      "name": "Jože Hočevar",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_ilija",
+      "name": "Bojan Ilija",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_juvan",
+      "name": "Ivan Juvan",
+      "kind": "activist",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_kastelic",
+      "name": "Luka Kastelic",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_lenarcic",
+      "name": "Lidija Lenarčič",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_mavret",
+      "name": "Tine Mavret",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "office:party_leadership:delavska_levica",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "gibanje_naprej"
+    },
+    {
+      "id": "SVN_novak",
+      "name": "Klemen Novak",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_ocvirk",
+      "name": "Erik Ocvirk",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_pirc",
+      "name": "Karmen Pirc",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_rebolj",
+      "name": "Luka Rebolj",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_stimc",
+      "name": "Karmen Štimc",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "demokratska_zveza"
+    },
+    {
+      "id": "SVN_tavcar",
+      "name": "Bojan Tavčar",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "solidarnost"
+    },
+    {
+      "id": "SVN_vidmar",
+      "name": "Aleš Vidmar",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_zupan",
+      "name": "Franci Zupan",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_avbelj",
+      "name": "Lidija Avbelj",
+      "kind": "union_leader",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_bavcar",
+      "name": "Marko Bavčar",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "demokratska_zveza"
+    },
+    {
+      "id": "SVN_cvikl",
+      "name": "Klemen Cvikl",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_demsar",
+      "name": "Mojca Demšar",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_ferfolja",
+      "name": "Tine Ferfolja",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_grasic",
+      "name": "Marko Grašič",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "gibanje_naprej"
+    },
+    {
+      "id": "SVN_hribar",
+      "name": "Erik Hribar",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_jenko",
+      "name": "Bojan Jenko",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_kopac",
+      "name": "Karmen Kopač",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_lipnik",
+      "name": "Darko Lipnik",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "solidarnost"
+    },
+    {
+      "id": "SVN_mihelcic",
+      "name": "Klemen Mihelčič",
+      "kind": "regional_figure",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "solidarnost"
+    },
+    {
+      "id": "SVN_nared",
+      "name": "Marko Nared",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_osole",
+      "name": "Lidija Osole",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_pecar",
+      "name": "Breda Pečar",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_rupnik",
+      "name": "Jasna Rupnik",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_suhadolc",
+      "name": "Franci Suhadolc",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_vodopivec",
+      "name": "Klemen Vodopivec",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SVN_zorko",
+      "name": "Nataša Zorko",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "krcanska_unija"
+    },
+    {
+      "id": "SVN_ambrozic",
+      "name": "Jože Ambrožič",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_bajc",
+      "name": "Vesna Bajc",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "delavska_levica"
+    },
+    {
+      "id": "SVN_cvetreznik",
+      "name": "Breda Cvetrežnik",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 38.6
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_drnovsek",
+      "name": "Vesna Drnovšek",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SVN_ferjancic",
+      "name": "Marko Ferjančič",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 40.0
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "demokratska_zveza"
+    },
+    {
+      "id": "SVN_gnamus",
+      "name": "Franci Gnamuš",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_ivanko",
+      "name": "Karmen Ivanko",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "stranka_zelenih"
+    },
+    {
+      "id": "SVN_kavcic",
+      "name": "Bojan Kavčič",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

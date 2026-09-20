@@ -1,11 +1,1134 @@
 {
   "people": [
-    { "id": "GBR_wexford", "name": "Caroline Wexford" },
-    { "id": "GBR_marchbanks", "name": "Edward Marchbanks" },
-    { "id": "GBR_pell", "name": "Adrian Pell" },
-    { "id": "GBR_harlow", "name": "Duncan Harlow" },
-    { "id": "GBR_cobbett", "name": "Miriam Cobbett" },
-    { "id": "GBR_kilbride", "name": "Rhona Kilbride" },
-    { "id": "GBR_robert_iii", "name": "Robert III" }
+    {
+      "id": "GBR_wexford",
+      "name": "Caroline Wexford",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_marchbanks",
+      "name": "Edward Marchbanks",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_pell",
+      "name": "Adrian Pell",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_harlow",
+      "name": "Duncan Harlow",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_cobbett",
+      "name": "Miriam Cobbett",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_kilbride",
+      "name": "Rhona Kilbride",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:progress_alliance",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_robert_iii",
+      "name": "Robert III",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GBR_acheson_lowndes",
+      "name": "Ivor Acheson-Lowndes",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.6
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_beckwith",
+      "name": "Desmond Beckwith",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "progress_alliance"
+    },
+    {
+      "id": "GBR_carradine",
+      "name": "Jasper Carradine",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_deverell",
+      "name": "Bertram Deverell",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_eastcote",
+      "name": "Ivor Eastcote",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "home_nations_bloc"
+    },
+    {
+      "id": "GBR_ffoulkes",
+      "name": "Letitia Ffoulkes",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "national_unity_party"
+    },
+    {
+      "id": "GBR_greenaway",
+      "name": "Letitia Greenaway",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:liberal_union",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "home_nations_bloc"
+    },
+    {
+      "id": "GBR_harrington",
+      "name": "Ivor Harrington",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "office:party_leadership:national_unity_party",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_inglethorpe",
+      "name": "Desmond Inglethorpe",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "GBR_jessel",
+      "name": "Beatrice Jessel",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_kingscote",
+      "name": "Frederick Kingscote",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "home_nations_bloc"
+    },
+    {
+      "id": "GBR_lambourne",
+      "name": "Kitty Lambourne",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_marlowe",
+      "name": "Kitty Marlowe",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_naughton",
+      "name": "Algernon Naughton",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_orlebar",
+      "name": "Cuthbert Orlebar",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_pentreath",
+      "name": "Kitty Pentreath",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.8,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "GBR_quennell",
+      "name": "Desmond Quennell",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_ravensworth",
+      "name": "Montague Ravensworth",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "office:party_leadership:progress_alliance",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_scarthwaite",
+      "name": "Letitia Scarthwaite",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_thirlwall",
+      "name": "Kenneth Thirlwall",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "patriot_front"
+    },
+    {
+      "id": "GBR_urquhart",
+      "name": "Edmund Urquhart",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_vane_tempest",
+      "name": "Ivor Vane-Tempest",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "patriot_front"
+    },
+    {
+      "id": "GBR_wetherby",
+      "name": "Cecily Wetherby",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 44.4
+        }
+      ],
+      "bench": true,
+      "party_id": "liberal_union"
+    },
+    {
+      "id": "GBR_yarborough",
+      "name": "Kenneth Yarborough",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 44.0
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_aldwyn",
+      "name": "Cuthbert Aldwyn",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "office:party_leadership:progress_alliance",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_blackwood",
+      "name": "Humphrey Blackwood",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_cholmondley",
+      "name": "Bertram Cholmondley",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_danvers",
+      "name": "Imogen Danvers",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ecology_alliance"
+    },
+    {
+      "id": "GBR_escott",
+      "name": "Jessamy Escott",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "patriot_front"
+    },
+    {
+      "id": "GBR_fairweather",
+      "name": "Ivor Fairweather",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "progress_alliance"
+    },
+    {
+      "id": "GBR_granville",
+      "name": "Giles Granville",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "patriot_front"
+    },
+    {
+      "id": "GBR_hawtrey",
+      "name": "Harriet Hawtrey",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_inskip",
+      "name": "Imogen Inskip",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_jarvis",
+      "name": "Kenneth Jarvis",
+      "kind": "union_leader",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_kelsall",
+      "name": "Letitia Kelsall",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_lubbock",
+      "name": "Kenneth Lubbock",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberal_union"
+    },
+    {
+      "id": "GBR_massingham",
+      "name": "Montague Massingham",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "home_nations_bloc"
+    },
+    {
+      "id": "GBR_nethercott",
+      "name": "Gwendolen Nethercott",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:national_unity_party",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberal_union"
+    },
+    {
+      "id": "GBR_pobjoy",
+      "name": "Edmund Pobjoy",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberal_union"
+    },
+    {
+      "id": "GBR_selwyn_french",
+      "name": "Edmund Selwyn-French",
+      "kind": "judge",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 41.4
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_aldridge",
+      "name": "Jasper Aldridge",
+      "kind": "press_owner",
+      "traits": [
+        "principled",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_bagshot",
+      "name": "Harriet Bagshot",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_denby",
+      "name": "Frederick Denby",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "progress_alliance"
+    },
+    {
+      "id": "GBR_everington",
+      "name": "Cuthbert Everington",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberal_union"
+    },
+    {
+      "id": "GBR_fairfax",
+      "name": "Humphrey Fairfax",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GBR_greville",
+      "name": "Florence Greville",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "home_nations_bloc"
+    },
+    {
+      "id": "GBR_hesketh",
+      "name": "Dorothy Hesketh",
+      "kind": "press_owner",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.58,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "GBR_ingham",
+      "name": "Humphrey Ingham",
+      "kind": "activist",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

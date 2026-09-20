@@ -1,12 +1,1169 @@
 {
   "people": [
-    { "id": "GRC_vlachos", "name": "Nikiforos Vlachos" },
-    { "id": "GRC_stavrou", "name": "Iason Stavrou" },
-    { "id": "GRC_iliopoulos", "name": "Takis Iliopoulos" },
-    { "id": "GRC_petraki", "name": "Sofia Petraki" },
-    { "id": "GRC_nikolaidis", "name": "Georgios Nikolaidis" },
-    { "id": "GRC_markou", "name": "Lefteris Markou" },
-    { "id": "GRC_zervos", "name": "Eleni Zervos" },
-    { "id": "GRC_alexandros_ii", "name": "Alexandros II" }
+    {
+      "id": "GRC_vlachos",
+      "name": "Nikiforos Vlachos",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_stavrou",
+      "name": "Iason Stavrou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_iliopoulos",
+      "name": "Takis Iliopoulos",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_petraki",
+      "name": "Sofia Petraki",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_nikolaidis",
+      "name": "Georgios Nikolaidis",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_markou",
+      "name": "Lefteris Markou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "office:party_leadership:nea_politiki",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_zervos",
+      "name": "Eleni Zervos",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_alexandros_ii",
+      "name": "Alexandros II",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:laiki_rizospastiki",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "GRC_agapitou",
+      "name": "Panagiotis Agapitou",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 38.8
+        }
+      ],
+      "bench": true,
+      "party_id": "nea_politiki"
+    },
+    {
+      "id": "GRC_bamichas",
+      "name": "Lambrini Bamichas",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_chrysafis",
+      "name": "Anthoula Chrysafis",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_kommounistiko_komma"
+    },
+    {
+      "id": "GRC_dendrinos",
+      "name": "Konstantina Dendrinos",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_eleftheriadis",
+      "name": " Fotios Eleftheriadis",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "office:party_leadership:ergatiko_kommounistiko_komma",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_fotopoulos",
+      "name": "Panagiotis Fotopoulos",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_galanis",
+      "name": " Fotios Galanis",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_hatzis",
+      "name": " Fotios Hatzis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "poreia_eleftherias"
+    },
+    {
+      "id": "GRC_ioannidis",
+      "name": "Nikolaos Ioannidis",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "poreia_eleftherias"
+    },
+    {
+      "id": "GRC_kanellos",
+      "name": "Fotini Kanellos",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "office:party_leadership:nea_politiki",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_lambrakis",
+      "name": "Sofia Lambrakis",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_manousakis",
+      "name": "Christos Manousakis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_oikonomakis",
+      "name": "Giota Oikonomakis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_kommounistiko_komma"
+    },
+    {
+      "id": "GRC_papazoglou",
+      "name": "Lambrini Papazoglou",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "elliniki_poreia"
+    },
+    {
+      "id": "GRC_rallis",
+      "name": "Sofia Rallis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_sifneos",
+      "name": "Leonidas Sifneos",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nea_politiki"
+    },
+    {
+      "id": "GRC_tsakonas",
+      "name": "Christina Tsakonas",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_vlachogiannis",
+      "name": "Manolis Vlachogiannis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nea_politiki"
+    },
+    {
+      "id": "GRC_zafeiriou",
+      "name": "Kostas Zafeiriou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:elliniki_poreia",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nea_politiki"
+    },
+    {
+      "id": "GRC_alexopoulos",
+      "name": "Ioanna Alexopoulos",
+      "kind": "press_owner",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_berdekes",
+      "name": "Manolis Berdekes",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_chondros",
+      "name": "Ioannis Chondros",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_doukas",
+      "name": "Fotini Doukas",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.68,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "GRC_enotriades",
+      "name": "Christos Enotriades",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "elliniki_poreia"
+    },
+    {
+      "id": "GRC_fassoulas",
+      "name": "Nikoletta Fassoulas",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_geroulanos",
+      "name": "Anthoula Geroulanos",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "poreia_eleftherias"
+    },
+    {
+      "id": "GRC_hondrokoukis",
+      "name": "Leonidas Hondrokoukis",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "poreia_eleftherias"
+    },
+    {
+      "id": "GRC_katsaros",
+      "name": "Giota Katsaros",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "elliniki_poreia"
+    },
+    {
+      "id": "GRC_leventis",
+      "name": "Fotini Leventis",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_kommounistiko_komma"
+    },
+    {
+      "id": "GRC_moraitis",
+      "name": "Dimitris Moraitis",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "elliniki_poreia"
+    },
+    {
+      "id": "GRC_nastos",
+      "name": "Christos Nastos",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_panagopoulos",
+      "name": "Evangelos Panagopoulos",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_roussos",
+      "name": "Evangelos Roussos",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_sakellaropoulos",
+      "name": "Evangelos Sakellaropoulos",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_triantafyllou",
+      "name": "Ioannis Triantafyllou",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_vgenopoulos",
+      "name": "Eleni Vgenopoulos",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 44.4
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nea_politiki"
+    },
+    {
+      "id": "GRC_zorbos",
+      "name": "Anargyros Zorbos",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_avgustis",
+      "name": "Leonidas Avgustis",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_alexandris",
+      "name": "Leonidas Alexandris",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 40.6
+        },
+        {
+          "object": "office:party_leadership:sosialistiko_kinima",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_bakolas",
+      "name": "Ioannis Bakolas",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_kommounistiko_komma"
+    },
+    {
+      "id": "GRC_chionidis",
+      "name": "Nikolaos Chionidis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_dimarhos",
+      "name": "Evangelos Dimarhos",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "elliniki_poreia"
+    },
+    {
+      "id": "GRC_emmanuelidis",
+      "name": "Fotini Emmanuelidis",
+      "kind": "judge",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_fragkiskos",
+      "name": "Sofia Fragkiskos",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_galatopoulos",
+      "name": " Fotios Galatopoulos",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiko_kinima"
+    },
+    {
+      "id": "GRC_hatzimichail",
+      "name": "Eleni Hatzimichail",
+      "kind": "activist",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "GRC_iliadis",
+      "name": "Nikolaos Iliadis",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "laiki_rizospastiki"
+    }
   ]
 }

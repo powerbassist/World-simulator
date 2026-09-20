@@ -44,6 +44,13 @@ tests=(
   # appears to.
   tests/test_summits.gd
   tests/test_people.gd
+  # V4.3's machine test, registered at authoring time in this list rather than
+  # discovered later -- the three-instance lesson above (summits, cabinet,
+  # companies) is why it lands here unread.
+  tests/test_characters.gd
+  # V4.3's surface scanner: the register is the list. Registered at authoring
+  # time for the same reason.
+  tests/test_surfaces_people.gd
   # ...and test_cabinet.gd was the THIRD instance, found by the V1.6 playability
   # audit: 55 test files on disk against 54 here. It covers can_assign, assign,
   # effectiveness and resignations -- a player verb (Politics -> Reassign) and one

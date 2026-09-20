@@ -1,11 +1,1179 @@
 {
   "people": [
-    { "id": "CYP_hadjipavlou", "name": "Stavros Hadjipavlou" },
-    { "id": "CYP_petrou", "name": "Charalambos Petrou" },
-    { "id": "CYP_zachariou", "name": "Michalis Zachariou" },
-    { "id": "CYP_christofi", "name": "Andreas Christofi" },
-    { "id": "CYP_adamidis", "name": "Giorgos Adamidis" },
-    { "id": "CYP_giallouridou", "name": "Eleni Giallouridou" },
-    { "id": "CYP_henri_iii", "name": "Henri III" }
+    {
+      "id": "CYP_hadjipavlou",
+      "name": "Stavros Hadjipavlou",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.33,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_petrou",
+      "name": "Charalambos Petrou",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_zachariou",
+      "name": "Michalis Zachariou",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_christofi",
+      "name": "Andreas Christofi",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_adamidis",
+      "name": "Giorgos Adamidis",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_giallouridou",
+      "name": "Eleni Giallouridou",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_henri_iii",
+      "name": "Henri III",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "CYP_adamou",
+      "name": "Despo Adamou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ethniki_sympraxi"
+    },
+    {
+      "id": "CYP_charalambous",
+      "name": "Evagoras Charalambous",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_dimitriou",
+      "name": "Ioanna Dimitriou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kypriaki_symmachia"
+    },
+    {
+      "id": "CYP_efstathiou",
+      "name": "Marios Efstathiou",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_georgiou",
+      "name": "Andreas Georgiou",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 32.7
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_hadjigeorgiou",
+      "name": "Despo Hadjigeorgiou",
+      "kind": "union_leader",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_ioannou",
+      "name": "Maria Ioannou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_kyprianou",
+      "name": "Charalambos Kyprianou",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_loizou",
+      "name": "Georgios Loizou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ethniki_sympraxi"
+    },
+    {
+      "id": "CYP_mavrommatis",
+      "name": "Chrysanthi Mavrommatis",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_nicolaou",
+      "name": "Ioannis Nicolaou",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_oikonomou",
+      "name": "Charalambos Oikonomou",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_papadopoulos",
+      "name": "Loizos Papadopoulos",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true,
+      "party_id": "kypriaki_symmachia"
+    },
+    {
+      "id": "CYP_stefanou",
+      "name": "Sofia Stefanou",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_vassiliou",
+      "name": "Nikos Vassiliou",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_andreou",
+      "name": "Georgios Andreou",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_christodoulou",
+      "name": "Despo Christodoulou",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ethniki_sympraxi"
+    },
+    {
+      "id": "CYP_eleftheriou",
+      "name": "Evagoras Eleftheriou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_flouris",
+      "name": "Kyriacos Flouris",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_griva",
+      "name": "Ioannis Griva",
+      "kind": "activist",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_hadjiantoni",
+      "name": "Georgios Hadjiantoni",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_ktorides",
+      "name": "Kyriacos Ktorides",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_liasides",
+      "name": "Fotos Liasides",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_mouskos",
+      "name": "Georgios Mouskos",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:kypriaki_symmachia",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_neophytou",
+      "name": "Fotini Neophytou",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_panayi",
+      "name": "Marios Panayi",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "ethniki_sympraxi"
+    },
+    {
+      "id": "CYP_pilavakis",
+      "name": "Kyriacos Pilavakis",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_rossides",
+      "name": "Despo Rossides",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_soteriou",
+      "name": "Kyriacos Soteriou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_theocharous",
+      "name": "Charalambos Theocharous",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_tsiakkouris",
+      "name": "Niovi Tsiakkouris",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "office:party_leadership:fileleftheri_protovoulia",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_vrahimi",
+      "name": "Kyriacos Vrahimi",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_zambas",
+      "name": "Demetris Zambas",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_argyrou",
+      "name": "Kyriacos Argyrou",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_chrysostomou",
+      "name": "Chrysanthi Chrysostomou",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:fileleftheri_protovoulia",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_drousiotis",
+      "name": "Loukia Drousiotis",
+      "kind": "activist",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_katsaros",
+      "name": "Nikos Katsaros",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "ethniki_sympraxi"
+    },
+    {
+      "id": "CYP_miltiades",
+      "name": "Demetris Miltiades",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_servas",
+      "name": "Ioanna Servas",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sosialistiki_poreia"
+    },
+    {
+      "id": "CYP_alambritis",
+      "name": "Ioanna Alambritis",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_bambos",
+      "name": "Despo Bambos",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_demetriades",
+      "name": "Ioannis Demetriades",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_erodotou",
+      "name": "Fotos Erodotou",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:ergatiko_metopo",
+          "stance": "want"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_fylaktou",
+      "name": "Ioanna Fylaktou",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "ergatiko_metopo"
+    },
+    {
+      "id": "CYP_georghiades",
+      "name": "Ioannis Georghiades",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_hadjikyriacos",
+      "name": "Eleni Hadjikyriacos",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "CYP_ktoris",
+      "name": "Evagoras Ktoris",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "office:party_leadership:kypriaki_symmachia",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "polites_tou_kentrou"
+    },
+    {
+      "id": "CYP_lombardos",
+      "name": "Charalambos Lombardos",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "fileleftheri_protovoulia"
+    }
   ]
 }

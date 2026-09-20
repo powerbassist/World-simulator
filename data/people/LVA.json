@@ -1,12 +1,1163 @@
 {
   "people": [
-    { "id": "LVA_kreituss", "name": "Jānis Kreituss" },
-    { "id": "LVA_liepina", "name": "Māra Liepiņa" },
-    { "id": "LVA_krumins", "name": "Ojārs Krūmiņš" },
-    { "id": "LVA_veismane", "name": "Elīna Veismane" },
-    { "id": "LVA_ozolins", "name": "Viktors Ozoliņš" },
-    { "id": "LVA_kalns", "name": "Andrejs Kalns" },
-    { "id": "LVA_vitola", "name": "Ineta Vītola" },
-    { "id": "LVA_viesturs_ii", "name": "Viesturs II" }
+    {
+      "id": "LVA_kreituss",
+      "name": "Jānis Kreituss",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_liepina",
+      "name": "Māra Liepiņa",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_krumins",
+      "name": "Ojārs Krūmiņš",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_veismane",
+      "name": "Elīna Veismane",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_ozolins",
+      "name": "Viktors Ozoliņš",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_kalns",
+      "name": "Andrejs Kalns",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_vitola",
+      "name": "Ineta Vītola",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_viesturs_ii",
+      "name": "Viesturs II",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "LVA_aizsilnieks",
+      "name": "Māris Aizsilnieks",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_berzins",
+      "name": "Aivars Bērziņš",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "taisnigums"
+    },
+    {
+      "id": "LVA_celms",
+      "name": "Aija Celms",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_dzene",
+      "name": "Māris Dzene",
+      "kind": "judge",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_egle",
+      "name": "Imants Egle",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_freimanis",
+      "name": "Normunds Freimanis",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_grinbergs",
+      "name": "Nellija Grīnbergs",
+      "kind": "judge",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_kalnins",
+      "name": "Ruta Kalnins",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tautas_sargi"
+    },
+    {
+      "id": "LVA_lacis",
+      "name": "Viktors Lācis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_mazpanaks",
+      "name": "Kristīne Mazpanāks",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_petersons",
+      "name": "Lasma Pētersons",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_riekstins",
+      "name": "Edgars Riekstiņš",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_skujenieks",
+      "name": "Normunds Skujenieks",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "taisnigums"
+    },
+    {
+      "id": "LVA_taurins",
+      "name": "Nellija Taurins",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_ulmanis",
+      "name": "Velta Ulmanis",
+      "kind": "union_leader",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_vilks",
+      "name": "Viktors Vilks",
+      "kind": "activist",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_zarins",
+      "name": "Ilze Zariņš",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_apsitis",
+      "name": "Aivars Apsītis",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "taisnigums"
+    },
+    {
+      "id": "LVA_briedis",
+      "name": "Aivars Briedis",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.22,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_cirulis",
+      "name": "Laimdots Cīrulis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_dumins",
+      "name": "Lasma Dūmiņš",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "taisnigums"
+    },
+    {
+      "id": "LVA_fogels",
+      "name": "Ojārs Fogels",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_gailitis",
+      "name": "Māris Gailītis",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "zala_zeme"
+    },
+    {
+      "id": "LVA_huns",
+      "name": "Dzintars Hūns",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:tautas_sargi",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_ikaunieks",
+      "name": "Kristīne Ikaunieks",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 37.7
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_jansonis",
+      "name": "Imants Jansonis",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_kroders",
+      "name": "Gunārs Kroders",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 34.3
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_lemanis",
+      "name": "Lasma Lēmanis",
+      "kind": "activist",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_mucenieks",
+      "name": "Laimdots Mucenieks",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "office:party_leadership:vienota_latvija",
+          "stance": "want"
+        },
+        {
+          "object": "office:party_leadership:atverta_latvija",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "taisnigums"
+    },
+    {
+      "id": "LVA_naumanis",
+      "name": "Viktors Naumanis",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_purmalis",
+      "name": "Aija Purmalis",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_rijnieks",
+      "name": "Dzintars Rijnieks",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_straume",
+      "name": "Māris Straume",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_vagners",
+      "name": "Ojārs Vagners",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 36.3
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_zakis",
+      "name": "Māris Zaķis",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_balins",
+      "name": "Gunārs Bāliņš",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_keizars",
+      "name": "Gunārs Ķeizārs",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "mieram_un_kartibai"
+    },
+    {
+      "id": "LVA_rubenis",
+      "name": "Dzintars Rubenis",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_skujins",
+      "name": "Jurita Skujins",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "office:party_leadership:taisnigums",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_aigars",
+      "name": "Edgars Aigars",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_baldzens",
+      "name": "Dzintars Baldzēns",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "zala_zeme"
+    },
+    {
+      "id": "LVA_celmins",
+      "name": "Normunds Celmiņš",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vienota_latvija"
+    },
+    {
+      "id": "LVA_dirveks",
+      "name": "Kārlis Dirveks",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "atverta_latvija"
+    },
+    {
+      "id": "LVA_eglitis",
+      "name": "Jānis Eglītis",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 30.5
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_fricbergs",
+      "name": "Gunta Fricbergs",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "LVA_grasis",
+      "name": "Dace Grasis",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tautas_sargi"
+    },
+    {
+      "id": "LVA_jansons",
+      "name": "Kristīne Jansons",
+      "kind": "activist",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

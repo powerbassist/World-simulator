@@ -1,18 +1,25 @@
 extends SceneTree
 
-## U6b. The register: what it holds, what it refuses, and what it is NOT allowed
-## to grow into. Model: docs/people-model.md.
+## U6b + V4.3. The register: what it holds, what it refuses, and what it is
+## NOT allowed to grow into. Model: docs/people-model.md (section 14 is the
+## character layer).
 ##
 ## The load-bearing assertions here are the ones about what does NOT happen:
 ##
-##   - NO PERSON IS UNREFERENCED. An orphan is content with no caller, which is
-##     what this session's own probe cut a five-deep minister bench for. The
+##   - NO PERSON IS UNREFERENCED. An orphan is content with no caller, which
+##     is what this session's own probe cut a five-deep minister bench for. The
 ##     loader refuses one, so a name authored into a file and wired to nothing
-##     fails the load rather than sitting there looking like a feature.
-##   - A PERSON CARRIES NO MECHANISM. Person has exactly two fields, checked by
-##     reading the file: the moment one has a number in it, this turns red and a
-##     later session has to come and say why. That is docs/tiers/v1.md §4/§5's
-##     boundary, and it is the argument the whole U6 split was taken on.
+##     fails the load rather than sitting there looking like a feature. V4.3
+##     widened what references a person (slot OR non-politician kind OR party
+##     edge) -- the judge nobody slots is LEGAL, the partyless backbencher
+##     politician is not, and both halves are pinned.
+##   - A PERSON IS A WANT CARRIER, NOT A MECHANISM CARRIER. Person has exactly
+##     seven fields, checked by reading the file: what someone IS and WANTS is
+##     content, and every number that MOVES lives on NationState. The moment an
+##     eighth field appears, this turns red and a later session has to say why.
+##   - EVERY KIND PLUGS IN. A kind in KIND_KEYS is a politician shape (wants +
+##     standing) or carries a meter in KIND_METERS -- a kind with neither is
+##     content that cannot act, refused here rather than loading inert.
 ##   - src/sim/ HANDLES NO NAMES. After the re-key the simulation layer moves
 ##     person IDs and nothing else, so no display string can leak into a model.
 ##   - THE REGISTER IS THE ONLY PLACE A NAME LIVES. data/nations/ and
@@ -23,6 +30,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Person = preload("res://src/core/person.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const CharacterK = preload("res://src/sim/character_constants.gd")
 
 const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
 
@@ -43,7 +51,10 @@ func _init() -> void:
 	_check_duplicate_id_refused()
 	_check_foreign_reference_refused()
 	_check_orphan_refused()
-	_check_person_carries_no_mechanism()
+	_check_person_field_contract()
+	_check_kind_meter_coverage()
+	_check_character_fields_in_band()
+	_check_character_fixture_refusals()
 	_check_sim_moves_ids_not_names()
 	_check_no_name_is_authored_twice()
 	_check_restored_monarch_is_per_nation()
@@ -103,6 +114,10 @@ func _check_every_reference_resolves() -> void:
 
 
 ## The unusual half of the load, and the one this session earned the hard way.
+## V4.3's rescoped rule: a person is referenced by a slot, OR by a
+## non-politician kind (the kind is the meter hook), OR by an authored
+## party_id (the backbencher edge). The loader enforces it; this check
+## re-derives it independently so the two cannot silently diverge.
 func _check_no_orphans() -> void:
 	var referenced := {}
 	for nation_id in NATIONS:
@@ -113,6 +128,10 @@ func _check_no_orphans() -> void:
 		referenced[nation.pretender_person_id] = true
 		for party in _loader.parties[nation_id]:
 			referenced[party.leader_person_id] = true
+	for nation_id in _loader.people.keys():
+		for person in _loader.people[nation_id]:
+			if person.kind != "politician" or person.party_id != "":
+				referenced[person.id] = true
 	for pid in _loader.person_by_id.keys():
 		if not referenced.has(pid):
 			_fail("person '%s' is referenced by nothing -- an orphan should not have loaded" % pid)
@@ -154,11 +173,16 @@ func _expect_fixture_error(people_dir: String, needle: String, what: String) -> 
 	_fail("%s did not fail to load, or did not name the problem: %s" % [what, fixture.errors])
 
 
-## Person has TWO fields. Read off the file rather than asserted about an
+## Person has EIGHT fields -- id, person_name, kind, traits, ambition,
+## party_id, wants, bench -- read off the file rather than asserted about an
 ## instance, because the failure this guards against is a later session ADDING
-## one -- an `age`, a `competence`, a `loyalty` -- and an instance check would
-## still pass with a third field sitting there unused.
-func _check_person_carries_no_mechanism() -> void:
+## one (an `age`, a `competence`, a `loyalty`) and an instance check would
+## still pass with a ninth field sitting there unused. The character layer's
+## law (people-model 14.1) is that WHAT MOVES lives on NationState; this check
+## is what makes that enforceable rather than aspirational. `bench` is the
+## portrait tiering flag -- an art-logistics marker, not character content,
+## and the one field a person carries for the pipeline rather than the model.
+func _check_person_field_contract() -> void:
 	var src := FileAccess.get_file_as_string("res://src/core/person.gd")
 	if src.is_empty():
 		_fail("could not read src/core/person.gd")
@@ -170,8 +194,104 @@ func _check_person_carries_no_mechanism() -> void:
 		var line := String(raw_line)
 		if line.begins_with("var "):
 			fields.append(line.strip_edges())
-	if fields.size() != 2:
-		_fail("Person declares %d fields, expected exactly 2 (id, person_name): %s -- a person carrying a NUMBER is a mechanism, and docs/tiers/v1.md §4/§5 own that work" % [fields.size(), fields])
+	var names: Array[String] = []
+	for f in fields:
+		names.append(f.replace("var ", "").get_slice(":", 0).strip_edges())
+	var expected: Array[String] = []
+	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants", "bench"]:
+		expected.append(String(n))
+	if names != expected:
+		_fail("Person declares %s, expected exactly [id, person_name, kind, traits, ambition, party_id, wants, bench] -- a ninth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names)])
+
+
+## Every kind plugs in or is refused: a politician shape acts through wants +
+## standing, every other kind must carry a meter in KIND_METERS, and the table
+## must name no kind or meter outside the vocabularies. A kind that cannot act
+## is content loading inert -- the class of failure this suite exists to make
+## loud.
+func _check_kind_meter_coverage() -> void:
+	for kind in CharacterK.KIND_KEYS:
+		if kind == "politician" or kind == "regional_figure":
+			continue
+		if not CharacterK.KIND_METERS.has(kind):
+			_fail("kind '%s' has no meter and no political lever -- declare it in KIND_METERS or refuse the kind" % kind)
+	for kind in CharacterK.KIND_METERS.keys():
+		if not CharacterK.KIND_KEYS.has(kind):
+			_fail("KIND_METERS names kind '%s', which is not in KIND_KEYS" % kind)
+		if not CharacterK.METER_KEYS.has(String(CharacterK.KIND_METERS[kind])):
+			_fail("KIND_METERS maps '%s' at meter '%s', which is not in METER_KEYS" % [kind, String(CharacterK.KIND_METERS[kind])])
+	for family in CharacterK.WANT_STANCES.keys():
+		if not ["programme", "office", "meter"].has(family):
+			_fail("WANT_STANCES carries family '%s', which the object grammar does not define" % family)
+
+
+## The loaded register itself: every person's character fields inside their
+## bands. The defaults (kind "politician", ambition 0.5) are in band by
+## construction, so this is a belt on the loader's own refusal -- it fires only
+## if someone bypasses from_dict.
+func _check_character_fields_in_band() -> void:
+	for nation_id in _loader.people.keys():
+		for person in _loader.people[nation_id]:
+			if not CharacterK.KIND_KEYS.has(person.kind):
+				_fail("person '%s' has kind '%s' outside KIND_KEYS" % [person.id, person.kind])
+			if person.ambition < 0.0 or person.ambition > 1.0:
+				_fail("person '%s' has ambition %.2f outside [0, 1]" % [person.id, person.ambition])
+			if person.traits.size() > 3:
+				_fail("person '%s' carries %d traits" % [person.id, person.traits.size()])
+			for t in person.traits:
+				if not CharacterK.TRAIT_KEYS.has(t):
+					_fail("person '%s' carries trait '%s' outside the set" % [person.id, t])
+
+
+## One fixture, every refusal class, both halves of the orphan rule. The clean
+## pair (a judge no slot points at; a backbencher with a resolvable party edge
+## and valid wants) must produce NO error naming them -- the positive half of
+## the V4.3 rule, which a needle list alone cannot say.
+func _check_character_fixture_refusals() -> void:
+	var fixture := DataLoader.new()
+	fixture.load_all(
+		"res://data/nations", "res://data/geo/europe.geojson", "res://data/parties",
+		"res://data/laws",
+		"res://data/political-systems", "res://data/scenarios",
+		"res://data/diplomatic-actions", "res://data/geo/world.geojson",
+		"res://data/bloc-proposals", "res://tests/fixtures/people_character"
+	)
+	var needles := [
+		"field 'kind' must be one of",
+		"is not in the trait set",
+		"twice",
+		"at most 3",
+		"outside [0, 1]",
+		"must be a number in [0, 1]",
+		"not legal for a programme want",
+		"no known want family",
+		"exactly one of below/above",
+		"only a meter want reads one",
+		"not a want field",
+		"one want per object",
+		"which is not one of the meters",
+		"pairs with",
+		"which is not in the register",
+		"not one of the cabinet's",
+		"not a party of this nation",
+		"not premiership, a portfolio or a party leadership",
+		"not one of this nation's parties",
+	]
+	var missing: Array[String] = []
+	for needle in needles:
+		var found := false
+		for e in fixture.errors:
+			if e.find(needle) != -1:
+				found = true
+				break
+		if not found:
+			missing.append(needle)
+	if not missing.is_empty():
+		_fail("character fixture did not fire (or did not name): %s -- errors were: %s" % [str(missing), str(fixture.errors)])
+	for pid in ["FRA_legrain", "FRA_okwant"]:
+		for e in fixture.errors:
+			if e.find(pid) != -1:
+				_fail("clean bench person '%s' was named in a load error: %s" % [pid, e])
 
 
 ## The prize of the re-key, and the property that keeps a display string out of a

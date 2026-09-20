@@ -29,6 +29,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const CharacterK = preload("res://src/sim/character_constants.gd")
 
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
@@ -394,6 +395,16 @@ func _load_people(nation_id: String, people_dir: String) -> void:
 ## unreferenced person is content with no caller, which is what U6b's own probe
 ## cut a five-deep minister bench for. Authoring a name nobody can reach should
 ## fail the load rather than sit in a file looking like a feature.
+##
+## V4.3 widened what a reference IS: a person is referenced by a slot, OR by a
+## non-politician kind (the kind is the meter hook -- a union leader has no
+## slot anywhere, and what points at them is the grievance ladder their kind
+## reads), OR by an authored party_id. A politician with no slot, no kind and
+## no party is still an orphan. This is also where want OBJECTS resolve against
+## the other registers: people load before parties and programme (load_all's
+## own ordering note), so person.gd can only check closed vocabularies and
+## every cross-register half waits for here, the first place the whole loader
+## is in hand.
 func _validate_people() -> void:
 	var referenced := {}
 
@@ -419,13 +430,90 @@ func _validate_people() -> void:
 				"party '%s' leader_person" % party.id, party.leader_person_id, referenced
 			)
 
+	# The programme register's ids, for want resolution. Built once here rather
+	# than per person: 37 entries against ~1600 people, and a linear scan per
+	# want would be 1600 scans of the thing a Dictionary answers once.
+	var programme_ids := {}
+	for entry in programme:
+		programme_ids[String(entry["id"])] = true
+
 	for nation_id in people.keys():
+		var party_ids := {}
+		for party in parties.get(nation_id, []):
+			party_ids[party.id] = true
+
 		for person in people[nation_id]:
-			if not referenced.has(person.id):
+			# A bench politician's affiliation is authored on them because no
+			# slot points at it; it must resolve in THIS nation's list, the
+			# same inside-one-nation's-context rule party ids always follow.
+			if person.party_id != "" and not party_ids.has(person.party_id):
 				errors.append(
-					"people/%s.json: person '%s' (%s) is referenced by nothing"
-					% [nation_id, person.id, person.person_name]
+					"people/%s.json: person '%s' claims party '%s', which is not one of this nation's parties"
+					% [nation_id, person.id, person.party_id]
 				)
+			for want in person.wants:
+				_resolve_want(want, nation_id, person.id, party_ids, programme_ids)
+
+			if referenced.has(person.id):
+				continue
+			if person.kind != "politician" or person.party_id != "":
+				continue
+			errors.append(
+				"people/%s.json: person '%s' (%s) is referenced by nothing"
+				% [nation_id, person.id, person.person_name]
+			)
+
+
+## The cross-register half of want validation. Shape, stance and threshold
+## coherence were checked at parse (person.gd, against character_constants);
+## what remains is that the object NAMES something real: a programme entry
+## that exists, a portfolio the cabinet knows, a party of this person's own
+## nation. An unresolvable want is a load error naming the person, not an
+## inert want quietly never satisfied.
+func _resolve_want(want: Dictionary, nation_id: String, person_id: String, party_ids: Dictionary, programme_ids: Dictionary) -> void:
+	var object := String(want["object"])
+	var rest := object.substr(object.find(":") + 1)
+
+	if object.begins_with("programme:"):
+		if not programme_ids.has(rest):
+			errors.append(
+				"people/%s.json: person '%s' wants programme entry '%s', which is not in the register"
+				% [nation_id, person_id, rest]
+			)
+		return
+
+	if object.begins_with("office:"):
+		if object == "office:premiership":
+			# Every nation has exactly one; nothing to resolve against. The
+			# whole-string compare IS the guard: "office:premiership:junk" is
+			# a typo wearing a valid prefix, and a resolver that read only the
+			# first segment would load it as the premiership itself.
+			return
+		if rest.begins_with("portfolio:"):
+			var key := rest.substr("portfolio:".length())
+			if not CharacterK.PORTFOLIO_KEYS.has(key):
+				errors.append(
+					"people/%s.json: person '%s' wants portfolio '%s', which is not one of the cabinet's (%s)"
+					% [nation_id, person_id, key, str(CharacterK.PORTFOLIO_KEYS)]
+				)
+			return
+		if rest.begins_with("party_leadership:"):
+			var pid := rest.substr("party_leadership:".length())
+			if not party_ids.has(pid):
+				errors.append(
+					"people/%s.json: person '%s' wants the leadership of '%s', which is not a party of this nation"
+					% [nation_id, person_id, pid]
+				)
+			return
+		errors.append(
+			"people/%s.json: person '%s' wants office '%s', which is not premiership, a portfolio or a party leadership"
+			% [nation_id, person_id, rest]
+		)
+		return
+
+	# meter:<key> is validated against METER_KEYS in person.gd, at parse -- it
+	# is a closed vocabulary, not a cross-register reference; nothing further
+	# here.
 
 
 func _check_person_ref(nation_id: String, where: String, slot: String, pid: String, referenced: Dictionary) -> void:

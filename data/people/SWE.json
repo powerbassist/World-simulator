@@ -1,11 +1,1169 @@
 {
   "people": [
-    { "id": "SWE_holmqvist", "name": "Karin Holmqvist" },
-    { "id": "SWE_sandberg", "name": "Erik Sandberg" },
-    { "id": "SWE_hellstrom", "name": "Ulla Hellström" },
-    { "id": "SWE_bergvall", "name": "Pär Bergvall" },
-    { "id": "SWE_vikstrom", "name": "Sten Vikström" },
-    { "id": "SWE_nordin", "name": "Cecilia Nordin" },
-    { "id": "SWE_karl_xvii", "name": "Karl XVII" }
+    {
+      "id": "SWE_holmqvist",
+      "name": "Karin Holmqvist",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_sandberg",
+      "name": "Erik Sandberg",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_hellstrom",
+      "name": "Ulla Hellström",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_bergvall",
+      "name": "Pär Bergvall",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "office:party_leadership:borgliga_samlingen",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_vikstrom",
+      "name": "Sten Vikström",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:sverigevanerna",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_nordin",
+      "name": "Cecilia Nordin",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_karl_xvii",
+      "name": "Karl XVII",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SWE_ahlstrom",
+      "name": "Hilma Ahlström",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:balanspartiet",
+          "stance": "want"
+        },
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "borgliga_samlingen"
+    },
+    {
+      "id": "SWE_bergstrom",
+      "name": "Dag Bergström",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.8
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_cronholm",
+      "name": "Birger Cronholm",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.63,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SWE_dahlgren",
+      "name": "Knut Dahlgren",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_ekstrom",
+      "name": "Lennart Ekström",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.3,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SWE_falk",
+      "name": "Lennart Falk",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_gullbrandsson",
+      "name": "Eskil Gullbrandsson",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_ingves",
+      "name": "Ingrid Ingves",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociala_forbundet"
+    },
+    {
+      "id": "SWE_jansson",
+      "name": "Birger Jansson",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_kallstrom",
+      "name": "Gustav Källström",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_lindgren",
+      "name": "Märta Lindgren",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_mansson",
+      "name": "Gustav Månsson",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "office:party_leadership:vansterrorelsen",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "borgliga_samlingen"
+    },
+    {
+      "id": "SWE_norrlow",
+      "name": "Lennart Norrlow",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_olofsson",
+      "name": "Lovisa Olofsson",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_persson",
+      "name": "Freja Persson",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_quarnstrom",
+      "name": "Dag Quarnström",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_rask",
+      "name": "Märta Rask",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_stenmark",
+      "name": "Märta Stenmark",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberala_unionen"
+    },
+    {
+      "id": "SWE_tegner",
+      "name": "Greta Tegnér",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_ulvaeus",
+      "name": "Birgitta Ulvaeus",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_werner",
+      "name": "Lovisa Werner",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberala_unionen"
+    },
+    {
+      "id": "SWE_zetterling",
+      "name": "Birgitta Zetterling",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_akerlund",
+      "name": "Henrik Åkerlund",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_bohlin",
+      "name": "Dag Bohlin",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "office:party_leadership:liberala_unionen",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vansterrorelsen"
+    },
+    {
+      "id": "SWE_cassel",
+      "name": "Johan Cassel",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_drakenberg",
+      "name": "Folke Drakenberg",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_edfeldt",
+      "name": "Karin Edfeldt",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vansterrorelsen"
+    },
+    {
+      "id": "SWE_frisk",
+      "name": "Gustav Frisk",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "liberala_unionen"
+    },
+    {
+      "id": "SWE_gyllenhammar",
+      "name": "Lovisa Gyllenhammar",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "borgliga_samlingen"
+    },
+    {
+      "id": "SWE_hofsten",
+      "name": "Agnes Hofsten",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_isberg",
+      "name": "Knut Isberg",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_jonsson",
+      "name": "Henrik Jonsson",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.2
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vansterrorelsen"
+    },
+    {
+      "id": "SWE_krogh",
+      "name": "Gustav Krogh",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 35.4
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_lundquist",
+      "name": "Karin Lundquist",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberala_unionen"
+    },
+    {
+      "id": "SWE_molander",
+      "name": "Greta Molander",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberala_unionen"
+    },
+    {
+      "id": "SWE_nordfeldt",
+      "name": "Gustav Nordfeldt",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vansterrorelsen"
+    },
+    {
+      "id": "SWE_odhner",
+      "name": "Eskil Odhner",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_rylander",
+      "name": "Lennart Rylander",
+      "kind": "judge",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_sorvik",
+      "name": "Dag Sörvik",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_almgren",
+      "name": "Birger Almgren",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "SWE_beijer",
+      "name": "Disa Beijer",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_cronstrand",
+      "name": "Claes Cronstrand",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vansterrorelsen"
+    },
+    {
+      "id": "SWE_dahm",
+      "name": "Agnes Dahm",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "borgliga_samlingen"
+    },
+    {
+      "id": "SWE_ekberg",
+      "name": "Knut Ekberg",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.3,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "SWE_falkengard",
+      "name": "Birgitta Falkengård",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "office:party_leadership:vansterrorelsen",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_gyllander",
+      "name": "Lennart Gyllander",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociala_forbundet"
+    },
+    {
+      "id": "SWE_henckel",
+      "name": "Elsa Henckel",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sverigevanerna"
+    },
+    {
+      "id": "SWE_isitt",
+      "name": "Ingvar Isitt",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "balanspartiet"
+    }
   ]
 }

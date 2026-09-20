@@ -39,6 +39,8 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
@@ -1307,6 +1309,19 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# month's numbers, not last month's.
 	Cabinet.tick_month(_state, _loader)
 
+	# V4.3, after Cabinet (wants read Opinion-settled state and the cabinet's
+	# vacancies) and before Elections (the stamp pair's only writer still runs
+	# last, and a challenge's new party leader is in place before the vote
+	# prices it). The meters are read here and handed in -- the leaf law keeps
+	# unrest.gd/media.gd/judiciary.gd un-preloaded in characters.gd. The acts
+	# go to the message stack as cards, T5's surface; the record is not state.
+	var _character_acts := Characters.tick_month(_state, _loader, {
+		"grievance": float(_state.player().unrest_pct),
+		"press_freedom": float(_state.player().press_freedom),
+		"judicial_independence": Judiciary.independence_deviation(_state.player()),
+	})
+	_card_character_acts(_character_acts)
+
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June
 	# 2029). Any result pauses the clock — the player reads it before time moves
@@ -1492,6 +1507,38 @@ func _card_unrest_acts(year: int, month: int) -> void:
 				city, region, float(act["unrest_pct"]),
 			]
 		_hud.message_stack.push(_unrest_title(String(act["label"])), body)
+
+
+## V4.3's interim surface: one card per act, named off the act's own record --
+## the person's NAME is resolved here in the UI, never in src/sim/ (the
+## re-key's law, still). T5's People-panel and hover-card surfaces build on
+## the same records; this column's card exists so an act is never silent.
+func _card_character_acts(acts: Array) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	for act in acts:
+		var who := _loader.person_name(String(act["person_id"]))
+		var kind := String(act["act"])
+		var detail: Dictionary = act.get("detail", {})
+		var title := "The bench stirs"
+		var body := "%s acts." % (who if who != "" else "Someone")
+		match kind:
+			"resign":
+				title = "A resignation"
+				body = "%s resigns the premiership. The party holds the office; the government pays in standing." % who
+			"defect":
+				title = "A defection"
+				body = "%s crosses the floor. The seat stays with the whip." % who
+			"challenge":
+				var deposed := _loader.person_name(String(detail.get("deposed", "")))
+				title = "A leadership challenge"
+				body = "%s takes the leadership. %s stands down." % [
+					who, deposed if deposed != "" else "The incumbent",
+				]
+			"brief_against":
+				title = "A leak"
+				body = "%s briefs against the government." % who
+		_hud.message_stack.push(title, body)
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the

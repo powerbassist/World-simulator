@@ -1,12 +1,1112 @@
 {
   "people": [
-    { "id": "IRL_lavelle", "name": "Aoife Lavelle" },
-    { "id": "IRL_kinsella", "name": "Declan Kinsella" },
-    { "id": "IRL_hession", "name": "Rory Hession" },
-    { "id": "IRL_tarrant", "name": "Niamh Tarrant" },
-    { "id": "IRL_mcelhinney", "name": "Colm McElhinney" },
-    { "id": "IRL_nolan", "name": "Saoirse Nolan" },
-    { "id": "IRL_goggins", "name": "Cian Goggins" },
-    { "id": "IRL_brian_iv", "name": "Brian IV" }
+    {
+      "id": "IRL_lavelle",
+      "name": "Aoife Lavelle",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.49,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_kinsella",
+      "name": "Declan Kinsella",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_hession",
+      "name": "Rory Hession",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_tarrant",
+      "name": "Niamh Tarrant",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_mcelhinney",
+      "name": "Colm McElhinney",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_nolan",
+      "name": "Saoirse Nolan",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_goggins",
+      "name": "Cian Goggins",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_brian_iv",
+      "name": "Brian IV",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "IRL_aherne",
+      "name": "Grainne Aherne",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "comhaontas_naisiunta"
+    },
+    {
+      "id": "IRL_blacker",
+      "name": "Deirdre Blacker",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_cuddihy",
+      "name": "Padraig Cuddihy",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_devane",
+      "name": "Fergal Devane",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "glas_nua"
+    },
+    {
+      "id": "IRL_enright",
+      "name": "Hugh Enright",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "daonlathaigh_nua"
+    },
+    {
+      "id": "IRL_fanning",
+      "name": "Gearoid Fanning",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "glas_nua"
+    },
+    {
+      "id": "IRL_gantly",
+      "name": "Brendan Gantly",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "comhaontas_naisiunta"
+    },
+    {
+      "id": "IRL_henchy",
+      "name": "Sinead Henchy",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "glas_nua"
+    },
+    {
+      "id": "IRL_igoe",
+      "name": "Gearoid Igoe",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sinn_pobail"
+    },
+    {
+      "id": "IRL_joyce",
+      "name": "Ita Joyce",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_kelleher",
+      "name": "Eamonn Kelleher",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_laffan",
+      "name": "Caitriona Laffan",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_mulvihill",
+      "name": "Sinead Mulvihill",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_nestor",
+      "name": "Padraig Nestor",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": true,
+      "party_id": "pairti_na_tire"
+    },
+    {
+      "id": "IRL_o_boyle",
+      "name": "Caitriona O'Boyle",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "pairti_na_tire"
+    },
+    {
+      "id": "IRL_prendergast",
+      "name": "Nuala Prendergast",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "IRL_quinlivan",
+      "name": "Sinead Quinlivan",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_ronayne",
+      "name": "Fiona Ronayne",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:glas_nua",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "pairti_na_tire"
+    },
+    {
+      "id": "IRL_scully",
+      "name": "Padraig Scully",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_tobin",
+      "name": "Aidan Tobin",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "IRL_usher",
+      "name": "Malachy Usher",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 39.6
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_waldron",
+      "name": "Lorcan Waldron",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 38.6
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_yelverton",
+      "name": "Gearoid Yelverton",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_zealand",
+      "name": "Eamonn Zealand",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:sinn_pobail",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "comhaontas_naisiunta"
+    },
+    {
+      "id": "IRL_bermingham",
+      "name": "Cathal Bermingham",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "comhaontas_naisiunta"
+    },
+    {
+      "id": "IRL_corballis",
+      "name": "Hugh Corballis",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_daly",
+      "name": "Cathal Daly",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "comhaontas_naisiunta"
+    },
+    {
+      "id": "IRL_egan",
+      "name": "Darragh Egan",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_fitzgerald",
+      "name": "Deirdre Fitzgerald",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "pairti_na_tire"
+    },
+    {
+      "id": "IRL_gleeson",
+      "name": "Brendan Gleeson",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sinn_pobail"
+    },
+    {
+      "id": "IRL_hannon",
+      "name": "Fiona Hannon",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sinn_pobail"
+    },
+    {
+      "id": "IRL_kavanagh",
+      "name": "Aidan Kavanagh",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_lambe",
+      "name": "Gearoid Lambe",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.23,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "IRL_macnamara",
+      "name": "Malachy MacNamara",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_nugent",
+      "name": "Fergal Nugent",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "daonlathaigh_nua"
+    },
+    {
+      "id": "IRL_o_donoghue",
+      "name": "Fergal O'Donoghue",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 37.3
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_phelan",
+      "name": "Aidan Phelan",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_roche",
+      "name": "Hugh Roche",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_swords",
+      "name": "Maeve Swords",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "IRL_tyrrell",
+      "name": "Deirdre Tyrrell",
+      "kind": "union_leader",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_ahern",
+      "name": "Fergal Ahern",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_barry",
+      "name": "Padraig Barry",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "IRL_comyn",
+      "name": "Gearoid Comyn",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "lucht_oibre_aontaithe"
+    },
+    {
+      "id": "IRL_dunne",
+      "name": "Hugh Dunne",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "pairti_na_tire"
+    },
+    {
+      "id": "IRL_farrell",
+      "name": "Eamonn Farrell",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "daonlathaigh_nua"
+    },
+    {
+      "id": "IRL_griffey",
+      "name": "Aine Griffey",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "glas_nua"
+    },
+    {
+      "id": "IRL_healy",
+      "name": "Darragh Healy",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    }
   ]
 }

@@ -1,12 +1,1127 @@
 {
   "people": [
-    { "id": "FIN_rautio", "name": "Eero Rautio" },
-    { "id": "FIN_viitanen", "name": "Juho Viitanen" },
-    { "id": "FIN_salmela", "name": "Anni Salmela" },
-    { "id": "FIN_koiranen", "name": "Teemu Koiranen" },
-    { "id": "FIN_nummela", "name": "Sirkka Nummela" },
-    { "id": "FIN_peltomaa", "name": "Outi Peltomaa" },
-    { "id": "FIN_nordlund", "name": "Jonas Nordlund" },
-    { "id": "FIN_vaino_i", "name": "Väinö I" }
+    {
+      "id": "FIN_rautio",
+      "name": "Eero Rautio",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_viitanen",
+      "name": "Juho Viitanen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "office:party_leadership:maaseudun_voima",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_salmela",
+      "name": "Anni Salmela",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_koiranen",
+      "name": "Teemu Koiranen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "office:party_leadership:tyovaen_liitto",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_nummela",
+      "name": "Sirkka Nummela",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.86,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_peltomaa",
+      "name": "Outi Peltomaa",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_nordlund",
+      "name": "Jonas Nordlund",
+      "kind": "politician",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_vaino_i",
+      "name": "Väinö I",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FIN_aaltonen",
+      "name": "Paavo Aaltonen",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_blomqvist",
+      "name": "Tuulikki Blomqvist",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_corander",
+      "name": "Ilmari Corander",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:tyovaen_liitto",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_degerholm",
+      "name": "Tapio Degerholm",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 36.2
+        }
+      ],
+      "bench": true,
+      "party_id": "vihrea_liike"
+    },
+    {
+      "id": "FIN_eskola",
+      "name": "Eino Eskola",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "office:party_leadership:svenska_liberalforbundet",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_fagerlund",
+      "name": "Seppo Fagerlund",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "tyovaen_liitto"
+    },
+    {
+      "id": "FIN_gronholm",
+      "name": "Ilmari Grönholm",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_hakulinen",
+      "name": "Aarne Hakulinen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallismieli"
+    },
+    {
+      "id": "FIN_ikonen",
+      "name": "Paavo Ikonen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vihrea_liike"
+    },
+    {
+      "id": "FIN_jarvinen",
+      "name": "Raili Järvinen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_karppinen",
+      "name": "Martti Karppinen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tyovaen_liitto"
+    },
+    {
+      "id": "FIN_lindstrom",
+      "name": "Lasse Lindström",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.36,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "FIN_makinen",
+      "name": "Eino Mäkinen",
+      "kind": "activist",
+      "traits": [
+        "loyal"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_nieminen",
+      "name": "Sinikka Nieminen",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_ojala",
+      "name": "Eino Ojala",
+      "kind": "press_owner",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.89,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "FIN_partanen",
+      "name": "Kalevi Partanen",
+      "kind": "activist",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_rautavaara",
+      "name": "Niilo Rautavaara",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_salonen",
+      "name": "Irmeli Salonen",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.78,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "FIN_tolvanen",
+      "name": "Heikki Tolvanen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "office:party_leadership:kansallinen_liitto",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_uusitalo",
+      "name": "Martti Uusitalo",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_virtanen",
+      "name": "Ilmari Virtanen",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "office:party_leadership:svenska_liberalforbundet",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_yrjana",
+      "name": "Kalevi Yrjänä",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_ahonen",
+      "name": "Eija Ahonen",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_berg",
+      "name": "Juha Berg",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_cederstrom",
+      "name": "Eino Cederström",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_dahlstrom",
+      "name": "Tuulikki Dahlström",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_erkinjuntti",
+      "name": "Niilo Erkinjuntti",
+      "kind": "judge",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_forsman",
+      "name": "Raili Forsman",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tyovaen_liitto"
+    },
+    {
+      "id": "FIN_grell",
+      "name": "Aarne Grell",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.51,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vihrea_liike"
+    },
+    {
+      "id": "FIN_heikkila",
+      "name": "Eija Heikkilä",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.93,
+      "wants": [
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_ilves",
+      "name": "Lasse Ilves",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallismieli"
+    },
+    {
+      "id": "FIN_jokinen",
+      "name": "Heikki Jokinen",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_kallio",
+      "name": "Tuulikki Kallio",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "office:party_leadership:maaseudun_voima",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallismieli"
+    },
+    {
+      "id": "FIN_lahtinen",
+      "name": "Eino Lahtinen",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_moisio",
+      "name": "Seppo Moisio",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_nurmi",
+      "name": "Lasse Nurmi",
+      "kind": "politician",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.44,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:kansallismieli",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallismieli"
+    },
+    {
+      "id": "FIN_rasanen",
+      "name": "Lasse Räsänen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_silvennoinen",
+      "name": "Tapio Silvennoinen",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:tyovaen_liitto",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vihrea_liike"
+    },
+    {
+      "id": "FIN_vaisanen",
+      "name": "Heikki Väisänen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_aalberg",
+      "name": "Eija Aalberg",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_blom",
+      "name": "Lasse Blom",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "maaseudun_voima"
+    },
+    {
+      "id": "FIN_cederholm",
+      "name": "Tuulikki Cederholm",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FIN_dahl",
+      "name": "Raili Dahl",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "kansallinen_liitto"
+    },
+    {
+      "id": "FIN_ekelund",
+      "name": "Aila Ekelund",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "svenska_liberalforbundet"
+    },
+    {
+      "id": "FIN_friman",
+      "name": "Juha Friman",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tyovaen_liitto"
+    },
+    {
+      "id": "FIN_granholm",
+      "name": "Irmeli Granholm",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "tyovaen_liitto"
+    },
+    {
+      "id": "FIN_heinonen",
+      "name": "Paavo Heinonen",
+      "kind": "judge",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

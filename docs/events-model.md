@@ -126,12 +126,20 @@ was designed and cut — with one pending slot and a global quiet period, an eve
 cooldown is a second bound on a thing already bounded, and
 `src/core/investment_action.gd`'s refusal of a second authored strength applies.
 
-**The subject is an OFFICE and never a person.** [[people-model|U6b]]'s rule verbatim — a
-law names an office, the nation's own `government` block names who holds it — so nothing
-in `src/sim/` ever touches a person id and *no mechanism on a person* stays true by
-construction. `src/ui/events_panel.gd` is the only thing in the project that resolves it,
-and the frame reads **"Cécile Aumont — Prime Minister"** without a word of content saying
-so. It is also why the same scandal reads correctly in a republic and in a monarchy.
+**The subject is an OFFICE — and since V4.3 a person may stand behind one.** The
+office resolution itself STAYS: a law names an office, the nation's own
+`government` block names who holds it, `src/ui/events_panel.gd` remains the only
+resolver, and the frame still reads **"Cécile Aumont — Prime Minister"** without
+a word of content saying so. It is also why the same scandal reads correctly in
+a republic and in a monarchy. What the original rule forbade — *nothing in
+`src/sim/` ever touches a person id* — is **overturned deliberately at V4.3**
+([[v4]] §V4.3, *People who want things*): the character register
+(`src/sim/characters.gd`, [[people-model]] §14) is that tier's signed exception,
+a person now carries wants, and the office-never-a-person wall it defended is
+rewritten here rather than left contradicting the code beneath it. The events
+SCHEMA does not change in that block: `subject_office` stays an office field,
+no event ships a person subject, and the day one wants to it will extend this
+same table with the reference named.
 
 **`preconditions` is often empty, and that is the honest split between §8's two bullets.**
 Not two machines: a scandal is the pure-hazard case (bullet 2, arriving whether or not

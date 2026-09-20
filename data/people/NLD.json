@@ -1,11 +1,1116 @@
 {
   "people": [
-    { "id": "NLD_kuiperink", "name": "Sander Kuiperink" },
-    { "id": "NLD_terborg", "name": "Willem Terborg" },
-    { "id": "NLD_bosveld", "name": "Ellen Bosveld" },
-    { "id": "NLD_aalders", "name": "Ruben Aalders" },
-    { "id": "NLD_stoffels", "name": "Marijke Stoffels" },
-    { "id": "NLD_wielinga", "name": "Fenna Wielinga" },
-    { "id": "NLD_maurits_iii", "name": "Maurits III" }
+    {
+      "id": "NLD_kuiperink",
+      "name": "Sander Kuiperink",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_terborg",
+      "name": "Willem Terborg",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_bosveld",
+      "name": "Ellen Bosveld",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_aalders",
+      "name": "Ruben Aalders",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_stoffels",
+      "name": "Marijke Stoffels",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_wielinga",
+      "name": "Fenna Wielinga",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_maurits_iii",
+      "name": "Maurits III",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:liberaal_verbond",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NLD_bakhuis",
+      "name": "Greet Bakhuis",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_coenen",
+      "name": "Cornelis Coenen",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_doornbos",
+      "name": "Aart Doornbos",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.61,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_everts",
+      "name": "Heleen Everts",
+      "kind": "union_leader",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_franken",
+      "name": "Gerben Franken",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_grootveld",
+      "name": "Dirk Grootveld",
+      "kind": "judge",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_hofland",
+      "name": "Jolanda Hofland",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_ijpelaar",
+      "name": "Heleen IJpelaar",
+      "kind": "judge",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_jansink",
+      "name": "Aart Jansink",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "office:party_leadership:sociale_unie",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_kuiper",
+      "name": "Jelle Kuiper",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_linthorst",
+      "name": "Egbert Linthorst",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_unie"
+    },
+    {
+      "id": "NLD_meulenkamp",
+      "name": "Bas Meulenkamp",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 41.3
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_nieuwenhuis",
+      "name": "Hidde Nieuwenhuis",
+      "kind": "activist",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_ophof",
+      "name": "Egbert Ophof",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_pronk",
+      "name": "Maartje Pronk",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_quist",
+      "name": "Frits Quist",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_polder"
+    },
+    {
+      "id": "NLD_rensink",
+      "name": "Lodewijk Rensink",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "office:party_leadership:nationale_vrijheid",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_sloots",
+      "name": "Egbert Sloots",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_tuinstra",
+      "name": "Menno Tuinstra",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_veerman",
+      "name": "Menno Veerman",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:nationale_vrijheid",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_wolters",
+      "name": "Bregje Wolters",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.94,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_polder"
+    },
+    {
+      "id": "NLD_zandbergen",
+      "name": "Bregje Zandbergen",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_bergkamp",
+      "name": "Jolanda Bergkamp",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberaal_verbond"
+    },
+    {
+      "id": "NLD_creemers",
+      "name": "Gerben Creemers",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:education",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_unie"
+    },
+    {
+      "id": "NLD_dekkers",
+      "name": "Frits Dekkers",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_eerden",
+      "name": "Lidewij Eerden",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_fiers",
+      "name": "Lodewijk Fiers",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_gerritsen",
+      "name": "Maartje Gerritsen",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_hofstede",
+      "name": "Anneke Hofstede",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_ijsselmuiden",
+      "name": "Bregje IJsselmuiden",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_polder"
+    },
+    {
+      "id": "NLD_klaver",
+      "name": "Karin Klaver",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_lammers",
+      "name": "Menno Lammers",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.62,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_manders",
+      "name": "Hidde Manders",
+      "kind": "union_leader",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.58,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_notten",
+      "name": "Lidewij Notten",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.26,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_oldenkamp",
+      "name": "Jelle Oldenkamp",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_poelstra",
+      "name": "Aart Poelstra",
+      "kind": "union_leader",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.86,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_rietdijk",
+      "name": "Bas Rietdijk",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "office:party_leadership:sociale_unie",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_scholten",
+      "name": "Doortje Scholten",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "NLD_vissers",
+      "name": "Jolanda Vissers",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_polder"
+    },
+    {
+      "id": "NLD_aaldering",
+      "name": "Gerben Aaldering",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.27,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_bergsma",
+      "name": "Frits Bergsma",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "democraten_nu"
+    },
+    {
+      "id": "NLD_cuijpers",
+      "name": "Gerben Cuijpers",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "nationale_vrijheid"
+    },
+    {
+      "id": "NLD_doornenbal",
+      "name": "Jelle Doornenbal",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberaal_verbond"
+    },
+    {
+      "id": "NLD_eversdijk",
+      "name": "Menno Eversdijk",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "liberaal_verbond"
+    },
+    {
+      "id": "NLD_francken",
+      "name": "Anneke Francken",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_unie"
+    },
+    {
+      "id": "NLD_groenleer",
+      "name": "Jelle Groenleer",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "NLD_hofstee",
+      "name": "Bas Hofstee",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:sociale_unie",
+          "stance": "want"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        }
+      ],
+      "bench": true,
+      "party_id": "christelijk_midden"
+    },
+    {
+      "id": "NLD_ijsendoorn",
+      "name": "Menno IJsendoorn",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_unie"
+    }
   ]
 }

@@ -1,11 +1,1165 @@
 {
   "people": [
-    { "id": "BEL_van_craen", "name": "Joris Van Craen" },
-    { "id": "BEL_vandekerckhove", "name": "Bram Vandekerckhove" },
-    { "id": "BEL_dewilde", "name": "Naima Dewilde" },
-    { "id": "BEL_coussement", "name": "Pieter Coussement" },
-    { "id": "BEL_vanhamme", "name": "Lore Vanhamme" },
-    { "id": "BEL_segers", "name": "Tom Segers" },
-    { "id": "BEL_baudouin_iii", "name": "Baudouin III" }
+    {
+      "id": "BEL_van_craen",
+      "name": "Joris Van Craen",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "office:party_leadership:burgerforum",
+          "stance": "want"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_vandekerckhove",
+      "name": "Bram Vandekerckhove",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_dewilde",
+      "name": "Naima Dewilde",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_coussement",
+      "name": "Pieter Coussement",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_vanhamme",
+      "name": "Lore Vanhamme",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_segers",
+      "name": "Tom Segers",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_baudouin_iii",
+      "name": "Baudouin III",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BEL_baelden",
+      "name": "Hilde Baelden",
+      "kind": "activist",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_claes",
+      "name": "Dries Claes",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_debruyn",
+      "name": "Fien Debruyn",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_ectors",
+      "name": "Nand Ectors",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_fransen",
+      "name": "Koen Fransen",
+      "kind": "activist",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_goossens",
+      "name": "Bavo Goossens",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_vooruitgang"
+    },
+    {
+      "id": "BEL_hendrickx",
+      "name": "Loes Hendrickx",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "burgerforum"
+    },
+    {
+      "id": "BEL_janssens",
+      "name": "Maarten Janssens",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.43,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_kerkhofs",
+      "name": "Joos Kerkhofs",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_luyten",
+      "name": "Elke Luyten",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_mannaerts",
+      "name": "Maarten Mannaerts",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:infrastructure",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "burgerforum"
+    },
+    {
+      "id": "BEL_nys",
+      "name": "Elke Nys",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "linkse_eenheid"
+    },
+    {
+      "id": "BEL_peeters",
+      "name": "Elke Peeters",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.28,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_ryckx",
+      "name": "Joos Ryckx",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 31.9
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_seghers",
+      "name": "Gerben Seghers",
+      "kind": "regional_figure",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_timmermans",
+      "name": "Rien Timmermans",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "office:party_leadership:vlaamse_toekomst",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_vanassche",
+      "name": "Elke Vanassche",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.88,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_willems",
+      "name": "Godelieve Willems",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "office:portfolio:health",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "burgerforum"
+    },
+    {
+      "id": "BEL_zegers",
+      "name": "Pim Zegers",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "federaal_herstel"
+    },
+    {
+      "id": "BEL_aelbrecht",
+      "name": "Lien Aelbrecht",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_boonen",
+      "name": "Sofie Boonen",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "linkse_eenheid"
+    },
+    {
+      "id": "BEL_coolsaet",
+      "name": "Koen Coolsaet",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_de_backer",
+      "name": "Fien De Backer",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_measured_country",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_elst",
+      "name": "Hilde Elst",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "federaal_herstel"
+    },
+    {
+      "id": "BEL_floor",
+      "name": "Pim Floor",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_grillaert",
+      "name": "Rien Grillaert",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.34,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_hoet",
+      "name": "Elke Hoet",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_ionkheere",
+      "name": "Lien Ionkheere",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_vooruitgang"
+    },
+    {
+      "id": "BEL_keppens",
+      "name": "Gillain Keppens",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "linkse_eenheid"
+    },
+    {
+      "id": "BEL_labiau",
+      "name": "Wout Labiau",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "groen_front"
+    },
+    {
+      "id": "BEL_mortelmans",
+      "name": "Lien Mortelmans",
+      "kind": "activist",
+      "traits": [
+        "principled",
+        "vain"
+      ],
+      "ambition": 0.23,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_noppe",
+      "name": "Sofie Noppe",
+      "kind": "regional_figure",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "federaal_herstel"
+    },
+    {
+      "id": "BEL_olyslagers",
+      "name": "Hilde Olyslagers",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.46,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_puelinckx",
+      "name": "Gerben Puelinckx",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.33,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "BEL_raskin",
+      "name": "Joos Raskin",
+      "kind": "activist",
+      "traits": [
+        "principled"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_swerts",
+      "name": "Lode Swerts",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_tanghe",
+      "name": "Maarten Tanghe",
+      "kind": "activist",
+      "traits": [
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_verhulst",
+      "name": "Rien Verhulst",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "federaal_herstel"
+    },
+    {
+      "id": "BEL_weyts",
+      "name": "Godelieve Weyts",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.89,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "federaal_herstel"
+    },
+    {
+      "id": "BEL_zion",
+      "name": "Rosa Zion",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_absil",
+      "name": "Lien Absil",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_bertrand",
+      "name": "Nand Bertrand",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.1
+        }
+      ],
+      "bench": true,
+      "party_id": "vlaamse_toekomst"
+    },
+    {
+      "id": "BEL_charlier",
+      "name": "Marijke Charlier",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "linkse_eenheid"
+    },
+    {
+      "id": "BEL_decoster",
+      "name": "Godelieve Decoster",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_dujardin",
+      "name": "Godelieve Dujardin",
+      "kind": "judge",
+      "traits": [
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_flore",
+      "name": "Gillain Floré",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "sociale_vooruitgang"
+    },
+    {
+      "id": "BEL_guerin",
+      "name": "Gerben Guerin",
+      "kind": "union_leader",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "BEL_hausman",
+      "name": "Marijke Hausman",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    }
   ]
 }

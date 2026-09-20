@@ -63,6 +63,13 @@ func _ready() -> void:
 	figures.add_child(_build_figure("unemployment", "Unemployment"))
 	figures.add_child(_build_figure("election", "Next vote"))
 	figures.add_child(_build_programme_figure())
+	# V4.3's interim People figure: how many people the term has MOVED (a
+	# non-zero grudge or loyalty), not how many exist -- the register is 1595
+	# and a permanent "1595" says nothing. Rises only when the player's
+	# decisions move someone, which is the number a president actually tracks.
+	# The People window (R) is the full surface; this strip is the pulse.
+	figures.add_child(_build_figure("people", "People",
+		"People whose loyalty or grudge the term has moved. Open the People window (R)."))
 
 	row.add_child(_spacer())
 
@@ -175,6 +182,17 @@ func refresh(state, _clock: Node, loader = null) -> void:
 	else:
 		_figure_values["election"].text = "—"
 	_figure_values["election"].tooltip_text = _election_tooltip(state, ns, loader, months)
+
+	# V4.3: the moved-people count, both registers read the same way so the
+	# figure and the People window's rows cannot disagree about who counts.
+	var moved := 0
+	for pid in ns.person_grudges.keys():
+		if float(ns.person_grudges[pid]) >= 0.05:
+			moved += 1
+	for pid in ns.person_loyalty.keys():
+		if absf(float(ns.person_loyalty[pid])) >= 0.05 and float(ns.person_grudges.get(pid, 0.0)) < 0.05:
+			moved += 1
+	_figure_values["people"].text = "%d" % moved
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

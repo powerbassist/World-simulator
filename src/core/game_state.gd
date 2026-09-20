@@ -32,6 +32,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Events = preload("res://src/sim/events.gd")
@@ -479,7 +480,25 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## pinned in tests/test_save_load.gd. The bump is taken ahead of the pulse
 ## wiring, so a version-34 save is refused before the first save that could hold
 ## a priced register is ever written.
-const SAVE_VERSION := 35
+##
+## V4.3 bumps this to 36 on the six person-state registers (nation_state.gd's
+## character-layer section): `person_loyalty`, `person_standing`,
+## `person_grudges`, `party_leader_override`, `person_party_override`, and
+## `person_want_state` (the edge-trigger's memory). An
+## absent loyalty dict reads "nobody remembers anything you did to them" --
+## the V1.6a test in the game's own voice, `programme_stock`'s case exactly --
+## and no re-derivation can rescue it, because nothing outside the register
+## records the acts that wrote it. The two overrides are worse than neutral:
+## a dropped `party_leader_override` RESURRECTS A DEPOSED RIVAL mid-term, and
+## a dropped `person_party_override` silently walks a defector back to the
+## party they left -- the save contradicting the world the player watched.
+## The version shipped once, ahead of the first writer, so a version-35 save
+## was refused before the first save that could hold a priced register existed
+## -- the V4.1 precedent taken identically. The writers are live since
+## characters.gd landed (init_nation seeds, the acts and the adjusters write);
+## the sentence above records the bump's timing, not the current state.
+## Absences pinned in tests/test_save_load.gd.
+const SAVE_VERSION := 36
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -808,6 +827,14 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
 		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, Orgs.parliament(loader), loader.political_systems, gs.errors, applied, org_base_positions.get(id, {}))
+		# V4.3, and here rather than inside _build_nation() for the Programme
+		# comment's exact reason one level up: the build function takes the
+		# nation's own content and a people register is a second file. Seeds
+		# the PLAYER's cast only -- an AI nation's person registers stay empty
+		# and nothing reads them, so month one has weight to move and a game
+		# with no player decision in it moves nothing.
+		if id == player_id:
+			Characters.init_nation(gs.nations[id], loader.people.get(id, []))
 
 	# AFTER the build loop rather than inside _build_nation(), and the placement is the
 	# argument: that function takes the nation's own content and nothing else, where a

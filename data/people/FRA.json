@@ -1,12 +1,1142 @@
 {
   "people": [
-    { "id": "FRA_moucron", "name": "Daniel Moucron" },
-    { "id": "FRA_vasseur", "name": "Hélène Vasseur" },
-    { "id": "FRA_lachapelle", "name": "Bruno Lachapelle" },
-    { "id": "FRA_ferrand", "name": "Camille Ferrand" },
-    { "id": "FRA_aubertin", "name": "Gilles Aubertin" },
-    { "id": "FRA_perrault", "name": "Nadia Perrault" },
-    { "id": "FRA_aumont", "name": "Cécile Aumont" },
-    { "id": "FRA_charles_xi", "name": "Charles XI" }
+    {
+      "id": "FRA_moucron",
+      "name": "Daniel Moucron",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_vasseur",
+      "name": "Hélène Vasseur",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:portfolio:pensions",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_lachapelle",
+      "name": "Bruno Lachapelle",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_ferrand",
+      "name": "Camille Ferrand",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_aubertin",
+      "name": "Gilles Aubertin",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "office:party_leadership:alliance_verte",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_perrault",
+      "name": "Nadia Perrault",
+      "kind": "politician",
+      "traits": [
+        "vain"
+      ],
+      "ambition": 0.79,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_confidence_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_aumont",
+      "name": "Cécile Aumont",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.54,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_charles_xi",
+      "name": "Charles XI",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "FRA_verchere",
+      "name": "Élise Verchère",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_verte"
+    },
+    {
+      "id": "FRA_tassigny",
+      "name": "Manon Tassigny",
+      "kind": "press_owner",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.37,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_moulinet",
+      "name": "Élise Moulinet",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_conservatrice"
+    },
+    {
+      "id": "FRA_beaumanoir",
+      "name": "Thibault Beaumanoir",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "wants": [
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_social_uni"
+    },
+    {
+      "id": "FRA_rivalland",
+      "name": "Émeric Rivalland",
+      "kind": "union_leader",
+      "traits": [
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "FRA_chassignol",
+      "name": "Diane Chassignol",
+      "kind": "activist",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.2
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_perecourt",
+      "name": "Sylvain Pérecourt",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_conservatrice"
+    },
+    {
+      "id": "FRA_vaugelas",
+      "name": "Gaspard Vaugelas",
+      "kind": "judge",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_delcour",
+      "name": "Apolline Delcour",
+      "kind": "regional_figure",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_civique"
+    },
+    {
+      "id": "FRA_briandais",
+      "name": "Émeric Briandais",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.24,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_montcharvin",
+      "name": "Margaux Montcharvin",
+      "kind": "judge",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_sauvageot",
+      "name": "Bastien Sauvageot",
+      "kind": "politician",
+      "traits": [
+        "networked"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 38.5
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_social_uni"
+    },
+    {
+      "id": "FRA_lariviere",
+      "name": "Apolline Larivière",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.53,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.1
+        },
+        {
+          "object": "programme:prog_the_continents_granary",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_poncharal",
+      "name": "Étienne Poncharal",
+      "kind": "judge",
+      "traits": [
+        "loyal",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.76,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_fermont",
+      "name": "Étienne Fermont",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 37.9
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "front_souverainiste"
+    },
+    {
+      "id": "FRA_griveau",
+      "name": "Adèle Griveau",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_chalandre",
+      "name": "Thibault Chalandre",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_office_honour",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_ollivier",
+      "name": "Diane Ollivier",
+      "kind": "politician",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_social_uni"
+    },
+    {
+      "id": "FRA_marchenay",
+      "name": "Sylvain Marchenay",
+      "kind": "judge",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_trebosc",
+      "name": "Aurélien Trébosc",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "sponsor"
+        },
+        {
+          "object": "meter:grievance",
+          "stance": "demand",
+          "below": 42.5
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_aubarede",
+      "name": "Émeric Aubarède",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_the_presidents_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_clapiers",
+      "name": "Loïc Clapiers",
+      "kind": "union_leader",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_classroom_ledger",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_nogaret",
+      "name": "Loïc Nogaret",
+      "kind": "press_owner",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_besombes",
+      "name": "Anaëlle Bésombes",
+      "kind": "activist",
+      "traits": [
+        "ambitious",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "wants": [
+        {
+          "object": "programme:prog_settle_the_streets",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_vairon",
+      "name": "Corentin Vairon",
+      "kind": "press_owner",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.87,
+      "wants": [
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_madelaine",
+      "name": "Clarisse Madelaine",
+      "kind": "press_owner",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.71,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": -0.1
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_rochecotte",
+      "name": "Romane Rochecotte",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.67,
+      "wants": [
+        {
+          "object": "office:party_leadership:renouveau_civique",
+          "stance": "want"
+        },
+        {
+          "object": "meter:judicial_independence",
+          "stance": "defend",
+          "above": 0.3
+        },
+        {
+          "object": "office:party_leadership:front_souverainiste",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "front_souverainiste"
+    },
+    {
+      "id": "FRA_sarrand",
+      "name": "Corentin Sarrand",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_villedieu",
+      "name": "Émeric Villedieu",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_strong_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:portfolio:defence",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_conservatrice"
+    },
+    {
+      "id": "FRA_perier",
+      "name": "Loïc Périer",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "vain"
+      ],
+      "ambition": 0.84,
+      "wants": [
+        {
+          "object": "office:party_leadership:parti_social_uni",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_first_hundred_days",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_civique"
+    },
+    {
+      "id": "FRA_ambroise",
+      "name": "Aurélien Ambroise",
+      "kind": "politician",
+      "traits": [
+        "fervent"
+      ],
+      "ambition": 0.31,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_conservatrice"
+    },
+    {
+      "id": "FRA_chauvire",
+      "name": "Sylvain Chauviré",
+      "kind": "activist",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.57,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_forgues",
+      "name": "Apolline Forgues",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        },
+        {
+          "object": "office:party_leadership:union_conservatrice",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_lantier",
+      "name": "Étienne Lantier",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.21,
+      "wants": [
+        {
+          "object": "office:party_leadership:alliance_verte",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "gauche_populaire"
+    },
+    {
+      "id": "FRA_morlaix",
+      "name": "Thibault Morlaix",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "vain"
+      ],
+      "ambition": 0.91,
+      "wants": [
+        {
+          "object": "office:party_leadership:union_conservatrice",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "alliance_verte"
+    },
+    {
+      "id": "FRA_saint_leger",
+      "name": "Loïc Saint-Léger",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_long_record",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_civique"
+    },
+    {
+      "id": "FRA_turcy",
+      "name": "Clarisse Turcy",
+      "kind": "union_leader",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.83,
+      "wants": [
+        {
+          "object": "programme:prog_the_full_term",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_vincendon",
+      "name": "Corentin Vincendon",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_sworn_offices",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "front_souverainiste"
+    },
+    {
+      "id": "FRA_yvrard",
+      "name": "Loïc Yvrard",
+      "kind": "politician",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.29,
+      "wants": [
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_border_fund",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:premiership",
+          "stance": "want"
+        }
+      ],
+      "bench": true,
+      "party_id": "front_souverainiste"
+    },
+    {
+      "id": "FRA_zuber",
+      "name": "Gaspard Zuber",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_rhine_axis",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_orderly_house",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_civique"
+    },
+    {
+      "id": "FRA_valsergent",
+      "name": "Aurélien Valsergent",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_maastricht_letter",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "renouveau_civique"
+    },
+    {
+      "id": "FRA_pradelles",
+      "name": "Sidonie Pradelles",
+      "kind": "judge",
+      "traits": [
+        "ambitious"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "meter:press_freedom",
+          "stance": "defend",
+          "above": 0.0
+        },
+        {
+          "object": "programme:prog_the_tariff_line",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_montfaucon",
+      "name": "Aurélien Montfaucon",
+      "kind": "regional_figure",
+      "traits": [
+        "fervent",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "parti_social_uni"
+    },
+    {
+      "id": "FRA_richebourg",
+      "name": "Gaspard Richebourg",
+      "kind": "press_owner",
+      "traits": [
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "wants": [],
+      "bench": true
+    },
+    {
+      "id": "FRA_chantereau",
+      "name": "Margaux Chantereau",
+      "kind": "activist",
+      "traits": [
+        "pragmatic",
+        "vain"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true
+    },
+    {
+      "id": "FRA_villedary",
+      "name": "Diane Villedary",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "principled"
+      ],
+      "ambition": 0.73,
+      "wants": [
+        {
+          "object": "office:party_leadership:front_souverainiste",
+          "stance": "want"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": true,
+      "party_id": "front_souverainiste"
+    },
+    {
+      "id": "FRA_beaufour",
+      "name": "Corentin Beaufour",
+      "kind": "politician",
+      "traits": [
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": true,
+      "party_id": "union_conservatrice"
+    }
   ]
 }

@@ -182,6 +182,12 @@ func _fail(message: String) -> void:
 func _check_emotion_completeness() -> void:
 	if not DirAccess.dir_exists_absolute(PORTRAITS_DIR.path_join("neutral")):
 		return  # Phase A: no WebP art exists yet, nothing to be incomplete
+	var loader := DataLoader.new()
+	loader.load_all()
+	var bench_ids: Dictionary = {}
+	for nation_id in loader.people.keys():
+		for person in loader.people[nation_id]:
+			bench_ids[person.id] = bool(person.bench)
 	var per_person := {}
 	for emotion in EMOTIONS:
 		var dir := PORTRAITS_DIR.path_join(emotion)
@@ -193,9 +199,14 @@ func _check_emotion_completeness() -> void:
 				var pid := f.get_basename()
 				per_person[pid] = int(per_person.get(pid, 0)) + 1
 	for pid in per_person:
-		if per_person[pid] != EMOTIONS.size():
+		# V4.3's tiers: the met cast (bench: false) carries all five emotions;
+		# the deep bench (bench: true) ships the single neutral. A bench person
+		# with five emotions is fine -- an upgraded tier -- and a met-cast
+		# person with fewer than five is the one mood that falls back.
+		var required := 1 if bool(bench_ids.get(pid, false)) else EMOTIONS.size()
+		if per_person[pid] < required:
 			_fail("'%s' carries %d of %d emotions -- one mood would fall back mid-session"
-				% [pid, per_person[pid], EMOTIONS.size()])
+				% [pid, per_person[pid], required])
 
 
 ## The emotion vocabulary is hand-carried in tools/ and src/ -- the scene

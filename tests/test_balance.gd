@@ -34,6 +34,7 @@ const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
@@ -496,6 +497,15 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# fires on the state a budget produces, and a default applies itself.
 		Events.tick_month(state, _loader)
 		Cabinet.tick_month(state, _loader)
+		# V4.3, main.gd's slot, so the balance run exercises the character
+		# layer through the call the game makes -- the V1.5d rule against a
+		# coupling the acts could otherwise drift behind. The returned acts are
+		# not asserted here; tests/test_characters.gd owns the bands.
+		Characters.tick_month(state, _loader, {
+			"grievance": float(ns.unrest_pct),
+			"press_freedom": float(ns.press_freedom),
+			"judicial_independence": Judiciary.independence_deviation(ns),
+		})
 
 		if i + 1 == dissolve_at_month:
 			Dissolution.dissolve(state, ns)

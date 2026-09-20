@@ -396,12 +396,24 @@ def prompt_for(person_id, name, emotion="neutral"):
 
 
 def _load_people():
+    """(id, name) for the whole register, plus -- the V4.3 tiering flag -- a
+    global _bench_ids set the --bench-neutral-only mode reads: met cast
+    (bench: false) renders five emotions, the deep bench renders the single
+    neutral. Kept here so every mode sees the same tier split."""
+    global _bench_ids
     people = []
+    _bench_ids = set()
     for path in sorted(PEOPLE_DIR.glob("*.json")):
         data = json.loads(comfy._confined(path, REPO).read_text(encoding="utf-8"))
         for person in data["people"]:
-            people.append((comfy._checked_id(person["id"]), person["name"]))
+            pid = comfy._checked_id(person["id"])
+            people.append((pid, person["name"]))
+            if bool(person.get("bench", False)):
+                _bench_ids.add(pid)
     return people
+
+
+_bench_ids = set()
 
 
 def _banned_pattern():
@@ -658,7 +670,17 @@ def main():
     # (img2img over the photo, or the seed-locked text render). A person with
     # no base is skipped here -- the base pass creates it; this guard is what
     # makes either pass alone resumable.
-    for emotion in EMOTIONS[1:]:
+    #
+    # V4.3 --bench-neutral-only: the deep bench (bench: true) ships the single
+    # neutral; the met cast keeps its five. The gate's tiering decision, read
+    # off the register's own flag so the pipeline and the tests cannot
+    # disagree about who is bench.
+    expressions = EMOTIONS[1:]
+    if "--bench-neutral-only" in sys.argv:
+        expressions = []
+        slice_people = [(pid, name) for pid, name in slice_people if pid not in _bench_ids]
+        print("--bench-neutral-only: %d met-cast people keep their expressions" % len(slice_people))
+    for emotion in expressions:
         todo_e = [(pid, name) for pid, name in slice_people
                   if (RAW_DIR / "neutral" / (pid + ".png")).exists()
                   and not (RAW_DIR / emotion / (pid + ".png")).exists()]
