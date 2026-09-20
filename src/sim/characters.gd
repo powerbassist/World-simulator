@@ -224,6 +224,17 @@ static func _denial_factor(person, object: String) -> float:
 
 ## The derived satisfaction read -- NEVER stored. programme reads the live
 ## register, office reads the slots, meter reads the hand-ins.
+##
+## want_satisfied is the PUBLIC surface of the private read below -- the
+## Programme.this_term() precedent: the People panel consumed a hand-kept
+## copy once and the copy diverged inside its own PR (the review's I1, every
+## meter want reading "denied" forever while the machine priced it), so the
+## panel reads the machine's answer through this one door instead. meters and
+## authored_leaders are handed in exactly as tick_month hands them.
+static func want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
+	return _want_satisfied(ns, person, want, meters, authored_leaders)
+
+
 static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
 	var object := String(want["object"])
 	if object.begins_with("programme:"):

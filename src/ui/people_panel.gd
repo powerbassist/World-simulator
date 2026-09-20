@@ -32,9 +32,11 @@ signal closed
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const PersonCard = preload("res://src/ui/person_card.gd")
 
 const PORTFOLIO_LABEL := {
 	"health": "Health", "education": "Education", "defence": "Defence",
@@ -79,6 +81,9 @@ var _dirty := true
 var _title: Label
 var _body: VBoxContainer
 var _close_button: Button
+var _ns
+var _card
+var _card_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -110,6 +115,20 @@ func _ready() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 4)
 	scroll.add_child(_body)
+
+	# The hover card rides its own CanvasLayer so it floats above the scroll
+	# and every sibling window -- the card's own contract (person_card.gd):
+	# built once, shown by whoever names the person, MOUSE_FILTER_IGNORE so it
+	# never eats the pointer the row is still tracking. Configured AFTER
+	# add_child -- a Control outside the tree is half-dead, its _ready unset.
+	_card_layer = CanvasLayer.new()
+	_card_layer.layer = 10
+	add_child(_card_layer)
+	_card = PersonCard.new()
+	_card_layer.add_child(_card)
+	# A card left open while the rows scroll away from under it would point at
+	# a row that moved; the scroll hides it the moment the content moves.
+	scroll.get_v_scroll_bar().value_changed.connect(func(_v): _hide_person_card())
 
 	_close_button = Button.new()
 	_close_button.text = "Close"
@@ -147,6 +166,7 @@ func _refresh() -> void:
 	if nation == null:
 		return
 
+	_ns = ns
 	_title.text = "The people of %s" % nation.nation_name
 
 	for child in _body.get_children():
@@ -253,14 +273,16 @@ func _party_or_kind_line(ns, person) -> String:
 	return person.kind.replace("_", " ")
 
 
-## One want with its DERIVED satisfaction read. The read is the same one
-## characters.gd prices (the world as it stands this month), so the panel
-## cannot disagree with the machine about whether a want is served.
+## One want with its DERIVED satisfaction read. The read IS the machine's own
+## (Characters.want_satisfied, the public door the Programme.this_term
+## precedent set), so the panel cannot disagree with the machine about
+## whether a want is served -- a hand-kept copy here once diverged inside its
+## own PR (the review's I1) and this is the structural close of that class.
 func _want_row(ns, person, want: Dictionary) -> void:
 	var object := String(want["object"])
 	var stance := String(want["stance"])
 	var text := "%s %s" % [STANCE_LABEL.get(stance, stance), _object_text(object, want)]
-	var served := _want_satisfied(ns, person, want)
+	var served := Characters.want_satisfied(ns, person, want, _meters(ns), _authored_leaders())
 	var tone := PanelKit.Tone.DIM
 	if stance == "oppose":
 		served = not served
@@ -297,56 +319,24 @@ func _object_text(object: String, want: Dictionary) -> String:
 	return object
 
 
-## The satisfaction read, duplicated from characters.gd's private helper
-## because the UI may not reach into src/sim/'s privates -- but it MUST agree
-## with the machine, so the strings and the reads are kept identical and
-## tests/test_people.gd pins that this file contains no hand-written person
-## list to drift from the register.
-func _want_satisfied(ns, person, want: Dictionary) -> bool:
-	var object := String(want["object"])
-	if object.begins_with("programme:"):
-		var entry_id := object.substr("programme:".length())
-		for entry in ns.programme:
-			if String(entry.get("entry_id", entry.get("id", ""))) == entry_id:
-				var status := String(entry.get("status", ""))
-				return status == "complete" or status == "active"
-		return false
-	if object == "office:premiership":
-		return String(ns.pm_person_id) == person.id
-	if object.begins_with("office:portfolio:"):
-		var key := object.substr("office:portfolio:".length())
-		var party_id: String = String(ns.person_party_override.get(person.id, person.party_id))
-		return String(ns.cabinet.get(key, "")) == party_id
-	if object.begins_with("office:party_leadership:"):
-		var pid := object.substr("office:party_leadership:".length())
-		return String(ns.party_leader_override.get(pid, _authored_leader(pid))) == person.id
-	if object.begins_with("meter:"):
-		# The meter family, missing from the first panel copy -- the review's
-		# I1: every meter want read "denied" forever because this copy fell to
-		# `return false`. The reads are the same three fields main.gd hands
-		# characters.gd (judicial independence through the same derived read),
-		# and the compare matches the machine's exactly: below/against the
-		# authored threshold, no clamps on either side.
-		var meter_key := object.substr("meter:".length())
-		var value := 0.0
-		match meter_key:
-			"grievance":
-				value = float(ns.unrest_pct)
-			"press_freedom":
-				value = float(ns.press_freedom)
-			"judicial_independence":
-				value = float(Judiciary.independence_deviation(ns))
-		if want.has("below"):
-			return value < float(want["below"])
-		return value > float(want["above"])
-	return false
+## The meter hand-in, matching what main.gd hands Characters.tick_month
+## (judicial independence through the same derived read) so the panel's read
+## and the machine's price see one world.
+func _meters(ns) -> Dictionary:
+	return {
+		"grievance": float(ns.unrest_pct),
+		"press_freedom": float(ns.press_freedom),
+		"judicial_independence": float(Judiciary.independence_deviation(ns)),
+	}
 
 
-func _authored_leader(party_id: String) -> String:
-	for p in _loader.parties.get(_state.player().id, []):
-		if p.id == party_id:
-			return String(p.leader_person_id)
-	return ""
+## The authored leadership edges, in the shape tick_month builds them: the
+## machine's want_satisfied takes the same dict the month tick walks.
+func _authored_leaders() -> Dictionary:
+	var leaders := {}
+	for party in _loader.parties.get(_state.player_nation_id, []):
+		leaders[party.id] = party.leader_person_id
+	return leaders
 
 
 ## Everyone the Diplomacy panel can point at. Their titles are live state too --
@@ -380,7 +370,36 @@ func _face_row(person_id: String, left: String, right: String) -> HBoxContainer:
 	var face := Portrait.framed_for(person_id, FACE_SIZE)
 	row.add_child(face)
 	row.move_child(face, 0)
+	# The hover surface: every row this panel builds names a person, and the
+	# card is that name's one annotation (person_card.gd's contract). The
+	# signals live on the row, not the face -- a face-sized target inside a
+	# row-sized hover is a target the player keeps missing.
+	row.mouse_entered.connect(_show_person_card.bind(person_id))
+	row.mouse_exited.connect(_hide_person_card)
 	return row
+
+
+## Show the card at the cursor, clamped to the viewport. Position is computed
+## AFTER show_for so the card's minimum size (and therefore the clamp) is the
+## filled card's, not the empty shell's.
+func _show_person_card(person_id: String) -> void:
+	if _card == null or _ns == null or _loader == null:
+		return
+	var vp := get_viewport()
+	if vp == null:
+		return
+	_card.show_for(person_id, _loader, _ns, Vector2.ZERO)
+	var pos := vp.get_mouse_position() + Vector2(18, 12)
+	var card_size: Vector2 = _card.get_combined_minimum_size()
+	var vp_size := vp.get_visible_rect().size
+	pos.x = minf(pos.x, maxf(vp_size.x - card_size.x - 8.0, 8.0))
+	pos.y = minf(pos.y, maxf(vp_size.y - card_size.y - 8.0, 8.0))
+	_card.position = pos
+
+
+func _hide_person_card() -> void:
+	if _card != null:
+		_card.hide_card()
 
 
 func _name_of(person_id: String) -> String:

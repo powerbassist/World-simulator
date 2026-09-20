@@ -1,9 +1,10 @@
 extends PanelContainer
 
 ## The shared hover card for any person the UI names -- V4.3's one-card
-## surface, built once and used wherever a person id appears with a hover
-## (the People panel's rows, the agenda and event cards' subjects). The card
-## reads the loader and the person-state registers and never writes either.
+## surface, built once and shown by whoever names a person (the People
+## panel's rows wire it today; a later surface adopts it with one show_for
+## call rather than a readout of its own). The card reads the loader and the
+## person-state registers and never writes either.
 ##
 ## SHARED BY CONSTRUCTION, not by convention: the register is 1595 people and
 ## every surface that hand-rolls its own person readout is a second copy of
