@@ -179,8 +179,9 @@ func _check_month_zero_renders(panel, state) -> void:
 	if text.strip_edges().is_empty():
 		_fail("the commodities panel renders nothing at all at month 0")
 		return
-	if int(state.year) == 2026 and int(state.month) == 1 and state.history.is_empty():
-		pass  # month 0 is the state we were asked about; the checks below hold either way
+	# Month 0 is the state we were asked about; the category checks below hold
+	# whether or not the clock has been ticked, which is the property that matters
+	# (the register is seeded by new_game, not by the first tick).
 	for category in EXPECTED_CATEGORIES:
 		if not text.contains(category.to_upper()):
 			_fail("the panel has no '%s' group at month 0: %s" % [category.to_upper(), text.substr(0, 400)])
@@ -381,6 +382,23 @@ func _check_map_modes(panel, state) -> void:
 				else MapLayers.ramp(mode, float(stops[i]["at"]))
 			if not _close(rects[i].color, expected):
 				_fail("%s: swatch %d is %s, the ramp says %s" % [mode, i, rects[i].color, expected])
+
+	# AND THE STOP TEXT IS CHECKED AS RENDERED, not just the swatch. The whole
+	# legend was green while two import-dependency stops printed the literal "%%":
+	# they are plain text, and only the third stop on that list runs through a
+	# format operator, so a doubled percent in the other two is never collapsed.
+	# A colour check structurally cannot see that class -- the swatches were right
+	# the whole time -- so the rendered LABELS are asserted here.
+	for mode in ["production", "import_dependency"]:
+		legend.show_layer(mode, state, map.viewer_id())
+		var rendered := _label_text_of(legend)
+		if rendered.contains("%%"):
+			_fail("the '%s' legend shows a literal '%%' -- a doubled percent in a stop nothing formats: %s" % [mode, rendered])
+		var shown: Array = MapLayers.production_stops(even) if mode == "production" else MapLayers.stops(mode)
+		for stop in shown:
+			if not rendered.contains(String(stop["text"])):
+				_fail("the '%s' legend does not show the stop text '%s' -- what is on screen: %s" % [
+					mode, String(stop["text"]), rendered])
 	legend.show_layer(MapLayers.POLITICAL, state, map.viewer_id())
 
 
@@ -389,6 +407,17 @@ func _all_color_rects(node) -> Array:
 	for n in _walk(node):
 		if n is ColorRect:
 			out.append(n)
+	return out
+
+
+## Every Label's text inside the legend, which is what the player actually reads --
+## the swatch colour and its stop text are two different failures and only one of
+## them was being checked.
+func _label_text_of(node) -> String:
+	var out := ""
+	for n in _walk(node):
+		if n is Label:
+			out += String(n.text) + "\n"
 	return out
 
 

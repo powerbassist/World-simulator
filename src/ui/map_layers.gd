@@ -27,11 +27,6 @@ const COERCION := "coercion"
 const PRODUCTION := "production"
 const IMPORT_DEPENDENCY := "import_dependency"
 
-## The commodity layers' reader -- V4.6 Task 4. The register itself is read off
-## GameState, so this file stays the stateless read trade.gd's header promises;
-## the preload exists only so the two quantities below are expressed ONCE.
-const CommoditiesK = preload("res://src/sim/commodity_constants.gd")
-
 ## The relations ramp's domain, and why it is not 0-100.
 ##
 ## diplomacy_constants.gd runs the scale 0-100, but the reachable game is narrow
@@ -202,8 +197,14 @@ const LAYERS: Array[Dictionary] = [
 		"label": "Import dep.",
 		"alpha": 0.50,
 		"stops": [
-			{"at": 0.0, "text": "0%%  self-sufficient"},
-			{"at": 0.25, "text": "25%%  a quarter bought in"},
+			# Plain text and NOT format strings: only the third stop runs through a
+			# format operator, so a doubled percent here is never collapsed and the
+			# legend printed the literal "%%. (The first draft had both doubled --
+			# the shape of a format literal carried over to two stops that are not
+			# one. The test now reads the RENDERED stop text, not just the swatch
+			# colour, so this class cannot ship silently again.)
+			{"at": 0.0, "text": "0%  self-sufficient"},
+			{"at": 0.25, "text": "25%  a quarter bought in"},
 			{"at": IMPORT_MAX_SHOWN, "text": "%d%%  dependent" % roundi(100.0 * IMPORT_MAX_SHOWN)},
 		],
 		"caption": "Share of what a nation wants that it buys from abroad.",
