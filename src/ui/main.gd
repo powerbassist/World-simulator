@@ -54,6 +54,7 @@ const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
+const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
@@ -144,6 +145,7 @@ var _people_panel
 var _companies_panel
 var _projects_panel
 var _region_panel
+var _commodities_panel
 var _city_panel
 var _energy_panel
 var _campaign_panel
@@ -462,6 +464,26 @@ func _ready() -> void:
 	_region_panel.setup(_state, _loader)
 	_region_panel.hide_close_button()
 
+	# V4.6. Task 4's read-only surface over the commodity layer, in the Economy
+	# cluster beside the region and city registers -- panel-system.md §16's rule
+	# that a cluster is the domain of the decision, and this is the same one: what
+	# the country makes, wants and buys in is an economic reading, not a
+	# diplomatic one. Read-only (no acted signal, people_panel's shape): Task 4
+	# ships no verb, so there is nothing here a button could do, and the two map
+	# modes are reached through the legend's own switcher because they are
+	# registry entries -- a second mode control on this panel would be the
+	# hand-written list V2.1a spent a block deleting.
+	#
+	# KEY_H rather than a mnemonic: C is the Diary, K the Agenda, M the map clear,
+	# S the save dialog and G Politics, so every letter this window's name
+	# suggests was already taken. H was free and is used for nothing else, which
+	# is the whole criterion -- the drawer's tooltip and the key press both read
+	# it off this one call.
+	_commodities_panel = CommoditiesPanel.new()
+	_windows.register("commodities", "Commodities", _commodities_panel, KEY_H, ICONS + "crate.svg")
+	_commodities_panel.setup(_state, _loader)
+	_commodities_panel.hide_close_button()
+
 	# V2.2b, one level down, and the only V2 surface whose drawer entry is the
 	# SECOND way in: the map's cross is the route, and this entry is for the
 	# player who does not know that -- §16's own wording.
@@ -688,6 +710,10 @@ func _build_action_bar() -> void:
 		# economy regional.
 		_entry("region", "Regions"),
 		_entry("city", "Cities"),
+		# V4.6 Task 4, and the fourth line this function's streak has predicted.
+		# The tier's own grammar puts it here: what the country makes and buys in
+		# is the same domain of decision as the two registers beside it.
+		_entry("commodities", "Commodities"),
 		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
 		# rather than the shape of the object, and AGENTS.md already carries the
 		# ruling -- region, city and energy are Economy.

@@ -59,13 +59,21 @@ func _check_takes_no_clicks() -> void:
 		_fail("map_flows mouse_filter is %d, expected IGNORE -- it would eat the map's clicks" % flows.mouse_filter)
 
 
-## THE OVERLAY IS A DRAW SURFACE, NOT A FIFTH LAYER. map_layers.gd's header says
-## no map layer adds, removes or reorders a draw layer: LAYERS chooses a roster
-## FILL from a per-nation scalar, one at a time. Arcs and convoys are additive
-## marks that RIDE the trade layer; they do not become one.
+## THE OVERLAY IS A DRAW SURFACE, NOT A LAYER. map_layers.gd's header says no map
+## layer adds, removes or reorders a draw layer: LAYERS chooses a roster FILL from
+## a per-nation scalar, one at a time. Arcs and convoys are additive marks that RIDE
+## the trade layer; they do not become one.
+##
+## V4.6: THE COUNT WAS A PROXY AND THE PROPERTY IS WHAT MATTERS. This check used to
+## read `LAYERS.size() != 4`, which held while every layer was a pair layer and
+## stopped holding the moment Task 4 added two genuine per-nation FILL layers
+## (production, import dependency) -- the registry grew for a reason this check has
+## no objection to, and the count would have failed on the growth rather than on the
+## defect it exists to catch. So it asserts the ABSENCE OF THE OVERLAY'S OWN ID
+## instead: a flow is not a layer, whether the registry holds four entries or forty.
 func _check_not_a_layer() -> void:
-	if MapLayers.LAYERS.size() != 4:
-		_fail("LAYERS has %d entries, expected 4 -- a flow is a draw surface" % MapLayers.LAYERS.size())
+	if MapLayers.ids().has("flows"):
+		_fail("the map-flow overlay registered itself as a layer -- arcs and convoys are a draw surface")
 
 
 ## Puts the camera where the cull check reads it, one frame early.

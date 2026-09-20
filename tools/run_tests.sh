@@ -115,6 +115,12 @@ tests=(
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
   tests/test_people_panel.gd
+  # V4.6's read-only commodity surface: the panel registers and renders at month
+  # 0, the shortage alert flips on its threshold, and the two map modes are
+  # registry entries the switcher grows without a legend edit. Registered at
+  # authoring time -- the four historical omissions (companies, cabinet, summits,
+  # map_plants) are why it lands here unread.
+  tests/test_commodities_panel.gd
   # V4.1: the agenda surface -- the term-start pause, the offer built from the
   # register, the choose command path, the derived progress bar, and the cards.
   tests/test_agenda_panel.gd

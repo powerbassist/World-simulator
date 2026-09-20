@@ -24,6 +24,13 @@ const POLITICAL := "political"
 const RELATIONS := "relations"
 const TRADE := "trade"
 const COERCION := "coercion"
+const PRODUCTION := "production"
+const IMPORT_DEPENDENCY := "import_dependency"
+
+## The commodity layers' reader -- V4.6 Task 4. The register itself is read off
+## GameState, so this file stays the stateless read trade.gd's header promises;
+## the preload exists only so the two quantities below are expressed ONCE.
+const CommoditiesK = preload("res://src/sim/commodity_constants.gd")
 
 ## The relations ramp's domain, and why it is not 0-100.
 ##
@@ -67,6 +74,47 @@ const RELATIONS_MAX_SHOWN := 72.0
 ## ordinary trade fight will actually see. 2.0 is both sides at full embargo and
 ## is the ceiling, since one measure per directed pair is the register's rule.
 const COERCION_MAX_SHOWN := 2.0
+
+## The production layer's domain: a nation's share of the world's commodity value
+## added this month.
+##
+## Measured before it was typed (tools/ probe over 240 months of the live tick, all
+## 29 nations): the share runs 0.0 to **0.1909**, with DEU the maximum and the
+## world's even share at 1/29 = 0.0345. The stops break AT the even share rather
+## than at the domain's midpoint for the trade ramp's own reason -- 0.0345 is the
+## one value on this scale that means something a player can name ("an even
+## slice"), and stretching the scale so it landed mid-ramp would put twenty-four
+## of the twenty-nine inside one colour.
+##
+## 0.0 is a REACHABLE value and a real datum, not the viewer's absence: a nation
+## with no output at all -- the collapsed-endowment state test_commodities.gd
+## creates -- reads the bottom of the ramp. That is why the two commodity layers
+## are the first on this map where the viewer's OWN nation carries a value.
+const PRODUCTION_MAX_SHOWN := 0.20
+
+## The import-dependency layer's domain: the value of what a nation buys from
+## abroad over the value of everything it wants, both at the live price.
+##
+## Measured the same way: 0.0 to **0.5854**, and the distribution is the finding
+## -- a dozen of the twenty-nine sit at literally 0.000 and the rest run 0.24 to
+## 0.59. So the ramp's resolution belongs in the upper half and the bottom is
+## genuinely flat, which is the honest shape rather than a stub: a nation that
+## makes what it wants trades nothing and has no dependency to draw. 0.60 is just
+## past the measured maximum so the worst case saturates at the top rather than
+## hanging off the end (_fraction clamps).
+const IMPORT_MAX_SHOWN := 0.60
+
+## Where the import ramp breaks, and the measurement is the reason rather than the
+## midpoint: a quarter is where the dependent nations actually begin (0.24 is the
+## lowest non-zero share measured), so the break lands on the boundary the data has
+## instead of in the middle of a cluster.
+##
+## A QUARTER AS AN ABSOLUTE SHARE, not a fraction of a per-nation anchor, and that
+## is the one place this pair does NOT copy the trade layer: a trade weight is
+## normalised over the viewer's partners, whereas "how much of what I want do I buy
+## in" is already a share of a whole and means the same thing for every nation. An
+## anchor would be a second normalisation of a quantity that has one.
+const IMPORT_MID_SHOWN := 0.25
 
 ## The layers, in switcher order.
 ##
@@ -130,6 +178,36 @@ const LAYERS: Array[Dictionary] = [
 		],
 		"caption": "Tariffs and sanctions on the pair, both ways.",
 	},
+	{
+		"id": PRODUCTION,
+		"label": "Production",
+		"alpha": 0.50,
+		# Signed at zero, because a nation with no output at all reads 0.0 and its
+		# cheap fill is the ramp's own low end -- unlike the pair layers, an entry
+		# here is a real datum and not the viewer's absence.
+		"stops": [
+			{"at": 0.0, "text": "0.0  nothing made"},
+			{"at": PRODUCTION_MAX_SHOWN, "text": "%.2f  industrial core" % PRODUCTION_MAX_SHOWN},
+		],
+		# The production stops are DERIVED too -- production_stops(even) -- and for
+		# the trade layer's exact reason: the break on this ramp is the world's
+		# even share, which is the roster's own size and not a constant, and
+		# keeping a literal here is how the trade legend ended up promising "an
+		# even ninth" on a twenty-eight-partner roster. map_legend.gd branches to
+		# it the same way.
+		"caption": "Share of the world's commodity value added, this month.",
+	},
+	{
+		"id": IMPORT_DEPENDENCY,
+		"label": "Import dep.",
+		"alpha": 0.50,
+		"stops": [
+			{"at": 0.0, "text": "0%%  self-sufficient"},
+			{"at": 0.25, "text": "25%%  a quarter bought in"},
+			{"at": IMPORT_MAX_SHOWN, "text": "%d%%  dependent" % roundi(100.0 * IMPORT_MAX_SHOWN)},
+		],
+		"caption": "Share of what a nation wants that it buys from abroad.",
+	},
 ]
 
 # -- Ramps ----------------------------------------------------------------------
@@ -163,6 +241,36 @@ const TRADE_HIGH := Color(0.976, 0.898, 0.639)
 const COERCE_NONE := Color(0.129, 0.196, 0.310)
 const COERCE_MID := Color(0.706, 0.325, 0.180)
 const COERCE_HIGH := Color(0.918, 0.243, 0.208)
+
+## Production: sequential, and deliberately the TEAL axis the relations ramp's warm
+## end already uses, because it answers the inverse question about the same kind of
+## quantity -- the relations layer's warm end is "close to you", and here warm is
+## "makes a lot". Two layers with a shared vocabulary for intensity is the grammar
+## this map already has; a third unrelated axis would be a colour nobody can place.
+##
+## PROD_LOW IS NOT NO_VALUE, and the first draft had it byte-identical -- caught by
+## this task's own test, which asserts a data layer's fill cannot be NO_VALUE. The
+## reasoning is the same one that made NO_VALUE a colour on neither ramp: a nation
+## that made nothing this month is a DATUM (the collapsed-endowment state), not an
+## absence, and if the empty end of the ramp IS the no-data colour then the map
+## cannot say which of the two it is drawing. So the low end is pulled toward the
+## teal it interpolates to rather than reusing the navy NO_VALUE owns.
+const PROD_LOW := Color(0.075, 0.157, 0.196)
+const PROD_MID := Color(0.196, 0.722, 0.678)
+const PROD_HIGH := Color(0.694, 0.949, 0.925)
+
+## Import dependency: sequential along the ember-to-red axis, which on this map
+## already means "something is wrong" (the coercion ramp) -- and a dependency is
+## the commodity layer's version of that. Distinct from production's teal, so a
+## player who has forgotten which of the two is up can still tell from the map.
+##
+## DEP_LOW carries PROD_LOW's lesson in the other direction: it interpolates from
+## the theme's SLATE toward brass rather than from NO_VALUE's navy, so the two
+## "empty" ends of the two commodity ramps are distinct colours as well as distinct
+## from the no-data colour.
+const DEP_LOW := Color(0.231, 0.243, 0.337)
+const DEP_MID := Color(0.788, 0.635, 0.153)
+const DEP_HIGH := Color(0.918, 0.243, 0.208)
 
 ## Ten land tones for the political layer, cycled by hash so neighbours rarely
 ## collide. Moved here from map_view.gd at U5c with its argument intact.
@@ -268,10 +376,31 @@ static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array)
 	# than a second copy of swatch()'s branches that could drift from it.
 	# state == null takes this path too: value() answers NAN there and swatch()
 	# returns NO_VALUE, which is reached without building any vector.
-	if layer_id != TRADE or state == null:
+	if layer_id != TRADE and layer_id != PRODUCTION or state == null:
 		for id in nation_ids:
 			var nation_id := String(id)
 			out[nation_id] = color_for(layer_id, state, viewer_id, nation_id)
+		return out
+
+	# The production layer has the trade layer's shape and not its scale: its
+	# anchor is the roster's size, which is one number, but `production_share()`
+	# sums every nation's value added and swatch() would call it once per nation --
+	# twenty-nine walks of the same twenty-nine figures, on a layer the player pans
+	# across. One world total hoisted here is one walk. (The trade vector below is
+	# the same defect at fifty-eight builds, and V3.4 measured it at 14-17 ms per
+	# drag frame.)
+	if layer_id == PRODUCTION:
+		var world := 0.0
+		for id in nation_ids:
+			world += float(_value_added(state.nations[id]))
+		var even := 1.0 / float(maxi(1, state.nations.size()))
+		var prod_alpha := alpha(PRODUCTION)
+		for id in nation_ids:
+			var nation_id := String(id)
+			var share := float(_value_added(state.nations[nation_id])) / world if world > 0.0 else 0.0
+			var color := ramp_production(share, even)
+			color.a = prod_alpha
+			out[nation_id] = color
 		return out
 
 	# The one vector. value() reads exactly this dictionary and
@@ -302,14 +431,40 @@ static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array)
 static func swatch(layer_id: String, state, viewer_id: String, nation_id: String) -> Color:
 	if layer_id == POLITICAL:
 		return PALETTE[hash(nation_id) % PALETTE.size()]
-	if is_viewer(viewer_id, nation_id):
+	# NO_VALUE is the answer for the viewer's own nation on the PAIR layers only --
+	# a nation has no pair with itself. On the two commodity layers "you" is a real
+	# reading and falls through to the ramp.
+	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
 		return NO_VALUE
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):
 		return NO_VALUE
 	if layer_id == TRADE:
 		return ramp_trade(v, trade_even_share(state, viewer_id))
+	if layer_id == PRODUCTION:
+		return ramp_production(v, production_even_share(state))
 	return ramp(layer_id, v)
+
+
+## The production ramp's anchor: one over the roster's size, the share a nation
+## would hold if the world's commodity output were spread evenly. Derived rather
+## than typed, exactly as trade_even_share() is and for the same reason -- the
+## roster grew 10 -> 27 -> 29 and a literal baked into the ramp or the legend
+## would have gone stale silently, which is the V3.3 trade-legend defect.
+static func production_even_share(state) -> float:
+	if state == null:
+		return 0.0
+	return 1.0 / float(maxi(1, state.nations.size()))
+
+
+## The production legend's stops, derived beside the ramp so the words cannot
+## promise a scale the colours do not use -- trade_stops()'s rule, one layer over.
+static func production_stops(even: float) -> Array:
+	return [
+		{"at": 0.0, "text": "0.0  nothing made"},
+		{"at": even, "text": "%.3f  an even share" % even},
+		{"at": PRODUCTION_MAX_SHOWN, "text": "%.2f  industrial core" % PRODUCTION_MAX_SHOWN},
+	]
 
 
 ## The trade ramp's anchor: one over the viewer's partner count, the share a
@@ -354,14 +509,52 @@ static func ramp(layer_id: String, v: float) -> Color:
 			if v <= 1.0:
 				return COERCE_NONE.lerp(COERCE_MID, _fraction(v, 0.0, 1.0))
 			return COERCE_MID.lerp(COERCE_HIGH, _fraction(v, 1.0, COERCION_MAX_SHOWN))
+		PRODUCTION:
+			# NO_VALUE, deliberately, where the other ramps return a colour. This
+			# layer's break is the ROSTER'S OWN SIZE and an anchor cannot be
+			# invented here without going stale the way the trade legend's "even
+			# ninth" did. Every caller that has a GameState -- swatch(), fills(),
+			# map_legend.gd's stops -- goes through ramp_production() with the
+			# derived anchor; this function, which has no state, says so rather
+			# than guessing one.
+			return NO_VALUE
+		IMPORT_DEPENDENCY:
+			# Broken at a QUARTER rather than the domain's midpoint, and the
+			# measurement is why: a dozen of the twenty-nine sit at literally 0.000
+			# and the rest run 0.24 to 0.59, so the resolution belongs in the upper
+			# half. Splitting at 0.30 would put two thirds of the dependent nations
+			# in one colour.
+			if v <= IMPORT_MID_SHOWN:
+				return DEP_LOW.lerp(DEP_MID, _fraction(v, 0.0, IMPORT_MID_SHOWN))
+			return DEP_MID.lerp(DEP_HIGH, _fraction(v, IMPORT_MID_SHOWN, IMPORT_MAX_SHOWN))
 	return NO_VALUE
+
+
+## The production ramp alone, over its derived anchor. Public for production_stops()'s
+## own reason: map_legend.gd colours a stop that belongs to no nation.
+##
+## `even` is passed rather than read, the same split ramp_trade() makes -- ramp()
+## has no GameState and must not pretend to.
+static func ramp_production(v: float, even: float) -> Color:
+	if even <= 0.0 or even >= PRODUCTION_MAX_SHOWN:
+		return PROD_MID
+	if v <= even:
+		return PROD_LOW.lerp(PROD_MID, _fraction(v, 0.0, even))
+	return PROD_MID.lerp(PROD_HIGH, _fraction(v, even, PRODUCTION_MAX_SHOWN))
 
 
 ## The raw datum, or NAN where there is none. NAN rather than 0.0 for the same
 ## reason Diplomacy.score() refuses to default: on the relations layer 0.0 is the
 ## worst possible score, not the absence of one.
 static func value(layer_id: String, state, viewer_id: String, nation_id: String) -> float:
-	if state == null or is_viewer(viewer_id, nation_id):
+	if state == null:
+		return NAN
+	# The two commodity layers are the FIRST on this map where the viewer's own
+	# nation carries a value, so the self-check that used to head this function is
+	# per-layer now. Production and import dependency are properties of a nation
+	# and not of a pair: "you" is a real reading on both, which is also why
+	# swatch() does not send them to NO_VALUE.
+	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
 		return NAN
 	match layer_id:
 		RELATIONS:
@@ -373,7 +566,62 @@ static func value(layer_id: String, state, viewer_id: String, nation_id: String)
 			# reading and belongs on the ramp, unlike the viewer's own nation, which
 			# has no pair with itself and is caught above.
 			return Coercion.severity_on_pair(state, viewer_id, nation_id)
+		PRODUCTION:
+			return production_share(state, nation_id)
+		IMPORT_DEPENDENCY:
+			return import_dependency(state, nation_id)
 	return NAN
+
+
+## A nation's share of the world's commodity value added this month. THE
+## DENOMINATOR IS THE WORLD'S OWN SUM, not a stored total: `commodity_state` is
+## per-nation data and nothing keeps a world aggregate (commodities.gd's step 5
+## sums one transiently and writes it nowhere), so deriving it here is the only
+## shape available -- and the right one, since a stored total would be a second
+## record that could disagree with the parts it is the sum of.
+##
+## An empty register reads 0.0 rather than NAN, and that is a real datum for the
+## same reason value() gives COERCION zero: a nation that made nothing this month
+## has a genuine zero share, and it is the state a collapsed endowment produces.
+static func production_share(state, nation_id: String) -> float:
+	var world := 0.0
+	for id in state.nations.keys():
+		world += float(_value_added(state.nations[id]))
+	if world <= 0.0:
+		return 0.0
+	return float(_value_added(state.nations[nation_id])) / world
+
+
+## The value of what a nation buys from abroad over the value of everything it
+## wants, both at the live price. VALUE rather than a unit count, and that is a
+## measurement's call: a tonne of ore and a tonne of semiconductors are not
+## comparable quantities, and an unweighted count of units would report a nation
+## that imports only cheap ore perfectly as dependent as one that imports only
+## aircraft. The live price is what makes the two commensurable.
+##
+## Defined on what the nation BOUGHT (the positive half of `trade`) rather than on
+## what it wants and did not make, so the figure answers the question the layer's
+## name asks: what actually crossed a border to get here. `maxf(0.0, ...)` because
+## `trade` is signed -- a negative entry is a sale and belongs on the export side
+## of the panel, not in a dependency reading.
+static func import_dependency(state, nation_id: String) -> float:
+	var cs: Dictionary = state.nations[nation_id].commodity_state
+	if cs.is_empty():
+		return 0.0
+	var want := 0.0
+	var bought := 0.0
+	for good_id in (cs["demand"] as Dictionary).keys():
+		var price := float(cs["price"].get(String(good_id), 0.0))
+		want += float(cs["demand"][good_id]) * price
+		bought += maxf(0.0, float(cs["trade"].get(String(good_id), 0.0))) * price
+	if want <= 0.0:
+		return 0.0
+	return clampf(bought / want, 0.0, 1.0)
+
+
+static func _value_added(ns) -> float:
+	var cs: Dictionary = ns.commodity_state
+	return float(cs["value_added_eur_bn"]) if cs.has("value_added_eur_bn") else 0.0
 
 
 ## One line naming the hovered nation's value, for the legend's readout.
@@ -384,7 +632,7 @@ static func value(layer_id: String, state, viewer_id: String, nation_id: String)
 ## the viewer alone and claiming DEU's side would need a second number this
 ## layer does not show.
 static func value_text(layer_id: String, state, viewer_id: String, nation_id: String) -> String:
-	if is_viewer(viewer_id, nation_id):
+	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
 		return "%s — you" % nation_id
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):
@@ -394,6 +642,20 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 			return "%s–%s  %.0f / 100" % [viewer_id, nation_id, v]
 		TRADE:
 			return "%s  %.1f%% of %s's demand" % [nation_id, 100.0 * v, viewer_id]
+		PRODUCTION:
+			# "you" in the tail rather than the bare "— you" the pair layers print,
+			# because the number is real here: the planet's supply tells you your
+			# own weight exactly as well as it tells you anybody else's.
+			var mark := " (you)" if is_viewer(viewer_id, nation_id) else ""
+			return "%s  %.1f%% of world output%s" % [nation_id, 100.0 * v, mark]
+		IMPORT_DEPENDENCY:
+			# A nation at zero buys nothing, and a 0.0 that could also be a NAN
+			# should say which it is -- the layer's own flat-bottom finding.
+			if is_zero_approx(v):
+				return "%s  buys nothing in%s" % [
+					nation_id, " (you)" if is_viewer(viewer_id, nation_id) else ""]
+			return "%s  %.0f%% of its demand imported%s" % [
+				nation_id, 100.0 * v, " (you)" if is_viewer(viewer_id, nation_id) else ""]
 		COERCION:
 			# The one readout on this map that names BOTH sides of a pair, and it
 			# may: the colour is a sum, so direction has to be recoverable
