@@ -492,11 +492,12 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## a dropped `party_leader_override` RESURRECTS A DEPOSED RIVAL mid-term, and
 ## a dropped `person_party_override` silently walks a defector back to the
 ## party they left -- the save contradicting the world the player watched.
-## Nothing writes these registers yet (characters.gd, the block's Task 3); the
-## version ships once, ahead of the first writer, so a version-35 save is
-## refused before the first save that could hold a priced register exists --
-## the V4.1 precedent taken identically. Absences pinned in
-## tests/test_save_load.gd.
+## The version shipped once, ahead of the first writer, so a version-35 save
+## was refused before the first save that could hold a priced register existed
+## -- the V4.1 precedent taken identically. The writers are live since
+## characters.gd landed (init_nation seeds, the acts and the adjusters write);
+## the sentence above records the bump's timing, not the current state.
+## Absences pinned in tests/test_save_load.gd.
 const SAVE_VERSION := 36
 
 var save_version: int = SAVE_VERSION

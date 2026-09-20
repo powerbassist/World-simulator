@@ -8,7 +8,7 @@ extends RefCounted
 ## VALUES arrive as arguments the caller hands in, the calendar.gd leaf
 ## discipline, and what it reads of the world it reads off NationState.
 ##
-## WHAT IT OWNS: the five person-state registers' values. Standing seeds from
+## WHAT IT OWNS: the six person-state registers' values. Standing seeds from
 ## authored ambition; loyalty and grudges move with the acts the player's
 ## choices produce; the two override registers carry a challenge's or a
 ## defection's result. What it never does: write seats_by_party (the seat
@@ -238,9 +238,16 @@ static func want_satisfied(ns, person, want: Dictionary, meters: Dictionary, aut
 static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
 	var object := String(want["object"])
 	if object.begins_with("programme:"):
-		# Satisfied when the sponsored entry is ON the term's register and
+		# Satisfied when the sponsored entry is ON THIS TERM's register and
 		# alive -- the want's judgement is participation, not conclusion
-		# (conclusions pay through the programme's own channel).
+		# (conclusions pay through the programme's own channel). Both halves
+		# are load-bearing: without the term gate a completed entry satisfies
+		# for ever, which for an oppose-stance author reads their want denied
+		# for ever and bills the standing denial every month to the end of the
+		# run -- the priced-forever class the ownership latch exists to refuse.
+		# The standard review's 92-scoring find; the gate is the same level
+		# comparison Programme.this_term() makes, inlined to keep this file's
+		# leaf preloads untouched.
 		var entry_id := object.substr("programme:".length())
 		return not _programme_entry(ns, entry_id).is_empty()
 	if object == "office:premiership":
@@ -422,15 +429,18 @@ static func _resign_floor(person) -> float:
 
 	## Helpers ----------------------------------------------------------------------
 
-## The live programme entry for an id, or {} when it is not on this term's
-## register. A PURE READ of ns.programme -- no Programme preload, because a
-## want's satisfaction is a dictionary read the shape of which this file
-## already knows.
+## The live programme entry for an id, or {} when it is not alive on this
+## term's register. A PURE READ of ns fields -- no Programme preload, because
+## a want's satisfaction is a dictionary read the shape of which this file
+## already knows. ALIVE means active: a completed entry is a conclusion the
+## programme channel already paid, not a standing fact, and a past term's
+## entry is not this term's participation.
 static func _programme_entry(ns, entry_id: String) -> Dictionary:
 	for entry in ns.programme:
 		if String(entry.get("entry_id", entry.get("id", ""))) == entry_id:
-			var status := String(entry.get("status", ""))
-			if status == "complete" or status == "active":
+			if int(entry.get("chosen_term", -1)) != int(ns.terms_served):
+				continue
+			if String(entry.get("status", "")) == "active":
 				return entry
 	return {}
 

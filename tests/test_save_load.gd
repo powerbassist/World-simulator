@@ -1796,7 +1796,7 @@ func _check_judiciary_fields(loader) -> void:
 		if payload.has(absent):
 			_fail("'%s' is serialised -- src/sim/judiciary.gd is a pure read" % absent)
 
-## V4.3: the five person-state registers. Values first -- an empty dict
+## V4.3: the six person-state registers. Values first -- an empty dict
 ## round-tripping as an empty dict proves nothing -- then the int-1 trap
 ## programme_stock's own comment names (a JSON 1.0 in a float map must come
 ## back the float the typed register declares), then one ABSENCE PIN per

@@ -243,7 +243,18 @@ static func _describe(ns, chosen: Array, by_id: Dictionary, pm_party_id: String,
 		# start and comes back whenever the executive's own party takes the
 		# premiership -- in France the President is not the Prime Minister, so
 		# that party's authored leader is the wrong person to name.
-		if pm_party_id == ns.incumbent_party_id and ns.start_head_of_government_person_id != "":
+		#
+		# The character layer's LIVE leadership wins over both edges below: a
+		# fired challenge wrote party_leader_override, and refilling from the
+		# authored (or start-of-game) record would reinstall the person the
+		# player watched deposed -- the resurrected-rival outcome the
+		# SAVE_VERSION 36 argument refuses even for a dropped save. The
+		# register is empty wherever no challenge has fired, so the read is a
+		# no-op there by construction.
+		var live_leader := String(ns.party_leader_override.get(pm_party_id, ""))
+		if live_leader != "":
+			pm_person_id = live_leader
+		elif pm_party_id == ns.incumbent_party_id and ns.start_head_of_government_person_id != "":
 			pm_person_id = ns.start_head_of_government_person_id
 		else:
 			pm_person_id = by_id[pm_party_id].leader_person_id

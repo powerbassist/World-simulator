@@ -38,11 +38,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 
-const PORTFOLIO_LABEL := {
-	"health": "Health", "education": "Education", "defence": "Defence",
-	"pensions": "Pensions", "infrastructure": "Infrastructure",
-}
-
 ## The face a row carries, at the row's own scale: 22px beside 14px captions
 ## reads as a face, and 30px of height is under two rows of separation.
 const FACE_SIZE := Vector2(22, 30)
@@ -67,13 +62,8 @@ const KIND_ORDER := [
 	["activist", "Activists"],
 ]
 
-## How each want object reads, in the same voice everywhere the panel prints
-## one (the hover card shares these strings through the label helpers below).
-const STANCE_LABEL := {
-	"sponsor": "sponsors", "oppose": "opposes", "want": "wants",
-	"demand": "demands", "defend": "defends",
-}
-
+## The want voice lives on person_card.gd (STANCE_LABEL / object_text) -- the
+## shared table this file's old comment promised and the card now supplies.
 var _state
 var _loader
 var _dirty := true
@@ -201,9 +191,9 @@ func _build_cabinet(ns) -> void:
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
 		if pid == "" or not by_id.has(pid):
-			PanelKit.row(_body, PORTFOLIO_LABEL.get(f, f), "VACANT", PanelKit.Tone.BAD)
+			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), "VACANT", PanelKit.Tone.BAD)
 		else:
-			PanelKit.row(_body, PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
+			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
 
 
 func _build_parties(ns) -> void:
@@ -281,7 +271,7 @@ func _party_or_kind_line(ns, person) -> String:
 func _want_row(ns, person, want: Dictionary) -> void:
 	var object := String(want["object"])
 	var stance := String(want["stance"])
-	var text := "%s %s" % [STANCE_LABEL.get(stance, stance), _object_text(object, want)]
+	var text := "%s %s" % [PersonCard.stance_label(stance), PersonCard.object_text(_loader, _state.player(), object, want)]
 	var served := Characters.want_satisfied(ns, person, want, _meters(ns), _authored_leaders())
 	var tone := PanelKit.Tone.DIM
 	if stance == "oppose":
@@ -290,33 +280,6 @@ func _want_row(ns, person, want: Dictionary) -> void:
 	if not served:
 		tone = PanelKit.Tone.BAD
 	PanelKit.line(_body, "    %s — %s" % [text, mark], tone)
-
-
-## What an object string reads as, for the want lines and the hover card.
-func _object_text(object: String, want: Dictionary) -> String:
-	if object.begins_with("programme:"):
-		var entry_id := object.substr("programme:".length())
-		for entry in _loader.programme:
-			if String(entry["id"]) == entry_id:
-				return String(entry["name"])
-		return entry_id
-	if object == "office:premiership":
-		return "the premiership"
-	if object.begins_with("office:portfolio:"):
-		var key := object.substr("office:portfolio:".length())
-		return "%s" % PORTFOLIO_LABEL.get(key, key).to_lower()
-	if object.begins_with("office:party_leadership:"):
-		var pid := object.substr("office:party_leadership:".length())
-		for p in _loader.parties.get(_state.player().id, []):
-			if p.id == pid:
-				return "the leadership of %s" % String(p.party_name)
-		return "a party leadership"
-	if object.begins_with("meter:"):
-		var meter := object.substr("meter:".length())
-		var direction := "below" if want.has("below") else "above"
-		var threshold := float(want.get("below", want.get("above", 0.0)))
-		return "%s %s %.1f" % [meter.replace("_", " "), direction, threshold]
-	return object
 
 
 ## The meter hand-in, matching what main.gd hands Characters.tick_month

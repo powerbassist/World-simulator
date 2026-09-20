@@ -1155,7 +1155,7 @@ var programme_chosen_term: int = -1
 var programme_stock: float = 0.0
 
 # --- The character layer (V4.3) ------------------------------------------------
-## FIVE REGISTERS OF PERSON STATE, and they are the whole of what a save remembers
+## SIX REGISTERS OF PERSON STATE, and they are the whole of what a save remembers
 ## about what the player did to the people in it. Content says who a person IS --
 ## traits, ambition, kind, party, wants (src/core/person.gd, data/people/) -- and
 ## never moves; these say what has happened to them. The split is
@@ -1176,7 +1176,8 @@ var person_loyalty: Dictionary[String, float] = {}
 
 ## person id -> political standing in [0, 1]. A person's weight in the acts they
 ## take: the challenge threshold and how far an endorsement carries. Written by
-## characters.gd; nothing writes it yet.
+## Characters.init_nation (cleared and seeded); nothing else writes it -- the
+## standing seed is the register's only content.
 ##
 ## Earns the bump for the field above's reason, stated once. A dropped standing
 ## register reads every person at 0.0 -- nobody carries any weight -- so a
@@ -1185,7 +1186,7 @@ var person_standing: Dictionary[String, float] = {}
 
 ## person id -> accumulated grudge in [0, 1]. The slow channel: a denied want and a
 ## betrayal add to it, and it decays on the half-life characters.gd owns. Written
-## by characters.gd; nothing writes it yet.
+## by characters.gd's adjusters and decay (init_nation seeds it zero).
 ##
 ## Earns the bump with the pair above, and it is the one a lost save is most
 ## visible in: a dropped register forgives every grudge the player earned, which is
@@ -1194,8 +1195,8 @@ var person_grudges: Dictionary[String, float] = {}
 
 ## party id -> the person id currently leading it, where a leadership challenge has
 ## moved the party off its authored `leader_person_id`. Empty means the authored
-## leader, which is the truth about every version-35 save. Written by
-## characters.gd; nothing writes it yet.
+## leader, which is the truth about every version-35 save. Written by the
+## challenge act (characters.gd) when a leadership contest fires.
 ##
 ## EARNS THE BUMP ON ITS OWN ARGUMENT, which the loyalty dict does not have: an
 ## absent override is not neutral, it RESURRECTS A DEPOSED RIVAL mid-term. The
@@ -1206,7 +1207,7 @@ var party_leader_override: Dictionary[String, String] = {}
 
 ## person id -> the party they now sit in, where a defection has moved them off
 ## their authored `party_id`. Empty means the authored affiliation. Written by
-## characters.gd; nothing writes it yet.
+## the defect act (characters.gd) when a person crosses the party line.
 ##
 ## EARNS THE BUMP for the override's reason one level down: an absent entry is not
 ## "no change", it SILENTLY RE-AFFILIATES a defector the save remembers -- the
@@ -1737,7 +1738,7 @@ func duplicate_state():
 	s.programme = programme.duplicate(true)
 	s.programme_chosen_term = programme_chosen_term
 	s.programme_stock = programme_stock
-	# The five character registers, for the programme pair's reason one level
+	# The six character registers, for the programme pair's reason one level
 	# down: characters.gd (Task 3) mutates entries inside them, and a
 	# projection copy writing through to the live register would corrupt what
 	# the player's acts did to the actual cast.
@@ -2321,7 +2322,7 @@ static func from_dict(d: Dictionary):
 	s.programme = _programme_from(d.get("programme", []))
 	s.programme_chosen_term = int(d.get("programme_chosen_term", -1))
 	s.programme_stock = float(d.get("programme_stock", 0.0))
-	# The five character registers. Per-entry casts on the campaign_sites
+	# The six character registers. Per-entry casts on the campaign_sites
 	# pattern -- a JSON 1.0 comes back as the int 1 and a typed Dictionary
 	# deserves the float it declares, and a stray non-string key in an override
 	# is a corrupted save refusing loudly rather than a silent type hole.

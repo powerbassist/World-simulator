@@ -20,6 +20,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
+const Government = preload("res://src/sim/government.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -36,6 +37,8 @@ func _init() -> void:
 	_check_single_writers()
 	_check_determinism()
 	_check_idle_nation_is_silent()
+	_check_programme_want_is_term_scoped_and_alive_only()
+	_check_challenge_reaches_the_premiership()
 
 	if _failures.is_empty():
 		print("test_characters: all checks passed")
@@ -97,7 +100,7 @@ func _check_tick_order_pin() -> void:
 
 ## SINGLE WRITERS. seats_by_party is elections' alone to WRITE (the defect a
 ## defection could commit -- discipline/government/legislature READ it, which
-## is their input and their right); the five person-state registers are
+## is their input and their right); the six person-state registers are
 ## characters' alone to write. The scan matches the WRITE form, not the name:
 ## assignment into the dict or erase on it.
 func _check_single_writers() -> void:
@@ -181,6 +184,83 @@ func _check_idle_nation_is_silent() -> void:
 	var acts: Array = Characters.tick_month(state, _loader, meters)
 	if not acts.is_empty():
 		_fail("a fresh game with no player decision fired %d character acts -- wants can only be denied by a decision" % acts.size())
+
+
+## The programme want's two gates, pinned at the read the machine prices (the
+## standard review's 92-scoring find: a completed entry counted as alive, so
+## an oppose-stance author read their want denied for ever and the standing
+## denial billed monthly to the end of the run). A want is satisfied only when
+## the entry is alive (active) on THIS term's register.
+func _check_programme_want_is_term_scoped_and_alive_only() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var want := {"family": "programme", "stance": "support", "object": "programme:prog_jobs_first", "below": 0.0}
+	var person = _loader.person_by_id.get("FRA_moucron")
+	if person == null:
+		_fail("FRA_moucron missing from the register -- the fixture needs a real person id")
+		return
+	var meters := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
+	var leaders := {}
+	# Not chosen: not satisfied, whatever the register may later hold.
+	ns.programme = []
+	if Characters.want_satisfied(ns, person, want, meters, leaders):
+		_fail("an unchosen programme entry read satisfied -- the want judges participation")
+	# Alive on this term: satisfied.
+	ns.programme = [{"entry_id": "prog_jobs_first", "chosen_term": int(ns.terms_served), "status": "active"}]
+	if not Characters.want_satisfied(ns, person, want, meters, leaders):
+		_fail("an active this-term entry read unsatisfied -- participation is the judgement")
+	# Completed this term: a conclusion, not a standing fact.
+	ns.programme = [{"entry_id": "prog_jobs_first", "chosen_term": int(ns.terms_served), "status": "complete"}]
+	if Characters.want_satisfied(ns, person, want, meters, leaders):
+		_fail("a completed entry read satisfied -- conclusions pay through the programme channel, not the want")
+	# Alive on a PAST term: not this term's participation.
+	ns.programme = [{"entry_id": "prog_jobs_first", "chosen_term": int(ns.terms_served) - 1, "status": "active"}]
+	if Characters.want_satisfied(ns, person, want, meters, leaders):
+		_fail("a past-term entry read satisfied -- the want judges this term's register")
+	ns.programme = []
+
+
+## A fired challenge must survive the next government formation: the
+## challenger's override is the party's LIVE leadership, and form() refilling
+## pm_person_id from the authored (or start-of-game) edge would reinstall the
+## person the player watched deposed -- the resurrected-rival outcome the
+## SAVE_VERSION 36 argument refuses for dropped saves (the standard review's
+## 85-scoring find).
+func _check_challenge_reaches_the_premiership() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var pm_party := String(ns.pm_party_id)
+	var authored_leader := ""
+	for party in _loader.parties.get(ns.id, []):
+		if String(party.id) == pm_party:
+			authored_leader = String(party.leader_person_id)
+			break
+	if authored_leader == "":
+		_fail("FRA's pm party '%s' has no authored leader -- fixture broken" % pm_party)
+		return
+	var challenger := ""
+	for party in _loader.parties.get(ns.id, []):
+		if String(party.id) == pm_party:
+			continue
+		if String(party.leader_person_id) != "" and _loader.person_by_id.has(String(party.leader_person_id)):
+			challenger = String(party.leader_person_id)
+			break
+	if challenger == "":
+		_fail("no challenger available for the premiership test -- fixture broken")
+		return
+	ns.party_leader_override[pm_party] = challenger
+	var party_list: Array = _loader.parties.get(ns.id, [])
+	var formed = Government.form(ns, party_list)
+	if String(formed.get("pm_person_id", "")) != challenger:
+		_fail("form() named '%s' PM with a live override naming '%s' -- the deposed rival was resurrected" % [String(formed.get("pm_person_id", "")), challenger])
+	# And the no-override path is unchanged: clear and re-form.
+	ns.party_leader_override.erase(pm_party)
+	var reformed = Government.form(ns, party_list)
+	var expected := authored_leader
+	if pm_party == String(ns.incumbent_party_id) and String(ns.start_head_of_government_person_id) != "":
+		expected = String(ns.start_head_of_government_person_id)
+	if String(reformed.get("pm_person_id", "")) != expected:
+		_fail("form() without an override named '%s', expected '%s' -- the authored path moved" % [String(reformed.get("pm_person_id", "")), expected])
 
 
 func _snapshot(ns) -> Dictionary:

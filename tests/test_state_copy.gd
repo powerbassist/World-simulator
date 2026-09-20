@@ -150,7 +150,7 @@ func _array_sentinel(a: Array):
 	return SENTINEL_NUMBER
 
 
-## The dictionary half of the same lesson, and V4.3's five character registers
+## The dictionary half of the same lesson, and V4.3's six character registers
 ## are what pushed it open: until them, every copied Dictionary on either state
 ## object was untyped, so the bare float sentinel worked -- and a
 ## Dictionary[String, String] override register REFUSES a float value, the set

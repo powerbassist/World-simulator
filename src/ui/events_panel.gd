@@ -265,7 +265,11 @@ func _subject_label(ns, ev) -> String:
 			var largest := Government.largest_party_id(ns, party_list)
 			for party in party_list:
 				if party.id == largest:
-					person_id = party.leader_person_id
+					# Override first, the panel's own read (people_panel.gd):
+					# a fired challenge deposed the authored leader, and this
+					# line naming the deposed person is the resurrected-rival
+					# class in a second surface.
+					person_id = String(ns.party_leader_override.get(party.id, party.leader_person_id))
 					office = "%s, leader" % party.party_name
 					break
 	var who: String = _loader.person_name(person_id)

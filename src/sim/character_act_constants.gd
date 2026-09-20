@@ -56,10 +56,12 @@ const STANDING_WEIGHT_BASE := 0.5
 const LOYALTY_WANT_SERVED := 0.02
 const GRUDGE_WANT_DENIED := 0.02
 
-## What an act takes off the register when it fires -- the relief every act
-## shares. It is a CATHARSIS, not a valve: large enough that the register falls
-## well clear of the rung it just fired from, which is what lets a standing
-## denial climb through the higher rungs on the way back up.
+## What the TERMINAL acts (resign, challenge) take off the register when they
+## fire -- the defect takes no relief at all and the brief takes the valve
+## below, so "every act" was the first ship's wrong tally (the standard
+## review's find). It is a CATHARSIS, not a valve: large enough that the
+## register falls well clear of the rung it just fired from, which is what
+## lets a standing denial climb through the higher rungs on the way back up.
 const GRUDGE_ACT_RELIEF := 0.2
 
 ## The BRIEF's own relief -- a VALVE, not a catharsis, and the ladder's
@@ -108,9 +110,13 @@ const GRUDGE_BRIEF_RELIEF := 0.012
 ##
 ## ARITHMETIC: LOYALTY_RESIGN_FLOOR / LOYALTY_ACT_COST = 0.4 / 0.1 = 4 briefs
 ## from a neutral 0.0, and 14 from a full 1.0. Briefs are grudge-gated at 0.45
-## and each one relieves GRUDGE_ACT_RELIEF, so the machine couples the two
-## registers through the term's own history: a sustained betrayal walks a person
-## from ally to resigned over years, never in one month.
+## and each one relieves GRUDGE_BRIEF_RELIEF -- the VALVE (0.012), not the
+## catharsis: the walk couples the two registers precisely because loyalty
+## drains by the full cost while the grudge only leaks one month's accrual per
+## brief. A sustained betrayal walks a person from ally to resigned over
+## years, never in one month. (The first ship's paragraph named
+## GRUDGE_ACT_RELIEF here, which would make a brief a catharsis and pin
+## nobody anywhere -- the standard review's find.)
 const LOYALTY_ACT_COST := 0.1
 
 ## Grudge decay, monthly, straight (the trait modifiers live in characters.gd

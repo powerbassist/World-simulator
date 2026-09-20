@@ -387,16 +387,16 @@ two channels, both existing registers — no third number was built.
 `src/sim/character_constants.gd`, `TRAIT_KEYS`. Each trait gates an act
 threshold or price (the CK lever the tier signed); 2–3 per person, authored:
 
-| Trait | The whole mechanical definition |
+| Trait | The whole mechanical definition (as shipped — the table was corrected to the code) |
 |---|---|
-| `ambitious` | standing gain ×AMBITION_STANDING_GAIN; challenge threshold lowered |
-| `loyal` | grudge from betrayal ×0.5; loyalty floor higher |
-| `principled` | opposing their want costs double grudge; their own acts cost them more standing |
-| `pragmatic` | grudge decay ×2; wants sway (stance softens) at high loyalty |
-| `vain` | office wants weighted ×1.5 in their act choice |
-| `stubborn` | grudge decay halved |
-| `networked` | their endorsement/brief carries ×1.5 bloc_offset magnitude |
-| `fervent` | collective reads (grievance, salience) amplify ×1.5 for union/activist kinds |
+| `ambitious` | standing SEED bonus (+STANDING_SEED_AMBITIOUS_BONUS at init — standing never moves again); challenge standing-threshold lowered by CHALLENGE_AMBITIOUS_DISCOUNT |
+| `loyal` | grudge taken ×0.5 (LOYAL_GRUDGE_FACTOR); resign floor relieved (LOYAL_RESIGN_RELIEF) |
+| `principled` | grudge taken ×2 (PRINCIPLED_GRUDGE_FACTOR) — a denied want bills them double; no standing channel exists |
+| `pragmatic` | grudge decay ×2 (PRAGMATIC_DECAY_FACTOR) — they let go faster; no stance-softening mechanism exists |
+| `vain` | challenge standing-threshold lowered by CHALLENGE_VAIN_DISCOUNT (0.1) when they carry a leadership want — a threshold discount, not an act-choice weighting |
+| `stubborn` | grudge decay halved (STUBBORN_DECAY_FACTOR) |
+| `networked` | their brief carries ×1.5 bloc_offset magnitude (NETWORKED_MAGNITUDE) |
+| `fervent` | a METER want's denial pulse ×1.5 (FERVENT_METER_FACTOR) for the collective kinds — the meter is their own register; no salience read exists |
 
 A ninth needs a measurement, not a mood. `ambition` the scalar and `ambitious`
 the trait are different things and both exist — the scalar is the dial, the
@@ -539,6 +539,52 @@ completeness) — one flag, three readers, no list. The bench generator's
 `--regen-wants` rebuilds bench want lists when the candidate MIX changes
 (the meters-first re-mix needed it); the 213 originals' wants are authored
 content and never regenerate.
+
+**The standard review's round (2026-09-20) — two machine fixes, five record fixes, both
+machine fixes proven harness-silent.** The /code-review standard pass at `72ad3dd` scored 16
+candidates and kept 7 at ≥80. The two machine finds, fixed and pinned:
+
+- **A completed programme entry counted as ALIVE (score 92).** `_programme_entry` scanned the
+  all-terms register with no term gate and accepted `status == "complete"`, so an
+  oppose-stance author of any completed entry read their want denied for ever and the C2
+  channel billed the standing denial (+0.012/month) to the end of the run — the
+  priced-forever class the ownership latch exists to refuse, reached not by a dropped save
+  but by the machine's own comment lying about its code. Measured content: 1,103 of 2,237
+  programme wants are oppose; 816 people carry 2+ standing wants. Fixed: the read is
+  term-gated (`chosen_term == ns.terms_served`, the `Programme.this_term()` comparison
+  inlined to keep the leaf's preloads untouched) AND alive-only (`status == "active"`); the
+  comment now states both gates. Pinned by `test_characters`'s
+  `_check_programme_want_is_term_scoped_and_alive_only` (not chosen / active this term /
+  completed this term / active past term).
+- **A fired challenge never reached the premiership (score 85).** The challenge act writes
+  `party_leader_override` and nothing else; `Government._describe` filled `pm_person_id`
+  from the AUTHORED edge (`government.gd`'s `by_id[pm_party_id].leader_person_id`, and the
+  incumbent branch restored the start-of-game record), so the next election or fall
+  reinstated the person the player watched deposed — the resurrected-rival outcome the
+  SAVE_VERSION 36 argument refuses for dropped saves, reproduced by the machine itself.
+  `_clear_office`'s comment claimed the refill read the live leadership; now it does:
+  override first, then the start-of-game special case, then the authored edge, in
+  `_describe` (the one funnel all three formation builders share). `events_panel.gd`'s
+  largest-party-leader line reads override-first too (the second surface the find named).
+  Pinned by `test_characters`'s `_check_challenge_reaches_the_premiership` (override names
+  the challenger; clearing it restores the authored path exactly).
+
+**The re-run obligation, discharged by structure plus measurement instead of a two-hour
+double batch.** The harness (`tools/balance_probe.gd`) never references Programme — grep
+proves no regime ever chooses an entry, so `ns.programme` is `[]` every month of every
+regime and the term gate cannot change any read there; the override register is written
+only by the challenge act, and the branch's recorded act inventory (the V4.3 re-run's
+verdict) shows challenges never fire in the harness. Empirical half: `hands_off` and
+`managed` (the regimes that elect and form governments every term) run byte-identical
+against a `72ad3dd` worktree — `reports/stdrev/` holds both sides. The other five finds are
+records, not machines: §14.2's trait table rewritten to the shipped constants (the
+constants' header already claimed the table was corrected; now it is), the
+`LOYALTY_ACT_COST`/`GRUDGE_ACT_RELIEF` paragraphs naming the right valve, the six-register
+comment sweep (nation_state headers, duplicate/from_dict, game_state's bump-timing note,
+the tests), and the want voice moved to `person_card.gd`'s shared `STANCE_LABEL` /
+`object_text` so the panel and the card cannot print two renderings of one want (the
+panel's private copies deleted). `tools/characters_probe.gd.uid` staged (the U5b gotcha).
+Suite 87/87 with the two new checks.
 
 ---
 

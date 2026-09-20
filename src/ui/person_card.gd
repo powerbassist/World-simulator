@@ -34,6 +34,55 @@ const TRAIT_LABEL := {
 	"networked": "Networked", "fervent": "Fervent",
 }
 
+## The want voice, SHARED with the People panel (the panel calls these, not
+## its own copies): one table, one object reader, so a want cannot read one
+## way on the panel and another on the card -- the two-readouts-of-one-record
+## failure this file's header refuses. The standard review's 80-scoring find
+## was exactly that split (the card printed raw "oppose programme:..." where
+## the panel printed "opposes The Full Term").
+const STANCE_LABEL := {
+	"sponsor": "sponsors", "oppose": "opposes", "want": "wants",
+	"demand": "demands", "defend": "defends",
+}
+
+const PORTFOLIO_LABEL := {
+	"health": "Health", "education": "Education", "defence": "Defence",
+	"pensions": "Pensions", "infrastructure": "Infrastructure",
+}
+
+
+static func stance_label(stance: String) -> String:
+	return String(STANCE_LABEL.get(stance, stance))
+
+
+## What a want's object string reads as, in the panel's own voice. `ns` is in
+## hand for the player's nation id (the party lookup); loader supplies the
+## programme register and the parties.
+static func object_text(loader, ns, object: String, want: Dictionary) -> String:
+	if object.begins_with("programme:"):
+		var entry_id := object.substr("programme:".length())
+		for entry in loader.programme:
+			if String(entry["id"]) == entry_id:
+				return String(entry["name"])
+		return entry_id
+	if object == "office:premiership":
+		return "the premiership"
+	if object.begins_with("office:portfolio:"):
+		var key := object.substr("office:portfolio:".length())
+		return "%s" % String(PORTFOLIO_LABEL.get(key, key)).to_lower()
+	if object.begins_with("office:party_leadership:"):
+		var pid := object.substr("office:party_leadership:".length())
+		for p in loader.parties.get(ns.id, []):
+			if p.id == pid:
+				return "the leadership of %s" % String(p.party_name)
+		return "a party leadership"
+	if object.begins_with("meter:"):
+		var meter := object.substr("meter:".length())
+		var direction := "below" if want.has("below") else "above"
+		var threshold := float(want.get("below", want.get("above", 0.0)))
+		return "%s %s %.1f" % [meter.replace("_", " "), direction, threshold]
+	return object
+
 var _body: VBoxContainer
 
 
@@ -100,7 +149,8 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 		PanelKit.line(_body, "Wants", PanelKit.Tone.DIM)
 		for want in person.wants:
 			PanelKit.line(_body, "  %s %s" % [
-				String(want["stance"]), String(want["object"])])
+				stance_label(String(want["stance"])),
+				object_text(loader, ns, String(want["object"]), want)])
 
 	visible = true
 
