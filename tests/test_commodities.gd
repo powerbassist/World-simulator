@@ -114,7 +114,7 @@ func _check_single_writer() -> void:
 ## be able to leave AND to come back to.
 ##
 ## Capacity above zero is asserted because it is a CONTENT claim the machine
-## leans on rather than a tolerance: all ten nation files carry all three sectors
+## leans on rather than a tolerance: every nation file carries all three sectors
 ## above zero. `_bucket()` deliberately applies no floor, so a nation file that
 ## authored a zero sector would show up HERE rather than as a silently dead
 ## column.

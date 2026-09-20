@@ -1236,7 +1236,13 @@ var person_want_state: Dictionary[String, bool] = {}
 ##   capacity           good id -> units/month the nation COULD make, from its
 ##                      measured sector output and the recipe structure.
 ##   demand             good id -> units it wants this month, at the live price.
-##   output             good id -> units actually made, after the recipe limit.
+##   output             good id -> units made NET of what this nation's own
+##                      downstream recipes consumed of it, so the figure is value
+##                      added's own numerator rather than a gross production count:
+##                      a tonne of iron ore that went into this month's steel is
+##                      not also counted as iron ore output.
+##                      (Gross production would double-count every intermediate,
+##                      which is why the net form is stored.)
 ##   surplus            good id -> output minus demand where that is positive,
 ##                      i.e. what it has to sell; 0.0 where it does not.
 ##   trade              good id -> units bought (positive) or sold (negative).

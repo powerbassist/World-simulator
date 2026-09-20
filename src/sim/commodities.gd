@@ -90,15 +90,16 @@ const CATEGORY_SECTOR := {
 	"services": "services",
 }
 
-## The category rank that makes the production pass topological -- and IT IS NOT
-## ENOUGH ON ITS OWN, which this file learned by measuring. Categories are a
-## COARSE order: `energy` holds both `uranium_fuel` (depth 1) and `electricity`
-## (depth 2, made from it), so a category-only pass produces electricity from
-## nothing and the whole downstream chain follows it down. The real order is
-## `_production_order()`, computed from the recipes themselves; this list survives
-## as the CATEGORY vocabulary the demand basket and the sector mapping key on,
-## and as the fallback order for a good no recipe mentions.
-const CATEGORY_ORDER := ["raw", "agri", "energy", "intermediate", "capital", "consumer", "services"]
+## THERE IS NO CATEGORY ORDER CONSTANT HERE, and its absence is a fix rather than
+## an omission. The first version of this file carried one and used it as the
+## production order, which was wrong -- categories are a COARSE order: `energy`
+## holds both `uranium_fuel` (depth 1) and `electricity` (depth 2, made from it),
+## so electricity came out before the fuel it needs and the whole downstream chain
+## followed it down, silently. `_production_order()` computes the real order from
+## the recipes instead. A category list is the SHAPE THAT PRODUCED THAT BUG, so
+## there is deliberately no second one to reach for: a good's category is read
+## where it means something (CATEGORY_SECTOR, and the demand basket in `_want`),
+## and never as an ordering.
 
 
 ## Seed ONE nation's commodity state. Called from `new_game` beside
@@ -108,7 +109,7 @@ const CATEGORY_ORDER := ["raw", "agri", "energy", "intermediate", "capital", "co
 ## Every good gets a capacity proportional to its sector's measured output. A
 ## NATION WITH NO INDUSTRY HAS NO CAPACITY FOR STEEL, and that zero is the truth
 ## rather than a degenerate case -- it is the state a shortage test creates and
-## the reason `_bucket()` carries no floor. All ten nation files carry all three
+## the reason `_bucket()` carries no floor. Every nation file carries all three
 ## sectors above zero, so the zero is reached by a fixture or by a player-caused
 ## collapse and not by content.
 static func init_nation(ns, loader) -> void:
@@ -155,6 +156,10 @@ static func tick_month(state, loader) -> void:
 		world_sector_share[sector] = float(world_sector_share[sector]) / (world_value * 1e9 / 12.0)
 
 	var structure: Dictionary = _structure(loader)
+	# Everything the loader alone determines, derived once for the whole tick
+	# rather than once per nation -- the recipe table is static content and the
+	# per-nation loop below must not re-derive it 29 times.
+	var tables: Dictionary = _static_tables(loader)
 
 	# 1-3. Capacity, demand, production -- per nation.
 	var produced := {}
@@ -171,7 +176,7 @@ static func tick_month(state, loader) -> void:
 		# Last month's price vector, which is the one the nation's own register
 		# carries -- every nation's copy is the same numbers, so the route a
 		# nation picks cannot depend on which copy it read.
-		_produce(loader, capacity, ns.commodity_state["price"], out)
+		_produce(tables, capacity, ns.commodity_state["price"], out)
 		produced[nation_id] = out
 		demanded[nation_id] = demand
 
@@ -244,6 +249,10 @@ static func tick_month(state, loader) -> void:
 			price[good_id] = next
 			value_added += float(produced[nation_id][good_id]) * next
 		ns.commodity_state["demand"] = demanded[nation_id]
+		# `output` is what `_produce` left standing, which is NET of the inputs
+		# this nation's own downstream recipes consumed -- and that is exactly what
+		# makes the figure below value added rather than gross production: a tonne
+		# of ore that went into this month's steel is not also counted as ore.
 		ns.commodity_state["output"] = produced[nation_id]
 		ns.commodity_state["trade"] = traded[nation_id]
 		ns.commodity_state["surplus"] = spare_by_nation[nation_id]
@@ -271,10 +280,17 @@ static func tick_month(state, loader) -> void:
 ## where another route was affordable. Recorded as the first thing a later session
 ## should improve, because it is the one place this machine is less general than
 ## the content it reads.
-static func _produce(loader, capacity: Dictionary, price: Dictionary, out: Dictionary) -> void:
-	for good_id in _production_order(loader):
+##
+## `tables` is the per-TICK bundle from `_static_tables()` and not the loader: the
+## recipe table is static content, so the production order and the candidate-route
+## lists are derived ONCE a month rather than once per nation per month. The
+## unhoisted form was a 60-round relaxation and a full recipe scan per good per
+## nation -- 29 nations' worth of the same answer, every tick.
+static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary) -> void:
+	var routes: Dictionary = tables["routes"]
+	for good_id in tables["order"]:
 		var cap := maxf(float(capacity.get(good_id, 0.0)), 0.0)
-		var route = _cheapest_route(loader, good_id, price)
+		var route = _cheapest_route(tables, good_id, price)
 		var target := cap
 		if route != null:
 			for input_id in route.inputs.keys():
@@ -288,6 +304,29 @@ static func _produce(loader, capacity: Dictionary, price: Dictionary, out: Dicti
 		if route != null:
 			for input_id in route.inputs.keys():
 				out[String(input_id)] = float(out[String(input_id)]) - float(route.inputs[input_id]) * target
+
+
+## Everything derived from the loader alone and needed every tick, built ONCE a
+## month and handed down: the production order, the candidate routes per output,
+## and the base prices the route cost falls back to.
+##
+## `routes` is the `_routes_for()` scan turned inside out -- one pass over the
+## recipe ids keyed by output, rather than a full rescan for every good of every
+## nation. The recipes inside each list keep `_recipe_ids()` order, so the
+## tie-break in `_cheapest_route()` sees the same sequence it always did.
+static func _static_tables(loader) -> Dictionary:
+	var routes := {}
+	for recipe_id in _recipe_ids(loader):
+		var recipe = loader.commodity_recipes[recipe_id]
+		var output := String(recipe.output)
+		if not routes.has(output):
+			routes[output] = []
+		routes[output].append(recipe)
+	return {
+		"order": _production_order(loader),
+		"routes": routes,
+		"base": _base_prices(loader),
+	}
 
 
 ## The goods in an order that is genuinely topological for THIS recipe table:
@@ -330,23 +369,21 @@ static func _production_order(loader) -> Array:
 ## second way to declare the same output).
 ##
 ## Cost is the input VALUE per unit at the live price, tie-broken on recipe id so
-## two equal-cost routes always resolve the same way. Live rather than base, so a
-## route really is chosen on what its inputs cost this month -- a shortage of
-## crude oil is what should push refining toward the gas route. `labour_per_unit`
-## and `capital_per_unit` are carried by the register and NOT read: this layer has
-## no wage or capital price to value them against, and inventing one would be a
-## second GDP lever the step-0 verdict refuses.
-static func _cheapest_route(loader, good_id: String, price: Dictionary):
+## two equal-cost routes always resolve the same way -- the candidate list arrives
+## already in `_recipe_ids()` order, so the first strict improvement wins. Live
+## rather than base, so a route really is chosen on what its inputs cost this
+## month: a shortage of crude oil is what should push refining toward the gas
+## route. `labour_per_unit` and `capital_per_unit` are carried by the register and
+## NOT read: this layer has no wage or capital price to value them against, and
+## inventing one would be a second GDP lever the step-0 verdict refuses.
+static func _cheapest_route(tables: Dictionary, good_id: String, price: Dictionary):
 	var best = null
 	var best_cost := 0.0
-	for recipe_id in _recipe_ids(loader):
-		var recipe = loader.commodity_recipes[recipe_id]
-		if String(recipe.output) != good_id:
-			continue
+	for recipe in tables["routes"].get(good_id, []):
 		var cost := 0.0
 		for input_id in recipe.inputs.keys():
 			var i_id := String(input_id)
-			cost += float(recipe.inputs[input_id]) * float(price.get(i_id, _base(loader, i_id)))
+			cost += float(recipe.inputs[input_id]) * float(price.get(i_id, float(tables["base"].get(i_id, 0.0))))
 		if best == null or cost < best_cost - 1e-12:
 			best = recipe
 			best_cost = cost
