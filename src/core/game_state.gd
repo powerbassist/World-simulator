@@ -14,6 +14,7 @@ const NationState = preload("res://src/core/nation_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -844,6 +845,12 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 	for ns in gs.nations.values():
 		Regions.init_nation(ns, loader.regions.get(ns.id, []))
 		Migration.init_nation(ns, loader.regions.get(ns.id, []))
+		# V4.6, same loop and the same argument: a commodity register is a third
+		# file rather than a field of the nation's own, and what it seeds is the
+		# nation's measured sector mix. Takes the whole `loader` rather than one
+		# register list, because the goods and the recipe table are both content
+		# this loop has no other route to -- the first init here to need two.
+		Commodities.init_nation(ns, loader)
 	gs.regions = loader.regions
 	gs.region_graph = loader.region_graph
 

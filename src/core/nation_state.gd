@@ -1252,12 +1252,17 @@ var person_want_state: Dictionary[String, bool] = {}
 ##   value_added_eur_bn what this month's output was worth, EUR bn -- the CHANGE
 ##                      the block models (the step-0 verdict: levels are not
 ##                      reproducible from recipes, deltas are). Nothing reads it
-##                      yet; a later task wires it or does not.
+##                      yet; Task 4's surfaces are its first readers.
 ##
 ## NOT SERIALISED YET, and that is Task 5's to decide rather than an oversight:
 ## the field is declared plain and empty so the round-trip gets its own recorded
 ## reason -- an absent register reads as a nation with no production at all,
 ## which is the `region_gdp_eur_bn` class and not the neutral-empty one.
+##
+## WITH A LIVE TICK AND NO SERIALISATION, the `{}` has a consequence until Task 5:
+## a LOADED save carries it, so Commodities.tick_month() lazily seeds any nation
+## whose register is empty -- the bridge that keeps a pre-V4.6 save loadable, and
+## the reason that branch must stay until this field round-trips.
 var commodity_state: Dictionary = {}
 
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,

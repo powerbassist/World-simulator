@@ -12,6 +12,7 @@ const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Net = preload("res://src/sim/network.gd")
@@ -1068,6 +1069,17 @@ func _on_month_elapsed(year: int, month: int) -> void:
 			_state.nations[nation_id], _state.regions.get(nation_id, []), _state.region_graph)
 	Energy.tick_month(_state, _loader, access_by_nation)
 	Economy.tick_month(_state)
+	# V4.6. Immediately AFTER Economy, from which it derives every nation's capacity
+	# off the `sector_output` that call just settled -- a tick before it would price
+	# this month's production off last month's mix. BEFORE Opinion, so a figure this
+	# layer writes can be read in the SAME month rather than a month late: Inflation's
+	# slot and Orgs' rule, both stated at their own calls below.
+	#
+	# NOTHING READS THE COMMODITY STATE YET -- Task 4's panel and map modes are its
+	# first readers -- so the slot is pinned rather than forced by a live reader.
+	# Said out loud because that is exactly when an order rots: the pin in
+	# tests/test_commodities.gd is what stops a later task placing it by convenience.
+	Commodities.tick_month(_state, _loader)
 	Budget.tick_month(_state)
 	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER
 	# Budget, because the burden reads the deficit that Budget has just settled and

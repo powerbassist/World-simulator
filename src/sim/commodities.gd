@@ -11,8 +11,10 @@ extends RefCounted
 ## 82 % (LUX), so "GDP is what the recipes say it is" is false and this file does
 ## not say it. `ns.gdp_eur_bn` stays V1.5's measured register figure and NOTHING
 ## HERE WRITES IT. What this file produces is a per-month value-added figure on
-## `commodity_state`, which no surface reads yet -- a later task wires it, if and
-## when a balance sweep says it earns its place.
+## `commodity_state`. Since V4.6's Task 3 the machine runs in the live month
+## (main.gd, after Economy and before Opinion) and in balance_probe.gd; what no
+## surface reads YET is its output -- Task 4's panel and map modes are its first
+## readers, and until one lands the value-added figure earns nothing.
 ##
 ## A LEAF, and the tier's own list of what it may touch: commodity_constants, and
 ## nothing else. No economy, no trade, no budget, no UI. Every number it reads of
@@ -136,6 +138,19 @@ static func tick_month(state, loader) -> void:
 	var ids: Array = _goods(loader)
 	var nation_ids: Array = state.nations.keys()
 	nation_ids.sort()
+
+	# THE PRE-SERIALISATION BRIDGE -- Task 5 deletes or reshapes it. Commodity state
+	# is not serialised yet, so LOADING a pre-V4.6 save leaves this field at its
+	# declared `{}` and every read below would index an empty register. The lazy
+	# seed lives HERE rather than in the load path for two reasons: it keeps the
+	# single-writer pin intact (this file alone writes the field), and it keeps ONE
+	# seeding route rather than two that can drift. That the two routes agree to the
+	# bit is what tests/test_commodities.gd compares, and it is deterministic for
+	# init_nation's own reason -- a pure function of the nation's measured mix.
+	for nation_id in nation_ids:
+		var ns = state.nations[nation_id]
+		if ns.commodity_state.is_empty():
+			init_nation(ns, loader)
 
 	# The world's own basket, once: output per head, and each sector's share of
 	# the world's measured output. Both are aggregates of the REGISTER, so moving

@@ -24,9 +24,13 @@ extends SceneTree
 ##     the same goods are still made elsewhere -- the difference between a
 ##     shortage and a broken machine.
 ##
-## The tick-order pin the plan listed here lands in Task 3, where the wiring it
-## reads exists; asserting an order against a call site nobody has written yet
-## would be a pin on nothing.
+##   - THE TICK ORDER: the call sits after Economy's and before Opinion's in the
+##     month handler, source-read the way test_characters.gd pins its own slot.
+##     The layer prices next month's demand off this month's settled output, so
+##     both halves of the order are load-bearing rather than tidiness.
+##   - THE PRE-SERIALISATION BRIDGE: a nation whose `commodity_state` is `{}` --
+##     what LOADING a pre-V4.6 save produces, since the field is not serialised
+##     until Task 5 -- seeds and ticks rather than crashing.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -54,6 +58,8 @@ func _init() -> void:
 	_check_every_recipe_chain_produces()
 	_check_shortage_is_bounded()
 	_check_prices_hold_the_band()
+	_check_tick_order_pin()
+	_check_pre_serialisation_bridge()
 
 	if _failures.is_empty():
 		print("test_commodities: all checks passed")
@@ -281,13 +287,98 @@ func _check_prices_hold_the_band() -> void:
 		_fail("all %d prices sit on a clamp edge after 24 months -- the world stopped moving, it is not under strain" % at_edge)
 
 
+## THE TICK ORDER, source-read off the month handler the way test_characters.gd
+## pins Characters' slot: comments stripped first, then the RELATIVE positions of
+## the three calls. A comment saying the order is not the check; the call sites'
+## order is. NOT in game_state.gd, which has no month tick at all -- main.gd's
+## `_on_month_elapsed` is the sequence every harness in this project mirrors.
+##
+## AFTER Economy: capacity is derived from `sector_output`, which Economy settles,
+## so a tick before it would price this month's production off last month's mix.
+## BEFORE Opinion: nothing reads the commodity state yet (Task 4's surfaces will),
+## and the slot is ahead of the voter so a figure this month can be priced in it
+## rather than a month later -- Opinion's own "reads the same month" rule for
+## Inflation and Orgs.
+##
+## AND THE MIRROR, one focused second read: balance_probe.gd is the re-run
+## instrument and calls itself main.gd's order, so its slot is checked too. The
+## four other harnesses that tick a subset (test_balance, agency/calendar/media/
+## trade probes) are NOT checked and deliberately do not carry the call: nothing
+## reads `commodity_state` yet, so a harness that omits it cannot disagree with
+## main.gd about a figure -- `Programme`, a player-only system whose harness state
+## is empty, is absent from them for the same reason. The omission is recorded
+## here rather than left to be rediscovered: the day a reader lands, this list is
+## the one that has to grow, and test_inflation.gd's `_check_every_harness_ticks_it`
+## is the shape to copy when it does.
+func _check_tick_order_pin() -> void:
+	_check_order_in("res://src/ui/main.gd", "main.gd")
+	_check_order_in("res://tools/balance_probe.gd", "balance_probe.gd")
+
+
+func _check_order_in(path: String, label: String) -> void:
+	var src := FileAccess.get_file_as_string(path)
+	if src.is_empty():
+		_fail("could not read %s" % path)
+		return
+	var code := _code_only(src)
+	var economy_at := code.find("Economy.tick_month(")
+	var commodities_at := code.find("Commodities.tick_month(")
+	var opinion_at := code.find("Opinion.tick_month(")
+	if economy_at == -1 or commodities_at == -1 or opinion_at == -1:
+		_fail("%s is missing one of Economy/Commodities/Opinion tick calls" % label)
+		return
+	if not (economy_at < commodities_at and commodities_at < opinion_at):
+		_fail("%s must run Commodities.tick_month after Economy (which settles the output its capacity reads) and before Opinion" % label)
+
+
+## THE PRE-SERIALISATION BRIDGE -- Task 5's, and it goes away or changes shape
+## there. `commodity_state` is not serialised yet, so LOADING a pre-V4.6 save
+## yields an `ns` whose field is the declared-but-unseeded `{}` and the tick would
+## index an empty register. The lazy seed lives in the MODULE rather than the load
+## path so the single-writer pin survives (only commodities.gd writes the field)
+## and so there is one seeding route, not two.
+##
+## The check is the determinism one: a bridge-seeded scene must reach the same
+## state as a freshly initialised one, to the bit, or "the after-load world" is a
+## second simulation.
+func _check_pre_serialisation_bridge() -> void:
+	var fresh = GameState.new_game(_loader, "FRA")
+	var loaded = GameState.new_game(_loader, "FRA")
+	if fresh == null or loaded == null:
+		return
+	for nation_id in loaded.nations.keys():
+		loaded.nations[nation_id].commodity_state = {}
+	# The fixture above is a hand-emptied field, which only proves the branch exists.
+	# The REAL load path is asserted beside it through the dictionary pair, because
+	# that is where the `{}` actually comes from and the day Task 5 serialises the
+	# field this leg stops being empty and the bridge becomes unreachable -- which is
+	# the signal to delete it rather than a failure.
+	var round_trip = GameState.from_dict(fresh.to_dict())
+	for nation_id in round_trip.nations.keys():
+		if not round_trip.nations[nation_id].commodity_state.is_empty():
+			_fail("a round trip carried nation %s's commodity_state -- it is serialised already, so the pre-serialisation bridge in commodities.gd is dead code Task 5 must delete" % nation_id)
+			return
+	for i in TICKS:
+		Commodities.tick_month(fresh, _loader)
+		Commodities.tick_month(loaded, _loader)
+		Commodities.tick_month(round_trip, _loader)
+	for nation_id in loaded.nations.keys():
+		if not _deep_equal(fresh.nations[nation_id].commodity_state, loaded.nations[nation_id].commodity_state):
+			_fail("nation %s seeded lazily diverged from a fresh init -- the pre-serialisation bridge runs the wrong model" % nation_id)
+			return
+		if not _deep_equal(fresh.nations[nation_id].commodity_state, round_trip.nations[nation_id].commodity_state):
+			_fail("nation %s ticked off a real to_dict/from_dict round trip diverged from a fresh init" % nation_id)
+			return
+
+
+## The fixture, and since Task 3 it deliberately does NOT seed: `new_game()` does,
+## so this one call is where the init wiring is proven. Seeding here as well would
+## have made every check below pass over a game that never seeds a commodity.
 func _new_state():
 	var state = GameState.new_game(_loader, "FRA")
 	if not state.errors.is_empty():
 		_fail("new_game(FRA) reported %s" % [state.errors])
 		return null
-	for nation_id in state.nations.keys():
-		Commodities.init_nation(state.nations[nation_id], _loader)
 	return state
 
 
