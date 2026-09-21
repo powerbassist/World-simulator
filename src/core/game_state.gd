@@ -499,7 +499,29 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## characters.gd landed (init_nation seeds, the acts and the adjusters write);
 ## the sentence above records the bump's timing, not the current state.
 ## Absences pinned in tests/test_save_load.gd.
-const SAVE_VERSION := 36
+##
+## V4.6 bumps this to 37 on `ns.commodity_state` (nation_state.gd's commodity
+## section) -- one register holding seven keys, and the bump is V2.8's
+## content-derived-static shape with the escalation the live register gives it:
+## a dropped `capacity` is a country that can make nothing, a dropped `price` is
+## a vector every nation's own copy of which would be re-derived at base while
+## the rest of the world has moved, and the three flow keys are the record of a
+## month the player lived. `value_added_eur_bn` rides in the same register
+## rather than earning a key of its own: the block's step-0 probe makes DELTAS
+## the modelled quantity and levels the measured register's, so the figure is a
+## per-month change rather than a level to pin separately.
+## The one reader that matters at load is `Commodities.tick_month()`'s lazy
+## seed, and the bump does not retire it: save_manager refuses a mismatch
+## outright (V3.3's argument), so what the branch still catches is an ns arriving
+## from a payload with the key absent -- a stripped dictionary, a hand-built
+## fixture, or a caller arriving before the first tick -- and
+## tests/test_commodities.gd pins that the seeded route agrees with a fresh init
+## to the bit.
+## Unlike V4.1's and V4.3's bumps this one ships WITH the first writer rather
+## than ahead of it: commodities.gd has been writing this register since V4.6's
+## Task 3, so version 36 is the one version under which a save could hold a
+## commodity register and not carry it, and this gate separates exactly that.
+const SAVE_VERSION := 37
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

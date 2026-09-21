@@ -1254,15 +1254,23 @@ var person_want_state: Dictionary[String, bool] = {}
 ##                      reproducible from recipes, deltas are). Nothing reads it
 ##                      yet; Task 4's surfaces are its first readers.
 ##
-## NOT SERIALISED YET, and that is Task 5's to decide rather than an oversight:
-## the field is declared plain and empty so the round-trip gets its own recorded
-## reason -- an absent register reads as a nation with no production at all,
-## which is the `region_gdp_eur_bn` class and not the neutral-empty one.
+## SERIALISED, SAVE_VERSION 37, and it earns the bump rather than riding one: an
+## absent register reads as a nation that can make nothing and holds no price
+## vector, which is the `region_gdp_eur_bn` class and not the neutral-empty one.
+## The whole dictionary travels under its own key, and it reaches from_dict()
+## through `_commodity_state_from()` below -- which casts and re-owns it, the
+## character registers' discipline applied to a register that is a dictionary of
+## dictionaries rather than a typed flat map.
 ##
-## WITH A LIVE TICK AND NO SERIALISATION, the `{}` has a consequence until Task 5:
-## a LOADED save carries it, so Commodities.tick_month() lazily seeds any nation
-## whose register is empty -- the bridge that keeps a pre-V4.6 save loadable, and
-## the reason that branch must stay until this field round-trips.
+## THE LAZY SEED IN Commodities.tick_month() STAYS, and the reason is narrower
+## than "backwards compatibility": save_manager refuses a mismatched version
+## outright (V3.3's argument at the gate), so no pre-37 save reaches this field
+## through the load path at all. What the branch still covers is an ns arriving
+## from a payload with the key absent -- a stripped dictionary, a hand-built
+## fixture, or a caller that built a NationState before the first tick -- and it
+## is deterministic for `init_nation`'s own reason: a pure function of the
+## nation's measured mix. tests/test_commodities.gd pins that it agrees with a
+## fresh init to the bit.
 var commodity_state: Dictionary = {}
 
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,
@@ -2019,6 +2027,7 @@ func to_dict() -> Dictionary:
 		"party_leader_override": party_leader_override,
 		"person_party_override": person_party_override,
 		"person_want_state": person_want_state,
+		"commodity_state": commodity_state,
 		"last_company_result": last_company_result,
 		"service_quality": service_quality,
 		"start_service_quality": start_service_quality,
@@ -2377,6 +2386,7 @@ static func from_dict(d: Dictionary):
 	s.party_leader_override = _string_map_from(d.get("party_leader_override", {}))
 	s.person_party_override = _string_map_from(d.get("person_party_override", {}))
 	s.person_want_state = _bool_map_from(d.get("person_want_state", {}))
+	s.commodity_state = _commodity_state_from(d.get("commodity_state", {}))
 	s.last_company_result = d.get("last_company_result", {})
 	s.service_quality = d.get("service_quality", {})
 	s.start_service_quality = d.get("start_service_quality", {})
@@ -2514,6 +2524,47 @@ static func _bool_map_from(raw) -> Dictionary[String, bool]:
 	var src: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	for key in src.keys():
 		out[String(key)] = bool(src[key])
+	return out
+
+
+## The commodity register's from-dict half, and it is the ONE field here that
+## needs a helper the map casts above cannot give it: `commodity_state` is a
+## Dictionary OF Dictionaries (six good-id maps plus one float), so the aliasing
+## problem those helpers solve for a flat register is a level deeper here. Each
+## inner map is REBUILT with its values cast to float -- a JSON 1.0 in a
+## capacity figure comes back as the int 1, and `commodity_state["capacity"]
+## ["steel"]` is read as a float everywhere downstream. The outer dictionary is
+## rebuilt too, so the loaded state owns every level of it.
+##
+## THE REBUILD IS LOAD-BEARING. `to_dict()` hands back a dictionary whose VALUES
+## ARE THE LIVE FIELDS (`{"commodity_state": commodity_state, ...}` copies no
+## dictionary -- probed: every whole-dict field on this object behaves that way),
+## so a from_dict() assigning the payload straight through would make
+## `from_dict(state.to_dict())` share its register with `state`. What makes that
+## fatal HERE rather than latent is that commodities.gd mutates entries IN PLACE
+## (`ns.commodity_state["demand"] = ...` rebinds an inner key, it does not
+## reassign the field), so the two states run as one simulation. Measured before
+## the fix: the round-trip fixture advanced its register three months per loop
+## instead of one, and the flat character maps above escape that only because
+## their helpers rebuild too.
+##
+## ABSENT (`{}`) IS PASSED THROUGH AS `{}` rather than seeded: seeding is
+## commodities.gd's alone (the single-writer pin), and a from_dict that filled
+## the register would be the second seeding route that pin exists to forbid.
+static func _commodity_state_from(raw) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	var src: Dictionary = raw
+	for key in src.keys():
+		var value = src[key]
+		if typeof(value) == TYPE_DICTIONARY:
+			var inner := {}
+			for good_id in (value as Dictionary).keys():
+				inner[String(good_id)] = float(value[good_id])
+			out[String(key)] = inner
+		else:
+			out[String(key)] = float(value)
 	return out
 
 

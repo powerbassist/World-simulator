@@ -28,9 +28,11 @@ extends SceneTree
 ##     month handler, source-read the way test_characters.gd pins its own slot.
 ##     The layer prices next month's demand off this month's settled output, so
 ##     both halves of the order are load-bearing rather than tidiness.
-##   - THE PRE-SERIALISATION BRIDGE: a nation whose `commodity_state` is `{}` --
-##     what LOADING a pre-V4.6 save produces, since the field is not serialised
-##     until Task 5 -- seeds and ticks rather than crashing.
+##   - THE ABSENT-REGISTER SEED: a nation whose `commodity_state` is `{}` -- the
+##     shape a payload with the key stripped hands back, and a hand-built
+##     fixture besides -- seeds and ticks rather than crashing. Since Task 5 the
+##     key IS serialised, so the check covers the stripped arrival AND the
+##     unmodified round trip, which must now carry the register.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -59,7 +61,7 @@ func _init() -> void:
 	_check_shortage_is_bounded()
 	_check_prices_hold_the_band()
 	_check_tick_order_pin()
-	_check_pre_serialisation_bridge()
+	_check_absent_register_bridge()
 
 	if _failures.is_empty():
 		print("test_commodities: all checks passed")
@@ -331,43 +333,59 @@ func _check_order_in(path: String, label: String) -> void:
 		_fail("%s must run Commodities.tick_month after Economy (which settles the output its capacity reads) and before Opinion" % label)
 
 
-## THE PRE-SERIALISATION BRIDGE -- Task 5's, and it goes away or changes shape
-## there. `commodity_state` is not serialised yet, so LOADING a pre-V4.6 save
-## yields an `ns` whose field is the declared-but-unseeded `{}` and the tick would
-## index an empty register. The lazy seed lives in the MODULE rather than the load
-## path so the single-writer pin survives (only commodities.gd writes the field)
-## and so there is one seeding route, not two.
+## THE ABSENT-REGISTER BRIDGE. Before Task 5 this check's subject was the `{}` a
+## pre-V4.6 save loaded; serialisation moved WHERE that `{}` comes from without
+## retiring the branch, because save_manager refuses a version MISMATCH outright
+## (V3.3's own argument at the gate) -- so the absent register now arrives from a
+## payload with the KEY stripped, which is exactly the shape of a version-36
+## save's dictionary and of a hand-built fixture. Three legs, and the third is
+## the one serialisation ADDED:
 ##
-## The check is the determinism one: a bridge-seeded scene must reach the same
-## state as a freshly initialised one, to the bit, or "the after-load world" is a
-## second simulation.
-func _check_pre_serialisation_bridge() -> void:
+##   1. the hand-emptied field: the branch exists and seeds the right model;
+##   2. the key STRIPPED from the payload: the real arrival shape, and the one
+##      that would have been the pre-V4.6 load path had the gate permitted it;
+##   3. the UNMODIFIED round trip: now carries the register, and must come back
+##      non-empty and tick to the same state. Before Task 5 this leg is the one
+##      that fired loud; it is kept because it is the pair to leg 2 -- together
+##      they say "the key is serialised, and its absence is still handled".
+##
+## All of it is the determinism contract rather than a smoke test: every seeded
+## route must reach the same state as a fresh init, to the bit, or "the after-load
+## world" is a second simulation.
+func _check_absent_register_bridge() -> void:
 	var fresh = GameState.new_game(_loader, "FRA")
 	var loaded = GameState.new_game(_loader, "FRA")
 	if fresh == null or loaded == null:
 		return
 	for nation_id in loaded.nations.keys():
 		loaded.nations[nation_id].commodity_state = {}
-	# The fixture above is a hand-emptied field, which only proves the branch exists.
-	# The REAL load path is asserted beside it through the dictionary pair, because
-	# that is where the `{}` actually comes from and the day Task 5 serialises the
-	# field this leg stops being empty and the bridge becomes unreachable -- which is
-	# the signal to delete it rather than a failure.
+
 	var round_trip = GameState.from_dict(fresh.to_dict())
+	# Leg 3 asserted before it is ticked: an unmodified round trip that came back
+	# empty would mean the key is not serialised after all, and leg 2 below would
+	# then be testing the same thing as leg 1.
 	for nation_id in round_trip.nations.keys():
-		if not round_trip.nations[nation_id].commodity_state.is_empty():
-			_fail("a round trip carried nation %s's commodity_state -- it is serialised already, so the pre-serialisation bridge in commodities.gd is dead code Task 5 must delete" % nation_id)
+		if round_trip.nations[nation_id].commodity_state.is_empty():
+			_fail("a round trip lost nation %s's commodity_state -- the key is not serialised, so the stripped-payload leg tests nothing the hand-emptied one does not" % nation_id)
 			return
+	var payload: Dictionary = fresh.to_dict()
+	for nation_id in (payload["nations"] as Dictionary).keys():
+		(payload["nations"][nation_id] as Dictionary).erase("commodity_state")
+	var stripped = GameState.from_dict(payload)
 	for i in TICKS:
 		Commodities.tick_month(fresh, _loader)
 		Commodities.tick_month(loaded, _loader)
 		Commodities.tick_month(round_trip, _loader)
+		Commodities.tick_month(stripped, _loader)
 	for nation_id in loaded.nations.keys():
 		if not _deep_equal(fresh.nations[nation_id].commodity_state, loaded.nations[nation_id].commodity_state):
-			_fail("nation %s seeded lazily diverged from a fresh init -- the pre-serialisation bridge runs the wrong model" % nation_id)
+			_fail("nation %s seeded lazily diverged from a fresh init -- the lazy seed runs the wrong model" % nation_id)
 			return
 		if not _deep_equal(fresh.nations[nation_id].commodity_state, round_trip.nations[nation_id].commodity_state):
 			_fail("nation %s ticked off a real to_dict/from_dict round trip diverged from a fresh init" % nation_id)
+			return
+		if not _deep_equal(fresh.nations[nation_id].commodity_state, stripped.nations[nation_id].commodity_state):
+			_fail("nation %s seeded from a payload with no commodity_state key diverged from a fresh init -- the absent-key arrival is not the bridge's" % nation_id)
 			return
 
 

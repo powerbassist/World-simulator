@@ -139,13 +139,15 @@ static func tick_month(state, loader) -> void:
 	var nation_ids: Array = state.nations.keys()
 	nation_ids.sort()
 
-	# THE PRE-SERIALISATION BRIDGE -- Task 5 deletes or reshapes it. Commodity state
-	# is not serialised yet, so LOADING a pre-V4.6 save leaves this field at its
-	# declared `{}` and every read below would index an empty register. The lazy
-	# seed lives HERE rather than in the load path for two reasons: it keeps the
-	# single-writer pin intact (this file alone writes the field), and it keeps ONE
-	# seeding route rather than two that can drift. That the two routes agree to the
-	# bit is what tests/test_commodities.gd compares, and it is deterministic for
+	# THE LAZY SEED -- NOT a pre-serialisation bridge since Task 5, and it survives
+	# the serialisation rather than being deleted with it: save_manager refuses a
+	# mismatched version outright, so the `{}` this catches now comes from a
+	# payload with the key absent, a hand-built fixture, or any caller arriving
+	# before the first tick rather than from a pre-V4.6 save. The seed lives HERE
+	# rather than in the load path for two reasons: it keeps the single-writer pin
+	# intact (this file alone writes the field), and it keeps ONE seeding route
+	# rather than two that can drift. That the two routes agree to the bit is what
+	# tests/test_commodities.gd compares, and it is deterministic for
 	# init_nation's own reason -- a pure function of the nation's measured mix.
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
