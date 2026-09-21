@@ -30,7 +30,9 @@ const PRICE_ELASTICITY := 0.30
 ## How much a good's demand quantity answers its price, `(base/price)^1.0`: a
 ## plain unit-elastic response. This is the term that stops a shortage from
 ## running away -- without it, demand is a constant and the only equilibrium is
-## the clamp.
+## the clamp. It is the ONLY place the live price enters demand: the basket it
+## scales is taken at the good's base price, so the effective elasticity is
+## exactly this constant and not one plus it.
 const DEMAND_ELASTICITY := 1.0
 
 ## The tier's own bound, and it is what makes a shortage survivable rather than

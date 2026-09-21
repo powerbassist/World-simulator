@@ -38,7 +38,8 @@ extends RefCounted
 ## ============================================================================
 ## Per month, in this order:
 ##   1. CAPACITY   -- what each nation COULD make, from its measured sector mix.
-##   2. DEMAND     -- what it wants, from a world per-capita basket at the live price.
+##   2. DEMAND     -- what it wants, from a world per-capita basket modulated by
+##                    the live price through DEMAND_ELASTICITY.
 ##   3. PRODUCTION -- recipe-limited, in the recipe graph's own depth order.
 ##   4. TRADE      -- surplus nations offer, deficit nations take, sorted ids.
 ##   5. PRICE      -- the world's own FLOW gap moves the world price, band-clamped.
@@ -408,9 +409,12 @@ static func _cheapest_route(tables: Dictionary, good_id: String, price: Dictiona
 
 
 ## What one nation wants of one good this month: its share of the world's
-## per-capita basket, made into a quantity at the LIVE price and then answered by
-## that price (unit-elastic, K.DEMAND_ELASTICITY). Without the second term demand
-## is a constant and the only equilibrium a shortage has is the clamp.
+## per-capita basket, a quantity taken at the good's BASE price and then answered
+## by the LIVE price through the elasticity dial (K = 1.0 is a plain unit-elastic
+## response). Dividing the basket by its base and not by the live price is what
+## keeps the dial single-counted: the second term is the WHOLE price response, so
+## `DEMAND_ELASTICITY` means what its comment promises. Without the second term
+## demand is a constant and the only equilibrium a shortage has is the clamp.
 ##
 ## The basket is UNIFORM over the world's sector budgets through the recipe
 ## structure, so it is the same rule that sizes capacity and the two cannot drift
@@ -421,7 +425,7 @@ static func _want(ns, good: Dictionary, structure: Dictionary, world_sector_shar
 	var base := float(good.base_price)
 	var value: float = per_capita * ns.population \
 		* float(world_sector_share.get(sector, 0.0)) * float(structure.get(String(good.id), 0.0))
-	var quantity := value / maxf(price, 1e-9)
+	var quantity := value / maxf(base, 1e-9)
 	return quantity * pow(base / maxf(price, 1e-9), K.DEMAND_ELASTICITY)
 
 
