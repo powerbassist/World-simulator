@@ -29,16 +29,17 @@ extends SceneTree
 ##     rule that a boundary has to be tested on both sides or it is not a
 ##     boundary. The negative control (a fully covered good, and a good nobody
 ##     wants) is checked beside it, so a line that printed unconditionally fails.
-##   - THE TREE RENDERS. Every recipe in the register appears, so a content pack
-##     that grows is drawn without an edit here.
+##   - THE TREE RENDERS. Every recipe in the register appears as its own line,
+##     keyed by recipe id (the unique discriminator -- three outputs carry more
+##     than one route), so a content pack that grows is drawn without an edit
+##     here and a by-output collapse cannot hide a route.
 ##   - THE TWO MAP MODES. They are REGISTRY entries, so the legend's switcher
 ##     must have grown their toggles without a legend edit, and the map view's
 ##     own layer flag must take them -- writing nothing back into sim state.
 ##
-## The panel spec, the shortage threshold and the map modes:
-## docs/commodities-model.md is not yet written (Task 6's, if this block wants
-## one); the measured basis for both ramp domains and the threshold is recorded
-## at the constants that carry them.
+## The panel spec, the shortage threshold and the map modes live in
+## docs/commodities-model.md; the measured basis for both ramp domains and the
+## threshold is recorded at the constants that carry them.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
@@ -292,22 +293,21 @@ func _check_shortage_flip(panel, state) -> void:
 	panel._refresh()
 
 
-## The tree, drawn. Every recipe in the register reaches the screen, so a content
-## pack that grows needs no edit in the panel -- the same property the character
-## register's grouping has, and the one a hand-written list would destroy.
+## The tree, drawn. One line per RECIPE, keyed by recipe id -- the unique
+## discriminator: three outputs carry more than one route, so checking the
+## output's NAME (the first version of this check) stayed green while a route
+## rendered nowhere and a by-output map silently collapsed four recipes into two
+## lines. Each expected line is rebuilt from the recipe through the panel's own
+## formatters, so the check tracks the panel's format rather than a second copy
+## of it; a collapsed tree misses at least one rebuilt line and fails.
 func _check_tree_renders(panel) -> void:
 	var text := _text_of(panel)
 	for recipe_id in (_main._loader.commodity_recipes.keys() as Array):
 		var recipe: Dictionary = _main._loader.commodity_recipes[recipe_id]
-		var output := String(recipe.output)
-		var name := _good_name(output)
-		if not text.contains(name):
-			_fail("the tree does not draw recipe '%s' -- its output '%s' is not named anywhere on the panel" % [recipe_id, output])
+		var line: String = "%s  <-  %s" % [_good_name(String(recipe.output)), panel._inputs_text(recipe)]
+		if not text.contains(line):
+			_fail("the tree does not draw recipe '%s' as a line -- expected '%s'" % [recipe_id, line])
 			return
-		for input_id in (recipe.inputs as Dictionary).keys():
-			if not text.contains(_good_name(String(input_id))):
-				_fail("the tree draws recipe '%s' without its input '%s'" % [recipe_id, input_id])
-				return
 
 
 ## The two modes are REGISTRY entries, which is the whole design: the switcher is

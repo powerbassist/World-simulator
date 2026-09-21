@@ -180,16 +180,15 @@ const LAYERS: Array[Dictionary] = [
 		# Signed at zero, because a nation with no output at all reads 0.0 and its
 		# cheap fill is the ramp's own low end -- unlike the pair layers, an entry
 		# here is a real datum and not the viewer's absence.
-		"stops": [
-			{"at": 0.0, "text": "0.0  nothing made"},
-			{"at": PRODUCTION_MAX_SHOWN, "text": "%.2f  industrial core" % PRODUCTION_MAX_SHOWN},
-		],
-		# The production stops are DERIVED too -- production_stops(even) -- and for
+		#
+		# The production stops are DERIVED -- production_stops(even) -- and for
 		# the trade layer's exact reason: the break on this ramp is the world's
 		# even share, which is the roster's own size and not a constant, and
 		# keeping a literal here is how the trade legend ended up promising "an
 		# even ninth" on a twenty-eight-partner roster. map_legend.gd branches to
-		# it the same way.
+		# it the same way, so a literal left here would be shadowed on every live
+		# path and drift from the rows actually drawn.
+		"stops": [],
 		"caption": "Share of the world's commodity value added, this month.",
 	},
 	{
@@ -371,12 +370,16 @@ static func color_for(layer_id: String, state, viewer_id: String, nation_id: Str
 static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array) -> Dictionary:
 	var out: Dictionary = {}
 
-	# Every other layer reads a per-PAIR datum -- a relations score, a severity
-	# on the pair -- so there is nothing shared across nations to hoist, and
-	# going through color_for() keeps one definition of what a fill is rather
-	# than a second copy of swatch()'s branches that could drift from it.
-	# state == null takes this path too: value() answers NAN there and swatch()
-	# returns NO_VALUE, which is reached without building any vector.
+	# The generic path serves the layers with no shared vector to hoist: the
+	# per-PAIR ones (RELATIONS, COERCION -- a relations score, a severity on the
+	# pair) share nothing across nations, and IMPORT_DEPENDENCY is per-NATION but
+	# already a share of the nation's own demand, so it has no world aggregate
+	# either. (POLITICAL is an identity tint, not a datum.) Going through
+	# color_for() keeps one definition of what a fill is rather than a second copy
+	# of swatch()'s branches that could drift from it. PRODUCTION and TRADE fall
+	# through below, each hoisting its own one-number anchor. state == null takes
+	# this path too: value() answers NAN there and swatch() returns NO_VALUE, which
+	# is reached without building any vector.
 	if layer_id != TRADE and layer_id != PRODUCTION or state == null:
 		for id in nation_ids:
 			var nation_id := String(id)

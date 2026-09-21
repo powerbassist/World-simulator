@@ -269,6 +269,11 @@ func _build_balance(ns) -> void:
 ## `commodity_recipes` rather than authored, so a recipe added to content appears
 ## here with no edit in this file.
 ##
+## ONE LINE PER RECIPE, not per output: three goods carry more than one route
+## (electricity, steel, chemicals), so keying by output would keep only the last
+## recipe and silently hide the rest -- including whichever route the live prices
+## actually pick. A LIST per output keeps every route the register declares.
+##
 ## `labour_per_unit` and `capital_per_unit` are deliberately NOT printed even
 ## though the register carries them: commodities.gd does not read them (its
 ## `_cheapest_route()` states why -- this layer has no wage or capital price to
@@ -281,17 +286,18 @@ func _build_tree() -> void:
 	var by_output: Dictionary = {}
 	for recipe_id in _recipe_ids():
 		var recipe: Dictionary = _loader.commodity_recipes[recipe_id]
-		by_output[String(recipe.output)] = recipe
+		var output := String(recipe.output)
+		if not by_output.has(output):
+			by_output[output] = []
+		by_output[output].append(recipe)
 
 	for category in DataLoader.COMMODITY_CATEGORIES:
 		var lines: Array = []
 		for good_id in _goods_in_order():
 			if _category_of(good_id) != String(category):
 				continue
-			var recipe = by_output.get(good_id)
-			if recipe == null:
-				continue
-			lines.append("%s  <-  %s" % [_good_name(good_id), _inputs_text(recipe)])
+			for recipe in by_output.get(good_id, []):
+				lines.append("%s  <-  %s" % [_good_name(good_id), _inputs_text(recipe)])
 		var body := PanelKit.section(_body, String(category))
 		if lines.is_empty():
 			PanelKit.line(body, "Made from nothing -- produced from the country's own endowment.")

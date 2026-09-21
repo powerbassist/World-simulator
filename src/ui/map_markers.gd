@@ -13,8 +13,10 @@ extends RefCounted
 ## structurally dead content, because the nine never build and its value would
 ## read exactly 0 for nine of the ten forever -- which is V1.6f's own "a frame of
 ## an all-zero data layer proves nothing" arriving as a design, not as a frame.
-## tests/test_map_markers.gd pins LAYERS at four so a later session moving it has
-## to come and say why.
+## tests/test_map_markers.gd asserts the property rather than a count -- V4.6
+## retired the old `LAYERS.size() == 4`, a proxy the two commodity layers
+## legitimately outgrew: no registry entry is a marker, whatever else the
+## registry holds, so a later session making one has to come and say why.
 ##
 ## Stateless and pure: a read over the loader's content and GameState, the shape
 ## src/sim/trade.gd and map_layers.gd both take. Nothing is cached, so a finished

@@ -501,15 +501,16 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## Absences pinned in tests/test_save_load.gd.
 ##
 ## V4.6 bumps this to 37 on `ns.commodity_state` (nation_state.gd's commodity
-## section) -- one register holding seven keys, and the bump is V2.8's
-## content-derived-static shape with the escalation the live register gives it:
-## a dropped `capacity` is a country that can make nothing, a dropped `price` is
-## a vector every nation's own copy of which would be re-derived at base while
-## the rest of the world has moved, and the three flow keys are the record of a
-## month the player lived. `value_added_eur_bn` rides in the same register
-## rather than earning a key of its own: the block's step-0 probe makes DELTAS
-## the modelled quantity and levels the measured register's, so the figure is a
-## per-month change rather than a level to pin separately.
+## section) -- one register holding seven keys, versioned WHOLE. An absent
+## register is a country with no commodity economy at all, and the lazy seed
+## would rebuild it from month-0 state: harmless for `capacity`, a seed-time
+## snapshot no tick reads back (production derives fresh from `sector_output`),
+## but it erases the month's `price`, `output`, `demand`, `trade` and `surplus`
+## -- the record of months the player lived, which no re-derivation restores, and
+## which is what this gate separates. `value_added_eur_bn` rides in the same
+## register rather than earning a key of its own: the block's step-0 probe makes
+## DELTAS the modelled quantity and levels the measured register's, so the figure
+## is a per-month change rather than a level to pin separately.
 ## The one reader that matters at load is `Commodities.tick_month()`'s lazy
 ## seed, and the bump does not retire it: save_manager refuses a mismatch
 ## outright (V3.3's argument), so what the branch still catches is an ns arriving

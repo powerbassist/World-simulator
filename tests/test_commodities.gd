@@ -297,21 +297,23 @@ func _check_prices_hold_the_band() -> void:
 ##
 ## AFTER Economy: capacity is derived from `sector_output`, which Economy settles,
 ## so a tick before it would price this month's production off last month's mix.
-## BEFORE Opinion: nothing reads the commodity state yet (Task 4's surfaces will),
-## and the slot is ahead of the voter so a figure this month can be priced in it
-## rather than a month later -- Opinion's own "reads the same month" rule for
-## Inflation and Orgs.
+## BEFORE Opinion: no SIM module reads the commodity state -- its readers are the
+## UI surfaces (the Commodities panel and the two map layers), which read after
+## the tick -- and the slot is ahead of the voter so a figure this month can be
+## priced in it rather than a month later -- Opinion's own "reads the same month"
+## rule for Inflation and Orgs.
 ##
 ## AND THE MIRROR, one focused second read: balance_probe.gd is the re-run
 ## instrument and calls itself main.gd's order, so its slot is checked too. The
 ## four other harnesses that tick a subset (test_balance, agency/calendar/media/
-## trade probes) are NOT checked and deliberately do not carry the call: nothing
-## reads `commodity_state` yet, so a harness that omits it cannot disagree with
-## main.gd about a figure -- `Programme`, a player-only system whose harness state
-## is empty, is absent from them for the same reason. The omission is recorded
-## here rather than left to be rediscovered: the day a reader lands, this list is
-## the one that has to grow, and test_inflation.gd's `_check_every_harness_ticks_it`
-## is the shape to copy when it does.
+## trade probes) are NOT checked and deliberately do not carry the call: no SIM
+## module reads `commodity_state`, so a harness that omits it cannot disagree with
+## main.gd about a SIM figure -- a harness builds no UI, and the layer's readers
+## (the panel and the map layers) print nothing in one. `Programme`, a player-only
+## system whose harness state is empty, is absent from them for the same reason.
+## The omission is recorded here rather than left to be rediscovered: the day a
+## SIM reader lands, this list is the one that has to grow, and test_inflation.gd's
+## `_check_every_harness_ticks_it` is the shape to copy when it does.
 func _check_tick_order_pin() -> void:
 	_check_order_in("res://src/ui/main.gd", "main.gd")
 	_check_order_in("res://tools/balance_probe.gd", "balance_probe.gd")

@@ -12,9 +12,10 @@ extends RefCounted
 ## not say it. `ns.gdp_eur_bn` stays V1.5's measured register figure and NOTHING
 ## HERE WRITES IT. What this file produces is a per-month value-added figure on
 ## `commodity_state`. Since V4.6's Task 3 the machine runs in the live month
-## (main.gd, after Economy and before Opinion) and in balance_probe.gd; what no
-## surface reads YET is its output -- Task 4's panel and map modes are its first
-## readers, and until one lands the value-added figure earns nothing.
+## (main.gd, after Economy and before Opinion) and in balance_probe.gd. No SIM
+## module reads its output; the readers are the UI surfaces -- Task 4's
+## Commodities panel and the two map layers -- which read after the tick and
+## never feed the simulation back.
 ##
 ## A LEAF, and the tier's own list of what it may touch: commodity_constants, and
 ## nothing else. No economy, no trade, no budget, no UI. Every number it reads of
@@ -43,8 +44,8 @@ extends RefCounted
 ##   3. PRODUCTION -- recipe-limited, in the recipe graph's own depth order.
 ##   4. TRADE      -- surplus nations offer, deficit nations take, sorted ids.
 ##   5. PRICE      -- the world's own FLOW gap moves the world price, band-clamped.
-##   6. VALUE      -- what the month's output was worth, for a consumer that does
-##                    not exist yet.
+##   6. VALUE      -- what the month's output was worth, for the UI surfaces that
+##                    read it.
 ##
 ## PRODUCTION IS NOT CAPPED AT DOMESTIC DEMAND, and that is measurement's finding
 ## rather than a preference. Capping it makes every nation an autarky by
@@ -107,7 +108,10 @@ const CATEGORY_SECTOR := {
 
 ## Seed ONE nation's commodity state. Called from `new_game` beside
 ## `Regions.init_nation()` and `Migration.init_nation()`, for their reason: each
-## seeds a live stock, this one capacity and the world price the register carries.
+## fills a register at the start of the game. This one's `capacity` is a
+## SEED-TIME SNAPSHOT rather than a live stock -- the tick re-derives capacity
+## from the live `sector_output` every month and never reads the stored key --
+## and the world price it lays down is the register's own starting vector.
 ##
 ## Every good gets a capacity proportional to its sector's measured output. A
 ## NATION WITH NO INDUSTRY HAS NO CAPACITY FOR STEEL, and that zero is the truth

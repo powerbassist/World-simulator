@@ -1233,8 +1233,12 @@ var person_want_state: Dictionary[String, bool] = {}
 ## new game.
 ##
 ## SEVEN KEYS, and the shape is the module's contract rather than this field's:
-##   capacity           good id -> units/month the nation COULD make, from its
-##                      measured sector output and the recipe structure.
+##   capacity           good id -> units/month the nation COULD make. This is the
+##                      SEED-TIME SNAPSHOT (month-0 sector output through the
+##                      recipe structure): the tick derives capacity FRESH from
+##                      the live `sector_output` every month and never reads this
+##                      key back, so it is a record of how the game began and not
+##                      a live stock.
 ##   demand             good id -> units it wants this month, at the live price.
 ##   output             good id -> units made NET of what this nation's own
 ##                      downstream recipes consumed of it, so the figure is value
@@ -1251,8 +1255,9 @@ var person_want_state: Dictionary[String, bool] = {}
 ##                      commodity_constants.PRICE_BAND of base.
 ##   value_added_eur_bn what this month's output was worth, EUR bn -- the CHANGE
 ##                      the block models (the step-0 verdict: levels are not
-##                      reproducible from recipes, deltas are). Nothing reads it
-##                      yet; Task 4's surfaces are its first readers.
+##                      reproducible from recipes, deltas are). No SIM module
+##                      reads it; the readers are the UI surfaces (the
+##                      Commodities panel and the two map layers).
 ##
 ## SERIALISED, SAVE_VERSION 37, and it earns the bump rather than riding one: an
 ## absent register reads as a nation that can make nothing and holds no price

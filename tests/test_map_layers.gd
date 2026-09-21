@@ -258,9 +258,14 @@ func _check_viewer_relative() -> void:
 		_fail("relations colour is not symmetric: FRA->DEU %s, DEU->FRA %s" % [fra_deu, deu_fra])
 
 
-## The viewer has no pair with itself and no self-weight. Inventing one would be
-## the only lie on the map, so it takes NO_VALUE on every data layer -- and it
-## must not be on the ramp at all, at either end.
+## The viewer has no PAIR with itself, so on the pair layers it takes NO_VALUE
+## and must not be on the ramp at all, at either end. V4.6: THE RULE IS
+## PER-LAYER NOW -- the loop below covers [RELATIONS, TRADE], the pair layers it
+## has always exercised, while the two commodity layers are the FIRST where the
+## viewer's own nation carries a real reading (production and import dependency
+## are properties of a nation, not of a pair). That exception is pinned in
+## tests/test_commodities_panel.gd (value() is non-NAN and the swatch is not
+## NO_VALUE for the viewer on those two layers).
 func _check_the_viewer_has_no_value() -> void:
 	var state = _main._state
 	for layer_id in [MapLayers.RELATIONS, MapLayers.TRADE]:

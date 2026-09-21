@@ -40,7 +40,9 @@ const MAX_PARTIES := 6
 ## seven are what the production tick and the surfaces iterate -- adding one is a
 ## deliberate edit HERE and in the model, not a data edit that silently widens
 ## every loop. Declared on the loader rather than in a constants file because the
-## loader is the only thing that reads it.
+## closed-seven validation is the loader's own job (this list is its vocabulary);
+## the surfaces also iterate it (the Commodities panel groups its ledger and its
+## tree by these categories), which is the second half of the same placement.
 const COMMODITY_CATEGORIES := ["raw", "agri", "energy", "intermediate", "capital", "consumer", "services"]
 
 const Org = preload("res://src/core/org.gd")
