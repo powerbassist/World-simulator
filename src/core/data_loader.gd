@@ -34,6 +34,17 @@ const CharacterK = preload("res://src/sim/character_constants.gd")
 const MIN_PARTIES := 4
 const MAX_PARTIES := 6
 
+## V4.6's seven, closed. The granularity rule behind the list is
+## docs/tiers/v4.md's: a good exists if a player decision can move its price. An
+## entry naming an eighth is a load error rather than a new category, because the
+## seven are what the production tick and the surfaces iterate -- adding one is a
+## deliberate edit HERE and in the model, not a data edit that silently widens
+## every loop. Declared on the loader rather than in a constants file because the
+## closed-seven validation is the loader's own job (this list is its vocabulary);
+## the surfaces also iterate it (the Commodities panel groups its ledger and its
+## tree by these categories), which is the second half of the same placement.
+const COMMODITY_CATEGORIES := ["raw", "agri", "energy", "intermediate", "capital", "consumer", "services"]
+
 const Org = preload("res://src/core/org.gd")
 const OrgK = preload("res://src/core/org_constants.gd")
 
@@ -70,6 +81,17 @@ var companies: Dictionary = {}
 ## code plus a slug -- so unlike a party id and like a person id, both are safe to
 ## read bare off a firm's `city`.
 var regions: Dictionary = {}
+
+## V4.6. The goods register and the recipe table, both from data/commodities/.
+## Keyed by id, and a DICTIONARY rather than a typed value type for
+## region_graph's own reason: the reader takes them as DATA and a type here
+## would be a second record of a file that already states its own shape. What
+## only this file can see -- and what _load_commodity_recipes() refuses per entry
+## -- is that every recipe's output and every one of its inputs names a good the
+## register declares, because an input nobody declares would sit in the file
+## looking like a recipe and produce nothing at tick time.
+var commodity_goods: Dictionary = {}
+var commodity_recipes: Dictionary = {}
 
 ## nation id -> Array[Outlet], in authored file order. Absent for the same reason
 ## `companies` may be absent, and with a stronger consequence: a nation with no
@@ -217,7 +239,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -245,6 +267,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	orgs.clear()
 	orgs_by_id.clear()
 	org_proposals.clear()
+	commodity_goods.clear()
+	commodity_recipes.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -312,6 +336,11 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	# validated against a register that has not been filled yet.
 	_load_orgs(orgs_dir)
 	_load_bloc_proposals(bloc_proposals_dir)
+	# Goods before recipes: a recipe's inputs and output are checked against the
+	# register, and a reference cannot be validated against a dictionary that has
+	# not been filled yet.
+	_load_commodity_goods(commodities_dir.path_join("goods.json"))
+	_load_commodity_recipes(commodities_dir.path_join("recipes.json"))
 
 	_validate_cross_file(geo_path, world_path)
 	_validate_amendments()
@@ -323,6 +352,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	_validate_outlets(outlets_dir)
 	_validate_regions(regions_dir, regions_geo_path, regions_graph_path)
 	_validate_energy_sources()
+	_validate_commodities()
 
 
 ## Resolve a person id to the name a screen prints. The ONLY reader of
@@ -1166,6 +1196,113 @@ func _validate_energy_sources() -> void:
 		for branch in n.energy_mix.keys():
 			if not EnergyK.BRANCHES.has(String(branch)):
 				errors.append("%s: imported.energy.mix names branch '%s', which is not in BRANCHES" % [nation_id, branch])
+
+
+## data/commodities/goods.json, one file and global (data/energy-sources.json's
+## shape and its reason: a good names no place and no nation). An entry is a
+## dictionary and not a typed value type at region_graph's own precedent -- the
+## one reader takes it as DATA, and a type here would be a second record of a
+## file that already states its own shape. What this function can see that a
+## runtime never would is a duplicate id (one good silently overwriting another)
+## and a category outside the seven.
+func _load_commodity_goods(path: String) -> void:
+	var text := FileAccess.get_file_as_string(path)
+	if text == "":
+		errors.append("data/commodities/goods.json: could not read file")
+		return
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof((parsed as Dictionary).get("goods")) != TYPE_ARRAY:
+		errors.append("data/commodities/goods.json: expected {\"goods\": [...]}")
+		return
+
+	for i in (parsed as Dictionary)["goods"].size():
+		var entry = (parsed as Dictionary)["goods"][i]
+		if typeof(entry) != TYPE_DICTIONARY:
+			errors.append("data/commodities/goods.json: goods[%d] is not an object" % i)
+			continue
+		var e: Dictionary = entry
+		var gid := String(e.get("id", ""))
+		if gid == "":
+			errors.append("data/commodities/goods.json: goods[%d] missing or invalid string field 'id'" % i)
+			continue
+		var where := "goods.json: %s" % gid
+		if not e.has("name") or typeof(e["name"]) != TYPE_STRING or String(e["name"]).strip_edges() == "":
+			errors.append("%s missing or invalid string field 'name'" % where)
+		var category := String(e.get("category", ""))
+		if not COMMODITY_CATEGORIES.has(category):
+			errors.append("%s category '%s' is not one of %s" % [where, category, str(COMMODITY_CATEGORIES)])
+		var price := float(e.get("base_price", 0.0))
+		if price <= 0.0:
+			errors.append("%s base_price must be positive -- a free good has no price for a shortage to move" % where)
+		if not e.has("unit") or typeof(e["unit"]) != TYPE_STRING or String(e["unit"]).strip_edges() == "":
+			errors.append("%s missing or invalid string field 'unit'" % where)
+		if commodity_goods.has(gid):
+			errors.append("data/commodities/goods.json: duplicate good id '%s'" % gid)
+		else:
+			commodity_goods[gid] = e
+
+
+## data/commodities/recipes.json, goods.json's shape. THE CROSS-FILE HALF IS THE
+## WHOLE POINT of loading this after goods: an output or an input naming a good
+## nobody declares would sit in the file looking like a recipe and produce nothing
+## at tick time -- the expensive silent class every data check in this project
+## exists to close. Raw, agri and services therefore carry NO recipe at all: they
+## are primary producers, and a row for one would be a second way to declare the
+## same output.
+func _load_commodity_recipes(path: String) -> void:
+	var text := FileAccess.get_file_as_string(path)
+	if text == "":
+		errors.append("data/commodities/recipes.json: could not read file")
+		return
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof((parsed as Dictionary).get("recipes")) != TYPE_ARRAY:
+		errors.append("data/commodities/recipes.json: expected {\"recipes\": [...]}")
+		return
+
+	for i in (parsed as Dictionary)["recipes"].size():
+		var entry = (parsed as Dictionary)["recipes"][i]
+		if typeof(entry) != TYPE_DICTIONARY:
+			errors.append("data/commodities/recipes.json: recipes[%d] is not an object" % i)
+			continue
+		var e: Dictionary = entry
+		var rid := String(e.get("id", ""))
+		if rid == "":
+			errors.append("data/commodities/recipes.json: recipes[%d] missing or invalid string field 'id'" % i)
+			continue
+		var where := "recipes.json: %s" % rid
+		var output := String(e.get("output", ""))
+		if not commodity_goods.has(output):
+			errors.append("%s output '%s' is not a good in data/commodities/goods.json" % [where, output])
+		if typeof(e.get("inputs", null)) != TYPE_DICTIONARY:
+			errors.append("%s missing or invalid object field 'inputs' -- {} is legal and means a primary producer, which is why it must be stated" % where)
+		else:
+			for inp in (e["inputs"] as Dictionary):
+				if not commodity_goods.has(inp):
+					errors.append("%s input '%s' is not a good in data/commodities/goods.json" % [where, inp])
+				elif float(e["inputs"][inp]) <= 0.0:
+					errors.append("%s input '%s' quantity must be positive" % [where, inp])
+		# Positive rather than non-negative, per the contract: a route with no
+		# labour and no capital behind it is a transformation out of nothing.
+		if float(e.get("labour_per_unit", 0.0)) <= 0.0:
+			errors.append("%s labour_per_unit must be positive" % where)
+		if float(e.get("capital_per_unit", 0.0)) <= 0.0:
+			errors.append("%s capital_per_unit must be positive" % where)
+		if commodity_recipes.has(rid):
+			errors.append("data/commodities/recipes.json: duplicate recipe id '%s'" % rid)
+		else:
+			commodity_recipes[rid] = e
+
+
+## The register's own emptiness, which no per-entry read can see: an empty
+## register puts nothing on the panel and nothing in any tile. Per-entry
+## correctness is refused at load (references, positivity), and category
+## coverage -- every category filled by some good -- is a suite-side gate in
+## tests/test_commodities_data.gd, not a loader check.
+func _validate_commodities() -> void:
+	if commodity_goods.is_empty():
+		errors.append("data/commodities/goods.json defines no goods")
+	if commodity_recipes.is_empty():
+		errors.append("data/commodities/recipes.json defines no recipes")
 
 
 ## data/energy-actions/*.json, _load_projects()'s shape. Per-entry validation lives

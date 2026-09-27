@@ -50,14 +50,18 @@ func _check_source_purity() -> void:
 			_fail("_plant_at_screen_point() reaches %s -- it is a screen-space radius test" % forbidden)
 
 
-## A PLANT IS A DRAW PASS, NOT A FIFTH LAYER. map_layers.gd's own header says no
-## map layer adds, removes or reorders a draw layer: LAYERS chooses a roster FILL
-## from a per-nation scalar, one at a time, and a plant is a point and is
-## additive. tests/test_map_markers.gd already pins this at 4 and so does this
-## file, because the session that would break it is this one.
+## A PLANT IS A DRAW PASS, NOT A LAYER. map_layers.gd's own header says no map layer
+## adds, removes or reorders a draw layer: LAYERS chooses a roster FILL from a
+## per-nation scalar, one at a time, and a plant is a point and is additive.
+##
+## V4.6: THE COUNT WAS A PROXY, and this check and test_map_markers.gd's sibling
+## both carried it -- see test_map_flows.gd's note. Task 4 added two real per-nation
+## fill layers, so the count is gone and the PROPERTY is asserted: the plant layer
+## owns no id in the registry, whatever else the registry holds.
 func _check_layers_unchanged() -> void:
-	if MapLayers.LAYERS.size() != 4:
-		_fail("LAYERS has %d entries, expected 4 -- a plant is a draw pass" % MapLayers.LAYERS.size())
+	for id in MapLayers.ids():
+		if String(id).contains("plant"):
+			_fail("the plant layer registered itself as a map layer: '%s' -- a plant is a draw pass" % id)
 
 
 ## PLACEMENT MODE INTERCEPTS EVERYTHING. A click meant to site a station must not

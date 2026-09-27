@@ -59,6 +59,7 @@ const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -822,6 +823,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
+		# V4.6. In main.gd's slot -- after Economy, whose `sector_output` the layer
+		# derives every nation's capacity from, and before Opinion. Nothing in this
+		# probe reads the commodity state, so it is here for balance_probe.gd's own
+		# standing rule: a harness runs the REAL month, and a system left out is a
+		# system whose agreement with main.gd means nothing (U6a's day-loop finding,
+		# restated at every tick this loop has gained since).
+		Commodities.tick_month(state, loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, loader)
 		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.

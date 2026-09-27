@@ -237,12 +237,21 @@ func _check_click_routes_to_the_project(map, state, loader) -> void:
 		_fail("clicking a marker also emitted nation_clicked %s" % str(nations_seen))
 
 
-## A marker is an always-on overlay, NOT a fifth map layer. If a later session
-## makes it one, this turns red and that session has to come and say why -- the
-## reasons are in map_markers.gd's header.
+## A marker is an always-on overlay, NOT a map layer. If a later session makes it
+## one, this turns red and that session has to come and say why -- the reasons are
+## in map_markers.gd's header.
+##
+## V4.6: THE COUNT WAS A PROXY. This read `LAYERS.size() != 4` until Task 4 added
+## two genuine per-nation fill layers (production, import dependency), which the
+## registry SHOULD hold and this check has no reason to refuse -- the count would
+## have failed on that growth rather than on a marker becoming a layer. The
+## property is what is asserted now: no registry entry is a marker, whatever else
+## the registry holds. The source scan below is unchanged and still the sharper
+## half, because it catches the id being introduced under another name.
 func _check_markers_are_not_a_map_layer() -> void:
-	if MapLayers.LAYERS.size() != 4:
-		_fail("map_layers.LAYERS has %d entries; a marker is not one of them" % MapLayers.LAYERS.size())
+	for id in MapLayers.ids():
+		if String(id).contains("marker"):
+			_fail("the marker overlay registered itself as a map layer: '%s'" % id)
 	var src := FileAccess.get_file_as_string("res://src/ui/map_layers.gd")
 	if src.findn("marker") >= 0:
 		_fail("map_layers.gd mentions markers; the registry does not know about them")

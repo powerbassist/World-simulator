@@ -132,11 +132,18 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 	# on a twenty-eight-partner roster.
 	var stops: Array = MapLayers.stops(_layer)
 	var even := -1.0
+	var prod_even := -1.0
 	if _layer == MapLayers.TRADE and state != null:
 		even = MapLayers.trade_even_share(state, viewer_id)
 		stops = MapLayers.trade_stops(even)
+	# The production layer's break is the ROSTER'S OWN SIZE, so its stops derive
+	# the same way the trade layer's do -- a literal here is exactly how the trade
+	# legend came to promise "an even ninth" on a twenty-eight-partner roster.
+	elif _layer == MapLayers.PRODUCTION and state != null:
+		prod_even = MapLayers.production_even_share(state)
+		stops = MapLayers.production_stops(prod_even)
 	for stop in stops:
-		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even))
+		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even, prod_even))
 
 	_caption.text = MapLayers.caption(_layer)
 	show_hover("", null, "")
@@ -145,15 +152,19 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 ## One row per legend stop. The swatch is MapLayers.ramp() at that stop's value
 ## rather than a colour typed here, so a ramp edit cannot leave the legend
 ## showing the old one.
-func _stop_row(at: float, text: String, trade_even := -1.0) -> Control:
+func _stop_row(at: float, text: String, trade_even := -1.0, prod_even := -1.0) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 
 	var swatch := ColorRect.new()
 	# The trade layer colours through ramp_trade at the same derived even share
 	# the stops were computed with; a plain ramp() call here is what left every
-	# trade swatch at the ramp's low colour after the trade branch moved.
-	swatch.color = MapLayers.ramp_trade(at, trade_even) if trade_even > 0.0 else MapLayers.ramp(_layer, at)
+	# trade swatch at the ramp's low colour after the trade branch moved. The
+	# production layer takes the same route for the same reason -- its anchor is
+	# the roster's size rather than a constant.
+	swatch.color = MapLayers.ramp_trade(at, trade_even) if trade_even > 0.0 \
+		else MapLayers.ramp_production(at, prod_even) if prod_even > 0.0 \
+		else MapLayers.ramp(_layer, at)
 	swatch.custom_minimum_size = SWATCH_SIZE
 	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(swatch)
