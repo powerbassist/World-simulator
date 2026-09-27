@@ -2,11 +2,60 @@
   "_source": "invented",
   "_note": "See data/companies/FRA.json for the schema and the reasoning. Britain's agriculture sector is the roster's smallest at 0.007 of GDP, so its two farms hold a large share of a small sector -- which is what a share of a SECTOR rather than of GDP is for.",
   "companies": [
-    { "id": "GBR_wexley", "name": "Wexley Farms", "sector": "agriculture", "share": 0.22, "headcount": 12000, "city": "UKH_ipswich" },
-    { "id": "GBR_northaven", "name": "Northaven Produce", "sector": "agriculture", "share": 0.16, "headcount": 14000, "city": "UKM_aberdeen" },
-    { "id": "GBR_ashcombe", "name": "Ashcombe Engineering", "sector": "industry", "share": 0.12, "headcount": 88000, "city": "UKG_birmingham" },
-    { "id": "GBR_tarnbridge", "name": "Tarnbridge Chemicals", "sector": "industry", "share": 0.09, "headcount": 41000, "city": "UKE_sheffield" },
-    { "id": "GBR_sterling_mutual", "name": "Sterling Mutual", "sector": "services", "share": 0.06, "headcount": 59000, "city": "UKI_london" },
-    { "id": "GBR_ravenhill", "name": "Ravenhill Retail", "sector": "services", "share": 0.05, "headcount": 168000, "city": "UKD_manchester" }
-  ]
+    {
+      "id": "GBR_wexley",
+      "name": "Wexley Farms",
+      "sector": "agriculture",
+      "share": 0.22,
+      "headcount": 12000,
+      "city": "UKH_ipswich",
+      "tier": "major"
+    },
+    {
+      "id": "GBR_northaven",
+      "name": "Northaven Produce",
+      "sector": "agriculture",
+      "share": 0.16,
+      "headcount": 14000,
+      "city": "UKM_aberdeen",
+      "tier": "major"
+    },
+    {
+      "id": "GBR_ashcombe",
+      "name": "Ashcombe Engineering",
+      "sector": "industry",
+      "share": 0.12,
+      "headcount": 88000,
+      "city": "UKG_birmingham",
+      "tier": "major"
+    },
+    {
+      "id": "GBR_tarnbridge",
+      "name": "Tarnbridge Chemicals",
+      "sector": "industry",
+      "share": 0.09,
+      "headcount": 41000,
+      "city": "UKE_sheffield",
+      "tier": "major"
+    },
+    {
+      "id": "GBR_sterling_mutual",
+      "name": "Sterling Mutual",
+      "sector": "services",
+      "share": 0.06,
+      "headcount": 59000,
+      "city": "UKI_london",
+      "tier": "major"
+    },
+    {
+      "id": "GBR_ravenhill",
+      "name": "Ravenhill Retail",
+      "sector": "services",
+      "share": 0.05,
+      "headcount": 168000,
+      "city": "UKD_manchester",
+      "tier": "major"
+    }
+  ],
+  "body": []
 }

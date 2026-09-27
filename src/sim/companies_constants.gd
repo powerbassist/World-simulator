@@ -382,3 +382,14 @@ const EQUITY_PREMIUM_PCT := 1.12
 ## stack sitting ON the clamp means the clamp and not the model is setting the
 ## number.
 const DIVIDEND_MAX_PCT_GDP := 1.50
+
+## V4.7a: the largest share a BODY-tier firm may carry. The tier boundary is the
+## block's spine -- at a hundred-plus firms per nation the average share is ~1 %,
+## and the step-0 probe (tools/industry_step0_probe.gd) measured that a subsidy's
+## share channel is ABSOLUTE, not scale-aware: a 1 % firm drains the same rival
+## pool at the same rate as a 0.14 major and ends the term a 13 % champion. The
+## verb tier gate is the primary defence (no player verb targets a body firm);
+## this clamp is the belt for the day any second share writer exists. 0.03 sits
+## an order of magnitude under the smallest verb-worthy major share the register
+## authors, so no drift the sim can produce reads as an escalation.
+const BODY_SHARE_MAX := 0.03

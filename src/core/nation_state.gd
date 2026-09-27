@@ -767,6 +767,8 @@ var deployment_opinion_load: float = 0.0
 ## law. It earns no SAVE_VERSION bump on the literal rule — absent it reads 0.0, "the
 ## state owns nothing", which is the truth about every version-15 save because those
 ## games could not nationalise anybody.
+## V4.7a fields are recoverable: absent owner is domestic, failed is false, and
+## absent body deltas read authored content. Therefore SAVE_VERSION remains 37.
 var companies := {}
 
 ## The four prices, recomputed once a month by Companies._recompute_prices() and
@@ -2305,7 +2307,18 @@ static func from_dict(d: Dictionary):
 	# is deliberately NOT softened into "recompute it from spending" -- a fallback
 	# that quietly repairs the field would make the save version unnecessary and
 	# the next genuinely unrecoverable field would have no precedent to point at.
-	s.companies = d.get("companies", {})
+	# V4.7a rebuilds every entry rather than assigning the payload dictionary --
+	# the from_dict aliasing defect commodities-model.md section 6 records (two
+	# states sharing one register). Entries hold only scalars, so per-key copies
+	# into fresh dictionaries are enough; the mutation test in
+	# tests/test_companies_tiers.gd proves the fix.
+	s.companies = {}
+	for company_id in d.get("companies", {}).keys():
+		var raw: Dictionary = d["companies"][company_id]
+		var fresh := {}
+		for key in raw.keys():
+			fresh[String(key)] = raw[key]
+		s.companies[String(company_id)] = fresh
 	s.subsidy_bill_pct_gdp = float(d.get("subsidy_bill_pct_gdp", 0.0))
 	s.firm_impulse_pct = float(d.get("firm_impulse_pct", 0.0))
 	s.firm_jobs_offset_pct = float(d.get("firm_jobs_offset_pct", 0.0))

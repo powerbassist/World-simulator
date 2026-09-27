@@ -61,9 +61,16 @@ const Demography = preload("res://src/sim/demography.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 
 
-## Seeds the live register from content: every firm starts at its authored share
+## Seeds the live register from content: every MAJOR starts at its authored share
 ## with no subsidy. Called from GameState._build_nation(), Defence.init_nation()'s
 ## slot.
+##
+## V4.7a: body-tier firms are NOT seeded -- the register carries what MOVED and
+## nothing that did not, so a body firm gains an entry only when something
+## touches it (a subsidy's pool takes its share, B-phase acts). The reads
+## (share_of_company, output_eur_bn, headcount) fall back to the authored
+## content for an absent entry, which is what makes the sparse shape safe and
+## keeps a ~2,500-firm register out of every save.
 ##
 ## A nation with no data/companies/<ID>.json gets an EMPTY register, and that is a
 ## supported state rather than a hole. Its sectors are simply unpartitioned, which
@@ -82,6 +89,8 @@ static func init_nation(ns, company_list: Array) -> void:
 	ns.firm_jobs_offset_pct = 0.0
 	ns.dividend_revenue_pct_gdp = 0.0
 	for company in company_list:
+		if not is_major(company):
+			continue
 		ns.companies[company.id] = {
 			"share": company.share, "subsidy": 0.0, "state_share": 0.0
 		}
@@ -108,6 +117,26 @@ static func firms_of(loader, nation_id: String) -> Array:
 	return loader.companies.get(nation_id, [])
 
 
+static func majors_of(loader, nation_id: String) -> Array:
+	var out: Array = []
+	for company in firms_of(loader, nation_id):
+		if is_major(company): out.append(company)
+	return out
+
+
+static func body_of(loader, nation_id: String) -> Array:
+	var out: Array = []
+	for company in firms_of(loader, nation_id):
+		if not is_major(company): out.append(company)
+	return out
+
+
+static func is_major(company) -> bool:
+	# Company.tier defaults "major" (from_dict sets it only when the field is
+	# present), so the legacy files read as majors through the typed default.
+	return String(company.tier) == "major"
+
+
 ## The firms of one nation in one sector, in authored order. The draw below is
 ## pro-rata by share, so order changes nothing -- but the panel reads this too,
 ## and there authored order is the order the player sees.
@@ -124,6 +153,11 @@ static func firms_in_sector(loader, nation_id: String, sector: String) -> Array:
 static func share_of(ns, company_id: String) -> float:
 	var entry = ns.companies.get(company_id)
 	return float(entry.get("share", 0.0)) if entry != null else 0.0
+
+
+static func share_of_company(ns, company) -> float:
+	var entry = ns.companies.get(company.id)
+	return float(entry.get("share", company.share)) if entry != null else float(company.share)
 
 
 static func subsidy_of(ns, company_id: String) -> float:
@@ -151,7 +185,7 @@ static func regulation_burden_of(ns, sector: String) -> float:
 ## number and the share is the firm's, so a stored revenue would be a third record
 ## of a product of two things that already exist.
 static func output_eur_bn(ns, company) -> float:
-	return share_of(ns, company.id) * float(ns.sector_output.get(company.sector, 0.0))
+	return share_of_company(ns, company) * float(ns.sector_output.get(company.sector, 0.0))
 
 
 ## V1.4c. What the whole firm is worth, EUR bn. DERIVED for revenue's own reason:
@@ -200,7 +234,7 @@ static func value_eur_bn(ns, company) -> float:
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
-	var reallocated: float = company.headcount * share_of(ns, company.id) / company.share
+	var reallocated: float = company.headcount * share_of_company(ns, company) / company.share
 	# Signed, so a deregulation law lets the same firms carry more staff. Floored at
 	# zero rather than trusted to the burden clamp: a later session raising
 	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
@@ -257,7 +291,10 @@ static func _tick_shares(ns, loader) -> void:
 
 		var before := {}
 		for company in firms:
-			before[company.id] = share_of(ns, company.id)
+			# share_of_company, not share_of: a body rival's register entry may
+			# not exist (the register is sparse), and the pool must read its
+			# authored share or the floor math would see 0.0 and seal it.
+			before[company.id] = share_of_company(ns, company)
 
 		var deltas := {}
 		for company in firms:
@@ -333,6 +370,17 @@ static func _tick_shares(ns, loader) -> void:
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
 		for company in firms:
+			# V4.7a: a body rival's entry may not exist yet (the register is
+			# sparse -- init_nation seeds majors only). The first spillover
+			# that MOVES it seeds it from the authored content, exactly the
+			# shape init_nation would have written; an untouched body firm
+			# stays out of the register.
+			if not ns.companies.has(company.id):
+				if is_equal_approx(float(deltas[company.id]), 0.0):
+					continue
+				ns.companies[company.id] = {
+					"share": company.share, "subsidy": 0.0, "state_share": 0.0
+				}
 			var entry: Dictionary = ns.companies[company.id]
 			entry["share"] = float(before[company.id]) + float(deltas[company.id])
 

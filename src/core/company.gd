@@ -73,6 +73,9 @@ var headcount: float = 0.0
 ## eighteen entries silently never filled in.
 var city: String = ""
 
+## V4.7a tier: legacy entries without the field remain majors until A3 regenerates them.
+var tier: String = "major"
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var c := new()
@@ -125,8 +128,11 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 	else:
 		c.city = d["city"]
 
+	if d.has("tier"):
+		c.tier = String(d["tier"])
+
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city":
+		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier":
 			errors.append("%s: %s has unrecognised field '%s' -- revenue is share x sector output and is never authored, and a firm carries no owner, margin or productivity term" % [
 				filename, path, key
 			])

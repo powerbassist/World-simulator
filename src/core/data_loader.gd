@@ -21,6 +21,7 @@ const ProjectAction = preload("res://src/core/project_action.gd")
 const EnergySource = preload("res://src/core/energy_source.gd")
 const EnergyAction = preload("res://src/core/energy_action.gd")
 const EnergyK = preload("res://src/sim/energy_constants.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const CampaignAction = preload("res://src/core/campaign_action.gd")
 const PledgeAction = preload("res://src/core/pledge_action.gd")
 const GameEvent = preload("res://src/core/event.gd")
@@ -583,6 +584,10 @@ func _load_companies(nation_id: String, companies_dir: String) -> void:
 		return
 
 	var raw_list: Array = parsed["companies"]
+	if typeof(parsed.get("body", [])) != TYPE_ARRAY:
+		errors.append("%s: body must be an array" % fname)
+	else:
+		raw_list.append_array(parsed["body"])
 	var parsed_companies: Array = []
 	var per_file_errors: Array[String] = []
 	var seen_ids := {}
@@ -593,6 +598,13 @@ func _load_companies(nation_id: String, companies_dir: String) -> void:
 			per_file_errors.append("%s: companies[%d] is not an object" % [fname, i])
 			continue
 		var company = Company.from_dict(entry, i, fname, per_file_errors)
+		# Legacy files are allowed to omit tier until A3 regenerates body/chief content.
+		if not entry.has("tier") and parsed.has("body"):
+			per_file_errors.append("%s: companies[%d] missing tier" % [fname, i])
+		elif not entry.has("tier"):
+			company.tier = "major"
+		if entry.has("tier") and String(entry["tier"]) not in ["major", "body"]:
+			per_file_errors.append("%s: companies[%d] tier must be major or body" % [fname, i])
 		if company.id == "":
 			continue
 
@@ -633,6 +645,10 @@ func _validate_companies() -> void:
 			if not by_sector.has(company.sector):
 				by_sector[company.sector] = []
 			by_sector[company.sector].append(company)
+
+		for company in companies[nation_id]:
+			if company.tier == "body" and company.share > CompaniesK.BODY_SHARE_MAX:
+				errors.append("companies/%s.json: body firm '%s' share exceeds BODY_SHARE_MAX (%.2f)" % [nation_id, company.id, CompaniesK.BODY_SHARE_MAX])
 
 		for sector in by_sector.keys():
 			var group: Array = by_sector[sector]
