@@ -524,10 +524,22 @@ static func _recompute_prices(ns, loader) -> void:
 ## shape, minus the cooldown: a subsidy is a STANDING STATE rather than an event,
 ## so `subsidy_active` gates it directly and a cooldown register would be a second
 ## gate on the same fact.
-static func available(state, ns, all_actions: Array, company_id: String) -> Array:
+##
+## V4.7a: the TIER gate lives here, in 7a and not with the B2 verbs, because the
+## step-0 probe measured the failure it prevents and A3's spillover defeats the
+## incidental gate the moment body content ships: a major's subsidy re-seeds its
+## body rivals through _tick_shares' get-or-create, and a seeded body firm then
+## passes the register-membership check below. The probe's finding is that a
+## body firm's share channel is ABSOLUTE -- a 0.01 firm drains the same pool as
+## a 0.14 major and ends the term at 0.13 -- so no verb targets a body firm,
+## whatever its register state.
+static func available(state, ns, all_actions: Array, company_id: String, loader) -> Array:
 	var out: Array = []
 	if not ns.companies.has(company_id):
 		return out
+	for company in firms_of(loader, ns.id):
+		if company.id == company_id and not is_major(company):
+			return out
 	for action in all_actions:
 		if action.id == "":
 			continue
@@ -610,7 +622,7 @@ static func state_owned_count(ns) -> int:
 ## is required rather than defaulted: a null loader would silently value every firm
 ## at zero and hand the player a free nationalisation.
 static func execute(state, ns, all_actions: Array, action, company_id: String, loader) -> Dictionary:
-	if not available(state, ns, all_actions, company_id).has(action):
+	if not available(state, ns, all_actions, company_id, loader).has(action):
 		var refused := {
 			"action_id": action.id,
 			"company_id": company_id,

@@ -45,16 +45,25 @@ func _init() -> void:
 	# every channel at exactly 0.0 for a never-touched firm, and no data file is
 	# edited. headcount is scaled off the named register's own jobs-per-share so
 	# the body firm is a fair average, not a straw one.
+	# V4.7a: the stand-in is a real Company (a raw Dictionary crashes is_major's
+	# typed read) tiered MAJOR so the verb can reach it -- available()'s tier
+	# gate refuses body firms since the A1 fix wave, and the probe's question is
+	# SHARE SCALE, not tier: what does a verb on a 0.01-share firm do. That the
+	# body tier itself is refused is pinned in tests/test_companies_tiers.gd;
+	# this probe measures the pre-gate world the finding came from, which is
+	# the evidence the gate exists for.
 	var jobs_per_share := 0.0
 	for c in _loader.companies[PLAYER]:
 		jobs_per_share += float(c.headcount) / float(c.share)
 	jobs_per_share /= float(_loader.companies[PLAYER].size())
 	var body_headcount := int(round(jobs_per_share * 0.01))
-	_loader.companies[PLAYER].append({
+	var probe_errors: Array[String] = []
+	var stand_in = preload("res://src/core/company.gd").from_dict({
 		"id": BODY_ID, "name": "Bodyprobe", "sector": "industry",
 		"share": 0.01, "headcount": body_headcount,
-		"city": "FRI_paris",
-	})
+		"city": "FRI_paris", "tier": "major",
+	}, 0, "probe", probe_errors)
+	_loader.companies[PLAYER].append(stand_in)
 	_line("body stand-in: share 0.01, headcount %d (register mean jobs/share %.0f)" % [
 		body_headcount, jobs_per_share])
 

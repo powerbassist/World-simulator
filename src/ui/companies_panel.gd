@@ -367,7 +367,7 @@ func _build_firm(ns, company) -> void:
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
-	for action in Companies.available(_state, ns, _loader.company_actions, company.id):
+	for action in Companies.available(_state, ns, _loader.company_actions, company.id, _loader):
 		buttons.add_child(_action_button(ns, company, action))
 	block.add_child(buttons)
 

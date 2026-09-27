@@ -40,6 +40,7 @@ func _init() -> void:
 		_test_sparse_reads()
 		_test_from_dict_does_not_alias_companies()
 		_test_from_dict_roundtrips_the_register()
+		_test_tier_gate_refuses_body_verbs()
 	_finish()
 
 
@@ -85,6 +86,12 @@ func _test_from_dict_does_not_alias_companies() -> void:
 	c.companies["FRA_aurignac"]["share"] = 0.99
 	if is_equal_approx(a.nations["FRA"].companies.get("FRA_aurignac", {}).get("share", 0.0), 0.99):
 		_fail("from_dict aliased the companies register")
+	# The other direction: mutating the ORIGINAL after load must not reach the
+	# loaded state either -- the direction a future nested entry value would
+	# break first.
+	a.nations["FRA"].companies["FRA_aurignac"]["share"] = 0.5
+	if is_equal_approx(float(c.companies.get("FRA_aurignac", {}).get("share", 0.0)), 0.5):
+		_fail("the original aliased the loaded state's register")
 
 
 func _test_from_dict_roundtrips_the_register() -> void:
@@ -104,6 +111,29 @@ func _test_from_dict_roundtrips_the_register() -> void:
 			if not after.has(key) or not is_equal_approx(float(before[key]), float(after[key])):
 				_fail("%s.%s did not round trip (%s vs %s)" % [
 					company_id, key, str(before.get(key)), str(after.get(key))])
+
+
+func _test_tier_gate_refuses_body_verbs() -> void:
+	# The step-0 escalator's permanent form: available() refuses a body-tier
+	# firm whatever its register state. Register membership alone stopped
+	# gating this the moment spillover began seeding body rivals (the
+	# get-or-create in _tick_shares) -- only the tier read stops it, so the
+	# pin seeds the entry a spillover would write and demands the refusal.
+	var Company = preload("res://src/core/company.gd")
+	var errs: Array[String] = []
+	_loader.companies["FRA"].append(Company.from_dict({
+		"id": "FRA_gatebody", "name": "Gatebody", "sector": "industry",
+		"share": 0.025, "headcount": 40000, "city": "FRI_paris", "tier": "body",
+	}, 0, "test", errs))
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.nations["FRA"]
+	ns.companies["FRA_gatebody"] = {"share": 0.025, "subsidy": 0.0, "state_share": 0.0}
+	if not Companies.available(state, ns, _loader.company_actions, "FRA_gatebody", _loader).is_empty():
+		_fail("a body-tier firm with a seeded register entry passed available()")
+	# And the same call for a major still returns verbs -- the gate is the
+	# tier, not the firm's register state.
+	if Companies.available(state, ns, _loader.company_actions, "FRA_aurignac", _loader).is_empty():
+		_fail("a major was refused every verb -- the gate over-reached")
 
 
 func _fail(message: String) -> void:
