@@ -150,6 +150,30 @@ var _hovered_id := ""
 var _markers: Array = []
 var _hovered_project := ""
 
+## THE FILL MEMO. `_draw_roster()` re-records every pan and zoom frame (a drag
+## queues a redraw per mouse-motion event), and MapLayers.fills() is stateless on
+## purpose -- its own header says nothing is cached there -- so importing the layer
+## re-sums all 29 nations x 60 goods on EVERY frame. Measured: 1.506 ms/frame for
+## IMPORT_DEPENDENCY against a 0.040 ms political baseline, ~38x, which the player
+## pays while dragging. So the result is memoised HERE at the caller, keyed on
+## `_fill_key`. `MapLayers` is untouched: the caching stays on this side of the
+## contract, the same way this file owns when a fill is derived.
+##
+## ONLY THE COMMODITY LAYERS ARE MEMOISED. Their every input is `commodity_state`,
+## and the sole writer of that (Commodities.tick_month) runs inside the monthly
+## tick -- so between two ticks the fills cannot change and a memo is exact. The
+## pair layers (RELATIONS, TRADE, COERCION) read relations, orgs and measures that
+## a diplomatic action or an event can move MID-month, so memoising them on the
+## month would hand back a stale colour until the next tick; they keep the
+## derived-every-draw path. POLITICAL is an id tint and needs no memo.
+##
+## The key is (state identity, absolute month year*12+month, layer, viewer). A
+## pan/hover frame leaves all four equal and hits the memo; a tick, a layer toggle
+## or a new `setup()` changes one and rebuilds. State IDENTITY is in the key so a
+## fresh game at month 0 cannot read the previous game's dictionary.
+var _fill_key := {}
+var _fill_cache: Dictionary = {}
+
 ## V2.2b, CORRECTED at V2.6b1: rebuilt on the MONTHLY hook by refresh_cities(),
 ## not once in setup(). This paragraph used to argue the register was static
 ## content, which was true when it was written and false from V2.6a, when a city's
@@ -887,6 +911,27 @@ func _draw_world_borders() -> void:
 			draw_polyline(screen_points, WORLD_BORDER, WORLD_BORDER_WIDTH)
 
 
+## MapLayers.fills() behind the month-keyed memo the `_fill_key` paragraph argues.
+## Only the commodity layers take the memo; everything else is derived fresh, so
+## this is a fast path and never a new contract for the other layers.
+func _layer_fills(viewer: String) -> Dictionary:
+	if _layer != MapLayers.PRODUCTION and _layer != MapLayers.IMPORT_DEPENDENCY:
+		return MapLayers.fills(_layer, _state, viewer, _polygons.keys())
+	var month := -1
+	if _state != null:
+		month = int(_state.year) * 12 + int(_state.month)
+	var key := {
+		"state": _state,
+		"month": month,
+		"layer": _layer,
+		"viewer": viewer,
+	}
+	if _fill_key != key:
+		_fill_key = key
+		_fill_cache = MapLayers.fills(_layer, _state, viewer, _polygons.keys())
+	return _fill_cache
+
+
 func _draw_roster() -> void:
 	var view := visible_lonlat_rect()
 	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
@@ -898,8 +943,10 @@ func _draw_roster() -> void:
 	# Trade.weights() builds to fill twenty-nine countries. See MapLayers.fills().
 	# A fill depends on the layer, the state and the viewer and on NOTHING the
 	# camera does, so hoisting it out of this loop cannot change when a colour
-	# updates -- it is still derived once per re-record, exactly as before.
-	var fills := MapLayers.fills(_layer, _state, viewer, _polygons.keys())
+	# updates -- it is still derived once per re-record, exactly as before. The
+	# memo below extends that same argument across the re-records that share a
+	# month (`_fill_key`), because the state cannot move between them.
+	var fills: Dictionary = _layer_fills(viewer)
 
 	for id in _polygons.keys():
 		var color: Color = fills[id]

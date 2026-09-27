@@ -331,9 +331,15 @@ static func stops(layer_id: String) -> Array:
 	return layer(layer_id)["stops"]
 
 
-## True when this nation is the one doing the viewing, and so has no value on any
-## data layer. Its own function rather than an `== ` at three call sites because
-## map_view.gd draws it differently as well as filling it differently.
+## True when this nation is the one doing the viewing. THE VIEWER'S VALUE IS
+## PER-LAYER since V4.6: on RELATIONS, TRADE and COERCION the viewer's own nation
+## is out of the comparison and carries NO_VALUE, but on PRODUCTION and
+## IMPORT_DEPENDENCY the two commodity layers are the first on this map where the
+## viewer's own nation carries a real value -- it is one of the world's producers
+## and buyers like any other, so swatch()/value()/value_text() fall through to the
+## ramp for it (pinned in tests/test_commodities_panel.gd). Its own function rather
+## than an `==` at the seven call sites in this file because map_view.gd draws it
+## differently as well as filling it differently.
 static func is_viewer(viewer_id: String, nation_id: String) -> bool:
 	return viewer_id == nation_id
 
@@ -656,7 +662,7 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 			# A nation at zero buys nothing, and a 0.0 that could also be a NAN
 			# should say which it is -- the layer's own flat-bottom finding.
 			if is_zero_approx(v):
-				return "%s  buys nothing in%s" % [
+				return "%s  is self-sufficient%s" % [
 					nation_id, " (you)" if is_viewer(viewer_id, nation_id) else ""]
 			return "%s  %.0f%% of its demand imported%s" % [
 				nation_id, 100.0 * v, " (you)" if is_viewer(viewer_id, nation_id) else ""]

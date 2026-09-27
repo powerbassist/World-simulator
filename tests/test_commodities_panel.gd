@@ -93,6 +93,7 @@ func _run() -> void:
 	panel._refresh()
 
 	_check_month_zero_renders(panel, state)
+	_check_hover_sentences(state)
 	_check_no_label_is_blank(panel)
 	_check_reads_and_never_writes(panel, state)
 	_check_shortage_flip(panel, state)
@@ -440,6 +441,23 @@ func _text_of(panel) -> String:
 		if node is Label:
 			text += node.text + "\n"
 	return text
+
+
+## Finding 7's test leg: the zero-dependency hover must be a COMPLETE sentence.
+## The shipped form read "DEU  buys nothing in" -- a preposition with no object
+## -- for every nation at month 0 and 13 of 29 after a year (runtime-measured in
+## review round 2). The fix says "is self-sufficient"; this asserts the rendered
+## words the player reads, the run-1 lesson (a swatch-colour check could not see
+## this class). Month 0 only, and before any fixture mutates a register: at
+## month 0 every nation's dependency is exactly 0.0, so all 29 hit the branch.
+func _check_hover_sentences(state) -> void:
+	var viewer: String = _main._map_view.viewer_id()
+	for nation_id in state.nations.keys():
+		var text: String = MapLayers.value_text(MapLayers.IMPORT_DEPENDENCY, state, viewer, String(nation_id))
+		if text.contains("nothing in"):
+			_fail("hover for %s still dangles the preposition: %s" % [nation_id, text])
+		if not text.contains("self-sufficient"):
+			_fail("zero-dependency hover for %s is not the self-sufficient sentence: %s" % [nation_id, text])
 
 
 func _walk(node) -> Array:

@@ -1944,7 +1944,9 @@ func _run_commodity_roundtrip(loader) -> void:
 	# writing through it would have proved the rebuild is writable rather than that
 	# the live state's figure survives JSON. (`state` and `loaded` still share
 	# nothing -- that is what _commodity_state_from's rebuild exists for.)
-	var disk_error := SaveManager.save_game(state, Clock.new(), COMMODITY_SLOT)
+	var commodity_clock := Clock.new()
+	var disk_error := SaveManager.save_game(state, commodity_clock, COMMODITY_SLOT)
+	commodity_clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
 	if not disk_error.is_empty():
 		_fail("save_game failed on the commodity fixture: %s" % disk_error)
 	else:
@@ -3373,7 +3375,9 @@ func _check_network_absences(loader) -> void:
 		edges_on_disk = (parsed as Dictionary)["edges"].size()
 	if edges_on_disk == 0:
 		_fail("data/geo/region_graph.json did not parse -- the load check below would be measuring nothing")
-	var save_error := SaveManager.save_game(state, Clock.new(), NETWORK_SLOT)
+	var network_clock := Clock.new()
+	var save_error := SaveManager.save_game(state, network_clock, NETWORK_SLOT)
+	network_clock.free()  # same off-tree rule; this one predates V4.6 but is the same class
 	if not save_error.is_empty():
 		_fail("save_game(FRA) failed: %s" % save_error)
 		return

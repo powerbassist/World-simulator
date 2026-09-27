@@ -350,6 +350,11 @@ func _check_order_in(path: String, label: String) -> void:
 ##      non-empty and tick to the same state. Before Task 5 this leg is the one
 ##      that fired loud; it is kept because it is the pair to leg 2 -- together
 ##      they say "the key is serialised, and its absence is still handled".
+##   4. the PARTIAL register: a payload carrying only some of the seven keys. The
+##      gate reads them all (`Commodities.STATE_KEYS`), so a partial one reseeds
+##      WHOLE and ticks clean, rather than passing an emptiness test and faulting
+##      on the first missing index (measured: 62 SCRIPT ERRORs from one partial
+##      register in one month before the gate read the key set).
 ##
 ## All of it is the determinism contract rather than a smoke test: every seeded
 ## route must reach the same state as a fresh init, to the bit, or "the after-load
@@ -374,11 +379,20 @@ func _check_absent_register_bridge() -> void:
 	for nation_id in (payload["nations"] as Dictionary).keys():
 		(payload["nations"][nation_id] as Dictionary).erase("commodity_state")
 	var stripped = GameState.from_dict(payload)
+	# Leg 4: a register missing six of its seven keys. Built off the real payload
+	# so it is the arrival shape and not a synthetic NationState.
+	var partial_payload: Dictionary = fresh.to_dict()
+	for nation_id in (partial_payload["nations"] as Dictionary).keys():
+		(partial_payload["nations"][nation_id] as Dictionary)["commodity_state"] = {
+			"capacity": {"steel": 1.0},
+		}
+	var partial = GameState.from_dict(partial_payload)
 	for i in TICKS:
 		Commodities.tick_month(fresh, _loader)
 		Commodities.tick_month(loaded, _loader)
 		Commodities.tick_month(round_trip, _loader)
 		Commodities.tick_month(stripped, _loader)
+		Commodities.tick_month(partial, _loader)
 	for nation_id in loaded.nations.keys():
 		if not _deep_equal(fresh.nations[nation_id].commodity_state, loaded.nations[nation_id].commodity_state):
 			_fail("nation %s seeded lazily diverged from a fresh init -- the lazy seed runs the wrong model" % nation_id)
@@ -388,6 +402,9 @@ func _check_absent_register_bridge() -> void:
 			return
 		if not _deep_equal(fresh.nations[nation_id].commodity_state, stripped.nations[nation_id].commodity_state):
 			_fail("nation %s seeded from a payload with no commodity_state key diverged from a fresh init -- the absent-key arrival is not the bridge's" % nation_id)
+			return
+		if not _deep_equal(fresh.nations[nation_id].commodity_state, partial.nations[nation_id].commodity_state):
+			_fail("nation %s seeded from a PARTIAL commodity_state (one key of seven) diverged from a fresh init -- a partial register must reseed whole, not fault on the missing keys" % nation_id)
 			return
 
 

@@ -27,12 +27,14 @@ extends RefCounted
 ## tests/test_commodities.gd reading src/. What it never does: write
 ## `sector_output` or `gdp_eur_bn` (Economy's), or reach a panel.
 ##
-## DETERMINISM IS THE LAW: no rand(), no RandomNumberGenerator, no mutable
-## static. Every loop walks an explicitly SORTED id list, never a Dictionary's
-## iteration order -- V1.3b's `Trade.weight_table()` states the reason once and it
-## holds here unchanged, because an unordered walk lets one nation's month depend
-## on an insertion history and the balance harness's whole promise is that two
-## runs differing in one decision differ in nothing else.
+## DETERMINISM IS THE LAW: no rand(), no RandomNumberGenerator, no mutable state
+## a month can observe. Every loop walks an explicitly SORTED id list, never a
+## Dictionary's iteration order -- V1.3b's `Trade.weight_table()` states the reason
+## once and it holds here unchanged, because an unordered walk lets one nation's
+## month depend on an insertion history and the balance harness's whole promise is
+## that two runs differing in one decision differ in nothing else. The one static
+## below is a MEMO keyed on the loader instance (`_loader_tables`); it is a pure
+## function of content the loader never mutates, so it is invisible to the tick.
 ##
 ## ============================================================================
 ## THE MODEL, AND WHY IT IS THIS SHAPE
@@ -106,6 +108,18 @@ const CATEGORY_SECTOR := {
 ## and never as an ordering.
 
 
+## The seven keys every `commodity_state` carries, in `init_nation()`'s own write
+## order. The lazy-seed gate reads THIS list rather than `is_empty()` alone: a
+## hand-built or hand-edited register carrying only SOME of the keys passes an
+## emptiness test and then faults on the first missing one mid-tick (`_want()`
+## reads `["price"]` before anything writes it), flooding SCRIPT ERRORs instead of
+## reseeding. A register missing ANY key is no register at all and reseeds WHOLE,
+## so the failure mode is a silent deterministic rebuild rather than a crash.
+const STATE_KEYS := [
+	"capacity", "output", "demand", "surplus", "trade", "price", "value_added_eur_bn",
+]
+
+
 ## Seed ONE nation's commodity state. Called from `new_game` beside
 ## `Regions.init_nation()` and `Migration.init_nation()`, for their reason: each
 ## fills a register at the start of the game. This one's `capacity` is a
@@ -120,7 +134,7 @@ const CATEGORY_SECTOR := {
 ## sectors above zero, so the zero is reached by a fixture or by a player-caused
 ## collapse and not by content.
 static func init_nation(ns, loader) -> void:
-	var structure: Dictionary = _structure(loader)
+	var structure: Dictionary = _loader_tables(loader)["structure"]
 	var capacity: Dictionary = {}
 	for good_id in _goods(loader):
 		var good: Dictionary = loader.commodity_goods[good_id]
@@ -148,15 +162,18 @@ static func tick_month(state, loader) -> void:
 	# the serialisation rather than being deleted with it: save_manager refuses a
 	# mismatched version outright, so the `{}` this catches now comes from a
 	# payload with the key absent, a hand-built fixture, or any caller arriving
-	# before the first tick rather than from a pre-V4.6 save. The seed lives HERE
-	# rather than in the load path for two reasons: it keeps the single-writer pin
-	# intact (this file alone writes the field), and it keeps ONE seeding route
+	# before the first tick rather than from a pre-V4.6 save. THE PARTIAL REGISTER
+	# is the same arrival one step in: a payload carrying some keys and not others
+	# passes an emptiness test and then faults on the first missing index, so the
+	# gate reads STATE_KEYS and reseeds the whole register instead. The seed lives
+	# HERE rather than in the load path for two reasons: it keeps the single-writer
+	# pin intact (this file alone writes the field), and it keeps ONE seeding route
 	# rather than two that can drift. That the two routes agree to the bit is what
 	# tests/test_commodities.gd compares, and it is deterministic for
 	# init_nation's own reason -- a pure function of the nation's measured mix.
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
-		if ns.commodity_state.is_empty():
+		if ns.commodity_state.is_empty() or not ns.commodity_state.has_all(STATE_KEYS):
 			init_nation(ns, loader)
 
 	# The world's own basket, once: output per head, and each sector's share of
@@ -177,11 +194,11 @@ static func tick_month(state, loader) -> void:
 	for sector in world_sector_share.keys():
 		world_sector_share[sector] = float(world_sector_share[sector]) / (world_value * 1e9 / 12.0)
 
-	var structure: Dictionary = _structure(loader)
+	var structure: Dictionary = _loader_tables(loader)["structure"]
 	# Everything the loader alone determines, derived once for the whole tick
 	# rather than once per nation -- the recipe table is static content and the
 	# per-nation loop below must not re-derive it 29 times.
-	var tables: Dictionary = _static_tables(loader)
+	var tables: Dictionary = _loader_tables(loader)
 
 	# 1-3. Capacity, demand, production -- per nation.
 	var produced := {}
@@ -303,9 +320,9 @@ static func tick_month(state, loader) -> void:
 ## should improve, because it is the one place this machine is less general than
 ## the content it reads.
 ##
-## `tables` is the per-TICK bundle from `_static_tables()` and not the loader: the
-## recipe table is static content, so the production order and the candidate-route
-## lists are derived ONCE a month rather than once per nation per month. The
+## `tables` is the bundle from `_loader_tables()` and not the loader: the recipe
+## table is static content, so the production order and the candidate-route lists
+## are derived ONCE per loader rather than once per nation per month. The
 ## unhoisted form was a 60-round relaxation and a full recipe scan per good per
 ## nation -- 29 nations' worth of the same answer, every tick.
 static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary) -> void:
@@ -349,6 +366,31 @@ static func _static_tables(loader) -> Dictionary:
 		"routes": routes,
 		"base": _base_prices(loader),
 	}
+
+
+## The one static in this file, and it is a MEMO rather than model state. Both
+## halves it caches are pure functions of the loader's content -- `_structure()`
+## is a 60-round relaxation and `_static_tables()` scans 24 recipes into 34
+## routes -- and the loader fills those dictionaries once at startup and never
+## mutates them, so re-deriving them every month is pure waste (the T2 hoist one
+## level up: that one measured a per-tick 228 -> 44 ms; this is per-month ->
+## per-loader). THE KEY IS THE LOADER INSTANCE, not its content: GDScript `!=` on
+## a RefCounted is IDENTITY, so a second loader -- a different fixture, a second
+## game in one process -- rebuilds, and the same one never does. Determinism
+## holds by construction rather than by argument: the cached value IS what a
+## fresh call returns, so a cached tick is bit-identical to an uncached one. The
+## returned bundle is READ-ONLY to every caller (`_produce`/`_cheapest_route`
+## only read it), which is what makes handing the same instance back safe.
+static var _cache_loader = null
+static var _cache_tables: Dictionary = {}
+
+static func _loader_tables(loader) -> Dictionary:
+	if _cache_loader != loader:
+		_cache_loader = loader
+		var tables: Dictionary = _static_tables(loader)
+		tables["structure"] = _structure(loader)
+		_cache_tables = tables
+	return _cache_tables
 
 
 ## The goods in an order that is genuinely topological for THIS recipe table:

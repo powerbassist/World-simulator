@@ -165,8 +165,10 @@ func _dict_sentinel(a: Dictionary):
 
 
 ## A Dictionary of Dictionaries duplicated shallowly passes the check above and
-## still shares its inner Dictionaries. NationState has no such field today; this
-## is here so that the day one is added, it is caught.
+## still shares its inner Dictionaries. V4.6 gave NationState its first such
+## field -- `commodity_state`, a register of per-good dictionaries -- so this
+## guard is live now, not dormant: it walks that register on every suite run and
+## is what catches a shallow `duplicate()` of it.
 func _check_nested(where: String, name: String, a: Dictionary, b: Dictionary) -> void:
 	for key in a.keys():
 		if typeof(a[key]) != TYPE_DICTIONARY:

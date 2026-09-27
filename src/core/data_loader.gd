@@ -86,10 +86,10 @@ var regions: Dictionary = {}
 ## Keyed by id, and a DICTIONARY rather than a typed value type for
 ## region_graph's own reason: the reader takes them as DATA and a type here
 ## would be a second record of a file that already states its own shape. What
-## only this file can see -- and what _validate_commodities() refuses -- is that
-## every recipe's output and every one of its inputs names a good the register
-## declares, because an input nobody declares would sit in the file looking like
-## a recipe and produce nothing at tick time.
+## only this file can see -- and what _load_commodity_recipes() refuses per entry
+## -- is that every recipe's output and every one of its inputs names a good the
+## register declares, because an input nobody declares would sit in the file
+## looking like a recipe and produce nothing at tick time.
 var commodity_goods: Dictionary = {}
 var commodity_recipes: Dictionary = {}
 
@@ -1293,9 +1293,11 @@ func _load_commodity_recipes(path: String) -> void:
 			commodity_recipes[rid] = e
 
 
-## The register's own completeness, which no per-entry read can see. Both halves
-## are content bugs that render as an absence: an empty register puts nothing on
-## the panel, and a category no good fills is a loop that runs zero times.
+## The register's own emptiness, which no per-entry read can see: an empty
+## register puts nothing on the panel and nothing in any tile. Per-entry
+## correctness is refused at load (references, positivity), and category
+## coverage -- every category filled by some good -- is a suite-side gate in
+## tests/test_commodities_data.gd, not a loader check.
 func _validate_commodities() -> void:
 	if commodity_goods.is_empty():
 		errors.append("data/commodities/goods.json defines no goods")
