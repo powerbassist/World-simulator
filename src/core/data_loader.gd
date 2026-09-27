@@ -646,11 +646,12 @@ func _validate_companies() -> void:
 				by_sector[company.sector] = []
 			by_sector[company.sector].append(company)
 
-		# The nation's person ids, for chief resolution -- built once per nation
+		# The nation's people, for chief resolution -- built once per nation
 		# rather than per firm, the programme-ids idiom _validate_people uses.
-		var person_ids := {}
+		# id -> person, because the chief check needs the KIND, not just the id.
+		var people_by_id := {}
 		for person in people.get(nation_id, []):
-			person_ids[person.id] = true
+			people_by_id[person.id] = person
 
 		for company in companies[nation_id]:
 			if company.tier == "body" and company.share > CompaniesK.BODY_SHARE_MAX:
@@ -665,8 +666,12 @@ func _validate_companies() -> void:
 				errors.append("companies/%s.json: major '%s' carries no chief_id -- a champion with no face is the count-is-the-design rule half-built" % [nation_id, company.id])
 			if company.tier == "body" and company.chief_id != "":
 				errors.append("companies/%s.json: body firm '%s' carries a chief_id -- the body has no faces" % [nation_id, company.id])
-			if company.chief_id != "" and not person_ids.has(company.chief_id):
-				errors.append("companies/%s.json: firm '%s' chief '%s' is not a person of this nation" % [nation_id, company.id, company.chief_id])
+			if company.chief_id != "":
+				var chief = people_by_id.get(company.chief_id)
+				if chief == null:
+					errors.append("companies/%s.json: firm '%s' chief '%s' is not a person of this nation" % [nation_id, company.id, company.chief_id])
+				elif chief.kind != "executive":
+					errors.append("companies/%s.json: firm '%s' chief '%s' is kind '%s', not an executive" % [nation_id, company.id, company.chief_id, chief.kind])
 
 		for sector in by_sector.keys():
 			var group: Array = by_sector[sector]
