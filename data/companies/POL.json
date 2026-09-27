@@ -9,7 +9,8 @@
       "share": 0.22,
       "headcount": 31000,
       "city": "PL72_kielce",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_kopalnia_miedzi"
     },
     {
       "id": "POL_huta_wisla",
@@ -18,7 +19,8 @@
       "share": 0.11,
       "headcount": 48000,
       "city": "PL22_katowice",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_huta_wisla"
     },
     {
       "id": "POL_stocznia_gdanska",
@@ -27,7 +29,8 @@
       "share": 0.07,
       "headcount": 12000,
       "city": "PL63_gdansk",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_stocznia_gdanska"
     },
     {
       "id": "POL_zboze_wielkopolskie",
@@ -36,7 +39,8 @@
       "share": 0.24,
       "headcount": 19000,
       "city": "PL41_poznan",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_zboze_wielkopolskie"
     },
     {
       "id": "POL_sady_lubelskie",
@@ -45,7 +49,8 @@
       "share": 0.17,
       "headcount": 11000,
       "city": "PL81_lublin",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_sady_lubelskie"
     },
     {
       "id": "POL_bank_kongresowy",
@@ -54,7 +59,8 @@
       "share": 0.08,
       "headcount": 42000,
       "city": "PL91_warsaw",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_bank_kongresowy"
     },
     {
       "id": "POL_siec_baltyk",
@@ -63,7 +69,8 @@
       "share": 0.06,
       "headcount": 96000,
       "city": "PL42_szczecin",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_siec_baltyk"
     },
     {
       "id": "POL_tabor_nowy",
@@ -72,7 +79,8 @@
       "share": 0.05,
       "headcount": 15000,
       "city": "PL71_lodz",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "POL_chief_tabor_nowy"
     }
   ],
   "body": []

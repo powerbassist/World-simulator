@@ -76,6 +76,14 @@ var city: String = ""
 ## V4.7a tier: legacy entries without the field remain majors until A3 regenerates them.
 var tier: String = "major"
 
+## V4.7a: the major's named chief -- a person in the same nation's
+## data/people/<ID>.json, kind "executive". Required on majors (the loader
+## refuses a major without one: a champion with no face is the count-is-the-
+## design rule half-built), refused on body firms (the body is acted upon,
+## nobody fronts it). The id itself is validated cross-register in
+## _validate_companies, the way party ids resolve for people.
+var chief_id: String = ""
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var c := new()
@@ -131,8 +139,14 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 	if d.has("tier"):
 		c.tier = String(d["tier"])
 
+	if d.has("chief_id"):
+		if typeof(d["chief_id"]) != TYPE_STRING:
+			errors.append("%s: %s field 'chief_id' must be a string" % [filename, path])
+		else:
+			c.chief_id = d["chief_id"]
+
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier":
+		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier" and key != "chief_id":
 			errors.append("%s: %s has unrecognised field '%s' -- revenue is share x sector output and is never authored, and a firm carries no owner, margin or productivity term" % [
 				filename, path, key
 			])

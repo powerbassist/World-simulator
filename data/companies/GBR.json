@@ -9,7 +9,8 @@
       "share": 0.22,
       "headcount": 12000,
       "city": "UKH_ipswich",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_wexley"
     },
     {
       "id": "GBR_northaven",
@@ -18,7 +19,8 @@
       "share": 0.16,
       "headcount": 14000,
       "city": "UKM_aberdeen",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_northaven"
     },
     {
       "id": "GBR_ashcombe",
@@ -27,7 +29,8 @@
       "share": 0.12,
       "headcount": 88000,
       "city": "UKG_birmingham",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_ashcombe"
     },
     {
       "id": "GBR_tarnbridge",
@@ -36,7 +39,8 @@
       "share": 0.09,
       "headcount": 41000,
       "city": "UKE_sheffield",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_tarnbridge"
     },
     {
       "id": "GBR_sterling_mutual",
@@ -45,7 +49,8 @@
       "share": 0.06,
       "headcount": 59000,
       "city": "UKI_london",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_sterling_mutual"
     },
     {
       "id": "GBR_ravenhill",
@@ -54,7 +59,8 @@
       "share": 0.05,
       "headcount": 168000,
       "city": "UKD_manchester",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "GBR_chief_ravenhill"
     }
   ],
   "body": []

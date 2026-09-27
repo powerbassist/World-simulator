@@ -646,9 +646,27 @@ func _validate_companies() -> void:
 				by_sector[company.sector] = []
 			by_sector[company.sector].append(company)
 
+		# The nation's person ids, for chief resolution -- built once per nation
+		# rather than per firm, the programme-ids idiom _validate_people uses.
+		var person_ids := {}
+		for person in people.get(nation_id, []):
+			person_ids[person.id] = true
+
 		for company in companies[nation_id]:
 			if company.tier == "body" and company.share > CompaniesK.BODY_SHARE_MAX:
 				errors.append("companies/%s.json: body firm '%s' share exceeds BODY_SHARE_MAX (%.2f)" % [nation_id, company.id, CompaniesK.BODY_SHARE_MAX])
+			# V4.7a chiefs: a major carries a named chief (a person of kind
+			# "executive" in this nation's people file), a body firm carries
+			# none -- the body is acted upon and nobody fronts it. The id
+			# resolves cross-register here, the party_id pattern: the loader
+			# has both halves in hand, and a bogus ref is a load error rather
+			# than a dangling edge the panel discovers mid-session.
+			if company.tier == "major" and company.chief_id == "":
+				errors.append("companies/%s.json: major '%s' carries no chief_id -- a champion with no face is the count-is-the-design rule half-built" % [nation_id, company.id])
+			if company.tier == "body" and company.chief_id != "":
+				errors.append("companies/%s.json: body firm '%s' carries a chief_id -- the body has no faces" % [nation_id, company.id])
+			if company.chief_id != "" and not person_ids.has(company.chief_id):
+				errors.append("companies/%s.json: firm '%s' chief '%s' is not a person of this nation" % [nation_id, company.id, company.chief_id])
 
 		for sector in by_sector.keys():
 			var group: Array = by_sector[sector]

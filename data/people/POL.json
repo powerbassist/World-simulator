@@ -1115,6 +1115,95 @@
       ],
       "bench": true,
       "party_id": "sojusz_obywatelski"
+    },
+    {
+      "id": "POL_chief_kopalnia_miedzi",
+      "name": "Zbigniew Miedziński",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "networked"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_huta_wisla",
+      "name": "Grażyna Wiśniewska",
+      "kind": "executive",
+      "traits": [
+        "stubborn",
+        "loyal"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_stocznia_gdanska",
+      "name": "Bogdan Krajewski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_zboze_wielkopolskie",
+      "name": "Halina Zborowska",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_sady_lubelskie",
+      "name": "Ewa Sadowska",
+      "kind": "executive",
+      "traits": [
+        "stubborn",
+        "principled"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_bank_kongresowy",
+      "name": "Janusz Kowalik",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "vain",
+        "networked"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_siec_baltyk",
+      "name": "Danuta Białek",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "ambitious"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_tabor_nowy",
+      "name": "Krzysztof Nowicki",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
     }
   ]
 }

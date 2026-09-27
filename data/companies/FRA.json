@@ -9,7 +9,8 @@
       "share": 0.28,
       "headcount": 24000,
       "city": "FRI_bordeaux",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_verdelis"
     },
     {
       "id": "FRA_grainval",
@@ -18,7 +19,8 @@
       "share": 0.19,
       "headcount": 15000,
       "city": "FRB_orleans",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_grainval"
     },
     {
       "id": "FRA_aurignac",
@@ -27,7 +29,8 @@
       "share": 0.14,
       "headcount": 112000,
       "city": "FRJ_toulouse",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_aurignac"
     },
     {
       "id": "FRA_sevrenne",
@@ -36,7 +39,8 @@
       "share": 0.1,
       "headcount": 74000,
       "city": "FRC_besancon",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_sevrenne"
     },
     {
       "id": "FRA_meridienne",
@@ -45,7 +49,8 @@
       "share": 0.06,
       "headcount": 68000,
       "city": "FR1_paris",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_meridienne"
     },
     {
       "id": "FRA_halbert",
@@ -54,7 +59,8 @@
       "share": 0.05,
       "headcount": 145000,
       "city": "FRE_lille",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "FRA_chief_halbert"
     }
   ],
   "body": []

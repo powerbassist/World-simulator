@@ -9,7 +9,8 @@
       "share": 0.24,
       "headcount": 18000,
       "city": "DEF_kiel",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_nordfeld"
     },
     {
       "id": "DEU_bauerhof",
@@ -18,7 +19,8 @@
       "share": 0.17,
       "headcount": 21000,
       "city": "DE9_hannover",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_bauerhof"
     },
     {
       "id": "DEU_rheinwerk",
@@ -27,7 +29,8 @@
       "share": 0.13,
       "headcount": 198000,
       "city": "DEA_duesseldorf",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_rheinwerk"
     },
     {
       "id": "DEU_kellermann",
@@ -36,7 +39,8 @@
       "share": 0.11,
       "headcount": 156000,
       "city": "DE1_stuttgart",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_kellermann"
     },
     {
       "id": "DEU_hanseatische",
@@ -45,7 +49,8 @@
       "share": 0.05,
       "headcount": 52000,
       "city": "DE6_hamburg",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_hanseatische"
     },
     {
       "id": "DEU_vollmar",
@@ -54,7 +59,8 @@
       "share": 0.04,
       "headcount": 132000,
       "city": "DEA_essen",
-      "tier": "major"
+      "tier": "major",
+      "chief_id": "DEU_chief_vollmar"
     }
   ],
   "body": []

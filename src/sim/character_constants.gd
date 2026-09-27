@@ -49,8 +49,18 @@ const KIND_COLLECTIVE := ["union_leader", "activist"]
 ## governor, a mayor -- and shares the politician lever (wants + standing).
 const KIND_KEYS := [
 	"politician", "regional_figure", "union_leader", "press_owner", "judge",
-	"activist",
+	"activist", "executive",
 ]
+
+## V4.7a: an executive is a FIRM CHIEF -- the face of a hand-authored major and
+## the future appoint-to-board pool. DECLARED STOPGAP, in the V1.4b sense of
+## that word: executives carry no meter and no wants, so in V4.7 they cannot
+## act, and a kind that cannot act is the inert-content class
+## tests/test_people.gd refuses. What makes this honest rather than silent is
+## that the chief's action is the FIRM's action (V4.7b's autonomy machine acts
+## through the firm), and their own lever -- lobbying spend, a voice in the
+## assembly arithmetic -- is V4.2's to open, recorded in that block's handoff.
+## The exemption in _check_kind_meter_coverage carries the same sentence.
 
 ## The EXISTING meter each metered kind reads. A kind that is neither
 ## `politician`, `regional_figure` nor in this table has no lever at all, and

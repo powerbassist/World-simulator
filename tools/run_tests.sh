@@ -44,6 +44,9 @@ tests=(
   # appears to.
   tests/test_summits.gd
   tests/test_people.gd
+  # V4.7a: the chiefs -- the firm->person edge and the executive stopgap's
+  # schema state, registered at authoring time like everything above it.
+  tests/test_chiefs.gd
   # V4.3's machine test, registered at authoring time in this list rather than
   # discovered later -- the three-instance lesson above (summits, cabinet,
   # companies) is why it lands here unread.

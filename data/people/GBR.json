@@ -1129,6 +1129,73 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "GBR_chief_wexley",
+      "name": "Edmund Wexley",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_northaven",
+      "name": "Fiona Northaven",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_ashcombe",
+      "name": "Desmond Ashcombe",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_tarnbridge",
+      "name": "Alan Tarnbridge",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_sterling_mutual",
+      "name": "Margaret Hollis",
+      "kind": "executive",
+      "traits": [
+        "principled",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_ravenhill",
+      "name": "Stuart Ravenhill",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.69,
+      "bench": true
     }
   ]
 }
