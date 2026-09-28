@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2504,
       "headcount": 25998,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "major",
       "chief_id": "IRL_chief_company_tyrrell"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.2253,
       "headcount": 18420,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "major",
       "chief_id": "IRL_chief_cuddihy_energy"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0522,
       "headcount": 28649,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "major",
       "chief_id": "IRL_chief_timmons"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0533,
       "headcount": 41266,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "major",
       "chief_id": "IRL_chief_hannon_transport"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0663,
       "headcount": 34082,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "major",
       "chief_id": "IRL_chief_comyn_group"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0478,
       "headcount": 26728,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "major",
       "chief_id": "IRL_chief_mulvihill"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.048,
       "headcount": 95701,
-      "city": "IE05_waterford",
+      "city": "IE06_tallaght",
       "tier": "major",
       "chief_id": "IRL_chief_laffan_agri"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0509,
       "headcount": 89945,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "major",
       "chief_id": "IRL_chief_usher"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0394,
       "headcount": 71026,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "major",
       "chief_id": "IRL_chief_o_donoghue_construction"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0231,
       "headcount": 26718,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "major",
       "chief_id": "IRL_chief_daly"
     },
@@ -128,7 +128,7 @@
       "sector": "services",
       "share": 0.0432,
       "headcount": 50334,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "major",
       "chief_id": "IRL_chief_bank_nestor"
     }
@@ -158,7 +158,7 @@
       "sector": "agriculture",
       "share": 0.0141,
       "headcount": 1063,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -203,7 +203,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2531,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -230,7 +230,7 @@
       "sector": "agriculture",
       "share": 0.0247,
       "headcount": 2018,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -248,7 +248,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2482,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -257,7 +257,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2309,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -266,7 +266,7 @@
       "sector": "agriculture",
       "share": 0.024,
       "headcount": 1826,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "body"
     },
     {
@@ -320,7 +320,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20684,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -329,7 +329,7 @@
       "sector": "industry",
       "share": 0.0145,
       "headcount": 10330,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "body"
     },
     {
@@ -347,7 +347,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20534,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -446,7 +446,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21327,
-      "city": "IE05_waterford",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -464,7 +464,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18550,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "body"
     },
     {
@@ -482,7 +482,7 @@
       "sector": "industry",
       "share": 0.0251,
       "headcount": 16215,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -491,7 +491,7 @@
       "sector": "industry",
       "share": 0.0128,
       "headcount": 8391,
-      "city": "IE05_waterford",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -554,7 +554,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -563,7 +563,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24431,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -581,7 +581,7 @@
       "sector": "services",
       "share": 0.0093,
       "headcount": 15284,
-      "city": "IE05_waterford",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -590,7 +590,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24754,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -662,7 +662,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -680,7 +680,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24669,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -689,7 +689,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24308,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -716,7 +716,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23854,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -725,7 +725,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22930,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -734,7 +734,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE06_tallaght",
+      "city": "IE05_waterford",
       "tier": "body"
     },
     {
@@ -743,7 +743,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22495,
-      "city": "IE04_galway",
+      "city": "IE05_limerick",
       "tier": "body"
     },
     {
@@ -761,7 +761,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -779,7 +779,7 @@
       "sector": "services",
       "share": 0.0114,
       "headcount": 16684,
-      "city": "IE05_limerick",
+      "city": "IE06_tallaght",
       "tier": "body"
     },
     {
@@ -806,7 +806,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -842,7 +842,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "IE05_limerick",
+      "city": "IE04_galway",
       "tier": "body"
     },
     {
@@ -851,7 +851,7 @@
       "sector": "services",
       "share": 0.0063,
       "headcount": 9157,
-      "city": "IE05_waterford",
+      "city": "IE06_tallaght",
       "tier": "body"
     }
   ]

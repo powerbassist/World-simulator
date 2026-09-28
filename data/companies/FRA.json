@@ -70,7 +70,7 @@
       "sector": "agriculture",
       "share": 0.025,
       "headcount": 2055,
-      "city": "FRF_metz",
+      "city": "FR1_argenteuil",
       "tier": "body"
     },
     {
@@ -88,7 +88,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2509,
-      "city": "FRI_merignac",
+      "city": "FRF_colmar",
       "tier": "body"
     },
     {
@@ -97,7 +97,7 @@
       "sector": "agriculture",
       "share": 0.021,
       "headcount": 1637,
-      "city": "FRK_grenoble",
+      "city": "FRL_avignon",
       "tier": "body"
     },
     {
@@ -133,7 +133,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2213,
-      "city": "FRE_lille",
+      "city": "FRH_brest",
       "tier": "body"
     },
     {
@@ -142,7 +142,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2646,
-      "city": "FRI_poitiers",
+      "city": "FR1_saint_maur_des_fosses",
       "tier": "body"
     },
     {
@@ -151,7 +151,7 @@
       "sector": "agriculture",
       "share": 0.0188,
       "headcount": 1486,
-      "city": "FRL_avignon",
+      "city": "FR1_versailles",
       "tier": "body"
     },
     {
@@ -169,7 +169,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2434,
-      "city": "FRM_ajaccio",
+      "city": "FRK_lyon",
       "tier": "body"
     },
     {
@@ -178,7 +178,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2595,
-      "city": "FRK_lyon",
+      "city": "FRJ_montpellier",
       "tier": "body"
     },
     {
@@ -214,7 +214,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19921,
-      "city": "FRF_colmar",
+      "city": "FRG_saint_nazaire",
       "tier": "body"
     },
     {
@@ -232,7 +232,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21528,
-      "city": "FRI_merignac",
+      "city": "FRF_colmar",
       "tier": "body"
     },
     {
@@ -241,7 +241,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21990,
-      "city": "FRE_lille",
+      "city": "FRG_le_mans",
       "tier": "body"
     },
     {
@@ -250,7 +250,7 @@
       "sector": "industry",
       "share": 0.0265,
       "headcount": 16257,
-      "city": "FRE_amiens",
+      "city": "FR1_boulogne_billancourt",
       "tier": "body"
     },
     {
@@ -268,7 +268,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20111,
-      "city": "FRJ_toulouse",
+      "city": "FRL_nice",
       "tier": "body"
     },
     {
@@ -277,7 +277,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19809,
-      "city": "FRE_lille",
+      "city": "FRG_le_mans",
       "tier": "body"
     },
     {
@@ -295,7 +295,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19661,
-      "city": "FRL_toulon",
+      "city": "FRF_metz",
       "tier": "body"
     },
     {
@@ -313,7 +313,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18928,
-      "city": "FRL_nice",
+      "city": "FRI_bordeaux",
       "tier": "body"
     },
     {
@@ -322,7 +322,7 @@
       "sector": "industry",
       "share": 0.0205,
       "headcount": 14370,
-      "city": "FRF_nancy",
+      "city": "FR1_asnieres_sur_seine",
       "tier": "body"
     },
     {
@@ -331,7 +331,7 @@
       "sector": "industry",
       "share": 0.0225,
       "headcount": 16112,
-      "city": "FRL_juan_les_pins",
+      "city": "FRF_colmar",
       "tier": "body"
     },
     {
@@ -358,7 +358,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19833,
-      "city": "FRD_le_havre",
+      "city": "FRF_reims",
       "tier": "body"
     },
     {
@@ -367,7 +367,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19182,
-      "city": "FRJ_montpellier",
+      "city": "FR1_saint_quentin_en_yvelines",
       "tier": "body"
     },
     {
@@ -385,7 +385,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20256,
-      "city": "FRJ_toulouse",
+      "city": "FRL_nice",
       "tier": "body"
     },
     {
@@ -430,7 +430,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24150,
-      "city": "FRB_bourges",
+      "city": "FR1_montreuil",
       "tier": "body"
     },
     {
@@ -439,7 +439,7 @@
       "sector": "services",
       "share": 0.0063,
       "headcount": 8786,
-      "city": "FRF_nancy",
+      "city": "FRL_avignon",
       "tier": "body"
     },
     {
@@ -448,7 +448,7 @@
       "sector": "services",
       "share": 0.0135,
       "headcount": 19728,
-      "city": "FRF_reims",
+      "city": "FRI_limoges",
       "tier": "body"
     },
     {
@@ -457,7 +457,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22848,
-      "city": "FRJ_beziers",
+      "city": "FR1_aubervilliers",
       "tier": "body"
     },
     {
@@ -475,7 +475,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22634,
-      "city": "FR1_noisy_le_grand",
+      "city": "FRG_la_roche_sur_yon",
       "tier": "body"
     },
     {
@@ -493,7 +493,7 @@
       "sector": "services",
       "share": 0.0089,
       "headcount": 12756,
-      "city": "FRI_limoges",
+      "city": "FR1_argenteuil",
       "tier": "body"
     },
     {
@@ -511,7 +511,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24596,
-      "city": "FRG_angers",
+      "city": "FRJ_nimes",
       "tier": "body"
     },
     {
@@ -520,7 +520,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22544,
-      "city": "FRD_caen",
+      "city": "FRF_metz",
       "tier": "body"
     },
     {
@@ -529,7 +529,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24901,
-      "city": "FRL_la_seyne_sur_mer",
+      "city": "FRI_merignac",
       "tier": "body"
     },
     {
@@ -565,7 +565,7 @@
       "sector": "services",
       "share": 0.0137,
       "headcount": 21181,
-      "city": "FRG_angers",
+      "city": "FRJ_nimes",
       "tier": "body"
     },
     {
@@ -574,7 +574,7 @@
       "sector": "services",
       "share": 0.0148,
       "headcount": 23948,
-      "city": "FRL_nice",
+      "city": "FRI_bordeaux",
       "tier": "body"
     },
     {
@@ -610,7 +610,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23753,
-      "city": "FRG_angers",
+      "city": "FRJ_nimes",
       "tier": "body"
     },
     {
@@ -619,7 +619,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRL_avignon",
+      "city": "FR1_versailles",
       "tier": "body"
     },
     {
@@ -628,7 +628,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24110,
-      "city": "FRD_le_havre",
+      "city": "FRH_rennes",
       "tier": "body"
     },
     {
@@ -637,7 +637,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FR1_cergy_pontoise",
+      "city": "FR1_champigny_sur_marne",
       "tier": "body"
     },
     {
@@ -646,7 +646,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23914,
-      "city": "FRL_la_seyne_sur_mer",
+      "city": "FRI_merignac",
       "tier": "body"
     },
     {
@@ -655,7 +655,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRM_ajaccio",
+      "city": "FRJ_toulouse",
       "tier": "body"
     },
     {
@@ -682,7 +682,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRF_troyes",
+      "city": "FR1_maison_blanche",
       "tier": "body"
     },
     {
@@ -691,7 +691,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRM_ajaccio",
+      "city": "FRJ_toulouse",
       "tier": "body"
     },
     {
@@ -709,7 +709,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23482,
-      "city": "FRH_brest",
+      "city": "FRL_aix_en_provence",
       "tier": "body"
     },
     {
@@ -718,7 +718,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRL_nice",
+      "city": "FRF_strasbourg",
       "tier": "body"
     },
     {
@@ -727,7 +727,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24082,
-      "city": "FRM_ajaccio",
+      "city": "FRK_lyon",
       "tier": "body"
     },
     {
@@ -736,7 +736,7 @@
       "sector": "services",
       "share": 0.0138,
       "headcount": 22250,
-      "city": "FRK_valence",
+      "city": "FR1_noisy_le_grand",
       "tier": "body"
     },
     {
@@ -745,7 +745,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23038,
-      "city": "FRG_le_mans",
+      "city": "FRB_tours",
       "tier": "body"
     },
     {
@@ -754,7 +754,7 @@
       "sector": "services",
       "share": 0.0113,
       "headcount": 18167,
-      "city": "FRM_ajaccio",
+      "city": "FRJ_toulouse",
       "tier": "body"
     },
     {
@@ -772,7 +772,7 @@
       "sector": "services",
       "share": 0.0066,
       "headcount": 9089,
-      "city": "FRH_quimper",
+      "city": "FR1_nanterre",
       "tier": "body"
     },
     {
@@ -790,7 +790,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24099,
-      "city": "FRK_lyon",
+      "city": "FRI_bordeaux",
       "tier": "body"
     },
     {
@@ -799,7 +799,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23118,
-      "city": "FRG_saint_nazaire",
+      "city": "FR1_courbevoie",
       "tier": "body"
     },
     {
@@ -817,7 +817,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRJ_perpignan",
+      "city": "FRE_dunkirk",
       "tier": "body"
     },
     {
@@ -835,7 +835,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23828,
-      "city": "FR1_gare",
+      "city": "FRL_juan_les_pins",
       "tier": "body"
     },
     {
@@ -844,7 +844,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRF_nancy",
+      "city": "FR1_asnieres_sur_seine",
       "tier": "body"
     },
     {
@@ -853,7 +853,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRG_le_mans",
+      "city": "FRB_tours",
       "tier": "body"
     },
     {
@@ -862,7 +862,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FRI_la_rochelle",
+      "city": "FRE_calais",
       "tier": "body"
     },
     {

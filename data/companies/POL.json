@@ -90,7 +90,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2194,
-      "city": "PL21_krakow",
+      "city": "PL71_lodz",
       "tier": "body"
     },
     {
@@ -108,7 +108,7 @@
       "sector": "agriculture",
       "share": 0.0227,
       "headcount": 1809,
-      "city": "PL41_kalisz",
+      "city": "PL41_pila",
       "tier": "body"
     },
     {
@@ -144,7 +144,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2284,
-      "city": "PL62_elblag",
+      "city": "PL22_bielsko_biala",
       "tier": "body"
     },
     {
@@ -162,7 +162,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2580,
-      "city": "PL22_tychy",
+      "city": "PL41_ostrow_wielkopolski",
       "tier": "body"
     },
     {
@@ -171,7 +171,7 @@
       "sector": "agriculture",
       "share": 0.0209,
       "headcount": 1527,
-      "city": "PL51_wroclaw",
+      "city": "PL63_gdansk",
       "tier": "body"
     },
     {
@@ -180,7 +180,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2239,
-      "city": "PL21_krakow",
+      "city": "PL41_poznan",
       "tier": "body"
     },
     {
@@ -207,7 +207,7 @@
       "sector": "agriculture",
       "share": 0.0137,
       "headcount": 1043,
-      "city": "PL22_myslowice",
+      "city": "PL82_mielec",
       "tier": "body"
     },
     {
@@ -216,7 +216,7 @@
       "sector": "agriculture",
       "share": 0.0285,
       "headcount": 2382,
-      "city": "PL22_myslowice",
+      "city": "PL22_raciborz",
       "tier": "body"
     },
     {
@@ -225,7 +225,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2258,
-      "city": "PL22_zabrze",
+      "city": "PL22_dabrowa_gornicza",
       "tier": "body"
     },
     {
@@ -234,7 +234,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2213,
-      "city": "PL51_jelenia_gora",
+      "city": "PL61_fordon",
       "tier": "body"
     },
     {
@@ -243,7 +243,7 @@
       "sector": "industry",
       "share": 0.027,
       "headcount": 18761,
-      "city": "PL43_zielona_gora",
+      "city": "PL91_mokotow",
       "tier": "body"
     },
     {
@@ -252,7 +252,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18148,
-      "city": "PL22_rybnik",
+      "city": "PL92_siedlce",
       "tier": "body"
     },
     {
@@ -261,7 +261,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21485,
-      "city": "PL72_ostrowiec_swietokrzyski",
+      "city": "PL91_bielany",
       "tier": "body"
     },
     {
@@ -297,7 +297,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18527,
-      "city": "PL91_praga_poludnie",
+      "city": "PL51_walbrzych",
       "tier": "body"
     },
     {
@@ -306,7 +306,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18265,
-      "city": "PL72_kielce",
+      "city": "PL22_katowice",
       "tier": "body"
     },
     {
@@ -315,7 +315,7 @@
       "sector": "industry",
       "share": 0.025,
       "headcount": 15162,
-      "city": "PL71_lodz",
+      "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
@@ -351,7 +351,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20610,
-      "city": "PL91_bielany",
+      "city": "PL91_srodmiescie",
       "tier": "body"
     },
     {
@@ -360,7 +360,7 @@
       "sector": "industry",
       "share": 0.0183,
       "headcount": 13059,
-      "city": "PL71_tomaszow_mazowiecki",
+      "city": "PL41_gniezno",
       "tier": "body"
     },
     {
@@ -369,7 +369,7 @@
       "sector": "industry",
       "share": 0.0173,
       "headcount": 10619,
-      "city": "PL71_piotrkow_trybunalski",
+      "city": "PL61_inowroclaw",
       "tier": "body"
     },
     {
@@ -378,7 +378,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19476,
-      "city": "PL41_konin",
+      "city": "PL22_zory",
       "tier": "body"
     },
     {
@@ -387,7 +387,7 @@
       "sector": "services",
       "share": 0.0097,
       "headcount": 15348,
-      "city": "PL63_slupsk",
+      "city": "PL42_koszalin",
       "tier": "body"
     },
     {
@@ -396,7 +396,7 @@
       "sector": "services",
       "share": 0.0155,
       "headcount": 24026,
-      "city": "PL62_olsztyn",
+      "city": "PL22_sosnowiec",
       "tier": "body"
     },
     {
@@ -423,7 +423,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24638,
-      "city": "PL84_lomza",
+      "city": "PL92_plock",
       "tier": "body"
     },
     {
@@ -450,7 +450,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23123,
-      "city": "PL52_kedzierzyn_kozle",
+      "city": "PL91_ursynow",
       "tier": "body"
     },
     {
@@ -468,7 +468,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL71_lodz",
+      "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
@@ -495,7 +495,7 @@
       "sector": "services",
       "share": 0.015,
       "headcount": 23200,
-      "city": "PL63_gdansk",
+      "city": "PL42_szczecin",
       "tier": "body"
     },
     {
@@ -504,7 +504,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL51_jelenia_gora",
+      "city": "PL84_suwalki",
       "tier": "body"
     },
     {
@@ -513,7 +513,7 @@
       "sector": "services",
       "share": 0.0149,
       "headcount": 21235,
-      "city": "PL72_kielce",
+      "city": "PL22_katowice",
       "tier": "body"
     },
     {
@@ -522,7 +522,7 @@
       "sector": "services",
       "share": 0.0147,
       "headcount": 23063,
-      "city": "PL84_bialystok",
+      "city": "PL21_krakow",
       "tier": "body"
     },
     {
@@ -531,7 +531,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL84_bialystok",
+      "city": "PL21_krakow",
       "tier": "body"
     },
     {
@@ -549,7 +549,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL91_praga_poludnie",
+      "city": "PL91_targowek",
       "tier": "body"
     },
     {
@@ -558,7 +558,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24388,
-      "city": "PL63_slupsk",
+      "city": "PL42_koszalin",
       "tier": "body"
     },
     {
@@ -567,7 +567,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 18776,
-      "city": "PL63_slupsk",
+      "city": "PL42_koszalin",
       "tier": "body"
     },
     {
@@ -585,7 +585,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL22_rybnik",
+      "city": "PL92_siedlce",
       "tier": "body"
     },
     {
@@ -594,7 +594,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL41_poznan",
+      "city": "PL63_gdynia",
       "tier": "body"
     },
     {
@@ -612,7 +612,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22470,
-      "city": "PL72_ostrowiec_swietokrzyski",
+      "city": "PL91_bielany",
       "tier": "body"
     },
     {
@@ -621,7 +621,7 @@
       "sector": "services",
       "share": 0.0075,
       "headcount": 12340,
-      "city": "PL62_olsztyn",
+      "city": "PL91_mokotow",
       "tier": "body"
     },
     {
@@ -630,7 +630,7 @@
       "sector": "services",
       "share": 0.0153,
       "headcount": 23859,
-      "city": "PL91_ursynow",
+      "city": "PL21_tarnow",
       "tier": "body"
     },
     {
@@ -648,7 +648,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 17841,
-      "city": "PL84_bialystok",
+      "city": "PL21_krakow",
       "tier": "body"
     },
     {
@@ -657,7 +657,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL51_wroclaw",
+      "city": "PL63_gdansk",
       "tier": "body"
     },
     {
@@ -675,7 +675,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22473,
-      "city": "PL51_walbrzych",
+      "city": "PL21_tarnow",
       "tier": "body"
     },
     {
@@ -702,7 +702,7 @@
       "sector": "services",
       "share": 0.0165,
       "headcount": 25000,
-      "city": "PL71_tomaszow_mazowiecki",
+      "city": "PL71_pabianice",
       "tier": "body"
     },
     {
@@ -720,7 +720,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22887,
-      "city": "PL71_piotrkow_trybunalski",
+      "city": "PL51_lubin",
       "tier": "body"
     },
     {
@@ -738,7 +738,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23808,
-      "city": "PL91_wawer",
+      "city": "PL41_leszno",
       "tier": "body"
     },
     {
@@ -747,7 +747,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "PL71_lodz",
+      "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
@@ -756,7 +756,7 @@
       "sector": "services",
       "share": 0.0098,
       "headcount": 13639,
-      "city": "PL71_lodz",
+      "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
@@ -765,7 +765,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23541,
-      "city": "PL63_tczew",
+      "city": "PL82_stalowa_wola",
       "tier": "body"
     },
     {
@@ -774,7 +774,7 @@
       "sector": "services",
       "share": 0.0098,
       "headcount": 15965,
-      "city": "PL71_lodz",
+      "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
@@ -783,7 +783,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24913,
-      "city": "PL82_rzeszow",
+      "city": "PL22_bytom",
       "tier": "body"
     },
     {
@@ -792,7 +792,7 @@
       "sector": "services",
       "share": 0.0123,
       "headcount": 18331,
-      "city": "PL52_opole",
+      "city": "PL22_czestochowa",
       "tier": "body"
     },
     {

@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.1892,
       "headcount": 11841,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "major",
       "chief_id": "SVK_chief_teren"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.28,
       "headcount": 28134,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "major",
       "chief_id": "SVK_chief_obchodny_dom_klimko"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0704,
       "headcount": 58380,
-      "city": "SK04_presov",
+      "city": "SK03_zilina",
       "tier": "major",
       "chief_id": "SVK_chief_urda"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0995,
       "headcount": 63189,
-      "city": "SK03_banska_bystrica",
+      "city": "SK04_presov",
       "tier": "major",
       "chief_id": "SVK_chief_spolocnost_senko"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0563,
       "headcount": 30336,
-      "city": "SK03_banska_bystrica",
+      "city": "SK04_presov",
       "tier": "major",
       "chief_id": "SVK_chief_banka_slavik"
     },
@@ -58,7 +58,7 @@
       "sector": "services",
       "share": 0.0436,
       "headcount": 52154,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "major",
       "chief_id": "SVK_chief_martinak_stavebnictvo"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0342,
       "headcount": 67071,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "major",
       "chief_id": "SVK_chief_teren_logistika"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0476,
       "headcount": 63749,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "major",
       "chief_id": "SVK_chief_hruska_skupina"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0379,
       "headcount": 49723,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "major",
       "chief_id": "SVK_chief_spolocnost_cipov"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0484,
       "headcount": 82098,
-      "city": "SK03_banska_bystrica",
+      "city": "SK04_presov",
       "tier": "major",
       "chief_id": "SVK_chief_spolocnost_palarik"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0308,
       "headcount": 45475,
-      "city": "SK04_presov",
+      "city": "SK03_zilina",
       "tier": "major",
       "chief_id": "SVK_chief_vranka"
     }
@@ -130,7 +130,7 @@
       "sector": "agriculture",
       "share": 0.027,
       "headcount": 2021,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.0237,
       "headcount": 1876,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -166,7 +166,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2371,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -184,7 +184,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2673,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -193,7 +193,7 @@
       "sector": "agriculture",
       "share": 0.0108,
       "headcount": 927,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -211,7 +211,7 @@
       "sector": "agriculture",
       "share": 0.0258,
       "headcount": 1980,
-      "city": "SK03_zilina",
+      "city": "SK04_presov",
       "tier": "body"
     },
     {
@@ -220,7 +220,7 @@
       "sector": "agriculture",
       "share": 0.0192,
       "headcount": 1481,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.0188,
       "headcount": 1647,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -238,7 +238,7 @@
       "sector": "agriculture",
       "share": 0.0291,
       "headcount": 2518,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -247,7 +247,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2394,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -265,7 +265,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2343,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21284,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -292,7 +292,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20597,
-      "city": "SK03_zilina",
+      "city": "SK04_presov",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.0293,
       "headcount": 19295,
-      "city": "SK02_nitra",
+      "city": "SK02_trnava",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.0265,
       "headcount": 17815,
-      "city": "SK03_zilina",
+      "city": "SK04_presov",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.0129,
       "headcount": 9203,
-      "city": "SK03_banska_bystrica",
+      "city": "SK03_zilina",
       "tier": "body"
     },
     {
@@ -346,7 +346,7 @@
       "sector": "industry",
       "share": 0.0197,
       "headcount": 13060,
-      "city": "SK03_banska_bystrica",
+      "city": "SK03_zilina",
       "tier": "body"
     },
     {
@@ -355,7 +355,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20462,
-      "city": "SK02_nitra",
+      "city": "SK02_trnava",
       "tier": "body"
     },
     {
@@ -364,7 +364,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20920,
-      "city": "SK04_presov",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "industry",
       "share": 0.0171,
       "headcount": 11434,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -391,7 +391,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18318,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -409,7 +409,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20337,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.0136,
       "headcount": 8834,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -436,7 +436,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18761,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -445,7 +445,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19383,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -454,7 +454,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19772,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -463,7 +463,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18711,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -472,7 +472,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20660,
-      "city": "SK04_presov",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -499,7 +499,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22848,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -508,7 +508,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK04_presov",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -517,7 +517,7 @@
       "sector": "services",
       "share": 0.0119,
       "headcount": 17653,
-      "city": "SK02_nitra",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.0099,
       "headcount": 14659,
-      "city": "SK02_nitra",
+      "city": "SK02_trnava",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "sector": "services",
       "share": 0.0098,
       "headcount": 15901,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -643,7 +643,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22926,
-      "city": "SK04_kosice",
+      "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
@@ -652,7 +652,7 @@
       "sector": "services",
       "share": 0.0133,
       "headcount": 20552,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -670,7 +670,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0073,
       "headcount": 11880,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -688,7 +688,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK04_presov",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -697,7 +697,7 @@
       "sector": "services",
       "share": 0.016,
       "headcount": 22651,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -706,7 +706,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24761,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -715,7 +715,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK03_banska_bystrica",
+      "city": "SK04_presov",
       "tier": "body"
     },
     {
@@ -724,7 +724,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22432,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -733,7 +733,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK01_petrzalka",
+      "city": "SK04_kosice",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23179,
-      "city": "SK04_presov",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
@@ -769,7 +769,7 @@
       "sector": "services",
       "share": 0.0153,
       "headcount": 24710,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -787,7 +787,7 @@
       "sector": "services",
       "share": 0.0122,
       "headcount": 19646,
-      "city": "SK04_kosice",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK04_presov",
+      "city": "SK03_zilina",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK03_zilina",
+      "city": "SK02_nitra",
       "tier": "body"
     },
     {
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SK02_nitra",
+      "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {

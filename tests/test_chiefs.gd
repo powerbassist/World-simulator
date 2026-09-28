@@ -60,10 +60,12 @@ func _test_every_major_has_a_resolving_chief() -> void:
 				_fail("%s chief '%s' is kind '%s', not executive" % [
 					company.id, company.chief_id, chief.kind])
 	# A3 grew the majors to every nation: the A2 pin was exactly 26 (the four
-	# authored nations); the A3 register holds 10-15 majors for each of the
-	# 29, so the pin is now the BAND the tier doc authors, not a count.
+	# authored nations carry 6/6/6/8); the 25 generated nations carry 10-14
+	# each, so the pin is the BAND the tier doc authors over the whole
+	# roster, not a count. (29 x 10 = 290 is the band's arithmetic floor, not
+	# a claim every nation carries ten -- the authored four sit under it.)
 	if majors < 290 or majors > 435:
-		_fail("expected majors in [290, 435] (29 nations x [10, 15]), found %d" % majors)
+		_fail("expected majors in [290, 435] (the tier-doc band over the roster), found %d" % majors)
 
 
 func _test_chiefs_are_the_declared_stopgap() -> void:

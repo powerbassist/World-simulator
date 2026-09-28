@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.192,
       "headcount": 17057,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "major",
       "chief_id": "CHE_chief_handelshaus_dutsch"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0555,
       "headcount": 49548,
-      "city": "CH06_luzern",
+      "city": "CH02_bern",
       "tier": "major",
       "chief_id": "CHE_chief_wyss"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0506,
       "headcount": 87903,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "major",
       "chief_id": "CHE_chief_handelshaus_nussbaumer"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0296,
       "headcount": 42735,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "major",
       "chief_id": "CHE_chief_fuchs_gruppe"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0275,
       "headcount": 54751,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "major",
       "chief_id": "CHE_chief_schnyder_landwirtschaft"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0626,
       "headcount": 115365,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "major",
       "chief_id": "CHE_chief_gesellschaft_ottiger"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0286,
       "headcount": 56118,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "major",
       "chief_id": "CHE_chief_bank_giezendanner"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0506,
       "headcount": 61964,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "major",
       "chief_id": "CHE_chief_quaderer"
     }
@@ -130,7 +130,7 @@
       "sector": "agriculture",
       "share": 0.0196,
       "headcount": 1551,
-      "city": "CH04_winterthur",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.0184,
       "headcount": 1499,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -157,7 +157,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2201,
-      "city": "CH04_winterthur",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -175,7 +175,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2657,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.0282,
       "headcount": 2214,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.023,
       "headcount": 1809,
-      "city": "CH05_sankt_gallen",
+      "city": "CH07_lugano",
       "tier": "body"
     },
     {
@@ -247,7 +247,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2276,
-      "city": "CH06_luzern",
+      "city": "CH02_bern",
       "tier": "body"
     },
     {
@@ -265,7 +265,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21544,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "industry",
       "share": 0.0225,
       "headcount": 16626,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -283,7 +283,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21423,
-      "city": "CH05_sankt_gallen",
+      "city": "CH07_lugano",
       "tier": "body"
     },
     {
@@ -292,7 +292,7 @@
       "sector": "industry",
       "share": 0.0293,
       "headcount": 20202,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.0292,
       "headcount": 20687,
-      "city": "CH06_luzern",
+      "city": "CH02_bern",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.019,
       "headcount": 12789,
-      "city": "CH02_bern",
+      "city": "CH05_sankt_gallen",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.0156,
       "headcount": 11133,
-      "city": "CH05_sankt_gallen",
+      "city": "CH07_lugano",
       "tier": "body"
     },
     {
@@ -337,7 +337,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19453,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -355,7 +355,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20009,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -364,7 +364,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20367,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "industry",
       "share": 0.0293,
       "headcount": 18373,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -382,7 +382,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18761,
-      "city": "CH04_winterthur",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21873,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -445,7 +445,7 @@
       "sector": "industry",
       "share": 0.0233,
       "headcount": 16448,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -454,7 +454,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19728,
-      "city": "CH06_luzern",
+      "city": "CH02_bern",
       "tier": "body"
     },
     {
@@ -472,7 +472,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20053,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -481,7 +481,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -490,7 +490,7 @@
       "sector": "services",
       "share": 0.0066,
       "headcount": 10145,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -499,7 +499,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24840,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -508,7 +508,7 @@
       "sector": "services",
       "share": 0.0102,
       "headcount": 14083,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -544,7 +544,7 @@
       "sector": "services",
       "share": 0.0153,
       "headcount": 21748,
-      "city": "CH05_sankt_gallen",
+      "city": "CH07_lugano",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23631,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -562,7 +562,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -571,7 +571,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.0062,
       "headcount": 9726,
-      "city": "CH02_bern",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -589,7 +589,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22652,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -598,7 +598,7 @@
       "sector": "services",
       "share": 0.016,
       "headcount": 23234,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -616,7 +616,7 @@
       "sector": "services",
       "share": 0.0152,
       "headcount": 21840,
-      "city": "CH05_sankt_gallen",
+      "city": "CH07_lugano",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24844,
-      "city": "CH04_winterthur",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22617,
-      "city": "CH04_winterthur",
+      "city": "CH06_luzern",
       "tier": "body"
     },
     {
@@ -661,7 +661,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH01_lausanne",
+      "city": "CH04_winterthur",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24907,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -715,7 +715,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -724,7 +724,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH01_geneva",
+      "city": "CH02_bern",
       "tier": "body"
     },
     {
@@ -733,7 +733,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH03_basel",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH02_bern",
+      "city": "CH05_sankt_gallen",
       "tier": "body"
     },
     {
@@ -760,7 +760,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22972,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {
@@ -787,7 +787,7 @@
       "sector": "services",
       "share": 0.0144,
       "headcount": 19577,
-      "city": "CH01_geneva",
+      "city": "CH01_lausanne",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0141,
       "headcount": 19747,
-      "city": "CH02_bern",
+      "city": "CH05_sankt_gallen",
       "tier": "body"
     },
     {
@@ -805,7 +805,7 @@
       "sector": "services",
       "share": 0.0125,
       "headcount": 17633,
-      "city": "CH02_bern",
+      "city": "CH05_sankt_gallen",
       "tier": "body"
     },
     {
@@ -832,7 +832,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CH07_lugano",
+      "city": "CH01_geneva",
       "tier": "body"
     },
     {

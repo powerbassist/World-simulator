@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2314,
       "headcount": 14472,
-      "city": "BE2_gent",
+      "city": "BE1_anderlecht",
       "tier": "major",
       "chief_id": "BEL_chief_bank_jongen"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.173,
       "headcount": 15999,
-      "city": "BE2_gent",
+      "city": "BE1_anderlecht",
       "tier": "major",
       "chief_id": "BEL_chief_compagnie_absil"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0367,
       "headcount": 21535,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "major",
       "chief_id": "BEL_chief_vennootschap_claes"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0502,
       "headcount": 32361,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "major",
       "chief_id": "BEL_chief_compagnie_floor"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.047,
       "headcount": 27994,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "major",
       "chief_id": "BEL_chief_raskin_industrie"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0659,
       "headcount": 86272,
-      "city": "BE2_gent",
+      "city": "BE1_anderlecht",
       "tier": "major",
       "chief_id": "BEL_chief_hoet"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0281,
       "headcount": 42335,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "major",
       "chief_id": "BEL_chief_jongen_industrie"
     },
@@ -128,7 +128,7 @@
       "sector": "services",
       "share": 0.0327,
       "headcount": 55333,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "major",
       "chief_id": "BEL_chief_vanaerschot_groep"
     }
@@ -140,7 +140,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2637,
-      "city": "BE2_antwerp",
+      "city": "BE3_charleroi",
       "tier": "body"
     },
     {
@@ -158,7 +158,7 @@
       "sector": "agriculture",
       "share": 0.0099,
       "headcount": 849,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -185,7 +185,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2529,
-      "city": "BE3_namur",
+      "city": "BE2_leuven",
       "tier": "body"
     },
     {
@@ -194,7 +194,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2243,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -221,7 +221,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2275,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -239,7 +239,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2475,
-      "city": "BE2_gent",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -266,7 +266,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2459,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -275,7 +275,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2382,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -293,7 +293,7 @@
       "sector": "industry",
       "share": 0.025,
       "headcount": 17529,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -302,7 +302,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18630,
-      "city": "BE3_mons",
+      "city": "BE2_deurne",
       "tier": "body"
     },
     {
@@ -311,7 +311,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20865,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -320,7 +320,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18356,
-      "city": "BE2_leuven",
+      "city": "BE3_la_louviere",
       "tier": "body"
     },
     {
@@ -329,7 +329,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21854,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -365,7 +365,7 @@
       "sector": "industry",
       "share": 0.0249,
       "headcount": 18390,
-      "city": "BE2_brugge",
+      "city": "BE2_mechelen",
       "tier": "body"
     },
     {
@@ -374,7 +374,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20525,
-      "city": "BE1_anderlecht",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -383,7 +383,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18696,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -392,7 +392,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19563,
-      "city": "BE2_hasselt",
+      "city": "BE3_tournai",
       "tier": "body"
     },
     {
@@ -428,7 +428,7 @@
       "sector": "industry",
       "share": 0.0107,
       "headcount": 6952,
-      "city": "BE2_sint_niklaas",
+      "city": "BE2_genk",
       "tier": "body"
     },
     {
@@ -446,7 +446,7 @@
       "sector": "industry",
       "share": 0.0252,
       "headcount": 17019,
-      "city": "BE2_deurne",
+      "city": "BE2_kortrijk",
       "tier": "body"
     },
     {
@@ -455,7 +455,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21538,
-      "city": "BE2_brugge",
+      "city": "BE2_mechelen",
       "tier": "body"
     },
     {
@@ -464,7 +464,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18162,
-      "city": "BE2_gent",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -491,7 +491,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21961,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -500,7 +500,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19976,
-      "city": "BE3_charleroi",
+      "city": "BE3_liege",
       "tier": "body"
     },
     {
@@ -518,7 +518,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24151,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -536,7 +536,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE2_aalst",
+      "city": "BE3_tournai",
       "tier": "body"
     },
     {
@@ -572,7 +572,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -581,7 +581,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24519,
-      "city": "BE2_gent",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -590,7 +590,7 @@
       "sector": "services",
       "share": 0.0152,
       "headcount": 21903,
-      "city": "BE2_gent",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -599,7 +599,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24971,
-      "city": "BE3_charleroi",
+      "city": "BE3_liege",
       "tier": "body"
     },
     {
@@ -608,7 +608,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -617,7 +617,7 @@
       "sector": "services",
       "share": 0.0108,
       "headcount": 17778,
-      "city": "BE1_anderlecht",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -626,7 +626,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -644,7 +644,7 @@
       "sector": "services",
       "share": 0.0143,
       "headcount": 21130,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -653,7 +653,7 @@
       "sector": "services",
       "share": 0.0073,
       "headcount": 9924,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -662,7 +662,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23938,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -671,7 +671,7 @@
       "sector": "services",
       "share": 0.0111,
       "headcount": 18104,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -680,7 +680,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24197,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -689,7 +689,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "body"
     },
     {
@@ -707,7 +707,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -716,7 +716,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22725,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -743,7 +743,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24044,
-      "city": "BE2_antwerp",
+      "city": "BE3_charleroi",
       "tier": "body"
     },
     {
@@ -779,7 +779,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22897,
-      "city": "BE2_gent",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -788,7 +788,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE2_brugge",
+      "city": "BE2_aalst",
       "tier": "body"
     },
     {
@@ -797,7 +797,7 @@
       "sector": "services",
       "share": 0.0081,
       "headcount": 12489,
-      "city": "BE3_namur",
+      "city": "BE2_leuven",
       "tier": "body"
     },
     {
@@ -806,7 +806,7 @@
       "sector": "services",
       "share": 0.012,
       "headcount": 17064,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -815,7 +815,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE1_anderlecht",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -833,7 +833,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BE3_la_louviere",
+      "city": "BE2_deurne",
       "tier": "body"
     },
     {
@@ -842,7 +842,7 @@
       "sector": "services",
       "share": 0.0091,
       "headcount": 14265,
-      "city": "BE3_liege",
+      "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
@@ -869,7 +869,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24871,
-      "city": "BE2_antwerp",
+      "city": "BE3_charleroi",
       "tier": "body"
     },
     {
@@ -878,7 +878,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22900,
-      "city": "BE3_seraing",
+      "city": "BE3_la_louviere",
       "tier": "body"
     },
     {
@@ -887,7 +887,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23050,
-      "city": "BE2_antwerp",
+      "city": "BE2_gent",
       "tier": "body"
     }
   ]

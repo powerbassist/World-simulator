@@ -70,7 +70,7 @@
       "sector": "agriculture",
       "share": 0.0148,
       "headcount": 1218,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -79,7 +79,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2394,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -88,7 +88,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2242,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -97,7 +97,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2594,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -106,7 +106,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2530,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -115,7 +115,7 @@
       "sector": "agriculture",
       "share": 0.0277,
       "headcount": 2378,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -124,7 +124,7 @@
       "sector": "agriculture",
       "share": 0.027,
       "headcount": 2253,
-      "city": "DE3_berlin",
+      "city": "DE2_munich",
       "tier": "body"
     },
     {
@@ -133,7 +133,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2663,
-      "city": "DE7_frankfurt_am_main",
+      "city": "DEE_halle_saale",
       "tier": "body"
     },
     {
@@ -142,7 +142,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2238,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -151,7 +151,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2361,
-      "city": "DE1_freiburg",
+      "city": "DEA_ratingen",
       "tier": "body"
     },
     {
@@ -160,7 +160,7 @@
       "sector": "agriculture",
       "share": 0.0218,
       "headcount": 1815,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -169,7 +169,7 @@
       "sector": "agriculture",
       "share": 0.0251,
       "headcount": 2190,
-      "city": "DE5_bremen",
+      "city": "DEA_dortmund",
       "tier": "body"
     },
     {
@@ -178,7 +178,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2464,
-      "city": "DEF_kiel",
+      "city": "DEB_mainz",
       "tier": "body"
     },
     {
@@ -187,7 +187,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2639,
-      "city": "DE2_munich",
+      "city": "DE1_karlsruhe",
       "tier": "body"
     },
     {
@@ -196,7 +196,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2657,
-      "city": "DE1_heidelberg",
+      "city": "DEA_viersen",
       "tier": "body"
     },
     {
@@ -205,7 +205,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2651,
-      "city": "DE5_bremen",
+      "city": "DE2_nuremberg",
       "tier": "body"
     },
     {
@@ -214,7 +214,7 @@
       "sector": "agriculture",
       "share": 0.01,
       "headcount": 828,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -223,7 +223,7 @@
       "sector": "agriculture",
       "share": 0.0174,
       "headcount": 1464,
-      "city": "DE3_berlin",
+      "city": "DE6_hamburg",
       "tier": "body"
     },
     {
@@ -232,7 +232,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18801,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -241,7 +241,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18151,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -250,7 +250,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20977,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -259,7 +259,7 @@
       "sector": "industry",
       "share": 0.0108,
       "headcount": 6605,
-      "city": "DEA_essen",
+      "city": "DE1_ulm",
       "tier": "body"
     },
     {
@@ -268,7 +268,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21848,
-      "city": "DEA_unna",
+      "city": "DE9_hameln",
       "tier": "body"
     },
     {
@@ -277,7 +277,7 @@
       "sector": "industry",
       "share": 0.0137,
       "headcount": 8472,
-      "city": "DE5_bremen",
+      "city": "DEA_dortmund",
       "tier": "body"
     },
     {
@@ -286,7 +286,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21103,
-      "city": "DE5_bremerhaven",
+      "city": "DEA_bochum",
       "tier": "body"
     },
     {
@@ -295,7 +295,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19781,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -304,7 +304,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19225,
-      "city": "DE3_berlin",
+      "city": "DE2_munich",
       "tier": "body"
     },
     {
@@ -313,7 +313,7 @@
       "sector": "industry",
       "share": 0.0257,
       "headcount": 17385,
-      "city": "DE8_stralsund",
+      "city": "DE9_wolfsburg",
       "tier": "body"
     },
     {
@@ -322,7 +322,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20521,
-      "city": "DEA_dortmund",
+      "city": "DE1_ulm",
       "tier": "body"
     },
     {
@@ -331,7 +331,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21649,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -340,7 +340,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21220,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -349,7 +349,7 @@
       "sector": "industry",
       "share": 0.0165,
       "headcount": 11702,
-      "city": "DE8_rostock",
+      "city": "DE1_mannheim",
       "tier": "body"
     },
     {
@@ -358,7 +358,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22010,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -367,7 +367,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20872,
-      "city": "DE9_braunschweig",
+      "city": "DEB_koblenz",
       "tier": "body"
     },
     {
@@ -376,7 +376,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19681,
-      "city": "DE2_munich",
+      "city": "DE1_karlsruhe",
       "tier": "body"
     },
     {
@@ -385,7 +385,7 @@
       "sector": "industry",
       "share": 0.0254,
       "headcount": 16949,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -394,7 +394,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20677,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -403,7 +403,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18573,
-      "city": "DED_dresden",
+      "city": "DEA_bochum",
       "tier": "body"
     },
     {
@@ -412,7 +412,7 @@
       "sector": "industry",
       "share": 0.0259,
       "headcount": 17678,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -421,7 +421,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18884,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -430,7 +430,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18830,
-      "city": "DE3_berlin",
+      "city": "DE6_hamburg",
       "tier": "body"
     },
     {
@@ -439,7 +439,7 @@
       "sector": "industry",
       "share": 0.0138,
       "headcount": 9610,
-      "city": "DE3_berlin",
+      "city": "DE6_hamburg",
       "tier": "body"
     },
     {
@@ -448,7 +448,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE4_brandenburg_an_der_havel",
+      "city": "DE1_tuebingen",
       "tier": "body"
     },
     {
@@ -457,7 +457,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24526,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -466,7 +466,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -475,7 +475,7 @@
       "sector": "services",
       "share": 0.0064,
       "headcount": 10046,
-      "city": "DEC_saarbruecken",
+      "city": "DE9_hannover",
       "tier": "body"
     },
     {
@@ -484,7 +484,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 17965,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -502,7 +502,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE8_rostock",
+      "city": "DE1_mannheim",
       "tier": "body"
     },
     {
@@ -511,7 +511,7 @@
       "sector": "services",
       "share": 0.0083,
       "headcount": 11549,
-      "city": "DE5_bremerhaven",
+      "city": "DEA_bochum",
       "tier": "body"
     },
     {
@@ -520,7 +520,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -529,7 +529,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DEB_trier",
+      "city": "DE8_schwerin",
       "tier": "body"
     },
     {
@@ -538,7 +538,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -547,7 +547,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24161,
-      "city": "DE2_augsburg",
+      "city": "DEA_iserlohn",
       "tier": "body"
     },
     {
@@ -556,7 +556,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22529,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -565,7 +565,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22683,
-      "city": "DED_dresden",
+      "city": "DEA_bielefeld",
       "tier": "body"
     },
     {
@@ -574,7 +574,7 @@
       "sector": "services",
       "share": 0.0138,
       "headcount": 20057,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -583,7 +583,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23533,
-      "city": "DEE_magdeburg",
+      "city": "DEA_aachen",
       "tier": "body"
     },
     {
@@ -592,7 +592,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE9_goettingen",
+      "city": "DEB_worms",
       "tier": "body"
     },
     {
@@ -601,7 +601,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DEG_erfurt",
+      "city": "DE9_braunschweig",
       "tier": "body"
     },
     {
@@ -610,7 +610,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24706,
-      "city": "DE3_berlin",
+      "city": "DE6_hamburg",
       "tier": "body"
     },
     {
@@ -628,7 +628,7 @@
       "sector": "services",
       "share": 0.0118,
       "headcount": 17355,
-      "city": "DE3_berlin",
+      "city": "DEA_koeln",
       "tier": "body"
     },
     {
@@ -646,7 +646,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24002,
-      "city": "DE4_cottbus",
+      "city": "DE1_heilbronn",
       "tier": "body"
     },
     {
@@ -655,7 +655,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE5_bremen",
+      "city": "DE1_stuttgart",
       "tier": "body"
     },
     {
@@ -673,7 +673,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23996,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -682,7 +682,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DED_zwickau",
+      "city": "DEB_kaiserslautern",
       "tier": "body"
     },
     {
@@ -691,7 +691,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -700,7 +700,7 @@
       "sector": "services",
       "share": 0.0062,
       "headcount": 9303,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -709,7 +709,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24351,
-      "city": "DE3_berlin",
+      "city": "DEA_koeln",
       "tier": "body"
     },
     {
@@ -718,7 +718,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DEB_trier",
+      "city": "DEA_guetersloh",
       "tier": "body"
     },
     {
@@ -727,7 +727,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 19474,
-      "city": "DE3_berlin",
+      "city": "DE7_frankfurt_am_main",
       "tier": "body"
     },
     {
@@ -736,7 +736,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23128,
-      "city": "DED_dresden",
+      "city": "DEA_bielefeld",
       "tier": "body"
     },
     {
@@ -745,7 +745,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE1_stuttgart",
+      "city": "DE7_darmstadt",
       "tier": "body"
     },
     {
@@ -754,7 +754,7 @@
       "sector": "services",
       "share": 0.0115,
       "headcount": 18236,
-      "city": "DE3_berlin",
+      "city": "DE7_frankfurt_am_main",
       "tier": "body"
     },
     {
@@ -763,7 +763,7 @@
       "sector": "services",
       "share": 0.0087,
       "headcount": 13297,
-      "city": "DED_dresden",
+      "city": "DEA_bielefeld",
       "tier": "body"
     },
     {
@@ -772,7 +772,7 @@
       "sector": "services",
       "share": 0.0121,
       "headcount": 18776,
-      "city": "DED_chemnitz",
+      "city": "DE7_kassel",
       "tier": "body"
     },
     {
@@ -781,7 +781,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22609,
-      "city": "DE1_pforzheim",
+      "city": "DEA_detmold",
       "tier": "body"
     },
     {
@@ -790,7 +790,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -799,7 +799,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -808,7 +808,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22889,
-      "city": "DE5_bremerhaven",
+      "city": "DEA_bochum",
       "tier": "body"
     },
     {
@@ -817,7 +817,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DED_chemnitz",
+      "city": "DE4_potsdam",
       "tier": "body"
     },
     {
@@ -826,7 +826,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23352,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -835,7 +835,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -844,7 +844,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24601,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -853,7 +853,7 @@
       "sector": "services",
       "share": 0.0139,
       "headcount": 21445,
-      "city": "DE5_bremen",
+      "city": "DEA_dortmund",
       "tier": "body"
     },
     {
@@ -862,7 +862,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE2_munich",
+      "city": "DE1_karlsruhe",
       "tier": "body"
     },
     {
@@ -871,7 +871,7 @@
       "sector": "services",
       "share": 0.0128,
       "headcount": 20106,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -880,7 +880,7 @@
       "sector": "services",
       "share": 0.0121,
       "headcount": 17199,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -889,7 +889,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -898,7 +898,7 @@
       "sector": "services",
       "share": 0.0105,
       "headcount": 15276,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -907,7 +907,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DE6_hamburg",
+      "city": "DE3_berlin",
       "tier": "body"
     },
     {
@@ -916,7 +916,7 @@
       "sector": "services",
       "share": 0.013,
       "headcount": 19730,
-      "city": "DEF_norderstedt",
+      "city": "DEA_bergisch_gladbach",
       "tier": "body"
     }
   ]

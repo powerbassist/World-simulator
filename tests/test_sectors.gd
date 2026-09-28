@@ -474,7 +474,10 @@ func _test_investment_never_moves_a_share_or_a_burden() -> void:
 
 	var shares_before := {}
 	for company in _loader.companies.get(PLAYER, []):
-		shares_before[company.id] = Companies.share_of(ns, company.id)
+		# share_of_company: the sparse register reads 0.0 for an untouched
+		# body firm, and the register-only read would make these body legs
+		# vacuous (0.0 == 0.0) instead of honest.
+		shares_before[company.id] = Companies.share_of_company(ns, company)
 	var burdens_before: Dictionary = ns.regulation_burden.duplicate(true)
 
 	for a in _loader.investment_actions:
@@ -483,7 +486,7 @@ func _test_investment_never_moves_a_share_or_a_burden() -> void:
 		_tick(state)
 
 	for company in _loader.companies.get(PLAYER, []):
-		if Companies.share_of(ns, company.id) != float(shares_before[company.id]):
+		if Companies.share_of_company(ns, company) != float(shares_before[company.id]):
 			_fail("investment moved %s's share" % company.id)
 	for sector in ns.regulation_burden.keys():
 		if float(ns.regulation_burden[sector]) != float(burdens_before.get(sector, 0.0)):

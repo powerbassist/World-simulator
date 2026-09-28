@@ -61,6 +61,18 @@ func _test_tiers() -> void:
 		for company in _loader.companies[nation_id]:
 			if not [ "major", "body" ].has(String(company.tier)):
 				_fail("firm %s carries tier '%s'" % [company.id, company.tier])
+	# A sector carrying exactly ONE major can never gain share: the pool's
+	# rivals are majors only, so a subsidy pointed at a lone major finds
+	# available == 0 and is refused -- a sector lever wearing a firm's name.
+	# The loader's own >= 2 rule counts majors+body, so it cannot express
+	# this; the pin lives here.
+	for nation_id in _loader.companies.keys():
+		var majors_by_sector := {}
+		for company in Companies.majors_of(_loader, nation_id):
+			majors_by_sector[company.sector] = int(majors_by_sector.get(company.sector, 0)) + 1
+		for sector in majors_by_sector.keys():
+			if int(majors_by_sector[sector]) < 2:
+				_fail("%s sector '%s' carries one major -- no pool rival, no verb" % [nation_id, sector])
 
 
 func _test_sparse_reads() -> void:
@@ -239,24 +251,30 @@ func _test_body_bands() -> void:
 				_fail("%s body holds no %s firms at all" % [nation_id, sector])
 		# Payroll concentration: the largest city by body payroll holds
 		# [0.25, 0.50] of the nation's body jobs -- V2.2a's measured finding.
-		# The band's largest city is the register's own largest BY POPULATION
-		# (the city the generator targets), not max-of-any: with only two
-		# cities a partition is [x, 1-x] and one side must exceed 0.50 -- a
-		# two-city nation cannot express the band, so nations whose body draws
-		# on fewer than three cities are exempt (LUX and MLT hold one each).
+		# The band's largest city is the register's own largest BY NATIONAL
+		# POPULATION (city share of region x region share of nation) -- the
+		# A3 review's Critical 3: region-local share alone made city-state
+		# regions (Ceuta, Logrono) outrank the real metropolis in six nations,
+		# and two of them landed OVER the ceiling while the exemption hid
+		# them. A register with ONE city has no partition to express at all
+		# (LUX, MLT -- its whole payroll is its one city) and is exempt; a
+		# register with two or more is measured, whatever its size.
 		var payroll_by_city := {}
 		var payroll_total := 0.0
 		for company in body:
 			payroll_by_city[company.city] = float(payroll_by_city.get(company.city, 0.0)) + company.headcount
 			payroll_total += company.headcount
-		if payroll_by_city.size() >= 3:
-			var biggest_city := ""
-			var biggest_pop := -1.0
-			for region in _loader.regions.get(nation_id, []):
-				for city in region.cities:
-					if city.share > biggest_pop:
-						biggest_pop = city.share
-						biggest_city = city.id
+		var register_cities := 0
+		var biggest_city := ""
+		var biggest_pop := -1.0
+		for region in _loader.regions.get(nation_id, []):
+			for city in region.cities:
+				register_cities += 1
+				var national_pop: float = city.share * region.share
+				if national_pop > biggest_pop:
+					biggest_pop = national_pop
+					biggest_city = city.id
+		if register_cities >= 2:
 			var share := float(payroll_by_city.get(biggest_city, 0.0)) / payroll_total \
 					if payroll_total > 0.0 else 0.0
 			if share < CompaniesK.BODY_PAYROLL_CONCENTRATION_MIN - 0.0001 \

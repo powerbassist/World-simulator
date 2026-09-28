@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2107,
       "headcount": 15795,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT33_innsbruck",
       "tier": "major",
       "chief_id": "AUT_chief_gesellschaft_gruber"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.2006,
       "headcount": 20725,
-      "city": "AT33_innsbruck",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "major",
       "chief_id": "AUT_chief_kalcher_industrie"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.08,
       "headcount": 41521,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "major",
       "chief_id": "AUT_chief_dienstl_bau"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0662,
       "headcount": 39110,
-      "city": "AT33_innsbruck",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "major",
       "chief_id": "AUT_chief_iro"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0659,
       "headcount": 50480,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT33_innsbruck",
       "tier": "major",
       "chief_id": "AUT_chief_tragusta_industrie"
     },
@@ -58,7 +58,7 @@
       "sector": "services",
       "share": 0.0266,
       "headcount": 40720,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "major",
       "chief_id": "AUT_chief_gesellschaft_grabner"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.02,
       "headcount": 35274,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT33_innsbruck",
       "tier": "major",
       "chief_id": "AUT_chief_handelshaus_murlasits"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0416,
       "headcount": 68685,
-      "city": "AT33_innsbruck",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "major",
       "chief_id": "AUT_chief_handelshaus_aschauer"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0419,
       "headcount": 60729,
-      "city": "AT11_eisenzicken",
+      "city": "AT32_salzburg",
       "tier": "major",
       "chief_id": "AUT_chief_gruber_gruppe"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0293,
       "headcount": 51581,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "major",
       "chief_id": "AUT_chief_handelshaus_birngruber"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0483,
       "headcount": 65318,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT33_innsbruck",
       "tier": "major",
       "chief_id": "AUT_chief_neumayer_bau"
     }
@@ -147,7 +147,7 @@
       "sector": "agriculture",
       "share": 0.0218,
       "headcount": 1918,
-      "city": "AT11_eisenzicken",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -156,7 +156,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2602,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -165,7 +165,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2541,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -174,7 +174,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2201,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -219,7 +219,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2500,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -237,7 +237,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2510,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -246,7 +246,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2328,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -255,7 +255,7 @@
       "sector": "agriculture",
       "share": 0.0141,
       "headcount": 1228,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -273,7 +273,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19412,
-      "city": "AT11_eisenzicken",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -282,7 +282,7 @@
       "sector": "industry",
       "share": 0.0212,
       "headcount": 12934,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -345,7 +345,7 @@
       "sector": "industry",
       "share": 0.0287,
       "headcount": 18456,
-      "city": "AT11_eisenzicken",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -390,7 +390,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21831,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -399,7 +399,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20469,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -426,7 +426,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19405,
-      "city": "AT34_dornbirn",
+      "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
@@ -435,7 +435,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20383,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -444,7 +444,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21015,
-      "city": "AT11_eisenzicken",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -462,7 +462,7 @@
       "sector": "industry",
       "share": 0.0196,
       "headcount": 12153,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -498,7 +498,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -507,7 +507,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24093,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -516,7 +516,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23920,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -534,7 +534,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -543,7 +543,7 @@
       "sector": "services",
       "share": 0.0165,
       "headcount": 25000,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -552,7 +552,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -579,7 +579,7 @@
       "sector": "services",
       "share": 0.0118,
       "headcount": 16039,
-      "city": "AT21_villach",
+      "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
@@ -597,7 +597,7 @@
       "sector": "services",
       "share": 0.0117,
       "headcount": 16210,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -606,7 +606,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23653,
-      "city": "AT31_linz",
+      "city": "AT21_villach",
       "tier": "body"
     },
     {
@@ -615,7 +615,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -624,7 +624,7 @@
       "sector": "services",
       "share": 0.0107,
       "headcount": 17597,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -633,7 +633,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24241,
-      "city": "AT31_linz",
+      "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
     {
@@ -642,7 +642,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT34_dornbirn",
+      "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
@@ -669,7 +669,7 @@
       "sector": "services",
       "share": 0.0089,
       "headcount": 13836,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -687,7 +687,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -705,7 +705,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT34_dornbirn",
+      "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
@@ -732,7 +732,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -741,7 +741,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -759,7 +759,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24045,
-      "city": "AT11_eisenzicken",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -768,7 +768,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24650,
-      "city": "AT21_klagenfurt_am_woerthersee",
+      "city": "AT32_salzburg",
       "tier": "body"
     },
     {
@@ -804,7 +804,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -813,7 +813,7 @@
       "sector": "services",
       "share": 0.0058,
       "headcount": 9278,
-      "city": "AT34_dornbirn",
+      "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
@@ -822,7 +822,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -831,7 +831,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "AT21_villach",
+      "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
@@ -840,7 +840,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22784,
-      "city": "AT32_salzburg",
+      "city": "AT22_graz",
       "tier": "body"
     },
     {
@@ -849,7 +849,7 @@
       "sector": "services",
       "share": 0.0098,
       "headcount": 13460,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {
@@ -858,7 +858,7 @@
       "sector": "services",
       "share": 0.0105,
       "headcount": 15904,
-      "city": "AT22_graz",
+      "city": "AT31_linz",
       "tier": "body"
     },
     {

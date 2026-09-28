@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2083,
       "headcount": 17292,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "major",
       "chief_id": "DNK_chief_brorson"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.1092,
       "headcount": 75614,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "major",
       "chief_id": "DNK_chief_erslev"
     },
@@ -58,7 +58,7 @@
       "sector": "services",
       "share": 0.0556,
       "headcount": 95711,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "major",
       "chief_id": "DNK_chief_paludan"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0353,
       "headcount": 41790,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "major",
       "chief_id": "DNK_chief_bank_wium"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.035,
       "headcount": 46089,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "major",
       "chief_id": "DNK_chief_ravn"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0779,
       "headcount": 105575,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "major",
       "chief_id": "DNK_chief_selskab_brorson"
     }
@@ -119,7 +119,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2249,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK03_esbjerg",
       "tier": "body"
     },
     {
@@ -128,7 +128,7 @@
       "sector": "agriculture",
       "share": 0.0191,
       "headcount": 1475,
-      "city": "DK03_vejle",
+      "city": "DK04_horsens",
       "tier": "body"
     },
     {
@@ -137,7 +137,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2306,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -146,7 +146,7 @@
       "sector": "agriculture",
       "share": 0.0237,
       "headcount": 2083,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -155,7 +155,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2406,
-      "city": "DK01_frederiksberg",
+      "city": "DK03_kolding",
       "tier": "body"
     },
     {
@@ -173,7 +173,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2475,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -182,7 +182,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2594,
-      "city": "DK03_esbjerg",
+      "city": "DK04_randers",
       "tier": "body"
     },
     {
@@ -191,7 +191,7 @@
       "sector": "agriculture",
       "share": 0.0225,
       "headcount": 1941,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -200,7 +200,7 @@
       "sector": "agriculture",
       "share": 0.0127,
       "headcount": 1130,
-      "city": "DK03_odense",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -218,7 +218,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2249,
-      "city": "DK04_randers",
+      "city": "DK03_vejle",
       "tier": "body"
     },
     {
@@ -227,7 +227,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2631,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -236,7 +236,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2419,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -254,7 +254,7 @@
       "sector": "agriculture",
       "share": 0.0193,
       "headcount": 1607,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -299,7 +299,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18251,
-      "city": "DK03_vejle",
+      "city": "DK04_horsens",
       "tier": "body"
     },
     {
@@ -317,7 +317,7 @@
       "sector": "industry",
       "share": 0.0188,
       "headcount": 13409,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -326,7 +326,7 @@
       "sector": "industry",
       "share": 0.0238,
       "headcount": 16741,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -335,7 +335,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20305,
-      "city": "DK03_esbjerg",
+      "city": "DK04_randers",
       "tier": "body"
     },
     {
@@ -344,7 +344,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20764,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -353,7 +353,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20032,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -380,7 +380,7 @@
       "sector": "industry",
       "share": 0.0162,
       "headcount": 11094,
-      "city": "DK04_horsens",
+      "city": "DK02_klinteby_frihed",
       "tier": "body"
     },
     {
@@ -389,7 +389,7 @@
       "sector": "industry",
       "share": 0.0159,
       "headcount": 11450,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -407,7 +407,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21181,
-      "city": "DK04_arhus",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -425,7 +425,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20076,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -434,7 +434,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21345,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -443,7 +443,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20593,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -461,7 +461,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -479,7 +479,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -515,7 +515,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22873,
-      "city": "DK01_frederiksberg",
+      "city": "DK04_randers",
       "tier": "body"
     },
     {
@@ -524,7 +524,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -542,7 +542,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23333,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -560,7 +560,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23782,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -596,7 +596,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK03_odense",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -605,7 +605,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -614,7 +614,7 @@
       "sector": "services",
       "share": 0.0089,
       "headcount": 14365,
-      "city": "DK03_odense",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -623,7 +623,7 @@
       "sector": "services",
       "share": 0.0156,
       "headcount": 22459,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -641,7 +641,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -650,7 +650,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23492,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK01_frederiksberg",
       "tier": "body"
     },
     {
@@ -659,7 +659,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22904,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -677,7 +677,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23139,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK03_esbjerg",
       "tier": "body"
     },
     {
@@ -695,7 +695,7 @@
       "sector": "services",
       "share": 0.0125,
       "headcount": 17027,
-      "city": "DK02_klinteby_frihed",
+      "city": "DK03_esbjerg",
       "tier": "body"
     },
     {
@@ -731,7 +731,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23605,
-      "city": "DK03_vejle",
+      "city": "DK04_horsens",
       "tier": "body"
     },
     {
@@ -749,7 +749,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK03_odense",
+      "city": "DK05_aalborg",
       "tier": "body"
     },
     {
@@ -758,7 +758,7 @@
       "sector": "services",
       "share": 0.0146,
       "headcount": 20731,
-      "city": "DK04_arhus",
+      "city": "DK03_odense",
       "tier": "body"
     },
     {
@@ -794,7 +794,7 @@
       "sector": "services",
       "share": 0.0087,
       "headcount": 13663,
-      "city": "DK04_horsens",
+      "city": "DK02_klinteby_frihed",
       "tier": "body"
     },
     {
@@ -803,7 +803,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "DK05_aalborg",
+      "city": "DK04_arhus",
       "tier": "body"
     },
     {
@@ -812,7 +812,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22674,
-      "city": "DK04_randers",
+      "city": "DK03_vejle",
       "tier": "body"
     },
     {

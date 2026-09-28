@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2134,
       "headcount": 22065,
-      "city": "ITH1_bolzano",
+      "city": "ITG1_palermo",
       "tier": "major",
       "chief_id": "ITA_chief_imbruglia_commercio"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0826,
       "headcount": 64604,
-      "city": "ITC1_turin",
+      "city": "ITC3_genoa",
       "tier": "major",
       "chief_id": "ITA_chief_ermenegildo_industrie"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0365,
       "headcount": 18787,
-      "city": "ITH1_bolzano",
+      "city": "ITG1_palermo",
       "tier": "major",
       "chief_id": "ITA_chief_ottaviani"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0982,
       "headcount": 82692,
-      "city": "ITC1_turin",
+      "city": "ITC3_genoa",
       "tier": "major",
       "chief_id": "ITA_chief_orsini_commercio"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0742,
       "headcount": 55019,
-      "city": "ITH2_trento",
+      "city": "ITC1_turin",
       "tier": "major",
       "chief_id": "ITA_chief_bandello_industrie"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0552,
       "headcount": 68448,
-      "city": "ITH2_trento",
+      "city": "ITC1_turin",
       "tier": "major",
       "chief_id": "ITA_chief_serafini"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0227,
       "headcount": 38120,
-      "city": "ITH1_bolzano",
+      "city": "ITG1_palermo",
       "tier": "major",
       "chief_id": "ITA_chief_banca_reali"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0505,
       "headcount": 99445,
-      "city": "ITH2_trento",
+      "city": "ITC1_turin",
       "tier": "major",
       "chief_id": "ITA_chief_oliverio"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0344,
       "headcount": 68504,
-      "city": "ITC2_aosta",
+      "city": "ITF3_naples",
       "tier": "major",
       "chief_id": "ITA_chief_valguarnera"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0369,
       "headcount": 71716,
-      "city": "ITC3_genoa",
+      "city": "ITC4_milan",
       "tier": "major",
       "chief_id": "ITA_chief_nesci"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0394,
       "headcount": 67728,
-      "city": "ITC1_turin",
+      "city": "ITC3_genoa",
       "tier": "major",
       "chief_id": "ITA_chief_banca_gentileschi"
     }
@@ -130,7 +130,7 @@
       "sector": "agriculture",
       "share": 0.0204,
       "headcount": 1763,
-      "city": "ITI3_ancona",
+      "city": "ITI2_perugia",
       "tier": "body"
     },
     {
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2624,
-      "city": "ITC3_genoa",
+      "city": "ITC4_milan",
       "tier": "body"
     },
     {
@@ -157,7 +157,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2303,
-      "city": "ITI3_pesaro",
+      "city": "ITI1_pisa",
       "tier": "body"
     },
     {
@@ -175,7 +175,7 @@
       "sector": "agriculture",
       "share": 0.0224,
       "headcount": 1677,
-      "city": "ITH2_trento",
+      "city": "ITF3_naples",
       "tier": "body"
     },
     {
@@ -193,7 +193,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2221,
-      "city": "ITG2_cagliari",
+      "city": "ITI1_livorno",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.0262,
       "headcount": 2248,
-      "city": "ITF4_bari",
+      "city": "ITF3_salerno",
       "tier": "body"
     },
     {
@@ -220,7 +220,7 @@
       "sector": "agriculture",
       "share": 0.0154,
       "headcount": 1194,
-      "city": "ITG1_catania",
+      "city": "ITC4_monza",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2639,
-      "city": "ITF2_campobasso",
+      "city": "ITH5_bologna",
       "tier": "body"
     },
     {
@@ -247,7 +247,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2595,
-      "city": "ITF6_crotone",
+      "city": "ITC4_sesto_san_giovanni",
       "tier": "body"
     },
     {
@@ -256,7 +256,7 @@
       "sector": "agriculture",
       "share": 0.0259,
       "headcount": 2068,
-      "city": "ITC3_genoa",
+      "city": "ITC4_milan",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2399,
-      "city": "ITI3_fano",
+      "city": "ITI3_ancona",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22012,
-      "city": "ITF5_matera",
+      "city": "ITH5_parma",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.0247,
       "headcount": 17696,
-      "city": "ITF3_naples",
+      "city": "ITF4_bari",
       "tier": "body"
     },
     {
@@ -337,7 +337,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21314,
-      "city": "ITH2_trento",
+      "city": "ITC1_turin",
       "tier": "body"
     },
     {
@@ -382,7 +382,7 @@
       "sector": "industry",
       "share": 0.0247,
       "headcount": 18069,
-      "city": "ITC2_aosta",
+      "city": "ITF3_naples",
       "tier": "body"
     },
     {
@@ -409,7 +409,7 @@
       "sector": "industry",
       "share": 0.0257,
       "headcount": 18938,
-      "city": "ITF5_matera",
+      "city": "ITH5_parma",
       "tier": "body"
     },
     {
@@ -418,7 +418,7 @@
       "sector": "industry",
       "share": 0.0297,
       "headcount": 19495,
-      "city": "ITF1_pescara",
+      "city": "ITG2_cagliari",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.0294,
       "headcount": 18316,
-      "city": "ITF3_naples",
+      "city": "ITI1_florence",
       "tier": "body"
     },
     {
@@ -436,7 +436,7 @@
       "sector": "industry",
       "share": 0.0239,
       "headcount": 17379,
-      "city": "ITI4_fiumicino",
+      "city": "ITI1_viareggio",
       "tier": "body"
     },
     {
@@ -445,7 +445,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18751,
-      "city": "ITG2_sassari",
+      "city": "ITI2_perugia",
       "tier": "body"
     },
     {
@@ -454,7 +454,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19557,
-      "city": "ITI3_pesaro",
+      "city": "ITI1_pisa",
       "tier": "body"
     },
     {
@@ -463,7 +463,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18969,
-      "city": "ITG1_catania",
+      "city": "ITG1_siracusa",
       "tier": "body"
     },
     {
@@ -472,7 +472,7 @@
       "sector": "industry",
       "share": 0.0174,
       "headcount": 11495,
-      "city": "ITC1_turin",
+      "city": "ITG1_palermo",
       "tier": "body"
     },
     {
@@ -481,7 +481,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23794,
-      "city": "ITI4_fiumicino",
+      "city": "ITI1_viareggio",
       "tier": "body"
     },
     {
@@ -490,7 +490,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24339,
-      "city": "ITI3_ancona",
+      "city": "ITI2_perugia",
       "tier": "body"
     },
     {
@@ -499,7 +499,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24938,
-      "city": "ITC1_turin",
+      "city": "ITC3_genoa",
       "tier": "body"
     },
     {
@@ -508,7 +508,7 @@
       "sector": "services",
       "share": 0.0071,
       "headcount": 10936,
-      "city": "ITC3_la_spezia",
+      "city": "ITG1_siracusa",
       "tier": "body"
     },
     {
@@ -517,7 +517,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24412,
-      "city": "ITC3_genoa",
+      "city": "ITC4_milan",
       "tier": "body"
     },
     {
@@ -535,7 +535,7 @@
       "sector": "services",
       "share": 0.0119,
       "headcount": 19260,
-      "city": "ITF2_campobasso",
+      "city": "ITI1_florence",
       "tier": "body"
     },
     {
@@ -544,7 +544,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITI3_fano",
+      "city": "ITI3_ancona",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "services",
       "share": 0.0085,
       "headcount": 13200,
-      "city": "ITF2_campobasso",
+      "city": "ITI1_florence",
       "tier": "body"
     },
     {
@@ -571,7 +571,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23993,
-      "city": "ITG1_trapani",
+      "city": "ITC3_savona",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.008,
       "headcount": 11617,
-      "city": "ITF4_taranto",
+      "city": "ITH5_piacenza",
       "tier": "body"
     },
     {
@@ -589,7 +589,7 @@
       "sector": "services",
       "share": 0.015,
       "headcount": 21033,
-      "city": "ITC2_aosta",
+      "city": "ITF3_naples",
       "tier": "body"
     },
     {
@@ -607,7 +607,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 20076,
-      "city": "ITG2_olbia",
+      "city": "ITH3_treviso",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITC3_genoa",
+      "city": "ITC4_milan",
       "tier": "body"
     },
     {
@@ -643,7 +643,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23093,
-      "city": "ITC2_aosta",
+      "city": "ITF3_naples",
       "tier": "body"
     },
     {
@@ -670,7 +670,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITF3_casoria",
+      "city": "ITI3_fano",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITC4_cinisello_balsamo",
+      "city": "ITF2_campobasso",
       "tier": "body"
     },
     {
@@ -697,7 +697,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITF3_torre_del_greco",
+      "city": "ITF3_afragola",
       "tier": "body"
     },
     {
@@ -706,7 +706,7 @@
       "sector": "services",
       "share": 0.0165,
       "headcount": 23488,
-      "city": "ITC1_turin",
+      "city": "ITG1_palermo",
       "tier": "body"
     },
     {
@@ -724,7 +724,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23555,
-      "city": "ITH5_reggio_nell_emilia",
+      "city": "ITH3_treviso",
       "tier": "body"
     },
     {
@@ -733,7 +733,7 @@
       "sector": "services",
       "share": 0.0073,
       "headcount": 10784,
-      "city": "ITI2_perugia",
+      "city": "ITF4_bari",
       "tier": "body"
     },
     {
@@ -742,7 +742,7 @@
       "sector": "services",
       "share": 0.0141,
       "headcount": 22252,
-      "city": "ITH5_bologna",
+      "city": "ITH3_mestre",
       "tier": "body"
     },
     {
@@ -769,7 +769,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITI1_pistoia",
+      "city": "ITC4_cremona",
       "tier": "body"
     },
     {
@@ -778,7 +778,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITI4_guidonia_montecelio",
+      "city": "ITI1_massa",
       "tier": "body"
     },
     {
@@ -787,7 +787,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23137,
-      "city": "ITI2_perugia",
+      "city": "ITG1_catania",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITG1_palermo",
+      "city": "ITH4_trieste",
       "tier": "body"
     },
     {
@@ -805,7 +805,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITI3_pesaro",
+      "city": "ITI1_pisa",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24790,
-      "city": "ITF2_campobasso",
+      "city": "ITH5_bologna",
       "tier": "body"
     },
     {
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0114,
       "headcount": 17858,
-      "city": "ITF6_crotone",
+      "city": "ITC4_sesto_san_giovanni",
       "tier": "body"
     },
     {
@@ -832,7 +832,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITC4_milan",
+      "city": "ITH3_verona",
       "tier": "body"
     },
     {
@@ -841,7 +841,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22854,
-      "city": "ITH4_trieste",
+      "city": "ITC3_genoa",
       "tier": "body"
     },
     {
@@ -850,7 +850,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ITF3_salerno",
+      "city": "ITG1_gela",
       "tier": "body"
     }
   ]

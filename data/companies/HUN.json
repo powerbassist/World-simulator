@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.161,
       "headcount": 15813,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "major",
       "chief_id": "HUN_chief_ando_anyagok"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0266,
       "headcount": 52623,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "major",
       "chief_id": "HUN_chief_dudas"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0363,
       "headcount": 70185,
-      "city": "HU33_szeged",
+      "city": "HU23_pecs",
       "tier": "major",
       "chief_id": "HUN_chief_dudink_ipar"
     }
@@ -130,7 +130,7 @@
       "sector": "agriculture",
       "share": 0.0284,
       "headcount": 2450,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "body"
     },
     {
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2567,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -157,7 +157,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2397,
-      "city": "HU33_szeged",
+      "city": "HU23_pecs",
       "tier": "body"
     },
     {
@@ -184,7 +184,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2204,
-      "city": "HU22_zalaegerszeg",
+      "city": "HU12_erd",
       "tier": "body"
     },
     {
@@ -193,7 +193,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2318,
-      "city": "HU22_sopron",
+      "city": "HU21_tatabanya",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.0226,
       "headcount": 1827,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -211,7 +211,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2348,
-      "city": "HU32_szolnok",
+      "city": "HU22_sopron",
       "tier": "body"
     },
     {
@@ -220,7 +220,7 @@
       "sector": "agriculture",
       "share": 0.0254,
       "headcount": 2037,
-      "city": "HU22_zalaegerszeg",
+      "city": "HU23_kaposvar",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2369,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     },
     {
@@ -265,7 +265,7 @@
       "sector": "agriculture",
       "share": 0.0203,
       "headcount": 1550,
-      "city": "HU32_nyiregyhaza",
+      "city": "HU33_kecskemet",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2287,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     },
     {
@@ -283,7 +283,7 @@
       "sector": "industry",
       "share": 0.0277,
       "headcount": 18517,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22097,
-      "city": "HU22_gyor",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.0227,
       "headcount": 15579,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     },
     {
@@ -346,7 +346,7 @@
       "sector": "industry",
       "share": 0.0115,
       "headcount": 8315,
-      "city": "HU23_kaposvar",
+      "city": "HU32_szolnok",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18332,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -391,7 +391,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22048,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -409,7 +409,7 @@
       "sector": "industry",
       "share": 0.0149,
       "headcount": 10751,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     },
     {
@@ -418,7 +418,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20787,
-      "city": "HU32_szolnok",
+      "city": "HU22_sopron",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18189,
-      "city": "HU33_szeged",
+      "city": "HU31_miskolc",
       "tier": "body"
     },
     {
@@ -436,7 +436,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19396,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -463,7 +463,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20463,
-      "city": "HU22_zalaegerszeg",
+      "city": "HU23_kaposvar",
       "tier": "body"
     },
     {
@@ -490,7 +490,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20541,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "body"
     },
     {
@@ -517,7 +517,7 @@
       "sector": "services",
       "share": 0.0129,
       "headcount": 21062,
-      "city": "HU32_szolnok",
+      "city": "HU22_sopron",
       "tier": "body"
     },
     {
@@ -526,7 +526,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24483,
-      "city": "HU32_nyiregyhaza",
+      "city": "HU21_szekesfehervar",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "body"
     },
     {
@@ -598,7 +598,7 @@
       "sector": "services",
       "share": 0.01,
       "headcount": 14013,
-      "city": "HU21_tatabanya",
+      "city": "HU22_sopron",
       "tier": "body"
     },
     {
@@ -616,7 +616,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU22_sopron",
+      "city": "HU21_tatabanya",
       "tier": "body"
     },
     {
@@ -643,7 +643,7 @@
       "sector": "services",
       "share": 0.0055,
       "headcount": 7465,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -661,7 +661,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU22_zalaegerszeg",
+      "city": "HU23_kaposvar",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24069,
-      "city": "HU32_debrecen",
+      "city": "HU33_szeged",
       "tier": "body"
     },
     {
@@ -706,7 +706,7 @@
       "sector": "services",
       "share": 0.0105,
       "headcount": 15376,
-      "city": "HU33_bekescsaba",
+      "city": "HU22_zalaegerszeg",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.0084,
       "headcount": 13774,
-      "city": "HU32_szolnok",
+      "city": "HU22_sopron",
       "tier": "body"
     },
     {
@@ -760,7 +760,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU32_szolnok",
+      "city": "HU22_zalaegerszeg",
       "tier": "body"
     },
     {
@@ -778,7 +778,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU32_nyiregyhaza",
+      "city": "HU21_szekesfehervar",
       "tier": "body"
     },
     {
@@ -805,7 +805,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU32_nyiregyhaza",
+      "city": "HU21_szekesfehervar",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU32_nyiregyhaza",
+      "city": "HU21_szekesfehervar",
       "tier": "body"
     },
     {
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU33_szeged",
+      "city": "HU23_pecs",
       "tier": "body"
     },
     {
@@ -850,7 +850,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23724,
-      "city": "HU21_szekesfehervar",
+      "city": "HU32_nyiregyhaza",
       "tier": "body"
     },
     {
@@ -859,7 +859,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HU23_pecs",
+      "city": "HU32_debrecen",
       "tier": "body"
     }
   ]

@@ -293,12 +293,24 @@ static func _tick_shares(ns, loader) -> void:
 		if firms.size() < 2:
 			continue
 
-		var before := {}
+		# MAJORS ONLY, snapshot and deltas alike: the pool is the verb plane
+		# (see the block comment above), and walking the ~80 body firms per
+		# sector to compute deltas nothing can write is the A3 review's Minor
+		# 7. SECTOR-SCOPED, deliberately not majors_of(ns.id): this loop runs
+		# once per sector, and a nation-wide list would subsidise the same
+		# firm once per sector and let one sector's subsidy drain another's
+		# majors -- the bug the conservation test caught within a tick of the
+		# refactor.
+		var majors: Array = []
 		for company in firms:
+			if is_major(company):
+				majors.append(company)
+		var before := {}
+		for company in majors:
 			before[company.id] = share_of_company(ns, company)
 
 		var deltas := {}
-		for company in firms:
+		for company in majors:
 			deltas[company.id] = 0.0
 
 		# TWO PASSES, because one pass cannot hold both properties this function needs.
@@ -332,10 +344,6 @@ static func _tick_shares(ns, loader) -> void:
 		# neither drains nor feeds the verb plane -- only the B-phase acts
 		# (fail, be bought) move a body firm's share, and they write the
 		# register directly rather than through this pool.
-		var majors: Array = []
-		for company in firms:
-			if is_major(company):
-				majors.append(company)
 		if majors.size() < 1:
 			continue  # no majors to subsidise: no verb can fire
 
@@ -390,15 +398,14 @@ static func _tick_shares(ns, loader) -> void:
 				)
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
-		for company in firms:
-			# A3: only majors and body entries that the subsidy touch; body firms
-			# untouched by a subsidy get no register entry. Sparse for body.
-			if not ns.companies.has(company.id):
-				if is_equal_approx(float(deltas[company.id]), 0.0):
-					continue
-				ns.companies[company.id] = {
-					"share": company.share, "subsidy": 0.0, "state_share": 0.0
-				}
+		# Majors only, because the pool only ever moved majors (A3's amended
+		# design): every major is seeded by init_nation, so a plain indexed
+		# write is honest. The A1-era get-or-create here was the spillover
+		# path for body rivals and is DELETED -- under the majors-only pool
+		# no code path reaches it, and the B-phase acts that will move a body
+		# firm's share write the register directly in industry.gd, not
+		# through this pool.
+		for company in majors:
 			var entry: Dictionary = ns.companies[company.id]
 			entry["share"] = float(before[company.id]) + float(deltas[company.id])
 

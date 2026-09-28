@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.214,
       "headcount": 15588,
-      "city": "ES23_logrono",
+      "city": "ES61_sevilla",
       "tier": "major",
       "chief_id": "ESP_chief_vallespin"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.227,
       "headcount": 16457,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "major",
       "chief_id": "ESP_chief_compania_figueroa"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0755,
       "headcount": 66804,
-      "city": "ES23_logrono",
+      "city": "ES61_sevilla",
       "tier": "major",
       "chief_id": "ESP_chief_estrada_energia"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0405,
       "headcount": 21005,
-      "city": "ES53_palma",
+      "city": "ES61_malaga",
       "tier": "major",
       "chief_id": "ESP_chief_compania_etxebarria"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0491,
       "headcount": 30490,
-      "city": "ES23_logrono",
+      "city": "ES61_sevilla",
       "tier": "major",
       "chief_id": "ESP_chief_sociedad_saenz"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0619,
       "headcount": 51136,
-      "city": "ES23_logrono",
+      "city": "ES61_sevilla",
       "tier": "major",
       "chief_id": "ESP_chief_jaramillo_construccion"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0602,
       "headcount": 83697,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "major",
       "chief_id": "ESP_chief_juntero"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0245,
       "headcount": 43714,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "major",
       "chief_id": "ESP_chief_olivencia_materiales"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0263,
       "headcount": 48961,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "major",
       "chief_id": "ESP_chief_compania_urenda"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0544,
       "headcount": 69241,
-      "city": "ES30_madrid",
+      "city": "ES24_zaragoza",
       "tier": "major",
       "chief_id": "ESP_chief_rueda"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0547,
       "headcount": 67814,
-      "city": "ES23_logrono",
+      "city": "ES61_sevilla",
       "tier": "major",
       "chief_id": "ESP_chief_sociedad_rueda"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0419,
       "headcount": 61515,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "major",
       "chief_id": "ESP_chief_jove"
     }
@@ -130,7 +130,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2347,
-      "city": "ES11_pontevedra",
+      "city": "ES21_getxo",
       "tier": "body"
     },
     {
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.0223,
       "headcount": 1960,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -148,7 +148,7 @@
       "sector": "agriculture",
       "share": 0.015,
       "headcount": 1111,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -157,7 +157,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2241,
-      "city": "ES62_lorca",
+      "city": "ES51_girona",
       "tier": "body"
     },
     {
@@ -166,7 +166,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2672,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -184,7 +184,7 @@
       "sector": "agriculture",
       "share": 0.0294,
       "headcount": 2562,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -193,7 +193,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2243,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2380,
-      "city": "ES11_a_coruna",
+      "city": "ES51_lleida",
       "tier": "body"
     },
     {
@@ -211,7 +211,7 @@
       "sector": "agriculture",
       "share": 0.0189,
       "headcount": 1593,
-      "city": "ES30_fuenlabrada",
+      "city": "ES12_aviles",
       "tier": "body"
     },
     {
@@ -220,7 +220,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2218,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2462,
-      "city": "ES23_logrono",
+      "city": "ES53_palma",
       "tier": "body"
     },
     {
@@ -238,7 +238,7 @@
       "sector": "agriculture",
       "share": 0.0171,
       "headcount": 1463,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -247,7 +247,7 @@
       "sector": "agriculture",
       "share": 0.0281,
       "headcount": 2306,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -256,7 +256,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2414,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -265,7 +265,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2453,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2598,
-      "city": "ES23_logrono",
+      "city": "ES21_bilbao",
       "tier": "body"
     },
     {
@@ -283,7 +283,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20019,
-      "city": "ES30_madrid",
+      "city": "ES61_malaga",
       "tier": "body"
     },
     {
@@ -292,7 +292,7 @@
       "sector": "industry",
       "share": 0.0238,
       "headcount": 14831,
-      "city": "ES12_gijon",
+      "city": "ES51_badalona",
       "tier": "body"
     },
     {
@@ -301,7 +301,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20117,
-      "city": "ES62_cartagena",
+      "city": "ES30_alcorcon",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.0226,
       "headcount": 14305,
-      "city": "ES51_reus",
+      "city": "ES51_vilanova_i_la_geltru",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19602,
-      "city": "ES30_alcorcon",
+      "city": "ES51_rubi",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20789,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -337,7 +337,7 @@
       "sector": "industry",
       "share": 0.0228,
       "headcount": 14478,
-      "city": "ES11_a_coruna",
+      "city": "ES51_lleida",
       "tier": "body"
     },
     {
@@ -346,7 +346,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18738,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -355,7 +355,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19199,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "body"
     },
     {
@@ -364,7 +364,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18938,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20038,
-      "city": "ES62_murcia",
+      "city": "ES51_l_hospitalet_de_llobregat",
       "tier": "body"
     },
     {
@@ -382,7 +382,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19195,
-      "city": "ES51_el_prat_de_llobregat",
+      "city": "ES21_santutxu",
       "tier": "body"
     },
     {
@@ -391,7 +391,7 @@
       "sector": "industry",
       "share": 0.0191,
       "headcount": 12649,
-      "city": "ES51_sabadell",
+      "city": "ES61_velez_malaga",
       "tier": "body"
     },
     {
@@ -400,7 +400,7 @@
       "sector": "industry",
       "share": 0.0216,
       "headcount": 15224,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -409,7 +409,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18889,
-      "city": "ES22_pamplona",
+      "city": "ES51_l_hospitalet_de_llobregat",
       "tier": "body"
     },
     {
@@ -418,7 +418,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21692,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20481,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -436,7 +436,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19685,
-      "city": "ES52_alicante",
+      "city": "ES51_reus",
       "tier": "body"
     },
     {
@@ -445,7 +445,7 @@
       "sector": "industry",
       "share": 0.0262,
       "headcount": 16996,
-      "city": "ES13_santander",
+      "city": "ES51_terrassa",
       "tier": "body"
     },
     {
@@ -454,7 +454,7 @@
       "sector": "industry",
       "share": 0.0184,
       "headcount": 11141,
-      "city": "ES62_murcia",
+      "city": "ES11_a_coruna",
       "tier": "body"
     },
     {
@@ -463,7 +463,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22162,
-      "city": "ES52_torrevieja",
+      "city": "ES11_ferrol",
       "tier": "body"
     },
     {
@@ -472,7 +472,7 @@
       "sector": "industry",
       "share": 0.0254,
       "headcount": 17361,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -481,7 +481,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21405,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -490,7 +490,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21908,
-      "city": "ES30_fuenlabrada",
+      "city": "ES12_aviles",
       "tier": "body"
     },
     {
@@ -499,7 +499,7 @@
       "sector": "services",
       "share": 0.0059,
       "headcount": 8246,
-      "city": "ES22_pamplona",
+      "city": "ES21_gasteiz_vitoria",
       "tier": "body"
     },
     {
@@ -508,7 +508,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -517,7 +517,7 @@
       "sector": "services",
       "share": 0.0159,
       "headcount": 24195,
-      "city": "ES30_ciudad_lineal",
+      "city": "ES52_torrevieja",
       "tier": "body"
     },
     {
@@ -526,7 +526,7 @@
       "sector": "services",
       "share": 0.0068,
       "headcount": 10291,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -535,7 +535,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -544,7 +544,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22845,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -562,7 +562,7 @@
       "sector": "services",
       "share": 0.0087,
       "headcount": 13488,
-      "city": "ES43_badajoz",
+      "city": "ES42_albacete",
       "tier": "body"
     },
     {
@@ -571,7 +571,7 @@
       "sector": "services",
       "share": 0.0114,
       "headcount": 16035,
-      "city": "ES30_fuenlabrada",
+      "city": "ES12_aviles",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.0064,
       "headcount": 9579,
-      "city": "ES43_merida",
+      "city": "ES11_lugo",
       "tier": "body"
     },
     {
@@ -589,7 +589,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23056,
-      "city": "ES53_palma",
+      "city": "ES11_vigo",
       "tier": "body"
     },
     {
@@ -598,7 +598,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -607,7 +607,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES62_lorca",
+      "city": "ES51_girona",
       "tier": "body"
     },
     {
@@ -616,7 +616,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23253,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23278,
-      "city": "ES11_santiago_de_compostela",
+      "city": "ES61_el_ejido",
       "tier": "body"
     },
     {
@@ -643,7 +643,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23366,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "body"
     },
     {
@@ -652,7 +652,7 @@
       "sector": "services",
       "share": 0.0066,
       "headcount": 10808,
-      "city": "ES23_logrono",
+      "city": "ES53_palma",
       "tier": "body"
     },
     {
@@ -661,7 +661,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES41_salamanca",
+      "city": "ES21_barakaldo",
       "tier": "body"
     },
     {
@@ -670,7 +670,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23080,
-      "city": "ES22_pamplona",
+      "city": "ES21_gasteiz_vitoria",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24906,
-      "city": "ES64_melilla",
+      "city": "ES51_barcelona",
       "tier": "body"
     },
     {
@@ -688,7 +688,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23834,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -697,7 +697,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -706,7 +706,7 @@
       "sector": "services",
       "share": 0.0158,
       "headcount": 24504,
-      "city": "ES62_murcia",
+      "city": "ES52_elche",
       "tier": "body"
     },
     {
@@ -715,7 +715,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -724,7 +724,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23130,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -733,7 +733,7 @@
       "sector": "services",
       "share": 0.0139,
       "headcount": 21368,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -742,7 +742,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23455,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.014,
       "headcount": 21859,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -760,7 +760,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES41_leon",
+      "city": "ES43_caceres",
       "tier": "body"
     },
     {
@@ -769,7 +769,7 @@
       "sector": "services",
       "share": 0.0121,
       "headcount": 17939,
-      "city": "ES21_gasteiz_vitoria",
+      "city": "ES43_badajoz",
       "tier": "body"
     },
     {
@@ -778,7 +778,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22828,
-      "city": "ES12_aviles",
+      "city": "ES30_alcobendas",
       "tier": "body"
     },
     {
@@ -787,7 +787,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23410,
-      "city": "ES22_pamplona",
+      "city": "ES21_gasteiz_vitoria",
       "tier": "body"
     },
     {
@@ -805,7 +805,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22960,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24322,
-      "city": "ES62_cartagena",
+      "city": "ES52_castello_de_la_plana",
       "tier": "body"
     },
     {
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES53_palma",
+      "city": "ES41_valladolid",
       "tier": "body"
     },
     {
@@ -832,7 +832,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23207,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     },
     {
@@ -841,7 +841,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24883,
-      "city": "ES30_madrid",
+      "city": "ES61_malaga",
       "tier": "body"
     },
     {
@@ -850,7 +850,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "ES52_gandia",
+      "city": "ES51_viladecans",
       "tier": "body"
     },
     {
@@ -859,7 +859,7 @@
       "sector": "services",
       "share": 0.013,
       "headcount": 20550,
-      "city": "ES63_ceuta",
+      "city": "ES30_madrid",
       "tier": "body"
     }
   ]

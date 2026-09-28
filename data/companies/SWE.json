@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.2648,
       "headcount": 27863,
-      "city": "SE33_umea",
+      "city": "SE22_malmoe",
       "tier": "major",
       "chief_id": "SWE_chief_dahlgren_material"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.211,
       "headcount": 13692,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "major",
       "chief_id": "SWE_chief_drakenberg_transport"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0545,
       "headcount": 32029,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "major",
       "chief_id": "SWE_chief_krogh_material"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0771,
       "headcount": 57515,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "major",
       "chief_id": "SWE_chief_bolag_isberg"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0751,
       "headcount": 44269,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "major",
       "chief_id": "SWE_chief_bolag_sorvik"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0844,
       "headcount": 45376,
-      "city": "SE33_umea",
+      "city": "SE22_malmoe",
       "tier": "major",
       "chief_id": "SWE_chief_olofsson_energi"
     },
@@ -68,7 +68,7 @@
       "sector": "services",
       "share": 0.0668,
       "headcount": 119448,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "major",
       "chief_id": "SWE_chief_stenmark_handel"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0382,
       "headcount": 56687,
-      "city": "SE33_umea",
+      "city": "SE22_malmoe",
       "tier": "major",
       "chief_id": "SWE_chief_lindau"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.039,
       "headcount": 65364,
-      "city": "SE22_malmoe",
+      "city": "SE12_uppsala",
       "tier": "major",
       "chief_id": "SWE_chief_quarnstrom"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0601,
       "headcount": 74571,
-      "city": "SE22_malmoe",
+      "city": "SE12_uppsala",
       "tier": "major",
       "chief_id": "SWE_chief_palsson"
     }
@@ -166,7 +166,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2346,
-      "city": "SE12_uppsala",
+      "city": "SE33_umea",
       "tier": "body"
     },
     {
@@ -175,7 +175,7 @@
       "sector": "agriculture",
       "share": 0.0158,
       "headcount": 1325,
-      "city": "SE33_umea",
+      "city": "SE23_gothenburg",
       "tier": "body"
     },
     {
@@ -184,7 +184,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2497,
-      "city": "SE22_helsingborg",
+      "city": "SE23_boras",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2418,
-      "city": "SE12_linkoeping",
+      "city": "SE21_joenkoeping",
       "tier": "body"
     },
     {
@@ -256,7 +256,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2323,
-      "city": "SE11_haninge",
+      "city": "SE31_karlstad",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "industry",
       "share": 0.0238,
       "headcount": 16268,
-      "city": "SE12_linkoeping",
+      "city": "SE12_vaesteras",
       "tier": "body"
     },
     {
@@ -301,7 +301,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18581,
-      "city": "SE21_joenkoeping",
+      "city": "SE33_umea",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21241,
-      "city": "SE12_norrkoeping",
+      "city": "SE11_soedertaelje",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21916,
-      "city": "SE12_oerebro",
+      "city": "SE22_helsingborg",
       "tier": "body"
     },
     {
@@ -346,7 +346,7 @@
       "sector": "industry",
       "share": 0.0226,
       "headcount": 16233,
-      "city": "SE33_lulea",
+      "city": "SE12_oerebro",
       "tier": "body"
     },
     {
@@ -355,7 +355,7 @@
       "sector": "industry",
       "share": 0.0252,
       "headcount": 16421,
-      "city": "SE11_sollentuna",
+      "city": "SE23_boras",
       "tier": "body"
     },
     {
@@ -364,7 +364,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19197,
-      "city": "SE11_sollentuna",
+      "city": "SE23_boras",
       "tier": "body"
     },
     {
@@ -400,7 +400,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20597,
-      "city": "SE33_umea",
+      "city": "SE22_malmoe",
       "tier": "body"
     },
     {
@@ -418,7 +418,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18597,
-      "city": "SE31_gaevle",
+      "city": "SE12_norrkoeping",
       "tier": "body"
     },
     {
@@ -481,7 +481,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24354,
-      "city": "SE12_linkoeping",
+      "city": "SE12_vaesteras",
       "tier": "body"
     },
     {
@@ -526,7 +526,7 @@
       "sector": "services",
       "share": 0.0114,
       "headcount": 16583,
-      "city": "SE12_vaesteras",
+      "city": "SE22_lund",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE11_haninge",
+      "city": "SE23_moelndal",
       "tier": "body"
     },
     {
@@ -562,7 +562,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22611,
-      "city": "SE12_linkoeping",
+      "city": "SE21_joenkoeping",
       "tier": "body"
     },
     {
@@ -571,7 +571,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE33_umea",
+      "city": "SE22_malmoe",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23117,
-      "city": "SE22_malmoe",
+      "city": "SE12_uppsala",
       "tier": "body"
     },
     {
@@ -589,7 +589,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE12_uppsala",
+      "city": "SE12_vaesteras",
       "tier": "body"
     },
     {
@@ -607,7 +607,7 @@
       "sector": "services",
       "share": 0.0067,
       "headcount": 9481,
-      "city": "SE22_malmoe",
+      "city": "SE12_uppsala",
       "tier": "body"
     },
     {
@@ -616,7 +616,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE21_joenkoeping",
+      "city": "SE11_sollentuna",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "services",
       "share": 0.0142,
       "headcount": 21158,
-      "city": "SE21_vaexjoe",
+      "city": "SE22_lund",
       "tier": "body"
     },
     {
@@ -652,7 +652,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23845,
-      "city": "SE22_helsingborg",
+      "city": "SE31_gaevle",
       "tier": "body"
     },
     {
@@ -688,7 +688,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24835,
-      "city": "SE11_huddinge",
+      "city": "SE11_solna",
       "tier": "body"
     },
     {
@@ -697,7 +697,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE22_helsingborg",
+      "city": "SE31_gaevle",
       "tier": "body"
     },
     {
@@ -724,7 +724,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE31_gaevle",
+      "city": "SE12_norrkoeping",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE22_karlskrona",
+      "city": "SE12_eskilstuna",
       "tier": "body"
     },
     {
@@ -769,7 +769,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE31_gaevle",
+      "city": "SE12_norrkoeping",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "SE33_umea",
+      "city": "SE23_gothenburg",
       "tier": "body"
     },
     {
@@ -805,7 +805,7 @@
       "sector": "services",
       "share": 0.0022,
       "headcount": 3397,
-      "city": "SE12_oerebro",
+      "city": "SE22_helsingborg",
       "tier": "body"
     },
     {

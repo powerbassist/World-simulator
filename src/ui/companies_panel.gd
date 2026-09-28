@@ -217,7 +217,11 @@ func _build_sector(ns, sector: String) -> void:
 	var sector_output: float = float(ns.sector_output.get(sector, 0.0))
 	var named := 0.0
 	for company in firms:
-		named += Companies.share_of(ns, company.id)
+		# share_of_company, not share_of: the sparse register reads 0.0 for
+		# every untouched body firm, and the heading would print the majors'
+		# share (~0.3) against authored coverage of ~0.88 -- the A3 review's
+		# Critical 2.
+		named += Companies.share_of_company(ns, company)
 	# V1.4b. The burden is per SECTOR, so it belongs on the sector's own line and
 	# nowhere else -- putting it on a firm row would suggest a rule the player could
 	# point at one company, which is exactly what src/core/law.gd refuses.
@@ -264,7 +268,11 @@ func _build_body(ns, sector: String, body: Array) -> void:
 	var share := 0.0
 	var jobs := 0.0
 	for company in body:
-		share += Companies.share_of(ns, company.id)
+		# The fallback read, same reason as the sector heading above: nothing
+		# writes a body entry in 7a, and a register-only read would print the
+		# tier's headline line at 0.00 of sector forever -- the A3 review's
+		# Critical 1, V1.6d's present-figure-as-zero class.
+		share += Companies.share_of_company(ns, company)
 		jobs += float(company.headcount)
 	PanelKit.line(_body, "BODY · %d firms · %.2f of sector · %s jobs" % [
 		body.size(), share, _thousands(jobs),

@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0339,
       "headcount": 19341,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_jokinen_logistiikka"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0761,
       "headcount": 55373,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_pankki_jokinen"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0381,
       "headcount": 23914,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_pankki_akerman"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0436,
       "headcount": 54332,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_yhtio_cederstrom"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0588,
       "headcount": 94045,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_granholm"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.02,
       "headcount": 28034,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "major",
       "chief_id": "FIN_chief_moisio_rakennus"
     },
@@ -138,7 +138,7 @@
       "sector": "services",
       "share": 0.0244,
       "headcount": 41460,
-      "city": "FI1C_turku",
+      "city": "FI1B_vantaa",
       "tier": "major",
       "chief_id": "FIN_chief_akerman"
     }
@@ -150,7 +150,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2329,
-      "city": "FI1D_kuopio",
+      "city": "FI1C_lahti",
       "tier": "body"
     },
     {
@@ -177,7 +177,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2406,
-      "city": "FI19_pori",
+      "city": "FI1C_lappeenranta",
       "tier": "body"
     },
     {
@@ -195,7 +195,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2579,
-      "city": "FI1C_turku",
+      "city": "FI1B_vantaa",
       "tier": "body"
     },
     {
@@ -204,7 +204,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2584,
-      "city": "FI1D_joensuu",
+      "city": "FI1C_kouvola",
       "tier": "body"
     },
     {
@@ -267,7 +267,7 @@
       "sector": "agriculture",
       "share": 0.0216,
       "headcount": 1730,
-      "city": "FI1C_lahti",
+      "city": "FI1D_kuopio",
       "tier": "body"
     },
     {
@@ -312,7 +312,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18455,
-      "city": "FI1C_turku",
+      "city": "FI19_tampere",
       "tier": "body"
     },
     {
@@ -339,7 +339,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19668,
-      "city": "FI1C_lappeenranta",
+      "city": "FI1D_joensuu",
       "tier": "body"
     },
     {
@@ -375,7 +375,7 @@
       "sector": "industry",
       "share": 0.0252,
       "headcount": 18299,
-      "city": "FI1C_lahti",
+      "city": "FI1D_kuopio",
       "tier": "body"
     },
     {
@@ -393,7 +393,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19527,
-      "city": "FI1D_rovaniemi",
+      "city": "FI1C_haemeenlinna",
       "tier": "body"
     },
     {
@@ -402,7 +402,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18338,
-      "city": "FI19_vaasa",
+      "city": "FI19_seinaejoki",
       "tier": "body"
     },
     {
@@ -411,7 +411,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21722,
-      "city": "FI1D_joensuu",
+      "city": "FI1C_kouvola",
       "tier": "body"
     },
     {
@@ -456,7 +456,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22068,
-      "city": "FI1C_kouvola",
+      "city": "FI1C_lahti",
       "tier": "body"
     },
     {
@@ -492,7 +492,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18721,
-      "city": "FI1C_turku",
+      "city": "FI1B_vantaa",
       "tier": "body"
     },
     {
@@ -519,7 +519,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23969,
-      "city": "FI1C_lahti",
+      "city": "FI19_jyvaeskylae",
       "tier": "body"
     },
     {
@@ -537,7 +537,7 @@
       "sector": "services",
       "share": 0.0061,
       "headcount": 9682,
-      "city": "FI19_tampere",
+      "city": "FI1B_espoo",
       "tier": "body"
     },
     {
@@ -555,7 +555,7 @@
       "sector": "services",
       "share": 0.0161,
       "headcount": 25000,
-      "city": "FI19_tampere",
+      "city": "FI1B_espoo",
       "tier": "body"
     },
     {
@@ -582,7 +582,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI19_tampere",
+      "city": "FI1B_espoo",
       "tier": "body"
     },
     {
@@ -618,7 +618,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1C_turku",
+      "city": "FI19_tampere",
       "tier": "body"
     },
     {
@@ -627,7 +627,7 @@
       "sector": "services",
       "share": 0.0105,
       "headcount": 17194,
-      "city": "FI1C_turku",
+      "city": "FI19_tampere",
       "tier": "body"
     },
     {
@@ -636,7 +636,7 @@
       "sector": "services",
       "share": 0.011,
       "headcount": 17041,
-      "city": "FI1D_oulu",
+      "city": "FI1B_vantaa",
       "tier": "body"
     },
     {
@@ -663,7 +663,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1D_kuopio",
+      "city": "FI1C_lahti",
       "tier": "body"
     },
     {
@@ -708,7 +708,7 @@
       "sector": "services",
       "share": 0.0081,
       "headcount": 12847,
-      "city": "FI1C_lahti",
+      "city": "FI19_jyvaeskylae",
       "tier": "body"
     },
     {
@@ -717,7 +717,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1C_kouvola",
+      "city": "FI19_pori",
       "tier": "body"
     },
     {
@@ -726,7 +726,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24315,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "body"
     },
     {
@@ -735,7 +735,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI19_vaasa",
+      "city": "FI1C_haemeenlinna",
       "tier": "body"
     },
     {
@@ -744,7 +744,7 @@
       "sector": "services",
       "share": 0.0064,
       "headcount": 9453,
-      "city": "FI1C_haemeenlinna",
+      "city": "FI19_vaasa",
       "tier": "body"
     },
     {
@@ -780,7 +780,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1C_kouvola",
+      "city": "FI19_pori",
       "tier": "body"
     },
     {
@@ -798,7 +798,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24648,
-      "city": "FI1D_joensuu",
+      "city": "FI1C_kouvola",
       "tier": "body"
     },
     {
@@ -825,7 +825,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1C_lappeenranta",
+      "city": "FI1D_joensuu",
       "tier": "body"
     },
     {
@@ -834,7 +834,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "body"
     },
     {
@@ -852,7 +852,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "FI1D_kuopio",
+      "city": "FI1C_lahti",
       "tier": "body"
     },
     {
@@ -861,7 +861,7 @@
       "sector": "services",
       "share": 0.0068,
       "headcount": 9757,
-      "city": "FI1B_vantaa",
+      "city": "FI1C_turku",
       "tier": "body"
     }
   ]

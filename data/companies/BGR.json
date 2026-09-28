@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.2134,
       "headcount": 16573,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "major",
       "chief_id": "BGR_chief_stefanov_stroitelstvo"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0435,
       "headcount": 36813,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "major",
       "chief_id": "BGR_chief_videv"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0632,
       "headcount": 51418,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "major",
       "chief_id": "BGR_chief_neykov_energija"
     },
@@ -68,7 +68,7 @@
       "sector": "industry",
       "share": 0.0399,
       "headcount": 28162,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "major",
       "chief_id": "BGR_chief_videv_zastrahovane"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0356,
       "headcount": 66536,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "major",
       "chief_id": "BGR_chief_targovska_kasta_aleksiev"
     },
@@ -108,7 +108,7 @@
       "sector": "services",
       "share": 0.0506,
       "headcount": 97261,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "major",
       "chief_id": "BGR_chief_stefanov_materiali"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0328,
       "headcount": 64909,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "major",
       "chief_id": "BGR_chief_bodurov"
     }
@@ -139,7 +139,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2362,
-      "city": "BG32_ruse",
+      "city": "BG34_burgas",
       "tier": "body"
     },
     {
@@ -148,7 +148,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2370,
-      "city": "BG34_stara_zagora",
+      "city": "BG31_pleven",
       "tier": "body"
     },
     {
@@ -157,7 +157,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2286,
-      "city": "BG32_veliko_turnovo",
+      "city": "BG33_shumen",
       "tier": "body"
     },
     {
@@ -175,7 +175,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2294,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -193,7 +193,7 @@
       "sector": "agriculture",
       "share": 0.0285,
       "headcount": 2536,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.0148,
       "headcount": 1265,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -211,7 +211,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2400,
-      "city": "BG32_veliko_turnovo",
+      "city": "BG33_dobrich",
       "tier": "body"
     },
     {
@@ -220,7 +220,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2375,
-      "city": "BG34_sliven",
+      "city": "BG41_pernik",
       "tier": "body"
     },
     {
@@ -229,7 +229,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2463,
-      "city": "BG34_stara_zagora",
+      "city": "BG34_sliven",
       "tier": "body"
     },
     {
@@ -238,7 +238,7 @@
       "sector": "agriculture",
       "share": 0.0202,
       "headcount": 1755,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -247,7 +247,7 @@
       "sector": "agriculture",
       "share": 0.024,
       "headcount": 1795,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -256,7 +256,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2315,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "body"
     },
     {
@@ -274,7 +274,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2340,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -301,7 +301,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20837,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -310,7 +310,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22142,
-      "city": "BG42_haskovo",
+      "city": "BG34_yambol",
       "tier": "body"
     },
     {
@@ -319,7 +319,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21504,
-      "city": "BG34_burgas",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -328,7 +328,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19854,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -337,7 +337,7 @@
       "sector": "industry",
       "share": 0.0274,
       "headcount": 19828,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18536,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -391,7 +391,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21554,
-      "city": "BG34_stara_zagora",
+      "city": "BG31_pleven",
       "tier": "body"
     },
     {
@@ -427,7 +427,7 @@
       "sector": "industry",
       "share": 0.0236,
       "headcount": 14587,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -445,7 +445,7 @@
       "sector": "industry",
       "share": 0.0117,
       "headcount": 8599,
-      "city": "BG33_dobrich",
+      "city": "BG41_blagoevgrad",
       "tier": "body"
     },
     {
@@ -454,7 +454,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21280,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -472,7 +472,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20983,
-      "city": "BG34_stara_zagora",
+      "city": "BG34_sliven",
       "tier": "body"
     },
     {
@@ -517,7 +517,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23717,
-      "city": "BG34_stara_zagora",
+      "city": "BG31_pleven",
       "tier": "body"
     },
     {
@@ -535,7 +535,7 @@
       "sector": "services",
       "share": 0.0145,
       "headcount": 19996,
-      "city": "BG34_sliven",
+      "city": "BG41_pernik",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24208,
-      "city": "BG32_ruse",
+      "city": "BG34_stara_zagora",
       "tier": "body"
     },
     {
@@ -580,7 +580,7 @@
       "sector": "services",
       "share": 0.0154,
       "headcount": 22297,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -589,7 +589,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24779,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -598,7 +598,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24568,
-      "city": "BG34_stara_zagora",
+      "city": "BG31_pleven",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24707,
-      "city": "BG33_varna",
+      "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "services",
       "share": 0.0104,
       "headcount": 16309,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -652,7 +652,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23185,
-      "city": "BG31_pleven",
+      "city": "BG32_ruse",
       "tier": "body"
     },
     {
@@ -661,7 +661,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22547,
-      "city": "BG32_veliko_turnovo",
+      "city": "BG33_dobrich",
       "tier": "body"
     },
     {
@@ -679,7 +679,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -751,7 +751,7 @@
       "sector": "services",
       "share": 0.014,
       "headcount": 19274,
-      "city": "BG34_sliven",
+      "city": "BG41_pernik",
       "tier": "body"
     },
     {
@@ -760,7 +760,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BG33_dobrich",
+      "city": "BG41_blagoevgrad",
       "tier": "body"
     },
     {
@@ -778,7 +778,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24424,
-      "city": "BG32_ruse",
+      "city": "BG34_burgas",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24988,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BG42_plovdiv",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -841,7 +841,7 @@
       "sector": "services",
       "share": 0.0115,
       "headcount": 16454,
-      "city": "BG34_burgas",
+      "city": "BG33_varna",
       "tier": "body"
     },
     {
@@ -850,7 +850,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "BG33_shumen",
+      "city": "BG41_pernik",
       "tier": "body"
     },
     {
@@ -859,7 +859,7 @@
       "sector": "services",
       "share": 0.006,
       "headcount": 8580,
-      "city": "BG34_sliven",
+      "city": "BG41_pernik",
       "tier": "body"
     }
   ]

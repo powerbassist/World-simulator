@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.212,
       "headcount": 17767,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "major",
       "chief_id": "CZE_chief_obchodni_dum_panek"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.2636,
       "headcount": 26828,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "major",
       "chief_id": "CZE_chief_gregor_materialy"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0307,
       "headcount": 25977,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "major",
       "chief_id": "CZE_chief_zizka"
     },
@@ -48,7 +48,7 @@
       "sector": "industry",
       "share": 0.0664,
       "headcount": 36741,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "major",
       "chief_id": "CZE_chief_banka_rysanek"
     },
@@ -118,7 +118,7 @@
       "sector": "services",
       "share": 0.0229,
       "headcount": 42168,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "major",
       "chief_id": "CZE_chief_hruby"
     },
@@ -140,7 +140,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2584,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -167,7 +167,7 @@
       "sector": "agriculture",
       "share": 0.0222,
       "headcount": 1689,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -185,7 +185,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2259,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -221,7 +221,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2580,
-      "city": "CZ04_usti_nad_labem",
+      "city": "CZ03_pilsen",
       "tier": "body"
     },
     {
@@ -230,7 +230,7 @@
       "sector": "agriculture",
       "share": 0.0205,
       "headcount": 1817,
-      "city": "CZ01_stodulky",
+      "city": "CZ08_opava",
       "tier": "body"
     },
     {
@@ -239,7 +239,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2452,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -248,7 +248,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2256,
-      "city": "CZ07_zlin",
+      "city": "CZ05_pardubice",
       "tier": "body"
     },
     {
@@ -257,7 +257,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2542,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -275,7 +275,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22094,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -302,7 +302,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20623,
-      "city": "CZ03_pilsen",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -320,7 +320,7 @@
       "sector": "industry",
       "share": 0.028,
       "headcount": 16983,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -329,7 +329,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20530,
-      "city": "CZ07_zlin",
+      "city": "CZ05_pardubice",
       "tier": "body"
     },
     {
@@ -347,7 +347,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20441,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -356,7 +356,7 @@
       "sector": "industry",
       "share": 0.0263,
       "headcount": 18769,
-      "city": "CZ06_brno_stred",
+      "city": "CZ02_kladno",
       "tier": "body"
     },
     {
@@ -365,7 +365,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20493,
-      "city": "CZ05_pardubice",
+      "city": "CZ08_havirov",
       "tier": "body"
     },
     {
@@ -374,7 +374,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19297,
-      "city": "CZ04_usti_nad_labem",
+      "city": "CZ03_pilsen",
       "tier": "body"
     },
     {
@@ -383,7 +383,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21850,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -437,7 +437,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19947,
-      "city": "CZ03_ceske_budejovice",
+      "city": "CZ07_olomouc",
       "tier": "body"
     },
     {
@@ -446,7 +446,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20413,
-      "city": "CZ03_pilsen",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -455,7 +455,7 @@
       "sector": "industry",
       "share": 0.0135,
       "headcount": 8876,
-      "city": "CZ08_havirov",
+      "city": "CZ05_hradec_kralove",
       "tier": "body"
     },
     {
@@ -464,7 +464,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18364,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -473,7 +473,7 @@
       "sector": "services",
       "share": 0.0136,
       "headcount": 19386,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -482,7 +482,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24028,
-      "city": "CZ01_stodulky",
+      "city": "CZ08_opava",
       "tier": "body"
     },
     {
@@ -491,7 +491,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -500,7 +500,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24697,
-      "city": "CZ08_havirov",
+      "city": "CZ05_hradec_kralove",
       "tier": "body"
     },
     {
@@ -518,7 +518,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24659,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -527,7 +527,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23242,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -536,7 +536,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23280,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -545,7 +545,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24294,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -554,7 +554,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ03_pilsen",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -563,7 +563,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -635,7 +635,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24341,
-      "city": "CZ06_brno_stred",
+      "city": "CZ02_kladno",
       "tier": "body"
     },
     {
@@ -662,7 +662,7 @@
       "sector": "services",
       "share": 0.0122,
       "headcount": 19798,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -680,7 +680,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -689,7 +689,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23968,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -698,7 +698,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24263,
-      "city": "CZ06_brno_stred",
+      "city": "CZ02_kladno",
       "tier": "body"
     },
     {
@@ -716,7 +716,7 @@
       "sector": "services",
       "share": 0.0109,
       "headcount": 14835,
-      "city": "CZ06_brno",
+      "city": "CZ08_ostrava",
       "tier": "body"
     },
     {
@@ -734,7 +734,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24741,
-      "city": "CZ07_zlin",
+      "city": "CZ05_pardubice",
       "tier": "body"
     },
     {
@@ -770,7 +770,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -779,7 +779,7 @@
       "sector": "services",
       "share": 0.0066,
       "headcount": 9183,
-      "city": "CZ02_kladno",
+      "city": "CZ01_stodulky",
       "tier": "body"
     },
     {
@@ -788,7 +788,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24572,
-      "city": "CZ05_pardubice",
+      "city": "CZ08_havirov",
       "tier": "body"
     },
     {
@@ -797,7 +797,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {
@@ -815,7 +815,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24463,
-      "city": "CZ08_havirov",
+      "city": "CZ05_hradec_kralove",
       "tier": "body"
     },
     {
@@ -824,7 +824,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "CZ05_hradec_kralove",
+      "city": "CZ06_brno_stred",
       "tier": "body"
     },
     {
@@ -833,7 +833,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23734,
-      "city": "CZ08_havirov",
+      "city": "CZ05_hradec_kralove",
       "tier": "body"
     },
     {
@@ -842,7 +842,7 @@
       "sector": "services",
       "share": 0.0123,
       "headcount": 18335,
-      "city": "CZ08_ostrava",
+      "city": "CZ06_brno",
       "tier": "body"
     },
     {

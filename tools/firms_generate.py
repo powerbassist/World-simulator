@@ -221,12 +221,18 @@ def nation_sector_weights(nation: str) -> dict:
 
 
 def nation_cities(nation: str) -> list:
-    """[(city_id, population_share)] for the nation's own region register."""
+    """[(city_id, NATIONAL population share)] for the nation's own region
+    register. The A3 review's Critical 3 lived here: the weight was the
+    city's share OF ITS REGION, so a city-state region (share 1.0 -- Ceuta,
+    Logrono) outranked the real metropolis and the payroll concentration
+    landed in six nations' smallest places. A city's national share is its
+    region share times its share of that region."""
     d = json.loads((REGIONS_DIR / ("%s.json" % nation)).read_text(encoding="utf-8"))
     out = []
     for region in d["regions"]:
+        r_share = float(region.get("share", 0.0))
         for city in region["cities"]:
-            out.append((city["id"], float(city["share"])))
+            out.append((city["id"], float(city["share"]) * r_share))
     return out
 
 
@@ -516,6 +522,12 @@ def main() -> int:
     check_only = "--check" in sys.argv
     majors_only = "--majors-only" in sys.argv
     emit_drafts = "--emit-drafts" in sys.argv
+    if check_only and majors_only:
+        # --majors-only re-derives empty body lists, so a check against the
+        # committed files would always report drift -- a mode footgun the A3
+        # review named. Check covers every tier; the flag is write-mode only.
+        print("--majors-only cannot combine with --check (it would always drift)")
+        return 2
     rng = random.Random(SEED)
 
     sidecar = json.loads(SIDECAR_PATH.read_text(encoding="utf-8"))
@@ -642,10 +654,17 @@ def main() -> int:
         (DRAFTS_DIR / "majors.json").write_text(
             json.dumps(drafts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    if sidecar_changed and not check_only:
-        SIDECAR_PATH.write_text(
-            json.dumps(dict(sorted(sidecar.items())), ensure_ascii=False, indent=1) + "\n",
-            encoding="utf-8")
+    # The sidecar is checked like the rest of the content: the re-derived
+    # text must equal the committed file, whatever changed (missing entries
+    # AND a hand edit to an existing one -- the draws are deterministic, so
+    # both are drift). The A3 review's other --check blind spot.
+    sidecar_text = json.dumps(dict(sorted(sidecar.items())), ensure_ascii=False, indent=1) + "\n"
+    if check_only:
+        if SIDECAR_PATH.read_text(encoding="utf-8") != sidecar_text:
+            print("DRIFT: %s" % SIDECAR_PATH)
+            return 1
+    elif sidecar_changed:
+        SIDECAR_PATH.write_text(sidecar_text, encoding="utf-8")
 
     print(" | ".join(report))
     print("majors: %d | body: %d | firms: %d" % (total_majors, total_body, total_firms))

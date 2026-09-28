@@ -120,7 +120,7 @@
       "sector": "agriculture",
       "share": 0.025,
       "headcount": 1912,
-      "city": "HR03_zadar",
+      "city": "HR02_osijek",
       "tier": "body"
     },
     {
@@ -345,7 +345,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19832,
-      "city": "HR02_osijek",
+      "city": "HR03_rijeka",
       "tier": "body"
     },
     {
@@ -498,7 +498,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "HR03_zadar",
+      "city": "HR02_osijek",
       "tier": "body"
     },
     {
@@ -759,7 +759,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24559,
-      "city": "HR06_varazdin",
+      "city": "HR03_zadar",
       "tier": "body"
     },
     {

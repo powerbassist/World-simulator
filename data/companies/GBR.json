@@ -88,7 +88,7 @@
       "sector": "agriculture",
       "share": 0.023,
       "headcount": 1824,
-      "city": "UKN_belfast",
+      "city": "UKM_glasgow",
       "tier": "body"
     },
     {
@@ -97,7 +97,7 @@
       "sector": "agriculture",
       "share": 0.0138,
       "headcount": 1042,
-      "city": "UKL_cardiff",
+      "city": "UKD_manchester",
       "tier": "body"
     },
     {
@@ -115,7 +115,7 @@
       "sector": "agriculture",
       "share": 0.0262,
       "headcount": 1997,
-      "city": "UKE_kingston_upon_hull",
+      "city": "UKH_southend_on_sea",
       "tier": "body"
     },
     {
@@ -124,7 +124,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2490,
-      "city": "UKM_glasgow",
+      "city": "UKE_sheffield",
       "tier": "body"
     },
     {
@@ -142,7 +142,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2625,
-      "city": "UKH_st_albans",
+      "city": "UKM_east_kilbride",
       "tier": "body"
     },
     {
@@ -160,7 +160,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2495,
-      "city": "UKK_plymouth",
+      "city": "UKJ_milton_keynes",
       "tier": "body"
     },
     {
@@ -169,7 +169,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2491,
-      "city": "UKG_sutton_coldfield",
+      "city": "UKD_southport",
       "tier": "body"
     },
     {
@@ -178,7 +178,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2370,
-      "city": "UKN_belfast",
+      "city": "UKM_glasgow",
       "tier": "body"
     },
     {
@@ -187,7 +187,7 @@
       "sector": "agriculture",
       "share": 0.0191,
       "headcount": 1509,
-      "city": "UKF_nottingham",
+      "city": "UKE_kingston_upon_hull",
       "tier": "body"
     },
     {
@@ -205,7 +205,7 @@
       "sector": "agriculture",
       "share": 0.0277,
       "headcount": 2309,
-      "city": "UKE_dewsbury",
+      "city": "UKF_loughborough",
       "tier": "body"
     },
     {
@@ -232,7 +232,7 @@
       "sector": "agriculture",
       "share": 0.0235,
       "headcount": 2079,
-      "city": "UKE_leeds",
+      "city": "UKK_bristol",
       "tier": "body"
     },
     {
@@ -250,7 +250,7 @@
       "sector": "industry",
       "share": 0.022,
       "headcount": 13895,
-      "city": "UKK_plymouth",
+      "city": "UKJ_milton_keynes",
       "tier": "body"
     },
     {
@@ -259,7 +259,7 @@
       "sector": "industry",
       "share": 0.0288,
       "headcount": 18009,
-      "city": "UKC_sunderland",
+      "city": "UKC_newcastle_upon_tyne",
       "tier": "body"
     },
     {
@@ -295,7 +295,7 @@
       "sector": "industry",
       "share": 0.0179,
       "headcount": 12663,
-      "city": "UKD_runcorn",
+      "city": "UKD_bury",
       "tier": "body"
     },
     {
@@ -313,7 +313,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20574,
-      "city": "UKD_wigan",
+      "city": "UKD_salford",
       "tier": "body"
     },
     {
@@ -322,7 +322,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21333,
-      "city": "UKC_darlington",
+      "city": "UKD_warrington",
       "tier": "body"
     },
     {
@@ -331,7 +331,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21384,
-      "city": "UKH_norwich",
+      "city": "UKE_rotherham",
       "tier": "body"
     },
     {
@@ -340,7 +340,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18912,
-      "city": "UKD_birkenhead",
+      "city": "UKF_northampton",
       "tier": "body"
     },
     {
@@ -358,7 +358,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18397,
-      "city": "UKH_basildon",
+      "city": "UKG_burton_upon_trent",
       "tier": "body"
     },
     {
@@ -367,7 +367,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21546,
-      "city": "UKK_torquay",
+      "city": "UKC_washington",
       "tier": "body"
     },
     {
@@ -376,7 +376,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18281,
-      "city": "UKK_bristol",
+      "city": "UKN_belfast",
       "tier": "body"
     },
     {
@@ -394,7 +394,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20900,
-      "city": "UKJ_reading",
+      "city": "UKF_mansfield",
       "tier": "body"
     },
     {
@@ -403,7 +403,7 @@
       "sector": "industry",
       "share": 0.0183,
       "headcount": 12533,
-      "city": "UKL_tonypandy",
+      "city": "UKH_hemel_hempstead",
       "tier": "body"
     },
     {
@@ -412,7 +412,7 @@
       "sector": "industry",
       "share": 0.0253,
       "headcount": 15443,
-      "city": "UKE_wakefield",
+      "city": "UKD_rochdale",
       "tier": "body"
     },
     {
@@ -421,7 +421,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19026,
-      "city": "UKD_salford",
+      "city": "UKG_nuneaton",
       "tier": "body"
     },
     {
@@ -439,7 +439,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20575,
-      "city": "UKN_belfast",
+      "city": "UKD_manchester",
       "tier": "body"
     },
     {
@@ -475,7 +475,7 @@
       "sector": "services",
       "share": 0.0143,
       "headcount": 22356,
-      "city": "UKH_southend_on_sea",
+      "city": "UKK_plymouth",
       "tier": "body"
     },
     {
@@ -484,7 +484,7 @@
       "sector": "services",
       "share": 0.0152,
       "headcount": 24221,
-      "city": "UKG_west_bromwich",
+      "city": "UKG_redditch",
       "tier": "body"
     },
     {
@@ -511,7 +511,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23394,
-      "city": "UKG_coventry",
+      "city": "UKH_southend_on_sea",
       "tier": "body"
     },
     {
@@ -529,7 +529,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKE_leeds",
+      "city": "UKL_cardiff",
       "tier": "body"
     },
     {
@@ -556,7 +556,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23410,
-      "city": "UKJ_basingstoke",
+      "city": "UKK_paignton",
       "tier": "body"
     },
     {
@@ -565,7 +565,7 @@
       "sector": "services",
       "share": 0.0137,
       "headcount": 21737,
-      "city": "UKN_belfast",
+      "city": "UKM_glasgow",
       "tier": "body"
     },
     {
@@ -583,7 +583,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKK_bristol",
+      "city": "UKN_belfast",
       "tier": "body"
     },
     {
@@ -592,7 +592,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKE_scarborough",
+      "city": "UKK_torquay",
       "tier": "body"
     },
     {
@@ -601,7 +601,7 @@
       "sector": "services",
       "share": 0.0118,
       "headcount": 18037,
-      "city": "UKH_basildon",
+      "city": "UKG_burton_upon_trent",
       "tier": "body"
     },
     {
@@ -610,7 +610,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKL_swansea",
+      "city": "UKF_leicester",
       "tier": "body"
     },
     {
@@ -637,7 +637,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23611,
-      "city": "UKJ_southampton",
+      "city": "UKE_huddersfield",
       "tier": "body"
     },
     {
@@ -655,7 +655,7 @@
       "sector": "services",
       "share": 0.0075,
       "headcount": 11859,
-      "city": "UKG_cannock",
+      "city": "UKG_rugby",
       "tier": "body"
     },
     {
@@ -673,7 +673,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKG_wolverhampton",
+      "city": "UKF_northampton",
       "tier": "body"
     },
     {
@@ -700,7 +700,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKM_edinburgh",
+      "city": "UKE_bradford",
       "tier": "body"
     },
     {
@@ -718,7 +718,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKM_glasgow",
+      "city": "UKE_sheffield",
       "tier": "body"
     },
     {
@@ -727,7 +727,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKN_craigavon",
+      "city": "UKE_york",
       "tier": "body"
     },
     {
@@ -754,7 +754,7 @@
       "sector": "services",
       "share": 0.0132,
       "headcount": 18900,
-      "city": "UKN_belfast",
+      "city": "UKD_manchester",
       "tier": "body"
     },
     {
@@ -763,7 +763,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKG_coventry",
+      "city": "UKH_southend_on_sea",
       "tier": "body"
     },
     {
@@ -781,7 +781,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23266,
-      "city": "UKJ_saint_peters",
+      "city": "UKJ_bracknell",
       "tier": "body"
     },
     {
@@ -799,7 +799,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22805,
-      "city": "UKE_kingston_upon_hull",
+      "city": "UKH_southend_on_sea",
       "tier": "body"
     },
     {
@@ -817,7 +817,7 @@
       "sector": "services",
       "share": 0.0131,
       "headcount": 21421,
-      "city": "UKG_telford",
+      "city": "UKJ_high_wycombe",
       "tier": "body"
     },
     {
@@ -826,7 +826,7 @@
       "sector": "services",
       "share": 0.0057,
       "headcount": 8690,
-      "city": "UKE_rotherham",
+      "city": "UKG_sutton_coldfield",
       "tier": "body"
     },
     {
@@ -835,7 +835,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23546,
-      "city": "UKL_newport",
+      "city": "UKG_wolverhampton",
       "tier": "body"
     },
     {
@@ -853,7 +853,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKE_york",
+      "city": "UKH_basildon",
       "tier": "body"
     },
     {
@@ -871,7 +871,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23208,
-      "city": "UKL_newport",
+      "city": "UKG_wolverhampton",
       "tier": "body"
     },
     {
@@ -880,7 +880,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKJ_crawley",
+      "city": "UKJ_hove",
       "tier": "body"
     },
     {
@@ -898,7 +898,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "UKE_grimsby",
+      "city": "UKN_derry",
       "tier": "body"
     },
     {
