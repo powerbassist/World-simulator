@@ -1192,84 +1192,6 @@
       "party_id": "rahva_koda"
     },
     {
-      "id": "EST_chief_lillemae_grupp",
-      "name": "Rein Lillemäe",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.73,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_aare",
-      "name": "Kadri Aare",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.77,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_claudt",
-      "name": "Tõnu Claudt",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.7,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_made",
-      "name": "Kristi Made",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked"
-      ],
-      "ambition": 0.47,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_ehala_grupp",
-      "name": "Aarne Ehala",
-      "kind": "executive",
-      "traits": [
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.41,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_palu",
-      "name": "Sirje Palu",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked"
-      ],
-      "ambition": 0.65,
-      "bench": true
-    },
-    {
-      "id": "EST_chief_rand_transport",
-      "name": "Endel Rand",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.6,
-      "bench": true
-    },
-    {
       "id": "EST_chief_dittmer_transport",
       "name": "Jaan Dittmer",
       "kind": "executive",
@@ -1317,26 +1239,94 @@
       "bench": true
     },
     {
-      "id": "EST_chief_kaubamaja_halliste",
-      "name": "Ülle Halliste",
+      "id": "EST_chief_dittmer_kaubandus",
+      "name": "Peeter Dittmer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_harma_ehitus",
+      "name": "Piret Härma",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_oja_kaubandus",
+      "name": "Aino Oja",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_nommik_kindlustus",
+      "name": "Tõnu Nõmmik",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_claudt_kaubandus",
+      "name": "Peeter Claudt",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_lillemae_toostus",
+      "name": "Mati Lillemäe",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "EST_chief_allik_materjalid",
+      "name": "Ivo Allik",
       "kind": "executive",
       "traits": [
         "ambitious",
         "networked",
         "stubborn"
       ],
-      "ambition": 0.77,
+      "ambition": 0.78,
       "bench": true
     },
     {
-      "id": "EST_chief_pank_valk",
-      "name": "Sirje Valk",
+      "id": "EST_chief_kaubamaja_oobik",
+      "name": "Piret Ööbik",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "loyal"
+        "stubborn"
       ],
-      "ambition": 0.33,
+      "ambition": 0.6,
       "bench": true
     }
   ]

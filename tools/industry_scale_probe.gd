@@ -59,8 +59,33 @@ func _init() -> void:
 	_line("firms layer per month (excl. first warm tick), %d runs x 23 ticks:" % runs)
 	_line("  mean %.3f ms | best %.3f ms | worst %.3f ms -- band 300 ms" % [
 		total_ms / n, best_ms, worst_ms])
+
+	# V4.7a, the PR-46 review's sixth important: the LIVE tick was the only
+	# thing this probe timed, but the roster's growth is multiplied 48x on the
+	# budget panel's projection -- Budget.project ticks Companies AND
+	# Migration once per projected month, and the panel runs TWO 24-month
+	# projections per refresh, re-refreshed per frame while a slider drags.
+	# The projection path gets its own line here so the gate cannot again be
+	# blind to the path that multiplies the register.
+	const Budget = preload("res://src/sim/budget.gd")
+	var proj_best := 1e9
+	var proj_worst := 0.0
+	var proj_total := 0.0
+	var proj_runs := 3
+	for r in proj_runs:
+		var pstate = GameState.new_game(loader, "FRA")
+		for i in proj_runs:
+			var t0 := Time.get_ticks_usec()
+			Budget.project(pstate, {}, 24, loader)
+			var dt_ms := float(Time.get_ticks_usec() - t0) / 1000.0
+			proj_total += dt_ms
+			proj_best = minf(proj_best, dt_ms)
+			proj_worst = maxf(proj_worst, dt_ms)
+	_line("budget projection (1x24-month project), %d runs:" % (proj_runs * proj_runs))
+	_line("  mean %.1f ms | best %.1f ms | worst %.1f ms -- panel refresh = 2x this, per frame on drag" % [
+		proj_total / float(proj_runs * proj_runs), proj_best, proj_worst])
 	var ok := worst_ms < 300.0
-	_line("verdict: %s" % ["PASS" if ok else "FAIL"])
+	_line("verdict: %s (firms month band 300 ms; the projection line informs the 7b re-baseline)" % ["PASS" if ok else "FAIL"])
 	_finish(0 if ok else 1)
 
 

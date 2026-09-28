@@ -103,14 +103,14 @@
       "chief_id": "BEL_chief_simonis_industrie"
     },
     {
-      "id": "BEL_hoet",
-      "name": "Hoet",
+      "id": "BEL_hoet_energie",
+      "name": "Hoet Energie",
       "sector": "services",
       "share": 0.0659,
-      "headcount": 86272,
+      "headcount": 112194,
       "city": "BE1_anderlecht",
       "tier": "major",
-      "chief_id": "BEL_chief_hoet"
+      "chief_id": "BEL_chief_hoet_energie"
     },
     {
       "id": "BEL_jongen_industrie",

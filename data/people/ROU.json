@@ -1163,42 +1163,103 @@
       "party_id": "blocul_muncitoresc"
     },
     {
-      "id": "ROU_chief_casa_de_comert_locusteanu",
-      "name": "Nicolae Locusteanu",
+      "id": "ROU_chief_banca_slatineanu",
+      "name": "Viorica Slătineanu",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_casa_de_comert_carp",
+      "name": "Florin Carp",
       "kind": "executive",
       "traits": [
         "loyal",
         "networked",
-        "stubborn"
-      ],
-      "ambition": 0.62,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_hasdeu",
-      "name": "Nicolae Hasdeu",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked"
-      ],
-      "ambition": 0.36,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_carp_constructii",
-      "name": "Petru Carp",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
         "pragmatic"
       ],
-      "ambition": 0.43,
+      "ambition": 0.51,
       "bench": true
     },
     {
-      "id": "ROU_chief_jalea_agricultura",
-      "name": "Emil Jalea",
+      "id": "ROU_chief_companie_odobescu",
+      "name": "Marian Odobescu",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_casa_de_comert_popescu",
+      "name": "Petru Popescu",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_racovita_constructii",
+      "name": "Adrian Racoviță",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_banca_negruzzi",
+      "name": "Marian Negruzzi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_cirstea_logistica",
+      "name": "Petru Cîrstea",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_companie_locusteanu",
+      "name": "Cornel Locusteanu",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "ROU_chief_hurmuzache_agricultura",
+      "name": "Elena Hurmuzache",
       "kind": "executive",
       "traits": [
         "loyal",
@@ -1220,72 +1281,26 @@
       "bench": true
     },
     {
-      "id": "ROU_chief_banca_slatineanu",
-      "name": "Viorica Slătineanu",
+      "id": "ROU_chief_companie_eftimie",
+      "name": "Gheorghe Eftimie",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "loyal",
-        "pragmatic"
-      ],
-      "ambition": 0.57,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_companie_negruzzi",
-      "name": "Cornel Negruzzi",
-      "kind": "executive",
-      "traits": [
-        "networked",
         "stubborn"
       ],
-      "ambition": 0.74,
+      "ambition": 0.54,
       "bench": true
     },
     {
-      "id": "ROU_chief_companie_hurmuzache",
-      "name": "Rodica Hurmuzache",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.69,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_falcoianu_logistica",
-      "name": "Nadia Fălcoianu",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.37,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_manescu",
-      "name": " Florin Mănescu",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.53,
-      "bench": true
-    },
-    {
-      "id": "ROU_chief_lazar",
-      "name": "Adrian Lazăr",
+      "id": "ROU_chief_companie_bratianu",
+      "name": "Adina Brătianu",
       "kind": "executive",
       "traits": [
         "loyal",
-        "networked",
+        "pragmatic",
         "stubborn"
       ],
-      "ambition": 0.81,
+      "ambition": 0.34,
       "bench": true
     }
   ]

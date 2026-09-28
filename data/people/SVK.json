@@ -1139,40 +1139,6 @@
       "bench": true
     },
     {
-      "id": "SVK_chief_teren",
-      "name": "Karol Teren",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "pragmatic"
-      ],
-      "ambition": 0.53,
-      "bench": true
-    },
-    {
-      "id": "SVK_chief_obchodny_dom_klimko",
-      "name": "František Klimko",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "stubborn"
-      ],
-      "ambition": 0.75,
-      "bench": true
-    },
-    {
-      "id": "SVK_chief_urda",
-      "name": "Hana Urda",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked"
-      ],
-      "ambition": 0.53,
-      "bench": true
-    },
-    {
       "id": "SVK_chief_spolocnost_senko",
       "name": "Alžbeta Senko",
       "kind": "executive",
@@ -1194,30 +1160,6 @@
         "stubborn"
       ],
       "ambition": 0.51,
-      "bench": true
-    },
-    {
-      "id": "SVK_chief_martinak_stavebnictvo",
-      "name": "František Martinák",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.76,
-      "bench": true
-    },
-    {
-      "id": "SVK_chief_teren_logistika",
-      "name": "Dušan Teren",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.81,
       "bench": true
     },
     {
@@ -1273,6 +1215,52 @@
         "pragmatic"
       ],
       "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_obchodny_dom_jambor",
+      "name": "Jana Jambor",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_obchodny_dom_frano",
+      "name": "František Fraňo",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_turcek_doprava",
+      "name": "Marek Turček",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_banka_zimka",
+      "name": "Katarína Zimka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
       "bench": true
     }
   ]

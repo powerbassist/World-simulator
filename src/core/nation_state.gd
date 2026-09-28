@@ -767,8 +767,12 @@ var deployment_opinion_load: float = 0.0
 ## law. It earns no SAVE_VERSION bump on the literal rule — absent it reads 0.0, "the
 ## state owns nothing", which is the truth about every version-15 save because those
 ## games could not nationalise anybody.
-## V4.7a fields are recoverable: absent owner is domestic, failed is false, and
-## absent body deltas read authored content. Therefore SAVE_VERSION remains 37.
+## V4.7a's own change is recoverable: the register went sparse, and an absent
+## body entry reads its authored share (share_of_company's fallback), which is
+## the truth about a firm no verb ever touched; majors missing from a pre-7a
+## save are repaired by _seed_missing_majors at the first tick. Therefore
+## SAVE_VERSION remains 37. (The owner/failed keys named here in the first
+## draft are V4.7b's PLANNED fields -- forward record, not this block's.)
 var companies := {}
 
 ## The four prices, recomputed once a month by Companies._recompute_prices() and

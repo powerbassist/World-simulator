@@ -258,10 +258,12 @@ func _build_sector(ns, sector: String) -> void:
 ## A3's body aggregate: one line saying the fabric exists and how much of the
 ## sector it holds, then the five biggest body employers by headcount -- enough
 ## to see the tier is real firms with real jobs, not enough to bury the majors.
-## The headcount read is the AUTHORED figure (company.headcount), not the live
-## register read the majors' rows use: body firms never take a verb, so their
-## headcount is a static content fact and the live read would be the same
-## number reached through two lookups.
+## The jobs read is the LIVE one (Companies.headcount), the same read the
+## majors' rows above use: a body firm's share never moves in 7a, but a
+## standing regulation burden scales its compliance factor like anybody's --
+## and the PR-46 review measured the authored read diverging 3-10 % from the
+## live figure the sim itself consumes, in the same panel as burden-scaled
+## major rows. One readout, one time.
 func _build_body(ns, sector: String, body: Array) -> void:
 	if body.is_empty():
 		return
@@ -273,16 +275,19 @@ func _build_body(ns, sector: String, body: Array) -> void:
 		# tier's headline line at 0.00 of sector forever -- the A3 review's
 		# Critical 1, V1.6d's present-figure-as-zero class.
 		share += Companies.share_of_company(ns, company)
-		jobs += float(company.headcount)
+		jobs += Companies.headcount(ns, company)
 	PanelKit.line(_body, "BODY · %d firms · %.2f of sector · %s jobs" % [
 		body.size(), share, _thousands(jobs),
 	])
 	var ranked := body.duplicate()
-	ranked.sort_custom(func(a, b): return float(a.headcount) > float(b.headcount))
+	var live_jobs := {}
+	for company in body:
+		live_jobs[company.id] = Companies.headcount(ns, company)
+	ranked.sort_custom(func(a, b): return float(live_jobs[a.id]) > float(live_jobs[b.id]))
 	for i in mini(5, ranked.size()):
 		var company = ranked[i]
 		PanelKit.line(_body, "  %s · %s jobs" % [
-			company.company_name, _thousands(float(company.headcount)),
+			company.company_name, _thousands(float(live_jobs[company.id])),
 		])
 
 

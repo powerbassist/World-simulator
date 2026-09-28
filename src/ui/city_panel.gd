@@ -211,8 +211,12 @@ func _build_detail(found: Dictionary) -> void:
 		if Companies.is_major(company):
 			rows.append([String(company.company_name), PanelKit.pop_text(Companies.headcount(ns, company))])
 		else:
+			# The live read, same as the majors' rows beside it: a standing
+			# burden scales a body firm's compliance like anybody's, and an
+			# authored figure would disagree with the region panel and the
+			# migration flow reading the same city (the PR-46 review's nit).
 			body_count += 1
-			body_jobs += float(company.headcount)
+			body_jobs += Companies.headcount(ns, company)
 	if rows.is_empty() and body_count == 0:
 		PanelKit.line(_body, "No named employer is domiciled here.")
 	else:

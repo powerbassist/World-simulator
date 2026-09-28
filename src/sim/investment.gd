@@ -49,7 +49,9 @@ extends RefCounted
 ##
 ## IT REACHES THE WHOLE SECTOR, INCLUDING THE UNNAMED RESIDUAL, and that is the line
 ## docs/tiers/v1.md section 6 says this bullet must not cross. V1.4b's regulation reads
-## only the NAMED firms, so a sector a quarter named is a quarter as regulable --
+## only the NAMED firms, so a sector a quarter named is a quarter as regulable
+## (V4.7a: named coverage is 0.85-0.97 per sector now, not a quarter -- the
+## bound binds near its ceiling and B4 owns the re-tune) --
 ## docs/companies-model.md records that as a structural bound rather than a rounding
 ## error, and it is one of the two things that keep a sector burden from being this
 ## lever with a minus sign. sector_trend_shift() reads `ns.sector_output` and nothing

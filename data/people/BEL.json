@@ -1274,18 +1274,6 @@
       "bench": true
     },
     {
-      "id": "BEL_chief_hoet",
-      "name": "Koen Hoet",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "stubborn"
-      ],
-      "ambition": 0.8,
-      "bench": true
-    },
-    {
       "id": "BEL_chief_jongen_industrie",
       "name": "Sofie Jongen",
       "kind": "executive",
@@ -1306,6 +1294,18 @@
         "pragmatic"
       ],
       "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_hoet_energie",
+      "name": "Koen Hoet",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.8,
       "bench": true
     }
   ]

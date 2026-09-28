@@ -207,6 +207,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "AUT_chief_iro_energie": {
+  "sex": "male",
+  "age": 67,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "AUT_chief_kalcher_industrie": {
   "sex": "female",
   "age": 59,
@@ -1014,6 +1027,19 @@
   "bust": "average bust"
  },
  "BEL_chief_hoet": {
+  "sex": "male",
+  "age": 42,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "BEL_chief_hoet_energie": {
   "sex": "male",
   "age": 42,
   "build": "stocky",
@@ -1884,6 +1910,32 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "BGR_chief_bodurov_targovija": {
+  "sex": "male",
+  "age": 46,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "BGR_chief_chavdarov_zastrahovane": {
+  "sex": "male",
+  "age": 45,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "BGR_chief_dimov": {
   "sex": "male",
   "age": 62,
@@ -1897,6 +1949,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "BGR_chief_dimov_zemedelie": {
+  "sex": "male",
+  "age": 50,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "BGR_chief_neykov_energija": {
   "sex": "male",
   "age": 52,
@@ -1908,6 +1973,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "light brown skin",
   "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "BGR_chief_obretenov": {
+  "sex": "male",
+  "age": 51,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "BGR_chief_stefanov_materiali": {
@@ -1975,6 +2053,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "BGR_chief_uzunov_transport": {
+  "sex": "male",
+  "age": 52,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "BGR_chief_videv": {
   "sex": "female",
   "age": 64,
@@ -2013,6 +2104,19 @@
   "skin": "olive skin",
   "eyes": "blue eyes",
   "bust": "flat chest"
+ },
+ "BGR_chief_zografski_grupa": {
+  "sex": "female",
+  "age": 40,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
  },
  "BGR_cholakov": {
   "sex": "female",
@@ -2749,6 +2853,19 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "CHE_chief_fuchs_energie": {
+  "sex": "male",
+  "age": 56,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "CHE_chief_fuchs_gruppe": {
   "sex": "male",
   "age": 47,
@@ -2774,6 +2891,19 @@
   "skin": "tanned skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
+ },
+ "CHE_chief_handelshaus_daenzer": {
+  "sex": "female",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
  },
  "CHE_chief_handelshaus_dutsch": {
   "sex": "female",
@@ -2814,6 +2944,32 @@
   "eyes": "blue eyes",
   "bust": "average bust"
  },
+ "CHE_chief_hoffmann_landwirtschaft": {
+  "sex": "male",
+  "age": 50,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "CHE_chief_jenni_handel": {
+  "sex": "male",
+  "age": 48,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "CHE_chief_joller": {
   "sex": "male",
   "age": 40,
@@ -2825,6 +2981,19 @@
   "wardrobe": "beige linen jacket",
   "skin": "tanned skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CHE_chief_portmann": {
+  "sex": "male",
+  "age": 65,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
   "bust": "flat chest"
  },
  "CHE_chief_quaderer": {
@@ -3629,6 +3798,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "CYP_chief_ktorides_ylika": {
+  "sex": "male",
+  "age": 46,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "CYP_chief_kyprianou_metafora": {
   "sex": "male",
   "age": 57,
@@ -3655,6 +3837,32 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "CYP_chief_loizou_kataskeves": {
+  "sex": "male",
+  "age": 66,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_lombardos_kataskeves": {
+  "sex": "male",
+  "age": 62,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "CYP_chief_miltiades": {
   "sex": "male",
   "age": 63,
@@ -3668,6 +3876,19 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "CYP_chief_miltiades_logistiki": {
+  "sex": "female",
+  "age": 45,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
  "CYP_chief_mouskos": {
   "sex": "male",
   "age": 51,
@@ -3678,6 +3899,19 @@
   "quirk": "dimpled chin",
   "wardrobe": "beige linen jacket",
   "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_mouskos_metafora": {
+  "sex": "male",
+  "age": 43,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
@@ -3694,6 +3928,58 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "CYP_chief_neophytou_asfaliseis": {
+  "sex": "male",
+  "age": 53,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_nicolaou_energeia": {
+  "sex": "male",
+  "age": 45,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_orphanides": {
+  "sex": "female",
+  "age": 40,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "CYP_chief_sarris": {
+  "sex": "male",
+  "age": 55,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "CYP_chief_trapeza_zachariou": {
   "sex": "male",
   "age": 62,
@@ -3705,6 +3991,19 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "pale skin with freckles",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_vassiliou_metafora": {
+  "sex": "male",
+  "age": 50,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "CYP_chief_vrahimi_omilos": {
@@ -3719,6 +4018,32 @@
   "skin": "tanned skin",
   "eyes": "green eyes",
   "bust": "average bust"
+ },
+ "CYP_chief_yiangou_kataskeves": {
+  "sex": "male",
+  "age": 59,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CYP_chief_zambas_logistiki": {
+  "sex": "male",
+  "age": 68,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
  },
  "CYP_chief_zenios_viomichania": {
   "sex": "male",
@@ -4446,6 +4771,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "CZE_chief_banka_malecek": {
+  "sex": "male",
+  "age": 49,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "CZE_chief_banka_rysanek": {
   "sex": "male",
   "age": 54,
@@ -4471,6 +4809,45 @@
   "skin": "fair skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
+ },
+ "CZE_chief_benesovsky_pojisteni": {
+  "sex": "male",
+  "age": 40,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "CZE_chief_benesovsky_skupina": {
+  "sex": "male",
+  "age": 68,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CZE_chief_fojtik_obchod": {
+  "sex": "female",
+  "age": 65,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "CZE_chief_gregor_materialy": {
   "sex": "female",
@@ -4511,6 +4888,45 @@
   "eyes": "brown eyes",
   "bust": "average bust"
  },
+ "CZE_chief_malecek": {
+  "sex": "male",
+  "age": 53,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "CZE_chief_nedved": {
+  "sex": "female",
+  "age": 52,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "CZE_chief_obchodni_dum_fiser": {
+  "sex": "male",
+  "age": 54,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "CZE_chief_obchodni_dum_havlicek": {
   "sex": "female",
   "age": 60,
@@ -4550,6 +4966,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "CZE_chief_spolecnost_kroupa": {
+  "sex": "male",
+  "age": 47,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "CZE_chief_spolecnost_nedved": {
   "sex": "male",
   "age": 54,
@@ -4560,6 +4989,32 @@
   "quirk": "pronounced smile lines",
   "wardrobe": "beige linen jacket",
   "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "CZE_chief_spolecnost_zemek": {
+  "sex": "male",
+  "age": 50,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "CZE_chief_toman_logistika": {
+  "sex": "male",
+  "age": 46,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
   "eyes": "green eyes",
   "bust": "flat chest"
  },
@@ -6121,6 +6576,19 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "DNK_chief_ahlefeldt_transport": {
+  "sex": "male",
+  "age": 55,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "DNK_chief_bank_moller": {
   "sex": "male",
   "age": 42,
@@ -6173,6 +6641,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "DNK_chief_friis_moller_handel": {
+  "sex": "female",
+  "age": 40,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "DNK_chief_friisberg": {
   "sex": "female",
   "age": 43,
@@ -6186,6 +6667,19 @@
   "eyes": "grey eyes",
   "bust": "average bust"
  },
+ "DNK_chief_gisl_logistik": {
+  "sex": "male",
+  "age": 59,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "DNK_chief_gronbaek_energi": {
   "sex": "male",
   "age": 50,
@@ -6197,6 +6691,19 @@
   "wardrobe": "high-collared shirt",
   "skin": "pale skin with freckles",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "DNK_chief_gronbaek_logistik": {
+  "sex": "male",
+  "age": 42,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
   "bust": "flat chest"
  },
  "DNK_chief_handelshus_nordenhof": {
@@ -6212,6 +6719,45 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "DNK_chief_handelshus_poulsen": {
+  "sex": "female",
+  "age": 64,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "DNK_chief_holst_byggeri": {
+  "sex": "male",
+  "age": 52,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "DNK_chief_jerndorff_forsikring": {
+  "sex": "male",
+  "age": 45,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "DNK_chief_paludan": {
   "sex": "male",
   "age": 57,
@@ -6222,6 +6768,19 @@
   "quirk": "heavy brow",
   "wardrobe": "open-collar dark blazer",
   "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "DNK_chief_poulsen_forsikring": {
+  "sex": "male",
+  "age": 54,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
@@ -6238,6 +6797,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "DNK_chief_ravn_energi": {
+  "sex": "male",
+  "age": 66,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "DNK_chief_selskab_brorson": {
   "sex": "male",
   "age": 44,
@@ -6249,6 +6821,19 @@
   "wardrobe": "open-collar dark blazer",
   "skin": "pale skin with freckles",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "DNK_chief_wandel_handel": {
+  "sex": "male",
+  "age": 68,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
   "bust": "flat chest"
  },
  "DNK_clemmensen": {
@@ -7003,6 +7588,58 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "ESP_chief_aranda_seguros": {
+  "sex": "male",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ESP_chief_aranda_transportes": {
+  "sex": "male",
+  "age": 61,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ESP_chief_arriaga_construccion": {
+  "sex": "male",
+  "age": 66,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "ESP_chief_compania_aranda": {
+  "sex": "male",
+  "age": 59,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "ESP_chief_compania_etxebarria": {
   "sex": "male",
   "age": 47,
@@ -7055,6 +7692,19 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "ESP_chief_figueroa_industrias": {
+  "sex": "female",
+  "age": 54,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "ESP_chief_jaramillo_construccion": {
   "sex": "female",
   "age": 54,
@@ -7094,6 +7744,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "ESP_chief_lizarraga_grupo": {
+  "sex": "female",
+  "age": 52,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "ESP_chief_olivencia_materiales": {
   "sex": "male",
   "age": 59,
@@ -7103,6 +7766,32 @@
   "face": "weathered face with deep lines",
   "quirk": "straight brows",
   "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "ESP_chief_palazuelos_energia": {
+  "sex": "male",
+  "age": 65,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "ESP_chief_querol_materiales": {
+  "sex": "male",
+  "age": 47,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
   "skin": "olive skin",
   "eyes": "grey eyes",
   "bust": "flat chest"
@@ -7134,6 +7823,19 @@
   "bust": "flat chest"
  },
  "ESP_chief_sociedad_saenz": {
+  "sex": "female",
+  "age": 59,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "ESP_chief_sotelo_materiales": {
   "sex": "female",
   "age": 59,
   "build": "average build",
@@ -7835,6 +8537,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "EST_chief_allik_materjalid": {
+  "sex": "male",
+  "age": 65,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "EST_chief_claudt": {
   "sex": "male",
   "age": 66,
@@ -7846,6 +8561,32 @@
   "wardrobe": "open-collar dark blazer",
   "skin": "olive skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "EST_chief_claudt_kaubandus": {
+  "sex": "male",
+  "age": 66,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "EST_chief_dittmer_kaubandus": {
+  "sex": "male",
+  "age": 57,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "EST_chief_dittmer_transport": {
@@ -7900,6 +8641,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "EST_chief_harma_ehitus": {
+  "sex": "female",
+  "age": 47,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "EST_chief_kaubamaja_halliste": {
   "sex": "female",
   "age": 56,
@@ -7913,6 +8667,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "EST_chief_kaubamaja_oobik": {
+  "sex": "male",
+  "age": 51,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "EST_chief_lillemae_grupp": {
   "sex": "male",
   "age": 62,
@@ -7925,6 +8692,19 @@
   "skin": "olive skin",
   "eyes": "green eyes",
   "bust": "flat chest"
+ },
+ "EST_chief_lillemae_toostus": {
+  "sex": "female",
+  "age": 63,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "EST_chief_made": {
   "sex": "female",
@@ -7950,6 +8730,32 @@
   "wardrobe": "open-collar dark blazer",
   "skin": "light brown skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "EST_chief_nommik_kindlustus": {
+  "sex": "male",
+  "age": 65,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "EST_chief_oja_kaubandus": {
+  "sex": "male",
+  "age": 63,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "EST_chief_palu": {
@@ -8780,6 +9586,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "FIN_chief_heikkila_ryhma": {
+  "sex": "female",
+  "age": 68,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "FIN_chief_jokinen_logistiikka": {
   "sex": "male",
   "age": 56,
@@ -8793,6 +9612,19 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "FIN_chief_kauppahuone_salonen": {
+  "sex": "female",
+  "age": 64,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
  "FIN_chief_makinen_vakuutus": {
   "sex": "male",
   "age": 56,
@@ -8804,6 +9636,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "olive skin",
   "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "FIN_chief_mannerkoski": {
+  "sex": "male",
+  "age": 45,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "FIN_chief_moisio_rakennus": {
@@ -8819,6 +9664,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "FIN_chief_nieminen_ryhma": {
+  "sex": "male",
+  "age": 58,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "FIN_chief_pankki_akerman": {
   "sex": "male",
   "age": 52,
@@ -8830,6 +9688,19 @@
   "wardrobe": "plain dark suit",
   "skin": "light brown skin",
   "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "FIN_chief_pankki_blomqvist": {
+  "sex": "male",
+  "age": 65,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "FIN_chief_pankki_jokinen": {
@@ -8871,6 +9742,45 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "FIN_chief_rasanen_maatalous": {
+  "sex": "male",
+  "age": 65,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "FIN_chief_rasanen_materiaalit": {
+  "sex": "female",
+  "age": 44,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "FIN_chief_rasanen_rakennus": {
+  "sex": "female",
+  "age": 49,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "FIN_chief_riekkinen_liikenne": {
   "sex": "male",
   "age": 52,
@@ -8882,6 +9792,19 @@
   "wardrobe": "plain dark suit",
   "skin": "pale skin with freckles",
   "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "FIN_chief_sihvonen_rakennus": {
+  "sex": "male",
+  "age": 51,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "FIN_chief_tiihonen": {
@@ -8896,6 +9819,32 @@
   "skin": "olive skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
+ },
+ "FIN_chief_tolvanen_ryhma": {
+  "sex": "female",
+  "age": 44,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "FIN_chief_vaisanen_materiaalit": {
+  "sex": "female",
+  "age": 62,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "FIN_chief_yhtio_cederstrom": {
   "sex": "female",
@@ -11211,6 +12160,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "GRC_chief_alexandris_emporio": {
+  "sex": "female",
+  "age": 43,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "GRC_chief_doukas": {
   "sex": "male",
   "age": 63,
@@ -11222,6 +12184,58 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "fair skin",
   "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "GRC_chief_emporikos_oikos_alexandris": {
+  "sex": "male",
+  "age": 56,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "GRC_chief_emporikos_oikos_chrysafis": {
+  "sex": "female",
+  "age": 47,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "GRC_chief_emporikos_oikos_reppas": {
+  "sex": "female",
+  "age": 51,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "GRC_chief_emporikos_oikos_tsakonas": {
+  "sex": "male",
+  "age": 55,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "GRC_chief_galatopoulos": {
@@ -11237,6 +12251,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "GRC_chief_galatopoulos_kataskeves": {
+  "sex": "female",
+  "age": 60,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "GRC_chief_iliopoulos_metafora": {
   "sex": "female",
   "age": 59,
@@ -11248,6 +12275,19 @@
   "wardrobe": "high-collared shirt",
   "skin": "light brown skin",
   "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "GRC_chief_kefalas_omilos": {
+  "sex": "female",
+  "age": 46,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
   "bust": "average bust"
  },
  "GRC_chief_manousakis": {
@@ -11262,6 +12302,32 @@
   "skin": "pale skin with freckles",
   "eyes": "green eyes",
   "bust": "average bust"
+ },
+ "GRC_chief_manousakis_asfaliseis": {
+  "sex": "male",
+  "age": 63,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "GRC_chief_manousakis_kataskeves": {
+  "sex": "male",
+  "age": 60,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
  },
  "GRC_chief_moraitis": {
   "sex": "female",
@@ -11328,6 +12394,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "GRC_chief_trapeza_bakolas": {
+  "sex": "female",
+  "age": 41,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "GRC_chief_trapeza_iliopoulos": {
   "sex": "male",
   "age": 50,
@@ -11338,6 +12417,32 @@
   "quirk": "widow's peak",
   "wardrobe": "open-collar dark blazer",
   "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "GRC_chief_trapeza_lamprou": {
+  "sex": "male",
+  "age": 66,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "GRC_chief_tsangaris_kataskeves": {
+  "sex": "male",
+  "age": 46,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
   "eyes": "green eyes",
   "bust": "flat chest"
  },
@@ -12024,6 +13129,32 @@
   "quirk": "strong brow ridge",
   "wardrobe": "charcoal suit, party-badge lapel pin"
  },
+ "HRV_chief_babic_promet": {
+  "sex": "male",
+  "age": 41,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "HRV_chief_banka_andelic": {
+  "sex": "female",
+  "age": 54,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
  "HRV_chief_banka_pandzic": {
   "sex": "female",
   "age": 58,
@@ -12050,6 +13181,19 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "HRV_chief_frlan_graditeljstvo": {
+  "sex": "female",
+  "age": 51,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "HRV_chief_grubisic_poljoprivreda": {
   "sex": "female",
   "age": 42,
@@ -12062,6 +13206,19 @@
   "skin": "light brown skin",
   "eyes": "blue eyes",
   "bust": "average bust"
+ },
+ "HRV_chief_grubisic_promet": {
+  "sex": "male",
+  "age": 61,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
  },
  "HRV_chief_lukic": {
   "sex": "male",
@@ -12115,6 +13272,45 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "HRV_chief_radic_industrija": {
+  "sex": "female",
+  "age": 65,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "HRV_chief_radic_osiguranje": {
+  "sex": "male",
+  "age": 59,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "HRV_chief_radic_promet": {
+  "sex": "male",
+  "age": 40,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "HRV_chief_saric": {
   "sex": "male",
   "age": 67,
@@ -12154,6 +13350,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "HRV_chief_starcevic_logistika": {
+  "sex": "male",
+  "age": 51,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "HRV_chief_trgovacki_dom_matosevic": {
   "sex": "female",
   "age": 68,
@@ -12166,6 +13375,32 @@
   "skin": "fair skin",
   "eyes": "blue eyes",
   "bust": "average bust"
+ },
+ "HRV_chief_vukasovic_trgovina": {
+  "sex": "male",
+  "age": 67,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "HRV_chief_zoric_trgovina": {
+  "sex": "male",
+  "age": 68,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
  },
  "HRV_cindric": {
   "sex": "male",
@@ -12865,6 +14100,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "HUN_chief_albertfalusi_szallitas": {
+  "sex": "male",
+  "age": 55,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "HUN_chief_ando_anyagok": {
   "sex": "male",
   "age": 67,
@@ -12891,6 +14139,45 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "HUN_chief_bank_egressy": {
+  "sex": "female",
+  "age": 53,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "HUN_chief_bank_erdelyi": {
+  "sex": "male",
+  "age": 63,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_bank_halasz": {
+  "sex": "female",
+  "age": 54,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "HUN_chief_bank_meszaros": {
   "sex": "male",
   "age": 58,
@@ -12902,6 +14189,19 @@
   "wardrobe": "beige linen jacket",
   "skin": "light brown skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_czutor_mezogazdasag": {
+  "sex": "male",
+  "age": 40,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "HUN_chief_dudas": {
@@ -12928,6 +14228,19 @@
   "wardrobe": "beige linen jacket",
   "skin": "tanned skin",
   "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_hegedus_ipar": {
+  "sex": "male",
+  "age": 43,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "HUN_chief_izso": {
@@ -12995,6 +14308,71 @@
   "eyes": "brown eyes",
   "bust": "average bust"
  },
+ "HUN_chief_lendvai_energia": {
+  "sex": "male",
+  "age": 67,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_lendvai_szallitas": {
+  "sex": "female",
+  "age": 52,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "HUN_chief_nagydani": {
+  "sex": "male",
+  "age": 48,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_racz_anyagok": {
+  "sex": "female",
+  "age": 43,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "HUN_chief_rekettyes": {
+  "sex": "male",
+  "age": 59,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "HUN_chief_szilagyi_csoport": {
   "sex": "male",
   "age": 55,
@@ -13006,6 +14384,19 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "tanned skin",
   "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "HUN_chief_toroksz": {
+  "sex": "male",
+  "age": 41,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "HUN_chief_veghseo_csoport": {
@@ -13020,6 +14411,19 @@
   "skin": "olive skin",
   "eyes": "green eyes",
   "bust": "average bust"
+ },
+ "HUN_chief_zsoldos_logisztika": {
+  "sex": "male",
+  "age": 59,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
  },
  "HUN_csanadi": {
   "sex": "female",
@@ -13743,6 +15147,19 @@
   "quirk": "strong brow ridge",
   "wardrobe": "dark formal suit, discreet tie pin"
  },
+ "IRL_chief_aherne_transport": {
+  "sex": "male",
+  "age": 60,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "IRL_chief_bank_nestor": {
   "sex": "male",
   "age": 62,
@@ -13834,6 +15251,32 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "IRL_chief_enright_logistics": {
+  "sex": "female",
+  "age": 48,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "IRL_chief_gantly_transport": {
+  "sex": "female",
+  "age": 58,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
  "IRL_chief_hannon_transport": {
   "sex": "female",
   "age": 68,
@@ -13845,6 +15288,32 @@
   "wardrobe": "plain dark suit",
   "skin": "tanned skin",
   "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "IRL_chief_henchy_agri": {
+  "sex": "female",
+  "age": 58,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "IRL_chief_kavanagh_materials": {
+  "sex": "female",
+  "age": 40,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
   "bust": "average bust"
  },
  "IRL_chief_laffan_agri": {
@@ -13860,6 +15329,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "IRL_chief_lambe_energy": {
+  "sex": "female",
+  "age": 63,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "IRL_chief_mulvihill": {
   "sex": "female",
   "age": 42,
@@ -13873,6 +15355,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "IRL_chief_nolan_construction": {
+  "sex": "male",
+  "age": 61,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "IRL_chief_o_donoghue_construction": {
   "sex": "male",
   "age": 57,
@@ -13884,6 +15379,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "tanned skin",
   "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "IRL_chief_o_donoghue_energy": {
+  "sex": "male",
+  "age": 64,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "IRL_chief_timmons": {
@@ -13899,6 +15407,32 @@
   "eyes": "blue eyes",
   "bust": "average bust"
  },
+ "IRL_chief_trust_nestor": {
+  "sex": "male",
+  "age": 40,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "IRL_chief_tyrrell_group": {
+  "sex": "female",
+  "age": 60,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "IRL_chief_usher": {
   "sex": "male",
   "age": 41,
@@ -13911,6 +15445,19 @@
   "skin": "tanned skin",
   "eyes": "green eyes",
   "bust": "flat chest"
+ },
+ "IRL_chief_usher_group": {
+  "sex": "female",
+  "age": 68,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
  },
  "IRL_comyn": {
   "sex": "male",
@@ -14705,6 +16252,19 @@
   "skin": "olive skin",
   "eyes": "brown eyes"
  },
+ "ITA_chief_banca_aloisio": {
+  "sex": "female",
+  "age": 67,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "ITA_chief_banca_gentileschi": {
   "sex": "male",
   "age": 52,
@@ -14744,6 +16304,110 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "ITA_chief_bellandi_energia": {
+  "sex": "female",
+  "age": 51,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "ITA_chief_brancadoro_commercio": {
+  "sex": "male",
+  "age": 64,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_compagnia_bellandi": {
+  "sex": "male",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_compagnia_pischedda": {
+  "sex": "female",
+  "age": 51,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "ITA_chief_compagnia_ravagnani": {
+  "sex": "male",
+  "age": 67,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_cuccurullo_materiali": {
+  "sex": "male",
+  "age": 66,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_dell_orto_agro": {
+  "sex": "male",
+  "age": 54,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_dossena_commercio": {
+  "sex": "male",
+  "age": 52,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "ITA_chief_ermenegildo_industrie": {
   "sex": "male",
   "age": 55,
@@ -14754,6 +16418,19 @@
   "quirk": "widow's peak",
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_errani_industrie": {
+  "sex": "male",
+  "age": 45,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
   "eyes": "green eyes",
   "bust": "flat chest"
  },
@@ -14769,6 +16446,19 @@
   "skin": "olive skin",
   "eyes": "grey eyes",
   "bust": "flat chest"
+ },
+ "ITA_chief_laudomi_trasporti": {
+  "sex": "female",
+  "age": 58,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "ITA_chief_nesci": {
   "sex": "male",
@@ -14796,6 +16486,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "ITA_chief_oliverio_commercio": {
+  "sex": "female",
+  "age": 45,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "ITA_chief_orsini_commercio": {
   "sex": "male",
   "age": 45,
@@ -14822,6 +16525,19 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "ITA_chief_quarantotto_materiali": {
+  "sex": "male",
+  "age": 55,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "ITA_chief_serafini": {
   "sex": "male",
   "age": 57,
@@ -14832,6 +16548,71 @@
   "quirk": "pronounced smile lines",
   "wardrobe": "open-collar dark blazer",
   "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_societa_gargiulo": {
+  "sex": "male",
+  "age": 61,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_societa_liguori": {
+  "sex": "male",
+  "age": 56,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_tirabassi_trasporti": {
+  "sex": "male",
+  "age": 57,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_ughi_energia": {
+  "sex": "female",
+  "age": 53,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "ITA_chief_ughi_industrie": {
+  "sex": "male",
+  "age": 55,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
@@ -14848,6 +16629,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "ITA_chief_valguarnera_energia": {
+  "sex": "male",
+  "age": 42,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "ITA_chief_valguarnera_gruppo": {
   "sex": "male",
   "age": 50,
@@ -14859,6 +16653,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "olive skin",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ITA_chief_ventimiglia_agro": {
+  "sex": "male",
+  "age": 58,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "ITA_cimabue": {
@@ -15537,6 +17344,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "LTU_chief_baltusis_zemes_ukis": {
+  "sex": "male",
+  "age": 60,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "LTU_chief_bankas_emuzis": {
   "sex": "female",
   "age": 50,
@@ -15589,6 +17409,58 @@
   "eyes": "blue eyes",
   "bust": "average bust"
  },
+ "LTU_chief_burokas_zemes_ukis": {
+  "sex": "male",
+  "age": 51,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LTU_chief_cepas_zemes_ukis": {
+  "sex": "male",
+  "age": 57,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "LTU_chief_eimutis_logistika": {
+  "sex": "female",
+  "age": 48,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LTU_chief_gudauskas_draudimas": {
+  "sex": "male",
+  "age": 44,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "LTU_chief_juozapavicius_pramone": {
   "sex": "male",
   "age": 45,
@@ -15614,6 +17486,32 @@
   "skin": "olive skin",
   "eyes": "grey eyes",
   "bust": "flat chest"
+ },
+ "LTU_chief_kazlauskas_logistika": {
+  "sex": "male",
+  "age": 60,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LTU_chief_laukaitis_logistika": {
+  "sex": "female",
+  "age": 55,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "LTU_chief_maciulis": {
   "sex": "male",
@@ -15641,6 +17539,32 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "LTU_chief_pakalniskis_grupe": {
+  "sex": "female",
+  "age": 68,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LTU_chief_prekybos_namai_dobilaitis": {
+  "sex": "female",
+  "age": 41,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "LTU_chief_prekybos_namai_mazeika": {
   "sex": "male",
   "age": 44,
@@ -15653,6 +17577,32 @@
   "skin": "olive skin",
   "eyes": "blue eyes",
   "bust": "flat chest"
+ },
+ "LTU_chief_prekybos_namai_tamosiunas": {
+  "sex": "male",
+  "age": 53,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "LTU_chief_prekybos_namai_tolutis": {
+  "sex": "female",
+  "age": 45,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
  },
  "LTU_chief_vaicekauskas": {
   "sex": "female",
@@ -15668,6 +17618,19 @@
   "bust": "average bust"
  },
  "LTU_chief_vaitkus": {
+  "sex": "male",
+  "age": 50,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LTU_chief_vaitkus_prekyba": {
   "sex": "male",
   "age": 50,
   "build": "wiry",
@@ -16380,6 +18343,84 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "LUX_chief_backes_construction": {
+  "sex": "female",
+  "age": 48,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "LUX_chief_banque_junge": {
+  "sex": "male",
+  "age": 63,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_banque_waringo": {
+  "sex": "male",
+  "age": 51,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_bintner_agriculture": {
+  "sex": "female",
+  "age": 68,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LUX_chief_diederich_groupe": {
+  "sex": "female",
+  "age": 60,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "LUX_chief_elschner_materiaux": {
+  "sex": "male",
+  "age": 60,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "LUX_chief_engel_transport": {
   "sex": "male",
   "age": 64,
@@ -16404,6 +18445,58 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "tanned skin",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_erpelding_industrie": {
+  "sex": "male",
+  "age": 62,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_erpelding_logistique": {
+  "sex": "male",
+  "age": 45,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_federspiel_materiaux": {
+  "sex": "female",
+  "age": 67,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "LUX_chief_frantz_commerce": {
+  "sex": "male",
+  "age": 57,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "LUX_chief_herrmann": {
@@ -16445,6 +18538,32 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "LUX_chief_kesseler_logistique": {
+  "sex": "female",
+  "age": 46,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "LUX_chief_kirpach_materiaux": {
+  "sex": "female",
+  "age": 55,
+  "build": "average build",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "LUX_chief_lentz_industrie": {
   "sex": "female",
   "age": 48,
@@ -16471,6 +18590,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "LUX_chief_nickels_agriculture": {
+  "sex": "male",
+  "age": 54,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "LUX_chief_origer": {
   "sex": "male",
   "age": 59,
@@ -16482,6 +18614,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "light brown skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_origer_commerce": {
+  "sex": "male",
+  "age": 63,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
   "bust": "flat chest"
  },
  "LUX_chief_origer_materiaux": {
@@ -16497,6 +18642,45 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "LUX_chief_pulver_industrie": {
+  "sex": "male",
+  "age": 59,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_reiffers_assurances": {
+  "sex": "male",
+  "age": 41,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_rippinger_materiaux": {
+  "sex": "female",
+  "age": 63,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "LUX_chief_schwartz": {
   "sex": "female",
   "age": 60,
@@ -16509,6 +18693,19 @@
   "skin": "tanned skin",
   "eyes": "grey eyes",
   "bust": "average bust"
+ },
+ "LUX_chief_societe_backes": {
+  "sex": "male",
+  "age": 61,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
  },
  "LUX_chief_societe_nies": {
   "sex": "male",
@@ -16534,6 +18731,32 @@
   "wardrobe": "plain dark suit",
   "skin": "pale skin with freckles",
   "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_societe_wagner": {
+  "sex": "male",
+  "age": 42,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LUX_chief_zimmer": {
+  "sex": "male",
+  "age": 67,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "LUX_claus": {
@@ -17275,6 +19498,97 @@
   "eyes": "brown eyes",
   "bust": "average bust"
  },
+ "LVA_chief_aigars_transports": {
+  "sex": "male",
+  "age": 40,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_banka_freimanis": {
+  "sex": "male",
+  "age": 63,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_berzins_transports": {
+  "sex": "male",
+  "age": 68,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_celmins_lauksaimnieciba": {
+  "sex": "male",
+  "age": 50,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_cirulis_rupnieciba": {
+  "sex": "male",
+  "age": 67,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_dirveks_energetika": {
+  "sex": "male",
+  "age": 68,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_fogels_logistika": {
+  "sex": "male",
+  "age": 58,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "LVA_chief_gailitis": {
   "sex": "male",
   "age": 50,
@@ -17285,6 +19599,32 @@
   "quirk": "dimpled chin",
   "wardrobe": "open-collar dark blazer",
   "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_gailitis_apdrosinasana": {
+  "sex": "female",
+  "age": 43,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LVA_chief_gailitis_lauksaimnieciba": {
+  "sex": "male",
+  "age": 67,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
@@ -17314,6 +19654,32 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "LVA_chief_jansons_logistika": {
+  "sex": "male",
+  "age": 63,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_keizars_grupa": {
+  "sex": "female",
+  "age": 59,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "LVA_chief_kroders": {
   "sex": "female",
   "age": 54,
@@ -17340,6 +19706,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "LVA_chief_lemanis_grupa": {
+  "sex": "female",
+  "age": 60,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "LVA_chief_mucenieks": {
   "sex": "female",
   "age": 43,
@@ -17351,6 +19730,45 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "fair skin",
   "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LVA_chief_ozolsparnis": {
+  "sex": "male",
+  "age": 49,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_ozolsparnis_tirdznieciba": {
+  "sex": "female",
+  "age": 66,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "LVA_chief_petersons_apdrosinasana": {
+  "sex": "female",
+  "age": 55,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
   "bust": "average bust"
  },
  "LVA_chief_rijnieks": {
@@ -17392,6 +19810,32 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "LVA_chief_skujenieks_transports": {
+  "sex": "male",
+  "age": 46,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_tirdzniecibas_nams_aizsilnieks": {
+  "sex": "female",
+  "age": 41,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
  "LVA_chief_tirdzniecibas_nams_dumins": {
   "sex": "male",
   "age": 56,
@@ -17405,6 +19849,32 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "LVA_chief_tirdzniecibas_nams_mucenieks": {
+  "sex": "male",
+  "age": 44,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_tirdzniecibas_nams_pinnis": {
+  "sex": "male",
+  "age": 68,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "LVA_chief_vagners": {
   "sex": "male",
   "age": 52,
@@ -17416,6 +19886,32 @@
   "wardrobe": "plain dark suit",
   "skin": "fair skin",
   "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_zarins_lauksaimnieciba": {
+  "sex": "male",
+  "age": 52,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "LVA_chief_zeltins_grupa": {
+  "sex": "male",
+  "age": 61,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
   "bust": "flat chest"
  },
  "LVA_cirulis": {
@@ -18136,6 +20632,32 @@
   "skin": "olive skin",
   "eyes": "brown eyes"
  },
+ "MLT_chief_azzopardi_construction": {
+  "sex": "male",
+  "age": 45,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_bank_spiteri": {
+  "sex": "female",
+  "age": 53,
+  "build": "average build",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "MLT_chief_bank_tonna": {
   "sex": "female",
   "age": 62,
@@ -18148,6 +20670,19 @@
   "skin": "olive skin",
   "eyes": "brown eyes",
   "bust": "average bust"
+ },
+ "MLT_chief_bank_vassallo": {
+  "sex": "male",
+  "age": 64,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
  },
  "MLT_chief_company_azzopardi": {
   "sex": "male",
@@ -18175,6 +20710,45 @@
   "eyes": "brown eyes",
   "bust": "average bust"
  },
+ "MLT_chief_company_naudi": {
+  "sex": "male",
+  "age": 44,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_company_pisani": {
+  "sex": "female",
+  "age": 68,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "MLT_chief_company_zahra": {
+  "sex": "female",
+  "age": 56,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "MLT_chief_cremona_transport": {
   "sex": "male",
   "age": 64,
@@ -18186,6 +20760,19 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "pale skin with freckles",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_debono_group": {
+  "sex": "male",
+  "age": 42,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "MLT_chief_galea_logistics": {
@@ -18253,6 +20840,19 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "MLT_chief_magro_insurance": {
+  "sex": "female",
+  "age": 60,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
  "MLT_chief_naudi_agri": {
   "sex": "female",
   "age": 40,
@@ -18279,6 +20879,45 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "MLT_chief_tonna_logistics": {
+  "sex": "male",
+  "age": 61,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_trust_agius": {
+  "sex": "male",
+  "age": 48,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_trust_camilleri": {
+  "sex": "male",
+  "age": 66,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "MLT_chief_trust_demartino": {
   "sex": "female",
   "age": 58,
@@ -18291,6 +20930,84 @@
   "skin": "pale skin with freckles",
   "eyes": "grey eyes",
   "bust": "average bust"
+ },
+ "MLT_chief_trust_jones": {
+  "sex": "male",
+  "age": 65,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_trust_rapa": {
+  "sex": "male",
+  "age": 45,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_trust_vassallo": {
+  "sex": "male",
+  "age": 56,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_wettinger": {
+  "sex": "male",
+  "age": 60,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "MLT_chief_xuereb_insurance": {
+  "sex": "female",
+  "age": 40,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "MLT_chief_zammit_transport": {
+  "sex": "male",
+  "age": 64,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
  },
  "MLT_chircop": {
   "sex": "male",
@@ -18964,6 +21681,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "NLD_chief_bank_linthorst": {
+  "sex": "male",
+  "age": 65,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "NLD_chief_bergsma": {
   "sex": "female",
   "age": 45,
@@ -18975,6 +21705,19 @@
   "wardrobe": "beige linen jacket",
   "skin": "fair skin",
   "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "NLD_chief_coenen_materialen": {
+  "sex": "female",
+  "age": 66,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
   "bust": "average bust"
  },
  "NLD_chief_creemers": {
@@ -19016,6 +21759,45 @@
   "eyes": "blue eyes",
   "bust": "average bust"
  },
+ "NLD_chief_groenleer_bouw": {
+  "sex": "male",
+  "age": 67,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_groenleer_industrie": {
+  "sex": "male",
+  "age": 48,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_groenleer_landbouw": {
+  "sex": "male",
+  "age": 53,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "NLD_chief_hofstede_verzekeringen": {
   "sex": "female",
   "age": 57,
@@ -19042,6 +21824,45 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "NLD_chief_hofstee_handel": {
+  "sex": "female",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "NLD_chief_ijsselmuiden_energie": {
+  "sex": "male",
+  "age": 59,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_klaver_materialen": {
+  "sex": "male",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "NLD_chief_kuiper": {
   "sex": "male",
   "age": 61,
@@ -19053,6 +21874,32 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "light brown skin",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_kuiper_groep": {
+  "sex": "male",
+  "age": 68,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_maatschappij_ijsselmuiden": {
+  "sex": "male",
+  "age": 40,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
   "bust": "flat chest"
  },
  "NLD_chief_maatschappij_lammers": {
@@ -19067,6 +21914,84 @@
   "skin": "pale skin with freckles",
   "eyes": "brown eyes",
   "bust": "flat chest"
+ },
+ "NLD_chief_maatschappij_rietdijk": {
+  "sex": "male",
+  "age": 43,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_manders_handel": {
+  "sex": "female",
+  "age": 59,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "NLD_chief_manders_industrie": {
+  "sex": "male",
+  "age": 57,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_meulenkamp_energie": {
+  "sex": "female",
+  "age": 45,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "NLD_chief_meulenkamp_transport": {
+  "sex": "male",
+  "age": 59,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_ophof_materialen": {
+  "sex": "female",
+  "age": 48,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "NLD_chief_pronk": {
   "sex": "female",
@@ -19105,6 +22030,19 @@
   "wardrobe": "plain dark suit",
   "skin": "fair skin",
   "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "NLD_chief_wolters_verzekeringen": {
+  "sex": "male",
+  "age": 58,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
   "bust": "flat chest"
  },
  "NLD_coenen": {
@@ -20663,6 +23601,45 @@
   "eyes": "grey eyes",
   "bust": "average bust"
  },
+ "PRT_chief_abreu_energia": {
+  "sex": "female",
+  "age": 53,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_aguiar_agricultura": {
+  "sex": "female",
+  "age": 43,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_almeirim_seguros": {
+  "sex": "female",
+  "age": 63,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "PRT_chief_banco_durao": {
   "sex": "female",
   "age": 43,
@@ -20676,6 +23653,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "PRT_chief_companhia_paiva": {
+  "sex": "male",
+  "age": 49,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "PRT_chief_companhia_sousa": {
   "sex": "female",
   "age": 45,
@@ -20687,6 +23677,19 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "olive skin",
   "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_durao_agricultura": {
+  "sex": "female",
+  "age": 43,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
   "bust": "average bust"
  },
  "PRT_chief_freitas": {
@@ -20715,6 +23718,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "PRT_chief_guerra_grupo": {
+  "sex": "male",
+  "age": 48,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "PRT_chief_guerra_industrias": {
   "sex": "female",
   "age": 45,
@@ -20741,6 +23757,32 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "PRT_chief_janes_logistica": {
+  "sex": "female",
+  "age": 49,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_mascarenhas": {
+  "sex": "female",
+  "age": 67,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "PRT_chief_meireles_construcao": {
   "sex": "male",
   "age": 54,
@@ -20754,6 +23796,19 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "PRT_chief_meireles_logistica": {
+  "sex": "female",
+  "age": 49,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "PRT_chief_oliveira_energia": {
   "sex": "male",
   "age": 48,
@@ -20765,6 +23820,32 @@
   "wardrobe": "beige linen jacket",
   "skin": "light brown skin",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_ourique_transportes": {
+  "sex": "female",
+  "age": 60,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_pina_materiais": {
+  "sex": "male",
+  "age": 68,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "PRT_chief_quintela": {
@@ -20780,6 +23861,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "PRT_chief_quintela_construcao": {
+  "sex": "male",
+  "age": 66,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "PRT_chief_ramos": {
   "sex": "male",
   "age": 47,
@@ -20791,6 +23885,19 @@
   "wardrobe": "beige linen jacket",
   "skin": "tanned skin",
   "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_ramos_industrias": {
+  "sex": "male",
+  "age": 52,
+  "build": "stocky",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
   "bust": "flat chest"
  },
  "PRT_chief_sampaio": {
@@ -20805,6 +23912,110 @@
   "skin": "olive skin",
   "eyes": "hazel eyes",
   "bust": "flat chest"
+ },
+ "PRT_chief_sequeira_grupo": {
+  "sex": "male",
+  "age": 52,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_sociedade_durao": {
+  "sex": "male",
+  "age": 66,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_sociedade_freitas": {
+  "sex": "female",
+  "age": 53,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_sociedade_trindade": {
+  "sex": "female",
+  "age": 49,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_sociedade_valente": {
+  "sex": "male",
+  "age": 46,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_tavares_grupo": {
+  "sex": "female",
+  "age": 60,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "PRT_chief_vasconcelos_materiais": {
+  "sex": "male",
+  "age": 62,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "PRT_chief_zagalo_construcao": {
+  "sex": "female",
+  "age": 57,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
  },
  "PRT_cordeiro": {
   "sex": "male",
@@ -21519,6 +24730,32 @@
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
+ "ROU_chief_alecsandrescu_logistica": {
+  "sex": "male",
+  "age": 42,
+  "build": "stocky",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_banca_negruzzi": {
+  "sex": "male",
+  "age": 40,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "ROU_chief_banca_slatineanu": {
   "sex": "male",
   "age": 47,
@@ -21529,6 +24766,19 @@
   "quirk": "straight brows",
   "wardrobe": "high-collared shirt",
   "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_bradeanu_asigurari": {
+  "sex": "male",
+  "age": 50,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
   "eyes": "grey eyes",
   "bust": "flat chest"
  },
@@ -21545,6 +24795,45 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "ROU_chief_casa_de_comert_alecsandrescu": {
+  "sex": "female",
+  "age": 59,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "ROU_chief_casa_de_comert_bradeanu": {
+  "sex": "male",
+  "age": 41,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_casa_de_comert_carp": {
+  "sex": "female",
+  "age": 43,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
  "ROU_chief_casa_de_comert_locusteanu": {
   "sex": "male",
   "age": 66,
@@ -21558,6 +24847,45 @@
   "eyes": "blue eyes",
   "bust": "flat chest"
  },
+ "ROU_chief_casa_de_comert_popescu": {
+  "sex": "female",
+  "age": 50,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "heavy brow",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "ROU_chief_cirstea_logistica": {
+  "sex": "female",
+  "age": 53,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "ROU_chief_companie_bratianu": {
+  "sex": "female",
+  "age": 68,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
  "ROU_chief_companie_dobrescu": {
   "sex": "female",
   "age": 53,
@@ -21568,6 +24896,19 @@
   "quirk": "widow's peak",
   "wardrobe": "plain dark suit",
   "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "ROU_chief_companie_eftimie": {
+  "sex": "female",
+  "age": 50,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
   "eyes": "blue eyes",
   "bust": "average bust"
  },
@@ -21584,6 +24925,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "ROU_chief_companie_locusteanu": {
+  "sex": "male",
+  "age": 47,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "ROU_chief_companie_negruzzi": {
   "sex": "male",
   "age": 53,
@@ -21595,6 +24949,45 @@
   "wardrobe": "knitted jumper over a collared shirt",
   "skin": "olive skin",
   "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_companie_odobescu": {
+  "sex": "male",
+  "age": 66,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_companie_rosetti": {
+  "sex": "male",
+  "age": 42,
+  "build": "slim",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "light brown skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_dobrescu_constructii": {
+  "sex": "male",
+  "age": 67,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
   "bust": "flat chest"
  },
  "ROU_chief_falcoianu_logistica": {
@@ -21623,6 +25016,45 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "ROU_chief_hurmuzache_agricultura": {
+  "sex": "male",
+  "age": 53,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_ionescu_logistica": {
+  "sex": "male",
+  "age": 57,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "ROU_chief_iorceanu_agricultura": {
+  "sex": "male",
+  "age": 50,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "ROU_chief_jalea_agricultura": {
   "sex": "male",
   "age": 40,
@@ -21649,6 +25081,19 @@
   "eyes": "blue eyes",
   "bust": "average bust"
  },
+ "ROU_chief_lazar_industrie": {
+  "sex": "female",
+  "age": 52,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "ROU_chief_manescu": {
   "sex": "female",
   "age": 68,
@@ -21661,6 +25106,32 @@
   "skin": "pale skin with freckles",
   "eyes": "brown eyes",
   "bust": "average bust"
+ },
+ "ROU_chief_odobescu_logistica": {
+  "sex": "female",
+  "age": 58,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "ROU_chief_racovita_constructii": {
+  "sex": "male",
+  "age": 54,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
  },
  "ROU_cirstea": {
   "sex": "female",
@@ -22364,6 +25835,45 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "SVK_chief_banka_zimka": {
+  "sex": "female",
+  "age": 55,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "SVK_chief_derer_poistenie": {
+  "sex": "female",
+  "age": 54,
+  "build": "slim",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "SVK_chief_ferkoly_priemysel": {
+  "sex": "male",
+  "age": 53,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "SVK_chief_hruska_skupina": {
   "sex": "male",
   "age": 65,
@@ -22403,6 +25913,32 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "SVK_chief_obchodny_dom_frano": {
+  "sex": "male",
+  "age": 44,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "SVK_chief_obchodny_dom_jambor": {
+  "sex": "male",
+  "age": 65,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
  "SVK_chief_obchodny_dom_klimko": {
   "sex": "male",
   "age": 68,
@@ -22415,6 +25951,32 @@
   "skin": "fair skin",
   "eyes": "green eyes",
   "bust": "flat chest"
+ },
+ "SVK_chief_oravec_polnohospodarstvo": {
+  "sex": "male",
+  "age": 59,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "SVK_chief_slavik_priemysel": {
+  "sex": "female",
+  "age": 44,
+  "build": "wiry",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
  },
  "SVK_chief_spolocnost_cipov": {
   "sex": "male",
@@ -22480,6 +26042,32 @@
   "skin": "pale skin with freckles",
   "eyes": "green eyes",
   "bust": "average bust"
+ },
+ "SVK_chief_turcek_doprava": {
+  "sex": "male",
+  "age": 45,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "SVK_chief_turcek_skupina": {
+  "sex": "male",
+  "age": 56,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
  },
  "SVK_chief_urda": {
   "sex": "female",
@@ -23253,6 +26841,19 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "SVN_chief_ambrozic_logistika": {
+  "sex": "male",
+  "age": 40,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "SVN_chief_bajc": {
   "sex": "female",
   "age": 62,
@@ -23265,6 +26866,19 @@
   "skin": "olive skin",
   "eyes": "green eyes",
   "bust": "average bust"
+ },
+ "SVN_chief_banka_dolinsek": {
+  "sex": "male",
+  "age": 66,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
  },
  "SVN_chief_banka_faganeli": {
   "sex": "male",
@@ -23279,6 +26893,19 @@
   "eyes": "green eyes",
   "bust": "flat chest"
  },
+ "SVN_chief_cerar_materiali": {
+  "sex": "female",
+  "age": 54,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
  "SVN_chief_cvikl_industrija": {
   "sex": "male",
   "age": 46,
@@ -23292,6 +26919,32 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "SVN_chief_cvikl_zavarovanje": {
+  "sex": "female",
+  "age": 45,
+  "build": "slim",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_dolinsek_gradbenistvo": {
+  "sex": "male",
+  "age": 55,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
  "SVN_chief_drnovsek": {
   "sex": "female",
   "age": 58,
@@ -23303,6 +26956,110 @@
   "wardrobe": "charcoal suit with a patterned tie",
   "skin": "tanned skin",
   "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_drnovsek_logistika": {
+  "sex": "male",
+  "age": 57,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_druzba_nared_rus": {
+  "sex": "male",
+  "age": 49,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_druzba_pirc": {
+  "sex": "male",
+  "age": 40,
+  "build": "average build",
+  "hair": "short cropped hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_druzba_stimc": {
+  "sex": "female",
+  "age": 44,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_faganeli_energija": {
+  "sex": "male",
+  "age": 56,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "widow's peak",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_grasic_materiali": {
+  "sex": "male",
+  "age": 65,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_grasic_trgovina": {
+  "sex": "male",
+  "age": 50,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_ivanko_kmetijstvo": {
+  "sex": "female",
+  "age": 43,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
   "bust": "average bust"
  },
  "SVN_chief_kastelic": {
@@ -23357,6 +27114,58 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "SVN_chief_lipnik_logistika": {
+  "sex": "male",
+  "age": 43,
+  "build": "wiry",
+  "hair": "thick wavy hair",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_merhar_trgovina": {
+  "sex": "female",
+  "age": 60,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "tanned skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_novak_logistika": {
+  "sex": "female",
+  "age": 47,
+  "build": "broad-shouldered",
+  "hair": "layered mid-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "plain dark suit",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_rupnik_promet": {
+  "sex": "male",
+  "age": 52,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "SVN_chief_slapar": {
   "sex": "female",
   "age": 63,
@@ -23370,6 +27179,19 @@
   "eyes": "green eyes",
   "bust": "average bust"
  },
+ "SVN_chief_slapar_trgovina": {
+  "sex": "male",
+  "age": 63,
+  "build": "slim",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "light brown skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "SVN_chief_stimc": {
   "sex": "male",
   "age": 52,
@@ -23381,6 +27203,58 @@
   "wardrobe": "beige linen jacket",
   "skin": "tanned skin",
   "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_stimc_kmetijstvo": {
+  "sex": "female",
+  "age": 51,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_tavcar_skupina": {
+  "sex": "male",
+  "age": 52,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "pronounced smile lines",
+  "wardrobe": "high-collared shirt",
+  "skin": "fair skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "SVN_chief_trgovska_hisa_drnovsek": {
+  "sex": "female",
+  "age": 42,
+  "build": "wiry",
+  "hair": "layered mid-length hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "SVN_chief_trgovska_hisa_grasic": {
+  "sex": "male",
+  "age": 50,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
   "bust": "flat chest"
  },
  "SVN_chief_trgovska_hisa_rupnik": {
@@ -24096,6 +27970,58 @@
   "eyes": "brown eyes",
   "bust": "flat chest"
  },
+ "SWE_chief_bank_ekstrom": {
+  "sex": "female",
+  "age": 40,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_bank_hellstrom": {
+  "sex": "female",
+  "age": 66,
+  "build": "stocky",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "fair skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_beijer_handel": {
+  "sex": "male",
+  "age": 54,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "olive skin",
+  "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_bergstrom_bygg": {
+  "sex": "male",
+  "age": 51,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
  "SWE_chief_bolag_isberg": {
   "sex": "male",
   "age": 57,
@@ -24108,6 +28034,19 @@
   "skin": "light brown skin",
   "eyes": "blue eyes",
   "bust": "flat chest"
+ },
+ "SWE_chief_bolag_krook": {
+  "sex": "female",
+  "age": 67,
+  "build": "broad-shouldered",
+  "hair": "short cropped hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "heavy brow",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "grey eyes",
+  "bust": "average bust"
  },
  "SWE_chief_bolag_sorvik": {
   "sex": "male",
@@ -24148,6 +28087,19 @@
   "eyes": "hazel eyes",
   "bust": "flat chest"
  },
+ "SWE_chief_dahm_gruppen": {
+  "sex": "female",
+  "age": 46,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "round glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
  "SWE_chief_drakenberg_transport": {
   "sex": "male",
   "age": 64,
@@ -24160,6 +28112,123 @@
   "skin": "pale skin with freckles",
   "eyes": "blue eyes",
   "bust": "flat chest"
+ },
+ "SWE_chief_gyllander_transport": {
+  "sex": "female",
+  "age": 40,
+  "build": "stocky",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "oval face with soft features",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "fair skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_gyllenhammar_forsakring": {
+  "sex": "male",
+  "age": 46,
+  "build": "average build",
+  "hair": "layered mid-length hair",
+  "glasses": "no glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "widow's peak",
+  "wardrobe": "plain dark suit",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_handelshus_dahm": {
+  "sex": "female",
+  "age": 60,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "brown eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_handelshus_lundquist": {
+  "sex": "female",
+  "age": 49,
+  "build": "wiry",
+  "hair": "close-cropped grey hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "widow's peak",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_hellstrom_industri": {
+  "sex": "male",
+  "age": 48,
+  "build": "broad-shouldered",
+  "hair": "thick wavy hair",
+  "glasses": "no glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "olive skin",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_henckel_energi": {
+  "sex": "female",
+  "age": 52,
+  "build": "broad-shouldered",
+  "hair": "straight shoulder-length hair",
+  "glasses": "thin-framed glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_henckel_material": {
+  "sex": "female",
+  "age": 60,
+  "build": "wiry",
+  "hair": "short cropped hair",
+  "glasses": "rectangular glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "heavy brow",
+  "wardrobe": "beige linen jacket",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_jansson_handel": {
+  "sex": "male",
+  "age": 55,
+  "build": "slim",
+  "hair": "close-cropped grey hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "open-collar dark blazer",
+  "skin": "light brown skin",
+  "eyes": "blue eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_jansson_lantbruk": {
+  "sex": "female",
+  "age": 62,
+  "build": "slim",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "plain dark suit",
+  "skin": "olive skin",
+  "eyes": "hazel eyes",
+  "bust": "average bust"
  },
  "SWE_chief_krogh_material": {
   "sex": "male",
@@ -24185,6 +28254,45 @@
   "wardrobe": "open-collar dark blazer",
   "skin": "tanned skin",
   "eyes": "grey eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_lundquist_bygg": {
+  "sex": "female",
+  "age": 48,
+  "build": "average build",
+  "hair": "thick wavy hair",
+  "glasses": "rectangular glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "widow's peak",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "grey eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_mansson_material": {
+  "sex": "female",
+  "age": 49,
+  "build": "wiry",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "olive skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_ohman_energi": {
+  "sex": "male",
+  "age": 49,
+  "build": "stocky",
+  "hair": "thick wavy hair",
+  "glasses": "round glasses",
+  "face": "narrow face with high cheekbones",
+  "quirk": "straight brows",
+  "wardrobe": "knitted jumper over a collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "blue eyes",
   "bust": "flat chest"
  },
  "SWE_chief_olofsson_energi": {
@@ -24226,6 +28334,32 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "SWE_chief_quarnstrom_handel": {
+  "sex": "male",
+  "age": 45,
+  "build": "broad-shouldered",
+  "hair": "close-cropped grey hair",
+  "glasses": "thin-framed glasses",
+  "face": "angular face with a prominent nose",
+  "quirk": "dimpled chin",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
+ "SWE_chief_rask_forsakring": {
+  "sex": "male",
+  "age": 41,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "no glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "dimpled chin",
+  "wardrobe": "charcoal suit with a patterned tie",
+  "skin": "olive skin",
+  "eyes": "green eyes",
+  "bust": "flat chest"
+ },
  "SWE_chief_stenmark_handel": {
   "sex": "female",
   "age": 46,
@@ -24239,6 +28373,32 @@
   "eyes": "grey eyes",
   "bust": "average bust"
  },
+ "SWE_chief_tegner_gruppen": {
+  "sex": "female",
+  "age": 42,
+  "build": "stocky",
+  "hair": "receding hairline",
+  "glasses": "rectangular glasses",
+  "face": "weathered face with deep lines",
+  "quirk": "heavy brow",
+  "wardrobe": "high-collared shirt",
+  "skin": "tanned skin",
+  "eyes": "green eyes",
+  "bust": "average bust"
+ },
+ "SWE_chief_tegner_transport": {
+  "sex": "male",
+  "age": 52,
+  "build": "average build",
+  "hair": "straight shoulder-length hair",
+  "glasses": "round glasses",
+  "face": "broad face with a strong jaw",
+  "quirk": "straight brows",
+  "wardrobe": "high-collared shirt",
+  "skin": "pale skin with freckles",
+  "eyes": "brown eyes",
+  "bust": "flat chest"
+ },
  "SWE_chief_ulfsax_gruppen": {
   "sex": "male",
   "age": 40,
@@ -24251,6 +28411,19 @@
   "skin": "pale skin with freckles",
   "eyes": "blue eyes",
   "bust": "flat chest"
+ },
+ "SWE_chief_zetterling_bygg": {
+  "sex": "female",
+  "age": 68,
+  "build": "broad-shouldered",
+  "hair": "receding hairline",
+  "glasses": "thin-framed glasses",
+  "face": "oval face with soft features",
+  "quirk": "dimpled chin",
+  "wardrobe": "beige linen jacket",
+  "skin": "tanned skin",
+  "eyes": "blue eyes",
+  "bust": "average bust"
  },
  "SWE_cronholm": {
   "sex": "male",

@@ -1129,17 +1129,6 @@
       "bench": true
     },
     {
-      "id": "AUT_chief_iro",
-      "name": "Christine Iro",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.33,
-      "bench": true
-    },
-    {
       "id": "AUT_chief_tragusta_industrie",
       "name": "Ignaz Tragusta",
       "kind": "executive",
@@ -1217,6 +1206,17 @@
         "stubborn"
       ],
       "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_iro_energie",
+      "name": "Christine Iro",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
       "bench": true
     }
   ]

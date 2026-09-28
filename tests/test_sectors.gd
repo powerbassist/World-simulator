@@ -515,7 +515,8 @@ func _test_the_module_is_a_leaf() -> void:
 
 ## THE LINE docs/tiers/v1.md SECTION 6 SAYS THIS BULLET MUST NOT CROSS, asserted rather
 ## than left to prose. V1.4b's regulation reaches only the NAMED partition -- a sector a
-## quarter named is a quarter as regulable, because companies.gd walks the register --
+## quarter named is a quarter as regulable, because companies.gd walks the register
+## (V4.7a: coverage is 0.85-0.97 per sector now, not a quarter) --
 ## and that bound is one of the two things separating a sector burden from this lever.
 ##
 ## This one reads `ns.sector_output` and nothing else, so it reaches the unnamed residual

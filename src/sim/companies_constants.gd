@@ -251,7 +251,9 @@ const REGULATION_JOBS_BETA := 0.10
 ## GDP_SHARE_REFERENCE exactly as SUBSIDY_GROWTH_BETA is.
 ##
 ## Reads the burdened sector's NAMED firms and nothing else, so a sector that is a
-## quarter named is a quarter as regulable. That is the second thing separating a
+## quarter named is a quarter as regulable -- a bound that V1.4b authored at
+## ~24 % named coverage and V4.7a's roster now pins at 0.85-0.97 (the ~4x
+## scale-up is recorded in test_balance.gd; re-tuning is B4's sweep). That is the second thing separating a
 ## regulation from a sector lever, and it is structural rather than a coefficient:
 ## the unnamed residual of a sector is not reached by this model at all, which is a
 ## bound docs/companies-model.md records rather than a rounding error.
@@ -401,9 +403,12 @@ const DIVIDEND_MAX_PCT_GDP := 1.50
 ## share channel is ABSOLUTE, not scale-aware: a 1 % firm drains the same rival
 ## pool at the same rate as a 0.14 major and ends the term a 13 % champion. The
 ## verb tier gate is the primary defence (no player verb targets a body firm);
-## this clamp is the belt for the day any second share writer exists. 0.03 sits
-## an order of magnitude under the smallest verb-worthy major share the register
-## authors, so no drift the sim can produce reads as an escalation.
+## this clamp is the belt for the day any second share writer exists. 0.03 is
+## calibrated against the register the generator authors, not against the
+## majors' smallest share (the tiers OVERLAP on [0.02, 0.03] -- the tier field
+## separates them, and only it does): 0.03 is the top of the generator's body
+## band, an order of magnitude under a TYPICAL major's stake (~0.05-0.28), so
+## the belt never binds authored content and would only catch a drift.
 const BODY_SHARE_MAX := 0.03
 
 ## V4.7a A3. The register-scale floor the brief declares: every nation's body
@@ -415,8 +420,11 @@ const BODY_SHARE_MAX := 0.03
 const BODY_MIN_PER_NATION := 80
 
 ## V4.7a A3, the bands declared BEFORE the generator ran (the brief's step 1,
-## E0's discipline). The generator and tests/test_companies_tiers.gd both read
-## these -- a band in one place the other cannot see is two bands.
+## E0's discipline). The test reads these; the generator RESTATES them as
+## Python literals (tools/firms_generate.py's "Bands, mirroring" block) because
+## a Python tool cannot read a GDScript const -- so a band change must touch
+## BOTH files in one commit or the suite catches it only at the next
+## generation. A band in one place the other cannot see is two bands.
 ##
 ## Per-sector named coverage (majors + body, summed): [0.85, 0.97]. The
 ## unnamed residual survives on purpose -- geography-model's

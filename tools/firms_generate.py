@@ -324,6 +324,34 @@ def make_chief(rng: random.Random, nation: str, person_name: str, firm_slug: str
     }
 
 
+def load_banned_names() -> set:
+    """The banned FIRM names -- tools/banned_names.txt's first section, the
+    same parse check_names.sh runs. Consulted at NAME CONSTRUCTION (the A3
+    brief's step the PR-46 review recorded as dropped): a banned surname in
+    the fragment pool must be skipped at draw time, because the alternative
+    is shipping content check_names refuses at commit."""
+    banned = set()
+    for line in (ROOT / "tools" / "banned_names.txt").read_text(encoding="utf-8").splitlines():
+        text = line.strip()
+        if not text or text.startswith("#"):
+            continue
+        # BOTH sections: [places] names are scoped by check_names to
+        # data/companies/ -- which is exactly what this generator writes
+        # ("Roche" lives there, under the Santander rule, and a firm called
+        # Roche Materials shipped because the first draft stopped at the
+        # marker). Firm names face the union of the two lists.
+        banned.add(text.lower())
+    return banned
+
+
+BANNED_NAMES = load_banned_names()
+
+
+def name_ok(name: str) -> bool:
+    """A name passes when none of its words is a banned firm name."""
+    return not any(w in BANNED_NAMES for w in name.lower().split())
+
+
 def gen_majors(rng: random.Random, nation: str, cities: list, used_slugs: set) -> list:
     """10-15 majors for a nation that has none. City choice follows the
     nation's own register; names are invented from its own curated pool.
@@ -371,6 +399,8 @@ def gen_majors(rng: random.Random, nation: str, cities: list, used_slugs: set) -
             else:
                 base = "%s %s" % (rng.choice(prefixes), surname)
             name = base.strip()
+            if not name_ok(name):
+                continue
             fid = "%s_%s" % (nation, slug(name))
             if fid in used_slugs:
                 # as below the body loop: a major is never dropped for a
@@ -385,7 +415,10 @@ def gen_majors(rng: random.Random, nation: str, cities: list, used_slugs: set) -
             # differentiator, and a table-identical ratio would erase it).
             jobs = int(round(share * SECTOR_JOBS_PER_SHARE[s] * rng.uniform(0.75, 1.35)))
             jobs = max(HEADCOUNT_MIN, min(230000, jobs))
-            chief = make_chief(rng, nation, "%s %s" % (given, surname.strip()), fid)
+            # given.strip(): bench_generate's given pools carry leading
+            # spaces on a few names (PR 44 #19), and the register stores the
+            # name verbatim -- strip here so new content cannot repeat it.
+            chief = make_chief(rng, nation, "%s %s" % (given.strip(), surname.strip()), fid)
             majors.append({
                 "id": fid, "name": name, "sector": s,
                 "share": share, "headcount": jobs,
@@ -440,10 +473,16 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
             surname = rng.choice(surnames)
             while True:
                 name = "%s %s" % (surname, rng.choice(suffixes))
+                if not name_ok(name):
+                    surname = rng.choice(surnames)
+                    continue
                 fid = "%s_%s" % (nation, slug(name))
                 if fid not in used_slugs:
                     break
                 name = "%s %s %s" % (surname, rng.choice(suffixes), rng.choice(suffixes))
+                if not name_ok(name):
+                    surname = rng.choice(surnames)
+                    continue
                 fid = "%s_%s" % (nation, slug(name))
                 if fid not in used_slugs:
                     break
@@ -467,10 +506,16 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
             surname = rng.choice(surnames)
             while True:
                 name = "%s %s" % (surname, rng.choice(suffixes))
+                if not name_ok(name):
+                    surname = rng.choice(surnames)
+                    continue
                 fid = "%s_%s" % (nation, slug(name))
                 if fid not in used_slugs:
                     break
                 name = "%s %s %s" % (surname, rng.choice(suffixes), rng.choice(suffixes))
+                if not name_ok(name):
+                    surname = rng.choice(surnames)
+                    continue
                 fid = "%s_%s" % (nation, slug(name))
                 if fid not in used_slugs:
                     break
@@ -543,6 +588,16 @@ def main() -> int:
     for nation in sorted(p.stem for p in NATIONS_DIR.glob("*.json")):
         cities = nation_cities(nation)
         used_slugs = set()
+        # The people register's ids are TAKEN, exactly like authored firm ids:
+        # both registers draw <NATION>_<surname>, and the PR-46 ultra review
+        # measured 82 generated firm ids landing on pre-existing bench person
+        # ids (AUT_iro the firm vs AUT_iro the press owner). No code path
+        # joins the two id spaces yet, but the loader's own id rule exists for
+        # the day one does, and re-namespacing later is a migration.
+        ppath = PEOPLE_DIR / ("%s.json" % nation)
+        pdoc = json.loads(ppath.read_text(encoding="utf-8"))
+        for person in pdoc["people"]:
+            used_slugs.add(person["id"])
 
         if nation in AUTHORED:
             # keep the hand-authored majors untouched
@@ -601,6 +656,10 @@ def main() -> int:
         # the portraits self-check gates sidecar coverage on the whole people
         # register, so the generator seeds them here too (same unconditional
         # draws, so a re-run over a seeded sidecar consumes the RNG the same).
+        # In check mode an EXPECTED entry missing from the committed sidecar
+        # is drift (the PR-46 review measured the compare-after-add shape
+        # passing absences silently); a hand edit to an existing entry is NOT
+        # -- the sidecar is documented hand-editable.
         if nation in AUTHORED:
             for c in doc["companies"]:
                 cid = c.get("chief_id")
@@ -610,13 +669,29 @@ def main() -> int:
                 age = rng.randint(40, 68)
                 entry = sidecar_entry(rng, sex, age)
                 if cid not in sidecar:
+                    if check_only:
+                        print("DRIFT: %s (missing sidecar entry for %s)" % (SIDECAR_PATH, cid))
+                        return 1
                     sidecar[cid] = entry
                     sidecar_changed = True
 
         # --- append the new chiefs to the people file -------------------------
+        # (pdoc is loaded once per nation at the top of the loop; the chief
+        # append reuses it.) Executives whose firm a regeneration renamed are
+        # PRUNED first: their old ids front no firm any more, and an orphan
+        # executive is a person nothing reads (test_chiefs' no-orphan pin).
+        # Every AUTHORED major keeps its committed chief_id, so the A2 26
+        # survive by construction; only generator-renamed majors' chiefs turn
+        # over.
+        chief_ids_now = set()
+        for m in majors:
+            if m.get("chief_id"):
+                chief_ids_now.add(m["chief_id"])
+        pdoc["people"] = [
+            per for per in pdoc["people"]
+            if per.get("kind") != "executive" or per["id"] in chief_ids_now
+        ]
         if chief_people:
-            ppath = PEOPLE_DIR / ("%s.json" % nation)
-            pdoc = json.loads(ppath.read_text(encoding="utf-8"))
             existing_ids = {p["id"] for p in pdoc["people"]}
             for chief in chief_people:
                 # Every draw happens unconditionally -- a draw inside an "if
@@ -631,6 +706,9 @@ def main() -> int:
                 pdoc["people"].append(chief)
                 existing_ids.add(chief["id"])
                 if chief["id"] not in sidecar:
+                    if check_only:
+                        print("DRIFT: %s (missing sidecar entry for %s)" % (SIDECAR_PATH, chief["id"]))
+                        return 1
                     sidecar[chief["id"]] = entry
                     sidecar_changed = True
             pt = people_text(pdoc)

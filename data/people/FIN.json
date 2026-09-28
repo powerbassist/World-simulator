@@ -1124,85 +1124,6 @@
       "bench": true
     },
     {
-      "id": "FIN_chief_pankki_nissinen",
-      "name": "Irmeli Nissinen",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "stubborn"
-      ],
-      "ambition": 0.3,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_tiihonen",
-      "name": "Eino Tiihonen",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.77,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_jokinen_logistiikka",
-      "name": "Martti Jokinen",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.39,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_pankki_jokinen",
-      "name": "Juha Jokinen",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.55,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_pankki_akerman",
-      "name": "Irmeli Åkerman",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.79,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_riekkinen_liikenne",
-      "name": "Liisa Riekkinen",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.62,
-      "bench": true
-    },
-    {
-      "id": "FIN_chief_fagerlund_rakennus",
-      "name": "Liisa Fagerlund",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.62,
-      "bench": true
-    },
-    {
       "id": "FIN_chief_yhtio_cederstrom",
       "name": "Martti Cederström",
       "kind": "executive",
@@ -1215,72 +1136,131 @@
       "bench": true
     },
     {
-      "id": "FIN_chief_gronholm_teollisuus",
-      "name": "Sinikka Grönholm",
+      "id": "FIN_chief_rasanen_maatalous",
+      "name": "Heikki Räsänen",
       "kind": "executive",
       "traits": [
         "networked",
         "pragmatic",
         "stubborn"
       ],
-      "ambition": 0.42,
+      "ambition": 0.49,
       "bench": true
     },
     {
-      "id": "FIN_chief_granholm",
-      "name": "Helinä Granholm",
+      "id": "FIN_chief_pankki_blomqvist",
+      "name": "Irmeli Blomqvist",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_nieminen_ryhma",
+      "name": "Tuulikki Nieminen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_tolvanen_ryhma",
+      "name": "Aarne Tolvanen",
       "kind": "executive",
       "traits": [
         "loyal",
         "networked",
-        "stubborn"
+        "pragmatic"
       ],
-      "ambition": 0.48,
+      "ambition": 0.76,
       "bench": true
     },
     {
-      "id": "FIN_chief_moisio_rakennus",
-      "name": "Heikki Moisio",
+      "id": "FIN_chief_vaisanen_materiaalit",
+      "name": "Martti Väisänen",
       "kind": "executive",
       "traits": [
+        "ambitious",
         "pragmatic",
         "stubborn"
       ],
-      "ambition": 0.59,
+      "ambition": 0.36,
       "bench": true
     },
     {
-      "id": "FIN_chief_makinen_vakuutus",
-      "name": "Irmeli Mäkinen",
+      "id": "FIN_chief_kauppahuone_salonen",
+      "name": "Irmeli Salonen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_sihvonen_rakennus",
+      "name": "Heikki Sihvonen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_rasanen_rakennus",
+      "name": "Eino Räsänen",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal",
         "networked"
       ],
-      "ambition": 0.66,
+      "ambition": 0.67,
       "bench": true
     },
     {
-      "id": "FIN_chief_pankki_mannerkoski",
-      "name": "Tapio Mannerkoski",
+      "id": "FIN_chief_rasanen_materiaalit",
+      "name": "Niilo Räsänen",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "stubborn"
+        "networked",
+        "pragmatic"
       ],
-      "ambition": 0.64,
+      "ambition": 0.63,
       "bench": true
     },
     {
-      "id": "FIN_chief_akerman",
-      "name": "Eino Åkerman",
+      "id": "FIN_chief_heikkila_ryhma",
+      "name": "Heikki Heikkilä",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_mannerkoski",
+      "name": "Tapio Mannerkoski",
       "kind": "executive",
       "traits": [
         "ambitious",
         "pragmatic"
       ],
-      "ambition": 0.4,
+      "ambition": 0.31,
       "bench": true
     }
   ]

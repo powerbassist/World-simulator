@@ -1137,63 +1137,6 @@
       "bench": true
     },
     {
-      "id": "MLT_chief_cremona_transport",
-      "name": "Carmel Cremona",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.67,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_bank_tonna",
-      "name": "Vincent Tonna",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "stubborn"
-      ],
-      "ambition": 0.34,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_company_azzopardi",
-      "name": "Josephine Azzopardi",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "networked"
-      ],
-      "ambition": 0.38,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_trust_demartino",
-      "name": "Vincent DeMartino",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.32,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_galea_logistics",
-      "name": "Mario Galea",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.58,
-      "bench": true
-    },
-    {
       "id": "MLT_chief_company_chircop",
       "name": "Angela Chircop",
       "kind": "executive",
@@ -1205,7 +1148,29 @@
       "bench": true
     },
     {
-      "id": "MLT_chief_magro",
+      "id": "MLT_chief_trust_rapa",
+      "name": "Rita Rapa",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_company_pisani",
+      "name": "Vincent Pisani",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_magro_insurance",
       "name": "Raymond Magro",
       "kind": "executive",
       "traits": [
@@ -1217,59 +1182,94 @@
       "bench": true
     },
     {
-      "id": "MLT_chief_gauci_agri",
-      "name": "Godfrey Gauci",
+      "id": "MLT_chief_company_naudi",
+      "name": "David Naudi",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_xuereb_insurance",
+      "name": "Godfrey Xuereb",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_tonna_logistics",
+      "name": "Josephine Tonna",
       "kind": "executive",
       "traits": [
         "networked",
         "stubborn"
       ],
-      "ambition": 0.72,
+      "ambition": 0.74,
       "bench": true
     },
     {
-      "id": "MLT_chief_naudi_agri",
-      "name": "Godfrey Naudi",
+      "id": "MLT_chief_trust_camilleri",
+      "name": "Emanuel Camilleri",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "networked"
-      ],
-      "ambition": 0.66,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_grima",
-      "name": "Vincent Grima",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.81,
-      "bench": true
-    },
-    {
-      "id": "MLT_chief_haber_group",
-      "name": "Sylvana Haber",
-      "kind": "executive",
-      "traits": [
-        "loyal",
         "networked",
         "pragmatic"
       ],
-      "ambition": 0.69,
+      "ambition": 0.82,
       "bench": true
     },
     {
-      "id": "MLT_chief_sciberras_industries",
-      "name": "Raymond Sciberras",
+      "id": "MLT_chief_debono_group",
+      "name": "Carmel Debono",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_trust_jones",
+      "name": "Angela Jones",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_azzopardi_construction",
+      "name": "Patrick Azzopardi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_bank_vassallo",
+      "name": "Evelyn Vassallo",
       "kind": "executive",
       "traits": [
         "loyal",
-        "networked"
+        "stubborn"
       ],
-      "ambition": 0.65,
+      "ambition": 0.77,
       "bench": true
     }
   ]

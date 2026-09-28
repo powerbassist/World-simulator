@@ -7,8 +7,9 @@ extends SceneTree
 ## not scale-aware, so body firms must never be verb targets and never ride
 ## the major pool. The load-bearing pins here:
 ##
-##   - the 26 shipped firms are majors and every nation's body list is empty
-##     until A3 generates it;
+##   - the register's SHAPE: every nation carries majors and a body list (A3
+##     generated 323 majors + 2,406 body across 29 nations; the A1-era "26
+##     firms, empty body" pin is history, corrected at the PR-46 review);
 ##   - a firm with no register entry reads its AUTHORED share (the
 ##     sparse-register fallback) and an unknown id reads 0.0 -- the fallback
 ##     is what makes body entries sparse safe;
@@ -40,6 +41,7 @@ func _init() -> void:
 	else:
 		_test_tiers()
 		_test_sparse_reads()
+		_test_old_save_ticks_clean()
 		_test_from_dict_does_not_alias_companies()
 		_test_from_dict_roundtrips_the_register()
 		_test_tier_gate_refuses_body_verbs()
@@ -97,6 +99,50 @@ func _test_sparse_reads() -> void:
 	# And an id that exists nowhere reads 0.0, never an error.
 	if Companies.share_of(ns, "FRA_body_nonexistent") != 0.0:
 		_fail("unknown firm id did not read as zero")
+
+
+## The PR-46 ultra review's headline finding, pinned: a save written before
+## 7a (SAVE_VERSION 37, register empty for the 25 nations that then had no
+## companies file) must LOAD and TICK without error. The repair is
+## _seed_missing_majors at the first tick; without it the share loop's indexed
+## write raised a missing-key error per unseeded nation, every month, and the
+## verbs' membership gate kept every firm of those nations permanently
+## verb-dead. The leg builds the old shape by hand (seeded for the four
+## legacy nations, {} for the rest), round-trips it through the real
+## from_dict, and ticks.
+func _test_old_save_ticks_clean() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var legacy_ids := ["FRA", "DEU", "GBR", "POL"]
+	for nation_id in state.nations.keys():
+		if legacy_ids.has(String(nation_id)):
+			continue
+		state.nations[nation_id].companies = {}
+	var payload: Dictionary = state.to_dict()
+	var loaded = GameState.from_dict(payload)
+	var unseeded := 0
+	for nation_id in loaded.nations.keys():
+		if not legacy_ids.has(String(nation_id)) and loaded.nations[nation_id].companies.is_empty():
+			unseeded += 1
+	if unseeded < 20:
+		_fail("the old-save fixture did not build (%d empty registers)" % unseeded)
+		return
+	# One firms tick over the whole loaded state: the pre-fix build raised
+	# here -- 25 missing-key errors, one per unseeded nation, and no repair.
+	Companies.tick_month(loaded, _loader)
+	# Post-tick: every nation with content majors holds them all.
+	var short := 0
+	for nation_id in loaded.nations.keys():
+		var ns = loaded.nations[nation_id]
+		var majors := Companies.majors_of(_loader, String(nation_id))
+		for company in majors:
+			if not ns.companies.has(company.id):
+				short += 1
+	if short > 0:
+		_fail("%d content majors missing from the register after the lazy-seed tick" % short)
+	# And a major of a formerly-empty nation can act: the membership gate reads.
+	var ita = loaded.nations["ITA"]
+	if Companies.majors_of(_loader, "ITA").size() > 0 and Companies.available(loaded, ita, _loader.company_actions, String(Companies.majors_of(_loader, "ITA")[0].id), _loader).is_empty():
+		_fail("a lazy-seeded major was refused every verb -- the membership gate did not see the repair")
 
 
 func _test_from_dict_does_not_alias_companies() -> void:

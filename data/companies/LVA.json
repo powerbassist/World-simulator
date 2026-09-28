@@ -13,113 +13,140 @@
       "chief_id": "LVA_chief_tirdzniecibas_nams_dumins"
     },
     {
-      "id": "LVA_gailitis",
-      "name": "Gailītis",
+      "id": "LVA_gailitis_lauksaimnieciba",
+      "name": "Gailītis Lauksaimniecība",
       "sector": "agriculture",
       "share": 0.1783,
-      "headcount": 19129,
+      "headcount": 15304,
+      "city": "LV00_riga",
+      "tier": "major",
+      "chief_id": "LVA_chief_gailitis_lauksaimnieciba"
+    },
+    {
+      "id": "LVA_petersons_apdrosinasana",
+      "name": "Pētersons Apdrošināšana",
+      "sector": "industry",
+      "share": 0.0808,
+      "headcount": 56336,
       "city": "LV00_daugavpils",
       "tier": "major",
-      "chief_id": "LVA_chief_gailitis"
+      "chief_id": "LVA_chief_petersons_apdrosinasana"
     },
     {
-      "id": "LVA_rijnieks",
-      "name": "Rijnieks",
+      "id": "LVA_ozolsparnis",
+      "name": "Ozolspārnis",
       "sector": "industry",
-      "share": 0.0838,
-      "headcount": 47132,
+      "share": 0.075,
+      "headcount": 55715,
       "city": "LV00_riga",
       "tier": "major",
-      "chief_id": "LVA_chief_rijnieks"
+      "chief_id": "LVA_chief_ozolsparnis"
     },
     {
-      "id": "LVA_sabiedriba_briedis",
-      "name": "Sabiedrība Briedis",
+      "id": "LVA_cirulis_rupnieciba",
+      "name": "Cīrulis Rūpniecība",
       "sector": "industry",
-      "share": 0.0698,
-      "headcount": 61971,
-      "city": "LV00_riga",
-      "tier": "major",
-      "chief_id": "LVA_chief_sabiedriba_briedis"
-    },
-    {
-      "id": "LVA_jansonis_apdrosinasana",
-      "name": "Jansonis Apdrošināšana",
-      "sector": "industry",
-      "share": 0.0625,
-      "headcount": 33685,
-      "city": "LV00_riga",
-      "tier": "major",
-      "chief_id": "LVA_chief_jansonis_apdrosinasana"
-    },
-    {
-      "id": "LVA_mucenieks",
-      "name": "Mucenieks",
-      "sector": "industry",
-      "share": 0.0693,
-      "headcount": 57991,
-      "city": "LV00_daugavpils",
-      "tier": "major",
-      "chief_id": "LVA_chief_mucenieks"
-    },
-    {
-      "id": "LVA_sabiedriba_ikaunieks",
-      "name": "Sabiedrība Ikaunieks",
-      "sector": "services",
-      "share": 0.029,
-      "headcount": 45671,
-      "city": "LV00_riga",
-      "tier": "major",
-      "chief_id": "LVA_chief_sabiedriba_ikaunieks"
-    },
-    {
-      "id": "LVA_vagners",
-      "name": "Vagners",
-      "sector": "services",
-      "share": 0.0354,
-      "headcount": 47639,
+      "share": 0.0527,
+      "headcount": 37878,
       "city": "LV00_liepaja",
       "tier": "major",
-      "chief_id": "LVA_chief_vagners"
+      "chief_id": "LVA_chief_cirulis_rupnieciba"
     },
     {
-      "id": "LVA_jansons_energetika",
-      "name": "Jansons Enerģētika",
-      "sector": "services",
-      "share": 0.0459,
-      "headcount": 53620,
+      "id": "LVA_tirdzniecibas_nams_pinnis",
+      "name": "Tirdzniecības nams Pinnis",
+      "sector": "industry",
+      "share": 0.0768,
+      "headcount": 67965,
       "city": "LV00_riga",
       "tier": "major",
-      "chief_id": "LVA_chief_jansons_energetika"
+      "chief_id": "LVA_chief_tirdzniecibas_nams_pinnis"
     },
     {
-      "id": "LVA_kroders",
-      "name": "Kroders",
+      "id": "LVA_jansons_logistika",
+      "name": "Jansons Loģistika",
       "sector": "services",
-      "share": 0.0501,
-      "headcount": 62313,
+      "share": 0.0341,
+      "headcount": 64321,
       "city": "LV00_daugavpils",
       "tier": "major",
-      "chief_id": "LVA_chief_kroders"
+      "chief_id": "LVA_chief_jansons_logistika"
     },
     {
-      "id": "LVA_lacis",
-      "name": "Lācis",
+      "id": "LVA_banka_freimanis",
+      "name": "Banka Freimanis",
       "sector": "services",
-      "share": 0.0493,
-      "headcount": 75189,
+      "share": 0.0443,
+      "headcount": 67974,
       "city": "LV00_liepaja",
       "tier": "major",
-      "chief_id": "LVA_chief_lacis"
+      "chief_id": "LVA_chief_banka_freimanis"
+    },
+    {
+      "id": "LVA_skujenieks_transports",
+      "name": "Skujenieks Transports",
+      "sector": "services",
+      "share": 0.0483,
+      "headcount": 84814,
+      "city": "LV00_liepaja",
+      "tier": "major",
+      "chief_id": "LVA_chief_skujenieks_transports"
+    },
+    {
+      "id": "LVA_tirdzniecibas_nams_aizsilnieks",
+      "name": "Tirdzniecības nams Aizsilnieks",
+      "sector": "services",
+      "share": 0.0475,
+      "headcount": 80237,
+      "city": "LV00_daugavpils",
+      "tier": "major",
+      "chief_id": "LVA_chief_tirdzniecibas_nams_aizsilnieks"
+    },
+    {
+      "id": "LVA_fogels_logistika",
+      "name": "Fogels Loģistika",
+      "sector": "services",
+      "share": 0.0356,
+      "headcount": 56727,
+      "city": "LV00_riga",
+      "tier": "major",
+      "chief_id": "LVA_chief_fogels_logistika"
     }
   ],
   "body": [
     {
+      "id": "LVA_aigars_energetika",
+      "name": "Aigars Enerģētika",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2549,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_straume_logistika",
+      "name": "Straume Loģistika",
+      "sector": "agriculture",
+      "share": 0.0292,
+      "headcount": 2433,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_pinnis_tirdznieciba",
+      "name": "Pinnis Tirdzniecība",
+      "sector": "agriculture",
+      "share": 0.0195,
+      "headcount": 1429,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
       "id": "LVA_rijnieks_grupa",
       "name": "Rijnieks Grupa",
       "sector": "agriculture",
-      "share": 0.0235,
-      "headcount": 1724,
+      "share": 0.03,
+      "headcount": 2201,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -127,8 +154,8 @@
       "id": "LVA_zarins_rupnieciba",
       "name": "Zariņš Rūpniecība",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2196,
+      "share": 0.0222,
+      "headcount": 1625,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -138,7 +165,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2252,
-      "city": "LV00_liepaja",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
@@ -147,15 +174,15 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2386,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_celmins_buvnieciba",
       "name": "Celmiņš Būvniecība",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2196,
+      "share": 0.02,
+      "headcount": 1464,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -165,15 +192,15 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2396,
-      "city": "LV00_liepaja",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_pinnis_lauksaimnieciba",
       "name": "Pinnis Lauksaimniecība",
       "sector": "agriculture",
-      "share": 0.0257,
-      "headcount": 2141,
+      "share": 0.03,
+      "headcount": 2499,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -183,15 +210,15 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2662,
-      "city": "LV00_daugavpils",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
       "id": "LVA_fogels_buvnieciba",
       "name": "Fogels Būvniecība",
       "sector": "agriculture",
-      "share": 0.0212,
-      "headcount": 1606,
+      "share": 0.0295,
+      "headcount": 2235,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -199,17 +226,17 @@
       "id": "LVA_rubenis_materiali",
       "name": "Rubenis Materiāli",
       "sector": "agriculture",
-      "share": 0.0237,
-      "headcount": 1969,
-      "city": "LV00_daugavpils",
+      "share": 0.0276,
+      "headcount": 2294,
+      "city": "LV00_liepaja",
       "tier": "body"
     },
     {
       "id": "LVA_zarins_buvnieciba",
       "name": "Zariņš Būvniecība",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2338,
+      "share": 0.0223,
+      "headcount": 1738,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -228,34 +255,97 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2669,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_lemanis_rupnieciba",
+      "name": "Lēmanis Rūpniecība",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 22096,
       "city": "LV00_riga",
       "tier": "body"
     },
     {
-      "id": "LVA_zeltins_materiali",
-      "name": "Zeltiņš Materiāli",
-      "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2494,
+      "id": "LVA_dirveks_buvnieciba",
+      "name": "Dirveks Būvniecība",
+      "sector": "industry",
+      "share": 0.0271,
+      "headcount": 16563,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
-      "id": "LVA_cirulis_energetika",
-      "name": "Cīrulis Enerģētika",
-      "sector": "agriculture",
-      "share": 0.0274,
-      "headcount": 2037,
+      "id": "LVA_vagners_logistika",
+      "name": "Vagners Loģistika",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18618,
       "city": "LV00_riga",
       "tier": "body"
     },
     {
-      "id": "LVA_huns_lauksaimnieciba",
-      "name": "Hūns Lauksaimniecība",
-      "sector": "agriculture",
-      "share": 0.0109,
-      "headcount": 819,
+      "id": "LVA_lemanis_transports_rupnieciba",
+      "name": "Lēmanis Transports Rūpniecība",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21502,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_freimanis_transports",
+      "name": "Freimanis Transports",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19024,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_kalnins_buvnieciba",
+      "name": "Kalnins Būvniecība",
+      "sector": "industry",
+      "share": 0.0194,
+      "headcount": 14298,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_mazpanaks_lauksaimnieciba",
+      "name": "Mazpanāks Lauksaimniecība",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19624,
       "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_baldzens_transports",
+      "name": "Baldzēns Transports",
+      "sector": "industry",
+      "share": 0.0144,
+      "headcount": 9284,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_vagners_materiali",
+      "name": "Vagners Materiāli",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21250,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_grasis_transports",
+      "name": "Grasis Transports",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21015,
+      "city": "LV00_liepaja",
       "tier": "body"
     },
     {
@@ -264,25 +354,25 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18618,
-      "city": "LV00_liepaja",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_lemanis_materiali",
       "name": "Lēmanis Materiāli",
       "sector": "industry",
-      "share": 0.0126,
-      "headcount": 7757,
-      "city": "LV00_riga",
+      "share": 0.03,
+      "headcount": 18468,
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_huns_logistika",
       "name": "Hūns Loģistika",
       "sector": "industry",
-      "share": 0.03,
-      "headcount": 18931,
-      "city": "LV00_riga",
+      "share": 0.0274,
+      "headcount": 17291,
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
@@ -291,7 +381,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19610,
-      "city": "LV00_daugavpils",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
@@ -316,17 +406,17 @@
       "id": "LVA_celms_materiali",
       "name": "Celms Materiāli",
       "sector": "industry",
-      "share": 0.0161,
-      "headcount": 11337,
-      "city": "LV00_daugavpils",
+      "share": 0.0167,
+      "headcount": 11759,
+      "city": "LV00_liepaja",
       "tier": "body"
     },
     {
       "id": "LVA_huns_rupnieciba",
       "name": "Hūns Rūpniecība",
       "sector": "industry",
-      "share": 0.03,
-      "headcount": 21852,
+      "share": 0.0211,
+      "headcount": 15369,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -336,15 +426,15 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20510,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_zuravlovs_transports",
       "name": "Zuravļovs Transports",
       "sector": "industry",
-      "share": 0.0173,
-      "headcount": 11703,
+      "share": 0.03,
+      "headcount": 20294,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -352,122 +442,149 @@
       "id": "LVA_kroders_materiali",
       "name": "Kroders Materiāli",
       "sector": "industry",
-      "share": 0.03,
-      "headcount": 18248,
-      "city": "LV00_daugavpils",
+      "share": 0.0258,
+      "headcount": 15694,
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
       "id": "LVA_celmins_rupnieciba",
       "name": "Celmiņš Rūpniecība",
       "sector": "industry",
-      "share": 0.0233,
-      "headcount": 15940,
+      "share": 0.03,
+      "headcount": 20524,
       "city": "LV00_liepaja",
       "tier": "body"
     },
     {
-      "id": "LVA_kalnins_logistika",
-      "name": "Kalnins Loģistika",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 21989,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_ikaunieks_transports",
-      "name": "Ikaunieks Transports",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 20620,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_mazpanaks_energetika",
-      "name": "Mazpanāks Enerģētika",
-      "sector": "industry",
-      "share": 0.0128,
-      "headcount": 7842,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_lacis_materiali",
-      "name": "Lācis Materiāli",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 18407,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_berzins_buvnieciba",
-      "name": "Bērziņš Būvniecība",
-      "sector": "industry",
-      "share": 0.0224,
-      "headcount": 14395,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_kalnins_rupnieciba",
-      "name": "Kalnins Rūpniecība",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 18422,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_celms_lauksaimnieciba",
-      "name": "Celms Lauksaimniecība",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 20713,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_kroders_transports",
-      "name": "Kroders Transports",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 21581,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_grinbergs_grupa",
-      "name": "Grīnbergs Grupa",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 21208,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_pinnis_rupnieciba",
-      "name": "Pinnis Rūpniecība",
-      "sector": "industry",
-      "share": 0.03,
-      "headcount": 20740,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_ulmanis_apdrosinasana",
-      "name": "Ulmanis Apdrošināšana",
+      "id": "LVA_vilks_transports",
+      "name": "Vilks Transports",
       "sector": "services",
-      "share": 0.0149,
-      "headcount": 21288,
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_ikaunieks_energetika",
+      "name": "Ikaunieks Enerģētika",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24093,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
-      "id": "LVA_sipolins_materiali",
-      "name": "Sīpoliņš Materiāli",
+      "id": "LVA_ozolins_apdrosinasana",
+      "name": "Ozolins Apdrošināšana",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24678,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_balins_lauksaimnieciba",
+      "name": "Bāliņš Lauksaimniecība",
+      "sector": "services",
+      "share": 0.0154,
+      "headcount": 22477,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_aizsilnieks_materiali",
+      "name": "Aizsilnieks Materiāli",
+      "sector": "services",
+      "share": 0.0159,
+      "headcount": 21993,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_balins_grupa_transports",
+      "name": "Bāliņš Grupa Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23642,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_fogels_logistika_grupa",
+      "name": "Fogels Loģistika Grupa",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_skujins_transports",
+      "name": "Skujins Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_berzins_lauksaimnieciba",
+      "name": "Bērziņš Lauksaimniecība",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_jansonis_buvnieciba",
+      "name": "Jansonis Būvniecība",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_mednis_lauksaimnieciba",
+      "name": "Mednis Lauksaimniecība",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24970,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_egle_materiali",
+      "name": "Egle Materiāli",
+      "sector": "services",
+      "share": 0.0117,
+      "headcount": 18876,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_fricbergs_buvnieciba",
+      "name": "Fricbergs Būvniecība",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23087,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_celms_energetika",
+      "name": "Celms Enerģētika",
+      "sector": "services",
+      "share": 0.0155,
+      "headcount": 22516,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_repenko_materiali",
+      "name": "Repenko Materiāli",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24786,
@@ -478,18 +595,18 @@
       "id": "LVA_straume_transports",
       "name": "Straume Transports",
       "sector": "services",
-      "share": 0.0108,
-      "headcount": 17629,
-      "city": "LV00_liepaja",
+      "share": 0.0091,
+      "headcount": 14854,
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
       "id": "LVA_briedis_tirdznieciba",
       "name": "Briedis Tirdzniecība",
       "sector": "services",
-      "share": 0.0163,
+      "share": 0.0166,
       "headcount": 25000,
-      "city": "LV00_daugavpils",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
@@ -507,25 +624,43 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23482,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_zeltins_energetika_apdrosinasana",
-      "name": "Zeltiņš Enerģētika Apdrošināšana",
-      "sector": "services",
-      "share": 0.0129,
-      "headcount": 18194,
       "city": "LV00_liepaja",
       "tier": "body"
     },
     {
-      "id": "LVA_jansons_tirdznieciba_materiali",
-      "name": "Jansons Tirdzniecība Materiāli",
+      "id": "LVA_zeltins_materiali",
+      "name": "Zeltiņš Materiāli",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23623,
+      "city": "LV00_liepaja",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_gailitis_energetika",
+      "name": "Gailītis Enerģētika",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22722,
+      "city": "LV00_daugavpils",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_ozolsparnis_apdrosinasana",
+      "name": "Ozolspārnis Apdrošināšana",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "LV00_riga",
+      "tier": "body"
+    },
+    {
+      "id": "LVA_baldzens_materiali",
+      "name": "Baldzēns Materiāli",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22659,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
@@ -534,24 +669,24 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "LV00_riga",
+      "city": "LV00_liepaja",
       "tier": "body"
     },
     {
       "id": "LVA_mucenieks_tirdznieciba",
       "name": "Mucenieks Tirdzniecība",
       "sector": "services",
-      "share": 0.0089,
-      "headcount": 12324,
-      "city": "LV00_liepaja",
+      "share": 0.0106,
+      "headcount": 14678,
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_kroders_buvnieciba",
       "name": "Kroders Būvniecība",
       "sector": "services",
-      "share": 0.0151,
-      "headcount": 21175,
+      "share": 0.0135,
+      "headcount": 18931,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -561,7 +696,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
@@ -570,24 +705,24 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_aizsilnieks_lauksaimnieciba",
       "name": "Aizsilnieks Lauksaimniecība",
       "sector": "services",
-      "share": 0.012,
-      "headcount": 17077,
-      "city": "LV00_liepaja",
+      "share": 0.0166,
+      "headcount": 23624,
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
       "id": "LVA_ulmanis_energetika",
       "name": "Ulmanis Enerģētika",
       "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
+      "share": 0.01,
+      "headcount": 15701,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -595,8 +730,8 @@
       "id": "LVA_zuravlovs_lauksaimnieciba",
       "name": "Zuravļovs Lauksaimniecība",
       "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
+      "share": 0.0141,
+      "headcount": 21623,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -604,8 +739,8 @@
       "id": "LVA_vagners_transports_energetika",
       "name": "Vagners Transports Enerģētika",
       "sector": "services",
-      "share": 0.0166,
-      "headcount": 22965,
+      "share": 0.0082,
+      "headcount": 11344,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -613,8 +748,8 @@
       "id": "LVA_skujins_apdrosinasana",
       "name": "Skujins Apdrošināšana",
       "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
+      "share": 0.0097,
+      "headcount": 15545,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -624,7 +759,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22464,
-      "city": "LV00_riga",
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
@@ -633,16 +768,16 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
-      "city": "LV00_liepaja",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
       "id": "LVA_mucenieks_energetika",
       "name": "Mucenieks Enerģētika",
       "sector": "services",
-      "share": 0.0089,
-      "headcount": 13596,
-      "city": "LV00_liepaja",
+      "share": 0.006,
+      "headcount": 9166,
+      "city": "LV00_daugavpils",
       "tier": "body"
     },
     {
@@ -658,8 +793,8 @@
       "id": "LVA_aigars_transports",
       "name": "Aigars Transports",
       "sector": "services",
-      "share": 0.0104,
-      "headcount": 14809,
+      "share": 0.0166,
+      "headcount": 23638,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -667,8 +802,8 @@
       "id": "LVA_naumanis_tirdznieciba",
       "name": "Naumanis Tirdzniecība",
       "sector": "services",
-      "share": 0.0112,
-      "headcount": 15424,
+      "share": 0.0166,
+      "headcount": 22860,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -685,8 +820,8 @@
       "id": "LVA_lacis_apdrosinasana",
       "name": "Lācis Apdrošināšana",
       "sector": "services",
-      "share": 0.0122,
-      "headcount": 18766,
+      "share": 0.0166,
+      "headcount": 25000,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -696,7 +831,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24683,
-      "city": "LV00_daugavpils",
+      "city": "LV00_riga",
       "tier": "body"
     },
     {
@@ -706,159 +841,6 @@
       "share": 0.0166,
       "headcount": 22532,
       "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_naumanis_transports",
-      "name": "Naumanis Transports",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 24362,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_fogels_rupnieciba",
-      "name": "Fogels Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 24666,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_lemanis_rupnieciba",
-      "name": "Lēmanis Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 22753,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_aizsilnieks_rupnieciba",
-      "name": "Aizsilnieks Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_jansons_transports_rupnieciba",
-      "name": "Jansons Transports Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 23735,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_zuravlovs_apdrosinasana",
-      "name": "Zuravļovs Apdrošināšana",
-      "sector": "services",
-      "share": 0.0138,
-      "headcount": 22436,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_vagners_materiali",
-      "name": "Vagners Materiāli",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_lacis_rupnieciba",
-      "name": "Lācis Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 22432,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_riekstins_rupnieciba",
-      "name": "Riekstiņš Rūpniecība",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_huns_transports",
-      "name": "Hūns Transports",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 23738,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_ozolsparnis_lauksaimnieciba",
-      "name": "Ozolspārnis Lauksaimniecība",
-      "sector": "services",
-      "share": 0.0126,
-      "headcount": 18784,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_repenko_buvnieciba",
-      "name": "Repenko Būvniecība",
-      "sector": "services",
-      "share": 0.0131,
-      "headcount": 20406,
-      "city": "LV00_daugavpils",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_grinbergs_materiali",
-      "name": "Grīnbergs Materiāli",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 24058,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_pinnis_rupnieciba_rupnieciba",
-      "name": "Pinnis Rūpniecība Rūpniecība",
-      "sector": "services",
-      "share": 0.0108,
-      "headcount": 15277,
-      "city": "LV00_liepaja",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_lemanis_buvnieciba",
-      "name": "Lēmanis Būvniecība",
-      "sector": "services",
-      "share": 0.0098,
-      "headcount": 13442,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_skujins_materiali",
-      "name": "Skujins Materiāli",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 25000,
-      "city": "LV00_riga",
-      "tier": "body"
-    },
-    {
-      "id": "LVA_pinnis_buvnieciba_grupa",
-      "name": "Pinnis Būvniecība Grupa",
-      "sector": "services",
-      "share": 0.0166,
-      "headcount": 24818,
-      "city": "LV00_daugavpils",
       "tier": "body"
     }
   ]

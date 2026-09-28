@@ -1140,115 +1140,117 @@
       "bench": true
     },
     {
-      "id": "SVN_chief_drnovsek",
+      "id": "SVN_chief_drnovsek_logistika",
       "name": "Alenka Drnovšek",
       "kind": "executive",
       "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_lipnik_logistika",
+      "name": "Franci Lipnik",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
         "networked",
         "pragmatic"
       ],
-      "ambition": 0.83,
+      "ambition": 0.67,
       "bench": true
     },
     {
-      "id": "SVN_chief_kopac",
-      "name": "Vesna Kopač",
+      "id": "SVN_chief_faganeli_energija",
+      "name": "Jasna Faganeli",
       "kind": "executive",
       "traits": [
+        "loyal",
         "networked",
         "stubborn"
       ],
-      "ambition": 0.75,
+      "ambition": 0.6,
       "bench": true
     },
     {
-      "id": "SVN_chief_banka_faganeli",
-      "name": "Marko Faganeli",
+      "id": "SVN_chief_cerar_materiali",
+      "name": "Alenka Cerar",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal",
         "networked"
       ],
-      "ambition": 0.76,
+      "ambition": 0.42,
       "bench": true
     },
     {
-      "id": "SVN_chief_stimc",
-      "name": "Darko Štimc",
+      "id": "SVN_chief_grasic_materiali",
+      "name": "Dragica Grašič",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.43,
-      "bench": true
-    },
-    {
-      "id": "SVN_chief_bajc",
-      "name": "Vesna Bajc",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.74,
-      "bench": true
-    },
-    {
-      "id": "SVN_chief_kastelic_logistika",
-      "name": "Nataša Kastelic",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked"
+        "stubborn"
       ],
       "ambition": 0.63,
       "bench": true
     },
     {
-      "id": "SVN_chief_lenarcic_industrija",
-      "name": "Ivan Lenarčič",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.67,
-      "bench": true
-    },
-    {
-      "id": "SVN_chief_kastelic",
-      "name": "Nataša Kastelic",
+      "id": "SVN_chief_dolinsek_gradbenistvo",
+      "name": "Mojca Dolinšek",
       "kind": "executive",
       "traits": [
         "ambitious",
         "networked"
       ],
-      "ambition": 0.8,
+      "ambition": 0.78,
       "bench": true
     },
     {
-      "id": "SVN_chief_cvikl_industrija",
-      "name": "Cvetka Cvikl",
+      "id": "SVN_chief_tavcar_skupina",
+      "name": "Darko Tavčar",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "networked"
+        "pragmatic"
       ],
-      "ambition": 0.64,
+      "ambition": 0.45,
       "bench": true
     },
     {
-      "id": "SVN_chief_slapar",
-      "name": "Bojan Slapar",
+      "id": "SVN_chief_banka_dolinsek",
+      "name": "Gregor Dolinšek",
       "kind": "executive",
       "traits": [
-        "networked",
+        "ambitious",
         "pragmatic",
         "stubborn"
       ],
-      "ambition": 0.34,
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_trgovska_hisa_drnovsek",
+      "name": "Luka Drnovšek",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.85,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_rupnik_promet",
+      "name": "Breda Rupnik",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
       "bench": true
     }
   ]

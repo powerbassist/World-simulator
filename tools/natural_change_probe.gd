@@ -207,7 +207,7 @@ func _tick_combined(ns, list: Array, loader, rate: float) -> void:
 		var city_weighted: float = 0.0
 		var city_total: float = 0.0
 		for city in region.cities:
-			var pull: float = Migration.city_pull(ns, loader, region, city.id)
+			var pull: float = Migration.city_pull(ns, region, city.id, Migration._jobs_by_city(ns, loader))
 			var share: float = Migration.city_share(ns, city.id)
 			city_pulls[city.id] = pull
 			city_shares[city.id] = share

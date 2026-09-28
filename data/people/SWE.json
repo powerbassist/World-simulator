@@ -1166,18 +1166,6 @@
       "party_id": "balanspartiet"
     },
     {
-      "id": "SWE_chief_dahlgren_material",
-      "name": "Claes Dahlgren",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.43,
-      "bench": true
-    },
-    {
       "id": "SWE_chief_drakenberg_transport",
       "name": "Ingrid Drakenberg",
       "kind": "executive",
@@ -1189,92 +1177,92 @@
       "bench": true
     },
     {
-      "id": "SWE_chief_krogh_material",
-      "name": "Folke Krogh",
+      "id": "SWE_chief_tegner_transport",
+      "name": "Johan Tegnér",
       "kind": "executive",
       "traits": [
-        "networked",
-        "pragmatic"
+        "ambitious",
+        "loyal"
       ],
-      "ambition": 0.81,
+      "ambition": 0.82,
       "bench": true
     },
     {
-      "id": "SWE_chief_bolag_isberg",
-      "name": "Birger Isberg",
+      "id": "SWE_chief_henckel_material",
+      "name": "Johan Henckel",
       "kind": "executive",
       "traits": [
         "networked",
         "stubborn"
       ],
-      "ambition": 0.83,
+      "ambition": 0.69,
       "bench": true
     },
     {
-      "id": "SWE_chief_bolag_sorvik",
-      "name": "Dag Sörvik",
+      "id": "SWE_chief_mansson_material",
+      "name": "Folke Månsson",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_lundquist_bygg",
+      "name": "Anders Lundquist",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_beijer_handel",
+      "name": "Eskil Beijer",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_handelshus_lundquist",
+      "name": "Folke Lundquist",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bergstrom_bygg",
+      "name": "Hilma Bergström",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_rask_forsakring",
+      "name": "Elsa Rask",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal",
-        "stubborn"
-      ],
-      "ambition": 0.72,
-      "bench": true
-    },
-    {
-      "id": "SWE_chief_olofsson_energi",
-      "name": "Knut Olofsson",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.72,
-      "bench": true
-    },
-    {
-      "id": "SWE_chief_stenmark_handel",
-      "name": "Folke Stenmark",
-      "kind": "executive",
-      "traits": [
-        "networked",
         "pragmatic"
-      ],
-      "ambition": 0.44,
-      "bench": true
-    },
-    {
-      "id": "SWE_chief_ulfsax_gruppen",
-      "name": "Knut Ulfsax",
-      "kind": "executive",
-      "traits": [
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.56,
-      "bench": true
-    },
-    {
-      "id": "SWE_chief_lindau",
-      "name": "Birger Lindau",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.62,
-      "bench": true
-    },
-    {
-      "id": "SWE_chief_quarnstrom",
-      "name": "Folke Quarnström",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "stubborn"
       ],
       "ambition": 0.47,
       "bench": true
@@ -1300,6 +1288,17 @@
         "stubborn"
       ],
       "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_tegner_gruppen",
+      "name": "Knut Tegnér",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.55,
       "bench": true
     }
   ]

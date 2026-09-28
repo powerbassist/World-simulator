@@ -1150,130 +1150,136 @@
       "party_id": "partido_solidarista"
     },
     {
-      "id": "PRT_chief_guerra_industrias",
-      "name": "Alexandre Guerra",
+      "id": "PRT_chief_companhia_paiva",
+      "name": "Lourenço Paiva",
       "kind": "executive",
       "traits": [
-        "ambitious",
         "networked",
         "stubborn"
       ],
-      "ambition": 0.82,
+      "ambition": 0.49,
       "bench": true
     },
     {
-      "id": "PRT_chief_quintela",
-      "name": "Inês Quintela",
+      "id": "PRT_chief_almeirim_seguros",
+      "name": "Beatriz Almeirim",
       "kind": "executive",
       "traits": [
         "networked",
         "pragmatic"
       ],
-      "ambition": 0.47,
+      "ambition": 0.73,
       "bench": true
     },
     {
-      "id": "PRT_chief_meireles_construcao",
-      "name": "Fernando Meireles",
+      "id": "PRT_chief_sociedade_valente",
+      "name": "Bernardino Valente",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "networked",
         "stubborn"
       ],
-      "ambition": 0.63,
+      "ambition": 0.81,
       "bench": true
     },
     {
-      "id": "PRT_chief_ramos",
-      "name": "Fernando Ramos",
+      "id": "PRT_chief_sequeira_grupo",
+      "name": "Joana Sequeira",
       "kind": "executive",
       "traits": [
-        "loyal",
+        "ambitious",
         "pragmatic"
       ],
-      "ambition": 0.75,
+      "ambition": 0.39,
       "bench": true
     },
     {
-      "id": "PRT_chief_guerra",
-      "name": "Dulce Guerra",
+      "id": "PRT_chief_mascarenhas",
+      "name": "Natália Mascarenhas",
       "kind": "executive",
       "traits": [
-        "loyal",
-        "networked",
+        "ambitious",
         "stubborn"
       ],
-      "ambition": 0.83,
+      "ambition": 0.34,
       "bench": true
     },
     {
-      "id": "PRT_chief_companhia_sousa",
-      "name": "Lourenço Sousa",
+      "id": "PRT_chief_sociedade_trindade",
+      "name": "Nuno Trindade",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal"
       ],
-      "ambition": 0.72,
+      "ambition": 0.7,
       "bench": true
     },
     {
-      "id": "PRT_chief_freitas",
-      "name": "Gaspar Freitas",
+      "id": "PRT_chief_ourique_transportes",
+      "name": "Natália Ourique",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sociedade_freitas",
+      "name": "Duarte Freitas",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_janes_logistica",
+      "name": "Eusébio Janes",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_aguiar_agricultura",
+      "name": "Elvira Aguiar",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_pina_materiais",
+      "name": "Miguel Pina",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal",
         "stubborn"
       ],
-      "ambition": 0.64,
+      "ambition": 0.41,
       "bench": true
     },
     {
-      "id": "PRT_chief_sampaio",
-      "name": "Nuno Sampaio",
+      "id": "PRT_chief_guerra_grupo",
+      "name": "Beatriz Guerra",
       "kind": "executive",
       "traits": [
-        "pragmatic",
-        "stubborn"
+        "networked",
+        "pragmatic"
       ],
-      "ambition": 0.82,
-      "bench": true
-    },
-    {
-      "id": "PRT_chief_oliveira_energia",
-      "name": "Lourenço Oliveira",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "networked"
-      ],
-      "ambition": 0.5,
-      "bench": true
-    },
-    {
-      "id": "PRT_chief_janes_grupo",
-      "name": "Gaspar Janes",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked"
-      ],
-      "ambition": 0.59,
-      "bench": true
-    },
-    {
-      "id": "PRT_chief_banco_durao",
-      "name": "Dulce Durão",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal",
-        "stubborn"
-      ],
-      "ambition": 0.48,
+      "ambition": 0.49,
       "bench": true
     }
   ]

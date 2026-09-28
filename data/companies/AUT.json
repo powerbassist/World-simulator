@@ -33,14 +33,14 @@
       "chief_id": "AUT_chief_dienstl_bau"
     },
     {
-      "id": "AUT_iro",
-      "name": "Iro",
+      "id": "AUT_iro_energie",
+      "name": "Iro Energie",
       "sector": "industry",
       "share": 0.0662,
-      "headcount": 39110,
+      "headcount": 34240,
       "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "major",
-      "chief_id": "AUT_chief_iro"
+      "chief_id": "AUT_chief_iro_energie"
     },
     {
       "id": "AUT_tragusta_industrie",

@@ -635,7 +635,12 @@ func _load_companies(nation_id: String, companies_dir: String) -> void:
 ## pointed at it moves nothing at all and the player pays a real bill for it. That
 ## is docs/tiers/v1.md section 6's "sectoral investment -- a lever pointed at a
 ## sector" wearing a firm's name, and refusing it at load is what keeps V1.4's
-## subsidy and V1.6's sector lever distinguishable.
+## subsidy and V1.6's sector lever distinguishable. (V4.7a narrowed this: the
+## check counts majors AND body, while the share pool is majors-only -- a
+## sector with one major plus body passes here and its lone major still has no
+## pool rival. The loader cannot express the majors-only form against body
+## content, so the invariant is pinned in tests/test_companies_tiers.gd
+## instead, where the tier split is visible.)
 func _validate_companies() -> void:
 	for nation_id in companies.keys():
 		var by_sector := {}

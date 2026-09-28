@@ -129,9 +129,11 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			# A MAJOR too small to move its sector is a name on a panel. The floor is
 			# the same standard _validate_people() applies to an unreferenced person:
 			# content with no reachable effect fails the load rather than sitting in a
-			# file looking like a feature. A body firm sits under MIN_BODY_SHARE's
-			# smaller floor for the same reason at its own scale -- its CEILING is
-			# BODY_SHARE_MAX, the loader's tier rule, not this floor's job.
+			# file looking like a feature. A body firm reads MIN_BODY_SHARE's smaller
+			# floor instead -- not because its whole band sits under the major floor
+			# (BODY_SHARE_MAX 0.03 overlaps it; the tiers are separated by the tier
+			# FIELD, not by share size) but because a body firm's scale of mattering
+			# is its own.
 			errors.append("%s: %s share = %s is below the %s-tier floor (%s) -- a firm that cannot move its sector is a label, not a firm" % [
 				filename, path, str(c.share), tier, str(share_floor)
 			])

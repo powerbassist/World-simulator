@@ -1131,6 +1131,18 @@
       "party_id": "tautos_ausra"
     },
     {
+      "id": "LTU_chief_bendrove_maciulis",
+      "name": "Rasa Mačiulis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
       "id": "LTU_chief_vaicekauskas",
       "name": "Sigita Vaicekauskas",
       "kind": "executive",
@@ -1232,18 +1244,6 @@
       "bench": true
     },
     {
-      "id": "LTU_chief_bendrove_maciulis",
-      "name": "Rasa Mačiulis",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.79,
-      "bench": true
-    },
-    {
       "id": "LTU_chief_bankas_emuzis",
       "name": "Laima Ėmužis",
       "kind": "executive",
@@ -1255,14 +1255,15 @@
       "bench": true
     },
     {
-      "id": "LTU_chief_vaitkus",
+      "id": "LTU_chief_vaitkus_prekyba",
       "name": "Aistė Vaitkus",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "networked"
+        "networked",
+        "pragmatic"
       ],
-      "ambition": 0.64,
+      "ambition": 0.68,
       "bench": true
     }
   ]

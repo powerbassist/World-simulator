@@ -1102,98 +1102,6 @@
       "party_id": "union_popular"
     },
     {
-      "id": "ESP_chief_vallespin",
-      "name": "Nicolás Vallespín",
-      "kind": "executive",
-      "traits": [
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.5,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_compania_figueroa",
-      "name": "Javier Figueroa",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.81,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_estrada_energia",
-      "name": "Gloria Estrada",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.42,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_compania_etxebarria",
-      "name": "Marisol Etxebarria",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.67,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_sociedad_saenz",
-      "name": "Andrés Sáenz",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.39,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_jaramillo_construccion",
-      "name": "Mateo Jaramillo",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "loyal"
-      ],
-      "ambition": 0.35,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_juntero",
-      "name": "Gonzalo Juntero",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic",
-        "stubborn"
-      ],
-      "ambition": 0.75,
-      "bench": true
-    },
-    {
-      "id": "ESP_chief_olivencia_materiales",
-      "name": "Lourdes Olivencia",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "pragmatic"
-      ],
-      "ambition": 0.65,
-      "bench": true
-    },
-    {
       "id": "ESP_chief_compania_urenda",
       "name": "Nuria Urenda",
       "kind": "executive",
@@ -1216,26 +1124,104 @@
       "bench": true
     },
     {
-      "id": "ESP_chief_sociedad_rueda",
-      "name": "Paloma Rueda",
+      "id": "ESP_chief_aranda_transportes",
+      "name": "Lourdes Aranda",
       "kind": "executive",
       "traits": [
-        "loyal",
-        "pragmatic"
+        "ambitious",
+        "networked"
       ],
-      "ambition": 0.83,
+      "ambition": 0.78,
       "bench": true
     },
     {
-      "id": "ESP_chief_jove",
-      "name": "Rodrigo Jové",
+      "id": "ESP_chief_arriaga_construccion",
+      "name": "Esperanza Arriaga",
       "kind": "executive",
       "traits": [
         "ambitious",
         "loyal",
         "pragmatic"
       ],
-      "ambition": 0.5,
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_aranda_seguros",
+      "name": "Borja Aranda",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_palazuelos_energia",
+      "name": "Lucas Palazuelos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_querol_materiales",
+      "name": "Rodrigo Querol",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_sotelo_materiales",
+      "name": "Fermín Sotelo",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_figueroa_industrias",
+      "name": "Nicolás Figueroa",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_lizarraga_grupo",
+      "name": "Andrés Lizárraga",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_compania_aranda",
+      "name": "Javier Aranda",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.65,
       "bench": true
     }
   ]

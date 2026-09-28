@@ -1155,18 +1155,6 @@
       "bench": true
     },
     {
-      "id": "BGR_chief_dimov",
-      "name": "Nadezhda Dimov",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.58,
-      "bench": true
-    },
-    {
       "id": "BGR_chief_stefanov_stroitelstvo",
       "name": "Silviya Stefanov",
       "kind": "executive",
@@ -1187,53 +1175,6 @@
         "pragmatic"
       ],
       "ambition": 0.35,
-      "bench": true
-    },
-    {
-      "id": "BGR_chief_zografski",
-      "name": "Ivan Zografski",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "pragmatic"
-      ],
-      "ambition": 0.57,
-      "bench": true
-    },
-    {
-      "id": "BGR_chief_videv",
-      "name": "Georgi Videv",
-      "kind": "executive",
-      "traits": [
-        "loyal",
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.75,
-      "bench": true
-    },
-    {
-      "id": "BGR_chief_neykov_energija",
-      "name": "Martin Neykov",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked",
-        "stubborn"
-      ],
-      "ambition": 0.57,
-      "bench": true
-    },
-    {
-      "id": "BGR_chief_videv_zastrahovane",
-      "name": "Stoyan Videv",
-      "kind": "executive",
-      "traits": [
-        "ambitious",
-        "networked",
-        "pragmatic"
-      ],
-      "ambition": 0.76,
       "bench": true
     },
     {
@@ -1282,14 +1223,70 @@
       "bench": true
     },
     {
-      "id": "BGR_chief_bodurov",
+      "id": "BGR_chief_dimov_zemedelie",
+      "name": "Nadezhda Dimov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_zografski_grupa",
+      "name": "Ivan Zografski",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_uzunov_transport",
+      "name": "Stoyan Uzunov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_chavdarov_zastrahovane",
+      "name": "Polina Chavdarov",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_obretenov",
+      "name": "Stoyan Obretenov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_bodurov_targovija",
       "name": "Filip Bodurov",
       "kind": "executive",
       "traits": [
         "ambitious",
-        "stubborn"
+        "networked"
       ],
-      "ambition": 0.45,
+      "ambition": 0.75,
       "bench": true
     }
   ]

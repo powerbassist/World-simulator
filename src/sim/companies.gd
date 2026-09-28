@@ -66,8 +66,8 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 ## slot.
 ##
 ## V4.7a: body-tier firms are NOT seeded -- the register carries what MOVED and
-## nothing that did not, so a body firm gains an entry only when something
-## touches it (a subsidy's pool takes its share, B-phase acts). The reads
+## nothing that did not, so a body firm gains an entry only when a B-phase act
+## writes one (the pool is majors-only; no 7a path touches a body firm). The reads
 ## (share_of_company, output_eur_bn, headcount) fall back to the authored
 ## content for an absent entry, which is what makes the sparse shape safe and
 ## keeps a ~2,500-firm register out of every save.
@@ -105,8 +105,30 @@ static func tick_month(state, loader) -> void:
 	ids.sort()
 	for id in ids:
 		var ns = state.nations[id]
+		_seed_missing_majors(ns, loader)
 		_tick_shares(ns, loader)
 		_recompute_prices(ns, loader)
+
+
+## V4.7a, the PR-46 ultra review's headline finding: the load path restores the
+## register from the payload ALONE (from_dict never sees the loader), and a save
+## written before this block shipped carries "companies": {} for the 25 nations
+## that had no companies file -- while this build's content gives each ~12
+## majors. Without this seed, the first monthly tick after loading such a save
+## raises a missing-key error per unseeded nation, every month, with no repair
+## path (the verbs' register-membership gate refuses too). The fix is the V4.6
+## commodity register's own shape: a LAZY seed at the tick, majors only, at the
+## authored share -- which is the truth about those firms in any save that
+## predates them (no verb ever touched them, so there is no verb state to lose).
+## Body firms stay unseeded: their reads fall back to authored content and only
+## a B-phase act can move one. Idempotent by construction -- a second run finds
+## every major present and writes nothing.
+static func _seed_missing_majors(ns, loader) -> void:
+	for company in majors_of(loader, ns.id):
+		if not ns.companies.has(company.id):
+			ns.companies[company.id] = {
+				"share": company.share, "subsidy": 0.0, "state_share": 0.0
+			}
 
 
 # --- Content -------------------------------------------------------------------
@@ -399,8 +421,9 @@ static func _tick_shares(ns, loader) -> void:
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
 		# Majors only, because the pool only ever moved majors (A3's amended
-		# design): every major is seeded by init_nation, so a plain indexed
-		# write is honest. The A1-era get-or-create here was the spillover
+		# design): every major holds an entry -- init_nation seeds a fresh game
+		# and _seed_missing_majors repairs a loaded pre-7a save -- so a plain
+		# indexed write is honest. The A1-era get-or-create here was the spillover
 		# path for body rivals and is DELETED -- under the majors-only pool
 		# no code path reaches it, and the B-phase acts that will move a body
 		# firm's share write the register directly in industry.gd, not
@@ -438,7 +461,12 @@ static func subsidy_bill_pct_gdp(ns) -> float:
 ## and the assembly passed the other.
 ##
 ## THE BURDEN READS ONLY THE NAMED FIRMS, and that is structural rather than a
-## rounding choice. A sector that is a quarter named is a quarter as regulable,
+## rounding choice. (V1.4b authored this when named coverage sat near a
+## quarter; V4.7a's two-tier register took every sector to 0.85-0.97 named, so
+## the proportionality bound now binds near its ceiling -- the ~4x channel
+## scale-up that put the extreme regimes ON the impulse clamp is recorded at
+## test_balance.gd's assertions, and the re-tune is B4's declared-band sweep.
+## A sector that is a quarter named is a quarter as regulable,
 ## because the unnamed residual is not in the register and this model does not
 ## reach it. That bound is what separates the term from a lever pointed at
 ## sector_output, which is docs/tiers/v1.md section 6's and not this session's.
@@ -550,14 +578,14 @@ static func _recompute_prices(ns, loader) -> void:
 ## so `subsidy_active` gates it directly and a cooldown register would be a second
 ## gate on the same fact.
 ##
-## V4.7a: the TIER gate lives here, in 7a and not with the B2 verbs, because the
-## step-0 probe measured the failure it prevents and A3's spillover defeats the
-## incidental gate the moment body content ships: a major's subsidy re-seeds its
-## body rivals through _tick_shares' get-or-create, and a seeded body firm then
-## passes the register-membership check below. The probe's finding is that a
-## body firm's share channel is ABSOLUTE -- a 0.01 firm drains the same pool as
-## a 0.14 major and ends the term at 0.13 -- so no verb targets a body firm,
-## whatever its register state.
+## V4.7a: the TIER gate lives here, in 7a and not with the B2 verbs. The
+## step-0 probe's finding is that a body firm's share channel is ABSOLUTE -- a
+## 0.01 firm drains the same pool as a 0.14 major and ends the term at 0.13 --
+## so no verb targets a body firm, whatever its register state. The gate is
+## DEFENCE IN DEPTH rather than the last line: the pool is majors-only and no
+## 7a code path writes a body entry, but the B-phase acts will (fail, be bought
+## write the register directly), and a body entry's existence must not make the
+## tier a verb target when they do.
 static func available(state, ns, all_actions: Array, company_id: String, loader) -> Array:
 	var out: Array = []
 	if not ns.companies.has(company_id):

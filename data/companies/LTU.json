@@ -8,7 +8,7 @@
       "sector": "agriculture",
       "share": 0.1478,
       "headcount": 14165,
-      "city": "LT01_vilnius",
+      "city": "LT02_klaipeda",
       "tier": "major",
       "chief_id": "LTU_chief_vaicekauskas"
     },
@@ -18,7 +18,7 @@
       "sector": "agriculture",
       "share": 0.28,
       "headcount": 25637,
-      "city": "LT02_klaipeda",
+      "city": "LT02_siauliai",
       "tier": "major",
       "chief_id": "LTU_chief_prekybos_namai_mazeika"
     },
@@ -28,7 +28,7 @@
       "sector": "industry",
       "share": 0.0338,
       "headcount": 21543,
-      "city": "LT02_klaipeda",
+      "city": "LT02_siauliai",
       "tier": "major",
       "chief_id": "LTU_chief_kairys_grupe"
     },
@@ -38,7 +38,7 @@
       "sector": "industry",
       "share": 0.0518,
       "headcount": 37961,
-      "city": "LT02_siauliai",
+      "city": "LT02_klaipeda",
       "tier": "major",
       "chief_id": "LTU_chief_juozapavicius_pramone"
     },
@@ -58,7 +58,7 @@
       "sector": "industry",
       "share": 0.0448,
       "headcount": 29078,
-      "city": "LT02_klaipeda",
+      "city": "LT02_kaunas",
       "tier": "major",
       "chief_id": "LTU_chief_maciulis"
     },
@@ -68,7 +68,7 @@
       "sector": "industry",
       "share": 0.0591,
       "headcount": 36623,
-      "city": "LT02_siauliai",
+      "city": "LT02_panevezys",
       "tier": "major",
       "chief_id": "LTU_chief_pakalniskis"
     },
@@ -78,7 +78,7 @@
       "sector": "services",
       "share": 0.0601,
       "headcount": 93932,
-      "city": "LT02_kaunas",
+      "city": "LT01_vilnius",
       "tier": "major",
       "chief_id": "LTU_chief_burokas_transportas"
     },
@@ -88,7 +88,7 @@
       "sector": "services",
       "share": 0.0356,
       "headcount": 50799,
-      "city": "LT02_panevezys",
+      "city": "LT02_siauliai",
       "tier": "major",
       "chief_id": "LTU_chief_zadeikis_statyba"
     },
@@ -98,7 +98,7 @@
       "sector": "services",
       "share": 0.0748,
       "headcount": 92486,
-      "city": "LT01_vilnius",
+      "city": "LT02_panevezys",
       "tier": "major",
       "chief_id": "LTU_chief_bendrove_maciulis"
     },
@@ -108,19 +108,19 @@
       "sector": "services",
       "share": 0.0725,
       "headcount": 131227,
-      "city": "LT02_siauliai",
+      "city": "LT01_vilnius",
       "tier": "major",
       "chief_id": "LTU_chief_bankas_emuzis"
     },
     {
-      "id": "LTU_vaitkus",
-      "name": "Vaitkus",
+      "id": "LTU_vaitkus_prekyba",
+      "name": "Vaitkus Prekyba",
       "sector": "services",
       "share": 0.0363,
-      "headcount": 66479,
-      "city": "LT02_panevezys",
+      "headcount": 45805,
+      "city": "LT02_kaunas",
       "tier": "major",
-      "chief_id": "LTU_chief_vaitkus"
+      "chief_id": "LTU_chief_vaitkus_prekyba"
     }
   ],
   "body": [
@@ -137,8 +137,8 @@
       "id": "LTU_paulauskas_grupe",
       "name": "Paulauskas Grupė",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2401,
+      "share": 0.0242,
+      "headcount": 1936,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -146,8 +146,8 @@
       "id": "LTU_fokas_transportas",
       "name": "Fokas Transportas",
       "sector": "agriculture",
-      "share": 0.0237,
-      "headcount": 1786,
+      "share": 0.03,
+      "headcount": 2260,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -173,8 +173,8 @@
       "id": "LTU_baltusis_zemes_ukis",
       "name": "Baltušis Žemės ūkis",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2471,
+      "share": 0.0121,
+      "headcount": 997,
       "city": "LT02_siauliai",
       "tier": "body"
     },
@@ -182,8 +182,8 @@
       "id": "LTU_cepas_zemes_ukis",
       "name": "Čepas Žemės ūkis",
       "sector": "agriculture",
-      "share": 0.0119,
-      "headcount": 969,
+      "share": 0.03,
+      "headcount": 2442,
       "city": "LT02_siauliai",
       "tier": "body"
     },
@@ -200,8 +200,8 @@
       "id": "LTU_simkus_pramone",
       "name": "Simkus Pramonė",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2395,
+      "share": 0.0222,
+      "headcount": 1772,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -209,8 +209,8 @@
       "id": "LTU_rastenis_transportas",
       "name": "Rastenis Transportas",
       "sector": "agriculture",
-      "share": 0.0218,
-      "headcount": 1696,
+      "share": 0.03,
+      "headcount": 2334,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -236,8 +236,8 @@
       "id": "LTU_burokas_logistika",
       "name": "Burokas Logistika",
       "sector": "agriculture",
-      "share": 0.03,
-      "headcount": 2639,
+      "share": 0.0154,
+      "headcount": 1355,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -245,8 +245,8 @@
       "id": "LTU_matulis_grupe",
       "name": "Matulis Grupė",
       "sector": "agriculture",
-      "share": 0.0151,
-      "headcount": 1246,
+      "share": 0.03,
+      "headcount": 2475,
       "city": "LT02_kaunas",
       "tier": "body"
     },
