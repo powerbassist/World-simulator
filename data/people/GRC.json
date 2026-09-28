@@ -1164,6 +1164,118 @@
       ],
       "bench": true,
       "party_id": "laiki_rizospastiki"
+    },
+    {
+      "id": "GRC_chief_trapeza_iliopoulos",
+      "name": "Nikoletta Iliopoulos",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_iliopoulos_metafora",
+      "name": "Manolis Iliopoulos",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_nastos",
+      "name": "Leonidas Nastos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_papalambros",
+      "name": "Nikoletta Papalambros",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_reppas_kataskeves",
+      "name": "Manolis Reppas",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_moraitis",
+      "name": "Sofia Moraitis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_galatopoulos",
+      "name": "Nikolaos Galatopoulos",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_sakellaropoulos_georgia",
+      "name": "Evangelos Sakellaropoulos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_manousakis",
+      "name": " Fotios Manousakis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "GRC_chief_doukas",
+      "name": "Manolis Doukas",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
     }
   ]
 }

@@ -1125,6 +1125,142 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "ITA_chief_imbruglia_commercio",
+      "name": "Raffaella Imbruglia",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.54,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_valguarnera_gruppo",
+      "name": "Nanni Valguarnera",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_ermenegildo_industrie",
+      "name": "Selvaggia Ermenegildo",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_ottaviani",
+      "name": "Ilaria Ottaviani",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_orsini_commercio",
+      "name": "Cesare Orsini",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_bandello_industrie",
+      "name": "Bruno Bandello",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_serafini",
+      "name": "Ludovico Serafini",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_banca_reali",
+      "name": "Dario Reali",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_oliverio",
+      "name": "Nanni Oliverio",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_valguarnera",
+      "name": "Fiorella Valguarnera",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_nesci",
+      "name": "Oreste Nesci",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_banca_gentileschi",
+      "name": "Emilio Gentileschi",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "bench": true
     }
   ]
 }

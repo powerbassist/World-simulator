@@ -234,7 +234,15 @@ static func value_eur_bn(ns, company) -> float:
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
-	var reallocated: float = company.headcount * share_of_company(ns, company) / company.share
+	# The RATIO is computed first, deliberately: (h * s) / s is not exactly h
+	# for every float pair -- the A3 roster's generated headcounts found the
+	# unlucky ones, and the residue showed up as a 1e-18 drift in
+	# firm_jobs_offset_pct on nations whose only sin was unlucky digits. s / s
+	# is exactly 1.0 in IEEE for every finite nonzero s, so this form holds the
+	# file's own invariant -- the deviation channels read EXACTLY 0.0 while
+	# every firm sits at its authored share -- by construction rather than by
+	# bit luck.
+	var reallocated: float = company.headcount * (share_of_company(ns, company) / company.share)
 	# Signed, so a deregulation law lets the same firms carry more staff. Floored at
 	# zero rather than trusted to the burden clamp: a later session raising
 	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
@@ -283,17 +291,10 @@ static func _tick_shares(ns, loader) -> void:
 	for sector in EK.SECTOR_TREND.keys():
 		var firms := firms_in_sector(loader, ns.id, sector)
 		if firms.size() < 2:
-			# Zero firms: the sector is unpartitioned, which is every sector of every
-			# nation with no companies file. One firm cannot come out of a validated
-			# file at all -- DataLoader._validate_companies() refuses it, because a
-			# firm with no rival is a sector lever wearing a company's name.
 			continue
 
 		var before := {}
 		for company in firms:
-			# share_of_company, not share_of: a body rival's register entry may
-			# not exist (the register is sparse), and the pool must read its
-			# authored share or the floor math would see 0.0 and seal it.
 			before[company.id] = share_of_company(ns, company)
 
 		var deltas := {}
@@ -318,7 +319,27 @@ static func _tick_shares(ns, loader) -> void:
 		var wants := {}
 		var pools := {}
 		var claim := 0.0
+		# A3: majors-only rivals, and the body is OUTSIDE the pool entirely --
+		# it neither gives nor receives. Two reasons, the second decisive: the
+		# pool is the verb channel's budget, and body rivals in it would grow
+		# the drainable supply with the body tier's size (ten rivals vs
+		# thirty), so a subsidised major's reachable share -- and the step-0
+		# probe's measured escalator -- would depend on how many body firms
+		# were generated. V1.4's balance calculus was calibrated against the
+		# majors' own pool; keeping it that way preserves that calibration
+		# under the roster's growth. And the tier doc's own shape says the
+		# same: the body aggregates into the residual, static content that
+		# neither drains nor feeds the verb plane -- only the B-phase acts
+		# (fail, be bought) move a body firm's share, and they write the
+		# register directly rather than through this pool.
+		var majors: Array = []
 		for company in firms:
+			if is_major(company):
+				majors.append(company)
+		if majors.size() < 1:
+			continue  # no majors to subsidise: no verb can fire
+
+		for company in majors:
 			var intensity := subsidy_of(ns, company.id)
 			if intensity <= 0.0:
 				continue
@@ -334,7 +355,7 @@ static func _tick_shares(ns, loader) -> void:
 			# the identical five-year outcome, because the floor and not the rate was
 			# setting where the share ended up.
 			var available := 0.0
-			for rival in firms:
+			for rival in majors:
 				if rival.id == company.id:
 					continue
 				available += maxf(
@@ -355,13 +376,13 @@ static func _tick_shares(ns, loader) -> void:
 
 		var scale: float = 1.0 / claim if claim > 1.0 else 1.0
 
-		for company in firms:
+		for company in majors:
 			if not wants.has(company.id):
 				continue
 			var gain: float = float(wants[company.id]) * scale
 			var available: float = float(pools[company.id])
 			deltas[company.id] = float(deltas[company.id]) + gain
-			for rival in firms:
+			for rival in majors:
 				if rival.id == company.id:
 					continue
 				var supply: float = maxf(
@@ -370,11 +391,8 @@ static func _tick_shares(ns, loader) -> void:
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
 		for company in firms:
-			# V4.7a: a body rival's entry may not exist yet (the register is
-			# sparse -- init_nation seeds majors only). The first spillover
-			# that MOVES it seeds it from the authored content, exactly the
-			# shape init_nation would have written; an untouched body firm
-			# stays out of the register.
+			# A3: only majors and body entries that the subsidy touch; body firms
+			# untouched by a subsidy get no register entry. Sparse for body.
 			if not ns.companies.has(company.id):
 				if is_equal_approx(float(deltas[company.id]), 0.0):
 					continue

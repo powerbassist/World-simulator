@@ -1138,6 +1138,154 @@
       ],
       "bench": true,
       "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_chief_obchodni_dum_panek",
+      "name": "Dobroslav Pánek",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_gregor_materialy",
+      "name": "Milan Gregor",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_zizka",
+      "name": "Petra Žižka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_zizka_doprava",
+      "name": "Klára Žižka",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_banka_rysanek",
+      "name": "Božena Ryšánek",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_spolecnost_nedved",
+      "name": "Vojtěch Nedvěd",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_obchodni_dum_havlicek",
+      "name": "Markéta Havlíček",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_vanek_obchod",
+      "name": "Anežka Vaněk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_havlicek_skupina",
+      "name": "Radim Havlíček",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_banka_sova",
+      "name": "Jitka Sova",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_petr",
+      "name": "Milan Petr",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_hruby",
+      "name": "Jaromír Hrubý",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_zahradka_pojisteni",
+      "name": "Anežka Zahrádka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
     }
   ]
 }

@@ -1122,6 +1122,166 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "FIN_chief_pankki_nissinen",
+      "name": "Irmeli Nissinen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.3,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_tiihonen",
+      "name": "Eino Tiihonen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_jokinen_logistiikka",
+      "name": "Martti Jokinen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_pankki_jokinen",
+      "name": "Juha Jokinen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_pankki_akerman",
+      "name": "Irmeli Åkerman",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_riekkinen_liikenne",
+      "name": "Liisa Riekkinen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_fagerlund_rakennus",
+      "name": "Liisa Fagerlund",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_yhtio_cederstrom",
+      "name": "Martti Cederström",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_gronholm_teollisuus",
+      "name": "Sinikka Grönholm",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_granholm",
+      "name": "Helinä Granholm",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_moisio_rakennus",
+      "name": "Heikki Moisio",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_makinen_vakuutus",
+      "name": "Irmeli Mäkinen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_pankki_mannerkoski",
+      "name": "Tapio Mannerkoski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_akerman",
+      "name": "Eino Åkerman",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
     }
   ]
 }

@@ -125,7 +125,14 @@ func _test_content_loads() -> void:
 func _test_register_seeds_from_content() -> void:
 	var state = _new_state()
 	var ns = state.nations[PLAYER]
+	# V4.7a: MAJORS only. The sparse register seeds majors and leaves body
+	# firms out until something touches them -- an untouched body firm reading
+	# its authored share is share_of_company's fallback, not a register entry,
+	# and iterating the whole roster here would demand density the design
+	# refuses.
 	for company in _loader.companies[PLAYER]:
+		if not Companies.is_major(company):
+			continue
 		if not is_equal_approx(Companies.share_of(ns, company.id), company.share):
 			_fail("%s seeded at share %.4f against authored %.4f" % [
 				company.id, Companies.share_of(ns, company.id), company.share
@@ -186,31 +193,40 @@ func _test_a_long_run_stays_exactly_zero() -> void:
 	# channels could read zero because the arithmetic cancels rather than because
 	# nothing happened.
 	var ns_player = state.nations[PLAYER]
+	# V4.7a: the fallback read again -- see the regulation check above.
 	for company in _loader.companies[PLAYER]:
-		if Companies.share_of(ns_player, company.id) != company.share:
+		if Companies.share_of_company(ns_player, company) != company.share:
 			_fail("%s share moved with no subsidy: %s against authored %s" % [
-				company.id, str(Companies.share_of(ns_player, company.id)), str(company.share)
+				company.id, str(Companies.share_of_company(ns_player, company)), str(company.share)
 			])
 
 
 func _test_nations_without_a_file_are_untouched() -> void:
-	var state = _new_state()
-	var found := false
-	for id in state.nations.keys():
-		if _loader.companies.get(id, []).is_empty():
-			found = true
-			if not state.nations[id].companies.is_empty():
-				_fail("%s has no companies file but a non-empty register" % id)
-	if not found:
-		_fail("every nation has a companies file, so the absent-file path asserts nothing")
+	# V4.7a rewrote this check: A3's content gives every nation a companies
+	# file, so the "find a fileless nation" premise is dead -- a GOOD problem,
+	# but the loader's absent-file legality still needs covering. The path is
+	# exercised directly now: _load_companies on an id with no file yields an
+	# empty list and no error, which is the whole contract.
+	_loader._load_companies("ZZZ_absent_probe", "res://data/companies")
+	if not _loader.companies.get("ZZZ_absent_probe", []).is_empty():
+		_fail("an absent companies file did not read as an empty list")
+	var direct_errors := 0
+	for e in _loader.errors:
+		if String(e).find("ZZZ_absent_probe") != -1:
+			direct_errors += 1
+	if direct_errors > 0:
+		_fail("an absent companies file produced %d load error(s)" % direct_errors)
+
 
 
 # --- The partition -------------------------------------------------------------
 
 func _named_share(ns, sector: String) -> float:
+	# V4.7a: the fallback read -- the named partition includes body firms,
+	# whose register-absent entries still hold their authored share.
 	var total := 0.0
 	for company in Companies.firms_in_sector(_loader, ns.id, sector):
-		total += Companies.share_of(ns, company.id)
+		total += Companies.share_of_company(ns, company)
 	return total
 
 
@@ -363,7 +379,10 @@ func _test_rivals_never_fall_below_the_floor() -> void:
 		Companies.tick_month(state, _loader)
 
 	for company in _loader.companies[PLAYER]:
-		var share := Companies.share_of(ns, company.id)
+		# V4.7a: the fallback read again -- the floor binds on the firm's true
+		# partition share, and a sparse body firm's register read of 0.0 would
+		# read every untouched body rival as floor-broken.
+		var share := Companies.share_of_company(ns, company)
 		# The RELATIVE floor the probe forced into the model: a rival keeps at least
 		# half of what it was authored with, so a two-firm sector can never collapse
 		# into a one-firm sector -- which would hand V1.4b and V1.4c a register whose
@@ -442,10 +461,13 @@ func _test_a_burden_moves_jobs_and_growth_and_no_share() -> void:
 			str(ns.subsidy_bill_pct_gdp)
 		])
 
+	# V4.7a: share_of_company, not share_of -- the sparse register means a
+	# body firm's partition read is the authored fallback, and share_of's
+	# 0.0-for-absent would read every untouched body firm as "moved".
 	for company in _loader.companies[PLAYER]:
-		if Companies.share_of(ns, company.id) != company.share:
+		if Companies.share_of_company(ns, company) != company.share:
 			_fail("%s share moved under a regulation: %s against authored %s" % [
-				company.id, str(Companies.share_of(ns, company.id)), str(company.share)
+				company.id, str(Companies.share_of_company(ns, company)), str(company.share)
 			])
 
 
@@ -516,8 +538,12 @@ func _test_the_burden_clamp_holds_both_ways() -> void:
 
 	# Every firm still holds exactly its authored share after twenty rounds of every
 	# rule in the file: nothing on this path may reach the partition.
+	# V4.7a: read through share_of_company -- the sparse register means a body
+	# firm's partition read IS the authored fallback until something moves it,
+	# and share_of's 0.0-for-absent would read every untouched body firm as
+	# "moved". A genuinely moved firm still fails here on either tier.
 	for company in _loader.companies[PLAYER]:
-		if Companies.share_of(ns, company.id) != company.share:
+		if Companies.share_of_company(ns, company) != company.share:
 			_fail("%s share moved under a saturated burden" % company.id)
 
 

@@ -109,19 +109,31 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 	else:
 		c.sector = sector
 
+	# The floor is scoped by tier BEFORE the share check reads it: majors keep
+	# the 0.02 standard (a verb target too small to move its sector is a label),
+	# while a body firm's whole band lives BELOW it (~0.005 typical, 0.03 the
+	# ceiling BODY_SHARE_MAX clamps at the loader). One floor for both tiers
+	# would refuse every body file A3 generates -- the A1 review's finding,
+	# fixed at the shared check rather than per call site.
+	var tier := "major"
+	if d.has("tier"):
+		tier = String(d["tier"])
+	var share_floor: float = K.MIN_BODY_SHARE if tier == "body" else K.MIN_AUTHORED_SHARE
 	if not d.has("share") or not (typeof(d["share"]) == TYPE_INT or typeof(d["share"]) == TYPE_FLOAT):
 		errors.append("%s: %s missing or non-numeric field 'share'" % [filename, path])
 	else:
 		c.share = float(d["share"])
 		if c.share <= 0.0 or c.share > 1.0:
 			errors.append("%s: %s share = %s must be in (0, 1]" % [filename, path, str(c.share)])
-		elif c.share < K.MIN_AUTHORED_SHARE:
-			# A firm too small to move its sector is a name on a panel. The floor is
+		elif c.share < share_floor:
+			# A MAJOR too small to move its sector is a name on a panel. The floor is
 			# the same standard _validate_people() applies to an unreferenced person:
 			# content with no reachable effect fails the load rather than sitting in a
-			# file looking like a feature.
-			errors.append("%s: %s share = %s is below MIN_AUTHORED_SHARE (%s) -- a firm that cannot move its sector is a label, not a firm" % [
-				filename, path, str(c.share), str(K.MIN_AUTHORED_SHARE)
+			# file looking like a feature. A body firm sits under MIN_BODY_SHARE's
+			# smaller floor for the same reason at its own scale -- its CEILING is
+			# BODY_SHARE_MAX, the loader's tier rule, not this floor's job.
+			errors.append("%s: %s share = %s is below the %s-tier floor (%s) -- a firm that cannot move its sector is a label, not a firm" % [
+				filename, path, str(c.share), tier, str(share_floor)
 			])
 
 	if not d.has("headcount") or not (typeof(d["headcount"]) == TYPE_INT or typeof(d["headcount"]) == TYPE_FLOAT):

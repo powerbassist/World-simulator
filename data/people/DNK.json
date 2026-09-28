@@ -1108,6 +1108,121 @@
       ],
       "bench": true,
       "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_chief_brorson",
+      "name": "Bodil Brorson",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_friisberg",
+      "name": "Mogens Friisberg",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_gronbaek_energi",
+      "name": "Karen Grønbæk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_handelshus_nordenhof",
+      "name": "Astrid Nordenhof",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_erslev",
+      "name": "Kjeld Erslev",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_paludan",
+      "name": "Carl Paludan",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_bank_wium",
+      "name": "Freja Wium",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_ravn",
+      "name": "Jesper Ravn",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_bank_moller",
+      "name": "Søren Møller",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_selskab_brorson",
+      "name": "Jesper Brorson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
     }
   ]
 }

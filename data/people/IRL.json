@@ -1107,6 +1107,153 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "IRL_chief_company_tyrrell",
+      "name": "Gearoid Tyrrell",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_cuddihy_energy",
+      "name": "Eamonn Cuddihy",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.84,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_timmons",
+      "name": "Nuala Timmons",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_hannon_transport",
+      "name": "Nuala Hannon",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.85,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_comyn_group",
+      "name": "Aidan Comyn",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_mulvihill",
+      "name": "Fergal Mulvihill",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_laffan_agri",
+      "name": "Orla Laffan",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_company_swords",
+      "name": "Cathal Swords",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_usher",
+      "name": "Caitriona Usher",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_company_kelleher",
+      "name": "Maeve Kelleher",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_o_donoghue_construction",
+      "name": "Aidan O'Donoghue",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_daly",
+      "name": "Maeve Daly",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_bank_nestor",
+      "name": "Sinead Nestor",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
     }
   ]
 }

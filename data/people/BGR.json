@@ -1153,6 +1153,144 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "BGR_chief_dimov",
+      "name": "Nadezhda Dimov",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_stefanov_stroitelstvo",
+      "name": "Silviya Stefanov",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_targovska_kasta_ignatov",
+      "name": "Deyan Ignatov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_zografski",
+      "name": "Ivan Zografski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_videv",
+      "name": "Georgi Videv",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_neykov_energija",
+      "name": "Martin Neykov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_videv_zastrahovane",
+      "name": "Stoyan Videv",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_targovska_kasta_todorov",
+      "name": "Emiliya Todorov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_targovska_kasta_aleksiev",
+      "name": "Kiril Aleksiev",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_banka_zografski",
+      "name": "Georgi Zografski",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_stefanov_materiali",
+      "name": "Ivan Stefanov",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "BGR_chief_bodurov",
+      "name": "Filip Bodurov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
     }
   ]
 }

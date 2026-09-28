@@ -233,8 +233,49 @@ func _build_sector(ns, sector: String) -> void:
 
 	_build_investment(ns, sector)
 
+	# A3. The majors own the verbs and the rows; the body is the register's
+	# fabric and gets ONE aggregate line plus its five biggest employers as
+	# caption lines -- ~80 body firms printed as full rows would bury every
+	# major under content that has no verb, and the fold contract needs the
+	# panel's primary action (the verbs) above the readout, not under it.
+	var majors := []
+	var body := []
 	for company in firms:
+		if Companies.is_major(company):
+			majors.append(company)
+		else:
+			body.append(company)
+	_build_body(ns, sector, body)
+
+	for company in majors:
 		_build_firm(ns, company)
+
+
+## A3's body aggregate: one line saying the fabric exists and how much of the
+## sector it holds, then the five biggest body employers by headcount -- enough
+## to see the tier is real firms with real jobs, not enough to bury the majors.
+## The headcount read is the AUTHORED figure (company.headcount), not the live
+## register read the majors' rows use: body firms never take a verb, so their
+## headcount is a static content fact and the live read would be the same
+## number reached through two lookups.
+func _build_body(ns, sector: String, body: Array) -> void:
+	if body.is_empty():
+		return
+	var share := 0.0
+	var jobs := 0.0
+	for company in body:
+		share += Companies.share_of(ns, company.id)
+		jobs += float(company.headcount)
+	PanelKit.line(_body, "BODY · %d firms · %.2f of sector · %s jobs" % [
+		body.size(), share, _thousands(jobs),
+	])
+	var ranked := body.duplicate()
+	ranked.sort_custom(func(a, b): return float(a.headcount) > float(b.headcount))
+	for i in mini(5, ranked.size()):
+		var company = ranked[i]
+		PanelKit.line(_body, "  %s · %s jobs" % [
+			company.company_name, _thousands(float(company.headcount)),
+		])
 
 
 ## V1.6e's readout and its two verbs, under the sector heading they are pointed at.

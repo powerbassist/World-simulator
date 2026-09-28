@@ -1174,6 +1174,160 @@
       ],
       "bench": true,
       "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_chief_ktorides",
+      "name": "Andreas Ktorides",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_neophytou",
+      "name": "Andreas Neophytou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_kyprianou_metafora",
+      "name": "Ioannis Kyprianou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_mouskos",
+      "name": "Nikos Mouskos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.37,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_trapeza_zachariou",
+      "name": "Evagoras Zachariou",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_etaireia_theocharous",
+      "name": "Despo Theocharous",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_eleftheriou",
+      "name": "Andreas Eleftheriou",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_miltiades",
+      "name": "Kyriaki Miltiades",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_etaireia_oikonomou",
+      "name": "Loizos Oikonomou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_zenios_viomichania",
+      "name": "Sofia Zenios",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_vrahimi_omilos",
+      "name": "Panayiotis Vrahimi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_erodotou",
+      "name": "Ioannis Erodotou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_liasides_georgia",
+      "name": "Ioanna Liasides",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "bench": true
     }
   ]
 }

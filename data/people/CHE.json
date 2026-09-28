@@ -1149,6 +1149,142 @@
       ],
       "bench": true,
       "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_chief_rickenbacher",
+      "name": "Ernst Rickenbacher",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_handelshaus_dutsch",
+      "name": "Elsbeth Dütsch",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_wyss",
+      "name": "Ernst Wyss",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_joller",
+      "name": "Franziska Joller",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_handelshaus_vuille",
+      "name": "Martin Vuille",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_schurch_energie",
+      "name": "Adelheid Schürch",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_handelshaus_nussbaumer",
+      "name": "Peter Nussbaumer",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_fuchs_gruppe",
+      "name": "Peter Fuchs",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_schnyder_landwirtschaft",
+      "name": "Hansjörg Schnyder",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_gesellschaft_ottiger",
+      "name": "Nathalie Ottiger",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_bank_giezendanner",
+      "name": "Nathalie Giezendanner",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_quaderer",
+      "name": "Heidi Quaderer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
     }
   ]
 }

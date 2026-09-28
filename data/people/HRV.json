@@ -1118,6 +1118,131 @@
       ],
       "bench": true,
       "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_chief_pavkovic",
+      "name": "Hrvoje Pavković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_simic_materijali",
+      "name": "Josip Šimić",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_saric",
+      "name": "Hrvoje Šarić",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_lukic",
+      "name": "Nada Lukić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_skvorc_logistika",
+      "name": "Goran Škvorc",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_miletic",
+      "name": "Ivan Miletić",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_ostojic_graditeljstvo",
+      "name": "Krešimir Ostojić",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_grubisic_poljoprivreda",
+      "name": "Josip Grubišić",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_banka_saric",
+      "name": "Ivana Šarić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_trgovacki_dom_matosevic",
+      "name": "Božidar Matošević",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_banka_pandzic",
+      "name": "Božidar Pandžić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.54,
+      "bench": true
     }
   ]
 }

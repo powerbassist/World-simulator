@@ -1158,6 +1158,130 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "LVA_chief_tirdzniecibas_nams_dumins",
+      "name": "Gunārs Dūmiņš",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_gailitis",
+      "name": "Gunārs Gailītis",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_rijnieks",
+      "name": "Dace Rijnieks",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_sabiedriba_briedis",
+      "name": "Dace Briedis",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_jansonis_apdrosinasana",
+      "name": "Viktors Jansonis",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_mucenieks",
+      "name": "Viktors Mucenieks",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_sabiedriba_ikaunieks",
+      "name": "Nellija Ikaunieks",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_vagners",
+      "name": "Dzintars Vagners",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_jansons_energetika",
+      "name": "Māris Jansons",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_kroders",
+      "name": "Māris Kroders",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_lacis",
+      "name": "Māris Lācis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.84,
+      "bench": true
     }
   ]
 }

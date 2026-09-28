@@ -1126,6 +1126,130 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "SVN_chief_trgovska_hisa_rupnik",
+      "name": "Erik Rupnik",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_drnovsek",
+      "name": "Alenka Drnovšek",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_kopac",
+      "name": "Vesna Kopač",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_banka_faganeli",
+      "name": "Marko Faganeli",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_stimc",
+      "name": "Darko Štimc",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_bajc",
+      "name": "Vesna Bajc",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_kastelic_logistika",
+      "name": "Nataša Kastelic",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_lenarcic_industrija",
+      "name": "Ivan Lenarčič",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_kastelic",
+      "name": "Nataša Kastelic",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_cvikl_industrija",
+      "name": "Cvetka Cvikl",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "SVN_chief_slapar",
+      "name": "Bojan Slapar",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
     }
   ]
 }

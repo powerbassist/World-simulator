@@ -1148,6 +1148,133 @@
       ],
       "bench": true,
       "party_id": "partido_solidarista"
+    },
+    {
+      "id": "PRT_chief_guerra_industrias",
+      "name": "Alexandre Guerra",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_quintela",
+      "name": "Inês Quintela",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_meireles_construcao",
+      "name": "Fernando Meireles",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_ramos",
+      "name": "Fernando Ramos",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_guerra",
+      "name": "Dulce Guerra",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_companhia_sousa",
+      "name": "Lourenço Sousa",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_freitas",
+      "name": "Gaspar Freitas",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sampaio",
+      "name": "Nuno Sampaio",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_oliveira_energia",
+      "name": "Lourenço Oliveira",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_janes_grupo",
+      "name": "Gaspar Janes",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_banco_durao",
+      "name": "Dulce Durão",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
     }
   ]
 }

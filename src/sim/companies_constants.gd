@@ -84,7 +84,19 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 ## its sector by any reachable amount, so it is a name on a panel rather than a
 ## firm -- the same standard _validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
+## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
+## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)
+## lives under 0.02 by design -- it is the tier boundary the block is built on.
 const MIN_AUTHORED_SHARE := 0.02
+
+## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same
+## "a firm that cannot move its sector is a label" rule at the body's own
+## scale: the generator targets a per-sector named coverage of [0.85, 0.97]
+## over majors + body with ~85 body firms a nation, which puts the typical
+## body share near 0.002-0.008 -- 0.001 is the floor under that band with
+## headroom, not a tuned constant (nothing sweeps it; the generator's own
+## check mode and the loader both refuse content below it).
+const MIN_BODY_SHARE := 0.001
 
 # --- What a subsidy costs -----------------------------------------------------
 
@@ -393,3 +405,29 @@ const DIVIDEND_MAX_PCT_GDP := 1.50
 ## an order of magnitude under the smallest verb-worthy major share the register
 ## authors, so no drift the sim can produce reads as an escalation.
 const BODY_SHARE_MAX := 0.03
+
+## V4.7a A3. The register-scale floor the brief declares: every nation's body
+## list carries at least this many firms, or the two-tier register is a major
+## list wearing a body label. 80 sits under the generator's ~85/nation target
+## with margin for the tiny nations (MLT and LUX hold one city each -- their
+## body is capped by the payroll-concentration band, not by this number).
+## tests/test_companies_tiers.gd pins the count against this constant.
+const BODY_MIN_PER_NATION := 80
+
+## V4.7a A3, the bands declared BEFORE the generator ran (the brief's step 1,
+## E0's discipline). The generator and tests/test_companies_tiers.gd both read
+## these -- a band in one place the other cannot see is two bands.
+##
+## Per-sector named coverage (majors + body, summed): [0.85, 0.97]. The
+## unnamed residual survives on purpose -- geography-model's
+## rural-and-unnamed pattern, V2.5's shares-round-DOWN discipline -- so no
+## sector's named firms ever claim the whole of it.
+const BODY_COVERAGE_MIN := 0.85
+const BODY_COVERAGE_MAX := 0.97
+
+## Body payroll concentration: the nation's largest city (by body payroll)
+## holds this fraction of the nation's body jobs, in [0.25, 0.50] -- V2.2a's
+## measured finding (Lille 33.1% of France's named payroll, Dusseldorf 34.3%
+## of Germany's, Manchester 44.0% of Britain's) REPRODUCED, not fought.
+const BODY_PAYROLL_CONCENTRATION_MIN := 0.25
+const BODY_PAYROLL_CONCENTRATION_MAX := 0.50

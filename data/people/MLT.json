@@ -1135,6 +1135,142 @@
       "ambition": 0.66,
       "wants": [],
       "bench": true
+    },
+    {
+      "id": "MLT_chief_cremona_transport",
+      "name": "Carmel Cremona",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_bank_tonna",
+      "name": "Vincent Tonna",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_company_azzopardi",
+      "name": "Josephine Azzopardi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_trust_demartino",
+      "name": "Vincent DeMartino",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_galea_logistics",
+      "name": "Mario Galea",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_company_chircop",
+      "name": "Angela Chircop",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_magro",
+      "name": "Raymond Magro",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_gauci_agri",
+      "name": "Godfrey Gauci",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_naudi_agri",
+      "name": "Godfrey Naudi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_grima",
+      "name": "Vincent Grima",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_haber_group",
+      "name": "Sylvana Haber",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_sciberras_industries",
+      "name": "Raymond Sciberras",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.65,
+      "bench": true
     }
   ]
 }

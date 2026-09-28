@@ -1164,6 +1164,143 @@
       ],
       "bench": true,
       "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_chief_dahlgren_material",
+      "name": "Claes Dahlgren",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_drakenberg_transport",
+      "name": "Ingrid Drakenberg",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_krogh_material",
+      "name": "Folke Krogh",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bolag_isberg",
+      "name": "Birger Isberg",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bolag_sorvik",
+      "name": "Dag Sörvik",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_olofsson_energi",
+      "name": "Knut Olofsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_stenmark_handel",
+      "name": "Folke Stenmark",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_ulfsax_gruppen",
+      "name": "Knut Ulfsax",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_lindau",
+      "name": "Birger Lindau",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_quarnstrom",
+      "name": "Folke Quarnström",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bolag_werner",
+      "name": "Eskil Werner",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_palsson",
+      "name": "Märta Pålsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
     }
   ]
 }

@@ -195,8 +195,29 @@ func _check_headcount_reaches_a_city() -> void:
 
 	# A city no firm names is exactly zero, not a fallback and not an error: most of
 	# the 1 065 cities in the register employ nobody the game has named.
-	if Companies.headcount_in_city(ns, _loader, "FRM_ajaccio") != 0.0:
-		_fail("a city with no firm should report exactly zero jobs")
+	# V4.7a: the city is FOUND, not hardcoded -- Ajaccio carried the check until
+	# the two-tier register generated a body firm into it, and a hardcoded city
+	# would break again at every future content pass. The check walks the
+	# register's own French cities for one no firm names; only if the register
+	# ever fills EVERY French city does the premise itself need re-thinking,
+	# and that day gets its own failure message rather than a silent pass.
+	var empty_city := ""
+	for region in _loader.regions.get("FRA", []):
+		for city in region.cities:
+			var taken := false
+			for company in _loader.companies["FRA"]:
+				if company.city == city.id:
+					taken = true
+					break
+			if not taken:
+				empty_city = city.id
+				break
+		if empty_city != "":
+			break
+	if empty_city == "":
+		_fail("every French city carries a firm -- the zero-jobs path needs a new empty city to name")
+	elif Companies.headcount_in_city(ns, _loader, empty_city) != 0.0:
+		_fail("a city with no firm (%s) should report exactly zero jobs" % empty_city)
 
 
 func _check_no_level_in_src() -> void:
