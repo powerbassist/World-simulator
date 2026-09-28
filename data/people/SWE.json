@@ -1164,6 +1164,142 @@
       ],
       "bench": true,
       "party_id": "balanspartiet"
+    },
+    {
+      "id": "SWE_chief_drakenberg_transport",
+      "name": "Ingrid Drakenberg",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_tegner_transport",
+      "name": "Johan Tegnér",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_henckel_material",
+      "name": "Johan Henckel",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_mansson_material",
+      "name": "Folke Månsson",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_lundquist_bygg",
+      "name": "Anders Lundquist",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_beijer_handel",
+      "name": "Eskil Beijer",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_handelshus_lundquist",
+      "name": "Folke Lundquist",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bergstrom_bygg",
+      "name": "Hilma Bergström",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_rask_forsakring",
+      "name": "Elsa Rask",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_bolag_werner",
+      "name": "Eskil Werner",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_palsson",
+      "name": "Märta Pålsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "SWE_chief_tegner_gruppen",
+      "name": "Knut Tegnér",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.55,
+      "bench": true
     }
   ]
 }

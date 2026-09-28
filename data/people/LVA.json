@@ -1158,6 +1158,131 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "LVA_chief_tirdzniecibas_nams_pinnis",
+      "name": "Dace Pinnis",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_tirdzniecibas_nams_dumins",
+      "name": "Gunārs Dūmiņš",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_gailitis_lauksaimnieciba",
+      "name": "Gunārs Gailītis",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_petersons_apdrosinasana",
+      "name": "Gunārs Pētersons",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_ozolsparnis",
+      "name": "Aivars Ozolspārnis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_cirulis_rupnieciba",
+      "name": "Jānis Cīrulis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_jansons_logistika",
+      "name": "Kārlis Jansons",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_banka_freimanis",
+      "name": "Aivars Freimanis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_skujenieks_transports",
+      "name": "Ilze Skujenieks",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_tirdzniecibas_nams_aizsilnieks",
+      "name": "Maija Aizsilnieks",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "LVA_chief_fogels_logistika",
+      "name": "Māris Fogels",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
     }
   ]
 }

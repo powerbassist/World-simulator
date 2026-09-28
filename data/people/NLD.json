@@ -1111,6 +1111,120 @@
       ],
       "bench": true,
       "party_id": "sociale_unie"
+    },
+    {
+      "id": "NLD_chief_groenleer_industrie",
+      "name": "Eefje Groenleer",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_manders_industrie",
+      "name": "Hidde Manders",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_maatschappij_ijsselmuiden",
+      "name": "Lidewij IJsselmuiden",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_bank_linthorst",
+      "name": "Lidewij Linthorst",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_meulenkamp_transport",
+      "name": "Hidde Meulenkamp",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_wolters_verzekeringen",
+      "name": "Cornelis Wolters",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_maatschappij_rietdijk",
+      "name": "Heleen Rietdijk",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.37,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_manders_handel",
+      "name": "Lodewijk Manders",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_groenleer_landbouw",
+      "name": "Lodewijk Groenleer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "NLD_chief_meulenkamp_energie",
+      "name": "Jelle Meulenkamp",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
     }
   ]
 }

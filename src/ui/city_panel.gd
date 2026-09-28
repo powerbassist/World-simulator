@@ -198,12 +198,29 @@ func _build_detail(found: Dictionary) -> void:
 	PanelKit.row(_body, "Share of the nation", "%.2f%%" % (Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0))
 
 	PanelKit.heading(_body, "Named employers")
+	# A3. Majors keep a row apiece; the body tier -- which since A3 domiciles
+	# most of a big city's firms -- is one aggregate line, the companies
+	# panel's own shape. A city holding thirty body firms printed thirty rows
+	# for employers with no verb, and the fold finding is about exactly that.
 	var rows: Array = []
+	var body_count := 0
+	var body_jobs := 0.0
 	for company in _loader.companies.get(nation_id, []):
 		if company.city != city.id:
 			continue
-		rows.append([String(company.company_name), PanelKit.pop_text(Companies.headcount(ns, company))])
-	if rows.is_empty():
+		if Companies.is_major(company):
+			rows.append([String(company.company_name), PanelKit.pop_text(Companies.headcount(ns, company))])
+		else:
+			# The live read, same as the majors' rows beside it: a standing
+			# burden scales a body firm's compliance like anybody's, and an
+			# authored figure would disagree with the region panel and the
+			# migration flow reading the same city (the PR-46 review's nit).
+			body_count += 1
+			body_jobs += Companies.headcount(ns, company)
+	if rows.is_empty() and body_count == 0:
 		PanelKit.line(_body, "No named employer is domiciled here.")
 	else:
-		PanelKit.ledger(_body, rows)
+		if not rows.is_empty():
+			PanelKit.ledger(_body, rows)
+		if body_count > 0:
+			PanelKit.line(_body, "BODY · %d firms · %s jobs" % [body_count, PanelKit.pop_text(body_jobs)])

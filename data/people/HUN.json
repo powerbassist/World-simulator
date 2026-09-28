@@ -1157,6 +1157,156 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "HUN_chief_rekettyes",
+      "name": "Judit Rekettyés",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_bank_halasz",
+      "name": "Zoltán Halász",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_toroksz",
+      "name": "Nándor Töröksz",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_bank_erdelyi",
+      "name": "Ferenc Erdélyi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_czutor_mezogazdasag",
+      "name": "Dezső Czutor",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_albertfalusi_szallitas",
+      "name": "Ilona Albertfalusi",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_racz_anyagok",
+      "name": "Csaba Rácz",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_hegedus_ipar",
+      "name": "Nándor Hegedűs",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_zsoldos_logisztika",
+      "name": "Miklós Zsoldos",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_lendvai_energia",
+      "name": "Gizella Lendvai",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_nagydani",
+      "name": "Ilona Nagydani",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_bank_egressy",
+      "name": "László Egressy",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "HUN_chief_lendvai_szallitas",
+      "name": "Nándor Lendvai",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.53,
+      "bench": true
     }
   ]
 }

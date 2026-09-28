@@ -2,13 +2,807 @@
   "_source": "invented",
   "_note": "Fictional firms per docs/fictionalization.md -- near-miss style, sector legible, no real company's name, logo or trademarked styling. `share` is of the firm's SECTOR, not of GDP, and a sector's named shares sum to less than 1.0: the remainder is the unnamed rest of the sector. `headcount` is jobs at that authored share and is the differentiator. Authored at V3.3 with Poland's playable kit, on the FRA convention. The economy the near-misses echo: a copper-and-silver mining major, coal-era heavy industry rebuilding around batteries and rolling stock, the Baltic shipyards, retail consolidation, and the banking hubs of Warsaw.",
   "companies": [
-    { "id": "POL_kopalnia_miedzi", "name": "Kopalnia Miedzi Wspólna", "sector": "industry", "share": 0.22, "headcount": 31000, "city": "PL72_kielce" },
-    { "id": "POL_huta_wisla", "name": "Huta Wisła", "sector": "industry", "share": 0.11, "headcount": 48000, "city": "PL22_katowice" },
-    { "id": "POL_stocznia_gdanska", "name": "Stocznia Gdańska Wschodnia", "sector": "industry", "share": 0.07, "headcount": 12000, "city": "PL63_gdansk" },
-    { "id": "POL_zboze_wielkopolskie", "name": "Zboże Wielkopolskie", "sector": "agriculture", "share": 0.24, "headcount": 19000, "city": "PL41_poznan" },
-    { "id": "POL_sady_lubelskie", "name": "Sady Lubelskie", "sector": "agriculture", "share": 0.17, "headcount": 11000, "city": "PL81_lublin" },
-    { "id": "POL_bank_kongresowy", "name": "Bank Kongresowy", "sector": "services", "share": 0.08, "headcount": 42000, "city": "PL91_warsaw" },
-    { "id": "POL_siec_baltyk", "name": "Sieć Bałtyk", "sector": "services", "share": 0.06, "headcount": 96000, "city": "PL42_szczecin" },
-    { "id": "POL_tabor_nowy", "name": "Tabor Nowy", "sector": "industry", "share": 0.05, "headcount": 15000, "city": "PL71_lodz" }
+    {
+      "id": "POL_kopalnia_miedzi",
+      "name": "Kopalnia Miedzi Wspólna",
+      "sector": "industry",
+      "share": 0.22,
+      "headcount": 31000,
+      "city": "PL72_kielce",
+      "tier": "major",
+      "chief_id": "POL_chief_kopalnia_miedzi"
+    },
+    {
+      "id": "POL_huta_wisla",
+      "name": "Huta Wisła",
+      "sector": "industry",
+      "share": 0.11,
+      "headcount": 48000,
+      "city": "PL22_katowice",
+      "tier": "major",
+      "chief_id": "POL_chief_huta_wisla"
+    },
+    {
+      "id": "POL_stocznia_gdanska",
+      "name": "Stocznia Gdańska Wschodnia",
+      "sector": "industry",
+      "share": 0.07,
+      "headcount": 12000,
+      "city": "PL63_gdansk",
+      "tier": "major",
+      "chief_id": "POL_chief_stocznia_gdanska"
+    },
+    {
+      "id": "POL_zboze_wielkopolskie",
+      "name": "Zboże Wielkopolskie",
+      "sector": "agriculture",
+      "share": 0.24,
+      "headcount": 19000,
+      "city": "PL41_poznan",
+      "tier": "major",
+      "chief_id": "POL_chief_zboze_wielkopolskie"
+    },
+    {
+      "id": "POL_sady_lubelskie",
+      "name": "Sady Lubelskie",
+      "sector": "agriculture",
+      "share": 0.17,
+      "headcount": 11000,
+      "city": "PL81_lublin",
+      "tier": "major",
+      "chief_id": "POL_chief_sady_lubelskie"
+    },
+    {
+      "id": "POL_bank_kongresowy",
+      "name": "Bank Kongresowy",
+      "sector": "services",
+      "share": 0.08,
+      "headcount": 42000,
+      "city": "PL91_warsaw",
+      "tier": "major",
+      "chief_id": "POL_chief_bank_kongresowy"
+    },
+    {
+      "id": "POL_siec_baltyk",
+      "name": "Sieć Bałtyk",
+      "sector": "services",
+      "share": 0.06,
+      "headcount": 96000,
+      "city": "PL42_szczecin",
+      "tier": "major",
+      "chief_id": "POL_chief_siec_baltyk"
+    },
+    {
+      "id": "POL_tabor_nowy",
+      "name": "Tabor Nowy",
+      "sector": "industry",
+      "share": 0.05,
+      "headcount": 15000,
+      "city": "PL71_lodz",
+      "tier": "major",
+      "chief_id": "POL_chief_tabor_nowy"
+    }
+  ],
+  "body": [
+    {
+      "id": "POL_zalewski_ubezpieczenia",
+      "name": "Zalewski Ubezpieczenia",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2599,
+      "city": "PL61_inowroclaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dunin_ubezpieczenia",
+      "name": "Dunin Ubezpieczenia",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2298,
+      "city": "PL81_zamosc",
+      "tier": "body"
+    },
+    {
+      "id": "POL_osiecki_transport",
+      "name": "Osiecki Transport",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2375,
+      "city": "PL71_lodz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dmochowski_ubezpieczenia",
+      "name": "Dmochowski Ubezpieczenia",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2403,
+      "city": "PL42_szczecin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_chodakowski_grupa",
+      "name": "Chodakowski Grupa",
+      "sector": "agriculture",
+      "share": 0.0205,
+      "headcount": 1528,
+      "city": "PL61_wloclawek",
+      "tier": "body"
+    },
+    {
+      "id": "POL_horodynski_transport",
+      "name": "Horodyński Transport",
+      "sector": "agriculture",
+      "share": 0.0243,
+      "headcount": 1951,
+      "city": "PL82_rzeszow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_matuszewski_rolnictwo",
+      "name": "Matuszewski Rolnictwo",
+      "sector": "agriculture",
+      "share": 0.0145,
+      "headcount": 1097,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_osiecki_ubezpieczenia",
+      "name": "Osiecki Ubezpieczenia",
+      "sector": "agriculture",
+      "share": 0.029,
+      "headcount": 2249,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lipinski_zaklady",
+      "name": "Lipiński Zakłady",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2591,
+      "city": "PL21_krakow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_zamojski_logistyka",
+      "name": "Zamojski Logistyka",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2513,
+      "city": "PL82_przemysl",
+      "tier": "body"
+    },
+    {
+      "id": "POL_holowinski_energia",
+      "name": "Hołowiński Energia",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2571,
+      "city": "PL22_bedzin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_tolwinski_budownictwo",
+      "name": "Tołwiński Budownictwo",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2361,
+      "city": "PL22_bielsko_biala",
+      "tier": "body"
+    },
+    {
+      "id": "POL_ernestowicz_energia",
+      "name": "Ernestowicz Energia",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2602,
+      "city": "PL51_legnica",
+      "tier": "body"
+    },
+    {
+      "id": "POL_kowalczyk_energia",
+      "name": "Kowalczyk Energia",
+      "sector": "agriculture",
+      "share": 0.024,
+      "headcount": 2022,
+      "city": "PL91_bialoleka",
+      "tier": "body"
+    },
+    {
+      "id": "POL_tarnowski_przemysl",
+      "name": "Tarnowski Przemysł",
+      "sector": "agriculture",
+      "share": 0.024,
+      "headcount": 1892,
+      "city": "PL63_gdansk",
+      "tier": "body"
+    },
+    {
+      "id": "POL_nowicki_transport",
+      "name": "Nowicki Transport",
+      "sector": "agriculture",
+      "share": 0.0245,
+      "headcount": 2002,
+      "city": "PL41_pila",
+      "tier": "body"
+    },
+    {
+      "id": "POL_zamojski_rolnictwo",
+      "name": "Zamojski Rolnictwo",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2314,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_osiecki_budownictwo_handel",
+      "name": "Osiecki Budownictwo Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20104,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_michalak_handel",
+      "name": "Michalak Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19706,
+      "city": "PL61_bydgoszcz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lewandowicz_przemysl",
+      "name": "Lewandowicz Przemysł",
+      "sector": "industry",
+      "share": 0.0273,
+      "headcount": 19692,
+      "city": "PL51_wroclaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_filipowicz_rolnictwo",
+      "name": "Filipowicz Rolnictwo",
+      "sector": "industry",
+      "share": 0.0125,
+      "headcount": 7935,
+      "city": "PL41_pila",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dmochowski_zaklady",
+      "name": "Dmochowski Zakłady",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18579,
+      "city": "PL63_gdynia",
+      "tier": "body"
+    },
+    {
+      "id": "POL_jagniatkowski_grupa",
+      "name": "Jagniątkowski Grupa",
+      "sector": "industry",
+      "share": 0.0208,
+      "headcount": 13744,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_rejman_grupa",
+      "name": "Rejman Grupa",
+      "sector": "industry",
+      "share": 0.0267,
+      "headcount": 19544,
+      "city": "PL22_bytom",
+      "tier": "body"
+    },
+    {
+      "id": "POL_sobolewski_budownictwo",
+      "name": "Sobolewski Budownictwo",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18951,
+      "city": "PL63_slupsk",
+      "tier": "body"
+    },
+    {
+      "id": "POL_cieszkowski_ubezpieczenia",
+      "name": "Cieszkowski Ubezpieczenia",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20799,
+      "city": "PL22_zabrze",
+      "tier": "body"
+    },
+    {
+      "id": "POL_zalewski_zaklady",
+      "name": "Zalewski Zakłady",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18737,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_piotrowski_ubezpieczenia",
+      "name": "Piotrowski Ubezpieczenia",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18359,
+      "city": "PL92_radom",
+      "tier": "body"
+    },
+    {
+      "id": "POL_fijas_transport",
+      "name": "Fijas Transport",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18246,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_bakowski_przemysl",
+      "name": "Bąkowski Przemysł",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21473,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lewandowicz_zaklady",
+      "name": "Lewandowicz Zakłady",
+      "sector": "industry",
+      "share": 0.0227,
+      "headcount": 15794,
+      "city": "PL72_ostrowiec_swietokrzyski",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lasocki_handel",
+      "name": "Lasocki Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20151,
+      "city": "PL21_krakow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_orzechowski_rolnictwo",
+      "name": "Orzechowski Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22822,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_jablonowski_logistyka",
+      "name": "Jabłonowski Logistyka",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23153,
+      "city": "PL51_wroclaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_kietlicz_przemysl",
+      "name": "Kietlicz Przemysł",
+      "sector": "services",
+      "share": 0.0138,
+      "headcount": 20383,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_barcicki_przemysl",
+      "name": "Barcicki Przemysł",
+      "sector": "services",
+      "share": 0.0134,
+      "headcount": 18417,
+      "city": "PL22_raciborz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_kaminski_rolnictwo",
+      "name": "Kamiński Rolnictwo",
+      "sector": "services",
+      "share": 0.0073,
+      "headcount": 10922,
+      "city": "PL71_lodz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_iwanski_transport",
+      "name": "Iwański Transport",
+      "sector": "services",
+      "share": 0.0151,
+      "headcount": 24506,
+      "city": "PL41_pila",
+      "tier": "body"
+    },
+    {
+      "id": "POL_niemcewicz_handel",
+      "name": "Niemcewicz Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23060,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dmochowski_przemysl_budownictwo",
+      "name": "Dmochowski Przemysł Budownictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23834,
+      "city": "PL91_wola",
+      "tier": "body"
+    },
+    {
+      "id": "POL_ankwicz_przemysl",
+      "name": "Ankwicz Przemysł",
+      "sector": "services",
+      "share": 0.0072,
+      "headcount": 11032,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_bilinski_energia",
+      "name": "Biliński Energia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23729,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_pulaski_przemysl",
+      "name": "Pułaski Przemysł",
+      "sector": "services",
+      "share": 0.0122,
+      "headcount": 17072,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dunin_przemysl",
+      "name": "Dunin Przemysł",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23261,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_malinowski_transport",
+      "name": "Malinowski Transport",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24225,
+      "city": "PL84_lomza",
+      "tier": "body"
+    },
+    {
+      "id": "POL_iwanski_energia",
+      "name": "Iwański Energia",
+      "sector": "services",
+      "share": 0.0059,
+      "headcount": 9463,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_adamowski_budownictwo",
+      "name": "Adamowski Budownictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24893,
+      "city": "PL51_jelenia_gora",
+      "tier": "body"
+    },
+    {
+      "id": "POL_filipowicz_ubezpieczenia",
+      "name": "Filipowicz Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22426,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_ejsmont_zaklady",
+      "name": "Ejsmont Zakłady",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL41_gniezno",
+      "tier": "body"
+    },
+    {
+      "id": "POL_horodynski_budownictwo",
+      "name": "Horodyński Budownictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23489,
+      "city": "PL22_zabrze",
+      "tier": "body"
+    },
+    {
+      "id": "POL_estko_ubezpieczenia",
+      "name": "Estko Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0124,
+      "headcount": 18811,
+      "city": "PL91_srodmiescie",
+      "tier": "body"
+    },
+    {
+      "id": "POL_jagniatkowski_transport",
+      "name": "Jagniątkowski Transport",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24208,
+      "city": "PL71_lodz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_niemcewicz_energia",
+      "name": "Niemcewicz Energia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL21_krakow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_tolwinski_rolnictwo",
+      "name": "Tołwiński Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL21_krakow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_jakubowski_rolnictwo",
+      "name": "Jakubowski Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24900,
+      "city": "PL41_poznan",
+      "tier": "body"
+    },
+    {
+      "id": "POL_adamczyk_ubezpieczenia",
+      "name": "Adamczyk Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0143,
+      "headcount": 21395,
+      "city": "PL41_kalisz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_filipowicz_logistyka",
+      "name": "Filipowicz Logistyka",
+      "sector": "services",
+      "share": 0.0146,
+      "headcount": 20327,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_iwanski_zaklady",
+      "name": "Iwański Zakłady",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL42_koszalin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_pulaski_grupa",
+      "name": "Pułaski Grupa",
+      "sector": "services",
+      "share": 0.0119,
+      "headcount": 17011,
+      "city": "PL51_walbrzych",
+      "tier": "body"
+    },
+    {
+      "id": "POL_estko_zaklady",
+      "name": "Estko Zakłady",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24216,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_struzyna_zaklady",
+      "name": "Strużyna Zakłady",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL92_radom",
+      "tier": "body"
+    },
+    {
+      "id": "POL_puszet_handel",
+      "name": "Puszet Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL51_wroclaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_kaminski_energia",
+      "name": "Kamiński Energia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22495,
+      "city": "PL42_koszalin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lasocki_transport",
+      "name": "Lasocki Transport",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL22_zabrze",
+      "tier": "body"
+    },
+    {
+      "id": "POL_dmochowski_rolnictwo",
+      "name": "Dmochowski Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22724,
+      "city": "PL42_szczecin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_piotrowski_energia",
+      "name": "Piotrowski Energia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_chodakowski_grupa_ubezpieczenia",
+      "name": "Chodakowski Grupa Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22625,
+      "city": "PL22_sosnowiec",
+      "tier": "body"
+    },
+    {
+      "id": "POL_jakubowski_handel",
+      "name": "Jakubowski Handel",
+      "sector": "services",
+      "share": 0.0086,
+      "headcount": 12440,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_lasocki_rolnictwo",
+      "name": "Lasocki Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL42_szczecin",
+      "tier": "body"
+    },
+    {
+      "id": "POL_estko_grupa",
+      "name": "Estko Grupa",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23518,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_glowacki_handel",
+      "name": "Głowacki Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24025,
+      "city": "PL61_grudziadz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_wojcik_ubezpieczenia",
+      "name": "Wojcik Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23123,
+      "city": "PL22_sosnowiec",
+      "tier": "body"
+    },
+    {
+      "id": "POL_kietlicz_rolnictwo",
+      "name": "Kietlicz Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23190,
+      "city": "PL92_plock",
+      "tier": "body"
+    },
+    {
+      "id": "POL_ejsmont_rolnictwo",
+      "name": "Ejsmont Rolnictwo",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL21_krakow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_nieborowski_przemysl",
+      "name": "Nieborowski Przemysł",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL61_bydgoszcz",
+      "tier": "body"
+    },
+    {
+      "id": "POL_wielowieyski_grupa",
+      "name": "Wielowieyski Grupa",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL51_wroclaw",
+      "tier": "body"
+    },
+    {
+      "id": "POL_matuszewski_logistyka",
+      "name": "Matuszewski Logistyka",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL22_sosnowiec",
+      "tier": "body"
+    },
+    {
+      "id": "POL_niemcewicz_rolnictwo_transport",
+      "name": "Niemcewicz Rolnictwo Transport",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "PL82_rzeszow",
+      "tier": "body"
+    },
+    {
+      "id": "POL_rybicki_ubezpieczenia",
+      "name": "Rybicki Ubezpieczenia",
+      "sector": "services",
+      "share": 0.0083,
+      "headcount": 12249,
+      "city": "PL22_czestochowa",
+      "tier": "body"
+    },
+    {
+      "id": "POL_holowinski_grupa",
+      "name": "Hołowiński Grupa",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23919,
+      "city": "PL91_warsaw",
+      "tier": "body"
+    }
   ]
 }

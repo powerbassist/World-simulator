@@ -1122,6 +1122,146 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "FIN_chief_yhtio_cederstrom",
+      "name": "Martti Cederström",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_rasanen_maatalous",
+      "name": "Heikki Räsänen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_pankki_blomqvist",
+      "name": "Irmeli Blomqvist",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_nieminen_ryhma",
+      "name": "Tuulikki Nieminen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_tolvanen_ryhma",
+      "name": "Aarne Tolvanen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_vaisanen_materiaalit",
+      "name": "Martti Väisänen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_kauppahuone_salonen",
+      "name": "Irmeli Salonen",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_sihvonen_rakennus",
+      "name": "Heikki Sihvonen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_rasanen_rakennus",
+      "name": "Eino Räsänen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_rasanen_materiaalit",
+      "name": "Niilo Räsänen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_heikkila_ryhma",
+      "name": "Heikki Heikkilä",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "FIN_chief_mannerkoski",
+      "name": "Tapio Mannerkoski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "bench": true
     }
   ]
 }

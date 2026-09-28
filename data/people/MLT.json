@@ -1135,6 +1135,142 @@
       "ambition": 0.66,
       "wants": [],
       "bench": true
+    },
+    {
+      "id": "MLT_chief_company_chircop",
+      "name": "Angela Chircop",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_trust_rapa",
+      "name": "Rita Rapa",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_company_pisani",
+      "name": "Vincent Pisani",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_magro_insurance",
+      "name": "Raymond Magro",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_company_naudi",
+      "name": "David Naudi",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_xuereb_insurance",
+      "name": "Godfrey Xuereb",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_tonna_logistics",
+      "name": "Josephine Tonna",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_trust_camilleri",
+      "name": "Emanuel Camilleri",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_debono_group",
+      "name": "Carmel Debono",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_trust_jones",
+      "name": "Angela Jones",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_azzopardi_construction",
+      "name": "Patrick Azzopardi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "MLT_chief_bank_vassallo",
+      "name": "Evelyn Vassallo",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
     }
   ]
 }

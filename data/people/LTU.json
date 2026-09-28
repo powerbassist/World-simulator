@@ -1129,6 +1129,142 @@
       ],
       "bench": true,
       "party_id": "tautos_ausra"
+    },
+    {
+      "id": "LTU_chief_bendrove_maciulis",
+      "name": "Rasa Mačiulis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_vaicekauskas",
+      "name": "Sigita Vaicekauskas",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_prekybos_namai_mazeika",
+      "name": "Sigita Mažeika",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_kairys_grupe",
+      "name": "Mindaugas Kairys",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_juozapavicius_pramone",
+      "name": "Algirdas Juozapavičius",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_bendrove_jurgutis",
+      "name": "Jonas Jurgutis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_maciulis",
+      "name": "Vytautas Mačiulis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_pakalniskis",
+      "name": "Gintaras Pakalniškis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_burokas_transportas",
+      "name": "Edmundas Burokas",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_zadeikis_statyba",
+      "name": "Edmundas Žadeikis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_bankas_emuzis",
+      "name": "Laima Ėmužis",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "LTU_chief_vaitkus_prekyba",
+      "name": "Aistė Vaitkus",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.68,
+      "bench": true
     }
   ]
 }

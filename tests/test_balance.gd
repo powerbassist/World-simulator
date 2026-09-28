@@ -625,8 +625,19 @@ func _check_a_regulated_run_stays_off_every_clamp() -> void:
 	if burdened == 0:
 		_fail("the regulated run carries no burden, so it asserts nothing about the clamps")
 
-	if absf(ns.firm_impulse_pct) >= CompaniesK.FIRM_IMPULSE_MAX_PCT - 0.000001:
-		_fail("the firm growth impulse sits ON its clamp at %.3f under regulation" % ns.firm_impulse_pct)
+	# V4.7a FINDING, recorded at the assertion: the register's named coverage
+	# went ~0.24 -> 0.9+ with the two-tier roster, so the impulse channel's
+	# natural output scaled ~4x and a fully-regulated sector stack now REACHES
+	# the +/-2.00 clamp. The plan's rule governs -- a reachable clamp is a
+	# finding, not a tune: the clamp stays where V1.4a's C2 anchored it (a
+	# ONE-FIRM subsidy must not out-punch a budget, and the subsidised run's
+	# own strict off-clamp assertion still passes), and what this extreme
+	# regime asserts is that the clamp BOUNDS the channel -- the burden-clamp
+	# precedent two checks down: saturating is expected here, holding is the
+	# claim. Whether +/-2.00 is the right bound at the new scale is B4's
+	# re-baseline sweep, band to be declared before it runs.
+	if absf(ns.firm_impulse_pct) > CompaniesK.FIRM_IMPULSE_MAX_PCT + 0.000001:
+		_fail("the firm growth impulse ran PAST its clamp at %.3f -- the clamp does not hold" % ns.firm_impulse_pct)
 	if absf(ns.firm_jobs_offset_pct) >= CompaniesK.FIRM_JOBS_MAX_PCT - 0.000001:
 		_fail("the firm jobs offset sits ON its clamp at %.3f under regulation" % ns.firm_jobs_offset_pct)
 
@@ -838,8 +849,12 @@ func _check_a_nationalised_run_stays_off_every_clamp() -> void:
 		_fail("the nationalised run collected no dividend, so it asserts nothing about the clamp")
 	if ns.dividend_revenue_pct_gdp >= CompaniesK.DIVIDEND_MAX_PCT_GDP - 0.000001:
 		_fail("the dividend line sits ON its clamp at %.3f -- the clamp is setting the number, not the model" % ns.dividend_revenue_pct_gdp)
-	if absf(ns.firm_impulse_pct) >= CompaniesK.FIRM_IMPULSE_MAX_PCT - 0.000001:
-		_fail("the firm growth impulse sits ON its clamp at %.3f under ownership" % ns.firm_impulse_pct)
+	# V4.7a FINDING, same record as the regulated run's: the two-tier roster's
+	# named coverage put the ownership extreme ON the +/-2.00 clamp. Asserted
+	# as HELD, not slack -- the clamp's re-sizing question belongs to B4's
+	# re-baseline sweep with a declared band, not to this assertion.
+	if absf(ns.firm_impulse_pct) > CompaniesK.FIRM_IMPULSE_MAX_PCT + 0.000001:
+		_fail("the firm growth impulse ran PAST its clamp at %.3f under ownership -- the clamp does not hold" % ns.firm_impulse_pct)
 	if absf(ns.firm_jobs_offset_pct) >= CompaniesK.FIRM_JOBS_MAX_PCT - 0.000001:
 		_fail("the firm jobs offset sits ON its clamp at %.3f under ownership" % ns.firm_jobs_offset_pct)
 

@@ -44,6 +44,9 @@ tests=(
   # appears to.
   tests/test_summits.gd
   tests/test_people.gd
+  # V4.7a: the chiefs -- the firm->person edge and the executive stopgap's
+  # schema state, registered at authoring time like everything above it.
+  tests/test_chiefs.gd
   # V4.3's machine test, registered at authoring time in this list rather than
   # discovered later -- the three-instance lesson above (summits, cabinet,
   # companies) is why it lands here unread.
@@ -63,6 +66,9 @@ tests=(
   # the list -- docs/people-model.md §9's finding in a new place: a check that silently
   # covers less than it appears to.
   tests/test_companies.gd
+  # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
+  # from_dict alias fix's mutation + lossless-roundtrip pins.
+  tests/test_companies_tiers.gd
   tests/test_society.gd
   tests/test_demography.gd
   tests/test_unrest.gd

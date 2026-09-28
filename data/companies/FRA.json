@@ -2,11 +2,859 @@
   "_source": "invented",
   "_note": "Fictional firms per docs/fictionalization.md -- near-miss style, sector legible, no real company's name, logo or trademarked styling. `share` is of the firm's SECTOR, not of GDP, and a sector's named shares sum to less than 1.0: the remainder is the unnamed rest of the sector. `headcount` is jobs at that authored share and is the differentiator -- two firms of equal share employing different numbers of people is what makes moving share between them create or destroy jobs. See docs/companies-model.md.",
   "companies": [
-    { "id": "FRA_verdelis", "name": "Verdelis", "sector": "agriculture", "share": 0.28, "headcount": 24000, "city": "FRI_bordeaux" },
-    { "id": "FRA_grainval", "name": "Grainval Coopérative", "sector": "agriculture", "share": 0.19, "headcount": 15000, "city": "FRB_orleans" },
-    { "id": "FRA_aurignac", "name": "Aurignac Industries", "sector": "industry", "share": 0.14, "headcount": 112000, "city": "FRJ_toulouse" },
-    { "id": "FRA_sevrenne", "name": "Sévrenne Automobile", "sector": "industry", "share": 0.10, "headcount": 74000, "city": "FRC_besancon" },
-    { "id": "FRA_meridienne", "name": "Banque Méridienne", "sector": "services", "share": 0.06, "headcount": 68000, "city": "FR1_paris" },
-    { "id": "FRA_halbert", "name": "Halbert Distribution", "sector": "services", "share": 0.05, "headcount": 145000, "city": "FRE_lille" }
+    {
+      "id": "FRA_verdelis",
+      "name": "Verdelis",
+      "sector": "agriculture",
+      "share": 0.28,
+      "headcount": 24000,
+      "city": "FRI_bordeaux",
+      "tier": "major",
+      "chief_id": "FRA_chief_verdelis"
+    },
+    {
+      "id": "FRA_grainval",
+      "name": "Grainval Coopérative",
+      "sector": "agriculture",
+      "share": 0.19,
+      "headcount": 15000,
+      "city": "FRB_orleans",
+      "tier": "major",
+      "chief_id": "FRA_chief_grainval"
+    },
+    {
+      "id": "FRA_aurignac",
+      "name": "Aurignac Industries",
+      "sector": "industry",
+      "share": 0.14,
+      "headcount": 112000,
+      "city": "FRJ_toulouse",
+      "tier": "major",
+      "chief_id": "FRA_chief_aurignac"
+    },
+    {
+      "id": "FRA_sevrenne",
+      "name": "Sévrenne Automobile",
+      "sector": "industry",
+      "share": 0.1,
+      "headcount": 74000,
+      "city": "FRC_besancon",
+      "tier": "major",
+      "chief_id": "FRA_chief_sevrenne"
+    },
+    {
+      "id": "FRA_meridienne",
+      "name": "Banque Méridienne",
+      "sector": "services",
+      "share": 0.06,
+      "headcount": 68000,
+      "city": "FR1_paris",
+      "tier": "major",
+      "chief_id": "FRA_chief_meridienne"
+    },
+    {
+      "id": "FRA_halbert",
+      "name": "Halbert Distribution",
+      "sector": "services",
+      "share": 0.05,
+      "headcount": 145000,
+      "city": "FRE_lille",
+      "tier": "major",
+      "chief_id": "FRA_chief_halbert"
+    }
+  ],
+  "body": [
+    {
+      "id": "FRA_morlaix_transports",
+      "name": "Morlaix Transports",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2338,
+      "city": "FRC_besancon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_beaufour_distribution",
+      "name": "Beaufour Distribution",
+      "sector": "agriculture",
+      "share": 0.0159,
+      "headcount": 1317,
+      "city": "FRK_lyon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_grandjouan_materiaux",
+      "name": "Grandjouan Matériaux",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2430,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_valsergent_cooperative",
+      "name": "Valsergent Coopérative",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2193,
+      "city": "FR1_courbevoie",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_turcy_logistique",
+      "name": "Turcy Logistique",
+      "sector": "agriculture",
+      "share": 0.0298,
+      "headcount": 2214,
+      "city": "FR1_cergy_pontoise",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_forgues_agro",
+      "name": "Forgues Agro",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2317,
+      "city": "FRI_bordeaux",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_lantier_energie",
+      "name": "Lantier Énergie",
+      "sector": "agriculture",
+      "share": 0.0236,
+      "headcount": 2027,
+      "city": "FRH_quimper",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_rochecotte_transports",
+      "name": "Rochecotte Transports",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2477,
+      "city": "FR1_cergy_pontoise",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_montcharvin_industries",
+      "name": "Montcharvin Industries",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2542,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_morlaix_logistique_logistique",
+      "name": "Morlaix Logistique Logistique",
+      "sector": "agriculture",
+      "share": 0.0196,
+      "headcount": 1577,
+      "city": "FRL_nice",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_chassignol_cooperative",
+      "name": "Chassignol Coopérative",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2476,
+      "city": "FRJ_toulouse",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_montcharvin_assurances",
+      "name": "Montcharvin Assurances",
+      "sector": "agriculture",
+      "share": 0.0256,
+      "headcount": 2242,
+      "city": "FRI_limoges",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_ollivier_energie",
+      "name": "Ollivier Énergie",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2332,
+      "city": "FR1_creteil",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_ambroise_materiaux",
+      "name": "Ambroise Matériaux",
+      "sector": "agriculture",
+      "share": 0.0102,
+      "headcount": 870,
+      "city": "FRL_marseille",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_valsergent_industries",
+      "name": "Valsergent Industries",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2611,
+      "city": "FRF_mulhouse",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_plessis_energie",
+      "name": "Plessis Énergie",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19126,
+      "city": "FR1_cergy_pontoise",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_noyelle_distribution",
+      "name": "Noyelle Distribution",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21879,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_tassigny_groupe",
+      "name": "Tassigny Groupe",
+      "sector": "industry",
+      "share": 0.0223,
+      "headcount": 14272,
+      "city": "FRI_limoges",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_briandais_materiaux",
+      "name": "Briandais Matériaux",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20740,
+      "city": "FRL_antibes",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_ollivier_assurances",
+      "name": "Ollivier Assurances",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20032,
+      "city": "FRF_strasbourg",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_fargeas_industries",
+      "name": "Fargeas Industries",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18971,
+      "city": "FRF_strasbourg",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vaugelas_distribution",
+      "name": "Vaugelas Distribution",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20343,
+      "city": "FRK_lyon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_sarrand_cooperative",
+      "name": "Sarrand Coopérative",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19487,
+      "city": "FRJ_toulouse",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_griveau_transports",
+      "name": "Griveau Transports",
+      "sector": "industry",
+      "share": 0.0191,
+      "headcount": 13745,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_briatore_distribution",
+      "name": "Briatore Distribution",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18616,
+      "city": "FRI_bordeaux",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_grandjouan_agro",
+      "name": "Grandjouan Agro",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19508,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_sarrazin_industries",
+      "name": "Sarrazin Industries",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19261,
+      "city": "FRF_strasbourg",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_besombes_transports",
+      "name": "Bésombes Transports",
+      "sector": "industry",
+      "share": 0.0287,
+      "headcount": 17519,
+      "city": "FRL_toulon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vairon_industries",
+      "name": "Vairon Industries",
+      "sector": "industry",
+      "share": 0.0265,
+      "headcount": 17105,
+      "city": "FRE_amiens",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_sarrand_agro",
+      "name": "Sarrand Agro",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21405,
+      "city": "FRK_lyon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_rivalland_industries",
+      "name": "Rivalland Industries",
+      "sector": "industry",
+      "share": 0.0268,
+      "headcount": 17778,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_trebosc_assurances",
+      "name": "Trébosc Assurances",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18175,
+      "city": "FR1_saint_maur_des_fosses",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vincendon_cooperative",
+      "name": "Vincendon Coopérative",
+      "sector": "industry",
+      "share": 0.023,
+      "headcount": 16990,
+      "city": "FRJ_beziers",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_lariviere_transports",
+      "name": "Larivière Transports",
+      "sector": "industry",
+      "share": 0.0213,
+      "headcount": 12911,
+      "city": "FRG_nantes",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_fermont_cooperative",
+      "name": "Fermont Coopérative",
+      "sector": "industry",
+      "share": 0.0145,
+      "headcount": 8861,
+      "city": "FRK_saint_etienne",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_beaumanoir_groupe",
+      "name": "Beaumanoir Groupe",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20543,
+      "city": "FR1_saint_denis",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_nogaret_materiaux",
+      "name": "Nogaret Matériaux",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21339,
+      "city": "FRH_quimper",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_briandais_energie",
+      "name": "Briandais Énergie",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19751,
+      "city": "FRI_bordeaux",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_trebosc_materiaux",
+      "name": "Trébosc Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24360,
+      "city": "FR1_maison_blanche",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vaugelas_transports",
+      "name": "Vaugelas Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22986,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_chassignol_groupe",
+      "name": "Chassignol Groupe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_lariviere_agro",
+      "name": "Larivière Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRK_chambery",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_chaudefontaine_agro",
+      "name": "Chaudefontaine Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23041,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_grandjouan_industries_logistique",
+      "name": "Grandjouan Industries Logistique",
+      "sector": "services",
+      "share": 0.0069,
+      "headcount": 9966,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_richebourg_energie",
+      "name": "Richebourg Énergie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24744,
+      "city": "FRK_chambery",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_fargeas_groupe",
+      "name": "Fargeas Groupe",
+      "sector": "services",
+      "share": 0.0163,
+      "headcount": 24130,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_madelaine_cooperative",
+      "name": "Madelaine Coopérative",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24403,
+      "city": "FRI_bordeaux",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_verchere_logistique",
+      "name": "Verchère Logistique",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_versailles",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_yvrard_distribution",
+      "name": "Yvrard Distribution",
+      "sector": "services",
+      "share": 0.0097,
+      "headcount": 13244,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_grandjouan_energie",
+      "name": "Grandjouan Énergie",
+      "sector": "services",
+      "share": 0.0075,
+      "headcount": 11825,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_aubarede_distribution",
+      "name": "Aubarède Distribution",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23002,
+      "city": "FR1_noisy_le_grand",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_yvrard_materiaux",
+      "name": "Yvrard Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22677,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_trebosc_logistique_distribution",
+      "name": "Trébosc Logistique Distribution",
+      "sector": "services",
+      "share": 0.0067,
+      "headcount": 10508,
+      "city": "FR1_versailles",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_verchere_agro",
+      "name": "Verchère Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRH_quimper",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_plessis_agro",
+      "name": "Plessis Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRD_rouen",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_noyelle_industries",
+      "name": "Noyelle Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_creteil",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_sarrand_transports",
+      "name": "Sarrand Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23329,
+      "city": "FRI_bordeaux",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_yvrard_industries",
+      "name": "Yvrard Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_asnieres_sur_seine",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_delcour_energie",
+      "name": "Delcour Énergie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24988,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_estagnol_materiaux",
+      "name": "Estagnol Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_champigny_sur_marne",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_verchere_logistique_energie",
+      "name": "Verchère Logistique Énergie",
+      "sector": "services",
+      "share": 0.0108,
+      "headcount": 16083,
+      "city": "FRD_le_havre",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_forgues_energie",
+      "name": "Forgues Énergie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24807,
+      "city": "FRB_bourges",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_sarrand_agro_energie",
+      "name": "Sarrand Agro Énergie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23445,
+      "city": "FRK_villeurbanne",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_delcour_agro",
+      "name": "Delcour Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_bompard_logistique",
+      "name": "Bompard Logistique",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23419,
+      "city": "FR1_argenteuil",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_plessis_materiaux",
+      "name": "Plessis Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_champigny_sur_marne",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_ollivier_logistique",
+      "name": "Ollivier Logistique",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vairon_logistique",
+      "name": "Vairon Logistique",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRL_cannes",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_valsergent_materiaux",
+      "name": "Valsergent Matériaux",
+      "sector": "services",
+      "share": 0.0142,
+      "headcount": 21559,
+      "city": "FRE_calais",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_richebourg_industries",
+      "name": "Richebourg Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRK_villeurbanne",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_moulinet_materiaux",
+      "name": "Moulinet Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22474,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_marivaux_assurances",
+      "name": "Marivaux Assurances",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_montreuil",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_beaumanoir_agro",
+      "name": "Beaumanoir Agro",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_chaudefontaine_industries",
+      "name": "Chaudefontaine Industries",
+      "sector": "services",
+      "share": 0.0068,
+      "headcount": 10587,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_marivaux_energie",
+      "name": "Marivaux Énergie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRI_la_rochelle",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_aubarede_industries",
+      "name": "Aubarède Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23685,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_ambroise_transports",
+      "name": "Ambroise Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRD_caen",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_tassigny_cooperative",
+      "name": "Tassigny Coopérative",
+      "sector": "services",
+      "share": 0.0117,
+      "headcount": 18193,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_noyelle_groupe",
+      "name": "Noyelle Groupe",
+      "sector": "services",
+      "share": 0.0081,
+      "headcount": 11754,
+      "city": "FRF_strasbourg",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_moulinet_groupe",
+      "name": "Moulinet Groupe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_villedary_transports",
+      "name": "Villedary Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_nogaret_transports",
+      "name": "Nogaret Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24257,
+      "city": "FR1_montreuil",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_montcharvin_transports",
+      "name": "Montcharvin Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRL_marseille",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_noyelle_transports",
+      "name": "Noyelle Transports",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRK_lyon",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_vincendon_groupe_distribution",
+      "name": "Vincendon Groupe Distribution",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_villedary_industries",
+      "name": "Villedary Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "FRF_reims",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_nogaret_logistique",
+      "name": "Nogaret Logistique",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24150,
+      "city": "FR1_paris",
+      "tier": "body"
+    },
+    {
+      "id": "FRA_villedary_materiaux",
+      "name": "Villedary Matériaux",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23152,
+      "city": "FR1_vitry_sur_seine",
+      "tier": "body"
+    }
   ]
 }

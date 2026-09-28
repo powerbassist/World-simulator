@@ -2,11 +2,895 @@
   "_source": "invented",
   "_note": "See data/companies/FRA.json for the schema and the reasoning. Germany's industry sector is the roster's largest at 0.283 of GDP, so its two industrial firms are the biggest employers in the register.",
   "companies": [
-    { "id": "DEU_nordfeld", "name": "Nordfeld Agrar", "sector": "agriculture", "share": 0.24, "headcount": 18000, "city": "DEF_kiel" },
-    { "id": "DEU_bauerhof", "name": "Bauerhof Gruppe", "sector": "agriculture", "share": 0.17, "headcount": 21000, "city": "DE9_hannover" },
-    { "id": "DEU_rheinwerk", "name": "Rheinwerk AG", "sector": "industry", "share": 0.13, "headcount": 198000, "city": "DEA_duesseldorf" },
-    { "id": "DEU_kellermann", "name": "Kellermann Motoren", "sector": "industry", "share": 0.11, "headcount": 156000, "city": "DE1_stuttgart" },
-    { "id": "DEU_hanseatische", "name": "Hanseatische Bank", "sector": "services", "share": 0.05, "headcount": 52000, "city": "DE6_hamburg" },
-    { "id": "DEU_vollmar", "name": "Vollmar Handel", "sector": "services", "share": 0.04, "headcount": 132000, "city": "DEA_essen" }
+    {
+      "id": "DEU_nordfeld",
+      "name": "Nordfeld Agrar",
+      "sector": "agriculture",
+      "share": 0.24,
+      "headcount": 18000,
+      "city": "DEF_kiel",
+      "tier": "major",
+      "chief_id": "DEU_chief_nordfeld"
+    },
+    {
+      "id": "DEU_bauerhof",
+      "name": "Bauerhof Gruppe",
+      "sector": "agriculture",
+      "share": 0.17,
+      "headcount": 21000,
+      "city": "DE9_hannover",
+      "tier": "major",
+      "chief_id": "DEU_chief_bauerhof"
+    },
+    {
+      "id": "DEU_rheinwerk",
+      "name": "Rheinwerk AG",
+      "sector": "industry",
+      "share": 0.13,
+      "headcount": 198000,
+      "city": "DEA_duesseldorf",
+      "tier": "major",
+      "chief_id": "DEU_chief_rheinwerk"
+    },
+    {
+      "id": "DEU_kellermann",
+      "name": "Kellermann Motoren",
+      "sector": "industry",
+      "share": 0.11,
+      "headcount": 156000,
+      "city": "DE1_stuttgart",
+      "tier": "major",
+      "chief_id": "DEU_chief_kellermann"
+    },
+    {
+      "id": "DEU_hanseatische",
+      "name": "Hanseatische Bank",
+      "sector": "services",
+      "share": 0.05,
+      "headcount": 52000,
+      "city": "DE6_hamburg",
+      "tier": "major",
+      "chief_id": "DEU_chief_hanseatische"
+    },
+    {
+      "id": "DEU_vollmar",
+      "name": "Vollmar Handel",
+      "sector": "services",
+      "share": 0.04,
+      "headcount": 132000,
+      "city": "DEA_essen",
+      "tier": "major",
+      "chief_id": "DEU_chief_vollmar"
+    }
+  ],
+  "body": [
+    {
+      "id": "DEU_obermuller_industrie",
+      "name": "Obermüller Industrie",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2347,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schluter_transporte",
+      "name": "Schlüter Transporte",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2494,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_obermuller_logistik",
+      "name": "Obermüller Logistik",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2196,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ehlers_handel",
+      "name": "Ehlers Handel",
+      "sector": "agriculture",
+      "share": 0.0142,
+      "headcount": 1075,
+      "city": "DE2_nuremberg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schluter_bau",
+      "name": "Schlüter Bau",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2628,
+      "city": "DE1_esslingen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_gerlach_versicherung",
+      "name": "Gerlach Versicherung",
+      "sector": "agriculture",
+      "share": 0.0142,
+      "headcount": 1193,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_hartung_gruppe",
+      "name": "Hartung Gruppe",
+      "sector": "agriculture",
+      "share": 0.0257,
+      "headcount": 1977,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ziegenhals_industrie",
+      "name": "Ziegenhals Industrie",
+      "sector": "agriculture",
+      "share": 0.0276,
+      "headcount": 2440,
+      "city": "DE1_tuebingen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ahrendts_industrie",
+      "name": "Ahrendts Industrie",
+      "sector": "agriculture",
+      "share": 0.0272,
+      "headcount": 2222,
+      "city": "DEA_duesseldorf",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wulfing_handel",
+      "name": "Wülfing Handel",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2597,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_lindhorst_transporte",
+      "name": "Lindhorst Transporte",
+      "sector": "agriculture",
+      "share": 0.0216,
+      "headcount": 1722,
+      "city": "DEA_bonn",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schwarzkopf_logistik",
+      "name": "Schwarzkopf Logistik",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2309,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_fischbach_werke",
+      "name": "Fischbach Werke",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2453,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wulfing_industrie",
+      "name": "Wülfing Industrie",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2498,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_lobbert_gruppe",
+      "name": "Löbbert Gruppe",
+      "sector": "agriculture",
+      "share": 0.021,
+      "headcount": 1833,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_feuerbach_handel",
+      "name": "Feuerbach Handel",
+      "sector": "agriculture",
+      "share": 0.0228,
+      "headcount": 1872,
+      "city": "DEA_viersen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wenzel_versicherung",
+      "name": "Wenzel Versicherung",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2639,
+      "city": "DE2_nuremberg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ehlers_werke",
+      "name": "Ehlers Werke",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2657,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_uhlig_werke",
+      "name": "Uhlig Werke",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21681,
+      "city": "DE2_munich",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_arndt_werke",
+      "name": "Arndt Werke",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19587,
+      "city": "DEB_kaiserslautern",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schwarzkopf_industrie",
+      "name": "Schwarzkopf Industrie",
+      "sector": "industry",
+      "share": 0.0279,
+      "headcount": 20413,
+      "city": "DE1_villingen_schwenningen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_arndt_versicherung",
+      "name": "Arndt Versicherung",
+      "sector": "industry",
+      "share": 0.0127,
+      "headcount": 7924,
+      "city": "DED_dresden",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_tiefensee_transporte",
+      "name": "Tiefensee Transporte",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18801,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_mummert_handel",
+      "name": "Mummert Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18151,
+      "city": "DEA_kerpen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_nolte_handel",
+      "name": "Nolte Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20977,
+      "city": "DEA_dortmund",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_quast_transporte",
+      "name": "Quast Transporte",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18347,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_zimmerer_energie",
+      "name": "Zimmerer Energie",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21848,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_mengede_werke",
+      "name": "Mengede Werke",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18553,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_grotehusmann_werke",
+      "name": "Grotehusmann Werke",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21103,
+      "city": "DEA_iserlohn",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_reher_industrie",
+      "name": "Reher Industrie",
+      "sector": "industry",
+      "share": 0.0217,
+      "headcount": 14308,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_busemann_handel",
+      "name": "Busemann Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19225,
+      "city": "DE9_hameln",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_neuhaus_bau",
+      "name": "Neuhaus Bau",
+      "sector": "industry",
+      "share": 0.0273,
+      "headcount": 18467,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_frevert_bau",
+      "name": "Frevert Bau",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20521,
+      "city": "DEE_halle_saale",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wenzel_transporte",
+      "name": "Wenzel Transporte",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21649,
+      "city": "DED_chemnitz",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ahrendts_bau",
+      "name": "Ahrendts Bau",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21220,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_quast_versicherung",
+      "name": "Quast Versicherung",
+      "sector": "industry",
+      "share": 0.0177,
+      "headcount": 12553,
+      "city": "DE1_ulm",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_grotehusmann_energie",
+      "name": "Grotehusmann Energie",
+      "sector": "industry",
+      "share": 0.0207,
+      "headcount": 15187,
+      "city": "DEA_duisburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_neuhaus_ag",
+      "name": "Neuhaus AG",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20872,
+      "city": "DE4_potsdam",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_mengede_transporte",
+      "name": "Mengede Transporte",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19681,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_overbeck_handel",
+      "name": "Overbeck Handel",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20019,
+      "city": "DE5_bremen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_feuerbach_logistik_logistik",
+      "name": "Feuerbach Logistik Logistik",
+      "sector": "industry",
+      "share": 0.0179,
+      "headcount": 12337,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wenzel_energie",
+      "name": "Wenzel Energie",
+      "sector": "services",
+      "share": 0.0161,
+      "headcount": 24781,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_arndt_bau",
+      "name": "Arndt Bau",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23425,
+      "city": "DEA_aachen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_waldmann_logistik",
+      "name": "Waldmann Logistik",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23731,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wulfing_gruppe",
+      "name": "Wülfing Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE9_hannover",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_potter_handel",
+      "name": "Pötter Handel",
+      "sector": "services",
+      "share": 0.0118,
+      "headcount": 17545,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_bergmann_industrie",
+      "name": "Bergmann Industrie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_diekmann_ag",
+      "name": "Diekmann AG",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DEB_worms",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_obermuller_transporte",
+      "name": "Obermüller Transporte",
+      "sector": "services",
+      "share": 0.0165,
+      "headcount": 23996,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_wulfing_ag",
+      "name": "Wülfing AG",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE2_munich",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_isenberg_versicherung",
+      "name": "Isenberg Versicherung",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE1_karlsruhe",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_diederichs_industrie",
+      "name": "Diederichs Industrie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24349,
+      "city": "DE5_bremerhaven",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_hillen_bau",
+      "name": "Hillen Bau",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE1_freiburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_obermuller_logistik_logistik",
+      "name": "Obermüller Logistik Logistik",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ahrendts_gruppe",
+      "name": "Ahrendts Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DED_leipzig",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_isenberg_ag",
+      "name": "Isenberg AG",
+      "sector": "services",
+      "share": 0.0157,
+      "headcount": 23196,
+      "city": "DE2_ingolstadt",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ricken_transporte",
+      "name": "Ricken Transporte",
+      "sector": "services",
+      "share": 0.0122,
+      "headcount": 19637,
+      "city": "DE7_frankfurt_am_main",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_eilers_werke",
+      "name": "Eilers Werke",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_putz_energie",
+      "name": "Pütz Energie",
+      "sector": "services",
+      "share": 0.014,
+      "headcount": 19200,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_kastner_logistik",
+      "name": "Kastner Logistik",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23462,
+      "city": "DEA_detmold",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_putz_industrie",
+      "name": "Pütz Industrie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DEA_leverkusen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_groenewold_transporte",
+      "name": "Groenewold Transporte",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23097,
+      "city": "DE9_braunschweig",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_overbeck_transporte_ag",
+      "name": "Overbeck Transporte AG",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE2_regensburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_vollmer_transporte",
+      "name": "Vollmer Transporte",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DEB_kaiserslautern",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_nienhaus_handel",
+      "name": "Nienhaus Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_iserlohe_versicherung",
+      "name": "Iserlohe Versicherung",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24161,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_gerlach_logistik",
+      "name": "Gerlach Logistik",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22529,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_diekmann_ag_logistik",
+      "name": "Diekmann AG Logistik",
+      "sector": "services",
+      "share": 0.0093,
+      "headcount": 13517,
+      "city": "DEA_dortmund",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_iserlohe_gruppe",
+      "name": "Iserlohe Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23533,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_pfeiffer_ag",
+      "name": "Pfeiffer AG",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE1_mannheim",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_emden_transporte",
+      "name": "Emden Transporte",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DEF_luebeck",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_waldmann_gruppe",
+      "name": "Waldmann Gruppe",
+      "sector": "services",
+      "share": 0.0076,
+      "headcount": 11311,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_isenberg_handel",
+      "name": "Isenberg Handel",
+      "sector": "services",
+      "share": 0.011,
+      "headcount": 16218,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_iserlohe_energie",
+      "name": "Iserlohe Energie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24415,
+      "city": "DE6_hamburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_mertens_energie",
+      "name": "Mertens Energie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DED_leipzig",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_claussen_energie",
+      "name": "Claussen Energie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_mertens_handel_gruppe",
+      "name": "Mertens Handel Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23103,
+      "city": "DE2_munich",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_eilers_logistik",
+      "name": "Eilers Logistik",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23401,
+      "city": "DEA_guetersloh",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_lohr_handel",
+      "name": "Löhr Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22891,
+      "city": "DEA_bochum",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_eilers_bau",
+      "name": "Eilers Bau",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23996,
+      "city": "DE9_wolfsburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_vollbrecht_energie",
+      "name": "Vollbrecht Energie",
+      "sector": "services",
+      "share": 0.0082,
+      "headcount": 12497,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_nolte_versicherung",
+      "name": "Nolte Versicherung",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_tiefensee_werke",
+      "name": "Tiefensee Werke",
+      "sector": "services",
+      "share": 0.0103,
+      "headcount": 15455,
+      "city": "DED_dresden",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_timmermann_gruppe",
+      "name": "Timmermann Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24351,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_ufermann_handel",
+      "name": "Ufermann Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "DE7_kassel",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schluter_industrie",
+      "name": "Schlüter Industrie",
+      "sector": "services",
+      "share": 0.0135,
+      "headcount": 20068,
+      "city": "DEA_bergisch_gladbach",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_kampmann_logistik",
+      "name": "Kampmann Logistik",
+      "sector": "services",
+      "share": 0.011,
+      "headcount": 15326,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_gerlach_versicherung_gruppe",
+      "name": "Gerlach Versicherung Gruppe",
+      "sector": "services",
+      "share": 0.0078,
+      "headcount": 12726,
+      "city": "DE3_berlin",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_schwarzkopf_gruppe_transporte",
+      "name": "Schwarzkopf Gruppe Transporte",
+      "sector": "services",
+      "share": 0.0091,
+      "headcount": 14576,
+      "city": "DE1_stuttgart",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_claussen_handel",
+      "name": "Claussen Handel",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24513,
+      "city": "DE6_hamburg",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_uhlig_industrie",
+      "name": "Uhlig Industrie",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22529,
+      "city": "DE5_bremen",
+      "tier": "body"
+    },
+    {
+      "id": "DEU_osterkamp_gruppe",
+      "name": "Osterkamp Gruppe",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22477,
+      "city": "DE3_berlin",
+      "tier": "body"
+    }
   ]
 }

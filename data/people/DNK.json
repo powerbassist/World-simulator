@@ -1108,6 +1108,132 @@
       ],
       "bench": true,
       "party_id": "liberalt_centrum"
+    },
+    {
+      "id": "DNK_chief_bank_wium",
+      "name": "Freja Wium",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_holst_byggeri",
+      "name": "Aksel Holst",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_gisl_logistik",
+      "name": "Flemming Gisl",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_jerndorff_forsikring",
+      "name": "Gunnar Jerndorff",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_ahlefeldt_transport",
+      "name": "Laurids Ahlefeldt",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_poulsen_forsikring",
+      "name": "Jesper Poulsen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_handelshus_poulsen",
+      "name": "Holger Poulsen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_gronbaek_logistik",
+      "name": "Mogens Grønbæk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_friis_moller_handel",
+      "name": "Holger Friis-Møller",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_wandel_handel",
+      "name": "Laurids Wandel",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "DNK_chief_ravn_energi",
+      "name": "Jesper Ravn",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
     }
   ]
 }

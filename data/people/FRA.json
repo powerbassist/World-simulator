@@ -1137,6 +1137,74 @@
       ],
       "bench": true,
       "party_id": "union_conservatrice"
+    },
+    {
+      "id": "FRA_chief_verdelis",
+      "name": "Hélène Verdelis",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_grainval",
+      "name": "Mathilde Grainval",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_aurignac",
+      "name": "Philippe Dalcourt",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_sevrenne",
+      "name": "Inès Sévrenne",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_meridienne",
+      "name": "Arnaud Vasseur",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_halbert",
+      "name": "Bernard Flament",
+      "kind": "executive",
+      "traits": [
+        "stubborn",
+        "loyal"
+      ],
+      "ambition": 0.42,
+      "bench": true
     }
   ]
 }

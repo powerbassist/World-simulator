@@ -61,9 +61,16 @@ const Demography = preload("res://src/sim/demography.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 
 
-## Seeds the live register from content: every firm starts at its authored share
+## Seeds the live register from content: every MAJOR starts at its authored share
 ## with no subsidy. Called from GameState._build_nation(), Defence.init_nation()'s
 ## slot.
+##
+## V4.7a: body-tier firms are NOT seeded -- the register carries what MOVED and
+## nothing that did not, so a body firm gains an entry only when a B-phase act
+## writes one (the pool is majors-only; no 7a path touches a body firm). The reads
+## (share_of_company, output_eur_bn, headcount) fall back to the authored
+## content for an absent entry, which is what makes the sparse shape safe and
+## keeps a ~2,500-firm register out of every save.
 ##
 ## A nation with no data/companies/<ID>.json gets an EMPTY register, and that is a
 ## supported state rather than a hole. Its sectors are simply unpartitioned, which
@@ -82,6 +89,8 @@ static func init_nation(ns, company_list: Array) -> void:
 	ns.firm_jobs_offset_pct = 0.0
 	ns.dividend_revenue_pct_gdp = 0.0
 	for company in company_list:
+		if not is_major(company):
+			continue
 		ns.companies[company.id] = {
 			"share": company.share, "subsidy": 0.0, "state_share": 0.0
 		}
@@ -96,8 +105,30 @@ static func tick_month(state, loader) -> void:
 	ids.sort()
 	for id in ids:
 		var ns = state.nations[id]
+		_seed_missing_majors(ns, loader)
 		_tick_shares(ns, loader)
 		_recompute_prices(ns, loader)
+
+
+## V4.7a, the PR-46 ultra review's headline finding: the load path restores the
+## register from the payload ALONE (from_dict never sees the loader), and a save
+## written before this block shipped carries "companies": {} for the 25 nations
+## that had no companies file -- while this build's content gives each ~12
+## majors. Without this seed, the first monthly tick after loading such a save
+## raises a missing-key error per unseeded nation, every month, with no repair
+## path (the verbs' register-membership gate refuses too). The fix is the V4.6
+## commodity register's own shape: a LAZY seed at the tick, majors only, at the
+## authored share -- which is the truth about those firms in any save that
+## predates them (no verb ever touched them, so there is no verb state to lose).
+## Body firms stay unseeded: their reads fall back to authored content and only
+## a B-phase act can move one. Idempotent by construction -- a second run finds
+## every major present and writes nothing.
+static func _seed_missing_majors(ns, loader) -> void:
+	for company in majors_of(loader, ns.id):
+		if not ns.companies.has(company.id):
+			ns.companies[company.id] = {
+				"share": company.share, "subsidy": 0.0, "state_share": 0.0
+			}
 
 
 # --- Content -------------------------------------------------------------------
@@ -106,6 +137,26 @@ static func firms_of(loader, nation_id: String) -> Array:
 	if loader == null:
 		return []
 	return loader.companies.get(nation_id, [])
+
+
+static func majors_of(loader, nation_id: String) -> Array:
+	var out: Array = []
+	for company in firms_of(loader, nation_id):
+		if is_major(company): out.append(company)
+	return out
+
+
+static func body_of(loader, nation_id: String) -> Array:
+	var out: Array = []
+	for company in firms_of(loader, nation_id):
+		if not is_major(company): out.append(company)
+	return out
+
+
+static func is_major(company) -> bool:
+	# Company.tier defaults "major" (from_dict sets it only when the field is
+	# present), so the legacy files read as majors through the typed default.
+	return String(company.tier) == "major"
 
 
 ## The firms of one nation in one sector, in authored order. The draw below is
@@ -124,6 +175,11 @@ static func firms_in_sector(loader, nation_id: String, sector: String) -> Array:
 static func share_of(ns, company_id: String) -> float:
 	var entry = ns.companies.get(company_id)
 	return float(entry.get("share", 0.0)) if entry != null else 0.0
+
+
+static func share_of_company(ns, company) -> float:
+	var entry = ns.companies.get(company.id)
+	return float(entry.get("share", company.share)) if entry != null else float(company.share)
 
 
 static func subsidy_of(ns, company_id: String) -> float:
@@ -151,7 +207,7 @@ static func regulation_burden_of(ns, sector: String) -> float:
 ## number and the share is the firm's, so a stored revenue would be a third record
 ## of a product of two things that already exist.
 static func output_eur_bn(ns, company) -> float:
-	return share_of(ns, company.id) * float(ns.sector_output.get(company.sector, 0.0))
+	return share_of_company(ns, company) * float(ns.sector_output.get(company.sector, 0.0))
 
 
 ## V1.4c. What the whole firm is worth, EUR bn. DERIVED for revenue's own reason:
@@ -200,7 +256,15 @@ static func value_eur_bn(ns, company) -> float:
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
-	var reallocated: float = company.headcount * share_of(ns, company.id) / company.share
+	# The RATIO is computed first, deliberately: (h * s) / s is not exactly h
+	# for every float pair -- the A3 roster's generated headcounts found the
+	# unlucky ones, and the residue showed up as a 1e-18 drift in
+	# firm_jobs_offset_pct on nations whose only sin was unlucky digits. s / s
+	# is exactly 1.0 in IEEE for every finite nonzero s, so this form holds the
+	# file's own invariant -- the deviation channels read EXACTLY 0.0 while
+	# every firm sits at its authored share -- by construction rather than by
+	# bit luck.
+	var reallocated: float = company.headcount * (share_of_company(ns, company) / company.share)
 	# Signed, so a deregulation law lets the same firms carry more staff. Floored at
 	# zero rather than trusted to the burden clamp: a later session raising
 	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
@@ -249,18 +313,26 @@ static func _tick_shares(ns, loader) -> void:
 	for sector in EK.SECTOR_TREND.keys():
 		var firms := firms_in_sector(loader, ns.id, sector)
 		if firms.size() < 2:
-			# Zero firms: the sector is unpartitioned, which is every sector of every
-			# nation with no companies file. One firm cannot come out of a validated
-			# file at all -- DataLoader._validate_companies() refuses it, because a
-			# firm with no rival is a sector lever wearing a company's name.
 			continue
 
-		var before := {}
+		# MAJORS ONLY, snapshot and deltas alike: the pool is the verb plane
+		# (see the block comment above), and walking the ~80 body firms per
+		# sector to compute deltas nothing can write is the A3 review's Minor
+		# 7. SECTOR-SCOPED, deliberately not majors_of(ns.id): this loop runs
+		# once per sector, and a nation-wide list would subsidise the same
+		# firm once per sector and let one sector's subsidy drain another's
+		# majors -- the bug the conservation test caught within a tick of the
+		# refactor.
+		var majors: Array = []
 		for company in firms:
-			before[company.id] = share_of(ns, company.id)
+			if is_major(company):
+				majors.append(company)
+		var before := {}
+		for company in majors:
+			before[company.id] = share_of_company(ns, company)
 
 		var deltas := {}
-		for company in firms:
+		for company in majors:
 			deltas[company.id] = 0.0
 
 		# TWO PASSES, because one pass cannot hold both properties this function needs.
@@ -281,7 +353,23 @@ static func _tick_shares(ns, loader) -> void:
 		var wants := {}
 		var pools := {}
 		var claim := 0.0
-		for company in firms:
+		# A3: majors-only rivals, and the body is OUTSIDE the pool entirely --
+		# it neither gives nor receives. Two reasons, the second decisive: the
+		# pool is the verb channel's budget, and body rivals in it would grow
+		# the drainable supply with the body tier's size (ten rivals vs
+		# thirty), so a subsidised major's reachable share -- and the step-0
+		# probe's measured escalator -- would depend on how many body firms
+		# were generated. V1.4's balance calculus was calibrated against the
+		# majors' own pool; keeping it that way preserves that calibration
+		# under the roster's growth. And the tier doc's own shape says the
+		# same: the body aggregates into the residual, static content that
+		# neither drains nor feeds the verb plane -- only the B-phase acts
+		# (fail, be bought) move a body firm's share, and they write the
+		# register directly rather than through this pool.
+		if majors.size() < 1:
+			continue  # no majors to subsidise: no verb can fire
+
+		for company in majors:
 			var intensity := subsidy_of(ns, company.id)
 			if intensity <= 0.0:
 				continue
@@ -297,7 +385,7 @@ static func _tick_shares(ns, loader) -> void:
 			# the identical five-year outcome, because the floor and not the rate was
 			# setting where the share ended up.
 			var available := 0.0
-			for rival in firms:
+			for rival in majors:
 				if rival.id == company.id:
 					continue
 				available += maxf(
@@ -318,13 +406,13 @@ static func _tick_shares(ns, loader) -> void:
 
 		var scale: float = 1.0 / claim if claim > 1.0 else 1.0
 
-		for company in firms:
+		for company in majors:
 			if not wants.has(company.id):
 				continue
 			var gain: float = float(wants[company.id]) * scale
 			var available: float = float(pools[company.id])
 			deltas[company.id] = float(deltas[company.id]) + gain
-			for rival in firms:
+			for rival in majors:
 				if rival.id == company.id:
 					continue
 				var supply: float = maxf(
@@ -332,7 +420,15 @@ static func _tick_shares(ns, loader) -> void:
 				)
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
-		for company in firms:
+		# Majors only, because the pool only ever moved majors (A3's amended
+		# design): every major holds an entry -- init_nation seeds a fresh game
+		# and _seed_missing_majors repairs a loaded pre-7a save -- so a plain
+		# indexed write is honest. The A1-era get-or-create here was the spillover
+		# path for body rivals and is DELETED -- under the majors-only pool
+		# no code path reaches it, and the B-phase acts that will move a body
+		# firm's share write the register directly in industry.gd, not
+		# through this pool.
+		for company in majors:
 			var entry: Dictionary = ns.companies[company.id]
 			entry["share"] = float(before[company.id]) + float(deltas[company.id])
 
@@ -365,7 +461,12 @@ static func subsidy_bill_pct_gdp(ns) -> float:
 ## and the assembly passed the other.
 ##
 ## THE BURDEN READS ONLY THE NAMED FIRMS, and that is structural rather than a
-## rounding choice. A sector that is a quarter named is a quarter as regulable,
+## rounding choice. (V1.4b authored this when named coverage sat near a
+## quarter; V4.7a's two-tier register took every sector to 0.85-0.97 named, so
+## the proportionality bound now binds near its ceiling -- the ~4x channel
+## scale-up that put the extreme regimes ON the impulse clamp is recorded at
+## test_balance.gd's assertions, and the re-tune is B4's declared-band sweep.
+## A sector that is a quarter named is a quarter as regulable,
 ## because the unnamed residual is not in the register and this model does not
 ## reach it. That bound is what separates the term from a lever pointed at
 ## sector_output, which is docs/tiers/v1.md section 6's and not this session's.
@@ -476,10 +577,22 @@ static func _recompute_prices(ns, loader) -> void:
 ## shape, minus the cooldown: a subsidy is a STANDING STATE rather than an event,
 ## so `subsidy_active` gates it directly and a cooldown register would be a second
 ## gate on the same fact.
-static func available(state, ns, all_actions: Array, company_id: String) -> Array:
+##
+## V4.7a: the TIER gate lives here, in 7a and not with the B2 verbs. The
+## step-0 probe's finding is that a body firm's share channel is ABSOLUTE -- a
+## 0.01 firm drains the same pool as a 0.14 major and ends the term at 0.13 --
+## so no verb targets a body firm, whatever its register state. The gate is
+## DEFENCE IN DEPTH rather than the last line: the pool is majors-only and no
+## 7a code path writes a body entry, but the B-phase acts will (fail, be bought
+## write the register directly), and a body entry's existence must not make the
+## tier a verb target when they do.
+static func available(state, ns, all_actions: Array, company_id: String, loader) -> Array:
 	var out: Array = []
 	if not ns.companies.has(company_id):
 		return out
+	for company in firms_of(loader, ns.id):
+		if company.id == company_id and not is_major(company):
+			return out
 	for action in all_actions:
 		if action.id == "":
 			continue
@@ -562,7 +675,7 @@ static func state_owned_count(ns) -> int:
 ## is required rather than defaulted: a null loader would silently value every firm
 ## at zero and hand the player a free nationalisation.
 static func execute(state, ns, all_actions: Array, action, company_id: String, loader) -> Dictionary:
-	if not available(state, ns, all_actions, company_id).has(action):
+	if not available(state, ns, all_actions, company_id, loader).has(action):
 		var refused := {
 			"action_id": action.id,
 			"company_id": company_id,

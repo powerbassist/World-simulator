@@ -209,9 +209,15 @@ func _check_person_field_contract() -> void:
 ## must name no kind or meter outside the vocabularies. A kind that cannot act
 ## is content loading inert -- the class of failure this suite exists to make
 ## loud.
+## V4.7a: `executive` joins the no-meter exemption as a DECLARED STOPGAP (the
+## reason lives beside KIND_KEYS in character_constants.gd, and it is the same
+## sentence): a chief's action is the firm's action under V4.7b's autonomy
+## machine, and the chief's own lever is V4.2's lobbying. When V4.2 opens it,
+## this exemption narrows back or the kind grows a lever -- a kind exempt here
+## forever is exactly the inert content this check exists to refuse.
 func _check_kind_meter_coverage() -> void:
 	for kind in CharacterK.KIND_KEYS:
-		if kind == "politician" or kind == "regional_figure":
+		if kind in ["politician", "regional_figure", "executive"]:
 			continue
 		if not CharacterK.KIND_METERS.has(kind):
 			_fail("kind '%s' has no meter and no political lever -- declare it in KIND_METERS or refuse the kind" % kind)

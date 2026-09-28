@@ -1174,6 +1174,155 @@
       ],
       "bench": true,
       "party_id": "fileleftheri_protovoulia"
+    },
+    {
+      "id": "CYP_chief_kyprianou_metafora",
+      "name": "Ioannis Kyprianou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_ktorides_ylika",
+      "name": "Andreas Ktorides",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_neophytou_asfaliseis",
+      "name": "Andreas Neophytou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_mouskos_metafora",
+      "name": "Nikos Mouskos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_vassiliou_metafora",
+      "name": "Demetris Vassiliou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_nicolaou_energeia",
+      "name": "Ioannis Nicolaou",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_sarris",
+      "name": "Georgios Sarris",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_miltiades_logistiki",
+      "name": "Kyriaki Miltiades",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_zambas_logistiki",
+      "name": "Kyriacos Zambas",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_orphanides",
+      "name": "Nikos Orphanides",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_loizou_kataskeves",
+      "name": "Georgios Loizou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_lombardos_kataskeves",
+      "name": "Georgia Lombardos",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "CYP_chief_yiangou_kataskeves",
+      "name": "Androula Yiangou",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
     }
   ]
 }

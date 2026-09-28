@@ -2,11 +2,895 @@
   "_source": "invented",
   "_note": "See data/companies/FRA.json for the schema and the reasoning. Britain's agriculture sector is the roster's smallest at 0.007 of GDP, so its two farms hold a large share of a small sector -- which is what a share of a SECTOR rather than of GDP is for.",
   "companies": [
-    { "id": "GBR_wexley", "name": "Wexley Farms", "sector": "agriculture", "share": 0.22, "headcount": 12000, "city": "UKH_ipswich" },
-    { "id": "GBR_northaven", "name": "Northaven Produce", "sector": "agriculture", "share": 0.16, "headcount": 14000, "city": "UKM_aberdeen" },
-    { "id": "GBR_ashcombe", "name": "Ashcombe Engineering", "sector": "industry", "share": 0.12, "headcount": 88000, "city": "UKG_birmingham" },
-    { "id": "GBR_tarnbridge", "name": "Tarnbridge Chemicals", "sector": "industry", "share": 0.09, "headcount": 41000, "city": "UKE_sheffield" },
-    { "id": "GBR_sterling_mutual", "name": "Sterling Mutual", "sector": "services", "share": 0.06, "headcount": 59000, "city": "UKI_london" },
-    { "id": "GBR_ravenhill", "name": "Ravenhill Retail", "sector": "services", "share": 0.05, "headcount": 168000, "city": "UKD_manchester" }
+    {
+      "id": "GBR_wexley",
+      "name": "Wexley Farms",
+      "sector": "agriculture",
+      "share": 0.22,
+      "headcount": 12000,
+      "city": "UKH_ipswich",
+      "tier": "major",
+      "chief_id": "GBR_chief_wexley"
+    },
+    {
+      "id": "GBR_northaven",
+      "name": "Northaven Produce",
+      "sector": "agriculture",
+      "share": 0.16,
+      "headcount": 14000,
+      "city": "UKM_aberdeen",
+      "tier": "major",
+      "chief_id": "GBR_chief_northaven"
+    },
+    {
+      "id": "GBR_ashcombe",
+      "name": "Ashcombe Engineering",
+      "sector": "industry",
+      "share": 0.12,
+      "headcount": 88000,
+      "city": "UKG_birmingham",
+      "tier": "major",
+      "chief_id": "GBR_chief_ashcombe"
+    },
+    {
+      "id": "GBR_tarnbridge",
+      "name": "Tarnbridge Chemicals",
+      "sector": "industry",
+      "share": 0.09,
+      "headcount": 41000,
+      "city": "UKE_sheffield",
+      "tier": "major",
+      "chief_id": "GBR_chief_tarnbridge"
+    },
+    {
+      "id": "GBR_sterling_mutual",
+      "name": "Sterling Mutual",
+      "sector": "services",
+      "share": 0.06,
+      "headcount": 59000,
+      "city": "UKI_london",
+      "tier": "major",
+      "chief_id": "GBR_chief_sterling_mutual"
+    },
+    {
+      "id": "GBR_ravenhill",
+      "name": "Ravenhill Retail",
+      "sector": "services",
+      "share": 0.05,
+      "headcount": 168000,
+      "city": "UKD_manchester",
+      "tier": "major",
+      "chief_id": "GBR_chief_ravenhill"
+    }
+  ],
+  "body": [
+    {
+      "id": "GBR_harrington_group",
+      "name": "Harrington Group",
+      "sector": "agriculture",
+      "share": 0.0216,
+      "headcount": 1834,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_deverell_agri",
+      "name": "Deverell Agri",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2318,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_massingham_agri",
+      "name": "Massingham Agri",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2307,
+      "city": "UKE_kingston_upon_hull",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_scarthwaite_holdings",
+      "name": "Scarthwaite Holdings",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2356,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ingham_energy",
+      "name": "Ingham Energy",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2450,
+      "city": "UKJ_milton_keynes",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_verney_logistics",
+      "name": "Verney Logistics",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2219,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_everington_industries",
+      "name": "Everington Industries",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2323,
+      "city": "UKD_birkenhead",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_sandys_logistics",
+      "name": "Sandys Logistics",
+      "sector": "agriculture",
+      "share": 0.0208,
+      "headcount": 1788,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_bagshot_materials",
+      "name": "Bagshot Materials",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2520,
+      "city": "UKJ_ashford",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_inglethorpe_holdings",
+      "name": "Inglethorpe Holdings",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2608,
+      "city": "UKD_liverpool",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_vane_tempest_trading",
+      "name": "Vane-Tempest Trading",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2521,
+      "city": "UKJ_milton_keynes",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_nethercott_group",
+      "name": "Nethercott Group",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2353,
+      "city": "UKF_derby",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_beckwith_group",
+      "name": "Beckwith Group",
+      "sector": "agriculture",
+      "share": 0.0217,
+      "headcount": 1618,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_pobjoy_energy",
+      "name": "Pobjoy Energy",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2247,
+      "city": "UKG_birmingham",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_greville_energy",
+      "name": "Greville Energy",
+      "sector": "agriculture",
+      "share": 0.03,
+      "headcount": 2345,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_wriothesley_energy",
+      "name": "Wriothesley Energy",
+      "sector": "agriculture",
+      "share": 0.0195,
+      "headcount": 1684,
+      "city": "UKL_rhondda",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ravensworth_transport",
+      "name": "Ravensworth Transport",
+      "sector": "agriculture",
+      "share": 0.0268,
+      "headcount": 1992,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_inglethorpe_industries",
+      "name": "Inglethorpe Industries",
+      "sector": "agriculture",
+      "share": 0.0253,
+      "headcount": 1862,
+      "city": "UKM_edinburgh",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_bagshot_energy",
+      "name": "Bagshot Energy",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19737,
+      "city": "UKD_manchester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_selwyn_french_group",
+      "name": "Selwyn-French Group",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18788,
+      "city": "UKL_tonypandy",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_nevile_trading",
+      "name": "Nevile Trading",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19471,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_hawtrey_holdings",
+      "name": "Hawtrey Holdings",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18967,
+      "city": "UKD_birkenhead",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_thirlwall_materials",
+      "name": "Thirlwall Materials",
+      "sector": "industry",
+      "share": 0.0286,
+      "headcount": 19694,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldwyn_materials",
+      "name": "Aldwyn Materials",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 21578,
+      "city": "UKK_torquay",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_quennell_logistics",
+      "name": "Quennell Logistics",
+      "sector": "industry",
+      "share": 0.0293,
+      "headcount": 21273,
+      "city": "UKM_east_kilbride",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_massingham_transport",
+      "name": "Massingham Transport",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20414,
+      "city": "UKE_sheffield",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_quennell_group",
+      "name": "Quennell Group",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20701,
+      "city": "UKK_bristol",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_inglethorpe_agri",
+      "name": "Inglethorpe Agri",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20666,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_blackwood_trading",
+      "name": "Blackwood Trading",
+      "sector": "industry",
+      "share": 0.0248,
+      "headcount": 16253,
+      "city": "UKJ_margate",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_beckwith_insurance",
+      "name": "Beckwith Insurance",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19662,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_danvers_trading",
+      "name": "Danvers Trading",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20366,
+      "city": "UKH_luton",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ingham_trading",
+      "name": "Ingham Trading",
+      "sector": "industry",
+      "share": 0.0218,
+      "headcount": 15078,
+      "city": "UKG_newcastle_under_lyme",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_orlebar_trading",
+      "name": "Orlebar Trading",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20996,
+      "city": "UKD_wigan",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_blackwood_insurance",
+      "name": "Blackwood Insurance",
+      "sector": "industry",
+      "share": 0.0185,
+      "headcount": 12017,
+      "city": "UKJ_woking",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_lambert_logistics",
+      "name": "Lambert Logistics",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 22020,
+      "city": "UKN_newtownabbey",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ffoulkes_holdings",
+      "name": "Ffoulkes Holdings",
+      "sector": "industry",
+      "share": 0.0211,
+      "headcount": 13173,
+      "city": "UKE_grimsby",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_eastcote_logistics",
+      "name": "Eastcote Logistics",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20207,
+      "city": "UKG_telford",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_naughton_insurance",
+      "name": "Naughton Insurance",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 19018,
+      "city": "UKE_doncaster",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_yarborough_logistics",
+      "name": "Yarborough Logistics",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 18789,
+      "city": "UKG_shrewsbury",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_nevile_materials",
+      "name": "Nevile Materials",
+      "sector": "industry",
+      "share": 0.0225,
+      "headcount": 14637,
+      "city": "UKG_dudley",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_orlebar_transport",
+      "name": "Orlebar Transport",
+      "sector": "industry",
+      "share": 0.03,
+      "headcount": 20099,
+      "city": "UKD_bolton",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_kelsall_trading",
+      "name": "Kelsall Trading",
+      "sector": "industry",
+      "share": 0.0144,
+      "headcount": 9794,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldridge_holdings",
+      "name": "Aldridge Holdings",
+      "sector": "services",
+      "share": 0.0111,
+      "headcount": 17261,
+      "city": "UKJ_southampton",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldwyn_trading",
+      "name": "Aldwyn Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_denby_holdings",
+      "name": "Denby Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKG_coventry",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_naughton_insurance_agri",
+      "name": "Naughton Insurance Agri",
+      "sector": "services",
+      "share": 0.0136,
+      "headcount": 21079,
+      "city": "UKJ_saint_peters",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_lambourne_energy",
+      "name": "Lambourne Energy",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_quennell_energy",
+      "name": "Quennell Energy",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23799,
+      "city": "UKM_edinburgh",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_inskip_trading",
+      "name": "Inskip Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ravensworth_holdings",
+      "name": "Ravensworth Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKJ_littlehampton",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_eastcote_materials",
+      "name": "Eastcote Materials",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23598,
+      "city": "UKC_gateshead",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_kingscote_trading",
+      "name": "Kingscote Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24976,
+      "city": "UKM_glasgow",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_fairfax_industries",
+      "name": "Fairfax Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24538,
+      "city": "UKE_sheffield",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_vane_tempest_materials",
+      "name": "Vane-Tempest Materials",
+      "sector": "services",
+      "share": 0.0058,
+      "headcount": 9144,
+      "city": "UKJ_crawley",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_danvers_group",
+      "name": "Danvers Group",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ffoulkes_insurance_holdings",
+      "name": "Ffoulkes Insurance Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23694,
+      "city": "UKM_dundee",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_deverell_insurance",
+      "name": "Deverell Insurance",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_selwyn_french_industries",
+      "name": "Selwyn-French Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKJ_saint_peters",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_everington_group",
+      "name": "Everington Group",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKL_cardiff",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_massingham_materials",
+      "name": "Massingham Materials",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24389,
+      "city": "UKK_cheltenham",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_kingscote_holdings",
+      "name": "Kingscote Holdings",
+      "sector": "services",
+      "share": 0.0142,
+      "headcount": 20091,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_orlebar_industries",
+      "name": "Orlebar Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24922,
+      "city": "UKD_manchester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_kelmscott_trading",
+      "name": "Kelmscott Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKK_plymouth",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_bagshot_transport_agri",
+      "name": "Bagshot Transport Agri",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22500,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_inglethorpe_holdings_insurance",
+      "name": "Inglethorpe Holdings Insurance",
+      "sector": "services",
+      "share": 0.0112,
+      "headcount": 15167,
+      "city": "UKD_manchester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldridge_trading",
+      "name": "Aldridge Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKJ_gosport",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_vane_tempest_transport_group",
+      "name": "Vane-Tempest Transport Group",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_sandys_industries",
+      "name": "Sandys Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_cholmondley_group",
+      "name": "Cholmondley Group",
+      "sector": "services",
+      "share": 0.008,
+      "headcount": 12075,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldwyn_group_holdings",
+      "name": "Aldwyn Group Holdings",
+      "sector": "services",
+      "share": 0.0078,
+      "headcount": 11895,
+      "city": "UKD_preston",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_acheson_lowndes_energy",
+      "name": "Acheson-Lowndes Energy",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKM_edinburgh",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_scarthwaite_agri",
+      "name": "Scarthwaite Agri",
+      "sector": "services",
+      "share": 0.0094,
+      "headcount": 13698,
+      "city": "UKM_paisley",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_beckwith_energy",
+      "name": "Beckwith Energy",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22488,
+      "city": "UKL_swansea",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_rothwell_materials",
+      "name": "Rothwell Materials",
+      "sector": "services",
+      "share": 0.0151,
+      "headcount": 21475,
+      "city": "UKH_great_yarmouth",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_vane_tempest_logistics_holdings",
+      "name": "Vane-Tempest Logistics Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKK_cheltenham",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_fairweather_holdings",
+      "name": "Fairweather Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_ponsonby_logistics",
+      "name": "Ponsonby Logistics",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22670,
+      "city": "UKJ_gosport",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_acheson_lowndes_holdings",
+      "name": "Acheson-Lowndes Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22838,
+      "city": "UKK_plymouth",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_kelmscott_energy",
+      "name": "Kelmscott Energy",
+      "sector": "services",
+      "share": 0.0142,
+      "headcount": 19501,
+      "city": "UKN_belfast",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_aldwyn_holdings",
+      "name": "Aldwyn Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23145,
+      "city": "UKG_newcastle_under_lyme",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_harrington_logistics",
+      "name": "Harrington Logistics",
+      "sector": "services",
+      "share": 0.0119,
+      "headcount": 18056,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_deverell_holdings",
+      "name": "Deverell Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 24067,
+      "city": "UKF_leicester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_beckwith_trading",
+      "name": "Beckwith Trading",
+      "sector": "services",
+      "share": 0.0083,
+      "headcount": 12897,
+      "city": "UKC_stockton_on_tees",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_fairweather_industries",
+      "name": "Fairweather Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 22449,
+      "city": "UKD_manchester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_hesketh_insurance",
+      "name": "Hesketh Insurance",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_morcom_trading",
+      "name": "Morcom Trading",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKD_preston",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_sandys_holdings",
+      "name": "Sandys Holdings",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKF_nottingham",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_cholmondley_transport",
+      "name": "Cholmondley Transport",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_cholmondley_energy",
+      "name": "Cholmondley Energy",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23678,
+      "city": "UKI_london",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_escott_group",
+      "name": "Escott Group",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKF_leicester",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_urquhart_insurance",
+      "name": "Urquhart Insurance",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 23394,
+      "city": "UKG_dudley",
+      "tier": "body"
+    },
+    {
+      "id": "GBR_nevile_industries",
+      "name": "Nevile Industries",
+      "sector": "services",
+      "share": 0.0166,
+      "headcount": 25000,
+      "city": "UKI_london",
+      "tier": "body"
+    }
   ]
 }

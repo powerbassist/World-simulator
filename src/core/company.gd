@@ -73,6 +73,17 @@ var headcount: float = 0.0
 ## eighteen entries silently never filled in.
 var city: String = ""
 
+## V4.7a tier: legacy entries without the field remain majors until A3 regenerates them.
+var tier: String = "major"
+
+## V4.7a: the major's named chief -- a person in the same nation's
+## data/people/<ID>.json, kind "executive". Required on majors (the loader
+## refuses a major without one: a champion with no face is the count-is-the-
+## design rule half-built), refused on body firms (the body is acted upon,
+## nobody fronts it). The id itself is validated cross-register in
+## _validate_companies, the way party ids resolve for people.
+var chief_id: String = ""
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var c := new()
@@ -98,19 +109,33 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 	else:
 		c.sector = sector
 
+	# The floor is scoped by tier BEFORE the share check reads it: majors keep
+	# the 0.02 standard (a verb target too small to move its sector is a label),
+	# while a body firm's whole band lives BELOW it (~0.005 typical, 0.03 the
+	# ceiling BODY_SHARE_MAX clamps at the loader). One floor for both tiers
+	# would refuse every body file A3 generates -- the A1 review's finding,
+	# fixed at the shared check rather than per call site.
+	var tier := "major"
+	if d.has("tier"):
+		tier = String(d["tier"])
+	var share_floor: float = K.MIN_BODY_SHARE if tier == "body" else K.MIN_AUTHORED_SHARE
 	if not d.has("share") or not (typeof(d["share"]) == TYPE_INT or typeof(d["share"]) == TYPE_FLOAT):
 		errors.append("%s: %s missing or non-numeric field 'share'" % [filename, path])
 	else:
 		c.share = float(d["share"])
 		if c.share <= 0.0 or c.share > 1.0:
 			errors.append("%s: %s share = %s must be in (0, 1]" % [filename, path, str(c.share)])
-		elif c.share < K.MIN_AUTHORED_SHARE:
-			# A firm too small to move its sector is a name on a panel. The floor is
+		elif c.share < share_floor:
+			# A MAJOR too small to move its sector is a name on a panel. The floor is
 			# the same standard _validate_people() applies to an unreferenced person:
 			# content with no reachable effect fails the load rather than sitting in a
-			# file looking like a feature.
-			errors.append("%s: %s share = %s is below MIN_AUTHORED_SHARE (%s) -- a firm that cannot move its sector is a label, not a firm" % [
-				filename, path, str(c.share), str(K.MIN_AUTHORED_SHARE)
+			# file looking like a feature. A body firm reads MIN_BODY_SHARE's smaller
+			# floor instead -- not because its whole band sits under the major floor
+			# (BODY_SHARE_MAX 0.03 overlaps it; the tiers are separated by the tier
+			# FIELD, not by share size) but because a body firm's scale of mattering
+			# is its own.
+			errors.append("%s: %s share = %s is below the %s-tier floor (%s) -- a firm that cannot move its sector is a label, not a firm" % [
+				filename, path, str(c.share), tier, str(share_floor)
 			])
 
 	if not d.has("headcount") or not (typeof(d["headcount"]) == TYPE_INT or typeof(d["headcount"]) == TYPE_FLOAT):
@@ -125,8 +150,17 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 	else:
 		c.city = d["city"]
 
+	if d.has("tier"):
+		c.tier = String(d["tier"])
+
+	if d.has("chief_id"):
+		if typeof(d["chief_id"]) != TYPE_STRING:
+			errors.append("%s: %s field 'chief_id' must be a string" % [filename, path])
+		else:
+			c.chief_id = d["chief_id"]
+
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city":
+		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier" and key != "chief_id":
 			errors.append("%s: %s has unrecognised field '%s' -- revenue is share x sector output and is never authored, and a firm carries no owner, margin or productivity term" % [
 				filename, path, key
 			])

@@ -1137,6 +1137,131 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "SVK_chief_spolocnost_senko",
+      "name": "Alžbeta Senko",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_banka_slavik",
+      "name": "Hana Slávik",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_hruska_skupina",
+      "name": "Andrej Hruška",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_spolocnost_cipov",
+      "name": "Dušan Cipov",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_nadassky_obchod",
+      "name": "Erik Nádašský",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_spolocnost_palarik",
+      "name": "Igor Palárik",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_vranka",
+      "name": "Andrej Vranka",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_obchodny_dom_jambor",
+      "name": "Jana Jambor",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_obchodny_dom_frano",
+      "name": "František Fraňo",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_turcek_doprava",
+      "name": "Marek Turček",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "SVK_chief_banka_zimka",
+      "name": "Katarína Zimka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
     }
   ]
 }

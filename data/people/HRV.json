@@ -1118,6 +1118,120 @@
       ],
       "bench": true,
       "party_id": "krscanska_unija"
+    },
+    {
+      "id": "HRV_chief_radic_promet",
+      "name": "Zvonimir Radić",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_radic_osiguranje",
+      "name": "Zvonimir Radić",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_frlan_graditeljstvo",
+      "name": "Petra Frlan",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_babic_promet",
+      "name": "Goran Babić",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_radic_industrija",
+      "name": "Jasenka Radić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_grubisic_promet",
+      "name": "Domagoj Grubišić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_banka_andelic",
+      "name": "Vesna Anđelić",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_starcevic_logistika",
+      "name": "Zlata Starčević",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_vukasovic_trgovina",
+      "name": "Luka Vukasović",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "HRV_chief_zoric_trgovina",
+      "name": "Andrija Zorić",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.48,
+      "bench": true
     }
   ]
 }

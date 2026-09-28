@@ -1154,6 +1154,143 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "LUX_chief_origer_commerce",
+      "name": "Tessy Origer",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_erpelding_logistique",
+      "name": "Alain Erpelding",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_pulver_industrie",
+      "name": "Lucien Pulver",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_bintner_agriculture",
+      "name": "Nicolas Bintner",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_reiffers_assurances",
+      "name": "Félix Reiffers",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_nickels_agriculture",
+      "name": "Félix Nickels",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_elschner_materiaux",
+      "name": "Désiré Elschner",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_societe_wagner",
+      "name": "Émile Wagner",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_herrmann_assurances",
+      "name": "Marc Herrmann",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_engel_transport",
+      "name": "Victor Engel",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_societe_reckinger",
+      "name": "Désiré Reckinger",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "LUX_chief_erpelding_industrie",
+      "name": "Mireille Erpelding",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.44,
+      "bench": true
     }
   ]
 }

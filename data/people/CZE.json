@@ -1138,6 +1138,136 @@
       ],
       "bench": true,
       "party_id": "obcanska_aliance"
+    },
+    {
+      "id": "CZE_chief_obchodni_dum_havlicek",
+      "name": "Markéta Havlíček",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_banka_malecek",
+      "name": "Lucie Maleček",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_obchodni_dum_fiser",
+      "name": "Petra Fišer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_toman_logistika",
+      "name": "František Toman",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_benesovsky_skupina",
+      "name": "Luboš Benešovský",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_spolecnost_zemek",
+      "name": "Radim Zemek",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_spolecnost_kroupa",
+      "name": "Jitka Kroupa",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.3,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_fojtik_obchod",
+      "name": "Radim Fojtík",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_benesovsky_pojisteni",
+      "name": "Jitka Benešovský",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_malecek",
+      "name": "Oldřich Maleček",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "CZE_chief_nedved",
+      "name": "Milan Nedvěd",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
     }
   ]
 }

@@ -2353,17 +2353,28 @@ func _run_companies_roundtrip(loader) -> void:
 	if not is_equal_approx(Companies.subsidy_of(loaded.player(), target), 1.0)	:
 		_fail("a standing subsidy did not survive the round trip")
 
-	# The bump's premise, checked rather than asserted: drop the key a version-14
-	# save would not have and the partition is gone -- every firm produces nothing,
-	# while the player is still being billed by a serialised budget line.
+	# The bump's premise, checked rather than asserted -- and rewritten at the
+	# rule when V4.7a made the register SPARSE: the partition now lives in
+	# content (an absent entry reads the authored share, by design), so "no
+	# register" no longer means "no output". What the register alone carries is
+	# the VERB STATE -- a moved share and a standing subsidy. Drop the key and
+	# the share reverts to authored and the subsidy to zero, while the
+	# serialised bill (its own field) keeps billing: the mismatch the bump
+	# exists to prevent is still shown, and a save from before the register
+	# loads as the world its era modelled -- firms at their authored partition,
+	# nothing subsidised.
 	var without: Dictionary = state.to_dict()
 	(without["nations"]["FRA"] as Dictionary).erase("companies")
 	var lost = GameState.from_dict(without)
 	if not lost.player().companies.is_empty():
 		_fail("an absent companies register did not read as empty -- the premise of the bump is wrong")
 	for company in loader.companies["FRA"]:
-		if Companies.output_eur_bn(lost.player(), company) != 0.0:
-			_fail("%s still produced something with no register -- the bump's premise is wrong" % company.id)
+		if not Companies.is_major(company):
+			continue
+		if not is_equal_approx(Companies.share_of_company(lost.player(), company), company.share):
+			_fail("%s did not revert to its authored share with no register" % company.id)
+		if Companies.subsidy_of(lost.player(), company.id) != 0.0:
+			_fail("%s kept a subsidy with no register -- the verb state did not revert" % company.id)
 	if not is_equal_approx(lost.player().subsidy_bill_pct_gdp, state.player().subsidy_bill_pct_gdp):
 		_fail("the serialised bill did not survive, so the mismatch this bump is about cannot be shown")
 

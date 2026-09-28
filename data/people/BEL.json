@@ -1160,6 +1160,153 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "BEL_chief_bank_jongen",
+      "name": "Lode Jongen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_compagnie_absil",
+      "name": "Nele Absil",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_vennootschap_claes",
+      "name": "Dries Claes",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_compagnie_floor",
+      "name": "Marijke Floor",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_absil_verzekering",
+      "name": "Gerben Absil",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_raskin_industrie",
+      "name": "Pim Raskin",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_tack",
+      "name": "Lode Tack",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_fransen_landbouw",
+      "name": "Dries Fransen",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_mannaerts_transport",
+      "name": "Nand Mannaerts",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_simonis_industrie",
+      "name": "Nand Simonis",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_jongen_industrie",
+      "name": "Sofie Jongen",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_vanaerschot_groep",
+      "name": "Joos Vanaerschot",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "BEL_chief_hoet_energie",
+      "name": "Koen Hoet",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
     }
   ]
 }

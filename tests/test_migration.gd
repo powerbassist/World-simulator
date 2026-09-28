@@ -153,7 +153,7 @@ func _check_city_pull_matches_named_payroll() -> void:
 				var heads: float = Migration.city_population(ns, region.id, city.id)
 				var payroll: float = Companies.headcount_in_city(ns, _loader, city.id)
 				var expected: float = payroll / heads if heads > 0.0 else 0.0
-				var actual: float = Migration.city_pull(ns, _loader, region, city.id)
+				var actual: float = Migration.city_pull(ns, region, city.id, Migration._jobs_by_city(ns, _loader))
 				if absf(actual - expected) > 0.000000001:
 					_fail("%s city '%s' pull %f against a recomputed %f" % [
 						nation_id, city.id, actual, expected,
@@ -361,7 +361,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 				var top_id := ""
 				var bottom_id := ""
 				for city in region.cities:
-					var pull: float = Migration.city_pull(ns, _loader, region, city.id)
+					var pull: float = Migration.city_pull(ns, region, city.id, Migration._jobs_by_city(ns, _loader))
 					if pull > top_pull:
 						top_pull = pull
 						top_id = city.id

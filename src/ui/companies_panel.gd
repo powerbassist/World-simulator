@@ -217,7 +217,11 @@ func _build_sector(ns, sector: String) -> void:
 	var sector_output: float = float(ns.sector_output.get(sector, 0.0))
 	var named := 0.0
 	for company in firms:
-		named += Companies.share_of(ns, company.id)
+		# share_of_company, not share_of: the sparse register reads 0.0 for
+		# every untouched body firm, and the heading would print the majors'
+		# share (~0.3) against authored coverage of ~0.88 -- the A3 review's
+		# Critical 2.
+		named += Companies.share_of_company(ns, company)
 	# V1.4b. The burden is per SECTOR, so it belongs on the sector's own line and
 	# nowhere else -- putting it on a firm row would suggest a rule the player could
 	# point at one company, which is exactly what src/core/law.gd refuses.
@@ -233,8 +237,58 @@ func _build_sector(ns, sector: String) -> void:
 
 	_build_investment(ns, sector)
 
+	# A3. The majors own the verbs and the rows; the body is the register's
+	# fabric and gets ONE aggregate line plus its five biggest employers as
+	# caption lines -- ~80 body firms printed as full rows would bury every
+	# major under content that has no verb, and the fold contract needs the
+	# panel's primary action (the verbs) above the readout, not under it.
+	var majors := []
+	var body := []
 	for company in firms:
+		if Companies.is_major(company):
+			majors.append(company)
+		else:
+			body.append(company)
+	_build_body(ns, sector, body)
+
+	for company in majors:
 		_build_firm(ns, company)
+
+
+## A3's body aggregate: one line saying the fabric exists and how much of the
+## sector it holds, then the five biggest body employers by headcount -- enough
+## to see the tier is real firms with real jobs, not enough to bury the majors.
+## The jobs read is the LIVE one (Companies.headcount), the same read the
+## majors' rows above use: a body firm's share never moves in 7a, but a
+## standing regulation burden scales its compliance factor like anybody's --
+## and the PR-46 review measured the authored read diverging 3-10 % from the
+## live figure the sim itself consumes, in the same panel as burden-scaled
+## major rows. One readout, one time.
+func _build_body(ns, sector: String, body: Array) -> void:
+	if body.is_empty():
+		return
+	var share := 0.0
+	var jobs := 0.0
+	for company in body:
+		# The fallback read, same reason as the sector heading above: nothing
+		# writes a body entry in 7a, and a register-only read would print the
+		# tier's headline line at 0.00 of sector forever -- the A3 review's
+		# Critical 1, V1.6d's present-figure-as-zero class.
+		share += Companies.share_of_company(ns, company)
+		jobs += Companies.headcount(ns, company)
+	PanelKit.line(_body, "BODY · %d firms · %.2f of sector · %s jobs" % [
+		body.size(), share, _thousands(jobs),
+	])
+	var ranked := body.duplicate()
+	var live_jobs := {}
+	for company in body:
+		live_jobs[company.id] = Companies.headcount(ns, company)
+	ranked.sort_custom(func(a, b): return float(live_jobs[a.id]) > float(live_jobs[b.id]))
+	for i in mini(5, ranked.size()):
+		var company = ranked[i]
+		PanelKit.line(_body, "  %s · %s jobs" % [
+			company.company_name, _thousands(float(live_jobs[company.id])),
+		])
 
 
 ## V1.6e's readout and its two verbs, under the sector heading they are pointed at.
@@ -367,7 +421,7 @@ func _build_firm(ns, company) -> void:
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
-	for action in Companies.available(_state, ns, _loader.company_actions, company.id):
+	for action in Companies.available(_state, ns, _loader.company_actions, company.id, _loader):
 		buttons.add_child(_action_button(ns, company, action))
 	block.add_child(buttons)
 

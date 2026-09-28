@@ -1148,6 +1148,139 @@
       ],
       "bench": true,
       "party_id": "partido_solidarista"
+    },
+    {
+      "id": "PRT_chief_companhia_paiva",
+      "name": "Lourenço Paiva",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_almeirim_seguros",
+      "name": "Beatriz Almeirim",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sociedade_valente",
+      "name": "Bernardino Valente",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sequeira_grupo",
+      "name": "Joana Sequeira",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_mascarenhas",
+      "name": "Natália Mascarenhas",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sociedade_trindade",
+      "name": "Nuno Trindade",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_ourique_transportes",
+      "name": "Natália Ourique",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_sociedade_freitas",
+      "name": "Duarte Freitas",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_janes_logistica",
+      "name": "Eusébio Janes",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_aguiar_agricultura",
+      "name": "Elvira Aguiar",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_pina_materiais",
+      "name": "Miguel Pina",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "PRT_chief_guerra_grupo",
+      "name": "Beatriz Guerra",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.49,
+      "bench": true
     }
   ]
 }

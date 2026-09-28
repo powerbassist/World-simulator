@@ -125,11 +125,28 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 ## three -- so for those seven nothing moves at this level and the region level moves
 ## them instead. A true zero rather than an absent figure, which is the same
 ## distinction src/ui/region_panel.gd's payroll column already draws.
-static func city_pull(ns, loader, region, city_id: String) -> float:
+## V4.7a: the jobs figure arrives pre-bucketed -- one pass over the nation's
+## firms per month (_jobs_by_city below), not a scan of the whole roster per
+## city. At the 2,729-firm register the scan was ~102k firm visits a month; the
+## bucket is bit-identical because each city's firms accumulate in roster order
+## either way.
+static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> float:
 	var heads: float = city_population(ns, region.id, city_id)
 	if heads <= 0.0:
 		return 0.0
-	return Companies.headcount_in_city(ns, loader, city_id) / heads
+	return float(jobs_by_city.get(city_id, 0.0)) / heads
+
+
+## Named jobs per city, one pass over the nation's whole firm roster -- the
+## migration month's only walk of the register, where it used to be one walk
+## per city. Summation order per city is the roster order, matching
+## Companies.headcount_in_city exactly, so the flow's inputs are unchanged to
+## the bit and the re-run prediction owes nothing.
+static func _jobs_by_city(ns, loader) -> Dictionary:
+	var out := {}
+	for company in Companies.firms_of(loader, ns.id):
+		out[company.city] = float(out.get(company.city, 0.0)) + Companies.headcount(ns, company)
+	return out
 
 
 # --- The flow -----------------------------------------------------------------
@@ -209,7 +226,7 @@ static func _tick_nation(ns, region_list: Array, loader, access: Dictionary, sit
 	# and a guard around the whole nation would have made the isolation silent
 	# about the one flow it does not isolate.
 	if K.MIGRATION_RATE != 0.0:
-		_tick_migration(ns, region_list, loader, access, sites)
+		_tick_migration(ns, region_list, loader, access, sites, _jobs_by_city(ns, loader))
 
 	# V2.6c. Natural change, the third flow on this register -- births and deaths
 	# as a measured per-region rate against the live-share-weighted mean. It runs
@@ -239,7 +256,7 @@ static func _tick_nation(ns, region_list: Array, loader, access: Dictionary, sit
 ## comments below are the original ordering argument, kept whole because the
 ## natural flow after them is what makes "both levels read start-of-month state"
 ## mean "start of the MIGRATION step" rather than start of the month.
-static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, sites: Dictionary) -> void:
+static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, sites: Dictionary, jobs_by_city: Dictionary) -> void:
 	# Level one (run FIRST): the named cities of each region. city_pull() reads its
 	# OWN region's live share through city_population(), while region_pull() reads no
 	# city's share at all -- so cities-then-regions is the order in which both levels
@@ -258,7 +275,7 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 		var city_weighted: float = 0.0
 		var city_total: float = 0.0
 		for city in region.cities:
-			var pull: float = city_pull(ns, loader, region, city.id)
+			var pull: float = city_pull(ns, region, city.id, jobs_by_city)
 			var share: float = city_share(ns, city.id)
 			city_pulls[city.id] = pull
 			city_shares[city.id] = share

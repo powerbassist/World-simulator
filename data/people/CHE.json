@@ -1149,6 +1149,129 @@
       ],
       "bench": true,
       "party_id": "union_ouvriere_helvetique"
+    },
+    {
+      "id": "CHE_chief_handelshaus_vuille",
+      "name": "Martin Vuille",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_schurch_energie",
+      "name": "Adelheid Schürch",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_fuchs_gruppe",
+      "name": "Peter Fuchs",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_schnyder_landwirtschaft",
+      "name": "Hansjörg Schnyder",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_gesellschaft_ottiger",
+      "name": "Nathalie Ottiger",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_bank_giezendanner",
+      "name": "Nathalie Giezendanner",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_portmann",
+      "name": "Adelheid Portmann",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_hoffmann_landwirtschaft",
+      "name": "Hansjörg Hoffmann",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_fuchs_energie",
+      "name": "Gerhard Fuchs",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_jenni_handel",
+      "name": "Elsbeth Jenni",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "CHE_chief_handelshaus_daenzer",
+      "name": "Beatrice Daenzer",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
     }
   ]
 }

@@ -1100,6 +1100,129 @@
       ],
       "bench": true,
       "party_id": "union_popular"
+    },
+    {
+      "id": "ESP_chief_compania_urenda",
+      "name": "Nuria Urenda",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_rueda",
+      "name": "Eduardo Rueda",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_aranda_transportes",
+      "name": "Lourdes Aranda",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_arriaga_construccion",
+      "name": "Esperanza Arriaga",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_aranda_seguros",
+      "name": "Borja Aranda",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_palazuelos_energia",
+      "name": "Lucas Palazuelos",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_querol_materiales",
+      "name": "Rodrigo Querol",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_sotelo_materiales",
+      "name": "Fermín Sotelo",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_figueroa_industrias",
+      "name": "Nicolás Figueroa",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.73,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_lizarraga_grupo",
+      "name": "Andrés Lizárraga",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "ESP_chief_compania_aranda",
+      "name": "Javier Aranda",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.65,
+      "bench": true
     }
   ]
 }

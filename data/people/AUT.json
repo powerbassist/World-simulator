@@ -1094,6 +1094,130 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "AUT_chief_gesellschaft_gruber",
+      "name": "Christoph Gruber",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_kalcher_industrie",
+      "name": "Leopold Kalcher",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_dienstl_bau",
+      "name": "Augustin Dienstl",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_tragusta_industrie",
+      "name": "Ignaz Tragusta",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_gesellschaft_grabner",
+      "name": "Barbara Grabner",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_handelshaus_murlasits",
+      "name": "Augustin Murlasits",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_handelshaus_aschauer",
+      "name": "Jakob Aschauer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_gruber_gruppe",
+      "name": "Gottfried Gruber",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_handelshaus_birngruber",
+      "name": "Jakob Birngruber",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_neumayer_bau",
+      "name": "Leopold Neumayer",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "AUT_chief_iro_energie",
+      "name": "Christine Iro",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
     }
   ]
 }

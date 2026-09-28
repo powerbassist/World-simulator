@@ -1107,6 +1107,133 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "IRL_chief_kavanagh_materials",
+      "name": "Fergal Kavanagh",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_enright_logistics",
+      "name": "Brendan Enright",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_nolan_construction",
+      "name": "Cathal Nolan",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_lambe_energy",
+      "name": "Eamonn Lambe",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_o_donoghue_energy",
+      "name": "Padraig O'Donoghue",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_gantly_transport",
+      "name": "Fiona Gantly",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_trust_nestor",
+      "name": "Fergal Nestor",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_aherne_transport",
+      "name": "Cathal Aherne",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_tyrrell_group",
+      "name": "Eamonn Tyrrell",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_henchy_agri",
+      "name": "Sinead Henchy",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "IRL_chief_usher_group",
+      "name": "Caitriona Usher",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
     }
   ]
 }

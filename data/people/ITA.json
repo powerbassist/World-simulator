@@ -1125,6 +1125,152 @@
         }
       ],
       "bench": true
+    },
+    {
+      "id": "ITA_chief_compagnia_pischedda",
+      "name": "Lavinia Pischedda",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_banca_aloisio",
+      "name": "Fiorella Aloisio",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_brancadoro_commercio",
+      "name": "Piero Brancadoro",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.54,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_valguarnera_gruppo",
+      "name": "Nanni Valguarnera",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_societa_liguori",
+      "name": "Ludovico Liguori",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.84,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_errani_industrie",
+      "name": "Mariangela Errani",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_compagnia_bellandi",
+      "name": "Raffaella Bellandi",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_tirabassi_trasporti",
+      "name": "Dario Tirabassi",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_laudomi_trasporti",
+      "name": "Nanni Laudomi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_banca_reali",
+      "name": "Dario Reali",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_oliverio_commercio",
+      "name": "Nanni Oliverio",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_compagnia_ravagnani",
+      "name": "Cesare Ravagnani",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "ITA_chief_dossena_commercio",
+      "name": "Marcello Dossena",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "bench": true
     }
   ]
 }
