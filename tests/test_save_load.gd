@@ -2414,9 +2414,16 @@ func _run_companies_roundtrip(loader) -> void:
 	# one writer -- a subsidy, a subsidy, an ownership op. `name`, `sector`,
 	# `headcount` and the AUTHORED share are content and must never appear here, for
 	# the reason above: the copy in the save is the one a content edit would silently
-	# disagree with. A fourth key still fails, so a later session storing a baseline
-	# or a per-firm burden has to come and say why.
-	const LIVE_KEYS := ["share", "subsidy", "state_share"]
+	# disagree with. A key beyond the list still fails, so a later session storing a
+	# baseline or a per-firm burden has to come and say why.
+	# V4.7b widens it for the AUTONOMY fields -- all scalars, all with exactly one
+	# writer (industry.gd), all carrying only what MOVED (a relocation's city
+	# override, a failure and its window, an open bid, the subsidy shadow the
+	# failure hazard reads). Absent, every one reads its default, which is the
+	# truth about every save that predates the machine.
+	const LIVE_KEYS := ["share", "subsidy", "state_share", "city", "failed",
+		"rescue_months_left", "bid_bidder", "bid_price_eur_bn", "bid_months_left",
+		"subsidy_shadow", "subsidy_lapsed_month"]
 	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
 		for key in (entry as Dictionary).keys():
 			if not LIVE_KEYS.has(key):

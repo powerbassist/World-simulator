@@ -75,6 +75,9 @@ tests=(
   tests/test_media.gd
   tests/test_cycle.gd
   tests/test_inflation.gd
+  # V4.7b: the autonomy machine -- determinism, tick order, single writer,
+  # body silence, zero-sum, and the three mechanics by construction.
+  tests/test_industry.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

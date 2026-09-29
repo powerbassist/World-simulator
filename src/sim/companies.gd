@@ -256,6 +256,11 @@ static func value_eur_bn(ns, company) -> float:
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
+	# V4.7b: a failed firm employs nobody. The flag is industry.gd's to write;
+	# this read is the payroll's own arithmetic, and the register is the one
+	# place both systems already meet.
+	if bool(ns.companies.get(company.id, {}).get("failed", false)):
+		return 0.0
 	# The RATIO is computed first, deliberately: (h * s) / s is not exactly h
 	# for every float pair -- the A3 roster's generated headcounts found the
 	# unlucky ones, and the residue showed up as a 1e-18 drift in
@@ -292,7 +297,11 @@ static func headcount(ns, company) -> float:
 static func headcount_in_city(ns, loader, city_id: String) -> float:
 	var total := 0.0
 	for company in firms_of(loader, ns.id):
-		if company.city == city_id:
+		# The LIVE city -- a V4.7b relocation writes the override and the
+		# payroll moves with it. The authored city stays content in data/.
+		var entry: Dictionary = ns.companies.get(company.id, {})
+		var live_city: String = String(entry.get("city", company.city))
+		if live_city == city_id:
 			total += headcount(ns, company)
 	return total
 

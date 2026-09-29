@@ -31,6 +31,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -1258,6 +1259,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+	Industry.tick_month(_state, _loader)
 
 	# After Companies, because the city pull reads live headcount: a month in which a
 	# subsidy moved a firm's hiring should move people in the same month rather than
