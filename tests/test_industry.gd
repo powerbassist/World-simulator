@@ -226,13 +226,16 @@ func _test_forced_failure() -> void:
 			str(entry.get("rescue_months_left")), IK.RESCUE_WINDOW_MONTHS])
 	if Industry.failing(state, ns).is_empty():
 		_fail("failing() does not report a major in its window")
-	# The window lapses: tick past it and the flag stops being revertible.
+	# The window lapses: tick past it and the window reads 0 while `failed`
+	# stands -- committed is the window-at-zero state, which B2's rescue verb
+	# reads. An open window after the horizon means the decrement is broken.
 	for _m in IK.RESCUE_WINDOW_MONTHS + 1:
 		_tick(state)
 	entry = ns.companies[major.id]
-	if bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", -1)) != 0 and not bool(entry.get("failed_committed", false)):
-		# Committed is represented by the window reading 0 while failed stands.
-		pass
+	if not bool(entry.get("failed", false)):
+		_fail("a failed flag vanished without the rescue verb -- nothing in B1 clears it")
+	if int(entry.get("rescue_months_left", -1)) != 0:
+		_fail("the rescue window did not lapse to 0 after its horizon (reads %s)" % str(entry.get("rescue_months_left")))
 
 
 func _test_forced_bid() -> void:

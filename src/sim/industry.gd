@@ -142,7 +142,12 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 			# pass genuinely touched carries a non-zero value.
 			if float(deltas[company.id]) == 0.0:
 				continue
-			var entry: Dictionary = ns.companies[company.id]
+			# Safe read like every other pass: the entry normally exists
+			# (Companies seeds majors first in main.gd's order), but a tick
+			# reorder should degrade to a skipped firm, not a crash.
+			var entry: Dictionary = ns.companies.get(company.id, {})
+			if entry.is_empty():
+				continue
 			entry["share"] = float(before[company.id]) + float(deltas[company.id])
 
 

@@ -53,9 +53,6 @@ func _init() -> void:
 			var ns = state.nations[nation_id]
 			for company in Companies.majors_of(loader, String(nation_id)):
 				var entry: Dictionary = ns.companies.get(company.id, {})
-				if bool(entry.get("failed", false)):
-					if int(entry.get("rescue_months_left", 0)) == 0 and not bool(entry.get("failed_committed", false)):
-						pass
 				var city: String = String(entry.get("city", ""))
 				if city != "" and city != String(company.city) and not moved.has(company.id):
 					relocations += 1
