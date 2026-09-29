@@ -742,6 +742,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["bid_bidder"] = ""
 			entry["bid_price_eur_bn"] = 0.0
 			entry["bid_months_left"] = 0
+			entry["courted"] = 0.0
 			if bidder != "":
 				_pulse_relations(state, ns.id, bidder.split("|")[0], K.BID_BLOCK_RELATIONS_PULSE)
 		"allow_bid":
@@ -752,6 +753,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["bid_bidder"] = ""
 			entry["bid_price_eur_bn"] = 0.0
 			entry["bid_months_left"] = 0
+			entry["courted"] = 0.0
 		"court":
 			# The flag the bid hazard reads (industry.gd multiplies the yearly
 			# hazard for a courted firm). Written only here, cleared only by
