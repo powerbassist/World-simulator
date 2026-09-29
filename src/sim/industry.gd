@@ -15,14 +15,17 @@ extends RefCounted
 ## the same months produces the same world and no RNG state is serialised
 ## anywhere. tests/test_industry.gd pins two identical states bit-identical.
 ##
-## SINGLE WRITER. The register keys this file owns -- `city` (a relocation's
-## override; the authored city stays content in data/), `failed`,
-## `rescue_months_left`, `bid_bidder`/`bid_price_eur_bn`/`bid_months_left`
-## (the bid as three scalars: from_dict's rebuild guarantee is per-scalar, and
-## a nested dictionary would silently narrow it), `subsidy_shadow` and
-## `subsidy_lapsed_month` (the failure hazard's memory of a withdrawn subsidy)
-## -- are written here and nowhere else. tests/test_industry.gd scans for a
-## second writer.
+## TWO WRITERS, ONE PER ROLE. This file owns the machine's writes -- `city`
+## (a relocation's override; the authored city stays content in data/),
+## `failed`, `rescue_months_left`, `bid_bidder`/`bid_price_eur_bn`/
+## `bid_months_left` (the bid as three scalars: from_dict's rebuild guarantee
+## is per-scalar, and a nested dictionary would silently narrow it),
+## `subsidy_shadow` and `subsidy_lapsed_month` (the failure hazard's memory of
+## a withdrawn subsidy). B2's VERB CHANNEL is the second writer of the keys it
+## answers: companies.gd's execute() clears/converts bids (block/allow),
+## writes `owner` and `courted`, and commits break-ups and rescues onto
+## failed/window. No third file writes any of it; tests/test_industry.gd
+## scans.
 ##
 ## SAVE_VERSION EARNS NO BUMP, argued per field: absent, every key reads its
 ## default -- no relocation (authored city), not failed, no window, no bid, no

@@ -437,12 +437,48 @@ func _test_rescue_restores_failing() -> void:
 			Companies.share_of_company(ns, major), major.share])
 	if ns.debt_eur_bn <= debt_before:
 		_fail("a bailout was free -- the debt did not move")
+	# C1's two legs: the bailout arm gates on the WINDOW, not the flag alone.
+	# A committed failure stays committed; a broken-up major is never
+	# resurrected while its rivals keep the absorbed split.
+	ns.companies[major.id]["failed"] = true
+	ns.companies[major.id]["share"] = 0.0
+	ns.companies[major.id]["rescue_months_left"] = 0
+	Companies.execute(state, ns, _loader.company_actions, rescue, major.id, _loader)
+	if not bool(ns.companies[major.id].get("failed", false)) or Companies.share_of_company(ns, major) != 0.0:
+		_fail("a rescue resurrected a COMMITTED failure -- the collapse is supposed to be committed")
+	var state2 = GameState.new_game(_loader, PLAYER)
+	var ns2 = state2.nations[PLAYER]
+	var major2 = Companies.majors_of(_loader, PLAYER)[0]
+	var rivals_before := 0.0
+	for other in Companies.majors_of(_loader, PLAYER):
+		if other.id != major2.id and other.sector == major2.sector:
+			rivals_before += Companies.share_of_company(ns2, other)
+	ns2.companies[major2.id]["failed"] = true
+	ns2.companies[major2.id]["share"] = 0.0
+	ns2.companies[major2.id]["rescue_months_left"] = 0
+	Companies.execute(state2, ns2, _loader.company_actions, _action("break_up"), major2.id, _loader)
+	Companies.execute(state2, ns2, _loader.company_actions, rescue, major2.id, _loader)
+	var rivals_after := 0.0
+	for other in Companies.majors_of(_loader, PLAYER):
+		if other.id != major2.id and other.sector == major2.sector:
+			rivals_after += Companies.share_of_company(ns2, other)
+	if Companies.share_of_company(ns2, major2) != 0.0 or absf(rivals_after - rivals_before) > 1e-9:
+		_fail("a rescue undid a break-up -- a dissolved firm does not come back")
 
 
 func _test_court_multiplies_bids() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.nations[PLAYER]
-	var major = Companies.majors_of(_loader, PLAYER)[0]
+	# The verb's own gate: courting targets a small major (< 0.10 share). The
+	# register's first firm is 0.28 and is rightly refused.
+	var major = null
+	for company in Companies.majors_of(_loader, PLAYER):
+		if company.share < 0.10:
+			major = company
+			break
+	if major == null:
+		_fail("no small major to court -- the test needs one")
+		return
 	var court = _action("court_investor")
 	if court == null:
 		_fail("court_investor content missing")

@@ -34,7 +34,10 @@
       "id": "court_investor",
       "name": "Court Foreign Investors",
       "summary": "The state quietly invites foreign capital to look at the firm. Interest multiplies -- and so does the exposure the takeover verbs exist to answer.",
-      "preconditions": [{ "field": "bid_pending", "op": "==", "value": 0 }],
+      "preconditions": [
+        { "field": "bid_pending", "op": "==", "value": 0 },
+        { "field": "firm_share", "op": "<", "value": 0.10 }
+      ],
       "effects": {
         "company": { "op": "court" },
         "bloc_offset": {

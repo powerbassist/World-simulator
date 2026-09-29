@@ -60,6 +60,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
+const DK = preload("res://src/sim/diplomacy_constants.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -715,13 +716,16 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	var price := 0.0
 
 	# V4.7b: A RESCUE ON A FAILING MAJOR IS A BAILOUT, not a subsidy -- the
-	# window's whole meaning. The flag clears, the authored share comes back
-	# (it went to the residual when the failure fired; the same content gives
-	# it back), the window closes, and the treasury pays the firm's value --
+	# window's whole meaning. Gated on the WINDOW, not the flag alone: a
+	# committed failure (window 0) stays committed -- the card copy promises
+	# "past it the collapse is committed" -- and a broken-up major (failed
+	# with a closed window) is never resurrected while its rivals keep the
+	# absorbed split. The flag clears, the authored share comes back (it went
+	# to the residual when the failure fired; the same content gives it
+	# back), the window closes, and the treasury pays the firm's value --
 	# balance-sheet swap, the same capital-transaction rule the ownership ops
 	# run under. On a healthy firm the rescue keeps its V1.4 meaning.
-	var rescued := false
-	if action.id == "strategic_rescue" and bool(entry.get("failed", false)):
+	if action.id == "strategic_rescue" and bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", 0)) > 0:
 		entry["failed"] = false
 		entry["rescue_months_left"] = 0
 		for company in firms_of(loader, ns.id):
@@ -729,7 +733,6 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 				entry["share"] = company.share
 				break
 		price = 0.25 * _value_of(ns, loader, company_id)
-		rescued = true
 
 	match String(terms.get("op", "")):
 		"subsidise": entry["subsidy"] = float(terms.get("intensity", 0.0))
@@ -740,20 +743,22 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["bid_price_eur_bn"] = 0.0
 			entry["bid_months_left"] = 0
 			if bidder != "":
-				_pulse_relations(state, ns.id, bidder.split("|")[0], -0.5)
+				_pulse_relations(state, ns.id, bidder.split("|")[0], K.BID_BLOCK_RELATIONS_PULSE)
 		"allow_bid":
 			var parts := String(entry.get("bid_bidder", "")).split("|")
 			if parts.size() > 0 and String(parts[0]) != "":
 				entry["owner"] = String(parts[0])
-				_pulse_relations(state, ns.id, String(parts[0]), 0.5)
+				_pulse_relations(state, ns.id, String(parts[0]), K.BID_ALLOW_RELATIONS_PULSE)
 			entry["bid_bidder"] = ""
 			entry["bid_price_eur_bn"] = 0.0
 			entry["bid_months_left"] = 0
 		"court":
 			# The flag the bid hazard reads (industry.gd multiplies the yearly
-			# hazard for a courted firm). Written only here; cleared never --
-			# an invitation once extended stands until a bid answers it, which
-			# is the honesty of the verb: you asked for this.
+			# hazard for a courted firm). Written only here, cleared only by
+			# an ANSWERED bid (allow/block clear it with the bid): an
+			# invitation stands until the capital it invited has come or been
+			# refused, and a foreign-owned firm keeps the multiplier -- the
+			# exposure was the point.
 			entry["courted"] = 1.0
 		"break_up":
 			# Pro-rata to the sector's EXISTING body firms -- no new firm ids
@@ -774,6 +779,20 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			for other in majors_of(loader, ns.id):
 				if other.id != company_id and other.sector == _sector_of_id(ns, loader, company_id) and not bool(ns.companies.get(other.id, {}).get("failed", false)):
 					major_absorber += share_of_company(ns, other)
+			if major_absorber <= 0.0:
+				# A sector whose only major is the target has no absorber:
+				# the split would silently fall to the residual -- the verb
+				# as a sector lever wearing a firm's name. Refused, and the
+				# refusal is the panel's to show.
+				var refused_split := {
+					"action_id": action.id,
+					"company_id": company_id,
+					"applied": false,
+					"refused": true,
+					"reason": "no other major in the sector can absorb the split",
+				}
+				ns.last_company_result = refused_split
+				return refused_split
 			if major_absorber > 0.0:
 				for other in majors_of(loader, ns.id):
 					if other.id == company_id or other.sector != _sector_of_id(ns, loader, company_id) or bool(ns.companies.get(other.id, {}).get("failed", false)):
@@ -835,12 +854,14 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 
 ## V4.7b: the ONE relations writer outside diplomacy.gd, for the one company
 ## verb that HAS a counterparty -- a foreign state's takeover offer, answered.
-## Same key, same clamp bounds as diplomacy's own pulses.
+## Through Relations.adjust at diplomacy's own bounds [0, 100]: a relations
+## register readable from 0 has no use for a minus, and the first draft's
+## hardcoded [-100, 100] could write below the readable floor.
 static func _pulse_relations(state, acting_nation: String, other_nation: String, delta: float) -> void:
 	if other_nation == "" or other_nation == acting_nation:
 		return
-	var key: String = Relations.key(acting_nation, other_nation)
-	state.relations[key] = clampf(float(state.relations.get(key, 0.0)) + delta, -100.0, 100.0)
+	Relations.adjust(state, acting_nation, other_nation, delta,
+		DK.RELATIONS_MIN, DK.RELATIONS_MAX)
 
 
 static func _firm_of(ns, loader, company_id: String):

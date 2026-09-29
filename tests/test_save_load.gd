@@ -2423,7 +2423,7 @@ func _run_companies_roundtrip(loader) -> void:
 	# truth about every save that predates the machine.
 	const LIVE_KEYS := ["share", "subsidy", "state_share", "city", "failed",
 		"rescue_months_left", "bid_bidder", "bid_price_eur_bn", "bid_months_left",
-		"subsidy_shadow", "subsidy_lapsed_month"]
+		"subsidy_shadow", "subsidy_lapsed_month", "owner", "courted"]
 	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
 		for key in (entry as Dictionary).keys():
 			if not LIVE_KEYS.has(key):

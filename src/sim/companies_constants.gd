@@ -100,6 +100,12 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 ## rule, rescoped to the verb scale).
 const BREAKUP_MIN_SHARE := 0.10
 
+## V4.7b: the relations pulse a takeover answer carries, in points. A block
+## sours the pair; an allowance warms it. A tenth of a point-scale step, the
+## same weight class as a diplomatic act's small pulse.
+const BID_BLOCK_RELATIONS_PULSE := -0.5
+const BID_ALLOW_RELATIONS_PULSE := 0.5
+
 const MIN_AUTHORED_SHARE := 0.02
 
 ## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same

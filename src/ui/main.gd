@@ -792,6 +792,12 @@ func _wire_hud() -> void:
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
 			_windows.open("agenda")
 			return
+		# V4.7b: an industry card routes to the window where its verbs live.
+		# (Focus-by-firm lands with B3's firm-focused surfaces; for now the
+		# click gets the player to the register, which is where the answer is.)
+		if _industry_card_firms.has(id):
+			_windows.open("companies")
+			return
 		_windows.open("events")
 	)
 
@@ -1402,30 +1408,43 @@ func _on_month_elapsed(year: int, month: int) -> void:
 ## has to stop repeating.
 var _announced_bids := {}
 var _announced_failures := {}
+var _industry_card_firms := {}   # card id -> company_id, for the activation route
 
 func _announce_industry_events() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
 	var bid: Dictionary = Industry.pending_bid(_state, ns)
-	if not bid.is_empty() and not _announced_bids.has(String(bid["company_id"])):
-		_announced_bids[String(bid["company_id"])] = true
-		var firm_name := _firm_display_name(ns.id, String(bid["company_id"]))
-		_hud.message_stack.push(
-			"Foreign takeover bid",
-			"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
-				String(bid["bidder_nation"]), float(bid["price_eur_bn"]), firm_name,
-				int(bid["months_left"])])
-	for failure in Industry.failing(_state, ns):
+	if bid.is_empty():
+		# The memory CLEARS when the event ends: a second bid on the same firm
+		# (after lapse, block or allowance) announces again -- a write-once
+		# memory would leave every later event UI-silent, the class the suite
+		# exists to catch.
+		_announced_bids.clear()
+	else:
+		if not _announced_bids.has(String(bid["company_id"])):
+			_announced_bids[String(bid["company_id"])] = true
+			var firm_name := _firm_display_name(ns.id, String(bid["company_id"]))
+			var card_id: String = _hud.message_stack.push(
+				"Foreign takeover bid",
+				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+					String(bid["bidder_nation"]), float(bid["price_eur_bn"]), firm_name,
+					int(bid["months_left"])])
+			_industry_card_firms[card_id] = String(bid["company_id"])
+	var failing_now := Industry.failing(_state, ns)
+	if failing_now.is_empty():
+		_announced_failures.clear()
+	for failure in failing_now:
 		var company_id := String(failure["company_id"])
 		if _announced_failures.has(company_id):
 			continue
 		_announced_failures[company_id] = true
 		var firm_name := _firm_display_name(ns.id, company_id)
-		_hud.message_stack.push(
+		var card_id: String = _hud.message_stack.push(
 			"Firm in difficulty",
 			"%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
 				firm_name, int(failure["months_left"])])
+		_industry_card_firms[card_id] = company_id
 
 func _firm_display_name(nation_id: String, company_id: String) -> String:
 	for company in _loader.companies.get(nation_id, []):
