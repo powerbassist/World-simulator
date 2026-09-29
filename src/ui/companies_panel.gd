@@ -39,6 +39,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
@@ -171,12 +172,68 @@ func _refresh() -> void:
 		PanelKit.heading(_body, "No register")
 		PanelKit.line(_body, "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
 
+	_build_autonomy_sections(ns)
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
 		_build_sector(ns, String(sector))
 
 	if _pin_bottom:
 		_apply_bottom()
+
+
+## V4.7b: the autonomy machine's two answerable states, each with the verb
+## row on it. A pending bid offers block/allow; a failing major offers the
+## rescue (its restore arm answers the window). Both vanish when answered or
+## lapsed -- the sections are the state's own material, not a feed.
+func _build_autonomy_sections(ns) -> void:
+	var bid: Dictionary = Industry.pending_bid(_state, ns)
+	if not bid.is_empty():
+		PanelKit.heading(_body, "Foreign takeover bid")
+		var firm_name := _firm_name(ns.id, String(bid["company_id"]))
+		PanelKit.line(_body, "%s offers %s bn for %s -- %d months left." % [
+			String(bid["bidder_nation"]), PanelKit.pop_text(float(bid["price_eur_bn"])),
+			firm_name, int(bid["months_left"])])
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		for action_id in ["block_takeover", "allow_takeover"]:
+			var action = _action_by_id(action_id)
+			if action != null:
+				row.add_child(_action_button(ns, _firm_object(ns.id, String(bid["company_id"])), action))
+		_body.add_child(row)
+	var failing: Array = Industry.failing(_state, ns)
+	if not failing.is_empty():
+		PanelKit.heading(_body, "Failing firms")
+		for failure in failing:
+			var company_id := String(failure["company_id"])
+			PanelKit.line(_body, "%s -- rescue window: %d months left." % [
+				_firm_name(ns.id, company_id), int(failure["months_left"])])
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 6)
+			var action = _action_by_id("strategic_rescue")
+			if action != null:
+				row.add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
+			_body.add_child(row)
+
+
+func _action_by_id(id: String):
+	for a in _loader.company_actions:
+		if String(a.id) == id:
+			return a
+	return null
+
+
+func _firm_name(nation_id: String, company_id: String) -> String:
+	for company in _loader.companies.get(nation_id, []):
+		if company.id == company_id:
+			return String(company.company_name)
+	return company_id
+
+
+func _firm_object(nation_id: String, company_id: String):
+	for company in _loader.companies.get(nation_id, []):
+		if company.id == company_id:
+			return company
+	return null
 
 
 ## The three figures the register produces, in one place. Both deviation channels
@@ -371,6 +428,18 @@ func _build_firm(ns, company) -> void:
 	name_label.text = company.company_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_row.add_child(name_label)
+
+	# V4.7b: the SOE chair -- a name on the firm the state part-owns. Reads the
+	# register's person id and resolves it against the nation's people; an
+	# absent chair is a firm with no appointment, said by silence.
+	var chair: String = String(ns.companies.get(company.id, {}).get("board_chair", ""))
+	if chair != "":
+		var chair_name := chair
+		for person in _loader.people.get(ns.id, []):
+			if String(person.id) == chair:
+				chair_name = String(person.person_name)
+				break
+		PanelKit.line(block, "Chair: %s" % chair_name)
 
 	# Two facts about one firm, and both are live state with one writer each -- a
 	# subsidy is not an ownership and a player who has done both must see both. Joined

@@ -29,7 +29,7 @@ extends RefCounted
 const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise",
 	# V4.7b: the takeover answers, the courtship flag, and break-up -- one
 	# channel, one dispatch, no new content type.
-	"block_bid", "allow_bid", "court", "break_up"]
+	"block_bid", "allow_bid", "court", "break_up", "appoint_board"]
 
 ## The term each op reads, or "" for the ops that read none. Declared as a table
 ## rather than as branches in src/core/company_action.gd because the property worth

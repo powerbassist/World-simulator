@@ -1,0 +1,18 @@
+{
+  "_note": "V4.7b's state-enterprise verb. A firm the state holds a stake in gets a chair, drawn deterministically from the nation's unseated executives (kind executive -- V4.3's stopgap kind finding its first seat). The appointment is a face and a name on the firm row, not a lever: the executive's own act channel is V4.2's lobbying, recorded in that block's handoff. One chair per firm; a second appointment replaces.",
+  "actions": [
+    {
+      "id": "appoint_board",
+      "name": "Appoint a Board Chair",
+      "summary": "The state names the chair of a firm it part-owns. A domestic executive takes the seat; the business answers for the politics of patronage.",
+      "preconditions": [{ "field": "state_owned", "op": "==", "value": 1 }],
+      "effects": {
+        "company": { "op": "appoint_board" },
+        "bloc_offset": {
+          "workers": 0.03,
+          "business": -0.04
+        }
+      }
+    }
+  ]
+}

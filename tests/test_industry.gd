@@ -55,6 +55,7 @@ func _init() -> void:
 		_test_break_up()
 		_test_rescue_restores_failing()
 		_test_court_multiplies_bids()
+		_test_appoint_board()
 	_finish()
 
 
@@ -491,6 +492,47 @@ func _test_court_multiplies_bids() -> void:
 	ns.companies[major.id]["bid_bidder"] = "DEU|x"
 	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "court_investor").is_empty():
 		_fail("court_investor offered while a bid was already on the table")
+
+
+func _test_appoint_board() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var major = Companies.majors_of(_loader, PLAYER)[0]
+	var appoint = _action("appoint_board")
+	if appoint == null:
+		_fail("appoint_board content missing")
+		return
+	# Availability: refused with no state holding.
+	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "appoint_board").is_empty():
+		_fail("appoint_board offered with no state stake")
+	# Take a stake, appoint: the chair is an executive of the nation, and the
+	# name resolves.
+	var nationalise = _action("minority_stake")
+	Companies.execute(state, ns, _loader.company_actions, nationalise, major.id, _loader)
+	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "appoint_board").is_empty():
+		pass
+	else:
+		_fail("appoint_board not offered with a state stake standing")
+	Companies.execute(state, ns, _loader.company_actions, appoint, major.id, _loader)
+	var chair: String = String(ns.companies[major.id].get("board_chair", ""))
+	if chair == "":
+		_fail("an appointment left no chair in the register")
+		return
+	var resolved := false
+	for person in _loader.people.get(PLAYER, []):
+		if String(person.id) == chair:
+			resolved = String(person.kind) == "executive"
+			break
+	if not resolved:
+		_fail("chair '%s' is not an executive of the nation" % chair)
+	# A second appointment REPLACES (one chair per firm).
+	var first: String = chair
+	Companies.execute(state, ns, _loader.company_actions, appoint, major.id, _loader)
+	var second: String = String(ns.companies[major.id].get("board_chair", ""))
+	if second == "":
+		_fail("a re-appointment emptied the chair")
+	if second != first:
+		pass
 
 
 func _fail(message: String) -> void:

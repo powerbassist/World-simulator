@@ -61,6 +61,7 @@ const Demography = preload("res://src/sim/demography.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -762,6 +763,31 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# refused, and a foreign-owned firm keeps the multiplier -- the
 			# exposure was the point.
 			entry["courted"] = 1.0
+		"appoint_board":
+			# V4.7b: the SOE chair -- a deterministic draw from the nation's
+			# unseated executives (Cycle, no rand; an unseated executive is
+			# one no register entry names as its chair). A face and a name on
+			# the firm row, not a lever: the executive's own act channel is
+			# V4.2's lobbying. A second appointment replaces the first.
+			var unseated: Array = []
+			for person in loader.people.get(ns.id, []):
+				if String(person.kind) != "executive":
+					continue
+				var seated := false
+				for other_id in ns.companies.keys():
+					if String(ns.companies[other_id].get("board_chair", "")) == String(person.id):
+						seated = true
+						break
+				if not seated:
+					unseated.append(String(person.id))
+			if unseated.is_empty():
+				entry["board_chair"] = ""
+			else:
+				unseated.sort()
+				var pick_index := int(Cycle.unit(
+					"companies|%s|chair" % company_id, int(state.year) * 12 + int(state.month))
+					* float(unseated.size()))
+				entry["board_chair"] = unseated[pick_index % unseated.size()]
 		"break_up":
 			# Pro-rata to the sector's EXISTING body firms -- no new firm ids
 			# are minted, because a register entry with no authored content
