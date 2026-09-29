@@ -2410,16 +2410,20 @@ func _run_companies_roundtrip(loader) -> void:
 		_fail("a save carries the company CONTENT -- the baseline is data/companies/, and a stored copy is what a content edit would silently disagree with")
 	# V1.4c TURNED THIS RED ON PURPOSE and widened it by exactly one key, which is
 	# the change worth recording rather than the widening. `share`, `subsidy` and
-	# `state_share` are the three things about a firm that MOVE, and each has exactly
-	# one writer -- a subsidy, a subsidy, an ownership op. `name`, `sector`,
+	# `state_share` are the three things about a firm that MOVE; `subsidy` and
+	# `state_share` keep exactly one writer each, and `share`'s writers widened at
+	# V4.7b to the ledger companies.gd's header keeps. `name`, `sector`,
 	# `headcount` and the AUTHORED share are content and must never appear here, for
 	# the reason above: the copy in the save is the one a content edit would silently
 	# disagree with. A key beyond the list still fails, so a later session storing a
 	# baseline or a per-firm burden has to come and say why.
-	# V4.7b widens it for the AUTONOMY fields -- all scalars, all with exactly one
-	# writer (industry.gd), all carrying only what MOVED (a relocation's city
-	# override, a failure and its window, an open bid, the subsidy shadow the
-	# failure hazard reads). Absent, every one reads its default, which is the
+	# V4.7b widens it for the AUTONOMY fields -- all scalars, one writer each,
+	# all carrying only what MOVED. The writers are the two-file ledger
+	# industry.gd's header keeps: industry.gd writes the machine's fields (the
+	# relocation's city override, the failure and its window, the open bid, the
+	# subsidy shadow the failure hazard reads), and execute() writes the verb
+	# answers (owner, courted, board_chair) and commits rescues and break-ups
+	# onto failed/window. Absent, every one reads its default, which is the
 	# truth about every save that predates the machine.
 	const LIVE_KEYS := ["share", "subsidy", "state_share", "city", "failed",
 		"rescue_months_left", "bid_bidder", "bid_price_eur_bn", "bid_months_left",

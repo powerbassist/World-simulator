@@ -10,13 +10,17 @@ extends RefCounted
 ## reaches effects.company through Legislature.apply() and an assembly division
 ## rather than through execute() below; what it writes is ns.regulation_burden, a
 ## per-SECTOR signed register this file only ever reads. Both prices land in the two
-## channels V1.4a already built. Nothing here writes `share` but a subsidy: share
-## movement is the subsidy's persistent channel and a second writer of it would be
-## two answers to the question of who is winning the sector.
+## channels V1.4a already built. `share`'s writers are a ledger, not an accident:
+## through V1.4b/c it was execute()'s subsidy arm alone -- a second writer would be
+## two answers to the question of who is winning the sector -- and V4.7b widened
+## the ledger in kind rather than in breach: rescue restores the authored share,
+## break_up redistributes to rivals, and the autonomy machine (industry.gd, whose
+## own header keeps its writers) drifts it monthly. A writer not named here or
+## there is a defect.
 ##
 ## V1.4c ADDS A THIRD WRITER AND A THIRD CHANNEL, and the writers stay one apiece:
 ##
-##     share             <- execute(), subsidy ops        per firm
+##     share             <- execute() (subsidy, rescue, break_up) + industry.gd  per firm
 ##     state_share       <- execute(), ownership ops      per firm
 ##     regulation_burden <- Legislature.apply()           per SECTOR
 ##
@@ -193,7 +197,8 @@ static func subsidy_of(ns, company_id: String) -> float:
 ## V1.4c. How much of the firm the state holds, 0.0 to 1.0. Written only by the
 ## ownership ops in execute(); a `business` law cannot reach it, because
 ## src/core/law.gd's _extract_company() names a sector and a burden and refuses any
-## third key -- the same refusal that keeps `share` to one writer.
+## third key -- the same refusal that keeps every register here to the writers its
+## header ledger names.
 static func state_share_of(ns, company_id: String) -> float:
 	var entry = ns.companies.get(company_id)
 	return float(entry.get("state_share", 0.0)) if entry != null else 0.0
@@ -259,9 +264,10 @@ static func value_eur_bn(ns, company) -> float:
 static func headcount(ns, company) -> float:
 	if company.share <= 0.0:
 		return 0.0
-	# V4.7b: a failed firm employs nobody. The flag is industry.gd's to write;
-	# this read is the payroll's own arithmetic, and the register is the one
-	# place both systems already meet.
+	# V4.7b: a failed firm employs nobody. The flag's writers are the ledger
+	# industry.gd's header keeps -- the machine commits failures, execute()
+	# commits rescues and break-ups -- and this read is the payroll's own
+	# arithmetic on the register both systems already meet in.
 	if bool(ns.companies.get(company.id, {}).get("failed", false)):
 		return 0.0
 	# The RATIO is computed first, deliberately: (h * s) / s is not exactly h
@@ -789,13 +795,13 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 					* float(unseated.size()))
 				entry["board_chair"] = unseated[pick_index % unseated.size()]
 		"break_up":
-			# Pro-rata to the sector's EXISTING body firms -- no new firm ids
-			# are minted, because a register entry with no authored content
-			# cannot price a payroll (the reads fall back to the loader's firm
-			# object, and a minted id has none). The major marks failed with a
-			# closed window: committed, not rescuable -- a dissolved firm does
-			# not come back. Its jobs read 0 through the failed branch; the
-			# body firms that absorbed the share hire through the live ratio.
+			# The sector's OTHER MAJORS absorb the share -- the why is the
+			# block below. No new firm ids are minted, because a register
+			# entry with no authored content cannot price a payroll (the
+			# reads fall back to the loader's firm object, and a minted id
+			# has none). The major marks failed with a closed window:
+			# committed, not rescuable -- a dissolved firm does not come
+			# back. Its jobs read 0 through the failed branch.
 			var split_share: float = share_of_company(ns, _firm_of(ns, loader, company_id))
 			# The split goes to the sector's OTHER MAJORS, pro-rata by live
 			# share -- its rivals divide the market. The first draft split to

@@ -402,22 +402,6 @@ func _test_break_up() -> void:
 		if absf(after - was) > 1e-9:
 			_fail("break_up moved body firm %s (%.4f -> %.4f) -- the body is not the split's absorber" % [
 				company.id, was, after])
-	# The partition: major's old share redistributed to the body of the sector.
-	var body_after := 0.0
-	for company in Companies.body_of(_loader, PLAYER):
-		if company.sector == major.sector:
-			body_after += Companies.share_of_company(ns, company)
-	var residual_credit := float(before[major.id])
-	if absf(body_after - (body_before_sum(PLAYER, major.sector, ns) + 0.0)) > 10.0:
-		pass
-
-
-func body_before_sum(nation: String, sector: String, ns) -> float:
-	var t := 0.0
-	for company in Companies.body_of(_loader, nation):
-		if company.sector == sector:
-			t += Companies.share_of_company(ns, company)
-	return t
 
 
 func _test_rescue_restores_failing() -> void:

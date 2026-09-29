@@ -209,11 +209,23 @@ func _build_autonomy_sections(ns) -> void:
 			var company_id := String(failure["company_id"])
 			PanelKit.line(_body, "%s -- rescue window: %d months left." % [
 				_firm_name(ns.id, company_id), int(failure["months_left"])])
+			var action = _action_by_id("strategic_rescue")
+			if action == null:
+				continue
+			# The same gate the firm rows answer to: available() is execute()'s
+			# own door, and a button execute() would refuse is the silent class
+			# -- the rescue's precondition (no subsidy standing) fails on a
+			# subsidised failing firm, and the click died invisibly while the
+			# window lapsed (the version-close ultra's Important). The note is
+			# the discoverable path to the withdraw-then-rescue workaround;
+			# the subsidy is the one precondition that can bite here, because
+			# `failing` already implies major + window standing.
+			if not Companies.available(_state, ns, _loader.company_actions, company_id, _loader).has(action):
+				PanelKit.line(_body, "Rescue refused while a subsidy stands -- withdraw support first.")
+				continue
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation", 6)
-			var action = _action_by_id("strategic_rescue")
-			if action != null:
-				row.add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
+			row.add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
 			_body.add_child(row)
 
 

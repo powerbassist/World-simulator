@@ -15,6 +15,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Society = preload("res://src/sim/society.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
@@ -404,6 +405,11 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# both so the mirror's completeness is exercised rather than assumed.
 		Defence.tick_month(state)
 		Companies.tick_month(state, _loader)
+		# V4.7b. The autonomy machine, in project()'s slot between Companies and
+		# Migration -- a failure, rescue or break-up inside the projected window
+		# writes failed/share, and a mirror that skipped it would agree with the
+		# projection only while no firm ever acted.
+		Industry.tick_month(state, _loader)
 		# V2.8 review. Five more that project() has ticked and this mirror never did.
 		# Four are inert from an undisplaced start, which is why the 1e-9 agreement
 		# held by accident yet again -- but Events is NOT structurally inert: its
