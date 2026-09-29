@@ -41,6 +41,22 @@ const Companies = preload("res://src/sim/companies.gd")
 const Net = preload("res://src/sim/network.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 
+## The relocation distance tables are a pure function of loader content: the
+## graph is built once by _load_region_graph, never mutated after (only
+## clear()ed by the next load_all), and duplicate_state()'s deep copy
+## duplicates content. One memo therefore serves every graph the process
+## holds, keyed on the graph's structural hash -- any content difference
+## clears it, so a stale table is not reachable. BEFORE the memo the machine
+## paid ~8 Dijkstras per nation-month unconditionally: 1,124 ms of the month
+## tick measured over the 29-nation roster, 7.6x the whole 300 ms band, the
+## B1 review's cannot-verify item found by the re-baseline's own wall clock.
+## The memo changes no distance and consumes no Cycle draw, so no result this
+## file produces moves. (It lives here and not in network.gd because tests
+## call distances_from on synthetic same-size graphs, where a memo could
+## answer stale.)
+static var _dist_memo: Dictionary = {}
+static var _dist_memo_graph := 0
+
 
 static func tick_month(state, loader) -> void:
 	var ids: Array = state.nations.keys()
@@ -170,7 +186,10 @@ static func _relocate(ns, loader, majors: Array, month: int) -> void:
 		for city in region.cities:
 			city_region[city.id] = region.id
 	var graph: Dictionary = loader.region_graph
-	var distance_cache := {}
+	var graph_key: int = graph.hash()
+	if _dist_memo_graph != graph_key:
+		_dist_memo.clear()
+		_dist_memo_graph = graph_key
 	for company in majors:
 		if _failed(ns, company.id):
 			continue
@@ -180,9 +199,9 @@ static func _relocate(ns, loader, majors: Array, month: int) -> void:
 		var current_region: String = String(city_region.get(live_city_of(ns, company), ""))
 		if current_region == "" or not region_cities.has(current_region):
 			continue
-		if not distance_cache.has(current_region):
-			distance_cache[current_region] = Net.distances_from(graph, current_region)
-		var rows: Dictionary = distance_cache[current_region]
+		if not _dist_memo.has(current_region):
+			_dist_memo[current_region] = Net.distances_from(graph, current_region)
+		var rows: Dictionary = _dist_memo[current_region]
 		var best_km := INF
 		var best_region := ""
 		for region_id in region_cities.keys():
