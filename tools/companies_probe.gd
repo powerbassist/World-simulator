@@ -219,10 +219,15 @@ func _rival_shares(ns, target_id: String) -> Dictionary:
 	for company in Companies.firms_of(_loader, ns.id):
 		if company.id == target_id:
 			sector = company.sector
+	# The pool is MAJORS-ONLY since V4.7a: body rivals read 0.0 in the register
+	# and contributed nothing, so the sweep's numbers never moved -- but a
+	# mirror that reproduced the pool by accident of zeros rather than by the
+	# tier rule was one refactoring away from silently wrong.
 	var out := {}
-	for company in Companies.firms_in_sector(_loader, ns.id, sector):
-		if company.id != target_id:
-			out[company.id] = Companies.share_of(ns, company.id)
+	for company in Companies.majors_of(_loader, ns.id):
+		if company.sector != sector or company.id == target_id:
+			continue
+		out[company.id] = Companies.share_of(ns, company.id)
 	return out
 
 
@@ -234,9 +239,10 @@ func _rival_floors(ns, target_id: String) -> Dictionary:
 		if company.id == target_id:
 			sector = company.sector
 	var out := {}
-	for company in Companies.firms_in_sector(_loader, ns.id, sector):
-		if company.id != target_id:
-			out[company.id] = K.RIVAL_FLOOR_FRACTION * company.share
+	for company in Companies.majors_of(_loader, ns.id):
+		if company.sector != sector or company.id == target_id:
+			continue
+		out[company.id] = K.RIVAL_FLOOR_FRACTION * company.share
 	return out
 
 
