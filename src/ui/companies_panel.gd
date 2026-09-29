@@ -190,8 +190,10 @@ func _build_autonomy_sections(ns) -> void:
 	if not bid.is_empty():
 		PanelKit.heading(_body, "Foreign takeover bid")
 		var firm_name := _firm_name(ns.id, String(bid["company_id"]))
-		PanelKit.line(_body, "%s offers %s bn for %s -- %d months left." % [
-			String(bid["bidder_nation"]), PanelKit.pop_text(float(bid["price_eur_bn"])),
+		# EUR bn, its own format -- pop_text is the POPULATION formatter and
+		# rendered a 50 bn offer as "0 k" (the B3 review's Important).
+		PanelKit.line(_body, "%s offers %.1f bn for %s -- %d months left." % [
+			String(bid["bidder_nation"]), float(bid["price_eur_bn"]),
 			firm_name, int(bid["months_left"])])
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
@@ -434,12 +436,8 @@ func _build_firm(ns, company) -> void:
 	# absent chair is a firm with no appointment, said by silence.
 	var chair: String = String(ns.companies.get(company.id, {}).get("board_chair", ""))
 	if chair != "":
-		var chair_name := chair
-		for person in _loader.people.get(ns.id, []):
-			if String(person.id) == chair:
-				chair_name = String(person.person_name)
-				break
-		PanelKit.line(block, "Chair: %s" % chair_name)
+		var chair_name: String = _loader.person_name(chair)
+		PanelKit.line(block, "Chair: %s" % (chair_name if chair_name != "" else chair))
 
 	# Two facts about one firm, and both are live state with one writer each -- a
 	# subsidy is not an ownership and a player who has done both must see both. Joined

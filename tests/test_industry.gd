@@ -525,14 +525,20 @@ func _test_appoint_board() -> void:
 			break
 	if not resolved:
 		_fail("chair '%s' is not an executive of the nation" % chair)
-	# A second appointment REPLACES (one chair per firm).
+	# A second appointment REPLACES (one chair per firm): the chair may stay
+	# the same draw or change, but it must never empty, and the register never
+	# holds two.
 	var first: String = chair
 	Companies.execute(state, ns, _loader.company_actions, appoint, major.id, _loader)
 	var second: String = String(ns.companies[major.id].get("board_chair", ""))
 	if second == "":
 		_fail("a re-appointment emptied the chair")
-	if second != first:
-		pass
+	var chairs := 0
+	for other_id in ns.companies.keys():
+		if String(ns.companies[other_id].get("board_chair", "")) == second and second != "":
+			chairs += 1
+	if chairs > 1:
+		_fail("the same executive chairs %d firms -- one chair per firm" % chairs)
 
 
 func _fail(message: String) -> void:

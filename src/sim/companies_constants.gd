@@ -40,6 +40,13 @@ const COMPANY_OP_TERM := {
 	"withdraw": "",
 	"nationalise": "stake",
 	"privatise": "",
+	# V4.7b: the autonomy verbs -- none carries a dial; the state they answer
+	# lives in the register, not in the action's terms.
+	"block_bid": "",
+	"allow_bid": "",
+	"court": "",
+	"break_up": "",
+	"appoint_board": "",
 }
 
 ## How large one authored subsidy may be. Bounds the content, not the accumulated
