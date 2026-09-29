@@ -1,0 +1,19 @@
+{
+  "_note": "V4.7b's break-up verb. The split is pro-rata among the sector's EXISTING body firms -- no new firm ids are minted, because a register entry with no authored content cannot price a payroll (the reads fall back to the loader's firm object, and a minted id has none). The children are body-tier by construction: the body never escalates, so a broken champion can never re-form -- the structural pin, not a promise. The major's own headcount reads zero through the failed flag, and its jobs move with the share the body firms absorb.",
+  "actions": [
+    {
+      "id": "break_up",
+      "name": "Break Up the Firm",
+      "summary": "Competition law dissolves the champion. Its market share passes to the smaller firms of the sector; its payroll goes with it; it does not come back.",
+      "preconditions": [{ "field": "firm_share", "op": ">=", "value": 0.10 }],
+      "effects": {
+        "company": { "op": "break_up" },
+        "bloc_offset": {
+          "workers": 0.08,
+          "rural": 0.02,
+          "business": -0.15
+        }
+      }
+    }
+  ]
+}

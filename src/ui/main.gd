@@ -1260,6 +1260,7 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
 	Industry.tick_month(_state, _loader)
+	_announce_industry_events()
 
 	# After Companies, because the city pull reads live headcount: a month in which a
 	# subsidy moved a firm's hiring should move people in the same month rather than
@@ -1393,6 +1394,45 @@ func _on_month_elapsed(year: int, month: int) -> void:
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling
 ## them they issued it.
+
+## V4.7b: the autonomy machine's two player-facing events, as cards. The
+## announced-state memory is main-side (UI): the sim stays free of the card
+## stack, and a dismissed card is remembered as announced -- DISMISSAL NEVER
+## ANSWERS, the bid and the window lapse on their own clocks; the card only
+## has to stop repeating.
+var _announced_bids := {}
+var _announced_failures := {}
+
+func _announce_industry_events() -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var bid: Dictionary = Industry.pending_bid(_state, ns)
+	if not bid.is_empty() and not _announced_bids.has(String(bid["company_id"])):
+		_announced_bids[String(bid["company_id"])] = true
+		var firm_name := _firm_display_name(ns.id, String(bid["company_id"]))
+		_hud.message_stack.push(
+			"Foreign takeover bid",
+			"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+				String(bid["bidder_nation"]), float(bid["price_eur_bn"]), firm_name,
+				int(bid["months_left"])])
+	for failure in Industry.failing(_state, ns):
+		var company_id := String(failure["company_id"])
+		if _announced_failures.has(company_id):
+			continue
+		_announced_failures[company_id] = true
+		var firm_name := _firm_display_name(ns.id, company_id)
+		_hud.message_stack.push(
+			"Firm in difficulty",
+			"%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
+				firm_name, int(failure["months_left"])])
+
+func _firm_display_name(nation_id: String, company_id: String) -> String:
+	for company in _loader.companies.get(nation_id, []):
+		if company.id == company_id:
+			return String(company.company_name)
+	return company_id
+
 func _obliged_count() -> int:
 	if _state == null:
 		return 0

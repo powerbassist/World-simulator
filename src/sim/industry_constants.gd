@@ -74,3 +74,10 @@ const BID_HAZARD_YEARLY := 0.01
 ## player must notice the card and decide; an unanswered bid lapses without
 ## penalty (the foreign state's interest was not a demand).
 const BID_WINDOW_MONTHS := 3
+
+## The bid-hazard multiplier for a firm the player has COURTED --
+## court_investor's flag. The verb's whole meaning is asking for exposure:
+## five times the interest rate is what "the state quietly invites foreign
+## capital" buys, and the exposure is exactly that the takeover verbs go
+## live on a firm the player nominated.
+const COURTED_BID_MULTIPLIER := 5.0

@@ -290,7 +290,12 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 			continue
 		if _failed(ns, company.id):
 			continue
+		# A courted firm draws interest at the multiplier the verb bought:
+		# court_investor's flag is the player asking for exposure, and the
+		# exposure is exactly that the takeover verbs become live.
 		var p_monthly: float = IK.BID_HAZARD_YEARLY / 12.0
+		if float(ns.companies.get(company.id, {}).get("courted", 0.0)) > 0.0:
+			p_monthly *= IK.COURTED_BID_MULTIPLIER
 		if Cycle.unit("industry|%s|bid" % company.id, month) >= p_monthly:
 			continue
 		var live: float = Companies.share_of_company(ns, company)

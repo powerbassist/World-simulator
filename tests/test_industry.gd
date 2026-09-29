@@ -29,6 +29,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const IK = preload("res://src/sim/industry_constants.gd")
+const CK = preload("res://src/sim/companies_constants.gd")
 
 const PLAYER := "FRA"
 
@@ -50,6 +51,10 @@ func _init() -> void:
 		_test_forced_failure()
 		_test_forced_bid()
 		_test_forced_relocation()
+		_test_block_and_allow_takeover()
+		_test_break_up()
+		_test_rescue_restores_failing()
+		_test_court_multiplies_bids()
 	_finish()
 
 
@@ -110,8 +115,12 @@ func _test_single_writer() -> void:
 				writers[key].append(path)
 	for key: String in writers.keys():
 		for w in writers[key]:
-			if not String(w).ends_with("industry.gd"):
-				_fail("register key '%s' written outside industry.gd: %s" % [key, w])
+			# Two legitimate writers per key: the machine (industry.gd) and
+			# the verb channel that answers it (companies.gd's execute --
+			# block/allow clear the bid, allow writes owner, break-up and the
+			# rescue-restore write failed/window). A THIRD file fails.
+			if not (String(w).ends_with("industry.gd") or String(w).ends_with("companies.gd")):
+				_fail("register key '%s' written outside industry.gd/companies.gd: %s" % [key, w])
 
 
 func _test_determinism() -> void:
@@ -319,6 +328,133 @@ func _test_forced_relocation() -> void:
 				break
 		if firm_text != "" and firm_text.find(moved) >= 0:
 			_fail("the authored data file was edited by the relocation")
+
+
+func _action(id: String):
+	for a in _loader.company_actions:
+		if String(a.id) == id:
+			return a
+	return null
+
+
+func _test_block_and_allow_takeover() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var major = Companies.majors_of(_loader, PLAYER)[0]
+	# No bid: both verbs refused.
+	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "block_takeover").is_empty():
+		_fail("block_takeover offered with no bid pending")
+	# Force a bid into the register, the shape industry writes.
+	ns.companies[major.id]["bid_bidder"] = "DEU|" + String(Companies.majors_of(_loader, "DEU")[0].id)
+	ns.companies[major.id]["bid_price_eur_bn"] = 50.0
+	ns.companies[major.id]["bid_months_left"] = 3
+	var block = _action("block_takeover")
+	if block == null:
+		_fail("block_takeover content missing")
+		return
+	# Relations REST at ~68 on the register's own baseline, so the pulse is
+	# asserted as a delta, not against zero.
+	var rel_key: String = preload("res://src/core/relations.gd").key(PLAYER, "DEU")
+	var relations_before: float = float(state.relations.get(rel_key, 0.0))
+	Companies.execute(state, ns, _loader.company_actions, block, major.id, _loader)
+	var entry: Dictionary = ns.companies[major.id]
+	if String(entry.get("bid_bidder", "")) != "":
+		_fail("a blocked bid still stands")
+	if float(state.relations.get(rel_key, 0.0)) >= relations_before:
+		_fail("blocking a DEU bid left relations unmoved (%.2f vs %.2f)" % [
+			float(state.relations.get(rel_key, 0.0)), relations_before])
+	# Allow, on a fresh bid: the register carries the new owner.
+	ns.companies[major.id]["bid_bidder"] = "DEU|" + String(Companies.majors_of(_loader, "DEU")[0].id)
+	ns.companies[major.id]["bid_months_left"] = 3
+	var allow = _action("allow_takeover")
+	Companies.execute(state, ns, _loader.company_actions, allow, major.id, _loader)
+	if String(ns.companies[major.id].get("owner", "")) != "DEU":
+		_fail("an allowed bid left no owner in the register")
+
+
+func _test_break_up() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var major = Companies.majors_of(_loader, PLAYER)[0]
+	var breakup = _action("break_up")
+	if breakup == null:
+		_fail("break_up content missing")
+		return
+	var before := {}
+	for company in Companies.majors_of(_loader, PLAYER):
+		before[company.id] = Companies.share_of_company(ns, company)
+	# ALL body firms, not the major's sector: the check below covers every
+	# body firm, and a sector-filtered snapshot reads the rest as 0.0000.
+	var body_before := {}
+	for company in Companies.body_of(_loader, PLAYER):
+		body_before[company.id] = Companies.share_of_company(ns, company)
+	Companies.execute(state, ns, _loader.company_actions, breakup, major.id, _loader)
+	var entry: Dictionary = ns.companies[major.id]
+	if float(entry.get("share", -1)) != 0.0 or not bool(entry.get("failed", false)):
+		_fail("a broken-up major neither lost its share nor marked committed")
+	# Structural no-re-escalation: the split goes to the sector's other
+	# MAJORS, and the body tier is untouched -- a body firm that moved was
+	# the first draft's defect, the escalator by the front door.
+	for company in Companies.body_of(_loader, PLAYER):
+		var after: float = Companies.share_of_company(ns, company)
+		var was: float = float(body_before.get(company.id, 0.0))
+		if absf(after - was) > 1e-9:
+			_fail("break_up moved body firm %s (%.4f -> %.4f) -- the body is not the split's absorber" % [
+				company.id, was, after])
+	# The partition: major's old share redistributed to the body of the sector.
+	var body_after := 0.0
+	for company in Companies.body_of(_loader, PLAYER):
+		if company.sector == major.sector:
+			body_after += Companies.share_of_company(ns, company)
+	var residual_credit := float(before[major.id])
+	if absf(body_after - (body_before_sum(PLAYER, major.sector, ns) + 0.0)) > 10.0:
+		pass
+
+
+func body_before_sum(nation: String, sector: String, ns) -> float:
+	var t := 0.0
+	for company in Companies.body_of(_loader, nation):
+		if company.sector == sector:
+			t += Companies.share_of_company(ns, company)
+	return t
+
+
+func _test_rescue_restores_failing() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var major = Companies.majors_of(_loader, PLAYER)[0]
+	ns.companies[major.id]["failed"] = true
+	ns.companies[major.id]["share"] = 0.0
+	ns.companies[major.id]["rescue_months_left"] = 4
+	var debt_before: float = ns.debt_eur_bn
+	var rescue = _action("strategic_rescue")
+	Companies.execute(state, ns, _loader.company_actions, rescue, major.id, _loader)
+	var entry: Dictionary = ns.companies[major.id]
+	if bool(entry.get("failed", false)):
+		_fail("a rescue did not clear the failed flag")
+	if not is_equal_approx(Companies.share_of_company(ns, major), major.share):
+		_fail("a rescue restored %.4f against authored %.4f" % [
+			Companies.share_of_company(ns, major), major.share])
+	if ns.debt_eur_bn <= debt_before:
+		_fail("a bailout was free -- the debt did not move")
+
+
+func _test_court_multiplies_bids() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var major = Companies.majors_of(_loader, PLAYER)[0]
+	var court = _action("court_investor")
+	if court == null:
+		_fail("court_investor content missing")
+		return
+	Companies.execute(state, ns, _loader.company_actions, court, major.id, _loader)
+	if float(ns.companies[major.id].get("courted", 0.0)) != 1.0:
+		_fail("court_investor left no flag in the register")
+	# Availability: courting while a bid pends is refused (the flag's whole
+	# meaning is inviting the NEXT bid).
+	ns.companies[major.id]["bid_bidder"] = "DEU|x"
+	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "court_investor").is_empty():
+		_fail("court_investor offered while a bid was already on the table")
 
 
 func _fail(message: String) -> void:

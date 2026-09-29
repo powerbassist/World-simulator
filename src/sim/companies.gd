@@ -59,6 +59,7 @@ const K = preload("res://src/sim/companies_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -605,14 +606,14 @@ static func available(state, ns, all_actions: Array, company_id: String, loader)
 	for action in all_actions:
 		if action.id == "":
 			continue
-		if _preconditions_met(state, ns, action, company_id):
+		if _preconditions_met(state, ns, action, company_id, loader):
 			out.append(action)
 	return out
 
 
-static func _preconditions_met(state, ns, action, company_id: String) -> bool:
+static func _preconditions_met(state, ns, action, company_id: String, loader) -> bool:
 	for cond in action.preconditions:
-		var actual: float = _read_field(state, ns, cond["field"], company_id)
+		var actual: float = _read_field(state, ns, cond["field"], company_id, loader)
 		var value: float = cond["value"]
 		var ok: bool
 		match cond["op"]:
@@ -631,7 +632,7 @@ static func _preconditions_met(state, ns, action, company_id: String) -> bool:
 ## the acting nation's own state. Diplomacy._read_field()'s split, and it is here
 ## for the same reason: a precondition list mixes both freely and the content
 ## should not have to know which kind a field is.
-static func _read_field(state, ns, field: String, company_id: String) -> float:
+static func _read_field(state, ns, field: String, company_id: String, loader) -> float:
 	match field:
 		"subsidy_active": return 1.0 if subsidy_of(ns, company_id) > 0.0 else 0.0
 		"subsidy_count": return float(subsidised_count(ns))
@@ -641,6 +642,19 @@ static func _read_field(state, ns, field: String, company_id: String) -> float:
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
 		"overall_approval_pct": return ns.overall_approval_pct
+		# V4.7b: the autonomy machine's state. A failing firm is one inside its
+		# rescue window (the flag with time left, not a committed failure); the
+		# live share needs the loader firm for its authored fallback.
+		"bid_pending":
+			return 1.0 if String(ns.companies.get(company_id, {}).get("bid_bidder", "")) != "" else 0.0
+		"failing":
+			var fentry: Dictionary = ns.companies.get(company_id, {})
+			return 1.0 if (bool(fentry.get("failed", false)) and int(fentry.get("rescue_months_left", 0)) > 0) else 0.0
+		"firm_share":
+			for company in firms_of(loader, ns.id):
+				if company.id == company_id:
+					return share_of_company(ns, company)
+			return 0.0
 		_:
 			push_error("companies: unknown precondition field '%s'" % field)
 			return 0.0
@@ -700,9 +714,77 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	var held_before := float(entry.get("state_share", 0.0))
 	var price := 0.0
 
+	# V4.7b: A RESCUE ON A FAILING MAJOR IS A BAILOUT, not a subsidy -- the
+	# window's whole meaning. The flag clears, the authored share comes back
+	# (it went to the residual when the failure fired; the same content gives
+	# it back), the window closes, and the treasury pays the firm's value --
+	# balance-sheet swap, the same capital-transaction rule the ownership ops
+	# run under. On a healthy firm the rescue keeps its V1.4 meaning.
+	var rescued := false
+	if action.id == "strategic_rescue" and bool(entry.get("failed", false)):
+		entry["failed"] = false
+		entry["rescue_months_left"] = 0
+		for company in firms_of(loader, ns.id):
+			if company.id == company_id:
+				entry["share"] = company.share
+				break
+		price = 0.25 * _value_of(ns, loader, company_id)
+		rescued = true
+
 	match String(terms.get("op", "")):
 		"subsidise": entry["subsidy"] = float(terms.get("intensity", 0.0))
 		"withdraw": entry["subsidy"] = 0.0
+		"block_bid":
+			var bidder: String = String(entry.get("bid_bidder", ""))
+			entry["bid_bidder"] = ""
+			entry["bid_price_eur_bn"] = 0.0
+			entry["bid_months_left"] = 0
+			if bidder != "":
+				_pulse_relations(state, ns.id, bidder.split("|")[0], -0.5)
+		"allow_bid":
+			var parts := String(entry.get("bid_bidder", "")).split("|")
+			if parts.size() > 0 and String(parts[0]) != "":
+				entry["owner"] = String(parts[0])
+				_pulse_relations(state, ns.id, String(parts[0]), 0.5)
+			entry["bid_bidder"] = ""
+			entry["bid_price_eur_bn"] = 0.0
+			entry["bid_months_left"] = 0
+		"court":
+			# The flag the bid hazard reads (industry.gd multiplies the yearly
+			# hazard for a courted firm). Written only here; cleared never --
+			# an invitation once extended stands until a bid answers it, which
+			# is the honesty of the verb: you asked for this.
+			entry["courted"] = 1.0
+		"break_up":
+			# Pro-rata to the sector's EXISTING body firms -- no new firm ids
+			# are minted, because a register entry with no authored content
+			# cannot price a payroll (the reads fall back to the loader's firm
+			# object, and a minted id has none). The major marks failed with a
+			# closed window: committed, not rescuable -- a dissolved firm does
+			# not come back. Its jobs read 0 through the failed branch; the
+			# body firms that absorbed the share hire through the live ratio.
+			var split_share: float = share_of_company(ns, _firm_of(ns, loader, company_id))
+			# The split goes to the sector's OTHER MAJORS, pro-rata by live
+			# share -- its rivals divide the market. The first draft split to
+			# the body tier and the pin caught it: pro-rata body receipts push
+			# body firms past BODY_SHARE_MAX, the exact escalation the tier
+			# boundary exists to make impossible. Majors-only keeps every
+			# invariant: body unchanged, sum conserved, no new ids.
+			var major_absorber := 0.0
+			for other in majors_of(loader, ns.id):
+				if other.id != company_id and other.sector == _sector_of_id(ns, loader, company_id) and not bool(ns.companies.get(other.id, {}).get("failed", false)):
+					major_absorber += share_of_company(ns, other)
+			if major_absorber > 0.0:
+				for other in majors_of(loader, ns.id):
+					if other.id == company_id or other.sector != _sector_of_id(ns, loader, company_id) or bool(ns.companies.get(other.id, {}).get("failed", false)):
+						continue
+					var other_entry: Dictionary = ns.companies.get(other.id, {})
+					if other_entry.is_empty():
+						continue
+					other_entry["share"] = float(other_entry.get("share", other.share)) + split_share * (share_of_company(ns, other) / major_absorber)
+			entry["failed"] = true
+			entry["rescue_months_left"] = 0
+			entry["share"] = 0.0
 		"nationalise":
 			var stake := float(terms.get("stake", 0.0))
 			price = (stake - held_before) * _value_of(ns, loader, company_id)
@@ -749,6 +831,28 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	}
 	ns.last_company_result = result
 	return result
+
+
+## V4.7b: the ONE relations writer outside diplomacy.gd, for the one company
+## verb that HAS a counterparty -- a foreign state's takeover offer, answered.
+## Same key, same clamp bounds as diplomacy's own pulses.
+static func _pulse_relations(state, acting_nation: String, other_nation: String, delta: float) -> void:
+	if other_nation == "" or other_nation == acting_nation:
+		return
+	var key: String = Relations.key(acting_nation, other_nation)
+	state.relations[key] = clampf(float(state.relations.get(key, 0.0)) + delta, -100.0, 100.0)
+
+
+static func _firm_of(ns, loader, company_id: String):
+	for company in firms_of(loader, ns.id):
+		if company.id == company_id:
+			return company
+	return null
+
+
+static func _sector_of_id(ns, loader, company_id: String) -> String:
+	var firm = _firm_of(ns, loader, company_id)
+	return String(firm.sector) if firm != null else ""
 
 
 static func _value_of(ns, loader, company_id: String) -> float:

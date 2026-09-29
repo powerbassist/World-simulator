@@ -26,7 +26,10 @@ extends RefCounted
 ## V1.4c adds two ops and no new channel, which is the seventh session running with
 ## no new content type. `data/company-actions/` now serves three sessions the way
 ## `data/diplomatic-actions/` served five.
-const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise"]
+const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise",
+	# V4.7b: the takeover answers, the courtship flag, and break-up -- one
+	# channel, one dispatch, no new content type.
+	"block_bid", "allow_bid", "court", "break_up"]
 
 ## The term each op reads, or "" for the ops that read none. Declared as a table
 ## rather than as branches in src/core/company_action.gd because the property worth
@@ -76,6 +79,11 @@ const PRECONDITION_FIELDS := [
 	"subsidy_active", "subsidy_count",
 	"state_owned", "state_owned_count",
 	"deficit_pct_gdp", "debt_to_gdp_pct", "unemployment_pct", "overall_approval_pct",
+	# V4.7b: the autonomy machine's state, read from the same register every
+	# other precondition reads -- a takeover verb is answerable only while a
+	# bid pends, a rescue-restore only while the window stands, and break-up
+	# only on share worth splitting.
+	"bid_pending", "failing", "firm_share",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
@@ -87,6 +95,11 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 ## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
 ## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)
 ## lives under 0.02 by design -- it is the tier boundary the block is built on.
+## V4.7b: the smallest live share break_up will split -- below it the verb is
+## the sector lever wearing a firm's name (companies-model section 2's own
+## rule, rescoped to the verb scale).
+const BREAKUP_MIN_SHARE := 0.10
+
 const MIN_AUTHORED_SHARE := 0.02
 
 ## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same
