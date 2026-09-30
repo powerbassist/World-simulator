@@ -1424,7 +1424,7 @@ func _announce_industry_events() -> void:
 	else:
 		if not _announced_bids.has(String(bid["company_id"])):
 			_announced_bids[String(bid["company_id"])] = true
-			var firm_name := _firm_display_name(ns.id, String(bid["company_id"]))
+			var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
 			var card_id: String = _hud.message_stack.push(
 				"Foreign takeover bid",
 				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
@@ -1448,18 +1448,12 @@ func _announce_industry_events() -> void:
 		if _announced_failures.has(company_id):
 			continue
 		_announced_failures[company_id] = true
-		var firm_name := _firm_display_name(ns.id, company_id)
+		var firm_name: String = _loader.firm_name(ns.id, company_id)
 		var card_id: String = _hud.message_stack.push(
 			"Firm in difficulty",
 			"%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
 				firm_name, int(failure["months_left"])])
 		_industry_card_firms[card_id] = company_id
-
-func _firm_display_name(nation_id: String, company_id: String) -> String:
-	for company in _loader.companies.get(nation_id, []):
-		if company.id == company_id:
-			return String(company.company_name)
-	return company_id
 
 func _obliged_count() -> int:
 	if _state == null:

@@ -65,6 +65,14 @@ var _close_button: Button
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
 
+## The sim's last refusal, shown at the head of the body until the next act
+## lands. The verb arms write refusal reasons into `last_company_result` "for
+## the panel to show" -- and nothing read them, so a refused click was a
+## no-op the player could not tell from a dead button (the ultra's find;
+## the no-sorber break-up and the exhausted board pool are the reachable
+## cases).
+var _last_refusal := ""
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 560)
@@ -172,6 +180,8 @@ func _refresh() -> void:
 		PanelKit.heading(_body, "No register")
 		PanelKit.line(_body, "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
 
+	if _last_refusal != "":
+		PanelKit.line(_body, _last_refusal)
 	_build_autonomy_sections(ns)
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
@@ -189,7 +199,7 @@ func _build_autonomy_sections(ns) -> void:
 	var bid: Dictionary = Industry.pending_bid(_state, ns)
 	if not bid.is_empty():
 		PanelKit.heading(_body, "Foreign takeover bid")
-		var firm_name := _firm_name(ns.id, String(bid["company_id"]))
+		var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
 		# EUR bn, its own format -- pop_text is the POPULATION formatter and
 		# rendered a 50 bn offer as "0 k" (the B3 review's Important).
 		PanelKit.line(_body, "%s offers %.1f bn for %s -- %d months left." % [
@@ -208,7 +218,7 @@ func _build_autonomy_sections(ns) -> void:
 		for failure in failing:
 			var company_id := String(failure["company_id"])
 			PanelKit.line(_body, "%s -- rescue window: %d months left." % [
-				_firm_name(ns.id, company_id), int(failure["months_left"])])
+				_loader.firm_name(ns.id, company_id), int(failure["months_left"])])
 			var action = _action_by_id("strategic_rescue")
 			if action == null:
 				continue
@@ -234,13 +244,6 @@ func _action_by_id(id: String):
 		if String(a.id) == id:
 			return a
 	return null
-
-
-func _firm_name(nation_id: String, company_id: String) -> String:
-	for company in _loader.companies.get(nation_id, []):
-		if company.id == company_id:
-			return String(company.company_name)
-	return company_id
 
 
 func _firm_object(nation_id: String, company_id: String):
@@ -524,7 +527,15 @@ func _on_act(ns, company, action) -> void:
 	var before := Budget.snapshot(_state)
 	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
 	if not result.get("applied", false):
+		# The refusal is the panel's to show -- the verb arms' own words. The
+		# reason (an exhausted executive pool, no major left to absorb a
+		# split) is the sim's, verbatim; a refusal with none reads as refused
+		# plainly rather than silently.
+		var reason := String(result.get("reason", ""))
+		_last_refusal = "%s refused%s" % [action.action_name, " -- %s" % reason if reason != "" else "."]
+		_dirty = true
 		return
+	_last_refusal = ""
 	_dirty = true
 	acted.emit(before, "%s: %s" % [action.action_name, company.company_name])
 

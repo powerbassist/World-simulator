@@ -367,6 +367,18 @@ func person_name(person_id: String) -> String:
 	return person.person_name if person != null else ""
 
 
+## The same lookup for a FIRM's name, added when the companies panel and the
+## HUD were found carrying byte-identical private copies of it (the ultra's
+## find). An unknown id gives back the id, which is what both surfaces'
+## fallbacks did -- a name the register cannot resolve is still worth
+## printing as the thing the player can go check.
+func firm_name(nation_id: String, company_id: String) -> String:
+	for company in companies.get(nation_id, []):
+		if company.id == company_id:
+			return String(company.company_name)
+	return company_id
+
+
 ## One data/people/<NATION>.json per nation, {"people": [...]}, the same shape
 ## and the same failure modes as data/parties/*.json. See docs/people-model.md.
 func _load_people(nation_id: String, people_dir: String) -> void:
