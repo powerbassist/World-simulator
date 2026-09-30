@@ -59,14 +59,21 @@ static var _dist_memo_graph := 0
 
 
 static func tick_month(state, loader) -> void:
+	# The memo's guard hash, computed ONCE for the whole machine month: the
+	# graph is loader content, immutable post-load, so 29 per-nation rehashes
+	# of ~2,700 Variants were 29 identical answers -- measured 0.46 ms of the
+	# machine's 17 ms month, and multiplied ~1,400x on a budget-panel refresh
+	# (two 24-month projections through the machine, the pass-4 fleet's
+	# measured find).
+	var graph_key: int = loader.region_graph.hash()
 	var ids: Array = state.nations.keys()
 	ids.sort()
 	for id in ids:
 		var ns = state.nations[id]
-		_tick_nation(state, ns, loader)
+		_tick_nation(state, ns, loader, graph_key)
 
 
-static func _tick_nation(state, ns, loader) -> void:
+static func _tick_nation(state, ns, loader, graph_key: int) -> void:
 	var month: int = int(state.year) * 12 + int(state.month)
 	var majors := Companies.majors_of(loader, ns.id)
 	if majors.is_empty():
@@ -80,7 +87,7 @@ static func _tick_nation(state, ns, loader) -> void:
 	_failures(ns, majors, month)
 	_bids(state, ns, loader, majors, month)
 	_invest(ns, loader, majors, month)
-	_relocate(ns, loader, majors, month)
+	_relocate(ns, loader, majors, month, graph_key)
 
 
 # --- Investment drift -----------------------------------------------------------
@@ -110,6 +117,19 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 		var deltas := {}
 		for company in firms:
 			deltas[company.id] = 0.0
+		# The taking pass collects its wants first and applies them scaled: k
+		# takers firing in one sector-month each cap at the sector's whole
+		# spare INDEPENDENTLY, and an unscaled joint drain could push a rival
+		# below its floor -- the pool holds that floor by scaling every gain
+		# by the reciprocal of the wants' share-sum when it exceeds one
+		# (companies.gd's _tick_shares, the same input class), and the comment
+		# below claimed the idiom while inheriting only half of it. Unreachable
+		# on shipped content (the pass-4 probe measured zero floor breaches in
+		# 9,744 idle nation-months; the smallest 3-major cell is ~12x the
+		# regime the breach needs) -- the scaling makes the inherited claim
+		# true regardless of what a later block authors.
+		var taker_wants := {}
+		var taker_spares := {}
 		for company in firms:
 			var acts: bool = Cycle.unit("industry|%s|invest" % company.id, month) < IK.INVEST_PROBABILITY_MONTHLY
 			if not acts:
@@ -136,20 +156,29 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 					deltas[other.id] = float(deltas[other.id]) + give
 			else:
 				# Taking: from the others' spare above the rival floor, the
-				# subsidy pool's arithmetic one row down.
+				# subsidy pool's arithmetic one row down -- both the floor
+				# and the joint-drain scaling.
 				var spare := 0.0
 				for other in firms:
 					if other.id != company.id:
 						spare += maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
 				if spare <= 0.0:
 					continue
-				var want: float = minf(step, spare)
-				deltas[company.id] = float(deltas[company.id]) + want
-				for other in firms:
-					if other.id == company.id:
-						continue
-					var supply: float = maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
-					deltas[other.id] = float(deltas[other.id]) - want * supply / spare
+				taker_wants[company.id] = minf(step, spare)
+				taker_spares[company.id] = spare
+		var ratio_sum := 0.0
+		for company_id: String in taker_wants:
+			ratio_sum += float(taker_wants[company_id]) / float(taker_spares[company_id])
+		var want_scale: float = 1.0 / maxf(1.0, ratio_sum)
+		for company_id: String in taker_wants:
+			var want: float = float(taker_wants[company_id]) * want_scale
+			deltas[company_id] = float(deltas[company_id]) + want
+			var spare: float = float(taker_spares[company_id])
+			for other in firms:
+				if other.id == company_id:
+					continue
+				var supply: float = maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
+				deltas[other.id] = float(deltas[other.id]) - want * supply / spare
 		for company in firms:
 			# EXACT zero, deliberately not is_equal_approx: Godot's approximate
 			# equality has a 1e-5 ABSOLUTE floor, and a drain of 9.8e-6 -- a
@@ -178,7 +207,7 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 ## one transform -- no second distance invented), and the move lands on that
 ## nearest region: a firm relocates next door when it relocates at all. The
 ## register's `city` is the override; the authored city stays content.
-static func _relocate(ns, loader, majors: Array, month: int) -> void:
+static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> void:
 	var city_region := {}
 	var region_cities := {}
 	for region in loader.regions.get(ns.id, []):
@@ -186,7 +215,6 @@ static func _relocate(ns, loader, majors: Array, month: int) -> void:
 		for city in region.cities:
 			city_region[city.id] = region.id
 	var graph: Dictionary = loader.region_graph
-	var graph_key: int = graph.hash()
 	if _dist_memo_graph != graph_key:
 		_dist_memo.clear()
 		_dist_memo_graph = graph_key
@@ -281,6 +309,15 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		# The rescue re-authors its own support: the bailout arm falls through
 		# to the ordinary subsidise by design.
 		entry["subsidy"] = 0.0
+		# And the takeover interest dies with the target: a bid standing on a
+		# collapsing firm is a bid on nothing, and leaving it pending left the
+		# panel offering block/allow on a corpse for the window-overlap months
+		# (the pass-4 fleet's merged find -- two lenses traced the same chain).
+		# A rescue brings the firm back WITHOUT the foreign interest: it lapsed
+		# with the collapse.
+		entry["bid_bidder"] = ""
+		entry["bid_price_eur_bn"] = 0.0
+		entry["bid_months_left"] = 0
 		entry["rescue_months_left"] = IK.RESCUE_WINDOW_MONTHS
 
 
@@ -378,8 +415,15 @@ static func is_failed(ns, company_id: String) -> bool:
 
 
 ## The firm's LIVE city -- the relocation override when one stands, the
-## authored content otherwise. headcount_in_city reads through this, so a
-## move takes the payroll with it and Migration's pull follows for free.
+## authored content otherwise. READ WHERE IT IS WRITTEN: companies.gd's
+## headcount_in_city carries its own inline read of the same register fact --
+## this file preloads companies.gd, so the reverse call would invert the
+## two-writers arrangement, and a mirror comment is the honest form of the
+## sharing the first draft claimed. Note the boundary that follows:
+## relocation moves the PANEL payroll (the live read) but not Migration's
+## city pull, which keys on the authored city -- recorded in
+## companies-model.md section 33 as a design line, not an oversight to fix
+## silently.
 static func live_city_of(ns, company) -> String:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var city: String = String(entry.get("city", ""))

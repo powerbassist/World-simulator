@@ -73,9 +73,9 @@ const Cycle = preload("res://src/sim/cycle.gd")
 ## slot.
 ##
 ## V4.7a: body-tier firms are NOT seeded -- the register carries what MOVED and
-## nothing that did not, so a body firm gains an entry only when a B-phase act
-## writes one (the pool is majors-only; no 7a path touches a body firm). The reads
-## (share_of_company, output_eur_bn, headcount) fall back to the authored
+## nothing that did not, and nothing writes a body entry at all: the body is
+## inert by design (industry.gd's header, pinned as BODY SILENCE), and the
+## reads (share_of_company, output_eur_bn, headcount) fall back to the authored
 ## content for an absent entry, which is what makes the sparse shape safe and
 ## keeps a ~2,500-firm register out of every save.
 ##
@@ -127,9 +127,10 @@ static func tick_month(state, loader) -> void:
 ## commodity register's own shape: a LAZY seed at the tick, majors only, at the
 ## authored share -- which is the truth about those firms in any save that
 ## predates them (no verb ever touched them, so there is no verb state to lose).
-## Body firms stay unseeded: their reads fall back to authored content and only
-## a B-phase act can move one. Idempotent by construction -- a second run finds
-## every major present and writes nothing.
+## Body firms stay unseeded: their reads fall back to authored content and
+## nothing moves one -- the body is inert by design, and a later block's body
+## market is where entries would begin. Idempotent by construction -- a second
+## run finds every major present and writes nothing.
 static func _seed_missing_majors(ns, loader) -> void:
 	for company in majors_of(loader, ns.id):
 		if not ns.companies.has(company.id):
@@ -391,9 +392,10 @@ static func _tick_shares(ns, loader) -> void:
 		# majors' own pool; keeping it that way preserves that calibration
 		# under the roster's growth. And the tier doc's own shape says the
 		# same: the body aggregates into the residual, static content that
-		# neither drains nor feeds the verb plane -- only the B-phase acts
-		# (fail, be bought) move a body firm's share, and they write the
-		# register directly rather than through this pool.
+		# neither drains nor feeds the verb plane -- no code path moves a
+		# body firm's share (the body is inert by design, BODY SILENCE and
+		# pinned); a later block's body market would write the register
+		# directly rather than through this pool.
 		if majors.size() < 1:
 			continue  # no majors to subsidise: no verb can fire
 
@@ -453,8 +455,9 @@ static func _tick_shares(ns, loader) -> void:
 		# and _seed_missing_majors repairs a loaded pre-7a save -- so a plain
 		# indexed write is honest. The A1-era get-or-create here was the spillover
 		# path for body rivals and is DELETED -- under the majors-only pool
-		# no code path reaches it, and the B-phase acts that will move a body
-		# firm's share write the register directly in industry.gd, not
+		# no code path reaches it, and nothing moves a body firm's share
+		# anyway: the body is inert by design (BODY SILENCE, pinned), and a
+		# later block's body market would write the register directly, not
 		# through this pool.
 		for company in majors:
 			var entry: Dictionary = ns.companies[company.id]
@@ -611,9 +614,10 @@ static func _recompute_prices(ns, loader) -> void:
 ## 0.01 firm drains the same pool as a 0.14 major and ends the term at 0.13 --
 ## so no verb targets a body firm, whatever its register state. The gate is
 ## DEFENCE IN DEPTH rather than the last line: the pool is majors-only and no
-## 7a code path writes a body entry, but the B-phase acts will (fail, be bought
-## write the register directly), and a body entry's existence must not make the
-## tier a verb target when they do.
+## code path writes a body entry -- the body is inert by design (BODY SILENCE,
+## pinned) -- but if a later block's body market writes one, its existence
+## must not make the tier a verb target. The gate stands for the register the
+## design does not yet have.
 static func available(state, ns, all_actions: Array, company_id: String, loader) -> Array:
 	var out: Array = []
 	if not ns.companies.has(company_id):
@@ -778,7 +782,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			if company.id == company_id:
 				entry["share"] = company.share
 				break
-		price = 0.25 * _value_of(ns, loader, company_id)
+		price = K.RESCUE_BAILOUT_PRICE_SHARE * _value_of(ns, loader, company_id)
 
 	match String(terms.get("op", "")):
 		"subsidise": entry["subsidy"] = float(terms.get("intensity", 0.0))

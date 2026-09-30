@@ -45,16 +45,21 @@ const RELOCATE_DISCOUNT_FLOOR := 0.1
 
 ## The base monthly failure hazard, before multipliers. Anchored so the whole
 ## band lands inside "a handful of failures per nation per fourteen-year run".
-## THE PROBE CORRECTED THE ANCHOR, recorded rather than hidden: the first
-## draft (0.001) assumed multipliers mostly 1, but a DECLINING sector carries
-## +1 for every major in it permanently -- half the register sits at x2 for
-## the whole run -- and measured 1.86 failures/nation/run, 2.7x the declared
-## band's top. Shipped at the smallest in-band value per the discipline: 0.0003
-## measures ~0.55/nation/run (tools/industry_probe.gd).
+## THE PROBE CORRECTED THE ANCHOR, and the first draft's RECORDED REASON was
+## wrong in its own terms (the pass-4 fleet's find, fixed at the record):
+## 0.001 measured 1.86 failures/nation/run against a band topping at 0.7, and
+## the draft blamed a "declining-sector x2 permanent" multiplier -- but NO
+## declining sector exists in shipped content (every SECTOR_TREND positive
+## since c4f8f3c), so the declining term contributes exactly 0 and the
+## measured 1.86 is the base alone: ~10.9 majors/nation x 168 months x 0.001.
+## Shipped at the smallest in-band value per the discipline: 0.0003 measures
+## ~0.55/nation/run (tools/industry_probe.gd). The DECLINING term in the
+## hazard stays: it is content-shaped, and a sector authored into decline
+## turns it on without touching this file.
 const FAIL_BASE_MONTHLY := 0.0003
 
-## The failure multipliers, added. A burdened sector doubles the base at its
-## clamp (2 x BURDEN_MAX-scale burden): V1.4b's compliance arithmetic is
+## The failure multipliers, added. A burdened sector TRIPLES the base at the
+## burden clamp (1 + 2 x BURDEN_MAX 1.00): V1.4b's compliance arithmetic is
 ## already the model's "rules have casualties" channel and the failure is its
 ## tail. A withdrawn subsidy counts once (the state pulled support the firm
 ## had organised around); a declining sector counts once. The plan's shape:

@@ -121,6 +121,16 @@ const MIN_BODY_SHARE := 0.001
 const BID_BLOCK_RELATIONS_PULSE := -0.5
 const BID_ALLOW_RELATIONS_PULSE := 0.5
 
+## V4.7b: the rescue's one-off capital price, as a share of the firm's whole
+## value -- the bailout arm's `price` on top of the recurring subsidy the same
+## verb starts. A quarter says: keeping a going concern alive is worth real
+## money but never the whole firm; it lands in ns.debt_eur_bn (a balance-sheet
+## swap, the ownership ops' rule) and interest prices it from there. UNSWEPT --
+## declared here at the pass-4 fleet's find after shipping as an inline
+## literal; a sweep belongs to the first balance task that makes rescues
+## routine rather than stories.
+const RESCUE_BAILOUT_PRICE_SHARE := 0.25
+
 # --- What a subsidy costs -----------------------------------------------------
 
 ## Points of GDP per year for one firm subsidised at full intensity.

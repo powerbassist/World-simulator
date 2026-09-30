@@ -1397,10 +1397,6 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		_enforce_term_start_programme()
 
 
-## The player's obliged deployments, right now. Only the obliged ones: a chosen
-## deployment is a command the player just issued and does not need a card telling
-## them they issued it.
-
 ## V4.7b: the autonomy machine's two player-facing events, as cards. The
 ## announced-state memory is main-side (UI): the sim stays free of the card
 ## stack, and a dismissed card is remembered as announced -- DISMISSAL NEVER
@@ -1428,7 +1424,7 @@ func _announce_industry_events() -> void:
 			var card_id: String = _hud.message_stack.push(
 				"Foreign takeover bid",
 				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
-					String(bid["bidder_nation"]), float(bid["price_eur_bn"]), firm_name,
+					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]), firm_name,
 					int(bid["months_left"])])
 			_industry_card_firms[card_id] = String(bid["company_id"])
 	var failing_now := Industry.failing(_state, ns)
@@ -1455,6 +1451,9 @@ func _announce_industry_events() -> void:
 				firm_name, int(failure["months_left"])])
 		_industry_card_firms[card_id] = company_id
 
+## The player's obliged deployments, right now. Only the obliged ones: a chosen
+## deployment is a command the player just issued and does not need a card telling
+## them they issued it.
 func _obliged_count() -> int:
 	if _state == null:
 		return 0

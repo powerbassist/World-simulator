@@ -1094,7 +1094,11 @@ block's design is a consequence of refusing the two obvious "fixes":
   because the generator drew different counts.
 
 So **the pool is majors-only**: body firms neither give nor receive share, and
-only a B-phase act moves a body firm's share, writing the register directly.
+nothing writes a body entry at all — the body is inert by design (industry.gd's
+own header: THE BODY IS NOT AN ACTOR, pinned by the suite's BODY SILENCE), and
+the reads' authored fallback is what keeps a body firm visible anyway. A later
+block's body market is where entries would start, and the sparse register is
+already shaped for it.
 The subsidy's calibration is V1.4's exactly, which is what kept 7a's
 bit-identical re-run honest. The cost is stated plainly: the body tier is
 texture the verbs cannot reach until a later block gives it a market of its
@@ -1111,11 +1115,21 @@ draw is `Cycle.unit("industry|<id>|<event>", month)` — a private key namespace
 nothing else consumes, over the absolute month index, no RNG state anywhere.
 
 The bands, **declared before the probe ran and corrected by it**:
-`FAIL_BASE_MONTHLY` 0.0003 (the first draft's 0.001 was calibrated on a hazard
-whose declining-sector ×2 the probe showed is PERMANENT, not episodic),
+`FAIL_BASE_MONTHLY` 0.0003 (the first draft's 0.001 measured 1.86
+failures/nation/run against a band topping at 0.7 — arithmetic that is the
+base alone speaking, ~10.9 majors × 168 months × 0.001 — and the shipped
+0.0003 measures ~0.55, in band; the correction story's declining-sector ×2
+was mis-recorded and is fixed here: NO declining sector exists in shipped
+content, every `SECTOR_TREND` has been positive since c4f8f3c, so the
+declining term is inert arithmetic kept for content that authors one),
 `RELOCATE_HAZARD_YEARLY` 0.002 (the draft's 0.02 made the comment's "a handful
 over a run" ~89), `INVEST_STEP` 0.002/month from rivals' spare above
-`RIVAL_FLOOR_FRACTION` × authored, `RESCUE_WINDOW_MONTHS` 6, `BID_HAZARD_YEARLY`
+`RIVAL_FLOOR_FRACTION` × authored — with the pool's joint-drain SCALING
+inherited beside the floor, so k takers in one month cannot push a rival
+below the floor (unreachable on shipped content; true by construction
+regardless) — `RESCUE_WINDOW_MONTHS` 6, `RESCUE_BAILOUT_PRICE_SHARE` 0.25 of
+firm value as the rescue's one-off capital price on top of the recurring
+support the same verb starts, `BID_HAZARD_YEARLY`
 0.01 on a larger same-sector foreign major, `BID_WINDOW_MONTHS` 3,
 `COURTED_BID_MULTIPLIER` 5.0. Measured idle: 0.62 failures/nation per 168-month
 run (band 0.15–0.7), 8 relocations.
@@ -1150,7 +1164,12 @@ firms past `BODY_SHARE_MAX`, the escalator's second appearance), and
 **appoint_board** (an unseated executive drawn by `Cycle`, B3). **Rescue is a
 bailout, not a resurrection**: `execute()`'s bailout arm is gated on the
 rescue WINDOW — gated on `failed` alone it revived committed failures and
-undid break-ups (the B2 review's C1, both legs pinned).
+undid break-ups (the B2 review's C1, both legs pinned). The bailout prices at
+`RESCUE_BAILOUT_PRICE_SHARE` — one-off capital on top of the recurring
+support the same verb then starts (the failure cleared it; the rescue
+re-authors it). And a failure or break-up ends the firm's foreign interest
+with it: the bid scalars clear at the commit, because a bid on a collapsed
+firm is a bid on nothing, and a rescue brings the firm back without it.
 
 The surfaces ride what exists: autonomy sections in the companies panel (the
 open bid's block/allow row, failing majors with rescue rows), the SOE chair

@@ -379,6 +379,15 @@ func firm_name(nation_id: String, company_id: String) -> String:
 	return company_id
 
 
+## The same seam for a NATION's display name: the takeover card and the
+## panel's bid row printed the raw three-letter id where every other surface
+## resolves the name (the pass-4 fleet's find). An unknown id gives back the
+## id, the same fallback rule firm_name runs.
+func nation_name(nation_id: String) -> String:
+	var nation = nations.get(nation_id, null)
+	return String(nation.nation_name) if nation != null else nation_id
+
+
 ## One data/people/<NATION>.json per nation, {"people": [...]}, the same shape
 ## and the same failure modes as data/parties/*.json. See docs/people-model.md.
 func _load_people(nation_id: String, people_dir: String) -> void:
