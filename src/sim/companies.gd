@@ -343,7 +343,17 @@ static func _tick_shares(ns, loader) -> void:
 		# refactor.
 		var majors: Array = []
 		for company in firms:
-			if is_major(company):
+			# A failed firm is OUT of the pool: its share is 0.0 and stays 0.0.
+			# With a retained subsidy it would otherwise regrow share from its
+			# rivals' spare every month -- output through the live share,
+			# headcount 0 through the failed flag, one register read two ways
+			# (the pass-2 ultra's second Important). A rescued firm re-enters
+			# here: the flag clears and the next tick prices it alive again.
+			# The flag is read as the raw register fact this file's other reads
+			# use -- is_failed() is industry.gd's read, and a sim module
+			# preloading its sibling machine for one predicate inverts the
+			# two-writers arrangement.
+			if is_major(company) and not bool(ns.companies.get(company.id, {}).get("failed", false)):
 				majors.append(company)
 		var before := {}
 		for company in majors:
@@ -611,6 +621,26 @@ static func available(state, ns, all_actions: Array, company_id: String, loader)
 	for company in firms_of(loader, ns.id):
 		if company.id == company_id and not is_major(company):
 			return out
+	# The failed gate: a failed firm answers one door -- the rescue, inside its
+	# window. Before this gate the dead register's preconditions were vacuously
+	# true (`subsidy_active == 0`, the failure having cleared the subsidy), so
+	# plain subsidise and nationalise were offered on a corpse, and a rescue
+	# clicked on a COMMITTED failure fell through execute()'s window arm to
+	# plain subsidise -- the zombie the pass-2 ultra traced: output through a
+	# share the subsidy pool regrew, headcount 0 through the flag, one
+	# register read two ways. The gate names the verb because the rescue's
+	# AUTHORED preconditions cannot demand `failing` without losing its V1.4
+	# healthy-firm form; it is the same id dispatch execute()'s bailout arm
+	# already runs, and execute() refuses through here, so the door and the
+	# arm cannot disagree.
+	var failed_entry: Dictionary = ns.companies.get(company_id, {})
+	if bool(failed_entry.get("failed", false)):
+		if int(failed_entry.get("rescue_months_left", 0)) > 0:
+			for action in all_actions:
+				if String(action.id) == "strategic_rescue":
+					out.append(action)
+					break
+		return out
 	for action in all_actions:
 		if action.id == "":
 			continue
@@ -658,6 +688,11 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 		"failing":
 			var fentry: Dictionary = ns.companies.get(company_id, {})
 			return 1.0 if (bool(fentry.get("failed", false)) and int(fentry.get("rescue_months_left", 0)) > 0) else 0.0
+		"courted":
+			# The courtship flag: 1.0 from the moment the verb fires until a
+			# bid is ANSWERED -- the gate that keeps a courtship from being
+			# re-bought click by click.
+			return float(ns.companies.get(company_id, {}).get("courted", 0.0))
 		"firm_share":
 			for company in firms_of(loader, ns.id):
 				if company.id == company_id:
@@ -722,16 +757,20 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	var held_before := float(entry.get("state_share", 0.0))
 	var price := 0.0
 
-	# V4.7b: A RESCUE ON A FAILING MAJOR IS A BAILOUT, not a subsidy -- the
-	# window's whole meaning. Gated on the WINDOW, not the flag alone: a
-	# committed failure (window 0) stays committed -- the card copy promises
-	# "past it the collapse is committed" -- and a broken-up major (failed
-	# with a closed window) is never resurrected while its rivals keep the
-	# absorbed split. The flag clears, the authored share comes back (it went
-	# to the residual when the failure fired; the same content gives it
-	# back), the window closes, and the treasury pays the firm's value --
-	# balance-sheet swap, the same capital-transaction rule the ownership ops
-	# run under. On a healthy firm the rescue keeps its V1.4 meaning.
+	# V4.7b: A RESCUE ON A FAILING MAJOR IS A BAILOUT AND THE STANDING SUPPORT
+	# TOGETHER -- the window's whole meaning, and NOT a resurrection. Gated on
+	# the WINDOW, not the flag alone: a committed failure (window 0) stays
+	# committed -- the card copy promises "past it the collapse is committed" --
+	# and a broken-up major (failed with a closed window) is never resurrected
+	# while its rivals keep the absorbed split. The flag clears, the authored
+	# share comes back (it went to the residual when the failure fired; the
+	# same content gives it back), the window closes, and the treasury pays
+	# the firm's value -- balance-sheet swap, the same capital-transaction
+	# rule the ownership ops run under. The arm does not return: the ordinary
+	# subsidise below then starts the recurring support on top of the one-off
+	# capital price -- the failure cleared the subsidy, and the rescue is what
+	# re-authors it. On a healthy firm the rescue is that subsidy alone, V1.4's
+	# meaning kept.
 	if action.id == "strategic_rescue" and bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", 0)) > 0:
 		entry["failed"] = false
 		entry["rescue_months_left"] = 0
@@ -774,7 +813,11 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# unseated executives (Cycle, no rand; an unseated executive is
 			# one no register entry names as its chair). A face and a name on
 			# the firm row, not a lever: the executive's own act channel is
-			# V4.2's lobbying. A second appointment replaces the first.
+			# V4.2's lobbying. A second appointment replaces the first, and
+			# the verb REFUSES when no unseated executive remains -- clearing
+			# the standing chair would be an appointment that removed a face
+			# while still pricing the blocs, patronage backwards (the ultra's
+			# find; the exhausted pool is the draw's own bound).
 			var unseated: Array = []
 			for person in loader.people.get(ns.id, []):
 				if String(person.kind) != "executive":
@@ -787,13 +830,20 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 				if not seated:
 					unseated.append(String(person.id))
 			if unseated.is_empty():
-				entry["board_chair"] = ""
-			else:
-				unseated.sort()
-				var pick_index := int(Cycle.unit(
-					"companies|%s|chair" % company_id, int(state.year) * 12 + int(state.month))
-					* float(unseated.size()))
-				entry["board_chair"] = unseated[pick_index % unseated.size()]
+				var refused_chair := {
+					"action_id": action.id,
+					"company_id": company_id,
+					"applied": false,
+					"refused": true,
+					"reason": "every executive already holds a chair",
+				}
+				ns.last_company_result = refused_chair
+				return refused_chair
+			unseated.sort()
+			var pick_index := int(Cycle.unit(
+				"companies|%s|chair" % company_id, int(state.year) * 12 + int(state.month))
+				* float(unseated.size()))
+			entry["board_chair"] = unseated[pick_index % unseated.size()]
 		"break_up":
 			# The sector's OTHER MAJORS absorb the share -- the why is the
 			# block below. No new firm ids are minted, because a register
@@ -838,6 +888,10 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["failed"] = true
 			entry["rescue_months_left"] = 0
 			entry["share"] = 0.0
+			# The failure commit's own rule: a dissolved firm's support stops.
+			# It employs nobody to support, and a subsidy standing here would
+			# bill on for nothing.
+			entry["subsidy"] = 0.0
 		"nationalise":
 			var stake := float(terms.get("stake", 0.0))
 			price = (stake - held_before) * _value_of(ns, loader, company_id)

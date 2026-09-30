@@ -89,30 +89,21 @@ const PRECONDITION_FIELDS := [
 	# V4.7b: the autonomy machine's state, read from the same register every
 	# other precondition reads -- a takeover verb is answerable only while a
 	# bid pends, a rescue-restore only while the window stands, and break-up
-	# only on share worth splitting.
-	"bid_pending", "failing", "firm_share",
+	# only on share worth splitting. The court verb gates on its own flag:
+	# an invitation stands until a bid is ANSWERED, so it cannot be re-bought
+	# click by click (the ultra's unpriced-lever finding).
+	"bid_pending", "failing", "firm_share", "courted",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 
-## The smallest share a firm may be authored at. A firm below this cannot move
+## The smallest share a MAJOR may be authored at. A firm below this cannot move
 ## its sector by any reachable amount, so it is a name on a panel rather than a
 ## firm -- the same standard _validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
 ## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
 ## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)
 ## lives under 0.02 by design -- it is the tier boundary the block is built on.
-## V4.7b: the smallest live share break_up will split -- below it the verb is
-## the sector lever wearing a firm's name (companies-model section 2's own
-## rule, rescoped to the verb scale).
-const BREAKUP_MIN_SHARE := 0.10
-
-## V4.7b: the relations pulse a takeover answer carries, in points. A block
-## sours the pair; an allowance warms it. A tenth of a point-scale step, the
-## same weight class as a diplomatic act's small pulse.
-const BID_BLOCK_RELATIONS_PULSE := -0.5
-const BID_ALLOW_RELATIONS_PULSE := 0.5
-
 const MIN_AUTHORED_SHARE := 0.02
 
 ## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same
@@ -123,6 +114,12 @@ const MIN_AUTHORED_SHARE := 0.02
 ## headroom, not a tuned constant (nothing sweeps it; the generator's own
 ## check mode and the loader both refuse content below it).
 const MIN_BODY_SHARE := 0.001
+
+## V4.7b: the relations pulse a takeover answer carries, in points. A block
+## sours the pair; an allowance warms it. A tenth of a point-scale step, the
+## same weight class as a diplomatic act's small pulse.
+const BID_BLOCK_RELATIONS_PULSE := -0.5
+const BID_ALLOW_RELATIONS_PULSE := 0.5
 
 # --- What a subsidy costs -----------------------------------------------------
 

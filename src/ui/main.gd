@@ -1432,8 +1432,17 @@ func _announce_industry_events() -> void:
 					int(bid["months_left"])])
 			_industry_card_firms[card_id] = String(bid["company_id"])
 	var failing_now := Industry.failing(_state, ns)
-	if failing_now.is_empty():
-		_announced_failures.clear()
+	# The memory clears PER FIRM, when that firm's own window closes -- the
+	# bid branch's design, not the all-clear the first draft used. Clearing
+	# only when NO firm failed would keep a rescued firm's entry alive while
+	# another window stood, and its RE-failure inside that window would then
+	# be card-silent: the write-once class the comment above names.
+	var failing_ids := {}
+	for failure in failing_now:
+		failing_ids[String(failure["company_id"])] = true
+	for announced_id in _announced_failures.keys():
+		if not failing_ids.has(announced_id):
+			_announced_failures.erase(announced_id)
 	for failure in failing_now:
 		var company_id := String(failure["company_id"])
 		if _announced_failures.has(company_id):

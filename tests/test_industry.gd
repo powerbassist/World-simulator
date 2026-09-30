@@ -9,8 +9,12 @@ extends SceneTree
 ##   - TICK ORDER: Industry ticks after Companies and before Migration in
 ##     main.gd's month (the investment drift reads the share pool the verbs
 ##     wrote; the relocation moves payroll Migration's pull then reads);
-##   - SINGLE WRITER: only industry.gd writes the autonomy fields (city
-##     override, failed, rescue window, bid keys, the subsidy shadow);
+##   - SINGLE WRITER PER ROLE: the two-writer ledger industry.gd's header
+##     keeps -- the machine (industry.gd) writes the autonomy fields, and
+##     the verb channel that answers them (companies.gd's execute) writes
+##     owner/courted/board_chair and commits rescues and break-ups onto
+##     failed/window. No THIRD file writes any of it, and that is what the
+##     scan below enforces;
 ##   - BODY SILENCE: no body firm ever gains a register entry or field -- the
 ##     body is acted upon, never acting;
 ##   - ZERO-SUM: idle, the majors' partition holds to the bit except where a
@@ -471,6 +475,11 @@ func _test_court_multiplies_bids() -> void:
 	Companies.execute(state, ns, _loader.company_actions, court, major.id, _loader)
 	if float(ns.companies[major.id].get("courted", 0.0)) != 1.0:
 		_fail("court_investor left no flag in the register")
+	# The flag is the verb's own repeat gate: with the courtship standing, the
+	# verb is not offered again -- a courtship bought again click by click was
+	# the ultra's unpriced-lever finding.
+	if not Companies.available(state, ns, _loader.company_actions, major.id, _loader).filter(func(a): return String(a.id) == "court_investor").is_empty():
+		_fail("court_investor offered while the courtship it opened still stands")
 	# Availability: courting while a bid pends is refused (the flag's whole
 	# meaning is inviting the NEXT bid).
 	ns.companies[major.id]["bid_bidder"] = "DEU|x"
@@ -523,6 +532,48 @@ func _test_appoint_board() -> void:
 			chairs += 1
 	if chairs > 1:
 		_fail("the same executive chairs %d firms -- one chair per firm" % chairs)
+	# The exhausted pool REFUSES, and the standing chairs survive: take stakes
+	# across the roster, appoint round-robin until no unseated executive
+	# remains, then try once more and read the refusal. An appointment that
+	# emptied the chair while still pricing the blocs was patronage backwards
+	# (the pass-2 ultra's find). The loop counts the nation's executives
+	# rather than trusting the roster's shape.
+	var executives := 0
+	for person in _loader.people.get(PLAYER, []):
+		if String(person.kind) == "executive":
+			executives += 1
+	var roster := Companies.majors_of(_loader, PLAYER)
+	for company in roster:
+		if String(company.id) != major.id:
+			Companies.execute(state, ns, _loader.company_actions, nationalise, company.id, _loader)
+	var seated := func() -> int:
+		var names := {}
+		for other_id in ns.companies.keys():
+			var chair_name: String = String(ns.companies[other_id].get("board_chair", ""))
+			if chair_name != "":
+				names[chair_name] = true
+		var distinct := 0
+		for person in _loader.people.get(PLAYER, []):
+			if String(person.kind) == "executive" and names.has(String(person.id)):
+				distinct += 1
+		return distinct
+	var guard: int = executives * roster.size() + executives + 8
+	while seated.call() < executives and guard > 0:
+		guard -= 1
+		for company in roster:
+			if seated.call() >= executives:
+				break
+			Companies.execute(state, ns, _loader.company_actions, appoint, company.id, _loader)
+	if seated.call() >= executives:
+		var before_chairs := {}
+		for other_id in ns.companies.keys():
+			before_chairs[other_id] = String(ns.companies[other_id].get("board_chair", ""))
+		var exhausted: Dictionary = Companies.execute(state, ns, _loader.company_actions, appoint, major.id, _loader)
+		if bool(exhausted.get("applied", true)):
+			_fail("an appointment went through with every executive seated -- the pool's bound did not hold")
+		for other_id in before_chairs.keys():
+			if String(ns.companies[other_id].get("board_chair", "")) != String(before_chairs[other_id]):
+				_fail("the refused appointment disturbed %s's chair" % other_id)
 
 
 func _fail(message: String) -> void:

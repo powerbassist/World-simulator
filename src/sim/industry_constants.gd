@@ -16,6 +16,13 @@ extends RefCounted
 ## content put it.
 const INVEST_STEP := 0.002
 
+## The share of major-months in which invest intent DRAWS at all: half the
+## majors try to grow or shed in a month, the other half sit the month out.
+## The value the idle band probe's partition stability rode as shipped, named
+## here rather than left inline in _invest (the ultra's find: every other
+## machine frequency in the file draws against a named threshold).
+const INVEST_PROBABILITY_MONTHLY := 0.5
+
 ## A major's chance, per year, of considering a move -- before the distance
 ## discount. The tier doc's "relocate between regions ... make a relocation
 ## MEAN something" is a rare event by design: each one should be a story

@@ -111,7 +111,7 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 		for company in firms:
 			deltas[company.id] = 0.0
 		for company in firms:
-			var acts: bool = Cycle.unit("industry|%s|invest" % company.id, month) < 0.5
+			var acts: bool = Cycle.unit("industry|%s|invest" % company.id, month) < IK.INVEST_PROBABILITY_MONTHLY
 			if not acts:
 				continue
 			var step: float = IK.INVEST_STEP
@@ -273,6 +273,14 @@ static func _failures(ns, majors: Array, month: int) -> void:
 			continue
 		entry["failed"] = true
 		entry["share"] = 0.0
+		# The support stops with the production it supported: a subsidy standing
+		# on a failed firm would bill on while the firm employed nobody -- and,
+		# before the share pool grew its failed guard, regrow share through the
+		# subsidy tick, the pass-2 ultra's zombie (output through the live
+		# share, headcount 0 through the flag, one register read two ways).
+		# The rescue re-authors its own support: the bailout arm falls through
+		# to the ordinary subsidise by design.
+		entry["subsidy"] = 0.0
 		entry["rescue_months_left"] = IK.RESCUE_WINDOW_MONTHS
 
 
