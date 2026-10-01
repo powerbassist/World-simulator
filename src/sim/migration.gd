@@ -139,9 +139,12 @@ static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> 
 
 ## Named jobs per city, one pass over the nation's whole firm roster -- the
 ## migration month's only walk of the register, where it used to be one walk
-## per city. Summation order per city is the roster order, matching
-## Companies.headcount_in_city exactly, so the flow's inputs are unchanged to
-## the bit and the re-run prediction owes nothing.
+## per city. Summation order per city is the roster order. The bucket keys on
+## the AUTHORED city, by design and recorded in companies-model.md section 33:
+## a relocation moves a firm's payroll in the city surface's reads, not in
+## the pull -- so the old "matches headcount_in_city exactly, to the bit"
+## record holds only while no relocation stands, and V4.7b's re-run
+## prediction priced on a fresh game where none can.
 static func _jobs_by_city(ns, loader) -> Dictionary:
 	var out := {}
 	for company in Companies.firms_of(loader, ns.id):

@@ -98,10 +98,13 @@ func _test_tick_order_pin() -> void:
 		_fail("balance_probe.gd does not mirror the Industry tick -- the harness would run a different model")
 
 
-## The autonomy fields' register keys, and the only file allowed to write
+## The autonomy fields' register keys, and the only files allowed to write
 ## them. companies.gd's own writes (share/subsidy/state_share) are excluded
 ## by construction; execute()'s rescue restore writes share/failed TOGETHER
 ## and is allowed for "failed" alone (B2 lands it, the pin names it now).
+## The scan WALKS src/sim and src/core rather than naming files -- the
+## hand-enumerated list was the pass-5 fleet's find and this repo's own
+## seventh-list lesson: a future writer in any unlisted file passed silently.
 func _test_single_writer() -> void:
 	var owned := {"city": false, "failed": false, "rescue_months_left": false,
 		"bid_bidder": false, "bid_price_eur_bn": false, "bid_months_left": false,
@@ -109,15 +112,31 @@ func _test_single_writer() -> void:
 	var writers := {"city": [], "failed": [], "rescue_months_left": [],
 		"bid_bidder": [], "bid_price_eur_bn": [], "bid_months_left": [],
 		"subsidy_shadow": [], "subsidy_lapsed_month": []}
-	for path in ["res://src/sim/industry.gd", "res://src/sim/companies.gd",
-			"res://src/sim/migration.gd", "res://src/sim/economy.gd",
-			"res://src/core/nation_state.gd"]:
-		var text := FileAccess.get_file_as_string(path)
-		for key: String in owned.keys():
-			var marker := '"%s"' % key
-			var assign := '.%s =' % key
-			if text.find(marker) >= 0 and (text.find('["%s"] =' % key) >= 0 or text.find(marker + " ]") >= 0 or text.find("[%s] +" % key) >= 0 or text.find('["%s"] +' % key) >= 0 or text.find('entry["%s"] =' % key) >= 0):
-				writers[key].append(path)
+	var roots := ["res://src/sim", "res://src/core"]
+	for root_dir: String in roots:
+		var dir := DirAccess.open(root_dir)
+		if dir == null:
+			_fail("single-writer scan cannot open %s" % root_dir)
+			continue
+		for file in dir.get_files():
+			if not String(file).ends_with(".gd"):
+				continue
+			var path := root_dir + "/" + file
+			var text := FileAccess.get_file_as_string(path)
+			for key: String in owned.keys():
+				var marker := '"%s"' % key
+				if text.find(marker) < 0:
+					continue
+				# An indexed WRITE only: `["key"] =` where the next character
+				# is not a second `=` -- the equality `d["city"] == ""` would
+				# otherwise false-positive (company.gd's own validation).
+				var write := '["%s"] =' % key
+				var at := text.find(write)
+				while at >= 0:
+					if text.substr(at + write.length(), 1) != "=":
+						writers[key].append(path)
+						break
+					at = text.find(write, at + 1)
 	for key: String in writers.keys():
 		for w in writers[key]:
 			# Two legitimate writers per key: the machine (industry.gd) and

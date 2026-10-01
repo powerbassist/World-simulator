@@ -23,6 +23,7 @@ signal closed
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
@@ -202,11 +203,15 @@ func _build_detail(found: Dictionary) -> void:
 	# most of a big city's firms -- is one aggregate line, the companies
 	# panel's own shape. A city holding thirty body firms printed thirty rows
 	# for employers with no verb, and the fold finding is about exactly that.
+	# V4.7b: the filter reads the LIVE city, the same register fact the jobs
+	# total above and every headcount in these rows read -- the authored-city
+	# filter listed a relocated firm under its old city while its payroll
+	# counted in the new one, one panel two answers (the pass-5 fleet's find).
 	var rows: Array = []
 	var body_count := 0
 	var body_jobs := 0.0
 	for company in _loader.companies.get(nation_id, []):
-		if company.city != city.id:
+		if Industry.live_city_of(ns, company) != city.id:
 			continue
 		if Companies.is_major(company):
 			rows.append([String(company.company_name), PanelKit.pop_text(Companies.headcount(ns, company))])

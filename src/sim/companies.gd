@@ -809,8 +809,9 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# hazard for a courted firm). Written only here, cleared only by
 			# an ANSWERED bid (allow/block clear it with the bid): an
 			# invitation stands until the capital it invited has come or been
-			# refused, and a foreign-owned firm keeps the multiplier -- the
-			# exposure was the point.
+			# refused -- and the x5 hazard dies with the answer. A foreign
+			# owner carries no standing multiplier; exposure is re-bought only
+			# by courting again (takeover.json's courted == 0 gate).
 			entry["courted"] = 1.0
 		"appoint_board":
 			# V4.7b: the SOE chair -- a deterministic draw from the nation's
@@ -894,8 +895,17 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["share"] = 0.0
 			# The failure commit's own rule: a dissolved firm's support stops.
 			# It employs nobody to support, and a subsidy standing here would
-			# bill on for nothing.
+			# bill on for nothing. And its foreign interest dies with it -- the
+			# pass-4 fix ran in industry.gd's failure commit only, leaving
+			# break_up (whose precondition has no bid gate, so the verbs are
+			# co-offered) serving a ghost bid to the panel and the pending
+			# mark for the window's remainder (the pass-5 merged find). A
+			# dissolved firm's courtship is dead with it.
 			entry["subsidy"] = 0.0
+			entry["bid_bidder"] = ""
+			entry["bid_price_eur_bn"] = 0.0
+			entry["bid_months_left"] = 0
+			entry["courted"] = 0.0
 		"nationalise":
 			var stake := float(terms.get("stake", 0.0))
 			price = (stake - held_before) * _value_of(ns, loader, company_id)

@@ -1142,6 +1142,15 @@ defects the pins caught: `is_equal_approx`'s 1e-5 ABSOLUTE floor skipped real
 write skip is exact `== 0.0` with the number in the comment), and the
 two-stage draw above.
 
+**The relocation boundary, a design line and not an oversight**: the
+register's `city` override moves the city SURFACE — the payroll total
+(`headcount_in_city`'s live read) and the named-employers filter beside it —
+while `Migration._jobs_by_city` keys on the AUTHORED city, so the pull does
+not re-price mid-window behind a move it never saw. A rare event (~8
+relocations per 168-month run worldwide), and the two stale records the
+split briefly falsified (migration.gd's bit-exact claim; the pass-5 fleet's
+find) now say the same thing this line does.
+
 **The tick cost, found by B4's wall clock and not by any gate**: the scale
 probe predates B1 and times Companies only, so the machine's month was never
 inside a band — the re-baseline's head side ran 2.5× slow, and the scratch

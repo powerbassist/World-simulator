@@ -419,11 +419,11 @@ static func is_failed(ns, company_id: String) -> bool:
 ## headcount_in_city carries its own inline read of the same register fact --
 ## this file preloads companies.gd, so the reverse call would invert the
 ## two-writers arrangement, and a mirror comment is the honest form of the
-## sharing the first draft claimed. Note the boundary that follows:
-## relocation moves the PANEL payroll (the live read) but not Migration's
-## city pull, which keys on the authored city -- recorded in
-## companies-model.md section 33 as a design line, not an oversight to fix
-## silently.
+## sharing the first draft claimed. The boundary the two reads draw --
+## the city surface (payroll total AND named employers) moves with the
+## relocation; Migration's pull keys on the authored city -- is recorded
+## as a design line in companies-model.md section 33, not an oversight to
+## fix silently.
 static func live_city_of(ns, company) -> String:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var city: String = String(entry.get("city", ""))
