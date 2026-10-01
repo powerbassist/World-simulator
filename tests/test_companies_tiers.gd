@@ -331,12 +331,11 @@ func _test_body_bands() -> void:
 					CompaniesK.BODY_PAYROLL_CONCENTRATION_MAX])
 
 
-## The sparse register's save leg. A body entry exists in the register ONLY
-## once something has touched it; A3's majors-only pool means a subsidy
-## spillover never does (the body is outside the verb plane -- only B-phase
-## acts fail or buy a body firm), so this leg seeds the entry the way a B-phase
-## act will, round-trips, and demands the touched body entry survive with its
-## live share. A dropped key would silently revert the firm to its authored
+## The sparse register's save leg. No code path writes a body entry (the body
+## is inert by design -- BODY SILENCE pinned; a later block's body market is
+## where entries would begin), so this leg hand-seeds the entry such a writer
+## would create, round-trips, and demands the touched body entry survive with
+## its live share. A dropped key would silently revert the firm to its authored
 ## share -- the drift the sparse design exists to avoid paying for on firms
 ## nobody has touched, whoever the writer turns out to be.
 func _test_body_touched_roundtrip() -> void:

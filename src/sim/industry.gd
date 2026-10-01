@@ -329,10 +329,17 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		entry["rescue_months_left"] = IK.RESCUE_WINDOW_MONTHS
 
 
-## The majors in their rescue windows, for the surfaces and the verbs.
-static func failing(state, ns) -> Array:
+## The majors in their rescue windows, for the surfaces and the verbs. Takes
+## the loader and skips register ids it does not hold: the decay writers walk
+## the LOADER, so an entry for a firm a content edit removed or renamed would
+## never lapse and the surface would show a rescue window forever -- and the
+## row's button would press into a null firm (the pass-7 fleet's find,
+## reproduced live). An orphan entry is inert state, not a surface.
+static func failing(state, ns, loader) -> Array:
 	var out: Array = []
 	for company_id in ns.companies.keys():
+		if not _is_loader_major(loader, ns.id, String(company_id)):
+			continue
 		var entry: Dictionary = ns.companies[company_id]
 		if bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", 0)) > 0:
 			out.append({
@@ -340,6 +347,19 @@ static func failing(state, ns) -> Array:
 				"months_left": int(entry.get("rescue_months_left", 0)),
 			})
 	return out
+
+
+## The one membership read the two register-walking surfaces share: a register
+## entry whose id the loader's majors do not hold is an orphan (a save written
+## before a content edit renamed or removed the firm), and every surface that
+## walks the register skips it.
+static func _is_loader_major(loader, nation_id: String, company_id: String) -> bool:
+	if loader == null:
+		return true  # a loader-less caller gets the register as it stands
+	for company in Companies.majors_of(loader, nation_id):
+		if company.id == company_id:
+			return true
+	return false
 
 
 # --- Foreign bids ---------------------------------------------------------------
@@ -397,8 +417,10 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 
 ## The open bid on this nation's register, if any: {company_id, bidder_id,
 ## price_eur_bn, months_left}. The verbs read this; the surfaces render it.
-static func pending_bid(state, ns) -> Dictionary:
+static func pending_bid(state, ns, loader = null) -> Dictionary:
 	for company_id in ns.companies.keys():
+		if not _is_loader_major(loader, ns.id, String(company_id)):
+			continue
 		var entry: Dictionary = ns.companies[company_id]
 		var bidder: String = String(entry.get("bid_bidder", ""))
 		if bidder == "":

@@ -108,10 +108,12 @@ func _test_tick_order_pin() -> void:
 func _test_single_writer() -> void:
 	var owned := {"city": false, "failed": false, "rescue_months_left": false,
 		"bid_bidder": false, "bid_price_eur_bn": false, "bid_months_left": false,
-		"subsidy_shadow": false, "subsidy_lapsed_month": false}
+		"subsidy_shadow": false, "subsidy_lapsed_month": false,
+		"owner": false, "courted": false, "board_chair": false}
 	var writers := {"city": [], "failed": [], "rescue_months_left": [],
 		"bid_bidder": [], "bid_price_eur_bn": [], "bid_months_left": [],
-		"subsidy_shadow": [], "subsidy_lapsed_month": []}
+		"subsidy_shadow": [], "subsidy_lapsed_month": [],
+		"owner": [], "courted": [], "board_chair": []}
 	var roots := ["res://src/sim", "res://src/core"]
 	for root_dir: String in roots:
 		var dir := DirAccess.open(root_dir)
@@ -257,7 +259,7 @@ func _test_forced_failure() -> void:
 	if int(entry.get("rescue_months_left", 0)) != IK.RESCUE_WINDOW_MONTHS:
 		_fail("the rescue window opened at %s instead of %d" % [
 			str(entry.get("rescue_months_left")), IK.RESCUE_WINDOW_MONTHS])
-	if Industry.failing(state, ns).is_empty():
+	if Industry.failing(state, ns, _loader).is_empty():
 		_fail("failing() does not report a major in its window")
 	# The window lapses: tick past it and the window reads 0 while `failed`
 	# stands -- committed is the window-at-zero state, which B2's rescue verb
@@ -279,7 +281,7 @@ func _test_forced_bid() -> void:
 	for _m in 240:
 		_tick(state)
 		for nation_id in state.nations.keys():
-			var bid: Dictionary = Industry.pending_bid(state, state.nations[nation_id])
+			var bid: Dictionary = Industry.pending_bid(state, state.nations[nation_id], _loader)
 			if not bid.is_empty():
 				opened = String(bid["company_id"])
 				break
@@ -293,13 +295,13 @@ func _test_forced_bid() -> void:
 	# go quiet. Track the opening bid's company and follow it to lapse.
 	var bid_nation := ""
 	for nation_id in state.nations.keys():
-		if not Industry.pending_bid(state, state.nations[nation_id]).is_empty():
+		if not Industry.pending_bid(state, state.nations[nation_id], _loader).is_empty():
 			bid_nation = String(nation_id)
 			break
-	var target: Dictionary = Industry.pending_bid(state, state.nations[bid_nation])
+	var target: Dictionary = Industry.pending_bid(state, state.nations[bid_nation], _loader)
 	var lapsed := false
 	for _m in IK.BID_WINDOW_MONTHS + 1:
-		var current: Dictionary = Industry.pending_bid(state, state.nations[bid_nation])
+		var current: Dictionary = Industry.pending_bid(state, state.nations[bid_nation], _loader)
 		if current.is_empty() or String(current["company_id"]) != String(target["company_id"]):
 			lapsed = true
 			break
@@ -454,23 +456,42 @@ func _test_rescue_restores_failing() -> void:
 	Companies.execute(state, ns, _loader.company_actions, rescue, major.id, _loader)
 	if not bool(ns.companies[major.id].get("failed", false)) or Companies.share_of_company(ns, major) != 0.0:
 		_fail("a rescue resurrected a COMMITTED failure -- the collapse is supposed to be committed")
+	# The leg is REAL, on a healthy major: the break-up LANDS (the split goes
+	# to the rivals), and the rescue attempted on the dissolved firm is then
+	# refused through available()'s failed gate at window 0 -- the first draft
+	# pre-failed the firm, so break_up was refused before it could split
+	# anything and the assertions below were trivially true (the pass-7
+	# fleet's find).
 	var state2 = GameState.new_game(_loader, PLAYER)
 	var ns2 = state2.nations[PLAYER]
-	var major2 = Companies.majors_of(_loader, PLAYER)[0]
+	var major2 = null
+	for company in Companies.majors_of(_loader, PLAYER):
+		if company.sector != Companies.majors_of(_loader, PLAYER)[0].sector and company.share >= 0.10:
+			major2 = company
+			break
+	if major2 == null:
+		major2 = Companies.majors_of(_loader, PLAYER)[1]
 	var rivals_before := 0.0
 	for other in Companies.majors_of(_loader, PLAYER):
 		if other.id != major2.id and other.sector == major2.sector:
 			rivals_before += Companies.share_of_company(ns2, other)
-	ns2.companies[major2.id]["failed"] = true
-	ns2.companies[major2.id]["share"] = 0.0
-	ns2.companies[major2.id]["rescue_months_left"] = 0
-	Companies.execute(state2, ns2, _loader.company_actions, _action("break_up"), major2.id, _loader)
+	var breakup2 = _action("break_up")
+	var dissolved: float = Companies.share_of_company(ns2, major2)
+	var landed: Dictionary = Companies.execute(state2, ns2, _loader.company_actions, breakup2, major2.id, _loader)
+	if not bool(landed.get("applied", false)):
+		_fail("the break-up leg's split was refused -- the leg tests nothing")
+	var rivals_after_split := 0.0
+	for other in Companies.majors_of(_loader, PLAYER):
+		if other.id != major2.id and other.sector == major2.sector:
+			rivals_after_split += Companies.share_of_company(ns2, other)
+	if absf(rivals_after_split - (rivals_before + dissolved)) > 1e-9:
+		_fail("the landed split did not hand the dissolved share to the rivals")
 	Companies.execute(state2, ns2, _loader.company_actions, rescue, major2.id, _loader)
 	var rivals_after := 0.0
 	for other in Companies.majors_of(_loader, PLAYER):
 		if other.id != major2.id and other.sector == major2.sector:
 			rivals_after += Companies.share_of_company(ns2, other)
-	if Companies.share_of_company(ns2, major2) != 0.0 or absf(rivals_after - rivals_before) > 1e-9:
+	if Companies.share_of_company(ns2, major2) != 0.0 or absf(rivals_after - rivals_after_split) > 1e-9:
 		_fail("a rescue undid a break-up -- a dissolved firm does not come back")
 
 

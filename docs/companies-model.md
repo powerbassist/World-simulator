@@ -1063,9 +1063,11 @@ The bands, declared in `companies_constants.gd` before generation ran:
 sector share, payroll [0.25, 0.50] of the nation's named employment against the
 V2.2a Lille/Düsseldorf/Manchester finding, `BODY_MIN_PER_NATION` 80.
 
-The register is **sparse**: `init_nation()` seeds majors only, and a body firm
-gains an entry only when an act touches it. Every read over the full roster
-therefore goes through `share_of_company()` (authored fallback), and
+The register is **sparse**: `init_nation()` seeds majors only, and -- the body
+being inert by design (§32, BODY SILENCE pinned) -- nothing writes a body entry
+at all; a later block's body market is where entries would begin. Every read
+over the full roster therefore goes through `share_of_company()` (authored
+fallback), and
 `share_of()` (register-only) is the read for a firm you already know is in the
 register. The A3 review caught both panels printing the register-only read over
 the full roster — a present figure printed as a confident zero, V1.6d's class —

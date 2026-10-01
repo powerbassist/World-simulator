@@ -21,6 +21,8 @@ extends RefCounted
 ## V1.4c ADDS A THIRD WRITER AND A THIRD CHANNEL, and the writers stay one apiece:
 ##
 ##     share             <- execute() (subsidy, rescue, break_up) + industry.gd  per firm
+##     subsidy           <- execute()'s ops + industry.gd's failure commit (the
+##                         support stops with the production it supported)  per firm
 ##     state_share       <- execute(), ownership ops      per firm
 ##     regulation_burden <- Legislature.apply()           per SECTOR
 ##
@@ -531,9 +533,11 @@ static func firm_impulse_pct(ns, loader) -> float:
 ## `law_structural_offset_pct`, whose shape this is.
 ##
 ## Exactly 0.0 while every firm sits at its authored share AND no sector carries a
-## burden -- which is every month of every run in which no subsidy has ever been
-## paid and no `business` law has ever passed. V1.4b widened that condition; see
-## headcount() for why the widening is the session's whole case.
+## burden AND no firm has failed. V1.4b widened that condition by the law; V4.7b
+## widened it by the world: the autonomy machine fails ~0.55 firms/nation per
+## idle 168-month run with no subsidy and no law standing, and a failed firm
+## employs nobody -- the machine-caused non-zero this channel prices is the
+## B4 re-run's largest moved channel, not a bug. See headcount().
 ##
 ## V1.5b: the denominator is now Demography.labour_force(), per nation and measured,
 ## where it was population x one flat 0.45. That re-baselines the jobs figures
@@ -622,9 +626,19 @@ static func available(state, ns, all_actions: Array, company_id: String, loader)
 	var out: Array = []
 	if not ns.companies.has(company_id):
 		return out
+	# The id must be a LOADER major, not merely a register key: an orphan
+	# entry (a save written before a content edit removed or renamed the
+	# firm) would otherwise reach the failed gate and be offered a rescue
+	# whose restore loop no-ops at value 0 -- a free rescue on a phantom.
+	var in_loader := false
 	for company in firms_of(loader, ns.id):
-		if company.id == company_id and not is_major(company):
-			return out
+		if company.id == company_id:
+			in_loader = true
+			if not is_major(company):
+				return out
+			break
+	if not in_loader:
+		return out
 	# The failed gate: a failed firm answers one door -- the rescue, inside its
 	# window. Before this gate the dead register's preconditions were vacuously
 	# true (`subsidy_active == 0`, the failure having cleared the subsidy), so

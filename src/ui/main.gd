@@ -1410,7 +1410,7 @@ func _announce_industry_events() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
-	var bid: Dictionary = Industry.pending_bid(_state, ns)
+	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
 	# The memory clears PER FIRM, when that firm's own bid ends -- the
 	# failure branch's design below, and the pass-6 fleet's find that the
 	# bid branch was still the all-clear its own comment forswore: with two
@@ -1435,7 +1435,7 @@ func _announce_industry_events() -> void:
 					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]), firm_name,
 					int(bid["months_left"])])
 			_industry_card_firms[card_id] = String(bid["company_id"])
-	var failing_now := Industry.failing(_state, ns)
+	var failing_now := Industry.failing(_state, ns, _loader)
 	# The memory clears PER FIRM, when that firm's own window closes -- the
 	# bid branch's design, not the all-clear the first draft used. Clearing
 	# only when NO firm failed would keep a rescued firm's entry alive while

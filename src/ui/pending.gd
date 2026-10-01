@@ -82,7 +82,7 @@ static func window_ids(state, loader) -> Array:
 	# a window, a failing major with a rescue window. Both are "awaits THE
 	# PLAYER" by the file's own test: each lapses to a committed outcome if
 	# ignored, and the verbs that answer live on the companies window.
-	if not Industry.pending_bid(state, ns).is_empty() or not Industry.failing(state, ns).is_empty():
+	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty():
 		out.append("companies")
 
 	return out

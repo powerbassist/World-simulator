@@ -2410,9 +2410,10 @@ func _run_companies_roundtrip(loader) -> void:
 		_fail("a save carries the company CONTENT -- the baseline is data/companies/, and a stored copy is what a content edit would silently disagree with")
 	# V1.4c TURNED THIS RED ON PURPOSE and widened it by exactly one key, which is
 	# the change worth recording rather than the widening. `share`, `subsidy` and
-	# `state_share` are the three things about a firm that MOVE; `subsidy` and
-	# `state_share` keep exactly one writer each, and `share`'s writers widened at
-	# V4.7b to the ledger companies.gd's header keeps. `name`, `sector`,
+	# `state_share` are the three things about a firm that MOVE; `state_share`
+	# keeps exactly one writer, and `share` and `subsidy` widened at V4.7b to the
+	# ledger companies.gd's header keeps (the machine's failure commit stops the
+	# support). `name`, `sector`,
 	# `headcount` and the AUTHORED share are content and must never appear here, for
 	# the reason above: the copy in the save is the one a content edit would silently
 	# disagree with. A key beyond the list still fails, so a later session storing a

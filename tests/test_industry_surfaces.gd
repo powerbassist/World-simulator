@@ -119,6 +119,27 @@ func _run() -> void:
 	if not _main._announced_failures.has(major.id):
 		_fail("a re-failed firm inside another window was card-silent -- the write-once class")
 
+	# --- The SOE chair line: the register read resolves to a NAME ------------
+	# The one new surface this file's first draft left unpinned (the pass-7
+	# fleet's find): a mistyped key or a broken fallback makes the line
+	# silently never draw. The chair is written as appoint_board writes it
+	# and read through the panel's own resolution.
+	var chair_id := ""
+	for person in loader.people.get(ns.id, []):
+		if String(person.kind) == "executive":
+			chair_id = String(person.id)
+			break
+	if chair_id == "":
+		_fail("no executive to stage a chair from")
+	else:
+		ns.companies[major.id]["board_chair"] = chair_id
+		panel._dirty = true
+		panel._refresh()
+		var chair_name: String = loader.person_name(chair_id)
+		if not _live_text_has(panel._body, "Chair: %s" % chair_name):
+			_fail("the SOE chair line did not draw the resolved name")
+		ns.companies[major.id].erase("board_chair")
+
 	# --- The corpse: the gate holds, and the refusal is shown ----------------
 	_ensure_entry(ns, third)
 	var corpse: Dictionary = ns.companies[third.id]

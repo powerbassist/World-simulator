@@ -196,7 +196,7 @@ func _refresh() -> void:
 ## rescue (its restore arm answers the window). Both vanish when answered or
 ## lapsed -- the sections are the state's own material, not a feed.
 func _build_autonomy_sections(ns) -> void:
-	var bid: Dictionary = Industry.pending_bid(_state, ns)
+	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
 	if not bid.is_empty():
 		PanelKit.heading(_body, "Foreign takeover bid")
 		var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
@@ -222,7 +222,7 @@ func _build_autonomy_sections(ns) -> void:
 			if action != null and bid_actions.has(action):
 				row.add_child(_action_button(ns, _firm_object(ns.id, String(bid["company_id"])), action))
 		_body.add_child(row)
-	var failing: Array = Industry.failing(_state, ns)
+	var failing: Array = Industry.failing(_state, ns, _loader)
 	if not failing.is_empty():
 		PanelKit.heading(_body, "Failing firms")
 		for failure in failing:
@@ -262,8 +262,10 @@ func _firm_object(nation_id: String, company_id: String):
 
 
 ## The three figures the register produces, in one place. Both deviation channels
-## read exactly 0.0 until a subsidy stands or a `business` law passes, so a player
-## who has done neither sees three zeroes -- the honest readout and not a bug.
+## read exactly 0.0 until a subsidy stands, a `business` law passes, or the
+## autonomy machine acts -- an idle world's failures and drift move the jobs
+## figure off zero by design (the B4 re-run's largest channel), so a non-zero
+## row with no verb on record is the machine working and not a bug.
 ##
 ## The two deviation rows are NET, and deliberately not split into a subsidy half
 ## and a regulation half. Splitting them would mean recomputing each channel against
