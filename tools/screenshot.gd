@@ -1282,8 +1282,12 @@ func _open_a_bid() -> void:
 
 
 ## V4.7b B4, for --failing. Writes the failure exactly as industry.gd::_failures
-## commits it -- `failed`, `share` 0.0 to the unnamed residual, the rescue
-## window -- on the largest major, which is the payroll the failing-majors
+## commits it -- all seven writes: `failed`, `share` 0.0 to the unnamed
+## residual, the support stopped, the foreign interest dead, and the rescue
+## window (the pass-2 zombie fix and the pass-4 ghost-bid fix are part of the
+## commit; --subsidy --failing composition stages on the same largest firm,
+## so the subsidy clear is what keeps the frame a state the machine could
+## produce) -- on the largest major, which is the payroll the failing-majors
 ## section prices most loudly. NOT followed by _tick_months for the reason
 ## _open_a_bid states: the window lapses, and a lapsed failure is a committed
 ## one whose row the panel does not draw.
@@ -1306,6 +1310,10 @@ func _fail_a_major() -> void:
 		return
 	entry["failed"] = true
 	entry["share"] = 0.0
+	entry["subsidy"] = 0.0
+	entry["bid_bidder"] = ""
+	entry["bid_price_eur_bn"] = 0.0
+	entry["bid_months_left"] = 0
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 

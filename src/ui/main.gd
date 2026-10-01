@@ -1411,11 +1411,19 @@ func _announce_industry_events() -> void:
 	if ns == null:
 		return
 	var bid: Dictionary = Industry.pending_bid(_state, ns)
+	# The memory clears PER FIRM, when that firm's own bid ends -- the
+	# failure branch's design below, and the pass-6 fleet's find that the
+	# bid branch was still the all-clear its own comment forswore: with two
+	# bids pending, answering A kept A's entry (pending_bid only shows the
+	# FIRST bid), and a re-bid on A announced nothing.
+	var live_bid_ids := {}
+	for company_id in ns.companies.keys():
+		if String(ns.companies[company_id].get("bid_bidder", "")) != "":
+			live_bid_ids[company_id] = true
+	for announced_id in _announced_bids.keys():
+		if not live_bid_ids.has(announced_id):
+			_announced_bids.erase(announced_id)
 	if bid.is_empty():
-		# The memory CLEARS when the event ends: a second bid on the same firm
-		# (after lapse, block or allowance) announces again -- a write-once
-		# memory would leave every later event UI-silent, the class the suite
-		# exists to catch.
 		_announced_bids.clear()
 	else:
 		if not _announced_bids.has(String(bid["company_id"])):

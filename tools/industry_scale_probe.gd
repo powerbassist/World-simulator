@@ -112,8 +112,17 @@ func _init() -> void:
 	_line("budget projection (1x24-month project), %d runs:" % (proj_runs * proj_runs))
 	_line("  mean %.1f ms | best %.1f ms | worst %.1f ms -- panel refresh = 2x this, per frame on drag" % [
 		proj_total / float(proj_runs * proj_runs), proj_best, proj_worst])
-	var ok := worst_ms < 300.0 and ind_worst_ms < 300.0
-	_line("verdict: %s (firms month band 300 ms, Companies AND Industry; the projection line informs the still-open PR-46 finding 6)" % ["PASS" if ok else "FAIL"])
+	# The projection gets a band too, not an informational line (the pass-6
+	# fleet's find: the machine x48 multiplication stayed unbudgeted -- a
+	# 50 ms/month regression would PASS the month bands while adding ~2.4 s
+	# per refresh-frame). Declared from measurement: 4.85 s mean / 5.78 s
+	# worst at head, the band's ~1.2 s headroom over worst catching a
+	# per-month regression that matters without flaking on machine variance.
+	# The ~4.5 s BASE predates this PR -- PR-46's finding 6, still open.
+	var proj_mean_ms := proj_total / float(proj_runs * proj_runs)
+	var proj_ok := proj_mean_ms < 7000.0
+	var ok := worst_ms < 300.0 and ind_worst_ms < 300.0 and proj_ok
+	_line("verdict: %s (firms month band 300 ms, Companies AND Industry; projection 24-month band 7.0 s, mean %.1f s -- the base is PR-46's still-open finding 6)" % ["PASS" if ok else "FAIL", proj_mean_ms / 1000.0])
 	_finish(0 if ok else 1)
 
 

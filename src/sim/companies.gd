@@ -778,6 +778,13 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	if action.id == "strategic_rescue" and bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", 0)) > 0:
 		entry["failed"] = false
 		entry["rescue_months_left"] = 0
+		# The failure commit's mechanical subsidy clear stamped the withdrawal
+		# memory (shadow > 0, live 0), and the hazard's withdrawn term would
+		# then double a firm the bailout just re-authorised full support for --
+		# the state "pulled support" is false here, the state IS the support.
+		# The memory resets with the rescue; a REAL withdrawal stamps again on
+		# its own (the pass-6 fleet's merged find).
+		entry["subsidy_lapsed_month"] = -1
 		for company in firms_of(loader, ns.id):
 			if company.id == company_id:
 				entry["share"] = company.share

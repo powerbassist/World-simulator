@@ -140,19 +140,27 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 				step = minf(step, float(before[company.id]))
 				if step <= 0.0:
 					continue
-				# The others absorb pro-rata by live share, capped by SHARE_MAX.
-				var receivers := 0.0
+				# The others absorb pro-rata by SHARE_HEADROOM, not by live
+				# share: a receiver at SHARE_MAX would take nothing while the
+				# first draft's per-receiver clip dropped the remainder to the
+				# residual -- zero-sum broken in the corner (the pass-6
+				# fleet's find; the taking arm was hardened the same way).
+				# Headroom-pro-rata sums to the shed exactly by construction,
+				# so the docstring's zero-sum claim holds under any caps. The
+				# arm is latent on shipped content (every SECTOR_TREND
+				# positive); it exists for content that authors a decline.
+				var headroom := 0.0
 				for other in firms:
 					if other.id != company.id:
-						receivers += float(before[other.id])
-				if receivers <= 0.0:
+						headroom += maxf(CK.SHARE_MAX - float(before[other.id]) - float(deltas[other.id]), 0.0)
+				if headroom <= 0.0:
 					continue
+				step = minf(step, headroom)
 				deltas[company.id] = float(deltas[company.id]) - step
 				for other in firms:
 					if other.id == company.id:
 						continue
-					var give: float = step * float(before[other.id]) / receivers
-					give = minf(give, maxf(CK.SHARE_MAX - float(before[other.id]) - float(deltas[other.id]), 0.0))
+					var give: float = step * maxf(CK.SHARE_MAX - float(before[other.id]) - float(deltas[other.id]), 0.0) / headroom
 					deltas[other.id] = float(deltas[other.id]) + give
 			else:
 				# Taking: from the others' spare above the rival floor, the

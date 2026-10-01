@@ -143,6 +143,73 @@ func _run() -> void:
 		_fail("a refused click left no refusal line in the body")
 
 
+	# --- The bid memory's PER-FIRM erase (the pass-6 fleet's find) -----------
+	# Both bids answered first, so the memory starts empty.
+	_answer_bid(ns, major)
+	_answer_bid(ns, second)
+	_main._announce_industry_events()
+	if not _main._announced_bids.is_empty():
+		_fail("bid memory not empty with no bids standing")
+	_stage_bid(ns, major)
+	_main._announce_industry_events()
+	if not _main._announced_bids.has(major.id):
+		_fail("first bid left no memory entry")
+	# A SECOND bid pends (never announced -- pending_bid shows the first);
+	# the first is ANSWERED: the per-firm erase drops the answered firm, and
+	# the newly-visible bid announces.
+	_stage_bid(ns, second)
+	_answer_bid(ns, major)
+	_main._announce_industry_events()
+	if _main._announced_bids.has(major.id):
+		_fail("the answered firm's bid memory survived the per-firm erase")
+	if not _main._announced_bids.has(second.id):
+		_fail("the newly-visible bid announced no memory entry")
+	# A re-bid on the answered firm while the second bid pends announces
+	# again -- the exact all-clear defect the old code had.
+	_stage_bid(ns, major)
+	_main._announce_industry_events()
+	if not _main._announced_bids.has(major.id):
+		_fail("a re-bid inside another pending bid was card-silent -- the all-clear class")
+	_answer_bid(ns, major)
+	_answer_bid(ns, second)
+	_main._announce_industry_events()
+
+	# --- The city panel's live-city employer filter (the pass-6 fleet's find)
+	# The relocation override, written exactly as _relocate does, moves the
+	# firm's employer listing: present in the NEW city's detail, absent from
+	# the authored one.
+	# The destination is ANOTHER MAJOR'S DOMICILE -- a named city the panel's
+	# register carries by construction; the first arbitrary town in the
+	# loader's list can sit below the named-city cut, where show_city builds
+	# no detail at all (the failure the first draft hit).
+	var other_city := ""
+	for company in majors:
+		if String(company.city) != String(major.city):
+			other_city = String(company.city)
+			break
+	if other_city == "":
+		_fail("no second city to relocate to -- the city-panel pin cannot run")
+	else:
+		var authored_city: String = String(major.city)
+		ns.companies[major.id]["city"] = other_city
+		var city_panel = _main._city_panel
+		city_panel.show_city(other_city)
+		# show_city only marks dirty; the rebuild rides the panel's _process,
+		# which a hidden panel never runs -- the test drives the refresh it
+		# would drive.
+		city_panel._refresh()
+		if OS.get_environment("B4DEBUG") != "":
+			print("B4TEST other_city=", other_city, " authored=", major.city)
+			_dump_labels(city_panel._body, "")
+		if not _live_text_has(city_panel._body, String(major.company_name)):
+			_fail("the relocated firm is not listed under its new city")
+		city_panel.show_city(authored_city)
+		city_panel._refresh()
+		if _live_text_has(city_panel._body, String(major.company_name)):
+			_fail("the relocated firm is still listed under its authored city")
+		ns.companies[major.id]["city"] = authored_city
+
+
 ## The bid's three scalars, exactly as industry.gd::_bids writes them.
 func _stage_bid(ns, company) -> void:
 	_ensure_entry(ns, company)
@@ -161,13 +228,20 @@ func _answer_bid(ns, company) -> void:
 	entry["courted"] = 0.0
 
 
-## The failure, exactly as industry.gd::_failures commits it.
+## The failure, exactly as industry.gd::_failures commits it -- all seven
+## writes: the flag, the share to the residual, the support stopped, the
+## foreign interest dead, and the window (the pass-6 fleet's find: the
+## first draft wrote three, leaving a bid+failure coexistence the machine
+## makes unproducible).
 func _stage_failure(ns, company) -> void:
 	_ensure_entry(ns, company)
 	var entry: Dictionary = ns.companies[company.id]
 	entry["failed"] = true
 	entry["share"] = 0.0
 	entry["subsidy"] = 0.0
+	entry["bid_bidder"] = ""
+	entry["bid_price_eur_bn"] = 0.0
+	entry["bid_months_left"] = 0
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 
@@ -216,3 +290,12 @@ func _finish() -> void:
 			print("FAIL: " + f)
 		print("test_industry_surfaces: %d failures" % _failures.size())
 		quit(1)
+
+
+func _dump_labels(node: Node, indent: String) -> void:
+	if node.is_queued_for_deletion():
+		return
+	if node is Label:
+		print(indent, "LABEL: '", node.text, "'")
+	for child in node.get_children():
+		_dump_labels(child, indent + "  ")

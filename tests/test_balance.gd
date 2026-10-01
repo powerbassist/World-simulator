@@ -42,6 +42,7 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -459,6 +460,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# nobody -- the share shift is exactly zero with no subsidy standing and all
 		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
 		Companies.tick_month(state, _loader)
+		# V4.7b, in main.gd's slot -- and NOT inert, which is the pass-6 fleet's
+		# important: the machine's idle world fails ~0.62 firms/nation per run and
+		# prices the register into unemployment, so this harness ran a pre-V4.7b
+		# model while its mirror ran the real one, the parity breach the file's own
+		# comments below forbid.
+		Industry.tick_month(state, _loader)
 		# After Companies, because the city pull reads live headcount: a month in which
 		# a subsidy moved a firm's hiring should move people in the same month rather
 		# than the next one. After Economy for the same reason one level up -- the
