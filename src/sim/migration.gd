@@ -128,8 +128,11 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 ## V4.7a: the jobs figure arrives pre-bucketed -- one pass over the nation's
 ## firms per month (_jobs_by_city below), not a scan of the whole roster per
 ## city. At the 2,729-firm register the scan was ~102k firm visits a month; the
-## bucket is bit-identical because each city's firms accumulate in roster order
-## either way.
+## bucket matched a per-city scan to the bit because each city's firms
+## accumulated in roster order either way -- a claim that held until V4.7b
+## moved headcount_in_city to the LIVE city (the bucket keys the AUTHORED one,
+## the relocation boundary companies-model section 33 records), so the
+## equivalence is exact only while no relocation stands.
 static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> float:
 	var heads: float = city_population(ns, region.id, city_id)
 	if heads <= 0.0:

@@ -14,10 +14,9 @@ extends SceneTree
 ## Budget.project(), the budget panel's per-frame 2x24-month projection, so
 ## an unbudgeted heaviest system sat on a per-frame path behind a gate that
 ## could not see it. The machine's month is now its own timed line with its
-## own 300 ms band, and the verdict requires both. The projection line below
-## stays informational (the panel refresh's ~5 s base predates this PR -- PR
-## #46's finding 6, still open as recorded); what the gate now refuses to
-## miss is the machine's share of it.
+## own 300 ms band, and the verdict requires both. The projection path is
+## BANDED TOO (7.0 s per 24-month project -- the pass-6 find; its ~4.5 s
+## base predates this PR and stays recorded as PR #46's finding 6).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")

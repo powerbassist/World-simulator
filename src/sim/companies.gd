@@ -927,6 +927,9 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["bid_price_eur_bn"] = 0.0
 			entry["bid_months_left"] = 0
 			entry["courted"] = 0.0
+			# The seat dies with the firm -- industry.gd's failure commit runs
+			# the same clear, for the same pool-drain reason.
+			entry["board_chair"] = ""
 		"nationalise":
 			var stake := float(terms.get("stake", 0.0))
 			price = (stake - held_before) * _value_of(ns, loader, company_id)

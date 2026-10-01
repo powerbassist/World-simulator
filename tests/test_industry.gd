@@ -242,7 +242,8 @@ func _test_forced_failure() -> void:
 	for _m in 240:
 		ns.regulation_burden[ major.sector ] = 1.0
 		ns.companies[major.id] = {"share": major.share, "subsidy": 0.0, "state_share": 0.0,
-			"subsidy_shadow": 1.0, "subsidy_lapsed_month": _month_index(state) - 1}
+			"subsidy_shadow": 1.0, "subsidy_lapsed_month": _month_index(state) - 1,
+			"board_chair": "staged_chair_id"}
 		_tick(state)
 		var entry: Dictionary = ns.companies[major.id]
 		if bool(entry.get("failed", false)):
@@ -256,6 +257,11 @@ func _test_forced_failure() -> void:
 		_fail("a failed major kept share %.4f" % float(entry["share"]))
 	if Companies.headcount(ns, major) != 0.0:
 		_fail("a failed major still employs %s people" % str(Companies.headcount(ns, major)))
+	# The seat dies with the firm (the pass-8 fleet's important): the staged
+	# entry carried a chair, and the commit clears it -- otherwise the corpse
+	# holds the executive out of the appointable pool for the rest of the run.
+	if String(entry.get("board_chair", "")) != "":
+		_fail("a failed major kept its board chair -- the pool drains on corpses")
 	if int(entry.get("rescue_months_left", 0)) != IK.RESCUE_WINDOW_MONTHS:
 		_fail("the rescue window opened at %s instead of %d" % [
 			str(entry.get("rescue_months_left")), IK.RESCUE_WINDOW_MONTHS])
@@ -414,8 +420,11 @@ func _test_break_up() -> void:
 	var body_before := {}
 	for company in Companies.body_of(_loader, PLAYER):
 		body_before[company.id] = Companies.share_of_company(ns, company)
+	ns.companies[major.id]["board_chair"] = "staged_chair_id"
 	Companies.execute(state, ns, _loader.company_actions, breakup, major.id, _loader)
 	var entry: Dictionary = ns.companies[major.id]
+	if String(entry.get("board_chair", "")) != "":
+		_fail("a broken-up major kept its board chair -- the pool drains on corpses")
 	if float(entry.get("share", -1)) != 0.0 or not bool(entry.get("failed", false)):
 		_fail("a broken-up major neither lost its share nor marked committed")
 	# Structural no-re-escalation: the split goes to the sector's other

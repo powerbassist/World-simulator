@@ -1164,6 +1164,16 @@ post-load, and the memo lives in industry.gd rather than network.gd because
 tests pass synthetic same-size graphs) carries it to **16.45 ms**. No distance
 changes, no draw moves: results bit-identical, suite 93/93.
 
+**The projection share, recorded rather than optimised here**: the machine
+also ticks inside `Budget.project()` — the budget panel's per-frame 2×24-month
+projection — adding ~48 machine-months, measured ~0.65–0.9 s of a ~9 s
+refresh frame whose base predates this block (PR-46's finding 6, still open).
+The hoistable per-month-invariant work (per-nation roster arrays, the
+relocation geography maps, the Cycle key strings) is worth roughly the
+machine's whole month and belongs to whatever session discharges finding 6;
+the probe's verdict bands the projection at 7.0 s so the share cannot grow
+unseen.
+
 ## 34. Five verbs on the one channel
 
 B2's verbs ride `effects.company` through `Companies.execute()`, the channel

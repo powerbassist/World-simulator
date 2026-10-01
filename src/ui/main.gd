@@ -1405,6 +1405,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 var _announced_bids := {}
 var _announced_failures := {}
 var _industry_card_firms := {}   # card id -> company_id, for the activation route
+var _bid_cards := {}             # company_id -> its LIVE bid card, taken away when the bid resolves
+var _failure_cards := {}         # company_id -> its LIVE failure card, same contract
 
 func _announce_industry_events() -> void:
 	var ns = _state.player()
@@ -1423,18 +1425,31 @@ func _announce_industry_events() -> void:
 	for announced_id in _announced_bids.keys():
 		if not live_bid_ids.has(announced_id):
 			_announced_bids.erase(announced_id)
+	# A resolved card is TAKEN AWAY -- PR 43's B4 contract, which these two
+	# cards dishonoured until the pass-8 fleet caught it: after block, allow
+	# or lapse the column still asserted an offer that no longer existed.
+	for firm_id in _bid_cards.keys():
+		if not live_bid_ids.has(firm_id):
+			_hud.message_stack.dismiss(String(_bid_cards[firm_id]))
+			_bid_cards.erase(firm_id)
 	if bid.is_empty():
 		_announced_bids.clear()
 	else:
-		if not _announced_bids.has(String(bid["company_id"])):
-			_announced_bids[String(bid["company_id"])] = true
-			var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
-			var card_id: String = _hud.message_stack.push(
-				"Foreign takeover bid",
-				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
-					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]), firm_name,
-					int(bid["months_left"])])
-			_industry_card_firms[card_id] = String(bid["company_id"])
+		var bid_firm := String(bid["company_id"])
+		var bid_body := "%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+			_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+			_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])]
+		if not _announced_bids.has(bid_firm):
+			_announced_bids[bid_firm] = true
+			var card_id: String = _hud.message_stack.push("Foreign takeover bid", bid_body)
+			_bid_cards[bid_firm] = card_id
+			_industry_card_firms[card_id] = bid_firm
+		elif _bid_cards.has(bid_firm):
+			# The window counts down: the body ages IN PLACE -- the set_body
+			# law, because dismiss-then-push moves the card to the bottom and
+			# the position IS the card's age. A player-dismissed id is a
+			# clean no-op: DISMISSAL NEVER ANSWERS, and never resurrects.
+			_hud.message_stack.set_body(String(_bid_cards[bid_firm]), bid_body)
 	var failing_now := Industry.failing(_state, ns, _loader)
 	# The memory clears PER FIRM, when that firm's own window closes -- the
 	# bid branch's design, not the all-clear the first draft used. Clearing
@@ -1447,16 +1462,21 @@ func _announce_industry_events() -> void:
 	for announced_id in _announced_failures.keys():
 		if not failing_ids.has(announced_id):
 			_announced_failures.erase(announced_id)
+	for firm_id in _failure_cards.keys():
+		if not failing_ids.has(firm_id):
+			_hud.message_stack.dismiss(String(_failure_cards[firm_id]))
+			_failure_cards.erase(firm_id)
 	for failure in failing_now:
 		var company_id := String(failure["company_id"])
+		var failure_body := "%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
+			_loader.firm_name(ns.id, company_id), int(failure["months_left"])]
 		if _announced_failures.has(company_id):
+			if _failure_cards.has(company_id):
+				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
 			continue
 		_announced_failures[company_id] = true
-		var firm_name: String = _loader.firm_name(ns.id, company_id)
-		var card_id: String = _hud.message_stack.push(
-			"Firm in difficulty",
-			"%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
-				firm_name, int(failure["months_left"])])
+		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
+		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen

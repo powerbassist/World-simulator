@@ -77,9 +77,15 @@ func _run() -> void:
 	if _count_live_buttons(panel._body, ["Block the Takeover", "Allow the Takeover"]) < 2:
 		_fail("the bid built no live takeover buttons (the bid row, or the firm row co-offering it)")
 
-	# --- The answered bid: memory clears, so the NEXT bid re-announces ------
+	# --- The answered bid: memory clears, the card is TAKEN AWAY, and the
+	# NEXT bid re-announces -- PR 43's resolved-card contract, which these
+	# cards dishonoured until the pass-8 fleet caught it (a stale offer
+	# standing after block/allow/lapse).
+	var cards_before_answer: int = stack.card_count()
 	_answer_bid(ns, major)
 	_main._announce_industry_events()
+	if stack.card_count() >= cards_before_answer:
+		_fail("the answered bid's card still stands -- the resolved-card contract")
 	if not _main._announced_bids.is_empty():
 		_fail("the bid memory did not clear when the event ended")
 	if Pending.window_ids(state, loader).has("companies"):
@@ -108,10 +114,13 @@ func _run() -> void:
 		if String(a.id) == "strategic_rescue":
 			rescue = a
 			break
+	var cards_before_rescue: int = stack.card_count()
 	var rescue_result: Dictionary = Companies.execute(state, ns, loader.company_actions, rescue, major.id, loader)
 	if not bool(rescue_result.get("applied", false)):
 		_fail("the rescue itself was refused: %s" % str(rescue_result))
 	_main._announce_industry_events()
+	if stack.card_count() >= cards_before_rescue:
+		_fail("the rescued firm's card still stands -- the resolved-card contract")
 	if _main._announced_failures.has(major.id):
 		_fail("the rescued firm's memory entry survived -- the per-firm clear did not run")
 	_stage_failure(ns, major)

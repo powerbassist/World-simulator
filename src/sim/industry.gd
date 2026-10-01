@@ -326,6 +326,12 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		entry["bid_bidder"] = ""
 		entry["bid_price_eur_bn"] = 0.0
 		entry["bid_months_left"] = 0
+		# The seat dies with the firm: a chair on a collapsed firm is the one
+		# person-key both death commits left standing, and the unseated-
+		# executive scan counted the corpse -- the appointable pool drained
+		# one seat per chaired death, unrecoverable for the run (the pass-8
+		# fleet's important).
+		entry["board_chair"] = ""
 		entry["rescue_months_left"] = IK.RESCUE_WINDOW_MONTHS
 
 

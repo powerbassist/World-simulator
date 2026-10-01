@@ -34,12 +34,15 @@ const INVEST_PROBABILITY_MONTHLY := 0.5
 const RELOCATE_HAZARD_YEARLY := 0.002
 
 ## The distance discount on the relocation hazard: 1 - km/2000, floored at
-## 0.1. A move across the continent (Lisbon-Warsaw, ~2900 km by road graph)
-## is ten times less likely than a next-region move; the firm that does move
-## far had a reason. 2000 km is the scale at which V2.4a's travel pricing
-## stops feeling domestic. The floor keeps the hazard strictly positive so a
-## draw can always fire it -- a distance that killed the hazard outright
-## would make the clamp set the number.
+## 0.1. 2000 km is the scale at which V2.4a's travel pricing stops feeling
+## domestic. The floor keeps the hazard strictly positive so a draw can
+## always fire it -- a distance that killed the hazard outright would make
+## the clamp set the number. The far-move story this scale once carried
+## (Lisbon-Warsaw at ten times a next-region move) is DEAD BY CONSTRUCTION:
+## the machine lands the firm on the graph-NEAREST other region only, so
+## the discount is a near-constant x0.85-0.98 -- companies-model section 37
+## records it, and this comment now does too (the pass-8 fleet's find:
+## a re-tuning session would have tuned an end that cannot fire).
 const RELOCATE_KM_SCALE := 2000.0
 const RELOCATE_DISCOUNT_FLOOR := 0.1
 

@@ -36,8 +36,9 @@ const Industry = preload("res://src/sim/industry.gd")
 
 ## The window ids with something on them awaiting an answer, in the order a
 ## president would deal with them: the thing with a deadline first. The loader
-## rides along for the one read that needs content (the programme's offer) --
-## every other check is a read of live state alone.
+## rides along for the reads that need content -- the programme's offer, and
+## the industry checks whose orphan skip walks the loader's majors (a register
+## entry for a firm a content edit removed must not light a mark forever).
 static func window_ids(state, loader) -> Array:
 	var out: Array = []
 	if state == null:
