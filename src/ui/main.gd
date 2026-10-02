@@ -2004,6 +2004,16 @@ func _on_load_requested(slot: String) -> void:
 		return
 
 	_state = result["state"]
+	# The announce memories and live-card maps belong to the DISCARDED game:
+	# firm ids are content, so the same id failing in the loaded game would
+	# be card-silent behind this session's carried entries -- the pass-15
+	# fleet's reproduced find. The stack survives (its ids are monotonic),
+	# so this is a memory reset and not a clear().
+	_announced_bids.clear()
+	_announced_failures.clear()
+	_bid_cards.clear()
+	_failure_cards.clear()
+	_industry_card_firms.clear()
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])

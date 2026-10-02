@@ -387,8 +387,9 @@ static func _failures(ns, majors: Array, month: int) -> void:
 ## reproduced live). An orphan entry is inert state, not a surface.
 static func failing(state, ns, loader) -> Array:
 	var out: Array = []
+	var loader_majors := _loader_major_ids(loader, ns)
 	for company_id in ns.companies.keys():
-		if not _is_loader_major(loader, ns.id, String(company_id)):
+		if not loader_majors.has(String(company_id)):
 			continue
 		var entry: Dictionary = ns.companies[company_id]
 		if bool(entry.get("failed", false)) and int(entry.get("rescue_months_left", 0)) > 0:
@@ -399,17 +400,25 @@ static func failing(state, ns, loader) -> Array:
 	return out
 
 
-## The one membership read the two register-walking surfaces share: a register
-## entry whose id the loader's majors do not hold is an orphan (a save written
-## before a content edit renamed or removed the firm), and every surface that
-## walks the register skips it.
-static func _is_loader_major(loader, nation_id: String, company_id: String) -> bool:
+## The one membership read the two register-walking surfaces share, as the
+## SET the caller's whole walk tests against: a register entry whose id the
+## loader's majors do not hold is an orphan (a save written before a content
+## edit renamed or removed the firm), and every surface that walks the
+## register skips it. One roster pass per SURFACE CALL, not per register
+## entry -- the helper this replaced rebuilt majors_of per entry, measured
+## at 530 us per window_ids call on the per-day top-bar path (the pass-15
+## fleet's measured find). A loader-less caller gets the register as it
+## stands.
+static func _loader_major_ids(loader, ns) -> Dictionary:
+	var ids := {}
 	if loader == null:
-		return true  # a loader-less caller gets the register as it stands
-	for company in Companies.majors_of(loader, nation_id):
-		if company.id == company_id:
-			return true
-	return false
+		# A loader-less caller gets the register as it stands.
+		for company_id in ns.companies.keys():
+			ids[company_id] = true
+		return ids
+	for company in Companies.majors_of(loader, ns.id):
+		ids[company.id] = true
+	return ids
 
 
 # --- Foreign bids ---------------------------------------------------------------
@@ -468,8 +477,9 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 ## The open bid on this nation's register, if any: {company_id, bidder_id,
 ## price_eur_bn, months_left}. The verbs read this; the surfaces render it.
 static func pending_bid(state, ns, loader = null) -> Dictionary:
+	var loader_majors := _loader_major_ids(loader, ns)
 	for company_id in ns.companies.keys():
-		if not _is_loader_major(loader, ns.id, String(company_id)):
+		if not loader_majors.has(String(company_id)):
 			continue
 		var entry: Dictionary = ns.companies[company_id]
 		var bidder: String = String(entry.get("bid_bidder", ""))
@@ -489,15 +499,8 @@ static func pending_bid(state, ns, loader = null) -> Dictionary:
 # --- Reads the rest of the game borrows ----------------------------------------
 
 ## A failed firm employs nobody: the one branch the V1.4 headcount never
-## needed, read through the same register every other read uses.
-static func is_failed(ns, company_id: String) -> bool:
-	return bool(ns.companies.get(company_id, {}).get("failed", false))
-
-
-## The firm's LIVE city -- the relocation override when one stands, the
-## authored content otherwise. READ WHERE IT IS WRITTEN: companies.gd's
-## headcount_in_city carries its own inline read of the same register fact --
-## this file preloads companies.gd, so the reverse call would invert the
-## two-writers arrangement, and a mirror comment is the honest form of the
+## needed, read through the same register every other read uses. (The
+## pass-13 hoist moved the LIVE-city read to companies.live_city_of, where
+## headcount_in_city, the machine and the city panel share it.)
 static func _failed(ns, company_id: String) -> bool:
 	return bool(ns.companies.get(company_id, {}).get("failed", false))

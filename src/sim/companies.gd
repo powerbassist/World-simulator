@@ -377,10 +377,10 @@ static func _tick_shares(ns, loader) -> void:
 			# headcount 0 through the failed flag, one register read two ways
 			# (the pass-2 ultra's second Important). A rescued firm re-enters
 			# here: the flag clears and the next tick prices it alive again.
-			# The flag is read as the raw register fact this file's other reads
-			# use -- is_failed() is industry.gd's read, and a sim module
-			# preloading its sibling machine for one predicate inverts the
-			# two-writers arrangement.
+			# The flag is read as the raw register fact this file's other
+			# reads use -- industry.gd's reader is private to the machine,
+			# and a sim module preloading its sibling machine for one
+			# predicate inverts the two-writers arrangement.
 			if is_major(company) and not bool(ns.companies.get(company.id, {}).get("failed", false)):
 				majors.append(company)
 		var before := {}
