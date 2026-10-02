@@ -50,9 +50,10 @@ extends RefCounted
 ## the real model forward on a copy and gets the real answer.
 ##
 ## Preloads constants, Demography (V1.5b's labour force), Cycle (V4.7b's
-## appoint_board draw) and diplomacy_constants -- NOT a leaf any more, and
-## not pretending to be one; the writer ledgers above say what the file
-## may do with what it holds.
+## appoint_board draw), Relations (V4.7b's takeover pulses -- the one
+## writer outside diplomacy.gd) and diplomacy_constants -- NOT a leaf any
+## more, and not pretending to be one; the writer ledgers above say what
+## the file may do with what it holds.
 ##
 ## FIRMS ARE LOAD-BEARING ON GDP, and the shape is what makes that safe.
 ## Economy._apply_growth_to_sectors() reconciles the three sectors against the

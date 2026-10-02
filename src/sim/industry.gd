@@ -21,14 +21,15 @@ extends RefCounted
 ## `bid_months_left` (the bid as three scalars: from_dict's rebuild guarantee
 ## is per-scalar, and a nested dictionary would silently narrow it),
 ## `subsidy_shadow`, `subsidy_lapsed_month` (the failure hazard's memory of a
-## withdrawn subsidy) and `board_chair` (the seat dies with the firm at the
-## failure commit). B2's VERB CHANNEL is the second writer of the keys it
-## answers: companies.gd's execute() clears/converts bids (block/allow),
-## writes `owner`, `courted` and `board_chair` (appoint_board, break_up),
-## resets `subsidy_lapsed_month` when support is re-authored (the rescue and
-## the ordinary re-subsidise), and commits break-ups and rescues onto
-## failed/window. No third file writes any of it; tests/test_industry.gd
-## scans.
+## withdrawn subsidy), `board_chair` (the seat dies with the firm at the
+## failure commit) and `courted` (the courtship dies with it too -- the same
+## commit clears the standing x5 hazard). B2's VERB CHANNEL is the second
+## writer of the keys it answers: companies.gd's execute() clears/converts
+## bids (block/allow), writes `owner` and `board_chair` (appoint_board,
+## break_up), resets `subsidy_lapsed_month` when support is re-authored (the
+## rescue and the ordinary re-subsidise), and commits break-ups and rescues
+## onto failed/window. No third file writes any of it;
+## tests/test_industry.gd scans.
 ##
 ## SAVE_VERSION EARNS NO BUMP, argued per field: absent, every key reads its
 ## default -- no relocation (authored city), not failed, no window, no bid, no
@@ -59,6 +60,11 @@ const EK = preload("res://src/sim/economy_constants.gd")
 ## answer stale.)
 static var _dist_memo: Dictionary = {}
 static var _dist_memo_graph := 0
+## The nearest-other-region answer per nation+region, cleared with the
+## distance memo: same immutable-content reasoning, same key guard. The
+## pass-14 perf find -- the argmin over the nation's regions re-ran per
+## major per month (~317 scans/tick) and x48 on the budget-refresh path.
+static var _best_region_memo: Dictionary = {}
 
 
 static func tick_month(state, loader) -> void:
@@ -237,6 +243,7 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 	var graph: Dictionary = loader.region_graph
 	if _dist_memo_graph != graph_key:
 		_dist_memo.clear()
+		_best_region_memo.clear()
 		_dist_memo_graph = graph_key
 	for company in majors:
 		if _failed(ns, company.id):
@@ -257,18 +264,30 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 			if live != String(company.city):
 				entry["city"] = String(company.city)
 			continue
-		if not _dist_memo.has(current_region):
-			_dist_memo[current_region] = Net.distances_from(graph, current_region)
-		var rows: Dictionary = _dist_memo[current_region]
-		var best_km := INF
-		var best_region := ""
-		for region_id in region_cities.keys():
-			if region_id == current_region:
-				continue
-			var km: float = float(rows.get(region_id, INF))
-			if km < best_km:
-				best_km = km
-				best_region = region_id
+		# The nearest-other-region answer is memoised per nation+region (the
+		# pass-14 perf find: the argmin re-ran per major per month, ~317
+		# scans/tick, x48 on the budget-refresh path) -- the same
+		# immutable-content reasoning the distance memo runs on, cleared
+		# together with it.
+		var memo_key: String = ns.id + "|" + current_region
+		if not _best_region_memo.has(memo_key):
+			if not _dist_memo.has(current_region):
+				_dist_memo[current_region] = Net.distances_from(graph, current_region)
+			var rows: Dictionary = _dist_memo[current_region]
+			var best_km := INF
+			var best_region := ""
+			for region_id in region_cities.keys():
+				if region_id == current_region:
+					continue
+				var km: float = float(rows.get(region_id, INF))
+				if km < best_km:
+					best_km = km
+					best_region = region_id
+			_best_region_memo[memo_key] = [best_region, best_km]
+		# [region, km] -- the discount below prices the km of the memoised
+		# answer, so the pair travels together.
+		var best_region: String = String(_best_region_memo[memo_key][0])
+		var best_km: float = float(_best_region_memo[memo_key][1])
 		if best_region == "":
 			continue
 		# ONE draw, with the distance inside it: the monthly hazard discounted
