@@ -116,8 +116,10 @@ const MIN_AUTHORED_SHARE := 0.02
 const MIN_BODY_SHARE := 0.001
 
 ## V4.7b: the relations pulse a takeover answer carries, in points. A block
-## sours the pair; an allowance warms it. A tenth of a point-scale step, the
-## same weight class as a diplomatic act's small pulse.
+## sours the pair; an allowance warms it. A TENTH of the smallest diplomatic
+## pulse (the authored acts run |4|-|18|) -- deliberate: an answer to the
+## bidder's own approach, not a measure in its own right (the pass-11
+## fleet's calibration find).
 const BID_BLOCK_RELATIONS_PULSE := -0.5
 const BID_ALLOW_RELATIONS_PULSE := 0.5
 
@@ -154,8 +156,10 @@ const SUBSIDY_BILL_MAX_PCT_GDP := 2.50
 
 ## Share of its sector a firm at full intensity takes from its named rivals each
 ## month. Taken pro-rata from the other named firms in the same sector of the same
-## nation, and NEVER from the unnamed residual -- which is what makes the sum of
-## named shares invariant under every lever, rather than merely renormalised.
+## nation, and NEVER from the unnamed residual -- which is what makes THIS POOL's
+## transfers renormalisation-free (the header ledger names the writers that move
+## named share outside it: the failure commit, the rescue's authored restore,
+## break_up's conserving split).
 ##
 ## This is the model's ONE persistent channel. A subsidy withdrawn leaves the
 ## share where it moved to: the firm out-competed its rivals with public money and

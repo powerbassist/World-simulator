@@ -324,9 +324,10 @@ static func headcount_in_city(ns, loader, city_id: String) -> float:
 ## this pool's transfers renormalisation-free -- and why a later session naming a
 ## seventh firm can take its share out of the residual and move no existing number.
 ## The pool is the INVARIANCE'S SCOPE, not the whole file: since V4.7b the failure
-## commit moves a named share to the residual and the rescue brings it back (the
-## header ledger names the writers), and break_up's split conserves the sum by its
-## own pro-rata form.
+## commit moves a named share to the residual and the rescue RE-AUTHORS the firm's
+## CONTENT share (the drifted live share does not survive the death), moving the
+## named sum by (authored - live) per rescue; break_up's split conserves the sum
+## by its own pro-rata form. The header ledger names the writers.
 ##
 ## Every draw is computed against the shares as they stood at the start of the
 ## month and applied afterwards, so the result does not depend on the order firms
@@ -789,9 +790,13 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	# the WINDOW, not the flag alone: a committed failure (window 0) stays
 	# committed -- the card copy promises "past it the collapse is committed" --
 	# and a broken-up major (failed with a closed window) is never resurrected
-	# while its rivals keep the absorbed split. The flag clears, the authored
-	# share comes back (it went to the residual when the failure fired; the
-	# same content gives it back), the window closes, and the treasury pays
+	# while its rivals keep the absorbed split. The flag clears, the share is
+	# RE-AUTHORED from content -- deliberately the authored position, not the
+	# drifted live share the failure zeroed, so a rescue moves the sector's
+	# named sum by (authored - live) whenever the machine's drift had moved
+	# the firm: the firm returns to its content position, and the drift it
+	# accumulated does not survive its death (pinned at that value in
+	# test_industry). The window closes, and the treasury pays
 	# the firm's value -- balance-sheet swap, the same capital-transaction
 	# rule the ownership ops run under. The arm does not return: the ordinary
 	# subsidise below then starts the recurring support on top of the one-off
