@@ -8,7 +8,9 @@ extends SceneTree
 ## the major pool. The load-bearing pins here:
 ##
 ##   - the register's SHAPE: every nation carries majors and a body list (A3
-##     generated 323 majors + 2,406 body across 29 nations; the A1-era "26
+##     generated 317 majors + 2,420 body across 29 nations (the PR-46
+##     review's finding 19, corrected at the pass-13 fleet's carried
+##     find); the A1-era "26
 ##     firms, empty body" pin is history, corrected at the PR-46 review);
 ##   - a firm with no register entry reads its AUTHORED share (the
 ##     sparse-register fallback) and an unknown id reads 0.0 -- the fallback
@@ -44,6 +46,7 @@ func _init() -> void:
 		_test_old_save_ticks_clean()
 		_test_from_dict_does_not_alias_companies()
 		_test_from_dict_roundtrips_the_register()
+		_test_machine_keys_roundtrip()
 		_test_tier_gate_refuses_body_verbs()
 		_test_register_scale()
 		_test_body_bands()
@@ -158,6 +161,41 @@ func _test_from_dict_does_not_alias_companies() -> void:
 	a.nations["FRA"].companies["FRA_aurignac"]["share"] = 0.5
 	if is_equal_approx(float(c.companies.get("FRA_aurignac", {}).get("share", 0.0)), 0.5):
 		_fail("the original aliased the loaded state's register")
+
+
+## The eleven V4.7b machine keys, round-tripped VERBATIM -- the save half of
+## the register contract the LIVE_KEYS allowlist only opens. The generic leg
+## above runs on a fresh register (three float keys), so a typed cast or a
+## filtered copy in from_dict's rebuild for the machine's strings and flags
+## passed the suite silently until this leg (the pass-9 fleet's find).
+func _test_machine_keys_roundtrip() -> void:
+	var a = GameState.new_game(_loader, "FRA")
+	var major = Companies.majors_of(_loader, "FRA")[0]
+	a.nations["FRA"].companies[major.id] = {
+		"share": 0.123, "subsidy": 0.5, "state_share": 0.25,
+		"city": "FRI_bordeaux", "failed": true, "rescue_months_left": 4,
+		"bid_bidder": "DEU|deuscher_hof", "bid_price_eur_bn": 12.5, "bid_months_left": 2,
+		"subsidy_shadow": 0.6, "subsidy_lapsed_month": 37,
+		"owner": "DEU", "courted": 1.0, "board_chair": "staged_chair"}
+	var payload: Dictionary = a.to_dict()["nations"]["FRA"]
+	var c = NationState.from_dict(payload)
+	var before: Dictionary = a.nations["FRA"].companies[major.id]
+	var after: Dictionary = c.companies.get(major.id, {})
+	for key in before.keys():
+		var expected = before[key]
+		if not after.has(key):
+			_fail("%s: the round trip dropped the machine key '%s'" % [major.id, key])
+			continue
+		var got = after[key]
+		if expected is String:
+			if String(got) != String(expected):
+				_fail("%s.%s: '%s' vs '%s'" % [major.id, key, str(got), str(expected)])
+		elif expected is bool:
+			if bool(got) != bool(expected):
+				_fail("%s.%s: %s vs %s" % [major.id, key, str(got), str(expected)])
+		else:
+			if not is_equal_approx(float(got), float(expected)):
+				_fail("%s.%s: %s vs %s" % [major.id, key, str(got), str(expected)])
 
 
 func _test_from_dict_roundtrips_the_register() -> void:
@@ -331,12 +369,11 @@ func _test_body_bands() -> void:
 					CompaniesK.BODY_PAYROLL_CONCENTRATION_MAX])
 
 
-## The sparse register's save leg. A body entry exists in the register ONLY
-## once something has touched it; A3's majors-only pool means a subsidy
-## spillover never does (the body is outside the verb plane -- only B-phase
-## acts fail or buy a body firm), so this leg seeds the entry the way a B-phase
-## act will, round-trips, and demands the touched body entry survive with its
-## live share. A dropped key would silently revert the firm to its authored
+## The sparse register's save leg. No code path writes a body entry (the body
+## is inert by design -- BODY SILENCE pinned; a later block's body market is
+## where entries would begin), so this leg hand-seeds the entry such a writer
+## would create, round-trips, and demands the touched body entry survive with
+## its live share. A dropped key would silently revert the firm to its authored
 ## share -- the drift the sparse design exists to avoid paying for on firms
 ## nobody has touched, whoever the writer turns out to be.
 func _test_body_touched_roundtrip() -> void:

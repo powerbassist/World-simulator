@@ -31,6 +31,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -791,6 +792,15 @@ func _wire_hud() -> void:
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
 			_windows.open("agenda")
 			return
+		# V4.7b: an industry card routes to the window where its verbs live.
+		# (Focus-by-firm was deferred twice -- B2 to B3, and B3 shipped its
+		# surfaces without it -- so it is an OPEN DEFERRAL, not a promise:
+		# the click gets the player to the register, whose autonomy sections
+		# surface the pending bid or failing firm. Recorded per the plan's
+		# own rule, that a deferral is a decision and not a discovery.)
+		if _industry_card_firms.has(id):
+			_windows.open("companies")
+			return
 		_windows.open("events")
 	)
 
@@ -1258,6 +1268,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 	# entry -> which verbs are available -> a new subsidy -> bill.
 	Companies.tick_month(_state, _loader)
+	Industry.tick_month(_state, _loader)
+	_announce_industry_events()
 
 	# After Companies, because the city pull reads live headcount: a month in which a
 	# subsidy moved a firm's hiring should move people in the same month rather than
@@ -1387,6 +1399,103 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	if results.is_empty():
 		_enforce_term_start_programme()
 
+
+## V4.7b: the autonomy machine's two player-facing events, as cards. The
+## announced-state memory is main-side (UI): the sim stays free of the card
+## stack, and a dismissed card is remembered as announced -- DISMISSAL NEVER
+## ANSWERS, the bid and the window lapse on their own clocks; the card only
+## has to stop repeating.
+var _announced_bids := {}
+var _announced_failures := {}
+var _industry_card_firms := {}   # card id -> company_id; the route opens the
+# companies window whole -- no focus-by-firm yet (the open deferral above) --
+# so the value is carried for the day that lands, not read today.
+var _bid_cards := {}             # company_id -> its LIVE bid card, taken away when the bid resolves
+var _failure_cards := {}         # company_id -> its LIVE failure card, same contract
+
+func _announce_industry_events() -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
+	# The memory clears PER FIRM, when that firm's own bid ends -- the
+	# failure branch's design below, and the pass-6 fleet's find that the
+	# bid branch was still the all-clear its own comment forswore: with two
+	# bids pending, answering A kept A's entry (pending_bid only shows the
+	# FIRST bid), and a re-bid on A announced nothing.
+	var live_bid_ids := {}
+	for company_id in ns.companies.keys():
+		if String(ns.companies[company_id].get("bid_bidder", "")) != "":
+			live_bid_ids[company_id] = true
+	for announced_id in _announced_bids.keys():
+		if not live_bid_ids.has(announced_id):
+			_announced_bids.erase(announced_id)
+	# A resolved card is TAKEN AWAY -- PR 43's B4 contract, which these two
+	# cards dishonoured until the pass-8 fleet caught it: after block, allow
+	# or lapse the column still asserted an offer that no longer existed.
+	for firm_id in _bid_cards.keys():
+		if not live_bid_ids.has(firm_id):
+			_hud.message_stack.dismiss(String(_bid_cards[firm_id]))
+			_bid_cards.erase(firm_id)
+	if bid.is_empty():
+		_announced_bids.clear()
+	else:
+		var bid_firm := String(bid["company_id"])
+		if not _announced_bids.has(bid_firm):
+			_announced_bids[bid_firm] = true
+			var card_id: String = _hud.message_stack.push(
+				"Foreign takeover bid",
+				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
+			_bid_cards[bid_firm] = card_id
+			_industry_card_firms[card_id] = bid_firm
+	# The window counts down on EVERY live card, read from the register --
+	# not only pending_bid's first (the pass-9 fleet's find: with two bids
+	# pending, the second firm's card froze at its announce-time months and
+	# could lapse on stale text). The body ages IN PLACE -- the set_body
+	# law, because dismiss-then-push moves the card to the bottom and the
+	# position IS the card's age. A player-dismissed id is a clean no-op:
+	# DISMISSAL NEVER ANSWERS, and never resurrects.
+	for firm_id in _bid_cards.keys():
+		if not live_bid_ids.has(firm_id):
+			continue
+		var entry: Dictionary = ns.companies[firm_id]
+		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
+		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
+			"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
+				float(entry.get("bid_price_eur_bn", 0.0)),
+				_loader.firm_name(ns.id, String(firm_id)),
+				int(entry.get("bid_months_left", 0))])
+	var failing_now := Industry.failing(_state, ns, _loader)
+	# The memory clears PER FIRM, when that firm's own window closes -- the
+	# bid branch's design, not the all-clear the first draft used. Clearing
+	# only when NO firm failed would keep a rescued firm's entry alive while
+	# another window stood, and its RE-failure inside that window would then
+	# be card-silent: the write-once class the comment above names.
+	var failing_ids := {}
+	for failure in failing_now:
+		failing_ids[String(failure["company_id"])] = true
+	for announced_id in _announced_failures.keys():
+		if not failing_ids.has(announced_id):
+			_announced_failures.erase(announced_id)
+	for firm_id in _failure_cards.keys():
+		if not failing_ids.has(firm_id):
+			_hud.message_stack.dismiss(String(_failure_cards[firm_id]))
+			_failure_cards.erase(firm_id)
+	for failure in failing_now:
+		var company_id := String(failure["company_id"])
+		var failure_body := "%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
+			_loader.firm_name(ns.id, company_id), int(failure["months_left"])]
+		if _announced_failures.has(company_id):
+			if _failure_cards.has(company_id):
+				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
+			continue
+		_announced_failures[company_id] = true
+		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
+		_failure_cards[company_id] = card_id
+		_industry_card_firms[card_id] = company_id
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling
@@ -1895,6 +2004,16 @@ func _on_load_requested(slot: String) -> void:
 		return
 
 	_state = result["state"]
+	# The announce memories and live-card maps belong to the DISCARDED game:
+	# firm ids are content, so the same id failing in the loaded game would
+	# be card-silent behind this session's carried entries -- the pass-15
+	# fleet's reproduced find. The stack survives (its ids are monotonic),
+	# so this is a memory reset and not a clear().
+	_announced_bids.clear()
+	_announced_failures.clear()
+	_bid_cards.clear()
+	_failure_cards.clear()
+	_industry_card_firms.clear()
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])

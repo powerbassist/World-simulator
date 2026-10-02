@@ -40,6 +40,7 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -868,6 +869,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
 		# under an unsubsidised run at all -- not even a figure the economy ignores.
 		Companies.tick_month(state, loader)
+		# V4.7b, main.gd's order: the autonomy machine ticks after Companies and
+		# before Migration.
+		Industry.tick_month(state, loader)
 		# After Companies, because the city pull reads live headcount: a month in which
 		# a subsidy moved a firm's hiring should move people in the same month rather
 		# than the next one. After Economy for the same reason one level up -- the

@@ -1,0 +1,51 @@
+{
+  "_note": "V4.7b's takeover verbs, answering the foreign bids industry.gd opens. The bid is the counterparty the V1.4c note said a subsidy never had -- so these two actions, and only these, carry a relations pulse: blocking or allowing a foreign state's offer is a diplomatic act with a counterparty, priced against the same resting relations every other pulse moves. The bid itself is never authored: it is Industry.pending_bid's live state, and a precondition field (bid_pending) gates both verbs on it. What allowing MEANS is recorded and honest: the register carries the new owner and the firm keeps producing -- foreign OWNERSHIP is recorded, not modelled further, until a block owns it. The court verb gates on its own flag (courted == 0): an invitation stands until a bid is ANSWERED -- a courtship bought again click by click was the ultra's unpriced-lever finding, and the flag's lifecycle is the verb's natural repeat gate.",
+  "actions": [
+    {
+      "id": "block_takeover",
+      "name": "Block the Takeover",
+      "summary": "The state forbids the sale. The foreign state's interest is refused and its capital takes the insult home; the workforce keeps a domestic owner.",
+      "preconditions": [{ "field": "bid_pending", "op": "==", "value": 1 }],
+      "effects": {
+        "company": { "op": "block_bid" },
+        "bloc_offset": {
+          "workers": 0.06,
+          "pensioners": 0.02,
+          "urban": 0.02,
+          "business": -0.10
+        }
+      }
+    },
+    {
+      "id": "allow_takeover",
+      "name": "Allow the Takeover",
+      "summary": "The sale proceeds. The foreign state's capital arrives, the register records the new owner, and the workforce answers for it.",
+      "preconditions": [{ "field": "bid_pending", "op": "==", "value": 1 }],
+      "effects": {
+        "company": { "op": "allow_bid" },
+        "bloc_offset": {
+          "business": 0.12,
+          "urban": 0.04,
+          "workers": -0.08
+        }
+      }
+    },
+    {
+      "id": "court_investor",
+      "name": "Court Foreign Investors",
+      "summary": "The state quietly invites foreign capital to look at the firm. Interest multiplies -- and so does the exposure the takeover verbs exist to answer.",
+      "preconditions": [
+        { "field": "bid_pending", "op": "==", "value": 0 },
+        { "field": "courted", "op": "==", "value": 0 },
+        { "field": "firm_share", "op": "<", "value": 0.10 }
+      ],
+      "effects": {
+        "company": { "op": "court" },
+        "bloc_offset": {
+          "business": 0.05,
+          "workers": -0.04
+        }
+      }
+    }
+  ]
+}

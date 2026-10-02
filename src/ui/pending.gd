@@ -31,12 +31,14 @@ const Events = preload("res://src/sim/events.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const Industry = preload("res://src/sim/industry.gd")
 
 
 ## The window ids with something on them awaiting an answer, in the order a
 ## president would deal with them: the thing with a deadline first. The loader
-## rides along for the one read that needs content (the programme's offer) --
-## every other check is a read of live state alone.
+## rides along for the reads that need content -- the programme's offer, and
+## the industry checks whose orphan skip walks the loader's majors (a register
+## entry for a firm a content edit removed must not light a mark forever).
 static func window_ids(state, loader) -> Array:
 	var out: Array = []
 	if state == null:
@@ -76,5 +78,12 @@ static func window_ids(state, loader) -> Array:
 	# the player cannot move.
 	if Campaign.is_open(state, ns):
 		out.append("campaign")
+
+	# V4.7b: the autonomy machine's two answerable states -- a foreign bid with
+	# a window, a failing major with a rescue window. Both are "awaits THE
+	# PLAYER" by the file's own test: each lapses to a committed outcome if
+	# ignored, and the verbs that answer live on the companies window.
+	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty():
+		out.append("companies")
 
 	return out

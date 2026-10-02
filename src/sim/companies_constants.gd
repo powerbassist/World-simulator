@@ -26,7 +26,10 @@ extends RefCounted
 ## V1.4c adds two ops and no new channel, which is the seventh session running with
 ## no new content type. `data/company-actions/` now serves three sessions the way
 ## `data/diplomatic-actions/` served five.
-const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise"]
+const COMPANY_OPS := ["subsidise", "withdraw", "nationalise", "privatise",
+	# V4.7b: the takeover answers, the courtship flag, and break-up -- one
+	# channel, one dispatch, no new content type.
+	"block_bid", "allow_bid", "court", "break_up", "appoint_board"]
 
 ## The term each op reads, or "" for the ops that read none. Declared as a table
 ## rather than as branches in src/core/company_action.gd because the property worth
@@ -37,6 +40,13 @@ const COMPANY_OP_TERM := {
 	"withdraw": "",
 	"nationalise": "stake",
 	"privatise": "",
+	# V4.7b: the autonomy verbs -- none carries a dial; the state they answer
+	# lives in the register, not in the action's terms.
+	"block_bid": "",
+	"allow_bid": "",
+	"court": "",
+	"break_up": "",
+	"appoint_board": "",
 }
 
 ## How large one authored subsidy may be. Bounds the content, not the accumulated
@@ -76,11 +86,18 @@ const PRECONDITION_FIELDS := [
 	"subsidy_active", "subsidy_count",
 	"state_owned", "state_owned_count",
 	"deficit_pct_gdp", "debt_to_gdp_pct", "unemployment_pct", "overall_approval_pct",
+	# V4.7b: the autonomy machine's state, read from the same register every
+	# other precondition reads -- a takeover verb is answerable only while a
+	# bid pends, a rescue-restore only while the window stands, and break-up
+	# only on share worth splitting. The court verb gates on its own flag:
+	# an invitation stands until a bid is ANSWERED, so it cannot be re-bought
+	# click by click (the ultra's unpriced-lever finding).
+	"bid_pending", "failing", "firm_share", "courted",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 
-## The smallest share a firm may be authored at. A firm below this cannot move
+## The smallest share a MAJOR may be authored at. A firm below this cannot move
 ## its sector by any reachable amount, so it is a name on a panel rather than a
 ## firm -- the same standard _validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
@@ -97,6 +114,24 @@ const MIN_AUTHORED_SHARE := 0.02
 ## headroom, not a tuned constant (nothing sweeps it; the generator's own
 ## check mode and the loader both refuse content below it).
 const MIN_BODY_SHARE := 0.001
+
+## V4.7b: the relations pulse a takeover answer carries, in points. A block
+## sours the pair; an allowance warms it. A TENTH of the smallest diplomatic
+## pulse (the authored acts run |4|-|18|) -- deliberate: an answer to the
+## bidder's own approach, not a measure in its own right (the pass-11
+## fleet's calibration find).
+const BID_BLOCK_RELATIONS_PULSE := -0.5
+const BID_ALLOW_RELATIONS_PULSE := 0.5
+
+## V4.7b: the rescue's one-off capital price, as a share of the firm's whole
+## value -- the bailout arm's `price` on top of the recurring subsidy the same
+## verb starts. A quarter says: keeping a going concern alive is worth real
+## money but never the whole firm; it lands in ns.debt_eur_bn (a balance-sheet
+## swap, the ownership ops' rule) and interest prices it from there. UNSWEPT --
+## declared here at the pass-4 fleet's find after shipping as an inline
+## literal; a sweep belongs to the first balance task that makes rescues
+## routine rather than stories.
+const RESCUE_BAILOUT_PRICE_SHARE := 0.25
 
 # --- What a subsidy costs -----------------------------------------------------
 
@@ -121,8 +156,10 @@ const SUBSIDY_BILL_MAX_PCT_GDP := 2.50
 
 ## Share of its sector a firm at full intensity takes from its named rivals each
 ## month. Taken pro-rata from the other named firms in the same sector of the same
-## nation, and NEVER from the unnamed residual -- which is what makes the sum of
-## named shares invariant under every lever, rather than merely renormalised.
+## nation, and NEVER from the unnamed residual -- which is what makes THIS POOL's
+## transfers renormalisation-free (the header ledger names the writers that move
+## named share outside it: the failure commit, the rescue's authored restore,
+## break_up's conserving split).
 ##
 ## This is the model's ONE persistent channel. A subsidy withdrawn leaves the
 ## share where it moved to: the firm out-competed its rivals with public money and

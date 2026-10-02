@@ -10,7 +10,8 @@ tags:
 **V1.4a–c, complete.** Named private firms partitioning a sector, a standing subsidy,
 a sector burden the assembly passes as a law, and public ownership with a dividend
 and a windfall. `src/sim/companies_constants.gd` holds the values; this page is the
-argument. §1–9 are V1.4a, §10–19 V1.4b, §20–29 V1.4c.
+argument. §1–9 are V1.4a, §10–19 V1.4b, §20–29 V1.4c; §30 is V2.2a's city field;
+§31–38 are V4.7's two-tier register and autonomy machine.
 
 Related: [[economy-model]] · [[people-model]] · [[coercion-model]] ·
 [[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]] ·
@@ -61,6 +62,16 @@ Deliberately absent, and each for a stated reason:
   `tariff_rate_pct`.
 - **A CEO.** A person is the *face of a firm*, and the mechanism that gives one
   something to do is [[v1]] §5. [[people-model]] §13 already parks it.
+
+> [!warning] V4.7a ships the face, not the interest
+> Every major carries an executive `chief_id` — a person of the executive kind,
+> resolved at load and validated loud — rendered on the card, the People window
+> and B3's board-chair line. What §2 refused was a CEO who ACTS: a firm's own
+> interest reaching the state through a verb of its own. That refusal still
+> holds — the chief is a face and a bench tier until [[v4.2]]'s lobbying gives
+> a firm's interest a lever, and §37 records the gap as the declared stopgap
+> it is.
+
 - **Any owner, margin or productivity term.** Ownership arrives with the verb
   that changes it, at V1.4c.
 
@@ -317,7 +328,23 @@ with the nation roster, tax count does not.** Firms scale with the roster too, a
 forever. A session making a fourth nation playable authors its firms first —
 named here so it is a decision rather than a discovery.
 
+> [!warning] V4.7a made it all 29, by generation
+> The register is 29 nations because the roster is — 317 majors and 2,420 body
+> firms, the 25 new nations' majors generator-authored and pinned by
+> `firms_generate.py --check` (§31). §8's decision-to-add-a-nation rule is spent:
+> adding a nation is now a generator run, and the open call is whether the
+> generated majors ever get the hand-curation pass the original three got
+> (§37).
+
 ## 9. What is deliberately not built
+
+> [!warning] V4.7b B1 builds the first half of this row
+> Autonomous firm behaviour — the "not built" this section opened with — is now
+> the industry machine: majors fail, bid, drift and relocate on their own
+> initiative, with the bands and the refusals recorded at §33. What remains
+> deliberately unbuilt is the firm as a NEGOTIATOR: nothing here answers back,
+> lobbies or closes itself rather than fail — a firm interest model, still
+> parked in [[someday]] and still a session, not a constant.
 
 **Autonomous firm behaviour.** Firms do not invest, relocate, hire or fail on
 their own initiative. [[someday]] already parks it, and V1.4a adds nothing that
@@ -1019,6 +1046,239 @@ The measured consequence is in [[geography-model]] section 7: **one city holds a
 to a half of a nation's named payroll** — Lille 33.1 % of France's, Manchester 44.0 %
 of Britain's — which nothing authored, and which is what makes section 6's migration a
 decision rather than a diffusion.
+
+---
+
+# V4.7 — the two-tier register and the autonomy machine
+
+## 31. The register went from three nations of majors to 29 nations of two tiers
+
+V4.7a's register is **317 majors + 2,420 body = 2,737 firms across all 29
+nations**, and the tier is a FIELD (`tier: major|body`, validated loud at load)
+because the two kinds answer different questions: a major is verb-worthy and has
+an executive chief; a body firm is the sector's texture and is never an actor.
+The bands, declared in `companies_constants.gd` before generation ran:
+`BODY_SHARE_MAX` 0.03 (a body firm can never again be a subsidy's escalator —
+§32), `MIN_BODY_SHARE` 0.001 scoped by tier, named coverage [0.85, 0.97] of
+sector share, payroll [0.25, 0.50] of the nation's named employment against the
+V2.2a Lille/Düsseldorf/Manchester finding, `BODY_MIN_PER_NATION` 80.
+
+The register is **sparse**: `init_nation()` seeds majors only, and -- the body
+being inert by design (§32, BODY SILENCE pinned) -- nothing writes a body entry
+at all; a later block's body market is where entries would begin. Every read
+over the full roster therefore goes through `share_of_company()` (authored
+fallback), and
+`share_of()` (register-only) is the read for a firm you already know is in the
+register. The A3 review caught both panels printing the register-only read over
+the full roster — a present figure printed as a confident zero, V1.6d's class —
+and the fix was one word at each site.
+
+The old-save repair is the load-bearing consequence: a v37 save predating the
+roster carries `"companies": {}` for 25 nations, and the verbatim-restore load
+path plus the sparse register meant every unseeded nation crashed at the first
+read. **The PR #46 review's headline** (four lenses independently): `_seed_missing_majors()`
+runs at the top of `tick_month()` and lazily seeds whatever the content now
+carries — an old save repairs itself on its first tick, pinned by a test that
+ticks a hand-built v37 payload.
+
+## 32. The escalator: the step-0 finding that scoped the whole block
+
+The share channel is **absolute, not scale-aware**. A 0.01-share firm pointed at
+the same subsidy pool as a 0.14 major drains the same monthly step and ends a
+60-month subsidy at 0.13 — five doublings of itself. Everything else in the
+block's design is a consequence of refusing the two obvious "fixes":
+
+- **Scale-aware steps refused**: a second calibration beside V1.4's, and a
+  second quantity to keep bit-stable.
+- **The body in the pool refused**: with body rivals giving down to half their
+  authored share, a subsidised major's reachable share grows with the generated
+  body count — the escalator at roster scale, differing between nations only
+  because the generator drew different counts.
+
+So **the pool is majors-only**: body firms neither give nor receive share, and
+nothing writes a body entry at all — the body is inert by design (industry.gd's
+own header: THE BODY IS NOT AN ACTOR, pinned by the suite's BODY SILENCE), and
+the reads' authored fallback is what keeps a body firm visible anyway. A later
+block's body market is where entries would start, and the sparse register is
+already shaped for it.
+The subsidy's calibration is V1.4's exactly, which is what kept 7a's
+bit-identical re-run honest. The cost is stated plainly: the body tier is
+texture the verbs cannot reach until a later block gives it a market of its
+own.
+
+## 33. The autonomy machine, and the bands that were declared first
+
+`src/sim/industry.gd` ticks after Companies, before Migration, per nation:
+**failures → bids → invest → relocate** — the plan's own order, and not for
+taste: failures first so a firm that fails this month commits at its pre-tick
+share (invest-then-fail leaked up to one `INVEST_STEP` per failure into the
+partition audit, found by the zero-sum pin to exactly that magnitude). Every
+draw is `Cycle.unit("industry|<id>|<event>", month)` — a private key namespace
+nothing else consumes, over the absolute month index, no RNG state anywhere.
+
+The bands, **declared before the probe ran and corrected by it**:
+`FAIL_BASE_MONTHLY` 0.0003 (the first draft's 0.001 measured 1.86
+failures/nation/run against a band topping at 0.7 — arithmetic that is the
+base alone speaking, ~10.9 majors × 168 months × 0.001 — and the shipped
+0.0003 measures ~0.55, in band; the correction story's declining-sector ×2
+was mis-recorded and is fixed here: NO declining sector exists in shipped
+content, every `SECTOR_TREND` has been positive since c4f8f3c, so the
+declining term is inert arithmetic kept for content that authors one),
+`RELOCATE_HAZARD_YEARLY` 0.002 (the draft's 0.02 made the comment's "a handful
+over a run" ~89), `INVEST_STEP` 0.002/month from rivals' spare above
+`RIVAL_FLOOR_FRACTION` × authored — with the pool's joint-drain SCALING
+inherited beside the floor, so k takers in one month cannot push a rival
+below the floor (unreachable on shipped content; true by construction
+regardless) — `RESCUE_WINDOW_MONTHS` 6, `RESCUE_BAILOUT_PRICE_SHARE` 0.25 of
+firm value as the rescue's one-off capital price on top of the recurring
+support the same verb starts, `BID_HAZARD_YEARLY`
+0.01 on a larger same-sector foreign major, `BID_WINDOW_MONTHS` 3,
+`COURTED_BID_MULTIPLIER` 5.0. Measured idle: 0.62 failures/nation per 168-month
+run (band 0.15–0.7), 8 relocations.
+
+The relocation's single draw carries the distance discount INSIDE it — a first
+draft drew hazard then a price gate, p² × discount, dead by construction — and
+the nearest-region target is the graph's own answer. Three more pre-ship
+defects the pins caught: `is_equal_approx`'s 1e-5 ABSOLUTE floor skipped real
+9.8e-6 drains (V3.6's settled-is-a-tolerance lesson, third appearance — the
+write skip is exact `== 0.0` with the number in the comment), and the
+two-stage draw above.
+
+**The relocation boundary, a design line and not an oversight**: the
+register's `city` override moves the city SURFACE — the payroll total
+(`headcount_in_city`'s live read) and the named-employers filter beside it —
+while `Migration._jobs_by_city` keys on the AUTHORED city, so the pull does
+not re-price mid-window behind a move it never saw. A rare event (~8
+relocations per 168-month run worldwide), and the two stale records the
+split briefly falsified (migration.gd's bit-exact claim; the pass-5 fleet's
+find) now say the same thing this line does.
+
+**The tick cost, found by B4's wall clock and not by any gate**: the scale
+probe predates B1 and times Companies only, so the machine's month was never
+inside a band — the re-baseline's head side ran 2.5× slow, and the scratch
+timing probe measured **1,124 ms/month over the 29-nation roster**: ~8
+unconditional Dijkstras per nation-month (`_relocate` needs the distance BEFORE
+the single draw, and `distances_from` sorts inside its frontier loop). The memo
+(`_dist_memo`, keyed on the graph's structural hash — content is immutable
+post-load, and the memo lives in industry.gd rather than network.gd because
+tests pass synthetic same-size graphs) carries it to **16.45 ms**. No distance
+changes, no draw moves: results bit-identical, suite 94/94 (the 94th is test_industry_surfaces.gd, landed after this section's first draft).
+
+**The projection share, recorded rather than optimised here**: the machine
+also ticks inside `Budget.project()` — the budget panel's per-frame 2×24-month
+projection — adding ~48 machine-months, measured ~0.65–0.9 s of a ~9 s
+refresh frame whose base predates this block (PR-46's finding 6, still open).
+The hoistable per-month-invariant work (per-nation roster arrays, the
+relocation geography maps, the Cycle key strings) is worth roughly the
+machine's whole month and belongs to whatever session discharges finding 6;
+the probe's verdict bands the projection at 7.0 s so the share cannot grow
+unseen.
+
+## 34. Five verbs on the one channel
+
+B2's verbs ride `effects.company` through `Companies.execute()`, the channel
+V1.4 built: **block_bid / allow_bid** (±0.5 relations pulses to the BIDDER NATION
+via `Relations.adjust` — the pair register, not a bloc: the verbs'
+`bloc_offset` is the separate opinion channel every company verb
+carries — and an answered bid ends the courtship), **court**
+(the ×5 hazard flag), **break_up** (pro-rata split to the sector's OTHER
+MAJORS, refusing loud when no absorber exists — the body-tier draft pushed body
+firms past `BODY_SHARE_MAX`, the escalator's second appearance), and
+**appoint_board** (an unseated executive drawn by `Cycle`, B3). **Rescue is a
+bailout, not a resurrection**: `execute()`'s bailout arm is gated on the
+rescue WINDOW — gated on `failed` alone it revived committed failures and
+undid break-ups (the B2 review's C1, both legs pinned). The bailout prices at
+`RESCUE_BAILOUT_PRICE_SHARE` — one-off capital on top of the recurring
+support the same verb then starts (the failure cleared it; the rescue
+re-authors it). And a failure or break-up ends the firm's foreign interest
+with it: the bid scalars clear at the commit, because a bid on a collapsed
+firm is a bid on nothing, and a rescue brings the firm back without it.
+
+The surfaces ride what exists: autonomy sections in the companies panel (the
+open bid's block/allow row, failing majors with rescue rows), the SOE chair
+line via `_loader.person_name()`, one card per announced event routing to the
+companies window, and `pending.gd` marks the cluster — the V4.8 obligation,
+landed a block early because the top-bar entry was already in hand.
+
+## 35. The first non-bit-identical re-baseline
+
+Every earlier re-run could predict bit-identity because the idle register was
+never read by a printed figure. V4.7b's idle world acts, and the register is
+priced into national figures at four named places:
+
+1. **Jobs** — `headcount()` reads live share and 0 for a failed firm, into
+   `firm_jobs_offset_pct()` (clamp 1.50), into structural unemployment
+   (`economy.gd:307`). A failure is a permanent step of
+   `min(1.50, 100 × headcount / labour_force)` points.
+2. **Growth** — `firm_impulse_pct()` prices standing subsidies and burdens
+   through the LIVE share (clamp ±2.00), into `economy.gd:161`'s growth sum.
+3. **Revenue** — the dividend is `state_share × output(live) × yield`.
+4. **City** — migration's `_jobs_by_city` reads live headcounts; city-level
+   only, never printed.
+
+The prediction (`reports/v47b-rerun-prediction.md`, written before the run):
+FRA's idle failure timeline is regime-invariant (Cycle keys carry no regime),
+so the ~48 clean regimes move together at FRA's first failure month or not at
+all — Poisson at the measured 0.62 band gives P(none) ≈ 54 %; the three firm
+verb regimes move from their verb month regardless; a moved line that no
+channel reaches is a defect.
+
+**RESULT (2026-09-29): HELD.** 51 regimes, both sides from worktrees
+(`fb6b1d7` vs `66299a2`): 0 identical, 840 moved line pairs, every one in a
+named channel's downstream — unemployment 395 rows and approval 382 lead;
+GDP moves 13 rows at print precision through the Okun/deficit feedback. The
+coin landed "move": FRA's failure timeline is non-empty and shared (clean
+regimes diverge together at the 2027 rows), GBR through its own. Class B
+confirmed: `managed_subsidises` diverges at verb month + 1, pre-failure.
+**One verdict flip: `managed_bill_is_held` LOST→HELD on a 0.1-point
+vote-share margin** through jobs→approval→poll — recorded, not tuned.
+Zero `characters:` acts, zero verb-answer lines, invariants 50/50, PROBLEM
+lines identical (the ruinous regime's designed debt-runaway). The A3 clamp
+obligation closed with it: the ±2.00 impulse clamp did not newly bind
+(growth moves ≤ 0.05) and the suite's stay-off-every-clamp checks are green —
+no re-sizing owed.
+
+## 36. `SAVE_VERSION` stays 37 — argued per field, three times
+
+B1's header argument: absent, every machine key reads its default — no
+relocation, not failed, no window, no bid, no shadow — and that is the truth
+about every save that predates the machine; a pre-B1 save cannot HAVE a
+pending bid, so "absent means none" is exactly right across this line. B2's
+verbs write only keys whose absence already means the pre-verb state. The
+sparse register repairs itself through the seed rather than through a version
+gate. The pin lives in `tests/test_companies_tiers.gd` beside the round-trip.
+
+## 37. The declared stopgaps and the open calls
+
+- **The executive kind carries no meter and no wants** — a firm's chief is a
+  face until [[v4.2]]'s lobbying gives a firm's interest a lever. Sunset
+  pinned in `tests/test_people.gd`.
+- **The relocation discount is nearly inert**: the nearest-region target makes
+  the distance discount a near-constant ×0.85–0.98; the constants comment's
+  Lisbon–Warsaw is unreachable by construction. Recorded, band holds.
+- **A second simultaneous bid is invisible** until the first is answered
+  (`pending_bid` returns the first); p ≈ 0.008/yr per nation. Recorded.
+- **The 25 generated nations' majors are generator-owned**, pinned by
+  `--check`; hand-curating them means narrowing `--check` to the body tier
+  first. The AUTHOR's call, carried open since the A3 review.
+- **The from_dict aliasing hazard** (V4.6 §6) is fixed for `companies` (T5's
+  rebuild) and still recorded live for `companies`' neighbours
+  (`plants`, `projects`, `sector_investment`): the sweep stays open.
+
+## 38. The screenshot pass
+
+**RESULT (2026-09-29): two flags added to the capture harness and two frames
+judged clean.** `--bid` stages the machine's own bid (three scalars, the
+target chosen by the machine's eligibility — a larger same-sector foreign
+major) on the player's register; `--failing` stages the machine's own failure
+(flag, share 0.0 to the residual, rescue window). Neither ticks afterwards:
+the bid window is three months and the rescue window six, so a staged-and-
+ticked capture lapses the very row it exists to show. Frames:
+`.superpowers/sdd/frames/v47b_bid.png` (FOREIGN TAKEOVER BID, "AUI offers
+€ 4.3 bn for Granval Cooperative — 3 months left", Block/Allow verbs) and
+`v47b_failing.png` (FAILING FIRMS, "Banque Méridienne — rescue window:
+6 months left", Strategic Rescue Package). The panels drew the machine's
+state without a tick — the sections read the register directly.
 
 ---
 

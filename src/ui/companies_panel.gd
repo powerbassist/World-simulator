@@ -39,6 +39,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
@@ -63,6 +64,14 @@ var _close_button: Button
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+
+## The sim's last refusal, shown at the head of the body until the next act
+## lands. The verb arms write refusal reasons into `last_company_result` "for
+## the panel to show" -- and nothing read them, so a refused click was a
+## no-op the player could not tell from a dead button (the ultra's find;
+## the no-sorber break-up and the exhausted board pool are the reachable
+## cases).
+var _last_refusal := ""
 
 
 func _ready() -> void:
@@ -171,6 +180,9 @@ func _refresh() -> void:
 		PanelKit.heading(_body, "No register")
 		PanelKit.line(_body, "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
 
+	if _last_refusal != "":
+		PanelKit.line(_body, _last_refusal)
+	_build_autonomy_sections(ns)
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
 		_build_sector(ns, String(sector))
@@ -179,9 +191,81 @@ func _refresh() -> void:
 		_apply_bottom()
 
 
+## V4.7b: the autonomy machine's two answerable states, each with the verb
+## row on it. A pending bid offers block/allow; a failing major offers the
+## rescue (its restore arm answers the window). Both vanish when answered or
+## lapsed -- the sections are the state's own material, not a feed.
+func _build_autonomy_sections(ns) -> void:
+	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
+	if not bid.is_empty():
+		PanelKit.heading(_body, "Foreign takeover bid")
+		var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
+		# EUR bn, its own format -- pop_text is the POPULATION formatter and
+		# rendered a 50 bn offer as "0 k" (the B3 review's Important). The
+		# bidder resolves through the loader like every other surface -- the
+		# raw three-letter id read as a country's name on the shipped frame
+		# (the pass-4 fleet's find).
+		PanelKit.line(_body, "%s offers %.1f bn for %s -- %d months left." % [
+			_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+			firm_name, int(bid["months_left"])])
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		# The same gate the failing row answers to: available() is the door
+		# execute() refuses through. A bid standing on a FAILED firm once
+		# rendered dead Block/Allow buttons beside the rescue row (the
+		# pass-4 fleet's merged find); the machine now clears a bid at the
+		# failure commit, and this gate is the defence in depth -- if a bid
+		# and a failure ever coexist again, the buttons go with the door.
+		var bid_actions: Array = Companies.available(_state, ns, _loader.company_actions, String(bid["company_id"]), _loader)
+		for action_id in ["block_takeover", "allow_takeover"]:
+			var action = _action_by_id(action_id)
+			if action != null and bid_actions.has(action):
+				row.add_child(_action_button(ns, _firm_object(ns.id, String(bid["company_id"])), action))
+		_body.add_child(row)
+	var failing: Array = Industry.failing(_state, ns, _loader)
+	if not failing.is_empty():
+		PanelKit.heading(_body, "Failing firms")
+		for failure in failing:
+			var company_id := String(failure["company_id"])
+			PanelKit.line(_body, "%s -- rescue window: %d months left." % [
+				_loader.firm_name(ns.id, company_id), int(failure["months_left"])])
+			var action = _action_by_id("strategic_rescue")
+			if action == null:
+				continue
+			# NO availability gate here, deliberately, and this is not the
+			# oversight it looks like beside the bid row above: available()'s
+			# failed gate offers strategic_rescue UNCONDITIONALLY on a firm
+			# inside its window (the pass-2 zombie fix), so every firm this
+			# loop lists has the verb -- an earlier draft gated and noted a
+			# subsidised-firm refusal that the same fix made unreachable
+			# (the failure commit clears the subsidy; the pass-4 fleet found
+			# the note dead). If a future gate ever refuses here again, gate
+			# AND note come back together.
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 6)
+			row.add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
+			_body.add_child(row)
+
+
+func _action_by_id(id: String):
+	for a in _loader.company_actions:
+		if String(a.id) == id:
+			return a
+	return null
+
+
+func _firm_object(nation_id: String, company_id: String):
+	for company in _loader.companies.get(nation_id, []):
+		if company.id == company_id:
+			return company
+	return null
+
+
 ## The three figures the register produces, in one place. Both deviation channels
-## read exactly 0.0 until a subsidy stands or a `business` law passes, so a player
-## who has done neither sees three zeroes -- the honest readout and not a bug.
+## read exactly 0.0 until a subsidy stands, a `business` law passes, or the
+## autonomy machine acts -- an idle world's failures and drift move the jobs
+## figure off zero by design (the B4 re-run's largest channel), so a non-zero
+## row with no verb on record is the machine working and not a bug.
 ##
 ## The two deviation rows are NET, and deliberately not split into a subsidy half
 ## and a regulation half. Splitting them would mean recomputing each channel against
@@ -372,6 +456,14 @@ func _build_firm(ns, company) -> void:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_row.add_child(name_label)
 
+	# V4.7b: the SOE chair -- a name on the firm the state part-owns. Reads the
+	# register's person id and resolves it against the nation's people; an
+	# absent chair is a firm with no appointment, said by silence.
+	var chair: String = String(ns.companies.get(company.id, {}).get("board_chair", ""))
+	if chair != "":
+		var chair_name: String = _loader.person_name(chair)
+		PanelKit.line(block, "Chair: %s" % (chair_name if chair_name != "" else chair))
+
 	# Two facts about one firm, and both are live state with one writer each -- a
 	# subsidy is not an ownership and a player who has done both must see both. Joined
 	# on one label rather than given a row apiece, for the reason the figures caption
@@ -445,7 +537,15 @@ func _on_act(ns, company, action) -> void:
 	var before := Budget.snapshot(_state)
 	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
 	if not result.get("applied", false):
+		# The refusal is the panel's to show -- the verb arms' own words. The
+		# reason (an exhausted executive pool, no major left to absorb a
+		# split) is the sim's, verbatim; a refusal with none reads as refused
+		# plainly rather than silently.
+		var reason := String(result.get("reason", ""))
+		_last_refusal = "%s refused%s" % [action.action_name, " -- %s" % reason if reason != "" else "."]
+		_dirty = true
 		return
+	_last_refusal = ""
 	_dirty = true
 	acted.emit(before, "%s: %s" % [action.action_name, company.company_name])
 

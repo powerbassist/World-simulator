@@ -18,6 +18,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -407,6 +408,15 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
 		Companies.tick_month(sim, loader)
+		# In main.gd's slot again -- Companies, then the autonomy machine, then
+		# Migration -- and present for the reason the Companies paragraph above
+		# gives in its own words: industry.gd writes `failed` and zeroes share,
+		# and headcount() prices a failed firm at nobody, so a projection that
+		# held the machine frozen would carry a failing firm's whole payroll
+		# through the window and miss a rescue that lands inside it. The B4
+		# re-baseline measured unemployment as the largest channel moved
+		# through exactly this read.
+		Industry.tick_month(sim, loader)
 		# In main.gd's slot -- between Companies and Investment -- and absent
 		# altogether until the V2.8 review, which is the one system here that had
 		# neither a paragraph justifying its presence nor Media's paragraph

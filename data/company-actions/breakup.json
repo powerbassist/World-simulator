@@ -1,0 +1,19 @@
+{
+  "_note": "V4.7b's break-up verb. The split is pro-rata among the sector's OTHER MAJORS -- its rivals divide the market (the first draft split to the body tier and the pin caught it: pro-rata receipts push body firms past BODY_SHARE_MAX, the escalation the tier boundary exists to make impossible). A sector whose only major is the target refuses the verb: no absorber means the split silently falls to the residual -- a sector lever wearing a firm's name. The major's headcount reads zero through the committed flag, and its market share moves with the rivals' live ratios. The >= 0.10 share gate is authored HERE and is that gate's one live copy: the constants file's BREAKUP_MIN_SHARE duplicated it unread and was deleted at the ultra's find -- a session re-adding the constant brings a reason, per the project's dead-constant rule (companies-model section 2's own rule, rescoped to the verb scale).",
+  "actions": [
+    {
+      "id": "break_up",
+      "name": "Break Up the Firm",
+      "summary": "Competition law dissolves the champion. Its market share passes to its rivals; its payroll goes with it; it does not come back.",
+      "preconditions": [{ "field": "firm_share", "op": ">=", "value": 0.10 }],
+      "effects": {
+        "company": { "op": "break_up" },
+        "bloc_offset": {
+          "workers": 0.08,
+          "rural": 0.02,
+          "business": -0.15
+        }
+      }
+    }
+  ]
+}

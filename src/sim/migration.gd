@@ -127,9 +127,12 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 ## distinction src/ui/region_panel.gd's payroll column already draws.
 ## V4.7a: the jobs figure arrives pre-bucketed -- one pass over the nation's
 ## firms per month (_jobs_by_city below), not a scan of the whole roster per
-## city. At the 2,729-firm register the scan was ~102k firm visits a month; the
-## bucket is bit-identical because each city's firms accumulate in roster order
-## either way.
+## city. At the 2,737-firm register the scan was ~102k firm visits a month; the
+## bucket matched a per-city scan to the bit because each city's firms
+## accumulated in roster order either way -- a claim that held until V4.7b
+## moved headcount_in_city to the LIVE city (the bucket keys the AUTHORED one,
+## the relocation boundary companies-model section 33 records), so the
+## equivalence is exact only while no relocation stands.
 static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> float:
 	var heads: float = city_population(ns, region.id, city_id)
 	if heads <= 0.0:
@@ -139,9 +142,12 @@ static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> 
 
 ## Named jobs per city, one pass over the nation's whole firm roster -- the
 ## migration month's only walk of the register, where it used to be one walk
-## per city. Summation order per city is the roster order, matching
-## Companies.headcount_in_city exactly, so the flow's inputs are unchanged to
-## the bit and the re-run prediction owes nothing.
+## per city. Summation order per city is the roster order. The bucket keys on
+## the AUTHORED city, by design and recorded in companies-model.md section 33:
+## a relocation moves a firm's payroll in the city surface's reads, not in
+## the pull -- so the old "matches headcount_in_city exactly, to the bit"
+## record holds only while no relocation stands, and V4.7b's re-run
+## prediction priced on a fresh game where none can.
 static func _jobs_by_city(ns, loader) -> Dictionary:
 	var out := {}
 	for company in Companies.firms_of(loader, ns.id):

@@ -18,6 +18,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open politics
@@ -67,6 +69,8 @@ const Events = preload("res://src/sim/events.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
+const IndustryK = preload("res://src/sim/industry_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -238,6 +242,20 @@ var _regulate := false
 ## carries the holding, the dividend, the burden and the jobs figure at once.
 var _nationalise := false
 
+## V4.7b B4. A new game's register carries no bid and no failing firm -- the
+## autonomy machine draws both at hazards of 0.01/yr and 0.0003/month, so an
+## unflagged capture proves only that the panel's autonomy sections stay
+## silent. Both stages write the register EXACTLY as the machine writes it --
+## the bid's three scalars, the failure's flag + zeroed share + window -- the
+## same discipline test_industry's forced mechanics use, so the frame shows
+## the rows the panel builds for the machine's own state, not a hand-shaped
+## variant of it.
+var _bid := false
+
+## V4.7b B4. See _bid: stages a failing major mid-window, whose rescue row and
+## the brass cluster mark are what the frame is there to prove.
+var _failing := false
+
 ## V1.5a, and the eighth time. A new game's quality stock sits EXACTLY on its own
 ## reference for all ten nations -- that is the property the whole session rests on --
 ## so the overview's two service lines are deliberately silent on frame 1 and a capture
@@ -407,6 +425,10 @@ func _init() -> void:
 			_regulate = true
 		elif args[i] == "--nationalise":
 			_nationalise = true
+		elif args[i] == "--bid":
+			_bid = true
+		elif args[i] == "--failing":
+			_failing = true
 		elif args[i] == "--corrupt":
 			_corrupt = true
 		elif args[i] == "--migrate":
@@ -609,6 +631,10 @@ func _apply_view() -> void:
 		_regulate_a_sector()
 	if _nationalise:
 		_nationalise_a_firm()
+	if _bid:
+		_open_a_bid()
+	if _failing:
+		_fail_a_major()
 	if _corrupt:
 		_corrupt_the_state()
 	if _migrate:
@@ -1206,6 +1232,101 @@ func _nationalise_a_firm() -> void:
 		Legislature.apply(state, ns, law, loader)
 
 	_tick_months(24)
+
+
+## V4.7b B4, for --bid. Writes the bid's three scalars exactly as
+## industry.gd::_bids writes them, on the largest major an eligible foreign
+## bidder would actually target (same sector, larger live share -- the machine's
+## own eligibility, so the frame shows a bid the machine could have opened).
+## NOT followed by _tick_months: the bid window is 3 months and the machine
+## ticks it down -- a capture staged and then ticked lapses the very row it
+## exists to show. The panel's block/allow row and the brass cluster mark read
+## the register directly, so nothing else is needed to make them speak.
+func _open_a_bid() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var ranked: Array = []
+	for company in Companies.majors_of(loader, ns.id):
+		ranked.append([Companies.share_of_company(ns, company), String(company.id), String(company.sector)])
+	ranked.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	if ranked.is_empty():
+		return
+
+	for row in ranked:
+		var target_id := String(row[1])
+		var target_sector := String(row[2])
+		var live: float = float(row[0])
+		var eligible: Array = []
+		for other_id: String in state.nations.keys():
+			if other_id == ns.id or other_id == state.player_nation_id:
+				continue
+			for other in Companies.majors_of(loader, other_id):
+				if other.sector != target_sector:
+					continue
+				if bool(state.nations[other_id].companies.get(other.id, {}).get("failed", false)):
+					continue
+				if Companies.share_of_company(state.nations[other_id], other) > live:
+					eligible.append(other_id + "|" + other.id)
+		if eligible.is_empty():
+			continue
+		eligible.sort()
+		var entry: Dictionary = ns.companies[target_id]
+		entry["bid_bidder"] = eligible[0]
+		entry["bid_price_eur_bn"] = Companies.value_eur_bn(ns, _firm_by_id(loader, ns.id, target_id))
+		entry["bid_months_left"] = IndustryK.BID_WINDOW_MONTHS
+		return
+
+
+## V4.7b B4, for --failing. Writes the failure exactly as industry.gd::_failures
+## commits it -- all nine writes: `failed`, `share` 0.0 to the unnamed
+## residual, the support stopped, the foreign interest dead (bid scalars AND
+## the courtship), the seat vacated, and the rescue window (the pass-2 zombie fix and the pass-4 ghost-bid fix are part of the
+## commit; --subsidy --failing composition stages on the same largest firm,
+## so the subsidy clear is what keeps the frame a state the machine could
+## produce) -- on the largest major, which is the payroll the failing-majors
+## section prices most loudly. NOT followed by _tick_months for the reason
+## _open_a_bid states: the window lapses, and a lapsed failure is a committed
+## one whose row the panel does not draw.
+func _fail_a_major() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var ranked: Array = []
+	for company in Companies.majors_of(loader, ns.id):
+		ranked.append([Companies.output_eur_bn(ns, company), String(company.id)])
+	ranked.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	if ranked.is_empty():
+		return
+	var head := String(ranked[0][1])
+	var entry: Dictionary = ns.companies.get(head, {})
+	if entry.is_empty():
+		return
+	entry["failed"] = true
+	entry["share"] = 0.0
+	entry["subsidy"] = 0.0
+	entry["bid_bidder"] = ""
+	entry["bid_price_eur_bn"] = 0.0
+	entry["bid_months_left"] = 0
+	entry["courted"] = 0.0
+	entry["board_chair"] = ""
+	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
+
+
+## The one firm lookup the two stages above need, and deliberately not a
+## general helper: a capture flag that reaches firms by id is one flag, not
+## an API.
+func _firm_by_id(loader, nation_id: String, firm_id: String):
+	for company in Companies.firms_of(loader, nation_id):
+		if company.id == firm_id:
+			return company
+	return null
 
 
 ## Runs the world forward N months through the REAL clock, and the fifth flag to

@@ -75,6 +75,15 @@ tests=(
   tests/test_media.gd
   tests/test_cycle.gd
   tests/test_inflation.gd
+  # V4.7b: the autonomy machine -- determinism, tick order, single writer,
+  # body silence, zero-sum, and the three mechanics by construction.
+  tests/test_industry.gd
+  # V4.7b's UI surfaces -- the pending mark, the announce memory and the
+  # panel's autonomy sections pinned through main's own memory dicts and
+  # LIVE controls (queue_free is deferred; same-frame reads see ghosts).
+  # Registered at authoring time per the pass-5 fleet's find: the silent
+  # class is why this file exists.
+  tests/test_industry_surfaces.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd
