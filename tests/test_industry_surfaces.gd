@@ -87,7 +87,7 @@ func _run() -> void:
 	if stack.card_count() >= cards_before_answer:
 		_fail("the answered bid's card still stands -- the resolved-card contract")
 	if not _main._announced_bids.is_empty():
-		_fail("the bid memory did not clear when the event ended")
+		_fail("the bid memory did not clear when the event ended: %s" % str(_main._announced_bids))
 	if Pending.window_ids(state, loader).has("companies"):
 		_fail("companies mark standing with no bid and no failure")
 	_stage_bid(ns, major)
@@ -156,9 +156,14 @@ func _run() -> void:
 	corpse["rescue_months_left"] = 0
 	corpse["share"] = 0.0
 	# A stale bid no machine path can now produce (failure and break-up clear
-	# it) -- hand-staged to prove the panel's defence-in-depth gate holds if
-	# one ever coexists: available() answers one door on a failed firm, and
-	# the door is shut at window 0.
+	# it) -- hand-STAGED here, so the defence-in-depth gate has something to
+	# suppress: the bid row's buttons are gated through available(), which
+	# answers one door on a failed firm and shuts it at window 0. The first
+	# draft asserted the empty count without staging the bid -- trivially
+	# true (the pass-12 fleet's find).
+	corpse["bid_bidder"] = "DEU|foreign_rival"
+	corpse["bid_price_eur_bn"] = 12.0
+	corpse["bid_months_left"] = IndustryK.BID_WINDOW_MONTHS
 	if not Companies.available(state, ns, loader.company_actions, third.id, loader).is_empty():
 		_fail("available() offered actions on a committed corpse")
 	var block = null
@@ -171,6 +176,11 @@ func _run() -> void:
 	panel._refresh()
 	if not _live_text_has(panel._body, "refused"):
 		_fail("a refused click left no refusal line in the body")
+	# The staged bid goes home when the section does: it is hand-staged state
+	# the machine cannot produce, and leaving it standing would leak into the
+	# per-firm memory section below (whose all-clear assertion reads the
+	# register this bid pollutes).
+	_answer_bid(ns, third)
 
 
 	# --- The bid memory's PER-FIRM erase (the pass-6 fleet's find) -----------

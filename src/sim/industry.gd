@@ -165,15 +165,23 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 					deltas[other.id] = float(deltas[other.id]) + give
 			else:
 				# Taking: from the others' spare above the rival floor, the
-				# subsidy pool's arithmetic one row down -- both the floor
-				# and the joint-drain scaling.
+				# subsidy pool's arithmetic one row down -- the floor, the
+				# joint-drain scaling, AND the SHARE_MAX receiver cap (the
+				# pool caps its want at the taker's own headroom; without it
+				# a firm at the ceiling that keeps drawing intent takes
+				# another step per month with no bound -- the pass-12
+				# fleet's find; unreachable on shipped content, armed only
+				# by content that authors closer cells).
 				var spare := 0.0
 				for other in firms:
 					if other.id != company.id:
 						spare += maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
 				if spare <= 0.0:
 					continue
-				taker_wants[company.id] = minf(step, spare)
+				var headroom: float = maxf(CK.SHARE_MAX - float(before[company.id]) - float(deltas[company.id]), 0.0)
+				if headroom <= 0.0:
+					continue
+				taker_wants[company.id] = minf(step, minf(spare, headroom))
 				taker_spares[company.id] = spare
 		var ratio_sum := 0.0
 		for company_id: String in taker_wants:
@@ -233,8 +241,18 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 		var entry: Dictionary = ns.companies.get(company.id, {})
 		if entry.is_empty():
 			continue
-		var current_region: String = String(city_region.get(live_city_of(ns, company), ""))
+		var live: String = live_city_of(ns, company)
+		var current_region: String = String(city_region.get(live, ""))
 		if current_region == "" or not region_cities.has(current_region):
+			# The override names a city content no longer holds (a save
+			# written before a content edit renamed or removed it): the one
+			# orphan this PR's guards call LIVE rather than inert -- it
+			# redirects payroll reads and wedges relocation permanently.
+			# Heal to the authored city, whose loader validation is loud, so
+			# the machine and every read follow the next tick (the pass-12
+			# fleet's find).
+			if live != String(company.city):
+				entry["city"] = String(company.city)
 			continue
 		if not _dist_memo.has(current_region):
 			_dist_memo[current_region] = Net.distances_from(graph, current_region)
