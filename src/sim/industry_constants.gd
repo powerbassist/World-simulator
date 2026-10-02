@@ -30,7 +30,8 @@ const INVEST_PROBABILITY_MONTHLY := 0.5
 ## authored "a handful per run" in its own comment while arithmetic gave
 ## 317 x 0.02 x 14 = ~89 raw moves -- the comment and the constant disagreed,
 ## and the run measured 42. Shipped at the value the comment meant:
-## 0.2 %/year measures ~4-9 moves per run worldwide (tools/industry_probe.gd).
+## 0.2 %/year measured 8 moves per 14yr worldwide; the probe gates [2, 14]
+## (tools/industry_probe.gd).
 const RELOCATE_HAZARD_YEARLY := 0.002
 
 ## The distance discount on the relocation hazard: 1 - km/2000, floored at
@@ -79,10 +80,14 @@ const FAIL_DECLINE_TERM := 1.0
 const RESCUE_WINDOW_MONTHS := 6
 
 ## A major's chance, per year, of DRAWING a foreign bid, before eligibility.
-## Takeover interest is rarer than failure -- the tier doc's "be bought by a
-## foreign rival" is an event, not a state. Eligibility (a foreign major in
-## the same sector with a larger live share) narrows it further; the probe
-## counts what actually opens.
+## The RAW draw is ~2.8x the base failure hazard (0.01/yr vs 0.0036/yr --
+## measured 42 bids vs 19 failures in one idle 168-month run) -- takeover
+## interest is MORE frequent than failure, not rarer; the tier doc's "be
+## bought by a foreign rival" is an event, not a state. Eligibility (a
+## foreign major in the same sector with a larger live share) narrows it
+## further. The probe counts bids still open at the horizon -- informational:
+## a lapsed or answered bid clears bid_bidder, so openings themselves are
+## not counted.
 const BID_HAZARD_YEARLY := 0.01
 
 ## Months a pending bid stays answerable. Three is a quarter's notice: the

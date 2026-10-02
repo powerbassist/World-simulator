@@ -8,7 +8,9 @@ extends SceneTree
 ## the major pool. The load-bearing pins here:
 ##
 ##   - the register's SHAPE: every nation carries majors and a body list (A3
-##     generated 323 majors + 2,406 body across 29 nations; the A1-era "26
+##     generated 317 majors + 2,420 body across 29 nations (the PR-46
+##     review's finding 19, corrected at the pass-13 fleet's carried
+##     find); the A1-era "26
 ##     firms, empty body" pin is history, corrected at the PR-46 review);
 ##   - a firm with no register entry reads its AUTHORED share (the
 ##     sparse-register fallback) and an unknown id reads 0.0 -- the fallback

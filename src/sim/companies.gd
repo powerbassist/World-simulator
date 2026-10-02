@@ -49,7 +49,10 @@ extends RefCounted
 ## that did not. Budget.project() already passes a loader, so the projection runs
 ## the real model forward on a copy and gets the real answer.
 ##
-## Preloads its constants and nothing else from src/sim/. A leaf.
+## Preloads constants, Demography (V1.5b's labour force), Cycle (V4.7b's
+## appoint_board draw) and diplomacy_constants -- NOT a leaf any more, and
+## not pretending to be one; the writer ledgers above say what the file
+## may do with what it holds.
 ##
 ## FIRMS ARE LOAD-BEARING ON GDP, and the shape is what makes that safe.
 ## Economy._apply_growth_to_sectors() reconciles the three sectors against the
@@ -311,11 +314,28 @@ static func headcount_in_city(ns, loader, city_id: String) -> float:
 	for company in firms_of(loader, ns.id):
 		# The LIVE city -- a V4.7b relocation writes the override and the
 		# payroll moves with it. The authored city stays content in data/.
-		var entry: Dictionary = ns.companies.get(company.id, {})
-		var live_city: String = String(entry.get("city", company.city))
-		if live_city == city_id:
+		if live_city_of(ns, company) == city_id:
 			total += headcount(ns, company)
 	return total
+
+
+## The firm's LIVE city -- the relocation override when one stands (and
+## STANDS means non-empty: an empty or absent key reads the authored
+## content), the authored content otherwise. This is the read's ONE HOME:
+## the industry machine, the payroll read above and the city panel's
+## employer filter all call it, so they cannot disagree at the edges -- the
+## two hand-kept copies the pass-13 fleet caught already diverged here (a
+## present-but-empty key read "" in one and healed in the other). The
+## boundary the reads draw -- the city surface moves with the relocation;
+## Migration's pull keys on the AUTHORED city -- is recorded as a design
+## line in docs/companies-model.md section 33, not an oversight to fix
+## silently. (It lives here and not in industry.gd because the machine
+## already preloads this file; the reverse would invert the arrangement
+## the headers keep.)
+static func live_city_of(ns, company) -> String:
+	var entry: Dictionary = ns.companies.get(company.id, {})
+	var city: String = String(entry.get("city", ""))
+	return city if city != "" else String(company.city)
 
 # --- The share partition -------------------------------------------------------
 

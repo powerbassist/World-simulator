@@ -74,8 +74,8 @@ func _init() -> void:
 
 	_line("failures opened: %d (declared band: 0.15-0.7 per nation per 14yr)" % failures_opened)
 	_line("failures committed: %d; windows still open at horizon: %d" % [failures_committed, rescues_pending])
-	_line("bids still open at horizon: %d (band: <= a handful)" % bids_opened)
-	_line("relocations: %d (declared band: a handful per run worldwide, ~4-12)" % relocations)
+	_line("bids still open at horizon: %d (informational -- a lapsed or answered bid clears bid_bidder, so this counts unexpired ones)" % bids_opened)
+	_line("relocations: %d (declared band: 2-14, the gate below)" % relocations)
 	var fail_per_nation := float(failures_opened) / float(loader.companies.size())
 	var ok := fail_per_nation >= 0.15 and fail_per_nation <= 0.7
 	var reloc_ok := relocations >= 2 and relocations <= 14

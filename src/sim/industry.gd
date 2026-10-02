@@ -20,10 +20,13 @@ extends RefCounted
 ## `failed`, `rescue_months_left`, `bid_bidder`/`bid_price_eur_bn`/
 ## `bid_months_left` (the bid as three scalars: from_dict's rebuild guarantee
 ## is per-scalar, and a nested dictionary would silently narrow it),
-## `subsidy_shadow` and `subsidy_lapsed_month` (the failure hazard's memory of
-## a withdrawn subsidy). B2's VERB CHANNEL is the second writer of the keys it
+## `subsidy_shadow`, `subsidy_lapsed_month` (the failure hazard's memory of a
+## withdrawn subsidy) and `board_chair` (the seat dies with the firm at the
+## failure commit). B2's VERB CHANNEL is the second writer of the keys it
 ## answers: companies.gd's execute() clears/converts bids (block/allow),
-## writes `owner` and `courted`, and commits break-ups and rescues onto
+## writes `owner`, `courted` and `board_chair` (appoint_board, break_up),
+## resets `subsidy_lapsed_month` when support is re-authored (the rescue and
+## the ordinary re-subsidise), and commits break-ups and rescues onto
 ## failed/window. No third file writes any of it; tests/test_industry.gd
 ## scans.
 ##
@@ -241,7 +244,7 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 		var entry: Dictionary = ns.companies.get(company.id, {})
 		if entry.is_empty():
 			continue
-		var live: String = live_city_of(ns, company)
+		var live: String = Companies.live_city_of(ns, company)
 		var current_region: String = String(city_region.get(live, ""))
 		if current_region == "" or not region_cities.has(current_region):
 			# The override names a city content no longer holds (a save
@@ -477,16 +480,5 @@ static func is_failed(ns, company_id: String) -> bool:
 ## headcount_in_city carries its own inline read of the same register fact --
 ## this file preloads companies.gd, so the reverse call would invert the
 ## two-writers arrangement, and a mirror comment is the honest form of the
-## sharing the first draft claimed. The boundary the two reads draw --
-## the city surface (payroll total AND named employers) moves with the
-## relocation; Migration's pull keys on the authored city -- is recorded
-## as a design line in companies-model.md section 33, not an oversight to
-## fix silently.
-static func live_city_of(ns, company) -> String:
-	var entry: Dictionary = ns.companies.get(company.id, {})
-	var city: String = String(entry.get("city", ""))
-	return city if city != "" else String(company.city)
-
-
 static func _failed(ns, company_id: String) -> bool:
 	return bool(ns.companies.get(company_id, {}).get("failed", false))

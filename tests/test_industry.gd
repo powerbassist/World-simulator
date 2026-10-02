@@ -257,6 +257,21 @@ func _test_forced_failure() -> void:
 		_fail("a failed major kept share %.4f" % float(entry["share"]))
 	if Companies.headcount(ns, major) != 0.0:
 		_fail("a failed major still employs %s people" % str(Companies.headcount(ns, major)))
+	# The live-city read's ONE HOME is companies.live_city_of (the pass-13
+	# fleet's important: the two hand-kept copies already diverged at the
+	# present-but-empty edge). The edge is pinned: a present-but-empty
+	# override HEALS to the authored city in the read, and the payroll read
+	# agrees -- one firm, one city, every read.
+	ns.companies[major.id]["city"] = ""
+	if Companies.live_city_of(ns, major) != String(major.city):
+		_fail("a present-but-empty city override did not heal to the authored city")
+	var jobs_authored := 0.0
+	for company in Companies.firms_of(_loader, PLAYER):
+		if Companies.live_city_of(ns, company) == String(major.city):
+			jobs_authored += Companies.headcount(ns, company)
+	if Companies.headcount_in_city(ns, _loader, String(major.city)) != jobs_authored:
+		_fail("headcount_in_city and live_city_of disagree -- the two-copies trap")
+	ns.companies[major.id].erase("city")
 	# The seat dies with the firm (the pass-8 fleet's important): the staged
 	# entry carried a chair, and the commit clears it -- otherwise the corpse
 	# holds the executive out of the appointable pool for the rest of the run.

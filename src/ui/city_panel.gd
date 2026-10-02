@@ -23,7 +23,6 @@ signal closed
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
@@ -211,7 +210,7 @@ func _build_detail(found: Dictionary) -> void:
 	var body_count := 0
 	var body_jobs := 0.0
 	for company in _loader.companies.get(nation_id, []):
-		if Industry.live_city_of(ns, company) != city.id:
+		if Companies.live_city_of(ns, company) != city.id:
 			continue
 		if Companies.is_major(company):
 			rows.append([String(company.company_name), PanelKit.pop_text(Companies.headcount(ns, company))])
