@@ -1177,8 +1177,10 @@ unseen.
 ## 34. Five verbs on the one channel
 
 B2's verbs ride `effects.company` through `Companies.execute()`, the channel
-V1.4 built: **block_bid / allow_bid** (±0.5 relations pulses to the bidder's
-bloc via `Relations.adjust` — an answered bid ends the courtship), **court**
+V1.4 built: **block_bid / allow_bid** (±0.5 relations pulses to the BIDDER NATION
+via `Relations.adjust` — the pair register, not a bloc: the verbs'
+`bloc_offset` is the separate opinion channel every company verb
+carries — and an answered bid ends the courtship), **court**
 (the ×5 hazard flag), **break_up** (pro-rata split to the sector's OTHER
 MAJORS, refusing loud when no absorber exists — the body-tier draft pushed body
 firms past `BODY_SHARE_MAX`, the escalator's second appearance), and

@@ -94,10 +94,11 @@ static func _tick_nation(state, ns, loader, graph_key: int) -> void:
 
 ## One month's autonomous drift: in a growing sector, firms that draw intent
 ## take INVEST_STEP from their rivals' spare (each rival's live share above
-## half its authored position -- the subsidy pool's own floor idiom); in a
-## declining one, drawing firms shed INVEST_STEP onto the others pro-rata by
-## live share. Zero-sum across the sector's majors by construction, and the
-## idle world's partition is bit-stable except where a failure commits.
+## half its authored position -- the subsidy pool's own floor idiom, with the
+## pool's joint-drain scaling); in a declining one, drawing firms shed
+## INVEST_STEP onto the others pro-rata by SHARE_HEADROOM, so the shed lands
+## under any caps. Zero-sum across the sector's majors by construction, and
+## the idle world's partition is bit-stable except where a failure commits.
 static func _invest(ns, loader, majors: Array, month: int) -> void:
 	var by_sector := {}
 	for company in majors:

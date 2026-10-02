@@ -656,6 +656,12 @@ static func available(state, ns, all_actions: Array, company_id: String, loader)
 	# arm cannot disagree.
 	var failed_entry: Dictionary = ns.companies.get(company_id, {})
 	if bool(failed_entry.get("failed", false)):
+		# DISPATCH ON THE ACTION ID, one of two copies (execute()'s bailout
+		# arm is the other; the failing-firms section is the UI's): a
+		# deliberate rule-1 bend, recorded -- the rescue's AUTHORED
+		# preconditions cannot demand `failing` without losing its V1.4
+		# healthy-firm form, so the door names the verb. Renaming the id in
+		# data/ needs the same rename here and in the tests, which pin it.
 		if int(failed_entry.get("rescue_months_left", 0)) > 0:
 			for action in all_actions:
 				if String(action.id) == "strategic_rescue":
@@ -840,12 +846,12 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			entry["courted"] = 0.0
 		"court":
 			# The flag the bid hazard reads (industry.gd multiplies the yearly
-			# hazard for a courted firm). Written only here, cleared only by
-			# an ANSWERED bid (allow/block clear it with the bid): an
-			# invitation stands until the capital it invited has come or been
-			# refused -- and the x5 hazard dies with the answer. A foreign
-			# owner carries no standing multiplier; exposure is re-bought only
-			# by courting again (takeover.json's courted == 0 gate).
+			# hazard for a courted firm). Written only here; cleared by an
+			# ANSWERED bid (allow/block clear it with the bid) and by DEATH --
+			# the failure commit and break_up end the courtship, the pass-9
+			# rule that a resurrected firm returns without the standing x5.
+			# Exposure is re-bought only by courting again (takeover.json's
+			# courted == 0 gate).
 			entry["courted"] = 1.0
 		"appoint_board":
 			# V4.7b: the SOE chair -- a deterministic draw from the nation's
