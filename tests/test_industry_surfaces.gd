@@ -258,11 +258,11 @@ func _answer_bid(ns, company) -> void:
 	entry["courted"] = 0.0
 
 
-## The failure, exactly as industry.gd::_failures commits it -- all seven
+## The failure, exactly as industry.gd::_failures commits it -- all nine
 ## writes: the flag, the share to the residual, the support stopped, the
-## foreign interest dead, and the window (the pass-6 fleet's find: the
-## first draft wrote three, leaving a bid+failure coexistence the machine
-## makes unproducible).
+## foreign interest dead (bid scalars AND the courtship), the seat vacated,
+## and the window (the pass-6 fleet's find: the first draft wrote three;
+## passes 4, 8 and 9 brought the commit to this shape).
 func _stage_failure(ns, company) -> void:
 	_ensure_entry(ns, company)
 	var entry: Dictionary = ns.companies[company.id]
@@ -272,6 +272,8 @@ func _stage_failure(ns, company) -> void:
 	entry["bid_bidder"] = ""
 	entry["bid_price_eur_bn"] = 0.0
 	entry["bid_months_left"] = 0
+	entry["courted"] = 0.0
+	entry["board_chair"] = ""
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 

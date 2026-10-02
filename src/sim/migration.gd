@@ -127,7 +127,7 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 ## distinction src/ui/region_panel.gd's payroll column already draws.
 ## V4.7a: the jobs figure arrives pre-bucketed -- one pass over the nation's
 ## firms per month (_jobs_by_city below), not a scan of the whole roster per
-## city. At the 2,729-firm register the scan was ~102k firm visits a month; the
+## city. At the 2,737-firm register the scan was ~102k firm visits a month; the
 ## bucket matched a per-city scan to the bit because each city's firms
 ## accumulated in roster order either way -- a claim that held until V4.7b
 ## moved headcount_in_city to the LIVE city (the bucket keys the AUTHORED one,

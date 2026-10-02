@@ -793,8 +793,11 @@ func _wire_hud() -> void:
 			_windows.open("agenda")
 			return
 		# V4.7b: an industry card routes to the window where its verbs live.
-		# (Focus-by-firm lands with B3's firm-focused surfaces; for now the
-		# click gets the player to the register, which is where the answer is.)
+		# (Focus-by-firm was deferred twice -- B2 to B3, and B3 shipped its
+		# surfaces without it -- so it is an OPEN DEFERRAL, not a promise:
+		# the click gets the player to the register, whose autonomy sections
+		# surface the pending bid or failing firm. Recorded per the plan's
+		# own rule, that a deferral is a decision and not a discovery.)
 		if _industry_card_firms.has(id):
 			_windows.open("companies")
 			return
@@ -1404,7 +1407,9 @@ func _on_month_elapsed(year: int, month: int) -> void:
 ## has to stop repeating.
 var _announced_bids := {}
 var _announced_failures := {}
-var _industry_card_firms := {}   # card id -> company_id, for the activation route
+var _industry_card_firms := {}   # card id -> company_id; the route opens the
+# companies window whole -- no focus-by-firm yet (the open deferral above) --
+# so the value is carried for the day that lands, not read today.
 var _bid_cards := {}             # company_id -> its LIVE bid card, taken away when the bid resolves
 var _failure_cards := {}         # company_id -> its LIVE failure card, same contract
 
@@ -1436,20 +1441,33 @@ func _announce_industry_events() -> void:
 		_announced_bids.clear()
 	else:
 		var bid_firm := String(bid["company_id"])
-		var bid_body := "%s has offered %.1f bn for %s. The offer lapses in %d months." % [
-			_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
-			_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])]
 		if not _announced_bids.has(bid_firm):
 			_announced_bids[bid_firm] = true
-			var card_id: String = _hud.message_stack.push("Foreign takeover bid", bid_body)
+			var card_id: String = _hud.message_stack.push(
+				"Foreign takeover bid",
+				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
 			_bid_cards[bid_firm] = card_id
 			_industry_card_firms[card_id] = bid_firm
-		elif _bid_cards.has(bid_firm):
-			# The window counts down: the body ages IN PLACE -- the set_body
-			# law, because dismiss-then-push moves the card to the bottom and
-			# the position IS the card's age. A player-dismissed id is a
-			# clean no-op: DISMISSAL NEVER ANSWERS, and never resurrects.
-			_hud.message_stack.set_body(String(_bid_cards[bid_firm]), bid_body)
+	# The window counts down on EVERY live card, read from the register --
+	# not only pending_bid's first (the pass-9 fleet's find: with two bids
+	# pending, the second firm's card froze at its announce-time months and
+	# could lapse on stale text). The body ages IN PLACE -- the set_body
+	# law, because dismiss-then-push moves the card to the bottom and the
+	# position IS the card's age. A player-dismissed id is a clean no-op:
+	# DISMISSAL NEVER ANSWERS, and never resurrects.
+	for firm_id in _bid_cards.keys():
+		if not live_bid_ids.has(firm_id):
+			continue
+		var entry: Dictionary = ns.companies[firm_id]
+		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
+		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
+			"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
+				float(entry.get("bid_price_eur_bn", 0.0)),
+				_loader.firm_name(ns.id, String(firm_id)),
+				int(entry.get("bid_months_left", 0))])
 	var failing_now := Industry.failing(_state, ns, _loader)
 	# The memory clears PER FIRM, when that firm's own window closes -- the
 	# bid branch's design, not the all-clear the first draft used. Clearing

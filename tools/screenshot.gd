@@ -1282,9 +1282,9 @@ func _open_a_bid() -> void:
 
 
 ## V4.7b B4, for --failing. Writes the failure exactly as industry.gd::_failures
-## commits it -- all seven writes: `failed`, `share` 0.0 to the unnamed
-## residual, the support stopped, the foreign interest dead, and the rescue
-## window (the pass-2 zombie fix and the pass-4 ghost-bid fix are part of the
+## commits it -- all eight writes: `failed`, `share` 0.0 to the unnamed
+## residual, the support stopped, the foreign interest dead, the seat vacated,
+## and the rescue window (the pass-2 zombie fix and the pass-4 ghost-bid fix are part of the
 ## commit; --subsidy --failing composition stages on the same largest firm,
 ## so the subsidy clear is what keeps the frame a state the machine could
 ## produce) -- on the largest major, which is the payroll the failing-majors
@@ -1314,6 +1314,8 @@ func _fail_a_major() -> void:
 	entry["bid_bidder"] = ""
 	entry["bid_price_eur_bn"] = 0.0
 	entry["bid_months_left"] = 0
+	entry["courted"] = 0.0
+	entry["board_chair"] = ""
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 

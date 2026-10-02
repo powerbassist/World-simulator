@@ -1162,7 +1162,7 @@ the single draw, and `distances_from` sorts inside its frontier loop). The memo
 (`_dist_memo`, keyed on the graph's structural hash — content is immutable
 post-load, and the memo lives in industry.gd rather than network.gd because
 tests pass synthetic same-size graphs) carries it to **16.45 ms**. No distance
-changes, no draw moves: results bit-identical, suite 93/93.
+changes, no draw moves: results bit-identical, suite 94/94 (the 94th is test_industry_surfaces.gd, landed after this section's first draft).
 
 **The projection share, recorded rather than optimised here**: the machine
 also ticks inside `Budget.project()` — the budget panel's per-frame 2×24-month

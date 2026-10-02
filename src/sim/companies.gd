@@ -320,10 +320,13 @@ static func headcount_in_city(ns, loader, city_id: String) -> float:
 # --- The share partition -------------------------------------------------------
 
 ## A subsidised firm takes share from its NAMED RIVALS in the same sector, pro-rata
-## by their current share, and never from the unnamed residual. That is what makes
-## the sum of a sector's named shares invariant under every lever rather than
-## merely renormalised afterwards -- and it is why a later session naming a seventh
-## firm can take its share out of the residual and move no existing number.
+## by their current share, and never from the unnamed residual. That is what keeps
+## this pool's transfers renormalisation-free -- and why a later session naming a
+## seventh firm can take its share out of the residual and move no existing number.
+## The pool is the INVARIANCE'S SCOPE, not the whole file: since V4.7b the failure
+## commit moves a named share to the residual and the rescue brings it back (the
+## header ledger names the writers), and break_up's split conserves the sum by its
+## own pro-rata form.
 ##
 ## Every draw is computed against the shares as they stood at the start of the
 ## month and applied afterwards, so the result does not depend on the order firms
@@ -806,7 +809,17 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 		price = K.RESCUE_BAILOUT_PRICE_SHARE * _value_of(ns, loader, company_id)
 
 	match String(terms.get("op", "")):
-		"subsidise": entry["subsidy"] = float(terms.get("intensity", 0.0))
+		"subsidise":
+			entry["subsidy"] = float(terms.get("intensity", 0.0))
+			# Re-support resets the withdrawal memory -- the rescue arm's own
+			# principle ("the state IS the support") at the ordinary verb: a
+			# withdraw-then-re-subsidise left the firm at a doubled failure
+			# hazard for the window's remainder while fully subsidised, the
+			# two re-support paths disagreeing about one memory (the pass-9
+			# fleet's find). A withdrawal leaves the stamp standing; that is
+			# the term's real work.
+			if float(terms.get("intensity", 0.0)) > 0.0:
+				entry["subsidy_lapsed_month"] = -1
 		"withdraw": entry["subsidy"] = 0.0
 		"block_bid":
 			var bidder: String = String(entry.get("bid_bidder", ""))
@@ -845,11 +858,22 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# while still pricing the blocs, patronage backwards (the ultra's
 			# find; the exhausted pool is the draw's own bound).
 			var unseated: Array = []
+			# The seated scan counts only LOADER majors' chairs: an orphan
+			# entry (a save written before a content edit removed the firm)
+			# is unactionable -- no verb reaches it, so its chair would drain
+			# the appointable pool forever, the pass-8 defect re-entering
+			# through the one register walk left unskipped (the pass-9
+			# fleet's find).
+			var loader_majors := {}
+			for company in majors_of(loader, ns.id):
+				loader_majors[company.id] = true
 			for person in loader.people.get(ns.id, []):
 				if String(person.kind) != "executive":
 					continue
 				var seated := false
 				for other_id in ns.companies.keys():
+					if not loader_majors.has(other_id):
+						continue
 					if String(ns.companies[other_id].get("board_chair", "")) == String(person.id):
 						seated = true
 						break

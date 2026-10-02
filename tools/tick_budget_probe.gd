@@ -35,6 +35,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -134,6 +135,13 @@ func _tick(state, loader, year: int, month: int) -> void:
 	_time("Diplomacy", func() -> void: Diplomacy.tick_month(state, loader))
 	_time("Defence", func() -> void: Defence.tick_month(state))
 	_time("Companies", func() -> void: Companies.tick_month(state, loader))
+	# V4.7b, main.gd's order -- the pass-9 fleet's find that the whole-month
+	# instrument was the one mirror left unextended (the PR-46 blindness
+	# class on the month probe). The mirror is otherwise HISTORICAL: the
+	# systems wired in by PRs #42/#44/#45 (Programme, Characters,
+	# Commodities) and the calendar family are still not timed here; the
+	# scale probe is the instrument that tracks the current month.
+	_time("Industry", func() -> void: Industry.tick_month(state, loader))
 	_time("Migration", func() -> void: Migration.tick_month(state, loader))
 	_time("Investment", func() -> void: Investment.tick_month(state))
 	_time("Projects", func() -> void: Projects.tick_month(state, loader))

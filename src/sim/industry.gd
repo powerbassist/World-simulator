@@ -321,11 +321,14 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		# collapsing firm is a bid on nothing, and leaving it pending left the
 		# panel offering block/allow on a corpse for the window-overlap months
 		# (the pass-4 fleet's merged find -- two lenses traced the same chain).
-		# A rescue brings the firm back WITHOUT the foreign interest: it lapsed
-		# with the collapse.
+		# The COURTSHIP dies with it too -- the flag is the standing x5 bid
+		# hazard, and a rescue would have brought the firm back to an
+		# invisible multiplier the player could neither see nor clear (the
+		# pass-9 fleet's merged find; break_up already ran this clear).
 		entry["bid_bidder"] = ""
 		entry["bid_price_eur_bn"] = 0.0
 		entry["bid_months_left"] = 0
+		entry["courted"] = 0.0
 		# The seat dies with the firm: a chair on a collapsed firm is the one
 		# person-key both death commits left standing, and the unseated-
 		# executive scan counted the corpse -- the appointable pool drained
