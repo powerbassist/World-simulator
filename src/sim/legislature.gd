@@ -676,19 +676,25 @@ static func ledger_of(ns, law_id: String) -> Dictionary:
 
 
 ## Whether `law_id` may be targeted by a repeal bill: the book must record it,
-## and the target must not be constitutional -- an institution is SET, not
-## accumulated (apply_effects() writes absolutes on that channel), so a
-## system transition is undone by AMENDMENT, not by repeal; that is what
-## docs/amendment-model.md is for. A target the loader does not know is a
-## custom law (T2's composed register); composed laws are never
-## constitutional, so the lookup's null reads legal.
+## and the target must not SET anything. That is not only the constitutional
+## case -- the ordinary-reform route (law.gd's ORDINARY_INSTITUTIONAL_KEYS) lets
+## a NON-constitutional law carry effects.institutional (the electoral-reform
+## Acts: election_system / election_threshold_pct), and the setting has no
+## inverse delta, so a repeal could subtract only the bloc price and leave the
+## electoral system in force -- a half-removed act. Restoring an electoral
+## system is a NEW reform act, not a repeal, so the gate refuses the channel,
+## not the flag. A system transition proper is undone by AMENDMENT, not by
+## repeal; that is what docs/amendment-model.md is for. A target the loader
+## does not know is a custom law (T2's composed register); composed laws are
+## never constitutional and never authored with an institutional channel, so
+## the lookup's null reads legal.
 static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 	if not ns.law_ledger.has(law_id):
 		return false
 	var target = _law_by_id(loader, law_id)
 	if target == null:
 		return true
-	return not target.constitutional
+	return not target.constitutional and not target.effects.has("institutional")
 
 
 ## A repeal's subtraction. The negated channels go back through
@@ -707,6 +713,10 @@ static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	var channels: Dictionary = ledger_of(ns, law_id)
 	if channels.is_empty():
+		# Loud, not silent: the caller checked repeal_target_legal() first and it
+		# gates on the same register, so reaching here means a race or a bug -- a
+		# repeal bill that passes and does nothing is the half-removed act class.
+		push_error("legislature: repeal targeted '%s' which has no recorded contribution" % law_id)
 		return
 	var negated := {}
 	if channels.has("tax_rates_pct"):

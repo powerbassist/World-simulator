@@ -156,17 +156,35 @@ func _test_repeal_refusals() -> void:
 		_fail("a law with no ledger entry must not be a repeal target")
 	# A constitutional law with a ledger entry is still refused -- an institution
 	# is SET, not accumulated, and a system transition is undone by amendment.
-	var amendment = _law_by_id("two_round_presidential")
+	var amendment = _law_by_id("single_term_reform")
 	if amendment == null:
-		# Fall back to any authored constitutional law; the roster carries them.
-		for law in _loader.laws:
-			if law.constitutional:
-				amendment = law
-				break
-	if amendment != null:
-		Legislature.apply(gs, ns, amendment, _loader)
-		if Legislature.repeal_target_legal(ns, _loader, amendment.id):
-			_fail("constitutional law %s must not be a repeal target" % amendment.id)
+		_fail("authored constitutional law single_term_reform not found")
+		return
+	Legislature.apply(gs, ns, amendment, _loader)
+	# The entry must exist BEFORE the refusal check, or this leg could pass via
+	# the no-ledger gate rather than the constitutional gate.
+	if not ns.law_ledger.has(amendment.id):
+		_fail("constitutional law %s recorded no ledger entry -- the refusal leg is vacuous" % amendment.id)
+		return
+	if Legislature.repeal_target_legal(ns, _loader, amendment.id):
+		_fail("constitutional law %s must not be a repeal target" % amendment.id)
+	# A NON-constitutional law that carries effects.institutional is refused too:
+	# the ordinary electoral-reform route SETS election_system/threshold, which has
+	# no inverse delta, so a repeal would strip only the bloc price and leave the
+	# electoral setting in force -- a half-removed act.
+	var reform = _law_by_id("proportional_representation_act")
+	if reform == null:
+		_fail("authored institutional law proportional_representation_act not found")
+		return
+	Legislature.apply(gs, ns, reform, _loader)
+	if reform.constitutional:
+		_fail("proportional_representation_act must be non-constitutional for this leg to test the institutional gate")
+		return
+	if not ns.law_ledger.has(reform.id):
+		_fail("institutional law %s recorded no ledger entry -- the refusal leg is vacuous" % reform.id)
+		return
+	if Legislature.repeal_target_legal(ns, _loader, reform.id):
+		_fail("non-constitutional institutional law %s must not be a repeal target -- the setting has no inverse delta" % reform.id)
 
 
 func _test_roundtrip_and_absence() -> void:
@@ -178,6 +196,12 @@ func _test_roundtrip_and_absence() -> void:
 	var ns2 = NationState.from_dict(d)
 	if ns2.law_ledger.get(SURTAX, {}).is_empty():
 		_fail("ledger did not survive to_dict/from_dict")
+	# One concrete channel value AND the month stamp, not just entry presence --
+	# a round trip that re-keyed or re-typed the payload would still be non-empty.
+	if is_equal_approx(float(ns2.law_ledger[SURTAX]["channels"].get("bloc_offset", {}).get("business", 0.0)), -0.15) == false:
+		_fail("round-tripped business bloc %s, expected -0.15" % [ns2.law_ledger[SURTAX]["channels"].get("bloc_offset", {})])
+	if ns2.law_ledger[SURTAX].get("months", []) != ns.law_ledger[SURTAX]["months"]:
+		_fail("round-trip lost the month stamps: %s vs %s" % [ns2.law_ledger[SURTAX].get("months"), ns.law_ledger[SURTAX]["months"]])
 	var d2: Dictionary = ns.to_dict()
 	d2.erase("law_ledger")
 	var ns3 = NationState.from_dict(d2)
