@@ -319,6 +319,236 @@ evidence: `tests/test_legislature.gd` applies every authored law at once and
 runs 120 months, asserting every field stays finite and unemployment stays in
 `[0, 100]`, the same shape `tests/test_economy.gd` uses for an absurd budget.
 
+## The effect ledger — V4.2 T1
+
+Every law that passes leaves a record of what its passage *actually moved*.
+`ns.law_ledger[law_id]` holds `{"channels": {...}, "months": [...]}`, where
+`channels` is the before/after diff `apply()` takes around `apply_effects()`.
+Three properties carry the design.
+
+**Realized, not authored.** Every accumulator clamps, so a law authored +2.0
+against a register already at +0.9 of a ±1.0 clamp records +0.1 — the amount
+that landed — and a repeal that subtracted the authored number would push the
+register past the bound in the other direction. Two consequences, both
+enforced at `_record_ledger()`: the snapshot reads **only the fields the law's
+own effects name** (one that walked every register would record another
+writer's movement as this law's), and a zero realized delta records NOTHING —
+a clamp binding at both ends moved nothing, and an entry that claimed it did
+would subtract nothing and lie.
+
+**One act, one entry.** A non-`once` law passed twice merges into the same
+sub-keys rather than opening a second entry — one act, repealed once.
+`months` carries each passage's `year*12 + month` stamp.
+
+**The first-order bound, stated where it can bite.** The repeal's subtraction
+clamps like any write, so a register already pushed past a bound by *other*
+writers absorbs part of the removal. The true counterfactual register is not
+recoverable once other writers have moved in between, and inventing one would
+be a second answer. A declared bound of realized-delta bookkeeping, not a
+patchable defect.
+
+`SAVE_VERSION` 38 carries the register; absence reads empty, and the repeal
+gate refuses a law with no record loudly rather than repealing nothing
+silently.
+
+## Repeal — V4.2 T1
+
+A repeal is a bill like any other — proposed, divided on, court-reviewable —
+whose `repeals` field names a law id. At the TOP of `apply()` sit the
+subtraction and the ledger record, because `apply()` is *every* path on which
+a bill takes effect: the division, the referendum settle, the upper-house
+release. `_subtract_ledger()` negates the target's **live** ledger and pushes
+it back through `apply_effects()` — the one applier, so budget levers route
+through `Budget.commit()` and the erosion curve and demand impulse fire exactly
+as any budget change would — then erases the entry and writes the target's own
+cooldown, so a repealed act sits out its cooldown before it can be re-proposed.
+
+`Legislature.repeal_target_legal()` gates the draft at composition time, not
+at passage. Two refusals, and the second is the one that earns the loader
+parameter on `Statute.draft()`: the book must record the target, and the
+target must not SET anything. That is not only the constitutional case — the
+ordinary-reform route lets a non-constitutional law carry
+`effects.institutional` (the electoral-reform Acts), and a setting has no
+inverse delta: the repeal would subtract the bloc price and leave the electoral
+system in force, the half-removed act class. Restoring a system is a NEW
+reform act, not a repeal. A law id the loader does not know is a composed law
+(T2's register); composed laws are never constitutional and never authored
+with an institutional channel, so the null lookup reads legal.
+
+## Composition — V4.2 T2
+
+The player drafts a bill out of named effect channels;
+`Statute.draft(state, ns, loader, spec)` validates it, sizes it, prices it
+politically, and parks it for a drafting period; `tick_month()` counts the
+parked drafts down; at zero each becomes a law in the nation's own register —
+proposed, voted, failable, repealable like any other.
+
+**The channels are the applier's vocabulary, minus two by construction.** A
+spec may name `tax_rates_pct` / `spending_pct_gdp` (keyed), the three scalars
+(`structural_unemployment_pct`, `potential_growth_pct`,
+`other_revenue_pct_gdp`), one `company` {sector, burden} and any `society`
+terms — exactly the shapes `apply_effects()` reads, because passage runs the
+merged dictionary through the ONE applier. `bloc_offset` is refused because
+the political price is what the machine *derives* (`bloc_offset` in a spec
+would be the player writing their own approval); `institutional` is refused
+because T1's repeal gate would refuse the bill at birth — a composed setting
+is an unrepealable act. The three anti-double-count pairs `law.gd` enforces at
+load are enforced here at the machine (a sector burden with a structural
+delta, a corruption stance with a spending line, a migration stance with a
+structural delta): one story per bill, or passage would run effects the schema
+exists to refuse.
+
+**The budget is arithmetic, not judgement.** Size = Σ |value| ×
+`CHANNEL_COST[channel]`, refused past `DRAFT_SIZE_MAX`; drafting time =
+`DRAFT_MONTHS_BASE + ceil(size × DRAFT_MONTHS_PER_SIZE)` months. Cost per unit
+is scaled so a typical authored single-channel law spends ~1.0 of budget — the
+tax levers are cheap because the authored ones move in points, the accumulators
+dear because the authored ones move in fractions.
+
+**The price is derived, never authored.** `CHANNEL_PRICE` holds a per-unit,
+per-bloc row per channel — every row cites the authored law it mirrors, and
+the anchor row IS `high_earner_surtax` verbatim (−0.03 business / +0.01
+workers per point of income rate). Contribution = value × per-unit price,
+signed for either sign of value, so a composed cut reads the mirror of the
+composed rise exactly as `corporate_tax_cut` does against its authored
+sibling. Spending prices per portfolio with separate rise/cut rows, because
+loss aversion is authored content (`retirement_age_reform`'s pension cut buys
+−0.35 on −1.2; no authored rise pays that). Exact-zero sums are dropped, so a
+single-channel draft always prices at least the blocs its row names — the
+all-upside guard at width one. What the table does *not* do is read back: the
+price lands on the composed law's effects as `bloc_offset` and reaches the
+country through the approval target, the same channel any authored law uses.
+
+**The register is the save form.** `ns.custom_laws` holds `to_save_dict()`
+payloads, rebuilt through `Law.composed_register()` — the ONE rebuild shared
+by `propose()`'s legality scan and the UI read, so a composed law is scannable
+by the sim and visible to the player without two factories drifting.
+Composed laws carry `origin "player"`, `composed`, `once = false` and the
+drafting cooldown. No `rand()` anywhere — the countdown is a counter, the id
+arithmetic on an append-only register, the price a pure function of the spec —
+so two identical states draft identically.
+
+## The drafting budget and its bands — V4.2 T3
+
+The composition constants were DECLARED at T2 as starting midpoints and are
+swept here, bands first. The instrument is `tools/composition_probe.gd`: the
+grid is breadth {single-best channel, single-worst channel, half the kinds,
+full} × size {1.0, 3.0, 6.0} × position {five points per axis, 5×5}, 100
+seeded assemblies per cell — the same assembly pool reused across every cell,
+so comparisons are paired. Assemblies are `Elections.init_nation` variants:
+each party's authored seat share is multiplied by a seeded draw in
+[0.55, 1.45] and re-allocated through the same largest-remainder step any
+election uses. The coalition is the new-game one throughout — one government,
+many assemblies, which is the variation a drafted bill actually faces.
+"Full" breadth is SIX kinds, not seven: the anti-double-count law makes
+`structural_unemployment_pct` uncomposeable with both `company` and
+`society.migration`, so the largest conflict-free kind-set is six — full
+breadth is the ceiling the machine allows, which is itself a finding. Within a
+cell the size budget is split into equal slices per channel. All numbers
+below were produced by that probe and none by a hand calculation.
+
+| Constant | Value | Why |
+|---|---|---|
+| `DRAFT_SIZE_MAX` | 6.0 | The budget a maximal omnibus may spend. Sized against the authored laws: a surtax-scale lever costs ~1.0, so the cap admits a six-channel omnibus at surtax scale and refuses a thirty-point income rise alone. |
+| `DRAFT_MONTHS_BASE` | 2 | The floor drafting time — even a minuscule bill does not reach the floor in the month it was drafted. |
+| `DRAFT_MONTHS_PER_SIZE` | 1.0 | Months per unit of budget. A 6.0 omnibus drafts 8 months — most of a playable quarter-year, cheap next to a 24-month cooldown. |
+| `DRAFT_COOLDOWN_MONTHS` | 24 | The composed law's re-proposal cooldown, two years — an omnibus should not become a monthly entitlement. |
+| `CHANNEL_COST` | see file | Budget price per unit of movement per channel; the ratio between rows is the model's claim about what a government can bundle. |
+
+The bands, declared before the run:
+
+- **P1 — the anti-all-upside clause.** The full-breadth max-size bill (the
+  grid's `full × max` cell) must (i) carry a derived worst-bloc price ≥ 1.0
+  point of approval-target — the standing readability floor: the polling panel
+  prints one decimal, and V2.6b1 measured a movement under 1.0 point as
+  unprintable against the ±3.0 displayed-noise band — and (ii) be carried by
+  FEWER of the 100 assemblies than a single-channel bill at the same position.
+- **P2 — breadth monotone.** At a fixed position, the pass count is
+  non-increasing in size, within every breadth family.
+- **P3 — tempo.** A max-size bill takes ≥ 8 months draft-to-vote; a min-size
+  bill ≤ 3. A composed bill must not arrive faster than an authored one could
+  be proposed, and a tiny one must not stall a term.
+- **P4 — determinism.** Two identical states draft the same spec into
+  identical ids, sizes, months and bit-identical derived prices.
+- **P5 — bounds.** Every grid cell's derived price, pushed through the ONE
+  applier, leaves `bloc_offset` inside `[BLOC_OFFSET_MIN, MAX]`; the sweep
+  records where the clamp binds — a binding clamp is the gap between the price
+  the player was quoted and the price that lands, which the ledger records as
+  the realized delta.
+
+**The negative control, and what it decides.** The max-breadth max-size bill
+composed with `CHANNEL_PRICE` ZEROED (the probe derives what the machine would:
+every row × 0 is exact-zero, and exact-zero is erased — the price is empty)
+must dominate the grid: tie-or-beat every real bill's pass count at the same
+position and undercut every real bill's worst-bloc price. If the control
+dominates, breadth without the table is free — which is the proof that the
+price table, not the vote arithmetic alone, closes the all-upside hole. The
+division in this model prices POSITION only (`support()` is spatial plus the
+coalition bonus; effects never enter), so the table's price lands on the
+country and not on the division — P1(ii) is the clause that probes whether any
+division-side cost exists at all.
+
+### The swept verdicts (probe run 2026-10-03, seed 20261003, FRA, 100 assemblies)
+
+The grid's worst-bloc prices, position-blind because the derived price reads
+channels only: single-best reaches 0.900 at the cap (business, the anchor row
+on a 30-point income move), single-worst 0.750 (the growth analogue row), and
+breadth is what buys price — half 1.325, full 1.183, both on urban, both from
+the spending rows doing most of the work. Only the four full/half cells at
+max size clear the 1.0 floor; breadth is not one input among several, it is
+the floor's only route.
+
+- **P1 — PASS on (i), FAIL on (ii), and (ii) is the record, not a tuning
+  debt.** (i): the full|max bill carries |urban| = 1.183 ≥ 1.0. (ii): the
+  same bill is carried by **69 of 100** assemblies at its most accommodated
+  position (0.0, −0.5) — and so is `single_best|max` (69) and
+  `single_best|min` (69); full|max ties the single-channel bill at **25 of 25
+  positions**, bit for bit. No constant reaches this clause, because
+  `resolve_vote()` reads the law's position and majority and nothing else —
+  the division is effects-blind *by measurement now, not by inspection*.
+  That is the design working as documented, and it is why the negative
+  control's sentence reads "the price table, not the vote arithmetic alone":
+  breadth's political cost lands entirely on the approval target, at the
+  next election, and never on the division. **Making breadth cost divisions
+  is an author call on `resolve_vote()` — a machine change with ~25 call
+  sites and the forecast reading it — and is recorded here as open, not
+  taken.** The price table carries the whole anti-all-upside load, which
+  P1(i) says it can bear.
+- **P2 — PASS, flat.** Zero violations in 300 breadth-family cells, and zero
+  strict size-drops: the monotonicity holds trivially for the same reason
+  P1(ii) fails — size never reaches the division either. The pass-rate
+  surface over positions is sharply peaked (69 of 100 at France's centre
+  left, 0 at every corner), so the assembly pool has real variance and the
+  flatness is not a degenerate pool.
+- **P3 — PASS at both edges.** Size 1.0 drafts in 3 months, size 6.0 in 8 —
+  the shipped `DRAFT_MONTHS_BASE` 2 + `DRAFT_MONTHS_PER_SIZE` 1.0 arithmetic
+  lands exactly on the band the model declared, at both ends, with no
+  interior to tune.
+- **P4 — PASS.** Two identical states draft the full|max spec into identical
+  ids, and the parked entries and derived prices are byte-equal
+  (`var_to_bytes`, not `==`).
+- **P5 — PASS, with the binding count recorded.** All 12 distinct derived
+  prices land inside [−1.0, +1.0] through the one applier, and two BIND:
+  half|max quotes urban +1.325 and full|max quotes +1.183 against the ±1.0
+  clamp — passage lands +1.0, and the ledger records the realized (smaller)
+  delta. The quote-to-landing gap is bounded by exactly the bills P1(i) is
+  about, and it is structural: the readability floor (1.0) sits AT the
+  clamp, so any bill that clears the floor on one bloc has said everything
+  the clamp allows. Recorded as the declared bound of the derived-price
+  form; T5's briefing surfaces should quote the derived price and the
+  realized ledger is the record of what landed.
+
+**The negative control — DOMINATES.** The zeroed-table control ties the best
+real pass count at every position (worst real-better gap 0) and prices 0.0 on
+every bloc against a grid whose cheapest real worst-bloc price is 0.050. Max
+breadth at zero price is carried everywhere the assembly allows and costs
+nothing anywhere — the all-upside hole is real and open, and the one thing
+standing in it is `CHANNEL_PRICE`. The constants held: **no value moved in
+this sweep.** P1(i) clears the floor with the shipped rows, P3 lands on the
+shipped arithmetic at both band edges, and P5's binding cells are a recorded
+bound of the form rather than a tuning failure — the V1.5d rule cuts both
+ways, and a sweep whose bands hold is a sweep that changes nothing.
+
 ---
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·

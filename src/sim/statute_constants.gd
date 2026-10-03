@@ -7,8 +7,16 @@ extends RefCounted
 
 ## The drafting budget: what a bill of a given size costs in months before it
 ## can be proposed. DECLARED at T2, swept at T3 against the bands in
-## docs/legislature-model.md -- these are the sweep's starting midpoints, not
-## tuned truths.
+## docs/legislature-model.md -- and the sweep HELD every value (probe run
+## 2026-10-03, seed 20261003): P1(i)'s floor is cleared by the shipped rows
+## (full|max worst-bloc price 1.183 against the 1.0 readability floor), P3
+## lands on this arithmetic at both band edges (size 1.0 -> 3 months, 6.0 ->
+## 8), and P5 found two cells where the derived price exceeds BLOC_OFFSET_MAX
+## (half|max +1.325, full|max +1.183 on urban -- the quote-to-landing gap the
+## ledger records as realized deltas, a recorded bound of the form, not a
+## tuning debt). P1(ii) measured the division effects-blind at 25 of 25
+## positions -- no constant here can make breadth cost votes; see the model
+## doc's open author call.
 const DRAFT_SIZE_MAX := 6.0
 const DRAFT_MONTHS_BASE := 2
 const DRAFT_MONTHS_PER_SIZE := 1.0
