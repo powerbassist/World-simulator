@@ -45,6 +45,14 @@ const NEW_TAX_EROSION_MAX := 1.0
 ## has no curve at all. 100 is a percent's ceiling; the authored sliders top
 ## at 70, wealth at 3.0 for its stock-scale base.
 const NEW_TAX_RATE_MAX := 100.0
+## The ceiling on the PRODUCT the revenue formula actually reads: base_share
+## x rate. The two caps above bound their fields independently, so base 4.0 x
+## rate 100 = 400 % of GDP could be born -- a yield nothing else in the birth
+## gate brakes (zero drafting size, zero derived bloc price, no salience row).
+## Anchored at wealth's OWN max yield: 4.0 base x 3.0 rate = 12.0, the most
+## the revenue model has ever been asked to price. A product above it is a
+## quantity the model has no shape for, exactly as an over-ceiling base is.
+const NEW_TAX_YIELD_CEILING := 12.0
 ## The demand-impulse multiplier a custom key reads in Budget.commit()'s
 ## level_effect loop, where the authored five read their MULT_TAX rows. The
 ## lowest of the five (wealth's 0.25): per-key demand multipliers are authored

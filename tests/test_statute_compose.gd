@@ -139,7 +139,7 @@ func _test_refusals() -> void:
 	# tests/test_statute_tax.gd's.
 	var birth := base.duplicate()
 	birth["channels"] = {"tax_rates_pct": {"income": 1.0}}
-	birth["new_tax"] = {"key": "carbon", "base_share": 0.06, "erosion": 0.7, "rate": 25.0}
+	birth["new_tax"] = {"key": "carbon", "name": "The Carbon Levy", "base_share": 0.06, "erosion": 0.7, "rate": 25.0}
 	r = Statute.draft(gs, ns, _loader, birth)
 	if not bool(r.get("ok", false)):
 		_fail("a VALID new_tax must draft now that T4 wired the params register: %s" % r.get("refusal", ""))

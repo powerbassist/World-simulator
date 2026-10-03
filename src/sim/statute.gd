@@ -228,18 +228,32 @@ static func _numeric_nonzero(value) -> bool:
 ## to price, a live coefficient, and a birth rate that doubles as the erosion
 ## reference, so the curve always has something to divide by.
 static func _validate_new_tax(new_tax: Dictionary) -> String:
+	if String(new_tax.get("name", "")).strip_edges() == "":
+		return "A tax needs a name to be argued about."
 	if not _numeric_nonzero(new_tax.get("base_share", null)):
 		return "A new tax names a base share of GDP."
 	if not _numeric_nonzero(new_tax.get("erosion", null)):
 		return "A new tax names an erosion for its base."
 	if not _numeric_nonzero(new_tax.get("rate", null)):
 		return "A new tax is born at a rate -- the rate is its erosion reference, so a zero rate has no curve."
+	if float(new_tax["base_share"]) < 0.0:
+		return "A negative base share is not a base -- the register prices what a levy sits on."
+	if float(new_tax["erosion"]) < 0.0:
+		return "A negative erosion is not an erosion -- it would steepen the curve where every authored coefficient softens it."
+	if float(new_tax["rate"]) < 0.0:
+		return "A negative birth rate is not a rate -- the rate is the curve's reference, so it must be positive."
 	if float(new_tax["base_share"]) > SK.NEW_TAX_BASE_SHARE_MAX:
 		return "That base exceeds anything the tax code prices (a net-wealth stock, 4.00 of GDP, is the ceiling)."
 	if float(new_tax["erosion"]) > SK.NEW_TAX_EROSION_MAX:
 		return "That erosion would clamp the curve flat above the birth rate."
 	if float(new_tax["rate"]) > SK.NEW_TAX_RATE_MAX:
 		return "A rate above %d points is not a rate." % int(SK.NEW_TAX_RATE_MAX)
+	# The two caps above bound their fields independently; the revenue formula
+	# reads the PRODUCT. Without this gate base 4.0 x rate 100 = 400 % of GDP
+	# in revenue from one bill -- nothing else in the birth gate brakes it.
+	if float(new_tax["base_share"]) * float(new_tax["rate"]) > SK.NEW_TAX_YIELD_CEILING:
+		return "That base times that rate would yield %.1f of GDP -- the most the revenue model prices is %.1f (the wealth tax's own 4.0 x 3.0)." \
+			% [float(new_tax["base_share"]) * float(new_tax["rate"]), SK.NEW_TAX_YIELD_CEILING]
 	return ""
 
 
@@ -371,7 +385,7 @@ static func _compose(ns, draft_id: String) -> void:
 		effects["tax_rates_pct"] = rates
 		tax_entry = {
 			"key": String(new_tax["key"]),
-			"name": String(entry.get("name", "")),
+			"name": String(new_tax.get("name", "")),
 			"base_share": float(new_tax.get("base_share", 0.0)),
 			"erosion": float(new_tax.get("erosion", 0.0)),
 			"ref_pct": float(new_tax.get("rate", 0.0)),

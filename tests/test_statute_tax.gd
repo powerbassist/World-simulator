@@ -43,7 +43,7 @@ const KEY := "carbon"
 const BIRTH_SPEC := {
 	"name": "The Carbon Levy",
 	"position": {"economic": -0.5, "social": 0.2},
-	"new_tax": {"key": KEY, "base_share": 0.06, "erosion": 0.7, "rate": 25.0},
+	"new_tax": {"key": KEY, "name": "The Carbon Levy", "base_share": 0.06, "erosion": 0.7, "rate": 25.0},
 }
 
 var _failures: Array[String] = []
@@ -65,7 +65,65 @@ func _init() -> void:
 		_test_repeal_keeps_the_params()
 		_test_roundtrip_absence_and_duplicate()
 		_test_init_resets()
+		_test_birth_yield_ceiling()
+		_test_negative_params_refused()
+		_test_nameless_key_refused()
 	_finish()
+
+
+## Review fix 1: the birth gate capped base_share and rate INDEPENDENTLY, so
+## base 4.0 x rate 100 = 400 % of GDP could be born -- a product nothing else
+## brakes. The ceiling anchors at wealth's own max yield (4.0 x 3.0 = 12.0).
+func _test_birth_yield_ceiling() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var over := BIRTH_SPEC.duplicate(true)
+	over["new_tax"]["key"] = "windfall"
+	over["new_tax"]["name"] = "The Windfall Duty"
+	over["new_tax"]["base_share"] = 4.0
+	over["new_tax"]["rate"] = 100.0
+	var r: Dictionary = Statute.draft(gs, ns, _loader, over)
+	if bool(r.get("ok", true)):
+		_fail("base 4.0 x rate 100 = 400 of GDP must be refused -- the yield ceiling")
+	if String(r.get("refusal", "")).find("12.0") == -1:
+		_fail("the yield-ceiling refusal must name the product and the anchor: '%s'" % r.get("refusal", ""))
+	# Wealth's own shape still passes the gate: 4.0 x 3.0 = 12.0, the anchor.
+	var at_anchor := BIRTH_SPEC.duplicate(true)
+	at_anchor["new_tax"]["key"] = "windfall"
+	at_anchor["new_tax"]["name"] = "The Windfall Duty"
+	at_anchor["new_tax"]["base_share"] = 4.0
+	at_anchor["new_tax"]["erosion"] = 0.8
+	at_anchor["new_tax"]["rate"] = 3.0
+	r = Statute.draft(gs, ns, _loader, at_anchor)
+	if not bool(r.get("ok", false)):
+		_fail("wealth's own shape (4.0 x 3.0 = 12.0) must still draft: %s" % r.get("refusal", ""))
+
+
+## Review fix 2: `_numeric_nonzero` alone let negative params draft.
+func _test_negative_params_refused() -> void:
+	for field in ["base_share", "erosion", "rate"]:
+		var pair = _fresh()
+		var gs = pair[0]
+		var spec: Dictionary = BIRTH_SPEC.duplicate(true)
+		spec["new_tax"][field] = -1.0
+		var r: Dictionary = Statute.draft(gs, pair[1], _loader, spec)
+		if bool(r.get("ok", true)):
+			_fail("a negative %s must be refused" % field)
+
+
+## Review fix 3: a nameless new_tax spec birthed a key whose panel label
+## read empty -- the params name comes from the spec, not the bill.
+func _test_nameless_key_refused() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var spec: Dictionary = BIRTH_SPEC.duplicate(true)
+	spec["new_tax"].erase("name")
+	var r: Dictionary = Statute.draft(gs, pair[1], _loader, spec)
+	if bool(r.get("ok", true)):
+		_fail("a nameless new_tax spec must be refused -- a tax needs a name to be argued about")
+	if String(r.get("refusal", "")).find("name") == -1:
+		_fail("the nameless refusal must say so: '%s'" % r.get("refusal", ""))
 
 
 func _fresh():
@@ -110,7 +168,7 @@ func _test_birth_writes_rate_and_params() -> void:
 		return
 	var params: Dictionary = ns.custom_taxes[KEY]
 	if String(params.get("name", "")) != "The Carbon Levy":
-		_fail("params name '%s', expected the bill's own name" % params.get("name"))
+		_fail("params name '%s', expected the spec's own name" % params.get("name"))
 	if not is_equal_approx(float(params.get("base_share", -1.0)), 0.06):
 		_fail("params base_share %s, expected 0.06" % params.get("base_share"))
 	if not is_equal_approx(float(params.get("erosion", -1.0)), 0.7):
