@@ -78,6 +78,65 @@ const POLL_COSTS := {
 	"popular": 0.04,
 }
 
+## V4.2 T6. The assembly's own life: private members' bills and the chiefs'
+## lobbying. Both hazards are per PLAYER nation per month -- has_budget is the
+## standing refusal of AI nations legislating, the gate legislature.tick_month()
+## already reads -- and both draw on Cycle.unit("statute|<event>|<nation>",
+## absolute month), the events.gd discipline: no rand anywhere, a replay
+## produces the same bills.
+##
+## PMB_HAZARD_MONTHLY prices the backbench floor. At 0.08 the draw fires just
+## under once a year (0.08 x 12 = 0.96), which is the band the test pins
+## against: often enough that a player who never drafts still has a statute
+## book moving under them, rarely enough that an endorsement stays a decision
+## rather than a chore. The realized count runs UNDER the draws, because the
+## candidate pool closes as bills resolve -- a failed bill sits out its
+## authored cooldown, a once-law passed is gone -- and the measured idle band
+## (120 months, FRA, the test's own loop) is 9 bills, right on the draw rate;
+## the test pins 1 <= bills <= 20, well inside the draw ceiling of 12 per
+## decade.
+const PMB_HAZARD_MONTHLY := 0.08
+
+## One month between tabling and division: the announcement card IS the
+## player's window to endorse, and the assembly divides on the next tick
+## with or without them -- the assembly proposes and the assembly decides.
+const PMB_MONTHS_TO_VOTE := 1
+
+## What the president's endorsement adds to every party's support line on the
+## bill's own division, read through resolve_vote()'s DEFAULTED support_bonus
+## parameter -- the same additive form coalition_bonus takes inside support().
+## A tenth of a point: enough to carry a bill sitting on the abstain band
+## (LK.ABSTAIN_BAND is 0.15), not enough to buy one the house opposes, since
+## the spatial term spans [-1, 1] and the bonus re-clamps like every line.
+const PMB_ENDORSE_SUPPORT := 0.10
+
+## The endorsement's own political price, applied ONCE at endorse() through
+## the ONE applier -- the player's public stand, not the bill's (the bill
+## prices the country at its division like any law's effects do). Mirrors the
+## authored pair high_earner_surtax prices -- workers +0.05, business -0.15 --
+## at the smallest magnitude on each side, because an endorsement is a signal
+## read as executive activism, worth a nudge to the workers' bloc and the same
+## against business, not a law's worth of either.
+const PMB_ENDORSE_PRICE := {"workers": 0.05, "business": -0.05}
+
+## LOBBY_HAZARD_MONTHLY prices a chief-backed bill at roughly one every four
+## years (0.02 x 12 = 0.24 draws) -- five times rarer than the backbench
+## floor, because a lobbied bill exists to raise the question a plain PMB
+## does not ("whose bill is this?") and a raised question stays raised only
+## when it is rare. Fires only when a sector's regulation burden stands above
+## LOBBY_BURDEN_FLOOR AND that sector has a major whose chief can sign the
+## ask AND the authored book carries a burden-easing law for the sector --
+## any leg missing and the fired draw falls through to the plain backbench.
+const LOBBY_HAZARD_MONTHLY := 0.02
+
+## The burden above which a sector's majors have something worth a bill: 0.1
+## on the signed burden register, a TENTH of companies_constants'
+## REGULATION_BURDEN_MAX clamp. Below it the sector's rules are noise no
+## chief would spend a bill on; the authored deregulation laws' own burdens
+## (-0.35, -0.4) clear the floor whole, so a relief bill is always in reach
+## of a sector actually paying for one.
+const LOBBY_BURDEN_FLOOR := 0.1
+
 ## What one unit of movement on each channel spends from the budget. Tax and
 ## spending in points, the accumulators in their authored units, scaled so a
 ## typical authored single-channel law costs ~1.0.

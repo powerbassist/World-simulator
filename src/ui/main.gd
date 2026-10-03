@@ -21,6 +21,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -1293,6 +1294,12 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# everything else in this handler: state settles top to bottom, elections
 	# read it last.
 	Legislature.tick_month(_state, _loader)
+	# V4.2 T6. The assembly's own life -- private members' bills and the
+	# chiefs' lobbying -- ticks AFTER the legislature, so a bill failing its
+	# division writes its authored cooldown AFTER this month's countdown pass
+	# has run and keeps its full length (the V2.8 ordering, one machine down).
+	Statute.tick_month(_state, _loader)
+	_announce_assembly_events()
 	Dissolution.tick_month(_state)
 
 	# Relations drift and diplomatic cooldowns, alongside the other cooldown
@@ -1559,6 +1566,76 @@ func _announce_industry_events() -> void:
 		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
 		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
+
+## V4.2 T6: the assembly's own events, as cards -- _announce_industry_events's
+## idiom whole. The announced-state memory is main-side (the sim stays free of
+## the card stack); dismissal never answers (an unendorsed bill still divides);
+## and a tabling card is TAKEN AWAY when its bill resolves, its replacement
+## being the division card and not a stale offer to endorse a bill the house
+## has already settled.
+var _announced_assembly_bills := {}
+var _assembly_cards := {}         # bill_id -> its LIVE tabling card
+var _assembly_result_month := -1  # absolute month whose division card was pushed
+
+func _announce_assembly_events() -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var live_ids := {}
+	for bill_id in ns.assembly_bills.keys():
+		live_ids[bill_id] = true
+	for announced_id in _announced_assembly_bills.keys():
+		if not live_ids.has(announced_id):
+			_announced_assembly_bills.erase(announced_id)
+	for bill_id in _assembly_cards.keys():
+		if not live_ids.has(bill_id):
+			_hud.message_stack.dismiss(String(_assembly_cards[bill_id]))
+			_assembly_cards.erase(bill_id)
+	for bill_id in ns.assembly_bills.keys():
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		var body := _assembly_bill_body(entry)
+		if _announced_assembly_bills.has(bill_id):
+			if _assembly_cards.has(bill_id):
+				_hud.message_stack.set_body(String(_assembly_cards[bill_id]), body)
+			continue
+		_announced_assembly_bills[bill_id] = true
+		var backed := String(entry.get("backer_firm", "")) != ""
+		var card_id: String = _hud.message_stack.push(
+			"A chief before the assembly" if backed else "Private member's bill", body)
+		_assembly_cards[bill_id] = card_id
+	# The division card. The assembly_bill marker on ns.last_law_result says
+	# the last division was the assembly's; the month memory is what stops it
+	# repeating -- the in-tray keeps no history, so there is nothing per-bill
+	# left to key on once the entry is erased.
+	var result: Dictionary = ns.last_law_result
+	var now := int(_state.year) * 12 + int(_state.month)
+	if bool(result.get("assembly_bill", false)) and _assembly_result_month != now:
+		_assembly_result_month = now
+		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
+
+func _assembly_bill_body(entry: Dictionary) -> String:
+	var law_name := _law_title(String(entry.get("law_id", "")))
+	var months := int(entry.get("months_left", 0))
+	var firm_id := String(entry.get("backer_firm", ""))
+	if firm_id != "":
+		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
+		return "%s's chief %s backs %s. The assembly divides in %d month%s; a stand one way or the other is the president's to take." % [
+			_loader.firm_name(_state.player_nation_id, firm_id),
+			chief if chief != "" else "the chief", law_name, months, "" if months == 1 else "s"]
+	return "%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone." % [
+		law_name, months, "" if months == 1 else "s"]
+
+func _assembly_result_body(result: Dictionary) -> String:
+	var law_name := _law_title(String(result.get("law_id", "")))
+	return "The assembly has %s %s, %d ayes to %d noes." % [
+		"carried" if bool(result.get("passed", false)) else "defeated",
+		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
+
+func _law_title(law_id: String) -> String:
+	for law in _loader.laws:
+		if law.id == law_id:
+			return String(law.law_name)
+	return law_id
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling

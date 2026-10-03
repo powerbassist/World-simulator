@@ -23,6 +23,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -848,6 +849,11 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		state.append_history(entry)
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state, loader)
+		# V4.2 T6, in main.gd's slot and AFTER the legislature for the cooldown
+		# reason main.gd states at its own call: a harness that never called this
+		# would run the pre-PMB model, and its agreement with the mirror would be
+		# about nothing (the V1.5d bug class).
+		Statute.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		# Added at V1.3b, and inert for every regime that does not sign anything:
 		# relations start at their resting value and this drifts them toward it, so

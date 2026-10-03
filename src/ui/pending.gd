@@ -32,6 +32,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Statute = preload("res://src/sim/statute.gd")
 
 
 ## The window ids with something on them awaiting an answer, in the order a
@@ -60,8 +61,12 @@ static func window_ids(state, loader) -> Array:
 	if Events.is_pending(ns):
 		out.append("events")
 
-	# A vote the country has already been called to. V1.7c.
-	if not ns.referendum_pending.is_empty():
+	# A vote the country has already been called to. V1.7c. V4.2 T6 extends the
+	# mark's source: a private member's bill in its endorsement window awaits
+	# THE PLAYER's public stand -- past the window the assembly divides on its
+	# own -- while an endorsed bill awaits only the calendar, so the mark keys
+	# on the unendorsed live bills, not on the in-tray whole.
+	if not ns.referendum_pending.is_empty() or not Statute.awaiting_endorsement(ns).is_empty():
 		out.append("legislature")
 
 	# A proposal before any council the player sits on, binding them whether or

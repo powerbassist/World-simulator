@@ -78,6 +78,11 @@ static func init_nation(ns) -> void:
 	# statute.buy_poll(), so it resets beside the registers that writer's
 	# machine owns and not in any file that merely reads it.
 	ns.poll_purchases = {}
+	# V4.2 T6. The assembly-bill in-tray, the draft_bills rule beside which it
+	# sits: whatever WRITES a field resets it, and the writers are statute.gd's
+	# generation and division (this file reads the register in available()'s
+	# in-flight guard and writes nothing to it).
+	ns.assembly_bills = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
@@ -333,9 +338,24 @@ static func available(ns, all_laws: Array) -> Array:
 		# twice would let the player restart the clock they are waiting out.
 		if ns.held_bills.has(law.id):
 			continue
+		# V4.2 T6. A bill the assembly's own backbench has tabled is IN FLIGHT on
+		# exactly the held_bills grounds: the player proposing the same law inside
+		# the endorsement window would divide it twice and apply the effects twice,
+		# which is the double-application guard this scan exists to keep.
+		if _in_assembly_tray(ns, law.id):
+			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
 	return out
+
+
+## Whether the assembly's own backbench has this law tabled -- available()'s
+## in-flight guard reads it and nothing else does.
+static func _in_assembly_tray(ns, law_id: String) -> bool:
+	for entry in ns.assembly_bills.values():
+		if String(entry.get("law_id", "")) == law_id:
+			return true
+	return false
 
 
 ## An electoral-reform Act that names the method the nation already uses changes
@@ -459,7 +479,20 @@ static func vote_of(s: float) -> String:
 ## to false, unlike apply()'s loader, because false is the behaviour every existing
 ## caller already has -- a default that means "the way it has always worked" hides
 ## nothing, where a default that means "skip a step" hides everything.
-static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dictionary:
+##
+## `support_bonus` is V4.2 T6's, and it is a DEFAULTED parameter on purpose: the
+## signature owns about twenty-five call sites and the plan forbade changing
+## their shape. The alternative the plan named first -- statute.gd resolving the
+## division through a wrapper -- would have re-mirrored this loop and the
+## majority match below verbatim, the >10-line duplication the plan's own
+## constraint names as the review-finding class. A defaulted parameter keeps
+## every existing call source-identical and gives the ONE caller that wants the
+## endorsement (statute.gd's division on a private member's bill) a per-party
+## additive that moves the PARTY's line without moving `own` -- the members'
+## spatial view is theirs, so a line dragged onto a bill the backbench does not
+## back can shed seats through the rebellion split that already prices exactly
+## that strain. Re-clamped here because support() clamps before the add.
+static func resolve_vote(ns, party_list: Array, law, referendum := false, support_bonus := 0.0) -> Dictionary:
 	var yes_seats := 0
 	var no_seats := 0
 	var abstain_seats := 0
@@ -469,6 +502,8 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 
 	for party in party_list:
 		var s: float = support(ns, party, law)
+		if support_bonus != 0.0:
+			s = clampf(s + support_bonus, -1.0, 1.0)
 		var own: float = spatial_support(ns, party, law)
 		party_support[party.id] = s
 

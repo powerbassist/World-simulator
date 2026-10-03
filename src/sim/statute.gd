@@ -8,15 +8,12 @@ extends RefCounted
 ## A leaf: preloads its constants, Law, and legislature.gd (for the repeal
 ## gate only -- legislature cannot preload this file back, so the legality
 ## scan rebuilds composed laws off the core Law factory, never through here).
-## One writer of ns.draft_bills and ns.custom_laws, both reset in
-## Legislature.init_nation(). No rand() anywhere -- the countdown is a
-## counter, the derived price a pure function of the spec, and a draft's id
-## is arithmetic -- so two identical states draft identically, the same
-## discipline as economy.gd and legislature.gd.
-##
-## NOT wired into main.gd yet: this task's tick_month counts drafts down
-## only. The PMB and lobbying machines land with their task and bring the
-## main.gd call with them; the test drives tick_month directly.
+## One writer of ns.draft_bills, ns.custom_laws and ns.assembly_bills, all
+## reset in Legislature.init_nation(). No rand() anywhere -- the countdown is
+## a counter, the derived price a pure function of the spec, a draft's id is
+## arithmetic, and the assembly's hazards draw on Cycle.unit over the
+## absolute month (the events.gd discipline) -- so two identical states draft
+## identically, the same discipline as economy.gd and legislature.gd.
 ##
 ## The model, and the justification for every constant, is
 ## docs/legislature-model.md.
@@ -26,6 +23,11 @@ const Law = preload("res://src/core/law.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const CK = preload("res://src/sim/companies_constants.gd")
+## T6. The two draws the assembly's own life needs: the hazard hash, and
+## SLOT_POSITION for the party-fit pick (the same table elections.gd positions
+## every party on -- no parallel ideology vocabulary, legislature.gd's own rule).
+const Cycle = preload("res://src/sim/cycle.gd")
+const EK = preload("res://src/sim/election_constants.gd")
 
 ## The channels a spec may name. The keyed channels carry {sub_key: value},
 ## the scalars a bare float, company its {sector, burden} shape and society
@@ -379,14 +381,15 @@ static func drafts(ns) -> Array:
 ## Monthly tick. THE PLAYER NATION ONLY: has_budget is the standing refusal
 ## of AI nations legislating, the same gate legislature.tick_month() reads.
 ##
-## `loader` is the plan's contract and is unused while the tick counts drafts
-## only -- T6's assembly bills resolve divisions against loader.parties, and
-## the parameter is in place so no call site moves when it does.
+## `loader` carries what the assembly needs: loader.laws is the backbench's
+## candidate pool, loader.parties the chamber the divisions are resolved
+## against, loader.companies the majors whose chiefs lobby.
 static func tick_month(state, loader) -> void:
 	for ns in state.nations.values():
 		if not ns.has_budget:
 			continue
 		_tick_drafts(ns)
+		_tick_assembly(state, ns, loader)
 
 
 ## Count every parked draft down, and compose the ones whose time is up.
@@ -480,3 +483,293 @@ static func _theme_of(effects: Dictionary) -> String:
 	if effects.is_empty():
 		return "institutional"
 	return "labour"
+
+
+# --- V4.2 T6: the assembly's own life -------------------------------------------
+
+## The in-tray counts down, the bills whose time is up divide, and the
+## backbench (and the chiefs) table what is next. The order is the drafts'
+## own V2.8 lesson twice over: countdown BEFORE division, so a bill tabled at
+## PMB_MONTHS_TO_VOTE divides on exactly the tick it was quoted; division
+## BEFORE generation, so a bill tabled this month keeps its full window
+## rather than losing a month to the same pass that tabled it.
+static func _tick_assembly(state, ns, loader) -> void:
+	_resolve_due(state, ns, loader)
+	_generate(ns, loader, _abs_month(state))
+
+
+## The absolute month, the index every Cycle draw in this file keys on -- the
+## same absolute-month discipline industry.gd's hazards keep, and what makes
+## a replay of the same months produce the same bills.
+static func _abs_month(state) -> int:
+	return int(state.year) * 12 + int(state.month)
+
+
+## The in-tray counts down; a bill at 0 divides. The entry is erased at the
+## division -- the in-tray is bills IN FLIGHT, and the result's record is
+## ns.last_law_result under its assembly marker, not a second copy here.
+static func _resolve_due(state, ns, loader) -> void:
+	var due: Array = []
+	for bill_id in ns.assembly_bills:
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		var left := int(entry.get("months_left", 0)) - 1
+		if left > 0:
+			entry["months_left"] = left
+		else:
+			due.append(bill_id)
+	for bill_id in due:
+		_divide(state, ns, loader, String(bill_id))
+
+
+## THE DIVISION. The assembly proposes and the assembly decides: resolve_vote()
+## runs with the entry's endorse bonus through its DEFAULTED support_bonus
+## parameter (the plan's constraint -- the signature owns about twenty-five
+## call sites -- and its sanctioned reading, since a statute-side wrapper
+## would have re-mirrored the loop and the majority match verbatim). Passage
+## applies through the ONE applier, so the ledger records the act and repeal
+## works later; failure writes the authored cooldown exactly as propose()'s
+## own failure path does. Deliberately NOT the court's pipeline: an
+## assembly bill that divided clean is the ordinary legislative procedure,
+## and the court's gate is for bills taking effect WITHOUT a division
+## (propose()'s referendum route, 49.3, the upper-house release).
+static func _divide(state, ns, loader, bill_id: String) -> void:
+	var entry: Dictionary = ns.assembly_bills.get(bill_id, {})
+	ns.assembly_bills.erase(bill_id)
+	if entry.is_empty():
+		return
+	var law = _law_by_id(loader, String(entry.get("law_id", "")))
+	if law == null:
+		# Loud, not silent: the pool is authored content and the in-tray is
+		# serialised state, so a ghost id means a save crossed a content edit.
+		push_error("statute: assembly bill '%s' names law '%s', which the loader does not know" %
+			[bill_id, String(entry.get("law_id", ""))])
+		return
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var result: Dictionary = Legislature.resolve_vote(
+		ns, party_list, law, false, float(entry.get("endorse_bonus", 0.0)))
+	result["assembly_bill"] = true
+	result["bill_id"] = bill_id
+	if String(entry.get("backer_firm", "")) != "":
+		result["backer_firm"] = String(entry["backer_firm"])
+		result["backer_chief"] = String(entry.get("backer_chief", ""))
+	if bool(result.get("passed", false)):
+		Legislature.apply(state, ns, law, loader)
+	elif law.cooldown_months > 0:
+		ns.law_cooldown_months[law.id] = law.cooldown_months
+	ns.last_law_result = result
+
+
+## Two hazards, one bill a month: the chiefs' lobby draw first (the rarer and
+## the more specific ask), the plain backbench draw only in the months the
+## lobby did not spend. A fired lobby whose ask cannot be built -- no
+## burden-easing law to name -- falls through to a plain backbench bill, per
+## the plan; a month with no burdened sector or no major to sign never draws
+## at all and belongs to the plain hazard.
+static func _generate(ns, loader, month: int) -> void:
+	if _lobby(ns, loader, month):
+		return
+	if Cycle.unit("statute|pmb|%s" % ns.id, month) < SK.PMB_HAZARD_MONTHLY:
+		_table_bill(ns, loader, month)
+
+
+## The chiefs' verb. A sector's regulation burden above the floor is a cost a
+## major is actually paying, and buying relief through a backbencher's bill is
+## what a chief is for. Returns whether the month was spent -- the plain draw
+## runs only when it was not.
+static func _lobby(ns, loader, month: int) -> bool:
+	var sector := _burdened_sector(ns)
+	if sector == "":
+		return false
+	var firm = _biggest_major(loader, ns.id, sector)
+	if firm == null:
+		return false
+	if Cycle.unit("statute|lobby|%s" % ns.id, month) >= SK.LOBBY_HAZARD_MONTHLY:
+		return false
+	var law = _burden_easing_law(ns, loader, sector, month)
+	if law == null:
+		_table_bill(ns, loader, month)
+		return true
+	_table_bill(ns, loader, month, String(firm.id), String(firm.chief_id), law)
+	return true
+
+
+## One bill onto the in-tray. `law` is null for a plain backbench bill, which
+## picks by fit: the candidate whose position sits nearest the sponsoring
+## party's own slot -- the assembly proposing what its members actually
+## believe, deterministic like every division. The bill tabled, the endorse
+## bonus is born at zero: the president's stand is a choice, not a default.
+static func _table_bill(ns, loader, month: int, backer_firm := "", backer_chief := "", law = null) -> void:
+	var pool := _candidate_pool(ns, loader)
+	if pool.is_empty():
+		return
+	if law == null:
+		var sponsor = _sponsor_party(ns, loader, month)
+		if sponsor == null:
+			return
+		law = _nearest(pool, sponsor)
+	# T2's idiom, mirrored: append-only size() over the absolute month. Two
+	# bills tabled in one month differ by size(); the month index strictly
+	# increases across a run, so a size() reused in a later month still cannot
+	# repeat an earlier id -- which is what makes erasing resolved entries
+	# safe where draft_bills must never be erased.
+	var bill_id := "pmb_%d" % (ns.assembly_bills.size() + month)
+	ns.assembly_bills[bill_id] = {
+		"law_id": law.id,
+		"months_left": SK.PMB_MONTHS_TO_VOTE,
+		"backer_firm": backer_firm,
+		"backer_chief": backer_chief,
+		"endorse_bonus": 0.0,
+	}
+
+
+## The laws the assembly's backbench may table: Legislature.available()'s own
+## gates (preconditions met, not a passed once-law, not on cooldown, not
+## held, the system's own rules), which is also what keeps the pool from
+## disagreeing with the player's legality scan -- both read the same
+## available(). Minus the two classes an assembly bill must never carry: a
+## constitutional amendment (the assembly alone does not ratify those) and an
+## institutional setting (T1's repeal gate -- an assembly bill must be
+## repealable, and a setting has no inverse delta). Authored laws only: the
+## backbench does not re-table the player's own compositions.
+static func _candidate_pool(ns, loader) -> Array:
+	var out: Array = []
+	for law in Legislature.available(ns, loader.laws):
+		if law.constitutional or law.effects.has("institutional"):
+			continue
+		out.append(law)
+	return out
+
+
+## The sponsor, drawn over the seats-weighted party list: a backbench bill's
+## author reads off the chamber the player can see, not off an even pool the
+## chamber does not resemble. Cumulative walk in authored order -- the
+## deterministic pick industry.gd's bidder draw makes, over weights.
+static func _sponsor_party(ns, loader, month: int):
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var total := 0
+	for party in party_list:
+		total += int(ns.seats_by_party.get(party.id, 0))
+	if total <= 0:
+		return null
+	var pick: float = Cycle.unit("statute|pmb_sponsor|%s" % ns.id, month) * float(total)
+	var walked := 0
+	for party in party_list:
+		walked += int(ns.seats_by_party.get(party.id, 0))
+		if float(walked) > pick:
+			return party
+	return party_list[party_list.size() - 1]
+
+
+## Ideological distance on the ONE two-axis space every support line reads,
+## the same expression spatial_support() runs -- squared-distance order is
+## what _nearest() needs, the sigma it lacks is not in the pick's way.
+static func _distance(law, sponsor) -> float:
+	var pos: Dictionary = EK.SLOT_POSITION.get(sponsor.ideology_slot, {"economic": 0.0, "social": 0.0})
+	var d_econ: float = float(pos["economic"]) - float(law.position.get("economic", 0.0))
+	var d_social: float = float(pos["social"]) - float(law.position.get("social", 0.0))
+	return d_econ * d_econ + d_social * d_social
+
+
+## The party-fit pick, ties to the pool's authored order (strict <, so the
+## first law at the winning distance wins and the pick never depends on dict
+## iteration order).
+static func _nearest(pool: Array, sponsor):
+	var best = pool[0]
+	var best_d := _distance(best, sponsor)
+	for law in pool:
+		var d := _distance(law, sponsor)
+		if d < best_d:
+			best = law
+			best_d = d
+	return best
+
+
+## The sector a chief would buy relief for: the FIRST burden above the floor
+## in sorted order -- sorted, because dict order is insertion order and the
+## ask would otherwise depend on the order laws happened to pass in.
+static func _burdened_sector(ns) -> String:
+	var sectors: Array = ns.regulation_burden.keys()
+	sectors.sort()
+	for sector in sectors:
+		if float(ns.regulation_burden[sector]) > SK.LOBBY_BURDEN_FLOOR:
+			return String(sector)
+	return ""
+
+
+## The chief who signs the ask: the sector's BIGGEST major, ties to authored
+## order (strict >) -- the firm with the most payroll at stake lobbies first,
+## and the pick never depends on the loader's file order.
+static func _biggest_major(loader, nation_id: String, sector: String):
+	var best = null
+	for company in loader.companies.get(nation_id, []):
+		if String(company.tier) != "major" or String(company.sector) != sector:
+			continue
+		if String(company.chief_id) == "":
+			continue
+		if best == null or float(company.share) > float(best.share):
+			best = company
+	return best
+
+
+## The burden-easing law the lobby names: the nearest-position negative-burden
+## law for the sector, from the SAME candidate pool the backbench draws (a
+## lobby cannot name a bill the assembly could not table), fitted to the same
+## seats-weighted sponsor draw -- the chief lobbies a member, and the member
+## tables what fits. Authored order breaks ties; shipped content carries at
+## most one deregulation law per sector, so the pick is nearly unique anyway.
+static func _burden_easing_law(ns, loader, sector: String, month: int):
+	var easing: Array = []
+	for law in _candidate_pool(ns, loader):
+		if not law.effects.has(COMPANY_CHANNEL):
+			continue
+		var company: Dictionary = law.effects[COMPANY_CHANNEL]
+		if String(company.get("sector", "")) != sector or float(company.get("burden", 0.0)) >= 0.0:
+			continue
+		easing.append(law)
+	if easing.is_empty():
+		return null
+	var sponsor = _sponsor_party(ns, loader, month)
+	if sponsor == null:
+		return easing[0]
+	return _nearest(easing, sponsor)
+
+
+## The player's public stand on a private member's bill. The endorse bonus
+## moves onto the in-tray entry, where the bill's OWN division reads it a
+## month later; the endorsement's political price lands THROUGH THE ONE
+## APPLIER immediately, because the endorsement is the news and the vote is
+## not. One endorsement per bill -- a second stand is refused, the price is
+## per stand, and a re-priced stand would be two charges for one act.
+static func endorse(state, ns, loader, bill_id: String) -> Dictionary:
+	var entry: Dictionary = ns.assembly_bills.get(bill_id, {})
+	if entry.is_empty():
+		return {"ok": false, "refusal": "There is no such bill before the assembly.", "bill_id": ""}
+	if float(entry.get("endorse_bonus", 0.0)) != 0.0:
+		return {"ok": false, "refusal": "The bill carries the president's endorsement already.", "bill_id": String(bill_id)}
+	# Exact-zero reads on purpose: the register writes the bonus itself, so
+	# 0.0 is exactly "never endorsed" and no tolerance question exists.
+	entry["endorse_bonus"] = SK.PMB_ENDORSE_SUPPORT
+	Legislature.apply_effects(state, ns, {"bloc_offset": Dictionary(SK.PMB_ENDORSE_PRICE).duplicate(true)}, loader)
+	return {"ok": true, "refusal": "", "bill_id": String(bill_id), "endorse_bonus": SK.PMB_ENDORSE_SUPPORT}
+
+
+## The live bills the player has not yet taken a stand on -- pending.gd's
+## legislature mark reads this, by that file's own test: an unendorsed bill
+## awaits THE PLAYER, an endorsed one awaits only the calendar.
+static func awaiting_endorsement(ns) -> Array:
+	var out: Array = []
+	for bill_id in ns.assembly_bills:
+		if float(ns.assembly_bills[bill_id].get("endorse_bonus", 0.0)) == 0.0:
+			out.append(ns.assembly_bills[bill_id])
+	return out
+
+
+## The authored law behind an in-tray id -- the division's lookup, null when
+## the loader does not know the id (a save crossed a content edit).
+static func _law_by_id(loader, law_id: String):
+	if loader == null or law_id == "":
+		return null
+	for law in loader.laws:
+		if law.id == law_id:
+			return law
+	return null

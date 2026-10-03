@@ -33,6 +33,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
@@ -455,6 +456,11 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		state.append_history(entry)
 		Discipline.tick_month(state, _loader)
 		Legislature.tick_month(state, _loader)
+		# V4.2 T6, in main.gd's slot and AFTER the legislature for the cooldown
+		# reason main.gd states at its own call: a harness that never called this
+		# would run the pre-PMB model, and its agreement with the mirror would be
+		# about nothing (the V1.5d bug class).
+		Statute.tick_month(state, _loader)
 		Dissolution.tick_month(state)
 		# V1.4a, in main.gd's slot. Inert for every regime here that subsidises
 		# nobody -- the share shift is exactly zero with no subsidy standing and all

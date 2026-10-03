@@ -753,6 +753,25 @@ var custom_taxes := {}
 ## save that never commissioned a poll, and it is what "none bought" means.
 var poll_purchases := {}
 
+## V4.2 T6. The assembly-bill in-tray: bill id -> {"law_id", "months_left",
+## "backer_firm", "backer_chief", "endorse_bonus"}. The private members' bills
+## and chief-backed lobbying in flight -- tabled by Statute.tick_month()'s
+## hazards, endorsed (once, by the player) through Statute.endorse(), and
+## erased at the division, which writes the result into `last_law_result`
+## under its assembly marker. Entries do NOT park after resolution, unlike
+## draft_bills: the in-tray is bills in flight and the result's record is the
+## last_law_result marker plus the cards, while the id scheme stays
+## collision-free anyway (it mirrors T2's append-only size() idiom, and the
+## absolute month in the id only ever increases within a run, so a size()
+## reused in a later month still cannot repeat an earlier id).
+##
+## Serialised under the 38 bump game_state.gd's comment already argues -- the
+## six-register gate names this register: absent, an announced bill the
+## assembly will vote on vanishes without a division, the held_bills
+## free-escape case. Absence READS empty with no error, the law_ledger
+## contract.
+var assembly_bills := {}
+
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
@@ -1848,6 +1867,10 @@ func duplicate_state():
 	# V4.2 T5. Deep, the custom_taxes reason one line up: a projection buying a
 	# poll against a SHARED register would spend the player's money twice.
 	s.poll_purchases = poll_purchases.duplicate(true)
+	# V4.2 T6. Deep, for the draft_bills reason: a projection ticking a shared
+	# in-tray would count the player's assembly bills down and divide them
+	# inside a forecast.
+	s.assembly_bills = assembly_bills.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -2098,6 +2121,7 @@ func to_dict() -> Dictionary:
 		"custom_laws": custom_laws,
 		"custom_taxes": custom_taxes,
 		"poll_purchases": poll_purchases,
+		"assembly_bills": assembly_bills,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2628,6 +2652,23 @@ static func from_dict(d: Dictionary):
 				"cost": float(rec.get("cost", 0.0)),
 			}
 		s.poll_purchases[String(poll_bill)] = entry
+	# V4.2 T6. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- the five fields are two ids, a countdown, and a bonus the
+	# division re-clamps around, and a payload key that is none of them has no
+	# business in an in-tray the tick iterates. months_left is int-cast for
+	# the draft_bills reason: JSON hands every number back as a float when it
+	# can, and the countdown compares and decrements it.
+	s.assembly_bills = {}
+	var raw_bills: Dictionary = d.get("assembly_bills", {})
+	for bill_id in raw_bills:
+		var bill: Dictionary = raw_bills[bill_id]
+		s.assembly_bills[String(bill_id)] = {
+			"law_id": String(bill.get("law_id", "")),
+			"months_left": int(bill.get("months_left", 0)),
+			"backer_firm": String(bill.get("backer_firm", "")),
+			"backer_chief": String(bill.get("backer_chief", "")),
+			"endorse_bonus": float(bill.get("endorse_bonus", 0.0)),
+		}
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

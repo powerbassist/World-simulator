@@ -106,6 +106,12 @@ tests=(
   # re-rollable poll, a forecast that never firms), and the single-writer pin
   # on poll_purchases is a source scan no sim-side test can see.
   tests/test_statute_surfaces.gd
+  # V4.2 T6: the assembly's own life -- the idle hazard band, a bill dividing
+  # with no player action, the endorsement moving its division and charging
+  # once, the chief-backed lobby naming a real law and a real chief, the
+  # in-flight guard, determinism, the has_budget gate, round-trip. Registered
+  # at authoring time per the pass-5 fleet's find.
+  tests/test_statute_assembly.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd
