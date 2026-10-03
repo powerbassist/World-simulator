@@ -88,6 +88,12 @@ tests=(
   # itself), per-act accumulation, repeal subtracting through the ONE applier,
   # the refusals (constitutional, unrecorded), event silence, round-trip.
   tests/test_statute_ledger.gd
+  # V4.2 T2: the composition machine -- the draft refusals, the budget
+  # arithmetic and the derived price, countdown-to-composition, the legality
+  # scan finding composed laws, the repeal draft (negated preview, NOT in
+  # effects), determinism, round-trip + absence, and the price table's bloc
+  # vocabulary pinned against BLOC_KEYS.
+  tests/test_statute_compose.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

@@ -686,6 +686,36 @@ var law_cooldown_months := {}
 ## re-derived counterfactual -- recorded in docs/legislature-model.md.
 var law_ledger := {}
 
+## V4.2 T2. The composition machine's in-tray: draft id -> the parked spec
+## ({name, position, channels, new_tax, repeals, negated, size, price,
+## months_left}). Written by Statute.draft() and counted down by
+## Statute.tick_month(), and by nothing else. Entries are NEVER erased --
+## the id scheme reads .size(), so a deleted entry could hand a later draft
+## an id some earlier law already carries; the in-tray read
+## (Statute.drafts()) filters on months_left instead, and the record of what
+## was drafted is the panel's history for free.
+##
+## Serialised under the bump game_state.gd's SAVE_VERSION comment already
+## argues (T1's six-register gate named this register), so this is not the
+## bump's argument again -- only what ABSENCE means HERE: a save taken
+## mid-draft that lost draft_bills would lose a bill the player was drafting,
+## which is not the truth about that save. Absence still READS empty with no
+## error, the law_ledger contract.
+var draft_bills := {}
+
+## V4.2 T2. The composed statute book: law id -> Law.to_save_dict(). Written
+## when a parked draft's countdown reaches 0 (Statute.tick_month()) and by
+## nothing else; read back as Law objects wherever the authored list is
+## scanned (legislature.gd's legality scan, the law panel), so a composed law
+## is proposed, voted, failed and repealed like any other. Holds the save
+## form and never a live Law, on the round-trips-through-JSON discipline
+## every register here keeps.
+##
+## Serialised under the same T1 gate -- absent, acts the player put on the
+## book are gone from it, and the accumulators they move would read as
+## unauthored drift. Absence reads empty, no error.
+var custom_laws := {}
+
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
@@ -1768,6 +1798,12 @@ func duplicate_state():
 	s.passed_law_ids = passed_law_ids.duplicate(true)
 	s.law_cooldown_months = law_cooldown_months.duplicate(true)
 	s.law_ledger = law_ledger.duplicate(true)
+	# V4.2 T2. Deep, for the ledger's reason: a projection ticking a shared
+	# in-tray would count the player's drafts down twice. The Law-shaped
+	# dictionaries in custom_laws are plain data, so duplicate(true) is the
+	# whole of the copy.
+	s.draft_bills = draft_bills.duplicate(true)
+	s.custom_laws = custom_laws.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -2014,6 +2050,8 @@ func to_dict() -> Dictionary:
 		"passed_law_ids": passed_law_ids,
 		"law_cooldown_months": law_cooldown_months,
 		"law_ledger": law_ledger,
+		"draft_bills": draft_bills,
+		"custom_laws": custom_laws,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2497,6 +2535,24 @@ static func from_dict(d: Dictionary):
 			"channels": Dictionary(entry.get("channels", {})).duplicate(true),
 			"months": Array(entry.get("months", [])).duplicate(true),
 		}
+	# V4.2 T2. Rebuild-style, the ledger's rule: the payloads arrive as JSON
+	# and are copied wholesale -- sharing them would alias the save against
+	# the live registers. months_left is int-cast because the countdown
+	# compares and decrements it and JSON hands every number back as a float
+	# when it can; the Law-shaped dictionaries in custom_laws are trusted
+	# like the ledger trusts its channels, and re-cast nowhere -- the fields
+	# are read through typed reads in the factories and the panels.
+	s.draft_bills = {}
+	var raw_drafts: Dictionary = d.get("draft_bills", {})
+	for draft_id in raw_drafts:
+		var copy: Dictionary = Dictionary(raw_drafts[draft_id]).duplicate(true)
+		copy["size"] = float(copy.get("size", 0.0))
+		copy["months_left"] = int(copy.get("months_left", 0))
+		s.draft_bills[String(draft_id)] = copy
+	s.custom_laws = {}
+	var raw_custom: Dictionary = d.get("custom_laws", {})
+	for law_id in raw_custom:
+		s.custom_laws[String(law_id)] = Dictionary(raw_custom[law_id]).duplicate(true)
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

@@ -153,6 +153,17 @@ var changes_system: bool = false
 ## the one applier, negated.
 var repeals: String = ""
 
+## V4.2. True for a runtime-built law -- the composition machine's output.
+## from_dict() never reads it, so authored content cannot claim it: a
+## data/laws/ entry is a law, not a composition.
+var composed: bool = false
+
+## V4.2. Who authored this law: "authored" (data/laws/, the default the
+## loader never writes past), "player" (the composition machine), "assembly"
+## and "lobby" (T6's private members' bills and chief-backed bills). A closed
+## vocabulary the panels read; nothing in the sim branches on it.
+var origin: String = "authored"
+
 ## V1.1e. HOW FAR THIS LAW REACHES INTO THE MACHINERY OF THE STATE, in [0, 1]: the
 ## largest fraction of any substantive effect clamp it uses. Computed once at load,
 ## because it is a property of the law and of the model's own bounds and neither
@@ -255,6 +266,72 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	law.reach = _reach_of(law.effects)
 
 	return law
+
+
+## V4.2. The save form of a composed law, and the inverse of
+## composed_from_dict(): everything JSON-safe, no Law references, no content
+## arrays. ns.custom_laws holds THESE and never a live Law, on the same
+## round-trip-through-JSON discipline as every other register.
+func to_save_dict() -> Dictionary:
+	return {
+		"id": id,
+		"name": law_name,
+		"theme": theme,
+		"summary": summary,
+		"position": position.duplicate(),
+		"majority": majority,
+		"cooldown_months": cooldown_months,
+		"once": once,
+		"effects": effects.duplicate(true),
+		"repeals": repeals,
+		"composed": composed,
+		"origin": origin,
+	}
+
+
+## The save-rebuild factory for composed laws -- from_dict()'s counterpart
+## for entries that were validated at BIRTH (statute.gd's draft()) and are
+## trusted from the save the way the ledger's payload is. It takes no
+## validation arrays because it runs none: the machine never composed what
+## the loader would refuse, and re-running the authored schema against a
+## played save would let a content edit retroactively break a statute.
+## `reach` is recomputed, not stored -- a property of the effects and the
+## model's bounds, and the court reads it on every composed bill's passage.
+static func composed_from_dict(d: Dictionary):
+	var law := new()
+	law.id = String(d.get("id", ""))
+	law.law_name = String(d.get("name", ""))
+	law.theme = String(d.get("theme", ""))
+	law.summary = String(d.get("summary", ""))
+	var pos: Dictionary = d.get("position", {})
+	if typeof(pos) == TYPE_DICTIONARY:
+		law.position = {"economic": float(pos.get("economic", 0.0)), "social": float(pos.get("social", 0.0))}
+	law.majority = String(d.get("majority", "simple"))
+	law.cooldown_months = int(d.get("cooldown_months", 0))
+	law.once = bool(d.get("once", false))
+	var fx = d.get("effects", {})
+	if typeof(fx) == TYPE_DICTIONARY:
+		law.effects = fx.duplicate(true)
+	law.constitutional = false
+	law.repeals = String(d.get("repeals", ""))
+	law.composed = bool(d.get("composed", true))
+	law.origin = String(d.get("origin", "player"))
+	law.changes_system = false
+	law.reach = _reach_of(law.effects)
+	return law
+
+
+## Every composed law on a nation's register, rebuilt -- the ONE rebuild,
+## shared by legislature.gd's legality scan and statute.custom_laws(), so the
+## two readers cannot drift. Lives here rather than in either caller because
+## statute.gd preloads legislature.gd (the repeal gate) and the reverse
+## preload would be a cycle: the scan reaches the register through the core
+## factory instead.
+static func composed_register(ns) -> Array:
+	var out: Array = []
+	for law_id in ns.custom_laws:
+		out.append(composed_from_dict(ns.custom_laws[law_id]))
+	return out
 
 
 ## The largest fraction of any clamp `effects` uses -- see `reach` above for the two

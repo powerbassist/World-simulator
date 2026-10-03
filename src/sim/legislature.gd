@@ -14,6 +14,10 @@ extends RefCounted
 
 const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
+## V4.2. The composed-law factory: the legality scan reads ns.custom_laws
+## through Law.composed_register() because statute.gd preloads THIS file (the
+## repeal gate), so the reverse preload would be a cycle.
+const Law = preload("res://src/core/law.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
@@ -62,6 +66,10 @@ static func init_nation(ns) -> void:
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
 	ns.law_ledger = {}
+	# V4.2 T2. The composition registers, the same rule: whatever WRITES a
+	# field resets it, and both are written in statute.gd.
+	ns.draft_bills = {}
+	ns.custom_laws = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
@@ -1011,7 +1019,12 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# referendum routes below because a cooldown is not something Article 49.3
 	# overrides -- 49.3 bypasses the assembly, not the clock.
 	var legal := false
-	for open_law in available(ns, loader.laws):
+	# V4.2 T2. The scan reads the authored list PLUS the composed register --
+	# a custom law is a law like any other, and a scan that could not find
+	# one would refuse the player's own bill as unavailable, which is both a
+	# wrong verdict and the loss of the double-application guard this scan
+	# exists to keep (an unfound law is an unchecked law).
+	for open_law in available(ns, loader.laws + Law.composed_register(ns)):
 		if open_law.id == law.id:
 			legal = true
 			break

@@ -27,6 +27,10 @@ const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
+## V4.2. The composed register reaches the list through statute.custom_laws()
+## -- the same read the sim's legality scan makes, so the panel can never
+## show a book the sim would refuse or hide one it would accept.
+const Statute = preload("res://src/sim/statute.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -143,7 +147,9 @@ func _refresh() -> void:
 		_list.add_child(_build_held_bill(ns, String(law_id)))
 
 	var party_list: Array = _loader.parties.get(ns.id, [])
-	var available: Array = Legislature.available(ns, _loader.laws)
+	# V4.2. Authored laws plus the composed register -- the same concat the
+	# legality scan runs, so a draft the player finished is on this list.
+	var available: Array = Legislature.available(ns, _loader.laws + Statute.custom_laws(ns))
 	if available.is_empty():
 		PanelKit.line(_list, "No law is currently proposable.", PanelKit.Tone.PLAIN)
 		return
