@@ -63,6 +63,10 @@ const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
+## V4.2 T5. The Tax Code window (the budget panel's tax levers moved there)
+## and the bill briefing both surfaces open over a bill.
+const TaxPanel = preload("res://src/ui/tax_panel.gd")
+const Briefing = preload("res://src/ui/briefing.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
@@ -133,6 +137,8 @@ var _term_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
+var _tax_panel
+var _briefing
 var _polling_panel
 var _election_panel
 var _law_panel
@@ -301,6 +307,52 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
+	# the cluster grammar (panel-system.md §16) puts a surface where its
+	# decision lives, and a tax rate is a budget-domain decision -- but a
+	# separate DOMAIN from spending, which is why it is its own window and
+	# not a row. KEY_X was the one letter left. The commit is Budget.commit()
+	# -- the same verb the budget panel sends -- so the demand impulse, the
+	# erosion curve and the books have one entry point however many windows
+	# move a rate.
+	_tax_panel = TaxPanel.new()
+	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "coins.svg")
+	_tax_panel.setup(_state, _loader)
+	_tax_panel.hide_close_button()
+	_tax_panel.committed.connect(func(before, pending):
+		_queue_effect("Tax code change", before)
+		_hud.message_stack.push("Tax code committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
+		_update_top_bar()
+	)
+	# A finished draft opens the briefing on itself: the price it was quoted
+	# and the drafting months are what the press just bought.
+	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
+		_briefing.open_for_draft(entry, draft_id, _state, _loader)
+		_briefing.show()
+	)
+
+	# V4.2 T5. The bill briefing, over every bill the player can put to the
+	# assembly. Not a window in the registry: it is not a surface the player
+	# navigates to, it is what opens when a bill is asked for -- the summit's
+	# shape, one verb earlier in the same day. The division routes back
+	# through law_panel.run_proposal() so the propose path, its card and its
+	# U4 baseline stay in one place whichever surface pressed the button.
+	# (The law panel's own brief_requested lands beside its proposed handler
+	# below -- the panel does not exist yet at this point in _ready().)
+	_briefing = Briefing.new()
+	_add_centered(_briefing)
+	_briefing.hide()
+	_briefing.propose_requested.connect(func(law):
+		_briefing.hide()
+		_law_panel.run_proposal(law)
+	)
+	_briefing.polled.connect(func(before, label):
+		_queue_effect(String(label), before)
+		# The forecast the purchase sharpens is the law panel's read.
+		_law_panel.mark_dirty()
+		_update_top_bar()
+	)
+
 	_government_panel = GovernmentPanel.new()
 	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "cog.svg")
 	_government_panel.setup(_state, _loader)
@@ -324,6 +376,13 @@ func _ready() -> void:
 	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
+	# V4.2 T5. Propose opens the briefing; the division comes back through
+	# run_proposal() from the briefing's own verb, so the path below is still
+	# the one propose path in the game.
+	_law_panel.brief_requested.connect(func(law):
+		_briefing.open_for_law(law, _state, _loader)
+		_briefing.show()
+	)
 	_law_panel.proposed.connect(func(before, law_name, result):
 		_queue_effect(String(law_name), before)
 		var body: String
@@ -699,6 +758,10 @@ func _build_action_bar() -> void:
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		_entry("economy", "Economy"),
 		_entry("budget", "Budget"),
+		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
+		# tier moved tax out of the Budget panel, and the cluster grammar puts
+		# the surface where its decision lives.
+		_entry("tax", "Tax Code"),
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
 		_entry("companies", "Companies"),

@@ -74,6 +74,10 @@ static func init_nation(ns) -> void:
 	ns.draft_bills = {}
 	ns.custom_laws = {}
 	ns.custom_taxes = {}
+	# V4.2 T5. The paid-poll register, the same rule: its only writer is
+	# statute.buy_poll(), so it resets beside the registers that writer's
+	# machine owns and not in any file that merely reads it.
+	ns.poll_purchases = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()

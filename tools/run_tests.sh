@@ -100,6 +100,12 @@ tests=(
   # at the shared scale, the authored five bit-identical, commit's custom
   # plumbing, one key one birth, repeal keeps the params, round-trip.
   tests/test_statute_tax.gd
+  # V4.2 T5: the tax panel, the bill briefing and the two paid polls, pinned
+  # through the real main.tscn -- every leg here can fail silently (a rate
+  # row off a hand-written list, a quoted-not-landed price, an uncharged or
+  # re-rollable poll, a forecast that never firms), and the single-writer pin
+  # on poll_purchases is a source scan no sim-side test can see.
+  tests/test_statute_surfaces.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

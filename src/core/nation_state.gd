@@ -737,6 +737,22 @@ var custom_laws := {}
 ## way an authored tax nobody charges does.
 var custom_taxes := {}
 
+## V4.2 T5. The polls the player has PAID for: bill key -> kind ->
+## {"month": absolute month, "cost": EUR bn}. Written by Statute.buy_poll()
+## and by nothing else in src/sim/ -- this register remembers MONEY, not
+## display; the surfaces (the briefing's poll buttons, the law panel's
+## forecast band) read it directly, and the single-writer pin is scanned in
+## tests/test_statute_surfaces.gd. One commission per bill per kind, once and
+## for good: the bought poll is a published figure the display must never
+## re-roll (poll_noise.gd's rule, priced this time).
+##
+## Serialised under the 38 bump game_state.gd's comment already argues (the
+## six-register gate names this register): absent, a reload un-buys the
+## fixed-forecast read and a second commission would charge twice for one
+## number. Absence READS empty with no error -- which is the truth about every
+## save that never commissioned a poll, and it is what "none bought" means.
+var poll_purchases := {}
+
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
@@ -1829,6 +1845,9 @@ func duplicate_state():
 	s.draft_bills = draft_bills.duplicate(true)
 	s.custom_laws = custom_laws.duplicate(true)
 	s.custom_taxes = custom_taxes.duplicate(true)
+	# V4.2 T5. Deep, the custom_taxes reason one line up: a projection buying a
+	# poll against a SHARED register would spend the player's money twice.
+	s.poll_purchases = poll_purchases.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -2078,6 +2097,7 @@ func to_dict() -> Dictionary:
 		"draft_bills": draft_bills,
 		"custom_laws": custom_laws,
 		"custom_taxes": custom_taxes,
+		"poll_purchases": poll_purchases,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2593,6 +2613,21 @@ static func from_dict(d: Dictionary):
 			"erosion": float(params.get("erosion", 0.0)),
 			"ref_pct": float(params.get("ref_pct", 0.0)),
 		}
+	# V4.2 T5. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- month and cost are the two fields the register keeps, and a
+	# payload key that is neither has no business in a record of money spent.
+	s.poll_purchases = {}
+	var raw_polls: Dictionary = d.get("poll_purchases", {})
+	for poll_bill in raw_polls:
+		var kinds: Dictionary = raw_polls[poll_bill]
+		var entry: Dictionary = {}
+		for kind in kinds:
+			var rec: Dictionary = kinds[kind]
+			entry[String(kind)] = {
+				"month": int(rec.get("month", 0)),
+				"cost": float(rec.get("cost", 0.0)),
+			}
+		s.poll_purchases[String(poll_bill)] = entry
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

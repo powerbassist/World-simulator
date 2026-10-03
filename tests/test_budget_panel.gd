@@ -25,6 +25,8 @@ var _loader
 var _panel
 var _frame := 0
 var _revenue_before := ""
+var _spending_before := ""
+var _health_after := 0.0
 
 
 func _init() -> void:
@@ -68,6 +70,9 @@ func _setup() -> void:
 		_fail("proposed revenue is blank after setup")
 	if _panel._figures["revenue"][0] != _revenue_before:
 		_fail("with nothing pending, the now and proposed columns should agree")
+	_spending_before = _panel._figures["spending"][1]
+	if _spending_before.is_empty():
+		_fail("proposed spending is blank after setup")
 	if _panel._figures["proj_debt"][0].is_empty():
 		_fail("the 24-month projection did not populate")
 
@@ -92,29 +97,37 @@ func _setup() -> void:
 
 
 func _move_a_lever() -> void:
-	_panel._sliders["income"].value = 28.0
+	# V4.2 T5 moved the tax levers to the Tax Code window; the lever this
+	# panel still owns is a spending one, and the test's shape is unchanged:
+	# move it, watch the proposed column move and the live state hold still.
+	# The figure is read off the state rather than named -- France's authored
+	# health line is not a round thirty, and the move is a RISE of six so the
+	# demand-impulse assertion below has a known sign.
+	var start: float = float(_state.player().spending_pct_gdp["health"])
+	_health_after = start + 6.0
+	_panel._sliders["health"].value = _health_after
 	_panel._refresh()
 
-	if float(_panel._pending["tax_rates_pct"]["income"]) != 28.0:
-		_fail("the slider's value_changed did not reach the panel; pending income is %s" % _panel._pending["tax_rates_pct"]["income"])
-	if _panel._figures["revenue"][1] == _revenue_before:
-		_fail("proposed revenue did not change when income tax moved 20 -> 28")
-	if absf(float(_state.player().tax_rates_pct["income"]) - 20.0) > 0.001:
-		_fail("moving a slider mutated live state: income rate is now %s" % _state.player().tax_rates_pct["income"])
+	if absf(float(_panel._pending["spending_pct_gdp"]["health"]) - _health_after) > 0.001:
+		_fail("the slider's value_changed did not reach the panel; pending health is %s" % _panel._pending["spending_pct_gdp"]["health"])
+	if _panel._figures["spending"][1] == _spending_before:
+		_fail("proposed spending did not change when health moved")
+	if absf(float(_state.player().spending_pct_gdp["health"]) - start) > 0.001:
+		_fail("moving a slider mutated live state: health is now %s" % _state.player().spending_pct_gdp["health"])
 
 
 func _commit() -> void:
 	_panel._on_commit()
 
-	if absf(float(_state.player().tax_rates_pct["income"]) - 28.0) > 0.001:
-		_fail("commit did not apply the pending income rate: %s" % _state.player().tax_rates_pct["income"])
-	if _state.player().demand_impulse_pct >= 0.0:
-		_fail("a tax rise should have left a negative demand impulse, got %s" % _state.player().demand_impulse_pct)
+	if absf(float(_state.player().spending_pct_gdp["health"]) - _health_after) > 0.001:
+		_fail("commit did not apply the pending health rate: %s" % _state.player().spending_pct_gdp["health"])
+	if _state.player().demand_impulse_pct <= 0.0:
+		_fail("a spending rise should have left a positive demand impulse, got %s" % _state.player().demand_impulse_pct)
 
 	_panel._refresh()
-	if _panel._figures["revenue"][0] != _panel._figures["revenue"][1]:
+	if _panel._figures["spending"][0] != _panel._figures["spending"][1]:
 		_fail("after commit the now and proposed columns disagree: %s vs %s" % [
-			_panel._figures["revenue"][0], _panel._figures["revenue"][1]
+			_panel._figures["spending"][0], _panel._figures["spending"][1]
 		])
 
 

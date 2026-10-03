@@ -25,6 +25,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
+const TaxPanel = preload("res://src/ui/tax_panel.gd")
 
 const START_YEAR := 2026
 
@@ -227,14 +228,20 @@ func _check_progressivity_is_bounded() -> void:
 		_fail("a state carrying an out-of-band schedule was not clamped on read")
 
 
-## The model bound and the control cannot drift apart. budget_panel.LEVER_MAX reads
+## The model bound and the control cannot drift apart. tax_panel.LEVER_MAX reads
 ## economy_constants.WEALTH_RATE_MAX_PCT rather than authoring 3.0 a second time, and this
-## is the check that keeps it that way.
+## is the check that keeps it that way. V4.2 T5 moved the tax levers off
+## budget_panel into their own surface, so the identity moved with them -- and
+## the old panel staying clean of tax keys is pinned beside it, so a lever
+## cannot quietly grow back in two places.
 func _check_the_wealth_lever_matches_the_model_bound() -> void:
-	if float(BudgetPanel.LEVER_MAX["wealth"]) != C.WEALTH_RATE_MAX_PCT:
-		_fail("the wealth slider runs to %.2f against a model bound of %.2f" % [float(BudgetPanel.LEVER_MAX["wealth"]), C.WEALTH_RATE_MAX_PCT])
-	if float(BudgetPanel.LEVER_MAX[BudgetPanel.PROGRESSIVITY_KEY]) != K.PROGRESSIVITY_MAX:
+	if float(TaxPanel.LEVER_MAX["wealth"]) != C.WEALTH_RATE_MAX_PCT:
+		_fail("the wealth slider runs to %.2f against a model bound of %.2f" % [float(TaxPanel.LEVER_MAX["wealth"]), C.WEALTH_RATE_MAX_PCT])
+	if float(TaxPanel.LEVER_MAX[TaxPanel.PROGRESSIVITY_KEY]) != K.PROGRESSIVITY_MAX:
 		_fail("the bracket slider and PROGRESSIVITY_MAX disagree")
+	for key in C.TAX_KEYS:
+		if BudgetPanel.LEVER_MAX.has(key) or BudgetPanel.LEVER_LABELS.has(key):
+			_fail("budget_panel still carries the '%s' tax lever the Tax Code window owns" % key)
 
 
 ## THE UNITS DECISION, PINNED. A wealth rate is not on income's scale -- its whole

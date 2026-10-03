@@ -68,7 +68,10 @@ func _check_law_proposal_answers() -> void:
 	if law == null:
 		_fail("the law fixture workplace_safety_act is not in the loader")
 		return
-	_main._law_panel._on_propose(law)
+	# V4.2 T5: _on_propose opens the bill briefing; the division -- and the
+	# card this test pins -- is run_proposal(), the verb the briefing's own
+	# button routes into.
+	_main._law_panel.run_proposal(law)
 	if _main._hud.message_stack.card_count() != before_count + 1:
 		_fail("a proposed law pushed no acknowledgment card")
 		return

@@ -316,6 +316,54 @@ static func custom_laws(ns) -> Array:
 	return Law.composed_register(ns)
 
 
+## V4.2 T5. Commission a poll on one bill. The ONE writer of
+## ns.poll_purchases, and the one place outside Budget.tick_month() that
+## moves the debt stock on the player's behalf -- the companies.gd bailout's
+## exact discipline, restated here because the next sim author will meet this
+## register before that comment:
+##
+## A POLL FEE IS A ONE-OFF PURCHASE, not income. The cost lands on the debt
+## STOCK (`debt_eur_bn`) through the GDP level, and it moves
+## `deficit_pct_gdp` by exactly zero in the month it happens -- the deficit is
+## a precondition field, and a one-off on the revenue side would close the
+## loop the subsidy bill's one-month lag exists to avoid. The interest on it
+## is priced by Budget.recompute() at the real rate from the next tick, like
+## any other debt.
+##
+## The purchase is recorded per bill AND per kind, once and for good: the
+## poll's whole point is the FIXED-FORECAST rule -- the surfaces show one
+## published figure and never re-roll it -- so a second commission of the same
+## kind would be a re-roll of a number the player already bought, and it is
+## refused. `bill_key` is the law id for an authored bill and the draft id for
+## a composed one (the draft becomes that law, so a poll bought in drafting
+## still names the bill after passage).
+##
+## READS the register here and nowhere else in src/sim/: it remembers money,
+## not display, and the surfaces reach it directly (tests/test_statute_surfaces.gd
+## scans the directory for the single-writer pin).
+static func buy_poll(state, ns, bill_key: String, kind: String) -> Dictionary:
+	if not SK.POLL_COSTS.has(kind):
+		return {"ok": false, "refused": true, "refusal": "There is no such poll.", "cost_eur_bn": 0.0}
+	if String(bill_key) == "":
+		return {"ok": false, "refused": true, "refusal": "A poll is commissioned on a named bill.", "cost_eur_bn": 0.0}
+	var bought: Dictionary = ns.poll_purchases.get(bill_key, {})
+	if bought.has(kind):
+		var when := int(bought[kind].get("month", 0))
+		return {"ok": false, "refused": true,
+			"refusal": "That poll was commissioned already (month %d) -- the figures it bought are fixed." % when,
+			"cost_eur_bn": 0.0}
+	var cost := float(ns.gdp_eur_bn) * float(SK.POLL_COSTS[kind]) / 100.0
+	if not ns.poll_purchases.has(bill_key):
+		ns.poll_purchases[bill_key] = {}
+	ns.poll_purchases[bill_key][kind] = {
+		"month": int(state.year) * 12 + int(state.month),
+		"cost": cost,
+	}
+	ns.debt_eur_bn += cost
+	return {"ok": true, "refused": false, "refusal": "", "kind": kind,
+		"bill_key": String(bill_key), "cost_eur_bn": cost}
+
+
 ## The in-tray read: the drafts still counting down. Settled entries stay
 ## parked at months_left 0 (the id scheme reads size(), so entries are never
 ## erased) and are filtered here instead.

@@ -62,6 +62,22 @@ const NEW_TAX_YIELD_CEILING := 12.0
 ## default.
 const CUSTOM_TAX_MULT_DEMAND := 0.25
 
+## V4.2 T5. The two commissioned polls, priced as a ONE-OFF cost of GDP. The
+## conversion to euros happens once, in statute.buy_poll(), through the GDP
+## level -- the same route companies.gd's bailout takes -- so this table stays
+## a price list and never a second place that knows the debt arithmetic. An
+## assembly poll buys the whip count down to ABSTAIN_BAND for that one bill; a
+## popular poll buys the country's bloc read at the precise margin. Each kind
+## is bought ONCE per bill -- the register keys purchases by bill AND kind
+## (poll_noise's fixed-forecast rule: a poll is a published figure, and a
+## second commission would be a re-roll of the same number).
+const POLL_KIND_ASSEMBLY := "assembly"
+const POLL_KIND_POPULAR := "popular"
+const POLL_COSTS := {
+	"assembly": 0.05,
+	"popular": 0.04,
+}
+
 ## What one unit of movement on each channel spends from the budget. Tax and
 ## spending in points, the accumulators in their authored units, scaled so a
 ## typical authored single-channel law costs ~1.0.

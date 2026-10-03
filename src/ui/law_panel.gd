@@ -31,6 +31,9 @@ const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 ## -- the same read the sim's legality scan makes, so the panel can never
 ## show a book the sim would refuse or hide one it would accept.
 const Statute = preload("res://src/sim/statute.gd")
+## V4.2 T5. The poll kinds are the constants file's vocabulary -- the same
+## words buy_poll() records and the briefing's buttons send.
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -43,6 +46,13 @@ const FORECAST_UNCERTAIN_BAND := 0.15
 ## month has actually elapsed against it, which a failed vote changes nothing
 ## to distinguish -- an entry that shows "nothing moved" is still correct.
 signal proposed(before: Dictionary, law_name: String, result: Dictionary)
+## V4.2 T5. Propose now OPENS THE BRIEFING rather than dividing on the press:
+## a bill briefing the player can read -- channels, landed price, the polls
+## they can commission -- before the division is what the whole popup exists
+## for, and the division itself is the briefing's verb (main.gd routes its
+## propose_requested back into run_proposal() below). One propose path, one
+## card path; this signal only asks for the popup.
+signal brief_requested(law)
 
 var _state
 var _loader
@@ -463,14 +473,20 @@ func _build_pending_referendum(ns) -> Control:
 	return box
 
 
-## The blur is unchanged: a party whose |support| falls inside
-## FORECAST_UNCERTAIN_BAND lands in "undecided" rather than a firm column.
+## The blur is unchanged: a party whose |support| falls inside the band lands
+## in "undecided" rather than a firm column. The band is not a constant here
+## any more -- V4.2 T5's commissioned assembly poll buys it down to
+## legislature_constants.ABSTAIN_BAND for THAT bill, and `forecast_band()`
+## reads the purchase register. STATIC, and the briefing calls this same walk:
+## the forecast is one computation and two windows, the same one-source rule
+## PanelKit's ledgers keep for figures -- a second effects-walk in briefing.gd
+## is exactly the drift this project keeps paying to find.
 ##
 ## Rebel seats are counted into the column they will actually vote in, not left
 ## inside their party's block. They are not a second kind of uncertainty -- the
 ## split is deterministic and the government panel already publishes it per
 ## party, so hiding it here would make the forecast lie in one direction only.
-func _forecast_text(ns, party_list: Array, law) -> String:
+static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 	var yes := 0
 	var no := 0
 	var undecided := 0
@@ -486,16 +502,16 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 			broke = Discipline.rebel_seats(ns, party, s, own)
 		rebels += broke
 
-		if s > FORECAST_UNCERTAIN_BAND:
+		if s > band:
 			yes += seats - broke
-		elif s < -FORECAST_UNCERTAIN_BAND:
+		elif s < -band:
 			no += seats - broke
 		else:
 			undecided += seats - broke
 
-		if own > FORECAST_UNCERTAIN_BAND:
+		if own > band:
 			yes += broke
-		elif own < -FORECAST_UNCERTAIN_BAND:
+		elif own < -band:
 			no += broke
 		else:
 			undecided += broke
@@ -504,6 +520,21 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 	if rebels > 0:
 		text += "  (%d expected to break ranks)" % rebels
 	return text
+
+
+func _forecast_text(ns, party_list: Array, law) -> String:
+	return forecast_text(ns, party_list, law, forecast_band(ns, law.id))
+
+
+## The band THIS bill's forecast is blurred by: the ordinary uncertainty, or
+## the assembly poll's ABSTAIN_BAND where one was bought -- the whole point of
+## the purchase is that the whip count firms up, and only for the bill that
+## was polled. Reads the purchase register HERE, in src/ui/ where it belongs:
+## src/sim/ never reads it (statute.buy_poll is its one sim touch).
+static func forecast_band(ns, bill_key: String) -> float:
+	if ns.poll_purchases.get(bill_key, {}).has(StatuteK.POLL_KIND_ASSEMBLY):
+		return LK.ABSTAIN_BAND
+	return FORECAST_UNCERTAIN_BAND
 
 
 ## What the second chamber and the court will do to a bill that carries the Assembly.
@@ -555,7 +586,18 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	return box
 
 
+## V4.2 T5. The press opens the briefing; the division happens from the
+## briefing's own verb, routed back into run_proposal() below. A bill the
+## player can read before the vote -- and commission a poll on before it --
+## is the whole of what the briefing is for.
 func _on_propose(law) -> void:
+	brief_requested.emit(law)
+
+
+## The division itself. Public because the briefing's verb lands here through
+## main.gd -- one propose path (this body), one card path (the `proposed`
+## handler in main.gd), whichever surface pressed the button.
+func run_proposal(law) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Legislature.propose(_state, _loader, law)
 	proposed.emit(before, law.law_name, result)
