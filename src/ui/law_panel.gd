@@ -65,6 +65,11 @@ var _close_button: Button
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
 
+## V4.2 T6 review. An Endorse the sim refused, verbatim from the machine --
+## the companies panel's _last_refusal idiom, because a refusal shown
+## nowhere is a press that did nothing (the silent-failure class).
+var _endorse_refusal := ""
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(760, 560)
@@ -155,6 +160,15 @@ func _refresh() -> void:
 	# flight, it is off the list below, and it is the only thing that list cannot say.
 	for law_id in ns.held_bills:
 		_list.add_child(_build_held_bill(ns, String(law_id)))
+
+	# V4.2 T6 review. The assembly's own in-tray -- private members' bills and
+	# chiefs' bills the machine tabled, which the proposable list below cannot
+	# show (a tabled law is by definition not in available()) and whose one
+	# answerable verb is the president's stand. The companies panel's
+	# autonomy sections are the house idiom for verbs on machine-generated
+	# state; everything here is off the in-tray register, no hand-written list.
+	_endorse_refusal = ""
+	_build_assembly_section(ns)
 
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	# V4.2. Authored laws plus the composed register -- the same concat the
@@ -586,6 +600,75 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	return box
 
 
+## The ASSEMBLY BILLS section: the header, then one compact row per bill in
+## the machine's in-tray -- the law's name off the loader, the backer line
+## when a chief lobbied the bill in, the months to the division, and Endorse
+## wherever the president has not yet stood. One endorsement per bill is the
+## sim's rule, so a taken stand REPLACES the verb with its record rather
+## than leaving a live button whose only possible future is a refusal (the
+## companies panel's spent-verb shape).
+func _build_assembly_section(ns) -> void:
+	if ns.assembly_bills.is_empty():
+		return
+	if _endorse_refusal != "":
+		PanelKit.line(_list, _endorse_refusal)
+	PanelKit.heading(_list, "ASSEMBLY BILLS")
+	for bill_id in ns.assembly_bills:
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		var law = _find_law(String(entry.get("law_id", "")))
+		var months := int(entry.get("months_left", 0))
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 2)
+		PanelKit.line(box, "%s — before the assembly, divides in %d %s." % [
+			law.law_name if law != null else String(entry.get("law_id", "")),
+			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
+		var firm_id := String(entry.get("backer_firm", ""))
+		if firm_id != "":
+			# The B3 person_name idiom: the chief resolves through the loader
+			# like every other named person -- a missing name reads as a role,
+			# never as a raw id or an empty space.
+			var chief: String = _loader.person_name(String(entry.get("backer_chief", "")))
+			PanelKit.line(box, "%s's chief %s backs this bill." % [
+				_loader.firm_name(ns.id, firm_id),
+				chief if chief != "" else "the chief"], PanelKit.Tone.PLAIN)
+		if float(entry.get("endorse_bonus", 0.0)) != 0.0:
+			PanelKit.line(box, "Endorsed — the president's stand is on the record.", PanelKit.Tone.PLAIN)
+		else:
+			box.add_child(_build_endorse_button(String(bill_id)))
+		_list.add_child(box)
+
+
+func _build_endorse_button(bill_id: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	# The tooltip names the trade off the constants' own vocabulary, so the
+	# button cannot drift from what the machine actually charges.
+	var price_bits := PackedStringArray()
+	for bloc in StatuteK.PMB_ENDORSE_PRICE:
+		price_bits.append("%s %+.2f" % [String(bloc).capitalize(), float(StatuteK.PMB_ENDORSE_PRICE[bloc])])
+	var endorse_btn := Button.new()
+	endorse_btn.text = "Endorse"
+	endorse_btn.tooltip_text = (
+		"Stand behind the bill publicly: %+.2f on every party's support line at its division, "
+		+ "priced now as executive activism (%s). One stand per bill."
+	) % [StatuteK.PMB_ENDORSE_SUPPORT, ", ".join(price_bits)]
+	endorse_btn.pressed.connect(_on_endorse.bind(bill_id))
+	_offer(endorse_btn)
+	row.add_child(endorse_btn)
+	return row
+
+
+## The player's stand. The sim owns every rule -- the bonus onto the in-tray
+## entry, the price through the ONE applier, the one-per-bill refusal -- and
+## this panel sends the command and marks itself dirty; the refresh then
+## shows the record where the button was.
+func _on_endorse(bill_id: String) -> void:
+	var result: Dictionary = Statute.endorse(_state, _state.player(), _loader, bill_id)
+	_endorse_refusal = "" if bool(result.get("ok", false)) \
+		else String(result.get("refusal", "The assembly refused the stand."))
+	_dirty = true
+
+
 ## V4.2 T5. The press opens the briefing; the division happens from the
 ## briefing's own verb, routed back into run_proposal() below. A bill the
 ## player can read before the vote -- and commission a poll on before it --
@@ -645,6 +728,9 @@ func _offer(button: Button) -> void:
 ## Every verb here is rebuilt on each refresh, so this is the first enabled one in
 ## build order. A referendum in flight is built first and its "Call it off" is
 ## therefore the verb while one is running, which is right: while the country has
-## been asked, that is the only decision the assembly's list cannot offer.
+## been asked, that is the only decision the assembly's list cannot offer. An
+## assembly bill awaiting its endorsement builds next -- with no referendum in
+## flight, the Endorse button is the verb, which is also right: its window is
+## PMB_MONTHS_TO_VOTE, the shortest clock on the page.
 func primary_action() -> Control:
 	return _primary

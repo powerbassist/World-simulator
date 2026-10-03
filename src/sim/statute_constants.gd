@@ -127,6 +127,18 @@ const PMB_ENDORSE_PRICE := {"workers": 0.05, "business": -0.05}
 ## LOBBY_BURDEN_FLOOR AND that sector has a major whose chief can sign the
 ## ask AND the authored book carries a burden-easing law for the sector --
 ## any leg missing and the fired draw falls through to the plain backbench.
+##
+## THE FALL-THROUGH'S RECORDED COST: a fired lobby draw never wastes the
+## month -- the chief still brings a bill (a plain backbench one, when no
+## burden-easing law exists to name) -- so on its fire months a burdened
+## nation's EFFECTIVE plain-bill rate is PMB_HAZARD + LOBBY_HAZARD (0.10),
+## not PMB_HAZARD alone; the lobby draw inflates the plain-PMB hazard by its
+## own 0.02 for exactly the nations paying a burden. Accepted, not tuned
+## away: the fall-through is mandated (a spent draw tabling nothing would
+## read as the backbench falling silent in the month a chief came to it),
+## and the inflated total of 0.10/month stays under the PMB band the test
+## pins -- 1-20 bills per 120 idle months against a draw ceiling of 12 per
+## decade.
 const LOBBY_HAZARD_MONTHLY := 0.02
 
 ## The burden above which a sector's majors have something worth a bill: 0.1

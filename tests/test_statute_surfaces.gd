@@ -24,7 +24,14 @@ extends SceneTree
 ##   (g) purchases riding save/load; absence meaning none bought;
 ##   (h) the single-writer pin: no src/sim file reads `poll_purchases`
 ##       except statute.gd's buy_poll -- the register remembers money, not
-##       display, and the surfaces reach it directly.
+##       display, and the surfaces reach it directly;
+##   (i) the law panel's ASSEMBLY BILLS section: a staged in-tray entry
+##       (hand-written in the machine's own shape, the way this file stages
+##       firms) shows its row and its Endorse button, the press calls
+##       endorse() (the entry's bonus moves), and the spent verb is replaced
+##       by the endorsed line -- the verb was player-unreachable before the
+##       section existed, which is why the leg can fail silently and lives
+##       here.
 
 const Law = preload("res://src/core/law.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -301,6 +308,46 @@ func _run() -> void:
 		_fail("the ordinary poll noise moved")
 	if StatuteK.POLL_COSTS.size() != 2:
 		_fail("the price list grew without a commission button to match")
+
+	# --- (i) The assembly-bills section: the endorse verb is reachable ------
+	# Staged exactly as _table_bill writes the in-tray entry -- the machine's
+	# own five-key shape, the way this file stages firms -- with the assembly
+	# test's fixture law and chief. The card has said all along that the
+	# stand is the president's to take; this leg pins the surface that
+	# finally offers it.
+	ns.assembly_bills["pmb_surfaces"] = {
+		"law_id": "retirement_age_reform",
+		"months_left": StatuteK.PMB_MONTHS_TO_VOTE,
+		"backer_firm": "FRA_aurignac",
+		"backer_chief": "FRA_chief_aurignac",
+		"endorse_bonus": 0.0,
+	}
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	var staged_law = _law_by_id(loader, "retirement_age_reform")
+	var bill_label: String = staged_law.law_name if staged_law != null else "retirement_age_reform"
+	if not _live_text_has(law_panel, bill_label):
+		_fail("the staged assembly bill built no row on the law panel")
+	if not _live_text_has(law_panel, loader.firm_name(ns.id, "FRA_aurignac")):
+		_fail("the lobbied bill's row does not name its backer firm")
+	if not _live_text_has(law_panel, loader.person_name("FRA_chief_aurignac")):
+		_fail("the lobbied bill's row does not name the backer chief")
+	var endorse_btn := _find_button(law_panel, "Endorse")
+	if endorse_btn == null:
+		_fail("the staged bill offers no Endorse button -- the stand is unreachable again")
+	else:
+		_press(endorse_btn)
+	if float(ns.assembly_bills.get("pmb_surfaces", {}).get("endorse_bonus", 0.0)) <= 0.0:
+		_fail("pressing Endorse left the in-tray bonus at zero -- endorse() never ran")
+	# One stand per bill: the spent verb is REPLACED by the record, the
+	# companies panel's shape -- a live button here could only ever refuse.
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if _find_button(law_panel, "Endorse") != null:
+		_fail("an endorsed bill still offers Endorse -- one stand per bill")
+	if not _live_text_has(law_panel, "Endorsed"):
+		_fail("the endorsed bill shows no endorsed line")
+	ns.assembly_bills.erase("pmb_surfaces")
 
 
 ## The forecast walk, on a synthetic bill positioned so one party's support

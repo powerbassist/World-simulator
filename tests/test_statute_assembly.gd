@@ -229,6 +229,11 @@ func _test_endorse() -> void:
 	if int(b["yes_seats"]) <= int(a["yes_seats"]):
 		_fail("the endorsed division won no more seats than the control (%d vs %d) -- measured control 115, endorsed 268" % [
 			int(b["yes_seats"]), int(a["yes_seats"])])
+	# The court-skip is marked, not silent: an assembly bill HAS divided, so
+	# its result records that the court's gate was never on its pipeline (the
+	# referendum settle path is the other unreviewed landing).
+	if not bool(b.get("court_skipped", false)):
+		_fail("the endorsed division's result does not carry court_skipped -- the skip is invisible")
 
 
 ## The in-flight guard: a law the backbench has tabled cannot be proposed by

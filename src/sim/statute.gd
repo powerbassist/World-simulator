@@ -549,6 +549,12 @@ static func _divide(state, ns, loader, bill_id: String) -> void:
 		ns, party_list, law, false, float(entry.get("endorse_bonus", 0.0)))
 	result["assembly_bill"] = true
 	result["bill_id"] = bill_id
+	# The skip is MARKED, not silent: the court's gate is _review_and_apply's,
+	# for bills taking effect WITHOUT a division (the referendum settle path
+	# lands unreviewed on the same recorded ground), and this bill HAS
+	# divided -- the readout names the absence rather than leaving a reader
+	# to wonder whether review was forgotten.
+	result["court_skipped"] = true
 	if String(entry.get("backer_firm", "")) != "":
 		result["backer_firm"] = String(entry["backer_firm"])
 		result["backer_chief"] = String(entry.get("backer_chief", ""))
