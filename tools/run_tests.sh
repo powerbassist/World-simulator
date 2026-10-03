@@ -112,6 +112,10 @@ tests=(
   # in-flight guard, determinism, the has_budget gate, round-trip. Registered
   # at authoring time per the pass-5 fleet's find.
   tests/test_statute_assembly.gd
+  # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
+  # coverage, spread bands -- re-derived from the JSON beside tools/law_lint.py,
+  # because a check only a shell invocation can reach is one the suite never runs.
+  tests/test_law_content.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

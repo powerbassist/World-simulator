@@ -145,6 +145,108 @@
         },
         "bloc_offset": { "pensioners": 0.15, "rural": 0.05, "students": -0.15 }
       }
+    },
+    {
+      "id": "two_term_limit_amendment",
+      "name": "Two-Term Limit Amendment",
+      "theme": "institutional",
+      "summary": "Limit the head of state to two terms, one more than the abolitionists wanted and one fewer than the incumbents did.",
+      "constitutional": true,
+      "systems": ["semi_presidential_republic"],
+      "position": { "economic": 0.0, "social": 0.1 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "term_limit": 2 },
+        "bloc_offset": { "students": 0.06, "urban": 0.04, "business": -0.04 }
+      }
+    },
+    {
+      "id": "dissolution_safeguard_amendment",
+      "name": "Dissolution Safeguard Amendment",
+      "theme": "institutional",
+      "summary": "No dissolution of the assembly until the government has actually lost a confidence vote.",
+      "constitutional": true,
+      "systems": ["constitutional_monarchy", "parliamentary_republic"],
+      "position": { "economic": 0.05, "social": 0.05 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "dissolution_rule": "confidence_failure" },
+        "bloc_offset": { "business": 0.06, "rural": 0.04, "urban": -0.04 }
+      }
+    },
+    {
+      "id": "referendum_amendment_rule",
+      "name": "Referendum Amendment Rule",
+      "theme": "institutional",
+      "summary": "Future constitutional amendments to require a national referendum as well as the assembly's vote.",
+      "constitutional": true,
+      "systems": ["directorial_republic"],
+      "position": { "economic": -0.1, "social": -0.2 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "amendment_rule": "referendum_required" },
+        "bloc_offset": { "urban": 0.08, "students": 0.08, "rural": 0.05, "business": -0.05 }
+      }
+    },
+    {
+      "id": "four_year_term_amendment",
+      "name": "Fixed Four-Year Term Amendment",
+      "theme": "institutional",
+      "summary": "Fix the assembly's term at four years, in the constitution rather than in the statute book.",
+      "constitutional": true,
+      "systems": ["parliamentary_republic", "semi_presidential_republic"],
+      "position": { "economic": 0.0, "social": 0.0 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "term_months": 48 },
+        "bloc_offset": { "rural": 0.04, "business": 0.05, "students": -0.04 }
+      }
+    },
+    {
+      "id": "constructive_vote_amendment",
+      "name": "Constructive Vote Amendment",
+      "theme": "institutional",
+      "summary": "A no-confidence motion must name a successor before the house may vote on it.",
+      "constitutional": true,
+      "systems": ["parliamentary_republic"],
+      "position": { "economic": 0.05, "social": 0.0 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "censure_rule": "constructive_absolute" },
+        "bloc_offset": { "business": 0.08, "workers": 0.04, "urban": -0.04 }
+      }
+    },
+    {
+      "id": "chancellor_election_amendment",
+      "name": "Chancellor Election Amendment",
+      "theme": "institutional",
+      "summary": "The assembly to elect its head of government by explicit recorded vote, not by quiet acclamation.",
+      "constitutional": true,
+      "systems": ["parliamentary_republic"],
+      "position": { "economic": 0.0, "social": -0.1 },
+      "majority": "amendment",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "formation_method": "chancellor_election" },
+        "bloc_offset": { "urban": 0.05, "students": 0.05, "business": 0.04 }
+      }
     }
   ]
 }

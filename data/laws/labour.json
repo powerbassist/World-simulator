@@ -66,6 +66,136 @@
         "society": { "settlement": -0.3 },
         "bloc_offset": { "business": 0.2, "workers": -0.2 }
       }
+    },
+    {
+      "id": "apprenticeship_guarantee_act",
+      "name": "Apprenticeship Guarantee Act",
+      "theme": "labour",
+      "summary": "A funded apprenticeship place for every school leaver who wants one.",
+      "position": { "economic": -0.3, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": -0.2,
+        "spending_pct_gdp": { "education": 0.2 },
+        "bloc_offset": { "workers": 0.12, "students": 0.08, "business": 0.05 }
+      }
+    },
+    {
+      "id": "agency_worker_rights_act",
+      "name": "Agency Workers' Rights Act",
+      "theme": "labour",
+      "summary": "Equal pay and conditions for agency staff from their first day on site.",
+      "position": { "economic": -0.5, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": 0.1,
+        "society": { "settlement": 0.15 },
+        "bloc_offset": { "workers": 0.18, "business": -0.14 }
+      }
+    },
+    {
+      "id": "platform_work_statute",
+      "name": "Platform Work Statute",
+      "theme": "labour",
+      "summary": "A presumption of employment for the couriers and drivers who work to an algorithm.",
+      "position": { "economic": -0.55, "social": -0.15 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": 0.15,
+        "society": { "settlement": 0.2 },
+        "bloc_offset": { "workers": 0.2, "students": 0.05, "business": -0.18 }
+      }
+    },
+    {
+      "id": "pension_age_linkage_act",
+      "name": "Pension Age Linkage Act",
+      "theme": "labour",
+      "summary": "Link the pension age to life expectancy, automatically and announced decades in advance.",
+      "position": { "economic": 0.5, "social": 0.3 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "pensions": -0.8 },
+        "structural_unemployment_pct": -0.15,
+        "society": { "settlement": -0.3 },
+        "bloc_offset": { "pensioners": -0.3, "business": 0.12, "workers": -0.08 }
+      }
+    },
+    {
+      "id": "benefit_conditionality_act",
+      "name": "Benefit Conditionality Act",
+      "theme": "labour",
+      "summary": "Tighten the job-search rules a claimant must meet to keep the unemployment benefit.",
+      "position": { "economic": 0.55, "social": 0.2 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [
+        { "field": "unemployment_pct", "op": ">=", "value": 9.0 }
+      ],
+      "effects": {
+        "structural_unemployment_pct": -0.2,
+        "society": { "settlement": -0.25 },
+        "bloc_offset": { "business": 0.15, "workers": -0.15, "rural": 0.05 }
+      }
+    },
+    {
+      "id": "wage_insurance_scheme",
+      "name": "Wage Insurance Scheme",
+      "theme": "labour",
+      "summary": "Top up the pay of workers who re-enter employment on less than they earned before.",
+      "position": { "economic": -0.25, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": -0.1,
+        "spending_pct_gdp": { "education": 0.15 },
+        "bloc_offset": { "workers": 0.15, "business": 0.05, "pensioners": -0.04 }
+      }
+    },
+    {
+      "id": "works_councils_act",
+      "name": "Works Councils Act",
+      "theme": "labour",
+      "summary": "Elected employee representation on the board of every firm above a statutory size.",
+      "position": { "economic": -0.5, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "industry", "burden": 0.15 },
+        "society": { "settlement": 0.2 },
+        "bloc_offset": { "workers": 0.2, "business": -0.2 }
+      }
+    },
+    {
+      "id": "seasonal_worker_programme",
+      "name": "Seasonal Worker Programme",
+      "theme": "labour",
+      "summary": "A fast visa route for the harvest labour the farms cannot hire at any wage.",
+      "position": { "economic": 0.0, "social": -0.2 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "migration": 0.15 },
+        "bloc_offset": { "rural": 0.12, "business": 0.1, "workers": -0.05 }
+      }
     }
   ]
 }

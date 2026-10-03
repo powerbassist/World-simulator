@@ -59,6 +59,126 @@
         "other_revenue_pct_gdp": 0.5,
         "bloc_offset": { "business": -0.1, "urban": 0.1, "rural": -0.15 }
       }
+    },
+    {
+      "id": "wealth_levy",
+      "name": "Net Wealth Levy",
+      "theme": "tax",
+      "summary": "An annual levy of 0.3 points on large net wealth, collected outside the income tax.",
+      "position": { "economic": -0.7, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "tax_rates_pct": { "wealth": 0.3 },
+        "bloc_offset": { "business": -0.1, "workers": 0.05, "pensioners": 0.04 }
+      }
+    },
+    {
+      "id": "capital_gains_surtax",
+      "name": "Capital Gains Surtax",
+      "theme": "tax",
+      "summary": "Raise the tax on investment gains by three points.",
+      "position": { "economic": -0.5, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "tax_rates_pct": { "capital_gains": 3.0 },
+        "bloc_offset": { "business": -0.1, "urban": 0.05 }
+      }
+    },
+    {
+      "id": "hiring_credit_act",
+      "name": "Hiring Credit Act",
+      "theme": "tax",
+      "summary": "A credit against employer contributions for every additional hire on the payroll.",
+      "position": { "economic": -0.25, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "structural_unemployment_pct": -0.15,
+        "bloc_offset": { "business": 0.16, "workers": -0.06 }
+      }
+    },
+    {
+      "id": "fuel_duty_uplift",
+      "name": "Fuel Duty Uplift",
+      "theme": "tax",
+      "summary": "Raise the duty on motor fuels, and let the drivers notice at the pump.",
+      "position": { "economic": 0.2, "social": -0.3 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.4,
+        "bloc_offset": { "rural": -0.18, "urban": 0.08, "business": -0.06 }
+      }
+    },
+    {
+      "id": "tobacco_alcohol_duty",
+      "name": "Tobacco and Alcohol Duty Act",
+      "theme": "tax",
+      "summary": "Raise the duties on tobacco and alcohol, half revenue and half public health.",
+      "position": { "economic": 0.3, "social": 0.3 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.3,
+        "bloc_offset": { "workers": -0.08, "students": -0.06, "pensioners": 0.05 }
+      }
+    },
+    {
+      "id": "financial_transactions_levy",
+      "name": "Financial Transactions Levy",
+      "theme": "tax",
+      "summary": "A small charge on every trade in securities and derivatives.",
+      "position": { "economic": -0.4, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.3,
+        "bloc_offset": { "business": -0.14, "urban": 0.06 }
+      }
+    },
+    {
+      "id": "tax_amnesty_act",
+      "name": "Tax Amnesty Act",
+      "theme": "tax",
+      "summary": "A one-year window to declare undeclared assets at a reduced rate, no questions asked.",
+      "position": { "economic": 0.4, "social": 0.0 },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.25,
+        "bloc_offset": { "business": 0.06, "workers": -0.12, "urban": -0.05 }
+      }
+    },
+    {
+      "id": "second_home_levy",
+      "name": "Second Home Levy",
+      "theme": "tax",
+      "summary": "A surcharge on the purchase of homes the buyer does not intend to live in.",
+      "position": { "economic": -0.3, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.2,
+        "bloc_offset": { "urban": 0.05, "pensioners": -0.08, "business": -0.04 }
+      }
     }
   ]
 }
