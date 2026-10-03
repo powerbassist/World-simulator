@@ -4,5 +4,6 @@
   "obsidian-excalidraw-plugin",
   "obsidian-git",
   "obsidian-tasks-plugin",
-  "templater-obsidian"
+  "templater-obsidian",
+  "obsidian-local-rest-api"
 ]
