@@ -106,7 +106,8 @@ const PMB_MONTHS_TO_VOTE := 1
 ## bill's own division, read through resolve_vote()'s DEFAULTED support_bonus
 ## parameter -- the same additive form coalition_bonus takes inside support().
 ## A tenth of a point: enough to carry a bill sitting on the abstain band
-## (LK.ABSTAIN_BAND is 0.15), not enough to buy one the house opposes, since
+## (LK.ABSTAIN_BAND is 0.05 -- law_panel.gd's 0.15 is the FORECAST blur, not
+## the division), not enough to buy one the house opposes, since
 ## the spatial term spans [-1, 1] and the bonus re-clamps like every line.
 const PMB_ENDORSE_SUPPORT := 0.10
 
