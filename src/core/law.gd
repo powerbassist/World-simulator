@@ -164,6 +164,17 @@ var composed: bool = false
 ## vocabulary the panels read; nothing in the sim branches on it.
 var origin: String = "authored"
 
+## V4.2 T4. The params of a tax key this bill BIRTHS -- {key, name,
+## base_share, erosion, ref_pct}: the register entry's four fields plus `key`
+## itself, which names what to register (the register is keyed by it and does
+## not store it a second time). Empty on every authored law (from_dict()
+## never reads it, so data/laws/ cannot claim a birth); the composition
+## machine fills it, and Legislature.apply() reads it at passage to register
+## the key BEFORE the rate moves -- one writer, one registration site.
+## `ref_pct` is the birth rate, the key's erosion reference for as long as
+## the key exists.
+var new_tax: Dictionary = {}
+
 ## V1.1e. HOW FAR THIS LAW REACHES INTO THE MACHINERY OF THE STATE, in [0, 1]: the
 ## largest fraction of any substantive effect clamp it uses. Computed once at load,
 ## because it is a property of the law and of the model's own bounds and neither
@@ -283,6 +294,7 @@ func to_save_dict() -> Dictionary:
 		"cooldown_months": cooldown_months,
 		"once": once,
 		"effects": effects.duplicate(true),
+		"new_tax": new_tax.duplicate(true),
 		"repeals": repeals,
 		"composed": composed,
 		"origin": origin,
@@ -312,6 +324,12 @@ static func composed_from_dict(d: Dictionary):
 	var fx = d.get("effects", {})
 	if typeof(fx) == TYPE_DICTIONARY:
 		law.effects = fx.duplicate(true)
+	# V4.2 T4. A birth's params ride the save dict -- trusted like the
+	# effects, validated at birth by the machine's draft gate, never
+	# re-validated here (composed_from_dict's own contract).
+	var nt = d.get("new_tax", {})
+	if typeof(nt) == TYPE_DICTIONARY:
+		law.new_tax = nt.duplicate(true)
 	law.constitutional = false
 	law.repeals = String(d.get("repeals", ""))
 	law.composed = bool(d.get("composed", true))

@@ -67,9 +67,13 @@ static func init_nation(ns) -> void:
 	ns.law_cooldown_months = {}
 	ns.law_ledger = {}
 	# V4.2 T2. The composition registers, the same rule: whatever WRITES a
-	# field resets it, and both are written in statute.gd.
+	# field resets it, and both are written in statute.gd. V4.2 T4 adds the
+	# params register beside them -- written in THIS file's apply() birth
+	# step, so it resets here with its fellow registers and not in
+	# statute.gd's own init (there is none; the tick is stateless).
 	ns.draft_bills = {}
 	ns.custom_laws = {}
+	ns.custom_taxes = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
@@ -579,6 +583,13 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 static func apply(state, ns, law, loader) -> void:
 	if law.repeals != "":
 		_subtract_ledger(state, ns, loader, law.repeals)
+	# V4.2 T4. A BIRTH registers its params BEFORE the rate moves, and this is
+	# the ONE registration site: the rate's own application runs through
+	# apply_effects() -> Budget.commit(), which refuses a pending rate whose
+	# key has no params behind it -- so a birth that applied its rate first
+	# would be refused by its own applier. One writer, one registration site.
+	if not law.new_tax.is_empty():
+		_register_new_tax(ns, law)
 	var before := _effect_snapshot(ns, law.effects)
 	apply_effects(state, ns, law.effects, loader)
 	_record_ledger(state, ns, law, before, _effect_snapshot(ns, law.effects))
@@ -674,6 +685,30 @@ static func _ledger_merge(into: Dictionary, from: Dictionary) -> void:
 			var keyed: Dictionary = from[channel]
 			for sub_key in keyed:
 				_ledger_add(into, channel, sub_key, float(keyed[sub_key]))
+
+
+## V4.2 T4. The ONE writer of ns.custom_taxes: a birth's params move onto the
+## register in the shape the revenue lines and the save round-trip read --
+## {name, base_share, erosion, ref_pct}. The Law's carrier holds `key` too
+## (it names what to register); the ENTRY does not store it, because the
+## register is keyed by it and a copy inside would be a second answer. The
+## entry is written once and never re-priced: a second bill proposing the
+## same key was refused at draft (one key, one birth), so reaching here with
+## the key already present means a hand-built law or a race -- loud, and the
+## EXISTING entry wins, because an overwrite would silently re-price a tax
+## already on the books. Typed field by field, the exact shape from_dict()
+## rebuilds, so a live register and a loaded one cannot differ in shape.
+static func _register_new_tax(ns, law) -> void:
+	var key := String(law.new_tax.get("key", ""))
+	if key == "" or ns.custom_taxes.has(key):
+		push_error("legislature: birth of tax key '%s' refused -- unnamed or already registered" % key)
+		return
+	ns.custom_taxes[key] = {
+		"name": String(law.new_tax.get("name", "")),
+		"base_share": float(law.new_tax.get("base_share", 0.0)),
+		"erosion": float(law.new_tax.get("erosion", 0.0)),
+		"ref_pct": float(law.new_tax.get("ref_pct", 0.0)),
+	}
 
 
 ## The ledger entry's realized channels for one law, {} when none -- the

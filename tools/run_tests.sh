@@ -94,6 +94,12 @@ tests=(
   # effects), determinism, round-trip + absence, and the price table's bloc
   # vocabulary pinned against BLOC_KEYS.
   tests/test_statute_compose.gd
+  # V4.2 T4: custom tax keys through the params register -- birth writes rate
+  # AND params (apply registers before the rate moves, or commit would refuse
+  # its own applier), the zero-reference rule, the ONE erosion curve, opinion
+  # at the shared scale, the authored five bit-identical, commit's custom
+  # plumbing, one key one birth, repeal keeps the params, round-trip.
+  tests/test_statute_tax.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

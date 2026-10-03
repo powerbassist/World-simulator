@@ -531,9 +531,10 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## the player was drafting is simply gone, which is not the truth about a save
 ## taken mid-draft); `ns.custom_laws` (passed composed laws as Law-shaped
 ## dictionaries -- absent, the statute book loses acts that are in force);
-## `ns.custom_taxes` (proposed tax keys' base and erosion -- absent, the tax
-## stops yielding at reload while its rate survives in tax_rates_pct, a silent
-## half-tax); `ns.poll_purchases` (paid polls -- absent, a reload un-buys the
+## `ns.custom_taxes` (proposed tax keys' params -- base, erosion and the birth
+## rate that anchors the erosion curve -- absent, the tax stops yielding at
+## reload while its rate survives in tax_rates_pct, a silent half-tax);
+## `ns.poll_purchases` (paid polls -- absent, a reload un-buys the
 ## fixed-forecast read and charges the player twice for one number);
 ## `ns.assembly_bills` (private members' bills and lobbying in flight --
 ## absent, an announced bill the assembly will vote on vanishes without a

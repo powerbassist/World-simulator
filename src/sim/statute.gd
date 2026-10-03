@@ -70,8 +70,16 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 	if typeof(channels) != TYPE_DICTIONARY:
 		return _refuse("The bill's channels must be named as an object.")
 	var repeals := String(spec.get("repeals", ""))
-	if channels.is_empty() and repeals == "":
-		return _refuse("A bill names at least one channel, or a law to repeal.")
+	# A BIRTH is a lever too: a bill that only proposes a new tax names
+	# something, so it passes the emptiness gate on its new_tax alone (T4).
+	# Guarded before the typed bind -- a non-dict payload must refuse, not
+	# crash the assignment.
+	var new_tax_raw: Variant = spec.get("new_tax", {})
+	if typeof(new_tax_raw) != TYPE_DICTIONARY:
+		return _refuse("A new tax names its params as an object.")
+	var new_tax: Dictionary = new_tax_raw
+	if channels.is_empty() and repeals == "" and new_tax.is_empty():
+		return _refuse("A bill names at least one channel, a law to repeal, or a tax to birth.")
 
 	var refusal := _validate_channels(channels)
 	if refusal != "":
@@ -80,18 +88,26 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 	if repeals != "" and not Legislature.repeal_target_legal(ns, loader, repeals):
 		return _refuse("That law cannot be repealed -- the book records no repealable contribution from it, or it sets something no subtraction can remove.")
 
-	var new_tax: Dictionary = spec.get("new_tax", {})
 	if not new_tax.is_empty():
-		# The collision refusal lands now; T4 wires the real tax params. A
-		# VALID new_tax is refused too rather than accepted-and-dropped: the
-		# applier reads the authored five keys only, so a bill that carried an
-		# unwired key would pass and quietly do nothing on it -- the
-		# half-applied state this project refuses throughout.
-		if typeof(new_tax) != TYPE_DICTIONARY or String(new_tax.get("key", "")) == "":
+		# V4.2 T4. The birth gate. The collision refusal is T2's and stands;
+		# the T2 interim refusal of VALID specs is gone -- the params register
+		# is wired (Budget.revenue_lines/_erosion/commit take it, opinion
+		# prices the key, apply() registers the params at passage), so an
+		# accepted spec is a tax, not a silent drop.
+		if String(new_tax.get("key", "")) == "":
 			return _refuse("A new tax names a key.")
-		if C.TAX_KEYS.has(String(new_tax["key"])):
+		var tax_key := String(new_tax["key"])
+		if C.TAX_KEYS.has(tax_key):
 			return _refuse("That tax key already exists in the tax code.")
-		return _refuse("New tax keys are not offered yet.")
+		# One key, one birth: the params register is the authorising record,
+		# and a second bill proposing the same key would re-price a base and
+		# erosion the first passage already put on the books -- two answers to
+		# one question.
+		if ns.custom_taxes.has(tax_key):
+			return _refuse("'%s' is already a tax key -- one key, one birth." % tax_key)
+		var tax_refusal := _validate_new_tax(new_tax)
+		if tax_refusal != "":
+			return _refuse(tax_refusal)
 
 	var size := _size_of(channels)
 	if size > SK.DRAFT_SIZE_MAX:
@@ -206,6 +222,27 @@ static func _numeric_nonzero(value) -> bool:
 	return float(value) != 0.0
 
 
+## The params of a proposed tax key, bounded where the authored tables bound
+## theirs -- SK.NEW_TAX_* carries the numbers and their whys. A birth that
+## passed this gate has a curve the shared _erosion() can run: a positive base
+## to price, a live coefficient, and a birth rate that doubles as the erosion
+## reference, so the curve always has something to divide by.
+static func _validate_new_tax(new_tax: Dictionary) -> String:
+	if not _numeric_nonzero(new_tax.get("base_share", null)):
+		return "A new tax names a base share of GDP."
+	if not _numeric_nonzero(new_tax.get("erosion", null)):
+		return "A new tax names an erosion for its base."
+	if not _numeric_nonzero(new_tax.get("rate", null)):
+		return "A new tax is born at a rate -- the rate is its erosion reference, so a zero rate has no curve."
+	if float(new_tax["base_share"]) > SK.NEW_TAX_BASE_SHARE_MAX:
+		return "That base exceeds anything the tax code prices (a net-wealth stock, 4.00 of GDP, is the ceiling)."
+	if float(new_tax["erosion"]) > SK.NEW_TAX_EROSION_MAX:
+		return "That erosion would clamp the curve flat above the birth rate."
+	if float(new_tax["rate"]) > SK.NEW_TAX_RATE_MAX:
+		return "A rate above %d points is not a rate." % int(SK.NEW_TAX_RATE_MAX)
+	return ""
+
+
 ## The budget arithmetic: |value| x CHANNEL_COST, summed over everything the
 ## spec names. bloc_offset is absent by construction -- the player never
 ## writes political prices directly.
@@ -311,15 +348,34 @@ static func _tick_drafts(ns) -> void:
 
 ## The draft becomes a law. effects = channels + derived price -- the player
 ## wrote the channels, the machine wrote the price, and the merged dictionary
-## is what the ONE applier reads at passage. The register holds the save form
-## (to_save_dict), never a live Law: it round-trips through JSON and is
-## rebuilt on read.
+## is what the ONE applier reads at passage. A BIRTH's rate rides the ordinary
+## tax_rates_pct channel so the one applier routes it: apply_effects() ADDS
+## each value to the current rate, and at birth the rate is 0.0 (one key, one
+## birth guarantees no earlier writer), so the add lands the bill's rate
+## exactly. The params travel on the Law itself in the register's own shape;
+## Legislature.apply() registers them BEFORE apply_effects() runs, so
+## commit() sees a keyed tax and not a pending rate with nothing behind it.
+## The register holds the save form (to_save_dict), never a live Law: it
+## round-trips through JSON and is rebuilt on read.
 static func _compose(ns, draft_id: String) -> void:
 	var entry: Dictionary = ns.draft_bills.get(draft_id, {})
 	if entry.is_empty():
 		return
 	var channels: Dictionary = entry.get("channels", {})
 	var effects: Dictionary = Dictionary(channels).duplicate(true)
+	var tax_entry := {}
+	var new_tax: Dictionary = entry.get("new_tax", {})
+	if not new_tax.is_empty():
+		var rates: Dictionary = effects.get("tax_rates_pct", {})
+		rates[String(new_tax["key"])] = float(new_tax.get("rate", 0.0))
+		effects["tax_rates_pct"] = rates
+		tax_entry = {
+			"key": String(new_tax["key"]),
+			"name": String(entry.get("name", "")),
+			"base_share": float(new_tax.get("base_share", 0.0)),
+			"erosion": float(new_tax.get("erosion", 0.0)),
+			"ref_pct": float(new_tax.get("rate", 0.0)),
+		}
 	var price: Dictionary = entry.get("price", {})
 	if not price.is_empty():
 		effects["bloc_offset"] = Dictionary(price).duplicate(true)
@@ -329,32 +385,36 @@ static func _compose(ns, draft_id: String) -> void:
 	var law = Law.composed_from_dict({
 		"id": draft_id,
 		"name": String(entry.get("name", "")),
-		"theme": _theme_of(channels),
+		"theme": _theme_of(effects),
 		"summary": "",
 		"position": entry.get("position", {}),
 		"majority": "simple",
 		"cooldown_months": SK.DRAFT_COOLDOWN_MONTHS,
 		"once": false,
 		"effects": effects,
+		"new_tax": tax_entry,
 		"repeals": String(entry.get("repeals", "")),
 		"origin": "player",
 	})
 	ns.custom_laws[law.id] = law.to_save_dict()
 
 
-## The display theme of a composed bill, derived from its channels -- a
-## runtime-built law has no authored theme, and the panel reads one. The
-## mapping is the vocabulary THEME_KEYS already fixes: tax levers are tax,
-## stances are social, sector burdens are business, a pure repeal amends the
-## statute book itself (institutional), and the spending/scalar levers --
-## the budget-and-labour story -- take labour.
-static func _theme_of(channels: Dictionary) -> String:
-	if channels.has("tax_rates_pct") or channels.has("other_revenue_pct_gdp"):
+## The display theme of a composed bill, derived from its effect channels --
+## a runtime-built law has no authored theme, and the panel reads one. Called
+## with the MERGED effects (a birth's rate is already in tax_rates_pct, so a
+## new-tax bill reads tax without its own branch), which for a channels-only
+## bill is the channels dictionary unchanged -- bloc_offset is present but
+## named by no check below. The mapping is the vocabulary THEME_KEYS already
+## fixes: tax levers are tax, stances are social, sector burdens are business,
+## a pure repeal amends the statute book itself (institutional), and the
+## spending/scalar levers -- the budget-and-labour story -- take labour.
+static func _theme_of(effects: Dictionary) -> String:
+	if effects.has("tax_rates_pct") or effects.has("other_revenue_pct_gdp"):
 		return "tax"
-	if channels.has(SOCIETY_CHANNEL):
+	if effects.has(SOCIETY_CHANNEL):
 		return "social"
-	if channels.has(COMPANY_CHANNEL):
+	if effects.has(COMPANY_CHANNEL):
 		return "business"
-	if channels.is_empty():
+	if effects.is_empty():
 		return "institutional"
 	return "labour"

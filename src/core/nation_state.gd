@@ -112,12 +112,13 @@ var start_spending_pct_gdp := {}
 ## tax_constants.PROGRESSIVITY_MIN/MAX, initialised for all ten from
 ## tax_constants.PROGRESSIVITY_BASE.
 ##
-## `spending_pct_gdp` AND `tax_rates_pct`'s SHAPE AND NOT A SIXTH TAX KEY, which is
-## what docs/tiers/v1.md section 6 asks for by name: brackets WITHIN income rather
-## than as further keys, so the distributional lever exists without a fourth revenue
-## channel. It is not a rate, it has no base share and it collects nothing; what it
-## does is move the income tax's erosion and the inequality index, which is
-## src/sim/tax.gd's whole surface.
+## V1.6d refused a sixth tax key here -- brackets WITHIN income, not further
+## keys -- and that refusal was right for what V1.6d was asked to build. V4.2
+## overturned it for a different door: the COMPOSITION machine may propose a
+## new key with its own base, erosion and rate (a carbon tax, a windfall
+## levy), the tax-model wealth-tax precedent being that a new key brings its
+## own base. `tax_progressivity` keeps its own meaning untouched: it is still
+## the bracket lever WITHIN income, not a key.
 ##
 ## BOTH FIELDS EARN THE SAVE BUMP AND FOR THE SAME REASON, unlike most pairs on this
 ## file's list: an absent `tax_progressivity` reads 0.0, which is not a neutral default
@@ -715,6 +716,26 @@ var draft_bills := {}
 ## book are gone from it, and the accumulators they move would read as
 ## unauthored drift. Absence reads empty, no error.
 var custom_laws := {}
+
+## V4.2 T4. The params of the tax keys the composition machine has BORN:
+## key -> {"name", "base_share", "erosion", "ref_pct"}. The rate lives in
+## `tax_rates_pct` like any tax's; this register is what makes the key YIELD
+## -- `base_share` prices the line, `erosion` is the key's own coefficient on
+## the shared curve, and `ref_pct` is the rate the key was BORN at, which is
+## its erosion reference: the zero-reference rule's own answer, since the tax
+## did not exist at new-game and `start_tax_rates_pct` has no entry for it,
+## so the one authored "rate this tax is normally levied at" (tax-model §2's
+## definition) is the one its creating bill set.
+##
+## EARNS ITS PLACE ON THE 38 BUMP game_state.gd's comment already argues:
+## absent, the rate survives in tax_rates_pct while the yield stops -- a
+## silent half-tax. Absence READS empty with no error, the law_ledger
+## contract. ONE WRITER: Legislature.apply()'s registration step, which runs
+## BEFORE the passage's effects so commit() sees a keyed tax and not a
+## pending rate with nothing behind it. Repeal of the creating bill removes
+## the RATE and deliberately leaves the entry: the tax exists at rate 0, the
+## way an authored tax nobody charges does.
+var custom_taxes := {}
 
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
@@ -1801,9 +1822,13 @@ func duplicate_state():
 	# V4.2 T2. Deep, for the ledger's reason: a projection ticking a shared
 	# in-tray would count the player's drafts down twice. The Law-shaped
 	# dictionaries in custom_laws are plain data, so duplicate(true) is the
-	# whole of the copy.
+	# whole of the copy. V4.2 T4 adds custom_taxes to the same rule -- a
+	# projection committing a rate against a SHARED params register would
+	# re-price the real books (V2.5's dropped region register, in the other
+	# direction).
 	s.draft_bills = draft_bills.duplicate(true)
 	s.custom_laws = custom_laws.duplicate(true)
+	s.custom_taxes = custom_taxes.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -2052,6 +2077,7 @@ func to_dict() -> Dictionary:
 		"law_ledger": law_ledger,
 		"draft_bills": draft_bills,
 		"custom_laws": custom_laws,
+		"custom_taxes": custom_taxes,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2553,6 +2579,20 @@ static func from_dict(d: Dictionary):
 	var raw_custom: Dictionary = d.get("custom_laws", {})
 	for law_id in raw_custom:
 		s.custom_laws[String(law_id)] = Dictionary(raw_custom[law_id]).duplicate(true)
+	# V4.2 T4. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- the four params are three floats and a name, and a payload key
+	# that is not one of them has no business in a register the revenue lines
+	# iterate.
+	s.custom_taxes = {}
+	var raw_taxes: Dictionary = d.get("custom_taxes", {})
+	for tax_key in raw_taxes:
+		var params: Dictionary = raw_taxes[tax_key]
+		s.custom_taxes[String(tax_key)] = {
+			"name": String(params.get("name", "")),
+			"base_share": float(params.get("base_share", 0.0)),
+			"erosion": float(params.get("erosion", 0.0)),
+			"ref_pct": float(params.get("ref_pct", 0.0)),
+		}
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

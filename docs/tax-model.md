@@ -131,7 +131,11 @@ offset, no stored effective index and no save entry** — `Defence.allies()`'s s
 **Three instruments and no more, and the absences are the design.** §6 owns brackets,
 capital gains and wealth. The **corporate rate** is not on that list, and neither is a
 state holding or a sector burden — [[companies-model|V1.4c]] refused an ownership channel
-into the distribution by name.
+into the distribution by name. V4.2's composition-machine tax keys (§13) do not join
+this list either: a player-proposed key prices revenue and opinion but carries **no
+`GINI_RATE_BETA` entry** — the inequality table is authored constants' privilege, the
+same rule its opinion scales follow — so the instruments that move the Gini stay
+exactly three.
 
 > **The tripwire did not fire, and that is a finding rather than a pass.** V1.5c's
 > assertion mutates the corporate rate, every `state_share` and every
@@ -418,9 +422,12 @@ row above: the grain a player moves it in is a bracket notch, which is hundredth
 
 ## 12. What is deliberately not built
 
-- **No sixth tax and no tariff key.** [[v1]] §6 fixes the count at five and
+- **No sixth AUTHORED tax and no tariff key.** [[v1]] §6's count of five is the count
+  of keys with an authored base in `economy_constants.TAX_BASE_SHARE`, and
   [[coercion-model|V1.3c]]'s tariffs stay a revenue line of their own — no slider, no base
-  share, no erosion curve, and a per-partner rate.
+  share, no erosion curve, and a per-partner rate. What V4.2 overturned is the closed
+  COUNT, not this list: the composition machine can BIRTH a key with params of its own
+  (§13), and not one row of the authored tables moved to do it.
 - **No law channel for brackets.** A law can already move `tax_rates_pct`;
   `tax_progressivity` is a budget lever only. Adding it means a new effect key and a
   fourth writer of the schedule, which is a session rather than a line.
@@ -431,6 +438,68 @@ row above: the grain a player moves it in is a bracket notch, which is hundredth
 - **No corporate-rate channel into the distribution.** §6's instrument list is brackets,
   capital gains and wealth, and `tests/test_unrest.gd` has asserted that blindness since
   V1.5c — an assertion this session **keeps**.
+
+## 13. The sixth key, overturned at the rule (V4.2)
+
+V1.6d refused a sixth tax key — [[v1]] §6's "brackets WITHIN income, not further keys"
+— and `nation_state.gd`'s `tax_progressivity` block recorded the refusal. Both halves of
+that record were right for what V1.6d was asked to build, and the statute book's
+composition machine ([[legislature-model]], V4.2) overturned neither of them; it opened
+a **different door**. What V1.6d refused was a sixth *authored* key — a fixed entry in
+the constants tables every nation shares. What V4.2 built is a *player-proposed* key
+with params of its own, born by a bill the composition machine priced and the assembly
+passed: the wealth-tax precedent of §1 inverted — a new key brings its own base, and
+here the bill authors it.
+
+### The params register, and the birth route
+
+`ns.custom_taxes` maps key → `{name, base_share, erosion, ref_pct}`. The RATE lives in
+`tax_rates_pct` like any tax's; the register is what makes the key **yield**. One
+writer: `Legislature.apply()` registers the params **before** the passage's effects
+run, because the rate itself moves through the one applier's ordinary
+`tax_rates_pct` channel into `Budget.commit()` — and commit refuses a pending rate
+whose key has nothing behind it (the silent half-tax refused at the source, not at
+reload). The composed law carries the params on a `new_tax` field of its own so the
+registration survives a save round trip.
+
+`ref_pct` is the rate the key was **born at**, and it is the key's erosion reference.
+That is §2's zero-reference finding working as designed: the tax did not exist at
+new-game, so `start_tax_rates_pct` has no entry for it, `ref` reads 0.0, and the one
+authored "rate this tax is normally levied at" a player-proposed tax has is the one its
+own bill set. At birth the curve reads exactly 1.0; raising the rate above the birth
+rate prices the base's response through the **shared** `_erosion()` — the key brings a
+coefficient, never a second curve, and the same `EROSION_MIN/MAX` clamps bind.
+
+### The bounds, and what a custom key never reads
+
+Birth gates at `statute.gd`'s draft validation, content refusals and not clamps: a
+base share up to wealth's 4.00 (the largest base the model prices), an erosion
+coefficient at or below 1.0 (above it the curve clamps flat above the reference and
+the clamp would be setting the number), a birth rate in (0, 100]. Collision with the
+authored five was refused at T2 and stands; a second bill proposing an existing custom
+key is refused — **one key, one birth**.
+
+A custom key NEVER reads a per-key override: not `TAX_SCALE_PP_BY_KEY` in opinion
+(the shared 16.0 scale prices it), not a `MULT_TAX` row in commit's demand impulse
+(the shared `CUSTOM_TAX_MULT_DEMAND`, the smallest footprint the model has ever
+charged a tax), not a `GINI_RATE_BETA` entry (§4). The authored fits were per key
+against bases the model authored; a key the player proposed inherits none of them.
+Two recorded consequences, both bounds rather than defects: no bloc's salience table
+carries a row for a key that did not exist when it was written, so the key's
+satisfaction reaches approval through the economy the tax moves (the demand impulse,
+then jobs and growth) and not through a weight of its own; and the composed bill's
+drafting size and derived price come from its CHANNELS alone — the machine prices
+what its table names, and a birth's rate rides in effects without a price row.
+
+### The lifecycle
+
+Repeal of the creating bill subtracts the rate through the ledger and
+`Budget.commit()` — the T1 gap where commit dropped any pending key outside the
+authored five is closed — and leaves the params entry in place: the tax exists at
+rate 0, the way an authored tax nobody charges does. One rate-0 custom tax yields
+exactly 0.0 by construction. `tests/test_statute_tax.gd` pins the whole of this;
+`SAVE_VERSION` stayed 38 because the register's absence was argued when the version
+moved.
 
 ---
 

@@ -22,6 +22,38 @@ const DRAFT_MONTHS_BASE := 2
 const DRAFT_MONTHS_PER_SIZE := 1.0
 const DRAFT_COOLDOWN_MONTHS := 24
 
+## V4.2 T4. What a proposed tax key may carry. These are BIRTH gates at
+## draft() -- content refusals, not clamps: a spec outside them is refused
+## whole, never trimmed to fit, because a clamp would silently re-price the
+## bill the player was shown.
+##
+## The ceiling on `base_share` is wealth's 4.00, the largest base
+## economy_constants.TAX_BASE_SHARE prices -- a net-wealth stock at four times
+## annual output. A proposed base above it is a quantity the revenue model has
+## no shape for, not a bigger tax.
+const NEW_TAX_BASE_SHARE_MAX := 4.0
+## The ceiling on the key's own erosion coefficient. Above 1.0, any rate above
+## the birth rate drives the shared curve's raw value negative and the answer
+## is EROSION_MIN all the way up -- the clamp, not the model, would be setting
+## the number above the reference. The authored five span 0.25 (vat) to 0.80
+## (wealth); 1.0 is the curve-stays-live bound above them.
+const NEW_TAX_EROSION_MAX := 1.0
+## A tax is born at a rate, and the birth rate doubles as the key's erosion
+## reference (the zero-reference rule's own answer: there is no authored
+## "normally levied at" for a key the player invented, so the rate its own
+## bill set is the reference) -- the curve divides by it, so a zero-rate birth
+## has no curve at all. 100 is a percent's ceiling; the authored sliders top
+## at 70, wealth at 3.0 for its stock-scale base.
+const NEW_TAX_RATE_MAX := 100.0
+## The demand-impulse multiplier a custom key reads in Budget.commit()'s
+## level_effect loop, where the authored five read their MULT_TAX rows. The
+## lowest of the five (wealth's 0.25): per-key demand multipliers are authored
+## constants' privilege exactly as the opinion scales are, and the shared
+## default gives a player-proposed key the SMALLEST demand footprint the model
+## has ever charged a tax, so it can never out-lever the authored set by
+## default.
+const CUSTOM_TAX_MULT_DEMAND := 0.25
+
 ## What one unit of movement on each channel spends from the budget. Tax and
 ## spending in points, the accumulators in their authored units, scaled so a
 ## typical authored single-channel law costs ~1.0.
