@@ -475,7 +475,15 @@ coefficient, never a second curve, and the same `EROSION_MIN/MAX` clamps bind.
 Birth gates at `statute.gd`'s draft validation, content refusals and not clamps: a
 base share up to wealth's 4.00 (the largest base the model prices), an erosion
 coefficient at or below 1.0 (above it the curve clamps flat above the reference and
-the clamp would be setting the number), a birth rate in (0, 100]. Collision with the
+the clamp would be setting the number), a birth rate in (0, 100]. The base and rate
+caps bound their fields independently and do not bound the PRODUCT the revenue
+formula reads — base 4.00 × rate 100 is a 400 %-of-GDP key, a yield nothing else in
+the birth gate brakes — so the product is refused in its own right at
+`NEW_TAX_YIELD_CEILING` 12.0, anchored at wealth's own
+maximum yield (4.00 base × 3.0 rate), the most the revenue model has ever been asked
+to price. And the birth names its key non-blank: the register carries the name the
+panels argue about, and an empty one is refused in the validator's own words — *a
+tax needs a name to be argued about*. Collision with the
 authored five was refused at T2 and stands; a second bill proposing an existing custom
 key is refused — **one key, one birth**.
 

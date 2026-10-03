@@ -1250,9 +1250,17 @@ gate. The pin lives in `tests/test_companies_tiers.gd` beside the round-trip.
 
 ## 37. The declared stopgaps and the open calls
 
-- **The executive kind carries no meter and no wants** — a firm's chief is a
-  face until [[v4.2]]'s lobbying gives a firm's interest a lever. Sunset
-  pinned in `tests/test_people.gd`.
+- **The executive kind carries no meter and no wants** — and the deferral
+  this bullet declared is RESOLVED: [[v4.2]] built the lever, and the lever
+  is an ACT, not a meter. A chief's interest reaches the statute book
+  through `statute.gd`'s chief-backed assembly bill — the sector's biggest
+  major signs the ask as `backer_chief`, the assembly divides, and the
+  endorsement window is the player's answer — priced at
+  `LOBBY_HAZARD_MONTHLY` 0.02 against `LOBBY_BURDEN_FLOOR` 0.1 (see
+  [[legislature-model]], V4.2 T6). `tests/test_people.gd` still pins the
+  exemption, and it stands accurately: a meter would price a chief's
+  grievance every tick against wants the person does not have, while the
+  act fires only when a sector's burden is worth a bill.
 - **The relocation discount is nearly inert**: the nearest-region target makes
   the distance discount a near-constant ×0.85–0.98; the constants comment's
   Lisbon–Warsaw is unreachable by construction. Recorded, band holds.

@@ -514,8 +514,10 @@ the floor's only route.
   sites and the forecast reading it — and is recorded here as open, not
   taken.** The price table carries the whole anti-all-upside load, which
   P1(i) says it can bear.
-- **P2 — PASS, flat.** Zero violations in 300 breadth-family cells, and zero
-  strict size-drops: the monotonicity holds trivially for the same reason
+- **P2 — PASS, flat.** Zero violations in the probe's 100 position-breadth
+  windows (4 breadth families × 25 positions, two size transitions each),
+  and zero strict size-drops: the monotonicity holds trivially for the same
+  reason
   P1(ii) fails — size never reaches the division either. The pass-rate
   surface over positions is sharply peaked (69 of 100 at France's centre
   left, 0 at every corner), so the assembly pool has real variance and the
@@ -548,6 +550,60 @@ this sweep.** P1(i) clears the floor with the shipped rows, P3 lands on the
 shipped arithmetic at both band edges, and P5's binding cells are a recorded
 bound of the form rather than a tuning failure — the V1.5d rule cuts both
 ways, and a sweep whose bands hold is a sweep that changes nothing.
+
+## The assembly's own life — V4.2 T6
+
+The statute book stops being the player's alone: `statute.gd`'s tick also
+runs the assembly's own life, and `ns.assembly_bills` is its in-tray. Two
+deterministic hazards table bills. The backbench floor is
+`PMB_HAZARD_MONTHLY` 0.08 — just under one draw a year, often enough that a
+player who never drafts still has a book moving under them; the measured
+idle band is 9 bills in 120 months (FRA), and the test pins 1–20. The
+chiefs' lobby is `LOBBY_HAZARD_MONTHLY` 0.02, five times rarer on purpose,
+because a lobbied bill exists to raise the question a plain PMB does not
+("whose bill is this?") and a raised question stays raised only when it is
+rare; it fires only when a sector's `regulation_burden` stands above
+`LOBBY_BURDEN_FLOOR` 0.1 (a tenth of the register's clamp) AND that sector
+has a major whose chief can sign the ask AND the book carries a
+burden-easing law to name. Both draws ride `Cycle.unit` over the absolute
+month — no `rand()`, a replay tables the same bills — and the whole machine
+sits behind `has_budget`, the standing refusal of AI nations legislating.
+
+The endorsement is the player's one verb on a private member's bill, and the
+window is one month (`PMB_MONTHS_TO_VOTE`): the announcement card IS the
+window, and the assembly divides on the next tick with or without the
+president — the assembly proposes and the assembly decides. The stand is
+`PMB_ENDORSE_SUPPORT` 0.10 added to every party's support line through
+`resolve_vote()`'s DEFAULTED `support_bonus` parameter — the sanctioned
+reading, since that signature owns ~25 call sites and a statute-side wrapper
+would have re-mirrored the loop and the majority match verbatim; every
+existing call is source-identical. The bonus re-clamps like every line, so
+it can carry a bill sitting on the `ABSTAIN_BAND` (0.05) fence and cannot
+buy one the house opposes — and a line dragged onto a bill the backbench
+does not back can shed seats through the rebellion split that already
+prices exactly that strain. The endorsement's own political price
+(`PMB_ENDORSE_PRICE`, workers +0.05 / business −0.05) lands ONCE through
+the ONE applier at endorse time — the endorsement is the news, the vote a
+month later is not — and a second stand is refused, because a re-priced
+stand would be two charges for one act.
+
+Two recordings the machine made of its own costs. The **fall-through**: a
+fired lobby whose ask cannot be built never wastes the month — the chief
+still brings a plain backbench bill — so on its fire months a burdened
+nation's effective plain-bill rate is 0.08 + 0.02 = 0.10 rather than 0.08
+alone. The inflation is recorded in `statute_constants.gd` and accepted
+rather than tuned away: fires run ~0.24/yr and only where a sector stands
+burdened (an idle world holds none above the floor), far inside the test's
+band. The **court skip**: an assembly bill HAS divided, and the court's gate
+is for bills taking effect WITHOUT a division — `propose()`'s referendum
+route, 49.3, the upper-house release, the referendum-settle precedent the
+T1 repeal section already relies on. The skip is therefore MARKED, not
+silent: `ns.last_law_result` carries `"assembly_bill": true` and
+`"court_skipped": true`, so the readout names the absence rather than
+leaving a reader to wonder whether review was forgotten.
+`tests/test_statute_assembly.gd` pins the whole machine, the endorsement's
+measured effect included (control 115/307, endorsed 268/309 on the same
+assembly).
 
 ---
 
