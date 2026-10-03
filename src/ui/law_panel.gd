@@ -65,9 +65,13 @@ var _close_button: Button
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
 
-## V4.2 T6 review. An Endorse the sim refused, verbatim from the machine --
-## the companies panel's _last_refusal idiom, because a refusal shown
-## nowhere is a press that did nothing (the silent-failure class).
+## V4.2 T6 review, round 2. An Endorse the sim refused, verbatim from the
+## machine -- the companies panel's _last_refusal idiom exactly: SET on a
+## refusal and CLEARED on a success inside the handler, NEVER in _refresh()
+## (the same refresh that must display a refusal is the one that would erase
+## it), and displayed above the section's empty early-return -- the one
+## reachable refusal IS the empty-in-tray frame, a stale press at a bill the
+## assembly divided between the click and the refresh.
 var _endorse_refusal := ""
 
 
@@ -167,7 +171,8 @@ func _refresh() -> void:
 	# answerable verb is the president's stand. The companies panel's
 	# autonomy sections are the house idiom for verbs on machine-generated
 	# state; everything here is off the in-tray register, no hand-written list.
-	_endorse_refusal = ""
+	# The refusal is NOT cleared here: refresh displays it, the handler owns
+	# its lifetime (see _endorse_refusal).
 	_build_assembly_section(ns)
 
 	var party_list: Array = _loader.parties.get(ns.id, [])
@@ -608,10 +613,15 @@ func _build_held_bill(ns, law_id: String) -> Control:
 ## than leaving a live button whose only possible future is a refusal (the
 ## companies panel's spent-verb shape).
 func _build_assembly_section(ns) -> void:
-	if ns.assembly_bills.is_empty():
-		return
+	# Above the empty early-return on purpose: the one reachable refusal is a
+	# stale press at a bill the assembly divided between the click and the
+	# refresh -- precisely the frame that arrives here with nothing left to
+	# list. A refusal the empty-in-tray frame swallowed would be a press that
+	# did nothing and said so nowhere.
 	if _endorse_refusal != "":
 		PanelKit.line(_list, _endorse_refusal)
+	if ns.assembly_bills.is_empty():
+		return
 	PanelKit.heading(_list, "ASSEMBLY BILLS")
 	for bill_id in ns.assembly_bills:
 		var entry: Dictionary = ns.assembly_bills[bill_id]

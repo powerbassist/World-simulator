@@ -131,14 +131,15 @@ const PMB_ENDORSE_PRICE := {"workers": 0.05, "business": -0.05}
 ## THE FALL-THROUGH'S RECORDED COST: a fired lobby draw never wastes the
 ## month -- the chief still brings a bill (a plain backbench one, when no
 ## burden-easing law exists to name) -- so on its fire months a burdened
-## nation's EFFECTIVE plain-bill rate is PMB_HAZARD + LOBBY_HAZARD (0.10),
-## not PMB_HAZARD alone; the lobby draw inflates the plain-PMB hazard by its
-## own 0.02 for exactly the nations paying a burden. Accepted, not tuned
-## away: the fall-through is mandated (a spent draw tabling nothing would
-## read as the backbench falling silent in the month a chief came to it),
-## and the inflated total of 0.10/month stays under the PMB band the test
-## pins -- 1-20 bills per 120 idle months against a draw ceiling of 12 per
-## decade.
+## nation's EFFECTIVE plain-bill rate is PMB_HAZARD + LOBBY_HAZARD (0.10)
+## rather than PMB_HAZARD alone. Accepted, not tuned away: the fall-through
+## is mandated (a spent draw tabling nothing would read as the backbench
+## falling silent in the month a chief came to it), and the added VOLUME is
+## small in the band's own units -- fires are ~0.24/yr at the 0.02 hazard
+## and only where a sector stands burdened (an idle world holds none above
+## the floor), so the fall-through adds ~0.24 bills/yr on top of the
+## backbench's ~0.96/yr: together far under the 1-20-per-120-months band
+## the test pins, whose measured idle run is 9 bills.
 const LOBBY_HAZARD_MONTHLY := 0.02
 
 ## The burden above which a sector's majors have something worth a bill: 0.1

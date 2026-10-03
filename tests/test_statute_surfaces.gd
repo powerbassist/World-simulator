@@ -347,7 +347,19 @@ func _run() -> void:
 		_fail("an endorsed bill still offers Endorse -- one stand per bill")
 	if not _live_text_has(law_panel, "Endorsed"):
 		_fail("the endorsed bill shows no endorsed line")
+	# THE STALE PRESS: the bill resolved between the click and the refresh --
+	# the one reachable refusal, endorse() refusing a bill no longer in the
+	# in-tray. The handler is driven directly (the pin is the DISPLAY, not
+	# the press) and the refusal must survive INTO the refresh that shows it:
+	# round 2's dead-display pair was the refresh erasing what it should
+	# print, and the section's empty early-return swallowing it after that.
 	ns.assembly_bills.erase("pmb_surfaces")
+	law_panel._on_endorse("pmb_surfaces")
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if not _live_text_has(law_panel, "There is no such bill before the assembly."):
+		_fail("a refused endorse printed no refusal line -- the display is dead as wired")
+	law_panel._endorse_refusal = ""
 
 
 ## The forecast walk, on a synthetic bill positioned so one party's support
