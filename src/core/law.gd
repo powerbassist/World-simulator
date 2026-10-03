@@ -144,6 +144,15 @@ var systems: Array[String] = []
 ## ns.permits_system_change -- see docs/transition-model.md.
 var changes_system: bool = false
 
+## V4.2. The law id this bill REMOVES on passage -- a repeal is a law like any
+## other: proposed, voted, failable, and its own passage gets its own ledger
+## entry (repealing a repeal re-adds, mechanically consistent). Authored
+## content never sets it; the composition machine does, so the field is ""
+## on every data/laws/*.json entry and the loader need not know it exists.
+## apply() subtracts the target's REALIZED ledger through apply_effects() --
+## the one applier, negated.
+var repeals: String = ""
+
 ## V1.1e. HOW FAR THIS LAW REACHES INTO THE MACHINERY OF THE STATE, in [0, 1]: the
 ## largest fraction of any substantive effect clamp it uses. Computed once at load,
 ## because it is a property of the law and of the model's own bounds and neither

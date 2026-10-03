@@ -84,6 +84,10 @@ tests=(
   # Registered at authoring time per the pass-5 fleet's find: the silent
   # class is why this file exists.
   tests/test_industry_surfaces.gd
+  # V4.2: the per-law effect ledger -- realized deltas (the clamp speaks for
+  # itself), per-act accumulation, repeal subtracting through the ONE applier,
+  # the refusals (constitutional, unrecorded), event silence, round-trip.
+  tests/test_statute_ledger.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

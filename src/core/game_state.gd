@@ -522,7 +522,26 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## than ahead of it: commodities.gd has been writing this register since V4.6's
 ## Task 3, so version 36 is the one version under which a save could hold a
 ## commodity register and not carry it, and this gate separates exactly that.
-const SAVE_VERSION := 37
+##
+## V4.2 bumps to 38 on SIX registers of the statute book, argued per register:
+## `ns.law_ledger` (the realized-delta record repeal subtracts -- absent, the
+## pre-38 truth that no passed law is repealable, and re-deriving a past
+## passage's realized deltas from current state is the second answer this
+## project refuses); `ns.draft_bills` (composition in flight -- absent, a bill
+## the player was drafting is simply gone, which is not the truth about a save
+## taken mid-draft); `ns.custom_laws` (passed composed laws as Law-shaped
+## dictionaries -- absent, the statute book loses acts that are in force);
+## `ns.custom_taxes` (proposed tax keys' base and erosion -- absent, the tax
+## stops yielding at reload while its rate survives in tax_rates_pct, a silent
+## half-tax); `ns.poll_purchases` (paid polls -- absent, a reload un-buys the
+## fixed-forecast read and charges the player twice for one number);
+## `ns.assembly_bills` (private members' bills and lobbying in flight --
+## absent, an announced bill the assembly will vote on vanishes without a
+## division, the held_bills free-escape case). One bump, six registers: the
+## block's plan (2026-10-03) argues each and the round-trip tests pin them
+## apart. Registers land with their writers task by task; the version moves
+## once, here, so every task's saves are mutually readable.
+const SAVE_VERSION := 38
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

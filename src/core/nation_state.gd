@@ -668,6 +668,24 @@ var passed_law_ids := {}
 ## down every tick. Set on a failed vote; absent once it reaches zero.
 var law_cooldown_months := {}
 
+## V4.2. The per-law effect ledger: law id -> {"channels": {…}, "months": [int]}.
+## `channels` records what each passage of that law ACTUALLY moved, taken as a
+## before/after diff around apply_effects() -- realized deltas, not authored
+## ones, because every accumulator clamps and a repeal must subtract what the
+## law moved or the register drifts on every repeal against a bound that was
+## binding at passage. A non-once law passed twice merges into the one entry:
+## the statute book is per-act, not per-passage.
+##
+## EARNS THE BUMP (V4.2's six-register gate), and it is `region_gdp_eur_bn`'s
+## case: absent it reads empty, which is the TRUTH about every pre-38 save --
+## laws passed before the ledger have no record, cannot be repealed, and no
+## re-derivation is attempted (reconstructing a past law's realized deltas
+## from current state is a second answer to a question only the passage could
+## answer). Declared first-order: if later writers displaced a law's
+## contribution, repeal subtracts what the law moved at its own passage, not a
+## re-derived counterfactual -- recorded in docs/legislature-model.md.
+var law_ledger := {}
+
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
@@ -1749,6 +1767,7 @@ func duplicate_state():
 	s.bloc_offset = bloc_offset.duplicate(true)
 	s.passed_law_ids = passed_law_ids.duplicate(true)
 	s.law_cooldown_months = law_cooldown_months.duplicate(true)
+	s.law_ledger = law_ledger.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -1994,6 +2013,7 @@ func to_dict() -> Dictionary:
 		"bloc_offset": bloc_offset,
 		"passed_law_ids": passed_law_ids,
 		"law_cooldown_months": law_cooldown_months,
+		"law_ledger": law_ledger,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2464,6 +2484,19 @@ static func from_dict(d: Dictionary):
 	s.deployment_opinion_load = float(d.get("deployment_opinion_load", 0.0))
 	s.passed_law_ids = d.get("passed_law_ids", {})
 	s.law_cooldown_months = d.get("law_cooldown_months", {})
+	# V4.2. Rebuild-style, per the from_dict aliasing defect V4.6's own
+	# serialisation task found and fixed: the ledger arrives as plain JSON and
+	# is copied wholesale -- its channel deltas are floats and its months are
+	# ints, and sharing the payload's dictionaries would alias the save
+	# against the live register.
+	s.law_ledger = {}
+	var raw_ledger: Dictionary = d.get("law_ledger", {})
+	for law_id in raw_ledger:
+		var entry: Dictionary = raw_ledger[law_id]
+		s.law_ledger[String(law_id)] = {
+			"channels": Dictionary(entry.get("channels", {})).duplicate(true),
+			"months": Array(entry.get("months", [])).duplicate(true),
+		}
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

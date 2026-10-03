@@ -61,6 +61,7 @@ static func init_nation(ns) -> void:
 	ns.regulation_burden = {}
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
+	ns.law_ledger = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
@@ -540,16 +541,208 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 ## the same mechanism, so double-counting is structurally impossible. Every
 ## other channel is one clamped accumulator, read by an existing formula.
 ##
+## V4.2. Two additions, both of them the statute book and neither a new
+## applier:
+##
+##   - A REPEAL subtracts first. A law with `repeals` set removes the target's
+##     REALIZED ledger through apply_effects() -- the negated channels, budget
+##     levers routed through Budget.commit() so the erosion curve and the
+##     demand impulse fire exactly as any budget change would -- then erases
+##     the target's entry and writes the target's own cooldown (a repealed act
+##     sits out its cooldown before it can be re-proposed). It happens at the
+##     TOP of apply(), not in propose()'s passed branch, because apply() is
+##     every path on which a bill takes effect -- the referendum settle and
+##     the upper-house release included -- and a repeal that only worked on
+##     one of them would be three machines.
+##
+##   - The LEDGER is recorded after. The before/after diff around
+##     apply_effects() is what makes the record REALIZED rather than authored:
+##     every accumulator clamps, and a repeal that subtracted authored deltas
+##     against a bound that was binding at passage would drift the register on
+##     every repeal. Only apply() records -- an event choice calls
+##     apply_effects() directly and records nothing, because an event is not a
+##     statute and has no repeal verb.
+##
 ## `loader` is required, not defaulted -- a system transition needs
 ## loader.political_systems (to re-read lose_condition off the new template)
 ## and loader.parties (to derive an elected head of state's holder). A
 ## defaulted param would let a transition silently half-apply, the failure
 ## mode this project refuses throughout. See docs/transition-model.md.
 static func apply(state, ns, law, loader) -> void:
+	if law.repeals != "":
+		_subtract_ledger(state, ns, loader, law.repeals)
+	var before := _effect_snapshot(ns, law.effects)
 	apply_effects(state, ns, law.effects, loader)
-
+	_record_ledger(state, ns, law, before, _effect_snapshot(ns, law.effects))
 	if law.once:
 		ns.passed_law_ids[law.id] = true
+
+
+## The channels this law's passage actually moved, keyed as the ledger stores
+## them. Only fields the law's own effects NAME are read -- a snapshot that
+## walked every register would record another writer's movement as this law's.
+static func _effect_snapshot(ns, effects: Dictionary) -> Dictionary:
+	var snap := {}
+	for key in effects.get("tax_rates_pct", {}):
+		snap["tax|%s" % key] = float(ns.tax_rates_pct.get(key, 0.0))
+	for key in effects.get("spending_pct_gdp", {}):
+		snap["spend|%s" % key] = float(ns.spending_pct_gdp.get(key, 0.0))
+	if effects.has("structural_unemployment_pct"):
+		snap["struct"] = ns.law_structural_offset_pct
+	if effects.has("potential_growth_pct"):
+		snap["pot"] = ns.law_potential_target_pct
+	if effects.has("other_revenue_pct_gdp"):
+		snap["orev"] = ns.law_other_revenue_pct_gdp
+	for bloc in effects.get("bloc_offset", {}):
+		snap["bloc|%s" % bloc] = float(ns.bloc_offset.get(bloc, 0.0))
+	if effects.has("company"):
+		var sector: String = String(effects["company"].get("sector", ""))
+		snap["burden|%s" % sector] = float(ns.regulation_burden.get(sector, 0.0))
+	for term in effects.get("society", {}):
+		snap["soc|%s" % term] = _society_field(ns, term)
+	return snap
+
+
+static func _society_field(ns, term: String) -> float:
+	match term:
+		"corruption": return ns.corruption
+		"migration": return ns.migration_stance
+		"settlement": return ns.settlement_stance
+		"press_freedom": return ns.press_freedom
+		"judicial_independence": return ns.judicial_independence
+	return 0.0
+
+
+static func _record_ledger(state, ns, law, before: Dictionary, after: Dictionary) -> void:
+	var channels := {}
+	for snap_key: String in after:
+		if not before.has(snap_key):
+			continue
+		var delta: float = float(after[snap_key]) - float(before[snap_key])
+		if is_zero_approx(delta):
+			# A zero realized delta records NOTHING -- the law moved nothing on
+			# that channel (a clamp was binding at both ends), and an entry
+			# that claimed it did would subtract nothing and lie.
+			continue
+		var parts := snap_key.split("|")
+		match parts[0]:
+			"tax": _ledger_add(channels, "tax_rates_pct", parts[1], delta)
+			"spend": _ledger_add(channels, "spending_pct_gdp", parts[1], delta)
+			"struct": _ledger_add(channels, "structural_unemployment_pct", "", delta)
+			"pot": _ledger_add(channels, "potential_growth_pct", "", delta)
+			"orev": _ledger_add(channels, "other_revenue_pct_gdp", "", delta)
+			"bloc": _ledger_add(channels, "bloc_offset", parts[1], delta)
+			"burden": _ledger_add(channels, "company", parts[1], delta)
+			"soc": _ledger_add(channels, "society", parts[1], delta)
+	if channels.is_empty():
+		return
+	var entry: Dictionary = ns.law_ledger.get(law.id, {"channels": {}, "months": []})
+	_ledger_merge(entry["channels"], channels)
+	entry["months"].append(int(state.year) * 12 + int(state.month))
+	ns.law_ledger[law.id] = entry
+
+
+## One channel of one law's ledger, summed across passages: {"tax_rates_pct":
+## {"income": 10.0}, "bloc_offset": {"business": -0.3}, "company": {"sector":
+## delta}, "society": {"term": delta}} -- dict channels key by their sub-key,
+## scalar channels (the three law_* accumulators) key by "".
+static func _ledger_add(channels: Dictionary, channel: String, sub_key: String, delta: float) -> void:
+	if not channels.has(channel):
+		channels[channel] = {}
+	var slot: Dictionary = channels[channel]
+	slot[sub_key] = float(slot.get(sub_key, 0.0)) + delta
+
+
+## Merge one passage's realized channels into the law's accumulated entry --
+## a non-once law passed twice is ONE act repealed once, so the second
+## passage ADDS to the same sub-keys rather than opening a second entry.
+static func _ledger_merge(into: Dictionary, from: Dictionary) -> void:
+	for channel in from:
+		if channel == "structural_unemployment_pct" or channel == "potential_growth_pct" \
+				or channel == "other_revenue_pct_gdp":
+			var slot: Dictionary = from[channel]
+			_ledger_add(into, channel, "", float(slot.get("", 0.0)))
+		else:
+			var keyed: Dictionary = from[channel]
+			for sub_key in keyed:
+				_ledger_add(into, channel, sub_key, float(keyed[sub_key]))
+
+
+## The ledger entry's realized channels for one law, {} when none -- the
+## statute panel's read and repeal validation's first gate.
+static func ledger_of(ns, law_id: String) -> Dictionary:
+	var entry: Dictionary = ns.law_ledger.get(law_id, {})
+	return entry.get("channels", {})
+
+
+## Whether `law_id` may be targeted by a repeal bill: the book must record it,
+## and the target must not be constitutional -- an institution is SET, not
+## accumulated (apply_effects() writes absolutes on that channel), so a
+## system transition is undone by AMENDMENT, not by repeal; that is what
+## docs/amendment-model.md is for. A target the loader does not know is a
+## custom law (T2's composed register); composed laws are never
+## constitutional, so the lookup's null reads legal.
+static func repeal_target_legal(ns, loader, law_id: String) -> bool:
+	if not ns.law_ledger.has(law_id):
+		return false
+	var target = _law_by_id(loader, law_id)
+	if target == null:
+		return true
+	return not target.constitutional
+
+
+## A repeal's subtraction. The negated channels go back through
+## apply_effects() -- the one applier, so budget levers route through
+## Budget.commit() and every clamp re-fires symmetrically -- then the entry is
+## erased and the target's own cooldown written.
+##
+## THE FIRST-ORDER BOUND, stated where it can bite: the subtraction clamps
+## like any write, so a register already pushed past a bound by OTHER writers
+## absorbs part of the removal (a law that contributed -0.10 against a
+## register driven to +1.0 by everything else removes nothing). That is the
+## declared bound of realized-delta bookkeeping -- docs/legislature-model.md
+## records it -- and not a patchable defect: the true counterfactual register
+## is not recoverable once other writers have moved in between, and inventing
+## one would be the second answer the project refuses.
+static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
+	var channels: Dictionary = ledger_of(ns, law_id)
+	if channels.is_empty():
+		return
+	var negated := {}
+	if channels.has("tax_rates_pct"):
+		var rates := {}
+		for key in channels["tax_rates_pct"]:
+			rates[key] = -float(channels["tax_rates_pct"][key])
+		negated["tax_rates_pct"] = rates
+	if channels.has("spending_pct_gdp"):
+		var spending := {}
+		for key in channels["spending_pct_gdp"]:
+			spending[key] = -float(channels["spending_pct_gdp"][key])
+		negated["spending_pct_gdp"] = spending
+	for scalar in ["structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp"]:
+		if channels.has(scalar):
+			negated[scalar] = -float(channels[scalar].get("", 0.0))
+	if channels.has("bloc_offset"):
+		var blocs := {}
+		for bloc in channels["bloc_offset"]:
+			blocs[bloc] = -float(channels["bloc_offset"][bloc])
+		negated["bloc_offset"] = blocs
+	if channels.has("company"):
+		# The ledger keys the burden channel by sector; apply_effects() reads
+		# {"sector": ..., "burden": ...}. A law may only ever name one sector
+		# (law.gd's schema), so the entry has one key.
+		var sector: String = String(channels["company"].keys()[0])
+		negated["company"] = {"sector": sector, "burden": -float(channels["company"][sector])}
+	if channels.has("society"):
+		var terms := {}
+		for term in channels["society"]:
+			terms[term] = -float(channels["society"][term])
+		negated["society"] = terms
+	apply_effects(state, ns, negated, loader)
+	ns.law_ledger.erase(law_id)
+	var target = _law_by_id(loader, law_id)
+	if target != null and target.cooldown_months > 0:
+		ns.law_cooldown_months[law_id] = target.cooldown_months
 
 
 ## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.
