@@ -1299,12 +1299,27 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# everything else in this handler: state settles top to bottom, elections
 	# read it last.
 	Legislature.tick_month(_state, _loader)
+	# The ultra pass-4 finding: a held bill releasing writes ns.last_law_result
+	# above, and the assembly's own tick below overwrites the same register
+	# when a private member's bill divides the SAME month -- the release card
+	# was then permanently unreachable, its only announcement surface read
+	# after both writers. Capture the release before it can be swallowed and
+	# hand it to the announcer beside the division; empty unless a release
+	# actually fired (assembly_bill + released are the machine's own two keys
+	# for it).
+	var assembly_release: Dictionary = {}
+	var release_ns = _state.player()
+	if release_ns != null:
+		var release_result: Dictionary = release_ns.last_law_result
+		if bool(release_result.get("assembly_bill", false)) \
+				and bool(release_result.get("released", false)):
+			assembly_release = release_result.duplicate(true)
 	# V4.2 T6. The assembly's own life -- private members' bills and the
 	# chiefs' lobbying -- ticks AFTER the legislature, so a bill failing its
 	# division writes its authored cooldown AFTER this month's countdown pass
 	# has run and keeps its full length (the V2.8 ordering, one machine down).
 	Statute.tick_month(_state, _loader)
-	_announce_assembly_events()
+	_announce_assembly_events(assembly_release)
 	Dissolution.tick_month(_state)
 
 	# Relations drift and diplomatic cooldowns, alongside the other cooldown
@@ -1581,8 +1596,9 @@ func _announce_industry_events() -> void:
 var _announced_assembly_bills := {}
 var _assembly_cards := {}         # bill_id -> its LIVE tabling card
 var _assembly_result_month := -1  # absolute month whose division card was pushed
+var _assembly_release_month := -1  # absolute month whose release card was pushed
 
-func _announce_assembly_events() -> void:
+func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
@@ -1608,16 +1624,31 @@ func _announce_assembly_events() -> void:
 		var card_id: String = _hud.message_stack.push(
 			"A chief before the assembly" if backed else "Private member's bill", body)
 		_assembly_cards[bill_id] = card_id
+	# The release card, handed in from _on_month_elapsed. The capture there is
+	# what lets a COLLISION month -- a PMB dividing the same tick an
+	# assembly-origin hold releases -- push both cards: the register read
+	# below holds only the last writer. The release keeps its OWN memory slot
+	# because both results of a collision carry the same
+	# assembly_division_month stamp; one shared var would swallow the second
+	# card of the pair exactly as the shared register did.
+	if not assembly_release.is_empty() \
+			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
+		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
+		_hud.message_stack.push("The assembly divides", _assembly_result_body(assembly_release))
 	# The division card. The assembly_bill marker on ns.last_law_result says
 	# the last division was the assembly's; the memory keys the DIVISION'S OWN
 	# MONTH -- the assembly_division_month stamp the machine writes into the
 	# result -- and not the current month, which is what made a quiet month
 	# whose tick merely found the old result still on the register re-announce
-	# it every month until a new law event overwrote it. The in-tray keeps no
-	# history, so the stamp is the one per-division fact left once the entry
-	# is erased.
+	# it every month until a new law event overwrote it. The released flag is
+	# excluded since the pass-4 capture: a release that stayed on the register
+	# (a month where the assembly's tick divided nothing) arrives through the
+	# parameter above, and firing here too would push the same card twice.
+	# The in-tray keeps no history, so the stamp is the one per-division fact
+	# left once the entry is erased.
 	var result: Dictionary = ns.last_law_result
 	if bool(result.get("assembly_bill", false)) \
+			and not bool(result.get("released", false)) \
 			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
 		_assembly_result_month = int(result.get("assembly_division_month", -1))
 		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
@@ -1636,6 +1667,14 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 
 func _assembly_result_body(result: Dictionary) -> String:
 	var law_name := _law_title(String(result.get("law_id", "")))
+	# A COURT STRIKE outranks every other wording, and it is checked FIRST
+	# (law_panel's own order) because it fires on BOTH paths that reach this
+	# builder: a release the court stopped still carries released/assembly_bill,
+	# and a struck division still carries its tally. "Comes into force" and
+	# "defeated, N ayes" against a bill the court stopped are both the card
+	# contradicting the state it announces; the court sentence prints alone.
+	if bool(result.get("struck_down", false)):
+		return "The court has struck %s down." % law_name
 	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
 	# one word for different things is the readout bug this project keeps
 	# finding), and a blocked one was beaten somewhere the lower-house tally
@@ -2180,13 +2219,14 @@ func _on_load_requested(slot: String) -> void:
 	_bid_cards.clear()
 	_failure_cards.clear()
 	_industry_card_firms.clear()
-	# The assembly's three beside them, the same rule: bill ids collide only
+	# The assembly's four beside them, the same rule: bill ids collide only
 	# within a run, a loaded last_law_result can carry assembly_bill true, and
-	# a stale division-month memory would either swallow the loaded bill's
-	# card or re-fire the discarded game's.
+	# a stale division- or release-month memory would either swallow the loaded
+	# bill's card or re-fire the discarded game's.
 	_announced_assembly_bills.clear()
 	_assembly_cards.clear()
 	_assembly_result_month = -1
+	_assembly_release_month = -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])

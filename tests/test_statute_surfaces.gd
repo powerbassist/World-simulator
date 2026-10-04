@@ -35,7 +35,7 @@ extends SceneTree
 ##   (j) the division card's memory keys the DIVISION'S OWN MONTH -- the
 ##       machine's assembly_division_month stamp -- so a quiet month cannot
 ##       re-announce a division (driven on the real announcer, twice);
-##   (k) the load-path reset clears the three assembly memories beside the
+##   (k) the load-path reset clears the four assembly memories beside the
 ##       industry maps (driven through the REAL _on_load_requested);
 ##   (l) the reversal preview's dual company shape: effect_lines() reads both
 ##       the {sector, burden} effects shape and the ledger's {sector: delta},
@@ -423,10 +423,12 @@ func _run() -> void:
 		_main._announced_assembly_bills["ghost_bill"] = true
 		_main._assembly_cards["ghost_bill"] = "card_ghost"
 		_main._assembly_result_month = 42
+		_main._assembly_release_month = 43
 		_main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
 		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty() \
-				or int(_main._assembly_result_month) != -1:
+				or int(_main._assembly_result_month) != -1 \
+				or int(_main._assembly_release_month) != -1:
 			_fail("the load path left assembly announce memories behind -- they belong to the discarded game")
 
 	# --- (l) The reversal preview's dual company shape ----------------------

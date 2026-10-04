@@ -874,8 +874,9 @@ var deployment_opinion_load: float = 0.0
 ## V4.7a's own change is recoverable: the register went sparse, and an absent
 ## body entry reads its authored share (share_of_company's fallback), which is
 ## the truth about a firm no verb ever touched; majors missing from a pre-7a
-## save are repaired by _seed_missing_majors at the first tick. Therefore
-## SAVE_VERSION remains 37. (The owner/failed keys named here in V4.7a's
+## save are repaired by _seed_missing_majors at the first tick. SAVE_VERSION
+## remained 37 through V4.7; the statute book's six registers are what 38
+## carries. (The owner/failed keys named here in V4.7a's
 ## first draft are V4.7b's SHIPPED fields -- the autonomy machine and its
 ## verbs write them; absent, every one reads its default -- the per-field
 ## argument is industry.gd's header, and tests/test_save_load.gd's

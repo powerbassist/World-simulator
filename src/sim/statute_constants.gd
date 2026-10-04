@@ -254,10 +254,15 @@ const CHANNEL_PRICE := {
 	# carbon_levy verbatim: +0.5 -> business -0.1, urban +0.1, rural -0.15.
 	"other_revenue_pct_gdp": {"business": -0.2, "urban": 0.2, "rural": -0.3},
 	# The per-unit mean of the three sector-regulation laws
-	# (emissions_standards, workplace_safety_act, banking_conduct_rules):
-	# business -0.5..-0.74, workers +0.26..+0.35, urban +0.13..+0.43,
-	# pensioners +0.46 (banking). rural/students excluded -- their authored
-	# signs disagree across the three.
+	# (emissions_standards, workplace_safety_act, banking_conduct_rules),
+	# each authored bloc price divided by its own law's burden:
+	# business -0.60 / -0.60 / -0.74 -- the three-law mean is -0.65, shipped
+	# -0.60 rounded toward zero; workers +0.35 / +0.26, the mean of the TWO
+	# POSITIVE inputs, emissions_standards' -0.33 excluded for disagreeing in
+	# sign alongside rural/students, whose authored signs disagree across the
+	# three; urban +0.13..+0.43, mean 0.25. pensioners is banking_conduct_rules'
+	# 0.46 MODERATED to 0.15 -- deliberate, not an oversight: a pensioner bloc
+	# barely exposed to banking conduct should not carry a banker-sized price.
 	"company": {"business": -0.6, "workers": 0.3, "urban": 0.25, "pensioners": 0.15},
 	"society": {
 		# anti_corruption_agency (-0.5 -> urban +0.15, business -0.05) and

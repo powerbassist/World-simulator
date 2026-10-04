@@ -217,6 +217,23 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			"abstain_seats": 0, "seats_total": ns.assembly_seats,
 			"party_votes": {}, "party_support": {}, "party_rebels": {},
 		}
+		# THE MOOT RELEASE, the ultra pass-4 finding: a repeal can release after
+		# its TARGET is already gone. Two repeal drafts of one target both compose
+		# (repeal_target_legal gates on the live ledger, and the repeal side has
+		# no one-in-flight gate), and available()'s consumed-repeal filter runs
+		# only on the propose path -- a bill parked in the hold is not re-scanned
+		# -- so the second repeal can carry and subtract while the first sits out
+		# its hold. Releasing then must apply NOTHING and charge NOTHING: the
+		# subtraction would find an empty book, and recording this as force with
+		# the override price would be a release lying about a bill that changed
+		# nothing. The record keeps passed/released -- the hold did run out -- and
+		# gains the flag that says why nothing followed. Deliberately no assembly
+		# marker either: nothing came into force, so there is no coming-into-force
+		# event for a card to announce.
+		if law.repeals != "" and ledger_of(ns, law.repeals).is_empty():
+			released["target_already_gone"] = true
+			ns.last_law_result = released
+			continue
 		# NEGATED: penalise_blocs() ADDS its argument, and UPPER_OVERRIDE_OFFSET is
 		# authored as a positive magnitude -- the same convention every sibling
 		# constant breaks by carrying its own sign (FALLEN -0.12, FORCE -0.08,
@@ -374,11 +391,13 @@ static func available(ns, all_laws: Array) -> Array:
 		# V4.2 ultra pass 2. A repeal whose target has no ledger entry is not
 		# proposable: repeal_target_legal() gates it at composition, so a target
 		# gone from the book means the repeal was ALREADY carried -- re-offering
-		# it would pass a carried no-op and log "a race or a bug" from the
-		# ordinary propose path, which is the comment's premise kept honest.
-		# Kills both the after-cooldown no-op and the two-repeals-of-one-target
-		# case; the window self-heals the other way too, since a re-passed
-		# target re-opens its own repealer here.
+		# it would pass a carried no-op (quiet since the pass-4 finding made the
+		# empty-ledger subtraction a no-op, but a button that repeals nothing is
+		# still the half-removed act class). Kills both the after-cooldown no-op
+		# and the propose-path half of the two-repeals-of-one-target case -- the
+		# held window's half is the moot release's, in _tick_held_bills; the
+		# window self-heals the other way too, since a re-passed target re-opens
+		# its own repealer here.
 		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
 			continue
 		if law.constitutional and not law.systems.has(ns.system_id):
@@ -799,16 +818,21 @@ static func _ledger_merge(into: Dictionary, from: Dictionary) -> void:
 ## {name, base_share, erosion, ref_pct}. The Law's carrier holds `key` too
 ## (it names what to register); the ENTRY does not store it, because the
 ## register is keyed by it and a copy inside would be a second answer. The
-## entry is written once and never re-priced: a second bill proposing the
-## same key was refused at draft (one key, one birth), so reaching here with
-## the key already present means a hand-built law or a race -- loud, and the
-## EXISTING entry wins, because an overwrite would silently re-price a tax
-## already on the books. Typed field by field, the exact shape from_dict()
-## rebuilds, so a live register and a loaded one cannot differ in shape.
+## guard's remaining job is the UNNAMED key, refused loudly -- a birth with no
+## key cannot be registered. An ALREADY-REGISTERED key is a QUIET no-op (the
+## ultra pass-4 finding): composed birth laws are once:false by design
+## (statute.gd's _compose), so a second passage of the same act is ordinary
+## play -- the existing params entry wins (an overwrite would silently
+## re-price a tax already on the books) and the rate re-adds through
+## apply_effects() like any repeatable tax law. Typed field by field, the
+## exact shape from_dict() rebuilds, so a live register and a loaded one
+## cannot differ in shape.
 static func _register_new_tax(ns, law) -> void:
 	var key := String(law.new_tax.get("key", ""))
-	if key == "" or ns.custom_taxes.has(key):
-		push_error("legislature: birth of tax key '%s' refused -- unnamed or already registered" % key)
+	if key == "":
+		push_error("legislature: birth of tax key '%s' refused -- unnamed" % key)
+		return
+	if ns.custom_taxes.has(key):
 		return
 	ns.custom_taxes[key] = {
 		"name": String(law.new_tax.get("name", "")),
@@ -863,10 +887,14 @@ static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	var channels: Dictionary = ledger_of(ns, law_id)
 	if channels.is_empty():
-		# Loud, not silent: the caller checked repeal_target_legal() first and it
-		# gates on the same register, so reaching here means a race or a bug -- a
-		# repeal bill that passes and does nothing is the half-removed act class.
-		push_error("legislature: repeal targeted '%s' which has no recorded contribution" % law_id)
+		# QUIET, not loud. Two overlapping repeal windows are ordinary: the
+		# propose path filters a consumed repealer (available()'s ledger gate)
+		# but the held window cannot re-run that filter, so a release can arrive
+		# with its target already subtracted -- the moot release in
+		# _tick_held_bills marks that case and stops before here, and any other
+		# route reaching an empty book is the same shape. A second subtraction
+		# finding nothing to subtract is a no-op, not a defect: the first repeal
+		# already took the book back to zero.
 		return
 	var negated := {}
 	if channels.has("tax_rates_pct"):

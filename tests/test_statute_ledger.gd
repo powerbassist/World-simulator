@@ -12,6 +12,9 @@ extends SceneTree
 ##   - REPEAL SUBTRACTS THROUGH THE ONE APPLIER: the negated channels go back
 ##     through apply_effects(), so budget levers route through Budget.commit()
 ##     and the erosion/demand machinery fires exactly as any budget change;
+##   - THE MOOT RELEASE (ultra pass 4): a repeal releasing after its target is
+##     already repealed applies nothing, records target_already_gone, charges
+##     no override -- and an empty-ledger subtraction is a quiet no-op;
 ##   - REFUSALS: constitutional laws and laws with no ledger entry are not
 ##     repeal targets -- an institution is SET, not accumulated, and you can
 ##     only repeal what the book recorded;
@@ -27,6 +30,7 @@ const NationState = preload("res://src/core/nation_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Law = preload("res://src/core/law.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const Statute = preload("res://src/sim/statute.gd")
 
 const PLAYER := "FRA"
 const SURTAX := "high_earner_surtax"
@@ -47,6 +51,7 @@ func _init() -> void:
 		_test_repeal_refusals()
 		_test_once_law_returns_on_repeal()
 		_test_consumed_repeal_not_reoffered()
+		_test_overlapping_repeals_release_moot()
 		_test_roundtrip_and_absence()
 		_test_duplicate_copies()
 		_test_event_silence()
@@ -261,6 +266,84 @@ func _test_consumed_repeal_not_reoffered() -> void:
 			break
 	if offered:
 		_fail("a consumed repealer was re-offered -- its next passage is a carried no-op")
+
+
+## THE MOOT RELEASE, the ultra pass-4 finding: two repeal drafts of one target
+## BOTH compose (repeal_target_legal gates on the live ledger, and the repeal
+## side has no one-in-flight gate), the first parks as an assembly-origin hold,
+## the second proposes, carries and SUBTRACTS -- and the held first then
+## releases with nothing left to subtract. The release must apply nothing,
+## mark its record with why, and charge no override price; the empty-ledger
+## subtraction behind it is a quiet no-op, not the "race or a bug" error the
+## propose-path filter's comment used to promise could not happen.
+func _test_overlapping_repeals_release_moot() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var income_before: float = float(ns.tax_rates_pct.get("income", 0.0))
+	Legislature.apply(gs, ns, _law_by_id(SURTAX), _loader)
+	if not ns.law_ledger.has(SURTAX):
+		_fail("setup: the target needs a ledger entry")
+		return
+	var spec := {
+		"name": "Repeal of the High-Earner Surtax",
+		"position": {"economic": -0.3, "social": 0.0},
+		"channels": {},
+		"repeals": SURTAX,
+	}
+	var first: Dictionary = Statute.draft(gs, ns, _loader, spec.duplicate(true))
+	var second: Dictionary = Statute.draft(gs, ns, _loader, spec.duplicate(true))
+	if not bool(first.get("ok", false)) or not bool(second.get("ok", false)):
+		_fail("two repeal drafts of one target must both compose -- the finding's premise: '%s' / '%s'"
+			% [first.get("refusal", ""), second.get("refusal", "")])
+		return
+	# _tick_drafts, not tick_month: the assembly's own hazard would table bills
+	# beside the countdown, and this leg needs a held-bill population of one.
+	for i in range(int(ns.draft_bills[String(first["draft_id"])]["months_left"])):
+		Statute._tick_drafts(ns)
+	var laws: Array = Statute.custom_laws(ns)
+	if laws.size() != 2 or String(laws[0].repeals) != SURTAX or String(laws[1].repeals) != SURTAX:
+		_fail("the two repeal drafts did not compose as a pair (%d laws)" % laws.size())
+		return
+	# Hand-park the FIRST as an assembly-origin hold -- the exact shape
+	# statute.gd's suspensive refusal writes -- then propose the second, which
+	# carries and subtracts under it.
+	ns.held_bills[String(laws[0].id)] = {"months": 1, "origin": "assembly"}
+	var result: Dictionary = Legislature.propose(gs, _loader, laws[1])
+	if not bool(result.get("passed", false)):
+		_fail("test setup: the second repeal must carry for this leg to mean anything: %s" % [result])
+		return
+	if ns.law_ledger.has(SURTAX):
+		_fail("setup: the second repeal must have emptied the target's ledger")
+		return
+	# Tick the hold out with the registers snapshotted: a no-op release must
+	# move nothing, record honestly, and charge nothing.
+	var bloc_before: Dictionary = ns.bloc_offset.duplicate(true)
+	var ledger_keys: Array = ns.law_ledger.keys()
+	Legislature.tick_month(gs, _loader)
+	if ns.held_bills.has(String(laws[0].id)):
+		_fail("the hold did not release after its month")
+		return
+	var released: Dictionary = ns.last_law_result
+	if String(released.get("law_id", "")) != String(laws[0].id):
+		_fail("the release tick recorded the wrong law: '%s'" % released.get("law_id", ""))
+		return
+	if not bool(released.get("released", false)) or not bool(released.get("passed", false)):
+		_fail("the release lost its passed/released record: %s" % [released])
+		return
+	# THE PIN: the record says WHY nothing followed the hold's expiry.
+	if not bool(released.get("target_already_gone", false)):
+		_fail("a release whose target was already repealed carried no target_already_gone mark: %s" % [released])
+	if released.has("override_offset"):
+		_fail("a moot release charged the override price nobody incurred")
+	for bloc in bloc_before:
+		if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)), float(bloc_before[bloc])):
+			_fail("the moot release moved %s -- a no-op must write no price" % bloc)
+	if ns.law_ledger.keys() != ledger_keys:
+		_fail("the moot release touched the ledger: %s vs %s" % [ns.law_ledger.keys(), ledger_keys])
+	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), income_before):
+		_fail("the target must stay repealed -- income at %s, expected %s"
+			% [ns.tax_rates_pct.get("income"), income_before])
 
 
 func _test_roundtrip_and_absence() -> void:

@@ -22,6 +22,9 @@ extends SceneTree
 ##   - THE AUTHORED FIVE ARE BIT-IDENTICAL: their revenue lines do not move
 ##     by one last bit when a custom key exists;
 ##   - ONE KEY, ONE BIRTH: a second bill proposing the same key is refused;
+##   - ONE ACT, MANY PASSAGES (ultra pass 4): the same composed birth law
+##     passing twice is ordinary play -- the apply-time re-registration is a
+##     quiet no-op (existing params entry wins, the rate re-adds);
 ##   - REPEAL REMOVES THE RATE, NOT THE TAX: the params entry survives, the
 ##     way an authored tax nobody charges does;
 ##   - ROUND-TRIP: rate + params survive save/load and duplicate_state();
@@ -62,6 +65,7 @@ func _init() -> void:
 		_test_authored_five_bit_identical()
 		_test_commit_sees_custom_keys()
 		_test_one_key_one_birth()
+		_test_second_passage_is_a_quiet_noop()
 		_test_repeal_keeps_the_params()
 		_test_roundtrip_absence_and_duplicate()
 		_test_init_resets()
@@ -320,7 +324,10 @@ func _test_one_key_one_birth() -> void:
 	# The ultra pass-3 finding: the gate read only the LANDED register, so two
 	# PARKED drafts could carry the key at once -- both accepted, both composing,
 	# and the second passage firing _register_new_tax's "impossible" error while
-	# its rate still landed. A draft still counting down must refuse.
+	# its rate still landed. A draft still counting down must refuse. (The
+	# error half of that hazard went quiet at pass 4 -- a second passage is a
+	# quiet no-op now, see _test_second_passage_is_a_quiet_noop -- but two
+	# parked drafts are still refused: the second would be a phantom bill.)
 	var parked_pair = _fresh()
 	var parked_ns = parked_pair[1]
 	var first: Dictionary = Statute.draft(parked_pair[0], parked_ns, _loader, BIRTH_SPEC.duplicate(true))
@@ -358,6 +365,32 @@ func _test_one_key_one_birth() -> void:
 		_fail("a key a COMPOSED law carries must be refused -- the enacted window")
 	if String(after.get("refusal", "")).find("drafted or enacted") == -1:
 		_fail("the composed-window refusal must name the window: '%s'" % after.get("refusal", ""))
+
+
+## ONE ACT, MANY PASSAGES, the ultra pass-4 finding: composed birth laws are
+## once:false by design (statute.gd's _compose), so a second passage of the
+## SAME act is ordinary play -- the panel lists every open law with a Propose
+## button, and nothing writes a cooldown on a carried birth. The apply-time
+## guard is therefore a QUIET no-op: the existing params entry wins and the
+## rate re-adds through apply_effects like any repeatable tax law. Only an
+## UNNAMED key is refused loudly. (The DRAFT-time gates above stay loud: they
+## are what keeps a NEW bill from re-birthing a live key -- this leg re-passes
+## the same act, which no draft gate can see.)
+func _test_second_passage_is_a_quiet_noop() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var draft_id := _birth_and_pass(gs, ns)
+	if draft_id == "":
+		return
+	var params_before: Dictionary = ns.custom_taxes[KEY]
+	var law = Law.composed_from_dict(ns.custom_laws[draft_id])
+	Legislature.apply(gs, ns, law, _loader)
+	if not is_equal_approx(float(ns.tax_rates_pct.get(KEY, -1.0)), 50.0):
+		_fail("the second passage must re-add the rate (25 -> 50), got %s" % ns.tax_rates_pct.get(KEY))
+	if ns.custom_taxes[KEY] != params_before:
+		_fail("the second passage re-priced the params entry: %s vs %s -- the existing entry wins"
+			% [ns.custom_taxes[KEY], params_before])
 
 
 func _test_repeal_keeps_the_params() -> void:

@@ -28,6 +28,10 @@ extends SceneTree
 ##     like propose()'s own, and the release applies through the court on its
 ##     own. A FAILED division faces neither stage and carries none of the
 ##     pipeline's keys;
+##   - THE STRUCK-DOWN CARD and THE COLLISION (ultra pass 4): a court strike
+##     outranks every other wording on both paths that reach the card body;
+##     a PMB dividing the same month a hold releases pushes BOTH cards, on
+##     the capture main.gd takes between its two ticks;
 ##   - THE LOBBY: a burdened sector with a major draws a chief-backed bill
 ##     naming that sector's burden-easing law, the backer a REAL chief; a
 ##     sector with no deregulation law to name falls through to a plain bill;
@@ -83,6 +87,7 @@ func _init() -> void:
 		_test_lobby()
 		_test_lobby_skips_dead_firms()
 		_test_held_composed_law_applies_at_release()
+		_test_release_and_division_same_month()
 		_test_determinism()
 		_test_roundtrip_absence_and_duplicate()
 	_finish()
@@ -370,6 +375,118 @@ func _test_upper_house_and_court_pipeline() -> void:
 	var release_body: String = main_ui._assembly_result_body(released)
 	if release_body.find("comes into force") == -1 or release_body.find("ayes") != -1:
 		_fail("a release's card does not word the coming-into-force: %s" % release_body)
+	# The ultra pass-4 finding: a COURT STRIKE outranks every other wording,
+	# on BOTH paths that reach this builder -- a release the court stopped
+	# still carries released/assembly_bill, and a struck division still
+	# carries its tally. "Comes into force" and "defeated, N ayes" against a
+	# bill the court stopped are both the card contradicting the state it
+	# announces; the court sentence prints alone.
+	var struck_release: Dictionary = released.duplicate(true)
+	struck_release["struck_down"] = true
+	struck_release["passed"] = false
+	struck_release["yes_seats"] = 300
+	struck_release["no_seats"] = 250
+	var struck_body: String = main_ui._assembly_result_body(struck_release)
+	if struck_body.find("struck") == -1:
+		_fail("a struck-down release's card does not name the court: %s" % struck_body)
+	if struck_body.find("comes into force") != -1 or struck_body.find("ayes") != -1:
+		_fail("a struck-down card words the coming-into-force or the tally: %s" % struck_body)
+	var struck_division: Dictionary = {
+		"assembly_bill": true, "law_id": String(released["law_id"]), "passed": false,
+		"struck_down": true, "majority": "simple",
+		"yes_seats": 300, "no_seats": 250, "abstain_seats": 0, "seats_total": 577,
+		"party_votes": {}, "party_support": {}, "party_rebels": {},
+	}
+	var struck_div_body: String = main_ui._assembly_result_body(struck_division)
+	if struck_div_body.find("struck") == -1 or struck_div_body.find("defeated") != -1:
+		_fail("a struck-down division's card reads its own tally: %s" % struck_div_body)
+	main_ui.free()
+
+
+## THE COLLISION, the ultra pass-4 finding: a PMB dividing the same month an
+## assembly-origin hold releases. Both results carry the assembly marker and
+## the SAME month stamp, and the division -- the later writer -- overwrites
+## ns.last_law_result before the announcer reads it, so the release card was
+## permanently unreachable. main.gd now captures the release between its two
+## ticks and hands it to the announcer beside the division, whose memory holds
+## one slot per card. Ticks run in main's order, the capture mirrors main's,
+## and the announcer runs on a bare main with a recording stack.
+class _StubStack:
+	var pushed: Array = []
+	func push(title: String, body: String, _actions: Array = []) -> String:
+		pushed.append({"title": title, "body": body})
+		return "card_%d" % pushed.size()
+	func set_body(_id: String, _body: String) -> void:
+		pass
+	func dismiss(_id: String) -> void:
+		pass
+
+
+class _StubHUD:
+	var message_stack
+	func _init() -> void:
+		message_stack = _StubStack.new()
+
+
+func _test_release_and_division_same_month() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var refused = _pool_law(ns, false)
+	if refused == null:
+		_fail("the collision leg needs a Senat-refusing pool law")
+		return
+	ns.held_bills[String(refused.id)] = {"months": 1, "origin": "assembly"}
+	ns.assembly_bills["pmb_collision"] = _hand_bill(ENDORSE_LAW)
+	# Main's order: Legislature, capture, Statute, announce.
+	Legislature.tick_month(gs, _loader)
+	var assembly_release: Dictionary = {}
+	var release_result: Dictionary = ns.last_law_result
+	if bool(release_result.get("assembly_bill", false)) \
+			and bool(release_result.get("released", false)):
+		assembly_release = release_result.duplicate(true)
+	if assembly_release.is_empty():
+		_fail("setup: the hold did not release with its assembly keys -- the capture has nothing to hand over: %s" % [release_result])
+		return
+	Statute.tick_month(gs, _loader)
+	var division_result: Dictionary = ns.last_law_result
+	if String(division_result.get("law_id", "")) != ENDORSE_LAW:
+		_fail("setup: the in-tray bill did not divide this month: '%s'" % division_result.get("law_id", ""))
+		return
+	if int(division_result.get("assembly_division_month", -2)) \
+			!= int(assembly_release.get("assembly_division_month", -3)):
+		_fail("setup: the two results must share the month stamp -- that is the collision")
+		return
+	var main_ui = load("res://src/ui/main.gd").new()
+	main_ui._loader = _loader
+	main_ui._state = gs
+	main_ui._hud = _StubHUD.new()
+	main_ui._announce_assembly_events(assembly_release)
+	var pushed: Array = main_ui._hud.message_stack.pushed
+	if pushed.size() != 2:
+		_fail("a collision month pushed %d cards -- the release and the division must BOTH land" % pushed.size())
+	else:
+		# Pin that neither result is lost: each pushed card carries its own
+		# result's body, built the only way a body is built.
+		var release_body: String = main_ui._assembly_result_body(assembly_release)
+		var division_body: String = main_ui._assembly_result_body(division_result)
+		if String(pushed[0]["body"]) != release_body:
+			_fail("the release card's body is not the release's own: %s" % [pushed[0]])
+		if String(pushed[1]["body"]) != division_body:
+			_fail("the division card's body is not the division's own: %s" % [pushed[1]])
+	# A quiet month re-announces neither (the tray is cleared: a generated bill
+	# would legitimately push its own tabling card and spoil the count).
+	ns.assembly_bills.clear()
+	main_ui._announce_assembly_events({})
+	if main_ui._hud.message_stack.pushed.size() != 2:
+		_fail("a quiet month re-announced a collision card")
+	# And the SOURCE: the capture must sit between the two ticks it guards.
+	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	var legislature_idx := text.find("Legislature.tick_month")
+	var capture_idx := text.find("var assembly_release")
+	var statute_idx := text.find("Statute.tick_month")
+	if not (legislature_idx < capture_idx and capture_idx < statute_idx):
+		_fail("main.gd does not capture the release between its two ticks -- a same-month division swallows the release card")
 	main_ui.free()
 
 
