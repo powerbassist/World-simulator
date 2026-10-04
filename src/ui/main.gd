@@ -1636,6 +1636,23 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 
 func _assembly_result_body(result: Dictionary) -> String:
 	var law_name := _law_title(String(result.get("law_id", "")))
+	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
+	# one word for different things is the readout bug this project keeps
+	# finding), and a blocked one was beaten somewhere the lower-house tally
+	# below does not show. Both wordings come off the outcome keys the result
+	# actually carries; only the bare false reads "defeated".
+	if bool(result.get("held_by_upper", false)):
+		return "The assembly carried %s and the %s has suspended it — it comes into force in %d months unless they pass it." % [
+			law_name, String(result.get("upper_chamber", "second chamber")), int(result.get("held_months", 0))]
+	if bool(result.get("blocked_by_upper", false)):
+		return "The assembly carried %s and the %s has blocked it." % [
+			law_name, String(result.get("upper_chamber", "second chamber"))]
+	# The held bill's release: the coming-into-force event, not a division --
+	# the release result carries no seat tally, and printing zeroes beside
+	# "carried" would contradict its own numbers.
+	if bool(result.get("released", false)):
+		return "The %s's hold has run out — %s comes into force." % [
+			String(result.get("upper_chamber", "second chamber")), law_name]
 	return "The assembly has %s %s, %d ayes to %d noes." % [
 		"carried" if bool(result.get("passed", false)) else "defeated",
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]

@@ -165,10 +165,12 @@ var repeals: String = ""
 ## data/laws/ entry is a law, not a composition.
 var composed: bool = false
 
-## V4.2. Who authored this law: "authored" (data/laws/, the default the
-## loader never writes past), "player" (the composition machine), "assembly"
-## and "lobby" (T6's private members' bills and chief-backed bills). A closed
-## vocabulary the panels read; nothing in the sim branches on it.
+## V4.2. Who authored this law: "authored" (data/laws/, the loader's default)
+## or "player" (the composition machine's birth). Assembly bills are authored
+## laws by construction -- the backbench tables the loader's own content --
+## so they keep "authored"; their provenance rides ns.assembly_bills and
+## ns.held_bills instead. No panel reads the field yet; it exists for the
+## statute panel's future provenance reads.
 var origin: String = "authored"
 
 ## V4.2 T4. The params of a tax key this bill BIRTHS -- {key, name,

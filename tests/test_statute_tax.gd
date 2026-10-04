@@ -317,6 +317,48 @@ func _test_one_key_one_birth() -> void:
 	if String(second.get("refusal", "")).find("already") == -1:
 		_fail("the one-birth refusal must name the existing key: '%s'" % second.get("refusal", ""))
 
+	# The ultra pass-3 finding: the gate read only the LANDED register, so two
+	# PARKED drafts could carry the key at once -- both accepted, both composing,
+	# and the second passage firing _register_new_tax's "impossible" error while
+	# its rate still landed. A draft still counting down must refuse.
+	var parked_pair = _fresh()
+	var parked_ns = parked_pair[1]
+	var first: Dictionary = Statute.draft(parked_pair[0], parked_ns, _loader, BIRTH_SPEC.duplicate(true))
+	if not bool(first.get("ok", false)):
+		_fail("the parked-key leg's first draft refused: %s" % first.get("refusal", ""))
+		return
+	var twin: Dictionary = Statute.draft(parked_pair[0], parked_ns, _loader, BIRTH_SPEC.duplicate(true))
+	if bool(twin.get("ok", true)):
+		_fail("a second PARKED draft carrying the key must be refused -- the drafted window")
+	if String(twin.get("refusal", "")).find("drafted or enacted") == -1:
+		_fail("the parked-key refusal must name the window: '%s'" % twin.get("refusal", ""))
+
+	# The composed-but-unproposed window: countdown to completion lands the law
+	# on ns.custom_laws WITHOUT registering the key (that happens at passage),
+	# and that window is unbounded -- a player can sit on a finished bill for a
+	# whole term. A birth key a composed law carries must refuse.
+	var composed_pair = _fresh()
+	var composed_gs = composed_pair[0]
+	var composed_ns = composed_pair[1]
+	var queued: Dictionary = Statute.draft(composed_gs, composed_ns, _loader, BIRTH_SPEC.duplicate(true))
+	if not bool(queued.get("ok", false)):
+		_fail("the composed-window leg's draft refused: %s" % queued.get("refusal", ""))
+		return
+	var draft_id := String(queued["draft_id"])
+	for i in range(int(composed_ns.draft_bills[draft_id]["months_left"])):
+		Statute.tick_month(composed_gs, _loader)
+	if not composed_ns.custom_laws.has(draft_id):
+		_fail("test setup: the draft did not compose -- the leg measures nothing")
+		return
+	if composed_ns.custom_taxes.has(KEY):
+		_fail("test setup: composing registered the key -- the unproposed window no longer exists")
+		return
+	var after: Dictionary = Statute.draft(composed_gs, composed_ns, _loader, BIRTH_SPEC.duplicate(true))
+	if bool(after.get("ok", true)):
+		_fail("a key a COMPOSED law carries must be refused -- the enacted window")
+	if String(after.get("refusal", "")).find("drafted or enacted") == -1:
+		_fail("the composed-window refusal must name the window: '%s'" % after.get("refusal", ""))
+
 
 func _test_repeal_keeps_the_params() -> void:
 	var pair = _fresh()

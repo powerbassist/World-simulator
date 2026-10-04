@@ -1450,7 +1450,7 @@ func _lobby_a_bill() -> void:
 	if sector == "":
 		printerr("--pmb: no sector stands above the lobby floor after the burden")
 		return
-	var firm = Statute._biggest_major(loader, ns.id, sector)
+	var firm = Statute._biggest_major(ns, loader, sector)
 	if firm == null:
 		printerr("--pmb: %s has no %s major with a chief to sign the ask" % [ns.id, sector])
 		return

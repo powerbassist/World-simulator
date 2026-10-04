@@ -124,23 +124,23 @@ const PMB_ENDORSE_PRICE := {"workers": 0.05, "business": -0.05}
 ## years (0.02 x 12 = 0.24 draws) -- five times rarer than the backbench
 ## floor, because a lobbied bill exists to raise the question a plain PMB
 ## does not ("whose bill is this?") and a raised question stays raised only
-## when it is rare. Fires only when a sector's regulation burden stands above
-## LOBBY_BURDEN_FLOOR AND that sector has a major whose chief can sign the
-## ask AND the authored book carries a burden-easing law for the sector --
-## any leg missing and the fired draw falls through to the plain backbench.
+## when it is rare. The hazard DRAW fires only when a sector's regulation
+## burden stands above LOBBY_BURDEN_FLOOR AND that sector has a major whose
+## chief can sign the ask -- a month missing either leg returns BEFORE the
+## draw (statute.gd's _lobby) and belongs to the plain hazard at
+## PMB_HAZARD_MONTHLY alone; no bill is guaranteed there.
 ##
-## THE FALL-THROUGH'S RECORDED COST: a fired lobby draw never wastes the
-## month -- the chief still brings a bill (a plain backbench one, when no
-## burden-easing law exists to name) -- so on its fire months a burdened
-## nation's EFFECTIVE plain-bill rate is PMB_HAZARD + LOBBY_HAZARD (0.10)
-## rather than PMB_HAZARD alone. Accepted, not tuned away: the fall-through
-## is mandated (a spent draw tabling nothing would read as the backbench
-## falling silent in the month a chief came to it), and the added VOLUME is
-## small in the band's own units -- fires are ~0.24/yr at the 0.02 hazard
-## and only where a sector stands burdened (an idle world holds none above
-## the floor), so the fall-through adds ~0.24 bills/yr on top of the
-## backbench's ~0.96/yr: together far under the 1-20-per-120-months band
-## the test pins, whose measured idle run is 9 bills.
+## THE THIRD LEG SITS AFTER THE DRAW: a FIRED draw whose sector's authored
+## book carries no burden-easing law to name still spends the month -- the
+## chief brings a plain backbench bill -- so the 0.10 effective plain-bill
+## rate (PMB_HAZARD + LOBBY_HAZARD) belongs to that leg alone. Accepted, not
+## tuned away: the fall-through is mandated (a spent draw tabling nothing
+## would read as the backbench falling silent in the month a chief came to
+## it), and the added VOLUME is small in the band's own units -- fires are
+## ~0.24/yr at the 0.02 hazard and only where a sector stands burdened (an
+## idle world holds none above the floor), so the fall-through adds ~0.24
+## bills/yr on top of the backbench's ~0.96/yr: together far under the
+## 1-20-per-120-months band the test pins, whose measured idle run is 9 bills.
 const LOBBY_HAZARD_MONTHLY := 0.02
 
 ## The burden above which a sector's majors have something worth a bill: 0.1

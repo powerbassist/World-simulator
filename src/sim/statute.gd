@@ -133,12 +133,18 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 			return _refuse("A tax key is 2 to 24 lowercase letters, digits and underscores -- other characters would corrupt the ledger's records.")
 		if C.TAX_KEYS.has(tax_key):
 			return _refuse("That tax key already exists in the tax code.")
-		# One key, one birth: the params register is the authorising record,
-		# and a second bill proposing the same key would re-price a base and
-		# erosion the first passage already put on the books -- two answers to
-		# one question.
-		if ns.custom_taxes.has(tax_key):
-			return _refuse("'%s' is already a tax key -- one key, one birth." % tax_key)
+		# One key, one birth, across the key's WHOLE life: the params register
+		# is the authorising record, and a second bill proposing the same key
+		# would re-price a base and erosion the first birth already put on the
+		# books -- two answers to one question. The ultra pass-3 finding was
+		# that the gate read only the LANDED register (ns.custom_taxes, written
+		# at passage), so two parked drafts could carry one key, both compose,
+		# and the second passage fire _register_new_tax's "impossible" error
+		# while its rate still landed -- so the parked carriers are gated too:
+		# a draft still counting down and a composed bill not yet proposed,
+		# whose saved birth params carry the key inside new_tax.
+		if ns.custom_taxes.has(tax_key) or _tax_key_carried(ns, tax_key) != "":
+			return _refuse("'%s' is already drafted or enacted -- one key, one birth." % tax_key)
 		var tax_refusal := _validate_new_tax(new_tax)
 		if tax_refusal != "":
 			return _refuse(tax_refusal)
@@ -182,6 +188,23 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 
 static func _refuse(message: String) -> Dictionary:
 	return {"ok": false, "refusal": message, "draft_id": "", "size": 0.0, "months": 0, "price": {}}
+
+
+## The parked half of one-key-one-birth: "" when no draft or composed law on
+## the register carries `key`, else the id that carries it. The caller has
+## already checked ns.custom_taxes (the landed register); this walks the two
+## in-flight carriers -- a draft's own new_tax and a composed law's saved
+## birth params, whose to_save_dict holds the key inside new_tax.
+static func _tax_key_carried(ns, key: String) -> String:
+	for draft_id in ns.draft_bills:
+		var entry: Dictionary = ns.draft_bills[draft_id]
+		if String(entry.get("new_tax", {}).get("key", "")) == key:
+			return String(draft_id)
+	for law_id in ns.custom_laws:
+		var saved: Dictionary = ns.custom_laws[law_id]
+		if String(saved.get("new_tax", {}).get("key", "")) == key:
+			return String(law_id)
+	return ""
 
 
 ## Shape validation, one refusal at a time -- unknown channel, unknown
@@ -819,8 +842,9 @@ static func _biggest_major(ns, loader, sector: String):
 ## law for the sector, from the SAME candidate pool the backbench draws (a
 ## lobby cannot name a bill the assembly could not table), fitted to the same
 ## seats-weighted sponsor draw -- the chief lobbies a member, and the member
-## tables what fits. Authored order breaks ties; shipped content carries at
-## most one deregulation law per sector, so the pick is nearly unique anyway.
+## tables what fits. Shipped content carries several easing laws per sector
+## (four for industry, three for services), so the pick is a real choice;
+## _nearest() breaks ties by authored order, which keeps it deterministic.
 static func _burden_easing_law(ns, loader, sector: String, month: int):
 	var easing: Array = []
 	for law in _candidate_pool(ns, loader):

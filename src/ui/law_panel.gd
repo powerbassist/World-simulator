@@ -262,8 +262,14 @@ func _build_result_summary(result: Dictionary) -> Control:
 			# months" in the held block directly below it, which is two numbers for one fact
 			# on one screen. This box is a record of a division that has already happened and
 			# never counts down; the block below is the live one.
-			held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
-				int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
+			# Same branch as the held list below: an assembly division's hold
+			# releases free, so only a government bill's record promises the
+			# override price.
+			if bool(result.get("assembly_bill", false)):
+				held.text = "It is held for %d months, and then comes into force." % int(result.get("held_months", 0))
+			else:
+				held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
+					int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
 			held.autowrap_mode = TextServer.AUTOWRAP_WORD
 			box.add_child(held)
 
@@ -601,8 +607,17 @@ func _build_held_bill(ns, law_id: String) -> Control:
 
 	# The ultra pass-2 shape: the entry carries {"months", "origin"}.
 	var months: int = int(ns.held_bills.get(law_id, {}).get("months", 0))
-	PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
-		"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
+	# The override clause is the GOVERNMENT's insistence priced -- an assembly
+	# hold releases free (legislature.gd's origin gate charges nothing nobody
+	# incurred), so its sentence promises no cost. The ultra pass-3 finding:
+	# the clause rode unconditioned, promising a price the assembly class
+	# never pays.
+	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
+		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s." % [
+			"one month" if months == 1 else "%d months" % months], PanelKit.Tone.PLAIN)
+	else:
+		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
+			"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
 
 

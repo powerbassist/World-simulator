@@ -284,7 +284,9 @@ func _build_polls() -> void:
 		var btn := Button.new()
 		var cost_pct: float = float(StatuteK.POLL_COSTS[kind])
 		var cost_bn: float = float(_ns.gdp_eur_bn) * cost_pct / 100.0
-		btn.text = "Commission an %s poll — %.2f%% of GDP (€%.1f bn)" % [kind, cost_pct, cost_bn]
+		# The article is the kind's own initial vowel: "an assembly", "a popular".
+		btn.text = "Commission %s %s poll — %.2f%% of GDP (€%.1f bn)" % [
+			"an" if kind.begins_with("a") else "a", kind, cost_pct, cost_bn]
 		if bought.has(kind):
 			# The fixed-forecast rule, made visible: a bought poll is a
 			# published figure, and the second commission is refused by the

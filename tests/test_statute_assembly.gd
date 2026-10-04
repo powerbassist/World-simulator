@@ -339,6 +339,39 @@ func _test_upper_house_and_court_pipeline() -> void:
 			_fail("a released PMB charged %f on %s -- the override price is the government's, not the assembly's" % [
 				charged, bloc])
 
+	# The ultra pass-3 card fix: the release IS the coming-into-force event,
+	# and main.gd's card gate reads the assembly marker and the event's own
+	# month stamp off the result -- without them the bill's enactment pushed
+	# no card anywhere (only the Legislature panel, on open, said so).
+	if not bool(released.get("assembly_bill", false)):
+		_fail("the released PMB carries no assembly marker -- the coming-into-force card cannot fire")
+	if int(released.get("assembly_division_month", -1)) != _month_index(gs):
+		_fail("the released PMB carries no release-month stamp (got %s, state at %d) -- the card memory has nothing to key on"
+			% [released.get("assembly_division_month", -1), _month_index(gs)])
+
+	# The card's WORDS, driven on main.gd's body-builder with the results the
+	# machine writes (a bare main instance: the builder reads only the loader
+	# and its argument, nothing of the scene). A held division says carried
+	# and suspended, never defeated; a blocked one says blocked; a release
+	# words the coming-into-force and carries no tally to contradict.
+	var main_ui = load("res://src/ui/main.gd").new()
+	main_ui._loader = _loader
+	var held_body: String = main_ui._assembly_result_body(hold_result)
+	if held_body.find("defeated") != -1:
+		_fail("a held division's card reads 'defeated': %s" % held_body)
+	if held_body.find("carried") == -1 or held_body.find("suspended") == -1:
+		_fail("a held division's card does not say carried-and-suspended: %s" % held_body)
+	var blocked_result: Dictionary = hold_result.duplicate(true)
+	blocked_result.erase("held_by_upper")
+	blocked_result["blocked_by_upper"] = true
+	var blocked_body: String = main_ui._assembly_result_body(blocked_result)
+	if blocked_body.find("blocked") == -1 or blocked_body.find("defeated") != -1:
+		_fail("a blocked division's card does not say blocked: %s" % blocked_body)
+	var release_body: String = main_ui._assembly_result_body(released)
+	if release_body.find("comes into force") == -1 or release_body.find("ayes") != -1:
+		_fail("a release's card does not word the coming-into-force: %s" % release_body)
+	main_ui.free()
+
 
 ## The first pool-class law the assembly carries and the Senat does (or does
 ## not) also carry -- found in the content rather than named, so a content edit

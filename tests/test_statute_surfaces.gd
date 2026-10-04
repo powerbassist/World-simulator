@@ -232,6 +232,12 @@ func _run() -> void:
 		if popular_btn == null:
 			_fail("the briefing built no popular poll button")
 		else:
+			# The ultra pass-3 finding: the label read "Commission an popular
+			# poll". Pinned on the rendered button because the substring find
+			# above matches inside the wrong label too -- the exact silent
+			# class this file exists for.
+			if not String(popular_btn.text).contains("Commission a popular poll"):
+				_fail("the popular poll button's article is wrong: '%s'" % popular_btn.text)
 			_press(popular_btn)
 		var expected2: float = float(ns.gdp_eur_bn) * float(StatuteK.POLL_COSTS["popular"]) / 100.0
 		if absf(ns.debt_eur_bn - (debt2 + expected2)) > 1e-9:
@@ -487,6 +493,50 @@ func _run() -> void:
 	if not _live_text_has(law_panel, "The Composed Namesake Act — FAILED"):
 		_fail("the result summary printed a raw draft id instead of the composed name")
 	live_ns.custom_laws.erase("draft_424242")
+	live_ns.last_law_result = {}
+
+	# (p) The held-bill blocks promise the override price only where it is
+	# charged -- the ultra pass-3 finding: the clause rode unconditioned on
+	# both the held list and the division record, while an assembly-origin
+	# hold releases free (nobody insisted on a PMB). Both origins rendered,
+	# the cost sentence asserted on the player's side alone.
+	live_ns.held_bills["carbon_levy"] = {"months": 5, "origin": "player"}
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if not _live_text_has(law_panel, "overriding them costs"):
+		_fail("a held government bill's block lost the override clause")
+	live_ns.held_bills["carbon_levy"]["origin"] = "assembly"
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if _live_text_has(law_panel, "overriding them costs"):
+		_fail("a held assembly bill's block still promises the override price")
+	if not _live_text_has(law_panel, "comes into force"):
+		_fail("a held assembly bill's block lost the coming-into-force sentence")
+	live_ns.held_bills.erase("carbon_levy")
+	# The division record's own held line, same branch keyed on the result's
+	# assembly marker (the record carries no origin -- the marker is what the
+	# machine stamps assembly divisions with).
+	live_ns.last_law_result = {
+		"law_id": "carbon_levy", "passed": false, "majority": "simple",
+		"yes_seats": 318, "no_seats": 259, "abstain_seats": 0, "seats_total": 577,
+		"party_votes": {}, "party_support": {}, "party_rebels": {},
+		"upper_chamber": live_ns.upper_chamber_name,
+		"upper_power": "suspensive", "upper_passed": false,
+		"upper_yes_seats": 100, "upper_no_seats": 200, "upper_abstain_seats": 48,
+		"upper_seats_total": 348,
+		"held_by_upper": true, "held_months": 9,
+	}
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if not _live_text_has(law_panel, "overriding them costs"):
+		_fail("a held government division's record lost the override clause")
+	live_ns.last_law_result["assembly_bill"] = true
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if _live_text_has(law_panel, "overriding them costs"):
+		_fail("a held assembly division's record still promises the override price")
+	if not _live_text_has(law_panel, "comes into force"):
+		_fail("a held assembly division's record lost the coming-into-force sentence")
 	live_ns.last_law_result = {}
 
 	# (o) The briefing does not hold the dead state across a load -- the ultra

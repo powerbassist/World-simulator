@@ -229,6 +229,17 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		if origin != "assembly":
 			Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
 			released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
+		else:
+			# The ultra pass-3 finding: the release was silent everywhere but
+			# the Legislature panel's own record -- the card gate in main.gd
+			# reads the assembly marker and the DIVISION'S OWN MONTH off
+			# ns.last_law_result, and the release carried neither. The stamp
+			# is the RELEASE month (the coming-into-force event's own), the
+			# same key the division writes, so the same per-month memory that
+			# keeps a quiet month from re-announcing a division keeps it from
+			# re-announcing a release.
+			released["assembly_bill"] = true
+			released["assembly_division_month"] = int(state.year) * 12 + int(state.month)
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
 
