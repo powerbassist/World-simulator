@@ -1027,9 +1027,10 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 	# the split is about the APPROVAL PATH and not about the mechanism.
 	#
 	# Accumulates and is SIGNED, so a deregulation law is the negative direction on
-	# the same register rather than a repeal verb this project does not have. One
-	# clamp, on the accumulated value -- the two channels companies.gd reads it
-	# through carry their own.
+	# the same register -- still true now the repeal verb exists (V4.2): repeal
+	# removes whole acts or nothing, it never moves a register partway, so easing a
+	# sector stays the signed channel's job. One clamp, on the accumulated value --
+	# the two channels companies.gd reads it through carry their own.
 	if effects.has("company"):
 		var sector: String = String(effects["company"]["sector"])
 		var burden: float = float(effects["company"]["burden"])

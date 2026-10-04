@@ -176,9 +176,10 @@ const SETTLEMENT_BETA := 12.0
 ##
 ## SIGNED, for corruption's and migration's reason plus one of its own: an imposed
 ## settlement -- a pay freeze, a service minimum during a strike -- is the negative
-## direction on the same accumulator, not a repeal verb. A one-way stance would make
-## every settlement law inert on a calm state, which is V1.3f's property that nothing on
-## the law list does nothing.
+## direction on the same accumulator -- still true now the repeal verb exists (V4.2):
+## repeal removes whole acts or nothing, it never moves a stance partway. A one-way
+## stance would make every settlement law inert on a calm state, which is V1.3f's
+## property that nothing on the law list does nothing.
 const SETTLEMENT_STANCE_MAX := 1.00
 
 ## V1.5d. How much a censored press adds to the grievance target, per point of

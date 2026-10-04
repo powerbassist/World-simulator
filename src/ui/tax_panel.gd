@@ -52,9 +52,10 @@ const KEY_LABELS := {
 ## Per-key slider ceilings -- the budget panel's LEVER_MAX rows for the tax
 ## side, moved with the levers. `wealth` reads the model bound, so the control
 ## and economy_constants cannot drift apart (tests/test_tax.gd asserts that
-## identity). A COMPOSED key has no authored row: its ceiling is the birth
-## gate's own NEW_TAX_RATE_MAX, the largest rate the model has ever been asked
-## to price for a player tax.
+## identity). A COMPOSED key has no authored row: its ceiling is MATCHED TO ITS
+## BASE in _lever_max() -- the model prices the PRODUCT base_share x rate, and
+## the birth gate admits only pairs under NEW_TAX_YIELD_CEILING, so the slider
+## may not offer a product the ceiling's own rationale declares unpriceable.
 const LEVER_MAX := {
 	"income": 70.0,
 	"corporate": 70.0,
@@ -311,7 +312,20 @@ func _lever_keys() -> Array:
 func _lever_max(key: String) -> float:
 	if LEVER_MAX.has(key):
 		return float(LEVER_MAX[key])
-	return SK.NEW_TAX_RATE_MAX
+	# THE BORN KEY'S OWN CEILING (the ultra pass-6 finding): the slider max is
+	# matched to the key's base, because the yield the revenue model prices is
+	# the PRODUCT base_share x rate and the birth gate admits only pairs under
+	# NEW_TAX_YIELD_CEILING. A 100-point slider on a base-4.0 key offered
+	# exactly the product the ceiling exists to refuse -- two clicks from a
+	# legal birth to a 140 %-of-GDP yield. minf keeps NEW_TAX_RATE_MAX as the
+	# absolute cap, so a LOW-base birth keeps its full range (12.0 / 0.06 = 200
+	# caps at 100); the 0.01 floor is divide-by-zero armour for a payload with
+	# no base behind it, not a tuned bound.
+	var ns = _state.player()
+	if ns == null:
+		return SK.NEW_TAX_RATE_MAX
+	var params: Dictionary = ns.custom_taxes.get(key, {})
+	return minf(SK.NEW_TAX_RATE_MAX, SK.NEW_TAX_YIELD_CEILING / maxf(float(params.get("base_share", 0.0)), 0.01))
 
 
 func _label_for(key: String) -> String:

@@ -481,7 +481,14 @@ formula reads — base 4.00 × rate 100 is a 400 %-of-GDP key, a yield nothing e
 the birth gate brakes — so the product is refused in its own right at
 `NEW_TAX_YIELD_CEILING` 12.0, anchored at wealth's own
 maximum yield (4.00 base × 3.0 rate), the most the revenue model has ever been asked
-to price. And the birth names its key non-blank: the register carries the name the
+to price. THE CEILING IS BIRTH AND LIFE, not birth alone (the ultra pass-6 finding,
+found live): a born key's rate could be cranked past the product afterwards — the tax
+panel's slider topped at `NEW_TAX_RATE_MAX` whatever the base — so the slider is
+MATCHED TO ITS BASE (`min(NEW_TAX_RATE_MAX, ceiling / base)`, a low-base birth keeping
+its full range) and `Budget.commit()` REFUSES a pending custom rate whose base × rate
+would clear the ceiling — loudly, per key, and not clamped, the birth gate's own
+refusal-not-clamp shape carried to the one writer every rate change routes through.
+And the birth names its key non-blank: the register carries the name the
 panels argue about, and an empty one is refused in the validator's own words — *a
 tax needs a name to be argued about*. Collision with the
 authored five was refused at T2 and stands; a second bill proposing an existing custom

@@ -57,6 +57,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const StatuteK = preload("res://src/sim/statute_constants.gd")
+const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
 const POLL_SLOT := "__test_poll_surfaces__"
@@ -122,9 +123,35 @@ func _run() -> void:
 	if not _live_text_has(panel, "The Carbon Levy"):
 		_fail("the composed key's row is not named off the params register")
 	if float(panel._sliders["carbon"].max_value) != StatuteK.NEW_TAX_RATE_MAX:
-		_fail("the composed key's slider is not capped at the birth-gate ceiling")
-	ns.custom_taxes.erase("carbon")
-	ns.tax_rates_pct.erase("carbon")
+		_fail("a low-base born key (0.06) lost its full rate range -- the max is matched to the BASE (12.0 / 0.06 = 200), so minf keeps NEW_TAX_RATE_MAX the cap")
+	# THE OTHER SIDE OF THAT RULE (the ultra pass-6 finding): a HIGH base pulls
+	# the max DOWN to its own yield bound. The old fallback offered 100 points
+	# on every born key, so a base-4.0 key was two clicks from a 140-of-GDP
+	# yield the ceiling's own rationale declares unpriceable -- the slider must
+	# top at 12.0 / 4.0 = 3.0.
+	ns.custom_taxes["heavy"] = {
+		"name": "The Stock Levy", "base_share": 4.0, "erosion": 0.8, "ref_pct": 3.0}
+	ns.tax_rates_pct["heavy"] = 3.0
+	panel.mark_dirty()
+	panel._refresh()
+	if not is_equal_approx(float(panel._sliders["heavy"].max_value),
+			StatuteK.NEW_TAX_YIELD_CEILING / 4.0):
+		_fail("a base-4.0 born key's slider tops at %s, expected 3.0 -- the product gate" % panel._sliders["heavy"].max_value)
+	# THE COMMIT GATE is sim-side, because the panel is not the only writer: a
+	# rate the slider can no longer produce is still REFUSED at Budget.commit
+	# (push_error + skip, never a silent clamp), and the register keeps the
+	# birth rate.
+	var heavy_rate: float = float(ns.tax_rates_pct["heavy"])
+	Budget.commit(state, {"tax_rates_pct": {"heavy": 100.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct["heavy"]), heavy_rate):
+		_fail("an over-ceiling commit applied the rate -- it must refuse, not clamp")
+	# Strictly >, like the birth gate: the anchor product (4.0 x 3.0 = 12.0)
+	# commits, so the gate bounds the product and not the act of committing.
+	Budget.commit(state, {"tax_rates_pct": {"heavy": 3.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct["heavy"]), 3.0):
+		_fail("a rate AT the product ceiling must still commit, got %s" % ns.tax_rates_pct["heavy"])
+	ns.custom_taxes.erase("heavy")
+	ns.tax_rates_pct.erase("heavy")
 	panel.mark_dirty()
 	panel._refresh()
 

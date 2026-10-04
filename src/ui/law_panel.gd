@@ -211,6 +211,13 @@ func _build_result_summary(result: Dictionary) -> Control:
 		verdict = "BLOCKED BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	elif result.get("struck_down", false):
 		verdict = "STRUCK DOWN"
+	# THE MOOT RELEASE (the ultra pass-6 finding), and it is the same one-word-
+	# per-outcome rule as the four above: a repeal releasing from its hold into
+	# an empty book did not come into force over anybody -- its target was
+	# already gone, nothing followed, and no override price was charged. The
+	# released branch below is the release that DID apply.
+	elif result.get("target_already_gone", false):
+		verdict = "MOOT — its target was already gone from the book."
 	elif result.get("released", false):
 		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
@@ -239,6 +246,12 @@ func _build_result_summary(result: Dictionary) -> Control:
 			PanelKit.line(box, "Article 49.3 is not available.", PanelKit.Tone.PLAIN)
 			return box
 		box.add_child(_build_censure_summary(result.get("censure", {})))
+		return box
+
+	# And a moot release had no division either -- the verdict line above already
+	# says why nothing followed, and a tally here would read a chamber that never
+	# sat against a bill that came to nothing.
+	if result.get("target_already_gone", false):
 		return box
 
 	var tally := Label.new()

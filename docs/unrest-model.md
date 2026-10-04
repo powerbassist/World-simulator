@@ -208,7 +208,8 @@ deficit — so the player could buy industrial peace only by opening `public_fin
 unrest would be the **permanent monotone charge** [[defence-model]] names.
 
 Signed both ways: an imposed settlement — a service minimum, a pay freeze — is the
-negative direction on the same accumulator, not a repeal verb. It is not
+negative direction on the same accumulator — still true now the repeal verb exists
+(V4.2): repeal removes whole acts or nothing, it never moves a stance partway. It is not
 strictly dominated, because its **authored `bloc_offset` is immediate and positive**
 (business, pensioners, rural and urban all resent the people who can strike) against a
 grievance cost that is slow. Fast in, slow out, in the other direction.

@@ -416,8 +416,9 @@ static func _tax_label(key: String, ns) -> String:
 
 
 ## The five society terms, phrased by the stance they name. The SIGN is the
-## direction (law.gd's schema: signed stances, not repeal verbs), so the
-## phrase map carries the pair and the walker only picks the side.
+## direction (law.gd's schema: signed stances -- still true now the repeal verb
+## exists (V4.2): repeal removes whole acts or nothing, it never moves a stance
+## partway), so the phrase map carries the pair and the walker only picks the side.
 static func _society_line(term: String, v: float) -> String:
 	var up := v > 0.0
 	match term:

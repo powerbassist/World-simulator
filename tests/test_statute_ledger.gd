@@ -31,6 +31,9 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Law = preload("res://src/core/law.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Statute = preload("res://src/sim/statute.gd")
+## The ultra pass-6 reader leg: the moot release's verdict is rendered by the
+## law panel's result summary, so the pin drives the real panel class.
+const LawPanelUi = preload("res://src/ui/law_panel.gd")
 
 const PLAYER := "FRA"
 const SURTAX := "high_earner_surtax"
@@ -344,6 +347,39 @@ func _test_overlapping_repeals_release_moot() -> void:
 	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), income_before):
 		_fail("the target must stay repealed -- income at %s, expected %s"
 			% [ns.tax_rates_pct.get("income"), income_before])
+	# THE READER (ultra pass 6): the record's one surface is the law panel's
+	# result summary, and until now it read the released branch -- "IN FORCE,
+	# over the SENAT" against a release that changed nothing, with a Yes 0 -
+	# No 0 tally for a chamber that never sat. Driven on the real panel class:
+	# the writer-side pins above could not see that half. The builder needs
+	# only _state/_loader (it builds its own box), so the panel never enters
+	# the tree -- _ready() has not run out here, and everything below is
+	# hand-freed Node memory.
+	var panel = LawPanelUi.new()
+	panel._state = gs
+	panel._loader = _loader
+	var summary: Control = panel._build_result_summary(released)
+	var text := _summary_text(summary)
+	summary.free()
+	panel.free()
+	if text.find("IN FORCE") != -1:
+		_fail("a moot release still reads IN FORCE: %s" % text)
+	if text.find("MOOT") == -1:
+		_fail("a moot release carries no MOOT verdict: %s" % text)
+	if text.find("Abstain 0") != -1:
+		_fail("a moot release prints a seat tally for a division that never sat: %s" % text)
+
+
+## The summary box's full text: every Label, walked deep (PanelKit lines are
+## direct children; the seat tally is a bare Label beside them).
+func _summary_text(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += String(child.text) + "\n"
+		else:
+			out += _summary_text(child)
+	return out
 
 
 func _test_roundtrip_and_absence() -> void:

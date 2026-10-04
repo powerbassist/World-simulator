@@ -70,6 +70,7 @@ func _init() -> void:
 		_test_roundtrip_absence_and_duplicate()
 		_test_init_resets()
 		_test_birth_yield_ceiling()
+		_test_commit_yield_gate()
 		_test_negative_params_refused()
 		_test_nameless_key_refused()
 		_test_tax_key_charset()
@@ -103,6 +104,50 @@ func _test_birth_yield_ceiling() -> void:
 	r = Statute.draft(gs, ns, _loader, at_anchor)
 	if not bool(r.get("ok", false)):
 		_fail("wealth's own shape (4.0 x 3.0 = 12.0) must still draft: %s" % r.get("refusal", ""))
+
+
+## The ultra pass-6 finding, the SIM half: the birth gate bounds the product at
+## draft time only, and commit() applied any pending custom rate unchecked --
+## the reviewer's live repro birthed the anchor shape and then cranked the
+## register to 4.0 x 100 through the one writer every rate change routes
+## through. The gate REFUSES there (loudly, per key), never clamps: a clamp
+## would silently re-price the schedule the caller was shown.
+func _test_commit_yield_gate() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	# The anchor birth, landed whole: base 4.0, born at 3.0 -- the product AT
+	# the ceiling, which is legal (strictly > is the refusal).
+	var spec: Dictionary = BIRTH_SPEC.duplicate(true)
+	spec["new_tax"]["key"] = "windfall"
+	spec["new_tax"]["name"] = "The Windfall Duty"
+	spec["new_tax"]["base_share"] = 4.0
+	spec["new_tax"]["erosion"] = 0.8
+	spec["new_tax"]["rate"] = 3.0
+	var r: Dictionary = Statute.draft(gs, ns, _loader, spec)
+	if not bool(r.get("ok", false)):
+		_fail("setup: the anchor birth must draft: %s" % r.get("refusal", ""))
+		return
+	var draft_id := String(r["draft_id"])
+	for i in range(int(ns.draft_bills[draft_id]["months_left"])):
+		Statute.tick_month(gs, _loader)
+	Legislature.apply(gs, ns, Law.composed_from_dict(ns.custom_laws[draft_id]), _loader)
+	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
+		_fail("setup: the anchor birth must land at 3.0, got %s" % ns.tax_rates_pct.get("windfall"))
+		return
+	# The crank: 100 points on a 4.0 base is 400 of GDP. Refused, and the
+	# register keeps the birth rate -- the rate the books actually price.
+	Budget.commit(gs, {"tax_rates_pct": {"windfall": 100.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
+		_fail("an over-ceiling commit applied the rate -- refuse, never clamp, got %s" % ns.tax_rates_pct.get("windfall"))
+	# The boundary holds in both directions: the anchor itself commits ...
+	Budget.commit(gs, {"tax_rates_pct": {"windfall": 3.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
+		_fail("a rate AT the product ceiling must still commit, got %s" % ns.tax_rates_pct.get("windfall"))
+	# ... and an ordinary under-ceiling move is nobody's business.
+	Budget.commit(gs, {"tax_rates_pct": {"windfall": 2.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 2.0):
+		_fail("a rate under the product ceiling (4.0 x 2.0 = 8.0) must commit, got %s" % ns.tax_rates_pct.get("windfall"))
 
 
 ## Review fix 2: `_numeric_nonzero` alone let negative params draft.

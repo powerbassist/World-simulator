@@ -350,7 +350,23 @@ static func commit(state, pending: Dictionary) -> void:
 			if not ns.custom_taxes.has(key):
 				push_error("budget: pending rate for tax key '%s' with no params on the register -- refused" % key)
 				continue
-			new_rates[key] = float(pending["tax_rates_pct"][key])
+			# THE YIELD GATE, sim-side (the ultra pass-6 finding). The tax panel
+			# matches a born key's slider to its base, but this command channel
+			# is not the panel's alone -- a repeal's negation and a future
+			# bill's tax channels route through apply_effects() into this same
+			# loop -- so the ceiling lives at the ONE writer too, not only at
+			# the control. REFUSAL and not a clamp for the birth gate's own
+			# recorded reason: a clamp would silently re-price the schedule the
+			# caller was shown. Strictly >, matching _validate_new_tax: a
+			# product AT the ceiling (wealth's own 4.0 x 3.0) stays legal.
+			var base_share := float(ns.custom_taxes[key].get("base_share", 0.0))
+			var pending_rate := float(pending["tax_rates_pct"][key])
+			if base_share * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
+				push_error("budget: base %.2f x rate %.1f would yield %.2f of GDP, past the %.1f the revenue model prices -- rate for '%s' refused" % [
+					base_share, pending_rate, base_share * pending_rate,
+					StatuteK.NEW_TAX_YIELD_CEILING, String(key)])
+				continue
+			new_rates[key] = pending_rate
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
