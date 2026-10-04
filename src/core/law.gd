@@ -745,12 +745,15 @@ static func _extract_society(raw, law_id: String, filename: String, errors: Arra
 ## construction, and the register is what it reads rather than what it moves.
 ##
 ## The burden is SIGNED. Deregulation is the negative direction on the same
-## accumulator, not a repeal verb: there is no repeal in this project and a `once`
-## law never returns, so a burden that could only ever rise would be a permanent
-## monotone charge -- the failure docs/defence-model.md names, where a clamp stops
-## being a guard rail and becomes the number. A signed burden also costs no new
-## precondition field, and legislature_constants.PRECONDITION_FIELDS has no sector
-## parameter and should not grow one.
+## accumulator, and that is still true now the repeal verb exists (V4.2): repeal
+## removes a whole act or nothing -- it never moves a burden partway -- so easing a
+## sector stays the signed channel's job. V1.4b's original reason (no repeal
+## existed, so a one-way burden would be a permanent monotone charge, the failure
+## docs/defence-model.md names where a clamp stops being a guard rail and becomes
+## the number) is a historical record, and the symmetric clamp also keeps a
+## deregulation non-inert on a clean state (V1.3f's property). A signed burden
+## costs no new precondition field, and legislature_constants.PRECONDITION_FIELDS
+## has no sector parameter and should not grow one.
 static func _extract_company(raw, law_id: String, filename: String, errors: Array[String], sector_keys: Array) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects.company must be an object" % [filename, law_id])

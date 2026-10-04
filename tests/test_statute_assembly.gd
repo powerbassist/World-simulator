@@ -375,6 +375,23 @@ func _test_upper_house_and_court_pipeline() -> void:
 	var release_body: String = main_ui._assembly_result_body(released)
 	if release_body.find("comes into force") == -1 or release_body.find("ayes") != -1:
 		_fail("a release's card does not word the coming-into-force: %s" % release_body)
+	# The ultra pass-5 finding: the release card names the chamber by the
+	# nation's own name (the hold card did, twelve months earlier) -- the
+	# generic "second chamber" fallback must never fire on a machine result.
+	if release_body.find(String(released["upper_chamber"])) == -1:
+		_fail("a release's card does not name the chamber '%s': %s" % [released.get("upper_chamber"), release_body])
+	# The ultra pass-5 finding, second half: the TABLING card must stop
+	# offering a stand once the president has made one -- the endorsed entry
+	# re-renders as the on-the-record line, never the endorsement ask.
+	var tabling: Dictionary = {"law_id": "high_earner_surtax", "months_left": 1,
+		"backer_firm": "", "backer_chief": "", "endorse_bonus": 0.0}
+	var ask_body: String = main_ui._assembly_bill_body(tabling)
+	if ask_body.find("Endorse it") == -1:
+		_fail("an unendorsed tabling card does not offer the stand: %s" % ask_body)
+	tabling["endorse_bonus"] = 0.10
+	var endorsed_body: String = main_ui._assembly_bill_body(tabling)
+	if endorsed_body.find("Endorse it") != -1 or endorsed_body.find("on the record") == -1:
+		_fail("an endorsed tabling card still offers the stand: %s" % endorsed_body)
 	# The ultra pass-4 finding: a COURT STRIKE outranks every other wording,
 	# on BOTH paths that reach this builder -- a release the court stopped
 	# still carries released/assembly_bill, and a struck division still

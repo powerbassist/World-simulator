@@ -1657,6 +1657,12 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 	var law_name := _law_title(String(entry.get("law_id", "")))
 	var months := int(entry.get("months_left", 0))
 	var firm_id := String(entry.get("backer_firm", ""))
+	# The endorsement transition inside the bill's life -- the card must not
+	# keep offering a stand the sim now refuses (the panel drops its button
+	# for the same reason).
+	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
+		return "%s reaches the floor in %d month%s. The president's stand is on the record -- endorsed." % [
+			law_name, months, "" if months == 1 else "s"]
 	if firm_id != "":
 		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
 		return "%s's chief %s backs %s. The assembly divides in %d month%s; a stand one way or the other is the president's to take." % [

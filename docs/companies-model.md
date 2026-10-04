@@ -500,17 +500,22 @@ and the third is the one that matters:
 
 ## 14. Deregulation is a direction, not an undo
 
-There is no repeal verb in this project and a `once` law never returns. So the
-clamp is **symmetric**: a deregulation law carries a negative burden on the same
-accumulator.
+**Recorded at V1.4b; the record overturned in part at V4.2.** The rule then read
+"there is no repeal verb in this project and a `once` law never returns", and the
+symmetric clamp followed from it. V4.2 built the repeal verb whole — the per-law
+effect ledger and `Legislature._subtract_ledger` — so a `once` law now returns when
+a carried repeal clears its gate. The SIGNED burden survives on its own reasons,
+which repeal does not replace: easing a sector PARTWAY is ordinary legislation,
+while repeal removes a whole act or nothing. The clamp stays **symmetric**.
 
 An asymmetric `[0, MAX]` would have been a **permanent monotone charge** —
 [[defence-model]]'s named failure mode, where a clamp stops being a guard rail and
-becomes the number — and it would have made a repeal law *inert at burden 0*,
-breaking [[foreign-policy-model|V1.3f]]'s inert-act property on the law list. It
-would also have needed a new whitelisted `PRECONDITION_FIELDS` entry carrying a
-sector parameter that list has never had. The signed burden costs none of that, and
-deregulation pays honestly in `bloc_offset` instead of being free.
+becomes the number — and, in V1.4b's no-repeal world, would have made a
+deregulation law *inert at burden 0*, breaking [[foreign-policy-model|V1.3f]]'s
+inert-act property on the law list. It would also have needed a new whitelisted
+`PRECONDITION_FIELDS` entry carrying a sector parameter that list has never had.
+The signed burden costs none of that, and deregulation pays honestly in
+`bloc_offset` instead of being free.
 
 ## 15. The anti-double-count is a load error, not a convention
 

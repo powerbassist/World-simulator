@@ -113,10 +113,11 @@ unchanged spending. `tests/test_society.gd` asserts it with the spending line ne
 written, and that omission is the whole test.
 
 **Signed both ways**, which is V1.4b's deregulation argument plus one V1.4b did not
-need. There is no repeal verb and a `once` law never returns, so `[0, MAX]` would be
-the permanent monotone charge [[defence-model]] names — *and* an anti-corruption law
-would be **inert on a clean state**, breaking [[foreign-policy-model|V1.3f]]'s
-property that nothing on the law list does nothing. Negative corruption is a
+need. Updated at V4.2, when the repeal verb landed: repeal removes whole acts rather
+than nudging a stance back, so `[0, MAX]` would still be the permanent monotone
+charge [[defence-model]] names — *and* an anti-corruption law would be **inert on a
+clean state**, breaking [[foreign-policy-model|V1.3f]]'s property that nothing on the
+law list does nothing. Negative corruption is a
 cleaner-than-baseline administration and raises delivery above 1.0.
 
 ## 5. The double count, and the three resolutions that were rejected

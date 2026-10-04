@@ -217,7 +217,8 @@ static func labour_force(ns) -> float:
 ## because working is the residual, so the stance is applied to `young` and `old` in
 ## proportion to their current sizes rather than to a fourth quantity. A tightening is
 ## the negative direction on the same accumulator and pushes both shares up -- V1.4b's
-## deregulation argument, and there is no repeal verb here either.
+## deregulation argument: a stance moves partway, repeal (V4.2) removes whole acts, and
+## neither closes a tightening.
 static func migration_drift(ns) -> float:
 	return K.MIGRATION_SHARE_BETA * float(ns.migration_stance) / 12.0
 

@@ -216,6 +216,9 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			"majority": law.majority, "yes_seats": 0, "no_seats": 0,
 			"abstain_seats": 0, "seats_total": ns.assembly_seats,
 			"party_votes": {}, "party_support": {}, "party_rebels": {},
+			# The hold card named the chamber by its own name twelve months
+			# ago; the release card says the same thing the same way.
+			"upper_chamber": ns.upper_chamber_name,
 		}
 		# THE MOOT RELEASE, the ultra pass-4 finding: a repeal can release after
 		# its TARGET is already gone. Two repeal drafts of one target both compose
@@ -842,8 +845,9 @@ static func _register_new_tax(ns, law) -> void:
 	}
 
 
-## The ledger entry's realized channels for one law, {} when none -- the
-## statute panel's read and repeal validation's first gate.
+## The ledger entry's realized channels for one law, {} when none --
+## repeal validation's first gate and Statute.draft()'s frozen preview
+## source; a statute panel reads it when one exists.
 static func ledger_of(ns, law_id: String) -> Dictionary:
 	var entry: Dictionary = ns.law_ledger.get(law_id, {})
 	return entry.get("channels", {})
