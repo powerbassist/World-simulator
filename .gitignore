@@ -88,3 +88,9 @@ tools/_apply_corrections.py
 tools/_merge_traits.py
 tools/fetch_photos.py
 tools/portraits_photo_sources.json
+
+# The review fleet's working dir (file snapshots, diffs, comment fetches the
+# ultra's lenses leave mid-pass). Gitignored so a running pass never drowns
+# git status -- and EMPTIED at every block closeout, same rule as the
+# .superpowers/sdd scratch: working space, not storage.
+.review-tmp/
