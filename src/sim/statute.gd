@@ -38,6 +38,11 @@ const EK = preload("res://src/sim/election_constants.gd")
 ## leaves; neither knows this file exists.
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
+## The ultra pass-2 discipline finding: the assembly's own division sheds
+## rebels exactly as propose()'s does, and the cost is applied by the mutating
+## caller. discipline.gd is a leaf -- it preloads only its constants and
+## opinion_constants -- so this preload runs no cycle.
+const Discipline = preload("res://src/sim/discipline.gd")
 
 ## The channels a spec may name. The keyed channels carry {sub_key: value},
 ## the scalars a bare float, company its {sector, burden} shape and society
@@ -50,6 +55,18 @@ const KEYED_CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const SCALAR_CHANNELS := ["structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp"]
 const SOCIETY_CHANNEL := "society"
 const COMPANY_CHANNEL := "company"
+
+## The new-tax key charset, [a-z0-9_] with length 2..24. THE PIPE GATE, the
+## ultra pass-2 finding: the ledger encodes a tax channel as "tax|<key>" and
+## recovers the sub-key with split("|"), so a key containing "|" corrupts the
+## record -- a birth keyed "carbon|tax" snapshots "tax|carbon|tax", the repeal
+## subtracts under the mis-split "carbon" while the live rate keeps yielding,
+## and the act is permanently un-repealable while its repeal reported carried
+## (worse: a key like "vat|one" mis-splits onto an AUTHORED lever and moves it
+## silently). Closed at the draft gate -- the one check the free-text field
+## cannot get past -- rather than at the encoding, which every legal key
+## already survives. Same pattern idiom as nation.gd's id regex.
+static var _tax_key_pattern := RegEx.create_from_string("^[a-z0-9_]{2,24}$")
 
 
 ## The player command: validate the spec, price it, park it. Refused specs
@@ -109,6 +126,11 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 		if String(new_tax.get("key", "")) == "":
 			return _refuse("A new tax names a key.")
 		var tax_key := String(new_tax["key"])
+		# THE PIPE GATE (see _tax_key_pattern above): the refusal names the rule,
+		# because a player told only "invalid" would rightly try again with the
+		# same characters in another order.
+		if _tax_key_pattern.search(tax_key) == null:
+			return _refuse("A tax key is 2 to 24 lowercase letters, digits and underscores -- other characters would corrupt the ledger's records.")
 		if C.TAX_KEYS.has(tax_key):
 			return _refuse("That tax key already exists in the tax code.")
 		# One key, one birth: the params register is the authorising record,
@@ -546,6 +568,16 @@ static func _resolve_due(state, ns, loader) -> void:
 ## function parked. Failure writes the authored cooldown exactly as
 ## propose()'s own failure path does -- a failed division faces neither the
 ## chamber nor the court, because there is nothing yet for either to review.
+## propose()'s _by_id, two lines local: the underscore is that file's own
+## boundary, and a cross-file call through it would be a convention this
+## project keeps by never crossing.
+static func _party_by_id(party_list: Array) -> Dictionary:
+	var by_id := {}
+	for party in party_list:
+		by_id[party.id] = party
+	return by_id
+
+
 static func _divide(state, ns, loader, bill_id: String) -> void:
 	var entry: Dictionary = ns.assembly_bills.get(bill_id, {})
 	ns.assembly_bills.erase(bill_id)
@@ -570,6 +602,16 @@ static func _divide(state, ns, loader, bill_id: String) -> void:
 	if String(entry.get("backer_firm", "")) != "":
 		result["backer_firm"] = String(entry["backer_firm"])
 		result["backer_chief"] = String(entry.get("backer_chief", ""))
+	# THE REBELLION CHARGE, on both paths -- placed before the passed branch so
+	# a held bill and a fall-through bill are priced alike, propose()'s own rule
+	# ("whichever way the bill went"). resolve_vote() stays a pure function; the
+	# cost is applied by the mutating caller, and this division is one -- the
+	# ultra pass-2 finding was that the assembly's route skipped it while the
+	# player's route charged, so the identical division cost two different
+	# disciplines. The endorsement bonus is what makes rebels ordinary here: it
+	# drags a party's line onto a bill its own members do not back, and the
+	# strain that split measures is exactly this charge's subject.
+	Discipline.penalise_rebellions(ns, result["party_rebels"], _party_by_id(party_list))
 	if bool(result.get("passed", false)):
 		var power: String = Chambers.power_over(ns, law)
 		if power != ChambersK.VERDICT_NONE:
@@ -591,10 +633,13 @@ static func _divide(state, ns, loader, bill_id: String) -> void:
 					# HELD, not defeated: propose()'s own reading, and the
 					# release in Legislature.tick_month() applies the bill
 					# through the court when the hold runs out -- no second
-					# division, no command from anyone.
+					# division, no command from anyone. The origin rides the
+					# entry (the ultra pass-2 shape): the release charges the
+					# override price only when the GOVERNMENT insisted, and
+					# nobody insisted on a private member's bill.
 					result["held_by_upper"] = true
 					result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
-					ns.held_bills[law.id] = ChambersK.UPPER_HOLD_MONTHS
+					ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "assembly"}
 				ns.last_law_result = result
 				return
 		# No upper chamber, or the chamber carried it: the court, the pipeline's
@@ -626,7 +671,7 @@ static func _lobby(ns, loader, month: int) -> bool:
 	var sector := _burdened_sector(ns)
 	if sector == "":
 		return false
-	var firm = _biggest_major(loader, ns.id, sector)
+	var firm = _biggest_major(ns, loader, sector)
 	if firm == null:
 		return false
 	if Cycle.unit("statute|lobby|%s" % ns.id, month) >= SK.LOBBY_HAZARD_MONTHLY:
@@ -744,16 +789,29 @@ static func _burdened_sector(ns) -> String:
 
 ## The chief who signs the ask: the sector's BIGGEST major, ties to authored
 ## order (strict >) -- the firm with the most payroll at stake lobbies first,
-## and the pick never depends on the loader's file order.
-static func _biggest_major(loader, nation_id: String, sector: String):
+## and the pick never depends on the loader's file order. THE LIVENESS GATE,
+## the ultra pass-2 finding: the pick reads the LIVE share off the firm
+## register (industry.gd's `entry.get("share", company.share)` idiom) and
+## skips the dead -- a failed firm has no payroll at stake and its chief signs
+## for nothing. An untouched firm has no register entry and reads its authored
+## share, which is what alive means for a sparse register.
+static func _biggest_major(ns, loader, sector: String):
 	var best = null
-	for company in loader.companies.get(nation_id, []):
+	var best_share := 0.0
+	for company in loader.companies.get(ns.id, []):
 		if String(company.tier) != "major" or String(company.sector) != sector:
 			continue
 		if String(company.chief_id) == "":
 			continue
-		if best == null or float(company.share) > float(best.share):
+		var entry: Dictionary = ns.companies.get(company.id, {})
+		if bool(entry.get("failed", false)):
+			continue
+		var share := float(entry.get("share", company.share))
+		if share <= 0.0:
+			continue
+		if best == null or share > best_share:
 			best = company
+			best_share = share
 	return best
 
 

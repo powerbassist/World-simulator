@@ -77,9 +77,12 @@ func _init() -> void:
 		_test_hazard_band_and_gate()
 		_test_resolves_without_player()
 		_test_endorse()
+		_test_division_charges_rebellion_discipline()
 		_test_upper_house_and_court_pipeline()
 		_test_in_flight_guard()
 		_test_lobby()
+		_test_lobby_skips_dead_firms()
+		_test_held_composed_law_applies_at_release()
 		_test_determinism()
 		_test_roundtrip_absence_and_duplicate()
 	_finish()
@@ -298,13 +301,24 @@ func _test_upper_house_and_court_pipeline() -> void:
 		return
 	if int(hold_result.get("held_months", 0)) != CK.UPPER_HOLD_MONTHS:
 		_fail("the hold is %s months, expected %d" % [hold_result.get("held_months", 0), CK.UPPER_HOLD_MONTHS])
-	if int(ns.held_bills.get(String(refused.id), 0)) != CK.UPPER_HOLD_MONTHS:
+	# The ultra pass-2 shape: {"months", "origin"} -- and the origin is
+	# "assembly", what makes the release charge no override (see below).
+	var held_entry: Dictionary = ns.held_bills.get(String(refused.id), {})
+	if int(held_entry.get("months", 0)) != CK.UPPER_HOLD_MONTHS:
 		_fail("the held bill is not parked in ns.held_bills -- the release would never fire")
+	if String(held_entry.get("origin", "")) != "assembly":
+		_fail("the assembly's hold must carry origin \"assembly\" -- nobody insisted on a PMB")
 	if ns.law_cooldown_months.has(String(refused.id)):
 		_fail("a held bill was cooled down -- it has not been beaten")
 
 	# The release: no second division and no player verb, and the bill arrives
-	# THROUGH THE COURT -- the released result is a reviewed one.
+	# THROUGH THE COURT -- the released result is a reviewed one. AND IT CHARGES
+	# NO OVERRIDE: the bloc movement across the release must be exactly the
+	# law's own authored effects, to the bit -- the override price is the
+	# GOVERNMENT's insistence priced, and the assembly's hold is nobody's.
+	var bloc_before: Dictionary = {}
+	for bloc in ns.bloc_offset:
+		bloc_before[bloc] = float(ns.bloc_offset[bloc])
 	for i in range(CK.UPPER_HOLD_MONTHS):
 		Legislature.tick_month(gs, _loader)
 	if not ns.held_bills.is_empty():
@@ -312,6 +326,18 @@ func _test_upper_house_and_court_pipeline() -> void:
 	var released: Dictionary = ns.last_law_result
 	if not bool(released.get("released", false)) or not released.has("reviewable"):
 		_fail("the release did not apply through the court: %s" % released)
+	if not bool(released.get("passed", false)):
+		_fail("the released PMB was struck down -- the no-override leg has no effects to measure against")
+		return
+	if released.has("override_offset"):
+		_fail("a released PMB carried the override price nobody incurred")
+	var authored: Dictionary = refused.effects.get("bloc_offset", {})
+	for bloc in bloc_before:
+		var moved: float = float(ns.bloc_offset.get(bloc, 0.0)) - float(bloc_before[bloc])
+		var charged: float = moved - float(authored.get(bloc, 0.0))
+		if absf(charged) > 1e-9:
+			_fail("a released PMB charged %f on %s -- the override price is the government's, not the assembly's" % [
+				charged, bloc])
 
 
 ## The first pool-class law the assembly carries and the Senat does (or does
@@ -405,6 +431,104 @@ func _test_lobby() -> void:
 			plain[bill_id] = ns2.assembly_bills[bill_id]
 	if plain.is_empty():
 		_fail("a fired lobby with no deregulation law to name tabled nothing -- it must fall through to the plain backbench bill")
+
+
+## THE REBELLION CHARGE on the assembly's own division -- the ultra pass-2
+## finding: every other division path applied Discipline.penalise_rebellions()
+## and this one skipped it, so the identical division cost two different
+## disciplines by route. The endorsement is what makes rebels ordinary here:
+## the bonus drags coalition lines across the abstain band while the members'
+## own spatial view stays put, and the strain that split measures is exactly
+## this charge's subject.
+func _test_division_charges_rebellion_discipline() -> void:
+	var treated = _fresh()
+	treated[1].assembly_bills["pmb_rebel"] = _hand_bill(ENDORSE_LAW)
+	var discipline_before: Dictionary = treated[1].party_discipline.duplicate()
+	Statute.endorse(treated[0], treated[1], _loader, "pmb_rebel")
+	_tick(treated[0])
+	var rebels: Dictionary = treated[1].last_law_result.get("party_rebels", {})
+	if rebels.is_empty():
+		_fail("the endorsed division shed no rebels -- the discipline leg is vacuous; pick a law whose bonus crosses the abstain band")
+		return
+	for pid in rebels:
+		var before: float = float(discipline_before[pid])
+		var after: float = float(treated[1].party_discipline[pid])
+		if after >= before:
+			_fail("the division did not charge %s's rebellion (%s vs %s) -- resolve_vote() computed rebels the machine never priced" % [
+				pid, before, after])
+
+
+## The ultra pass-2 lobby finding: the pick read the AUTHORED share and gated
+## on nothing, so the sector's biggest major was named as backer while FAILED.
+## The failure is committed exactly as industry.gd writes it (the sparse
+## register: the flag, the zeroed share, the cleared seat), the fixture month
+## is the same measured draw the healthy leg above runs, and the OTHER major
+## must sign the ask.
+func _test_lobby_skips_dead_firms() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	gs.year = 2
+	gs.month = 2
+	if Cycle.unit("statute|lobby|%s" % PLAYER, _month_index(gs) + 1) >= SK.LOBBY_HAZARD_MONTHLY:
+		_fail("test setup: the drawn lobby month no longer fires -- recompute the fixture month")
+		return
+	ns.companies[LOBBY_FIRM] = {
+		"failed": true, "share": 0.0, "board_chair": "", "rescue_months_left": 6,
+	}
+	ns.regulation_burden[LOBBY_SECTOR] = 0.5
+	_tick(gs)
+	var backed := ""
+	var chief := ""
+	for bill_id in ns.assembly_bills:
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		if String(entry.get("backer_firm", "")) != "":
+			backed = String(entry["backer_firm"])
+			chief = String(entry.get("backer_chief", ""))
+	if backed != "FRA_sevrenne":
+		_fail("the lobby picked '%s' with the sector's biggest major dead -- expected FRA_sevrenne" % backed)
+	if chief != "FRA_chief_sevrenne":
+		_fail("the dead firm's chief signed the ask: '%s'" % chief)
+
+
+## F12's pin, recorded so the refuted class can never land silently: a composed
+## law held by the chamber is APPLIED at release, not silently destroyed. The
+## release's lookup is the loader's, and a composed law is not in loader.laws
+## -- without the register fallback in legislature._tick_held_bills the entry
+## was erased and the act vanished: no effects, no result, no error. The law
+## composes through the machine (the tax test's birth idiom), the hold is
+## hand-written THE MACHINE'S WAY, and one legislature tick releases it.
+func _test_held_composed_law_applies_at_release() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var spec := {
+		"name": "The Border Adjustment",
+		"position": {"economic": 0.0, "social": 0.0},
+		"channels": {"other_revenue_pct_gdp": 0.3},
+	}
+	var r: Dictionary = Statute.draft(gs, ns, _loader, spec)
+	if not bool(r.get("ok", false)):
+		_fail("the composed hold leg's spec refused: %s" % r.get("refusal", ""))
+		return
+	var law_id := String(r["draft_id"])
+	for i in range(int(ns.draft_bills[law_id]["months_left"])):
+		Statute.tick_month(gs, _loader)
+	if not ns.custom_laws.has(law_id):
+		_fail("the composition never completed -- the hold leg has no law to hold")
+		return
+	ns.held_bills[law_id] = {"months": 1, "origin": "assembly"}
+	var before: float = float(ns.law_other_revenue_pct_gdp)
+	Legislature.tick_month(gs, _loader)
+	if ns.held_bills.has(law_id):
+		_fail("the hold did not release after its month")
+		return
+	if not is_equal_approx(float(ns.law_other_revenue_pct_gdp), before + 0.3):
+		_fail("the held composed law was silently destroyed at release: %s vs %s -- the release must resolve the composed register" % [
+			ns.law_other_revenue_pct_gdp, before + 0.3])
+	var released: Dictionary = ns.last_law_result
+	if String(released.get("law_id", "")) != law_id or not bool(released.get("released", false)):
+		_fail("the composed law's release recorded no result: %s" % [released])
 
 
 ## Leg (e): identical states, identical bills -- Cycle over the absolute

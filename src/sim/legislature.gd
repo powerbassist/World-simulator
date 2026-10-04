@@ -180,18 +180,35 @@ static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
 ## whole first term. So the release charges UPPER_OVERRIDE_OFFSET through
 ## Government.penalise_blocs(), which is Article 49.3's own accumulator. Charged HERE
 ## rather than at the refusal because that is when the government has actually
-## insisted.
+## insisted -- and ONLY for a bill the government proposed: the origin each entry
+## carries since the ultra pass-2 shape is the charge's gate, and a private
+## member's bill the chamber held releases free, because nobody insisted on it
+## and a price nobody incurred is a levy, not a price.
 static func _tick_held_bills(state, ns, loader) -> void:
 	var due: Array = []
 	for law_id in ns.held_bills:
-		var remaining: int = int(ns.held_bills[law_id]) - 1
+		var entry: Dictionary = ns.held_bills[law_id]
+		var remaining: int = int(entry.get("months", 0)) - 1
 		if remaining <= 0:
 			due.append(law_id)
 		else:
-			ns.held_bills[law_id] = remaining
+			entry["months"] = remaining
 	for law_id in due:
+		# The origin is read BEFORE the erase -- it is the charge's gate below.
+		var origin: String = String(ns.held_bills[law_id].get("origin", "player"))
 		ns.held_bills.erase(law_id)
 		var law = _law_by_id(loader, String(law_id))
+		if law == null:
+			# A composed law is not in loader.laws -- the register it lives on
+			# is ns.custom_laws, rebuilt through the core factory (the same
+			# lookup _subtract_ledger runs). Without this half, a held COMPOSED
+			# bill was erased here and silently destroyed: no effects, no
+			# result, the ultra pass-2 pin in test_statute_assembly.gd holds
+			# the behavior either way.
+			for composed in Law.composed_register(ns):
+				if String(composed.id) == law_id:
+					law = composed
+					break
 		if law == null:
 			continue
 		var released := {
@@ -207,9 +224,11 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# until the V2.8 review, an override RAISED every bloc's approval, which is
 		# the opposite of the price tools/upper_house_probe.gd table U4 measured --
 		# that sweep ran _run_with_offset(loader, -offset), so the calibration this
-		# constant carries has always been a cost.
-		Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
-		released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
+		# constant carries has always been a cost. Gated on the origin since the
+		# ultra pass 2: an assembly bill's release charges nothing.
+		if origin != "assembly":
+			Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
+			released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
 
@@ -340,6 +359,16 @@ static func available(ns, all_laws: Array) -> Array:
 		if law.once and ns.passed_law_ids.has(law.id):
 			continue
 		if ns.law_cooldown_months.has(law.id):
+			continue
+		# V4.2 ultra pass 2. A repeal whose target has no ledger entry is not
+		# proposable: repeal_target_legal() gates it at composition, so a target
+		# gone from the book means the repeal was ALREADY carried -- re-offering
+		# it would pass a carried no-op and log "a race or a bug" from the
+		# ordinary propose path, which is the comment's premise kept honest.
+		# Kills both the after-cooldown no-op and the two-repeals-of-one-target
+		# case; the window self-heals the other way too, since a re-passed
+		# target re-opens its own repealer here.
+		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
 			continue
 		if law.constitutional and not law.systems.has(ns.system_id):
 			continue
@@ -662,6 +691,10 @@ static func apply(state, ns, law, loader) -> void:
 static func _effect_snapshot(ns, effects: Dictionary) -> Dictionary:
 	var snap := {}
 	for key in effects.get("tax_rates_pct", {}):
+		# "tax|%s" is split on "|" in _record_ledger to recover the sub-key, so
+		# a key containing "|" would corrupt the record -- statute.draft()'s
+		# new-tax charset gate (the pipe gate) is what keeps every key that
+		# reaches here split-safe.
 		snap["tax|%s" % key] = float(ns.tax_rates_pct.get(key, 0.0))
 	for key in effects.get("spending_pct_gdp", {}):
 		snap["spend|%s" % key] = float(ns.spending_pct_gdp.get(key, 0.0))
@@ -873,6 +906,16 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 				break
 	if target != null and target.cooldown_months > 0:
 		ns.law_cooldown_months[law_id] = target.cooldown_months
+	# THE ONCE RETURN, the ultra pass-2 finding: a once-law's flag was the one
+	# writer of passed_law_ids and nothing erased it, so a carried repeal
+	# removed the act for ever while the docs promise "the act returns by being
+	# re-proposed and re-passed after its cooldown". A carried repeal clears the
+	# gate -- the act returns by re-passage exactly as documented -- and the
+	# once flag's purpose (no re-passing without a fight) survives, because only
+	# a CARRIED REPEAL clears it. Composed laws are pinned once:false at birth,
+	# so this is the authored class only.
+	if target != null and target.once:
+		ns.passed_law_ids.erase(law_id)
 
 
 ## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.
@@ -1221,10 +1264,13 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 					ns.law_cooldown_months[law.id] = law.cooldown_months
 			else:
 				# HELD, not defeated: no cooldown, because the bill has not been beaten
-				# and is still in flight. tick_month() passes it when the hold runs out.
+				# and is still in flight. tick_month() passes it when the hold runs
+				# out. The origin rides the entry (the ultra pass-2 shape): "player"
+				# is what makes the release charge the override price -- the
+				# government's own insistence is the thing being priced.
 				result["held_by_upper"] = true
 				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
-				ns.held_bills[law.id] = ChambersK.UPPER_HOLD_MONTHS
+				ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "player"}
 			Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
 			ns.last_law_result = result
 			return result

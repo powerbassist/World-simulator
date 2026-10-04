@@ -39,7 +39,13 @@ extends SceneTree
 ##       industry maps (driven through the REAL _on_load_requested);
 ##   (l) the reversal preview's dual company shape: effect_lines() reads both
 ##       the {sector, burden} effects shape and the ledger's {sector: delta},
-##       or a regulation repeal's "It reverses" drops its one line.
+##       or a regulation repeal's "It reverses" drops its one line; and the
+##       bloc reversal rides the same walk under include_bloc (the default
+##       walk stays silent -- the price section prints the price already);
+##   (n) the result summary resolves composed laws -- a staged register entry
+##       renders its NAME, never the raw draft_NNNN id;
+##   (o) the briefing detaches on the real load path: hidden, and no reference
+##       to the discarded GameState survives (the V2.8 drift class).
 
 const Law = preload("res://src/core/law.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -438,6 +444,72 @@ func _run() -> void:
 			imposed = true
 	if not imposed:
 		_fail("the effects-shape burden line regressed: %s" % [effects_lines])
+
+	# (m) The reversal walk renders the BLOC reversal too -- the ultra pass-2
+	# finding: a negated ledger carries the bloc deltas the repeal re-applies,
+	# and effect_lines() dropped them, so the preview named every channel but
+	# the one a political-price-bearing repeal most moves. Default stays OFF:
+	# the price section's own walk must not print the price rows a second time.
+	var bloc_lines: Array[String] = BriefingUi.effect_lines(
+		{"bloc_offset": {"business": -0.15}}, ns, true)
+	var bloc_moved := false
+	for line in bloc_lines:
+		if line == "Moves the Business bloc's approval price by -0.15.":
+			bloc_moved = true
+	if not bloc_moved:
+		_fail("a negated bloc delta produced no reversal line: %s" % [bloc_lines])
+	if not BriefingUi.effect_lines({"bloc_offset": {"business": -0.15}}, ns).is_empty():
+		_fail("bloc_offset leaked into the default walk -- the price section would print its rows twice")
+
+	# (n) The result summary resolves composed laws -- the ultra pass-2 finding:
+	# _find_law scanned the loader only, so every composed division, held bill
+	# and referendum printed the raw draft_NNNN id on the panel that lists the
+	# laws. Staged in the register's own to_save_dict shape (the machine's).
+	# The LIVE state: leg (k)'s load rebounded every panel to the loaded game.
+	var live_state = _main._state
+	var live_loader = _main._loader
+	var live_ns = live_state.player()
+	live_ns.custom_laws["draft_424242"] = {
+		"id": "draft_424242", "name": "The Composed Namesake Act",
+		"theme": "labour", "summary": "",
+		"position": {"economic": 0.0, "social": 0.0},
+		"majority": "simple", "cooldown_months": 24, "once": false,
+		"effects": {"other_revenue_pct_gdp": 0.2}, "new_tax": {},
+		"repeals": "", "composed": true, "origin": "player",
+	}
+	live_ns.last_law_result = {
+		"law_id": "draft_424242", "passed": false, "majority": "simple",
+		"yes_seats": 115, "no_seats": 307, "abstain_seats": 0, "seats_total": 577,
+		"party_votes": {}, "party_support": {}, "party_rebels": {},
+	}
+	law_panel.mark_dirty()
+	law_panel._refresh()
+	if not _live_text_has(law_panel, "The Composed Namesake Act — FAILED"):
+		_fail("the result summary printed a raw draft id instead of the composed name")
+	live_ns.custom_laws.erase("draft_424242")
+	live_ns.last_law_result = {}
+
+	# (o) The briefing does not hold the dead state across a load -- the ultra
+	# pass-2 finding, the V2.8 drift class one panel deeper: the briefing is
+	# not in the registry, so the load path's setup() sweep never rebinds it,
+	# and an open briefing kept the discarded GameState (its poll verb wrote
+	# the dead run's books). Driven through the REAL load handler, leg (k)'s
+	# reason: a detach the handler skips is exactly the defect.
+	law_panel._on_propose(_law_by_id(live_loader, "high_earner_surtax"))
+	if not briefing.visible:
+		_fail("setup: the briefing did not open for the detach leg")
+	var err3: String = SaveManager.save_game(live_state, _main._clock, POLL_SLOT)
+	if err3 != "":
+		_fail("the detach leg's save failed: %s" % err3)
+	else:
+		_main._on_load_requested(POLL_SLOT)
+		SaveManager.delete_slot(POLL_SLOT)
+		if briefing.visible:
+			_fail("the briefing stayed open across a load -- a dead popup still answers clicks")
+		if briefing._state != null:
+			_fail("the briefing kept the discarded GameState across a load")
+		if briefing._ns != null:
+			_fail("the briefing kept the discarded nation across a load")
 
 
 ## The forecast walk, on a synthetic bill positioned so one party's support

@@ -150,7 +150,11 @@ var changes_system: bool = false
 ## snapshot at the top of apply(), and its negation is not re-recorded -- so
 ## the book has no path back through the repealer: the act returns by being
 ## re-proposed and re-passed after its cooldown, a new passage with new
-## realized deltas. Authored content never sets it; the composition machine
+## realized deltas. That promise is load-bearing for a ONCE law too, and the
+## ultra pass-2 made it true rather than merely documented: a carried repeal
+## clears the once gate (passed_law_ids, in _subtract_ledger), so the act is
+## re-proposable -- the once flag's purpose survives because only a carried
+## repeal clears it. Authored content never sets it; the composition machine
 ## does, so the field is "" on every data/laws/*.json entry and the loader
 ## need not know it exists. apply() subtracts the target's REALIZED ledger
 ## through apply_effects() -- the one applier, negated.

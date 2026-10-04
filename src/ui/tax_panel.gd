@@ -351,6 +351,24 @@ func _on_commit() -> void:
 	committed.emit(before, pending)
 
 
+## The uncommitted tax intent, for the budget panel's now-vs-proposed columns
+## and 24-month projection to price -- the ultra pass-2 wiring (without it the
+## budget panel's proposed column asserted "no change" while the player's
+## largest revenue lever sat half-drafted on X). EDITED KEYS ONLY, mirroring
+## what the player actually moved: Budget.commit() splices per key and an
+## untouched lever's pending value is just the live rate restated, so an empty
+## return is the harmless case -- the merge writes nothing. Read-only; the
+## commit is still this panel's own verb.
+func pending_tax() -> Dictionary:
+	var out := {"tax_rates_pct": {}}
+	for key in _edited_keys:
+		if String(key) == PROGRESSIVITY_KEY:
+			out["tax_progressivity"] = _pending_value(PROGRESSIVITY_KEY)
+		else:
+			out["tax_rates_pct"][key] = _pending_value(String(key))
+	return out
+
+
 func _on_lever_changed(value: float, key: String) -> void:
 	if key == PROGRESSIVITY_KEY:
 		_pending[PROGRESSIVITY_KEY] = value

@@ -599,7 +599,8 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	PanelKit.line(box, "%s — held by the %s" % [
 		law.law_name if law != null else law_id, ns.upper_chamber_name], PanelKit.Tone.PLAIN)
 
-	var months: int = int(ns.held_bills.get(law_id, 0))
+	# The ultra pass-2 shape: the entry carries {"months", "origin"}.
+	var months: int = int(ns.held_bills.get(law_id, {}).get("months", 0))
 	PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
 		"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
@@ -723,6 +724,14 @@ func _find_law(law_id: String):
 	for law in _loader.laws:
 		if law.id == law_id:
 			return law
+	# V4.2 ultra pass 2: a composed law lives on the register, not the loader --
+	# the briefing's _repeal_line idiom. Without the fallback every held bill,
+	# referendum and result summary for a composed law printed the raw
+	# draft_NNNN id on the panel that lists the laws.
+	if _state != null and _state.player() != null:
+		for law in Statute.custom_laws(_state.player()):
+			if String(law.id) == law_id:
+				return law
 	return null
 
 

@@ -1663,8 +1663,12 @@ var upper_amendment: String = ""
 ## but only at an election, which for France is up to five years away.
 var upper_share: Dictionary = {}
 
-## Bills the second chamber has refused and not killed: law id -> months remaining.
+## Bills the second chamber has refused and not killed: law id -> {"months":
+## months remaining, "origin": "player"|"assembly"} -- the ultra pass-2 shape.
 ## Counted down by Legislature.tick_month(), which every harness already calls.
+## The origin is the release price's gate: the override charge is the
+## GOVERNMENT's insistence priced, so a held private member's bill (the
+## assembly's own writer in statute.gd) releases free.
 ##
 ## EARNS THE BUMP, and it is `referendum_pending`'s case at V1.7c and
 ## `event_pending`'s at V1.8: absent, the register reads empty and a bill the Senate
@@ -2582,7 +2586,17 @@ static func from_dict(d: Dictionary):
 		s.upper_share[party_id] = float(d["upper_share"][party_id])
 	s.held_bills = {}
 	for law_id in d.get("held_bills", {}):
-		s.held_bills[law_id] = int(d["held_bills"][law_id])
+		# The ultra pass-2 shape is {"months": int, "origin": str}; an int
+		# payload (the pre-fix shape, never shipped -- 38 is unreleased) wraps
+		# as a player hold rather than crash int() on a Dictionary.
+		var held_entry: Variant = d["held_bills"][law_id]
+		if typeof(held_entry) == TYPE_DICTIONARY:
+			s.held_bills[law_id] = {
+				"months": int(held_entry.get("months", 0)),
+				"origin": String(held_entry.get("origin", "player")),
+			}
+		else:
+			s.held_bills[law_id] = {"months": int(held_entry), "origin": "player"}
 	s.judicial_review = String(d.get("judicial_review", ""))
 	s.judicial_independence = float(d.get("judicial_independence", 0.0))
 	s.start_judicial_independence = float(d.get("start_judicial_independence", 0.0))

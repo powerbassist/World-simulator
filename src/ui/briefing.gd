@@ -112,6 +112,23 @@ func open_for_draft(entry: Dictionary, draft_id: String, state, loader) -> void:
 	_rebuild()
 
 
+## A load invalidates everything this panel holds: the cached GameState is the
+## discarded game, the purchase state on it is dead, and a stale poll press
+## would write the dead run's books and push a dead-snapshot effects row into
+## the live one. Called from main.gd's load path, beside the industry-map
+## resets -- this panel is NOT in the window registry, so the setup() sweep
+## that rebinds every registered surface never reaches it (the V2.8 drift
+## class, one panel deeper).
+func detach() -> void:
+	hide()
+	_state = null
+	_ns = null
+	_party_list = []
+	_law = null
+	_draft = {}
+	_bill_key = ""
+
+
 func _rebuild() -> void:
 	for child in _body.get_children():
 		child.queue_free()
@@ -214,12 +231,15 @@ func _build_price() -> void:
 
 	# The reversal preview is the record of what the player was SHOWN at draft
 	# time -- the passage subtracts the target's LIVE ledger, so these lines
-	# are a briefing, not the mechanism.
+	# are a briefing, not the mechanism. include_bloc is TRUE here: a negated
+	# ledger carries the bloc deltas the repeal will actually re-apply, and
+	# dropping them showed a preview that named every channel but the one a
+	# political-price-bearing repeal most moves (the ultra pass-2 finding).
 	if not _draft.is_empty():
 		var negated: Dictionary = _draft.get("negated", {})
 		if not negated.is_empty():
 			PanelKit.heading(section, "It reverses")
-			for line in effect_lines(negated, _ns):
+			for line in effect_lines(negated, _ns, true):
 				PanelKit.line(section, line, PanelKit.Tone.DIM)
 
 
@@ -288,6 +308,11 @@ func _poll_key(bloc: String) -> String:
 
 
 func _on_poll(kind: String) -> void:
+	# A hidden panel's stale signal must not act: after detach() the state is
+	# the discarded game, and buy_poll() would charge the dead run's debt and
+	# emit a snapshot nothing live can compare against.
+	if _state == null:
+		return
 	var before := Trends.snapshot_now(_state)
 	var result: Dictionary = Statute.buy_poll(_state, _ns, _bill_key, kind)
 	if bool(result.get("refused", false)):
@@ -304,12 +329,17 @@ func _on_poll(kind: String) -> void:
 
 ## Human lines for a bill's channels -- direction and magnitude, one walk
 ## over the effects dictionary that both the rows and the attribution
-## sentence read. `bloc_offset` is skipped: it is the price, and the price has
-## its own section above. THE SCALAR SHAPES BOTH EXIST HERE: a spec's scalars
+## sentence read. `bloc_offset` is skipped by default: it is the price, and
+## the price has its own section above -- rendering it here too would print
+## every price row twice. THE ONE EXCEPTION is the reversal walk, which passes
+## `include_bloc`: a negated ledger's bloc deltas are not the price, they are
+## what the repeal re-applies, so the preview renders them as reversal lines
+## rather than dropping the one channel the bill most directly moves (the
+## ultra pass-2 finding). THE SCALAR SHAPES BOTH EXIST HERE: a spec's scalars
 ## are bare floats and a negated ledger's are {"": value} keyed by the empty
 ## string (legislature.gd's ledger shape), and _scalar_of() reads either, so
 ## the reversal preview rides this same walk instead of a second one.
-static func effect_lines(effects: Dictionary, ns) -> Array[String]:
+static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Array[String]:
 	var out: Array[String] = []
 	for key in effects.get("tax_rates_pct", {}):
 		var v := float(effects["tax_rates_pct"][key])
@@ -357,6 +387,12 @@ static func effect_lines(effects: Dictionary, ns) -> Array[String]:
 		var v: float = _scalar_of(effects["society"][term])
 		if v != 0.0:
 			out.append(_society_line(String(term), v))
+	if include_bloc:
+		for bloc in effects.get("bloc_offset", {}):
+			var v := float(effects["bloc_offset"][bloc])
+			if v != 0.0:
+				out.append("Moves the %s bloc's approval price by %+.2f." % [
+					String(bloc).capitalize(), v])
 	return out
 
 

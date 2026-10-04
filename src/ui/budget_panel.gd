@@ -146,6 +146,12 @@ signal committed(before: Dictionary, pending: Dictionary)
 
 var _state
 var _loader
+## V4.2 ultra pass 2. The Tax Code window, wired by main.gd beside the other
+## panel-to-panel references: its uncommitted edits ride this panel's proposed
+## column and 24-month projection (see _refresh()). A sibling reference, not
+## state -- the load path rebinds each panel's own setup() and leaves this
+## alone. Null until wired; every read guards it.
+var tax_panel = null
 var _pending := {"spending_pct_gdp": {}}
 ## The lever keys the player has actually moved. PER KEY rather than one boolean:
 ## a boolean latches -- nudge one slider, close the window without committing, and
@@ -430,10 +436,27 @@ func _refresh() -> void:
 	# nothing. preview() recomputes the books on a deep copy, so the "now" column is
 	# the live position without this panel writing a byte of sim state, which rule 2
 	# forbids. Found by tests/test_budget_panel.gd, not by looking.
+	#
+	# THE TAX MERGE, the ultra pass-2 finding: V4.2 T5 moved the tax levers off
+	# this panel and its _pending lost them with it, so an uncommitted Tax Code
+	# draft left proposed == now on Revenue/Deficit and both projections
+	# tax-identical -- the one surface that promises "this is what will happen"
+	# silently asserting no change. The edited keys merge into a copy of the
+	# spending pending; Budget.commit()'s per-key splice makes absent keys
+	# harmless, so an empty tax pending is exactly the pre-fix behaviour.
+	var pending := _pending.duplicate(true)
+	if tax_panel != null:
+		var tax_pending: Dictionary = tax_panel.pending_tax()
+		if tax_pending.has("tax_rates_pct"):
+			var rates: Dictionary = pending.get("tax_rates_pct", {})
+			rates.merge(tax_pending["tax_rates_pct"])
+			pending["tax_rates_pct"] = rates
+		if tax_pending.has("tax_progressivity"):
+			pending["tax_progressivity"] = tax_pending["tax_progressivity"]
 	var now := Budget.preview(_state, {})
-	var proposed := Budget.preview(_state, _pending)
+	var proposed := Budget.preview(_state, pending)
 	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS, _loader)
-	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS, _loader)
+	var proposed_path := Budget.project(_state, pending, PROJECTION_MONTHS, _loader)
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
 	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))

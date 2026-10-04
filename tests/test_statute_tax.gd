@@ -68,6 +68,7 @@ func _init() -> void:
 		_test_birth_yield_ceiling()
 		_test_negative_params_refused()
 		_test_nameless_key_refused()
+		_test_tax_key_charset()
 	_finish()
 
 
@@ -124,6 +125,33 @@ func _test_nameless_key_refused() -> void:
 		_fail("a nameless new_tax spec must be refused -- a tax needs a name to be argued about")
 	if String(r.get("refusal", "")).find("name") == -1:
 		_fail("the nameless refusal must say so: '%s'" % r.get("refusal", ""))
+
+
+## The ultra pass-2 pipe gate: the ledger encodes a tax channel as "tax|<key>"
+## and splits on "|", so a key carrying "|" corrupts the record (a birth keyed
+## "carbon|tax" became permanently un-repealable while its repeal reported
+## carried; "vat|one" mis-split onto an AUTHORED lever). The draft gate refuses
+## anything outside [a-z0-9_], length 2..24, and names the rule.
+func _test_tax_key_charset() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	for bad in ["carbon|tax", "Carbon", "carbon-tax", "a", "x".repeat(25)]:
+		var spec: Dictionary = BIRTH_SPEC.duplicate(true)
+		spec["new_tax"]["key"] = bad
+		spec["new_tax"]["name"] = "The Pipe Levy"
+		var r: Dictionary = Statute.draft(gs, ns, _loader, spec)
+		if bool(r.get("ok", true)):
+			_fail("tax key '%s' must be refused by the charset gate" % bad)
+		if String(r.get("refusal", "")).find("lowercase") == -1:
+			_fail("the charset refusal must name the rule: '%s'" % r.get("refusal", ""))
+	# The legal form still drafts: digits and underscores, length 2..24.
+	var good: Dictionary = BIRTH_SPEC.duplicate(true)
+	good["new_tax"]["key"] = "carbon_tax_2"
+	good["new_tax"]["name"] = "The Second Carbon Levy"
+	var ok: Dictionary = Statute.draft(gs, ns, _loader, good)
+	if not bool(ok.get("ok", false)):
+		_fail("carbon_tax_2 must pass the charset gate: %s" % ok.get("refusal", ""))
 
 
 func _fresh():

@@ -320,6 +320,11 @@ func _ready() -> void:
 	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "coins.svg")
 	_tax_panel.setup(_state, _loader)
 	_tax_panel.hide_close_button()
+	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
+	# projection price the Tax Code window's uncommitted edits (the panels are
+	# siblings; this is a reference, not state, and the load path's setup()
+	# sweep leaves it alone).
+	_budget_panel.tax_panel = _tax_panel
 	_tax_panel.committed.connect(func(before, pending):
 		_queue_effect("Tax code change", before)
 		_hud.message_stack.push("Tax code committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
@@ -2177,6 +2182,11 @@ func _on_load_requested(slot: String) -> void:
 	# review found below -- setup(), not refresh(), because the reference itself
 	# is what has to be replaced.
 	_map_flows.setup(_map_view, _clock, _loader, _state)
+
+	# The bill briefing is not in the registry, so the setup() sweep below never
+	# reaches it -- open across a load it kept the discarded GameState, and its
+	# poll verb wrote the dead run's books (the V2.8 five-panel drift class).
+	_briefing.detach()
 
 	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
 	# A panel stores `state` in its own setup(), so one omitted here keeps a

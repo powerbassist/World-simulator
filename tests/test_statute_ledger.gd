@@ -45,6 +45,8 @@ func _init() -> void:
 		_test_clamp_aware_recording()
 		_test_repeal_subtracts_exactly()
 		_test_repeal_refusals()
+		_test_once_law_returns_on_repeal()
+		_test_consumed_repeal_not_reoffered()
 		_test_roundtrip_and_absence()
 		_test_duplicate_copies()
 		_test_event_silence()
@@ -185,6 +187,80 @@ func _test_repeal_refusals() -> void:
 		return
 	if Legislature.repeal_target_legal(ns, _loader, reform.id):
 		_fail("non-constitutional institutional law %s must not be a repeal target -- the setting has no inverse delta" % reform.id)
+
+
+## THE ONCE RETURN, the ultra pass-2 finding: a once-law's passed flag was
+## written at apply() and nothing ever erased it, so a carried repeal removed
+## the act for ever while the docs promise "the act returns by being
+## re-proposed and re-passed after its cooldown". A carried repeal now clears
+## the gate. coal_phase_out_act is a non-constitutional once law with
+## cooldown_months 0, so the return is immediate -- both facts asserted.
+func _test_once_law_returns_on_repeal() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var law = _law_by_id("coal_phase_out_act")
+	if law == null:
+		_fail("authored once law coal_phase_out_act not found")
+		return
+	if not law.once:
+		_fail("coal_phase_out_act must be a once law for this leg to mean anything")
+		return
+	Legislature.apply(gs, ns, law, _loader)
+	if not ns.passed_law_ids.has(law.id):
+		_fail("setup: applying the once law must set its passed flag")
+		return
+	var repeal := Law.new()
+	repeal.id = "repeal_of_the_coal_phase_out"
+	repeal.law_name = "Repeal of the Coal Phase-Out Act"
+	repeal.theme = "business"
+	repeal.summary = "Test repeal."
+	repeal.position = {"economic": 0.5, "social": 0.0}
+	repeal.majority = "simple"
+	repeal.repeals = law.id
+	Legislature.apply(gs, ns, repeal, _loader)
+	if ns.passed_law_ids.has(law.id):
+		_fail("a carried repeal left the once flag set -- the act can never return")
+	var offered := false
+	for open_law in Legislature.available(ns, _loader.laws):
+		if open_law.id == law.id:
+			offered = true
+			break
+	if int(law.cooldown_months) != 0:
+		_fail("the fixture's once law grew a cooldown -- the immediate-return read needs cooldown 0")
+	elif not offered:
+		_fail("the repealed once law was not re-offered -- the return is still dead")
+
+
+## A repeal whose target is gone from the book is not proposable -- the ultra
+## pass-2 nit. available() re-offered a consumed repealer after its (nonexistent)
+## cooldown and a second passage logged "a race or a bug" from the ordinary
+## propose path; the filter kills the no-op and keeps _subtract_ledger's
+## premise honest.
+func _test_consumed_repeal_not_reoffered() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	Legislature.apply(gs, ns, _law_by_id(SURTAX), _loader)
+	var repeal := Law.new()
+	repeal.id = "repeal_of_the_surtax"
+	repeal.law_name = "Repeal of the High-Earner Surtax"
+	repeal.theme = "tax"
+	repeal.summary = "Test repeal."
+	repeal.position = {"economic": 0.6, "social": 0.0}
+	repeal.majority = "simple"
+	repeal.repeals = SURTAX
+	Legislature.apply(gs, ns, repeal, _loader)
+	if ns.law_ledger.has(SURTAX):
+		_fail("setup: the target's ledger entry must be gone after the carried repeal")
+		return
+	var offered := false
+	for open_law in Legislature.available(ns, [repeal]):
+		if open_law.id == repeal.id:
+			offered = true
+			break
+	if offered:
+		_fail("a consumed repealer was re-offered -- its next passage is a carried no-op")
 
 
 func _test_roundtrip_and_absence() -> void:
