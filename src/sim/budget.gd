@@ -37,6 +37,11 @@ const Energy = preload("res://src/sim/energy.gd")
 ## demand default in commit()'s level_effect loop, where the authored five read
 ## their MULT_TAX rows. Constants only, so the dependency stops at the values.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
+## The ultra pass-1 projection finding, PR 46 finding 6 / PR 47 finding 1 a third
+## time: project() ticks the assembly's own life too, and the cycle this preload
+## closes (statute -> legislature -> here) is the one budget -> events ->
+## legislature -> here already runs.
+const Statute = preload("res://src/sim/statute.gd")
 
 
 static func tick_month(state) -> void:
@@ -493,6 +498,24 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# re-baseline measured unemployment as the largest channel moved
 		# through exactly this read.
 		Industry.tick_month(sim, loader)
+		# In project()'s slot beside Industry -- main.gd runs it beside the
+		# legislature's tick -- and present for the reason the Events paragraph
+		# below gives in its own words, made sharper because the machine is
+		# figure-bearing at IDLE: the backbench's PMB hazard is a pure function
+		# of (nation, month), Cycle-keyed like the Events hazard the loop
+		# already includes, so the projection sees exactly the divisions the
+		# next twenty-four months deliver rather than an average of them. And a
+		# carried bill applies through the ONE applier, whose budget levers
+		# route through Budget.commit() into the very revenue and spending keys
+		# the snapshot prints -- a projection that held the assembly frozen
+		# would show a country whose parliament never legislates. The countdown
+		# side of the same machine (law cooldowns, suspensive holds,
+		# referendums) stays in Legislature.tick_month(), which this loop has
+		# never run -- the boundary tests/test_upper_house.gd already records
+		# for the fiscal projection -- so a hold rides out the window and a
+		# failed bill's cooldown does not count down inside it; both are
+		# recorded bounds of this loop, not omissions to patch by symmetry.
+		Statute.tick_month(sim, loader)
 		# In main.gd's slot -- between Companies and Investment -- and absent
 		# altogether until the V2.8 review, which is the one system here that had
 		# neither a paragraph justifying its presence nor Media's paragraph

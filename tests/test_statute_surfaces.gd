@@ -32,11 +32,20 @@ extends SceneTree
 ##       by the endorsed line -- the verb was player-unreachable before the
 ##       section existed, which is why the leg can fail silently and lives
 ##       here.
+##   (j) the division card's memory keys the DIVISION'S OWN MONTH -- the
+##       machine's assembly_division_month stamp -- so a quiet month cannot
+##       re-announce a division (driven on the real announcer, twice);
+##   (k) the load-path reset clears the three assembly memories beside the
+##       industry maps (driven through the REAL _on_load_requested);
+##   (l) the reversal preview's dual company shape: effect_lines() reads both
+##       the {sector, burden} effects shape and the ledger's {sector: delta},
+##       or a regulation repeal's "It reverses" drops its one line.
 
 const Law = preload("res://src/core/law.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
+const BriefingUi = preload("res://src/ui/briefing.gd")
 const LawPanelUi = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
@@ -360,6 +369,75 @@ func _run() -> void:
 	if not _live_text_has(law_panel, "There is no such bill before the assembly."):
 		_fail("a refused endorse printed no refusal line -- the display is dead as wired")
 	law_panel._endorse_refusal = ""
+
+	# --- (j) The division card keys the DIVISION'S OWN MONTH ----------------
+	# The review's finding: the guard used to compare the memory against the
+	# CURRENT month, so every quiet month re-announced the last division until
+	# a new law event overwrote it. Driven on the real announcer: push once,
+	# advance the clock, call again, and the card count must not move.
+	var cards_before: int = _main._hud.message_stack._cards.size()
+	var stamp: int = int(state.year) * 12 + int(state.month)
+	# The FULL division shape resolve_vote() writes -- the law panel's result
+	# summary reads the tally and party_votes off this same dictionary on the
+	# next frame, so a thinner fixture would be a script error, not a pin.
+	ns.last_law_result = {
+		"assembly_bill": true, "bill_id": "pmb_card", "law_id": "retirement_age_reform",
+		"passed": false, "majority": "simple",
+		"yes_seats": 115, "no_seats": 307, "abstain_seats": 0, "seats_total": 577,
+		"party_votes": {}, "party_support": {}, "party_rebels": {},
+		"assembly_division_month": stamp,
+	}
+	_main._announce_assembly_events()
+	if int(_main._assembly_result_month) != stamp:
+		_fail("the card memory did not take the division's own month stamp")
+	var after_first: int = _main._hud.message_stack._cards.size()
+	if after_first != cards_before + 1:
+		_fail("the division card did not push exactly once (%d -> %d)" % [cards_before, after_first])
+	state.month = int(state.month) + 1
+	if int(state.month) > 12:
+		state.month = 1
+		state.year = int(state.year) + 1
+	_main._announce_assembly_events()
+	if _main._hud.message_stack._cards.size() != after_first:
+		_fail("a quiet month re-announced the division -- the memory must key the stamp, not the clock")
+
+	# --- (k) The load-path reset clears the assembly memories too -----------
+	# Driven through the REAL handler, the same reason leg (g) drives the real
+	# save/load pair: a memory reset the handler skips is exactly the defect.
+	var err2: String = SaveManager.save_game(state, _main._clock, POLL_SLOT)
+	if err2 != "":
+		_fail("the load-reset leg's save failed: %s" % err2)
+	else:
+		_main._announced_assembly_bills["ghost_bill"] = true
+		_main._assembly_cards["ghost_bill"] = "card_ghost"
+		_main._assembly_result_month = 42
+		_main._on_load_requested(POLL_SLOT)
+		SaveManager.delete_slot(POLL_SLOT)
+		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty() \
+				or int(_main._assembly_result_month) != -1:
+			_fail("the load path left assembly announce memories behind -- they belong to the discarded game")
+
+	# --- (l) The reversal preview's dual company shape ----------------------
+	# A negated ledger keys the burden channel BY SECTOR ({sector: delta},
+	# legislature.gd's ledger shape) where a bill's effects carry {sector,
+	# burden}. Without the second reading a regulation repeal's "It reverses"
+	# preview printed its heading over zero lines -- silent, misleading by
+	# omission, on the statute book's headline verb.
+	var ledger_lines: Array[String] = BriefingUi.effect_lines({"company": {"industry": -0.3}}, ns)
+	var lifted := false
+	for line in ledger_lines:
+		if line == "Lifts a burden of 0.30 on the Industry sector.":
+			lifted = true
+	if not lifted:
+		_fail("a negated sector burden produced no reversal line: %s" % [ledger_lines])
+	var effects_lines: Array[String] = BriefingUi.effect_lines(
+		{"company": {"sector": "industry", "burden": 0.3}}, ns)
+	var imposed := false
+	for line in effects_lines:
+		if line == "Imposes a burden of 0.30 on the Industry sector.":
+			imposed = true
+	if not imposed:
+		_fail("the effects-shape burden line regressed: %s" % [effects_lines])
 
 
 ## The forecast walk, on a synthetic bill positioned so one party's support

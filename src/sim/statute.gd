@@ -5,11 +5,16 @@ extends RefCounted
 ## a drafting period, and the finished bill enters the nation's own register
 ## as a law like any other -- proposed, voted, failable, repealable.
 ##
-## A leaf: preloads its constants, Law, and legislature.gd (for the repeal
-## gate only -- legislature cannot preload this file back, so the legality
-## scan rebuilds composed laws off the core Law factory, never through here).
+## The preload ledger, companies.gd's post-PR-47 form: SK (its own constants),
+## Law, legislature.gd (the repeal gate and the division's applier --
+## legislature cannot preload this file back, so the legality scan rebuilds
+## composed laws off the core Law factory, never through here),
+## economy_constants, companies_constants, Cycle, election_constants, and --
+## V4.2's ultra review, the second chamber on a carried bill -- chambers.gd
+## and chambers_constants.gd. NOT a leaf, and not pretending to be one.
 ## One writer of ns.draft_bills, ns.custom_laws and ns.assembly_bills, all
-## reset in Legislature.init_nation(). No rand() anywhere -- the countdown is
+## reset in Legislature.init_nation(); on a suspensive hold it parks beside
+## propose() into ns.held_bills. No rand() anywhere -- the countdown is
 ## a counter, the derived price a pure function of the spec, a draft's id is
 ## arithmetic, and the assembly's hazards draw on Cycle.unit over the
 ## absolute month (the events.gd discipline) -- so two identical states draft
@@ -28,6 +33,11 @@ const CK = preload("res://src/sim/companies_constants.gd")
 ## every party on -- no parallel ideology vocabulary, legislature.gd's own rule).
 const Cycle = preload("res://src/sim/cycle.gd")
 const EK = preload("res://src/sim/election_constants.gd")
+## The ultra pass-1 finding: a carried assembly bill walks the SAME pipeline
+## propose()'s ordinary route walks -- second chamber, then court. Both are
+## leaves; neither knows this file exists.
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
 
 ## The channels a spec may name. The keyed channels carry {sub_key: value},
 ## the scalars a bare float, company its {sector, burden} shape and society
@@ -319,10 +329,10 @@ static func custom_laws(ns) -> Array:
 
 
 ## V4.2 T5. Commission a poll on one bill. The ONE writer of
-## ns.poll_purchases, and the one place outside Budget.tick_month() that
-## moves the debt stock on the player's behalf -- the companies.gd bailout's
-## exact discipline, restated here because the next sim author will meet this
-## register before that comment:
+## ns.poll_purchases, and a second one-off capital writer outside
+## Budget.tick_month() beside the companies.gd bailout -- the same discipline,
+## restated here because the next sim author will meet this register before
+## that comment:
 ##
 ## A POLL FEE IS A ONE-OFF PURCHASE, not income. The cost lands on the debt
 ## STOCK (`debt_eur_bn`) through the GDP level, and it moves
@@ -525,13 +535,17 @@ static func _resolve_due(state, ns, loader) -> void:
 ## runs with the entry's endorse bonus through its DEFAULTED support_bonus
 ## parameter (the plan's constraint -- the signature owns about twenty-five
 ## call sites -- and its sanctioned reading, since a statute-side wrapper
-## would have re-mirrored the loop and the majority match verbatim). Passage
-## applies through the ONE applier, so the ledger records the act and repeal
-## works later; failure writes the authored cooldown exactly as propose()'s
-## own failure path does. Deliberately NOT the court's pipeline: an
-## assembly bill that divided clean is the ordinary legislative procedure,
-## and the court's gate is for bills taking effect WITHOUT a division
-## (propose()'s referendum route, 49.3, the upper-house release).
+## would have re-mirrored the loop and the majority match verbatim). A CARRIED
+## bill then walks the SAME pipeline propose()'s ordinary route walks, in the
+## same order: the second chamber between the division and everything after it
+## (Chambers.power_over -> resolve_upper, an absolute refusal killing the bill
+## with the authored cooldown, a suspensive one parking it into ns.held_bills
+## for the release path to apply through the court), then the court through
+## Legislature.review_and_apply_after_division(). The pool filters to AUTHORED
+## laws only, so the held-bill release's loader lookup always finds what this
+## function parked. Failure writes the authored cooldown exactly as
+## propose()'s own failure path does -- a failed division faces neither the
+## chamber nor the court, because there is nothing yet for either to review.
 static func _divide(state, ns, loader, bill_id: String) -> void:
 	var entry: Dictionary = ns.assembly_bills.get(bill_id, {})
 	ns.assembly_bills.erase(bill_id)
@@ -549,17 +563,43 @@ static func _divide(state, ns, loader, bill_id: String) -> void:
 		ns, party_list, law, false, float(entry.get("endorse_bonus", 0.0)))
 	result["assembly_bill"] = true
 	result["bill_id"] = bill_id
-	# The skip is MARKED, not silent: the court's gate is _review_and_apply's,
-	# for bills taking effect WITHOUT a division (the referendum settle path
-	# lands unreviewed on the same recorded ground), and this bill HAS
-	# divided -- the readout names the absence rather than leaving a reader
-	# to wonder whether review was forgotten.
-	result["court_skipped"] = true
+	# The DIVISION'S OWN MONTH, not the reader's: main.gd's card memory keys
+	# on this stamp, so a quiet month that merely finds the result still on
+	# the register cannot re-announce a division that happened once.
+	result["assembly_division_month"] = _abs_month(state)
 	if String(entry.get("backer_firm", "")) != "":
 		result["backer_firm"] = String(entry["backer_firm"])
 		result["backer_chief"] = String(entry.get("backer_chief", ""))
 	if bool(result.get("passed", false)):
-		Legislature.apply(state, ns, law, loader)
+		var power: String = Chambers.power_over(ns, law)
+		if power != ChambersK.VERDICT_NONE:
+			var upper: Dictionary = Legislature.resolve_upper(ns, party_list, law)
+			result["upper_chamber"] = ns.upper_chamber_name
+			result["upper_power"] = power
+			result["upper_passed"] = upper["passed"]
+			result["upper_yes_seats"] = upper["yes_seats"]
+			result["upper_no_seats"] = upper["no_seats"]
+			result["upper_abstain_seats"] = upper["abstain_seats"]
+			result["upper_seats_total"] = upper["seats_total"]
+			if not bool(upper["passed"]):
+				result["passed"] = false
+				if power == ChambersK.VERDICT_ABSOLUTE:
+					result["blocked_by_upper"] = true
+					if law.cooldown_months > 0:
+						ns.law_cooldown_months[law.id] = law.cooldown_months
+				else:
+					# HELD, not defeated: propose()'s own reading, and the
+					# release in Legislature.tick_month() applies the bill
+					# through the court when the hold runs out -- no second
+					# division, no command from anyone.
+					result["held_by_upper"] = true
+					result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
+					ns.held_bills[law.id] = ChambersK.UPPER_HOLD_MONTHS
+				ns.last_law_result = result
+				return
+		# No upper chamber, or the chamber carried it: the court, the pipeline's
+		# last stage, exactly as propose()'s ordinary route runs it.
+		Legislature.review_and_apply_after_division(state, ns, law, loader, result)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 	ns.last_law_result = result

@@ -363,6 +363,19 @@ through `Budget.commit()` and the erosion curve and demand impulse fire exactly
 as any budget change would — then erases the entry and writes the target's own
 cooldown, so a repealed act sits out its cooldown before it can be re-proposed.
 
+**A pure repeal records no ledger entry of its own.** Its subtraction runs
+*before* the snapshot, and its negation is not re-recorded, so the book has no
+path back *through the repealer*: repealing a repeal removes nothing and
+re-adds nothing. The repealed act returns the only way an act can — by being
+re-proposed and re-passed after its cooldown, a new passage with new realized
+deltas. (An early draft of this section, and of the `repeals` field's comment
+in `law.gd`, claimed the repealer's passage got its own ledger entry and that
+repealing a repeal re-added; neither is mechanically possible, and the draft
+gate refuses both shapes loudly.) The cooldown comes off the target law
+wherever it lives — an id the loader does not know is a composed law, found a
+second time in `ns.custom_laws` — which is what makes the 24-month re-proposal
+cadence hold for the compositions as well as the authored book.
+
 `Legislature.repeal_target_legal()` gates the draft at composition time, not
 at passage. Two refusals, and the second is the one that earns the loader
 parameter on `Statute.draft()`: the book must record the target, and the
@@ -594,16 +607,32 @@ nation's effective plain-bill rate is 0.08 + 0.02 = 0.10 rather than 0.08
 alone. The inflation is recorded in `statute_constants.gd` and accepted
 rather than tuned away: fires run ~0.24/yr and only where a sector stands
 burdened (an idle world holds none above the floor), far inside the test's
-band. The **court skip**: an assembly bill HAS divided, and the court's gate
-is for bills taking effect WITHOUT a division — `propose()`'s referendum
-route, 49.3, the upper-house release, the referendum-settle precedent the
-T1 repeal section already relies on. The skip is therefore MARKED, not
-silent: `ns.last_law_result` carries `"assembly_bill": true` and
-`"court_skipped": true`, so the readout names the absence rather than
-leaving a reader to wonder whether review was forgotten.
-`tests/test_statute_assembly.gd` pins the whole machine, the endorsement's
-measured effect included (control 115/307, endorsed 268/309 on the same
-assembly).
+band.
+
+**The pipeline, corrected by the version-close review.** A carried assembly
+bill walks the SAME stages `propose()`'s ordinary route walks, in the same
+order: the second chamber between the division and everything after it
+(`Chambers.power_over()` → `resolve_upper()` — an absolute refusal kills the
+bill with the authored cooldown, a suspensive one holds it `UPPER_HOLD_MONTHS`
+in `ns.held_bills` exactly as `propose()` parks one), then the court through
+`Legislature.review_and_apply_after_division()`. An assembly bill that divided
+clean is the ordinary legislative procedure, and that is what the court
+reviews — `propose()`'s ordinary route has court-reviewed every carried bill
+since V1.1e; a division was never an exemption. (The first draft of this
+section recorded a "court skip" on exactly the opposite ground — that the
+court's gate was for bills taking effect without a division — and the
+division the first draft reasoned beside, the assembly's own, was skipping
+the second chamber entirely; both halves were false, and neither was marked.)
+A FAILED division faces neither stage: there is nothing yet for a chamber or
+a court to review, and the result carries no `upper_*` or `reviewable` key.
+The result records each stage under the standard keys — `upper_chamber` /
+`upper_passed` / `blocked_by_upper` / `held_by_upper` from the chamber,
+`reviewable` / `struck_down` from the court — plus `assembly_bill: true`,
+the bill's id, its backer if a chief signed it, and
+`assembly_division_month`, the stamp the division card's memory keys on.
+`tests/test_statute_assembly.gd` pins the whole machine — the pipeline
+included, a Senat-passing and a Senat-held bill both — and the endorsement's
+measured effect (control 115/307, endorsed 268/309 on the same assembly).
 
 ---
 

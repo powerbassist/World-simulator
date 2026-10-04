@@ -1604,13 +1604,17 @@ func _announce_assembly_events() -> void:
 			"A chief before the assembly" if backed else "Private member's bill", body)
 		_assembly_cards[bill_id] = card_id
 	# The division card. The assembly_bill marker on ns.last_law_result says
-	# the last division was the assembly's; the month memory is what stops it
-	# repeating -- the in-tray keeps no history, so there is nothing per-bill
-	# left to key on once the entry is erased.
+	# the last division was the assembly's; the memory keys the DIVISION'S OWN
+	# MONTH -- the assembly_division_month stamp the machine writes into the
+	# result -- and not the current month, which is what made a quiet month
+	# whose tick merely found the old result still on the register re-announce
+	# it every month until a new law event overwrote it. The in-tray keeps no
+	# history, so the stamp is the one per-division fact left once the entry
+	# is erased.
 	var result: Dictionary = ns.last_law_result
-	var now := int(_state.year) * 12 + int(_state.month)
-	if bool(result.get("assembly_bill", false)) and _assembly_result_month != now:
-		_assembly_result_month = now
+	if bool(result.get("assembly_bill", false)) \
+			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
+		_assembly_result_month = int(result.get("assembly_division_month", -1))
 		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
 
 func _assembly_bill_body(entry: Dictionary) -> String:
@@ -2154,6 +2158,13 @@ func _on_load_requested(slot: String) -> void:
 	_bid_cards.clear()
 	_failure_cards.clear()
 	_industry_card_firms.clear()
+	# The assembly's three beside them, the same rule: bill ids collide only
+	# within a run, a loaded last_law_result can carry assembly_bill true, and
+	# a stale division-month memory would either swallow the loaded bill's
+	# card or re-fire the discarded game's.
+	_announced_assembly_bills.clear()
+	_assembly_cards.clear()
+	_assembly_result_month = -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])

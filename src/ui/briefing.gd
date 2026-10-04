@@ -333,11 +333,26 @@ static func effect_lines(effects: Dictionary, ns) -> Array[String]:
 			"Raises" if v > 0.0 else "Forgoes", absf(v)])
 	if effects.has("company"):
 		var company: Dictionary = effects["company"]
-		var v := absf(float(company.get("burden", 0.0)))
-		if v != 0.0:
-			var up: bool = float(company.get("burden", 0.0)) > 0.0
-			out.append("%s a burden of %.2f on the %s sector." % [
-				"Imposes" if up else "Lifts", v, String(company.get("sector", "")).capitalize()])
+		# TWO SHAPES, the dual reading _scalar_of() gives the scalars above: a
+		# bill's effects carry {"sector": ..., "burden": ...}, and a negated
+		# ledger carries {sector: delta} keyed by the sector itself
+		# (legislature.gd's ledger shape -- _subtract_ledger's own comment
+		# records that the two differ). Without the second reading, a
+		# regulation repeal's "It reverses" preview dropped the one line it
+		# exists to show.
+		if company.has("sector") and company.has("burden"):
+			var v := absf(float(company.get("burden", 0.0)))
+			if v != 0.0:
+				var up: bool = float(company.get("burden", 0.0)) > 0.0
+				out.append("%s a burden of %.2f on the %s sector." % [
+					"Imposes" if up else "Lifts", v, String(company.get("sector", "")).capitalize()])
+		else:
+			for sector in company:
+				var ledger_v := float(company[sector])
+				if ledger_v != 0.0:
+					out.append("%s a burden of %.2f on the %s sector." % [
+						"Imposes" if ledger_v > 0.0 else "Lifts", absf(ledger_v),
+						String(sector).capitalize()])
 	for term in effects.get("society", {}):
 		var v: float = _scalar_of(effects["society"][term])
 		if v != 0.0:

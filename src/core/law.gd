@@ -144,13 +144,16 @@ var systems: Array[String] = []
 ## ns.permits_system_change -- see docs/transition-model.md.
 var changes_system: bool = false
 
-## V4.2. The law id this bill REMOVES on passage -- a repeal is a law like any
-## other: proposed, voted, failable, and its own passage gets its own ledger
-## entry (repealing a repeal re-adds, mechanically consistent). Authored
-## content never sets it; the composition machine does, so the field is ""
-## on every data/laws/*.json entry and the loader need not know it exists.
-## apply() subtracts the target's REALIZED ledger through apply_effects() --
-## the one applier, negated.
+## V4.2. The law id this bill REMOVES on passage -- a repeal is a law like
+## any other in HOW it arrives: proposed, voted, failable. But a PURE repeal
+## records no ledger entry of its own -- its subtraction runs BEFORE the
+## snapshot at the top of apply(), and its negation is not re-recorded -- so
+## the book has no path back through the repealer: the act returns by being
+## re-proposed and re-passed after its cooldown, a new passage with new
+## realized deltas. Authored content never sets it; the composition machine
+## does, so the field is "" on every data/laws/*.json entry and the loader
+## need not know it exists. apply() subtracts the target's REALIZED ledger
+## through apply_effects() -- the one applier, negated.
 var repeals: String = ""
 
 ## V4.2. True for a runtime-built law -- the composition machine's output.

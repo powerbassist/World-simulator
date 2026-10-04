@@ -22,6 +22,12 @@ extends SceneTree
 ##     interface's sanctioned reading, since a wrapper would have re-mirrored
 ##     the loop and the majority match verbatim) and the endorsement price
 ##     lands ONCE through the ONE applier, with a second stand refused;
+##   - THE PIPELINE (the version-close review's correction): a CARRIED bill
+##     walks propose()'s own stages -- the second chamber between the division
+##     and everything after it, then the court; a Senat-refused bill is HELD
+##     like propose()'s own, and the release applies through the court on its
+##     own. A FAILED division faces neither stage and carries none of the
+##     pipeline's keys;
 ##   - THE LOBBY: a burdened sector with a major draws a chief-backed bill
 ##     naming that sector's burden-easing law, the backer a REAL chief; a
 ##     sector with no deregulation law to name falls through to a plain bill;
@@ -35,6 +41,7 @@ const NationState = preload("res://src/core/nation_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const SK = preload("res://src/sim/statute_constants.gd")
+const CK = preload("res://src/sim/chambers_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 
 const PLAYER := "FRA"
@@ -70,6 +77,7 @@ func _init() -> void:
 		_test_hazard_band_and_gate()
 		_test_resolves_without_player()
 		_test_endorse()
+		_test_upper_house_and_court_pipeline()
 		_test_in_flight_guard()
 		_test_lobby()
 		_test_determinism()
@@ -180,6 +188,12 @@ func _test_resolves_without_player() -> void:
 		_fail("the result does not carry the assembly marker -- the cards cannot say where it came from")
 	if int(result.get("yes_seats", -1)) < 0:
 		_fail("the result carries no seat tally -- resolve_vote() did not run")
+	# THE DIVISION'S OWN MONTH, stamped into the result: main.gd's card memory
+	# keys on this, not on the current month, so a quiet month cannot re-announce
+	# a division that happened once.
+	if int(result.get("assembly_division_month", -1)) != _month_index(gs):
+		_fail("the result carries no division month stamp (got %s, state at %d) -- the card memory has nothing to key on"
+			% [result.get("assembly_division_month", -1), _month_index(gs)])
 	var law = _law_by_id(ENDORSE_LAW)
 	if bool(result.get("passed", true)):
 		if ns.law_cooldown_months.has(ENDORSE_LAW):
@@ -229,11 +243,92 @@ func _test_endorse() -> void:
 	if int(b["yes_seats"]) <= int(a["yes_seats"]):
 		_fail("the endorsed division won no more seats than the control (%d vs %d) -- measured control 115, endorsed 268" % [
 			int(b["yes_seats"]), int(a["yes_seats"])])
-	# The court-skip is marked, not silent: an assembly bill HAS divided, so
-	# its result records that the court's gate was never on its pipeline (the
-	# referendum settle path is the other unreviewed landing).
-	if not bool(b.get("court_skipped", false)):
-		_fail("the endorsed division's result does not carry court_skipped -- the skip is invisible")
+	# The retired court_skipped marker must be GONE, and a FAILED division must
+	# carry none of the passage pipeline's keys: the second chamber and the
+	# court review a bill that CARRIED (test_upper_house_and_court_pipeline
+	# pins that read), and there is nothing yet for either to review here.
+	if b.has("court_skipped"):
+		_fail("a failed division still carries the retired court_skipped marker")
+	for key in ["upper_chamber", "upper_passed", "reviewable", "held_by_upper", "blocked_by_upper"]:
+		if b.has(key):
+			_fail("a failed division walked the passage pipeline ('%s' present)" % key)
+
+
+## THE PIPELINE, the version-close review's correction: a CARRIED assembly bill
+## walks propose()'s own stages -- the second chamber between the division and
+## everything after it, then the court. FRA's Senat is suspensive for an
+## ordinary bill, so the two laws the finder picks give both readings: carried
+## AND passed by the chamber reaches the court (the reviewable key is the flip
+## of the retired court_skipped pin); carried and REFUSED is HELD like
+## propose()'s own, and the release applies through the court with no command
+## from anyone -- test_upper_house's idiom, one stage earlier in the pipeline.
+func _test_upper_house_and_court_pipeline() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var passing = _pool_law(ns, true)
+	var refused = _pool_law(ns, false)
+	if passing == null or refused == null:
+		_fail("the content offers no Senat-passing or Senat-refusing pool law -- rewrite the finder, do not drop the pin")
+		return
+
+	# Carried AND carried by the upper chamber: the court is the next stage.
+	ns.assembly_bills["pmb_pipeline_pass"] = _hand_bill(String(passing.id))
+	_tick(gs)
+	var result: Dictionary = ns.last_law_result
+	if String(result.get("law_id", "")) != String(passing.id):
+		_fail("the pipeline leg divided the wrong bill: '%s'" % result.get("law_id", ""))
+		return
+	if String(result.get("upper_chamber", "")) != ns.upper_chamber_name:
+		_fail("a carried division skipped the second chamber -- no upper_chamber key")
+	if not bool(result.get("upper_passed", false)):
+		_fail("the pipeline leg's law did not pass the Senat -- pick another (upper result: %s)" % result)
+	if not result.has("reviewable"):
+		_fail("a carried, chamber-passed division never reached the court -- no reviewable key")
+
+	# Carried and REFUSED by the suspensive Senat: held, not defeated.
+	ns.assembly_bills["pmb_pipeline_hold"] = _hand_bill(String(refused.id))
+	_tick(gs)
+	var hold_result: Dictionary = ns.last_law_result
+	if String(hold_result.get("law_id", "")) != String(refused.id):
+		_fail("the hold leg divided the wrong bill: '%s'" % hold_result.get("law_id", ""))
+		return
+	if not bool(hold_result.get("held_by_upper", false)):
+		_fail("a Senat-refused division was not held: %s" % hold_result)
+		return
+	if int(hold_result.get("held_months", 0)) != CK.UPPER_HOLD_MONTHS:
+		_fail("the hold is %s months, expected %d" % [hold_result.get("held_months", 0), CK.UPPER_HOLD_MONTHS])
+	if int(ns.held_bills.get(String(refused.id), 0)) != CK.UPPER_HOLD_MONTHS:
+		_fail("the held bill is not parked in ns.held_bills -- the release would never fire")
+	if ns.law_cooldown_months.has(String(refused.id)):
+		_fail("a held bill was cooled down -- it has not been beaten")
+
+	# The release: no second division and no player verb, and the bill arrives
+	# THROUGH THE COURT -- the released result is a reviewed one.
+	for i in range(CK.UPPER_HOLD_MONTHS):
+		Legislature.tick_month(gs, _loader)
+	if not ns.held_bills.is_empty():
+		_fail("the hold did not expire after %d legislature ticks" % CK.UPPER_HOLD_MONTHS)
+	var released: Dictionary = ns.last_law_result
+	if not bool(released.get("released", false)) or not released.has("reviewable"):
+		_fail("the release did not apply through the court: %s" % released)
+
+
+## The first pool-class law the assembly carries and the Senat does (or does
+## not) also carry -- found in the content rather than named, so a content edit
+## cannot leave these legs quietly measuring nothing (test_upper_house's
+## _held_law, widened by the upper outcome).
+func _pool_law(ns, upper_passes: bool):
+	var party_list: Array = _loader.parties.get(PLAYER, [])
+	for law in _loader.laws:
+		if law.constitutional or law.effects.has("institutional"):
+			continue
+		if not bool(Legislature.resolve_vote(ns, party_list, law, false)["passed"]):
+			continue
+		if bool(Legislature.resolve_upper(ns, party_list, law)["passed"]) != upper_passes:
+			continue
+		return law
+	return null
 
 
 ## The in-flight guard: a law the backbench has tabled cannot be proposed by

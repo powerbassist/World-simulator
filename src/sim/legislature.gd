@@ -86,8 +86,10 @@ static func init_nation(ns) -> void:
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
-	# in this file and released by tick_month() in this file, so it is reset here and
-	# not in Chambers.init_nation(), which owns the chamber and not the in-tray.
+	# in this file and -- V4.2 T6's ultra review -- by statute.gd's assembly division
+	# parking a suspensive refusal, and it is released by tick_month() in this file
+	# either way, so it is reset here and not in Chambers.init_nation(), which owns
+	# the chamber and not the in-tray.
 	ns.held_bills = {}
 
 
@@ -213,8 +215,15 @@ static func _tick_held_bills(state, ns, loader) -> void:
 
 
 ## THE COURT'S GATE, and it is the LAST stage of the pipeline rather than a second
-## applier. Called from propose(), from _force() and from the release above -- every
-## path on which a bill takes effect without the country having voted on it.
+## applier. Called from propose()'s ORDINARY route (a bill that divided and is
+## taking effect), from _force(), from the release above, and -- V4.2 T6's ultra
+## review -- from statute.gd's assembly division through the public delegate
+## below. The old header scoped this to "bills taking effect without the country
+## having voted on it", and that scope was false: a DIVIDED bill is not thereby
+## exempt from review -- propose()'s ordinary route has court-reviewed every
+## carried bill since V1.1e -- and the assembly's division is the ordinary
+## legislative procedure, not a stage beyond it. What the court does not see is
+## the one landing the third refusal below records: a law the COUNTRY ratified.
 ##
 ## DELIBERATELY NOT INSIDE apply_effects(). That function has had two callers since
 ## V1.8 and the second is an EVENT CHOICE, which is docs/tiers/v1.md section 1's
@@ -245,6 +254,17 @@ static func _review_and_apply(state, ns, law, loader, result: Dictionary) -> voi
 			ns.law_cooldown_months[law.id] = law.cooldown_months
 		return
 	apply(state, ns, law, loader)
+
+
+## The assembly division's way in -- the underscore above marks this file's own
+## internals, and statute.gd is another file. A carried PMB has divided, which
+## is what the court REVIEWS (propose()'s ordinary route is the precedent), so
+## the delegation is one line and the review is the same gate every other
+## divided bill faces. The block/hold half of the pipeline stays in
+## statute.gd's _divide, because which chamber verdict applies is the caller's
+## own read.
+static func review_and_apply_after_division(state, ns, law, loader, result: Dictionary) -> void:
+	_review_and_apply(state, ns, law, loader, result)
 
 
 ## The second chamber's division. A PURE FUNCTION of state, like resolve_vote()
@@ -677,10 +697,14 @@ static func _record_ledger(state, ns, law, before: Dictionary, after: Dictionary
 		if not before.has(snap_key):
 			continue
 		var delta: float = float(after[snap_key]) - float(before[snap_key])
-		if is_zero_approx(delta):
-			# A zero realized delta records NOTHING -- the law moved nothing on
-			# that channel (a clamp was binding at both ends), and an entry
-			# that claimed it did would subtract nothing and lie.
+		if delta == 0.0:
+			# EXACT zero, not is_zero_approx: the criterion is "the law moved
+			# nothing", and is_zero_approx's 1e-5 ABSOLUTE floor would drop a
+			# real sub-1e-5 realized delta -- unrecorded, the channel is
+			# un-negatable at repeal and the act permanently un-repealable.
+			# The V4.7 lesson's third appearance (industry.gd's 9.8e-6 drain;
+			# statute.gd's own exact-zero erasure one file over), named here so
+			# the next tolerance question finds the ruling with it.
 			continue
 		var parts := snap_key.split("|")
 		match parts[0]:
@@ -832,7 +856,21 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 		negated["society"] = terms
 	apply_effects(state, ns, negated, loader)
 	ns.law_ledger.erase(law_id)
+	# One lookup, one writer: the cooldown comes off the target law wherever it
+	# lives. A composed law is not in loader.laws -- the lookup's null reads
+	# legal in repeal_target_legal() above for exactly that reason -- so the
+	# target is found a second time in the composed register, whose entries all
+	# carry DRAFT_COOLDOWN_MONTHS. Without this half, a repealed composition
+	# wrote no cooldown at all and available() re-offered it immediately: the
+	# apply() header's own rule ("a repealed act sits out its cooldown before
+	# it can be re-proposed") failed for the one class of law this block
+	# introduced.
 	var target = _law_by_id(loader, law_id)
+	if target == null:
+		for composed in Law.composed_register(ns):
+			if String(composed.id) == law_id:
+				target = composed
+				break
 	if target != null and target.cooldown_months > 0:
 		ns.law_cooldown_months[law_id] = target.cooldown_months
 

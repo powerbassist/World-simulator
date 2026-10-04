@@ -58,6 +58,7 @@ func _init() -> void:
 		_test_countdown_composes()
 		_test_propose_accepts_custom_law()
 		_test_repeal_draft()
+		_test_repeal_of_composed_law_writes_cooldown()
 		_test_determinism()
 		_test_roundtrip_absence_and_duplicate()
 		_test_init_resets()
@@ -302,6 +303,79 @@ func _test_repeal_draft() -> void:
 		_fail("passage did not erase the target's ledger entry")
 	if not ns.law_cooldown_months.has(SURTAX):
 		_fail("passage did not write the target's cooldown")
+
+
+## The version-close review's finding: a repeal of a COMPOSED law wrote no
+## cooldown at all -- _subtract_ledger's target lookup scans loader.laws only,
+## and a composition is not in it -- so available() re-offered the repealed act
+## immediately and the 24-month re-proposal cadence failed for the one class
+## of law T2 introduced. The lookup now finds the target a second time in the
+## composed register, and the pin is the whole consequence: cooldown written
+## at the composition's own DRAFT_COOLDOWN_MONTHS, and the law OFF the open
+## list while it sits out.
+func _test_repeal_of_composed_law_writes_cooldown() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var income_before: float = float(ns.tax_rates_pct.get("income", 0.0))
+	# Compose and PASS a one-channel law: the ledger records its realized delta.
+	var r: Dictionary = Statute.draft(gs, ns, _loader, _one_channel_spec())
+	if not bool(r.get("ok", false)):
+		_fail("the composed-law repeal leg's spec refused: %s" % r.get("refusal", ""))
+		return
+	for i in range(int(r["months"])):
+		Statute.tick_month(gs, _loader)
+	var laws: Array = Statute.custom_laws(ns)
+	if laws.is_empty():
+		_fail("the composed-law repeal leg composed nothing")
+		return
+	var law = laws[0]
+	Legislature.apply(gs, ns, law, _loader)
+	if not ns.law_ledger.has(String(law.id)):
+		_fail("the composed law's passage recorded no ledger -- the repeal leg is vacuous")
+		return
+	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), income_before + 2.0):
+		_fail("the composed law's passage left income at %s, expected %s" % [
+			ns.tax_rates_pct.get("income", 0.0), income_before + 2.0])
+	# Draft a repeal OF THE COMPOSED LAW -- the draft gate must accept it the
+	# same as an authored target (the lookup's null reads legal).
+	var r2: Dictionary = Statute.draft(gs, ns, _loader, {
+		"name": "Repeal of the Composition",
+		"position": {"economic": -0.4, "social": 0.0},
+		"channels": {},
+		"repeals": String(law.id),
+	})
+	if not bool(r2.get("ok", false)):
+		_fail("a repeal of a recorded composed law must draft: %s" % r2.get("refusal", ""))
+		return
+	for i in range(int(r2["months"])):
+		Statute.tick_month(gs, _loader)
+	var repeal = null
+	for entry in Statute.custom_laws(ns):
+		if String(entry.repeals) == String(law.id):
+			repeal = entry
+			break
+	if repeal == null:
+		_fail("the repeal of the composed law composed nothing")
+		return
+	Legislature.apply(gs, ns, repeal, _loader)
+	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), income_before):
+		_fail("the composed repeal left income at %s, expected the pre-law %s" % [
+			ns.tax_rates_pct.get("income", 0.0), income_before])
+	if ns.law_ledger.has(String(law.id)):
+		_fail("the composed repeal did not erase the target's ledger entry")
+	# THE FINDING'S PIN: the cooldown, at the composition's own length.
+	if not ns.law_cooldown_months.has(String(law.id)):
+		_fail("repealing a composed law wrote no cooldown -- the act is immediately re-proposable")
+	elif int(ns.law_cooldown_months[String(law.id)]) != SK.DRAFT_COOLDOWN_MONTHS:
+		_fail("the composed target's cooldown is %d, expected DRAFT_COOLDOWN_MONTHS %d" % [
+			int(ns.law_cooldown_months[String(law.id)]), SK.DRAFT_COOLDOWN_MONTHS])
+	# And the consequence the cooldown exists for: the repealed act is OFF the
+	# open list -- both the player's legality scan and the assembly's pool read
+	# this same available().
+	for open_law in Legislature.available(ns, _loader.laws + Law.composed_register(ns)):
+		if String(open_law.id) == String(law.id):
+			_fail("a repealed composed law is still proposable -- the cooldown did not gate available()")
 
 
 func _test_determinism() -> void:
