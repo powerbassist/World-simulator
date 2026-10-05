@@ -367,7 +367,11 @@ static func commit(state, pending: Dictionary) -> void:
 					StatuteK.NEW_TAX_YIELD_CEILING, String(key)])
 				new_rates.erase(key)
 				continue
-			new_rates[key] = pending_rate
+			# The landed-rate floor covers THIS branch too -- the raw pending
+			# re-read just above would otherwise overwrite the loop-head floor
+			# for exactly the born keys the floor exists to guard (the ultra
+			# pass-10 finding).
+			new_rates[key] = maxf(pending_rate, 0.0)
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
@@ -510,6 +514,28 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# standing subsidy as costing nothing and would hold the share shift still, so
 		# the one surface in the game that promises "this is what will happen" would be
 		# wrong about the thing the player just paid for.
+		# In main.gd's RELATIVE slot -- after Legislature, BEFORE Companies and
+		# Industry -- and the slot is load-bearing (the ultra pass-10
+		# finding): a division's company-channel burden is priced by this same
+		# month's Companies/Industry passes in reality, so the projection must
+		# write it before they run, not a month late. Present for the reason
+		# the Events paragraph below gives in its own words, made sharper
+		# because the machine is figure-bearing at IDLE: the backbench's PMB
+		# hazard is a pure function of (nation, month), Cycle-keyed like the
+		# Events hazard the loop already includes, so the projection sees
+		# exactly the divisions the next twenty-four months deliver rather
+		# than an average of them. And a carried bill applies through the ONE
+		# applier, whose budget levers route through Budget.commit() into the
+		# very revenue and spending keys the snapshot prints -- a projection
+		# that held the assembly frozen would show a country whose parliament
+		# never legislates. The countdown side of the same machine (law
+		# cooldowns, suspensive holds, referendums) stays in
+		# Legislature.tick_month(), which this loop has never run -- the
+		# boundary tests/test_upper_house.gd already records for the fiscal
+		# projection -- so a hold rides out the window and a failed bill's
+		# cooldown does not count down inside it; both are recorded bounds of
+		# this loop, not omissions to patch by symmetry.
+		Statute.tick_month(sim, loader)
 		Companies.tick_month(sim, loader)
 		# In main.gd's slot again -- Companies, then the autonomy machine, then
 		# Migration -- and present for the reason the Companies paragraph above
@@ -520,24 +546,6 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# re-baseline measured unemployment as the largest channel moved
 		# through exactly this read.
 		Industry.tick_month(sim, loader)
-		# In project()'s slot beside Industry -- main.gd runs it beside the
-		# legislature's tick -- and present for the reason the Events paragraph
-		# below gives in its own words, made sharper because the machine is
-		# figure-bearing at IDLE: the backbench's PMB hazard is a pure function
-		# of (nation, month), Cycle-keyed like the Events hazard the loop
-		# already includes, so the projection sees exactly the divisions the
-		# next twenty-four months deliver rather than an average of them. And a
-		# carried bill applies through the ONE applier, whose budget levers
-		# route through Budget.commit() into the very revenue and spending keys
-		# the snapshot prints -- a projection that held the assembly frozen
-		# would show a country whose parliament never legislates. The countdown
-		# side of the same machine (law cooldowns, suspensive holds,
-		# referendums) stays in Legislature.tick_month(), which this loop has
-		# never run -- the boundary tests/test_upper_house.gd already records
-		# for the fiscal projection -- so a hold rides out the window and a
-		# failed bill's cooldown does not count down inside it; both are
-		# recorded bounds of this loop, not omissions to patch by symmetry.
-		Statute.tick_month(sim, loader)
 		# In main.gd's slot -- between Companies and Investment -- and absent
 		# altogether until the V2.8 review, which is the one system here that had
 		# neither a paragraph justifying its presence nor Media's paragraph

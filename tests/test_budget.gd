@@ -405,6 +405,11 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# before V1.3f. _check_projection_matches_under_defence_and_companies() displaces
 		# both so the mirror's completeness is exercised rather than assumed.
 		Defence.tick_month(state)
+		# The ultra pass-10 finding: the mirror copies project()'s ORDER, and
+		# project() moved Statute before Companies -- a division's
+		# company-channel burden is priced by the same month's Companies/
+		# Industry passes, so both legs must write it before they run.
+		Statute.tick_month(state, _loader)
 		Companies.tick_month(state, _loader)
 		# V4.7b. The autonomy machine, in project()'s slot between Companies and
 		# Migration -- a failure, rescue or break-up inside the projected window
@@ -421,7 +426,6 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# revenue and spending keys the comparison walks. PMB_MONTHS_TO_VOTE is
 		# 1, so any bill staged inside a 24-month window divides inside it too:
 		# the checks above exercise this line rather than assuming it inert.
-		Statute.tick_month(state, _loader)
 		# V2.8 review. Five more that project() has ticked and this mirror never did.
 		# Four are inert from an undisplaced start, which is why the 1e-9 agreement
 		# held by accident yet again -- but Events is NOT structurally inert: its

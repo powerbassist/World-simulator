@@ -148,7 +148,7 @@ func _test_tick_order_pin() -> void:
 	if not (legislature < statute):
 		_fail("tick order broken: Legislature (%d) < Statute (%d) must hold -- a failed bill's cooldown must be written after the countdown pass" % [
 			legislature, statute])
-	for harness_path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd"]:
+	for harness_path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd", "res://tests/test_budget.gd"]:
 		var harness := FileAccess.get_file_as_string(harness_path)
 		if harness.find("Statute.tick_month") < 0:
 			_fail("%s does not mirror the Statute tick -- the harness would run a different model" % harness_path)
