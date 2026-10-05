@@ -76,14 +76,13 @@ The original pitch names trade deals and diplomacy as core features. They are **
 
 Neighbouring nations exist at MVP — they have real starting statistics, their economies evolve, and their trade affects French growth. But they do not negotiate. Interactive diplomacy needs an AI capable of evaluating and countering offers, which is a subsystem comparable in size to the entire domestic loop, and the domestic loop has to be proven enjoyable before a second one is stacked on it.
 
-Diplomacy is block 3 of [[v1]] — planned, sequenced, and expected. It is deferred, not abandoned. If this cut is wrong, it is the one worth arguing about, because reversing it substantially changes the [[ROADMAP]].
+Diplomacy is block 3 of [[v1]] — planned, sequenced, and expected. It is deferred, not abandoned. If this cut is wrong, it is the one worth arguing about, because reversing it substantially changes the .
 
 ## Related decisions
 
 - [[engine-decision]] — Godot 4, GDScript, and why not Unity or Unreal
 - [[data-architecture]] — static content versus live state, and why there is no database
 - [[data-sources]] — which open datasets seed the content, and under what licenses
-- [[ROADMAP]] — the session-by-session build order
 
 ---
 

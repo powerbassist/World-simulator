@@ -161,4 +161,4 @@ No dependency injection container. No event bus. No abstract base classes for a 
 
 ---
 
-Related: [[index]] · [[scope]] · [[data-architecture]] · [[ROADMAP]]
+Related: [[index]] · [[scope]] · [[data-architecture]]

@@ -8,7 +8,7 @@ tags:
 
 # Projects Model
 
-Infrastructure projects, as built at [[ROADMAP|V1.6f]] — the sixth session of the V1.6
+Infrastructure projects, as built at V1.6f — the sixth session of the V1.6
 block and **the last one in it**. A discrete, dated, expensive commitment that bills
 every month it is under construction and pays once, permanently, when it finishes.
 
@@ -44,7 +44,7 @@ The sim half counts **~24 surfaces**, between [[transition-model|V1.2d]]'s ~21 a
 ### U6c: instance thirty-nine, and it is in the row's own wording
 
 **Geography is not per-project, and the phrase above is what would have made it so.**
-Every statement of machine 3 — this table, [[sector-model]] §5 and [[ROADMAP]]'s V1.6f
+Every statement of machine 3 — this table, [[sector-model]] §5 and 's V1.6f
 paragraph — called it *"per-project geography as content"*. Read literally that puts a
 lon/lat inside `effects.project`, and `data/project-actions/` is a **global flat list**:
 one `high_speed_rail` shared by all ten, so every nation's rail spine would stand at one
@@ -455,4 +455,4 @@ grid **finished** at +0.170 %/yr, and three unstarted projects with their terms.
 
 ---
 
-Related: [[index]] · [[sector-model]] · [[economy-model]] · [[calendar-model]] · [[credit-model]] · [[companies-model]] · [[tax-model]] · [[opinion-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[sector-model]] · [[economy-model]] · [[calendar-model]] · [[credit-model]] · [[companies-model]] · [[tax-model]] · [[opinion-model]] · [[decision-log]] · [[v1]]

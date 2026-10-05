@@ -8,7 +8,7 @@ tags:
 
 # Sector Model
 
-Sectoral investment, as built at [[ROADMAP|V1.6e]] — the fifth session of the V1.6 block
+Sectoral investment, as built at V1.6e — the fifth session of the V1.6 block
 and the block's **one genuine new player verb**. State money pointed at one of the three
 sectors, a capital stock it accumulates, and the single channel through which that stock
 reaches the economy.
@@ -20,7 +20,7 @@ reaches the economy.
 **The row split, as this page recorded in advance.** [[v1]] §6's last bullet is
 *"**Sectoral investment** and **infrastructure projects**"*, and the V1.6 decomposition
 named projects as the cut. Counted, it splits — but on a harder reason than the
-decomposition gave, which is [[ROADMAP|§1]] below.
+decomposition gave, which is §1 below.
 
 ## 1. The count, and why the cut is about TRACK rather than about a scheduler
 
@@ -474,4 +474,4 @@ photograph, and this one could have stopped short of it.
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[companies-model]] · [[tax-model]] · [[credit-model]] · [[cycle-model]] · [[opinion-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[economy-model]] · [[companies-model]] · [[tax-model]] · [[credit-model]] · [[cycle-model]] · [[opinion-model]] · [[decision-log]] · [[v1]]

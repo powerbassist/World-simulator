@@ -14,8 +14,7 @@ argument. §1–9 are V1.4a, §10–19 V1.4b, §20–29 V1.4c; §30 is V2.2a's c
 §31–38 are V4.7's two-tier register and autonomy machine.
 
 Related: [[economy-model]] · [[people-model]] · [[coercion-model]] ·
-[[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]] ·
-[[ROADMAP]]
+[[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]]
 
 ## 1. The first content class that fronts nothing
 
@@ -376,7 +375,7 @@ taken on. Both are built — §10 and §20 below.
 > session and not a constant. See §28.
 
 **Bond markets.** Moved to [[v1]] §6, where the yield they write belongs — see
-[[ROADMAP]] for the argument.
+ for the argument.
 
 ---
 
@@ -866,7 +865,7 @@ compensation *for* — [[v1]] §6 owns both. What nationalising costs is then a 
 rather than a flow**: the whole purchase lands on `debt_to_gdp_pct` at once, and
 privatising is the only lever in the game that moves a stock back down.
 
-> [!note] [[ROADMAP|V1.6c]] discharged the obligation, and on a RATE
+> [!note] V1.6c discharged the obligation, and on a RATE
 > [[cycle-model|V1.6a]] arrived with the cycle and discharged nothing: a dividend
 > expressed as a share of GDP is not procyclical by construction, because the cycle
 > moves numerator and denominator together. **A rate is the one quantity in this
@@ -1297,4 +1296,4 @@ state without a tick — the sections read the register directly.
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
 [[coercion-model]] · [[defence-model]] · [[bloc-model]] · [[geography-model]] ·
-[[v1]] · [[ROADMAP]]
+[[v1]]

@@ -8,7 +8,7 @@ tags:
 
 # Bloc Model
 
-The supranational bloc: what the council votes on, what a rule in force requires, what defying it costs, and what membership charges. Built at [[ROADMAP|V1.3d]], the fourth session of the V1.3 block.
+The supranational bloc: what the council votes on, what a rule in force requires, what defying it costs, and what membership charges. Built at V1.3d, the fourth session of the V1.3 block.
 
 Files: `src/sim/bloc.gd` (the rules) · `src/sim/bloc_constants.gd` (the numbers) · `src/core/bloc_proposal.gd` (the content type) · `data/bloc-proposals/*.json` (the content) · `GameState.bloc` (the register) · `tools/bloc_probe.gd` (the measurement).
 
@@ -23,7 +23,7 @@ Per-nation state is on `NationState`. [[diplomacy-model|Relations]] and [[trade-
 
 ## 1. The `ISSUE_KEYS` question, and why it was answered yes
 
-[[ROADMAP|V1.3a]], [[trade-model|V1.3b]] and [[coercion-model|V1.3c]] each priced their domestic cost through `bloc_offset` and each deferred this call here by name. The cost was named in advance: six new `BLOC_SALIENCE_BASE` rows, against which [[declined]] records that *every* tuned opinion constant was measured.
+V1.3a, [[trade-model|V1.3b]] and [[coercion-model|V1.3c]] each priced their domestic cost through `bloc_offset` and each deferred this call here by name. The cost was named in advance: six new `BLOC_SALIENCE_BASE` rows, against which [[declined]] records that *every* tuned opinion constant was measured.
 
 **Three structural reasons, none of them thematic:**
 
@@ -249,4 +249,4 @@ All three are `eu_member`/`neighbours`' case, not `agreements`' case. `tests/tes
 
 ---
 
-Related: [[ROADMAP]] · [[coercion-model]] · [[trade-model]] · [[diplomacy-model]] · [[opinion-model]] · [[economy-model]] · [[declined]]
+Related: [[coercion-model]] · [[trade-model]] · [[diplomacy-model]] · [[opinion-model]] · [[economy-model]] · [[declined]]

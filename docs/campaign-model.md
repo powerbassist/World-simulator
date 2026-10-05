@@ -441,7 +441,7 @@ em dash.
 ## 17. Siting the effort was deferred, and the reason is measured
 
 [[tiers/v2|V2]] §6 books *campaign meetings sited* beside unrest sited and calls the
-two **one shape**. [[ROADMAP|V2.6b1]] built the unrest half and **deferred this one to
+two **one shape**. V2.6b1 built the unrest half and **deferred this one to
 V2.6b2**, on a measurement rather than on scope.
 
 **A campaign effort has no regionally-varying signal that is not a regional opinion
@@ -579,7 +579,7 @@ past the run-up to find a demonstration. Three frames judged clean after the fix
 
 
 Related: [[index]] · [[siting-model]] · [[election-model]] · [[opinion-model]] · [[media-model]] ·
-[[projects-model]] · [[v1]] · [[ROADMAP]]
+[[projects-model]] · [[v1]]
 
 ## V3.0 — the power band measured, and REFUSED
 

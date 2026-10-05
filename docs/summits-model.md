@@ -125,4 +125,4 @@ already reads the relations and cooldowns a summit changed.
 ---
 
 Related: [[index]] · [[calendar-model]] · [[events-model]] ·
-[[diplomacy-model]] · [[v2]] · [[ROADMAP]]
+[[diplomacy-model]] · [[v2]]

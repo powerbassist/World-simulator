@@ -138,10 +138,10 @@ reason anyone predicted.
 ### World Bank Open Data — economic seed values
 
 - **License:** CC BY 4.0. Attribution required.
-- **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`). **And, since [[ROADMAP|V1.5b]], age structure** — population aged 0–14 (`SP.POP.0014.TO.ZS`) and 65+ (`SP.POP.65UP.TO.ZS`) — **plus the 15–64 labour-force participation rate (`SL.TLF.ACTI.ZS`)**.
+- **Provides:** GDP (`NY.GDP.MKTP.CD`), population (`SP.POP.TOTL`), unemployment rate (`SL.UEM.TOTL.ZS`), and value-added by sector — agriculture (`NV.AGR.TOTL.ZS`), industry (`NV.IND.TOTL.ZS`), services (`NV.SRV.TOTL.ZS`). **And, since V1.5b, age structure** — population aged 0–14 (`SP.POP.0014.TO.ZS`) and 65+ (`SP.POP.65UP.TO.ZS`) — **plus the 15–64 labour-force participation rate (`SL.TLF.ACTI.ZS`)**.
 - **Used for:** Starting statistics for every nation in scope, **rounded**. GDP converted USD → EUR at a fixed rate pinned in the import script (see below), so re-running the import doesn't drift on exchange-rate noise. Sector shares are normalised to sum to 1.0 — the three World Bank value-added indicators sum to roughly 89–95% of GDP on their own (the residual is taxes less subsidies on products), so dividing by their sum is required, not optional polish.
-- **Read at two years, not one, and that is what makes ageing measured rather than modelled.** The download loop below has always fetched `date=2015:2024`, so [[ROADMAP|V1.5b]]'s per-nation ageing slope cost one extra read of a series already on disk and no extra download. `imported._trend_from_year` records the base year in the data, beside `_year`, for the reason `_usd_eur` is echoed there: without it the provenance record claims the block describes one year while the cohort slopes describe two. The slopes genuinely differ — Luxembourg **+0.142** points of 65+ share per year against France's **+0.366** — which is why the ten pyramids are not the clustered `coalition_position` failure the decomposition feared. See [[demography-model]].
-- **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **Re-checked at [[ROADMAP|V1.6d]] before that session planned a measured base share for capital gains or wealth, and the rejection stands with two more reasons.** Coverage is not the issue -- `GC.TAX.TOTL.GD.ZS`, `GC.TAX.YPKG.*` and `GC.TAX.GSRV.RV.ZS` all return 10 of 10 nations over 1990-2024 with 30-35 rows each. The scope problem above is confirmed to the digit (FRA 22.78 % of GDP, DEU 10.89, CHE 9.45); `GC.TAX.YPKG.*` bundles income, profits **and capital gains** into one bucket, which is exactly the split V1.6d exists to create; and `GC.TAX.PRPT.*` returns **no rows at all**, so there is no wealth series on this provider. V1.6d's two new `TAX_BASE_SHARE` entries are therefore authored model parameters, like the three that preceded them, and this file gains no download line.
+- **Read at two years, not one, and that is what makes ageing measured rather than modelled.** The download loop below has always fetched `date=2015:2024`, so V1.5b's per-nation ageing slope cost one extra read of a series already on disk and no extra download. `imported._trend_from_year` records the base year in the data, beside `_year`, for the reason `_usd_eur` is echoed there: without it the provenance record claims the block describes one year while the cohort slopes describe two. The slopes genuinely differ — Luxembourg **+0.142** points of 65+ share per year against France's **+0.366** — which is why the ten pyramids are not the clustered `coalition_position` failure the decomposition feared. See [[demography-model]].
+- **Does not provide, at usable scope: debt-to-GDP or tax revenue.** `GC.DOD.TOTL.GD.ZS` (central government debt) returns null for France, Germany, Luxembourg and Switzerland entirely, and where it does return a value (UK: 130.7% in 2024) it is central-government debt, not the general-government figure this game means by "debt-to-GDP". `GC.TAX.TOTL.GD.ZS` (central government tax revenue) has the same scope problem — it returns single digits for Switzerland and Germany, nowhere near the 35–46% general-government tax-to-GDP ratios these countries actually have. **Re-checked at V1.6d before that session planned a measured base share for capital gains or wealth, and the rejection stands with two more reasons.** Coverage is not the issue -- `GC.TAX.TOTL.GD.ZS`, `GC.TAX.YPKG.*` and `GC.TAX.GSRV.RV.ZS` all return 10 of 10 nations over 1990-2024 with 30-35 rows each. The scope problem above is confirmed to the digit (FRA 22.78 % of GDP, DEU 10.89, CHE 9.45); `GC.TAX.YPKG.*` bundles income, profits **and capital gains** into one bucket, which is exactly the split V1.6d exists to create; and `GC.TAX.PRPT.*` returns **no rows at all**, so there is no wealth series on this provider. V1.6d's two new `TAX_BASE_SHARE` entries are therefore authored model parameters, like the three that preceded them, and this file gains no download line.
 - **`fiscal.debt_to_gdp_pct` and `fiscal.tax_revenue_pct_gdp` are hand-authored**, from IMF/OECD general-government figures, in the `fiscal` block of each nation file — not imported, not refreshed by `tools/import_data.py`. See [[data-architecture]] for the schema.
 
 #### V2.8 — energy
@@ -218,7 +218,7 @@ re-pricing the council's first division.
 
 - **License:** CC BY 4.0. Attribution required.
 - **Provides:** City names, populations, coordinates.
-- **Status:** **Imported at [[ROADMAP|V2.2a]]**, from `cities15000`, which is the pre-registered decision taken as written rather than re-argued. 581 places of the 4 732 the file holds for the ten, filed under the NUTS region whose polygon contains them. See [[geography-model]].
+- **Status:** **Imported at V2.2a**, from `cities15000`, which is the pre-registered decision taken as written rather than re-argued. 581 places of the 4 732 the file holds for the ten, filed under the NUTS region whose polygon contains them. See [[geography-model]].
 - **Three gotchas, all of them GeoNames mixing administrative levels, and all three found by reading the generated file rather than by a check:**
   - **`PPLX` is a section of a populated place, not a place** — 607 rows across the ten, 76 of them above the population cut. Hamburg-Nord, Carabanchel, Eixample, Favoriten, `Paris 13e Arrondissement`. Each double-counts the city it is part of. Excluded by feature code, with `PPLQ` (abandoned) beside it.
   - **A borough is coded like a city.** `UKI London` carries London *and* twenty of its own boroughs — Islington, Westminster, Bexley, Croydon — summing to **1.325** of the region; Brussels carries its communes and reaches 1.285. The importer takes cities in descending order only **while they fit**, which needs no list of exceptions and also settles the city-state case where Eurostat and GeoNames disagree by 6 % about Hamburg.
@@ -304,7 +304,7 @@ This is by design, not a gap. These are the parts of the game that need to be *t
 
 ## Attribution
 
-World Bank and GeoNames both require credit. The credit line goes in `ATTRIBUTION.md` at the project root and is surfaced in the game's credits screen when one exists. It is written down at [[ROADMAP|session S0]], not deferred — an attribution obligation you remember at ship time is an attribution obligation you have already breached.
+World Bank and GeoNames both require credit. The credit line goes in `ATTRIBUTION.md` at the project root and is surfaced in the game's credits screen when one exists. It is written down at session S0, not deferred — an attribution obligation you remember at ship time is an attribution obligation you have already breached.
 
 Draft line:
 
@@ -395,7 +395,7 @@ curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
 > [[cycle-model]] section 3.
 
 > [!warning] `SI.POV.GINI` is the one series with gaps, and it needs the fallback
-> [[ROADMAP|V1.5c]] added it for section 5's inequality statistic, and it is the only
+> V1.5c added it for section 5's inequality statistic, and it is the only
 > indicator in the loop above that is **not published at `YEAR` for any of the ten**:
 > coverage stops at 2021 (GBR, NLD), 2022 (CHE, DEU) or 2023 (the other six), because it
 > is EU-SILC-based rather than an annual national account.
@@ -500,7 +500,7 @@ files don't silently change under a future re-download. Then run
 > `name`, `geo_id`, `capital`, `playable`, `government`, `fiscal`, `imported` — so
 > every top-level field a later session added was silently dropped the next time
 > anyone ran the import. Two already had been: U6b's `leader` block and the `flag`
-> block. Found at [[ROADMAP|V1.5b]] by diffing the ten files after an import and
+> block. Found at V1.5b by diffing the ten files after an import and
 > asking why the change was larger than the block it claimed to add. It now rebuilds
 > from the file's own key order, so there is no list to forget to update, and short
 > scalar arrays are written back on one line so the output already matches what is

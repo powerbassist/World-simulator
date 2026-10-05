@@ -8,7 +8,7 @@ tags:
 
 # Events Model
 
-Occasions, choices and deadlines, as built at [[ROADMAP|V1.8]] — **the last session of
+Occasions, choices and deadlines, as built at V1.8 — **the last session of
 the V1 tier**, and the one [[v1]] §8 has been deferring to since the scope was written.
 
 Same standard as [[pledge-model]], [[unrest-model]] and [[media-model]]: a **game

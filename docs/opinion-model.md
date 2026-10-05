@@ -8,7 +8,7 @@ tags:
 
 # Opinion Model
 
-The MVP public-opinion model, as built in [[ROADMAP|S5]]. Every formula, every
+The MVP public-opinion model, as built in S5. Every formula, every
 constant, and the argument for why approval moves fast enough to be worth
 watching and slowly enough to be worth planning around.
 
@@ -56,7 +56,7 @@ fixed set, forever — [[economy-model|the same definition]] used to keep the
 economy's constants out of `data/`.
 
 > [!note] The trigger fired at V1.2a, and the call was re-examined, not skipped
-> "A second playable nation" was the named trigger. [[ROADMAP|V1.2a]] made
+> "A second playable nation" was the named trigger. V1.2a made
 > Germany playable and the plan step re-opened this exact question, with a
 > measurement instead of a restated assumption: `tools/balance_probe.gd`,
 > parameterised by nation, ran the same relative "managed" budget against
@@ -147,7 +147,7 @@ did, which is a drift, not a mechanic.
 `growth` uses growth *relative to trend* rather than absolute growth, so a nation
 with a structurally low trend is not permanently unpopular for it.
 
-`europe` is [[ROADMAP|V1.3d]]'s, and the only issue here whose scale is not a
+`europe` is V1.3d's, and the only issue here whose scale is not a
 quantity in percentage points — [[bloc-model|bloc burden]] is already a
 normalised score. It is measured against `start_bloc_burden` like every other
 term is measured against a start, so France beginning in real breach of a deficit
@@ -182,7 +182,7 @@ nobody cares about buys nothing" true rather than decorative.
 | business | public_finances 0.34 · tax_corporate 0.25 · growth 0.19 · infrastructure 0.09 · jobs 0.07 · education 0.06 |
 | students | education 0.38 · jobs 0.22 · public_finances 0.14 · tax_vat 0.10 · growth 0.08 · health 0.08 |
 
-[[ROADMAP|V1.3d]] added a `europe` entry to every row — workers 0.10, pensioners
+V1.3d added a `europe` entry to every row — workers 0.10, pensioners
 0.10, urban 0.06, rural 0.14, business 0.06, students 0.05 — so the rows no
 longer sum to 1.0 and `salience_weights()`'s renormalisation now does real work
 at rest. What that cost the eleven measured issues was the first thing V1.3d
@@ -203,7 +203,7 @@ Three properties are load-bearing rather than incidental:
   rate — specifically so that bloc reactions to it feel earned. Leaning on it
   hardest is the payoff.
 - **`public_finances` is second, at about 0.20 of the national agenda.** The
-  [[ROADMAP|S10]] pass roughly doubled this row from its S5 weights; the argument
+  S10 pass roughly doubled this row from its S5 weights; the argument
   is in the callout below. It is worth noting how *surgical* that change is: a
   player who never touches the budget sits at a `public_finances` satisfaction of
   about zero and is untouched by it. The row bites only once the player moves the
@@ -230,7 +230,7 @@ one place crowds attention out of another.
 
 > [!important] The gain was 1.0 until S10, and that made the game unloseable
 > This constant does far more work than its S5 description suggested, and the
-> [[ROADMAP|S10]] balance pass found it doing none of it. Three separate
+> S10 balance pass found it doing none of it. Three separate
 > failures traced back here and to the `public_finances` weights beside it:
 >
 > **Fiscal discipline was strictly dominated.** `public_finances` carried about
@@ -326,7 +326,7 @@ That is the model earning its keep: there is no lever that is simply good, so
 S6's election is a question of which coalition you built rather than how high you
 pushed one number.
 
-> [!note] A known soft spot, for [[ROADMAP|S10]]
+> [!note] A known soft spot, for S10
 > The last row is still a real approval win for a budget that takes debt from
 > 116 % to roughly 215 % of GDP over five years. Every bloc now weights
 > `public_finances` — that change alone took the peak from 73 down to 66 — but a
@@ -358,7 +358,7 @@ what is being asked about**. Three things follow, all of them wanted:
   published figure, not a fresh sample every frame — and the numbers do not
   flicker while a slider is being dragged.
 - The figures survive a save and reload, because there is no RNG state to
-  serialise. [[ROADMAP|S9]] gets this for free.
+  serialise. S9 gets this for free.
 - `tests/test_budget.gd`'s projection-equals-reality guarantee is untouched.
 
 `u()` is FNV-1a over the key mixed through splitmix32's finaliser, written out
@@ -385,8 +385,8 @@ argue about.
 There is **no term where approval feeds back into itself or into the economy**.
 Opinion is a pure read of the simulation this month; it never writes to the
 economy or the budget. That is what keeps the stability argument this short, and
-it is a property worth defending — [[ROADMAP|S6]] elections consume approval, and
-[[ROADMAP|S7]] laws will write to the economy, but neither should let approval
+it is a property worth defending — S6 elections consume approval, and
+S7 laws will write to the economy, but neither should let approval
 drive an economic variable directly.
 
 The argument is not the evidence. `tests/test_opinion.gd` runs 120 months under
@@ -396,7 +396,7 @@ salience invariant on every bloc every month. **That** is the evidence.
 ## Where the constants live
 
 `src/sim/opinion_constants.gd`, all of them, next to
-`src/sim/economy_constants.gd` and for the same reason: [[ROADMAP|S10]]'s balance
+`src/sim/economy_constants.gd` and for the same reason: S10's balance
 pass gets one file per model, and `opinion.gd` and the polling panel cannot drift
 apart.
 
@@ -406,11 +406,11 @@ not know polls exist.
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[ROADMAP]] · [[mechanics-society]]
+Related: [[index]] · [[economy-model]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[mechanics-society]]
 
 ## The thirteenth issue
 
-`inflation` joined `ISSUE_KEYS` at [[ROADMAP|V1.6b]], and it is the **first yes** to a
+`inflation` joined `ISSUE_KEYS` at V1.6b, and it is the **first yes** to a
 question five sessions answered no — V1.3d (`europe`, yes), then V1.4c (`ownership`),
 V1.5a (`corruption`), V1.5c (`unrest`) and V1.5d (`framing`), all no.
 `src/sim/opinion_constants.gd` carries all six answers together, which is the point:

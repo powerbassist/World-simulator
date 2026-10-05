@@ -7,7 +7,7 @@ tags:
 
 # Diplomacy Model
 
-Pair-keyed relations, their monthly drift, and the player's diplomatic actions. Built at [[ROADMAP|V1.3a]], the schema session of the V1.3 block.
+Pair-keyed relations, their monthly drift, and the player's diplomatic actions. Built at V1.3a, the schema session of the V1.3 block.
 
 Files: `src/core/relations.gd` (the key) · `src/sim/diplomacy.gd` (the rules) · `src/sim/diplomacy_constants.gd` (the numbers) · `src/core/diplomatic_action.gd` (the content type) · `data/diplomatic-actions/*.json` (the content) · `tools/diplomacy_probe.gd` (the measurement).
 
@@ -192,4 +192,4 @@ Three consequences of the measurement, none of which were in the plan:
 
 ---
 
-Related: [[ROADMAP]] · [[trade-model]] · [[legislature-model]] · [[opinion-model]] · [[scenario-model]] · [[data-architecture]] · [[data-sources]]
+Related: [[trade-model]] · [[legislature-model]] · [[opinion-model]] · [[scenario-model]] · [[data-architecture]] · [[data-sources]]

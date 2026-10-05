@@ -8,10 +8,10 @@ tags:
 
 # Amendment Model
 
-Built at [[ROADMAP|V1.2c]]. [docs/tiers/v1.md](tiers/v1.md) §2's next item after
+Built at V1.2c. [docs/tiers/v1.md](tiers/v1.md) §2's next item after
 [[political-systems]]: constitutional amendment, the mechanism for changing the
 institutions a template constrains. System transition (monarchy ↔ republic) is
-built at [[ROADMAP|V1.2d]], as the same mechanism pointed at `system_id`
+built at V1.2d, as the same mechanism pointed at `system_id`
 itself — see [[transition-model]] for why it earned a separate session (not,
 in the end, the `lose_condition` reason first assumed).
 
@@ -144,7 +144,7 @@ cancelled) or a grand-coalition-shaped start scenario (V1.2, also scheduled)
 could raise Germany's ceiling. Until one of those lands, Germany's
 `two_thirds` is real and correctly unauthored-against, not a placeholder.
 
-**And a referendum is NOT that trigger, which the [[ROADMAP]]'s own V1.7
+**And a referendum is NOT that trigger, which the 's own V1.7
 decomposition expected it to be.** That page argued referendums belong beside
 electoral-system choice because *"a referendum exists precisely because a
 supermajority is sometimes unreachable, and this block measured exactly that for

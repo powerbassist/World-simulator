@@ -8,7 +8,7 @@ tags:
 
 # Legislature Model
 
-The MVP legislature model, as built in [[ROADMAP|S7]]. Law templates, how a
+The MVP legislature model, as built in S7. Law templates, how a
 party's support for a law is computed, how a vote resolves, and how a passed
 law's effects land on the economy and on opinion.
 
@@ -271,7 +271,7 @@ full field list and `src/core/law.gd` for validation.
 Deliberately **not** in the schema: per-party amendment, sponsors,
 multi-stage passage, sunset clauses. All are [[v1|V1.1]]
 territory, and the shape is extensible by adding keys — the same lesson
-[[ROADMAP|S1]] leaves for the nation schema. **Upper-house readings left that list at
+S1 leaves for the nation schema. **Upper-house readings left that list at
 V1.1e** and cost the law schema nothing: a second chamber is `resolve_upper()` over a
 composition `src/sim/chambers.gd` derives, and what it may do to a bill is per-NATION
 data (`government.upper`) rather than per-law — see [[upper-house-model]].
@@ -642,4 +642,4 @@ measured effect (control 115/307, endorsed 268/309 on the same assembly).
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
 [[government-model]] · [[discipline-model]] · [[opinion-model]] ·
-[[economy-model]] · [[amendment-model]] · [[data-architecture]] · [[ROADMAP]]
+[[economy-model]] · [[amendment-model]] · [[data-architecture]]

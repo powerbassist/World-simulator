@@ -8,7 +8,7 @@ tags:
 
 # Trade Model
 
-Who each nation trades with, how much, what an agreement changes, and the two channels that reach the economy. Built at [[ROADMAP|V1.3b]], the second session of the V1.3 block.
+Who each nation trades with, how much, what an agreement changes, and the two channels that reach the economy. Built at V1.3b, the second session of the V1.3 block.
 
 Files: `src/sim/trade.gd` (the rules) · `src/sim/trade_constants.gd` (the numbers) · `data/diplomatic-actions/agreements.json` (the content) · `GameState.agreements` (the register) · `tools/trade_probe.gd` (the measurement).
 
@@ -17,7 +17,7 @@ Files: `src/sim/trade.gd` (the rules) · `src/sim/trade_constants.gd` (the numbe
 
 ## What replaced what
 
-`external_impulse_pct` has been wired since [[ROADMAP|S4]] and deliberately quiet: one GDP-weighted average of the nine nations the player does not govern, the same number for every viewer, and exactly zero at new-game. Every tuned constant in `economy_constants.gd` was measured with it at zero.
+`external_impulse_pct` has been wired since S4 and deliberately quiet: one GDP-weighted average of the nine nations the player does not govern, the same number for every viewer, and exactly zero at new-game. Every tuned constant in `economy_constants.gd` was measured with it at zero.
 
 V1.3b replaces that scalar with a **directed weight table** — ninety entries, one per ordered pair — read from live GDP, live relations and the agreement register. `Economy.neighbour_weighted_growth()` is retired rather than kept alongside: two answers to "how much does B matter to A" is exactly the divergence [[diplomacy-model|the symmetric pair key]] was chosen to make impossible.
 
@@ -322,4 +322,4 @@ sanctioned. Recorded in [[energy-model]] §10 rather than built.
 
 ---
 
-Related: [[ROADMAP]] · [[economy-model]] · [[diplomacy-model]] · [[opinion-model]] · [[data-architecture]] · [[data-sources]]
+Related: [[economy-model]] · [[diplomacy-model]] · [[opinion-model]] · [[data-architecture]] · [[data-sources]]

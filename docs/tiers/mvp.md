@@ -77,7 +77,7 @@ Steps 1–5 repeat continuously. Step 6 is the wall the whole game is aimed at.
 ## Done-when
 
 The MVP is finished when all of the following are true. Evidence was gathered in
-the [[ROADMAP|S10]] balance pass; every claim below is a check that runs in
+the S10 balance pass; every claim below is a check that runs in
 `./tools/run_tests.sh`, not a playtest impression. The trajectories the tuning
 was done against come from `tools/balance_probe.gd`, which plays fourteen
 simulated years — the inherited term plus two full ones — under ten fixed budget
@@ -129,4 +129,4 @@ The full exclusion list, with reasoning, is [[out-of-scope-mvp]]. The headline o
 
 ---
 
-Related: [[scope]] · [[v1]] · [[someday]] · [[out-of-scope-mvp]] · [[ROADMAP]]
+Related: [[scope]] · [[v1]] · [[someday]] · [[out-of-scope-mvp]]

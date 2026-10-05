@@ -5,7 +5,8 @@ France: budget, laws, an assembly that need not agree with you, and an election
 at the end of the term. Ten European nations, 2D map, dense UI panels.
 
 Design vault is `docs/` — open **the project root** as the Obsidian vault, not
-`docs/`, or the `[[ROADMAP]]` links do not resolve. Start at [docs/index.md](docs/index.md).
+`docs/` (the vault config `.obsidian/` lives at the root). Start at
+[docs/index.md](docs/index.md).
 
 ## Stack
 
@@ -1898,7 +1899,7 @@ its own budget section fell below the fold.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table are in
-[ROADMAP.md](ROADMAP.md); [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
+ROADMAP.md; [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
 bullet with the session that builds it. Order: (a) relations and diplomatic
 actions, (b) trade intensity and agreements, (c) tariffs and sanctions, (d) the
 bloc, (e) AI foreign policy, (f) defence.
@@ -4161,7 +4162,7 @@ one line in `main.gd`'s `_build_action_bar()`.
 
 One session, one objective, a fresh chat each time. Commit at every session
 boundary, and end each session by writing the next one's handoff prompt — the
-convention is in [ROADMAP.md](ROADMAP.md). Verify against the session's
+convention is in ROADMAP.md. Verify against the session's
 done-when list before claiming done.
 
 **There is ONE instructions file, `AGENTS.md`, as of the V3.1 close-out.** A

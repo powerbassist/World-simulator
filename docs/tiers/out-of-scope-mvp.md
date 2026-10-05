@@ -43,7 +43,7 @@ Each entry says *why*, because "not yet" without a reason erodes the moment some
 
 Every item above is a real feature that would make the game better. That is precisely why the list is written down: the danger is never the bad idea, it is the good idea arriving four months early and pushing the playable loop past the horizon.
 
-The MVP loop closes at **session S6** of the [[ROADMAP]]. Nothing on this page gets built before then.
+The MVP loop closes at **session S6** of the . Nothing on this page gets built before then.
 
 ---
 

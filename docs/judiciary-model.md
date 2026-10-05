@@ -8,12 +8,12 @@ tags:
 
 # Judiciary Model
 
-The court, as built in [[ROADMAP|V1.1e]]. Whether a passed bill survives, the rule-of-law
+The court, as built in V1.1e. Whether a passed bill survives, the rule-of-law
 stock that decides, and the price of moving it.
 
 [[v1]] §1 asks for *"courts that can strike down laws, a check the player cannot simply
 outvote"*, and that bullet **also owns §5's *"rule of law — institutional strength gating
-what the player can get away with"***, handed here at [[ROADMAP|V1.5]]'s decomposition on
+what the player can get away with"***, handed here at V1.5's decomposition on
 the argument that two uncontestable gates on player action would be one machine claimed
 twice. So this is one machine wearing both labels rather than two sharing a page.
 
@@ -316,4 +316,4 @@ the gate.
 ---
 
 Related: [[index]] · [[upper-house-model]] · [[legislature-model]] · [[society-model]] ·
-[[unrest-model]] · [[media-model]] · [[amendment-model]] · [[data-sources]] · [[ROADMAP]]
+[[unrest-model]] · [[media-model]] · [[amendment-model]] · [[data-sources]]

@@ -7,7 +7,7 @@ tags:
 
 # The Economy From Below
 
-National GDP is the sum of its regions. Built at [[ROADMAP|V2.5]];
+National GDP is the sum of its regions. Built at V2.5;
 [[tiers/v2|V2]] section 5. The register it reads is [[geography-model|V2.2a]]'s.
 
 ## 1. What changed

@@ -8,7 +8,7 @@ tags:
 
 # People Model
 
-The named-individual register, as built in [[ROADMAP|U6b]] — the deferral
+The named-individual register, as built in U6b — the deferral
 [[cabinet-model|V1.1d]] took deliberately and [[v1]] §5 has been assuming ever
 since.
 
@@ -590,6 +590,6 @@ Suite 87/87 with the two new checks.
 
 Related: [[index]] · [[cabinet-model]] · [[calendar-model]] ·
 [[fictionalization]] · [[transition-model]] · [[government-model]] ·
-[[data-architecture]] · [[v1]] · [[ROADMAP]]
+[[data-architecture]] · [[v1]]
 
 

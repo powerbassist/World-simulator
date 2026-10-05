@@ -244,7 +244,7 @@ half-implements — the same call [[government-model]] makes for
 than an honest refusal, and it is Germany's and Belgium's actual mechanism, not
 a placeholder for one this session ran out of time to build.
 
-**Italy's *semestre bianco* blackout — built at [[ROADMAP|V1.2b]].** The real
+**Italy's *semestre bianco* blackout — built at V1.2b.** The real
 rule bars dissolution during the last six months of the **head of state's own**
 seven-year term. V1.1c recorded this as future work because no nation but
 France tracked a separate executive clock in this schema, and inventing one for
@@ -278,9 +278,9 @@ seats between them, which destroys
 [[government-model|the no-two-parties-reach-289 property]] that makes every
 French majority government a three-party coalition.
 `tests/test_government.gd` asserts that property directly. Fixing it needs the
-roster re-authored, which is [[ROADMAP|S2]] content work, not this session's.
+roster re-authored, which is S2 content work, not this session's.
 
 ---
 
 Related: [[index]] · [[government-model]] · [[discipline-model]] ·
-[[election-model]] · [[electoral-systems]] · [[v1]] · [[ROADMAP]]
+[[election-model]] · [[electoral-systems]] · [[v1]]

@@ -108,5 +108,6 @@ tools/portraits_photo_sources.json
 # The review fleet's working dir (file snapshots, diffs, comment fetches the
 # ultra's lenses leave mid-pass). Gitignored so a running pass never drowns
 # git status -- and EMPTIED at every block closeout, same rule as the
-# .superpowers/sdd scratch: working space, not storage.
-.review-tmp/
+# .superpowers/sdd scratch: working space, not storage. The * catches the
+# per-PR suffix a pass appends (.review-tmp48/ and friends).
+.review-tmp*

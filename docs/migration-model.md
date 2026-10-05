@@ -7,7 +7,7 @@ tags:
 
 # People Move
 
-The two population partitions become live. Built at [[ROADMAP|V2.6a]];
+The two population partitions become live. Built at V2.6a;
 [[tiers/v2|V2]] section 6. The register it reads is [[geography-model|V2.2a]]'s
 and the quantities it migrates on are [[region-economy-model|V2.5]]'s.
 
@@ -592,7 +592,7 @@ finding behind that — is [[natural-change-model]] §6.
 ---
 
 Related: [[tiers/v2]] · [[siting-model]] · [[geography-model]] · [[region-economy-model]] ·
-[[demography-model]] · [[decision-log]] · [[ROADMAP]]
+[[demography-model]] · [[decision-log]]
 ## V3.3: the zero-migration bound is now six nations'
 
 LUX's "one region cannot differ from itself" case arrives five times more:

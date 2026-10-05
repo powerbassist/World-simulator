@@ -8,7 +8,7 @@ tags:
 
 # Calendar Model
 
-The president's diary, as built in [[ROADMAP|U6a]]. Dated state the game has
+The president's diary, as built in U6a. Dated state the game has
 carried since the MVP, put on a timeline for the first time — plus optional
 booking of the verbs that already exist.
 
@@ -494,4 +494,4 @@ live for them -- but they book no blocks and burn no days. Their diary is still
 
 Related: [[index]] · [[engine-decision]] · [[cabinet-model]] ·
 [[foreign-policy-model]] · [[coercion-model]] · [[bloc-model]] ·
-[[defence-model]] · [[v1]] · [[ROADMAP]]
+[[defence-model]] · [[v1]]

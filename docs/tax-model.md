@@ -8,7 +8,7 @@ tags:
 
 # Tax Model
 
-Five taxes and brackets, as built at [[ROADMAP|V1.6d]] — the fourth session of the V1.6
+Five taxes and brackets, as built at V1.6d — the fourth session of the V1.6
 block, and the first in it to ship a **verb**. Two new tax keys, a bracket lever inside
 the income tax, and the discharge of [[unrest-model|V1.5c]]'s declared Gini stopgap.
 
@@ -518,4 +518,4 @@ moved.
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[unrest-model]] · [[opinion-model]] · [[credit-model]] · [[inflation-model]] · [[companies-model]] · [[demography-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[economy-model]] · [[unrest-model]] · [[opinion-model]] · [[credit-model]] · [[inflation-model]] · [[companies-model]] · [[demography-model]] · [[decision-log]] · [[v1]]

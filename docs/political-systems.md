@@ -8,12 +8,12 @@ tags:
 
 # Political Systems Model
 
-Built at [[ROADMAP|V1.2b]]. [docs/tiers/v1.md](tiers/v1.md) §2's headline
+Built at V1.2b. [docs/tiers/v1.md](tiers/v1.md) §2's headline
 feature, built once there was a working institutional layer to generalise —
 government formation ([[government-model]]), discipline
 ([[discipline-model]]), dissolution ([[dissolution-model]]), cabinet
 ([[cabinet-model]]), and a second playable nation
-([[ROADMAP|V1.2a]]).
+(V1.2a).
 
 ## What changed, and why it had to
 

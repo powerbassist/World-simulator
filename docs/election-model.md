@@ -8,7 +8,7 @@ tags:
 
 # Election Model
 
-The MVP election model, as built in [[ROADMAP|S6]] — the session where the loop
+The MVP election model, as built in S6 — the session where the loop
 closes. Vote share, seat allocation and the win/lose condition. Real electoral
 systems and the schedule that drives them are [[electoral-systems]]; this file is
 the vote-share model and the constants that decide who wins.
@@ -71,11 +71,11 @@ constant in this model.
 
 **Rejected first:** a direct bloc-to-slot affinity matrix — six blocs by twelve
 ideology slots authored today, more as [[fictionalization|content grows]] — would
-be 72 hand-tuned numbers nobody could individually defend, and [[ROADMAP|S10]]'s
+be 72 hand-tuned numbers nobody could individually defend, and S10's
 balance pass would have to retune all of them together. The two-axis space is 36
 numbers (12 slots + 6 blocs, two coordinates each), each one independently
 arguable against the party's name or the bloc's stated priorities, and it is the
-same vocabulary [[ROADMAP|S7]]'s per-ideology-slot law support will read — one
+same vocabulary S7's per-ideology-slot law support will read — one
 space, not two.
 
 Bloc positions follow directly from what `opinion_constants.gd`'s
@@ -134,7 +134,7 @@ and there is no Continue button. This was a deliberate call, not a default: the
 alternatives were "continue in opposition" (a second game mode with no budget
 control, well past S6's scope) and "keep governing regardless of the result"
 (which would make the election screen advisory and contradict the roadmap's own
-"you can lose it"). Restart is a relaunch until [[ROADMAP|S9]] gives the game
+"you can lose it"). Restart is a relaunch until S9 gives the game
 save slots.
 
 **A European Parliament election never ends a run.** It scores, allocates seats,
@@ -159,7 +159,7 @@ Win → `Elections.tick_month()` increments `terms_served`, resets
 > both votes — `Elections.resolve_executive()` calls the same `vote_share()` and
 > the same `attribution()`. Full argument in [[government-model]].
 >
-> **Since [[ROADMAP|V1.2b]]**, the verdict itself is dispatched on
+> **Since V1.2b**, the verdict itself is dispatched on
 > `ns.lose_condition`, not on `has_executive` — the same code path, named
 > rather than inferred. See [[political-systems]].
 
@@ -207,7 +207,7 @@ down the tick order.
 
 ## Balance signal, recorded per the S6 checkpoint
 
-[[opinion-model]] flagged a soft spot for [[ROADMAP|S10]]: every spending line
+[[opinion-model]] flagged a soft spot for S10: every spending line
 raised 3pp of GDP peaks approval at 66% within a year and only decays to 57 by
 year five, on a budget that walks debt toward roughly 215% of GDP over a full
 five-year term.
@@ -234,11 +234,11 @@ on the verdict carries one told line stating the agency bound the V3.0 probe
 measured (approval prices change, not level); it says the bound, it does not
 re-open it.
 
-It is [[ROADMAP|S10]]'s first concrete balance question: whether unlimited
+It is S10's first concrete balance question: whether unlimited
 short-term deficit spending should cost votes *within* a single term, not only
 across the one after it.
 
 ---
 
 Related: [[index]] · [[electoral-systems]] · [[opinion-model]] · [[economy-model]]
-· [[data-architecture]] · [[ROADMAP]]
+· [[data-architecture]]

@@ -8,7 +8,7 @@ tags:
 
 # Society Model
 
-The delivery layer, as built at [[ROADMAP|V1.5a]] — the first session of the V1.5
+The delivery layer, as built at V1.5a — the first session of the V1.5
 block. A service's quality as a stock converging on sustained spending, and
 corruption as the factor that decides how much of that spending arrives.
 
@@ -408,4 +408,4 @@ two uncontestable gates on player action is one machine claimed twice.
 ---
 
 Related: [[index]] · [[opinion-model]] · [[economy-model]] · [[cabinet-model]] ·
-[[defence-model]] · [[companies-model]] · [[legislature-model]] · [[v1]] · [[ROADMAP]]
+[[defence-model]] · [[companies-model]] · [[legislature-model]] · [[v1]]

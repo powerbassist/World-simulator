@@ -8,7 +8,7 @@ tags:
 
 # Transition Model
 
-Built at [[ROADMAP|V1.2d]]. [docs/tiers/v1.md](tiers/v1.md) §2's last item:
+Built at V1.2d. [docs/tiers/v1.md](tiers/v1.md) §2's last item:
 system transition (monarchy ↔ republic), the same amendment mechanism
 [[amendment-model]] built, pointed at `system_id` itself.
 
@@ -32,7 +32,7 @@ time rather than discovered mid-build. GBR was picked over the alternatives
 for a structural reason, not a narrative one — its `ordinary_law` amendment
 bar is an ordinary absolute majority, so reachability is settled *by
 construction*: no live sweep can come back "unshippable" the way Germany's
-did. GBR's data was already complete from [[ROADMAP|V1.2a]] (fiscal block,
+did. GBR's data was already complete from V1.2a (fiscal block,
 per-party `leader_name`, FPTP with `threshold_pct: 0`, no executive block,
 head of state authored), so [docs/tiers/v1.md](tiers/v1.md) §2's "a third
 nation onward is a one-flag data edit" held up on inspection — no split into
@@ -148,7 +148,7 @@ lives on the template, not the nation.
 
 **But** `constitutional_monarchy` and `parliamentary_republic` both declare
 `lose_condition: "party_not_largest"`, so for the only transition pair this
-block ships, **it does not change**. [ROADMAP.md](../ROADMAP.md)'s stated
+block ships, **it does not change**. ROADMAP.md's stated
 reason for keeping transition separate from amendment — "changes
 `lose_condition` and the head of state at the same time, not one field" — is
 true in principle and false in this block's own content. The real reason
