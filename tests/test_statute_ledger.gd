@@ -28,6 +28,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Budget = preload("res://src/sim/budget.gd")
 const Law = preload("res://src/core/law.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Statute = preload("res://src/sim/statute.gd")
@@ -51,6 +52,7 @@ func _init() -> void:
 		_test_realized_equals_authored_when_no_clamp_binds()
 		_test_clamp_aware_recording()
 		_test_repeal_subtracts_exactly()
+		_test_budget_floor_on_repeal()
 		_test_repeal_refusals()
 		_test_once_law_returns_on_repeal()
 		_test_consumed_repeal_not_reoffered()
@@ -155,6 +157,49 @@ func _test_repeal_subtracts_exactly() -> void:
 	# The repealed act sits out its own cooldown before it can be re-proposed.
 	if not ns.law_cooldown_months.has(SURTAX):
 		_fail("repeal did not write the target's cooldown")
+
+
+## The ultra pass-8 finding, pinned on the review's own chain: the surtax's
+## +5.0 lands, the player cuts income to 0.0 through the budget (a floor every
+## UI writer applies), and the repeal's negation must land what the register
+## holds -- 0.0, never -5.0. The accumulators' clamps do not reach the two
+## budget channels (commit() writes them verbatim), so the floor lives in the
+## subtraction itself (`_budget_removal`).
+func _test_budget_floor_on_repeal() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var law = _law_by_id(SURTAX)
+	Legislature.apply(gs, ns, law, _loader)
+	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), income_at_fresh() + 5.0):
+		_fail("budget-floor fixture: the surtax did not land")
+		return
+	# The player's own budget action, the way the Tax Code panel commits it.
+	Budget.commit(gs, {"tax_rates_pct": {"income": 0.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct.get("income", 0.0)), 0.0):
+		_fail("budget-floor fixture: the manual cut did not land")
+		return
+	var repeal := Law.new()
+	repeal.id = "repeal_after_the_cut"
+	repeal.law_name = "Repeal After The Cut"
+	repeal.theme = "tax"
+	repeal.summary = "Test repeal against a floored register."
+	repeal.position = {"economic": 0.6, "social": 0.0}
+	repeal.majority = "simple"
+	repeal.repeals = SURTAX
+	Legislature.apply(gs, ns, repeal, _loader)
+	var landed: float = float(ns.tax_rates_pct.get("income", 0.0))
+	if landed < 0.0:
+		_fail("repeal negation landed income at %s -- a negative rate is a state no writer refuses into existence" % landed)
+	if not is_equal_approx(landed, 0.0):
+		_fail("repeal negation landed income at %s, expected the floor 0.0" % landed)
+	if ns.law_ledger.has(SURTAX):
+		_fail("the floored repeal did not erase the target's entry")
+
+
+func income_at_fresh() -> float:
+	var pair = _fresh()
+	return float(pair[1].tax_rates_pct.get("income", 0.0))
 
 
 func _test_repeal_refusals() -> void:

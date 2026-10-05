@@ -690,7 +690,8 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 ##
 ##   - The LEDGER is recorded after. The before/after diff around
 ##     apply_effects() is what makes the record REALIZED rather than authored:
-##     every accumulator clamps, and a repeal that subtracted authored deltas
+##     every accumulator clamps (and the two budget channels floor at zero --
+##     _budget_removal below), and a repeal that subtracted authored deltas
 ##     against a bound that was binding at passage would drift the register on
 ##     every repeal. Only apply() records -- an event choice calls
 ##     apply_effects() directly and records nothing, because an event is not a
@@ -883,11 +884,14 @@ static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 ## THE FIRST-ORDER BOUND, stated where it can bite: the subtraction clamps
 ## like any write, so a register already pushed past a bound by OTHER writers
 ## absorbs part of the removal (a law that contributed -0.10 against a
-## register driven to +1.0 by everything else removes nothing). That is the
-## declared bound of realized-delta bookkeeping -- docs/legislature-model.md
-## records it -- and not a patchable defect: the true counterfactual register
-## is not recoverable once other writers have moved in between, and inventing
-## one would be the second answer the project refuses.
+## register driven to +1.0 by everything else removes nothing). The two
+## budget channels have no clamp and take their own floor instead -- a
+## removal lands what the register holds, and no more (`_budget_removal`
+## below). That is the declared bound of realized-delta bookkeeping --
+## docs/legislature-model.md records it -- and not a patchable defect: the
+## true counterfactual register is not recoverable once other writers have
+## moved in between, and inventing one would be the second answer the
+## project refuses.
 static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	var channels: Dictionary = ledger_of(ns, law_id)
 	if channels.is_empty():
@@ -904,12 +908,12 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	if channels.has("tax_rates_pct"):
 		var rates := {}
 		for key in channels["tax_rates_pct"]:
-			rates[key] = -float(channels["tax_rates_pct"][key])
+			rates[key] = _budget_removal(ns.tax_rates_pct, key, float(channels["tax_rates_pct"][key]))
 		negated["tax_rates_pct"] = rates
 	if channels.has("spending_pct_gdp"):
 		var spending := {}
 		for key in channels["spending_pct_gdp"]:
-			spending[key] = -float(channels["spending_pct_gdp"][key])
+			spending[key] = _budget_removal(ns.spending_pct_gdp, key, float(channels["spending_pct_gdp"][key]))
 		negated["spending_pct_gdp"] = spending
 	for scalar in ["structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp"]:
 		if channels.has(scalar):
@@ -959,6 +963,19 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	# so this is the authored class only.
 	if target != null and target.once:
 		ns.passed_law_ids.erase(law_id)
+
+
+## THE BUDGET FLOOR, the ultra pass-8 finding: the two budget channels have no
+## clamp -- commit() writes them verbatim and every UI writer floors its slider
+## at 0.0 -- so a repeal's negation whose removal exceeds what the register
+## holds would land a NEGATIVE rate, a state the birth gate's own words refuse
+## ("a negative birth rate is not a rate") and the revenue model turns into an
+## unpriced payout. The removal lands what the register holds, and no more:
+## the floor is the register's own, the one every slider already applies.
+## The accumulators keep their clamps and need none of this.
+static func _budget_removal(register: Dictionary, key: String, recorded: float) -> float:
+	var current: float = float(register.get(key, 0.0))
+	return minf(maxf(-recorded, -current), 0.0)
 
 
 ## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.

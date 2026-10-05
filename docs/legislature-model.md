@@ -345,7 +345,11 @@ clamps like any write, so a register already pushed past a bound by *other*
 writers absorbs part of the removal. The true counterfactual register is not
 recoverable once other writers have moved in between, and inventing one would
 be a second answer. A declared bound of realized-delta bookkeeping, not a
-patchable defect.
+patchable defect. **The two budget channels have no clamp and take their own
+floor instead** (the ultra pass-8 finding): a removal whose recorded delta
+exceeds what the register holds lands what is there, and no more — a negative
+rate is a state every other writer refuses, and the floor is the register's
+own, the one every slider already applies.
 
 `SAVE_VERSION` 38 carries the register; absence reads empty, and the repeal
 gate refuses a law with no record loudly rather than repealing nothing
