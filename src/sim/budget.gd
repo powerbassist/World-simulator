@@ -342,13 +342,20 @@ static func commit(state, pending: Dictionary) -> void:
 		# than the live rate (a composed over-cut, a lever passed twice) lands
 		# AT zero -- priced as "cut to zero" -- instead of as a negative
 		# revenue line paying out.
+		#
+		# THE REFUSAL KEEPS THE LIVE RATE (the ultra pass-11 finding): a
+		# refused key's write is SKIPPED, never erased -- `new_rates` opened as
+		# a duplicate of the live register, so erasing a key deletes its LIVE
+		# rate (revenue reads 0, the panel row vanishes, the demand impulse
+		# books the erasure as a tax cut) -- the opposite of "refused, and the
+		# register keeps the birth rate". A refused pending write lands
+		# nothing and changes nothing.
 		for key in pending["tax_rates_pct"]:
-			new_rates[key] = maxf(float(pending["tax_rates_pct"][key]), 0.0)
 			if C.TAX_KEYS.has(key):
+				new_rates[key] = maxf(float(pending["tax_rates_pct"][key]), 0.0)
 				continue
 			if not ns.custom_taxes.has(key):
 				push_error("budget: pending rate for tax key '%s' with no params on the register -- refused" % key)
-				new_rates.erase(key)
 				continue
 			# THE YIELD GATE, sim-side (the ultra pass-6 finding). The tax panel
 			# matches a born key's slider to its base, but this command channel
@@ -360,18 +367,13 @@ static func commit(state, pending: Dictionary) -> void:
 			# caller was shown. Strictly >, matching _validate_new_tax: a
 			# product AT the ceiling (wealth's own 4.0 x 3.0) stays legal.
 			var base_share := float(ns.custom_taxes[key].get("base_share", 0.0))
-			var pending_rate := float(pending["tax_rates_pct"][key])
+			var pending_rate := maxf(float(pending["tax_rates_pct"][key]), 0.0)
 			if base_share * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
 				push_error("budget: base %.2f x rate %.1f would yield %.2f of GDP, past the %.1f the revenue model prices -- rate for '%s' refused" % [
 					base_share, pending_rate, base_share * pending_rate,
 					StatuteK.NEW_TAX_YIELD_CEILING, String(key)])
-				new_rates.erase(key)
 				continue
-			# The landed-rate floor covers THIS branch too -- the raw pending
-			# re-read just above would otherwise overwrite the loop-head floor
-			# for exactly the born keys the floor exists to guard (the ultra
-			# pass-10 finding).
-			new_rates[key] = maxf(pending_rate, 0.0)
+			new_rates[key] = pending_rate
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
