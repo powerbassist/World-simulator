@@ -967,15 +967,17 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 
 ## THE BUDGET FLOOR, the ultra pass-8 finding: the two budget channels have no
 ## clamp -- commit() writes them verbatim and every UI writer floors its slider
-## at 0.0 -- so a repeal's negation whose removal exceeds what the register
-## holds would land a NEGATIVE rate, a state the birth gate's own words refuse
-## ("a negative birth rate is not a rate") and the revenue model turns into an
-## unpriced payout. The removal lands what the register holds, and no more:
-## the floor is the register's own, the one every slider already applies.
-## The accumulators keep their clamps and need none of this.
+## at 0.0 -- so a repeal's negation must never land a NEGATIVE rate, a state
+## the birth gate's own words refuse ("a negative birth rate is not a rate")
+## and the revenue model turns into an unpriced payout. The formula floors the
+## RESULTING RATE at zero through both directions: a raise-removal lands what
+## the register holds (current 0, recorded +5 -> 0 removal), and a
+## cut-restoration passes whole (recorded -5, current 20 -> +5, back to 25).
+## Budget.commit() carries the matching landed-rate floor for its other
+## callers; the accumulators keep their clamps and need none of this.
 static func _budget_removal(register: Dictionary, key: String, recorded: float) -> float:
 	var current: float = float(register.get(key, 0.0))
-	return minf(maxf(-recorded, -current), 0.0)
+	return maxf(-recorded, -current)
 
 
 ## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.

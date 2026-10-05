@@ -53,6 +53,8 @@ func _init() -> void:
 		_test_clamp_aware_recording()
 		_test_repeal_subtracts_exactly()
 		_test_budget_floor_on_repeal()
+		_test_cut_restoration_on_repeal()
+		_test_committed_rates_floor_at_zero()
 		_test_repeal_refusals()
 		_test_once_law_returns_on_repeal()
 		_test_consumed_repeal_not_reoffered()
@@ -195,6 +197,58 @@ func _test_budget_floor_on_repeal() -> void:
 		_fail("repeal negation landed income at %s, expected the floor 0.0" % landed)
 	if ns.law_ledger.has(SURTAX):
 		_fail("the floored repeal did not erase the target's entry")
+
+
+## The ultra pass-9 finding: pass 8's own floor over-clamped the REMOVAL, so
+## repealing a CUT restored nothing -- corporate_tax_cut (-5) repealed at a
+## live rate of 20 stayed 20 while the book claimed the act was gone. The
+## floor belongs on the RESULTING RATE: a cut-restoration passes whole.
+func _test_cut_restoration_on_repeal() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var start_corporate: float = float(ns.tax_rates_pct.get("corporate", 0.0))
+	var cut = _law_by_id("corporate_tax_cut")
+	if cut == null:
+		_fail("cut-restoration fixture: corporate_tax_cut not found")
+		return
+	Legislature.apply(gs, ns, cut, _loader)
+	var after_cut: float = float(ns.tax_rates_pct.get("corporate", 0.0))
+	if not is_equal_approx(after_cut, start_corporate - 5.0):
+		_fail("cut-restoration fixture: the cut did not land (%s)" % after_cut)
+		return
+	var repeal := Law.new()
+	repeal.id = "repeal_of_the_corporate_cut"
+	repeal.law_name = "Repeal of the Corporate Tax Relief Act"
+	repeal.theme = "tax"
+	repeal.summary = "Test repeal of a cut."
+	repeal.position = {"economic": -0.6, "social": 0.0}
+	repeal.majority = "simple"
+	repeal.repeals = "corporate_tax_cut"
+	Legislature.apply(gs, ns, repeal, _loader)
+	if not is_equal_approx(float(ns.tax_rates_pct.get("corporate", 0.0)), start_corporate):
+		_fail("repealing a cut restored nothing: corporate at %s, expected %s" % [
+			ns.tax_rates_pct.get("corporate"), start_corporate])
+
+
+## The ultra pass-9 nit's class, closed at the ONE writer: a composed cut
+## bigger than the live rate lands AT zero (priced as cut-to-zero), never
+## negative -- including the pre-existing double-passage hole (a repeatable
+## cut law passing twice below the live rate).
+func _test_committed_rates_floor_at_zero() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	Budget.commit(gs, {"tax_rates_pct": {"vat": -30.0}})
+	var vat: float = float(ns.tax_rates_pct.get("vat", 0.0))
+	if vat < 0.0:
+		_fail("commit landed vat at %s -- the landed-rate floor did not fire" % vat)
+	if not is_equal_approx(vat, 0.0):
+		_fail("commit's floor landed vat at %s, expected 0.0" % vat)
+	var spending_before: float = float(ns.spending_pct_gdp.get("health", 0.0))
+	Budget.commit(gs, {"spending_pct_gdp": {"health": spending_before - 999.0}})
+	if float(ns.spending_pct_gdp.get("health", 0.0)) < 0.0:
+		_fail("commit landed a negative spending line")
 
 
 func income_at_fresh() -> float:

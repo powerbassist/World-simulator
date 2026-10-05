@@ -334,21 +334,21 @@ static func commit(state, pending: Dictionary) -> void:
 
 	var new_rates: Dictionary = ns.tax_rates_pct.duplicate(true)
 	if pending.has("tax_rates_pct"):
-		for key in C.TAX_KEYS:
-			if pending["tax_rates_pct"].has(key):
-				new_rates[key] = float(pending["tax_rates_pct"][key])
-		# V4.2 T4. Custom keys ride the SAME pending channel -- before this
-		# loop a law's rate for a composed key was applied by nothing and
-		# silently dropped, the half-applied state this project refuses. The
-		# params register is the authorising record: a pending rate for a key
-		# with no params behind it is a bug or a hand-built payload, and it is
-		# refused loudly rather than applied as a rate that yields nothing
-		# (the silent half-tax) or priced as a line with no base.
+		# THE LANDED-RATE FLOOR (the ultra pass-9 finding's class): a rate is
+		# [0, inf) -- every panel slider floors at 0, the birth gate refuses a
+		# negative birth rate, and the repeal negation floors its removal at
+		# the register (Legislature._budget_removal). This is the one writer
+		# for every other route, so the floor lives here too: a cut bigger
+		# than the live rate (a composed over-cut, a lever passed twice) lands
+		# AT zero -- priced as "cut to zero" -- instead of as a negative
+		# revenue line paying out.
 		for key in pending["tax_rates_pct"]:
+			new_rates[key] = maxf(float(pending["tax_rates_pct"][key]), 0.0)
 			if C.TAX_KEYS.has(key):
 				continue
 			if not ns.custom_taxes.has(key):
 				push_error("budget: pending rate for tax key '%s' with no params on the register -- refused" % key)
+				new_rates.erase(key)
 				continue
 			# THE YIELD GATE, sim-side (the ultra pass-6 finding). The tax panel
 			# matches a born key's slider to its base, but this command channel
@@ -365,14 +365,20 @@ static func commit(state, pending: Dictionary) -> void:
 				push_error("budget: base %.2f x rate %.1f would yield %.2f of GDP, past the %.1f the revenue model prices -- rate for '%s' refused" % [
 					base_share, pending_rate, base_share * pending_rate,
 					StatuteK.NEW_TAX_YIELD_CEILING, String(key)])
+				new_rates.erase(key)
 				continue
 			new_rates[key] = pending_rate
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
-		for key in C.SPENDING_KEYS:
-			if pending["spending_pct_gdp"].has(key):
-				new_spending[key] = float(pending["spending_pct_gdp"][key])
+		# The same landed-rate floor: a spending cut bigger than the line
+		# lands at zero, never negative (the pass-9 finding's spending leg).
+		for key in pending["spending_pct_gdp"]:
+			new_spending[key] = maxf(float(pending["spending_pct_gdp"][key]), 0.0)
+			if C.SPENDING_KEYS.has(key):
+				continue
+			push_error("budget: pending spending for unknown key '%s' -- refused" % String(key))
+			new_spending.erase(key)
 
 	# V1.6d. A THIRD KEY ON `pending`, beside the two dictionaries, and a scalar rather
 	# than a fourth entry in tax_rates_pct -- because it is not a rate. Optional like
