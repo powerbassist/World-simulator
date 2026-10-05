@@ -204,13 +204,18 @@ const CHANNEL_PRICE := {
 	"spending_pct_gdp": {
 		# health_service_reform (+1.0 -> pensioners +0.15, urban +0.10) and
 		# childcare_expansion (+0.3 -> urban +0.2, workers +0.1); urban read
-		# between the two.
+		# between the two. The cut row follows the 1.5x rule on urban and
+		# workers; pensioners ships -0.25, deliberately 1.667x its rise -- a
+		# health cut is felt by pensioners before anyone else, and the
+		# moderation is recorded rather than rounded to the rule.
 		"health": {
 			"rise": {"pensioners": 0.15, "urban": 0.2, "workers": 0.1},
 			"cut": {"pensioners": -0.25, "urban": -0.3, "workers": -0.15},
 		},
 		# public_sector_pay_settlement (+0.3 education, shared with health
 		# +0.4, buys workers +0.2 / urban +0.08), read per education point.
+		# Workers' cut ships -0.25, 1.667x the 1.5x rule -- public-sector
+		# workers take an education cut personally -- recorded, not rounded.
 		"education": {
 			"rise": {"workers": 0.15, "urban": 0.1},
 			"cut": {"workers": -0.25, "urban": -0.15},
@@ -232,7 +237,8 @@ const CHANNEL_PRICE := {
 			"cut": {"pensioners": -0.29, "business": 0.12},
 		},
 		# housing_programme (+0.6 -> urban +0.2, rural +0.05, per point
-		# 0.33 / 0.08). regional_devolution's rural +0.2 on +0.2 is excluded:
+		# 0.33 / 0.08; urban shipped at 0.30, rounded toward the rise rows).
+		# regional_devolution's rural +0.2 on +0.2 is excluded:
 		# a devolution price on a constitutional-class act, not a spending
 		# ratio.
 		"infrastructure": {

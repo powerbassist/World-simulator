@@ -1687,7 +1687,7 @@ func _assembly_result_body(result: Dictionary) -> String:
 	# below does not show. Both wordings come off the outcome keys the result
 	# actually carries; only the bare false reads "defeated".
 	if bool(result.get("held_by_upper", false)):
-		return "The assembly carried %s and the %s has suspended it — it comes into force in %d months unless they pass it." % [
+		return "The assembly carried %s and the %s has suspended it — it comes into force in %d months." % [
 			law_name, String(result.get("upper_chamber", "second chamber")), int(result.get("held_months", 0))]
 	if bool(result.get("blocked_by_upper", false)):
 		return "The assembly carried %s and the %s has blocked it." % [

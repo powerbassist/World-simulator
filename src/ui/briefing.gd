@@ -263,10 +263,18 @@ func _build_polls() -> void:
 	# for: the ordinary poll noise, or the commissioned +-1.0 where the
 	# popular poll was bought. The poll is ABOUT this bill, so its hash is
 	# keyed by the bill as well as the bloc -- two bills' polls are two
-	# pieces of fieldwork, not one number read twice.
+	# pieces of fieldwork, not one number read twice. A COMMISSIONED poll's
+	# hash is keyed on the month the fieldwork happened -- the purchase
+	# record's own month, stored exactly in poll_id units -- because the
+	# fixed-forecast rule means the player bought one published figure, not
+	# a fresh draw every month (the ultra pass-14 finding): the free poll
+	# beside it keeps the live month, and the two legitimately read
+	# differently as the months pass.
 	var bought: Dictionary = _ns.poll_purchases.get(_bill_key, {})
 	var precise: bool = bought.has(StatuteK.POLL_KIND_POPULAR)
 	var id := PollNoise.poll_id(int(_state.year), int(_state.month))
+	if precise:
+		id = int(bought[StatuteK.POLL_KIND_POPULAR].get("month", id))
 	var rows: Array = [["", "the country"]]
 	for bloc in K.BLOC_KEYS:
 		var truth: float = float(_ns.bloc_approval.get(bloc, 0.0))
