@@ -88,8 +88,9 @@ static func init_nation(ns) -> void:
 	# `regulation_burden` above give the reason. A held bill is written by propose()
 	# in this file and -- V4.2 T6's ultra review -- by statute.gd's assembly division
 	# parking a suspensive refusal, and it is released by tick_month() in this file
-	# either way, so it is reset here and not in Chambers.init_nation(), which owns
-	# the chamber and not the in-tray.
+	# either way, so it is reset here -- and also in Chambers.init_nation(), which has reset
+	# it since V1.1e; two cheap idempotences over one register, and the comment
+	# that claimed otherwise was the ultra pass-12 fleet's stale-record find.
 	ns.held_bills = {}
 
 

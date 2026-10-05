@@ -20,9 +20,9 @@ is not the last anyone hears of them.
 
 ### Negative pending rates through `Budget.commit()` (general case)
 
-`Budget.commit()` writes pending rates verbatim and trusts its callers; the
-panels floor their sliders at 0 UI-side, and the repeal path floors its
-negation at the register (`Legislature._budget_removal`). What remains open is
+`Budget.commit()` floors every pending write at zero and refuses unknown
+keys, but beyond that trusts its callers; the repeal path floors its negation
+at the register (`Legislature._budget_removal`). What remains open is
 the general case: any *future* sim caller — the general compose window above
 all — could send a negative pending rate, and the pre-existing corporate route
 has the same shape today. **Trigger:** the general compose window shipping, or
