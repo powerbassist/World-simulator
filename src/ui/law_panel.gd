@@ -254,6 +254,15 @@ func _build_result_summary(result: Dictionary) -> Control:
 	if result.get("target_already_gone", false):
 		return box
 
+	# A HOLD'S RELEASE had no division either (the ultra pass-7 finding): the
+	# bill was carried once, BEFORE the second chamber suspended it, and the
+	# release applies over that chamber without the assembly re-sitting -- so
+	# the tally below read "Yes 0 · No 0 · Abstain 0, of 577 seats" against a
+	# chamber that never sat. The card main.gd builds refuses the same tally
+	# for the same reason.
+	if result.get("released", false):
+		return box
+
 	var tally := Label.new()
 	tally.text = "Yes %d · No %d · Abstain %d, of %d seats" % [
 		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]

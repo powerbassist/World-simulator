@@ -2226,13 +2226,24 @@ func _on_load_requested(slot: String) -> void:
 	_failure_cards.clear()
 	_industry_card_firms.clear()
 	# The assembly's four beside them, the same rule: bill ids collide only
-	# within a run, a loaded last_law_result can carry assembly_bill true, and
-	# a stale division- or release-month memory would either swallow the loaded
-	# bill's card or re-fire the discarded game's.
+	# within a run, so those two maps belong to the discarded game. The two
+	# month memories are NOT simply reset to -1 (the ultra pass-7 finding):
+	# the stamp exists so a quiet month cannot re-announce a division already
+	# on the register, and the load boundary must honour it, not reset it --
+	# the first month elapsed after a save+load otherwise re-announced the
+	# loaded division (or release) as news. Each slot takes the loaded stamp
+	# for ITS OWN shape of result and -1 otherwise: a stale memory inherited
+	# from the discarded game could swallow a real card whose stamp it
+	# happened to match.
 	_announced_assembly_bills.clear()
 	_assembly_cards.clear()
-	_assembly_result_month = -1
-	_assembly_release_month = -1
+	var loaded_ns = _state.player()
+	var loaded_result: Dictionary = loaded_ns.last_law_result
+	var carries_bill := bool(loaded_result.get("assembly_bill", false))
+	var released_load := bool(loaded_result.get("released", false))
+	var loaded_stamp := int(loaded_result.get("assembly_division_month", -1))
+	_assembly_result_month = loaded_stamp if carries_bill and not released_load else -1
+	_assembly_release_month = loaded_stamp if carries_bill and released_load else -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])

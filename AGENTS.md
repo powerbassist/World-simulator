@@ -15,7 +15,9 @@ Design vault is `docs/` — open **the project root** as the Obsidian vault, not
   escape hatch for a hot loop a profiler actually found — not preemptively.
 - No database and no autoloads in the game code. Third-party addons are
   editor-side and gitignored by default; `src/` may reference an addon file
-  **only if that file is committed** — see `.gitignore`. JSON content, JSON saves.
+  **only if that file is committed** — see `.gitignore`. The `.obsidian/` vault
+  is the second stated exception (documentation surface, not game code — `src/`
+  reads nothing in it). JSON content, JSON saves.
 
 ## Commands
 

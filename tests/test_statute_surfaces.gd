@@ -35,8 +35,10 @@ extends SceneTree
 ##   (j) the division card's memory keys the DIVISION'S OWN MONTH -- the
 ##       machine's assembly_division_month stamp -- so a quiet month cannot
 ##       re-announce a division (driven on the real announcer, twice);
-##   (k) the load-path reset clears the four assembly memories beside the
-##       industry maps (driven through the REAL _on_load_requested);
+##   (k) the load path clears the bill-id memories and SEEDS the two month
+##       memories from the loaded result's own stamp, so the first month
+##       elapsed after a save+load cannot re-announce the loaded division or
+##       release (driven through the REAL _on_load_requested);
 ##   (l) the reversal preview's dual company shape: effect_lines() reads both
 ##       the {sector, burden} effects shape and the ledger's {sector: delta},
 ##       or a regulation repeal's "It reverses" drops its one line; and the
@@ -440,23 +442,76 @@ func _run() -> void:
 	if _main._hud.message_stack._cards.size() != after_first:
 		_fail("a quiet month re-announced the division -- the memory must key the stamp, not the clock")
 
-	# --- (k) The load-path reset clears the assembly memories too -----------
-	# Driven through the REAL handler, the same reason leg (g) drives the real
-	# save/load pair: a memory reset the handler skips is exactly the defect.
+	# --- (k) The load boundary honours the stamp, not a reset ---------------
+	# The ultra pass-7 finding, reproduced live: the handler reset both month
+	# memories to -1 while the LOADED register keeps leg (j)'s division stamp,
+	# so the first month elapsed after a save+load re-announced the loaded
+	# division as news -- evicting a live card behind it (MAX_CARDS 6, oldest
+	# dropped). The bill-id maps still belong to the discarded game; the two
+	# month memories are seeded FROM the loaded result instead. Driven through
+	# the REAL handler, the same reason leg (g) drives the real save/load pair.
 	var err2: String = SaveManager.save_game(state, _main._clock, POLL_SLOT)
 	if err2 != "":
-		_fail("the load-reset leg's save failed: %s" % err2)
+		_fail("the load leg's save failed: %s" % err2)
 	else:
 		_main._announced_assembly_bills["ghost_bill"] = true
 		_main._assembly_cards["ghost_bill"] = "card_ghost"
 		_main._assembly_result_month = 42
 		_main._assembly_release_month = 43
+		var cards_before_load: int = _main._hud.message_stack._cards.size()
 		_main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
-		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty() \
-				or int(_main._assembly_result_month) != -1 \
-				or int(_main._assembly_release_month) != -1:
-			_fail("the load path left assembly announce memories behind -- they belong to the discarded game")
+		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty():
+			_fail("the load path left the bill-id memories behind -- they belong to the discarded game")
+		# THE SEED: the saved register carries leg (j)'s division fixture, so
+		# the division memory must land on ITS stamp and the release memory on
+		# none -- a reset to -1 here is the stale re-announce below.
+		var reloaded_ns = _main._state.player()
+		var loaded_stamp := int(reloaded_ns.last_law_result.get("assembly_division_month", -1))
+		if loaded_stamp < 0 or int(_main._assembly_result_month) != loaded_stamp:
+			_fail("the load path did not seed the division memory from the loaded stamp (memory %s, register %s) -- the next month re-announces it" % [
+				_main._assembly_result_month, loaded_stamp])
+		if int(_main._assembly_release_month) != -1:
+			_fail("a loaded DIVISION seeded the release memory (%s)" % _main._assembly_release_month)
+		# The live-repro month: one month elapsed on the loaded game, and the
+		# stale card must NOT fire. The announcer is driven directly, the
+		# collision leg's quiet-month precedent -- a full _on_month_elapsed
+		# would let the assembly table a NEW bill, whose tabling card would
+		# legitimately move the count and spoil the pin.
+		reloaded_ns.assembly_bills.clear()
+		var y := int(_main._state.year)
+		var m := int(_main._state.month) + 1
+		if m > 12:
+			m = 1
+			y += 1
+		_main._state.year = y
+		_main._state.month = m
+		_main._announce_assembly_events()
+		if _main._hud.message_stack._cards.size() != cards_before_load:
+			_fail("the first month after load re-announced the loaded division -- the load boundary must honour the stamp")
+		# THE RELEASE VARIANT, by symmetry: the release stamp rides the same
+		# register (legislature.gd writes it there), so a loaded RELEASE seeds
+		# the release slot and never the division's -- a swap would silently
+		# re-arm the wrong once-only memory.
+		reloaded_ns.last_law_result = {
+			"assembly_bill": true, "law_id": "retirement_age_reform",
+			"passed": true, "released": true, "majority": "simple",
+			"yes_seats": 0, "no_seats": 0, "abstain_seats": 0, "seats_total": 577,
+			"party_votes": {}, "party_support": {}, "party_rebels": {},
+			"upper_chamber": String(reloaded_ns.upper_chamber_name),
+			"assembly_division_month": loaded_stamp,
+		}
+		var err3: String = SaveManager.save_game(_main._state, _main._clock, POLL_SLOT)
+		if err3 != "":
+			_fail("the load leg's release save failed: %s" % err3)
+		else:
+			_main._on_load_requested(POLL_SLOT)
+			SaveManager.delete_slot(POLL_SLOT)
+			if int(_main._assembly_release_month) != loaded_stamp:
+				_fail("the load path did not seed the release memory from the loaded release (memory %s, register %s)" % [
+					_main._assembly_release_month, loaded_stamp])
+			if int(_main._assembly_result_month) != -1:
+				_fail("a loaded RELEASE seeded the division memory (%s)" % _main._assembly_result_month)
 
 	# --- (l) The reversal preview's dual company shape ----------------------
 	# A negated ledger keys the burden channel BY SECTOR ({sector: delta},

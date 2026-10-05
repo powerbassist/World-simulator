@@ -123,6 +123,19 @@ func _hand_bill(law_id: String, backer := "", chief := "") -> Dictionary:
 	}
 
 
+## Every Label's text in a builder's output, depth-first -- the same live read
+## the surfaces test makes on the real panel, minus the scene tree (the
+## summary builders make Labels and boxes only, nothing that needs _ready).
+func _labels_text(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += String(child.text) + "\n"
+		else:
+			out += _labels_text(child)
+	return out
+
+
 ## test_industry's pattern: the order is read off the source, because a test
 ## that only ticked in one order would pass a file wired in the wrong one.
 func _test_tick_order_pin() -> void:
@@ -418,6 +431,23 @@ func _test_upper_house_and_court_pipeline() -> void:
 	if struck_div_body.find("struck") == -1 or struck_div_body.find("defeated") != -1:
 		_fail("a struck-down division's card reads its own tally: %s" % struck_div_body)
 	main_ui.free()
+
+	# THE PANEL's record of the same release (the ultra pass-7 finding): the
+	# result summary gave a release the IN FORCE verdict and then printed the
+	# division tally underneath it -- "Yes 0 · No 0 · Abstain 0, of 577 seats",
+	# a chamber that never sat, reported as one that voted. The card above
+	# already refuses the tally on a release; the panel's own builder is
+	# driven here on the machine's own dict, the bare-instance way the card
+	# body is (it reads only the loader and its argument).
+	var panel_ui = load("res://src/ui/law_panel.gd").new()
+	panel_ui._loader = _loader
+	var release_summary = panel_ui._build_result_summary(released)
+	var summary_text := _labels_text(release_summary)
+	panel_ui.free()
+	if summary_text.find("Yes 0") != -1:
+		_fail("a release's result summary prints a seat tally -- a hold's release has no division, the chamber never sat: %s" % summary_text)
+	if summary_text.find("IN FORCE") == -1:
+		_fail("a release's result summary lost its verdict line: %s" % summary_text)
 
 
 ## THE COLLISION, the ultra pass-4 finding: a PMB dividing the same month an

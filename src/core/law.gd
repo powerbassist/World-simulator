@@ -663,13 +663,15 @@ static func extract_shared_effects(raw: Dictionary, owner_id: String, filename: 
 ## private field". The channel needed no new shape to carry a second register.
 ##
 ## Both values are SIGNED. Anti-corruption is the negative direction on one
-## accumulator and a migration tightening the negative direction on the other, not
-## repeal verbs: V1.4b's argument for deregulation transferred whole, plus one V1.4b
-## did not need -- a one-directional level would make an anti-corruption law INERT on
-## a clean state, and V1.3f's own property is that nothing on the law list does
-## nothing. For migration the sign carries a second load: ageing is a charge no verb
-## in this game can otherwise close, so an opening direction is what makes the
-## dependency ratio admissible at all rather than a permanent monotone ratchet.
+## accumulator and a migration tightening the negative direction on the other,
+## and that is still true now the repeal verb exists (V4.2): repeal removes
+## whole acts rather than moving a stance partway, so the sign still does work
+## a repeal cannot. A one-directional level would also make an anti-corruption
+## law INERT on a clean state, and V1.3f's own property is that nothing on the
+## law list does nothing. For migration the sign carries a second load: ageing
+## is a charge no verb in this game can otherwise close, so an opening
+## direction is what makes the dependency ratio admissible at all rather than
+## a permanent monotone ratchet.
 ##
 ## V1.5c WIDENED IT BY ONE KEY AGAIN, which is the second piece of evidence for V1.5a's
 ## claim and a better one than the first: a channel that carries a second register might
