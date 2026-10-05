@@ -53,6 +53,7 @@ func _init() -> void:
 		_test_clamp_aware_recording()
 		_test_repeal_subtracts_exactly()
 		_test_budget_floor_on_repeal()
+		_test_mixed_moot_release_lands_channels()
 		_test_cut_restoration_on_repeal()
 		_test_committed_rates_floor_at_zero()
 		_test_repeal_refusals()
@@ -198,6 +199,55 @@ func _test_budget_floor_on_repeal() -> void:
 	if ns.law_ledger.has(SURTAX):
 		_fail("the floored repeal did not erase the target's entry")
 
+
+## The ultra pass-13 finding: a MIXED bill (channels + repeals) held by the
+## second chamber and released after its target is gone must still land its
+## OWN channels -- apply() is every path on which a bill takes effect.
+func _test_mixed_moot_release_lands_channels() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	var law = _law_by_id(SURTAX)
+	Legislature.apply(gs, ns, law, _loader)
+	var mixed := Law.new()
+	mixed.id = "mixed_release_probe"
+	mixed.law_name = "Mixed Release Probe"
+	mixed.theme = "tax"
+	mixed.summary = "Test mixed bill."
+	mixed.position = {"economic": 0.6, "social": 0.0}
+	mixed.majority = "simple"
+	mixed.repeals = SURTAX
+	mixed.effects = {"spending_pct_gdp": {"health": 0.3}}
+	# A hand-built law exists only if the register carries it -- the same
+	# composed-register fallback the real release path walks.
+	ns.custom_laws[mixed.id] = mixed.to_save_dict()
+	# Hand-park it the machine's way: the second chamber suspended the mixed
+	# bill, and the target's ledger is still live (nothing else repealed it).
+	ns.held_bills[mixed.id] = {"months": 1, "origin": "assembly"}
+	# A second, PURE repeal of the same target carries while the mixed bill
+	# sits in the hold -- the target's book is now empty.
+	var pure := Law.new()
+	pure.id = "pure_repeal_probe"
+	pure.law_name = "Pure Repeal Probe"
+	pure.theme = "tax"
+	pure.summary = "Test pure repeal."
+	pure.position = {"economic": 0.6, "social": 0.0}
+	pure.majority = "simple"
+	pure.repeals = SURTAX
+	Legislature.apply(gs, ns, pure, _loader)
+	if ns.law_ledger.has(SURTAX):
+		_fail("mixed-moot fixture: the pure repeal did not subtract")
+		return
+	var health_before: float = float(ns.spending_pct_gdp.get("health", 0.0))
+	# Release the mixed bill through the REAL release path.
+	Legislature.tick_month(gs, _loader)
+	var health_after: float = float(ns.spending_pct_gdp.get("health", 0.0))
+	if not is_equal_approx(health_after, health_before + 0.3):
+		_fail("a mixed bill's moot release dropped its own channels: health %s -> %s" % [
+			health_before, health_after])
+	# No target_already_gone flag on a MIXED release: the flag means "why
+	# nothing followed", and the bill's own channels did follow -- only a
+	# pure repeal's release carries it.
 
 ## The ultra pass-9 finding: pass 8's own floor over-clamped the REMOVAL, so
 ## repealing a CUT restored nothing -- corporate_tax_cut (-5) repealed at a

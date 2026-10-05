@@ -221,20 +221,30 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			# ago; the release card says the same thing the same way.
 			"upper_chamber": ns.upper_chamber_name,
 		}
-		# THE MOOT RELEASE, the ultra pass-4 finding: a repeal can release after
+		# THE MOOT RELEASE, the ultra pass-4 finding: a REPEAL can release after
 		# its TARGET is already gone. Two repeal drafts of one target both compose
 		# (repeal_target_legal gates on the live ledger, and the repeal side has
 		# no one-in-flight gate), and available()'s consumed-repeal filter runs
 		# only on the propose path -- a bill parked in the hold is not re-scanned
 		# -- so the second repeal can carry and subtract while the first sits out
-		# its hold. Releasing then must apply NOTHING and charge NOTHING: the
+		# its hold. Releasing then must subtract NOTHING and charge NOTHING: the
 		# subtraction would find an empty book, and recording this as force with
 		# the override price would be a release lying about a bill that changed
 		# nothing. The record keeps passed/released -- the hold did run out -- and
-		# gains the flag that says why nothing followed. Deliberately no assembly
-		# marker either: nothing came into force, so there is no coming-into-force
-		# event for a card to announce.
-		if law.repeals != "" and ledger_of(ns, law.repeals).is_empty():
+		# gains the flag that says why the subtraction did not follow. Deliberately
+		# no assembly marker either: nothing came into force, so there is no
+		# coming-into-force event for a card to announce.
+		#
+		# The moot branch short-circuits only the SUBTRACTION and only for a PURE
+		# repeal (the ultra pass-13 finding): a MIXED bill -- channels beside a
+		# `repeals` target -- must still land its own channels and face the court
+		# below, exactly as apply() would, because apply() is every path on which
+		# a bill takes effect and a blanket skip here would make the same carried
+		# bill evaporate or take effect depending on which path delivered it.
+		# _subtract_ledger()'s empty-book return is the quiet no-op the pure
+		# case needs, so the flag below is the only special-casing a mixed
+		# release carries.
+		if law.repeals != "" and ledger_of(ns, law.repeals).is_empty() and law.effects.is_empty():
 			released["target_already_gone"] = true
 			ns.last_law_result = released
 			continue

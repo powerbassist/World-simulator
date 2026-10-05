@@ -1898,8 +1898,9 @@ one session: the bloc panel was printing `deficit_pct_gdp <= 3.0` at a player, a
 its own budget section fell below the fold.
 
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
-The argument, the four calls it made, and the per-session table are in
-ROADMAP.md; [docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
+The argument, the four calls it made, and the per-session table were in
+ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now);
+[docs/tiers/v1.md](docs/tiers/v1.md) §3 tags every
 bullet with the session that builds it. Order: (a) relations and diplomatic
 actions, (b) trade intensity and agreements, (c) tariffs and sanctions, (d) the
 bloc, (e) AI foreign policy, (f) defence.
@@ -4162,8 +4163,8 @@ one line in `main.gd`'s `_build_action_bar()`.
 
 One session, one objective, a fresh chat each time. Commit at every session
 boundary, and end each session by writing the next one's handoff prompt — the
-convention is in ROADMAP.md. Verify against the session's
-done-when list before claiming done.
+handoffs live in .superpowers/sdd/ beside this file. Verify against the
+session's done-when list before claiming done.
 
 **There is ONE instructions file, `AGENTS.md`, as of the V3.1 close-out.** A
 second copy, `CLAUDE.md`, existed for a different assistant reading a different
