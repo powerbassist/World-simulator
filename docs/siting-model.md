@@ -32,7 +32,7 @@ there**. `--site` is the one new screenshot flag.
 
 ## 2. THE ROW'S CENTRAL CLAIM IS FALSE, AND THE PROJECT HAD NO WAY TO ASK
 
-'s V2.6b row says both its halves *"decide **where** by reading V2.6a's
+The ROADMAP's V2.6b row says both its halves *"decide **where** by reading V2.6a's
 live shares"*. Measured before any code was written, that is wrong: the site is chosen
 by **static content**, and the live shares are third-order behind it.
 

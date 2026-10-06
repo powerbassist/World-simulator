@@ -121,7 +121,7 @@ const PMB_ENDORSE_SUPPORT := 0.10
 const PMB_ENDORSE_PRICE := {"workers": 0.05, "business": -0.05}
 
 ## LOBBY_HAZARD_MONTHLY prices a chief-backed bill at roughly one every four
-## years (0.02 x 12 = 0.24 draws) -- five times rarer than the backbench
+## years (0.02 x 12 = 0.24 draws) -- four times rarer than the backbench
 ## floor, because a lobbied bill exists to raise the question a plain PMB
 ## does not ("whose bill is this?") and a raised question stays raised only
 ## when it is rare. The hazard DRAW fires only when a sector's regulation

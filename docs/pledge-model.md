@@ -22,7 +22,7 @@ and `tools/pledge_probe.gd` is what set the ladder.
 
 ## 1. The row said the price was a quantity that does not exist. It said so twice.
 
-'s V1.7 decomposition records this as **the row most likely to split**:
+The ROADMAP's V1.7 decomposition records this as **the row most likely to split**:
 
 > The price is a quantity that does not exist, which is V1.5d's *legitimacy* problem
 > again. […] if the price cannot land on an existing register the way V1.5d landed

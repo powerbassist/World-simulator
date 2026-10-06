@@ -576,7 +576,7 @@ deterministic hazards table bills. The backbench floor is
 `PMB_HAZARD_MONTHLY` 0.08 — just under one draw a year, often enough that a
 player who never drafts still has a book moving under them; the measured
 idle band is 9 bills in 120 months (FRA), and the test pins 1–20. The
-chiefs' lobby is `LOBBY_HAZARD_MONTHLY` 0.02, five times rarer on purpose,
+chiefs' lobby is `LOBBY_HAZARD_MONTHLY` 0.02, four times rarer on purpose,
 because a lobbied bill exists to raise the question a plain PMB does not
 ("whose bill is this?") and a raised question stays raised only when it is
 rare; it fires only when a sector's `regulation_burden` stands above

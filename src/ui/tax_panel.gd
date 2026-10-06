@@ -189,7 +189,7 @@ func _build_compose() -> Control:
 	_compose_box.hide()
 	outer.add_child(_compose_box)
 
-	PanelKit.line(_compose_box, "A new key is born by a bill: name it, set its base and its birth rate, and draft. The assembly votes when the drafting completes.", PanelKit.Tone.PLAIN)
+	PanelKit.line(_compose_box, "A new key is born by a bill: name it, set its base and its birth rate, and draft. When the drafting completes the bill waits on your Propose in the Legislature -- the key prices nothing until the act carries.", PanelKit.Tone.PLAIN)
 
 	var fields := HBoxContainer.new()
 	fields.add_theme_constant_override("separation", 12)
@@ -317,7 +317,7 @@ func _lever_max(key: String) -> float:
 	# the PRODUCT base_share x rate and the birth gate admits only pairs under
 	# NEW_TAX_YIELD_CEILING. A 100-point slider on a base-4.0 key offered
 	# exactly the product the ceiling exists to refuse -- two clicks from a
-	# legal birth to a 140 %-of-GDP yield. minf keeps NEW_TAX_RATE_MAX as the
+	# legal birth to a 400 %-of-GDP yield. minf keeps NEW_TAX_RATE_MAX as the
 	# absolute cap, so a LOW-base birth keeps its full range (12.0 / 0.06 = 200
 	# caps at 100); the 0.01 floor is divide-by-zero armour for a payload with
 	# no base behind it, not a tuned bound.

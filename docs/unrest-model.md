@@ -21,7 +21,7 @@ is noted.
 ## 1. The session where two rules that were pulling apart finally agree
 
 [[diplomacy-model|V1.3a]]'s rule was that live state ships **with a verb** or it decays
-into a number nobody reads. 's decomposition inverted it for this block —
+into a number nobody reads. The V1.5 decomposition inverted it for this block —
 *every session ships a statistic and the price it charges* — because §5's nine bullets
 contain at most two player verbs and both belong to (d).
 

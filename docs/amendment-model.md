@@ -144,7 +144,7 @@ cancelled) or a grand-coalition-shaped start scenario (V1.2, also scheduled)
 could raise Germany's ceiling. Until one of those lands, Germany's
 `two_thirds` is real and correctly unauthored-against, not a placeholder.
 
-**And a referendum is NOT that trigger, which the 's own V1.7
+**And a referendum is NOT that trigger, which the ROADMAP's own V1.7
 decomposition expected it to be.** That page argued referendums belong beside
 electoral-system choice because *"a referendum exists precisely because a
 supermajority is sometimes unreachable, and this block measured exactly that for

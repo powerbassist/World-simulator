@@ -257,7 +257,7 @@ func _build_polls() -> void:
 		PanelKit.line(section, "The Assembly: %s" % LawPanel.forecast_text(
 			_ns, _party_list, _law, band), PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(section, "The Assembly divides once drafting completes.", PanelKit.Tone.DIM)
+		PanelKit.line(section, "Drafting first; when it completes, the bill waits on your Propose in the Legislature.", PanelKit.Tone.DIM)
 
 	# The country's read, bloc by bloc, at the margin the player has paid
 	# for: the ordinary poll noise, or the commissioned +-1.0 where the

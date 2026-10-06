@@ -128,7 +128,7 @@ func _run() -> void:
 		_fail("a low-base born key (0.06) lost its full rate range -- the max is matched to the BASE (12.0 / 0.06 = 200), so minf keeps NEW_TAX_RATE_MAX the cap")
 	# THE OTHER SIDE OF THAT RULE (the ultra pass-6 finding): a HIGH base pulls
 	# the max DOWN to its own yield bound. The old fallback offered 100 points
-	# on every born key, so a base-4.0 key was two clicks from a 140-of-GDP
+	# on every born key, so a base-4.0 key was one drag from a 400-of-GDP
 	# yield the ceiling's own rationale declares unpriceable -- the slider must
 	# top at 12.0 / 4.0 = 3.0.
 	ns.custom_taxes["heavy"] = {

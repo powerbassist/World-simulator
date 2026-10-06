@@ -125,7 +125,7 @@ for two nations only — FRA **0.0330** and ESP **0.0460**.
 
 ## 4. Britain, and the half the tier row got wrong
 
-'s V2 preamble records that `nama_10r_2gdp` carries zero `UK` geo codes,
+The ROADMAP's V2 preamble records that `nama_10r_2gdp` carries zero `UK` geo codes,
 that Eurostat dropped UK regions after withdrawal, and that *"Britain therefore needs a
 second source or an authored register"*. Half of that is right and the wrong half is
 the one that mattered.
