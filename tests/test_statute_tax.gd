@@ -585,7 +585,7 @@ func _test_reserved_line_names() -> void:
 func _test_reserved_names_derive_from_the_writer() -> void:
 	var source := FileAccess.get_file_as_string("res://src/sim/budget.gd")
 	var regex := RegEx.new()
-	regex.compile('ns[.]revenue_pct_gdp."([a-z_]+)" *=')
+	regex.compile('ns[.]revenue_pct_gdp[[]"([a-z_]+)"] *=')
 	var derived := {}
 	for match_ in regex.search_all(source):
 		derived[match_.get_string(1)] = true
