@@ -111,3 +111,12 @@ tools/portraits_photo_sources.json
 # .superpowers/sdd scratch: working space, not storage. The * catches the
 # per-PR suffix a pass appends (.review-tmp48/ and friends).
 .review-tmp*
+.review_tmp*
+.review-tmp*.gd
+.review_tmp*.gd
+# The audit fleet's root-level fetch scratch (PR comment dumps), plus the
+# Windows `nul` redirect artifact its subshells keep minting.
+pr4*.md
+pr4*.json
+pr4*.txt
+nul
