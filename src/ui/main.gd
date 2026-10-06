@@ -1665,7 +1665,7 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 			law_name, months, "" if months == 1 else "s"]
 	if firm_id != "":
 		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
-		return "%s's chief %s backs %s. The assembly divides in %d month%s; a stand one way or the other is the president's to take." % [
+		return "%s's chief %s backs %s. The assembly divides in %d month%s; whether the president stands behind it is the president's to take." % [
 			_loader.firm_name(_state.player_nation_id, firm_id),
 			chief if chief != "" else "the chief", law_name, months, "" if months == 1 else "s"]
 	return "%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone." % [
