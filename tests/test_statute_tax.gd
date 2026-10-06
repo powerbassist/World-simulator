@@ -71,6 +71,7 @@ func _init() -> void:
 		_test_init_resets()
 		_test_birth_yield_ceiling()
 		_test_reserved_line_names()
+		_test_yield_cap_gates_the_reoffer()
 		_test_commit_yield_gate()
 		_test_negative_params_refused()
 		_test_nameless_key_refused()
@@ -509,6 +510,53 @@ func _test_init_resets() -> void:
 	Legislature.init_nation(ns)
 	if not ns.custom_taxes.is_empty():
 		_fail("init_nation did not reset the params register -- whatever WRITES a field resets it")
+
+
+## The ultra pass-17 finding: a birth act is repeatable, but a re-passage
+## whose pending product would exceed the yield ceiling changes nothing the
+## model can price -- so available() does not offer it. The anchor birth
+## (4.0 x 3.0 = 12.0 at birth) is never re-offered; a small birth is.
+func _test_yield_cap_gates_the_reoffer() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	# The anchor birth: at the ceiling from its first passage.
+	var anchor := BIRTH_SPEC.duplicate(true)
+	anchor["new_tax"]["key"] = "windfall"
+	anchor["new_tax"]["name"] = "The Windfall Duty"
+	anchor["new_tax"]["base_share"] = 4.0
+	anchor["new_tax"]["erosion"] = 0.8
+	anchor["new_tax"]["rate"] = 3.0
+	var r: Dictionary = Statute.draft(gs, ns, _loader, anchor)
+	if not bool(r.get("ok", false)):
+		_fail("yield-cap fixture: the anchor birth was refused")
+		return
+	# Compose it the machine's way (tick the draft to completion).
+	for i in range(4):
+		gs.month = int(gs.month) + 1
+		Statute.tick_month(gs, _loader)
+	var anchor_law = null
+	for composed in Law.composed_register(ns):
+		if String(composed.id) == String(r["draft_id"]):
+			anchor_law = composed
+			break
+	if anchor_law == null:
+		_fail("yield-cap fixture: the anchor birth did not compose")
+		return
+	Legislature.apply(gs, ns, anchor_law, _loader)
+	# Re-passage would land 6.0 on a 4.0 base -- 24 of GDP. Not offered.
+	var offered := false
+	for open_law in Legislature.available(ns, _loader.laws + Law.composed_register(ns)):
+		if open_law.id == anchor_law.id:
+			offered = true
+			break
+	if offered:
+		_fail("the anchor birth's re-passage was offered -- it would price 24 of GDP")
+	# The commit backstop still holds: a direct crank is refused, the live
+	# birth rate kept.
+	Budget.commit(gs, {"tax_rates_pct": {"windfall": 100.0}})
+	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
+		_fail("the yield backstop no longer keeps the birth rate")
 
 
 func _test_reserved_line_names() -> void:

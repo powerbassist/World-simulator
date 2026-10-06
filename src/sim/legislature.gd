@@ -13,6 +13,9 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+# V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
+# preloads this file, and this file preloads only its constants and leaves).
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 ## V4.2. The composed-law factory: the legality scan reads ns.custom_laws
 ## through Law.composed_register() because statute.gd preloads THIS file (the
@@ -414,6 +417,26 @@ static func available(ns, all_laws: Array) -> Array:
 		# its own repealer here.
 		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
 			continue
+		# THE YIELD-CAP OFFER GATE, the ultra pass-17 finding: a birth act is
+		# repeatable by design (once:false, no passage cooldown), but the
+		# revenue model prices at most NEW_TAX_YIELD_CEILING / base of a born
+		# key -- the same cap the tax panel's slider has carried since the
+		# pass-14 round. A re-passage whose pending product would exceed the
+		# cap changes nothing the model can price, so the act is not offered:
+		# the _already_in_force shape ("a button that changes nothing is not
+		# offered"), which also stops the direct propose route, whose legality
+		# scan is this very list. The yield gate in Budget.commit() stays as
+		# the backstop for routes that bypass this filter.
+		var birth: Dictionary = law.new_tax
+		var birth_key := String(birth.get("key", ""))
+		if not birth.is_empty() and ns.custom_taxes.has(birth_key):
+			# The birth's per-passage DELTA rides the effects (statute.gd's
+			# compose merges it into tax_rates_pct); new_tax carries only the
+			# registration params.
+			var base: float = maxf(float(ns.custom_taxes[birth_key].get("base_share", 0.0)), 0.01)
+			var pending_rate: float = float(ns.tax_rates_pct.get(birth_key, 0.0)) 				+ float(law.effects.get("tax_rates_pct", {}).get(birth_key, 0.0))
+			if base * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
+				continue
 		if law.constitutional and not law.systems.has(ns.system_id):
 			continue
 		if law.changes_system and not ns.permits_system_change:
