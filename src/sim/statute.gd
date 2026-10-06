@@ -133,6 +133,15 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 			return _refuse("A tax key is 2 to 24 lowercase letters, digits and underscores -- other characters would corrupt the ledger's records.")
 		if C.TAX_KEYS.has(tax_key):
 			return _refuse("That tax key already exists in the tax code.")
+		# THE RESERVED LINE NAMES (the ultra pass-15 finding): "other",
+		# "tariffs" and "dividends" are not tax keys -- they are the computed
+		# revenue lines Budget.recompute() WRITES OVER the modelled dict after
+		# revenue_lines() returns, so a born tax carrying one would yield into
+		# a dict slot the next recompute replaces with an unrelated national
+		# quantity: the levy prices approval and demand and collects nothing,
+		# the silent half-tax the register's bump argument exists to prevent.
+		if ["other", "tariffs", "dividends"].has(tax_key):
+			return _refuse("'%s' is a reserved revenue-line name -- the books overwrite it with a computed line, so a tax born there would collect nothing." % tax_key)
 		# One key, one birth, across the key's WHOLE life: the params register
 		# is the authorising record, and a second bill proposing the same key
 		# would re-price a base and erosion the first birth already put on the

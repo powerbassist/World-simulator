@@ -2193,7 +2193,7 @@ func _validate_cross_file(geo_path: String, world_path: String) -> void:
 		errors.append("expected 29 nations, loaded %d" % nations.size())
 
 	# At least one, not exactly one -- V1.2a made a second nation playable, and
-	# a third later is a one-flag data edit, not a code change. See ROADMAP.md.
+	# a third later is a one-flag data edit, not a code change. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).
 	var playable_count := 0
 	for n in nations.values():
 		if n.playable:

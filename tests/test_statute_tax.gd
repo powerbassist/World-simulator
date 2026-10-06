@@ -70,6 +70,7 @@ func _init() -> void:
 		_test_roundtrip_absence_and_duplicate()
 		_test_init_resets()
 		_test_birth_yield_ceiling()
+		_test_reserved_line_names()
 		_test_commit_yield_gate()
 		_test_negative_params_refused()
 		_test_nameless_key_refused()
@@ -508,6 +509,22 @@ func _test_init_resets() -> void:
 	Legislature.init_nation(ns)
 	if not ns.custom_taxes.is_empty():
 		_fail("init_nation did not reset the params register -- whatever WRITES a field resets it")
+
+
+func _test_reserved_line_names() -> void:
+	var pair = _fresh()
+	var gs = pair[0]
+	var ns = pair[1]
+	# The ultra pass-15 finding: "other", "tariffs" and "dividends" are the
+	# COMPUTED revenue lines Budget.recompute() writes over the modelled dict
+	# -- a tax born under one would price approval and demand and collect
+	# nothing. All three are refused at draft.
+	for reserved in ["other", "tariffs", "dividends"]:
+		var spec: Dictionary = BIRTH_SPEC.duplicate(true)
+		spec["new_tax"]["key"] = reserved
+		var r: Dictionary = Statute.draft(gs, ns, _loader, spec)
+		if bool(r.get("ok", false)):
+			_fail("a reserved revenue-line name '%s' drafted clean" % reserved)
 
 
 func _fail(message: String) -> void:

@@ -167,7 +167,7 @@ static func tariff_revenue_pct_gdp(state, actor_id: String, row: Dictionary) -> 
 ## >
 ## > Named rather than approximated, the same shape V1.3a's and V1.3b's stopgaps
 ## > use, so V1.3e replacing it is a visible test change rather than a silent one.
-## > V1.3e opens with the checklist of all three. See ROADMAP.md.
+## > V1.3e opens with the checklist of all three. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).
 ##
 ## Called by Diplomacy.tick_month(), which already runs for all ten nations and
 ## whose own comment anticipated exactly this ("V1.3e will have the other nine
