@@ -43,6 +43,9 @@ const ChambersK = preload("res://src/sim/chambers_constants.gd")
 ## caller. discipline.gd is a leaf -- it preloads only its constants and
 ## opinion_constants -- so this preload runs no cycle.
 const Discipline = preload("res://src/sim/discipline.gd")
+## The birth gate reads COMPUTED_REVENUE_LINES from it (the pass-15 reserved
+## names); budget.gd preloads nothing that loops back here.
+const Budget = preload("res://src/sim/budget.gd")
 
 ## The channels a spec may name. The keyed channels carry {sub_key: value},
 ## the scalars a bare float, company its {sector, burden} shape and society
@@ -140,7 +143,7 @@ static func draft(state, ns, loader, spec: Dictionary) -> Dictionary:
 		# a dict slot the next recompute replaces with an unrelated national
 		# quantity: the levy prices approval and demand and collects nothing,
 		# the silent half-tax the register's bump argument exists to prevent.
-		if ["other", "tariffs", "dividends"].has(tax_key):
+		if Budget.COMPUTED_REVENUE_LINES.has(tax_key):
 			return _refuse("'%s' is a reserved revenue-line name -- the books overwrite it with a computed line, so a tax born there would collect nothing." % tax_key)
 		# One key, one birth, across the key's WHOLE life: the params register
 		# is the authorising record, and a second bill proposing the same key

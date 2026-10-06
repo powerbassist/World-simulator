@@ -60,6 +60,16 @@ static func tick_month(state) -> void:
 ## the surface that promises "this is what will happen", and a tariff imposed this
 ## month whose revenue only appeared next month would be a lie on exactly that
 ## surface. Three call sites, all of which already had the state in hand.
+## The three revenue lines recompute() itself writes AFTER revenue_lines()
+## returns -- "other" (line 1 below), "tariffs", "dividends". A TAX key
+## carrying one of these names would yield into a dict slot the next
+## recompute replaces with an unrelated national quantity: the silent
+## half-tax. Statute.draft()'s birth gate refuses them FROM THIS CONSTANT --
+## one declaration at the writer, and the re-deriving pin in
+## tests/test_statute_tax.gd fails the day a fourth computed line appears
+## without the constant growing.
+const COMPUTED_REVENUE_LINES := ["other", "tariffs", "dividends"]
+
 static func recompute(state, ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(
 		ns.tax_rates_pct, ns.start_tax_rates_pct, Tax.progressivity_base_factor(ns),

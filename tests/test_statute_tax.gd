@@ -72,6 +72,7 @@ func _init() -> void:
 		_test_birth_yield_ceiling()
 		_test_reserved_line_names()
 		_test_yield_cap_gates_the_reoffer()
+		_test_reserved_names_derive_from_the_writer()
 		_test_commit_yield_gate()
 		_test_negative_params_refused()
 		_test_nameless_key_refused()
@@ -573,6 +574,27 @@ func _test_reserved_line_names() -> void:
 		var r: Dictionary = Statute.draft(gs, ns, _loader, spec)
 		if bool(r.get("ok", false)):
 			_fail("a reserved revenue-line name '%s' drafted clean" % reserved)
+
+
+## The re-deriving pin (the ultra pass-19 finding): the reserved names the
+## birth gate refuses are exactly the computed lines Budget.recompute()
+## writes over the modelled dict. This file re-derives the set from
+## budget.gd's SOURCE so the gate cannot silently drift from the writer --
+## a fourth computed line added without growing COMPUTED_REVENUE_LINES
+## turns this red.
+func _test_reserved_names_derive_from_the_writer() -> void:
+	var source := FileAccess.get_file_as_string("res://src/sim/budget.gd")
+	var regex := RegEx.new()
+	regex.compile('ns[.]revenue_pct_gdp."([a-z_]+)" *=')
+	var derived := {}
+	for match_ in regex.search_all(source):
+		derived[match_.get_string(1)] = true
+	for reserved in Budget.COMPUTED_REVENUE_LINES:
+		if not derived.has(reserved):
+			_fail("COMPUTED_REVENUE_LINES carries '%s', which budget.gd no longer writes" % reserved)
+	for written in derived:
+		if not Budget.COMPUTED_REVENUE_LINES.has(written):
+			_fail("budget.gd writes computed line '%s' that COMPUTED_REVENUE_LINES does not reserve" % written)
 
 
 func _fail(message: String) -> void:
