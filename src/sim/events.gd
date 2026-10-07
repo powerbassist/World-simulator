@@ -16,11 +16,12 @@ extends RefCounted
 ## the content can see. ns.event_queue holds up to QUEUE_MAX entries ordered
 ## severity-descending then arrival; each entry carries its own countdown and
 ## expires on its own default. The quiet period followed the slot down: a
-## resolution quiets THAT EVENT'S CATEGORY for CATEGORY_QUIET_MONTHS, because one
-## resolution in fiscal silencing scandal forever was the global quiet's defect at
-## scale. The per-event cooldown V1.8 designed and cut -- cut on the grounds that
-## the slot already bounded repetition, an argument that died with the slot -- is
-## back as `cooldown_months`, a sparse until-month register.
+## delivery quiets THAT EVENT'S CATEGORY for CATEGORY_QUIET_MONTHS (a resolution
+## re-arms the countdown), because one resolution in fiscal silencing scandal
+## forever was the global quiet's defect at scale. The per-event cooldown V1.8
+## designed and cut -- cut on the grounds that the slot already bounded
+## repetition, an argument that died with the slot -- is back as
+## `cooldown_months`, a sparse until-month register.
 ##
 ## ============================================================================
 ## NO RANDOMNESS, STILL. THE DRAW IS A PURE FUNCTION, TWICE OVER
@@ -29,9 +30,10 @@ extends RefCounted
 ## against the authored likelihood, so an event's arrival month is fixed before
 ## the game starts and a save reloaded on the arrival month receives the same
 ## crisis. The V4.4 addition is the weighted pick INSIDE a pulsing category --
-## Cycle.unit over (nation, category, month) against the cumulative authored
-## weights -- which is a pure function the same way. There is still no stored
-## draw anywhere, and tests/test_save_load.gd still pins that absence; what the
+## Cycle.unit over (nation, category, sorted eligible roster, month) against the
+## cumulative authored weights -- which is a pure function the same way. There is
+## still no stored draw anywhere, and tests/test_save_load.gd still pins that
+## absence; what the
 ## hooks added is a stamp per hook of the month it last fired, which is not RNG
 ## state but the reload-safety of an edge whose source (a register another
 ## machine wrote) is not itself month-pure.
@@ -44,7 +46,7 @@ extends RefCounted
 ## scoring each choice against the NATION'S OWN position (approval-weighted bloc
 ## response, plus fiscal, corruption and unrest terms), applied through
 ## Legislature.apply_effects() like every choice the player makes. An AI nation
-## announces and resolves in the same tick -- it has no desk, so it has no queue;
+## receives and resolves in the same tick -- it has no desk, so it has no queue;
 ## its resolved history is the visible trace. Deterministic like everything here:
 ## same state, same choice, and ties go to content order. docs/events-model.md
 ## §11's limitation is rewritten at the rule in this file's own commit.
@@ -278,15 +280,26 @@ static func _month_of(month_index: int) -> int:
 
 
 ## The weighted winner inside one pulsing category. One hash per (nation,
-## category, month) walked against the cumulative authored weights -- a pure
-## function like the hazard, so a reload mid-month picks the same winner.
+## category, sorted eligible roster, month) walked against the cumulative authored
+## weights -- a pure function like the hazard, so a reload mid-month picks the
+## same winner. The key carries the SORTED roster of eligible ids, not the
+## category alone: two categories drawing in one month would otherwise walk ONE
+## hash stream and their winners would move together, and a roster that changes as
+## gates open and close is what breaks month-to-month streakiness -- with no
+## stored draw anywhere, which is the pin test_save_load.gd holds.
 static func _weighted_pick(ns, fired: Array, month_index: int):
 	var total := 0.0
+	var roster: Array[String] = []
 	for ev in fired:
 		total += float(ev.weight)
+		roster.append(String(ev.id))
 	if total <= 0.0:
 		return fired[0]
-	var draw: float = Cycle.unit("%s|%s|draw" % [ns.id, String(fired[0].category)], month_index) * total
+	roster.sort()
+	var draw: float = Cycle.unit(
+		"%s|%s|draw|%s" % [ns.id, String(fired[0].category), "|".join(roster)],
+		month_index
+	) * total
 	for ev in fired:
 		draw -= float(ev.weight)
 		if draw < 0.0:
@@ -380,7 +393,28 @@ static func _base_price_of(loader, good_id: String) -> float:
 
 ## Put the occasion in front of whoever it belongs to: the player's desk, or an
 ## AI nation's same-tick decision.
+##
+## THE MARKS ARE MADE HERE, at DELIVERY, and neither in announce() nor at
+## resolution -- the one place this differs from Legislature.apply()'s
+## `passed_law_ids`. An event HAS HAPPENED the moment it is delivered; the choice
+## is the response to it, not the event, and marking at resolution would mean a
+## save reloaded mid-crisis could see the same revelation announced twice.
+## Delivery, not announce(), is also what makes the marks bind for the AI: the AI
+## branch resolves directly and never calls announce(), so marks inside announce()
+## were player-only -- the once event recurred for the other twenty-eight nations
+## and no cooldown ever bound on one. announce() stays the raw staging primitive
+## the test sweep and the screenshot harness drive repeatedly, and a sweep calling
+## it forty-eight times must not accumulate cooldown state: state belongs to
+## delivery, not to staging.
 static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -> void:
+	# Written BEFORE the desk's dedupe skip rather than after it: a skipped
+	# duplicate arrives with the same month_index, and every write below is a
+	# function of that month, so the second write is the first write.
+	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
+	if ev.cooldown_months > 0:
+		ns.event_cooldowns[ev.id] = month_index + int(ev.cooldown_months)
+	if ev.once:
+		ns.event_fired[ev.id] = true
 	if is_player:
 		# The same occasion twice is not two occasions: a draw landing while the
 		# desk still holds its event (a long deadline outliving the category
@@ -427,22 +461,22 @@ static func region_names(ns, loader) -> Dictionary:
 	return out
 
 
-## Put the event on the player's desk, ordered severity-first.
+## Put the event on the player's desk, ordered severity-first. The raw staging
+## primitive: this writes THE QUEUE AND NOTHING ELSE.
 ##
 ## `event_name` is COPIED IN, not looked up at read time, for Referendum.announce()'s
 ## reason: src/sim/calendar.gd draws a diary row off this register and preloads nothing,
 ## so the register has to carry its own label. It is also what lets the tick above
 ## clear an entry whose content has gone without needing to name it.
 ##
-## THE `once` MARK IS MADE HERE AND NOT AT RESOLUTION, which is the one place this
-## differs from Legislature.apply()'s `passed_law_ids`. An event HAS HAPPENED the
-## moment it is announced; the choice is the response to it, not the event. Marking
-## at resolution would also mean a save reloaded mid-crisis could see the same
-## revelation announced twice.
-##
-## ANNOUNCING QUIETS THE CATEGORY, not only resolving: one scandal on the desk is
-## the category's whole say this month, and quieting at resolution would let a
-## category stack a second draw onto a desk still holding its first.
+## THE REGISTERS ARE NOT WRITTEN HERE. The `once` mark, the per-event cooldown and
+## the category quiet are made at DELIVERY -- _deliver(), the tick's door -- and
+## not at announcement and not at resolution, which is the one place that differs
+## from Legislature.apply()'s `passed_law_ids`: an event HAS HAPPENED the moment it
+## is delivered, and marking at resolution would mean a save reloaded mid-crisis
+## could see the same revelation announced twice. Delivery is also what makes the
+## marks bind for the AI, whose branch never calls this function; and the sweeps
+## that drive this primitive month after month must leave no cooldown state behind.
 static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void:
 	var entry := {
 		"event_id": ev.id,
@@ -470,11 +504,6 @@ static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void
 		entry["region_name"] = String(region_by_id.get(region_id, ""))
 	ns.event_queue.append(entry)
 	_order_queue(ns)
-	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
-	if ev.cooldown_months > 0:
-		ns.event_cooldowns[ev.id] = month_index + int(ev.cooldown_months)
-	if ev.once:
-		ns.event_fired[ev.id] = true
 
 
 ## Worst first, and within one severity in arrival order. In place on a small

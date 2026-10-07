@@ -503,7 +503,7 @@ var last_referendum_result: Dictionary = {}
 var event_queue: Array[Dictionary] = []
 
 ## Event ids that have already happened, for the `once` ones. `passed_law_ids`' shape.
-## Marked at ANNOUNCEMENT rather than at resolution, because an event has happened the
+## Marked at DELIVERY rather than at resolution, because an event has happened the
 ## moment it arrives -- the choice is the response to it, not the event.
 var event_fired: Dictionary = {}
 

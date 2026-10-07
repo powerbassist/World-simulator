@@ -30,7 +30,7 @@ extends SceneTree
 ##     project() and src/ui/main.gd;
 ##   - THE OTHER TWENTY-EIGHT GET EVENTS AND ANSWER THEM THEMSELVES (V4.4). The AI
 ##     chooser closed defence-model's "no AI chooser" limitation, recorded a sixth
-##     time at V1.8 and closed here at the rule: an AI nation announces and resolves
+##     time at V1.8 and closed here at the rule: an AI nation delivers and resolves
 ##     in the same tick, deterministically, against its own position -- and it never
 ##     holds a desk, so its queue is structurally always empty;
 ##   - src/sim/calendar.gd IS STILL A LEAF after gaining an event row.
@@ -113,7 +113,7 @@ func _init() -> void:
 	_test_the_default_applies_exactly_once()
 	_test_answering_applies_the_choice()
 	_test_answering_early_and_late_cost_the_same()
-	_test_once_is_marked_at_announcement()
+	_test_once_is_marked_at_delivery()
 	_test_the_quiet_period_holds()
 	_test_the_diary_shows_the_deadline()
 	_test_calendar_is_still_a_leaf()
@@ -868,19 +868,58 @@ func _test_answering_early_and_late_cost_the_same() -> void:
 		_fail("answering on the last month cost a different amount from answering on the first")
 
 
-## An event HAS HAPPENED the moment it is announced; the choice is the response to it.
-## Marking at resolution instead would let a save reloaded mid-crisis see the same
-## revelation announced twice.
-func _test_once_is_marked_at_announcement() -> void:
+## An event HAS HAPPENED the moment it is DELIVERED; the choice is the response to
+## it. Marking at resolution instead would let a save reloaded mid-crisis see the
+## same revelation announced twice. The mark lives in _deliver, not in announce():
+## announce is the raw staging primitive the sweeps drive repeatedly, and -- the
+## defect this shape fixed -- only the player branch ever called announce(), so a
+## mark there never bound for the other twenty-eight nations, whose once event
+## recurred and whose cooldowns never fired.
+func _test_once_is_marked_at_delivery() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var ev = _event(ONCE_ONLY)
 	if not ev.once:
 		_fail("'%s' is not a `once` event, so this check measures nothing" % ONCE_ONLY)
 		return
-	_announce(state, ev)
+	var stub := _StubLoader.new()
+	stub.events = [ev]
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	# The player leg: the mark exists once the event is in front of the player,
+	# driven through the tick's own delivery door because the mark is delivery's
+	# write now.
+	Events._deliver(state, ns, stub, ev, month, true)
 	if not ns.event_fired.has(ev.id):
-		_fail("a `once` event was not marked at announcement")
+		_fail("a `once` event was not marked at delivery")
+	if not Events.is_pending(ns):
+		_fail("the `once` event never reached the desk, so the mark is not the one in front of the player")
+	# The AI leg, the finding's other half: the AI branch never touches announce(),
+	# so the marks must live where every delivery passes. The desk stays empty --
+	# the AI has no queue. The REAL loader, because _resolve applies the chosen
+	# effects through it and a stub carries nothing for apply_effects to read.
+	var ai_state = _new_state()
+	var ai_ns = null
+	for id in ai_state.nations.keys():
+		if String(id) != PLAYER:
+			ai_ns = ai_state.nations[id]
+			break
+	Events._deliver(ai_state, ai_ns, _loader, ev, month, false)
+	if not ai_ns.event_fired.has(ev.id):
+		_fail("an AI nation's delivery did not mark the `once` event -- it would recur for ever")
+	if not ai_ns.event_queue.is_empty():
+		_fail("an AI delivery queued an entry, and the AI has no desk")
+	# And delivery writes the per-event cooldown -- the other half of the same
+	# move. A fixture rather than content, because no shipped event carries a
+	# cooldown today, and this pin is what keeps the write where every delivery
+	# passes.
+	var cd = _make_event("cooldown_fixture", false)
+	cd.cooldown_months = 4
+	var cd_state = _new_state()
+	var cd_ns = cd_state.player()
+	var cd_month := Events._absolute_month(int(cd_state.year), int(cd_state.month))
+	Events._deliver(cd_state, cd_ns, _loader, cd, cd_month, true)
+	if int(cd_ns.event_cooldowns.get(cd.id, -1)) != cd_month + 4:
+		_fail("delivery did not write the per-event cooldown register")
 
 
 ## THE QUIET HOLDS FOR ITS OWN CATEGORY AND NOTHING ELSE. The V1.8 global quiet
@@ -932,7 +971,7 @@ func _test_calendar_is_still_a_leaf() -> void:
 ## THE OTHER TWENTY-EIGHT GET EVENTS, AND ANSWER THEM THEMSELVES. This is the pin
 ## V1.8 wrote as "the nine never get an event" -- docs/defence-model.md's honest
 ## limitation, recorded a sixth time -- and V4.4 closes it at the rule: an AI nation
-## announces and resolves in the same tick, so its QUEUE is structurally always
+## delivers and resolves in the same tick, so its QUEUE is structurally always
 ## empty (no desk, nothing pending), while its HISTORY is the visible trace of
 ## politics that happened to it. Deterministic like everything here: two identical
 ## states answer identically, which is the reload-safety the pure-function pins

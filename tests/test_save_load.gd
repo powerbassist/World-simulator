@@ -1544,12 +1544,13 @@ func _check_event_fields(loader) -> void:
 	var month := Events._absolute_month(int(state.year), int(state.month))
 
 	# The desk holds TWO entries, so "both present, months left intact" means both:
-	# broadcast_charter is the `once` event, so its announcement also marks
-	# event_fired for pin (3), and procurement_scandal gives the queue a second
-	# entry. Both non-sited, so the V3.5 announce arguments stay inert -- filled
-	# exactly as tick_month fills them. The announce is the RAW primitive: the
-	# tick's QUEUE_MAX gate and dedupe are the tick's, and a staged desk wants
-	# exactly what it staged.
+	# broadcast_charter is the `once` event, so pin (3) needs its mark, and
+	# procurement_scandal gives the queue a second entry. Both non-sited, so the
+	# V3.5 announce arguments stay inert -- filled exactly as tick_month fills
+	# them. The announce is the RAW primitive: the tick's QUEUE_MAX gate and
+	# dedupe are the tick's, and a staged desk wants exactly what it staged -- and
+	# since the marks moved from announce to DELIVERY, the once-mark is STAGED
+	# beside the registers below rather than bought as announce's side effect.
 	var ev = Events.event_by_id(loader, "broadcast_charter")
 	if ev == null:
 		_fail("broadcast_charter is not in the event list, so the event round trip measures nothing")
@@ -1560,8 +1561,10 @@ func _check_event_fields(loader) -> void:
 		return
 	Events.announce(ns, ev, month, Events.region_names(ns, loader))
 	Events.announce(ns, second, month, Events.region_names(ns, loader))
-	# The quiet, a cooldown, a chain and the three hook stamps, staged so every
-	# register the bump covers is non-empty in the ONE save this check serialises.
+	# The once-mark, the quiet, a cooldown, a chain and the three hook stamps,
+	# staged so every register the bump covers is non-empty in the ONE save this
+	# check serialises.
+	ns.event_fired[ev.id] = true
 	ns.event_category_quiet["fiscal"] = 7
 	ns.event_cooldowns["procurement_scandal"] = month + 12
 	ns.event_armed.append({
