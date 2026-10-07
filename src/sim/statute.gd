@@ -44,7 +44,9 @@ const ChambersK = preload("res://src/sim/chambers_constants.gd")
 ## opinion_constants -- so this preload runs no cycle.
 const Discipline = preload("res://src/sim/discipline.gd")
 ## The birth gate reads COMPUTED_REVENUE_LINES from it (the pass-15 reserved
-## names); budget.gd preloads nothing that loops back here.
+## names); budget.gd preloads this file back (its projection runs the assembly's
+## own tick -- the pass-1 finding) -- the engine tolerates the cycle; the
+## ledger header below records the shape.
 const Budget = preload("res://src/sim/budget.gd")
 
 ## The channels a spec may name. The keyed channels carry {sub_key: value},

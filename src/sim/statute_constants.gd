@@ -186,13 +186,16 @@ const CHANNEL_PRICE := {
 		"corporate": {"business": -0.04},
 		# vat_consolidation: -0.1 workers / -0.05 students on +2.0.
 		"vat": {"workers": -0.05, "students": -0.025},
-		# No authored mover. The income anchor's business price: capital
-		# income is business-adjacent, and a levy on it angers the same bloc
-		# at the same rate.
+		# T7's capital_gains_surtax is now an authored mover (its own price:
+		# business -0.033 per point); this row stays at the nearest-analogue
+		# price the T3 sweep validated.
 		"capital_gains": {"business": -0.03},
-		# No authored mover. The plan sketch's own row (business -0.04,
-		# pensioners +0.02 on a rise -- a wealth levy is redistribution
-		# toward the asset-poor), corrected to the real bloc key.
+		# T7's wealth_levy is now an authored mover (its own prices: business
+		# -0.333, workers +0.167, pensioners +0.133 per point); this row stays
+		# at the plan-sketch price (business -0.04, pensioners +0.02 -- a
+		# wealth levy is redistribution toward the asset-poor) the T3 sweep
+		# validated. The divergence from the mover's own ratio is recorded,
+		# not an oversight.
 		"wealth": {"business": -0.04, "pensioners": 0.02},
 	},
 	# Priced per portfolio, and a cut and a rise differ: the CUT row's signs
@@ -214,8 +217,12 @@ const CHANNEL_PRICE := {
 		},
 		# public_sector_pay_settlement (+0.3 education, shared with health
 		# +0.4, buys workers +0.2 / urban +0.08), read per education point.
-		# Workers' cut ships -0.25, 1.667x the 1.5x rule -- public-sector
-		# workers take an education cut personally -- recorded, not rounded.
+		# The RISE ships at the health-reform scale (workers 0.15, urban 0.10),
+		# deliberately moderated from the anchor's per-education-point 0.667 /
+		# 0.267 -- the raw reading would make one pay settlement the loudest
+		# education lever in the book. Workers' CUT ships -0.25, 1.667x the
+		# 1.5x rule -- public-sector workers take an education cut personally
+		# -- recorded, not rounded.
 		"education": {
 			"rise": {"workers": 0.15, "urban": 0.1},
 			"cut": {"workers": -0.25, "urban": -0.15},
@@ -251,11 +258,13 @@ const CHANNEL_PRICE := {
 	# (its exact mirror) -- read per point. minimum_wage_rise prices 2.0/-1.5
 	# per point and is the outlier; the cluster is the row.
 	"structural_unemployment_pct": {"workers": 0.8, "business": -0.7},
-	# No clean authored ratio: competition_enforcement and
-	# emergency_procurement_powers are the only growth movers and both carry
-	# their company/society prices in the same bloc row. Priced as the
-	# diffuse-hope row -- growth is a general good, business leaning positive
-	# per emergency_procurement_powers' business +0.10.
+	# No clean authored ratio: at this table's writing competition_enforcement
+	# and emergency_procurement_powers were the only growth movers, and both
+	# carried their company/society prices in the same bloc row -- T7's
+	# content growth added eight more, whose own per-point prices run louder
+	# than this row; the T3 sweep validated the shipped row as composed-bill
+	# price. Priced as the diffuse-hope row -- growth is a general good,
+	# business leaning positive per emergency_procurement_powers' +0.10.
 	"potential_growth_pct": {"workers": 0.4, "urban": 0.4, "business": 0.5},
 	# carbon_levy verbatim: +0.5 -> business -0.1, urban +0.1, rural -0.15.
 	"other_revenue_pct_gdp": {"business": -0.2, "urban": 0.2, "rural": -0.3},
