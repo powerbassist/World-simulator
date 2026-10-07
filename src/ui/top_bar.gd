@@ -70,6 +70,13 @@ func _ready() -> void:
 	# The People window (R) is the full surface; this strip is the pulse.
 	figures.add_child(_build_figure("people", "People",
 		"People whose loyalty or grudge the term has moved. Open the People window (R)."))
+	# V4.4's interim V4.8 obligation: the desk -- pending events by count, the worst
+	# severity named in the tooltip. Deliberately NOT the programme figure's
+	# empty-state hiding: an empty desk is itself a reading (the value says so),
+	# because the glance this strip serves is "is anything waiting on me", and
+	# hiding the figure answers that question by not asking it.
+	figures.add_child(_build_figure("desk", "Desk",
+		"Events awaiting an answer. Worst severity in the tooltip."))
 
 	row.add_child(_spacer())
 
@@ -147,6 +154,21 @@ func _spacer() -> Control:
 	return spacer
 
 
+## The desk tooltip: a critical on the desk is named outright -- that is the one
+## line a president must not have to decode -- and any other desk reads as a count
+## by severity. The names are events_constants' own register (1 minor, 2 major,
+## 3 critical), not new copy.
+func _desk_tooltip(worst: int, by_severity: Dictionary) -> String:
+	if worst >= 3:
+		return "Severity 3 — critical on the desk"
+	var parts: Array[String] = []
+	for severity in [2, 1]:
+		var count := int(by_severity.get(severity, 0))
+		if count > 0:
+			parts.append("%d %s" % [count, "major" if severity == 2 else "minor"])
+	return " · ".join(parts) if not parts.is_empty() else "On the desk."
+
+
 ## Called every day -- cheap enough that main.gd calls it unconditionally rather
 ## than gating it behind a dirty flag like the floating panels, matching the HUD
 ## it replaces. The loader is optional so the existing two-argument call still
@@ -193,6 +215,25 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		if absf(float(ns.person_loyalty[pid])) >= 0.05 and float(ns.person_grudges.get(pid, 0.0)) < 0.05:
 			moved += 1
 	_figure_values["people"].text = "%d" % moved
+
+	# V4.4: the desk, read straight off the queue register -- the same read
+	# Events.is_pending() makes for the brass mark, so the strip and the mark
+	# cannot disagree about whether something is waiting.
+	var desk: Array = ns.event_queue
+	if desk.is_empty():
+		# Em dash, not "0 pending": the state is "nothing pending" and a confident
+		# zero here would be V1.6d's lie in the strip's own handwriting.
+		_figure_values["desk"].text = "— clear"
+		_figure_values["desk"].tooltip_text = "Nothing awaits an answer."
+	else:
+		var worst := 0
+		var by_severity := {}
+		for entry in desk:
+			var severity := int(entry.get("severity", 1))
+			worst = maxi(worst, severity)
+			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
+		_figure_values["desk"].text = "%d pending" % desk.size()
+		_figure_values["desk"].tooltip_text = _desk_tooltip(worst, by_severity)
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

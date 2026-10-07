@@ -16,7 +16,11 @@ extends SceneTree
 ## names: it PREDICTS which balance regimes the re-run will move, before the re-run is
 ## run. A prediction written afterwards is not a prediction.
 ##
-## E1  cadence, and the session's one tuned constant (EVENT_COOLDOWN_MONTHS).
+## E1b lifetime accumulation, now on the real machine (defaults and answer-well).
+## E4  cadence and the desk, swept over CATEGORY_QUIET_MONTHS -- the V4.4 dial.
+## E5  category spread over a full idle run at the shipped constants.
+## E6  the hook vocabulary, staged register by register and witnessed landing.
+## E7  chooser spread: what the other twenty-eight answered over a term.
 ## E2  legibility, two-sided, against a ruler that was MEASURED rather than invented.
 ## E3  dominance, on a live path rather than off the authored numbers.
 ##
@@ -53,6 +57,8 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
+const GameEvent = preload("res://src/core/event.gd")
+const EconomyK = preload("res://src/sim/economy_constants.gd")
 
 const START_YEAR := 2026
 const RUN_MONTHS := 168
@@ -163,6 +169,16 @@ const DIRECTION := {
 
 var _loader
 
+## Bands that failed, if any -- the exit contract: 0 = every declared band PASSED,
+## 1 = at least one failed, with the findings printed beside their tables. V1.8's
+## file had no exit contract because it guarded nothing; the V4.4 tables guard a
+## landed machine, so they carry one.
+var _band_failures: Array[String] = []
+
+
+func _band_failed(msg: String) -> void:
+	_band_failures.append(msg)
+
 
 func _init() -> void:
 	_loader = DataLoader.new()
@@ -176,10 +192,21 @@ func _init() -> void:
 	_table_e0_range(paths)
 	_table_e0b_occupancy(paths)
 	_table_e0c_prediction(paths)
-	_table_e1_cadence()
 	_table_e1b_accumulation()
+	_table_e4_cadence()
+	_table_e5_categories()
+	_table_e6_hooks()
+	_table_e7_chooser()
 	_table_e2_legibility()
 	_table_e3_dominance()
+	if not _band_failures.is_empty():
+		printerr("")
+		for f in _band_failures:
+			printerr("BAND FAILED: %s" % f)
+		printerr("events_probe: %d band failure(s) -- report the measured interval, do not tune silently" % _band_failures.size())
+		quit(1)
+		return
+	print("\nevents_probe: every declared band PASSED")
 	quit(0)
 
 
@@ -385,69 +412,113 @@ func _table_e0c_prediction(paths: Dictionary) -> void:
 		print("%-14s %s" % [regime, "  |  ".join(worst)])
 
 
-# --- E1: cadence, and the session's one tuned constant -----------------------------
+# --- The real-machine driver, and the E4 surgery on the one V4.4 dial ---------------
 
-## Candidate values for EVENT_COOLDOWN_MONTHS. Two-sided by construction (see the
-## constant's own header), so V1.5c's correction governs -- the interior, not an edge --
-## and V1.5b's diagnostic applies: a value at the endpoint of this grid is a suspect and
-## not a result.
-const COOLDOWN_CANDIDATES := [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 24]
+## tests/test_events.gd's _tick() order, copied verbatim: the minimal chain an
+## event reads and that reads an event. The full _step above stays for the E0
+## tables and E2/E3, whose premises are the field ranges and the outcome
+## comparison -- and that chain deliberately does NOT tick the machine, which is
+## why those tables keep reading the world they have always read. E1's local
+## mirror is gone: its EVENT_COOLDOWN_MONTHS no longer exists in the machine's
+## behaviour (the per-category quiet replaced it), and a mirror of a machine that
+## no longer runs measures nothing -- V1.5d's harness-runs-the-old-model failure,
+## pre-empted.
+func _tick_events(state, months_in: int) -> void:
+	state.year = START_YEAR + int(months_in / 12)
+	state.month = (months_in % 12) + 1
+	Economy.tick_month(state)
+	Budget.tick_month(state)
+	Inflation.tick_month(state)
+	Opinion.tick_month(state)
+	Demography.tick_month(state)
+	Society.tick_month(state)
+	Unrest.tick_month(state)
+	Events.tick_month(state, _loader)
 
-## THE EMULATION IS EXACT AND THAT IS THE POINT. A probe cannot change a `const` at
-## runtime, and docs/inflation-model.md records what happens when it works around that by
-## rescaling a measured result: the passing interval MOVED when the shipped constant
-## moved, so the sweep's own answer depended on the value it was choosing. This loop
-## calls Events.hazard_passes() and Legislature.preconditions_met() -- the shipped
-## functions -- and differs from Events.tick_month() in the cooldown alone.
-func _sim_events(regime: String, months: int, cooldown: int, answer: bool) -> Dictionary:
+
+## One FRA run on the real machine, tallied from the desk. `answer_well` answers
+## every entry with _best_choice() in the month it sits on the desk -- E1b's
+## answer-well path, the player a probe can actually be. `quiet_override` > 0
+## emulates a CATEGORY_QUIET_MONTHS the probe cannot set: the shipped code runs
+## everywhere, and only the PLAYER's quiet register is rewritten after each tick,
+## from a note of when each category last saw a delivery or a default.
+##
+## THE NOTE NEEDS NO HOOK INTO THE MACHINE: both quiet writes coincide with a
+## queue transition -- announce() appends, _resolve() erases -- so a before/after
+## diff of the desk is the whole witness. The rewrite is the identity when the
+## override equals the shipped constant (left = K - (now - wrote) is the machine's
+## own countdown), which is why the sweep runs the shipped row with the override
+## OFF: that row stays a pure reading. The E4 sweep never answers, so the note's
+## blindness to answer-driven resolutions is inert here.
+##
+## One known undercount, stated rather than hidden: a 1-month entry that expires
+## and re-arrives inside one tick is neither an arrival nor an answer in a
+## before/after diff. At the shipped quiet a same-category redelivery cannot land
+## that fast; only override 1 could produce it.
+func _run_machine(regime: String, months: int, answer_well: bool, quiet_override: int) -> Dictionary:
 	var state = _new_state("FRA")
 	_commit(state, REGIMES[regime])
 	var ns = state.player()
-	var fired := 0
-	var defaults := 0
-	var quiet := 0
-	var pending: Dictionary = {}
-	var fired_once := {}
-
-	for i in range(months):
-		_step(state, i)
-		if not ns.in_government:
-			break
-		if quiet > 0:
-			quiet -= 1
-
-		if not pending.is_empty():
-			pending["months_left"] = int(pending["months_left"]) - 1
-			if int(pending["months_left"]) <= 0:
-				var ev = pending["event"]
-				var choice: Dictionary = _best_choice(ev) if answer else ev.default_choice()
-				if not answer:
-					defaults += 1
-				Legislature.apply_effects(state, ns, choice.get("effects", {}), _loader)
-				pending = {}
-				quiet = cooldown
-			continue
-
-		if quiet > 0:
-			continue
-
-		for ev in _loader.events:
-			if ev.once and fired_once.has(ev.id):
-				continue
-			if not Legislature.preconditions_met(ns, ev.preconditions):
-				continue
-			if not Events.hazard_passes(ns.id, ev.id, int(state.year), int(state.month), float(ev.likelihood)):
-				continue
-			pending = {"event": ev, "months_left": int(ev.respond_months)}
-			fired += 1
-			if ev.once:
-				fired_once[ev.id] = true
-			break
-
-	return {
-		"fired": fired, "defaults": defaults, "months": _months_run(state),
+	var tally := {
+		"arrivals": 0, "answered": 0, "by_category": {},
+		"max_depth": 0, "overfull": 0, "months": months, "windows": [0.0, 0.0, 0.0],
 		"state": state,
 	}
+	var wrote := {}
+	for i in range(months):
+		var before := {}
+		for entry in ns.event_queue:
+			before[String(entry.get("event_id", ""))] = String(entry.get("category", ""))
+		_tick_events(state, i)
+		var after := {}
+		for entry in ns.event_queue:
+			var id := String(entry.get("event_id", ""))
+			after[id] = String(entry.get("category", ""))
+			if not before.has(id):
+				tally["arrivals"] = int(tally["arrivals"]) + 1
+				tally["by_category"][after[id]] = int(tally["by_category"].get(after[id], 0)) + 1
+				wrote[after[id]] = i
+		for id in before:
+			if not after.has(id):
+				tally["answered"] = int(tally["answered"]) + 1
+				tally["windows"][mini(2, i / TERM_MONTHS)] += 1.0
+				wrote[before[id]] = i
+		if answer_well:
+			var guard := 0
+			while Events.is_pending(ns) and guard < EventsK.QUEUE_MAX + 1:
+				guard += 1
+				var ev = Events.event_by_id(_loader, Events.pending_event_id(ns))
+				if ev == null:
+					break
+				var record := Events.answer(state, _loader, Events.pending_event_id(ns),
+					String(_best_choice(ev).get("id", "")))
+				if record.is_empty():
+					break
+		if quiet_override > 0 and quiet_override != EventsK.CATEGORY_QUIET_MONTHS:
+			ns.event_category_quiet.clear()
+			for category in wrote.keys():
+				var left: int = int(quiet_override) - (i - int(wrote[category]))
+				if left > 0:
+					ns.event_category_quiet[category] = left
+				else:
+					wrote.erase(category)
+		var depth: int = ns.event_queue.size()
+		tally["max_depth"] = maxi(int(tally["max_depth"]), depth)
+		if depth >= EventsK.QUEUE_MAX:
+			tally["overfull"] = int(tally["overfull"]) + 1
+	return tally
+
+
+## The median over the run of each 60-month window's answers, scaled to a full
+## term so the trailing 48-month window competes fairly -- "events answered per
+## five-year term (median over the run)" is exactly this and nothing mystical.
+func _median_term_rate(tally: Dictionary) -> float:
+	var rates: Array[float] = []
+	for w in range(3):
+		var span: int = TERM_MONTHS if w < 2 else RUN_MONTHS - 2 * TERM_MONTHS
+		rates.append(float(tally["windows"][w]) * float(TERM_MONTHS) / float(span))
+	rates.sort()
+	return rates[1]
 
 
 func _months_run(state) -> int:
@@ -484,70 +555,263 @@ func _weighted_offset(effects: Dictionary) -> float:
 const ACCUMULATION_CEILING := 0.60
 
 
-func _table_e1_cadence() -> void:
-	print("\n=== E1  CADENCE: events per five-year term, swept over EVENT_COOLDOWN_MONTHS ===")
-	print("CLAUSE (i), cadence: between 2 and 6 per term in the median reachable regime.")
-	print("Under 2 the machine is decorative -- section 8's own falsifier from the other")
-	print("side. Over 6 the message column (six cards, oldest dropped) buries one event")
-	print("under the next, and an occasion nobody read is not an occasion.")
-	print("CLAUSE (ii), slack: the worst reachable career accumulation must leave the")
-	print("bloc_offset clamp free by %.0f %%." % (100.0 * (1.0 - ACCUMULATION_CEILING)))
-	print("")
-	print("CLAUSE (i) ALONE PASSED EVERY CANDIDATE FROM 3 TO 18, which is the one-sided")
-	print("failure V1.5a and V1.5b both recorded and which V1.5a's two-part selector is")
-	print("the only thing on this project's record ever to answer. (ii) is what closes")
-	print("the interval, and it closes it from the other end: a short cooldown is not")
-	print("wrong because events are frequent, it is wrong because a career of them")
-	print("saturates a permanent accumulator.\n")
-	var head: Array[String] = ["%-10s" % "cooldown"]
-	for regime in REACHABLE:
-		head.append("%12s" % regime)
-	head.append("%12s" % "median")
-	head.append("%12s" % "|worst|")
-	head.append("  verdict")
+# --- E4: cadence and the desk, swept over the V4.4 dial -----------------------------
+
+## THE BANDS WERE DECLARED BEFORE THIS SWEEP RAN -- the plan's clause, restated in
+## events_constants.gd beside the dial: cadence 6-18 answered per five-year term;
+## the desk full on under 5% of months; the queue never past QUEUE_MAX. The last
+## is a CONSTRUCTION, not a measurement (the tick's own delivery gate), so it is
+## asserted here and never tuned against -- a row that breaks it is a machine
+## defect, not a band failure.
+const QUIET_SWEEP := [1, 2, 3, 4, 5, 6]
+const CADENCE_MIN := 6.0
+const CADENCE_MAX := 18.0
+const OVERFULL_MAX := 0.05
+
+
+func _table_e4_cadence() -> void:
+	print("\n=== E4  CADENCE AND THE DESK: hands-off FRA on the real machine, swept over CATEGORY_QUIET_MONTHS ===")
+	print("V1.8's E1 swept EVENT_COOLDOWN_MONTHS, and that constant is gone from the")
+	print("machine's behaviour -- the per-category quiet replaced it (events_constants'")
+	print("own note). The shipped row runs the untouched machine; the other rows")
+	print("emulate the override on the quiet register alone (see _run_machine).\n")
+	var head: Array[String] = ["%-7s" % "quiet", "%9s" % "arrivals", "%9s" % "answered",
+		"%9s" % "per term", "%8s" % "maxdesk", "%8s" % "overfull", "  verdict"]
 	print(" ".join(head))
-	var passing: Array[int] = []
-	for cd in COOLDOWN_CANDIDATES:
-		var per_term: Array[float] = []
-		var cells: Array[String] = ["%-10d" % cd]
-		var worst := 0.0
-		for regime in REACHABLE:
-			var r := _sim_events(regime, RUN_MONTHS, cd, false)
-			var rate: float = float(r["fired"]) * float(TERM_MONTHS) / float(r["months"])
-			per_term.append(rate)
-			cells.append("%12.2f" % rate)
-			worst = maxf(worst, absf(float(_worst_offset(r["state"])["value"])))
-			var a := _sim_events(regime, RUN_MONTHS, cd, true)
-			worst = maxf(worst, absf(float(_worst_offset(a["state"])["value"])))
-		per_term.sort()
-		var median: float = (per_term[0] + per_term[per_term.size() - 1]) / 2.0
-		var cadence_ok: bool = median >= 2.0 and median <= 6.0
-		var slack_ok: bool = worst <= ACCUMULATION_CEILING
-		cells.append("%12.2f" % median)
-		cells.append("%12.3f" % worst)
-		cells.append("  PASS" if cadence_ok and slack_ok else ("  cadence" if not cadence_ok else "  saturating"))
-		if cadence_ok and slack_ok:
-			passing.append(cd)
-		print(" ".join(cells))
-	if passing.is_empty():
-		print("\nNO CANDIDATE PASSES BOTH CLAUSES -- the two criteria have no overlap, which")
-		print("is V1.6a's legibility floor in a new place and is recorded, not tuned around.")
-	else:
-		var mid: float = (float(passing[0]) + float(passing[passing.size() - 1])) / 2.0
-		print("\npassing %s -> midpoint %.1f, nearest candidate %d" % [
-			str(passing), mid, _nearest(passing, mid),
+	for quiet in QUIET_SWEEP:
+		var override: int = 0 if quiet == EventsK.CATEGORY_QUIET_MONTHS else quiet
+		var t := _run_machine("hands_off", RUN_MONTHS, false, override)
+		var rate := _median_term_rate(t)
+		var overfull: float = float(t["overfull"]) / float(maxi(1, int(t["months"])))
+		var cadence_ok: bool = rate >= CADENCE_MIN and rate <= CADENCE_MAX
+		var overfull_ok: bool = overfull < OVERFULL_MAX
+		var bound_ok: bool = int(t["max_depth"]) <= EventsK.QUEUE_MAX
+		var ok := cadence_ok and overfull_ok and bound_ok
+		var verdict := "PASS" if ok else (
+			"BOUND BROKEN" if not bound_ok else ("cadence %.1f outside [%.0f, %.0f]" % [rate, CADENCE_MIN, CADENCE_MAX] if not cadence_ok else "overfull %.1f%% >= %.0f%%" % [100.0 * overfull, 100.0 * OVERFULL_MAX]))
+		print("%-7d %9d %9d %9.2f %8d %7.1f%%   %s" % [
+			quiet, int(t["arrivals"]), int(t["answered"]), rate,
+			int(t["max_depth"]), 100.0 * overfull, verdict,
 		])
-		if passing[0] == COOLDOWN_CANDIDATES[0] or passing[passing.size() - 1] == COOLDOWN_CANDIDATES[COOLDOWN_CANDIDATES.size() - 1]:
-			print("the passing set touches an END of the swept grid -- V1.5b's suspect: widen it")
-	print("shipped EVENT_COOLDOWN_MONTHS = %d" % EventsK.EVENT_COOLDOWN_MONTHS)
+		if quiet == EventsK.CATEGORY_QUIET_MONTHS and not ok:
+			_band_failed("E4: the shipped quiet (%d) row fails its declared band -- %s" % [
+				EventsK.CATEGORY_QUIET_MONTHS, verdict])
+	print("\nshipped CATEGORY_QUIET_MONTHS = %d, QUEUE_MAX = %d (asserted, not measured)" % [
+		EventsK.CATEGORY_QUIET_MONTHS, EventsK.QUEUE_MAX])
 
 
-func _nearest(values: Array[int], target: float) -> int:
-	var best: int = values[0]
-	for v in values:
-		if absf(float(v) - target) < absf(float(best) - target):
-			best = v
-	return best
+# --- E5: category spread -------------------------------------------------------------
+
+## Declared with the dial: no category supplies more than 30% of the desk's
+## arrivals over a full idle run. A category that crowds the rest out is the
+## monoculture the weighted pick was built against, and NO machine constant can
+## fix it -- the quiet quiets every category alike -- so a failure here is a
+## CONTENT verdict (rebalance likelihoods/weights in data/events/), recorded
+## rather than tuned.
+const CATEGORY_SHARE_MAX := 0.30
+
+
+func _table_e5_categories() -> void:
+	print("\n=== E5  CATEGORY SPREAD: arrivals by category, %d-month idle run, shipped machine ===" % RUN_MONTHS)
+	var t := _run_machine("hands_off", RUN_MONTHS, false, 0)
+	var total := int(t["arrivals"])
+	print("%d arrivals over %d months\n" % [total, int(t["months"])])
+	print("%-12s %8s %7s   %s" % ["category", "arrivals", "share", "verdict"])
+	var all_ok := total > 0
+	for category in EventsK.CATEGORIES:
+		var n := int(t["by_category"].get(category, 0))
+		var share := float(n) / float(maxi(1, total))
+		var ok := share <= CATEGORY_SHARE_MAX
+		all_ok = all_ok and ok
+		print("%-12s %8d %6.1f%%   %s" % [category, n, 100.0 * share, "PASS" if ok else "OVER %.0f%%" % (100.0 * CATEGORY_SHARE_MAX)])
+	if not all_ok:
+		_band_failed("E5: a category supplies more than %.0f%% of arrivals -- a content verdict, not a dial" % (100.0 * CATEGORY_SHARE_MAX))
+
+
+# --- E6: the hook vocabulary, witnessed at runtime -----------------------------------
+
+## The no-name-without-a-branch pin has a source-level twin in tests/test_events.gd;
+## this table is its runtime witness. For each hook in events_constants.ON_ACTIONS,
+## stage the exact register its emitter reads (copied from Events._hook_fired's own
+## match arms -- when the machine moves an emitter, this staging moves with it) and
+## assert an on_action-bearing fixture lands on the desk for a stub loader at
+## likelihood 1.0. Today's content carries NO on_action event, so this is the
+## vocabulary firing on fixtures -- deliberately: the machinery must be proven
+## before the content task hangs real events on it.
+class _StubLoader:
+	var events: Array = []
+	var commodity_goods: Dictionary = {}
+	var regions: Dictionary = {}
+
+
+func _hook_fixture(hook: String):
+	var raw := {
+		"id": "hook_witness_%s" % hook,
+		"name": "The hook witness",
+		"summary": "A probe fixture: proves the %s hook reaches the desk." % hook,
+		"likelihood": EventsK.LIKELIHOOD_MAX,
+		"category": "scandal",
+		"respond_months": 2,
+		"severity": 2,
+		"on_action": hook,
+		"choices": [
+			{"id": "act", "label": "Act", "summary": "Act on it.",
+				"effects": {"bloc_offset": {"workers": 0.02}}},
+			{"id": "wait", "label": "Wait", "summary": "Let it pass.", "default": true,
+				"effects": {"bloc_offset": {"business": -0.02}}},
+		],
+	}
+	var errors: Array[String] = []
+	var ev = GameEvent.from_dict(raw, "events_probe fixture", errors,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	if not errors.is_empty():
+		printerr("the %s fixture did not load: %s" % [hook, errors])
+		return null
+	# The stage must land whatever the hook hash draws -- the fixture rides the
+	# loader as authored; the likelihood is the staging's business.
+	ev.likelihood = 1.0
+	return ev
+
+
+func _stage_hook(state, hook: String, month_index: int) -> void:
+	var ns = state.player()
+	match hook:
+		"law_passed":
+			ns.law_ledger["probe_law"] = {"months": [month_index]}
+		"law_repealed":
+			ns.repealed_at["probe_law"] = month_index
+		"member_bill_passed":
+			ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month_index}
+		"minister_resigned":
+			# The readable window is LAST month's resignation -- the emitters' own
+			# one-month lag -- so the stamp is the absolute month before this one.
+			var previous: int = month_index - 1
+			ns.last_resignation = {"year": int(previous / 12), "month": previous % 12}
+		"takeover_bid":
+			ns.companies["probe_co"] = {"bid_month": month_index}
+		"firm_failed":
+			ns.companies["probe_co"] = {"failed_month": month_index}
+		"commodity_price_high":
+			# HOOK_PRICE_RATIO of base is the machine's own "high"; 130 against a
+			# base of 100 clears it from inside the +-75% price clamp.
+			ns.commodity_state["price"] = {"probe_good": 130.0}
+		"accession_won":
+			ns.last_accession = {"month_index": month_index}
+
+
+func _table_e6_hooks() -> void:
+	print("\n=== E6  HOOK RATES: every name in ON_ACTIONS, staged onto its register ===")
+	print("No shipped event carries on_action yet, so each row is a fixture at")
+	print("likelihood 1.0 on a stub loader -- the machinery firing before the content")
+	print("task hangs real events on it.\n")
+	var passed := 0
+	for hook in EventsK.ON_ACTIONS:
+		var ev = _hook_fixture(hook)
+		if ev == null:
+			print("%-22s FIXTURE DID NOT LOAD" % hook)
+			_band_failed("E6: the %s fixture did not load through the real from_dict" % hook)
+			continue
+		var stub := _StubLoader.new()
+		stub.events = [ev]
+		stub.commodity_goods = {"probe_good": {"base_price": 100.0}}
+		var state = _new_state("FRA")
+		var month_index: int = Events._absolute_month(int(state.year), int(state.month))
+		_stage_hook(state, hook, month_index)
+		Events._tick_nation(state, state.player(), stub, month_index, true)
+		var landed: bool = Events.is_pending(state.player()) \
+			and Events.pending_event_id(state.player()) == String(ev.id)
+		if landed:
+			passed += 1
+		else:
+			_band_failed("E6: the %s hook never delivered its event" % hook)
+		print("%-22s %s" % [hook, "witnessed" if landed else "*** NEVER LANDED ***"])
+	print("\nhook vocabulary: %d/%d witnessed" % [passed, EventsK.ON_ACTIONS.size()])
+
+
+# --- E7: the chooser spread over a term ----------------------------------------------
+
+## The chooser's SITUATING claim, measured over whole nations rather than staged
+## at a unit (the unit pin is test_events' chooser test). Declared before this
+## run: at least 10 of the 28 answered something over 168 months; NO nation took
+## a default -- the chooser always answers, so a defaulted record is a chooser
+## that did not run; and the per-event choice distribution is NOT constant across
+## nations -- two nations in two positions differing on one shared event is the
+## whole claim, and zero differences would make the chooser a second default
+## button.
+func _table_e7_chooser() -> void:
+	print("\n=== E7  CHOOSER SPREAD: what the other twenty-eight answered over %d months ===" % RUN_MONTHS)
+	var state = _new_state("FRA")
+	var per_nation := {}
+	var per_event := {}
+	for i in range(RUN_MONTHS):
+		_tick_events(state, i)
+		var year := int(state.year)
+		var month := int(state.month)
+		for nation_id in state.nations:
+			if String(nation_id) == String(state.player_nation_id):
+				continue
+			var ns = state.nations[nation_id]
+			var key := String(nation_id)
+			if not per_nation.has(key):
+				per_nation[key] = {"answered": 0, "defaulted": 0, "by_category": {}}
+			var row: Dictionary = per_nation[key]
+			# Records carry their own resolution month, so this month's answers are
+			# found by that pair -- which also survives the EVENTS_KEPT cap: today's
+			# records are always the newest in the register.
+			for record in ns.event_history:
+				if int(record.get("year", -1)) != year or int(record.get("month", -1)) != month:
+					continue
+				row["answered"] = int(row["answered"]) + 1
+				if bool(record.get("defaulted", false)):
+					row["defaulted"] = int(row["defaulted"]) + 1
+				row["by_category"][String(record.get("category", ""))] = \
+					int(row["by_category"].get(String(record.get("category", "")), 0)) + 1
+				var by_choice: Dictionary = per_event.get_or_add(String(record.get("event_id", "")), {})
+				var choice_id := String(record.get("choice_id", ""))
+				by_choice[choice_id] = int(by_choice.get(choice_id, 0)) + 1
+	print("%-5s %9s %10s   %s" % ["nation", "answered", "defaulted", "by category"])
+	var any_answered := 0
+	var total_defaulted := 0
+	for key in per_nation.keys():
+		var row: Dictionary = per_nation[key]
+		if int(row["answered"]) > 0:
+			any_answered += 1
+		total_defaulted += int(row["defaulted"])
+		var summary: Array[String] = []
+		var cats: Array = row["by_category"].keys()
+		cats.sort()
+		for category in cats:
+			summary.append("%s %d" % [category, row["by_category"][category]])
+		print("%-5s %9d %10d   %s" % [key, int(row["answered"]), int(row["defaulted"]), "  ".join(summary)])
+	var split_event := ""
+	var split_detail := ""
+	for event_id in per_event.keys():
+		var by_choice: Dictionary = per_event[event_id]
+		if by_choice.size() >= 2:
+			split_event = event_id
+			var parts: Array[String] = []
+			for choice_id in by_choice.keys():
+				parts.append("%s x%d" % [choice_id, by_choice[choice_id]])
+			split_detail = ", ".join(parts)
+			break
+	print("\nper-event choice spread (the situating witness):")
+	if split_event == "":
+		print("  none -- every nation that answered the same event answered it the same way")
+	else:
+		print("  %s: %s" % [split_event, split_detail])
+	var spread_ok := not split_event.is_empty()
+	var nations_ok := any_answered >= 10
+	var defaults_ok := total_defaulted == 0
+	print("\nnations answering: %d of %d (band >= 10)%s" % [
+		any_answered, per_nation.size(), "" if nations_ok else "  *** UNDER THE BAND ***"])
+	print("defaults taken: %d (band == 0)%s" % [
+		total_defaulted, "" if defaults_ok else "  *** A CHOOSER DID NOT RUN ***"])
+	if not nations_ok:
+		_band_failed("E7: only %d of %d nations answered anything -- the chooser ships unreachable" % [any_answered, per_nation.size()])
+	if not defaults_ok:
+		_band_failed("E7: %d defaulted records -- the chooser always answers, so a default is a chooser that did not run" % total_defaulted)
+	if not spread_ok:
+		_band_failed("E7: no event's choice split across nations -- the chooser does not situate")
 
 
 # --- E1b: the accumulation bound, and it is a different constraint from E2 ---------
@@ -581,12 +845,17 @@ func _table_e1b_accumulation() -> void:
 		"regime", "months", "events", "worst(def)", "offset", "worst(ans)", "offset",
 	])
 	for regime in REGIMES.keys():
-		var d := _sim_events(regime, RUN_MONTHS, EventsK.EVENT_COOLDOWN_MONTHS, false)
-		var a := _sim_events(regime, RUN_MONTHS, EventsK.EVENT_COOLDOWN_MONTHS, true)
+		# Both paths on the real machine now -- the defaults path is what a player
+		# who never opens the window produces; the answer-well path answers every
+		# entry with _best_choice() on its arrival month. The old table measured
+		# answer-at-expiry; arrival-answering is the same choice set with the same
+		# effects, applied when a responsive player actually applies them.
+		var d := _run_machine(regime, RUN_MONTHS, false, 0)
+		var a := _run_machine(regime, RUN_MONTHS, true, 0)
 		var dw := _worst_offset(d["state"])
 		var aw := _worst_offset(a["state"])
 		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
-			regime, int(d["months"]), int(d["fired"]),
+			regime, int(d["months"]), int(d["arrivals"]),
 			dw["bloc"], float(dw["value"]), aw["bloc"], float(aw["value"]),
 			"   *** SATURATED ***" if absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001 else "",
 		])

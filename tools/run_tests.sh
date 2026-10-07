@@ -142,6 +142,10 @@ tests=(
   tests/test_upper_house.gd
   tests/test_judiciary.gd
   tests/test_events.gd
+  # V4.4 T7: the desk figure on the top bar -- the empty desk reads a clear
+  # state and stays visible, the count is the queue's own and the tooltip names
+  # the worst severity, and the brass mark keys on the same read the strip does.
+  tests/test_top_bar_desk.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
