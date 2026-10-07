@@ -107,8 +107,39 @@ var sited := false
 ## ultimatum is the preconditioned one (bullet 1, data-defined with preconditions).
 var preconditions: Array = []
 
-## Array of {"id", "label", "summary", "effects", "is_default"}. Two to four, exactly
-## one of them the default.
+## V4.4. REQUIRED. One of events_constants.CATEGORIES. The draw's unit: hazards fire
+## per event as they always did, the winner inside a category is weighted, and the
+## quiet after a resolution quiets the category. See events_constants.CATEGORIES for
+## why a flat global draw could let one loud category crowd the rest out on hazard
+## order alone.
+var category: String = ""
+
+## V4.4. Draw weight inside the category, in [WEIGHT_MIN, WEIGHT_MAX]. Content, not
+## a machine number: it decides only RELATIVE to the other events drawing this month,
+## which is why its bounds are wide and its default is neutral.
+var weight: float = 1.0
+
+## V4.4. 1..3 -- minor / major / critical. Orders the pending queue; V4.8's message
+## settings and auto-pause will key on it. Authored because it is a fact about the
+## event's weight in the world, not derivable from its effects.
+var severity: int = 1
+
+## V4.4. One of events_constants.ON_ACTIONS, or "" for the standing monthly hazard.
+## A hook event fires BECAUSE something happened -- its emitter is read inside
+## Events.tick_month off registers the machines already write (or the two V4.4 stamps,
+## named in events_constants.ON_ACTIONS' comment) -- and its `likelihood` is the
+## chance the hooked happening spawns the occasion. The preconditions still gate it.
+var on_action: String = ""
+
+## V4.4. Months after ITS OWN resolution before this event may draw again. The V1.8
+## cut of this field rested on the one-slot argument, which the queue retired; 0 is
+## the V1.8 behaviour and the default, because the category quiet already bounds
+## cross-firing.
+var cooldown_months: int = 0
+
+## Array of {"id", "label", "summary", "effects", "is_default"} plus the V4.4
+## optional "arms" ({event_id, delay_months}). Two to four, exactly one of them the
+## default.
 var choices: Array = []
 
 const MIN_CHOICES := 2
@@ -160,6 +191,55 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 				filename, ev.id, ev.respond_months, K.RESPOND_MONTHS_MIN, K.RESPOND_MONTHS_MAX
 			])
 
+	if not d.has("category") or typeof(d["category"]) != TYPE_STRING or not K.CATEGORIES.has(d["category"]):
+		errors.append("%s: %s category is missing or not one of %s -- V4.4 requires it; the category is the draw's unit" % [
+			filename, ev.id, K.CATEGORIES
+		])
+	else:
+		ev.category = d["category"]
+
+	if d.has("weight"):
+		if not (typeof(d["weight"]) == TYPE_INT or typeof(d["weight"]) == TYPE_FLOAT):
+			errors.append("%s: %s weight is not numeric" % [filename, ev.id])
+		else:
+			ev.weight = float(d["weight"])
+			if ev.weight < K.WEIGHT_MIN or ev.weight > K.WEIGHT_MAX:
+				errors.append("%s: %s weight = %s out of range [%s, %s]" % [
+					filename, ev.id, str(ev.weight), str(K.WEIGHT_MIN), str(K.WEIGHT_MAX)
+				])
+
+	if d.has("severity"):
+		if not (typeof(d["severity"]) == TYPE_INT or typeof(d["severity"]) == TYPE_FLOAT):
+			errors.append("%s: %s severity is not numeric" % [filename, ev.id])
+		else:
+			ev.severity = int(d["severity"])
+			if ev.severity < K.SEVERITY_MIN or ev.severity > K.SEVERITY_MAX:
+				errors.append("%s: %s severity = %d out of range [%d, %d] (1 minor, 2 major, 3 critical)" % [
+					filename, ev.id, ev.severity, K.SEVERITY_MIN, K.SEVERITY_MAX
+				])
+
+	if d.has("on_action"):
+		var hook = d["on_action"]
+		if typeof(hook) != TYPE_STRING or not K.ON_ACTIONS.has(hook):
+			# Names the refused hook in the error rather than lumping it with typos:
+			# src/core/law.gd's own V1.7c discipline, and election_lost is the one an
+			# author will reach for.
+			errors.append("%s: %s on_action '%s' is not one of %s -- and 'election_lost' is refused outright: a lost election ends the game, so nothing could answer the event" % [
+				filename, ev.id, str(hook), K.ON_ACTIONS
+			])
+		else:
+			ev.on_action = hook
+
+	if d.has("cooldown_months"):
+		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
+			errors.append("%s: %s cooldown_months is not numeric" % [filename, ev.id])
+		else:
+			ev.cooldown_months = int(d["cooldown_months"])
+			if ev.cooldown_months < 0 or ev.cooldown_months > K.EVENT_COOLDOWN_MAX_MONTHS:
+				errors.append("%s: %s cooldown_months = %d out of range [0, %d]" % [
+					filename, ev.id, ev.cooldown_months, K.EVENT_COOLDOWN_MAX_MONTHS
+				])
+
 	ev.once = bool(d.get("once", false))
 	ev.interrupt = bool(d.get("interrupt", false))
 	ev.sited = bool(d.get("sited", false))
@@ -182,9 +262,10 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
 	"once", "preconditions", "choices", "interrupt", "sited",
+	"category", "weight", "severity", "on_action", "cooldown_months",
 ]
 
-const CHOICE_KEYS := ["id", "label", "summary", "effects", "default"]
+const CHOICE_KEYS := ["id", "label", "summary", "effects", "default", "arms"]
 
 
 static func _extract_choices(d: Dictionary, event_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, sector_keys: Array) -> Array:
@@ -230,6 +311,29 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 		if is_default:
 			defaults += 1
 
+		# V4.4: a choice may arm a follow-up event at a delay -- the chain machine
+		# V4.1 deliberately refused, built once here. The target is validated as a
+		# loaded event id by the loader's cross-check (it needs the whole set in
+		# hand, _validate_people's pattern); here only the shape and the delay bound.
+		var arms := {}
+		if entry.has("arms"):
+			var raw_arms = entry["arms"]
+			if typeof(raw_arms) != TYPE_DICTIONARY:
+				errors.append("%s: %s arms must be an object {event_id, delay_months}" % [filename, path])
+			else:
+				var target = raw_arms.get("event_id", "")
+				var delay = raw_arms.get("delay_months", 0)
+				if typeof(target) != TYPE_STRING or target == "":
+					errors.append("%s: %s arms.event_id is missing or not a string" % [filename, path])
+				elif not (typeof(delay) == TYPE_INT or typeof(delay) == TYPE_FLOAT) \
+						or int(delay) < K.ARMS_DELAY_MIN_MONTHS \
+						or int(delay) > K.ARMS_DELAY_MAX_MONTHS:
+					errors.append("%s: %s arms.delay_months = %s out of range [%d, %d]" % [
+						filename, path, str(delay), K.ARMS_DELAY_MIN_MONTHS, K.ARMS_DELAY_MAX_MONTHS
+					])
+				else:
+					arms = {"event_id": target, "delay_months": int(delay)}
+
 		var effects := _extract_effects(
 			entry, path, filename, errors, tax_keys, spending_keys, bloc_keys, sector_keys
 		)
@@ -244,6 +348,7 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 			"summary": choice_summary,
 			"effects": effects,
 			"is_default": is_default,
+			"arms": arms,
 		})
 
 	# EXACTLY ONE DEFAULT, and it is required rather than inferred from the ordering.

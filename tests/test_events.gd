@@ -140,7 +140,7 @@ func _init() -> void:
 func _test_the_interrupt_flag() -> void:
 	# Schema: the key is known, absent reads false, and the default is
 	# non-interrupt.
-	var raw := {"id": "x", "name": "X", "summary": "s", "likelihood": 0.05,
+	var raw := {"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal",
 		"respond_months": 2, "choices": [
 			{"id": "a", "label": "A", "summary": "do a", "effects": {"bloc_offset": {"business": 0.01}}, "default": true},
 			{"id": "b", "label": "B", "summary": "do b", "effects": {"bloc_offset": {"workers": 0.01}}},
@@ -441,7 +441,7 @@ func _announce(state, ev) -> void:
 ## A fixture built through the real from_dict, so a schema refusal fails here rather
 ## than in the content that will one day carry the key.
 func _make_event(id: String, sited: bool):
-	var raw := {"id": id, "name": id.capitalize(), "summary": "s", "likelihood": 0.05,
+	var raw := {"id": id, "name": id.capitalize(), "summary": "s", "likelihood": 0.05, "category": "scandal",
 		"respond_months": 2, "choices": [
 			{"id": "a", "label": "A", "summary": "do a", "effects": {"bloc_offset": {"business": 0.01}}, "default": true},
 			{"id": "b", "label": "B", "summary": "do b", "effects": {"bloc_offset": {"workers": 0.01}}},
@@ -537,7 +537,7 @@ func _test_no_choice_is_empty() -> void:
 ## because a key refused as "unrecognised" reads as a typo and gets re-added.
 func _test_institutional_is_refused_by_name() -> void:
 	var errors := _validate({
-		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal", "respond_months": 2,
 		"choices": [
 			{"id": "a", "label": "A", "summary": "s", "default": true,
 			 "effects": {"institutional": {"censure_rule": "constructive"}}},
@@ -554,7 +554,7 @@ func _test_institutional_is_refused_by_name() -> void:
 ## one field.
 func _test_approval_precondition_is_refused() -> void:
 	var errors := _validate({
-		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal", "respond_months": 2,
 		"preconditions": [{"field": "overall_approval_pct", "op": "<=", "value": 40.0}],
 		"choices": [
 			{"id": "a", "label": "A", "summary": "s", "default": true,
@@ -577,7 +577,7 @@ func _test_approval_precondition_is_refused() -> void:
 ## world.
 func _test_emissions_precondition_resolves() -> void:
 	var errors := _validate({
-		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal", "respond_months": 2,
 		"preconditions": [{"field": "co2e_per_capita_t", "op": "<=", "value": 8.0}],
 		"choices": [
 			{"id": "a", "label": "A", "summary": "s", "default": true,
@@ -602,7 +602,7 @@ func _test_emissions_precondition_resolves() -> void:
 
 func _test_a_second_default_is_refused() -> void:
 	var errors := _validate({
-		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal", "respond_months": 2,
 		"choices": [
 			{"id": "a", "label": "A", "summary": "s", "default": true,
 			 "effects": {"bloc_offset": {"urban": -0.1}}},
@@ -616,7 +616,7 @@ func _test_a_second_default_is_refused() -> void:
 
 func _test_a_choice_with_no_effects_is_refused() -> void:
 	var errors := _validate({
-		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "respond_months": 2,
+		"id": "x", "name": "X", "summary": "s", "likelihood": 0.05, "category": "scandal", "respond_months": 2,
 		"choices": [
 			{"id": "a", "label": "A", "summary": "s", "default": true,
 			 "effects": {"bloc_offset": {"urban": -0.1}}},

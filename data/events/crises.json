@@ -9,6 +9,9 @@
       "name": "The books are called in",
       "summary": "The deficit has passed the point where the Commission writes letters and the markets stop reading them. You are expected to say what you will do about it, in public, this quarter.",
       "likelihood": 0.2,
+      "category": "fiscal",
+      "severity": 2,
+      "cooldown_months": 6,
       "respond_months": 3,
       "once": false,
       "preconditions": [
@@ -78,6 +81,9 @@
       "name": "The unions set a date",
       "summary": "The federations have agreed a date and a list. They would rather have a settlement than the date, and they have said so in a way that leaves you a fortnight.",
       "likelihood": 0.25,
+      "category": "unrest",
+      "severity": 2,
+      "cooldown_months": 6,
       "respond_months": 2,
       "once": false,
       "preconditions": [
@@ -149,6 +155,9 @@
       "name": "Industry asks for terms",
       "summary": "With unemployment where it is, the industrial federation has come with two proposals and a warning about which plants close if it gets neither.",
       "likelihood": 0.06,
+      "category": "industrial",
+      "severity": 2,
+      "cooldown_months": 12,
       "respond_months": 4,
       "once": false,
       "preconditions": [
@@ -221,6 +230,9 @@
       "summary": "A winter peak has taken three regions dark, hospitals are on generators, and the operator says the interconnects cannot hold another evening like it. This is the one crisis that does not wait a quarter: the clock stops until you have said what kind of state you are governing.",
       "interrupt": true,
       "likelihood": 0.04,
+      "category": "industrial",
+      "severity": 3,
+      "cooldown_months": 24,
       "respond_months": 1,
       "once": false,
       "preconditions": [
@@ -251,7 +263,9 @@
           "label": "Buy fuel on the spot market",
           "summary": "Whatever the price is, it is cheaper than the dark. The debt takes it, and the markets read the wire as fast as the cities read the light.",
           "effects": {
-            "spending_pct_gdp": { "infrastructure": 0.35 },
+            "spending_pct_gdp": {
+              "infrastructure": 0.35
+            },
             "bloc_offset": {
               "business": 0.045,
               "workers": 0.02,

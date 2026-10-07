@@ -2504,6 +2504,46 @@ func _load_events(events_dir: String) -> void:
 				gates[gate] = ev.id
 			events.append(ev)
 
+	# V4.4: two checks that need the whole set in hand, _validate_people's pattern --
+	# a chain may arm an event authored in another file, and a cycle is a property of
+	# the SET, not of any one event. Edges run announcing-event -> armed-event; an
+	# event's own choices are alternatives, so one choice's arms never reaches
+	# another's, but an armed event arms in turn when IT is answered, which is where
+	# a cycle would live.
+	var arm_edges := {}
+	for ev in events:
+		for choice in ev.choices:
+			var arms: Dictionary = choice.get("arms", {})
+			if arms.is_empty():
+				continue
+			var target := String(arms.get("event_id", ""))
+			if not seen_ids.has(target):
+				errors.append("%s: '%s' arms '%s', which is not a loaded event -- a chain that points at nothing can never land" % [
+					events_dir, ev.id, target
+				])
+				continue
+			if not arm_edges.has(ev.id):
+				arm_edges[ev.id] = []
+			arm_edges[ev.id].append(target)
+	for start_id in arm_edges.keys():
+		# Depth-first walk carrying its own path; an edge back onto the path is the
+		# cycle. One report per start is enough -- the author fixes the loop, not
+		# every entry into it.
+		var found_cycle := false
+		var frontier: Array = [[start_id, [start_id]]]
+		while not frontier.is_empty() and not found_cycle:
+			var frame: Array = frontier.pop_back()
+			var node: String = frame[0]
+			var node_path: Array = frame[1]
+			for next_id in arm_edges.get(node, []):
+				if node_path.has(next_id):
+					errors.append("%s: the chain through '%s' is a cycle ('%s' -> '%s' closes it) -- a follow-up that re-arms its own ancestry never runs out of future" % [
+						events_dir, start_id, node, next_id
+					])
+					found_cycle = true
+					break
+				frontier.append([next_id, node_path + [next_id]])
+
 
 ## V2.4b. One summit = two files sharing an id: <ID>.dialogue is the scene in
 ## dialogue_manager syntax, <ID>.json the sidecar that names it and prices its

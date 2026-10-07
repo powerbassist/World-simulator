@@ -10,6 +10,9 @@
       "summary": "A newspaper has the ministry's contract file. The awards went to two firms, and one of them wrote the specification.",
       "subject_office": "head_of_government",
       "likelihood": 0.03,
+      "category": "scandal",
+      "severity": 1,
+      "cooldown_months": 8,
       "respond_months": 3,
       "once": false,
       "choices": [
@@ -70,6 +73,9 @@
       "summary": "Two names on the head of state's honours list gave money to the governing party. Nobody says the two facts are connected, and nobody says they are not.",
       "subject_office": "head_of_state",
       "likelihood": 0.02,
+      "category": "scandal",
+      "severity": 1,
+      "cooldown_months": 8,
       "respond_months": 2,
       "once": false,
       "choices": [
@@ -131,6 +137,8 @@
       "name": "The broadcasting charter",
       "summary": "The state broadcaster's charter is up. Its newsroom has spent the year on your government, and the terms of the renewal are yours to set.",
       "likelihood": 0.035,
+      "category": "scandal",
+      "severity": 1,
       "respond_months": 4,
       "once": true,
       "choices": [
