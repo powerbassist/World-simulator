@@ -142,6 +142,10 @@ tests=(
   tests/test_upper_house.gd
   tests/test_judiciary.gd
   tests/test_events.gd
+  # V4.4 T11: the event plate library -- the generator's --dry-run pinned
+  # set-equal to what the helper can name, every nameable plate bytes-loading
+  # once any ships, no orphan art, and the one-reader rule over src/ui.
+  tests/test_event_art.gd
   # V4.4 T7: the desk figure on the top bar -- the empty desk reads a clear
   # state and stays visible, the count is the queue's own and the tooltip names
   # the worst severity, and the brass mark keys on the same read the strip does.

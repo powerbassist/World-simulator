@@ -32,6 +32,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const EventArt = preload("res://src/ui/event_art.gd")
 
 var _state
 var _loader
@@ -192,6 +193,22 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	var where := String(entry.get("region_name", ""))
 	if where != "":
 		title = "%s — %s" % [title, where]
+
+	# The plate above the title line: category art keyed by severity band, the
+	# variant picked stably from the event's own id -- the same plate the
+	# arrival card carries, so one crisis reads as one story in both places.
+	# Missing art is silent (the lenient precedent): the entry is a line again,
+	# never a hole where a header would have been.
+	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), ev.id)
+	if art != null:
+		var header := TextureRect.new()
+		header.texture = art
+		header.custom_minimum_size = Vector2(0, 64)
+		header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		header.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		header.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_body.add_child(header)
+
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 
 	var tag := Label.new()

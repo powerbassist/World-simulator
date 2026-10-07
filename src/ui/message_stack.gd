@@ -43,7 +43,12 @@ func _ready() -> void:
 
 ## Returns the card's id, so the caller can dismiss it later without having
 ## tracked it -- a resolved crisis should be able to take its own card away.
-func push(title: String, body: String, actions: Array = []) -> String:
+##
+## `art`, when given (V4.4), is the event plate shown on the title's side -- a
+## 16:9 sliver between the title and the close button, the same plate the
+## Dispatches desk entry carries above its title line. Null draws the card
+## exactly as before: missing art is silent here like everywhere else.
+func push(title: String, body: String, actions: Array = [], art: Texture2D = null) -> String:
 	var id := "card_%d" % _next_id
 	_next_id += 1
 
@@ -62,6 +67,14 @@ func push(title: String, body: String, actions: Array = []) -> String:
 
 	var header := HBoxContainer.new()
 	column.add_child(header)
+
+	if art != null:
+		var plate := TextureRect.new()
+		plate.texture = art
+		plate.custom_minimum_size = Vector2(32, 18)  # 16:9, the plate's own aspect
+		plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		plate.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		header.add_child(plate)
 
 	var title_label := Label.new()
 	title_label.text = title.to_upper()

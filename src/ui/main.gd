@@ -52,6 +52,7 @@ const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
+const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
@@ -2026,7 +2027,11 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		var where := String(entry.get("region_name", ""))
 		if where != "":
 			title = "%s — %s" % [title, where]
-		var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions)
+		# The same plate the Dispatches desk entry carries, on the title's side:
+		# one crisis, one image, in both places it is read. Null (no art yet)
+		# draws the card exactly as before -- missing art is silent.
+		var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
+		var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
 		_event_cards[card_id] = event_id
 
 
