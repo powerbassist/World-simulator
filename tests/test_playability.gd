@@ -67,7 +67,7 @@ func _run() -> void:
 ## answered. A decision ARRIVING must stop the clock -- interrupt or not; the
 ## flag's own extra behaviour (opening Dispatches) stays interrupt-only. Staged
 ## through the real register (Events.announce) and the real arrival branch
-## (_card_events with was_pending false), so a wiring break fails here.
+## (_card_events with an empty desk_before), so a wiring break fails here.
 func _check_decision_arrival_stops_the_clock() -> void:
 	var Events := load("res://src/sim/events.gd")
 	var clock: Node = _main.get_node("Clock")
@@ -85,7 +85,10 @@ func _check_decision_arrival_stops_the_clock() -> void:
 	# event is non-sited, so both are inert -- filled as tick_month fills them.
 	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
 		Events.region_names(ns, _main._loader))
-	_main._card_events(_main._state.year, _main._state.month, false, {})
+	# V4.4: the third argument is the desk's BEFORE-CONTENT, not the old was-
+	# pending boolean -- the staged event is on no desk before this call, so the
+	# empty dictionary is false's exact successor, and the arrival branch fires.
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
 	if not clock.paused:
 		_fail("a decision arrived and the clock kept running")
 		return

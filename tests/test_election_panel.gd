@@ -492,18 +492,22 @@ func _advance(clock: Node, months: int) -> void:
 		for _d in range(31):
 			clock.advance_one_day()
 			if clock.paused:
+				# THE VERDICT CHECK FIRST. V1.8's one pending slot made "an event
+				# on the desk at the election month" rare enough that the events
+				# branch could sit above this; the desk is a queue now, and a
+				# drive that answered-and-unpaused over the visible result would
+				# run the clock straight past the vote the reading frames own.
+				if _main._election_panel.visible:
+					return
 				if Events.is_pending(ns) and not Events.pending_event(ns, _main._loader).choices.is_empty():
 					Events.choose(_main._state, _main._loader, String(Events.pending_event(ns, _main._loader).choices[0]["id"]))
 					clock.paused = false
 					continue
-				# A verdict on screen is the pause the drive STOPS for -- the
-				# reading frames own it -- so the offer is answered only when
-				# no result panel is showing.
-				if not _main._election_panel.visible:
-					var offer: Array = Programme.available(_main._state, ns, _main._loader)
-					if not offer.is_empty():
-						_main._agenda_panel.programme_chosen.emit(String(offer[0]["id"]))
-						continue
+				# An answerable pause with no verdict on screen -- the offer.
+				var offer: Array = Programme.available(_main._state, ns, _main._loader)
+				if not offer.is_empty():
+					_main._agenda_panel.programme_chosen.emit(String(offer[0]["id"]))
+					continue
 				return
 
 

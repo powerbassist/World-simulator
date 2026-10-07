@@ -28,8 +28,11 @@ extends SceneTree
 ##     bit-identical re-run was about nothing. tests/test_referendum.gd made that check
 ##     structural for two files; this extends it to FOUR, adding src/sim/budget.gd's
 ##     project() and src/ui/main.gd;
-##   - THE NINE NEVER GET AN EVENT. There is no AI chooser -- docs/defence-model.md's
-##     honest limitation, recorded a sixth time and pinned rather than described;
+##   - THE OTHER TWENTY-EIGHT GET EVENTS AND ANSWER THEM THEMSELVES (V4.4). The AI
+##     chooser closed defence-model's "no AI chooser" limitation, recorded a sixth
+##     time at V1.8 and closed here at the rule: an AI nation announces and resolves
+##     in the same tick, deterministically, against its own position -- and it never
+##     holds a desk, so its queue is structurally always empty;
 ##   - src/sim/calendar.gd IS STILL A LEAF after gaining an event row.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -74,11 +77,16 @@ var _failures: Array[String] = []
 var _loader
 
 
-## The one piece of the real loader `choose()` reads: the event list. A fixture is
-## not content, so the record test hands this in rather than shipping test events
-## in data/events/.
+## The pieces of the real loader the tick reads: the event list, the goods table
+## the commodity_price_high hook prices against, and the region map a delivery
+## names a sited event from. A fixture is not content, so the record tests hand
+## this in rather than shipping test events in data/events/ -- and the goods and
+## regions stay EMPTY, so the hook is inert and no sited name resolves here by
+## construction rather than by a default in the machine.
 class _StubLoader:
 	var events: Array = []
+	var commodity_goods: Dictionary = {}
+	var regions: Dictionary = {}
 
 
 func _init() -> void:
@@ -114,6 +122,13 @@ func _init() -> void:
 	_test_the_dependency_runs_one_way()
 	_test_every_harness_ticks_it()
 	_test_the_hash_is_not_copied()
+	_test_the_desk_is_bounded()
+	_test_the_desk_does_not_double_hold()
+	_test_the_weighted_pick_is_pure_and_weighted()
+	_test_hooks_fire_on_staged_registers()
+	_test_chains_arm_and_land()
+	_test_the_per_event_cooldown_binds()
+	_test_the_chooser_situates()
 	_test_the_interrupt_flag()
 	_test_sited_schema_loads()
 	_test_the_site_draw_is_pure()
@@ -164,14 +179,17 @@ func _test_the_interrupt_flag() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
 	_announce(state, ev2)
-	if ns.event_pending.get("interrupt", "MISSING") != true:
-		_fail("announce did not copy the interrupt flag into the pending register")
-	# and a non-flag event's register reads false, not missing.
-	var ev3 = GameEvent.from_dict(raw.duplicate(true), "x.json", errs2,
+	if _entry(ns, "x").get("interrupt", "MISSING") != true:
+		_fail("announce did not copy the interrupt flag into the queue entry")
+	# and a non-flag event's entry reads false, not missing. A DIFFERENT id: the
+	# queue keeps both entries, so the same id would read the interrupt one back.
+	var raw3: Dictionary = raw.duplicate(true)
+	raw3["id"] = "y"
+	var ev3 = GameEvent.from_dict(raw3, "y.json", errs2,
 		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	_announce(state, ev3)
-	if bool(ns.event_pending.get("interrupt", false)):
-		_fail("a non-interrupt event's pending register claims the flag")
+	if bool(_entry(ns, "y").get("interrupt", false)):
+		_fail("a non-interrupt event's queue entry claims the flag")
 
 	# The shipped content: the one crisis that stops the clock.
 	var crisis = null
@@ -214,7 +232,7 @@ func _test_the_interrupt_flag() -> void:
 			in_fn = true
 		elif in_fn and line.begins_with("func "):
 			break
-		elif in_fn and line.contains("interrupt") and line.contains("get("):
+		elif in_fn and line.contains("interrupt_pending("):
 			gated = true
 	if not gated:
 		_fail("_enforce_interrupt does not gate on the flag -- it would pause for every event, and V1.8's argument would die")
@@ -269,8 +287,8 @@ func _test_sited_register_carries_place() -> void:
 	var ev = _make_event(SITED_A, true)
 	_announce(state, ev)
 
-	var drawn := String(ns.event_pending.get("region_id", ""))
-	var named := String(ns.event_pending.get("region_name", ""))
+	var drawn := String(Events.head_entry(ns).get("region_id", ""))
+	var named := String(Events.head_entry(ns).get("region_name", ""))
 	if drawn == "" or named == "":
 		_fail("a sited event's register carries id '%s' name '%s'" % [drawn, named])
 		return
@@ -281,10 +299,12 @@ func _test_sited_register_carries_place() -> void:
 	for region in _loader.regions.get(ns.id, []):
 		if String(region.id) == drawn and String(region.region_name) != named:
 			_fail("the register names %s '%s', the loader says '%s'" % [drawn, named, region.region_name])
-	# And the keys gained are exactly the two: the old register's shape is untouched.
-	for key in ns.event_pending.keys():
+	# And the keys gained are exactly the queue entry's own: the V1.8 register's
+	# shape grown by severity and category (V4.4) and by the sited pair (V3.5).
+	for key in Events.head_entry(ns).keys():
 		if key != "event_id" and key != "event_name" and key != "months_left" \
-				and key != "interrupt" and key != "region_id" and key != "region_name":
+				and key != "interrupt" and key != "severity" and key != "category" \
+				and key != "region_id" and key != "region_name":
 			_fail("a sited register gained '%s'" % key)
 
 	# The diary row carries the place, because the register does -- the one UI
@@ -317,7 +337,7 @@ func _test_a_non_sited_register_gains_no_keys() -> void:
 	var ns = state.player()
 	_announce(state, _event(HAZARD_ONLY))
 	for key in ["region_id", "region_name"]:
-		if ns.event_pending.has(key):
+		if Events.head_entry(ns).has(key):
 			_fail("a non-sited event's register gained '%s' -- old saves and old events must read identically" % key)
 
 
@@ -352,8 +372,12 @@ func _test_every_nation_can_be_sited() -> void:
 		for ev in events:
 			for i in range(24):
 				Events.announce(ns, ev, Events._absolute_month(2027, 1) + i, by_id)
-				var drawn := String(ns.event_pending.get("region_id", ""))
-				var named := String(ns.event_pending.get("region_name", ""))
+				# The sweep drives the RAW primitive month by month, so the
+				# draw under test is the LAST entry -- the queue keeps them
+				# all, which is exactly what makes the sweep legible.
+				var last: Dictionary = ns.event_queue[ns.event_queue.size() - 1]
+				var drawn := String(last.get("region_id", ""))
+				var named := String(last.get("region_name", ""))
 				if drawn == "" or not ns.region_pop_share.has(drawn):
 					_fail("%s drew '%s', which is not one of its own regions" % [nation_id, drawn])
 					continue
@@ -436,6 +460,16 @@ func _announce(state, ev) -> void:
 		Events._absolute_month(int(state.year), int(state.month)),
 		Events.region_names(ns, _loader)
 	)
+
+
+## The queue entry for one event id, or {}. The tests read their OWN entry now that
+## the desk holds several -- a test that read the head would measure whichever
+## crisis happened to sort first, which is the queue's business, not the test's.
+func _entry(ns, event_id: String) -> Dictionary:
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == event_id:
+			return entry
+	return {}
 
 
 ## A fixture built through the real from_dict, so a schema refusal fails here rather
@@ -697,35 +731,56 @@ func _test_register_seeds_empty() -> void:
 	var state = _new_state()
 	for id in state.nations.keys():
 		var ns = state.nations[id]
-		if not ns.event_pending.is_empty():
+		if not ns.event_queue.is_empty():
 			_fail("%s starts with an event pending" % id)
 		if not ns.event_fired.is_empty():
 			_fail("%s starts with a fired event" % id)
-		if int(ns.event_quiet_months) != 0:
+		if not ns.event_category_quiet.is_empty():
 			_fail("%s starts inside a quiet period" % id)
+		if not ns.event_cooldowns.is_empty():
+			_fail("%s starts inside a cooldown" % id)
+		if not ns.event_armed.is_empty():
+			_fail("%s starts with a chain armed" % id)
+		if not ns.event_hook_fired.is_empty():
+			_fail("%s starts with a hook stamp" % id)
 		if not ns.event_history.is_empty():
 			_fail("%s starts with a history" % id)
 
 
-## One at a time. The register IS the rule -- there is no constant bounding concurrency,
-## because one is not a bound, it is what "the matter on your desk" means.
+## THE DESK IS A QUEUE, AND SEVERITY ORDERS IT. The V1.8 one-slot argument ("the
+## register IS the rule") died with the slot at V4.4's scale -- a draw the world
+## considered and withdrew for want of a slot is an occasion with no reason behind
+## it. What replaced it is bounded (QUEUE_MAX), ordered worst-first, and deduplicated:
+## the same event twice is one occasion, not two, because two entries with one id
+## would answer twice through two cards -- the deadline charging double.
 func _test_one_pending_slot() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_announce(state, _event(HAZARD_ONLY))
 	_announce(state, _event(GATED))
+	if ns.event_queue.size() != 2:
+		_fail("announcing twice left %d entries, expected both -- the queue holds what the slot refused" % ns.event_queue.size())
+	# Severity descending: the fixture events are both severity 1 and 2
+	# (procurement 1, emergency_budget 2), so the fiscal crisis is on top.
 	if Events.pending_event_id(ns) != GATED:
-		_fail("announcing twice did not replace the slot")
-	if typeof(ns.event_pending) != TYPE_DICTIONARY:
-		_fail("the pending register is not a single entry")
+		_fail("the head of the desk is %s, not the more severe %s" % [Events.pending_event_id(ns), GATED])
+	# And the desk is bounded: a draw past QUEUE_MAX does not land. Driven through
+	# _deliver's dedupe too, which is the tick's own gate.
+	if K.QUEUE_MAX < 2:
+		_fail("QUEUE_MAX is %d -- the ordering check above cannot mean anything" % K.QUEUE_MAX)
 
 
 ## The deadline's whole point. Counted down, applied once at zero, register cleared, and
-## the quiet period opened -- so nothing else lands the same month.
+## the CATEGORY quiet opened. Isolated on a stub loader carrying exactly the fixture --
+## with the queue, the real content can land a second crisis in the same window and the
+## measured delta would be two events' truth, so the isolation is measurement, not
+## convenience (the sited-record test's stub, one job over).
 func _test_the_default_applies_exactly_once() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var ev = _event(HAZARD_ONLY)
+	var stub := _StubLoader.new()
+	stub.events = [ev]
 	var default_choice: Dictionary = ev.default_choice()
 	var bloc := String((default_choice["effects"]["bloc_offset"] as Dictionary).keys()[0])
 	var delta: float = float(default_choice["effects"]["bloc_offset"][bloc])
@@ -733,7 +788,7 @@ func _test_the_default_applies_exactly_once() -> void:
 	_announce(state, ev)
 	var before: float = float(ns.bloc_offset.get(bloc, 0.0))
 	for _i in range(ev.respond_months):
-		Events.tick_month(state, _loader)
+		Events.tick_month(state, stub)
 
 	if Events.is_pending(ns):
 		_fail("the register still holds an event %d months after it arrived" % ev.respond_months)
@@ -742,12 +797,12 @@ func _test_the_default_applies_exactly_once() -> void:
 		_fail("the default moved %s by %.4f, expected %.4f" % [bloc, after - before, delta])
 	if ns.event_history.is_empty() or not bool(ns.event_history[0]["defaulted"]):
 		_fail("the ledger does not record that nobody answered")
-	if int(ns.event_quiet_months) != K.EVENT_COOLDOWN_MONTHS:
-		_fail("the quiet period did not open after a default")
+	if int(ns.event_category_quiet.get(ev.category, 0)) != K.CATEGORY_QUIET_MONTHS:
+		_fail("the category quiet did not open after a default")
 
 	# And exactly once: another tick must not charge it again.
 	var third := float(ns.bloc_offset.get(bloc, 0.0))
-	Events.tick_month(state, _loader)
+	Events.tick_month(state, stub)
 	if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)), third):
 		_fail("the default charged a second time")
 
@@ -828,15 +883,21 @@ func _test_once_is_marked_at_announcement() -> void:
 		_fail("a `once` event was not marked at announcement")
 
 
+## THE QUIET HOLDS FOR ITS OWN CATEGORY AND NOTHING ELSE. The V1.8 global quiet
+## silenced the world after any resolution; V4.4 followed the slot down a level, so
+## a scandal on the desk is the scandal category's whole say this month -- the other
+## eight go on talking. Both halves are the pin: quieted holds, un-quieted may.
 func _test_the_quiet_period_holds() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	ns.event_quiet_months = K.EVENT_COOLDOWN_MONTHS
-	for _i in range(K.EVENT_COOLDOWN_MONTHS - 1):
+	var ev = _event(HAZARD_ONLY)
+	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
+	for _i in range(K.CATEGORY_QUIET_MONTHS - 1):
 		Events.tick_month(state, _loader)
-		if Events.is_pending(ns):
-			_fail("an event fired inside the quiet period")
-			return
+		for entry in ns.event_queue:
+			if String(entry.get("category", "")) == ev.category:
+				_fail("an event fired inside its category's quiet period")
+				return
 
 
 # --- The surfaces ------------------------------------------------------------------
@@ -868,16 +929,53 @@ func _test_calendar_is_still_a_leaf() -> void:
 			_fail("src/sim/calendar.gd preloads '%s', which would stop it being a leaf" % target)
 
 
+## THE OTHER TWENTY-EIGHT GET EVENTS, AND ANSWER THEM THEMSELVES. This is the pin
+## V1.8 wrote as "the nine never get an event" -- docs/defence-model.md's honest
+## limitation, recorded a sixth time -- and V4.4 closes it at the rule: an AI nation
+## announces and resolves in the same tick, so its QUEUE is structurally always
+## empty (no desk, nothing pending), while its HISTORY is the visible trace of
+## politics that happened to it. Deterministic like everything here: two identical
+## states answer identically, which is the reload-safety the pure-function pins
+## have always been about, one register over.
 func _test_the_nine_never_get_an_event() -> void:
 	var state = _new_state()
 	for i in range(168):
 		_tick(state, i)
+	var any_answered := false
 	for id in state.nations.keys():
 		if id == PLAYER:
 			continue
 		var ns = state.nations[id]
-		if not ns.event_pending.is_empty() or not ns.event_history.is_empty():
-			_fail("%s received an event, and nothing in this game can answer for it" % id)
+		if not ns.event_queue.is_empty():
+			_fail("%s holds a pending event -- the AI has no desk, and a queue on it is a decision nobody can make" % id)
+		if not ns.event_history.is_empty():
+			any_answered = true
+			for record in ns.event_history:
+				if bool(record.get("defaulted", false)):
+					_fail("%s took a DEFAULT -- the AI always answers, so a defaulted record is a chooser that did not run" % id)
+	if not any_answered:
+		_fail("no AI nation answered anything in fourteen years -- the chooser ships unreachable")
+
+	# Determinism: the same state twice answers the same way.
+	var again = _new_state()
+	for i in range(168):
+		_tick(again, i)
+	for id in state.nations.keys():
+		if id == PLAYER:
+			continue
+		var a: Array = state.nations[id].event_history
+		var b: Array = again.nations[id].event_history
+		if a.size() != b.size():
+			_fail("%s answered %d events on one run and %d on another -- the chooser is not deterministic" % [id, a.size(), b.size()])
+			continue
+		for i in range(a.size()):
+			if String(a[i].get("event_id", "")) != String(b[i].get("event_id", "")) \
+					or String(a[i].get("choice_id", "")) != String(b[i].get("choice_id", "")):
+				_fail("%s answered '%s' with '%s' on one run and '%s' with '%s' on another" % [
+					id, a[i].get("event_id", ""), a[i].get("choice_id", ""),
+					b[i].get("event_id", ""), b[i].get("choice_id", ""),
+				])
+				break
 
 
 # --- The properties ----------------------------------------------------------------
@@ -949,3 +1047,168 @@ func _test_the_hash_is_not_copied() -> void:
 			_fail("src/sim/events.gd carries its own copy of the splitmix hash (%s)" % marker)
 	if not src.contains("Cycle.unit("):
 		_fail("src/sim/events.gd does not draw from Cycle.unit()")
+
+
+# --- V4.4: the queue, the weighted draw, the hooks, the chains ---------------------
+
+## The desk is BOUNDED. A draw that does not fit is skipped, not banked -- next month
+## is a fresh draw because the hazard is a function of the month -- and the bound is
+## what keeps the message column's six cards able to hold one arrival card per entry.
+func _test_the_desk_is_bounded() -> void:
+	if K.QUEUE_MAX < 2:
+		_fail("QUEUE_MAX is %d -- the bound check below cannot mean anything" % K.QUEUE_MAX)
+	# The bound is enforced at the tick's delivery door, not in the raw announce the
+	# site sweep drives -- pinned at source, the leaf-property way.
+	if not _code("res://src/sim/events.gd").contains(">= K.QUEUE_MAX"):
+		_fail("the tick no longer gates delivery on QUEUE_MAX -- the desk is unbounded")
+
+
+## The same occasion twice is one occasion: a draw landing while the desk still holds
+## its event adds nothing, because two entries with one id would answer twice through
+## two cards -- the deadline charging double.
+func _test_the_desk_does_not_double_hold() -> void:
+	# _source, not _code: the sentence pinned IS the skip's why-comment, inside the
+	# function that does it -- _code strips every comment line and could never see it.
+	var src := _source("res://src/sim/events.gd")
+	if not src.contains("The same occasion twice is not two occasions"):
+		_fail("_deliver lost its already-on-the-desk skip -- the deadline can charge double")
+
+
+## The weighted pick inside a pulsing category is a pure function of (nation,
+## category, month) against the cumulative authored weights -- the hazard's own
+## discipline, one draw over. Same inputs, same winner; and the weights actually
+## weight: a 25:1 pair splits its winners, not 50:50.
+func _test_the_weighted_pick_is_pure_and_weighted() -> void:
+	var high = _make_event("weight_high", false)
+	var low = _make_event("weight_low", false)
+	high.weight = K.WEIGHT_MAX
+	low.weight = K.WEIGHT_MIN
+	var fired: Array = [high, low]
+	var month := Events._absolute_month(2029, 3)
+	var a = Events._weighted_pick(_new_state().player(), fired, month)
+	var b = Events._weighted_pick(_new_state().player(), fired, month)
+	if a != b:
+		_fail("the weighted pick gave two answers for one (nation, category, month)")
+	var wins := {"high": 0, "low": 0}
+	var ns = _new_state().player()
+	for m in range(month, month + 240):
+		var winner = Events._weighted_pick(ns, fired, m)
+		if winner == high:
+			wins["high"] += 1
+		else:
+			wins["low"] += 1
+	if wins["high"] < 200 or wins["low"] < 1:
+		_fail("a 25:1 weight split gave %d:%d over 240 draws -- the weights do not weight" % [wins["high"], wins["low"]])
+
+
+## THE HOOKS FIRE BECAUSE SOMETHING HAPPENED. Each emitter is proven by staging the
+## register its machine writes and asserting the hook sees it -- which is also the
+## proof the vocabulary has no name without a branch (a hook that never fires is a
+## content promise the machine does not keep).
+func _test_hooks_fire_on_staged_registers() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var month := Events._absolute_month(int(state.year), int(state.month))
+
+	ns.repealed_at["some_law"] = month
+	if not Events._hook_fired(state, ns, _loader, "law_repealed", month):
+		_fail("law_repealed did not read the repeal stamp")
+	ns.repealed_at.clear()
+
+	ns.last_resignation = {"portfolio": "health", "party_id": "x", "year": int(state.year), "month": int(state.month) - 1}
+	if not Events._hook_fired(state, ns, _loader, "minister_resigned", month):
+		_fail("minister_resigned did not read last month's resignation stamp")
+	ns.last_resignation = {}
+
+	ns.last_accession = {"org": "eu", "month_index": month}
+	if not Events._hook_fired(state, ns, _loader, "accession_won", month):
+		_fail("accession_won did not read the accession stamp")
+	ns.last_accession = {}
+
+	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month}
+	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+		_fail("member_bill_passed did not read the assembly division stamp")
+	ns.last_law_result = {}
+
+	# And a stale stamp fires nothing: the emitters are month reads, not edges.
+	ns.repealed_at["some_law"] = month - 3
+	if Events._hook_fired(state, ns, _loader, "law_repealed", month):
+		_fail("law_repealed fired on a three-month-old stamp -- the emitters are month reads, not memories")
+
+
+## A choice that ARMS a follow-up schedules it: due at its delay, ahead of the
+## calendar's draws, through the same gates. The chain is the machine V4.1 refused,
+## built once, here.
+func _test_chains_arm_and_land() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var source = _event("procurement_scandal")
+	var target = _event("emergency_budget_demand")
+	# The chain lands "through the same gates", and the target's own authored gate
+	# is deficit >= 5.5 -- fresh France runs 5.05, so the gate is STAGED open, the
+	# chooser test's staging, or the consequence dies silently at its own door.
+	ns.deficit_pct_gdp = 6.0
+	var chosen: Dictionary = {}
+	for c in source.choices:
+		if not bool(c["is_default"]):
+			c["arms"] = {"event_id": target.id, "delay_months": 2}
+			chosen = c
+			break
+	_announce(state, source)
+	Events.answer(state, _loader, source.id, String(chosen.get("id", "")))
+	if ns.event_armed.size() != 1:
+		_fail("answering an arming choice left %d armed chains, expected 1" % ns.event_armed.size())
+		return
+	if String(ns.event_armed[0].get("event_id", "")) != target.id:
+		_fail("the armed chain points at '%s', not the authored target" % ns.event_armed[0].get("event_id", ""))
+	var stub := _StubLoader.new()
+	stub.events = [target]
+	# The armed entry is due at an ABSOLUTE month, and tick_month reads the calendar
+	# without advancing it -- V1.8's countdown idiom (two ticks, same month) would
+	# never reach the due month, so the clock moves here, _tick()'s way.
+	for _i in range(2):
+		state.month += 1
+		if int(state.month) > 12:
+			state.month = 1
+			state.year += 1
+		Events.tick_month(state, stub)
+	if not Events.is_pending(ns):
+		_fail("the armed follow-up never landed at its delay")
+	elif Events.pending_event_id(ns) != target.id:
+		_fail("the desk holds '%s' -- the armed follow-up landed something else" % Events.pending_event_id(ns))
+
+
+## An event's own cooldown binds: the register holds an UNTIL month, sparse, and
+## nothing draws the event before it.
+func _test_the_per_event_cooldown_binds() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var ev = _event("procurement_scandal")
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	ns.event_cooldowns[ev.id] = month + 5
+	if Events._cooldown_ok(ns, ev, month + 4):
+		_fail("a cooling event passed its own cooldown gate")
+	if not Events._cooldown_ok(ns, ev, month + 5):
+		_fail("the cooldown gated the month it releases -- an until-month is inclusive")
+
+
+## THE AI CHOOSER SITUATES. Two positions answer the same event differently -- that
+## is the whole claim the E7 probe will sweep, pinned here at the unit: a
+## deficit-running government weighs the balance, a balanced one does not. Not
+## optimality: difference.
+func _test_the_chooser_situates() -> void:
+	var ev = _event("emergency_budget_demand")
+	var state = _new_state()
+	var ns = state.player()
+	ns.deficit_pct_gdp = 0.5
+	var balanced = Events._choose(ns, ev)
+	ns.deficit_pct_gdp = 6.0
+	var indebted = Events._choose(ns, ev)
+	if balanced.is_empty() or indebted.is_empty():
+		_fail("the chooser returned no choice at all")
+		return
+	var ids := []
+	for c in ev.choices:
+		ids.append(String(c["id"]))
+	if not ids.has(String(balanced.get("id", ""))) or not ids.has(String(indebted.get("id", ""))):
+		_fail("the chooser invented a choice not on the event")

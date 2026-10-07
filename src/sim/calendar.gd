@@ -461,18 +461,21 @@ static func fixed_dates(state) -> Array:
 	# V1.8, and it needed no preload for V1.6f's and V1.7c's reason a third time. What
 	# this row carries is not an id but the event's own NAME, copied into the register
 	# at announcement -- so unlike the referendum row above, calendar_panel.gd does not
-	# have to look anything up to print it.
-	if not ns.event_pending.is_empty():
-		var event_left := int(ns.event_pending.get("months_left", 0))
-		if event_left > 0:
-			var label := String(ns.event_pending.get("event_name", ""))
-			# V3.5: a sited event's place rides the register the same way, so the
-			# row still needs no lookup -- and the diary names the flood's valley,
-			# not just the flood.
-			var where := String(ns.event_pending.get("region_name", ""))
-			if where != "":
-				label = "%s — %s" % [label, where]
-			out.append(_fixed_in(state, K.FIXED_EVENT, event_left, label))
+	# have to look anything up to print it. V4.4: the desk is a queue, and the diary
+	# carries one row per entry -- a calendar that printed only the head would hide
+	# every other deadline the desk holds, which is the whole of what the queue is.
+	for entry in ns.event_queue:
+		var event_left := int(entry.get("months_left", 0))
+		if event_left <= 0:
+			continue
+		var label := String(entry.get("event_name", ""))
+		# V3.5: a sited event's place rides the register the same way, so the
+		# row still needs no lookup -- and the diary names the flood's valley,
+		# not just the flood.
+		var where := String(entry.get("region_name", ""))
+		if where != "":
+			label = "%s — %s" % [label, where]
+		out.append(_fixed_in(state, K.FIXED_EVENT, event_left, label))
 
 	out.sort_custom(func(a, b): return entry_ordinal(a) < entry_ordinal(b))
 	return out

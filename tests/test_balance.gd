@@ -815,7 +815,12 @@ func _check_a_nuclear_run_stays_off_every_clamp() -> void:
 ## is the run whose dependency deviation is large and whose growth cost is the
 ## channel's readable face. The nuclear run moves the dependency the other way.
 func _check_a_gas_run_stays_off_every_clamp() -> void:
-	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30)
+	# stop_on_loss false, and V4.4 is why: the unanswered desk is a steady
+	# approval drain by design (six-plus categories pulsing, the queue holding
+	# four), and the MANAGED regime now loses the 2031 verdict -- at month 67 of
+	# a channel check whose whole premise is fourteen years of cadence. The vote
+	# is test_two_full_terms' subject; this check watches the energy channel.
+	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30, false)
 	var ns = run["state"].player()
 
 	if not run["problems"].is_empty():

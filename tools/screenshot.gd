@@ -2554,7 +2554,7 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 		# The register only gains region_id on a sited announce, so the key is the
 		# honest marker -- checking the event content here would be a second opinion
 		# about what sited means.
-		if Events.is_pending(ns) and ns.event_pending.has("region_id"):
+		if Events.is_pending(ns) and Events.head_entry(ns).has("region_id"):
 			return
 	printerr("--climate: no sited event drew inside %d months" % horizon)
 
@@ -2592,7 +2592,7 @@ func _answer_a_crisis() -> void:
 	Events.choose(state, _main._loader, answered)
 
 	var second = _main._loader.events[1]
-	ns.event_quiet_months = 0
+	ns.event_category_quiet = {}
 	Events.announce(ns, second, Events._absolute_month(int(state.year), int(state.month)),
 		Events.region_names(ns, _main._loader))
 	_tick_months(second.respond_months + 1)

@@ -970,6 +970,9 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 		negated["society"] = terms
 	apply_effects(state, ns, negated, loader)
 	ns.law_ledger.erase(law_id)
+	# V4.4: the erase is silent otherwise, and the law_repealed hook needs to know
+	# WHEN. One writer, one reader (events.gd), sparse.
+	ns.repealed_at[law_id] = int(state.year) * 12 + int(state.month)
 	# One lookup, one writer: the cooldown comes off the target law wherever it
 	# lives. A composed law is not in loader.laws -- the lookup's null reads
 	# legal in repeal_target_legal() above for exactly that reason -- so the
@@ -1045,7 +1048,13 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 			spending[key] = float(ns.spending_pct_gdp.get(key, 0.0)) + float(effects["spending_pct_gdp"][key])
 		pending["spending_pct_gdp"] = spending
 	if not pending.is_empty():
-		Budget.commit(state, pending)
+		# The NATION-scoped writer, not Budget.commit(): commit is the player's
+		# command and reads state.player(), and V4.4's chooser applies the other
+		# twenty-eight nations' fiscal answers here -- through commit they would
+		# have rewritten the player's budget with another government's crisis
+		# response.
+		Budget.apply_pending(ns, pending)
+		Budget.recompute(state, ns)
 
 	if effects.has("structural_unemployment_pct"):
 		ns.law_structural_offset_pct = clampf(

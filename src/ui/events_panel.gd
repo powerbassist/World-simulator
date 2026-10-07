@@ -150,28 +150,54 @@ func _refresh() -> void:
 func _build_pending(ns) -> void:
 	PanelKit.heading(_body, "On your desk")
 
-	var ev = Events.pending_event(ns, _loader)
-	if ev == null:
+	# V4.4: the desk is a queue, ordered worst-first by the machine, and the panel
+	# prints every entry -- a Dispatches window that showed only the head would
+	# answer four deadlines with one clock's worth of information. Each entry
+	# carries its own countdown and its own answer route (Events.answer, by id),
+	# which is what keeps the buttons on the row they name.
+	var longest_quiet := 0
+	for category in ns.event_category_quiet:
+		longest_quiet = maxi(longest_quiet, int(ns.event_category_quiet[category]))
+
+	if ns.event_queue.is_empty():
 		# Two states reach this line and they are not the same, so the caption names
 		# which one -- projects_panel.gd's own correction, where a player who could not
 		# tell an empty list from a closed gate would read the lever as broken.
-		if int(ns.event_quiet_months) > 0:
+		if longest_quiet > 0:
 			PanelKit.line(_body, "Nothing today. The last matter closed %d %s ago." % [
-				EventsK.EVENT_COOLDOWN_MONTHS - int(ns.event_quiet_months),
-				"month" if EventsK.EVENT_COOLDOWN_MONTHS - int(ns.event_quiet_months) == 1 else "months",
+				EventsK.CATEGORY_QUIET_MONTHS - longest_quiet,
+				"month" if EventsK.CATEGORY_QUIET_MONTHS - longest_quiet == 1 else "months",
 			])
 		else:
 			PanelKit.line(_body, "Nothing today.")
+		return
+
+	for entry in ns.event_queue:
+		_build_entry(ns, entry)
+
+
+## One desk entry: the crisis, the clock on it, the menu. The severity tag rides the
+## title line because it is the queue's own ordering made visible -- the player who
+## cannot see why this row sits above that one is the player who trusts the order
+## for no reason.
+func _build_entry(ns, entry: Dictionary) -> void:
+	var ev = Events.event_by_id(_loader, String(entry.get("event_id", "")))
+	if ev == null:
 		return
 
 	# A sited crisis names its place -- read off the register, which carries the
 	# name because every reader of it (this panel, the calendar, the card) is a
 	# leaf over pending state (V3.5).
 	var title: String = ev.event_name
-	var where := String(ns.event_pending.get("region_name", ""))
+	var where := String(entry.get("region_name", ""))
 	if where != "":
 		title = "%s — %s" % [title, where]
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
+
+	var tag := Label.new()
+	tag.text = "%s — severity %d/%d" % [ev.category, int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.theme_type_variation = UiTheme.MICRO
+	_body.add_child(tag)
 
 	var who := _subject_label(ns, ev)
 	if who != "":
@@ -185,7 +211,7 @@ func _build_pending(ns) -> void:
 	# The deadline in the same units the register holds and the diary prints. Two
 	# surfaces reporting one fact in two units is how they come to disagree -- U6c's
 	# hover read "12 of 96 months" against a project with twelve months LEFT.
-	var left := Events.months_left(ns)
+	var left := int(entry.get("months_left", 0))
 	var deadline := Label.new()
 	deadline.text = "%d %s to answer, then: %s" % [
 		left, "month" if left == 1 else "months", ev.default_choice().get("label", ""),
@@ -234,7 +260,10 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 ## month before it.
 func _on_choose(ev, choice: Dictionary) -> void:
 	var before := Budget.snapshot(_state)
-	var record := Events.choose(_state, _loader, String(choice.get("id", "")))
+	# answer() by id, not choose() on the head: with several entries on the desk
+	# the button must answer ITS row -- a panel whose buttons resolved whatever
+	# sat on top would be a panel that answered the wrong crisis on purpose.
+	var record := Events.answer(_state, _loader, ev.id, String(choice.get("id", "")))
 	if record.is_empty():
 		return
 	_dirty = true

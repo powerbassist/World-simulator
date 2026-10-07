@@ -705,7 +705,9 @@ func _outcome(base, ev, choice: Dictionary) -> Dictionary:
 	Events.announce(ns, ev, Events._absolute_month(int(base.year), int(base.month)),
 		Events.region_names(ns, _loader))
 	Legislature.apply_effects(state, ns, choice.get("effects", {}), _loader)
-	ns.event_pending = {}
+	# clear(), not a fresh []: the register is Array[Dictionary], and an untyped
+	# empty literal assigned through an untyped reference fails its type check.
+	ns.event_queue.clear()
 	for i in range(HORIZON):
 		_step(state, PROBE_MONTH + i)
 	var blocs := {}

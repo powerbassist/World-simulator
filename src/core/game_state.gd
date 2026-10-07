@@ -542,7 +542,30 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## block's plan (2026-10-03) argues each and the round-trip tests pin them
 ## apart. Registers land with their writers task by task; the version moves
 ## once, here, so every task's saves are mutually readable.
-const SAVE_VERSION := 38
+##
+## V4.4 bumps this to 39 on SIX registers, argued apart in
+## tests/test_save_load.gd the same way:
+##   * `ns.event_queue` -- the slot became the desk. `event_pending`'s case one
+##     level up: absent, crises the country is facing vanish, and now SEVERAL
+##     can. A dropped queue is a free escape from every act V1.8 made
+##     un-escapable, times four.
+##   * `ns.event_category_quiet` and `ns.event_cooldowns` -- sparse
+##     until-registers whose ABSENT value means "may draw now" (`event_quiet_
+##     months`' case, U6a's `diplo_months_to_act`): absent, a save reloaded the
+##     month after a resolution hands the category its draw back immediately.
+##   * `ns.event_armed` -- a chain the player paid for must not evaporate,
+##     `held_bills`' free-escape case at V1.1e.
+##   * `ns.event_hook_fired` -- the hooks' reload-safety stamp; NOT RNG state
+##     (the pure-function absence pins stand, and the test keeps them red), but
+##     the memory that stops a save/load cycle re-firing a happening whose
+##     source register still says "last month".
+##   * `ns.repealed_at` and `ns.last_accession` -- the two hook stamps other
+##     machines write; serialised with the family so a reload does not forget a
+##     repeal or an accession the world still remembers.
+## The ONE-WAY gate stands: save_manager refuses a version mismatch outright,
+## so from_dict's defaults are robustness, not a bridge -- no v38 save ever
+## reaches them.
+const SAVE_VERSION := 39
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

@@ -493,23 +493,57 @@ var last_referendum_result: Dictionary = {}
 ## could not reconstruct which month drew which place. A non-sited event's register
 ## carries neither key.
 ##
-## Written by Events.announce(), Events.tick_month() and Events.choose(), and by nothing
-## else.
-var event_pending: Dictionary = {}
+## Written by Events.announce(), Events.tick_month() and Events.answer(), and by nothing
+## else. V4.4: this replaced `event_pending` -- the desk is a QUEUE now (severity-
+## ordered, bounded by events_constants.QUEUE_MAX), because at a hundred-and-twenty
+## events one slot is a draw the world considered and withdrew for no reason the
+## content can see. Each entry is the V1.8 register's own shape (event_id,
+## event_name, months_left, interrupt, plus region_id/region_name when sited) grown
+## by `severity` and `category`.
+var event_queue: Array[Dictionary] = []
 
 ## Event ids that have already happened, for the `once` ones. `passed_law_ids`' shape.
 ## Marked at ANNOUNCEMENT rather than at resolution, because an event has happened the
 ## moment it arrives -- the choice is the response to it, not the event.
 var event_fired: Dictionary = {}
 
-## Months before any further event may fire. The session's one tuned constant counted
-## down: events_constants.EVENT_COOLDOWN_MONTHS.
-var event_quiet_months: int = 0
+## V4.4. Months before a CATEGORY may draw again, sparse -- entries exist only while
+## they bind. The V1.8 global `event_quiet_months` followed the slot down a level:
+## one resolution in fiscal silencing scandal forever was the global quiet's defect
+## at nine categories.
+var event_category_quiet: Dictionary = {}
+
+## V4.4. Event id -> the absolute month until which it may not draw again, sparse.
+## An until-month rather than a countdown so the register never holds an entry that
+## does not bind, and a save reloaded mid-cooldown keeps the same boundary.
+var event_cooldowns: Dictionary = {}
+
+## V4.4. Chains a choice has armed: {event_id, due_index, source_id}. A consequence
+## the player paid for must not evaporate on save -- `held_bills`' free-escape case.
+var event_armed: Array[Dictionary] = []
+
+## V4.4. Hook name -> the absolute month it last fired, for THIS nation. Not RNG
+## state (the pure-function pin stands): it is the reload-safety of an edge whose
+## source is a register another machine wrote, without which a save made in the
+## month of a happening and reloaded could hand the same happening to the hook twice.
+var event_hook_fired: Dictionary = {}
+
+## V4.4. Law id -> the absolute month it was repealed. The V4.2 ledger ERASE is
+## silent (legislature.gd's own record), so the repeal's month is stamped beside
+## it -- one line, one writer, and only the law_repealed hook reads it.
+var repealed_at: Dictionary = {}
+
+## V4.4. The last accession that flipped: {org, month_index}. orgs.gd deletes the
+## finished fight the same tick membership changes, so nothing else records WHEN a
+## nation joined -- the accession_won hook reads this stamp.
+var last_accession: Dictionary = {}
 
 ## What happened and what the player chose, newest first, capped at EVENTS_KEPT. A
 ## DISPLAY RECORD: nothing in src/sim/ reads it back, and tests/test_events.gd asserts
 ## that by reading every file in the directory -- V1.3f's `foreign_acts` property in the
-## session most likely to be tempted to build the grievance ledger literally.
+## session most likely to be tempted to build the grievance ledger literally. V4.4:
+## the AI nations' choices land here too, their own trace of politics that happened
+## to them.
 var event_history: Array[Dictionary] = []
 
 ## Whether this nation's own constitution permits changing its political
@@ -1811,10 +1845,14 @@ func duplicate_state():
 	s.last_referendum_result = last_referendum_result.duplicate(true)
 	# Deep, for referendum_pending's reason above: Events.tick_month() writes
 	# months_left in place, and a shared reference would let Budget.project() tick the
-	# live register on its copy.
-	s.event_pending = event_pending.duplicate(true)
+	# live register on its copy. The whole V4.4 event family copies deep for the
+	# same reason -- the queue's entries are written in place by the countdown.
+	s.event_queue = event_queue.duplicate(true)
 	s.event_fired = event_fired.duplicate(true)
-	s.event_quiet_months = event_quiet_months
+	s.event_category_quiet = event_category_quiet.duplicate(true)
+	s.event_cooldowns = event_cooldowns.duplicate(true)
+	s.event_armed = event_armed.duplicate(true)
+	s.event_hook_fired = event_hook_fired.duplicate(true)
 	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 
@@ -2075,9 +2113,14 @@ func to_dict() -> Dictionary:
 		"amendment_rule": amendment_rule,
 		"referendum_mode": referendum_mode,
 		"referendum_pending": referendum_pending,
-		"event_pending": event_pending,
+		"event_queue": event_queue,
 		"event_fired": event_fired,
-		"event_quiet_months": event_quiet_months,
+		"event_category_quiet": event_category_quiet,
+		"event_cooldowns": event_cooldowns,
+		"event_armed": event_armed,
+		"event_hook_fired": event_hook_fired,
+		"repealed_at": repealed_at,
+		"last_accession": last_accession,
 		"event_history": event_history,
 		"permits_system_change": permits_system_change,
 
@@ -2393,9 +2436,20 @@ static func from_dict(d: Dictionary):
 	# `diplo_months_to_act`, whose absent value fired nine acts in one month. Only
 	# `event_history` earns nothing: it is a display record, and it is serialised anyway
 	# so the ledger the panel is built around survives a reload.
-	s.event_pending = d.get("event_pending", {})
+	s.event_queue.clear()
+	for row in d.get("event_queue", []):
+		if typeof(row) == TYPE_DICTIONARY:
+			s.event_queue.append(row)
 	s.event_fired = d.get("event_fired", {})
-	s.event_quiet_months = int(d.get("event_quiet_months", 0))
+	s.event_category_quiet = d.get("event_category_quiet", {})
+	s.event_cooldowns = d.get("event_cooldowns", {})
+	s.event_armed.clear()
+	for row in d.get("event_armed", []):
+		if typeof(row) == TYPE_DICTIONARY:
+			s.event_armed.append(row)
+	s.event_hook_fired = d.get("event_hook_fired", {})
+	s.repealed_at = d.get("repealed_at", {})
+	s.last_accession = d.get("last_accession", {})
 	s.event_history.clear()
 	for row in d.get("event_history", []):
 		if typeof(row) == TYPE_DICTIONARY:

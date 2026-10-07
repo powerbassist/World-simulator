@@ -349,6 +349,11 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		if Cycle.unit("industry|%s|fail" % company.id, month) >= hazard:
 			continue
 		entry["failed"] = true
+		# V4.4: the firm_failed hook's stamp. The machine writes field diffs only
+		# (no journal, by the register's own design), so "failed THIS month" is a
+		# stamp on the entry -- read by events.gd's hook emitter, ignored by
+		# everything else.
+		entry["failed_month"] = month
 		entry["share"] = 0.0
 		# The support stops with the production it supported: a subsidy standing
 		# on a failed firm would bill on while the firm employed nobody -- and,
@@ -472,6 +477,11 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 		entry["bid_bidder"] = pick
 		entry["bid_price_eur_bn"] = Companies.value_eur_bn(ns, company)
 		entry["bid_months_left"] = IK.BID_WINDOW_MONTHS
+		# V4.4: the takeover_bid hook's stamp, failed_month's argument one verb
+		# over -- the machine writes field diffs only, so "a bid ARRIVED this
+		# month" is a stamp on the entry. Not cleared when the bid lapses: a
+		# stale stamp never matches a later month, so it is inert by the match.
+		entry["bid_month"] = month
 
 
 ## The open bid on this nation's register, if any: {company_id, bidder_id,

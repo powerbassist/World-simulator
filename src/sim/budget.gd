@@ -337,11 +337,26 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 ## shock, a budget left alone is not. The revenue delta is computed by running
 ## revenue_lines() at the old and new rates, so the erosion curve is respected
 ## automatically and the two can never drift apart.
+## The player's command verb, player-scoped by construction: the budget screen,
+## the tax panel, a repeal's negation and an event choice all land here when --
+## and only when -- the nation they belong to is the one the player governs.
+## The nation-scoped writer below is the machine half; V4.4's chooser made the
+## first caller whose ns is NOT state.player() (the other twenty-eight answer
+## their own crises), and routing that through here rewrote the player's budget
+## with another government's answer.
 static func commit(state, pending: Dictionary) -> void:
 	var ns = state.player()
 	if ns == null:
 		return
+	apply_pending(ns, pending)
+	recompute(state, ns)
 
+
+## The one fiscal WRITER, nation-scoped: the landed-rate floors, the yield gate
+## and the demand impulse, for whoever the effects belong to. `recompute` is the
+## caller's, not this function's, because it needs the state -- the tariff line
+## reads the relations the state holds.
+static func apply_pending(ns, pending: Dictionary) -> void:
 	var new_rates: Dictionary = ns.tax_rates_pct.duplicate(true)
 	if pending.has("tax_rates_pct"):
 		# THE LANDED-RATE FLOOR (the ultra pass-9 finding's class): a rate is
@@ -445,7 +460,6 @@ static func commit(state, pending: Dictionary) -> void:
 	ns.tax_progressivity = clampf(
 		new_progressivity, TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
 	)
-	recompute(state, ns)
 
 
 ## What the books look like the instant `pending` is committed, before any time
